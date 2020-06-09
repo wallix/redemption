@@ -124,7 +124,7 @@ LoginMod::LoginMod(
         this->timeout_timer = timer_events_
         .create_timer_executor(time_base)
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
-        .on_action([this](JLN_TIMER_CTX ctx){
+        .on_action([this](auto ctx){
             this->set_mod_signal(BACK_EVENT_STOP);
             return ctx.terminate();
         });

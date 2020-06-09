@@ -30,7 +30,80 @@
 
 RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
+std::string side_effect;
+
 RED_AUTO_TEST_CASE(TestSimpleTimer)
+{
+    LOG(LOG_INFO, "TestSimpleTimer");
+    TimeBase time_base(timeval{1591190078, 222});
+    TimerContainer timer_events_;
+    /* global */ side_effect = "";
+
+    auto && a = timer_events_.create_timer_executor(time_base)
+    .set_notify_delete(
+        [](jln::NotifyDeleteType){
+            /* How can I get the timestamp of call to delete */
+            side_effect += "Delete Timer at ???\n";
+        })
+    .set_delay(std::chrono::seconds(1))
+    .on_action(
+        [](TimerZone::TimerContext ctx){
+            side_effect += "Action Timer at "+std::to_string(ctx.get_current_time().tv_sec)+"\n";
+            return ctx.terminate();
+        });
+    // ctx.ready()
+    // ctx.ready_to(fn)
+
+    RED_CHECK(side_effect == "");
+    timer_events_.exec_timer(time_base.get_current_time());
+    RED_CHECK(side_effect == "");
+
+    time_base.increment_sec(1);
+    timer_events_.exec_timer(time_base.get_current_time());
+    RED_CHECK(side_effect == std::string("Action Timer at 1591190079\nDelete Timer at ???\n"));
+
+    time_base.increment_sec(1);
+    timer_events_.exec_timer(time_base.get_current_time());
+    RED_CHECK(side_effect == std::string("Action Timer at 1591190079\nDelete Timer at ???\n"));
+}
+
+RED_AUTO_TEST_CASE(TestSimpleTimerLambdaCaptureContext)
+{
+    LOG(LOG_INFO, "TestSimpleTimer");
+    TimeBase time_base(timeval{1591190078, 222});
+    TimerContainer timer_events_;
+    std::string lambda_captured = "";
+
+    auto && a = timer_events_.create_timer_executor(time_base)
+    .set_notify_delete(
+        [](jln::NotifyDeleteType){
+            /* I can get the time_stamp through lambda capture */
+//            lambda_captured += "Delete Timer at "+std::to_string(time_base.get_current_time().tv_sec)+"\n";
+        })
+    .set_delay(std::chrono::seconds(1))
+    .on_action(
+        [&lambda_captured](TimerZone::TimerContext ctx){
+            lambda_captured += "Action Timer at "+std::to_string(ctx.get_current_time().tv_sec)+"\n";
+            return ctx.terminate();
+        });
+    // ctx.ready()
+    // ctx.ready_to(fn)
+
+    RED_CHECK(lambda_captured == "");
+    timer_events_.exec_timer(time_base.get_current_time());
+    RED_CHECK(lambda_captured == "");
+
+    time_base.increment_sec(1);
+    timer_events_.exec_timer(time_base.get_current_time());
+    RED_CHECK(lambda_captured == std::string("Action Timer at 1591190079\n"));
+
+    time_base.increment_sec(1);
+    timer_events_.exec_timer(time_base.get_current_time());
+    RED_CHECK(lambda_captured == std::string("Action Timer at 1591190079\n"));
+}
+
+
+RED_AUTO_TEST_CASE(TestSimpleTimer1)
 {
     LOG(LOG_INFO, "TestSimpleTimer");
     TimeBase time_base(timeval{1591190078, 222});
@@ -44,7 +117,7 @@ RED_AUTO_TEST_CASE(TestSimpleTimer)
         })
     .set_delay(std::chrono::seconds(1))
     .on_action(
-        [](jln::TimerContext ctx){
+        [](TimerZone::TimerContext ctx){
             LOG(LOG_INFO, "Callback timer TestSimpleTimerOneShot");
             return ctx.terminate();
         });
@@ -60,6 +133,7 @@ RED_AUTO_TEST_CASE(TestSimpleTimer)
     LOG(LOG_INFO, "TestSimpleTimerOneShot exec_timer3 %s", s);
     timer_events_.exec_timer(time_base.get_current_time());
 }
+
 
 RED_AUTO_TEST_CASE(TestSimpleTimerOneShot)
 {
@@ -147,7 +221,7 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
         s += "d3\n";
     })
     .set_delay(std::chrono::seconds(1))
-    .on_action([](JLN_TIMER_CTX ctx, std::string& s, char& c){
+    .on_action([](auto ctx, std::string& s, char& c){
         s += "timer3\n";
         return c++ == 'd' ? ctx.terminate() : ctx.ready();
     });
@@ -227,7 +301,7 @@ RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
     RED_REQUIRE_GT(fd1, 0);
 
     TopFdPtr fd_event = fd_events_.create_top_executor(time_base, fd1, std::ref(s))
-    .on_action([](JLN_TOP_CTX ctx, std::string& s){
+    .on_action([](auto ctx, std::string& s){
         s += "fd1:";
         return ctx.next();
     })
@@ -235,10 +309,10 @@ RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
         s += "~fd1:";
     }))
     .set_timeout({})
-    .on_timeout([](JLN_TOP_TIMER_CTX ctx, std::string&){ return ctx.ready(); });
+    .on_timeout([](auto ctx, std::string&){ return ctx.ready(); });
 
     TopFdPtr fd_event_2 = fd_events_.create_top_executor(time_base, fd1)
-    .on_action([&s](JLN_TOP_CTX ctx){
+    .on_action([&s](auto ctx){
         s += "fd2:";
         return ctx.next();
     })
@@ -246,7 +320,7 @@ RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
         s += "~fd2:";
     }))
     .set_timeout({})
-    .on_timeout([](JLN_TOP_TIMER_CTX ctx){ return ctx.ready(); });
+    .on_timeout([](auto ctx){ return ctx.ready(); });
 
     fd_events_.exec_action(fd_is_set);
     RED_CHECK_EQ(s, "fd2:~fd2:fd1:~fd1:");
@@ -265,7 +339,7 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
     using jln::value;
 
     auto trace = [](auto name){
-        return [](JLN_FUNCSEQUENCER_CTX ctx, std::string& s){
+        return [](auto ctx, std::string& s){
             s += decltype(name){}.c_str();
             // or
             // if constexpr (ctx.is_final_sequence()) return ctx.ready();
@@ -303,7 +377,7 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
     s.clear();
 
 //    auto trace2 = [](auto f){
-//        return [](JLN_FUNCSEQUENCER_CTX ctx, std::string& s){
+//        return [](auto ctx, std::string& s){
 //            s += ctx.sequence_name();
 //            return jln::make_lambda<decltype(f)>()(ctx);
 //        };
@@ -349,7 +423,7 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
 //        {
 //            this->ptr = events_.create_action_executor(time_base, std::ref(*this), f)
 //            .set_notify_delete([](jln::NotifyDeleteType d, S& self, F f){ f(self, d); })
-//            .on_action([](JLN_ACTION_CTX ctx, S&, F){
+//            .on_action([](auto ctx, S&, F){
 //                return ctx.terminate();
 //            });
 //        }

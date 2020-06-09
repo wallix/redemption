@@ -803,7 +803,7 @@ public:
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
             this->handshake_timeout = this->timer_events_.create_timer_executor(this->time_base)
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
-            .on_action([](JLN_TIMER_CTX ctx){
+            .on_action([](auto ctx){
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
                 throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
                 return ctx.ready();

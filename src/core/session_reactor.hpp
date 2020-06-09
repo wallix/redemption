@@ -47,7 +47,6 @@ namespace jln
     class TopExecutor;
     class GroupExecutor;
     template<class... Ts> class ActionExecutor;
-    class TimerExecutor;
     template<class T> class SharedData;
     class SharedPtr;
     class TopSharedPtr;
@@ -96,9 +95,9 @@ namespace jln
     template<class F>
     F make_lambda() noexcept
     {
-        static_assert(
-            std::is_empty<F>::value,
-            "F must be an empty class or a lambda expression convertible to pointer of function");
+//        static_assert(
+//            std::is_empty<F>::value,
+//            "F must be an empty class or a lambda expression convertible to pointer of function");
         // big hack for a lambda not default constructible before C++20 :)
         alignas(F) char const f[sizeof(F)]{}; // same as `char f`
         return reinterpret_cast<F const&>(f); /*NOLINT*/
@@ -260,33 +259,12 @@ namespace jln
             InitCtx init_ctx;
         };
 
-        template<BuilderInit::E Has, class InitCtx>
-        struct [[nodiscard]] TimerExecutorBuilderImpl
-        {
-            explicit TimerExecutorBuilderImpl(InitCtx&& /*init_ctx*/) noexcept;
-
-            template<class F>
-            auto on_action(F&& f) &&;
-
-            auto set_delay(std::chrono::milliseconds ms) &&;
-            auto set_time(timeval tv) &&;
-
-            template<class F>
-            auto set_notify_delete(F&& /*f*/) && noexcept;
-
-        private:
-            InitCtx init_ctx;
-        };
 
         template<class InitCtx>
         using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
 
-        template<class InitCtx>
-        using TimerExecutorBuilder = TimerExecutorBuilderImpl<BuilderInit::None, InitCtx>;
     }  // namespace detail
 
-
-# define REDEMPTION_JLN_CONCEPT(C) auto
 
     enum class NextMode { ChildToNext, CreateContinuation, };
 
@@ -359,25 +337,6 @@ namespace jln
         }
     };
 
-    struct TimerContext
-    {
-        R next() noexcept { return R::Next; }
-        R ready() noexcept { return R::Ready; }
-        R terminate() noexcept { return R::Terminate; }
-        R ready_to(std::chrono::milliseconds ms) noexcept;
-
-        TimerContext& set_delay(std::chrono::milliseconds ms) noexcept;
-        TimerContext& set_time(timeval tv) noexcept;
-        timeval get_current_time() const noexcept;
-
-        TimerContext(TimerExecutor& timer) noexcept
-        : timer(timer)
-        {}
-
-    private:
-        TimerExecutor& timer;
-    };
-
     template<class... Ts>
     struct ActionContext
     {
@@ -446,14 +405,6 @@ namespace jln
             return *this;
         }
     };
-
-# define JLN_GROUP_CTX auto
-# define JLN_TOP_CTX auto
-# define JLN_TIMER_CTX auto
-# define JLN_ACTION_CTX auto
-# define JLN_EXIT_CTX auto
-# define JLN_GROUP_TIMER_CTX auto
-# define JLN_TOP_TIMER_CTX auto
 
     struct GroupExecutor
     {
@@ -547,114 +498,6 @@ namespace jln
 
     template<class... Ts>
     using GroupExecutorDefault = GroupExecutorWithValues<detail::tuple<>, Ts...>;
-
-
-    struct TimerExecutor
-    {
-        std::function<R(TimerContext)> on_timer;
-        timeval tv {};
-        std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
-        TimeBase& timebase;
-
-        TimerExecutor(TimeBase& timebase) noexcept
-        : timebase(timebase)
-        {}
-
-        void set_delay(std::chrono::milliseconds ms) noexcept;
-        void set_time(timeval tv) noexcept;
-
-        bool exec_action()
-        {
-            REDEMPTION_DEBUG_ONLY(
-                this->exec_is_running = true;
-                SCOPE_EXIT(this->exec_is_running = false);
-            )
-
-            switch (this->on_timer(TimerContext{*this})) {
-                case R::Terminate:
-                case R::Next:
-                    return false;
-                case R::Ready:
-                    assert(this->delay.count() >= 0);
-                    this->set_delay(this->delay);
-                    return true;
-                case R::ReRun:
-                    REDEMPTION_UNREACHABLE();
-                case R::Exception:
-                    REDEMPTION_UNREACHABLE();
-                case R::ExitSuccess:
-                    REDEMPTION_UNREACHABLE();
-                case R::ExitError:
-                    REDEMPTION_UNREACHABLE();
-                case R::NeedMoreData:
-                    REDEMPTION_UNREACHABLE();
-                case R::CreateGroup:
-                    REDEMPTION_UNREACHABLE();
-                case R::SubstituteTimeout:
-                    REDEMPTION_UNREACHABLE();
-                case R::SubstituteAction:
-                    REDEMPTION_UNREACHABLE();
-                case R::SubstituteExit:
-                    REDEMPTION_UNREACHABLE();
-                case R::CreateContinuation:
-                    REDEMPTION_UNREACHABLE();
-            }
-
-            REDEMPTION_UNREACHABLE();
-            return false;
-        }
-
-    private:
-        REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
-    };
-
-    template<class Tuple>
-    struct TimerExecutorWithValues final : TimerExecutor
-    {
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
-        template<class... Us>
-        TimerExecutorWithValues(TimeBase& timebase, Us&&... xs)
-        : TimerExecutor(timebase)
-        , t{static_cast<Us&&>(xs)...}
-        {}
-        REDEMPTION_DIAGNOSTIC_POP
-
-        template<class F>
-        void on_action(F&& f)
-        {
-            this->on_timer = [f, this](TimerContext ctx) mutable /*-> R*/ {
-                return this->t.invoke(f, ctx);
-            };
-        }
-
-        template<class F, class... Args>
-        void invoke(F&& f, Args&&... args)
-        noexcept(noexcept(std::declval<Tuple&>().invoke(
-            static_cast<F&&>(f), static_cast<Args&&>(args)...)))
-        {
-            this->t.invoke(static_cast<F&&>(f), static_cast<Args&&>(args)...);
-        }
-
-        Tuple t;
-    };
-
-    template<template<class...> class Tuple>
-    struct TimerExecutorWithValues<Tuple<>> final : TimerExecutor
-    {
-        using Base = TimerExecutor;
-        using Base::Base;
-
-        template<class F>
-        void on_action(F&& f)
-        {
-            this->on_timer = static_cast<F&&>(f);
-        }
-
-        template<class F, class... Args>
-        void invoke(F&& f, Args&&... args)
-        FALCON_RETURN_NOEXCEPT(static_cast<F&&>(f)(static_cast<Args&&>(args)...))
-    };
 
 
     template<class... Ts>
@@ -1004,8 +847,6 @@ namespace jln
         Ctx& ctx;
         unsigned& i;
     };
-
-# define JLN_FUNCSEQUENCER_CTX auto
 
     namespace detail
     {
@@ -1737,43 +1578,6 @@ namespace jln
         }
     };
 
-    class TimerSharedPtr : public SharedPtr
-    {
-        using Timer = TimerExecutor;
-        using Data = SharedData<Timer>;
-
-        struct PtrInterface : protected SharedPtr
-        {
-            friend class TimerSharedPtr;
-
-            void set_time(timeval const& tv) noexcept
-            {
-                this->timer().set_time(tv);
-            }
-
-            void set_delay(std::chrono::milliseconds ms) noexcept
-            {
-                this->timer().set_delay(ms);
-            }
-
-        private:
-            Timer& timer() noexcept
-            {
-                return static_cast<Data*>(this->p)->value();
-            }
-        };
-
-    public:
-        TimerSharedPtr(SharedDataBase* p = nullptr) noexcept
-        : SharedPtr(p)
-        {}
-
-        PtrInterface* operator->() noexcept
-        {
-            return static_cast<PtrInterface*>(static_cast<SharedPtr*>(this));
-        }
-    };
-
     class ActionSharedPtr : public SharedPtr
     {
         using SharedPtr::SharedPtr;
@@ -1867,8 +1671,7 @@ namespace jln
 
     public:
         template<class... Us>
-        REDEMPTION_JLN_CONCEPT(detail::TopExecutorBuilder_Concept)
-        create_top_executor(TimeBase& timebase, int fd, Us&&... xs)
+        auto create_top_executor(TimeBase& timebase, int fd, Us&&... xs)
         {
             using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
             using Group = GroupExecutorWithValues<Tuple>;
@@ -1995,145 +1798,6 @@ namespace jln
         }
     };
 
-    class TimerContainer
-    {
-        using Timer = TimerExecutor;
-
-    public:
-        using Ptr = TimerSharedPtr;
-
-    private:
-        template<class LocalTimerData, class Tuple>
-        struct InitContext
-        {
-            std::unique_ptr<LocalTimerData, SharedDataDeleter> data_ptr;
-            TimerContainer& cont;
-
-            TimerExecutorWithValues<Tuple>& timer() noexcept
-            {
-                return this->data_ptr->value();
-            }
-
-            template<class F>
-            void set_notify_delete(F /*unused*/) noexcept
-            {
-                this->data_ptr->set_notify_delete([](NotifyDeleteType t, auto& act) noexcept{
-                    act.invoke(make_lambda<F>(), t);
-                });
-            }
-
-            TimerSharedPtr terminate_init()
-            {
-                assert(this->data_ptr);
-                SharedDataBase* data_ptr = this->data_ptr.release();
-                data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
-                data_ptr->shared_ptr = nullptr;
-                return TimerSharedPtr(static_cast<LocalTimerData*>(data_ptr));
-            }
-        };
-
-    public:
-        template<class... Us>
-        REDEMPTION_JLN_CONCEPT(detail::TimerExecutorBuilder_Concept)
-        create_timer_executor(TimeBase& timebase, Us&&... xs)
-        {
-            using Tuple = detail::tuple<decay_and_strip_t<Us>...>;
-            using Timer = TimerExecutorWithValues<Tuple>;
-            using LocalTimerData = SharedData<Timer>;
-            using InitCtx = InitContext<LocalTimerData, Tuple>;
-            return detail::TimerExecutorBuilder<InitCtx>{
-                InitCtx{
-                    std::unique_ptr<LocalTimerData, SharedDataDeleter>(
-                        new LocalTimerData{timebase, static_cast<Us&&>(xs)...}),
-                    *this}
-            };
-        }
-
-        TimerContainer(const TimerContainer&) = delete;
-
-        TimerContainer() noexcept
-        {
-            this->node_executors.next = nullptr;
-        }
-
-        ~TimerContainer()
-        {
-            this->clear();
-        }
-
-    private:
-        static Timer& to_timer(SharedDataBase* d) noexcept
-        {
-            return static_cast<SharedData<Timer>*>(d)->value();
-        }
-
-    public:
-        template<class F>
-        void for_each(F&& f)
-        {
-            SharedDataBase* node = this->node_executors.next;
-            for (; node; node = node->next) {
-                if (node->shared_ptr) {
-                    f(to_timer(node));
-                }
-            }
-        }
-
-        void clear() noexcept
-        {
-            while (this->node_executors.next) {
-                SharedDataBase* p = &this->node_executors;
-                while (p->next) {
-                    SharedDataBase*const node = p->next;
-                    SharedDataBase*const next = p->next->next;
-                    if (node->has_value()) {
-                        node->free_value();
-                        p = node;
-                    }
-                    else {
-                        p->next->delete_self();
-                        p->next = next;
-                    }
-                }
-            }
-        }
-
-        [[nodiscard]] bool is_empty() const noexcept
-        {
-            return !bool(this->node_executors.next);
-        }
-
-        bool exec_timer(timeval tv)
-        {
-            SharedDataBase* node = &this->node_executors;
-            while (node->next) {
-                auto* cur = node->next;
-                if (cur->shared_ptr) {
-                    auto& timer = to_timer(cur);
-                    if (timer.tv > tv || timer.exec_action()) {
-                        node = node->next;
-                    }
-                    else {
-                        while ((node->next != cur) && node->next) {
-                            node = node->next;
-                        }
-                        node->next = cur->next;
-                        cur->free_value();
-                        cur->delete_self();
-                    }
-                }
-                else {
-                    node->next = cur->next;
-                    cur->delete_self();
-                }
-            }
-
-            return bool(this->node_executors.next);
-        }
-
-        SharedDataBase node_executors;
-    };
-
     inline int GroupTimerContext::get_fd() const noexcept
     {
         return this->top.get_fd();
@@ -2237,11 +1901,6 @@ namespace jln
         return R::Exception;
     }
 
-    inline timeval TimerContext::get_current_time() const noexcept
-    {
-        return this->timer.timebase.get_current_time();
-    }
-
     template<detail::BuilderInit::E Has, class InitCtx>
     detail::TopExecutorBuilderImpl<Has, InitCtx>::TopExecutorBuilderImpl(
         InitCtx&& init_ctx) noexcept
@@ -2321,7 +1980,352 @@ namespace jln
     }
 
 
-    template<detail::BuilderInit::E Has, class InitCtx>
+
+}  // namespace jln
+
+struct TopFdContainer : jln::TopContainer {};
+using TopFdPtr = TopFdContainer::Ptr;
+
+
+namespace TimerZone
+{
+    class TimerExecutor;
+
+    namespace detail
+    {
+        template<jln::detail::BuilderInit::E Has, class InitCtx>
+        struct [[nodiscard]] TimerExecutorBuilderImpl
+        {
+            explicit TimerExecutorBuilderImpl(InitCtx&& /*init_ctx*/) noexcept;
+
+            template<class F>
+            auto on_action(F&& f) &&;
+
+            auto set_delay(std::chrono::milliseconds ms) &&;
+            auto set_time(timeval tv) &&;
+
+            template<class F>
+            auto set_notify_delete(F&& /*f*/) && noexcept;
+
+        private:
+            InitCtx init_ctx;
+        };
+
+        template<class InitCtx>
+        using TimerExecutorBuilder = TimerExecutorBuilderImpl<jln::detail::BuilderInit::None, InitCtx>;
+    }
+
+    struct TimerContext
+    {
+        jln::R next() noexcept { return jln::R::Next; }
+        jln::R ready() noexcept { return jln::R::Ready; }
+        jln::R terminate() noexcept { return jln::R::Terminate; }
+        jln::R ready_to(std::chrono::milliseconds ms) noexcept;
+
+        TimerContext& set_delay(std::chrono::milliseconds ms) noexcept;
+        TimerContext& set_time(timeval tv) noexcept;
+        timeval get_current_time() const noexcept;
+
+        TimerContext(TimerExecutor& timer) noexcept
+        : timer(timer)
+        {}
+
+    private:
+        TimerExecutor& timer;
+    };
+
+
+    struct TimerExecutor
+    {
+        std::function<jln::R(TimerContext)> on_timer;
+        timeval tv {};
+        std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
+        TimeBase& timebase;
+
+        TimerExecutor(TimeBase& timebase) noexcept
+        : timebase(timebase)
+        {}
+
+        void set_delay(std::chrono::milliseconds ms) noexcept;
+        void set_time(timeval tv) noexcept;
+
+        bool exec_action()
+        {
+            REDEMPTION_DEBUG_ONLY(
+                this->exec_is_running = true;
+                SCOPE_EXIT(this->exec_is_running = false);
+            )
+
+            switch (this->on_timer(TimerContext{*this})) {
+                case jln::R::Terminate:
+                case jln::R::Next:
+                    return false;
+                case jln::R::Ready:
+                    assert(this->delay.count() >= 0);
+                    this->set_delay(this->delay);
+                    return true;
+                case jln::R::ReRun:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::Exception:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::ExitSuccess:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::ExitError:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::NeedMoreData:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::CreateGroup:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::SubstituteTimeout:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::SubstituteAction:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::SubstituteExit:
+                    REDEMPTION_UNREACHABLE();
+                case jln::R::CreateContinuation:
+                    REDEMPTION_UNREACHABLE();
+            }
+
+            REDEMPTION_UNREACHABLE();
+            return false;
+        }
+
+    private:
+        REDEMPTION_DEBUG_ONLY(bool exec_is_running = false;)
+    };
+
+
+
+    template<class Tuple>
+    struct TimerExecutorWithValues final : TimerExecutor
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-braces")
+        template<class... Us>
+        TimerExecutorWithValues(TimeBase& timebase, Us&&... xs)
+        : TimerExecutor(timebase)
+        , t{static_cast<Us&&>(xs)...}
+        {}
+        REDEMPTION_DIAGNOSTIC_POP
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            this->on_timer = [f, this](TimerContext ctx) mutable /*-> R*/ {
+                return this->t.invoke(f, ctx);
+            };
+        }
+
+        template<class F, class... Args>
+        void invoke(F&& f, Args&&... args)
+        noexcept(noexcept(std::declval<Tuple&>().invoke(
+            static_cast<F&&>(f), static_cast<Args&&>(args)...)))
+        {
+            this->t.invoke(static_cast<F&&>(f), static_cast<Args&&>(args)...);
+        }
+
+        Tuple t;
+    };
+
+    template<template<class...> class Tuple>
+    struct TimerExecutorWithValues<Tuple<>> final : TimerExecutor
+    {
+        using Base = TimerExecutor;
+        using Base::Base;
+
+        template<class F>
+        void on_action(F&& f)
+        {
+            this->on_timer = static_cast<F&&>(f);
+        }
+
+        template<class F, class... Args>
+        void invoke(F&& f, Args&&... args)
+        FALCON_RETURN_NOEXCEPT(static_cast<F&&>(f)(static_cast<Args&&>(args)...))
+    };
+
+
+    class TimerSharedPtr : public jln::SharedPtr
+    {
+        using Timer = TimerExecutor;
+        using Data = jln::SharedData<Timer>;
+
+        struct PtrInterface : protected jln::SharedPtr
+        {
+            friend class TimerSharedPtr;
+
+            void set_time(timeval const& tv) noexcept
+            {
+                this->timer().set_time(tv);
+            }
+
+            void set_delay(std::chrono::milliseconds ms) noexcept
+            {
+                this->timer().set_delay(ms);
+            }
+
+        private:
+            Timer& timer() noexcept
+            {
+                return static_cast<Data*>(this->p)->value();
+            }
+        };
+
+    public:
+        TimerSharedPtr(jln::SharedDataBase* p = nullptr) noexcept
+        : jln::SharedPtr(p)
+        {}
+
+        PtrInterface* operator->() noexcept
+        {
+            return static_cast<PtrInterface*>(static_cast<jln::SharedPtr*>(this));
+        }
+    };
+
+    class TimerContainer
+    {
+        using Timer = TimerExecutor;
+
+    public:
+        using Ptr = TimerSharedPtr;
+
+    private:
+        template<class LocalTimerData, class Tuple>
+        struct InitContext
+        {
+            std::unique_ptr<LocalTimerData, jln::SharedDataDeleter> data_ptr;
+            TimerContainer& cont;
+
+            TimerExecutorWithValues<Tuple>& timer() noexcept
+            {
+                return this->data_ptr->value();
+            }
+
+            template<class F>
+            void set_notify_delete(F /*unused*/) noexcept
+            {
+                this->data_ptr->set_notify_delete([](jln::NotifyDeleteType t, auto& act) noexcept{
+                    act.invoke(jln::make_lambda<F>(), t);
+                });
+            }
+
+            TimerSharedPtr terminate_init()
+            {
+                assert(this->data_ptr);
+                jln::SharedDataBase* data_ptr = this->data_ptr.release();
+                data_ptr->next = std::exchange(this->cont.node_executors.next, data_ptr);
+                data_ptr->shared_ptr = nullptr;
+                return TimerSharedPtr(static_cast<LocalTimerData*>(data_ptr));
+            }
+        };
+
+    public:
+        template<class... Us>
+        auto create_timer_executor(TimeBase& timebase, Us&&... xs)
+        {
+            using Tuple = jln::detail::tuple<jln::decay_and_strip_t<Us>...>;
+            using Timer = TimerExecutorWithValues<Tuple>;
+            using LocalTimerData = jln::SharedData<Timer>;
+            using InitCtx = InitContext<LocalTimerData, Tuple>;
+            return detail::TimerExecutorBuilder<InitCtx>{
+                InitCtx{
+                    std::unique_ptr<LocalTimerData, jln::SharedDataDeleter>(
+                        new LocalTimerData{timebase, static_cast<Us&&>(xs)...}),
+                    *this}
+            };
+        }
+
+        TimerContainer(const TimerContainer&) = delete;
+
+        TimerContainer() noexcept
+        {
+            this->node_executors.next = nullptr;
+        }
+
+        ~TimerContainer()
+        {
+            this->clear();
+        }
+
+    private:
+        static Timer& to_timer(jln::SharedDataBase* d) noexcept
+        {
+            return static_cast<jln::SharedData<Timer>*>(d)->value();
+        }
+
+    public:
+        template<class F>
+        void for_each(F&& f)
+        {
+            jln::SharedDataBase* node = this->node_executors.next;
+            for (; node; node = node->next) {
+                if (node->shared_ptr) {
+                    f(to_timer(node));
+                }
+            }
+        }
+
+        void clear() noexcept
+        {
+            while (this->node_executors.next) {
+                jln::SharedDataBase* p = &this->node_executors;
+                while (p->next) {
+                    jln::SharedDataBase*const node = p->next;
+                    jln::SharedDataBase*const next = p->next->next;
+                    if (node->has_value()) {
+                        node->free_value();
+                        p = node;
+                    }
+                    else {
+                        p->next->delete_self();
+                        p->next = next;
+                    }
+                }
+            }
+        }
+
+        [[nodiscard]] bool is_empty() const noexcept
+        {
+            return !bool(this->node_executors.next);
+        }
+
+        bool exec_timer(timeval tv)
+        {
+            jln::SharedDataBase* node = &this->node_executors;
+            while (node->next) {
+                auto* cur = node->next;
+                if (cur->shared_ptr) {
+                    auto& timer = to_timer(cur);
+                    if (timer.tv > tv || timer.exec_action()) {
+                        node = node->next;
+                    }
+                    else {
+                        while ((node->next != cur) && node->next) {
+                            node = node->next;
+                        }
+                        node->next = cur->next;
+                        cur->free_value();
+                        cur->delete_self();
+                    }
+                }
+                else {
+                    node->next = cur->next;
+                    cur->delete_self();
+                }
+            }
+
+            return bool(this->node_executors.next);
+        }
+
+        jln::SharedDataBase node_executors;
+    };
+
+    inline timeval TimerContext::get_current_time() const noexcept
+    {
+        return this->timer.timebase.get_current_time();
+    }
+
+    template<jln::detail::BuilderInit::E Has, class InitCtx>
     detail::TimerExecutorBuilderImpl<Has, InitCtx>::TimerExecutorBuilderImpl(
         InitCtx&& init_ctx) noexcept
     : init_ctx(std::move(init_ctx))
@@ -2330,8 +2334,8 @@ namespace jln
     template<int Has, class InitCtx>
     auto select_timer_result(InitCtx& init_ctx)
     {
-        using E = detail::BuilderInit::E;
-        if constexpr (detail::BuilderInit::has(Has, E::Timer | E::Timeout)) { /*NOLINT*/
+        using E = jln::detail::BuilderInit::E;
+        if constexpr (jln::detail::BuilderInit::has(Has, E::Timer | E::Timeout)) { /*NOLINT*/
             return init_ctx.terminate_init();
         }
         else { /*NOLINT*/
@@ -2339,38 +2343,38 @@ namespace jln
         }
     }
 
-    template<detail::BuilderInit::E Has, class InitCtx>
+    template<jln::detail::BuilderInit::E Has, class InitCtx>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::set_delay(std::chrono::milliseconds ms) &&
     {
-        static_assert(!(Has & BuilderInit::Timeout), "set_delay or set_time are already used");
+        static_assert(!(Has & jln::detail::BuilderInit::Timeout), "set_delay or set_time are already used");
         this->init_ctx.timer().set_delay(ms);
-        return select_timer_result<Has | BuilderInit::Timeout>(this->init_ctx);
+        return select_timer_result<Has | jln::detail::BuilderInit::Timeout>(this->init_ctx);
     }
 
-    template<detail::BuilderInit::E Has, class InitCtx>
+    template<jln::detail::BuilderInit::E Has, class InitCtx>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::set_time(timeval tv) &&
     {
-        static_assert(!(Has & BuilderInit::Timeout), "set_delay or set_time are already used");
+        static_assert(!(Has & jln::detail::BuilderInit::Timeout), "set_delay or set_time are already used");
         this->init_ctx.timer().set_time(tv);
-        return select_timer_result<Has | BuilderInit::Timeout>(this->init_ctx);
+        return select_timer_result<Has | jln::detail::BuilderInit::Timeout>(this->init_ctx);
     }
 
-    template<detail::BuilderInit::E Has, class InitCtx>
+    template<jln::detail::BuilderInit::E Has, class InitCtx>
     template<class F>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::on_action(F&& f) &&
     {
-        static_assert(!(Has & BuilderInit::Timer), "on_action is already used");
+        static_assert(!(Has & jln::detail::BuilderInit::Timer), "on_action is already used");
         this->init_ctx.timer().on_action(static_cast<F&&>(f));
-        return select_timer_result<Has | BuilderInit::Timer>(this->init_ctx);
+        return select_timer_result<Has | jln::detail::BuilderInit::Timer>(this->init_ctx);
     }
 
-    template<detail::BuilderInit::E Has, class InitCtx>
+    template<jln::detail::BuilderInit::E Has, class InitCtx>
     template<class F>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::set_notify_delete(F&& f) && noexcept
     {
-        static_assert(!(Has & BuilderInit::NotifyDelete), "set_notify_delete is already used");
+        static_assert(!(Has & jln::detail::BuilderInit::NotifyDelete), "set_notify_delete is already used");
         this->init_ctx.set_notify_delete(static_cast<F&&>(f));
-        return select_timer_result<Has | BuilderInit::NotifyDelete>(this->init_ctx);
+        return select_timer_result<Has | jln::detail::BuilderInit::NotifyDelete>(this->init_ctx);
     }
 
     inline TimerContext& TimerContext::set_delay(std::chrono::milliseconds ms) noexcept
@@ -2385,10 +2389,10 @@ namespace jln
         return *this;
     }
 
-    inline R TimerContext::ready_to(std::chrono::milliseconds ms) noexcept
+    inline jln::R TimerContext::ready_to(std::chrono::milliseconds ms) noexcept
     {
         this->timer.set_delay(ms);
-        return R::Ready;
+        return jln::R::Ready;
     }
 
     inline void TimerExecutor::set_delay(std::chrono::milliseconds ms) noexcept
@@ -2404,9 +2408,8 @@ namespace jln
         this->tv = tv;
     }
 
-}  // namespace jln
+}
 
-struct TimerContainer : jln::TimerContainer {};
+struct TimerContainer : TimerZone::TimerContainer {};
 using TimerPtr = TimerContainer::Ptr;
-struct TopFdContainer : jln::TopContainer {};
-using TopFdPtr = TopFdContainer::Ptr;
+

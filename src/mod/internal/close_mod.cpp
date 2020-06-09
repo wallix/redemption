@@ -132,7 +132,7 @@ CloseMod::CloseMod(
         std::chrono::seconds start_timer{};
         this->timeout_timer = timer_events_.create_timer_executor(time_base, start_timer)
         .set_delay(delay)
-        .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
+        .on_action([this](auto ctx, std::chrono::seconds& seconds){
 //            LOG(LOG_INFO, "timer event %ld", seconds.count());
             // TODO milliseconds += ctx.time() - previous_time
             ++seconds;

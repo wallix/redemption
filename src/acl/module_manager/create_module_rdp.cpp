@@ -872,7 +872,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         new_mod->rdp_data.metrics = std::move(metrics);
         new_mod->rdp_data.metrics->metrics_timer = timer_events_.create_timer_executor(time_base)
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-            .on_action([metrics = new_mod->rdp_data.metrics.get()](JLN_TIMER_CTX ctx){
+            .on_action([metrics = new_mod->rdp_data.metrics.get()](auto ctx){
                 metrics->log(ctx.get_current_time());
                 return ctx.ready();
             })

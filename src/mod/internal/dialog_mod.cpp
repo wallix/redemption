@@ -74,7 +74,7 @@ DialogMod::DialogMod(
         this->timeout_timer = this->timer_events_
         .create_timer_executor(this->time_base)
         .set_delay(std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()))
-        .on_action([this](JLN_TIMER_CTX ctx){
+        .on_action([this](auto ctx){
             this->accepted();
             return ctx.terminate();
         });

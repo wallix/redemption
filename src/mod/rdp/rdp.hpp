@@ -2269,7 +2269,7 @@ public:
         LOG(LOG_INFO, "**** rdp::fd_events_.create_top_executor");
         this->fd_event = this->fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
         .on_exit(check_error)
-        .on_action([this](JLN_TOP_CTX ctx){
+        .on_action([this](auto ctx){
             bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
             // RdpNego::recv_next_data set a new fd if tls
@@ -2285,7 +2285,7 @@ public:
                 this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
                 return ctx.disable_timeout()
                 .replace_exit(jln::propagate_exit())
-                .replace_action([this](JLN_TOP_CTX ctx){
+                .replace_action([this](auto ctx){
                     auto & gd = this->gd_provider.get_graphics();
                     if (this->buf.remaining()){
                         this->draw_event(this->gd_provider.get_graphics(), this->sesman);
@@ -2298,7 +2298,7 @@ public:
                     #endif
                     this->buf.load_data(this->trans);
                     this->draw_event(gd, this->sesman);
-                    return ctx.replace_action([this](JLN_TOP_CTX ctx){
+                    return ctx.replace_action([this](auto ctx){
                         auto & gd = this->gd_provider.get_graphics();
                         #ifndef __EMSCRIPTEN__
                         if (this->channels.remote_programs_session_manager) {
@@ -2313,7 +2313,7 @@ public:
             }
         })
         .set_timeout(this->private_rdp_negociation->open_session_timeout)
-        .on_timeout([this](JLN_TOP_TIMER_CTX ctx){
+        .on_timeout([this](auto ctx){
             if (this->error_message) {
                 *this->error_message = "Logon timer expired!";
             }
@@ -5183,7 +5183,7 @@ public:
                         .create_timer_executor(this->time_base)
                         .set_delay(this->channels.remote_app.bypass_legal_notice_delay)
                         .on_action(jln::sequencer(
-                            [this](JLN_TIMER_CTX ctx) {
+                            [this](auto ctx) {
                                 LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
                                 this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
                                 this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
@@ -5195,7 +5195,7 @@ public:
                                 }
                                 return ctx.terminate();
                             },
-                            [this](JLN_TIMER_CTX ctx) {
+                            [this](auto ctx) {
                                 this->on_remoteapp_redirect_user_screen(
                                     this->authentifier, RDP::LOGON_FAILED_OTHER);
                                 return ctx.terminate();

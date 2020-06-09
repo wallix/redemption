@@ -296,7 +296,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         new_mod->mod.metrics = std::move(metrics);
         new_mod->mod.metrics_timer = timer_events_.create_timer_executor(time_base)
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-            .on_action([metrics = new_mod->mod.metrics.get()](JLN_TIMER_CTX ctx){
+            .on_action([metrics = new_mod->mod.metrics.get()](auto ctx){
                 metrics->log(ctx.get_current_time());
                 return ctx.ready();
             })

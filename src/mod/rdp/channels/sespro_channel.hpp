@@ -232,7 +232,7 @@ public:
                 this->session_probe_timer = this->timer_events_
                     .create_timer_executor(this->time_base)
                     .set_delay(this->sespro_params.effective_launch_timeout)
-                    .on_action([this, &sesman](JLN_TIMER_CTX ctx){
+                    .on_action([this, &sesman](auto ctx){
                         this->process_event_launch(sesman);
                         return ctx.ready_to(this->sespro_params.effective_launch_timeout);
                     });
@@ -248,9 +248,10 @@ public:
         this->session_probe_timer = this->timer_events_
             .create_timer_executor(this->time_base)
             .set_delay(this->sespro_params.launcher_abort_delay)
-            .on_action(jln::one_shot([this, &sesman](){
+            .on_action([this, &sesman](TimerZone::TimerContext ctx){
                 this->process_event_launch(sesman);
-            }));
+                return ctx.terminate();
+                });
     }
 
     void give_additional_launch_time() {

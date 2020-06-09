@@ -97,15 +97,15 @@ mod_vnc::mod_vnc( Transport & t
     this->fd_event = fd_events_.create_top_executor(time_base, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
-        .on_action([this, &sesman](JLN_TOP_CTX ctx){
+        .on_action([this, &sesman](auto ctx){
             this->draw_event(this->gd_provider.get_graphics(), sesman);
             return ctx.need_more_data();
         })
-        .on_timeout([this](JLN_TOP_TIMER_CTX ctx){
+        .on_timeout([this](auto ctx){
             gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
             // rearmed by clipboard
             return ctx.disable_timeout()
-            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx){
+            .replace_timeout([this](auto ctx){
                 this->check_timeout();
                 return ctx.disable_timeout().ready();
             });
