@@ -2018,7 +2018,7 @@ void mod_vnc::rdp_input_up_and_running()
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
         Rect const screen_rect(0, 0, this->width, this->height);
         this->update_screen(screen_rect, 1);
-        this->state = UP_AND_RUNNING;
+        this->state = DO_INITIAL_CLEAR_SCREEN;
     }
 }
 
