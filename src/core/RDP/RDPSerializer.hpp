@@ -391,8 +391,8 @@ public:
 
     // These should not be part of draw interface, they have their own pdu
     // same thing for bitmap update
-    void draw(RDPSetSurfaceCommand const & cmd) override {}
-    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
 
 protected:
