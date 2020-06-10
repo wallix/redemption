@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TestSimpleTimer)
         })
     .set_delay(std::chrono::seconds(1))
     .on_action(
-        [](TimerZone::TimerContext ctx){
+        [](jln::TimerContext ctx){
             side_effect += "Action Timer at "+std::to_string(ctx.get_current_time().tv_sec)+"\n";
             return ctx.terminate();
         });
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestSimpleTimerLambdaCaptureContext)
         })
     .set_delay(std::chrono::seconds(1))
     .on_action(
-        [&lambda_captured](TimerZone::TimerContext ctx){
+        [&lambda_captured](jln::TimerContext ctx){
             lambda_captured += "Action Timer at "+std::to_string(ctx.get_current_time().tv_sec)+"\n";
             return ctx.terminate();
         });
@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(TestSimpleTimer1)
         })
     .set_delay(std::chrono::seconds(1))
     .on_action(
-        [](TimerZone::TimerContext ctx){
+        [](jln::TimerContext ctx){
             LOG(LOG_INFO, "Callback timer TestSimpleTimerOneShot");
             return ctx.terminate();
         });

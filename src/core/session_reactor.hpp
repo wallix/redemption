@@ -42,16 +42,9 @@ Author(s): Jonathan Poelen
 # define REDEMPTION_DEBUG_ONLY(...)
 #endif
 
+
 namespace jln
 {
-    class TopExecutor;
-    class GroupExecutor;
-    template<class... Ts> class ActionExecutor;
-    template<class T> class SharedData;
-    class SharedPtr;
-    class TopSharedPtr;
-    class ActionSharedPtr;
-
     enum class [[nodiscard]] R : char
     {
         Next,
@@ -68,6 +61,39 @@ namespace jln
         ReRun,
         CreateContinuation,
     };
+
+    namespace detail
+    {
+        struct BuilderInit
+        {
+            enum E
+            {
+                None,
+                Action = 1 << 0,
+                Exit = 1 << 1,
+                Timer = 1 << 2,
+                Timeout = 1 << 3,
+                NotifyDelete = 1 << 4,
+            };
+
+            static constexpr bool has(int f, int mask) noexcept
+            {
+                return (f & mask) == mask;
+            }
+
+        };
+    }
+}
+
+namespace jln
+{
+    class TopExecutor;
+    class GroupExecutor;
+    template<class... Ts> class ActionExecutor;
+    template<class T> class SharedData;
+    class SharedPtr;
+    class TopSharedPtr;
+    class ActionSharedPtr;
 
     struct ExitR
     {
@@ -214,24 +240,6 @@ namespace jln
 
     namespace detail
     {
-        struct BuilderInit
-        {
-            enum E
-            {
-                None,
-                Action = 1 << 0,
-                Exit = 1 << 1,
-                Timer = 1 << 2,
-                Timeout = 1 << 3,
-                NotifyDelete = 1 << 4,
-            };
-
-            static constexpr bool has(int f, int mask) noexcept
-            {
-                return (f & mask) == mask;
-            }
-        };
-
         template<BuilderInit::E Has, class InitCtx>
         struct [[nodiscard]] TopExecutorBuilderImpl
         {
@@ -665,289 +673,11 @@ namespace jln
 
     namespace detail
     {
-        template<class S, class F>
-        struct named_function
-        {
-            F f;
 
-            template<class... Ts>
-            decltype(auto) operator()(Ts&&... xs)
-            {
-                return this->f(static_cast<Ts&&>(xs)...);
-            }
-
-            template<class... Ts>
-            decltype(auto) operator()(Ts&&... xs) const
-            {
-                return this->f(static_cast<Ts&&>(xs)...);
-            }
-        };
-
-        template<class S>
-        struct named_type
-        {
-            template<class F>
-            named_function<S, std::decay_t<F>> operator()(F&& f) const noexcept
-            {
-                return {static_cast<F&&>(f)};
-            }
-
-            template<class F>
-            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept /*NOLINT*/
-            {
-                return {static_cast<F&&>(f)};
-            }
-        };
-
-        struct unamed{};
-
-        template<class I, class S>
-        struct named_indexed
-        {
-            static constexpr I index() noexcept { return I{}; }
-            static constexpr S name() noexcept { return S{}; }
-        };
-
-        template<class S, class I>
-        named_indexed<I, S> named_indexed_by_name(named_indexed<I, S> x) noexcept
-        {
-            return x;
-        }
-
-        template<class i, class F>
-        struct function_to_named_index
-        {
-            using type = named_indexed<i, unamed>;
-        };
-
-        template<class i, class S, class F>
-        struct function_to_named_index<i, named_function<S, F>>
-        {
-            using type = named_indexed<i, S>;
-        };
     }  // namespace detail
-
-    namespace literals
-    {
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
-        template<class C, C... cs>
-        detail::named_type<string_c<cs...>> operator ""_f () noexcept
-        { return {}; }
-        REDEMPTION_DIAGNOSTIC_POP
-    }
 
     template<auto x>
     inline constexpr auto value = std::integral_constant<decltype(x), x>{};
-
-    enum class IndexSequence : int;
-
-    template<class Ctx, class NamedIndexPack>
-    struct FuncSequencerCtx
-    {
-        Ctx& base() noexcept
-        {
-            return this->ctx;
-        }
-
-        [[nodiscard]] R terminate() const noexcept
-        {
-            return R::Terminate;
-        }
-
-        [[nodiscard]] bool is_final_sequence() const noexcept
-        {
-            return this->i == NamedIndexPack::count - 1u;
-        }
-
-        [[nodiscard]] IndexSequence index() const noexcept
-        {
-            return IndexSequence(this->i);
-        }
-
-        [[nodiscard]] char const* sequence_name() const noexcept
-        {
-            return NamedIndexPack::strings[this->i];
-        }
-
-        R ready() noexcept
-        {
-            return R::Ready;
-        }
-
-        R next() noexcept
-        {
-            return this->ctx.next();
-        }
-
-        Ctx& previous() noexcept
-        {
-            return this->at(this->i-1);
-        }
-
-        R exec_next() noexcept
-        {
-            return this->exec_at(this->i+1);
-        }
-
-        R exec_previous() noexcept
-        {
-            return this->exec_at(this->i-1);
-        }
-
-        Ctx& at(int i) noexcept
-        {
-            // assert(i >= 0);
-            assert(i < int{NamedIndexPack::count});
-            this->i = i;
-            return this->ctx;
-        }
-
-        template<char... cs>
-        Ctx& at(string_c<cs...> /*unused*/) noexcept
-        {
-            this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
-            return this->ctx;
-        }
-
-        R exec_at(int i) noexcept
-        {
-            this->i = i;
-            return R::ReRun;
-        }
-
-        template<char... cs>
-        R exec_at(string_c<cs...> /*unused*/) noexcept
-        {
-            this->i = detail::named_indexed_by_name<string_c<cs...>>(NamedIndexPack{}).index();
-            return R::ReRun;
-        }
-
-        FuncSequencerCtx& set_delay(std::chrono::milliseconds ms) noexcept
-        {
-            (void)this->ctx.set_delay(ms);
-            return *this;
-        }
-
-        FuncSequencerCtx& set_time(std::chrono::milliseconds ms) noexcept
-        {
-            (void)this->ctx.set_time(ms);
-            return *this;
-        }
-
-        FuncSequencerCtx(Ctx& ctx, unsigned& i) noexcept
-        : ctx(ctx)
-        , i(i)
-        {}
-
-        operator Ctx& () noexcept { return this->ctx; }
-
-    private:
-        Ctx& ctx;
-        unsigned& i;
-    };
-
-    namespace detail
-    {
-        template<class> struct name_or_index;
-
-        template<class i, class S>
-        struct name_or_index<named_indexed<i, S>>
-        { using type = S; };
-
-        template<class i>
-        struct name_or_index<named_indexed<i, unamed>>
-        { using type = i; };
-
-        template<class... Ts>
-        struct CheckUniqueName : name_or_index<Ts>::type...
-        {
-            static const bool value = true;
-        };
-
-        template<class... NamedIndexed>
-        struct named_indexed_pack : NamedIndexed...
-        {
-            static_assert(CheckUniqueName<NamedIndexed...>::value, "name duplicated");
-
-            static constexpr std::size_t count = sizeof...(NamedIndexed);
-
-            static constexpr char const* const strings[sizeof...(NamedIndexed)]
-                = {NamedIndexed::name().c_str()...};
-        };
-
-        template<class Ints, class... Fs>
-        struct create_named_indexed_pack;
-
-        template<std::size_t... Ints, class... Fs>
-        struct create_named_indexed_pack<std::integer_sequence<std::size_t, Ints...>, Fs...>
-        {
-            using type = named_indexed_pack<typename function_to_named_index<
-                std::integral_constant<std::size_t, Ints>,  Fs>::type...>;
-        };
-
-
-        template<std::size_t... Ints, class... Fs>
-        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...> /*unused*/, Fs&&... fs)
-        {
-            R r;
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wparentheses")
-            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-value")
-            (((i == Ints) && ((void)(r = fs()), true)) || ...)
-            || ((void)(r = R::ExitError), true);
-            REDEMPTION_DIAGNOSTIC_POP
-            return r;
-        }
-    }  // namespace detail
-
-    template<class S, class F>
-    detail::named_function<S, F> named(S /*unused*/, F /*unused*/)
-    { return {}; }
-
-    template<class... Fs>
-    auto sequencer(Fs&&... fs)
-    {
-        static_assert(sizeof...(Fs) > 1);
-
-        using Pack = typename detail::create_named_indexed_pack<
-            std::index_sequence_for<Fs...>, std::decay_t<Fs>...>::type;
-
-        return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
-            // gcc < 8.0 bug: explicit capture otherwise xs is misaligned
-            auto wrap = [&i, &ctx, &xs...](auto& f) {
-                return [&]() {
-                    return f(
-                        FuncSequencerCtx<decltype(ctx), Pack>{ctx, i},
-                        static_cast<decltype(xs)&&>(xs)...
-                    );
-                };
-            };
-
-            for (;;) {
-                R const r = detail::switch_(
-                    i, std::make_index_sequence<sizeof...(Fs)>{}, wrap(fs)...);
-
-                switch (r) {
-                    case R::ReRun:
-                        break;
-                    case R::Next:
-                        return i < sizeof...(fs)-1 ? ((void)++i, R::Ready) : R::Next;
-                    case R::CreateGroup:
-                        ++i;
-                        return R::CreateContinuation;
-                    case R::SubstituteTimeout:
-                    case R::SubstituteAction:
-                    case R::SubstituteExit:
-                        ++i;
-                        return r;
-                    default:
-                        return r;
-                }
-            }
-        };
-    }
 
     template<class F>
     auto propagate_exit(F&& f) noexcept
@@ -1987,13 +1717,255 @@ struct TopFdContainer : jln::TopContainer {};
 using TopFdPtr = TopFdContainer::Ptr;
 
 
-namespace TimerZone
+namespace jln
 {
     class TimerExecutor;
 
     namespace detail
     {
-        template<jln::detail::BuilderInit::E Has, class InitCtx>
+
+        template<class S, class F>
+        struct named_function
+        {
+            F f;
+
+            template<class... Ts>
+            decltype(auto) operator()(Ts&&... xs)
+            {
+                return this->f(static_cast<Ts&&>(xs)...);
+            }
+
+            template<class... Ts>
+            decltype(auto) operator()(Ts&&... xs) const
+            {
+                return this->f(static_cast<Ts&&>(xs)...);
+            }
+        };
+
+        template<class S>
+        struct named_type
+        {
+            template<class F>
+            named_function<S, std::decay_t<F>> operator()(F&& f) const noexcept
+            {
+                return {static_cast<F&&>(f)};
+            }
+
+            template<class F>
+            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept /*NOLINT*/
+            {
+                return {static_cast<F&&>(f)};
+            }
+        };
+
+        struct unamed{};
+
+        template<class I, class S>
+        struct named_indexed
+        {
+            static constexpr I index() noexcept { return I{}; }
+            static constexpr S name() noexcept { return S{}; }
+        };
+
+        template<class S, class I>
+        named_indexed<I, S> named_indexed_by_name(named_indexed<I, S> x) noexcept
+        {
+            return x;
+        }
+
+        template<class i, class F>
+        struct function_to_named_index
+        {
+            using type = named_indexed<i, unamed>;
+        };
+
+        template<class i, class S, class F>
+        struct function_to_named_index<i, named_function<S, F>>
+        {
+            using type = named_indexed<i, S>;
+        };
+
+        template<class> struct name_or_index;
+
+        template<class i, class S>
+        struct name_or_index<named_indexed<i, S>>
+        { using type = S; };
+
+        template<class i>
+        struct name_or_index<named_indexed<i, unamed>>
+        { using type = i; };
+
+        template<class... Ts>
+        struct CheckUniqueName : name_or_index<Ts>::type...
+        {
+            static const bool value = true;
+        };
+
+        template<class... NamedIndexed>
+        struct named_indexed_pack : NamedIndexed...
+        {
+            static_assert(CheckUniqueName<NamedIndexed...>::value, "name duplicated");
+
+            static constexpr std::size_t count = sizeof...(NamedIndexed);
+
+            static constexpr char const* const strings[sizeof...(NamedIndexed)]
+                = {NamedIndexed::name().c_str()...};
+        };
+
+        template<class Ints, class... Fs>
+        struct create_named_indexed_pack;
+
+        template<std::size_t... Ints, class... Fs>
+        struct create_named_indexed_pack<std::integer_sequence<std::size_t, Ints...>, Fs...>
+        {
+            using type = named_indexed_pack<typename function_to_named_index<
+                std::integral_constant<std::size_t, Ints>,  Fs>::type...>;
+        };
+    }
+
+    namespace literals
+    {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
+        template<class C, C... cs>
+        detail::named_type<jln::string_c<cs...>> operator ""_f () noexcept
+        { return {}; }
+        REDEMPTION_DIAGNOSTIC_POP
+    }
+
+
+
+    namespace detail {
+        template<std::size_t... Ints, class... Fs>
+        R switch_(unsigned i, std::integer_sequence<std::size_t, Ints...> /*unused*/, Fs&&... fs)
+        {
+            R r;
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wparentheses")
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-value")
+            (((i == Ints) && ((void)(r = fs()), true)) || ...)
+            || ((void)(r = R::ExitError), true);
+            REDEMPTION_DIAGNOSTIC_POP
+            return r;
+        }
+    }
+
+
+    template<class S, class F>
+    detail::named_function<S, F> named(S /*unused*/, F /*unused*/)
+    { return {}; }
+
+    enum class IndexSequence : int;
+
+    template<class Ctx, class NamedIndexPack>
+    struct FuncSequencerCtx
+    {
+        Ctx& base() noexcept
+        {
+            return this->ctx;
+        }
+
+        [[nodiscard]] R terminate() const noexcept
+        {
+            return R::Terminate;
+        }
+
+        [[nodiscard]] bool is_final_sequence() const noexcept
+        {
+            return this->i == NamedIndexPack::count - 1u;
+        }
+
+        [[nodiscard]] IndexSequence index() const noexcept
+        {
+            return IndexSequence(this->i);
+        }
+
+        [[nodiscard]] char const* sequence_name() const noexcept
+        {
+            return NamedIndexPack::strings[this->i];
+        }
+
+        R ready() noexcept
+        {
+            return R::Ready;
+        }
+
+        R next() noexcept
+        {
+            return this->ctx.next();
+        }
+
+        Ctx& previous() noexcept
+        {
+            return this->at(this->i-1);
+        }
+
+        R exec_next() noexcept
+        {
+            return this->exec_at(this->i+1);
+        }
+
+        R exec_previous() noexcept
+        {
+            return this->exec_at(this->i-1);
+        }
+
+        Ctx& at(int i) noexcept
+        {
+            // assert(i >= 0);
+            assert(i < int{NamedIndexPack::count});
+            this->i = i;
+            return this->ctx;
+        }
+
+        template<char... cs>
+        Ctx& at(jln::string_c<cs...> /*unused*/) noexcept
+        {
+            this->i = detail::named_indexed_by_name<jln::string_c<cs...>>(NamedIndexPack{}).index();
+            return this->ctx;
+        }
+
+        R exec_at(int i) noexcept
+        {
+            this->i = i;
+            return R::ReRun;
+        }
+
+        template<char... cs>
+        R exec_at(jln::string_c<cs...> /*unused*/) noexcept
+        {
+            this->i = detail::named_indexed_by_name<jln::string_c<cs...>>(NamedIndexPack{}).index();
+            return R::ReRun;
+        }
+
+        FuncSequencerCtx& set_delay(std::chrono::milliseconds ms) noexcept
+        {
+            (void)this->ctx.set_delay(ms);
+            return *this;
+        }
+
+        FuncSequencerCtx& set_time(std::chrono::milliseconds ms) noexcept
+        {
+            (void)this->ctx.set_time(ms);
+            return *this;
+        }
+
+        FuncSequencerCtx(Ctx& ctx, unsigned& i) noexcept
+        : ctx(ctx)
+        , i(i)
+        {}
+
+        operator Ctx& () noexcept { return this->ctx; }
+
+    private:
+        Ctx& ctx;
+        unsigned& i;
+    };
+
+    namespace detail
+    {
+        template<detail::BuilderInit::E Has, class InitCtx>
         struct [[nodiscard]] TimerExecutorBuilderImpl
         {
             explicit TimerExecutorBuilderImpl(InitCtx&& /*init_ctx*/) noexcept;
@@ -2012,15 +1984,60 @@ namespace TimerZone
         };
 
         template<class InitCtx>
-        using TimerExecutorBuilder = TimerExecutorBuilderImpl<jln::detail::BuilderInit::None, InitCtx>;
+        using TimerExecutorBuilder = TimerExecutorBuilderImpl<detail::BuilderInit::None, InitCtx>;
+    }
+
+
+
+    template<class... Fs>
+    auto sequencer(Fs&&... fs)
+    {
+        static_assert(sizeof...(Fs) > 1);
+
+        using Pack = typename detail::create_named_indexed_pack<
+            std::index_sequence_for<Fs...>, std::decay_t<Fs>...>::type;
+
+        return [=, i = 0u](auto ctx, auto&&... xs) mutable /*-> R*/ {
+            // gcc < 8.0 bug: explicit capture otherwise xs is misaligned
+            auto wrap = [&i, &ctx, &xs...](auto& f) {
+                return [&]() {
+                    return f(
+                        FuncSequencerCtx<decltype(ctx), Pack>{ctx, i},
+                        static_cast<decltype(xs)&&>(xs)...
+                    );
+                };
+            };
+
+            for (;;) {
+                R const r = detail::switch_(
+                    i, std::make_index_sequence<sizeof...(Fs)>{}, wrap(fs)...);
+
+                switch (r) {
+                    case R::ReRun:
+                        break;
+                    case R::Next:
+                        return i < sizeof...(fs)-1 ? ((void)++i, R::Ready) : R::Next;
+                    case R::CreateGroup:
+                        ++i;
+                        return R::CreateContinuation;
+                    case R::SubstituteTimeout:
+                    case R::SubstituteAction:
+                    case R::SubstituteExit:
+                        ++i;
+                        return r;
+                    default:
+                        return r;
+                }
+            }
+        };
     }
 
     struct TimerContext
     {
-        jln::R next() noexcept { return jln::R::Next; }
-        jln::R ready() noexcept { return jln::R::Ready; }
-        jln::R terminate() noexcept { return jln::R::Terminate; }
-        jln::R ready_to(std::chrono::milliseconds ms) noexcept;
+        R next() noexcept { return R::Next; }
+        R ready() noexcept { return R::Ready; }
+        R terminate() noexcept { return R::Terminate; }
+        R ready_to(std::chrono::milliseconds ms) noexcept;
 
         TimerContext& set_delay(std::chrono::milliseconds ms) noexcept;
         TimerContext& set_time(timeval tv) noexcept;
@@ -2037,7 +2054,7 @@ namespace TimerZone
 
     struct TimerExecutor
     {
-        std::function<jln::R(TimerContext)> on_timer;
+        std::function<R(TimerContext)> on_timer;
         timeval tv {};
         std::chrono::milliseconds delay = std::chrono::milliseconds(-1);
         TimeBase& timebase;
@@ -2057,32 +2074,32 @@ namespace TimerZone
             )
 
             switch (this->on_timer(TimerContext{*this})) {
-                case jln::R::Terminate:
-                case jln::R::Next:
+                case R::Terminate:
+                case R::Next:
                     return false;
-                case jln::R::Ready:
+                case R::Ready:
                     assert(this->delay.count() >= 0);
                     this->set_delay(this->delay);
                     return true;
-                case jln::R::ReRun:
+                case R::ReRun:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::Exception:
+                case R::Exception:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::ExitSuccess:
+                case R::ExitSuccess:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::ExitError:
+                case R::ExitError:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::NeedMoreData:
+                case R::NeedMoreData:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::CreateGroup:
+                case R::CreateGroup:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::SubstituteTimeout:
+                case R::SubstituteTimeout:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::SubstituteAction:
+                case R::SubstituteAction:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::SubstituteExit:
+                case R::SubstituteExit:
                     REDEMPTION_UNREACHABLE();
-                case jln::R::CreateContinuation:
+                case R::CreateContinuation:
                     REDEMPTION_UNREACHABLE();
             }
 
@@ -2325,7 +2342,7 @@ namespace TimerZone
         return this->timer.timebase.get_current_time();
     }
 
-    template<jln::detail::BuilderInit::E Has, class InitCtx>
+    template<detail::BuilderInit::E Has, class InitCtx>
     detail::TimerExecutorBuilderImpl<Has, InitCtx>::TimerExecutorBuilderImpl(
         InitCtx&& init_ctx) noexcept
     : init_ctx(std::move(init_ctx))
@@ -2334,8 +2351,8 @@ namespace TimerZone
     template<int Has, class InitCtx>
     auto select_timer_result(InitCtx& init_ctx)
     {
-        using E = jln::detail::BuilderInit::E;
-        if constexpr (jln::detail::BuilderInit::has(Has, E::Timer | E::Timeout)) { /*NOLINT*/
+        using E = detail::BuilderInit::E;
+        if constexpr (detail::BuilderInit::has(Has, E::Timer | E::Timeout)) { /*NOLINT*/
             return init_ctx.terminate_init();
         }
         else { /*NOLINT*/
@@ -2343,38 +2360,38 @@ namespace TimerZone
         }
     }
 
-    template<jln::detail::BuilderInit::E Has, class InitCtx>
+    template<detail::BuilderInit::E Has, class InitCtx>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::set_delay(std::chrono::milliseconds ms) &&
     {
-        static_assert(!(Has & jln::detail::BuilderInit::Timeout), "set_delay or set_time are already used");
+        static_assert(!(Has & detail::BuilderInit::Timeout), "set_delay or set_time are already used");
         this->init_ctx.timer().set_delay(ms);
-        return select_timer_result<Has | jln::detail::BuilderInit::Timeout>(this->init_ctx);
+        return select_timer_result<Has | detail::BuilderInit::Timeout>(this->init_ctx);
     }
 
-    template<jln::detail::BuilderInit::E Has, class InitCtx>
+    template<detail::BuilderInit::E Has, class InitCtx>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::set_time(timeval tv) &&
     {
-        static_assert(!(Has & jln::detail::BuilderInit::Timeout), "set_delay or set_time are already used");
+        static_assert(!(Has & detail::BuilderInit::Timeout), "set_delay or set_time are already used");
         this->init_ctx.timer().set_time(tv);
-        return select_timer_result<Has | jln::detail::BuilderInit::Timeout>(this->init_ctx);
+        return select_timer_result<Has | detail::BuilderInit::Timeout>(this->init_ctx);
     }
 
-    template<jln::detail::BuilderInit::E Has, class InitCtx>
+    template<detail::BuilderInit::E Has, class InitCtx>
     template<class F>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::on_action(F&& f) &&
     {
-        static_assert(!(Has & jln::detail::BuilderInit::Timer), "on_action is already used");
+        static_assert(!(Has & detail::BuilderInit::Timer), "on_action is already used");
         this->init_ctx.timer().on_action(static_cast<F&&>(f));
-        return select_timer_result<Has | jln::detail::BuilderInit::Timer>(this->init_ctx);
+        return select_timer_result<Has | detail::BuilderInit::Timer>(this->init_ctx);
     }
 
-    template<jln::detail::BuilderInit::E Has, class InitCtx>
+    template<detail::BuilderInit::E Has, class InitCtx>
     template<class F>
     auto detail::TimerExecutorBuilderImpl<Has, InitCtx>::set_notify_delete(F&& f) && noexcept
     {
-        static_assert(!(Has & jln::detail::BuilderInit::NotifyDelete), "set_notify_delete is already used");
+        static_assert(!(Has & detail::BuilderInit::NotifyDelete), "set_notify_delete is already used");
         this->init_ctx.set_notify_delete(static_cast<F&&>(f));
-        return select_timer_result<Has | jln::detail::BuilderInit::NotifyDelete>(this->init_ctx);
+        return select_timer_result<Has | detail::BuilderInit::NotifyDelete>(this->init_ctx);
     }
 
     inline TimerContext& TimerContext::set_delay(std::chrono::milliseconds ms) noexcept
@@ -2389,10 +2406,10 @@ namespace TimerZone
         return *this;
     }
 
-    inline jln::R TimerContext::ready_to(std::chrono::milliseconds ms) noexcept
+    inline R TimerContext::ready_to(std::chrono::milliseconds ms) noexcept
     {
         this->timer.set_delay(ms);
-        return jln::R::Ready;
+        return R::Ready;
     }
 
     inline void TimerExecutor::set_delay(std::chrono::milliseconds ms) noexcept
@@ -2410,6 +2427,6 @@ namespace TimerZone
 
 }
 
-struct TimerContainer : TimerZone::TimerContainer {};
+struct TimerContainer : jln::TimerContainer {};
 using TimerPtr = TimerContainer::Ptr;
 
