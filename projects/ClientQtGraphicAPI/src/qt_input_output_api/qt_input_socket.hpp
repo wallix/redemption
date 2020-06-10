@@ -21,15 +21,13 @@
 
 #pragma once
 
-#include <fstream>
-
-#include "utils/log.hpp"
 #include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+
 #include <QtCore/QSocketNotifier>
 #include <QtCore/QTimer>
 

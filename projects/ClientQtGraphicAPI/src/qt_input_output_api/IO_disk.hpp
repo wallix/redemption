@@ -29,6 +29,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
+#include "core/FSCC/FileInformation.hpp"
 
 
 class IODisk : public ClientIODiskAPI

@@ -22,20 +22,14 @@
 
 #include "utils/log.hpp"
 #include "utils/png.hpp"
-#include "utils/select.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/file.hpp"
 
 #include "core/front_api.hpp"
-#include "core/client_info.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
 #include "cxx/cxx.hpp"
 #include "client_redemption/execute_events.hpp"
-#include "gdi/graphic_cmd_color.hpp"
 
 
 class ClientFront : public FrontAPI

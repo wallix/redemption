@@ -21,10 +21,10 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#include "gdi/graphic_api.hpp"
+#pragma once
+
 #include "core/channel_names.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/image_data_view.hpp"
 #include "utils/stream.hpp"

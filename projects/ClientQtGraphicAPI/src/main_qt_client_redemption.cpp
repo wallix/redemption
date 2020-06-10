@@ -61,17 +61,6 @@ public:
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
         this->qt_graphic.get_static_qwidget())
     {
-//<<<<<<< HEAD
-//        this->qt_sound = new QtOutputSound(
-//            this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
-//        this->qt_socket_listener = new QtInputSocket(
-//            time_base, fd_events, timer_events, this, this->qt_graphic.get_static_qwidget());
-//        this->qt_clipboard = new QtInputOutputClipboard(
-//            &this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
-//            this->qt_graphic.get_static_qwidget());
-
-//        this->clientRDPSNDChannel.set_api(this->qt_sound);
-//        this->clientCLIPRDRChannel.set_api(this->qt_clipboard);
         this->clientRDPSNDChannel.set_api(&this->qt_sound);
         this->clientCLIPRDRChannel.set_api(&this->qt_clipboard);
         this->clientRDPDRChannel.set_api(&this->ioDisk);

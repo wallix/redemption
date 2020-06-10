@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "core/callback.hpp"
 #include "keyboard/keymap2.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"

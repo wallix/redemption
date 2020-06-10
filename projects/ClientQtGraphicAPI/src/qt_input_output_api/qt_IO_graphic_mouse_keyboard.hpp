@@ -26,18 +26,12 @@
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
 
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
-#include "qt_graphics_components/qt_options_window.hpp"
 #include "qt_graphics_components/qt_screen_window.hpp"
 #include "qt_graphics_components/qt_form_window.hpp"
 
-#include <QtGui/QBitmap>
 #include <QtGui/QColor>
 #include <QtGui/QImage>
-#include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
-#include <QtGui/QRgb>
-#include <QtGui/QWheelEvent>
-// #include <QtGui/QWindowsCEStyle>
 
 #include "redemption_qt_include_widget.hpp"
 

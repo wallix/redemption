@@ -20,6 +20,7 @@
 */
 
 #include "qt_input_output_api/qt_input_output_clipboard.hpp"
+#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
@@ -29,8 +30,8 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
+#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 
 #include <fstream>
 

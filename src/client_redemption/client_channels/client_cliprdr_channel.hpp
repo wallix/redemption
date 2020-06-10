@@ -33,7 +33,6 @@
 #include <string>
 
 
-class ConstImageDataView;
 class ClientChannelMod;
 class RDPClipboardConfig;
 class InStream;
