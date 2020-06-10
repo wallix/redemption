@@ -122,24 +122,55 @@ namespace redemption_unit_test__
     template <class T>
     wrap_data_test(T, char const*) -> wrap_data_test<T>;
 
+#if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
+    template<class View>
+    auto wrap_data_test_print_elem(std::ostream& out, View const& v, int /*dummy*/)
+    -> decltype(void(ut::flagged_bytes_view{v}))
+    {
+        ut::flagged_bytes_view flagged_v{v};
+        put_view(v.size(), out, flagged_v);
+    }
+
+    template<class T>
+    void wrap_data_test_print_elem(std::ostream& out, T const& x, char /*dummy*/)
+    {
+        out << x;
+    }
+
+    /*
+    template<class T>
+    auto wrap_data_test_print_elem(std::ostream& out, T const& cont, int)
+    -> decltype(void(array_view{cont}))
+    {
+        switch (cont.size()) {
+          case 0: return;
+          case 1:
+              wrap_data_test_print_elem(out, x[0]);
+              return
+          default:
+              wrap_data_test_print_elem(out, x[0]);
+              for (auto const& x : cont.drop_front(1)) {
+                  out << ", ";
+                  wrap_data_test_print_elem(out, x);
+              }
+              break;
+        }
+    }
+    */
+#endif
+
     template<class T>
     std::ostream& operator<<(std::ostream& out, wrap_data_test_elem<T> const& e)
     {
         out << e.prefix_message;
+        #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
+        out << "(";
         std::apply([&](auto const& x, auto const&... xs){
-            auto print = [&](auto const& y){
-                if constexpr (std::is_same_v<decltype(y),array_view<const char> const&>) {
-                    out << ", ";
-                    out.write(y.data(), y.size());
-                }
-                else {
-                    out << ", " << y;
-                }
-            };
-            out << x;
-            (print(xs), ...);
+            wrap_data_test_print_elem(out, x, 1);
+            ((void(out << ", "), wrap_data_test_print_elem(out, xs, 1)), ...);
         }, e.t);
         out << ")";
+        #endif
         return out;
     }
 } // namespace redemption_unit_test__

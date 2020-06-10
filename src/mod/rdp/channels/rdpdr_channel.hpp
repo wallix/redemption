@@ -1482,8 +1482,7 @@ public:
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
 
                             this->report_message.log6(
-                                LogId::DRIVE_REDIRECTION_USE,
-                                this->time_base.get_current_time(), {
+                                LogId::DRIVE_REDIRECTION_USE, {
                                 KVLog("device_name"_av, device_name),
                                 KVLog("device_type"_av, device_type_name),
                             });
@@ -1566,8 +1565,7 @@ public:
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
                                     this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_READ_EX,
-                                        this->time_base.get_current_time(), {
+                                        LogId::DRIVE_REDIRECTION_READ_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
                                         KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -1580,8 +1578,7 @@ public:
                                 }
                                 else {
                                     this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_READ,
-                                        this->time_base.get_current_time(), {
+                                        LogId::DRIVE_REDIRECTION_READ, {
                                         KVLog("file_name"_av, file_path),
                                     });
 
@@ -1607,8 +1604,7 @@ public:
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
 
                                     this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_WRITE_EX,
-                                        this->time_base.get_current_time(), {
+                                        LogId::DRIVE_REDIRECTION_WRITE_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
                                         KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -1621,8 +1617,7 @@ public:
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_WRITE,
-                                        this->time_base.get_current_time(), {
+                                        LogId::DRIVE_REDIRECTION_WRITE, {
                                         KVLog("file_name"_av, file_path),
                                     });
 
@@ -1734,8 +1729,7 @@ public:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
                                 this->report_message.log6(
-                                    LogId::DRIVE_REDIRECTION_DELETE,
-                                    this->time_base.get_current_time(), {
+                                    LogId::DRIVE_REDIRECTION_DELETE, {
                                     KVLog("file_name"_av, file_path),
                                 });
 
@@ -1755,8 +1749,7 @@ public:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
                                 this->report_message.log6(
-                                    LogId::DRIVE_REDIRECTION_RENAME,
-                                    this->time_base.get_current_time(), {
+                                    LogId::DRIVE_REDIRECTION_RENAME, {
                                     KVLog("old_file_name"_av, target_iter->file_path),
                                     KVLog("new_file_name"_av, file_path),
                                 });

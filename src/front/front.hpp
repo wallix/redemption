@@ -96,7 +96,6 @@
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
-#include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/genfstat.hpp"
@@ -107,6 +106,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"
@@ -620,8 +620,6 @@ private:
 
     std::unique_ptr<NegoServer> nego_server;
 
-    std::string server_capabilities_filename;
-
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
     ReportMessageApi & report_message;
@@ -719,6 +717,7 @@ public:
 
         this->orders.graphics_update_pdu().send_set_surface_command(cmd);
     }
+
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
         if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec
         && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
@@ -767,6 +766,8 @@ public:
 public:
     Front( TimeBase& time_base
          , TimerContainer& timer_events_
+         // TODO: To Cut dependency with sesman, we should rather provide some front specific callback table
+         // to send data to acl.
          , SesmanInterface & sesman
          , Transport & trans
          , Random & gen
@@ -774,7 +775,6 @@ public:
          , CryptoContext & cctx
          , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
-         , std::string server_capabilities_filename = {}
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -789,7 +789,6 @@ public:
     , server_fastpath_update_support(false)
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , server_capabilities_filename(std::move(server_capabilities_filename))
     , report_message(report_message)
     , time_base(time_base)
     , timer_events_(timer_events_)
@@ -907,7 +906,7 @@ public:
                         }
                         else {
                             this->must_be_stop_capture();
-                            this->can_be_start_capture(this->sesman);
+                            this->can_be_start_capture();
                         }
                     }
 
@@ -968,17 +967,19 @@ public:
     }
 
     // ===========================================================================
-    bool can_be_start_capture(SesmanInterface & sesman) override
+    bool can_be_start_capture() override
     {
         // Recording is enabled.
-        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
+        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types for set_auth_info set_screen_info
+        // I also should imagine something else for capture needs. Maybe to see after splitting front between
+        // capture related code and network-related code.
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::can_be_start_capture: session capture is already started");
             return false;
         }
 
-        if (!sesman.is_capture_necessary())
+        if (!this->sesman.is_capture_necessary())
         {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
@@ -988,10 +989,10 @@ public:
 
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::can_be_start_capture");
-            sesman.show_session_config();
+            this->sesman.show_session_config();
         }
 
-        this->capture_bpp = sesman.wrm_color_depth();
+        this->capture_bpp = this->sesman.wrm_color_depth();
 
         // TODO remove this after unifying capture interface
         VideoParams video_params = video_params_from_ini(std::chrono::seconds::zero(), ini);
@@ -1012,7 +1013,7 @@ public:
             }
         }
 
-        bool const capture_pattern_checker = sesman.has_ocr_pattern_check();
+        bool const capture_pattern_checker = this->sesman.has_ocr_pattern_check();
 
         const CaptureFlags capture_flags =
             (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
@@ -1029,27 +1030,9 @@ public:
         const bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
-          || sesman.has_kbd_pattern_check();
+          || this->sesman.has_kbd_pattern_check();
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-
-        auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm).to_sv());
-        if (wrm_path_len + 2 < std::size(path)) {
-            path[wrm_path_len] = '/';
-            path[wrm_path_len+1] = 0;
-        }
-        utils::strlcpy(basename, record_filebase);
-        extension[0] = 0; // extension is currently ignored
-
-        if (!canonical_path(record_filebase, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
 
         PngParams png_params = {
             0, 0,
@@ -1090,7 +1073,7 @@ public:
 
         CaptureParams capture_params{
             this->time_base.get_current_time(),
-            basename,
+            record_filebase,
             record_tmp_path,
             record_path.c_str(),
             groupid,
@@ -1146,11 +1129,11 @@ public:
         this->update_keyboard_input_mask_state();
 
         if (capture_wrm) {
-            sesman.set_acl_recording_started();
+            this->sesman.set_acl_recording_started();
         }
 
         if (capture_png){
-            sesman.set_acl_rt_ready();
+            this->sesman.set_acl_rt_ready();
         }
 
         return true;
@@ -3083,9 +3066,6 @@ private:
                 if (this->fastpath_support) {
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
-                if (!this->server_capabilities_filename.empty()) {
-                    general_caps_load(general_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     general_caps.log("Front::send_demand_active: Sending to client");
                 }
@@ -3097,9 +3077,6 @@ private:
                 bitmap_caps.desktopWidth = this->client_info.screen_info.width;
                 bitmap_caps.desktopHeight = this->client_info.screen_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-                if (!this->server_capabilities_filename.empty()) {
-                    bitmap_caps_load(bitmap_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     bitmap_caps.log("Front::send_demand_active: Sending to client");
                 }
@@ -3126,9 +3103,6 @@ private:
                 order_caps.pad4octetsB = 0x0f4240;
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
-                if (!this->server_capabilities_filename.empty()) {
-                    order_caps_load(order_caps, this->server_capabilities_filename);
-                }
                 if (bool(this->verbose & Verbose::basic_trace3)) {
                     order_caps.log("Front::send_demand_active: Sending to client");
                 }

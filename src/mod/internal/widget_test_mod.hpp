@@ -21,6 +21,7 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
+#include "acl/gd_provider.hpp"
 
 class TimeBase;
 class FrontAPI;
@@ -30,7 +31,8 @@ class WidgetTestMod : public mod_api
 {
 public:
     WidgetTestMod(TimeBase& time_base,
-        GraphicTimerContainer & graphic_timer_events_,
+        GdProvider & gd_provider,
+        TimerContainer & timer_events_,
         FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);
 

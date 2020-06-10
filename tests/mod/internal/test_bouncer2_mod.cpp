@@ -22,21 +22,22 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 // TEST missing
 int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    Inifile ini;
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    TimeBase time_base;
-    GraphicTimerContainer graphic_timer_events_;
-    Bouncer2Mod d(time_base, graphic_timer_events_, sesman, front, screen_info.width, screen_info.height);
+    TimeBase time_base({0,0});
+    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
+    TimerContainer timer_events_;
+    Bouncer2Mod d(time_base, gd_provider, timer_events_, sesman, front, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

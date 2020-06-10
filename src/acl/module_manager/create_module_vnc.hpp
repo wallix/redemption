@@ -24,20 +24,15 @@
 
 #pragma once
 
-#include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
-#include "mod/vnc/vnc.hpp"
-#include "mod/metrics_hmac.hpp"
-#include "utils/sugar/unique_fd.hpp"
-#include "transport/socket_transport.hpp"
-#include "acl/connect_to_target_host.hpp"
 
 #include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
 
-#include "mod/vnc/vnc.hpp"
 #include "acl/mod_pack.hpp"
+
+class AuthApi;
 
 extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -45,11 +40,9 @@ extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    TimeBase & time_base, 
-    GraphicFdContainer & graphic_fd_events_,
+    TimeBase & time_base,
+    TopFdContainer & fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     TimeObj & timeobj
 );
-

@@ -444,6 +444,13 @@
           "description": ""
         },
         {
+          "name": "update_disabled_features",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "childless_window_as_unidentified_input_field",
           "type": "bool",
           "default": true,
@@ -509,7 +516,7 @@
           "description": ""
         },
         {
-          "name": "bestsafe_integration",
+          "name": "enable_bestsafe_interaction",
           "type": "bool",
           "default": false,
           "description": ""
@@ -780,6 +787,21 @@
           "default": true,
           "advanced": true,
           "description": ""
+        },
+        {
+          "name": "verify_before_transfer",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "max_file_size_rejected",
+          "type": "integer",
+          "min": 0,
+          "default": 1024,
+          "advanced": true,
+          "description": "File greather are automatically rejected.\n(is in mebibyte)"
         }
       ]
     },

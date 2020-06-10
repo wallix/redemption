@@ -26,12 +26,11 @@
 #include "utils/uninit_checked.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/report_message_api.hpp"
-#include "acl/sesman.hpp"
 
 #include <memory>
 
+class SesmanInterface;
 
-using data_size_type = int_fast32_t;
 
 class BaseVirtualChannel
 {

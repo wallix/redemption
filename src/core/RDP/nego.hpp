@@ -137,7 +137,7 @@ private:
 
     State recv_connection_confirm(OutTransport trans, InStream x224_stream, ServerNotifier& notifier);
 
-    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier);
+    State activate_ssl_tls(OutTransport trans, ServerNotifier& notifier) const;
 
     State activate_ssl_hybrid(OutTransport trans, ServerNotifier& notifier);
 

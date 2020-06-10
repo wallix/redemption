@@ -32,7 +32,6 @@
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "test_only/front/front_wrapper.hpp"
 #include "core/client_info.hpp"
 #include "utils/theme.hpp"
@@ -43,11 +42,13 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channel_list.hpp"
+#include "core/session_reactor.hpp"
+#include "core/channels_authorizations.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
-
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -61,7 +62,7 @@ namespace dump2008 {
 class MyFront : public FrontWrapper
 {
 public:
-    bool can_be_start_capture(SesmanInterface & sesman) override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     using FrontWrapper::FrontWrapper;
@@ -155,12 +156,9 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
     SesmanInterface sesman(ini);
 
 
@@ -172,6 +170,8 @@ RED_AUTO_TEST_CASE(TestFront)
         time_base, timer_events_, sesman, front_trans, gen1, ini , cctx,
         report_message, fastpath_support);
     null_mod no_mod;
+
+    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
 
     while (!front.is_up_and_running()) {
         front.incoming(no_mod, sesman);
@@ -242,7 +242,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        t, ini, time_base, gd_provider, fd_events_, timer_events_, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
@@ -255,8 +255,13 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_TEST_PASSPOINT();
 
-    execute_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front, 38);
-
+    int count = 0;
+    int n = 38;
+    for (; count < n && !fd_events_.is_empty(); ++count) {
+        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        fd_events_.exec_action(is_set);
+    }
+    RED_CHECK_EQ(count, n);
 //    front.dump_png("trace_w2008_");
 }
 
@@ -324,12 +329,9 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
 
     NullReportMessage report_message;
 

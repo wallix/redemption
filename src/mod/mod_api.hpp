@@ -26,7 +26,7 @@
 #include "acl/acl_api.hpp"
 
 #include <string>
-#include <ctime>
+
 
 class mod_api : public Callback, public AclApi
 {
@@ -43,7 +43,8 @@ public:
 
     BackEvent_t get_mod_signal()
     {
-        LOG_IF(this->mod_signal != BACK_EVENT_NONE, LOG_INFO, "Reading mod_signal from %p is %s", this, signal_name(this->mod_signal)); 
+        LOG_IF(this->mod_signal != BACK_EVENT_NONE, LOG_INFO,
+            "Reading mod_signal from %p is %s", this, signal_name(this->mod_signal));
         return this->mod_signal;
     }
 
@@ -59,13 +60,6 @@ public:
     virtual void display_osd_message(std::string const & /*unused*/) {}
 
     virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
-
-    virtual bool disable_input_event_and_graphics_update(
-            bool disable_input_event, bool disable_graphics_update) {
-        (void)disable_input_event;
-        (void)disable_graphics_update;
-        return false;
-    }
 
     virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
 

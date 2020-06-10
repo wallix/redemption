@@ -76,12 +76,9 @@ private:
 public:
     ClientRedemptionHeadless(TimeBase & time_base,
                              TopFdContainer& fd_events_,
-                             GraphicFdContainer& graphic_fd_events_,
                              TimerContainer& timer_events_,
-                             GraphicEventContainer & graphic_events_,
-                             GraphicTimerContainer & graphic_timer_events_,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, config)
+        : ClientRedemption(time_base, fd_events_, timer_events_, config)
         , headless_socket(time_base, this)
     {
         this->cmd_launch_conn();
@@ -143,20 +140,14 @@ int main(int argc, char const** argv)
 
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
-    TimeBase time_base;
+    TimeBase time_base(tvtime());
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
     ScopedSslInit scoped_ssl;
 
     ClientRedemptionHeadless client(time_base,
                                     fd_events_,
-                                    graphic_fd_events_,
                                     timer_events_,
-                                    graphic_events_,
-                                    graphic_timer_events_,
                                     config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);

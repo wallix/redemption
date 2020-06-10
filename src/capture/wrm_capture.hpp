@@ -680,8 +680,7 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
-    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
-    }
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override {
         /* no remoteFx support in recording, transcode to bitmapUpdates */
@@ -694,7 +693,7 @@ public:
             bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
             bitmap_data.dest_top = cmd.destRect.y + rect.itop();
             bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
-            
+
             bitmap_data.width = bitmap.cx();
             bitmap_data.height = bitmap.cy();
             bitmap_data.bits_per_pixel = 32;

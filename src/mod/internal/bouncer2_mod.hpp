@@ -26,14 +26,15 @@
 #include "mod/mod_api.hpp"
 #include "core/session_reactor.hpp"
 #include "utils/colors.hpp"
-#include "core/front_api.hpp"
-#include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
+class FrontAPI;
+class SesmanInterface;
 
 class Bouncer2Mod : public mod_api
 {
     bool capture_started = false;
-    
+
     uint16_t front_width;
     uint16_t front_height;
     FrontAPI & front;
@@ -50,14 +51,16 @@ class Bouncer2Mod : public mod_api
     int mouse_y = 0;
 
     TimeBase& time_base;
-    GraphicTimerPtr timer;
+    GdProvider & gd_provider;
+    TimerPtr timer;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     Bouncer2Mod(
          TimeBase& time_base,
-         GraphicTimerContainer & graphic_timer_events_,
+         GdProvider & gd_provider,
+         TimerContainer & timer_events_,
          SesmanInterface & sesman,
          FrontAPI & front,
          uint16_t width, uint16_t height);

@@ -26,10 +26,13 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "utils/sugar/update_lock.hpp"
+#include "acl/sesman.hpp"
+#include "core/front_api.hpp"
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
-    GraphicTimerContainer & graphic_timer_events_,
+    GdProvider & gd_provider,
+    TimerContainer & timer_events_,
     SesmanInterface & sesman,
     FrontAPI & front,
     uint16_t width, uint16_t height)
@@ -39,11 +42,11 @@ Bouncer2Mod::Bouncer2Mod(
 , sesman(sesman)
 , dancing_rect(0,0,100,100)
 , time_base(time_base)
-, timer(graphic_timer_events_
-    .create_timer_executor(time_base)
+, gd_provider(gd_provider)
+, timer(timer_events_.create_timer_executor(time_base)
     .set_delay(std::chrono::milliseconds(33))
-    .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
-        this->draw_event(gd);
+    .on_action(jln::always_ready([this](){
+        this->draw_event(this->gd_provider.get_graphics());
     })))
 {}
 
@@ -105,7 +108,7 @@ int Bouncer2Mod::interaction()
 // This should come from BACK!
 void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
-    if (!this->capture_started && this->front.can_be_start_capture(this->sesman)){
+    if (!this->capture_started && this->front.can_be_start_capture()){
         this->capture_started = true;
         LOG(LOG_INFO, "Bouncer Mod : capture started");
     }

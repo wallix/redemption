@@ -29,28 +29,28 @@
 #include "mod/mod_api.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "RAIL/client_execute.hpp"
+#include "acl/gd_provider.hpp"
+
 
 using CloseModVariables = vcfg::variables<
-    vcfg::var<cfg::globals::auth_user,          vcfg::accessmode::get | vcfg::accessmode::is_asked>,
-    vcfg::var<cfg::globals::target_device,      vcfg::accessmode::get | vcfg::accessmode::ask | vcfg::accessmode::is_asked>,
-    vcfg::var<cfg::globals::target_user,        vcfg::accessmode::get | vcfg::accessmode::ask>,
-    vcfg::var<cfg::context::selector,           vcfg::accessmode::ask>,
-    vcfg::var<cfg::context::target_protocol,    vcfg::accessmode::ask>,
-    vcfg::var<cfg::globals::close_timeout,      vcfg::accessmode::get>,
+    vcfg::var<cfg::globals::auth_user, vcfg::accessmode::get | vcfg::accessmode::is_asked>,
+    vcfg::var<cfg::globals::target_device, vcfg::accessmode::get | vcfg::accessmode::ask | vcfg::accessmode::is_asked>,
+    vcfg::var<cfg::globals::target_user, vcfg::accessmode::get | vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::selector, vcfg::accessmode::ask>,
+    vcfg::var<cfg::context::target_protocol, vcfg::accessmode::ask>,
+    vcfg::var<cfg::globals::close_timeout, vcfg::accessmode::get>,
     vcfg::var<cfg::globals::target_application, vcfg::accessmode::get>,
-    vcfg::var<cfg::context::module,             vcfg::accessmode::get>,
-    vcfg::var<cfg::translation::language,       vcfg::accessmode::get>,
-    vcfg::var<cfg::context::close_box_extra_message,
-                                                vcfg::accessmode::get | vcfg::accessmode::set>
+    vcfg::var<cfg::context::module, vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::language, vcfg::accessmode::get>,
+    vcfg::var<cfg::context::close_box_extra_message, vcfg::accessmode::get | vcfg::accessmode::set>
 >;
+
+class ClientExecute;
 
 class CloseMod : public mod_api, public NotifyApi
 {
     FlatWabClose close_widget;
-
     CloseModVariables vars;
-
     TimerPtr timeout_timer;
 
 public:
@@ -59,53 +59,34 @@ public:
         CloseModVariables vars,
         TimeBase& time_base,
         TimerContainer& timer_events_,
-        gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+        GdProvider & gd_provider, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
-        Theme const& theme, bool showtimer = false, bool back_selector = false);
+        Theme const& theme, bool back_selector);
 
     ~CloseMod() override;
 
     std::string module_name() override {return "CloseMod";}
-
     void notify(Widget* sender, notify_event_t event) override;
 
-    [[nodiscard]] bool is_up_and_running() const override
-    {
-        return true;
-    }
+    [[nodiscard]] bool is_up_and_running() const override { return true; }
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         this->close_widget.move_size_widget(left, top, width, height);
     }
 
-    [[nodiscard]] Font const & font() const
-    {
-        return this->screen.font;
-    }
+    [[nodiscard]] Font const & font() const { return this->screen.font; }
+    [[nodiscard]] Theme const & theme() const { return this->screen.theme; }
 
-    [[nodiscard]] Theme const & theme() const
-    {
-        return this->screen.theme;
-    }
-
-    [[nodiscard]] Rect get_screen_rect() const
-    {
-        return this->screen.get_rect();
-    }
+    [[nodiscard]] Rect get_screen_rect() const { return this->screen.get_rect(); }
 
     void init() override;
 
     void rdp_gdi_up_and_running(ScreenInfo &) override {}
-
     void rdp_gdi_down() override {}
-
     void rdp_input_invalidate(Rect r) override;
-
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
-
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override;
-
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
     {
         this->screen.rdp_input_unicode(unicode, flag);
@@ -123,20 +104,10 @@ public:
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 
-    [[nodiscard]] Dimension get_dim() const override
-    {
-        return Dimension(this->front_width, this->front_height);
-    }
+    [[nodiscard]] Dimension get_dim() const override { return Dimension(this->front_width, this->front_height); }
 
-    void allow_mouse_pointer_change(bool allow)
-    {
-        this->screen.allow_mouse_pointer_change(allow);
-    }
-
-    void redo_mouse_pointer_change(int x, int y)
-    {
-        this->screen.redo_mouse_pointer_change(x, y);
-    }
+    void allow_mouse_pointer_change(bool allow) { this->screen.allow_mouse_pointer_change(allow); }
+    void redo_mouse_pointer_change(int x, int y) { this->screen.redo_mouse_pointer_change(x, y); }
 
 private:
     void cancel_double_click_detection();

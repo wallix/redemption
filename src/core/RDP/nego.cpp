@@ -368,7 +368,7 @@ inline bool enable_client_tls(OutTransport trans, ServerNotifier& notifier, cons
     return true;
 }
 
-RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier)
+RdpNego::State RdpNego::activate_ssl_tls(OutTransport trans, ServerNotifier& notifier) const
 {
     if (!enable_client_tls(trans, notifier, this->tls_client_params)) {
         return State::Tls;

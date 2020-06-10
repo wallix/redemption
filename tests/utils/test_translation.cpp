@@ -62,20 +62,6 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),    "before closing");
     RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang), "Connection closed by manager.");
     RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),    "End of connection");
-    RED_CHECK_EQUAL(TR(trkeys::help_message, lang),
-                                  "In login edit box, enter:<br>"
-                                  "- target device and login with the Bastion login separated<br>"
-                                  "  by a semi colon as login@target:service:Bastionlogin<br>"
-                                  "- or a valid Bastion authentication user.<br>"
-                                  "<br>"
-                                  "In password edit box enter your password<br>"
-                                  "for user.<br>"
-                                  "<br>"
-                                  "Both fields are case sensitive.<br>"
-                                  "<br>"
-                                  "Contact your system administrator if you are<br>"
-                                  "experiencing problems."
-                                  );
     RED_CHECK_EQUAL(TR(trkeys::selector, lang),           "Selector");
     RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   "Session is out of allowed timeframe");
     RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     "Missed keepalive from ACL");
@@ -108,20 +94,6 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),     "avant fermeture");
     RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang),  "Le gestionnaire de session a coupé la connexion.");
     RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),     "Fin de connexion");
-    RED_CHECK_EQUAL(TR(trkeys::help_message, lang),
-                                  "Dans la zone de saisie login, entrez:<br>"
-                                  "- le login sur la cible et le nom de la machine cible suivi<br>"
-                                  "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
-                                  "- ou un nom de compte Bastion valide.<br>"
-                                  "<br>"
-                                  "Dans la zone de saisie mot de passe,<br>"
-                                  "entrez le mot de passe du compte.<br>"
-                                  "<br>"
-                                  "Les deux champs sont sensibles à la casse.<br>"
-                                  "<br>"
-                                  "Contactez votre administrateur système en<br>"
-                                  "cas de problème pour vous connecter."
-                                  );
     RED_CHECK_EQUAL(TR(trkeys::selector, lang),           "Sélecteur");
     RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   "L'autorisation de la session a expiré");
     RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     "Absence de réponse de Keepalive de l'ACL");

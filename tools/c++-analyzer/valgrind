@@ -42,6 +42,8 @@ show_resume_error ()
 
 show_full_error ()
 {
+  local outfile="${TMPDIR:-tmp}"/valgrind_files_error.$$
+
   while read f ; do
     #--suppressions=./tools/valgrind-filter/valgrind-ignore-ssl-snappy
     outvalgrind=`valgrind \
@@ -60,7 +62,7 @@ show_full_error ()
             echo -n -e "  \e[38;5;221;1m$n1 allocs, $n2 frees\e[0m"
         fi
         echo -e "  \e[38;5;221;1mfail\e[0m"
-        echo "$outvalgrind" | ./tools/valgrind-filter/valgrind-output-color
+        echo "$outvalgrind"
         echo "$f (valgrind ${error#* })" >&2
         if [[ $n1 != $n2 ]] ; then
             echo "$f (leak: $n1 allocs, $n2 frees)" >&2
@@ -68,10 +70,11 @@ show_full_error ()
     else
         echo "$f  ok"
     fi
-  done >/tmp/valgrind_files_error
+  done > "$outfile"
 
   echo
-  exec cat /tmp/valgrind_files_error
+  cat "$outfile"
+  exec rm "$outfile"
 }
 
 if [ ! -z "$*" ] ; then

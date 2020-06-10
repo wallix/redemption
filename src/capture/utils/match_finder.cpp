@@ -201,12 +201,8 @@ void MatchFinder::report(
         ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
     utils::back(message) = '\0';
 
-    report_message.log6(is_pattern_kill
-        ? LogId::KILL_PATTERN_DETECTED
-        : LogId::NOTIFY_PATTERN_DETECTED
-    , tvtime(), {
-        KVLog("pattern"_av, std::string_view{message}),
-    });
+    report_message.log6(is_pattern_kill ? LogId::KILL_PATTERN_DETECTED : LogId::NOTIFY_PATTERN_DETECTED
+                        ,{ KVLog("pattern"_av, std::string_view{message}),});
 
     report_message.report(
         (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),

@@ -20,8 +20,9 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-
 #include "core/channels_authorizations.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
+
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizations)
 {

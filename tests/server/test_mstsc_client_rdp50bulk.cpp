@@ -24,23 +24,24 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "acl/sesman.hpp"
+#include "core/session_reactor.hpp"
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/front_wrapper.hpp"
 #include "core/report_message_api.hpp"
-#include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "core/session.hpp"
-//#include "transport/socket_transport.hpp"
+// include "core/listen.hpp"
+// include "core/session.hpp"
+// include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <netinet/tcp.h>
+// include <netinet/tcp.h>
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
@@ -100,9 +101,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx;
     const bool fastpath_support = true;
     NullReportMessage report_message;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
     SesmanInterface sesman(ini);
     FrontWrapper front(time_base, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);

@@ -24,6 +24,8 @@
 #include "transport/transport.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 
+#include <limits>
+
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h> // PATH_MAX
 #else

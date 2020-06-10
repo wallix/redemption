@@ -51,21 +51,37 @@ else
 
 
 ## boost_stacktrace {
-if $(BOOST_STACKTRACE) = 1
+if $(BOOST_STACKTRACE) != 0
 {
-    # boost_stacktrace_addr2line
-    # boost_stacktrace_backtrace
-    # boost_stacktrace_basic
-    # boost_stacktrace_noop
-    lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
     REDEMPTION_BOOST_STACKTRACE_FLAGS = <linkflags>-rdynamic ;
-    BOOST_STACKTRACE_CXXFLAGS = <define>BOOST_STACKTRACE_DYN_LINK ;
     BOOST_STACKTRACE_LIBFLAGS = <library>boost_stacktrace ;
     BOOST_STACKTRACE_LINKFLAGS =
         $(BOOST_STACKTRACE_LIBFLAGS)
         <variant>debug:<library>dl
         <variant>san:<library>dl
     ;
+
+    if $(BOOST_STACKTRACE) = "static_backtrace"
+    {
+        BOOST_STACKTRACE_CXXFLAGS = <define>BOOST_STACKTRACE_USE_BACKTRACE ;
+        lib boost_stacktrace : : <name>backtrace ;
+    }
+    else
+    {
+        BOOST_STACKTRACE_CXXFLAGS = <define>BOOST_STACKTRACE_DYN_LINK ;
+        if $(BOOST_STACKTRACE) = 1
+        {
+            lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
+        }
+        else
+        {
+            # boost_stacktrace_addr2line
+            # boost_stacktrace_backtrace
+            # boost_stacktrace_basic
+            # boost_stacktrace_noop
+            lib boost_stacktrace : : <name>boost_stacktrace_$(BOOST_STACKTRACE) ;
+        }
+    }
 
     lib disable_boost_stacktrace : : <name>boost_stacktrace_noop ;
     BOOST_NOOP_STACKTRACE_LIBFLAGS = <library>disable_boost_stacktrace ;

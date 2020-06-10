@@ -24,6 +24,7 @@
 
 #include "capture/fdx_capture.hpp"
 #include "acl/connect_to_target_host.hpp"
+#include "acl/dispatch_report_message.hpp"
 #include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -37,13 +38,13 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/genfstat.hpp"
 #include "acl/mod_pack.hpp"
 
 namespace
 {
     void file_verification_error(
         FrontAPI& front,
-        TimeBase& time_base,
         ReportMessageApi& report_message,
         chars_view up_target_name,
         chars_view down_target_name,
@@ -51,15 +52,12 @@ namespace
     {
         for (auto&& service : {up_target_name, down_target_name}) {
             if (not service.empty()) {
-                report_message.log6(
-                    LogId::FILE_VERIFICATION_ERROR, time_base.get_current_time(), {
-                    KVLog("icap_service"_av, service),
-                    KVLog("status"_av, msg),
-                });
-                front.session_update(LogId::FILE_VERIFICATION_ERROR, {
-                    KVLog("icap_service"_av, service),
-                    KVLog("status"_av, msg),
-                });
+                const KVList data = {
+                        KVLog("icap_service"_av, service),
+                        KVLog("status"_av, msg),
+                };
+                report_message.log6(LogId::FILE_VERIFICATION_ERROR, data);
+                front.session_update(LogId::FILE_VERIFICATION_ERROR, data);
             }
         }
     }
@@ -97,7 +95,6 @@ struct RdpData
             ReportMessageApi & report_message;
             std::string up_target_name;
             std::string down_target_name;
-            TimeBase& time_base;
             TimerContainer& timer_events_;
             FrontAPI& front;
         };
@@ -113,7 +110,6 @@ struct RdpData
         , trans(std::move(fd), ReportError([this](Error err){
             file_verification_error(
                 this->ctx_error.front,
-                this->ctx_error.time_base,
                 this->ctx_error.report_message,
                 this->ctx_error.up_target_name,
                 this->ctx_error.down_target_name,
@@ -144,8 +140,8 @@ struct RdpData
 
 class ModRDPWithSocketAndMetrics final : public mod_api
 {
-    SocketTransport socket_transport;
 public:
+    SocketTransport socket_transport;
     ModRdpFactory rdp_factory;
     DispatchReportMessage dispatcher;
     mod_rdp mod;
@@ -192,9 +188,7 @@ public:
       , std::string * error_message
       , TimeBase& time_base
       , TopFdContainer & fd_events_
-      , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
-      , GraphicEventContainer & graphic_events_
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -220,7 +214,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
 
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, ini, time_base, mod_wrapper, fd_events_, timer_events_, sesman, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -228,14 +222,14 @@ public:
     , ini(ini)
     {
         this->mod_wrapper.target_info_is_shown = false;
-        this->mod_wrapper.set_mod_transport(&this->socket_transport);
+//        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
     std::string module_name() override {return "RDP Mod With Socket And Metrics";}
 
     ~ModRDPWithSocketAndMetrics()
     {
-        this->mod_wrapper.set_mod_transport(nullptr);
+//        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
     }
@@ -297,20 +291,13 @@ public:
     // from mod_api
     void display_osd_message(std::string const & message) override
     {
-        this->mod_wrapper.osd_message_fn(message, true);
-        //return this->mod.display_osd_message(message);
+        this->mod_wrapper.display_osd_message(message);
     }
 
     // from mod_api
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         return this->mod.move_size_widget(left, top, width, height);
-    }
-
-    // from mod_api
-    bool disable_input_event_and_graphics_update(bool disable_input_event, bool disable_graphics_update) override
-    {
-        return this->mod.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
     }
 
     // from mod_api
@@ -386,6 +373,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
     spp.vc_params.end_of_session_check_delay_time = ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
     spp.vc_params.ignore_ui_less_processes_during_end_of_session_check =
         ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
+    spp.vc_params.update_disabled_features                             = ini.get<cfg::mod_rdp::session_probe_update_disabled_features>();
     spp.vc_params.childless_window_as_unidentified_input_field =
         ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
     spp.is_public_session = ini.get<cfg::mod_rdp::session_probe_public_session>();
@@ -441,15 +429,12 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     TopFdContainer& fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     LicenseApi & file_system_license_store,
     Random & gen,
     TimeObj & timeobj,
     CryptoContext & cctx,
-
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     switch (ini.get<cfg::context::mode_console>()) {
@@ -479,7 +464,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
 
-    ini.get_mutable_ref<cfg::context::close_box_extra_message>().clear();
+    ini.set<cfg::context::close_box_extra_message>("");
     ModRDPParams mod_rdp_params(
         (smartcard_passthrough ? "" : ini.get<cfg::globals::target_user>().c_str())
       , (smartcard_passthrough ? "" : ini.get<cfg::context::target_password>().c_str())
@@ -698,6 +683,11 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     // ================== FileValidator ============================
     auto & vp = mod_rdp_params.validator_params;
     vp.log_if_accepted = ini.get<cfg::file_verification::log_if_accepted>();
+    vp.verify_before_transfer = ini.get<cfg::file_verification::verify_before_transfer>();
+    vp.max_file_size_rejected = std::min<uint64_t>(
+        (1ull << (64 - 20 /* mebibyte */)) - 1u,
+        ini.get<cfg::file_verification::max_file_size_rejected>()
+    ) * 1024u * 1024u;
     vp.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
     vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
     vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
@@ -722,7 +712,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
                     report_message,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
-                    time_base, timer_events_, front
+                    timer_events_, front
                 });
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
@@ -733,7 +723,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         else {
             LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
             file_verification_error(
-                front, time_base, report_message,
+                front, report_message,
                 mod_rdp_params.validator_params.up_target_name,
                 mod_rdp_params.validator_params.down_target_name,
                 "Unable to connect to FileValidator service"_av
@@ -774,6 +764,44 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     }
     // ================== End Metrics ======================
 
+
+    // ================== Application Driver =========================
+    char const * application_driver_exe_or_file            = nullptr;
+    char const * application_driver_script                 = nullptr;
+    if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "*APP_DRIVER_IE*")) {
+        application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script      = ini.get<cfg::mod_rdp::application_driver_ie_script>();
+    }
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "*APP_DRIVER_CHROME_UIA*")) {
+        application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script      = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
+    }
+    if (application_driver_exe_or_file) {
+        std::string & application_driver_alternate_shell = ini.get_mutable_ref<cfg::context::application_driver_alternate_shell>();
+        application_driver_alternate_shell  = "\x02";
+        application_driver_alternate_shell += application_driver_exe_or_file;
+        application_driver_alternate_shell += "\x02";
+        application_driver_alternate_shell += application_driver_script;
+        application_driver_alternate_shell += "\x02";
+
+        mod_rdp_params.application_params.alternate_shell = application_driver_alternate_shell.c_str();
+
+
+        std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
+
+        application_driver_shell_arguments  = ini.get<cfg::mod_rdp::application_driver_script_argument>();
+        application_driver_shell_arguments += " ";
+        application_driver_shell_arguments += ini.get<cfg::mod_rdp::shell_arguments>();
+
+        mod_rdp_params.application_params.shell_arguments = application_driver_shell_arguments.c_str();
+
+        mod_rdp_params.session_probe_params.enable_session_probe                               = true;
+        mod_rdp_params.session_probe_params.vc_params.launch_application_driver                = true;
+        mod_rdp_params.session_probe_params.vc_params.launch_application_driver_then_terminate = !(ini.get<cfg::mod_rdp::enable_session_probe>());
+    }
+    // ================== End Application Driver ======================
+
+
     unique_fd client_sck =
         connect_to_target_host(ini,
                                time_base,
@@ -808,9 +836,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
         time_base,
         fd_events_,
-        graphic_fd_events_,
         timer_events_,
-        graphic_events_,
         sesman,
         drawable,
         front,
@@ -871,9 +897,11 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         }
     }
 
+    auto tmp_psocket_transport = &(new_mod->socket_transport);
+
     if (!host_mod_in_widget) {
         auto mod = new_mod.release();
-        ModPack mod_pack{mod, &(mod->mod), mod->mod.get_windowing_api(), nullptr};
+        ModPack mod_pack{mod, &(mod->mod), mod->mod.get_windowing_api(), nullptr, false, false, tmp_psocket_transport};
         return mod_pack;
     }
 
@@ -906,6 +934,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     );
     host_mod->init();
 
-    ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod};
+    ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod, false, false, tmp_psocket_transport};
     return mod_pack;
 }

@@ -48,7 +48,7 @@ public:
 
     void add_channel_receiver(ChannelReceiver&& channel);
 
-    bool can_be_start_capture(SesmanInterface & sesman) override;
+    bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
     bool is_capture_in_progress() const override;
 

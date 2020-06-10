@@ -51,7 +51,6 @@ namespace
 # include <cstring>
 
 # ifdef REDEMPTION_WITH_STACKTRACE
-#  include <iostream>
 #  include <csignal>
 #  include <cstdlib>
 

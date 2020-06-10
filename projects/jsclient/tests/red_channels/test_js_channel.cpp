@@ -21,45 +21,36 @@ Author(s): Jonathan Poelen
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "binding_channel.hpp"
 
-#include "red_emscripten/em_asm.hpp"
-#include "red_emscripten/bind.hpp"
 #include "red_channels/js_channel.hpp"
 
 #include "core/channel_list.hpp"
 
-#include <tuple>
-#include <vector>
-#include <variant>
-#include <string_view>
-
 namespace
 {
 
-CHANNELS::ChannelNameId name_id_ref("test");
-
-using DataChan = DataChanPrintable;
+using redjs::JsChannel;
 
 MAKE_BINDING_CALLBACKS(
-    DataChan,
-    (JS_d(receiveData, uint8_t, int flags))
-    (JS_c(free))
+    JsChannel,
+    BasicChannelData,
+    ((d, receiveData, uint8_t, int flags))
+    ((c, free))
 )
 
-auto test_init_channel(Callback& cb, emscripten::val&& v)
-{
-    return redjs::JsChannel{cb, std::move(v), name_id_ref};
 }
 
-}
-
-#define RECEIVE_DATAS(...) js_channel.receive(__VA_ARGS__); CTX_CHECK_DATAS()
-#define CALL_CB(...) js_channel.__VA_ARGS__; CTX_CHECK_DATAS()
-
-RED_AUTO_TEST_CHANNEL(TestJsChannel, test_init_channel, js_channel)
+RED_AUTO_TEST_CASE(TestJsChannel)
 {
-    auto vec = [](bytes_view av) { return std::vector<uint8_t>(av.begin(), av.end()); };
     auto chan_flags1 = CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST;
     auto chan_flags2 = CHANNELS::CHANNEL_FLAG_FIRST;
+    auto name_id_ref = CHANNELS::ChannelNameId("test");
+
+    auto p = JsChannel_ctx(name_id_ref);
+
+#define RECEIVE_DATAS(...) p->channel_ptr->receive(__VA_ARGS__); CTX_CHECK_DATAS(p)
+#define CALL_CB(...) p->channel_ptr->__VA_ARGS__; CTX_CHECK_DATAS(p)
+
+    using namespace test_channel_data::JsChannel_structs;
 
     RECEIVE_DATAS("abc"_av, chan_flags1)
     {
@@ -73,6 +64,12 @@ RED_AUTO_TEST_CHANNEL(TestJsChannel, test_init_channel, js_channel)
 
     CALL_CB(send_data("xyz"_av, 3, chan_flags2))
     {
-        CHECK_NEXT_DATA(DataChan(name_id_ref, vec("xyz"_av), 3, chan_flags2));
+        CHECK_NEXT_DATA(BasicChannelData(name_id_ref, "xyz"_av, 3, chan_flags2));
+    };
+
+    p->channel_ptr.reset();
+    CTX_CHECK_DATAS(p)
+    {
+        CHECK_NEXT_DATA(test_channel_data::JsChannel_structs::free());
     };
 }

@@ -39,7 +39,7 @@ template<class ForwardTo> class GraphicApiForwarder : public gdi::GraphicApi
     ForwardTo & sink;
 public:
     GraphicApiForwarder(ForwardTo & sink) : sink(sink){}
-    
+
     void draw(RDP::FrameMarker const & cmd)
             override { this->sink.draw(cmd); }
     void draw(RDPDestBlt const & cmd, Rect clip)
@@ -84,13 +84,12 @@ public:
 #else
     void draw(RDPMemBlt const & cmd, Rect clip, Bitmap const & bmp)
             override { this->sink.draw(cmd, clip, bmp);}
-    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) 
+    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp)
             override { this->sink.draw(cmd, clip, color_ctx, bmp); }
 #endif
-    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) 
+    void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
             override { this->sink.draw(cmd, clip, color_ctx, gly_cache); }
-    void draw(RDPSetSurfaceCommand const & cmd)
-            override { this->sink.draw(cmd); }
+    void draw(RDPSetSurfaceCommand const & cmd) override { this->sink.draw(cmd); }
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
             override { this->sink.draw(cmd, content); }
     void draw(const RDP::RAIL::NewOrExistingWindow & cmd)
@@ -113,7 +112,7 @@ public:
             override { this->sink.draw(cmd); }
     void draw(RDPBrushCache const & cmd)
             override { this->sink.draw(cmd); }
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) 
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
             override {this->sink.set_pointer(cache_idx, cursor, mode); }
     void set_palette(BGRPalette const & palette)
             override { this->sink.set_palette(palette); }

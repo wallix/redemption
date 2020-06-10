@@ -40,7 +40,6 @@
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
 
 #include "gdi/screen_functions.hpp"
 #include "gdi/graphic_api.hpp"
@@ -79,6 +78,10 @@ class VNCMetrics;
 
 class UltraDSM;
 class mod_vnc;
+class GdProvider;
+class TopFdContainer;
+class TimerContainer;
+class TimeBase;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -325,9 +328,8 @@ private:
     Zdecompressor<> zd;
 
     TimeBase& time_base;
-    GraphicEventContainer & graphic_events_;
-    GraphicFdPtr fd_event;
-    GraphicEventPtr wait_client_up_and_running_event;
+    GdProvider & gd_provider;
+    TopFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
@@ -360,9 +362,9 @@ private:
 public:
     mod_vnc( Transport & t
            , TimeBase& time_base
-           , GraphicFdContainer & graphic_fd_events_
+           , GdProvider & gd_provider
+           , TopFdContainer & fd_events_
            , TimerContainer & timer_events_
-           , GraphicEventContainer & graphic_events_
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -386,6 +388,8 @@ public:
            , SesmanInterface & sesman);
 
     std::string module_name() override {return "VNC Mod";}
+
+    void init() override;
 
     template<std::size_t MaxLen>
     class MessageCtx
@@ -836,7 +840,7 @@ public:
     };
     ServerInitCtx server_init_ctx;
 
-    void initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface & sesman);
+    void initial_clear_screen(gdi::GraphicApi & drawable);
 
     // TODO It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?
     void rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keymap*/ ) override;
@@ -1750,5 +1754,4 @@ public:
     [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
 };
-
 

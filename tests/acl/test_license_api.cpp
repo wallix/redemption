@@ -23,12 +23,16 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
+#include "acl/gd_provider.hpp"
 #include "configs/config.hpp"
+#include "core/session_reactor.hpp"
 #include "core/client_info.hpp"
 #include "core/listen.hpp"
 #include "core/report_message_api.hpp"
+#include "core/channels_authorizations.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -38,7 +42,6 @@
 #include "system/linux/system/tls_context.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 #include "transport/socket_transport.hpp"
@@ -106,7 +109,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             // Uncomment the code block below to generate testing data.
             std::string error_message;
-            SocketTransport t( name
+            SocketTransport trans( name
                              , std::move(client_sck)
                              , ini.get<cfg::context::target_host>().c_str()
                              , 3389
@@ -116,7 +119,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                              );
 #else
             // Comment the code block below to generate testing data.
-            TestTransport t(
+            TestTransport trans(
                     (already_redirected ? cstr_array_view(indata_woel_2) : cstr_array_view(indata_woel_1)),
                     (already_redirected ? cstr_array_view(outdata_woel_2) : cstr_array_view(outdata_woel_1))
                 );
@@ -268,12 +271,10 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 #endif
 
-            TimeBase time_base;
+            TimeBase time_base({0,0});
+            GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
             TopFdContainer fd_events_;
-            GraphicFdContainer graphic_fd_events_;
             TimerContainer timer_events_;
-            GraphicEventContainer graphic_events_;
-            GraphicTimerContainer graphic_timer_events_;
             SesmanInterface sesman(ini);
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -281,7 +282,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(trans, ini, time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -289,31 +290,34 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             RED_CHECK_EQUAL(info.screen_info.width, 1024);
             RED_CHECK_EQUAL(info.screen_info.height, 768);
 
+            LOG(LOG_INFO, "--- Looping 1");
+
 #ifdef GENERATE_TESTING_DATA
-            // Uncomment the code block below to generate testing data.
             auto const end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
-            graphic_timer_events_.exec_timer(end_tv, front.gd());
-            graphic_fd_events_.exec_timeout(end_tv, front.gd());
 
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
                 auto is_fd_set = [](int /*fd*/, auto& /*e*/){ return true; };
-                graphic_events_.exec_action(gd);
-                graphic_fd_events_.exec_action(is_fd_set, front.gd());
+                fd_events_.exec_action(is_fd_set);
                 LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
                 if (!already_redirected) {
                     return true;
                 }
                 return !mod->is_up_and_running();
             });
-#endif
+#else
+            trans.disable_remaining_error();
+            auto end_tv = time_base.get_current_time();
+            timer_events_.exec_timer(end_tv);
+            fd_events_.exec_timeout(end_tv);
 
-#ifndef GENERATE_TESTING_DATA
-            // Comment the code block below to generate testing data.
-            t.disable_remaining_error();
-            execute_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 70);
+            int n = 0;
+            while (!fd_events_.is_empty() && (++n < 70)) {
+                auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+                fd_events_.exec_action(is_set);
+            }
 #endif
         }
         catch(Error const & e) {
@@ -509,12 +513,10 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             } license_store(license_client_name, license_version, license_scope, license_company_name,
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 
-            TimeBase time_base;
+            TimeBase time_base({0,0});
+            GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
             TopFdContainer fd_events_;
-            GraphicFdContainer graphic_fd_events_;
             TimerContainer timer_events_;
-            GraphicEventContainer graphic_events_;
-            GraphicTimerContainer graphic_timer_events_;
             SesmanInterface sesman(ini);
 
 
@@ -523,7 +525,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(t, ini, time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -536,14 +538,11 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             auto const end_tv = this->get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
-            graphic_timer_events_.exec_timer(end_tv, front.gd());
-            graphic_fd_events_.exec_timeout(end_tv, front.gd());
 
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
                 auto is_fd_set = [](int /*fd*/, auto& /*e*/){ return true; };
-                graphic_events_.exec_action(gd);
-                graphic_fd_events_.exec_action(is_fd_set, front.gd());
+                fd_events_.exec_action(is_fd_set);
                 LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
                 if (!already_redirected) {
                     return true;
@@ -555,7 +554,16 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 #ifndef GENERATE_TESTING_DATA
             // Comment the code block below to generate testing data.
             t.disable_remaining_error();
-            execute_mod(time_base,  fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 70);
+
+            auto end_tv = time_base.get_current_time();
+            timer_events_.exec_timer(end_tv);
+            fd_events_.exec_timeout(end_tv);
+
+            int n = 0;
+            while (!fd_events_.is_empty() && (++n < 70)) {
+                auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+                fd_events_.exec_action(is_set);
+            }
 #endif
         }
         catch(Error const & e) {

@@ -125,11 +125,11 @@ public:
         }
     }
 
-    void log6(LogId id, const timeval time, KVList kv_list) override
+    void log6(LogId id, KVList kv_list) override
     {
         // TODO: should we delay logs sent to SIEM ?
         if (this->acl_serial && this->session_log_is_open) {
-            this->acl_serial->log6(id, time, kv_list);
+            this->acl_serial->log6(id, kv_list);
         }
         else {
             this->buffered_log_params.emplace_back(id, kv_list);
@@ -153,7 +153,7 @@ public:
                     for (auto const& kv : log_param.kv_list) {
                         v.emplace_back(KVLog{kv.key, kv.value});
                     }
-                    this->acl_serial->log6(log_param.id, tvtime(), {v});
+                    this->acl_serial->log6(log_param.id, {v});
                     v.clear();
                 }
                 this->buffered_log_params.clear();

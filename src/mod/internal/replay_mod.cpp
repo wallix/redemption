@@ -25,7 +25,6 @@
 #include "capture/cryptofile.hpp"
 #include "core/app_path.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
@@ -250,14 +249,13 @@ struct ReplayMod::Reader
         }
 
         this->reader.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-        front.can_be_start_capture(sesman);
+        front.can_be_start_capture();
         return is_resized;
     }
 };
 
 ReplayMod::ReplayMod(
     TimeBase& time_base
-  , GraphicTimerContainer & graphic_timer_events_
   , SesmanInterface & sesman
   , gdi::GraphicApi & drawable_
   , FrontAPI & front
@@ -291,13 +289,6 @@ ReplayMod::ReplayMod(
         this->front_width  = this->internal_reader->reader.info.width;
         this->front_height = this->internal_reader->reader.info.height;
     }
-
-    this->timer = graphic_timer_events_.create_timer_executor(time_base)
-    .set_delay(std::chrono::seconds(0))
-    .on_action([this](auto ctx, gdi::GraphicApi& gd){
-        this->draw_event(gd);
-        return ctx.ready();
-    });
 }
 
 

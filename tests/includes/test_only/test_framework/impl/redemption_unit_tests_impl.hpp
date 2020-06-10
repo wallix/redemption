@@ -29,6 +29,14 @@ Author(s): Jonathan Poelen
 #include <boost/test/unit_test.hpp>
 #include <boost/version.hpp>
 
+#include "cxx/diagnostic.hpp"
+#include "cxx/compiler_version.hpp"
+
+// FIXME global warning deactivation, should be in each macro
+#if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(9, 0, 0)
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wused-but-marked-unused")
+#endif
 
 #define RED_AUTO_TEST_CASE(...) BOOST_AUTO_TEST_CASE(__VA_ARGS__) /*NOLINT*/
 
@@ -265,7 +273,10 @@ constexpr fn_invoker_t<F> fn_invoker(char const* name, F f)
 #include "utils/sugar/bytes_view.hpp"
 namespace ut
 {
+#ifdef IN_IDE_PARSER
     struct flagged_bytes_view;
+    enum class PatternView : char;
+#endif
 }
 
 namespace redemption_unit_test__
@@ -276,20 +287,18 @@ namespace redemption_unit_test__
         bytes_view lhs;
         bytes_view rhs;
         char const* revert;
-        std::size_t min_len;
-        char pattern;
+        unsigned min_len;
+        ::ut::PatternView pattern;
 
         friend std::ostream & operator<<(std::ostream & out, Put2Mem const & x);
     };
 
-    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
-
-    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
-    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
-    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
-    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
-    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
-    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, char pattern, std::size_t min_len);
+    boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
+    boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
+    boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
+    boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
+    boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
+    boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
 
 
     template<class T> struct is_bytes_view : std::false_type {};
@@ -457,7 +466,8 @@ struct name<T, U, std::enable_if_t<                                       \
     static assertion_result                                               \
     eval( bytes_view lhs, bytes_view rhs )                                \
     {                                                                     \
-        return ::redemption_unit_test__::bytes_##name(lhs, rhs, 'a', 0);  \
+        return ::redemption_unit_test__::bytes_##name(lhs, rhs,           \
+            ::ut::default_pattern_view, ::ut::default_ascii_min_len);     \
     }                                                                     \
                                                                           \
     template<class PrevExprType>                                          \
@@ -487,15 +497,15 @@ struct name<T, U, std::enable_if_t<                                       \
         if constexpr (std::is_convertible_v<T, bytes_view>                \
                    && std::is_convertible_v<U, bytes_view>)               \
         {                                                                 \
-            char flag = 'a';                                              \
-            std::size_t min_len = 0;                                      \
+            auto flag = ::ut::default_pattern_view;                       \
+            unsigned min_len = ::ut::default_ascii_min_len;               \
             if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
-               flag = lhs.flag;                                           \
-               min_len = lhs.min_len;                                     \
+               flag = lhs.pattern;                                        \
+               min_len = std::max(min_len, lhs.min_len);                  \
             }                                                             \
             if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
-               flag = rhs.flag;                                           \
-               min_len = rhs.min_len;                                     \
+               flag = rhs.pattern;                                        \
+               min_len = std::max(min_len, rhs.min_len);                  \
             }                                                             \
             return ::redemption_unit_test__                               \
                 ::bytes_##name(lhs, rhs, flag, min_len);                  \

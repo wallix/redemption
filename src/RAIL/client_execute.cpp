@@ -58,7 +58,7 @@ ClientExecute::ClientExecute(
     WindowListCaps const & window_list_caps, bool verbose)
 : front_(front)
 , drawable_(drawable)
-, wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin)))
+, wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin), BLACK))
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , verbose(verbose)

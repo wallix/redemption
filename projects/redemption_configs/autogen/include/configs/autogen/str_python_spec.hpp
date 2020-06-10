@@ -121,6 +121,10 @@ support_connection_redirection_during_recording = boolean(default=True)
 # (is in millisecond)
 rdp_keepalive_connection_interval = integer(min=0, default=0)
 
+# Enable primary connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [session_log]
 
 enable_session_log = boolean(default=True)
@@ -536,6 +540,9 @@ session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, defaul
 session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_hidden
+session_probe_update_disabled_features = boolean(default=True)
+
+#_hidden
 session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none
@@ -574,6 +581,18 @@ session_probe_on_account_manipulation = option(0, 1, 2, default=0)
 
 #_advanced
 session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=True)
+
+#_hidden
+application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(')
+
+#_hidden
+application_driver_script_argument = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(')
+
+#_hidden
+application_driver_chrome_uia_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(')
+
+#_hidden
+application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
 
 # Keep known server certificates on WAB
 #_hidden
@@ -759,7 +778,7 @@ enable_rdp_metrics = boolean(default=False)
 enable_vnc_metrics = boolean(default=False)
 
 #_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(')
+log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
 
 # (is in second)
 #_advanced
@@ -798,6 +817,14 @@ clipboard_text_down = boolean(default=False)
 
 #_hidden
 log_if_accepted = boolean(default=True)
+
+#_hidden
+verify_before_transfer = boolean(default=False)
+
+# File greather are automatically rejected.
+# (is in mebibyte)
+#_hidden
+max_file_size_rejected = integer(min=0, default=1024)
 
 [file_storage]
 
@@ -922,13 +949,13 @@ png_limit = integer(min=0, default=5)
 replay_path = string(max=4096, default='/tmp/')
 
 #_hidden
-hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(')
+hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(')
 
 #_hidden
-record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(')
+record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(')
 
 #_hidden
-record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(')
+record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(')
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
@@ -1075,10 +1102,6 @@ mod_vnc = integer(min=0, default=0)
 #_hex
 mod_internal = integer(min=0, default=0)
 
-#_advanced
-#_hex
-mod_xup = integer(min=0, default=0)
-
 #_hidden
 password = integer(min=0, default=0)
 
@@ -1126,7 +1149,83 @@ password_fr = string(default='')
 
 [internal_mod]
 
+# Enable target edit field in login page.
 #_advanced
-load_theme = string(default='')
+enable_target_field = boolean(default=True)
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+#_advanced
+enable_theme = boolean(default=False)
+
+#_advanced
+bgcolor = string(default='dark_blue_bis')
+
+#_advanced
+fgcolor = string(default='white')
+
+#_advanced
+separator_color = string(default='light_blue')
+
+#_advanced
+focus_color = string(default='winblue')
+
+#_advanced
+error_color = string(default='yellow')
+
+#_hidden
+logo = boolean(default=False)
+
+#_hidden
+logo_path = string(default='')
+
+#_advanced
+edit_bgcolor = string(default='white')
+
+#_advanced
+edit_fgcolor = string(default='black')
+
+#_advanced
+edit_focus_color = string(default='winblue')
+
+#_advanced
+tooltip_bgcolor = string(default='black')
+
+#_advanced
+tooltip_fgcolor = string(default='light_yellow')
+
+#_advanced
+tooltip_border_color = string(default='black')
+
+#_advanced
+selector_line1_bgcolor = string(default='pale_blue')
+
+#_advanced
+selector_line1_fgcolor = string(default='black')
+
+#_advanced
+selector_line2_bgcolor = string(default='light_blue')
+
+#_advanced
+selector_line2_fgcolor = string(default='black')
+
+#_advanced
+selector_selected_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_selected_fgcolor = string(default='white')
+
+#_advanced
+selector_focus_bgcolor = string(default='winblue')
+
+#_advanced
+selector_focus_fgcolor = string(default='white')
+
+#_advanced
+selector_label_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_label_fgcolor = string(default='white')
 
 )gen_config_ini"

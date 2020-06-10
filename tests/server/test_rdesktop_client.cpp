@@ -31,6 +31,7 @@
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "acl/sesman.hpp"
+#include "core/session_reactor.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
@@ -101,9 +102,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     CryptoContext cctx;
     const bool fastpath_support = false;
     NullReportMessage report_message;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
     SesmanInterface sesman(ini);
     FrontWrapper front(time_base, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);

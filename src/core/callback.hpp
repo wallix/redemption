@@ -29,13 +29,12 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/rect.hpp"
-#include "gdi/screen_info.hpp"
-#include "utils/log.hpp"
 
 #include <string>
 
 class InStream;
 struct Keymap2;
+class ScreenInfo;
 
 enum : uint16_t {
     RDP_INPUT_SYNCHRONIZE          = 0,
@@ -134,7 +133,7 @@ struct RdpInput : private noncopyable
     }
 
     // Client Notify module that gdi is up and running
-    virtual void rdp_gdi_up_and_running(ScreenInfo & ) = 0;
+    virtual void rdp_gdi_up_and_running(ScreenInfo & screen_info) = 0;
 
     // Client Notify module that gdi is not up and running any more
     virtual void rdp_gdi_down() = 0;

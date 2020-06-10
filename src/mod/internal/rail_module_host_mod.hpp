@@ -22,6 +22,7 @@
 
 #include "mod/internal/widget/rail_module_host.hpp"
 
+#include "configs/config.hpp"
 #include "configs/config_access.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"

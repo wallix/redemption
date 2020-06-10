@@ -28,6 +28,9 @@
 #include "core/RDP/autoreconnect.hpp"
 #include "core/RDP/lic.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
+#include "core/RDP/gcc/userdata/sc_sec1.hpp"
+#include "core/RDP/gcc.hpp"
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
@@ -85,33 +88,27 @@ void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::s
     auto notification_type = this->server_status_messages[underlying_cast(status)];
     if (bool(notification_type & ServerNotification::syslog)) {
         auto log6 = [&](LogId id, zstring_view message){
-            this->report_message.log6(id, tvtime(), {
-                KVLog("description"_av, message),
-            });
+            this->report_message.log6(id, {KVLog("description"_av, message),});
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
         };
 
         switch (status)
         {
             case Status::AccessAllowed:
-                log6(LogId::CERTIFICATE_CHECK_SUCCESS,
-                    "Connexion to server allowed"_zv);
+                log6(LogId::CERTIFICATE_CHECK_SUCCESS, "Connexion to server allowed"_zv);
                 break;
             case Status::CertCreate:
-                log6(LogId::SERVER_CERTIFICATE_NEW,
-                    "New X.509 certificate created"_zv);
+                log6(LogId::SERVER_CERTIFICATE_NEW, "New X.509 certificate created"_zv);
                 break;
             case Status::CertSuccess:
-                log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS,
-                    "X.509 server certificate match"_zv);
+                log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, "X.509 server certificate match"_zv);
                 break;
             case Status::CertFailure:
-                log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE,
-                    "X.509 server certificate match failure"_zv);
+                log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, "X.509 server certificate match failure"_zv);
                 break;
             case Status::CertError:
                 log6(LogId::SERVER_CERTIFICATE_ERROR,
-                    str_concat("X.509 server certificate internal error: "_zv, error_msg));
+                        str_concat("X.509 server certificate internal error: "_zv, error_msg));
                 break;
         }
     }
@@ -887,9 +884,9 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
             size_t num_channels = channel_list.size();
-            if ((num_channels > 0) 
-            || this->enable_auth_channel 
-            || this->has_managed_drive 
+            if ((num_channels > 0)
+            || this->enable_auth_channel
+            || this->has_managed_drive
             || this->checkout_channel.c_str()[0]) {
                 /* Here we need to put channel information in order
                 to redirect channel data
@@ -899,9 +896,9 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 bool has_cliprdr_channel = false;
                 bool has_rdpdr_channel   = false;
                 bool has_rdpsnd_channel  = false;
-                
-                
-                
+
+
+
                 for (size_t index = 0, adjusted_index = 0; index < num_channels; index++) {
                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
 
@@ -1640,7 +1637,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [&infoPacket](StreamSize<1024> /*maxlen*/, OutStream & stream) {
+        [&infoPacket](StreamSize<2048> /*maxlen*/, OutStream & stream) {
             infoPacket.emit(stream);
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}

@@ -21,7 +21,8 @@
 #pragma once
 
 #include <cstdint>
-#include "acl/sesman.hpp"
+
+class SesmanInterface;
 
 struct rdp_api
 {
@@ -37,7 +38,7 @@ struct rdp_api
 
     virtual void sespro_ending_in_progress() = 0;
 
-    virtual void sespro_launch_process_ended(SesmanInterface & sesman) = 0;
+    virtual void sespro_launch_process_ended() = 0;
 
     virtual ~rdp_api() = default;
 };

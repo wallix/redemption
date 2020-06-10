@@ -30,6 +30,10 @@ Author(s): Jonathan Poelen
 
 struct zstring_view
 {
+    using value_type = char;
+    using iterator = char const*;
+    using const_iterator = char const*;
+
     zstring_view() = default;
     zstring_view(zstring_view &&) = default;
     zstring_view(zstring_view const &) = default;

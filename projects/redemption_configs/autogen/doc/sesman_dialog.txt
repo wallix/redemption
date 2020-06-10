@@ -139,6 +139,7 @@ cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_
 cfg::mod_rdp::session_probe_memory_usage_limit ⇐ mod_rdp:session_probe_memory_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_end_of_session_check_delay_time ⇐ mod_rdp:session_probe_end_of_session_check_delay_time   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check ⇐ mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
+cfg::mod_rdp::session_probe_update_disabled_features ⇐ mod_rdp:session_probe_update_disabled_features   [bool]
 cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field ⇐ mod_rdp:session_probe_childless_window_as_unidentified_input_field   [bool]
 cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled_features   [SessionProbeDisabledFeature]
       0x000: none
@@ -248,6 +249,10 @@ cfg::file_verification::clipboard_text_down ⇐ file_verification:clipboard_text
     Verify text data via clipboard from server to client
     File verification on download must be enabled via option Enable down.
 cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   [bool]
+cfg::file_verification::verify_before_transfer ⇐ file_verification:verify_before_transfer   [bool]
+cfg::file_verification::max_file_size_rejected ⇐ file_verification:max_file_size_rejected   [uint32_t]
+    File greather are automatically rejected.
+    (is in mebibyte)
 
 cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile]
     Enable storage of transferred files (via RDP Clipboard).
@@ -392,4 +397,5 @@ cfg::context::rd_shadow_invitation_id ⇒ rd_shadow_invitation_id   [std::string
 cfg::context::rd_shadow_invitation_addr ⇒ rd_shadow_invitation_addr   [std::string]
 cfg::context::rd_shadow_invitation_port ⇒ rd_shadow_invitation_port   [unsigned int]
 cfg::context::smartcard_login ⇒ smartcard_login   [std::string]
+
 

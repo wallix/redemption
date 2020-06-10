@@ -34,45 +34,25 @@ struct KVLog
 
     KVLog() = default;
 
-    KVLog(chars_view key, chars_view value) noexcept
-    : key(key)
-    , value(value)
-    {}
+    KVLog(chars_view key, chars_view value) noexcept : key(key), value(value) {}
 };
 
 struct KVList : array_view<KVLog>
 {
-    KVList(array_view<KVLog> kv_list) noexcept
-    : array_view<KVLog>(kv_list)
-    {}
-
-    KVList(std::initializer_list<KVLog> kv_list) noexcept
-    : array_view<KVLog>(kv_list)
-    {}
+    KVList(array_view<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
+    KVList(std::initializer_list<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
 };
 
 struct ReportMessageApi : noncopyable
 {
     // TODO array_view
     virtual void report(const char * reason, const char * message) = 0;
-
-    virtual void log6(LogId id, const timeval time, KVList kv_list) = 0;
-
+    virtual void log6(LogId id, KVList kv_list) = 0;
     virtual ~ReportMessageApi() = default;
 };
 
 struct NullReportMessage : ReportMessageApi
 {
-    void report(const char * reason, const char * message) override
-    {
-        (void)reason;
-        (void)message;
-    }
-
-    void log6(LogId id, const timeval time, KVList kv_list) override
-    {
-        (void)id;
-        (void)time;
-        (void)kv_list;
-    }
+    void report(const char * /* reason */, const char * /* message */) override {}
+    void log6(LogId /*id*/, KVList /*kv_list*/) override {}
 };

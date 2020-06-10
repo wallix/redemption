@@ -23,6 +23,7 @@
 #include "test_only/test_framework/file.hpp"
 
 
+#include "utils/sugar/unique_fd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -67,13 +68,11 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicTimerContainer graphic_timer_events_;
     rdpdr_drive_read_task.configure_event(
-        time_base, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
 
@@ -109,13 +108,11 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         contents.size(), test_to_server_sender, to_verbose_flags(0));
 
     bool run_task = true;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicTimerContainer graphic_timer_events_;
     rdpdr_send_drive_io_response_task.configure_event(
-        time_base, fd_events_, graphic_fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
     RED_CHECK(fd_events_.is_empty());

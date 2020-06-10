@@ -21,21 +21,20 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "core/front_api.hpp"
-#include "gdi/graphic_api.hpp"
-#include "utils/image_data_view.hpp"
-#include "core/session_reactor.hpp"
-#include "acl/sesman.hpp"
-
-#include <memory>
-#include <string>
 
 class TimeBase;
+class TimerContainer;
 class Transport;
 class Random;
 class CryptoContext;
 class ReportMessageApi;
 class Inifile;
 class Callback;
+
+namespace gdi
+{
+    class GraphicApi;
+}
 
 class FrontWrapper : public FrontAPI
 {
@@ -49,11 +48,12 @@ public:
         Inifile & ini,
         CryptoContext & cctx,
         ReportMessageApi & report_message,
-        bool fp_support, // If true, fast-path must be supported
-        std::string server_capabilities_filename = {});
+        bool fp_support // If true, fast-path must be supported
+    );
+
     ~FrontWrapper();
 
-    bool can_be_start_capture(SesmanInterface & /*sesman*/) override { return false; }
+    bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
     bool is_capture_in_progress() const override { return false; }
 
@@ -91,5 +91,5 @@ protected:
 
 private:
     class D;
-    std::unique_ptr<D> d;
+    D* d;
 };

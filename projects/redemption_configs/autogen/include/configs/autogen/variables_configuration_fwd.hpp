@@ -4,9 +4,8 @@
 
 #pragma once
 
-enum authid_t : unsigned;
-
-namespace cfg {
+namespace cfg
+{
     struct globals {
         struct capture_chunk;
         struct nla_auth_user;
@@ -51,6 +50,7 @@ namespace cfg {
         struct experimental_support_resize_session_during_recording;
         struct support_connection_redirection_during_recording;
         struct rdp_keepalive_connection_interval;
+        struct enable_ipv6;
     };
 
     struct session_log {
@@ -162,6 +162,7 @@ namespace cfg {
         struct session_probe_memory_usage_limit;
         struct session_probe_end_of_session_check_delay_time;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
+        struct session_probe_update_disabled_features;
         struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_disabled_features;
         struct session_probe_bestsafe_integration;
@@ -169,6 +170,10 @@ namespace cfg {
         struct session_probe_public_session;
         struct session_probe_on_account_manipulation;
         struct session_probe_at_end_of_session_freeze_connection_and_wait;
+        struct application_driver_exe_or_file;
+        struct application_driver_script_argument;
+        struct application_driver_chrome_uia_script;
+        struct application_driver_ie_script;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;
@@ -227,6 +232,8 @@ namespace cfg {
         struct clipboard_text_up;
         struct clipboard_text_down;
         struct log_if_accepted;
+        struct verify_before_transfer;
+        struct max_file_size_rejected;
     };
 
     struct file_storage {
@@ -320,7 +327,6 @@ namespace cfg {
         struct mod_rdp;
         struct mod_vnc;
         struct mod_internal;
-        struct mod_xup;
         struct password;
         struct compression;
         struct cache;
@@ -342,7 +348,7 @@ namespace cfg {
     };
 
     struct internal_mod {
-        struct theme;
+        struct enable_target_field;
     };
 
     struct context {
@@ -434,6 +440,35 @@ namespace cfg {
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
+        struct application_driver_alternate_shell;
+        struct application_driver_shell_arguments;
+    };
+
+    struct theme {
+        struct enable_theme;
+        struct bgcolor;
+        struct fgcolor;
+        struct separator_color;
+        struct focus_color;
+        struct error_color;
+        struct logo;
+        struct logo_path;
+        struct edit_bgcolor;
+        struct edit_fgcolor;
+        struct edit_focus_color;
+        struct tooltip_bgcolor;
+        struct tooltip_fgcolor;
+        struct tooltip_border_color;
+        struct selector_line1_bgcolor;
+        struct selector_line1_fgcolor;
+        struct selector_line2_bgcolor;
+        struct selector_line2_fgcolor;
+        struct selector_selected_bgcolor;
+        struct selector_selected_fgcolor;
+        struct selector_focus_bgcolor;
+        struct selector_focus_fgcolor;
+        struct selector_label_bgcolor;
+        struct selector_label_fgcolor;
     };
 
 } // namespace cfg

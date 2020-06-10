@@ -39,14 +39,14 @@ BrowserTransport::TlsResult BrowserTransport::enable_client_tls(ServerNotifier& 
 
 size_t BrowserTransport::do_partial_read(uint8_t * data, size_t len)
 {
-    if (in_buffers.empty()) {
+    if (input_buffers.empty()) {
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
     }
 
     auto remaining = len;
 
     while (remaining) {
-        auto& s = in_buffers.front();
+        auto& s = input_buffers.front();
         auto const s_len = s.size() - current_pos;
         auto const min_len = std::min(s_len, remaining);
         memcpy(data, s.data() + current_pos, min_len);
@@ -55,8 +55,8 @@ size_t BrowserTransport::do_partial_read(uint8_t * data, size_t len)
         data += min_len;
         if (min_len == s_len) {
             current_pos = 0;
-            in_buffers.erase(in_buffers.begin());
-            if (in_buffers.empty()) {
+            input_buffers.erase(input_buffers.begin());
+            if (input_buffers.empty()) {
                 break;
             }
         }
@@ -72,9 +72,9 @@ size_t BrowserTransport::do_partial_read(uint8_t * data, size_t len)
 
 void BrowserTransport::do_send(const uint8_t * buffer, size_t len)
 {
-    // LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
+    // LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, output_buffer.size() + len);
     // hexdump(buffer, len);
-    this->out_buffers.insert(this->out_buffers.end(), buffer, buffer + len);
+    this->output_buffer.insert(this->output_buffer.end(), buffer, buffer + len);
 }
 
 int BrowserTransport::get_fd() const
@@ -82,19 +82,19 @@ int BrowserTransport::get_fd() const
     return FD_TRANS;
 }
 
-void BrowserTransport::add_in_buffer(std::string data)
+void BrowserTransport::push_input_buffer(std::string&& data)
 {
-    this->in_buffers.emplace_back(std::move(data));
+    this->input_buffers.emplace_back(std::move(data));
 }
 
-bytes_view BrowserTransport::get_out_buffer() const noexcept
+bytes_view BrowserTransport::get_output_buffer() const noexcept
 {
-    return this->out_buffers;
+    return this->output_buffer;
 }
 
-void BrowserTransport::clear_out_buffer() noexcept
+void BrowserTransport::clear_output_buffer() noexcept
 {
-    this->out_buffers.clear();
+    this->output_buffer.clear();
 }
 
 }

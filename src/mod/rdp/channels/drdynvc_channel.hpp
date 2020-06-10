@@ -190,11 +190,10 @@ public:
                             out_stream.get_produced_bytes());
                     }
 
-                    this->report_message.log6(
-                        (is_authorized ? LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED : LogId::DYNAMIC_CHANNEL_CREATION_REJECTED),
-                        this->time_base.get_current_time(), {
-                        KVLog("channel_name"_av, { channel_name, strlen(channel_name)})
-                    });
+                    this->report_message.log6((is_authorized
+                            ? LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED
+                            : LogId::DYNAMIC_CHANNEL_CREATION_REJECTED),
+                        {KVLog("channel_name"_av, { channel_name, strlen(channel_name)})});
 
                     send_message_to_client = is_authorized;
                 }

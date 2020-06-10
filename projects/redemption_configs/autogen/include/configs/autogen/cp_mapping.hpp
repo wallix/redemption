@@ -162,6 +162,9 @@ cp_spec = {
         u'mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check': (
             'ignore_ui_less_processes_during_end_of_session_check', True
         ),
+        u'mod_rdp:session_probe_update_disabled_features': (
+            'update_disabled_features', True
+        ),
         u'mod_rdp:session_probe_childless_window_as_unidentified_input_field': (
             'childless_window_as_unidentified_input_field', True
         ),
@@ -169,7 +172,7 @@ cp_spec = {
             'disabled_features', 352
         ),
         u'mod_rdp:session_probe_bestsafe_integration': (
-            'bestsafe_integration', False
+            'enable_bestsafe_interaction', False
         ),
         u'mod_rdp:session_probe_alternate_directory_environment_variable': (
             'alternate_directory_environment_variable', u''
@@ -228,6 +231,12 @@ cp_spec = {
         ),
         u'file_verification:log_if_accepted': (
             'log_if_accepted', True
+        ),
+        u'file_verification:verify_before_transfer': (
+            'verify_before_transfer', False
+        ),
+        u'file_verification:max_file_size_rejected': (
+            'max_file_size_rejected', 1024
         ),
     },
     'file_storage': {

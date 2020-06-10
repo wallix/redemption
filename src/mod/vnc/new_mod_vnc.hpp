@@ -22,9 +22,6 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
-#include "core/session_reactor.hpp"
-#include "acl/sesman.hpp"
-
 
 #include <memory>
 
@@ -32,16 +29,19 @@ class ClientExecute;
 class FrontAPI;
 class ReportMessageApi;
 class TimeBase;
+class TopFdContainer;
+class TimerContainer;
 class Transport;
 class VNCMetrics;
+class SesmanInterface;
+class GdProvider;
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     TimeBase& time_base,
+    GdProvider & gd_provider,
     TopFdContainer & fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer & timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     const char* username,
     const char* password,

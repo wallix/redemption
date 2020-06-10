@@ -20,7 +20,7 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include <string>
+#include "utils/sugar/zstring_view.hpp"
 
 enum BackEvent_t
 {
@@ -30,12 +30,12 @@ enum BackEvent_t
     BACK_EVENT_REFRESH,  // MODULE ASKED DATA TO ACL, WAITING FOR ACL REFRESH
 };
 
-static inline auto signal_name(BackEvent_t signal) -> std::string
+inline zstring_view signal_name(BackEvent_t signal)
 {
-     return signal == BACK_EVENT_NONE?"BACK_EVENT_NONE"
-           :signal == BACK_EVENT_NEXT?"BACK_EVENT_NEXT"
-           :signal == BACK_EVENT_REFRESH?"BACK_EVENT_REFRESH"
-           :signal == BACK_EVENT_STOP?"BACK_EVENT_STOP"
-           :"BACK_EVENT_UNKNOWN";
+     return signal == BACK_EVENT_NONE ? "BACK_EVENT_NONE"_zv
+          : signal == BACK_EVENT_NEXT  ?"BACK_EVENT_NEXT"_zv
+          : signal == BACK_EVENT_REFRESH ? "BACK_EVENT_REFRESH"_zv
+          : signal == BACK_EVENT_STOP ? "BACK_EVENT_STOP"_zv
+          : "BACK_EVENT_UNKNOWN"_zv;
 }
 

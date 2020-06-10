@@ -29,6 +29,7 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/timebase.hpp"
 
 #include <string>
 #include <chrono>
@@ -126,22 +127,20 @@ public:
 };
 
 
-class AclSerializer final : ReportMessageApi
+class AclSerializer final : public ReportMessageApi
 {
 public:
     Inifile & ini;
+    Transport * auth_trans;
 
 private:
-    Transport & auth_trans;
+    TimeBase & timebase;
     char session_id[256];
-    SessionLogFile log_file;
-
-public:
-    std::string manager_disconnect_reason;
+    SessionLogFile * log_file;
 
 private:
-    std::string session_type;
 public:
+    std::string session_type;
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
@@ -156,17 +155,22 @@ public:
         arcsight  = 0x20,
     };
 
-    AclSerializer(
-        Inifile & ini, time_t acl_start_time, Transport & auth_trans,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat, Verbose verbose);
-
+    AclSerializer(Inifile & ini, TimeBase & timebase);
     ~AclSerializer();
+
+    void disconnect() {
+        if (this->auth_trans){
+            this->auth_trans->disconnect();
+            this->auth_trans = nullptr;
+        }
+    }
+
+    void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
+    void set_log_file(SessionLogFile * log_file) { this->log_file = log_file; }
 
     void report(const char * reason, const char * message) override;
 
-    void receive();
-
-    void log6(LogId id, const timeval time, KVList kv_list) override;
+    void log6(LogId id, KVList kv_list) override;
 
     void start_session_log();
 
@@ -177,24 +181,64 @@ public:
     void incoming();
 
     void send_acl_data();
-    
+
     void server_redirection_target();
 };
 
 
 struct Acl
 {
-    SocketTransport auth_trans;
-    AclSerializer   acl_serial;
+    enum {
+        state_not_yet_connected = 0,
+        state_connected,
+        state_connection_failed,
+        state_disconnected_by_redemption,
+        state_disconnected_by_authentifier
+    } status = state_not_yet_connected;
+
+    std::string manager_disconnect_reason;
+
+    std::string show() {
+        switch (this->status) {
+        case state_not_yet_connected:
+            return "Acl::state_not_yet_connected";
+        case state_connected:
+            return "Acl::state_connected";
+        case state_connection_failed:
+            return "Acl::state_connection_failed";
+        case state_disconnected_by_redemption:
+            return "Acl::state_disconnected_by_redemption";
+        case state_disconnected_by_authentifier:
+            return "Acl::state_disconnected_by_authentifier";
+        }
+        return "Acl::unexpected state";
+    }
+
+    Inifile & ini;
+    AclSerializer  * acl_serial = nullptr;
     KeepAlive keepalive;
     Inactivity inactivity;
-
-    Acl(Inifile & ini, unique_fd client_sck, time_t now,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat);
-  
+    Acl(Inifile & ini, TimeBase & time_base);
+    void set_acl_serial(AclSerializer * acl_serial) {
+        this->acl_serial = acl_serial;
+        if (this->acl_serial != nullptr){
+            this->status = state_connected;
+        }
+    }
     time_t get_inactivity_timeout();
-
     void update_inactivity_timeout();
+    bool is_not_yet_connected() { return this->status == state_not_yet_connected; }
+    void connection_failed() { this->status = state_connection_failed; }
+    bool is_connected() { return this->status == state_connected; }
+    void disconnect() {
+        if (this->acl_serial) {
+            this->acl_serial->disconnect();
+            this->acl_serial = nullptr;
+            this->status = state_disconnected_by_redemption;
+        }
+    }
+    void receive();
 
+    ~Acl() {}
 
 };

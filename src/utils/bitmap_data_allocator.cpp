@@ -14,20 +14,22 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2016
-   Author(s): Christophe Grosjean
+   Copyright (C) Wallix 2011
+   Author(s): Christophe Grosjean, Javier Caverni, Martin Potier,
+              Meng Tan
+   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
+   This file implement the bitmap items data structure
+   including RDP RLE compression and decompression algorithms
+
+   It also features storage and color versionning of the bitmap
+   returning a pointer on a table, corresponding to the required
+   color model.
 */
 
-#pragma once
+#include "utils/bitmap_data_allocator.hpp"
 
-#include "utils/crypto/ssl_mod_exp_direct.hpp"
-
-static inline writable_bytes_view mod_exp(
-    writable_bytes_view out,
-    bytes_view inr,
-    bytes_view modulus,
-    bytes_view exponent
-) {
-    return mod_exp_direct(out, inr, modulus, exponent);
-}
+namespace aux_
+{
+    BmpMemAlloc bitmap_data_allocator;
+} // namespace aux_

@@ -33,7 +33,6 @@ disable_srcs = set((
 
 src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
-    ('src/proxy_recorder/proxy_recorder.hpp', ['src/proxy_recorder/proxy_recorder.cpp']),
     ('src/utils/primitives/primitives_internal.hpp', ['src/utils/primitives/primitives_sse2.cpp']),
 
 ))
@@ -255,12 +254,17 @@ try:
     set_arg = lambda name: lambda arg: default_options.setdefault(name, arg)
     def add_deps_src(arg):
         a = arg.split(',')
-        src_deps[a[0]] = glob.glob(a[1])
+        if a[0] not in src_deps:
+            src_deps[a[0]] = []
+        for pattern in a[1:]:
+            src_deps[a[0]] += glob.glob(pattern)
+
     def add_disable_src(arg):
         disable_srcs.add(arg)
         base = arg[-4:]
         if base == '.hpp':
             disable_srcs.add(arg[:-3] + 'cpp')
+
     options = {
         '--src': lambda arg: get_files(sources, arg),
         '--main': set_arg('main'),

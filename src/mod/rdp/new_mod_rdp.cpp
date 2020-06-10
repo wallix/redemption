@@ -26,10 +26,9 @@ std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     Inifile & ini,
     TimeBase& time_base,
+    GdProvider & gd_provider,
     TopFdContainer & fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer & graphic_events_,
     SesmanInterface & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,
@@ -37,7 +36,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     RedirectionInfo& redir_info,
     Random& gen,
     TimeObj& timeobj,
-    const ChannelsAuthorizations channels_authorizations,
+    const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
     const TLSClientParams & tls_client_params,
     AuthApi& authentifier,
@@ -50,7 +49,9 @@ std::unique_ptr<mod_api> new_mod_rdp(
 )
 {
     return std::make_unique<mod_rdp>(
-        trans, ini, time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, gd, front, info, redir_info, gen, timeobj,
+        trans, ini,
+        time_base, gd_provider, fd_events_, timer_events_,
+        sesman, gd, front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, vars, metrics, file_validator_service, mod_rdp_factory);
 }

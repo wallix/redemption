@@ -288,7 +288,7 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
     ssize_t res = socket_send_partial(this->tls.get(), this->sck, buffer, len);
 
     if (res < 0) {
-        LOG(LOG_WARNING,
+        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
         throw Error(ERR_TRANSPORT_WRITE_FAILED);

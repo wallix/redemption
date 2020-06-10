@@ -42,6 +42,7 @@
 
 
 
+
 class QtOutputSound : public QObject, public ClientOutputSoundAPI
 {
 

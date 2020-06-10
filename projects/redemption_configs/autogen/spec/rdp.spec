@@ -231,6 +231,9 @@ end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_advanced
+update_disabled_features = boolean(default=True)
+
+#_advanced
 childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none
@@ -247,7 +250,7 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #_hex
 disabled_features = integer(min=0, max=511, default=352)
 
-bestsafe_integration = boolean(default=False)
+enable_bestsafe_interaction = boolean(default=False)
 
 # The name of an environment variable which points to the alternative directory for starting Session Probe.
 # The maximum length of this name is 3 bytes.
@@ -351,6 +354,14 @@ clipboard_text_down = boolean(default=False)
 
 #_advanced
 log_if_accepted = boolean(default=True)
+
+#_advanced
+verify_before_transfer = boolean(default=False)
+
+# File greather are automatically rejected.
+# (is in mebibyte)
+#_advanced
+max_file_size_rejected = integer(min=0, default=1024)
 
 [file_storage]
 

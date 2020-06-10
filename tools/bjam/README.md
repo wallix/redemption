@@ -1,3 +1,5 @@
+Note: the following commands assume that `REDEMPTION_PATH` exists. Please replace with a real path or declare the variable.
+
 # Bash
 
 In your `~/.bashrc`:
@@ -26,7 +28,7 @@ In your `~/.zshrc`:
 
 ```bash
 bf () {
-  bjam "$@" 2>&1 \
+  BOOST_TEST_COLOR_OUTPUT=0 bjam "$@" 2>&1 \
   | stdbuf -o0 $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
     -v columns=$COLUMNS \
     -v "replacements=$PWD;;$HOME;" \

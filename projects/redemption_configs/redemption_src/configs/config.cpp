@@ -22,57 +22,132 @@
 */
 
 #include "configs/config.hpp"
+#include "configs/io.hpp"
 #include "utils/translation.hpp"
+#include "utils/log.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
-namespace configs
+#include "configs/autogen/str_authid.hpp"
+
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
+#include "configs/autogen/enums_func_ini.tcc"
+REDEMPTION_DIAGNOSTIC_POP
+
+namespace
 {
     template<class T, class U>
-    parse_error parse_and_log(const char * context, const char * key, T & x, U u, chars_view av)
+    parse_error config_parse_and_log(
+        const char * context, const char * key, T & x, U u, zstring_view av)
     {
-        auto const err = ::configs::parse(x, u, av);
+        auto const err = parse_from_cfg(x, u, av);
         if (err) {
-            LOG(
-                LOG_WARNING,
+            LOG(LOG_WARNING,
                 "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
                 key, context, int(av.size()), av.data(), err.c_str()
             );
         }
         return err;
     }
-} // namespace configs
 
-REDEMPTION_DIAGNOSTIC_PUSH
-REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wweak-template-vtables")
-#include "configs/autogen/extern_template_field.tcc"
-REDEMPTION_DIAGNOSTIC_POP
-#include "configs/autogen/enums_func_ini.tcc"
+    template<class T>
+    struct ConfigFieldVTable
+    {
+        static bool parse(configs::VariablesConfiguration & variables, zstring_view value)
+        {
+            auto const err = parse_from_cfg(
+                static_cast<T&>(variables).value,
+                configs::spec_type<typename T::sesman_and_spec_type>{},
+                value);
+
+            if (err) {
+                LOG(LOG_WARNING,
+                    "parsing error with acl parameter '%s' for \"%s\": %s",
+                    configs::authstr[unsigned(T::index)], value, err.c_str());
+                return false;
+            }
+
+            return true;
+        }
+
+        static zstring_view to_zstring_view(
+            configs::VariablesConfiguration const& variables,
+            writable_chars_view buffer)
+        {
+            return assign_zbuf_from_cfg(
+                buffer,
+                cfg_s_type<typename T::sesman_and_spec_type>{},
+                static_cast<T const&>(variables).value
+            );
+        }
+    };
+
+    template<class>
+    struct ConfigFieldVTableMaker;
+
+    template<class T, class... Ts>
+    struct ConfigFieldVTableMaker<configs::Pack<T, Ts...>>
+    {
+        static constexpr auto make_parsers()
+        {
+            return std::array<decltype(&ConfigFieldVTable<T>::parse), sizeof...(Ts)+1>{
+                &ConfigFieldVTable<T>::parse,
+                &ConfigFieldVTable<Ts>::parse...
+            };
+        }
+
+        static constexpr auto make_to_zstring_view()
+        {
+            return std::array<decltype(&ConfigFieldVTable<T>::to_zstring_view), sizeof...(Ts)+1>{
+                &ConfigFieldVTable<T>::to_zstring_view,
+                &ConfigFieldVTable<Ts>::to_zstring_view...
+            };
+        }
+    };
+
+    inline constexpr auto config_parse_value_fns
+        = ConfigFieldVTableMaker<configs::VariablesAclPack>::make_parsers();
+
+    inline constexpr auto config_to_zstring_view_fns
+        = ConfigFieldVTableMaker<configs::VariablesAclPack>::make_to_zstring_view();
+} // anonymous namespace
+
 #include "configs/autogen/set_value.tcc"
 
-
-template<class T>
-bool Inifile::Field<T>::parse(configs::VariablesConfiguration & variables, chars_view value)
+zstring_view Inifile::FieldConstReference::to_zstring_view(
+    Inifile::ZStringBuffer& buffer) const
 {
-    return ! ::configs::parse_and_log(
-        T::section, T::name,
-        static_cast<T&>(variables).value,
-        configs::spec_type<typename T::sesman_and_spec_type>{},
-        value
-    );
+    return config_to_zstring_view_fns[unsigned(this->id)](
+        this->ini->variables, writable_chars_view(buffer));
 }
 
-/// \return chars_view::data() guarantee with null terminal
-template<class T>
-chars_view Inifile::Field<T>::to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const
+zstring_view Inifile::FieldConstReference::get_acl_name() const
 {
-    return ::configs::assign_zbuf_from_cfg(
-        static_cast<configs::zstr_buffer_from<typename T::type>&>(
-            static_cast<configs::CBuf<T>&>(buffers)
-        ),
-        configs::cfg_s_type<typename T::sesman_and_spec_type>{},
-        static_cast<T const &>(variables).value
-    );
+    return configs::authstr[unsigned(this->id)];
 }
 
+bool Inifile::FieldReference::set(zstring_view value)
+{
+    bool const err = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
+    if (err) {
+        this->ini->asked_table.clear(this->id);
+        this->ini->new_from_acl = true;
+    }
+    return err;
+}
+
+Inifile::FieldReference Inifile::get_acl_field_by_name(chars_view name)
+{
+    using int_type = std::underlying_type_t<configs::authid_t>;
+    for (int_type i = 0; i < int_type(configs::max_authid); ++i) {
+        if (configs::authstr[i].size() == name.size()
+         && 0 == memcmp(configs::authstr[i].data(), name.data(), name.size())
+        ) {
+            return {*this, authid_t(i)};
+        }
+    }
+    return {};
+}
 
 Translation::language_t language(Inifile const & ini)
 {
@@ -132,5 +207,5 @@ void Inifile::initialize()
     this->ask<cfg::globals::target_device>();
     this->ask<cfg::globals::target_user>();
 
-    static_cast<Field<cfg::context::target_port>&>(this->fields).asked_ = true;
+    this->asked_table.set(cfg::context::target_port::index);
 }

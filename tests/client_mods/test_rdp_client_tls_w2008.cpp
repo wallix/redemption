@@ -25,19 +25,25 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "configs/config.hpp"
+#include "acl/gd_provider.hpp"
 #include "core/client_info.hpp"
+#include "core/session_reactor.hpp"
 #include "core/report_message_api.hpp"
+#include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
+
+#include "test_only/acl/sesman_wrapper.hpp"
+
 #include <chrono>
+
+using namespace std::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -89,7 +95,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
-    Inifile ini;
+    std::string close_box_extra_message;
     Theme theme;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
@@ -101,7 +107,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+                               , close_box_extra_message
                                , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -131,13 +137,11 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
+    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
 
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -145,19 +149,23 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, ini,
-        time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman,
-        front.gd(), front, info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
-        nullptr, nullptr, mod_rdp_factory);
+    auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, fd_events_,
+        timer_events_, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
+        report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     t.disable_remaining_error();
 
-    execute_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 70);
+    int n = 72;
+    int count = 0;
+    for (; count < n && !fd_events_.is_empty(); ++count) {
+        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        fd_events_.exec_action(is_set);
+    }
+    RED_CHECK_EQ(count, n);
 
     // t.disable_remaining_error();
     //front.dump_png("trace_w2008_tls_");
@@ -216,7 +224,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
-    Inifile ini;
+    std::string close_box_extra_message;
     Theme theme;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
@@ -228,7 +236,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+                               , close_box_extra_message
                                , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -258,24 +266,21 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
+    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
-    SesmanInterface sesman(ini);
-
+    SesmanWrapper sesman;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, ini,
-        time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, sesman, front.gd(), front, info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
+    auto mod = new_mod_rdp(t, sesman.get_ini(),
+        time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
+        sesman.redir_info(), gen, timeobj, channels_authorizations, mod_rdp_params,
+        tls_client_params, authentifier, report_message, license_store, sesman.get_ini(),
         nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -283,7 +288,13 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     t.disable_remaining_error();
 
-    execute_mod(time_base, fd_events_, graphic_fd_events_, timer_events_, graphic_events_, graphic_timer_events_, *mod, front.gd(), 40);
+    int n = 42;
+    int count = 0;
+    for (; count < n && !fd_events_.is_empty(); ++count) {
+        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+        fd_events_.exec_action(is_set);
+    }
+    RED_CHECK_EQ(count, n);
 
     // t.disable_remaining_error();
 //    front.dump_png("trace_w2008_tls_");

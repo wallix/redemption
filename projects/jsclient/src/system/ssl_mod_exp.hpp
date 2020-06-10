@@ -14,14 +14,18 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
+   Copyright (C) Wallix 2016
    Author(s): Christophe Grosjean
 
-   Unit test to conversion of RDP drawing orders to PNG images
 */
 
-// api
-#include "core/authid.hpp"
+#pragma once
 
-int main()
-{}
+#include "utils/sugar/bytes_view.hpp"
+
+writable_bytes_view mod_exp(
+    writable_bytes_view out,
+    bytes_view inr,
+    bytes_view modulus,
+    bytes_view exponent
+);

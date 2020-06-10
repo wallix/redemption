@@ -54,7 +54,7 @@ class RDPGraphics
     }
 
     drawImage(imageData, rop, ...args) {
-        // rop supposed to 0xCC
+        // assume rop == 0xCC
         if (this.promise) {
             this.promise = this.promise.then(() => {
                 this.canvas.putImageData(imageData, ...args);
@@ -95,9 +95,9 @@ class RDPGraphics
 
     drawLineTo(backMode, startX, startY, endX, endY, backColor, penStyle, penWidth, penColor) {
         // console.log('drawLineTo');
-		this.canvas.save();
-		this.canvas.fillStyle = rgbToCss(backColor);
-		this.canvas.strokeStyle = rgbToCss(penColor);
+        this.canvas.save();
+        this.canvas.fillStyle = rgbToCss(backColor);
+        this.canvas.strokeStyle = rgbToCss(penColor);
         // behavior of stroke is strange (transparency color with a odd penWidth)
         if (!penStyle && startX === endX) {
             if (endX < startX) {
@@ -133,25 +133,25 @@ class RDPGraphics
             // canvas.globalAlpha = (backMode === 1 /* TRANSPARENT */? 0.0 : 1.0);
             this.canvas.stroke();
         }
-		this.canvas.restore();
+        this.canvas.restore();
     }
 
     drawPolyline(startX, startY, deltas, penColor) {
         // console.log('drawPolyline');
-		this.canvas.save();
-		this.canvas.strokeStyle = rgbToCss(penColor);
-		this.canvas.beginPath();
-		this.canvas.moveTo(startX, startY);
+        this.canvas.save();
+        this.canvas.strokeStyle = rgbToCss(penColor);
+        this.canvas.beginPath();
+        this.canvas.moveTo(startX, startY);
         let endX = startX;
         let endY = startY;
         const iend = deltas.length
-		for (let i = 0; i < iend; i += 2) {
-			endX += deltas[i];
-			endY += deltas[i+1];
-			this.canvas.lineTo(endX, endY);
-		}
-		this.canvas.stroke();
-		this.canvas.restore();
+        for (let i = 0; i < iend; i += 2) {
+            endX += deltas[i];
+            endY += deltas[i+1];
+            this.canvas.lineTo(endX, endY);
+        }
+        this.canvas.stroke();
+        this.canvas.restore();
     }
 
     _transformPixels(x, y, w, h, f) {
@@ -159,7 +159,7 @@ class RDPGraphics
         const u32a = new Uint32Array(imgData.data.buffer);
         const len = imgData.width * imgData.height;
         for (let i = 0; i < len; ++i) {
-            u32a[i] = f(u32a[i] - 0xff000000) + 0xff000000;
+            u32a[i] = f(u32a[i] & 0xff000000) | 0xff000000;
         }
         this.canvas.putImageData(imgData, x, y);
     }
@@ -181,9 +181,15 @@ class RDPGraphics
             case 0x5a: this._transformPixels(x,y,w,h, (src) => color ^ src); break;
             case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(color & src)); break;
             case 0xa0: this._transformPixels(x,y,w,h, (src) => color & src); break;
-            // case 0xaa: break;
+            case 0xa5: this._transformPixels(x,y,w,h, (src) => ~(color ^ src)); break;
+            case 0xaa: break;
             case 0xaf: this._transformPixels(x,y,w,h, (src) => color | ~src); break;
-            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~target); break;
+            case 0xf0:
+                this.canvas.fillStyle = rgbToCss(color);
+                this.canvas.fillRect(x,y,w,h);
+                break;
+            case 0xfa: this._transformPixels(x,y,w,h, (src) => src | color); break;
+            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~color); break;
             case 0xff:
                 this.canvas.fillStyle = "#fff";
                 this.canvas.fillRect(x,y,w,h);
@@ -202,7 +208,7 @@ class RDPGraphics
             const i = y * w;
             for (let x = 0; x < w; ++x) {
                 const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
-                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] - 0xff000000) + 0xff000000;
+                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xff000000) | 0xff000000;
             }
         }
         this.canvas.putImageData(imgData, orgX, orgY);

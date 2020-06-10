@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "configs/config.hpp"
+#include "utils/log.hpp"
 #include "core/misc.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -31,6 +31,7 @@
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/stream_throw_helpers.hpp"
+
 
 class FrontAPI;
 
@@ -734,7 +735,7 @@ public:
             if (!this->session_probe_channel
              || this->client_execute.exe_or_file != serpdu.ExeOrFile()
             ) {
-                this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, tvtime(), {
+                this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
                     KVLog("exe_or_file"_av, serpdu.ExeOrFile()),
                 });
             }
@@ -1515,5 +1516,5 @@ private:
 
     void sespro_ending_in_progress() override {}
 
-    void sespro_launch_process_ended(SesmanInterface & /*sesman*/) override {}
+    void sespro_launch_process_ended() override {}
 };

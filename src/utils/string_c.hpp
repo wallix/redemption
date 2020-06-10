@@ -34,7 +34,23 @@ namespace jln
         static constexpr char const* c_str() noexcept { return value; }
         static constexpr zstring_view zstring() noexcept
         { return {zstring_view::is_zero_terminated{}, value, sizeof...(cs)}; }
+
+        template<char... cs2>
+        constexpr string_c<cs..., cs2...> operator+(string_c<cs2...> /*unused*/) const
+        { return {}; }
     };
+
+    template<class, class>
+    struct string_c_concat;
+
+    template<char... xs, char... ys>
+    struct string_c_concat<string_c<xs...>, string_c<ys...>>
+    {
+        using type = string_c<xs..., ys...>;
+    };
+
+    template<class x, class y>
+    using string_c_concat_t = typename string_c_concat<x, y>::type;
 
     namespace literals
     {
@@ -51,6 +67,12 @@ namespace jln
         REDEMPTION_DIAGNOSTIC_POP
     } // namespace literals
 
+    template<unsigned long long x>
+    struct ull_to_string_c;
+
+    template<unsigned long long x>
+    using ull_to_string_c_t = typename ull_to_string_c<x>::type;
+
     namespace detail
     {
         template<int n>
@@ -59,36 +81,46 @@ namespace jln
         template<>
         struct ull_to_string_c_impl<1>
         {
-            template<char c1, char c2, char c3, char c4, char c5>
-            using type = string_c<c5>;
+            template<unsigned long long x, char c1, char c2, char c3, char c4, char c5>
+            using f = string_c<c5>;
         };
 
         template<>
         struct ull_to_string_c_impl<2>
         {
-            template<char c1, char c2, char c3, char c4, char c5>
-            using type = string_c<c4, c5>;
+            template<unsigned long long x, char c1, char c2, char c3, char c4, char c5>
+            using f = string_c<c4, c5>;
         };
 
         template<>
         struct ull_to_string_c_impl<3>
         {
-            template<char c1, char c2, char c3, char c4, char c5>
-            using type = string_c<c3, c4, c5>;
+            template<unsigned long long x, char c1, char c2, char c3, char c4, char c5>
+            using f = string_c<c3, c4, c5>;
         };
 
         template<>
         struct ull_to_string_c_impl<4>
         {
-            template<char c1, char c2, char c3, char c4, char c5>
-            using type = string_c<c2, c3, c4, c5>;
+            template<unsigned long long x, char c1, char c2, char c3, char c4, char c5>
+            using f = string_c<c2, c3, c4, c5>;
         };
 
         template<>
         struct ull_to_string_c_impl<5>
         {
-            template<char c1, char c2, char c3, char c4, char c5>
-            using type = string_c<c1, c2, c3, c4, c5>;
+            template<unsigned long long x, char c1, char c2, char c3, char c4, char c5>
+            using f = string_c<c1, c2, c3, c4, c5>;
+        };
+
+        template<>
+        struct ull_to_string_c_impl<6>
+        {
+            template<unsigned long long x, char c1, char c2, char c3, char c4, char c5>
+            using f = string_c_concat_t<
+                ull_to_string_c_t<x/100000>,
+                string_c<c1, c2, c3, c4, c5>
+            >;
         };
     } // namespace detail
 
@@ -102,7 +134,8 @@ namespace jln
             x > 99 ? 3 :
             x > 9 ? 2
                 : 1
-        )>::template type<
+        )>::template f<
+            x,
             char(x / 10000 % 10 + '0'),
             char(x / 1000 % 10 + '0'),
             char(x / 100 % 10 + '0'),
@@ -111,18 +144,30 @@ namespace jln
         >;
     };
 
-    template<unsigned long long x>
-    using ull_to_string_c_t = typename ull_to_string_c<x>::type;
-
-    template<class, class>
-    struct string_c_concat;
-
-    template<char... xs, char... ys>
-    struct string_c_concat<string_c<xs...>, string_c<ys...>>
+    namespace detail
     {
-        using type = string_c<xs..., ys...>;
-    };
+        template<bool>
+        struct integer_to_string_c_t_impl;
 
-    template<class x, class y>
-    using string_c_concat_t = typename string_c_concat<x, y>::type;
+        template<>
+        struct integer_to_string_c_t_impl<true>
+        {
+            template<long long x>
+            using f = string_c_concat_t<
+                string_c<'-'>,
+                ull_to_string_c_t<static_cast<unsigned long long>(-(x+1))+1u>
+            >;
+        };
+
+        template<>
+        struct integer_to_string_c_t_impl<false>
+        {
+            template<unsigned long long x>
+            using f = ull_to_string_c_t<x>;
+        };
+    }
+
+    template<class T, T x>
+    using integer_to_string_c_t = typename detail::integer_to_string_c_t_impl<(x < 0)>
+        ::template f<x>;
 } // namespace jln

@@ -20,11 +20,13 @@ Author(s): Jonathan Poelen
 
 #include "core/session_reactor.hpp"
 #include "acl/auth_api.hpp"
+#include "acl/gd_provider.hpp"
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
+#include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
@@ -41,10 +43,9 @@ Author(s): Jonathan Poelen
 #include "redjs/browser_front.hpp"
 #include "redjs/channel_receiver.hpp"
 #include "acl/sesman.hpp"
-
+#include "utils/timebase.hpp"
 
 #include <chrono>
-
 
 using Ms = std::chrono::milliseconds;
 
@@ -93,14 +94,12 @@ struct RdpClient
 
     redjs::BrowserFront front;
     gdi::GraphicApi& gd;
+    GdForwarder<gdi::GraphicApi> gd_forwarder{gd};
+
     JsReportMessage report_message;
     TimeBase time_base;
     TopFdContainer fd_events;
-    GraphicFdContainer graphic_fd_events;
     TimerContainer timer_events;
-    GraphicEventContainer graphic_events;
-    GraphicTimerContainer graphic_timer_events;
-    CallbackEventContainer front_events;
 
     Inifile ini;
     SesmanInterface sesman;
@@ -122,6 +121,7 @@ struct RdpClient
         uint32_t disabled_orders, unsigned long verbose)
     : front(callbacks, width, height, RDPVerbose(verbose))
     , gd(front.graphic_api())
+    , time_base({0,0})
     , sesman(ini)
     , js_rand(callbacks)
     {
@@ -154,13 +154,13 @@ struct RdpClient
             RDPVerbose(verbose)
         );
 
-        mod_rdp_params.device_id                  = "device_id";
-        mod_rdp_params.enable_tls                 = false;
-        mod_rdp_params.enable_nla                 = false;
-        mod_rdp_params.enable_fastpath            = true;
-        mod_rdp_params.enable_new_pointer         = true;
-        mod_rdp_params.enable_glyph_cache         = true;
-        mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
+        mod_rdp_params.device_id           = "device_id";
+        mod_rdp_params.enable_tls          = false;
+        mod_rdp_params.enable_nla          = false;
+        mod_rdp_params.enable_fastpath     = true;
+        mod_rdp_params.enable_new_pointer  = true;
+        mod_rdp_params.enable_glyph_cache  = true;
+        mod_rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
         mod_rdp_params.ignore_auth_channel = true;
 
 
@@ -168,12 +168,11 @@ struct RdpClient
             mod_rdp_params.log();
         }
 
-        const ChannelsAuthorizations channels_authorizations("*", std::string{});
+        const ChannelsAuthorizations channels_authorizations("*", std::string_view{});
 
         this->mod = new_mod_rdp(
-            browser_trans, ini, time_base,
-            fd_events, graphic_fd_events, timer_events, graphic_events, sesman,
-            gd, front, client_info,
+            browser_trans, ini, time_base, gd_forwarder,
+            fd_events, timer_events, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -181,35 +180,30 @@ struct RdpClient
 
     void send_first_packet()
     {
-        graphic_fd_events.exec_timeout(time_base.get_current_time(), this->gd);
+        this->fd_events.exec_timeout(this->time_base.get_current_time());
     }
 
     bytes_view get_sending_data_view() const
     {
-        return browser_trans.get_out_buffer();
+        return this->browser_trans.get_output_buffer();
     }
 
     void clear_sending_data()
     {
-        browser_trans.clear_out_buffer();
+        this->browser_trans.clear_output_buffer();
     }
 
     void add_receiving_data(std::string data)
     {
-        browser_trans.add_in_buffer(std::move(data));
-        front_events.exec_action(*mod);
-        graphic_events.exec_action(gd);
-        auto fd_isset = [fd_trans = browser_trans.get_fd()](int fd, auto& /*e*/){
-            return fd == fd_trans;
-        };
-        graphic_fd_events.exec_action(fd_isset, gd);
+        this->browser_trans.push_input_buffer(std::move(data));
+        this->fd_events.exec_action([](int /*fd*/, auto& /*top*/){ return true; });
     }
 
     void rdp_input_scancode(uint16_t key, uint16_t flag)
     {
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            time_base.get_current_time().tv_sec,
+            this->time_base.get_current_time().tv_sec,
             nullptr);
     }
 

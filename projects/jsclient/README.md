@@ -1,36 +1,12 @@
 # Install Emscripten
 
-http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html
+https://emscripten.org/docs/getting_started/downloads.html
 
-## Download
-
-```bash
-wget 'https://github.com/juj/emsdk/archive/master.zip' -Oemsdk-master.zip
-unzip emsdk-master.zip
-cd emsdk-master/
-./emsdk install sdk-1.38.31-64bit
-```
-
-## Setting
-
-```bash
-./emsdk activate sdk-1.38.31-64bit
-source ./emsdk_env.sh
-```
-
-## Environment
-
-```bash
-source ./emsdk_set_env.sh
-```
-
-## Update
-
-```bash
-./emsdk update
-./emsdk install sdk-1.38.31-64bit
-./emsdk activate sdk-1.38.31-64bit
-source ./emsdk_env.sh
+```sh
+git clone https://github.com/emscripten-core/emsdk.git &&
+cd emsdk &&
+./emsdk install latest &&
+./emsdk activate latest
 ```
 
 ## Test
@@ -45,6 +21,7 @@ int main()
 ```
 
 ```bash
+source ./emsdk_env.sh
 em++ test.cpp -o test.js
 node test.js
 ```
@@ -122,8 +99,8 @@ cargo build --release --bin websocat
 Create a server at build directory (see `bjam toolset=clang cwd`).
 
     cd "$(bjam toolset=clang cwd | sed '/^CWD/!d;s/^CWD: //')"
-    python -m SimpleHTTPServer 7453 &
-    xdg-open client.html
+    python -m http.server 7453 --bind 127.0.0.1
+    xdg-open http://localhost:7453/client.html
 
 Or run
 

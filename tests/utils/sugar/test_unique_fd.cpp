@@ -37,3 +37,16 @@ RED_AUTO_TEST_CASE_WF(TestLocalFd, wf)
     RED_CHECK(fd.is_open());
     RED_CHECK(fd.fd() > 0);
 }
+
+RED_AUTO_TEST_CASE_WF(TestReleaseFd, wf)
+{
+    char const* const unknown_file = wf.c_str();
+    unique_fd fd = unique_fd(unknown_file, O_RDONLY|O_CREAT, 0666);
+    RED_CHECK(fd.fd() != -1);
+    int sck = fd.fd();
+    unique_fd other_fd(fd.release());
+    RED_CHECK(fd.fd() == -1);
+    RED_CHECK(other_fd.fd() == sck);
+    RED_CHECK(!fd.is_open());
+    RED_CHECK(other_fd.is_open());
+}

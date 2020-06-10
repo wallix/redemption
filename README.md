@@ -37,7 +37,7 @@ Support of:
 # Dependencies
 
 To compile ReDemPtion you need the following packages:
-- libboost-tools-dev (contains bjam: software build tool) (https://github.com/boostorg/build)
+- libboost-tools-dev (contains bjam and b2: software build tool) (https://github.com/boostorg/build)
 - libboost-test-dev (unit-test dependency)
 - zlib1g-dev
 - libssl-dev
@@ -59,7 +59,7 @@ Submodule ($ `git submodule update --init`):
 
 On Ubuntu SNAPPY dev files are broken and `SNAPPY_MAJOR`, `SNAPPY_MINOR` and `SNAPPY_PATCHLEVEL` macros are not defined.
 The simplest way to fix that is editing `/usr/include/snappy-stubs-public.h` and define these above `SNAPPY_VERSION`
-like below (change values depending on your snappy package). 
+like below (change values depending on your snappy package).
 
 ```bash
 $ apt show libsnappy-dev | grep Version
@@ -145,12 +145,12 @@ Use `bjam --help` for more information.
 
 ## Special runtime variables (shell variable)
 
-- `REDEMPTION_FILTER_ERROR`: Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
+- `REDEMPTION_FILTER_ERROR` (Only if `BOOST_STACKTRACE != 0`): No backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
 
 
 ## Setting build variables
 
-List with `sed -E 's/.*\[ setvar ([^ ]+).*\] ;/\1/;t;d' jam/defines.jam`
+List with `bjam env_help`.
 
     bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
 
@@ -159,8 +159,6 @@ Or with a shell variable
     export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
     bjam ....
 
-List default values with `sed -E 's/^([A-Z_]+)_DEFAULT [^=]+= (.*) ;/\1 = \2/;t;d' jam/defines.jam`
-
 
 ## Modes and options
 
@@ -168,7 +166,7 @@ $ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 
 - `release`: default
 - `debug`: debug mode
-- `san`: debug + enable sanitizers: asan, lsan, usan
+- `san`: debug + sanitizers (asan, lsan, usan)
 
 - `-s cxx_color`: default auto never always
 - `-s cxx_lto`: off on fat linker-plugin
@@ -176,7 +174,7 @@ $ `bjam [variant=]{release|debug|san} [-s cxx_option=value] [target...]`
 - `-s cxx_stack_protector`: off on strong all
 - ...
 
-(`cxx_*` options list with `sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/\1 = \2/;t;d' jam/cxxflags.jam`)
+Complet list with `bjam cxx_help`.
 
 
 # Run ReDemPtion
@@ -259,75 +257,12 @@ Exemple call line for proxy_recorder:
 
     ./tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
 
+- `--add-changelog`: if you want to add some specific changelogs
+
 
 # Test files
 
-(`docs/TU/unit_test.pdf`)
-
-Based on [Boost.Test](https://www.boost.org/doc/libs/1_70_0/libs/test/doc/html/index.html) with a `RED_` prefix rather than `BOOST_`.
-
-Redemption extra macro (`tests/includes/test_only/test_framework/`):
-
-- `RED_TEST(a == b)`, `RED_REQUIRE`. (old macros: `RED_CHECK_EQ(a,b)`, `RED_REQUIRE_EQ(a,b)`, `*_{LT,GT,LE,GE,NE,EQUAL})`
-- `RED_FILE_CONTENTS(filename, contents)` require `#include "test_only/get_file_contents.hpp"`
-- `RED_TEST_DELEGATE_PRINT(type, expr)`: ex `RED_TEST_DELEGATE_PRINT(myvalue, x.get())`
-- `RED_TEST_DELEGATE_PRINT_ENUM(type)`
-- `RED_CHECK_EQ_RANGES(rng1, rng2)`
-- `RED_TEST_FUNC(function)((args...) @ xxx)`: `RED_TEST_FUNC(strlen)(("test") == 4)`
-- `RED_TEST_FUNC_CTX(function)`: `auto fstrlen = RED_TEST_FUNC_CTX(function); RED_TEST(fstrlen("test") == 4)`
-- `RED_TEST_INVOKER(function)`: `auto foo = RED_TEST_INVOKER(my_local_lambda_or_func) RED_TEST(foo("test") == 4)`
-- `RED_CHECK_EXCEPTION_ERROR_ID(stmt, id)`: `CHECK_EXCEPTION_ERROR_ID(trans.send("message"_av), ERR_TRANSPORT_WRITE_FAILED)`
-- `RED_ERROR_COUNT`
-- `RED_BIND_DATA_TEST_CASE(name, dataset, varnames...)`
-
-```cpp
-RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
-    std::tuple{3, "3"},
-    std::tuple{5, "5"}
-}), number, string)
-{
-    RED_TEST(std::to_string(number) == string);
-}
-```
-
-Special values:
-
-```cpp
-RED_TEST(x == y +- 1_v); // x between y-1 to y+1
-RED_TEST(x == y +- 3_percent); // x between y-y*3/100 to y+y*3/100
-RED_TEST(x < y +- 1_v);
-
-using namespace std::literals::string_view_literals;
-
-// RED_TEST(render(range) == range) or RED_TEST(range == render(range))
-
-RED_TEST(ut::ascii("aéc\xff"sv) == "abcd"sv); // no ascii character to hexadecimal ("a\xc3\xa9""c\xff")
-RED_TEST(ut::utf8("aéc\xff"sv) == "abcd"sv); // no utf8 character to hexadecimal ("aéc\xff")
-RED_TEST(ut::hex("aéc\xff"sv) == "abcd"sv); // all hexadecimal ("\x61\xc3\xa9\x63\xff")
-RED_TEST(ut::dump("aéc\xff"sv) == "abcd"sv); // hexdump format
-```
-
-Special class:
-
-- WorkingDiretory: `tests/includes/test_only/working_directory.hpp`
-- WorkingFile: `tests/includes/test_only/working_directory.hpp`
-
-```
-RED_AUTO_TEST_CASE_WD(name, wd)
-{
-  // wd is a WorkingDiretory
-  auto filename1 = wd.add_file("file1");
-  auto filename2 = wd.add_file("file2");
-  create_file(filename1);
-  create_file(filename2);
-  // RED_CHECK_WORKSPACE(wd); check if WorkingDiretory contains only file1 and file2 (implicit with RED_AUTO_TEST_CASE_WD)
-}
-
-RED_AUTO_TEST_CASE_WF(name, wf)
-{
-  create_file(wf);
-}
-```
+See [test_framework directory](tests/includes/test_only/test_framework).
 
 
 # FAQ

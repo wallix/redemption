@@ -23,6 +23,7 @@
 
 #include "mod/vnc/vnc.hpp"
 #include <openssl/tls1.h>
+#include "acl/gd_provider.hpp"
 
 
 #ifndef __EMSCRIPTEN__
@@ -33,9 +34,9 @@
 
 mod_vnc::mod_vnc( Transport & t
            , TimeBase& time_base
-           , GraphicFdContainer & graphic_fd_events_
+           , GdProvider & gd_provider
+           , TopFdContainer & fd_events_
            , TimerContainer & timer_events_
-           , GraphicEventContainer & graphic_events_
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -74,7 +75,7 @@ mod_vnc::mod_vnc( Transport & t
     , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , time_base(time_base)
-    , graphic_events_(graphic_events_)
+    , gd_provider(gd_provider)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
 #endif
@@ -95,18 +96,18 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    this->fd_event = graphic_fd_events_.create_top_executor(time_base, this->t.get_fd())
+    this->fd_event = fd_events_.create_top_executor(time_base, this->t.get_fd())
         .set_timeout(std::chrono::milliseconds(0))
         .on_exit(jln::propagate_exit())
-        .on_action([this, &sesman](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-            this->draw_event(gd, sesman);
+        .on_action([this, &sesman](JLN_TOP_CTX ctx){
+            this->draw_event(this->gd_provider.get_graphics(), sesman);
             return ctx.need_more_data();
         })
-        .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
-            gdi_clear_screen(gd, this->get_dim());
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx){
+            gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
             // rearmed by clipboard
             return ctx.disable_timeout()
-            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi&){
+            .replace_timeout([this](JLN_TOP_TIMER_CTX ctx){
                 this->check_timeout();
                 return ctx.disable_timeout().ready();
             });
@@ -157,18 +158,14 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     return true;
 }
 
-void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface & sesman)
+void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
 
     // set almost null cursor, this is the little dot cursor
     drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-    this->report_message.log6(
-        LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-        this->time_base.get_current_time(),
-        {}
-    );
+    this->report_message.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
 
     Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -178,7 +175,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable, SesmanInterface &
     drawable.end_update();
 
     this->state = UP_AND_RUNNING;
-    this->front.can_be_start_capture(sesman);
+    this->front.can_be_start_capture();
 
     this->update_screen(screen_rect, 1);
     this->lib_open_clip_channel();
@@ -757,7 +754,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
     switch (this->state)
     {
     case DO_INITIAL_CLEAR_SCREEN:
-        this->initial_clear_screen(gd, sesman);
+        this->initial_clear_screen(gd);
         return false;
 
     case UP_AND_RUNNING:
@@ -2047,17 +2044,22 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 }
 
 
+void mod_vnc::init()
+{
+    if (this->gd_provider.is_ready_to_draw()
+    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
+        this->state = DO_INITIAL_CLEAR_SCREEN;
+        this->initial_clear_screen(this->gd_provider.get_graphics());
+    }
+}
+
+
 void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
 {
-    LOG(LOG_INFO, "mod_vnc::rdp_gdi_up_and_running");
-    if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
+    if (this->gd_provider.is_ready_to_draw()
+    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->graphic_events_.create_action_executor(this->time_base)
-        .on_action([this](auto ctx, gdi::GraphicApi & drawable){
-            this->initial_clear_screen(drawable, this->sesman);
-            return ctx.terminate();
-        });
+        this->initial_clear_screen(this->gd_provider.get_graphics());
     }
 }
 
@@ -2093,11 +2095,7 @@ void mod_vnc::disconnect()
         int((seconds % 3600) / 60),
         int(seconds % 60));
 
-    this->report_message.log6(
-        LogId::SESSION_DISCONNECTION,
-        this->time_base.get_current_time(), {
-        KVLog("duration"_av, {duration_str, len}),
-    });
+    this->report_message.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
 
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
         "type=SESSION_DISCONNECTION duration=%s", duration_str);

@@ -19,15 +19,30 @@
  *
  */
 
-#include "mod/internal/close_mod.hpp"
 #include "configs/config.hpp"
+#include "mod/internal/close_mod.hpp"
 #include "core/front_api.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
 
-namespace
+static FlatWabClose build_close_widget(gdi::GraphicApi & drawable,
+                                Rect const widget_rect,
+                                CloseMod & mod,
+                                WidgetScreen & screen,
+                                std::string auth_error_message,
+                                CloseModVariables vars,
+                                Font const& font, Theme const& theme, bool back_selector);
+
+static FlatWabClose build_close_widget(gdi::GraphicApi & drawable,
+                                Rect const widget_rect,
+                                CloseMod & mod,
+                                WidgetScreen & screen,
+                                std::string auth_error_message,
+                                CloseModVariables vars,
+                                Font const& font, Theme const& theme, bool back_selector)
 {
+
     struct temporary_text
     {
         char text[255];
@@ -38,7 +53,8 @@ namespace
                 snprintf(text, sizeof(text), "%s", TR(trkeys::selector, language(vars)).c_str());
             }
             else {
-                // TODO target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman
+                // TODO target_application only used for user message,
+                // the two branches of alternative should be unified et message prepared by sesman
                 if (!vars.get<cfg::globals::target_application>().empty()) {
                     snprintf(
                         text, sizeof(text), "%s",
@@ -53,33 +69,42 @@ namespace
             }
         }
     };
-} // namespace
+
+
+    FlatWabClose widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+                        screen, &mod, auth_error_message.c_str(),
+                        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
+                            ? nullptr
+                            : vars.get<cfg::globals::auth_user>().c_str(),
+                        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
+                            ? nullptr
+                            : temporary_text(vars).text,
+                        true,
+                        vars.get<cfg::context::close_box_extra_message>().c_str(),
+                        font, theme, language(vars), back_selector);
+
+    return widget;
+}
+
+
 
 CloseMod::CloseMod(
     std::string auth_error_message,
-    CloseModVariables vars, 
+    CloseModVariables vars,
     TimeBase& time_base,
     TimerContainer& timer_events_,
-    gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
+    GdProvider & gd_provider,
+    FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
-    Font const& font, Theme const& theme, bool showtimer, bool back_selector)
+    Font const& font, Theme const& theme, bool back_selector)
     : close_widget(
-        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this,
-        auth_error_message.c_str(),
-        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
-            ? nullptr
-            : vars.get<cfg::globals::auth_user>().c_str(),
-        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
-            ? nullptr
-            : temporary_text(vars).text,
-        showtimer,
-        vars.get<cfg::context::close_box_extra_message>().c_str(),
-        font, theme, language(vars), back_selector)
+        build_close_widget(gd_provider.get_graphics(), widget_rect, *this, this->screen, auth_error_message,
+                           vars, font, theme, back_selector))
     , vars(vars)
     , front_width(width)
     , front_height(height)
     , front(front)
-    , screen(drawable, front_width, front_height, font, nullptr, theme)
+    , screen(gd_provider.get_graphics(), front_width, front_height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , dc_state(DCState::Wait)
@@ -94,7 +119,7 @@ CloseMod::CloseMod(
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
             static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
     }
-    drawable.set_palette(BGRPalette::classic_332());
+    gd_provider.get_graphics().set_palette(BGRPalette::classic_332());
 
     this->screen.add_widget(&this->close_widget);
     this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget::focus_reason_tabkey);
@@ -105,18 +130,15 @@ CloseMod::CloseMod(
     if (vars.get<cfg::globals::close_timeout>().count()) {
         std::chrono::seconds delay{1};
         std::chrono::seconds start_timer{};
-        if (!showtimer) {
-            delay = vars.get<cfg::globals::close_timeout>();
-            start_timer = delay;
-        }
-        this->timeout_timer = timer_events_
-        .create_timer_executor(time_base, start_timer)
+        this->timeout_timer = timer_events_.create_timer_executor(time_base, start_timer)
         .set_delay(delay)
         .on_action([this](JLN_TIMER_CTX ctx, std::chrono::seconds& seconds){
+//            LOG(LOG_INFO, "timer event %ld", seconds.count());
             // TODO milliseconds += ctx.time() - previous_time
             ++seconds;
             auto const close_timeout = this->vars.get<cfg::globals::close_timeout>();
             if (seconds < close_timeout) {
+//                LOG(LOG_INFO, "refresh time");
                 this->close_widget.refresh_timeleft((close_timeout - seconds).count());
                 return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
             }
@@ -148,10 +170,11 @@ void CloseMod::notify(Widget* sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {
+        LOG(LOG_INFO, "CloseMod::notify Click on Close Button");
         this->set_mod_signal(BACK_EVENT_STOP);
     }
     else if (NOTIFY_SUBMIT == event) {
-        LOG(LOG_INFO, "asking for selector");
+        LOG(LOG_INFO, "CloseMod::notify Click on Back to Selector Button");
         this->vars.ask<cfg::context::selector>();
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     ScreenInfo screen_info{1600, 1200, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base;
+    TimeBase time_base({0,0});
     TimerContainer timer_events_;
     ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
 

@@ -24,16 +24,16 @@
 
 #pragma once
 
-#include "configs/config.hpp"
-#include "core/channels_authorizations.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
-#include "acl/dispatch_report_message.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
 
+class AuthApi;
+class Random;
+class CryptoContext;
 
 extern ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -43,13 +43,11 @@ extern ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     TopFdContainer& fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer& graphic_events_,
     SesmanInterface & sesman,
     LicenseApi & file_system_license_store,
     Random & gen,
     TimeObj & timeobj,
     CryptoContext & cctx,
-    std::array<uint8_t, 28>& server_auto_reconnect_packet);
-
+    std::array<uint8_t, 28>& server_auto_reconnect_packet
+);

@@ -20,55 +20,30 @@
 */
 #pragma once
 
-#include "mod/null/null.hpp"
-#include "mod/mod_api.hpp"
-#include "transport/socket_transport.hpp"
-
-#include "acl/end_session_warning.hpp"
 #include "RAIL/client_execute.hpp"
-#include "acl/auth_api.hpp"
-#include "acl/file_system_license_store.hpp"
+#include "acl/gd_provider.hpp"
+#include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
+#include "acl/time_before_closing.hpp"
 #include "configs/config.hpp"
-#include "core/log_id.hpp"
-#include "core/session_reactor.hpp"
-#include "front/front.hpp"
+#include "core/callback_forwarder.hpp"
+#include "core/front_api.hpp"
+#include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
-#include "gdi/clip_from_cmd.hpp"
 #include "gdi/subrect4.hpp"
-#include "utils/sugar/array_view.hpp"
-
-
 #include "mod/internal/rail_module_host_mod.hpp"
-
-#include "mod/rdp/rdp_api.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
 #include "mod/rdp/windowing_api.hpp"
-#include "mod/xup/xup.hpp"
-
-#include "transport/socket_transport.hpp"
-
-#include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "utils/sugar/update_lock.hpp"
-#include "utils/log_siem.hpp"
-#include "utils/fileutils.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include "acl/module_manager/enums.hpp"
-#include "core/back_event_t.hpp"
 
-#include "core/session_reactor.hpp"
-
-#include "core/callback_forwarder.hpp"
-#include "acl/time_before_closing.hpp"
-#include "acl/mod_pack.hpp"
-#include "acl/gd_provider.hpp"
+class SocketTransport;
+class rdp_api;
 
 struct ModWrapper : public GdProvider
 {
@@ -83,7 +58,7 @@ struct ModWrapper : public GdProvider
         BGRPalette const & palette;
         Rect protected_rect;
 
-        GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect) 
+        GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect)
             : sink(sink), callback(callback), palette(palette), protected_rect(rect) {}
 
         template<class Command, class... Args>
@@ -91,7 +66,7 @@ struct ModWrapper : public GdProvider
             { this->sink.draw(cmd); }
         void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
             { this->sink.draw(cmd, content); }
-            
+
         template<class Command, class... Args>
         void draw(Command const & cmd, Rect clip, Args const &... args)
         {
@@ -187,27 +162,25 @@ struct ModWrapper : public GdProvider
             }
         }
 
-        void set_pointer(uint16_t cache_idx, Pointer const& cursor, gdi::GraphicApi::SetPointerMode mode) 
-            {this->sink.set_pointer(cache_idx, cursor, mode); }
-        void set_palette(BGRPalette const & palette)
-            { this->sink.set_palette(palette); }
-        void sync()
-            {this->sink.sync();}
-        void set_row(std::size_t rownum, bytes_view data)
-            {this->sink.set_row(rownum, data);}
-        void begin_update()
-            {this->sink.begin_update();}
-        void end_update()
-            {this->sink.end_update();}
+        void set_pointer(
+            uint16_t cache_idx, Pointer const& cursor,
+            gdi::GraphicApi::SetPointerMode mode)
+        {
+            this->sink.set_pointer(cache_idx, cursor, mode);
+        }
 
-
+        void set_palette(BGRPalette const & palette) { this->sink.set_palette(palette); }
+        void sync() { this->sink.sync(); }
+        void set_row(std::size_t rownum, bytes_view data) { this->sink.set_row(rownum, data); }
+        void begin_update() { this->sink.begin_update(); }
+        void end_update() { this->sink.end_update(); }
     } gfilter;
 
     struct gdi::GraphicApiForwarder<GFilter> g;
 
     FrontAPI & front;
-    
-    std::string module_name() 
+
+    std::string module_name() const
     {
         return this->modi->module_name();
     }
@@ -218,7 +191,7 @@ public:
 public:
 
     bool target_info_is_shown = false;
-    bool show_osd_flag = false;
+    bool enable_osd = false;
 
     bool is_connected() const {
         return this->connected;
@@ -230,7 +203,7 @@ public:
 
     void last_disconnect()
     {
-        if (this->has_mod()) {
+        if (this->modi != &this->no_mod) {
             try {
                 this->get_mod()->disconnect();
             }
@@ -246,6 +219,8 @@ public:
         return this->g;
     }
 
+    bool is_ready_to_draw() override { return true; }
+
     // FIXME: we should always be able to use graphic_wrapper directly
     // finding out the actual internal graphics interface should never be necessary
     gdi::GraphicApi & get_graphic_wrapper()
@@ -257,6 +232,19 @@ public:
         return gd;
     }
 
+    void display_osd_message(const std::string& message) override
+    {
+        if (message != this->get_message()) {
+            this->clear_osd_message();
+        }
+        if (!message.empty()) {
+            this->osd_message = std::move(message);
+            this->is_disable_by_input = true;
+            str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
+            this->prepare_osd_message();
+            this->draw_osd_message();
+        }
+    }
 
     [[nodiscard]] Rect get_protected_rect() const
     { return this->gfilter.protected_rect; }
@@ -313,17 +301,12 @@ public:
         return this->osd_message.c_str();
     }
 
-    void set_message(std::string message, bool is_disable_by_input)
+    void prepare_osd_message()
     {
-        this->osd_message = std::move(message);
-        this->is_disable_by_input = is_disable_by_input;
         this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
          && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
          && (this->client_info.cs_monitor.monitorCount > 1));
 
-        if (is_disable_by_input) {
-            str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
-        }
 
         gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
         int w = tm.width + padw * 2;
@@ -426,13 +409,9 @@ public:
         return this->modi;
     }
 
-    bool has_mod() const {
-        return (this->modi != &this->no_mod);
-    }
-
     void remove_mod()
     {
-        if (this->has_mod()){
+        if (this->modi != &this->no_mod){
             this->clear_osd_message();
             delete this->modi;
             this->modi = &this->no_mod;
@@ -443,7 +422,7 @@ public:
     }
 
     bool is_up_and_running() const {
-        return this->has_mod() && this->get_mod()->is_up_and_running();
+        return (this->modi != &this->no_mod) && this->get_mod()->is_up_and_running();
     }
 
     void set_mod_transport(SocketTransport * psocket_transport)
@@ -474,7 +453,8 @@ public:
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
         this->connected = mod_pack.connected;
-        this->show_osd_flag = mod_pack.enable_osd;
+        this->psocket_transport = mod_pack.psocket_transport;
+        this->enable_osd = mod_pack.enable_osd;
         this->modi->init();
     }
 
@@ -510,17 +490,6 @@ public:
         }
     }
 
-    void osd_message_fn(std::string message, bool is_disable_by_input)
-    {
-        if (message != this->get_message()) {
-            this->clear_osd_message();
-        }
-        if (!message.empty()) {
-            this->set_message(std::move(message), is_disable_by_input);
-            this->draw_osd_message();
-        }
-    }
-
     bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
     {
         if (this->is_disable_by_input
@@ -541,7 +510,7 @@ public:
             this->disable_osd();
             return;
         }
-        if (this->show_osd_flag) {
+        if (this->enable_osd) {
 
             if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
                 && keymap->top_kevent() == Keymap2::KEVENT_INSERT
@@ -554,7 +523,7 @@ public:
 
         this->get_mod()->rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-        if (this->show_osd_flag) {
+        if (this->enable_osd) {
             Inifile const& ini = this->ini;
 
             if (ini.get<cfg::globals::enable_osd_display_remote_target>() && (param1 == Keymap2::F12)) {
@@ -584,7 +553,16 @@ public:
                             msg += ']';
                         }
                     }
-                    this->osd_message_fn(std::move(msg), false);
+                    if (msg != this->get_message()) {
+                        this->clear_osd_message();
+                    }
+                    if (!msg.empty()) {
+                        this->osd_message = std::move(msg);
+                        this->is_disable_by_input = false;
+                        this->prepare_osd_message();
+                        this->draw_osd_message();
+                    }
+
                     this->target_info_is_shown = true;
                 }
             }
@@ -599,7 +577,7 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (!this->try_input_mouse(device_flags, x, y, keymap)) {
-            if (this->show_osd_flag) {
+            if (this->enable_osd) {
                 if (this->try_input_mouse(device_flags, x, y, keymap)) {
                     this->target_info_is_shown = false;
                     return ;

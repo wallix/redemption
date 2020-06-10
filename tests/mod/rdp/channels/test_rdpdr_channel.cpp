@@ -28,6 +28,7 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "./test_channel.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 namespace
 {
@@ -183,10 +184,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         uint32_t     random_number                = 5245;
         const char * proxy_managed_drive_prefix   = "";
 
-        TimeBase time_base;
+        TimeBase time_base({0,0});
         TimerContainer timer_events_;
-        Inifile ini;
-        SesmanInterface sesman(ini);
+        SesmanWrapper sesman;
         FileSystemVirtualChannel file_system_virtual_channel(
             time_base, timer_events_, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);

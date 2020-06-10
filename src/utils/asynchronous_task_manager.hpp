@@ -18,12 +18,14 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
-#include "core/session_reactor.hpp"
+class TimeBase;
+class TimerContainer;
+class TopFdContainer;
 
-class AsynchronousTask {
+class AsynchronousTask
+{
 public:
     virtual ~AsynchronousTask() = default;
 
@@ -64,6 +66,5 @@ public:
         ptr_function  f = [](void* /*unused*/, AsynchronousTask& /*unused*/) noexcept {};
     };
 
-    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, GraphicFdContainer & graphic_fd_events_, TimerContainer&, TerminateEventNotifier) = 0;
+    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, TimerContainer&, TerminateEventNotifier) = 0;
 };
-

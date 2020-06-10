@@ -67,6 +67,5 @@ zstring_view app_path(AppPath) noexcept;
 
 // #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
-#define THEME_INI    "theme.ini"
 
 #define DEFAULT_FONT_NAME "dejavu_14.rbf"

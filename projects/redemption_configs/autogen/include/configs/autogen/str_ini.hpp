@@ -142,6 +142,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (is in millisecond)
 #rdp_keepalive_connection_interval = 0
 
+# Enable primary connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
 [session_log]
 
 # value: 0 or 1
@@ -631,6 +636,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
+#session_probe_update_disabled_features = 1
+
+# value: 0 or 1
+#_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
 # min = 0, max = 511
@@ -674,6 +683,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #session_probe_at_end_of_session_freeze_connection_and_wait = 1
+
+# maxlen = 256
+#_hidden
+#application_driver_exe_or_file = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_script_argument = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_chrome_uia_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
 
 # Keep known server certificates on WAB
 # value: 0 or 1
@@ -892,7 +917,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(
+#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
 
 # (is in second)
 #_advanced
@@ -936,6 +961,16 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #log_if_accepted = 1
+
+# value: 0 or 1
+#_hidden
+#verify_before_transfer = 0
+
+# File greather are automatically rejected.
+# (is in mebibyte)
+# min = 0
+#_hidden
+#max_file_size_rejected = 1024
 
 [file_storage]
 
@@ -1080,15 +1115,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#hash_path = )gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(
+#hash_path = )gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(
+#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_path = )gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(
+#record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
@@ -1260,11 +1295,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #mod_internal = 0
 
 # min = 0
-#_advanced
-#_hex
-#mod_xup = 0
-
-# min = 0
 #_hidden
 #password = 0
 
@@ -1321,7 +1351,86 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [internal_mod]
 
+# Enable target edit field in login page.
+# value: 0 or 1
 #_advanced
-#load_theme = 
+#enable_target_field = 1
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+# value: 0 or 1
+#_advanced
+#enable_theme = 0
+
+#_advanced
+#bgcolor = dark_blue_bis
+
+#_advanced
+#fgcolor = white
+
+#_advanced
+#separator_color = light_blue
+
+#_advanced
+#focus_color = winblue
+
+#_advanced
+#error_color = yellow
+
+# value: 0 or 1
+#_hidden
+#logo = 0
+
+#_hidden
+#logo_path = 
+
+#_advanced
+#edit_bgcolor = white
+
+#_advanced
+#edit_fgcolor = black
+
+#_advanced
+#edit_focus_color = winblue
+
+#_advanced
+#tooltip_bgcolor = black
+
+#_advanced
+#tooltip_fgcolor = light_yellow
+
+#_advanced
+#tooltip_border_color = black
+
+#_advanced
+#selector_line1_bgcolor = pale_blue
+
+#_advanced
+#selector_line1_fgcolor = black
+
+#_advanced
+#selector_line2_bgcolor = light_blue
+
+#_advanced
+#selector_line2_fgcolor = black
+
+#_advanced
+#selector_selected_bgcolor = medium_blue
+
+#_advanced
+#selector_selected_fgcolor = white
+
+#_advanced
+#selector_focus_bgcolor = winblue
+
+#_advanced
+#selector_focus_fgcolor = white
+
+#_advanced
+#selector_label_bgcolor = medium_blue
+
+#_advanced
+#selector_label_fgcolor = white
 
 )gen_config_ini"

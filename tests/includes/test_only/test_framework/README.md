@@ -1,4 +1,6 @@
-Boost.Test with RED prefixe (https://www.boost.org/doc/libs/1_35_0/libs/test/doc/components/utf/index.html)
+Based on [Boost.Test](https://www.boost.org/doc/libs/1_70_0/libs/test/doc/html/index.html) with a `RED_` prefix rather than `BOOST_`.
+
+(`docs/TU/unit_test.pdf`)
 
 # test_framework/redemption_unit_tests.hpp
 
@@ -23,20 +25,20 @@ RED_AUTO_TEST_CASE(test_name)
     // "smart" print if error (ascii and/or hexadecimal)
     RED_TEST(view1 == view2);
 
-    // ascii format
+    // output in ascii format
     RED_TEST(view1 == ut::ascii(view2, minimal_printable_ascii_char));
     RED_TEST(view1 == ut::ascii(view2/*, 0*/));
     RED_TEST(view1 == "abc"_av_ascii);
 
-    // utf8 format
+    // output in utf8 format
     RED_TEST(view1 == ut::utf8(view2));
     RED_TEST(view1 == "abc"_av_utf8);
 
-    // hex format
+    // output in hex format
     RED_TEST(view1 == ut::hex(view2));
     RED_TEST(view1 == "abc"_av_hex);
 
-    // dump format
+    // output in dump format
     RED_TEST(view1 == ut::dump(view2));
     RED_TEST(view1 == "abc"_av_dump);
 

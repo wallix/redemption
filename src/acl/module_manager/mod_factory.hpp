@@ -46,8 +46,6 @@
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
-#include "mod/xup/xup.hpp"
-#include "acl/module_manager/create_mod_xup.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
@@ -63,10 +61,7 @@ class ModFactory
     TimeBase & time_base;
     SesmanInterface & sesman;
     TopFdContainer& fd_events_;
-    GraphicFdContainer & graphic_fd_events_;
     TimerContainer & timer_events_;
-    GraphicEventContainer & graphic_events_;
-    GraphicTimerContainer & graphic_timer_events_;
     ClientInfo & client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
@@ -88,10 +83,7 @@ public:
                TimeBase & time_base,
                SesmanInterface & sesman,
                TopFdContainer& fd_events_,
-               GraphicFdContainer & graphic_fd_events_,
                TimerContainer & timer_events_,
-               GraphicEventContainer & graphic_events_,
-               GraphicTimerContainer & graphic_timer_events_,
                ClientInfo & client_info,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
@@ -110,10 +102,7 @@ public:
         , time_base(time_base)
         , sesman(sesman)
         , fd_events_(fd_events_)
-        , graphic_fd_events_(graphic_fd_events_)
         , timer_events_(timer_events_)
-        , graphic_events_(graphic_events_)
-        , graphic_timer_events_(graphic_timer_events_)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
@@ -165,15 +154,8 @@ public:
             return this->create_wait_info_mod();
         case MODULE_INTERNAL_TRANSITION:
             return this->create_transition_mod();
-        case MODULE_INTERNAL_WIDGET_LOGIN: 
+        case MODULE_INTERNAL_WIDGET_LOGIN:
             return this->create_login_mod();
-        case MODULE_XUP:
-        {
-            auto mod_pack = this->create_xup_mod();
-            mod_pack.enable_osd = true;
-            mod_pack.connected = true;
-            return mod_pack;
-        }
         case MODULE_RDP:
         {
             auto mod_pack = this->create_rdp_mod();
@@ -198,19 +180,19 @@ public:
     {
         auto new_mod = new Bouncer2Mod(
                             this->time_base,
-                            this->graphic_timer_events_,
+                            this->mod_wrapper,
+                            this->timer_events_,
                             this->sesman,
                             this->front,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_mod_replay() -> ModPack
     {
             auto new_mod = new ReplayMod(
                 this->time_base,
-                this->graphic_timer_events_,
                 this->sesman,
                 this->graphics, this->front,
                 [this]{
@@ -226,24 +208,26 @@ public:
                 this->client_info.screen_info.height,
                 this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
+                timeval{0, 0}, timeval{0, 0}, 0,
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
                 this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_widget_test_mod() -> ModPack
     {
         auto new_mod = new WidgetTestMod(
             this->time_base,
-            this->graphic_timer_events_,
+            this->mod_wrapper,
+            this->timer_events_,
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->glyphs
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_test_card_mod() -> ModPack
@@ -255,7 +239,7 @@ public:
             this->glyphs,
             false
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_selector_mod() -> ModPack
@@ -276,7 +260,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_close_mod() -> ModPack
@@ -292,7 +276,7 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
-            this->graphics, this->front,
+            this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
@@ -302,10 +286,9 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme,
-            true,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_close_mod_back_to_selector() -> ModPack
@@ -321,7 +304,7 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
-            this->graphics, this->front,
+            this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
@@ -331,10 +314,9 @@ public:
             this->rail_client_execute,
             this->glyphs,
             this->theme,
-            true,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_interactive_target_mod() -> ModPack
@@ -354,7 +336,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_valid_message_mod() -> ModPack
@@ -380,7 +362,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_display_message_mod() -> ModPack
@@ -406,7 +388,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_dialog_challenge_mod() -> ModPack
@@ -439,7 +421,7 @@ public:
             this->theme,
             challenge
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_wait_info_mod() -> ModPack
@@ -468,7 +450,7 @@ public:
             showform,
             flag
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_transition_mod() -> ModPack
@@ -488,7 +470,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_login_mod() -> ModPack
@@ -535,32 +517,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr};
-    }
-
-    auto create_xup_mod() -> ModPack
-    {
-        unique_fd client_sck = connect_to_target_host(
-                    this->ini, this->time_base,
-                    this->report_message, trkeys::authentification_x_fail);
-
-        const char * name = "XUP Target";
-
-        auto new_mod = new XupModWithSocket(
-            this->mod_wrapper,
-            this->ini,
-            name,
-            std::move(client_sck),
-            this->ini.get<cfg::debug::mod_xup>(),
-            nullptr,
-            this->time_base,
-            this->graphic_fd_events_,
-            this->front,
-            this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            safe_int(this->ini.get<cfg::context::opt_bpp>())
-        );
-        return {new_mod, nullptr, nullptr, nullptr};
+        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_rdp_mod() -> ModPack
@@ -577,9 +534,7 @@ public:
             this->glyphs, this->theme,
             this->time_base,
             this->fd_events_,
-            this->graphic_fd_events_,
             this->timer_events_,
-            this->graphic_events_,
             this->sesman,
             this->file_system_license_store,
             this->gen,
@@ -597,9 +552,8 @@ public:
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,
-            this->graphic_fd_events_,
+            this->fd_events_,
             this->timer_events_,
-            this->graphic_events_,
             this->sesman,
             this->timeobj
         );

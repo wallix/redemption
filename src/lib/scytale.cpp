@@ -1073,7 +1073,9 @@ namespace
     template<class T, class = void>
     struct scytale_raw_value_impl
     {
-        static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum, integral or std::chrono::duration)");
+        static_assert(!std::is_same<T, T>::value,
+            "missing specialization or not a regular type"
+            " (should be a struct with bytes or str member, enum, integral or std::chrono::duration)");
     };
 
     template<class T>

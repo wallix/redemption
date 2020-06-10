@@ -18,15 +18,13 @@
  *   Author(s): Meng Tan
  */
 
-
+#include "configs/config.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/widget/tooltip.hpp"
 #include "keyboard/keymap2.hpp"
-#include "configs/config.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
-
 
 
 void TransitionMod::rdp_input_invalidate(Rect r)

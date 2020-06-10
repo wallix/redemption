@@ -22,9 +22,6 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
-#include "core/channels_authorizations.hpp"
-#include "core/session_reactor.hpp"
-#include "acl/sesman.hpp"
 
 #include <memory>
 
@@ -34,6 +31,8 @@ class FrontAPI;
 class LicenseApi;
 class ReportMessageApi;
 class TimeBase;
+class TopFdContainer;
+class TimerContainer;
 class TimeObj;
 class Transport;
 class RedirectionInfo;
@@ -43,6 +42,9 @@ class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
 class ModRdpFactory;
+class SesmanInterface;
+class GdProvider;
+class ChannelsAuthorizations;
 
 namespace gdi { class GraphicApi; }
 
@@ -50,10 +52,9 @@ std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     Inifile & ini,
     TimeBase& time_base,
+    GdProvider & gd_provider,
     TopFdContainer & fd_events_,
-    GraphicFdContainer & graphic_fd_events_,
     TimerContainer& timer_events_,
-    GraphicEventContainer & graphic_events_,
     SesmanInterface & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,
@@ -61,7 +62,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     RedirectionInfo& redir_info,
     Random& gen,
     TimeObj& timeobj,
-    const ChannelsAuthorizations channels_authorizations,
+    const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
     const TLSClientParams& tls_client_params,
     AuthApi& authentifier,

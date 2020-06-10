@@ -118,12 +118,8 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
-    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
-        // TODO
-    }
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {
-        // TODO
-    }
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {}
 
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }

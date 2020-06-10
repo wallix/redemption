@@ -5,8 +5,15 @@ ECHO "redemption-src: $(REDEMPTION_PUBLIC_PATH)" ;
 JAM_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/jam ;
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
-
 SYSTEM_TYPE = emscripten ;
+## disable some paths
+## @{
+OCR1_INCLUDE_PATH = "" ;
+MLN_INCLUDES_PATH = "" ;
+PPOCR_INCLUDES_PATH = "" ;
+PROGRAM_OPTIONS_INCLUDES_PATH = "" ;
+SYSTEM_SRC_PATH ?= "" ;
+## }
 
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
@@ -21,6 +28,7 @@ include $(JAM_INCLUDE_PATH)/libs.jam ;
 EXE_DEPENDENCIES +=
     <cxxflags>"-s ABORTING_MALLOC=0"
     <cxxflags>"-s EXTRA_EXPORTED_RUNTIME_METHODS=['stringToUTF16']"
+    <cxxflags>"--no-entry"
 ;
 
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
@@ -58,15 +66,15 @@ rule emcc_flags ( properties * )
             <cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
             <cxxflags>"-s DEMANGLE_SUPPORT=1"
             <linkflags>"-s DEMANGLE_SUPPORT=1"
-            <cxxflags>"-s WASM=1"
+            # <cxxflags>"-s WASM=1"
         ;
     }
-    else
-    {
-        fs +=
-            <cxxflags>"-s WASM=0"
-        ;
-    }
+    # else
+    # {
+    #     fs +=
+    #         <cxxflags>"-s WASM=0"
+    #     ;
+    # }
 
     return $(fs) ;
 }
@@ -82,6 +90,10 @@ rule filter_flags ( flags * )
             if $(f) = <conditional>@flags
             {
                 jsflags += <conditional>@emcc_flags ;
+            }
+            else if $(f) = <variant>debug:<cxx-stl-debug-default>allow-broken-abi
+            {
+                jsflags += <variant>debug:<cxx-stl-debug-default>on ;
             }
             else
             {
@@ -104,8 +116,6 @@ project redjs
 
     # <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
 
-    # <cxxflags>-fno-rtti
-    # <define>EMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
     <cxxflags>"-isystem system_include"
     <include>src
 
@@ -113,17 +123,20 @@ project redjs
     # DISABLE_EXCEPTION_CATCHING = 0 - generate code to actually catch exceptions
     # DISABLE_EXCEPTION_CATCHING = 1 - disable exception catching at all
     # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
-    <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
-    <cxxflags>"-s USE_PTHREADS=0"
+    # <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
+    <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=2"
+    <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
+    <linkflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
     # <linkflags>"-s SIMD=1"
     # <cxxflags>"-s FS_LOG=1"
-    # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
-    <cxxflags>"-s FILESYSTEM=1" # TODO because ?
+    <cxxflags>"-s USE_PTHREADS=0"
+    <cxxflags>"-s FILESYSTEM=0"
     <cxxflags>"-s USE_LIBPNG=0"
     <cxxflags>"-s USE_ZLIB=0"
+    <cxxflags>"-s USE_SDL=0"
 
-    # <cxx-lto>on
+    <cxxflags>"-s STRICT=1"
 
     # <cxxflags>"-s ASM_JS=0"
     # <cxxflags>"-s BINARYEN_TRAP_MODE=js" # clamp, allow
@@ -132,11 +145,15 @@ project redjs
     <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
     <variant>debug:<linkflags>"-s DEMANGLE_SUPPORT=1"
 
+    <variant>release:<cxx-lto>on
+
+    <variant>release:<cxxflags>-fno-rtti
+    <variant>release:<define>EMSCRIPTEN_HAS_UNBOUND_TYPE_NAMES=0
+
     <variant>release:<cxxflags>-O3
     # <variant>release:<cxxflags>-Os
     # <variant>release:<cxxflags>-Oz
 
-    <variant>release:<cxxflags>"-s STRICT=1"
     # <variant>release:<cxxflags>"-s AGGRESSIVE_VARIABLE_ELIMINATION=1"
     <variant>release:<cxxflags>"-s EVAL_CTORS=1"
     # <variant>release:<cxxflags>"-s ELIMINATE_DUPLICATE_FUNCTIONS=1" # slow
@@ -193,9 +210,6 @@ alias unit_test.bc :
 constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
     <cxxflags>--bind
-    <cxxflags>-fno-rtti&&-frtti
-    # TODO only if include ".../bind.h"
-    <cxxflags>-Wno-missing-prototypes
 ;
 
 objjs log_test.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/log_as_logtest.cpp
@@ -263,10 +277,6 @@ rule exe-js ( name : src : objs * : deps * )
     exejs $(name).em : $(src) $(objs) log_print.bc :
         $(deps)
         <cxxflags>--bind
-        # TODO rtti
-        <cxxflags>-fno-rtti&&-frtti
-        # TODO only if include ".../bind.h"
-        <cxxflags>-Wno-missing-prototypes
         <cxxflags>"-s MODULARIZE=1"
         <cxxflags>"-s EXPORT_NAME="$(JS_MODULE_NAME)
     ;

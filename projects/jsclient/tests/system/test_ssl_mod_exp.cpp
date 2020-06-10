@@ -14,13 +14,12 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2014
-   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
+   Copyright (C) Wallix 2012
+   Author(s): Christophe Grosjean
+
+   Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#pragma once
 
-#include "utils/crypto/ssl_sha512_direct.hpp"
-
-using SslHMAC_Sha512 = SslHMAC_Sha512_direct;
-using SslSha512 = SslSha512_direct;
+#include "system/ssl_mod_exp.hpp"
+#include "../../../../tests/system/common/test_ssl_mod_exp.hpp"

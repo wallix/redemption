@@ -156,6 +156,7 @@ struct SessionProbeVirtualChannelParams
     std::chrono::milliseconds end_of_session_check_delay_time {};
 
     bool ignore_ui_less_processes_during_end_of_session_check = true;
+    bool update_disabled_features                             = true;
 
     bool childless_window_as_unidentified_input_field = true;
 
@@ -170,6 +171,9 @@ struct SessionProbeVirtualChannelParams
     SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
 
     bool at_end_of_session_freeze_connection_and_wait = true;
+
+    bool launch_application_driver                = false;
+    bool launch_application_driver_then_terminate = false;
 };
 
 

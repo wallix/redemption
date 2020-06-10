@@ -1,3 +1,36 @@
+redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix back to selector
+  * Fix login page escape
+  * Fix OSD
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 29 May 2020 13:09:15 +0200
+
+redemption (8.1.7%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix record filenames
+  * various fixes
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 May 2020 21:50:52 +0200
+
+redemption (8.1.5%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * target in login page
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 26 May 2020 16:37:03 +0200
+
+redemption (8.1.3%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Update options
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 May 2020 17:13:14 +0200
+
+redemption (8.1.0%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Session Loop Refactoring
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 15 May 2020 17:02:07 +0200
+
 redemption (8.0.19%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Review Python3 for Sesman

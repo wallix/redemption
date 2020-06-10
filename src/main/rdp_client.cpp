@@ -24,6 +24,7 @@
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
+#include "core/channels_authorizations.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "client_redemption/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -42,6 +43,7 @@
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
 
 #include <iostream>
@@ -149,13 +151,9 @@ int main(int argc, char** argv)
     ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     TimeSystem system_timeobj;
-    TimeBase time_base;
+    TimeBase time_base(tvtime());
     TopFdContainer fd_events_;
-    GraphicFdContainer graphic_fd_events_;
     TimerContainer timer_events_;
-    GraphicEventContainer graphic_events_;
-    GraphicTimerContainer graphic_timer_events_;
-
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
@@ -183,20 +181,13 @@ int main(int argc, char** argv)
         }
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
-        return run_test_client(
-            is_vnc ? "VNC" : "RDP", time_base, 
-                                    fd_events_,
-                                    graphic_fd_events_,
-                                    timer_events_,
-                                    graphic_events_,
-                                    graphic_timer_events_,
-                                    *mod, gdi::null_gd(),
+        return run_test_client(is_vnc ? "VNC" : "RDP", time_base, fd_events_, timer_events_, *mod,
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
     Inifile ini;
     if (!ini_file.empty()) {
-        configuration_load(ini.configuration_holder(), ini_file);
+        configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
     SesmanInterface sesman(ini);
 
@@ -206,16 +197,16 @@ int main(int argc, char** argv)
     NullAuthentifier authentifier;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
+    GdForwarder<gdi::GraphicApi> gd_forwarder(gdi::null_gd());
 
     if (is_vnc) {
         return run([&](Transport& trans){
             return new_mod_vnc(
                 trans
               , time_base
+              , gd_forwarder
               , fd_events_
-              , graphic_fd_events_
               , timer_events_
-              , graphic_events_
               , sesman
               , username.c_str()
               , password.c_str()
@@ -281,16 +272,16 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, ini, time_base,
+                trans, ini,
+                time_base,
+                gd_forwarder,
                 fd_events_,
-                graphic_fd_events_,
                 timer_events_,
-                graphic_events_,
                 sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, 
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore,
                 ini, nullptr, nullptr, mod_rdp_factory);
         });
     };

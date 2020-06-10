@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestDispatchReportMessage)
         std::string s;
     } front(screen_info);
     struct : NullReportMessage {
-        void log6(LogId id, const timeval /*time*/, KVList /*kv_list*/) override
+        void log6(LogId id, KVList /*kv_list*/) override
         {
             push(s, detail::log_id_string_map[underlying_cast(id)]);
         }
@@ -58,8 +58,8 @@ RED_AUTO_TEST_CASE(TestDispatchReportMessage)
 
     DispatchReportMessage dispatch_report_message(report_message, front, LogCategoryId::Clipboard);
 
-    dispatch_report_message.log6(LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION, {}, {});
-    dispatch_report_message.log6(LogId::BUTTON_CLICKED, {}, {});
+    dispatch_report_message.log6(LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION, {});
+    dispatch_report_message.log6(LogId::BUTTON_CLICKED, {});
 
     RED_CHECK(front.s == "BUTTON_CLICKED\n");
     RED_CHECK(report_message.s == "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION\nBUTTON_CLICKED\n");

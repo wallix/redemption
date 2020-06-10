@@ -184,7 +184,7 @@ public:
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
     void draw(const RDP::FrameMarker & order) override;
 
-    bool logical_frame_ended()
+    bool logical_frame_ended() const
     {
         return this->drawable.logical_frame_ended;
     }

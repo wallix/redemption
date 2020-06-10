@@ -77,15 +77,21 @@
 #include "core/RDPEA/audio_output.hpp"
 
 #include "core/session_reactor.hpp"
-
+#include "mod/rdp/channels/sespro_channel.hpp"
 #include "core/log_id.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
-#include "mod/rdp/rdp.hpp"
 #include "gdi/screen_functions.hpp"
+
+#ifndef __EMSCRIPTEN__
+// TODO: annoying as it introduces a dependency on openssl in rdp mod
+// see how to extract something more abstract where it's used
+// check : enable_server_cert_external_validation workflow
+#include "system/tls_cert_to_escaped_string.hpp"
+#endif
 
 #ifdef __EMSCRIPTEN__
 class RDPMetrics;
@@ -131,11 +137,13 @@ struct FileValidatorService;
 #include "utils/sugar/splitter.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 #include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 
 #include <cstdlib>
 #include <deque>
 #include <bitset>
 
+class SesmanInterface;
 
 #ifndef __EMSCRIPTEN__
 // TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?
@@ -153,15 +161,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer& timer_events_)
-        : time_base(time_base), fd_events_(fd_events_), graphic_fd_events_(graphic_fd_events_), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer& timer_events_)
+        : time_base(time_base), gd_provider(gd_provider), fd_events_(fd_events_), timer_events_(timer_events_)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, AsynchronousTask::TerminateEventNotifier{this, remover()});
         }
     }
 
@@ -169,21 +177,21 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->graphic_fd_events_, this->timer_events_, {this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, AsynchronousTask::TerminateEventNotifier{this, remover()});
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
 public:
     TimeBase& time_base;
+    GdProvider & gd_provider;
     TopFdContainer& fd_events_;
-    GraphicFdContainer& graphic_fd_events_;
     TimerContainer& timer_events_;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, TopFdContainer& fd_events_, GraphicFdContainer& graphic_fd_events_, TimerContainer&)
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer&)
     {}
 };
 #endif
@@ -406,19 +414,22 @@ private:
     const RDPVerbose verbose;
 
     TimeBase & time_base;
+    GdProvider & gd_provider;
     TimerContainer& timer_events_;
-    GraphicEventContainer & graphic_events_;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
+    SessionProbeVirtualChannel::Callbacks & callbacks;
 
 public:
     mod_rdp_channels(
-        const ChannelsAuthorizations channels_authorizations,
+        const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, TimerContainer& timer_events_, GraphicEventContainer & graphic_events_,
+        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_,
         FileValidatorService * file_validator_service,
-        ModRdpFactory& mod_rdp_factory)
+        ModRdpFactory& mod_rdp_factory,
+        SessionProbeVirtualChannel::Callbacks & callbacks
+        )
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
@@ -444,14 +455,17 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , time_base(time_base)
+    , gd_provider(gd_provider)
     , timer_events_(timer_events_)
-    , graphic_events_(graphic_events_)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
+    , callbacks(callbacks)
     {}
 
     void DLP_antivirus_check_channels_files() {
-        this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        if (this->clipboard_virtual_channel) {
+            this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
+        }
     }
 
     void init_remote_program_and_session_probe(
@@ -786,7 +800,7 @@ public:
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    mod_api& mod, rdp_api& rdp, AuthApi& authentifier,
+                    rdp_api& rdp, AuthApi& authentifier,
                     const Translation::language_t & lang,
                     const bool bogus_refresh_rect,
                     const uint32_t monitor_count,
@@ -824,16 +838,16 @@ public:
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
             this->timer_events_,
-            this->graphic_events_,
             this->session_probe_to_server_sender.get(),
             front,
-            mod,
             rdp,
             authentifier,
             file_system_virtual_channel,
             this->gen,
             base_params,
-            sp_vc_params);
+            sp_vc_params,
+            this->callbacks
+            );
 #endif
 
     }
@@ -925,7 +939,6 @@ public:
         const CHANNELS::ChannelDef & auth_channel,
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
-        mod_api & mod_rdp,
         ServerTransportContext & stc,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
@@ -953,9 +966,13 @@ public:
         ::parse_server_message(auth_channel_message.c_str(), order, parameters);
 
         if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
-            const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
-            const bool disable_graphics_update = false;
-            mod_rdp.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            if (::strcasecmp(parameters[0].c_str(), "Enable") != 0){
+                this->callbacks.disable_input_event();
+            }
+            else {
+                this->callbacks.enable_input_event();
+            }
+            this->callbacks.enable_graphics_update();
         }
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0]);
@@ -1008,37 +1025,9 @@ public:
         authentifier.set_pm_request(checkout_channel_message.c_str());
     }
 
-    void process_session_probe_event(
-        const CHANNELS::ChannelDef & session_probe_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
-        FrontAPI& front,
-        mod_api & mod_rdp,
-        rdp_api& rdp,
-        AuthApi& authentifier,
-        ServerTransportContext & stc,
-        AsynchronousTaskContainer & asynchronous_tasks,
-        GeneralCaps const & client_general_caps,
-        const char (& client_name)[128],
-        const uint32_t monitor_count,
-        const bool bogus_refresh_rect,
-        const Translation::language_t & lang,
+    void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         SesmanInterface & sesman
     ) {
-        (void)session_probe_channel;
-#ifndef __EMSCRIPTEN__
-        if (!this->session_probe_virtual_channel) {
-            this->create_session_probe_virtual_channel(
-                    front, stc,
-                    asynchronous_tasks,
-                    mod_rdp, rdp, authentifier,
-                    lang,
-                    bogus_refresh_rect,
-                    monitor_count,
-                    client_general_caps,
-                    client_name);
-#endif
-        }
-
 #ifndef __EMSCRIPTEN__
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
 #endif
@@ -1685,7 +1674,6 @@ public:
     void do_enable_session_probe(
         FrontAPI& front,
         ServerTransportContext & stc,
-        mod_api & mod_rdp,
         rdp_api& rdp,
         AuthApi& authentifier,
         AsynchronousTaskContainer & asynchronous_tasks,
@@ -1721,7 +1709,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp, authentifier,
+                    rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -1753,7 +1741,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    mod_rdp, rdp, authentifier,
+                    rdp, authentifier,
                     lang,
                     bogus_refresh_rect,
                     monitor_count,
@@ -1849,6 +1837,17 @@ public:
 
 class mod_rdp : public mod_api, public rdp_api
 {
+    struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
+        mod_rdp & mod;
+        SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {}
+        virtual void freeze_screen() override { mod.freeze_screen(); }
+        virtual void disable_input_event() override { mod.disable_input_event(); }
+        virtual void enable_input_event() override { mod.enable_input_event(); }
+        virtual void enable_graphics_update() override { mod.enable_graphics_update(); }
+        virtual void disable_graphics_update() override { mod.disable_graphics_update(); }
+        virtual void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
+    } spvc_callbacks;
+
     mod_rdp_channels channels;
 
     CryptContext decrypt {};
@@ -1937,11 +1936,11 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     TimeBase& time_base;
-    GraphicFdContainer & graphic_fd_events_;
+    GdProvider & gd_provider;
+    TopFdPtr fd_event;
+    TopFdContainer & fd_events_;
     TimerContainer& timer_events_;
-    GraphicEventContainer & graphic_events_;
     SesmanInterface & sesman;
-    GraphicFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
     TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
@@ -1961,6 +1960,7 @@ class mod_rdp : public mod_api, public rdp_api
     bool graphics_update_disabled = false;
 
     bool mcs_disconnect_provider_ultimatum_pdu_received = false;
+    bool errinfo_graphics_subsystem_failed_encountered  = false;
 
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
@@ -2007,7 +2007,6 @@ class mod_rdp : public mod_api, public rdp_api
     struct PrivateRdpNegociation
     {
         RdpNegociation rdp_negociation;
-        GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
 #ifndef __EMSCRIPTEN__
         CertificateResult result = CertificateResult::wait;
@@ -2034,10 +2033,9 @@ public:
         Transport & trans
       , Inifile & ini
       , TimeBase& time_base
+      , GdProvider & gd_provider
       , TopFdContainer & fd_events_
-      , GraphicFdContainer & graphic_fd_events_
       , TimerContainer& timer_events_
-      , GraphicEventContainer & graphic_events_
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -2045,7 +2043,7 @@ public:
       , RedirectionInfo & redir_info
       , Random & gen
       , TimeObj & timeobj
-      , ChannelsAuthorizations channels_authorizations
+      , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , AuthApi & authentifier
@@ -2056,10 +2054,13 @@ public:
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpFactory& mod_rdp_factory
     )
-        : channels(
-            std::move(channels_authorizations), mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, timer_events_, graphic_events_, file_validator_service,
-            mod_rdp_factory)
+        : spvc_callbacks(*this)
+        , channels(
+            channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
+            report_message, gen, metrics, time_base, gd_provider, timer_events_, file_validator_service,
+            mod_rdp_factory,
+            spvc_callbacks
+        )
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
@@ -2105,12 +2106,12 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
-        , graphic_fd_events_(graphic_fd_events_)
+        , gd_provider(gd_provider)
+        , fd_events_(fd_events_)
         , timer_events_(timer_events_)
-        , graphic_events_(graphic_events_)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(time_base, fd_events_, graphic_fd_events_, timer_events_)
+        , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -2156,27 +2157,189 @@ public:
 #ifndef __EMSCRIPTEN__
         this->channels.init_remote_program_and_session_probe(
             gd, *this, mod_rdp_params, this->authentifier, info, program, directory);
-#else
-        (void)gd;
 #endif
 
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
 
-        gdi_clear_screen(gd, this->get_dim());
+        Dimension const& dim = this->get_dim();
+        Rect const r(0, 0, dim.w, dim.h);
+        RDPOpaqueRect cmd(r, color_encode(BLACK, BitsPerPixel{24}));
+        gd.begin_update();
+        gd.draw(cmd, r, gdi::ColorCtx::depth24());
+        gd.end_update();
 
-        this->init_negociate_event_(
-            info, gen, timeobj, mod_rdp_params, tls_client_params, program, directory,
-            (mod_rdp_params.open_session_timeout!=0s)?mod_rdp_params.open_session_timeout:15s);
+        const std::chrono::seconds open_session_timeout = (mod_rdp_params.open_session_timeout!=0s)
+                                                        ?  mod_rdp_params.open_session_timeout
+                                                        :  15s;
+
+        auto check_error = [this](auto /*ctx*/, jln::ExitR er){
+            LOG(LOG_INFO, "**** rdp::fd_events_.on_error()");
+
+            if (er.status != jln::ExitR::Exception) {
+                return er.to_result();
+            }
+
+            switch (er.error.id) {
+            case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+            case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+            case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+            case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+            case ERR_NLA_AUTHENTICATION_FAILED:
+                return er.to_result();
+            default: break;
+            }
+
+            const char * statestr = "UNKNOWN_STATE";
+            const char * statedescr = "Unknown state.";
+            switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
+                #define CASE(e, trkey)                      \
+                    case RdpNegociation::State::e:          \
+                        statestr = "RDP_" #e;               \
+                        statedescr = TR(trkey, this->lang); \
+                    break
+                CASE(NEGO_INITIATE, trkeys::err_mod_rdp_nego);
+                CASE(NEGO, trkeys::err_mod_rdp_nego);
+                CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
+                CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
+                CASE(CHANNEL_JOIN_CONFIRM, trkeys::mod_rdp_channel_join_confirme);
+                CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
+                CASE(TERMINATED, trkeys::err_mod_rdp_nego);
+                #undef CASE
+            }
+
+            str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
+
+            LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
+                statestr, statedescr);
+            er.error = Error(ERR_SESSION_UNKNOWN_BACKEND);
+            return er.to_result();
+        };
+
+        this->private_rdp_negociation = std::make_unique<PrivateRdpNegociation>(
+            open_session_timeout, program, directory,
+            this->channels.channels_authorizations, this->channels.mod_channel_list,
+            this->channels.auth_channel, this->channels.checkout_channel,
+            this->decrypt, this->encrypt, this->logon_info,
+            this->channels.enable_auth_channel,
+            this->trans, this->front, info, this->redir_info,
+            gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
+    #ifndef __EMSCRIPTEN__
+            this->channels.drive.file_system_drive_manager.has_managed_drive()
+         || this->channels.session_probe.enable_session_probe,
+            this->channels.remote_app.convert_remoteapp_to_desktop,
+    #else
+            false,
+            false,
+    #endif
+            tls_client_params
+        );
+
+        RdpNegociation& rdp_negociation = this->private_rdp_negociation->rdp_negociation;
+
+    #ifndef __EMSCRIPTEN__
+        if (this->enable_server_cert_external_validation) {
+            LOG(LOG_INFO, "**** Enable server cert external validation");
+            rdp_negociation.set_cert_callback([this](X509& certificate){
+                auto& result = this->private_rdp_negociation->result;
+
+                if (result != CertificateResult::wait) {
+                    return result;
+                }
+
+                std::string blob_str;
+                if (!cert_to_escaped_string(certificate, blob_str)) {
+                    LOG(LOG_ERR, "cert_to_string failed");
+                    return result;
+                }
+
+                // LOG(LOG_INFO, "cert pem: %s", blob_str);
+
+                this->sesman.set_server_cert(blob_str);
+                this->sesman.set_acl_server_cert();
+
+                return result;
+            });
+        }
+    #endif
+
+        LOG(LOG_INFO, "**** Start Negociation");
+        rdp_negociation.start_negociation();
+
+        LOG(LOG_INFO, "**** rdp::fd_events_.create_top_executor");
+        this->fd_event = this->fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
+        .on_exit(check_error)
+        .on_action([this](JLN_TOP_CTX ctx){
+            bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+
+            // RdpNego::recv_next_data set a new fd if tls
+            int const fd = this->trans.get_fd();
+            if (fd >= 0) {
+                ctx.set_fd(fd);
+            }
+
+            if (!is_finish) {
+                return ctx.need_more_data();
+            }
+            else {
+                this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+                return ctx.disable_timeout()
+                .replace_exit(jln::propagate_exit())
+                .replace_action([this](JLN_TOP_CTX ctx){
+                    auto & gd = this->gd_provider.get_graphics();
+                    if (this->buf.remaining()){
+                        this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                    }
+                    this->private_rdp_negociation.reset();
+                    #ifndef __EMSCRIPTEN__
+                    if (this->channels.remote_programs_session_manager) {
+                        this->channels.remote_programs_session_manager->set_drawable(&gd);
+                    }
+                    #endif
+                    this->buf.load_data(this->trans);
+                    this->draw_event(gd, this->sesman);
+                    return ctx.replace_action([this](JLN_TOP_CTX ctx){
+                        auto & gd = this->gd_provider.get_graphics();
+                        #ifndef __EMSCRIPTEN__
+                        if (this->channels.remote_programs_session_manager) {
+                            this->channels.remote_programs_session_manager->set_drawable(&gd);
+                        }
+                        #endif
+                        this->buf.load_data(this->trans);
+                        this->draw_event(gd, this->sesman);
+                        return ctx.need_more_data();
+                    });
+                });
+            }
+        })
+        .set_timeout(this->private_rdp_negociation->open_session_timeout)
+        .on_timeout([this](JLN_TOP_TIMER_CTX ctx){
+            if (this->error_message) {
+                *this->error_message = "Logon timer expired!";
+            }
+
+            this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+
+    #ifndef __EMSCRIPTEN__
+            if (this->channels.session_probe.enable_session_probe) {
+                this->enable_input_event();
+                this->enable_graphics_update();
+            }
+    #endif
+            LOG(LOG_ERR,
+                "Logon timer expired on %s. The session will be disconnected.",
+                this->logon_info.hostname());
+            return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
+        });
+
     }   // mod_rdp
 
 
     ~mod_rdp() override {
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
-            const bool disable_input_event     = false;
-            const bool disable_graphics_update = false;
-            this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            this->enable_input_event();
+            this->enable_graphics_update();
         }
 #endif
 
@@ -2202,7 +2365,34 @@ public:
         }
     }
 
-    void acl_update() override;
+    void acl_update() override
+    {
+        if (this->enable_server_cert_external_validation) {
+            auto const& message = this->ini.get<cfg::mod_rdp::server_cert_response>();
+            if (message.empty()) {
+                return;
+            }
+
+            if (message == "Ok" || message == "ok") {
+                LOG(LOG_INFO, "Certificate was valid according to authentifier");
+            }
+            else {
+                LOG(LOG_INFO, "Certificate was invalid according to authentifier: %s", message);
+                throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
+            }
+
+            bool const is_finish =
+                this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+            if (is_finish) {
+                this->negociation_result =
+                    this->private_rdp_negociation->rdp_negociation.get_result();
+                if (this->buf.remaining()) {
+                    this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                }
+            }
+        }
+        return;
+    }
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state)
@@ -2217,7 +2407,7 @@ public:
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, stc,
                                 this->asynchronous_tasks,
-                                *this, *this, this->authentifier,
+                                *this, this->authentifier,
                                 this->lang,
                                 this->bogus_refresh_rect,
                                 this->monitor_count,
@@ -2748,13 +2938,13 @@ public:
 
             this->connection_finalization_state = DISCONNECTED;
 
-#ifndef __EMSCRIPTEN__
-            if ((!this->channels.session_probe_virtual_channel
-                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
-             && !this->remote_apps_not_enabled) {
-                this->authentifier.disconnect_target();
-            }
-#endif
+//#ifndef __EMSCRIPTEN__
+//            if ((!this->channels.session_probe_virtual_channel
+//                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
+//             && !this->remote_apps_not_enabled) {
+//                this->authentifier.disconnect_target();
+//            }
+//#endif
             this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
             this->log_disconnection(bool(this->verbose & RDPVerbose::sesprobe));
@@ -2790,7 +2980,7 @@ public:
             if ((mod_channel.name == this->channels.auth_channel) && this->channels.enable_auth_channel) {
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
+                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
@@ -2798,11 +2988,21 @@ public:
             else if (mod_channel.name == channel_names::sespro) {
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, *this, *this, this->authentifier, stc,
-                    this->asynchronous_tasks,
-                    this->client_general_caps, this->client_name,
-                    this->monitor_count, this->bogus_refresh_rect, this->lang, sesman);
+
+#ifndef __EMSCRIPTEN__
+                if (!this->channels.session_probe_virtual_channel) {
+                    this->channels.create_session_probe_virtual_channel(
+                            this->front, stc,
+                            this->asynchronous_tasks,
+                            *this, this->authentifier,
+                            this->lang,
+                            this->bogus_refresh_rect,
+                            this->monitor_count,
+                            this->client_general_caps,
+                            this->client_name);
+                }
+#endif
+                this->channels.process_session_probe_event(sec.payload, length, flags, chunk_size, sesman);
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
@@ -2984,9 +3184,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log6(
-                                    LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-                                    this->time_base.get_current_time(), {});
+                                this->report_message.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3008,7 +3206,6 @@ public:
                                     this->channels.do_enable_session_probe(
                                         this->front,
                                         stc,
-                                        *this,
                                         *this,
                                         this->authentifier,
                                         this->asynchronous_tasks,
@@ -3034,7 +3231,7 @@ public:
                             }
                             else
 #endif
-                            if (this->front.can_be_start_capture(sesman)) {
+                            if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
                                     this->rdp_allow_display_updates(
@@ -3136,6 +3333,12 @@ public:
                                             LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                         uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
                                         this->process_error_info(error_info);
+
+                                        if (ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info)
+                                        {
+                                            this->errinfo_graphics_subsystem_failed_encountered = true;
+                                            throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                                        }
                                     }
                                     break;
                                 case PDUTYPE2_SHUTDOWN_DENIED:
@@ -3249,19 +3452,6 @@ public:
 
     void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
     {
-#ifndef __EMSCRIPTEN__
-        if (this->channels.remote_programs_session_manager) {
-            this->channels.remote_programs_session_manager->set_drawable(&gd);
-        }
-#endif
-
-        this->buf.load_data(this->trans);
-        this->draw_event_impl(gd, sesman);
-    }
-
-
-    void draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
-    {
         while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
 
@@ -3283,6 +3473,13 @@ public:
                 }
             }
             catch(Error const & e){
+                LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
+
+                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)
+                {
+                    throw;
+                }
+
                 if (e.id == ERR_RDP_SERVER_REDIR) {
                     if (!this->support_connection_redirection_during_recording) {
                         this->front.must_be_stop_capture();
@@ -3335,10 +3532,8 @@ public:
 
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    this->disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update);
+                    this->enable_input_event();
+                    this->enable_graphics_update();
                 }
 #endif
 
@@ -3349,9 +3544,9 @@ public:
                     throw;
                 }
 
-                if (UP_AND_RUNNING != this->connection_finalization_state &&
-                    DISCONNECTED != this->connection_finalization_state &&
-                    !this->already_upped_and_running) {
+                if (UP_AND_RUNNING != this->connection_finalization_state
+                && DISCONNECTED != this->connection_finalization_state
+                && !this->already_upped_and_running) {
                     const char * statedescr = TR(trkeys::err_mod_rdp_connected, this->lang);
                     str_append(
                         this->close_box_extra_message_ref,
@@ -4873,10 +5068,13 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
-            const bool disable_input_event     = true;
-            const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
-            this->disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
+            this->disable_input_event();
+            if (this->channels.session_probe.enable_launch_mask){
+                this->disable_graphics_update();
+            }
+            else {
+                this->enable_graphics_update();
+            }
         }
 #endif
     }   // process_logon_info
@@ -4922,10 +5120,13 @@ public:
 
 #ifndef __EMSCRIPTEN__
             if (this->channels.session_probe.enable_session_probe) {
-                const bool disable_input_event     = true;
-                const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
-                this->disable_input_event_and_graphics_update(
-                    disable_input_event, disable_graphics_update);
+                this->disable_input_event();
+                if (this->channels.session_probe.enable_launch_mask){
+                    this->disable_graphics_update();
+                }
+                else {
+                    this->enable_graphics_update();
+                }
             }
 
             if (this->channels.session_probe_virtual_channel &&
@@ -5802,11 +6003,8 @@ private:
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
-            this->report_message.log6(
-                LogId::SESSION_DISCONNECTION,
-                this->time_base.get_current_time(), {
-                KVLog("duration"_av, {duration_str, len}),
-            });
+            this->report_message.log6(LogId::SESSION_DISCONNECTION,
+                {KVLog("duration"_av, {duration_str, len}),});
 
             LOG_IF(enable_verbose, LOG_INFO,
                 "type=SESSION_DISCONNECTION duration=%s", duration_str);
@@ -5817,7 +6015,8 @@ private:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
             LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
 
-        if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
+        if (!this->mcs_disconnect_provider_ultimatum_pdu_received &&
+            !this->errinfo_graphics_subsystem_failed_encountered) {
             this->connection_finalization_state = DISCONNECTED;
             write_packets(
                 this->trans,
@@ -5830,32 +6029,71 @@ private:
     }
 
 public:
-    bool disable_input_event_and_graphics_update(
-        bool disable_input_event, bool disable_graphics_update) override
+    void disable_input_event()
     {
-        bool need_full_screen_update =
-            (this->graphics_update_disabled && !disable_graphics_update);
+        LOG(LOG_INFO, "Mod_rdp: disable input event.");
+        this->input_event_disabled = true;
+    }
 
-        if (this->input_event_disabled != disable_input_event) {
-            LOG(LOG_INFO, "Mod_rdp: %s input event.",
-                (disable_input_event ? "Disable" : "Enable"));
-        }
-        if (this->graphics_update_disabled != disable_graphics_update) {
-            LOG(LOG_INFO, "Mod_rdp: %s graphics update.",
-                (disable_graphics_update ? "Disable" : "Enable"));
-        }
+    void enable_input_event()
+    {
+        LOG(LOG_INFO, "Mod_rdp: enable input event.");
+        this->input_event_disabled = false;
+    }
 
-        this->input_event_disabled     = disable_input_event;
-        this->graphics_update_disabled = disable_graphics_update;
+    void disable_graphics_update()
+    {
+        LOG(LOG_INFO, "Mod_rdp: Disable graphics update.");
+        this->graphics_update_disabled = true;
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
-            this->channels.remote_programs_session_manager->disable_graphics_update(
-                disable_graphics_update);
+            this->channels.remote_programs_session_manager->disable_graphics_update(true);
         }
 #endif
+    }
 
-        return need_full_screen_update;
+    void enable_graphics_update()
+    {
+        LOG(LOG_INFO, "Mod_rdp: Enable graphics update.");
+        bool need_full_screen_update = this->graphics_update_disabled;
+        this->graphics_update_disabled = false;
+
+#ifndef __EMSCRIPTEN__
+        if (this->channels.remote_programs_session_manager) {
+            this->channels.remote_programs_session_manager->disable_graphics_update(false);
+        }
+#endif
+        if (need_full_screen_update) {
+            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
+                "SessionProbeVirtualChannel::process_event: "
+                    "Force full screen update. Rect=(0, 0, %u, %u)",
+                this->negociation_result.front_width, this->negociation_result.front_height);
+                if (this->bogus_refresh_rect && this->monitor_count) {
+                    this->rdp_suppress_display_updates();
+                    this->rdp_allow_display_updates(0, 0,
+                        this->negociation_result.front_width, this->negociation_result.front_height);
+                }
+            this->rdp_input_invalidate(Rect(0, 0,
+                this->negociation_result.front_width, this->negociation_result.front_height));
+        }
+    }
+
+    void freeze_screen()
+    {
+        Rect const r(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
+        RDPPatBlt cmd(r, 0xA0, color_encode(BLACK, BitsPerPixel{24}), color_encode(WHITE, BitsPerPixel{24}),
+            RDPBrush(0, 0, 3, 0xaa, byte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
+        );
+        auto & drawable = this->gd_provider.get_graphics();
+        drawable.begin_update();
+        drawable.draw(cmd, r, gdi::ColorCtx::depth24());
+        drawable.end_update();
+    }
+
+    void display_osd_message(std::string const & message) override
+    {
+        this->gd_provider.display_osd_message(message);
     }
 
 public:
@@ -5938,16 +6176,16 @@ public:
 
     void sespro_ending_in_progress() override
     {
-        this->authentifier.disconnect_target();
+//        this->authentifier.disconnect_target();
         this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
 
-    void sespro_launch_process_ended(SesmanInterface & sesman) override {
+    void sespro_launch_process_ended() override {
         if (this->delayed_start_capture) {
             this->delayed_start_capture = false;
 
-            if (this->front.can_be_start_capture(sesman)) {
+            if (this->front.can_be_start_capture()) {
                 if (this->bogus_refresh_rect && this->monitor_count) {
                     this->rdp_suppress_display_updates();
                     this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
@@ -6094,10 +6332,10 @@ private:
         return channel_data_size;
     }
 
-    void init_negociate_event_(
-        const ClientInfo & info, Random & gen, TimeObj & timeobj,
-        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-        const std::chrono::seconds open_session_timeout);
+//    void init_negociate_event_(
+//        const ClientInfo & info, Random & gen, TimeObj & timeobj,
+//        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
+//        const std::chrono::seconds open_session_timeout);
 };
 
 #undef IF_ENABLE_METRICS
