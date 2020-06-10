@@ -3398,7 +3398,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// Allow to control permissions on recorded files. <br/>
+    /// Allow to control permissions on recorded files with octal number <br/>
     /// type: uint32_t <br/>
     /// default: {0440} <br/>
     struct video::file_permissions {
@@ -3408,6 +3408,17 @@ namespace cfg
         using sesman_and_spec_type = ::configs::spec_types::file_permission;
         using mapped_type = sesman_and_spec_type;
         type value{0440};
+    };
+    /// Use only session id for basename <br/>
+    /// type: bool <br/>
+    /// default: {false} <br/>
+    struct video::rt_basename_only_sid {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
     };
 
     /// basename without extension <br/>
@@ -5528,6 +5539,7 @@ struct video
 , cfg::video::play_video_with_corrupted_bitmap
 , cfg::video::allow_rt_without_recording
 , cfg::video::file_permissions
+, cfg::video::rt_basename_only_sid
 { static constexpr bool is_section = true; };
 
 struct capture

@@ -304,6 +304,7 @@ namespace cfg
         struct play_video_with_corrupted_bitmap;
         struct allow_rt_without_recording;
         struct file_permissions;
+        struct rt_basename_only_sid;
     };
 
     struct capture {

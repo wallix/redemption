@@ -23,7 +23,6 @@
 #include "configs/autogen/enums.hpp"
 
 #include <cstdint>
-
 #include <sys/time.h>
 #include "acl/auth_api.hpp"
 

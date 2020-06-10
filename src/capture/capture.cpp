@@ -678,7 +678,9 @@ protected:
         gdi::ImageFrameApi & imageFrameApi, WritableImageView const & image_view)
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
-        capture_params.record_tmp_path, capture_params.basename, ".png",
+        capture_params.record_tmp_path,
+        png_params.real_basename,
+        ".png",
         capture_params.groupid,
         [&capture_params](const Error & error){
             if (capture_params.sesman){
@@ -1437,7 +1439,6 @@ void Capture::NotifyMetaIfNextVideo::notify_next_video(
     }
 }
 
-
 Capture::Capture(
     const CaptureParams& capture_params,
     const DrawableParams& drawable_params,
@@ -1539,8 +1540,11 @@ Capture::Capture(
                                                    *image_frame_api_real_time_ptr);
             }
             else {
-                this->png_capture_obj = std::make_unique<PngCapture>(
-                    capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr);
+                this->png_capture_obj =
+                    std::make_unique<PngCapture>(capture_params,
+                                                 png_params,
+                                                 *this->gd_drawable,
+                                                 *image_frame_api_ptr);
             }
         }
         if (capture_wrm) {
