@@ -748,6 +748,11 @@ public:
                 this->callbacks.enable_input_event();
                 this->callbacks.enable_graphics_update();
             }
+            else if (!::strcasecmp(parameters_[0].c_str(), "DisableRedirectedDrive")) {
+                assert(this->sespro_params.launch_application_driver);
+
+                this->file_system_virtual_channel.disable_session_probe_drive();
+            }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get target informations")) {
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("TargetInformations="_av);

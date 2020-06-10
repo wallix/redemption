@@ -278,7 +278,7 @@ class AuthentifierSocketClosed(Exception):
 
 class BastionSignal(Exception):
     def __init__(self, message="BastionSignal"):
-        super().__init__(message)
+        super(BastionSignal, self).__init__(message)
 
 
 class RTManager(object):
@@ -1385,10 +1385,7 @@ class Sesman():
                     Logger().info("exception: '%s'" % e)
                     import traceback
                     Logger().info("<<<<%s>>>>" % traceback.format_exc())
-                if e[0] != 4:
-                    raise
-                Logger().info("Got Signal %s" % e)
-                got_signal = True
+                raise
             if self.proxy_conx in r:
                 _status, _error = self.receive_data()
                 if self.shared.get(u'waitinforeturn') == "backselector":
@@ -2028,10 +2025,7 @@ class Sesman():
                                     import traceback
                                     Logger().info("<<<<%s>>>>" %
                                                   traceback.format_exc())
-                                if e[0] != 4:
-                                    raise
-                                Logger().info("Got Signal %s" % e)
-                                got_signal = True
+                                raise
                             current_time = time()
                             if self.check_session_parameters:
                                 self.update_session_parameters(current_time)

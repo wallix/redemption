@@ -34,10 +34,10 @@ namespace
         const modulus = BigInt(UTF8ToString(modulus_str));
         let exponent = BigInt(UTF8ToString(exponent_str));
 
-        const int2 = 2n;
-        const int1 = 1n;
+        const int2 = BigInt(2);
+        const int1 = BigInt(1);
 
-        let result = 1n;
+        let result = BigInt(1);
         while (exponent) {
             if ((exponent % int2) == int1) {
                 result = (result * base) % modulus;

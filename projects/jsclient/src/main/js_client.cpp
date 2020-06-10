@@ -196,7 +196,7 @@ struct RdpClient
     void add_receiving_data(std::string data)
     {
         this->browser_trans.push_input_buffer(std::move(data));
-        this->fd_events.for_each([](int /*fd*/, auto& /*top*/){});
+        this->fd_events.exec_action([](int /*fd*/, auto& /*top*/){ return true; });
     }
 
     void rdp_input_scancode(uint16_t key, uint16_t flag)
