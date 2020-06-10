@@ -385,55 +385,75 @@ public:
             .create_timer_executor(this->time_base, std::ref(*this))
             .set_delay(this->params.short_delay_ms)
             .on_action(jln::sequencer(
-                "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
-                "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
-                "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-                "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
-                                                                    SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-                "Ctrl (down)"_f     (send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
-                "c (down)"_f        (send_scancode(value<46>, value<0>,                           value<false>, value<true> )),
-                "c (up)"_f          (send_scancode(value<46>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-                "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
+                "Windows (down)"_f(
+                    send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>,
+                                  value<true>,  value<true> )),
+                "r (down)"_f(
+                    send_scancode(value<19>, value<0>,
+                                  value<false>, value<true> )),
+                "r (up)"_f(
+                    send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,
+                                  value<false>, value<true>)),
+                "Windows (up)"_f(
+                    send_scancode(value<91>,
+                                  value<SlowPath::KBDFLAGS_EXTENDED | SlowPath::KBDFLAGS_RELEASE>,
+                                  value<false>, value<false>)),
+                "Ctrl (down)"_f(
+                    send_scancode(value<29>, value<0>,
+                                  value<true>,  value<true> )),
+                "c (down)"_f(
+                    send_scancode(value<46>, value<0>,
+                                  value<false>, value<true> )),
+                "c (up)"_f(
+                    send_scancode(value<46>, value<SlowPath::KBDFLAGS_RELEASE>,
+                                  value<false>, value<true> )),
+                "Ctrl (up)"_f(
+                    send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,
+                                  value<false>, value<false>)),
 
-            "Wait"_f            ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                if (time(nullptr) < self.delay_end_time) {
-                    self.delay_coefficient += 0.5f;
+                "Wait"_f(
+                    [](auto ctx, SessionProbeClipboardBasedLauncher& self)
+                    {
+                        if (time(nullptr) < self.delay_end_time)
+                        {
+                            self.delay_coefficient += 0.5f;
+                            return ctx.exec_at("Windows (down)"_c);
+                        }
+                        return ctx.exec_at("Send format list"_c);
+                    }),
+            "Send format list"_f(
+                    [](auto ctx, SessionProbeClipboardBasedLauncher& self)
+                    {
+                        self.delay_wainting_clipboard_response = true;
+                        {
+                            StaticOutStream<256> out_s;
+                            Cliprdr::format_list_serialize_with_header(
+                                out_s,
+                                Cliprdr::IsLongFormat(self.cliprdr_channel
+                                    ? self.cliprdr_channel->use_long_format_names()
+                                    : false),
+                                std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                    return ctx.exec_at("Windows (down)"_c);
-                }
-                return ctx.exec_at("Send format list"_c);
-            }),
-
-            "Send format list"_f
-                                ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                self.delay_wainting_clipboard_response = true;
-
-                {
-                    StaticOutStream<256> out_s;
-                    Cliprdr::format_list_serialize_with_header(
-                        out_s,
-                        Cliprdr::IsLongFormat(self.cliprdr_channel
-                            ? self.cliprdr_channel->use_long_format_names()
-                            : false),
-                        std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
-
-                    InStream in_s(out_s.get_produced_bytes());
-                    const size_t totalLength = out_s.get_offset();
-                    self.mod.send_to_mod_channel(channel_names::cliprdr,
+                            InStream in_s(out_s.get_produced_bytes());
+                            const size_t totalLength = out_s.get_offset();
+                            self.mod.send_to_mod_channel(
+                                                channel_names::cliprdr,
                                                  in_s,
                                                  totalLength,
                                                    CHANNELS::CHANNEL_FLAG_FIRST
                                                  | CHANNELS::CHANNEL_FLAG_LAST
                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-                }
-
-                return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).next();
-            }),
-            "Wait format list response"_f
-                                ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).ready();
-            })
-
+                        }
+                        return ctx.set_delay(
+                            self.to_microseconds(self.params.long_delay_ms,
+                                                 self.delay_coefficient)).next();
+                    }),
+            "Wait format list response"_f(
+                    [](auto ctx, SessionProbeClipboardBasedLauncher& self)
+                    {
+                        return ctx.set_delay(
+                            self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).ready();
+                    })
         ));
     }
 
@@ -479,24 +499,24 @@ public:
         .create_timer_executor(this->time_base, std::ref(*this))
         .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
-            "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
-            "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
-            "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
+            "Windows (down)"_f(send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
+            "r (down)"_f(send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
+            "r (up)"_f(send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
+            "Windows (up)"_f(send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
                                                                 SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-            "Ctrl (down)"_f     (send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
-            "v (down)"_f        (send_scancode(value<47>, value<0>,                           value<false>, value<true> )),
-            "v (up)"_f          (send_scancode(value<47>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
+            "Ctrl (down)"_f(send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
+            "v (down)"_f(send_scancode(value<47>, value<0>,                           value<false>, value<true> )),
+            "v (up)"_f(send_scancode(value<47>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
+            "Ctrl (up)"_f(send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
 
-            "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
+            "Enter (down)"_f([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                 ++self.copy_paste_loop_counter;
                 if (!self.format_data_requested) {
                     return ctx.set_delay(self.to_microseconds(self.params.short_delay_ms, self.delay_coefficient)).exec_at(0);
                 }
                 return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
             }),
-            "Enter (up)"_f      (send_scancode(value<28>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true>))
+            "Enter (up)"_f(send_scancode(value<28>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true>))
         ));
     }
 

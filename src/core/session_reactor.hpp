@@ -42,9 +42,10 @@ Author(s): Jonathan Poelen
 # define REDEMPTION_DEBUG_ONLY(...)
 #endif
 
-
 namespace jln
 {
+    class SharedPtr;
+
     enum class [[nodiscard]] R : char
     {
         Next,
@@ -83,6 +84,212 @@ namespace jln
 
         };
     }
+
+    enum class NotifyDeleteType
+    {
+        DeleteByDtor,
+        DeleteByAction,
+    };
+
+    struct SharedDataBase
+    {
+        enum class FreeCat {
+            ValueByWrapper = int(NotifyDeleteType::DeleteByDtor),
+            Value = int(NotifyDeleteType::DeleteByAction),
+            Self,
+        };
+        SharedPtr* shared_ptr;
+
+    protected:
+        void (*deleter) (SharedDataBase*, FreeCat) noexcept;
+
+    public:
+        SharedDataBase* next;
+
+        void free_value() noexcept
+        {
+            this->deleter(this, FreeCat::Value);
+        }
+
+        void free_by_wrapper() noexcept
+        {
+            this->deleter(this, FreeCat::ValueByWrapper);
+        }
+
+        void delete_self() noexcept
+        {
+            this->deleter(this, FreeCat::Self);
+        }
+
+        [[nodiscard]] bool has_value() const noexcept
+        {
+            return bool(this->shared_ptr);
+        }
+
+    protected:
+        void release_shared_ptr() noexcept;
+
+        // TODO ~SharedDataBase() = default;
+    };
+
+    struct [[nodiscard]] SharedPtr
+    {
+        SharedPtr(SharedDataBase* p = nullptr) noexcept
+          : p(p)
+        {
+            assert(!p || !p->shared_ptr);
+
+            if (this->p) {
+                this->p->shared_ptr = this;
+            }
+        }
+
+        SharedPtr(SharedPtr const&) = delete;
+        SharedPtr& operator=(SharedPtr const&) = delete;
+
+        SharedPtr(SharedPtr&& other) noexcept
+        : p(std::exchange(other.p, nullptr))
+        {
+            this->p->shared_ptr = this;
+        }
+
+        SharedPtr& operator=(SharedPtr&& other) noexcept
+        {
+            assert(other.p != this->p && "unimplemented");
+            this->reset();
+            this->p = std::exchange(other.p, nullptr);
+            this->p->shared_ptr = this;
+            return *this;
+        }
+
+        ~SharedPtr()
+        {
+            if (this->p) {
+                std::exchange(this->p, nullptr)->free_by_wrapper();
+            }
+        }
+
+        explicit operator bool() const noexcept
+        {
+            return bool(this->p);
+        }
+
+        void reset() noexcept
+        {
+            if (this->p) {
+                std::exchange(this->p, nullptr)->free_value();
+            }
+        }
+
+        void detach() noexcept
+        {
+            if (this->p) {
+                this->p->shared_ptr = nullptr;
+                this->p = nullptr;
+            }
+        }
+
+    private:
+        friend class SharedDataBase;
+
+        SharedDataBase* release() noexcept
+        {
+            return std::exchange(this->p, nullptr);
+        }
+
+    protected:
+        SharedDataBase* p;
+    };
+
+    inline void SharedDataBase::release_shared_ptr() noexcept
+    {
+        if (this->shared_ptr) {
+            this->shared_ptr->release();
+            this->shared_ptr = nullptr;
+        }
+    }
+
+    namespace detail
+    {
+        inline auto default_notify_delete() noexcept
+        {
+            return [](NotifyDeleteType, auto&)noexcept{};
+        }
+    }
+
+    template<class F>
+    F make_lambda() noexcept
+    {
+//        static_assert(
+//            std::is_empty<F>::value,
+//            "F must be an empty class or a lambda expression convertible to pointer of function");
+        // big hack for a lambda not default constructible before C++20 :)
+        alignas(F) char const f[sizeof(F)]{}; // same as `char f`
+        return reinterpret_cast<F const&>(f); /*NOLINT*/
+    }
+
+    template<class T>
+    struct SharedData : SharedDataBase
+    {
+        using value_type = T;
+
+        template<class... Ts>
+        SharedData(Ts&&... xs)
+        : u(static_cast<Ts&&>(xs)...)
+        {
+            this->set_notify_delete(detail::default_notify_delete());
+        }
+
+        template<class F>
+        void set_notify_delete(F /*unused*/)
+        {
+            this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
+                auto* self = static_cast<SharedData*>(p);
+                switch (cat) {
+                    case FreeCat::ValueByWrapper:
+                    case FreeCat::Value:
+                        assert(!self->is_deleted);
+                        REDEMPTION_DEBUG_ONLY(self->is_deleted = true;)
+                        self->release_shared_ptr();
+                        make_lambda<F>()(static_cast<NotifyDeleteType>(cat), self->u.value);
+                        self->u.value.~T();
+                        break;
+                    case FreeCat::Self:
+                        assert(self->is_deleted);
+                        delete self; /*NOLINT*/
+                        break;
+                }
+            };
+        }
+
+        T* operator->() { return &this->u.value; }
+        T& operator*() { return this->u.value; }
+
+        T& value() { return this->u.value; }
+
+    private:
+        // TODO ~SharedData() = default;
+
+        union U{
+            T value;
+
+            template<class... Ts>
+            U(Ts&&... xs) : value(static_cast<Ts&&>(xs)...){}
+            ~U() { /* removed by this->deleter */} /*NOLINT*/
+        } u;
+
+        REDEMPTION_DEBUG_ONLY(bool is_deleted = false;)
+    };
+
+    struct SharedDataDeleter
+    {
+        void operator()(SharedDataBase* p) const noexcept
+        {
+            p->free_value();
+            p->delete_self();
+        }
+    };
+
 }
 
 namespace jln
@@ -91,7 +298,6 @@ namespace jln
     class GroupExecutor;
     template<class... Ts> class ActionExecutor;
     template<class T> class SharedData;
-    class SharedPtr;
     class TopSharedPtr;
     class ActionSharedPtr;
 
@@ -117,17 +323,6 @@ namespace jln
         Error,
         Success,
     };
-
-    template<class F>
-    F make_lambda() noexcept
-    {
-//        static_assert(
-//            std::is_empty<F>::value,
-//            "F must be an empty class or a lambda expression convertible to pointer of function");
-        // big hack for a lambda not default constructible before C++20 :)
-        alignas(F) char const f[sizeof(F)]{}; // same as `char f`
-        return reinterpret_cast<F const&>(f); /*NOLINT*/
-    }
 
     namespace detail
     {
@@ -1061,200 +1256,6 @@ namespace jln
         this->top.disable_timeout();
         return *this;
     }
-
-    enum class NotifyDeleteType
-    {
-        DeleteByDtor,
-        DeleteByAction,
-    };
-
-    struct SharedDataBase
-    {
-        enum class FreeCat {
-            ValueByWrapper = int(NotifyDeleteType::DeleteByDtor),
-            Value = int(NotifyDeleteType::DeleteByAction),
-            Self,
-        };
-        SharedPtr* shared_ptr;
-
-    protected:
-        void (*deleter) (SharedDataBase*, FreeCat) noexcept;
-
-    public:
-        SharedDataBase* next;
-
-        void free_value() noexcept
-        {
-            this->deleter(this, FreeCat::Value);
-        }
-
-        void free_by_wrapper() noexcept
-        {
-            this->deleter(this, FreeCat::ValueByWrapper);
-        }
-
-        void delete_self() noexcept
-        {
-            this->deleter(this, FreeCat::Self);
-        }
-
-        [[nodiscard]] bool has_value() const noexcept
-        {
-            return bool(this->shared_ptr);
-        }
-
-    protected:
-        void release_shared_ptr() noexcept;
-
-        // TODO ~SharedDataBase() = default;
-    };
-
-    struct [[nodiscard]] SharedPtr
-    {
-        SharedPtr(SharedDataBase* p = nullptr) noexcept
-          : p(p)
-        {
-            assert(!p || !p->shared_ptr);
-
-            if (this->p) {
-                this->p->shared_ptr = this;
-            }
-        }
-
-        SharedPtr(SharedPtr const&) = delete;
-        SharedPtr& operator=(SharedPtr const&) = delete;
-
-        SharedPtr(SharedPtr&& other) noexcept
-        : p(std::exchange(other.p, nullptr))
-        {
-            this->p->shared_ptr = this;
-        }
-
-        SharedPtr& operator=(SharedPtr&& other) noexcept
-        {
-            assert(other.p != this->p && "unimplemented");
-            this->reset();
-            this->p = std::exchange(other.p, nullptr);
-            this->p->shared_ptr = this;
-            return *this;
-        }
-
-        ~SharedPtr()
-        {
-            if (this->p) {
-                std::exchange(this->p, nullptr)->free_by_wrapper();
-            }
-        }
-
-        explicit operator bool() const noexcept
-        {
-            return bool(this->p);
-        }
-
-        void reset() noexcept
-        {
-            if (this->p) {
-                std::exchange(this->p, nullptr)->free_value();
-            }
-        }
-
-        void detach() noexcept
-        {
-            if (this->p) {
-                this->p->shared_ptr = nullptr;
-                this->p = nullptr;
-            }
-        }
-
-    private:
-        friend class SharedDataBase;
-
-        SharedDataBase* release() noexcept
-        {
-            return std::exchange(this->p, nullptr);
-        }
-
-    protected:
-        SharedDataBase* p;
-    };
-
-    inline void SharedDataBase::release_shared_ptr() noexcept
-    {
-        if (this->shared_ptr) {
-            this->shared_ptr->release();
-            this->shared_ptr = nullptr;
-        }
-    }
-
-    namespace detail
-    {
-        inline auto default_notify_delete() noexcept
-        {
-            return [](NotifyDeleteType, auto&)noexcept{};
-        }
-    }
-
-    template<class T>
-    struct SharedData : SharedDataBase
-    {
-        using value_type = T;
-
-        template<class... Ts>
-        SharedData(Ts&&... xs)
-        : u(static_cast<Ts&&>(xs)...)
-        {
-            this->set_notify_delete(detail::default_notify_delete());
-        }
-
-        template<class F>
-        void set_notify_delete(F /*unused*/)
-        {
-            this->deleter = [](SharedDataBase* p, FreeCat cat) noexcept {
-                auto* self = static_cast<SharedData*>(p);
-                switch (cat) {
-                    case FreeCat::ValueByWrapper:
-                    case FreeCat::Value:
-                        assert(!self->is_deleted);
-                        REDEMPTION_DEBUG_ONLY(self->is_deleted = true;)
-                        self->release_shared_ptr();
-                        make_lambda<F>()(static_cast<NotifyDeleteType>(cat), self->u.value);
-                        self->u.value.~T();
-                        break;
-                    case FreeCat::Self:
-                        assert(self->is_deleted);
-                        delete self; /*NOLINT*/
-                        break;
-                }
-            };
-        }
-
-        T* operator->() { return &this->u.value; }
-        T& operator*() { return this->u.value; }
-
-        T& value() { return this->u.value; }
-
-    private:
-        // TODO ~SharedData() = default;
-
-        union U{
-            T value;
-
-            template<class... Ts>
-            U(Ts&&... xs) : value(static_cast<Ts&&>(xs)...){}
-            ~U() { /* removed by this->deleter */} /*NOLINT*/
-        } u;
-
-        REDEMPTION_DEBUG_ONLY(bool is_deleted = false;)
-    };
-
-    struct SharedDataDeleter
-    {
-        void operator()(SharedDataBase* p) const noexcept
-        {
-            p->free_value();
-            p->delete_self();
-        }
-    };
 
     class TopSharedPtr : public SharedPtr
     {
