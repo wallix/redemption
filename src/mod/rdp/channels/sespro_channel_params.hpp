@@ -174,6 +174,9 @@ struct SessionProbeVirtualChannelParams
 
     bool launch_application_driver                = false;
     bool launch_application_driver_then_terminate = false;
+
+    bool enable_self_cleaner               = false;
+    bool enable_application_driver_cleaner = false;
 };
 
 
