@@ -1424,6 +1424,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         // PngParams
                         png_params.remote_program_session = false;
                         png_params.rt_display = ini.get<cfg::video::rt_display>();
+                        png_params.real_basename = spath.basename.c_str();
 
                         RDPDrawable rdp_drawable{
                             max_screen_dim.w, max_screen_dim.h};
@@ -1641,7 +1642,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false};
+    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, nullptr};
     VideoParams video_params;
     FullVideoParams full_video_params;
 

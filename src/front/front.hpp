@@ -1087,6 +1087,13 @@ public:
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
+        const char *real_png_basename = record_filebase;
+        
+        if (ini.get<cfg::video::rt_basename_only_sid>())
+        {
+            real_png_basename = ini.get<cfg::context::session_id>().c_str();
+        }
+        
         PngParams png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
@@ -1095,7 +1102,8 @@ public:
             ini.get<cfg::video::png_limit>() : 0,
             true,
             this->client_info.remote_program,
-            ini.get<cfg::video::rt_display>()
+            ini.get<cfg::video::rt_display>(),
+            real_png_basename
         };
         const bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
@@ -1123,7 +1131,7 @@ public:
             hash_path.c_str(),
             ini
         );
-
+        
         CaptureParams capture_params{
             this->time_base.get_current_time(),
             record_filebase,

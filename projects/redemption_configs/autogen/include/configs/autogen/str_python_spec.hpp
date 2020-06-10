@@ -1060,10 +1060,14 @@ play_video_with_corrupted_bitmap = boolean(default=False)
 # Allow Realtime display (4eyes) without recording of session
 allow_rt_without_recording = boolean(default=False)
 
-# Allow to control permissions on recorded files.
+# Allow to control permissions on recorded files with octal number
 # (is in octal or symbolic mode format (as chmod Linux command))
 #_hidden
 file_permissions = string(default='440')
+
+# Use only session id for basename
+#_hidden
+rt_basename_only_sid = boolean(default=False)
 
 [crypto]
 

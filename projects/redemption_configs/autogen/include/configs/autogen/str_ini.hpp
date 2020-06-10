@@ -1246,11 +1246,16 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #allow_rt_without_recording = 0
 
-# Allow to control permissions on recorded files.
+# Allow to control permissions on recorded files with octal number
 # (is in octal or symbolic mode format (as chmod Linux command))
 # max = 777, min = 0
 #_hidden
 #file_permissions = 440
+
+# Use only session id for basename
+# value: 0 or 1
+#_hidden
+#rt_basename_only_sid = 0
 
 [crypto]
 
