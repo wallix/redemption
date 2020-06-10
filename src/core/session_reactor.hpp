@@ -213,137 +213,6 @@ namespace jln
     template<class T>
     constexpr auto emplace = detail::emplace_type<T>{};
 
-    namespace detail
-    {
-        struct BuilderInit
-        {
-            enum E
-            {
-                None,
-                Action = 1 << 0,
-                Exit = 1 << 1,
-                Timer = 1 << 2,
-                Timeout = 1 << 3,
-                NotifyDelete = 1 << 4,
-            };
-
-            static constexpr bool has(int f, int mask) noexcept
-            {
-                return (f & mask) == mask;
-            }
-        };
-
-        template<BuilderInit::E Has, class InitCtx>
-        struct [[nodiscard]] TopExecutorBuilderImpl
-        {
-            explicit TopExecutorBuilderImpl(InitCtx&& init_ctx) noexcept;
-
-            template<class F>
-            auto on_action(F&& f) &&;
-
-            template<class F>
-            auto on_exit(F&& f) &&;
-
-            template<class F>
-            auto on_timeout(F&& f) &&;
-
-            auto set_timeout(std::chrono::milliseconds ms) &&;
-
-            auto disable_timeout() &&;
-
-            auto propagate_exit() &&;
-
-            template<class F>
-            auto set_notify_delete(F&& /*f*/) && noexcept;
-
-        private:
-            InitCtx init_ctx;
-        };
-
-        template<BuilderInit::E Has, class InitCtx>
-        struct [[nodiscard]] TimerExecutorBuilderImpl
-        {
-            explicit TimerExecutorBuilderImpl(InitCtx&& /*init_ctx*/) noexcept;
-
-            template<class F>
-            auto on_action(F&& f) &&;
-
-            auto set_delay(std::chrono::milliseconds ms) &&;
-            auto set_time(timeval tv) &&;
-
-            template<class F>
-            auto set_notify_delete(F&& /*f*/) && noexcept;
-
-        private:
-            InitCtx init_ctx;
-        };
-
-    #ifdef IN_IDE_PARSER
-        struct Func
-        {
-            template<class F>
-            Func(F) {}
-        };
-
-        struct /*[[nodiscard]]*/ TopExecutorBuilder_Concept
-        {
-            template<class... Ts>
-            explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
-
-            TopExecutorBuilder_Concept disable_timeout();
-            TopExecutorBuilder_Concept set_timeout(std::chrono::milliseconds);
-            TopExecutorBuilder_Concept on_timeout(Func);
-            TopExecutorBuilder_Concept on_action(Func);
-            TopExecutorBuilder_Concept on_exit(Func);
-            TopExecutorBuilder_Concept propagate_exit();
-
-            TopExecutorBuilder_Concept set_notify_delete(Func);
-
-            operator SharedPtr ();
-
-            operator TopSharedPtr ();
-        };
-
-        struct /*[[nodiscard]]*/ TimerExecutorBuilder_Concept
-        {
-            template<class... Ts>
-            explicit TimerExecutorBuilder_Concept(Ts&&...) noexcept;
-
-            TimerExecutorBuilder_Concept on_action(Func);
-
-            TimerExecutorBuilder_Concept set_delay(std::chrono::milliseconds ms);
-            TimerExecutorBuilder_Concept set_time(timeval tv);
-
-            TimerExecutorBuilder_Concept set_notify_delete(Func);
-
-            operator SharedPtr ();
-
-            operator TimerSharedPtr();
-        };
-
-        template<class InitCtx>
-        using TopExecutorBuilder = TopExecutorBuilder_Concept;
-
-        template<class InitCtx>
-        using TimerExecutorBuilder = TimerExecutorBuilder_Concept;
-
-    #else
-        template<class InitCtx>
-        using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
-
-        template<class InitCtx>
-        using TimerExecutorBuilder = TimerExecutorBuilderImpl<BuilderInit::None, InitCtx>;
-
-    #endif
-    }  // namespace detail
-
-
-#ifdef IN_IDE_PARSER
-# define REDEMPTION_JLN_CONCEPT(C) C
-#else
-# define REDEMPTION_JLN_CONCEPT(C) auto
-#endif
-
     enum class NextMode { ChildToNext, CreateContinuation, };
 
     struct GroupContext
@@ -1917,7 +1786,135 @@ namespace jln
             data_ptr->shared_ptr = nullptr;
             return InheritSharedPtr(data_ptr);
         }
+
+
+        struct BuilderInit
+        {
+            enum E
+            {
+                None,
+                Action = 1 << 0,
+                Exit = 1 << 1,
+                Timer = 1 << 2,
+                Timeout = 1 << 3,
+                NotifyDelete = 1 << 4,
+            };
+
+            static constexpr bool has(int f, int mask) noexcept
+            {
+                return (f & mask) == mask;
+            }
+        };
+
+        template<BuilderInit::E Has, class InitCtx>
+        struct [[nodiscard]] TopExecutorBuilderImpl
+        {
+            explicit TopExecutorBuilderImpl(InitCtx&& init_ctx) noexcept;
+
+            template<class F>
+            auto on_action(F&& f) &&;
+
+            template<class F>
+            auto on_exit(F&& f) &&;
+
+            template<class F>
+            auto on_timeout(F&& f) &&;
+
+            auto set_timeout(std::chrono::milliseconds ms) &&;
+
+            auto disable_timeout() &&;
+
+            auto propagate_exit() &&;
+
+            template<class F>
+            auto set_notify_delete(F&& /*f*/) && noexcept;
+
+        private:
+            InitCtx init_ctx;
+        };
+
+        template<BuilderInit::E Has, class InitCtx>
+        struct [[nodiscard]] TimerExecutorBuilderImpl
+        {
+            explicit TimerExecutorBuilderImpl(InitCtx&& /*init_ctx*/) noexcept;
+
+            template<class F>
+            auto on_action(F&& f) &&;
+
+            auto set_delay(std::chrono::milliseconds ms) &&;
+            auto set_time(timeval tv) &&;
+
+            template<class F>
+            auto set_notify_delete(F&& /*f*/) && noexcept;
+
+        private:
+            InitCtx init_ctx;
+        };
+
+    #ifdef IN_IDE_PARSER
+        struct Func
+        {
+            template<class F>
+            Func(F) {}
+        };
+
+        struct /*[[nodiscard]]*/ TopExecutorBuilder_Concept
+        {
+            template<class... Ts>
+            explicit TopExecutorBuilder_Concept(Ts&&...) noexcept;
+
+            TopExecutorBuilder_Concept disable_timeout();
+            TopExecutorBuilder_Concept set_timeout(std::chrono::milliseconds);
+            TopExecutorBuilder_Concept on_timeout(Func);
+            TopExecutorBuilder_Concept on_action(Func);
+            TopExecutorBuilder_Concept on_exit(Func);
+            TopExecutorBuilder_Concept propagate_exit();
+
+            TopExecutorBuilder_Concept set_notify_delete(Func);
+
+            operator SharedPtr ();
+
+            operator TopSharedPtr ();
+        };
+
+        struct /*[[nodiscard]]*/ TimerExecutorBuilder_Concept
+        {
+            template<class... Ts>
+            explicit TimerExecutorBuilder_Concept(Ts&&...) noexcept;
+
+            TimerExecutorBuilder_Concept on_action(Func);
+
+            TimerExecutorBuilder_Concept set_delay(std::chrono::milliseconds ms);
+            TimerExecutorBuilder_Concept set_time(timeval tv);
+
+            TimerExecutorBuilder_Concept set_notify_delete(Func);
+
+            operator SharedPtr ();
+
+            operator TimerSharedPtr();
+        };
+
+        template<class InitCtx>
+        using TopExecutorBuilder = TopExecutorBuilder_Concept;
+
+        template<class InitCtx>
+        using TimerExecutorBuilder = TimerExecutorBuilder_Concept;
+
+    #else
+        template<class InitCtx>
+        using TopExecutorBuilder = TopExecutorBuilderImpl<BuilderInit::None, InitCtx>;
+
+        template<class InitCtx>
+        using TimerExecutorBuilder = TimerExecutorBuilderImpl<BuilderInit::None, InitCtx>;
+    #endif
     }  // namespace detail
+
+
+#ifdef IN_IDE_PARSER
+# define REDEMPTION_JLN_CONCEPT(C) C
+#else
+# define REDEMPTION_JLN_CONCEPT(C) auto
+#endif
 
 
     class TopContainer
