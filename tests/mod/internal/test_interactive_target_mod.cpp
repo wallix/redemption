@@ -28,6 +28,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
+#include "core/events.hpp"
 
 // TODO "Need more tests, with or without device/login/password asking, "
 
@@ -38,7 +39,8 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -65,7 +67,8 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -88,7 +91,8 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -134,7 +138,8 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge2)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

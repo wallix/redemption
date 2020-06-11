@@ -46,6 +46,7 @@
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
+#include "core/events.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
@@ -62,6 +63,7 @@ class ModFactory
     SesmanInterface & sesman;
     TopFdContainer& fd_events_;
     TimerContainer & timer_events_;
+    EventContainer & events;
     ClientInfo & client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
@@ -84,6 +86,7 @@ public:
                SesmanInterface & sesman,
                TopFdContainer& fd_events_,
                TimerContainer & timer_events_,
+               EventContainer & event,
                ClientInfo & client_info,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
@@ -103,6 +106,7 @@ public:
         , sesman(sesman)
         , fd_events_(fd_events_)
         , timer_events_(timer_events_)
+        , events(events)
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
@@ -276,6 +280,7 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
+            this->events,
             this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -304,6 +309,7 @@ public:
             this->ini,
             this->time_base,
             this->timer_events_,
+            this->events,
             this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

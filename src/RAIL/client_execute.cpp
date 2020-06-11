@@ -54,6 +54,7 @@
 ClientExecute::ClientExecute(
     TimeBase& time_base,
     TimerContainer& timer_events_,
+    EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
 : front_(front)
@@ -64,6 +65,7 @@ ClientExecute::ClientExecute(
 , verbose(verbose)
 , time_base(time_base)
 , timer_events_(timer_events_)
+, events(events)
 {
 }
 

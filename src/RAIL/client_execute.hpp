@@ -27,6 +27,7 @@
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
+#include "core/events.hpp"
 
 
 #include <string>
@@ -159,10 +160,11 @@ class ClientExecute : public windowing_api
 
     TimeBase& time_base;
     TimerContainer& timer_events_;
+    EventContainer& events;
 
 public:
     ClientExecute(
-        TimeBase& time_base, TimerContainer& timer_events_,
+        TimeBase& time_base, TimerContainer& timer_events_, EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 

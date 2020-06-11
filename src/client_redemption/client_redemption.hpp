@@ -94,6 +94,7 @@ public:
     TimeBase& time_base;
     TopFdContainer& fd_events_;
     TimerContainer& timer_events_;
+    EventContainer& events;
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
@@ -233,9 +234,10 @@ public:
     GdForwarder<ClientRedemption> gd_forwarder;
 
 public:
-    ClientRedemption(TimeBase & time_base,
+    ClientRedemption(TimeBase& time_base,
                      TopFdContainer& fd_events_,
-                     TimerContainer & timer_events_,
+                     TimerContainer& timer_events_,
+                     EventContainer& events,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
@@ -243,8 +245,9 @@ public:
         , time_base(time_base)
         , fd_events_(fd_events_)
         , timer_events_(timer_events_)
+        , events(events)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(time_base, timer_events_, *this, *this, this->config.info.window_list_caps, false)
+        , rail_client_execute(time_base, timer_events_, events, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)

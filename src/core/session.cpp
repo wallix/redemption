@@ -581,8 +581,9 @@ private:
 
     timeval prepare_timeout(timeval ultimatum, timeval now,
                 const Front & front,
-                TimerContainer & timer_events_,
                 TopFdContainer & fd_events_,
+                TimerContainer & timer_events_,
+                EventContainer & events,
                 bool front_pending,
                 bool mod_pending)
     {
@@ -624,6 +625,9 @@ private:
             this->show_ultimatum("(front tls pending)"_zv, ultimatum, now);
         }
 
+//        for (auto & e: events){
+//        }
+
         return ultimatum;
     }
 
@@ -658,6 +662,7 @@ public:
         TimeBase time_base(tvtime());
         TopFdContainer fd_events_;
         TimerContainer timer_events_;
+        EventContainer events;
 
         TimeSystem timeobj;
 
@@ -681,11 +686,11 @@ public:
             Theme theme;
             ::load_theme(theme, ini);
 
-            ClientExecute rail_client_execute(time_base, timer_events_, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
+            ClientExecute rail_client_execute(time_base, timer_events_, events, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, timer_events_, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, timer_events_, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
@@ -785,8 +790,9 @@ public:
 
                 timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                         front,
-                        timer_events_,
                         fd_events_,
+                        timer_events_,
+                        events,
                         front_trans.has_tls_pending_data(),
                         mod_data_pending
                         );
@@ -911,6 +917,11 @@ public:
 
                         auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
+                        for(auto & e: events){
+                            if (e.alarm.trigger(end_tv)){
+                                e.exec_timeout();
+                            }
+                        }
                         fd_events_.exec_timeout(end_tv);
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                             return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});

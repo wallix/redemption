@@ -29,7 +29,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
-
+#include "core/events.hpp"
 
 RED_AUTO_TEST_CASE(TestLoginMod)
 {
@@ -39,7 +39,8 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -69,7 +70,8 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

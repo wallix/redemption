@@ -93,6 +93,7 @@ CloseMod::CloseMod(
     CloseModVariables vars,
     TimeBase& time_base,
     TimerContainer& timer_events_,
+    EventContainer& events,
     GdProvider & gd_provider,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
@@ -112,6 +113,7 @@ CloseMod::CloseMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , timer_events_(timer_events_)
+    , events(events)
 {
     this->screen.set_wh(this->front_width, this->front_height);
 

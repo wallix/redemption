@@ -42,6 +42,7 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/acl/sesman_wrapper.hpp"
 #include "configs/config.hpp"
+#include "core/events.hpp"
 
 class FakeFront : public FrontAPI
 {
@@ -85,7 +86,8 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events_;
+    ClientExecute client_execute(time_base, timer_events_, events_, front.gd(), front, window_list_caps, false);
 
     Theme theme;
 
@@ -105,7 +107,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     tmp = "";
     RED_CHECK(ini2.get<cfg::context::auth_error_message>().empty());
 
-    CloseMod d("message", ini.get_ini(), time_base, timer_events_, gd_forwarder, front,
+    CloseMod d("message", ini.get_ini(), time_base, timer_events_, events_, gd_forwarder, front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         glyphs, theme, false);
     d.init();
@@ -250,7 +252,8 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    ClientExecute client_execute(time_base, timer_events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Theme theme;
 
@@ -261,7 +264,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
     InifileWrapper ini;
-    CloseMod d("message", ini.get_ini(), time_base, timer_events_, gd_forwarder, front,
+    CloseMod d("message", ini.get_ini(), time_base, timer_events_, events, gd_forwarder, front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         glyphs, theme, true);
     d.init();
@@ -269,6 +272,12 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
 
     timeval tv1{1, 0};
     timer_events_.exec_timer(tv1);
+    for (auto & event: events){
+        if (event.alarm.trigger(tv1)){
+            event.exec_timeout();
+        }
+    }
+
     // ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
         "\x95\xd0\x6e\x6e\xae\xdf\xa0\x68\xcb\x7b\x3d\x2d\x84\x07\x59\xa1\xb6\xdb\x30\xb8");

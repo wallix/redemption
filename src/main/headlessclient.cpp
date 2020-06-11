@@ -30,6 +30,7 @@
 #include "client_redemption/client_redemption.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "core/events.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -77,8 +78,9 @@ public:
     ClientRedemptionHeadless(TimeBase & time_base,
                              TopFdContainer& fd_events_,
                              TimerContainer& timer_events_,
+                             EventContainer& events,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(time_base, fd_events_, timer_events_, config)
+        : ClientRedemption(time_base, fd_events_, timer_events_, events, config)
         , headless_socket(time_base, this)
     {
         this->cmd_launch_conn();
@@ -143,11 +145,13 @@ int main(int argc, char const** argv)
     TimeBase time_base(tvtime());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
     ScopedSslInit scoped_ssl;
 
     ClientRedemptionHeadless client(time_base,
                                     fd_events_,
                                     timer_events_,
+                                    events,
                                     config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
