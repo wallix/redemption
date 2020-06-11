@@ -56,6 +56,17 @@ namespace python
         out << "u'" << io_quoted2{x} << "'";
     }
 
+    template<class T, unsigned n>
+    void write_type(std::ostream& out, type_<types::fixed_string<n>>, T const& x)
+    {
+        if constexpr (std::is_same_v<types::fixed_string<n>, T>) {
+            out << "u''";
+        }
+        else {
+            out << "u'" << io_quoted2{x} << "'";
+        }
+    }
+
     template<class Int, class T>
     enable_if_integral_type<Int>
     write_type(std::ostream& out, type_<types::list<Int>>, T const& x)

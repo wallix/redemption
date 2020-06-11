@@ -66,6 +66,15 @@ inline zstring_view assign_zbuf_from_cfg(
     return str;
 }
 
+template<unsigned n>
+inline zstring_view assign_zbuf_from_cfg(
+    writable_chars_view /*zbuf*/,
+    cfg_s_type<::configs::spec_types::fixed_string> /*type*/,
+    char const (&str)[n]
+) {
+    return zstring_view(zstring_view::is_zero_terminated(), str, strlen(str));
+}
+
 inline zstring_view assign_zbuf_from_cfg(
     writable_chars_view /*zbuf*/,
     cfg_s_type<bool> /*type*/,

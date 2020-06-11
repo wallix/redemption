@@ -149,10 +149,11 @@ namespace impl
         }
     };
 
+    inline char const * quoted2(types::dirpath const &) { return ""; }
     inline exprio quoted2(cfg_attributes::cpp::expr e) { return {e.value}; }
     template<class T> io_quoted2 quoted2(T const & s) { return s; }
-    template<class T> char const * quoted2(types::list<T> const &) { return ""; }
-    inline char const * quoted2(types::dirpath const &) { return ""; }
+    template<class T> char const * quoted2(types::list<T>) { return ""; }
+    template<unsigned n> char const * quoted2(types::fixed_string<n>) { return ""; }
 
     inline std::string stringize_bool(bool x) { return x ? "True" : "False"; }
 

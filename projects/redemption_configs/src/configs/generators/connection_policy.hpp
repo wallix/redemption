@@ -103,6 +103,7 @@ namespace json
 
         inline exprio quoted(cfg_attributes::cpp::expr e) { return {e.value}; }
         template<class T> static io_quoted quoted(T const & s) { return s; }
+        template<unsigned n> static char const* quoted(types::fixed_string<n>) { return ""; }
         // template<class T> static char const * quoted(types::list<T> const &) { return ""; }
     }
 
