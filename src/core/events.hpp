@@ -23,21 +23,44 @@
 
 struct Event {
     struct Trigger {
+        bool garbage = false;
+        void * lifespan_handle = nullptr;
         bool active = false;
         timeval now;
         timeval trigger_time;
+        timeval start_time;
+        std::chrono::microseconds period = std::chrono::seconds{0};
+
+        // periodic alarm will call on_period every period interval,
+        // starting at start_time.
+        void set_period(std::chrono::microseconds period) {
+            this->period = period;
+        }
         
-        void set_timeout_alarm(timeval trigger_time) {
+        // timeout alarm will call on_timeout once when trigger_time is reached
+        // the trigger time must be reset with set_timeout
+        // if we want to call the alarm again
+        void set_timeout(timeval trigger_time) {
           this->active = true;
-          this->trigger_time = this->now = trigger_time;
+          this->trigger_time = this->start_time = this->now = trigger_time;
+        }
+
+        void stop_alarm(){
+            this->active = false;
         }
 
         bool trigger(timeval now) {
             this->now = now;
             if (not active) { return false; }
             if (this->now >= this->trigger_time) {
-                // one time alarm
-                this->active = false;
+                if (this->period.count() == 0){
+                    // one time alarm
+                    this->active = false;
+                }
+                // periodic alarm : if some ticks were lost
+                // the periodic alarm won't try to catch up
+                // it will reset the interval based on current time
+                this->trigger_time = now + this->period;
                 return true;
             }
             return false;

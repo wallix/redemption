@@ -86,8 +86,8 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
-    EventContainer events_;
-    ClientExecute client_execute(time_base, timer_events_, events_, front.gd(), front, window_list_caps, false);
+    EventContainer events;
+    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
 
     Theme theme;
 
@@ -107,141 +107,43 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     tmp = "";
     RED_CHECK(ini2.get<cfg::context::auth_error_message>().empty());
 
-    CloseMod d("message", ini.get_ini(), time_base, timer_events_, events_, gd_forwarder, front,
+    CloseMod d("message", ini.get_ini(), time_base, timer_events_, events, gd_forwarder, front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         glyphs, theme, false);
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    RED_CHECK(events.size() == 2);
 
-    time_base.set_current_time({1, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({2, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({3, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({4, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({5, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({6, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({7, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({8, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({10, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({12, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({14, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({15, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({16, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({17, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({18, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({19, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({20, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({21, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({22, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({23, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({24, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({25, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({26, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({27, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({28, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({29, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({30, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({31, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({32, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({33, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({34, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({35, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({36, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({37, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({38, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({39, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({40, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({41, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({42, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({43, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({44, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({45, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({46, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({47, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({48, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({49, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({50, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({51, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({52, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({53, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({54, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({55, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({56, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({57, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({58, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({59, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({60, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({61, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    time_base.set_current_time({62, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+
+    for (auto & event: events){
+        if (event.alarm.trigger({62,0})){
+            event.exec_timeout();
+        }
+    }
+//    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
-    "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
+        "\x11\xe6\x7f\xdb\x20\x5a\x01\x1e\x74\x58\xf3\xb8\x44\xe9\xeb\x51\x30\xd0\x73\x3d");
 
 
-    time_base.set_current_time({300, 0});
-    timer_events_.exec_timer(time_base.get_current_time());
-    // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+    for (auto & event: events){
+        if (event.alarm.trigger({580,0})){
+            event.exec_timeout();
+        }
+    }
+//    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
-    "\x51\x50\xc4\xea\x5a\xb5\x0f\x12\x91\xe5\x2f\xd4\xd3\x83\x43\x71\x3b\xcd\x34\xe0");
+        "\xf1\x93\xd8\x9f\x7a\x00\x14\x8b\x42\xd8\x4b\x70\x4d\x7c\x96\xdc\x7f\x92\xb2\xe0");
 
+    time_base.set_current_time({601, 0});
+    for (auto & event: events){
+        if (event.alarm.trigger(time_base.get_current_time())){
+            event.exec_timeout();
+        }
+    }
+//    ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
+    RED_CHECK_SIG(ConstImageDataView(front),
+        "\x3d\x0b\x77\x0b\x35\x44\x43\x3d\x0b\xa8\x20\x97\x2a\x24\xf3\x4d\x20\xe8\xff\xb4");
+    RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
 }
 
 RED_AUTO_TEST_CASE(TestCloseModSelector)
@@ -271,7 +173,6 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     timeval tv1{1, 0};
-    timer_events_.exec_timer(tv1);
     for (auto & event: events){
         if (event.alarm.trigger(tv1)){
             event.exec_timeout();

@@ -117,6 +117,12 @@ inline timeval operator+(timeval const & a, std::chrono::milliseconds const& ms)
     return to_timeval(usec);
 }
 
+inline timeval operator+(timeval const & a, std::chrono::microseconds const& us)
+{
+    std::chrono::microseconds usec = std::chrono::seconds(a.tv_sec) + std::chrono::microseconds(a.tv_usec) + us;
+    return to_timeval(usec);
+}
+
 inline timeval& operator+=(timeval& tv, std::chrono::seconds const& seconds)
 {
     tv.tv_sec += seconds.count();

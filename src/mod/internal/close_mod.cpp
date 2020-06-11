@@ -129,25 +129,29 @@ CloseMod::CloseMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    if (vars.get<cfg::globals::close_timeout>().count()) {
-        std::chrono::seconds delay{1};
-        std::chrono::seconds start_timer{};
-        this->timeout_timer = timer_events_.create_timer_executor(time_base, start_timer)
-        .set_delay(delay)
-        .on_action([this](auto ctx, std::chrono::seconds& seconds){
-//            LOG(LOG_INFO, "timer event %ld", seconds.count());
-            // TODO milliseconds += ctx.time() - previous_time
-            ++seconds;
-            auto const close_timeout = this->vars.get<cfg::globals::close_timeout>();
-            if (seconds < close_timeout) {
-//                LOG(LOG_INFO, "refresh time");
-                this->close_widget.refresh_timeleft((close_timeout - seconds).count());
-                return ctx.ready_to(std::min(std::chrono::seconds{1}, close_timeout));
-            }
-            this->set_mod_signal(BACK_EVENT_STOP);
-            return ctx.terminate();
-        });
-    }
+    Event close_event;
+    close_event.alarm.set_timeout(
+                        time_base.get_current_time()
+                        +std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()});
+    close_event.actions.on_timeout = [this](Event&)
+    {
+        LOG(LOG_INFO, "Close Event");
+        this->set_mod_signal(BACK_EVENT_STOP);
+    };
+
+    Event refresh_event;
+    refresh_event.alarm.set_timeout(time_base.get_current_time());
+    refresh_event.alarm.set_period(std::chrono::seconds{1});
+    refresh_event.actions.on_timeout = [this](Event& event)
+    {
+        LOG(LOG_INFO, "Refresh Event");
+        auto elapsed = event.alarm.now.tv_sec-event.alarm.start_time.tv_sec;
+        auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()} 
+                        - std::chrono::seconds{elapsed};
+        this->close_widget.refresh_timeleft(remaining.count());
+    };
+    events.push_back(std::move(close_event));
+    events.push_back(std::move(refresh_event));
 }
 
 CloseMod::~CloseMod()

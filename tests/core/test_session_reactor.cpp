@@ -42,7 +42,7 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     timeval wakeup = origin+std::chrono::seconds(2);
 
     Event e;
-    e.alarm.set_timeout_alarm(wakeup);
+    e.alarm.set_timeout(wakeup);
     e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
 
     // before time: nothing happens
@@ -55,9 +55,30 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     RED_CHECK(s == std::string("Event Triggered"));
     
     // If I set an alarm in the past it will be triggered immediately
-    e.alarm.set_timeout_alarm(origin);
+    e.alarm.set_timeout(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
 }
+
+RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
+{
+    std::string s;
+
+    timeval origin{79, 0};
+    timeval wakeup = origin+std::chrono::seconds(2);
+
+    Event e;
+    e.alarm.set_timeout(wakeup);
+    e.alarm.set_period(std::chrono::seconds{1});
+    e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
+
+    // before time: nothing happens
+    RED_CHECK(!e.alarm.trigger(origin));
+    // when it's time of above alarm is triggered
+    RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
+    // but only once
+    RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(2)));
+}
+
 
 RED_AUTO_TEST_CASE(TestEventContainer)
 {
@@ -67,7 +88,7 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     timeval wakeup = origin+std::chrono::seconds(2);
     Event e;
     e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
-    e.alarm.set_timeout_alarm(wakeup);
+    e.alarm.set_timeout(wakeup);
     event_container.push_back(std::move(e));
 
     auto t = origin;
