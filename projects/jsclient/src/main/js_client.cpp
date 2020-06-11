@@ -18,6 +18,10 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
+#ifdef IN_IDE_PARSER
+# define __EMSCRIPTEN__
+#endif
+
 #include "core/session_reactor.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
@@ -118,8 +122,8 @@ struct RdpClient
     RdpClient(
         emscripten::val callbacks, uint16_t width, uint16_t height,
         std::string const& username, std::string const& password,
-        uint32_t disabled_orders, unsigned long verbose)
-    : front(callbacks, width, height, RDPVerbose(verbose))
+        PrimaryDrawingOrdersSupport disabled_orders, RDPVerbose verbose)
+    : front(callbacks, width, height, verbose)
     , gd(front.graphic_api())
     , time_base({0,0})
     , sesman(ini)
@@ -129,8 +133,8 @@ struct RdpClient
         client_info.screen_info.height = height;
         client_info.screen_info.bpp = BitsPerPixel{24};
 
-        const auto supported_orders = front.get_supported_orders()
-            & ~PrimaryDrawingOrdersSupport(disabled_orders);
+        PrimaryDrawingOrdersSupport supported_orders
+            = front.get_supported_orders() - disabled_orders;
         for (unsigned i = 0; i < NB_ORDER_SUPPORT; ++i) {
             client_info.order_caps.orderSupport[i] = supported_orders.test(OrdersIndexes(i));
         }
@@ -151,7 +155,7 @@ struct RdpClient
             theme,
             server_auto_reconnect_packet,
             close_box_extra_message,
-            RDPVerbose(verbose)
+            verbose
         );
 
         mod_rdp_params.device_id           = "device_id";
@@ -164,7 +168,7 @@ struct RdpClient
         mod_rdp_params.ignore_auth_channel = true;
 
 
-        if (bool(RDPVerbose(verbose) & RDPVerbose::basic_trace)) {
+        if (bool(verbose & RDPVerbose::basic_trace)) {
             mod_rdp_params.log();
         }
 
@@ -232,7 +236,19 @@ struct RdpClient
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<emscripten::val, uint16_t, uint16_t, std::string, std::string, uint32_t, unsigned long>()
+        .constructor([](
+            emscripten::val&& callbacks, uint16_t width, uint16_t height,
+            std::string const& username, std::string const& password,
+            uint32_t disabled_orders,
+            uint32_t verbose_low_bits, uint32_t /*verbose_high_bits*/
+        ) {
+            static_assert(sizeof(RDPVerbose) == 4);
+            return new RdpClient(
+                std::move(callbacks), width, height, username, password,
+                PrimaryDrawingOrdersSupport(disabled_orders),
+                RDPVerbose(verbose_low_bits)
+            );
+        })
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })

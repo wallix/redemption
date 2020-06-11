@@ -31,6 +31,10 @@ Author(s): Jonathan Poelen
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/rdp_draw_glyphs.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -44,6 +48,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 
 #include "utils/log.hpp"
 
@@ -89,20 +94,54 @@ namespace
         }
     }
 
+    std::array<uint8_t, 8> get_brush_data(RDPBrush const& brush)
+    {
+        std::array<uint8_t, 8> brush_data {
+            brush.extra[0],
+            brush.extra[1],
+            brush.extra[2],
+            brush.extra[3],
+            brush.extra[4],
+            brush.extra[5],
+            brush.extra[6],
+            brush.hatch,
+        };
+        return brush_data;
+    }
+
+    struct MemBltPoints
+    {
+        Rect rect;
+        uint16_t srcx;
+        uint16_t srcy;
+
+        MemBltPoints(Rect rect, uint16_t srcx, uint16_t srcy, Rect clip)
+        : rect(clip.intersect(rect))
+        , srcx(srcx + rect.x - rect.x + (this->rect.x - rect.x))
+        , srcy(srcy + rect.y - rect.y + (this->rect.y - rect.y))
+        {}
+    };
+
     namespace jsnames
     {
         constexpr char const* draw_rect = "drawRect";
-        constexpr char const* draw_scr_blt = "drawSrcBlt";
+        constexpr char const* draw_scr_blt = "drawScrBlt";
         constexpr char const* draw_line_to = "drawLineTo";
         constexpr char const* draw_polyline = "drawPolyline";
+        constexpr char const* draw_polygone_sc = "drawPolygoneCB";
+        constexpr char const* draw_polygone_cb = "drawPolygoneSC";
+        constexpr char const* draw_ellipse_sc = "drawEllipseCB";
+        constexpr char const* draw_ellipse_cb = "drawEllipseSC";
         constexpr char const* draw_pat_blt = "drawPatBlt";
-        constexpr char const* draw_pat_blt_ex = "drawPatBltEx";
         constexpr char const* draw_dest_blt = "drawDestBlt";
+        constexpr char const* draw_frame_marker = "drawFrameMarker"; // mendatory
 
         constexpr char const* draw_image = "drawImage";
-        constexpr char const* draw_memblt = "drawCachedImage";
-        constexpr char const* set_cached_image = "cachedImage";
-        constexpr char const* set_cached_image_size = "setCachedImageSize";
+        constexpr char const* draw_memblt = "drawMemBlt";
+        constexpr char const* draw_mem3blt = "drawMem3Blt";
+
+        constexpr char const* set_bmp_cache = "setBmpCacheIndex";
+        constexpr char const* set_bmp_cache_size = "setBmpCacheSize";
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
@@ -130,7 +169,7 @@ BrowserGraphic::BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16
 
 PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
 {
-    PrimaryDrawingOrdersSupport supported {};
+    PrimaryDrawingOrdersSupport supported = TS_NEG_GLYPH_INDEX;
     auto set = [&](char const* name, auto f){
         supported |= !!callbacks[name] ? f : PrimaryDrawingOrdersSupport{};
     };
@@ -143,9 +182,27 @@ PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
         | TS_NEG_SCRBLT_INDEX
         | TS_NEG_MULTISCRBLT_INDEX);
 
+    set(jsnames::draw_pat_blt, PrimaryDrawingOrdersSupport{}
+        | TS_NEG_PATBLT_INDEX
+        | TS_NEG_MULTIPATBLT_INDEX);
+
+    set(jsnames::draw_dest_blt, PrimaryDrawingOrdersSupport{}
+        | TS_NEG_DSTBLT_INDEX
+        | TS_NEG_MULTIDSTBLT_INDEX);
+
     set(jsnames::draw_memblt, TS_NEG_MEMBLT_INDEX);
+    set(jsnames::draw_mem3blt, TS_NEG_MEM3BLT_INDEX);
     set(jsnames::draw_line_to, TS_NEG_LINETO_INDEX);
     set(jsnames::draw_polyline, TS_NEG_POLYLINE_INDEX);
+    set(jsnames::draw_polygone_cb, TS_NEG_POLYGON_CB_INDEX);
+    set(jsnames::draw_polygone_sc, TS_NEG_POLYGON_SC_INDEX);
+    set(jsnames::draw_ellipse_cb, TS_NEG_ELLIPSE_CB_INDEX);
+    set(jsnames::draw_ellipse_sc, TS_NEG_ELLIPSE_SC_INDEX);
+
+    auto supported_orders_impl = this->callbacks["supportedOrders"];
+    if (!!supported_orders_impl) {
+        supported &= PrimaryDrawingOrdersSupport(supported_orders_impl.as<uint32_t>());
+    }
 
     return supported;
 }
@@ -230,6 +287,8 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 
 void BrowserGraphic::draw(const RDPDestBlt & cmd, Rect clip)
 {
+    // LOG(LOG_INFO, "BrowserGraphic::RDPDestBlt");
+
     const Rect trect = intersect(clip, cmd.rect);
     emval_call(this->callbacks, jsnames::draw_dest_blt,
         trect.x,
@@ -242,6 +301,8 @@ void BrowserGraphic::draw(const RDPDestBlt & cmd, Rect clip)
 
 void BrowserGraphic::draw(const RDPMultiDstBlt & cmd, Rect clip)
 {
+    // LOG(LOG_INFO, "BrowserGraphic::RDPMultiDstBlt");
+
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_dest_blt,
             trect.x,
@@ -255,71 +316,47 @@ void BrowserGraphic::draw(const RDPMultiDstBlt & cmd, Rect clip)
 
 void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
+    // LOG(LOG_INFO, "BrowserGraphic::RDPPatBlt");
+
     const Rect trect = intersect(clip, cmd.rect);
 
-    auto back_color = color_decode(cmd.back_color, color_ctx);
-    if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
-        auto fore_color = color_decode(cmd.fore_color, color_ctx);
-        uint8_t brush_data[8];
-        memcpy(brush_data, cmd.brush.extra, 7);
-        brush_data[7] = cmd.brush.hatch;
-
-        emval_call(this->callbacks, jsnames::draw_pat_blt_ex,
-            trect.x,
-            trect.y,
-            trect.cx,
-            trect.cy,
-            cmd.rop,
-            back_color,
-            fore_color,
-            brush_data
-        );
-    }
-    else {
-        emval_call(this->callbacks, jsnames::draw_pat_blt,
-            trect.x,
-            trect.y,
-            trect.cx,
-            trect.cy,
-            cmd.rop,
-            back_color
-        );
-    }
+    emval_call(this->callbacks, jsnames::draw_pat_blt,
+        cmd.brush.org_x,
+        cmd.brush.org_y,
+        cmd.brush.style,
+        get_brush_data(cmd.brush).data(),
+        trect.x,
+        trect.y,
+        trect.cx,
+        trect.cy,
+        cmd.rop,
+        color_decode(cmd.back_color, color_ctx),
+        color_decode(cmd.fore_color, color_ctx)
+    );
 }
 
 void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
+    // LOG(LOG_INFO, "BrowserGraphic::RDPMultiPatBlt");
+
     auto back_color = color_decode(cmd.BackColor, color_ctx);
-    if (cmd.brush.style == 0x03 && (cmd.bRop == 0xF0 || cmd.bRop == 0x5A)) {
-        auto fore_color = color_decode(cmd.ForeColor, color_ctx);
-        uint8_t brush_data[8];
-        memcpy(brush_data, cmd.brush.extra, 7);
-        brush_data[7] = cmd.brush.hatch;
-        draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
-            emval_call(this->callbacks, jsnames::draw_pat_blt_ex,
-                trect.x,
-                trect.y,
-                trect.cx,
-                trect.cy,
-                cmd.bRop,
-                back_color,
-                fore_color,
-                brush_data
-            );
-        });
-    }
-    else {
-        draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
-            emval_call(this->callbacks, jsnames::draw_pat_blt,
-                trect.x,
-                trect.y,
-                trect.cx,
-                trect.cy,
-                cmd.bRop,
-                back_color
-            );
-        });
-    }
+    auto fore_color = color_decode(cmd.ForeColor, color_ctx);
+
+    draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
+        emval_call(this->callbacks, jsnames::draw_pat_blt,
+            cmd.brush.org_x,
+            cmd.brush.org_y,
+            cmd.brush.style,
+            get_brush_data(cmd.brush).data(),
+            trect.x,
+            trect.y,
+            trect.cx,
+            trect.cy,
+            cmd.bRop,
+            back_color,
+            fore_color
+        );
+    });
 }
 
 void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries)
@@ -327,23 +364,19 @@ void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_en
     this->image_data_index[0] = 0;
     this->image_data_index[1] = nb_entries[0];
     this->image_data_index[2] = this->image_data_index[1] + nb_entries[1];
-    this->nb_image_datas = this->image_data_index[2] + nb_entries[2];
-    emval_call(this->callbacks, jsnames::set_cached_image_size, this->nb_image_datas);
-    this->image_bounds = std::unique_ptr<Bounds[]>(new Bounds[this->nb_image_datas]);
+    uint32_t nb_image_datas = this->image_data_index[2] + nb_entries[2];
+    emval_call(this->callbacks, jsnames::set_bmp_cache_size, nb_image_datas);
 }
 
 void BrowserGraphic::draw(RDPBmpCache const & cmd)
 {
+    // LOG(LOG_INFO, "BrowserGraphic::RDPBmpCache");
+
     uint32_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
-    if (image_idx >= this->nb_image_datas) {
-        LOG(LOG_INFO, "BrowserGraphic::RDPBmpCache: out of range");
-        return ;
-    }
 
     auto img = image_data_from_bitmap(cmd.bmp);
-    this->image_bounds[image_idx] = {checked_int(img.width()), checked_int(img.height())};
 
-    emval_call(this->callbacks, jsnames::set_cached_image,
+    emval_call(this->callbacks, jsnames::set_bmp_cache,
         img.data(),
         img.width(),
         img.height(),
@@ -351,69 +384,51 @@ void BrowserGraphic::draw(RDPBmpCache const & cmd)
     );
 }
 
-void BrowserGraphic::draw(RDPMemBlt const & cmd_, Rect clip)
+void BrowserGraphic::draw(RDPMemBlt const & cmd, Rect clip)
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPMemBlt");
 
-    uint32_t const image_idx = this->image_data_index[cmd_.cache_id & 0b11] + cmd_.cache_idx;
-    if (image_idx >= this->nb_image_datas) {
-        LOG(LOG_ERR, "BrowserGraphic::RDPMemBlt: out of range (%" PRIu16 " %" PRIu16 ")",
-            cmd_.cache_id, cmd_.cache_idx);
-        return ;
-    }
+    const uint32_t image_idx = this->image_data_index[cmd.cache_id & 0b11] + cmd.cache_idx;
 
-    RDPMemBlt cmd(cmd_);
+    MemBltPoints ps(cmd.rect.intersect(this->width, this->height), cmd.srcx, cmd.srcy, clip);
 
-    cmd.rect = cmd_.rect.intersect(this->width, this->height);
-    cmd.srcx += (cmd.rect.x - cmd_.rect.x);
-    cmd.srcy += (cmd.rect.y - cmd_.rect.y);
-
-    Rect const rect = clip.intersect(cmd.rect);
-    uint16_t const srcx = cmd.srcx + (rect.x - cmd.rect.x);
-    uint16_t const srcy = cmd.srcy + (rect.y - cmd.rect.y);
-
-    Bounds bounds = this->image_bounds[image_idx];
-
-    const int mincx = std::min<int>(int32_t(bounds.w) - int32_t(srcx),
-        std::min(int32_t(this->width) - int32_t(rect.x), int32_t(rect.cx)));
-    const int mincy = std::min<int>(int32_t(bounds.h) - int32_t(srcy),
-        std::min(int32_t(this->height) - int32_t(rect.y), int32_t(rect.cy)));
-
-    if (mincx <= 0 || mincy <= 0) {
-        return;
-    }
-
-    // cmd.rop == 0xCC
     emval_call(this->callbacks, jsnames::draw_memblt,
         image_idx,
-        cmd_.rop,
-        srcx,
-        srcy,
-        mincx,
-        mincy,
-        rect.x,
-        rect.y,
-        mincx,
-        mincy
+        cmd.rop,
+        ps.srcx,
+        ps.srcy,
+        ps.rect.x,
+        ps.rect.y,
+        ps.rect.cx,
+        ps.rect.cy
     );
-
-    // switch (cmd.rop) {
-    // case 0xCC:  // dest
-    // case 0x55:  // dest = NOT source
-    // case 0x22:  // dest = dest AND (NOT source)
-    // case 0x66:  // dest = source XOR dest (SRCINVERT)
-    // case 0x88:  // dest = source AND dest (SRCAND)
-    // case 0xBB:  // dest = (NOT source) OR dest (MERGEPAINT)
-    // case 0xEE:  // dest = source OR dest (SRCPAINT)
-    //     break;
-    // default:
-    //     // should not happen
-    //     //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
-    //     break;
-    // }
 }
 
-void BrowserGraphic::draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) {}
+void BrowserGraphic::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+{
+    // LOG(LOG_INFO, "BrowserGraphic::RDPMem3Blt");
+
+    const uint32_t image_idx = this->image_data_index[cmd.cache_id & 0b11] + cmd.cache_idx;
+
+    MemBltPoints ps(cmd.rect.intersect(this->width, this->height), cmd.srcx, cmd.srcy, clip);
+
+    emval_call(this->callbacks, jsnames::draw_mem3blt,
+        cmd.brush.org_x,
+        cmd.brush.org_y,
+        cmd.brush.style,
+        get_brush_data(cmd.brush).data(),
+        image_idx,
+        cmd.rop,
+        ps.srcx,
+        ps.srcy,
+        ps.rect.x,
+        ps.rect.y,
+        ps.rect.cx,
+        ps.rect.cy,
+        color_decode(cmd.back_color, color_ctx),
+        color_decode(cmd.fore_color, color_ctx)
+    );
+}
 
 void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
@@ -440,6 +455,8 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
 
 void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
 {
+    // LOG(LOG_INFO, "BrowserGraphic::RDPGlyphIndex");
+
     Rect screen_rect = clip.intersect(this->width, this->height);
     if (screen_rect.isempty()){
         return ;
@@ -501,46 +518,115 @@ void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx co
     );
 }
 
-void BrowserGraphic::draw(RDPPolygonSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+void BrowserGraphic::draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    LOG(LOG_DEBUG, "RDPPolygonSC unsupported");
+    // LOG(LOG_INFO, "BrowserGraphic::RDPPolygonSC");
+
+    emval_call(this->callbacks, jsnames::draw_polygone_sc,
+        cmd.xStart,
+        cmd.yStart,
+        cmd.NumDeltaEntries,
+        reinterpret_cast<void const*>(cmd.deltaPoints),
+        clip.x,
+        clip.y,
+        clip.cx,
+        clip.cy,
+        color_decode(cmd.BrushColor, color_ctx),
+        cmd.fillMode
+    );
 }
 
-void BrowserGraphic::draw(RDPPolygonCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+void BrowserGraphic::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    LOG(LOG_DEBUG, "RDPPolygonCB unsupported");
+    // LOG(LOG_INFO, "BrowserGraphic::RDPPolygonCB");
+
+    emval_call(this->callbacks, jsnames::draw_polygone_cb,
+        cmd.xStart,
+        cmd.yStart,
+        cmd.NumDeltaEntries,
+        reinterpret_cast<void const*>(cmd.deltaPoints),
+        clip.x,
+        clip.y,
+        clip.cx,
+        clip.cy,
+        cmd.brush.org_x,
+        cmd.brush.org_y,
+        cmd.brush.style,
+        get_brush_data(cmd.brush).data(),
+        color_decode(cmd.backColor, color_ctx),
+        color_decode(cmd.foreColor, color_ctx),
+        cmd.fillMode
+    );
 }
 
-void BrowserGraphic::draw(RDPPolyline const & cmd, Rect /*clip*/, gdi::ColorCtx color_ctx)
+void BrowserGraphic::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPPolyline");
-
-    const auto color = color_decode(cmd.PenColor, color_ctx);
 
     emval_call(this->callbacks, jsnames::draw_polyline,
         cmd.xStart,
         cmd.yStart,
         cmd.NumDeltaEntries,
         reinterpret_cast<void const*>(cmd.deltaEncodedPoints),
-        color
+        clip.x,
+        clip.y,
+        clip.cx,
+        clip.cy,
+        color_decode(cmd.PenColor, color_ctx)
     );
 }
 
-void BrowserGraphic::draw(RDPEllipseSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+void BrowserGraphic::draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    LOG(LOG_DEBUG, "RDPEllipseSC unsupported");
+    // LOG(LOG_INFO, "BrowserGraphic::RDPEllipseSC");
+
+    emval_call(this->callbacks, jsnames::draw_ellipse_sc,
+        cmd.el.ileft(),
+        cmd.el.itop(),
+        cmd.el.eright(),
+        cmd.el.ebottom(),
+        clip.x,
+        clip.y,
+        clip.cx,
+        clip.cy,
+        cmd.bRop2,
+        color_decode(cmd.color, color_ctx),
+        cmd.fillMode
+    );
 }
 
-void BrowserGraphic::draw(RDPEllipseCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/)
+void BrowserGraphic::draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    LOG(LOG_DEBUG, "RDPEllipseCB unsupported");
+    // LOG(LOG_INFO, "BrowserGraphic::RDPEllipseCB");
+
+    emval_call(this->callbacks, jsnames::draw_ellipse_cb,
+        cmd.el.ileft(),
+        cmd.el.itop(),
+        cmd.el.eright(),
+        cmd.el.ebottom(),
+        clip.x,
+        clip.y,
+        clip.cx,
+        clip.cy,
+        cmd.brop2,
+        color_decode(cmd.back_color, color_ctx),
+        color_decode(cmd.fore_color, color_ctx),
+        cmd.fill_mode
+    );
 }
 
 void BrowserGraphic::draw(const RDPColCache   & /*unused*/) { }
 
 void BrowserGraphic::draw(const RDPBrushCache & /*unused*/) { }
 
-void BrowserGraphic::draw(const RDP::FrameMarker & /*cmd*/) {}
+void BrowserGraphic::draw(const RDP::FrameMarker & cmd)
+{
+    // LOG(LOG_INFO, "BrowserGraphic::FrameMarker");
+
+    emval_call(this->callbacks, jsnames::draw_frame_marker,
+        bool(cmd.action)
+    );
+}
 
 void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
 void BrowserGraphic::draw(const RDP::RAIL::WindowIcon & /*unused*/) { }

@@ -25,35 +25,50 @@ const redemptionLoadModule = function(Module, window)
         };
     };
 
+    const wCb_em2js_Deltas = function(cb, thisp) {
+        return function(xStart, yStart, numDeltaEntries, deltaEntries, ...args) {
+            const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+            return cb.call(thisp, xStart, yStart, deltas, ...args);
+        };
+    };
+
+    const wCb_em2js_Brush = function(cb, thisp) {
+        return function(brushData, ...args) {
+            cb.call(thisp, HEAPU8.subarray(brushData, brushData + 8), ...args);
+        };
+    };
+
     const noop = function(){};
 
     // { funcname: [wrapCreator, defaultFunction], ... }
     const wrappersGd = {
-        setCachedImageSize: identity,
-        cachedImage: wCb_em2js_ImageData,
-        drawCachedImage: identity,
-        drawImage: wCb_em2js_ImageData,
+        setBmpCacheSize: identity,
+        setBmpCacheIndex: wCb_em2js_ImageData,
+        drawMemBlt: identity,
+        drawMem3Blt: wCb_em2js_Brush,
 
+        drawImage: wCb_em2js_ImageData,
         drawRect: identity,
-        drawSrcBlt: identity,
+        drawScrBlt: identity,
         drawLineTo: identity,
         drawDestBlt: identity,
-
-        drawPolyline: function(cb, thisp) {
-            return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
+        drawPolyline: wCb_em2js_Deltas,
+        drawPolygoneSC: wCb_em2js_Deltas,
+        drawPolygoneCB: function(cb, thisp) {
+            return function(xStart, yStart, numDeltaEntries, deltaEntries,
+                            clipX, clipY, clipW, clipH, brushData, ...args
+            ) {
                 const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
-                cb.call(thisp, xStart, yStart, deltas, penColor);
+                return cb.call(thisp, xStart, yStart, deltas,
+                               clipX, clipY, clipW, clipH,
+                               HEAPU8.subarray(brushData, brushData + 8),
+                               ...args);
             };
         },
-
-        drawPatBlt: identity,
-        drawPatBltEx: function(cb, thisp) {
-            return function(x, y, w, h, rop, backColor, foreColor, brush) {
-                const brushData = HEAPU8.subarray(brush, brush + 8);
-                cb.call(thisp, x, y, w, h, rop, backColor, foreColor, brushData);
-            };
-        },
-
+        drawEllipseSC: identity,
+        drawEllipseCB: identity,
+        drawPatBlt: wCb_em2js_Brush,
+        drawFrameMarker: identity,
 
         setPointer: wCb_em2js_ImageData,
         newPointer: wCb_em2js_ImageData,
@@ -78,20 +93,22 @@ const redemptionLoadModule = function(Module, window)
     class RDPClient {
         constructor(socket, width, height, events, username, password, disabled_orders, verbosity) {
             const rdpEvents = {};
-            wrapEvents(rdpEvents, wrappersGd, events, noop);
+            wrapEvents(rdpEvents, wrappersGd, events, undefined);
             wrapEvents(rdpEvents, wrappersFront, events, undefined);
-            if (!rdpEvents.random) {
-                rdpEvents.random = function(idata, len) {
-                    const data = HEAPU8.subarray(idata, idata + len);
-                    window.crypto.getRandomValues(data);
-                }
+            rdpEvents.drawFrameMarker = rdpEvents.drawFrameMarker || noop;
+            rdpEvents.random = rdpEvents.random || function(idata, len) {
+                const data = HEAPU8.subarray(idata, idata + len);
+                window.crypto.getRandomValues(data);
             }
+
+            verbosity = verbosity || 0;
 
             this.native = new Module.RdpClient(
                 rdpEvents, width, height,
                 username || "", password || "",
                 disabled_orders || 0,
-                verbosity || 0,
+                verbosity & 0xffffffff,
+                (verbosity > 0xffffffff ? verbosity - 0xffffffff : 0)
             );
             this.socket = socket;
             this._channels = [];

@@ -6,6 +6,8 @@ const rgbToCss = function(color) {
 //     ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
 //  && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
 
+const RDPGraphicsPromiseError = (e) => console.log('RDPGraphics._pushEvent error: ', e);
+
 class RDPGraphics
 {
     constructor(canvasElement) {
@@ -16,7 +18,9 @@ class RDPGraphics
         this.cachePointers = [];
         this.cacheImages = [];
         this.promise = Promise.resolve()
-        this.orderStack = [];
+
+        this.width = canvasElement.width;
+        this.height = canvasElement.height;
 
         this.canvas.imageSmoothingEnabled = false;
     }
@@ -27,30 +31,60 @@ class RDPGraphics
             const imgData = this.canvas.getImageData(0, 0, this.ecanvas.width, this.ecanvas.height);
             this.ecanvas.width = w;
             this.ecanvas.height = h;
+            this.width = w;
+            this.height = h;
             this.canvas.putImageData(imgData, 0, 0);
         }
     }
 
-    setCachedImageSize(n) {
+    _pushEvent(f) {
+        this.promise = this.promise.then(f, RDPGraphicsPromiseError);
+    }
+
+    setBmpCacheSize(n) {
         this.cacheImages.length = n;
     }
 
-    cachedImage(imageData, imageIdx) {
+    setBmpCacheIndex(imageData, imageIdx) {
         const p = createImageBitmap(imageData);
-        const setImg = (img) => { this.cacheImages[imageIdx] = img };
-        this.promise = this.promise.then(() => p).then(setImg);
+        this._pushEvent(() => p);
+        this._pushEvent((img) => { this.cacheImages[imageIdx] = img });
     }
 
-    drawCachedImage(imageIdx, rop, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-        // rop supposed to 0xCC
-        this.promise = this.promise.then(() => {
-            this.canvas.drawImage(this.cacheImages[imageIdx], sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+    drawMemBlt(imageIdx, rop, sx, sy, dx, dy, dWidth, dHeight) {
+        // assume rop == 0xCC
+        this._pushEvent(() => {
+            const img = this.cacheImages[imageIdx];
+            const mincx = Math.min(img.width - sx, this.width - dx, dWidth);
+            const mincy = Math.min(img.height - sy, this.height - dy, dHeight);
+
+            if (mincx <= 0 || mincy <= 0) {
+                return;
+            }
+
+            // console.log(sx, sy, mincx, mincy, dx, dy, img.width, img.height);
+            this.canvas.drawImage(img, sx, sy, mincx, mincy, dx, dy, mincx, mincy);
         });
+
+        // switch (cmd.rop) {
+        // case 0xCC:  // dest
+        // case 0x55:  // dest = NOT source
+        // case 0x22:  // dest = dest AND (NOT source)
+        // case 0x66:  // dest = source XOR dest (SRCINVERT)
+        // case 0x88:  // dest = source AND dest (SRCAND)
+        // case 0xBB:  // dest = (NOT source) OR dest (MERGEPAINT)
+        // case 0xEE:  // dest = source OR dest (SRCPAINT)
+        //     break;
+        // default:
+        //     // should not happen
+        //     //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
+        //     break;
+        // }
     }
 
     drawImage(imageData, rop, ...args) {
         // assume rop == 0xCC
-        this.promise = this.promise.then(() => {
+        this._pushEvent(() => {
             this.canvas.putImageData(imageData, ...args);
         });
         // TODO clone imageData or move ownership (return true + free) ?
@@ -58,15 +92,15 @@ class RDPGraphics
 
     drawRect(x, y, w, h, color) {
         // console.log('drawRect');
-        this.promise = this.promise.then(() => {
+        this._pushEvent(() => {
             this.canvas.fillStyle = rgbToCss(color);
             this.canvas.fillRect(x,y,w,h);
         });
     }
 
-    drawSrcBlt(sx, sy, w, h, dx, dy, rop) {
-        // console.log('drawSrcBlt');
-        this.promise = this.promise.then(() => {
+    drawScrBlt(sx, sy, w, h, dx, dy, rop) {
+        // console.log('drawScrBlt');
+        this._pushEvent(() => {
             const sourceImageData = this.canvas.getImageData(sx, sy, w, h);
             if (rop === 0xCC) {
                 this.canvas.putImageData(sourceImageData, dx, dy);
@@ -89,7 +123,7 @@ class RDPGraphics
 
     drawLineTo(backMode, startX, startY, endX, endY, backColor, penStyle, penWidth, penColor) {
         // console.log('drawLineTo');
-        this.promise = this.promise.then(() => {
+        this._pushEvent(() => {
             this.canvas.save();
             this.canvas.fillStyle = rgbToCss(backColor);
             this.canvas.strokeStyle = rgbToCss(penColor);
@@ -132,9 +166,9 @@ class RDPGraphics
         });
     }
 
-    drawPolyline(startX, startY, deltas, penColor) {
+    drawPolyline(startX, startY, deltas, clipX, clipY, clipW, clipH, penColor) {
         // console.log('drawPolyline');
-        this.promise = this.promise.then(() => {
+        this._pushEvent(() => {
             this.canvas.save();
             this.canvas.strokeStyle = rgbToCss(penColor);
             this.canvas.beginPath();
@@ -162,12 +196,29 @@ class RDPGraphics
         this.canvas.putImageData(imgData, x, y);
     }
 
+    _transformPixelsBrush(orgX, orgY, w, h, backColor, foreColor, brushData, f) {
+        const imgData = this.canvas.getImageData(orgX, orgY, w, h);
+        const u32a = new Uint32Array(imgData.data.buffer);
+        w = imgData.width;
+        h = imgData.height;
+        for (let y = 0; y < h; ++y) {
+            const brushU8 = brushData[(y + orgY) % 8];
+            const i = y * w;
+            for (let x = 0; x < w; ++x) {
+                const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
+                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xff000000)
+                          | 0xff000000;
+            }
+        }
+        this.canvas.putImageData(imgData, orgX, orgY);
+    }
+
     _invert(x, y, w, h) {
         this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff);
     }
 
-    drawPatBlt(x, y, w, h, rop, color) {
-        this.promise = this.promise.then(() => {
+    drawPatBlt(brushData, orgX, orgY, style, x, y, w, h, rop, color/*backColor*/, foreColor) {
+        this._pushEvent(() => {
             switch (rop) {
                 case 0x00:
                     this.canvas.fillStyle = "#000";
@@ -177,15 +228,29 @@ class RDPGraphics
                 case 0x0f: this._transformPixels(x,y,w,h, (src) => ~src); break;
                 case 0x50: this._transformPixels(x,y,w,h, (src) => src & ~color); break;
                 case 0x55: this._invert(x,y,w,h); break;
-                case 0x5a: this._transformPixels(x,y,w,h, (src) => color ^ src); break;
+                case 0x5a:
+                    if (style === 0x03) {
+                        this._transformPixelsBrush(x,y,w,h,color,foreColor,brushData,
+                                                   (src,c) => src ^ c);
+                    }
+                    else {
+                        this._transformPixels(x,y,w,h, (src) => color ^ src);
+                    }
+                    break;
                 case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(color & src)); break;
                 case 0xa0: this._transformPixels(x,y,w,h, (src) => color & src); break;
                 case 0xa5: this._transformPixels(x,y,w,h, (src) => ~(color ^ src)); break;
                 case 0xaa: break;
                 case 0xaf: this._transformPixels(x,y,w,h, (src) => color | ~src); break;
                 case 0xf0:
-                    this.canvas.fillStyle = rgbToCss(color);
-                    this.canvas.fillRect(x,y,w,h);
+                    if (style === 0x03) {
+                        this._transformPixelsBrush(x,y,w,h,color,foreColor,brushData,
+                                                   (src,c) => src);
+                    }
+                    else {
+                        this.canvas.fillStyle = rgbToCss(color);
+                        this.canvas.fillRect(x,y,w,h);
+                    }
                     break;
                 case 0xfa: this._transformPixels(x,y,w,h, (src) => src | color); break;
                 case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~color); break;
@@ -198,34 +263,8 @@ class RDPGraphics
         });
     }
 
-    _transformPixelsBrush(orgX, orgY, w, h, backColor, foreColor, brushData, f) {
-        const imgData = this.canvas.getImageData(orgX, orgY, w, h);
-        const u32a = new Uint32Array(imgData.data.buffer);
-        w = imgData.width;
-        h = imgData.height;
-        for (let y = 0; y < h; ++y) {
-            const brushU8 = brushData[(y + orgY) % 8];
-            const i = y * w;
-            for (let x = 0; x < w; ++x) {
-                const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
-                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xff000000) | 0xff000000;
-            }
-        }
-        this.canvas.putImageData(imgData, orgX, orgY);
-    }
-
-    drawPatBltEx(x, y, w, h, rop, backColor, foreColor, brushData) {
-        this.promise = this.promise.then(() => {
-            switch (rop) {
-                case 0xf0: this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData, (src,c) => src); break;
-                case 0x5a: this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData, (src,c) => src ^ c); break;
-                default: console.log('unsupported PatBltEx rop', rop);
-            }
-        });
-    }
-
     drawDestBlt(x, y, w, h, rop) {
-        this.promise = this.promise.then(() => {
+        this._pushEvent(() => {
             switch (rop) {
             case 0x00:
                 this.canvas.fillStyle = "#000";
