@@ -32,6 +32,58 @@ RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
 std::string side_effect;
 
+
+
+RED_AUTO_TEST_CASE(TestExecutionContext)
+{
+    struct Event {
+        struct Context {
+            timeval trigger_time;
+            timeval now;
+        } context;
+
+        struct Actions {
+             std::function<void(Event &)> on_timeout;
+        } actions;
+
+        Event(timeval trigger_time, std::function<void(Event &)> on_timeout)
+            : context{trigger_time}
+            ,  actions{on_timeout}
+          {
+          }
+
+          bool trigger_timeout(timeval now) {
+            if (this->context.trigger_time <= this->context.now) {
+                return false;
+            }
+            if (now <= this->context.now) {
+                return false;
+            }
+            this->context.now = now;
+            return now >= this->context.trigger_time;
+          }
+          void exec_timeout() { this->actions.on_timeout(*this);}
+    };
+
+    std::string s;
+    std::function<void(Event&)> do_nothing = [](Event &){};
+    std::function<void(Event&)> fn = [&s](Event&e){ s += "Event Triggered"; };
+
+    timeval wakeup{81, 0};
+
+    Event e(wakeup, fn);
+    // before time: nothing happens
+    RED_CHECK(!e.trigger_timeout(timeval{79, 0}));
+    // hen it's time of above alarm is triggered
+    RED_CHECK(e.trigger_timeout(timeval{81, 0}));
+    // but only once
+    RED_CHECK(!e.trigger_timeout(timeval{82, 0}));
+
+    e.exec_timeout();
+    RED_CHECK(s == std::string("Event Triggered"));
+}
+
+
 RED_AUTO_TEST_CASE(TestSimpleTimer)
 {
     LOG(LOG_INFO, "TestSimpleTimer");
