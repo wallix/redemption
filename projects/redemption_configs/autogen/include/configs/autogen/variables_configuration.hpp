@@ -2241,10 +2241,9 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// The name of an environment variable which points to the alternative directory for starting Session Probe. <br/>
-    /// The maximum length of this name is 3 bytes. <br/>
+    /// The name of the environment variable pointing to the alternative directory to launch Session Probe. <br/>
     /// If empty, the environment variable TMP will be used. <br/>
-    /// type: std::string <br/>
+    /// type: char[4] <br/>
     /// connpolicy -> proxy    [name: session_probe::alternate_directory_environment_variable] <br/>
     /// sesman::name: mod_rdp:session_probe_alternate_directory_environment_variable <br/>
     /// value{} <br/>
@@ -2256,8 +2255,8 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(72);
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = char[4];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
@@ -5569,7 +5568,6 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
-, cfg::mod_rdp::session_probe_alternate_directory_environment_variable
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::server_cert
@@ -5627,6 +5625,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_update_disabled_features
 , cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field
 , cfg::mod_rdp::session_probe_bestsafe_integration
+, cfg::mod_rdp::session_probe_alternate_directory_environment_variable
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::server_cert_store

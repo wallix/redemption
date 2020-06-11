@@ -249,11 +249,10 @@ disabled_features = integer(min=0, max=511, default=352)
 
 enable_bestsafe_interaction = boolean(default=False)
 
-# The name of an environment variable which points to the alternative directory for starting Session Probe.
-# The maximum length of this name is 3 bytes.
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
 # If empty, the environment variable TMP will be used.
 #_advanced
-alternate_directory_environment_variable = string(default='')
+alternate_directory_environment_variable = string(max=3, default='')
 
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
