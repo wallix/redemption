@@ -21,13 +21,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-#include <vector>
-
-
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/channel_list.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
@@ -36,11 +29,8 @@
 
 #include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDialog)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
@@ -49,9 +39,7 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QHeaderView)
 
 
 class QtKeyLabel :  public QWidget

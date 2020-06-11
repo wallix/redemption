@@ -104,7 +104,7 @@ namespace detail
     template<class... StringsOrChars>
     void str_concat_view(std::string& str, StringsOrChars&&... strs)
     {
-        str.reserve(str.size() + (len_from_av_or_char(strs) + ...));
+        str.reserve(str.size() + (... + len_from_av_or_char(strs)));
         (append_from_av_or_char(str, strs), ...);
     }
 } // namespace detail

@@ -28,13 +28,10 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/channel_list.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
-#include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
 
 #include <QtGui/QPainter>
@@ -51,12 +48,8 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QLineEdit)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDialog)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QScrollArea)
 

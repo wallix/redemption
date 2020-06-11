@@ -29,7 +29,6 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/image_data_view.hpp"
 #include "utils/difftimeval.hpp"
 
 #include <chrono>

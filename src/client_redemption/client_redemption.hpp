@@ -33,7 +33,6 @@
 #include "acl/gd_provider.hpp"
 
 #include "core/channels_authorizations.hpp"
-#include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -46,7 +45,6 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 
-#include "transport/crypto_transport.hpp"
 #include "transport/replay_transport.hpp"
 #include "transport/socket_transport.hpp"
 
@@ -232,7 +230,7 @@ public:
 
     std::string       local_IP;
     bool wab_diag_channel_on = false;
-    GdForwarder<class ClientRedemption> gd_forwarder;
+    GdForwarder<ClientRedemption> gd_forwarder;
 
 public:
     ClientRedemption(TimeBase & time_base,

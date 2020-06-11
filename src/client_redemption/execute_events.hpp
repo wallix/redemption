@@ -21,8 +21,6 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "core/session_reactor.hpp"
-#include "gdi/graphic_api.hpp"
-#include "core/callback.hpp"
 #include "utils/select.hpp"
 
 

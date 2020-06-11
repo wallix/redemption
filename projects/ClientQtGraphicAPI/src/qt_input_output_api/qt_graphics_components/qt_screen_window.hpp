@@ -22,15 +22,11 @@
 
 
 #include "utils/log.hpp"
-#include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "client_redemption/client_channels/client_remoteapp_channel.hpp"
-// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtCore/QTimer>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
-#include <QtGui/QImage>
 
 #include "redemption_qt_include_widget.hpp"
 

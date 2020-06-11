@@ -38,7 +38,6 @@
 
 #include "configs/autogen/enums.hpp"
 
-
 using std::size_t; /*NOLINT*/
 
 class ServerNotifier;
@@ -49,6 +48,8 @@ struct TLSClientParams
     uint32_t tls_max_level = 0;
     bool show_common_cipher_list = false;
     std::string cipher_string;
+    int security_level = 1;
+    bool anonymous_tls = false;
 };
 
 

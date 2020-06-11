@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
 #ifndef Q_MOC_RUN
 #include "core/channel_names.hpp"
 #include "core/channel_list.hpp"

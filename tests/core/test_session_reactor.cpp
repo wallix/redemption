@@ -52,6 +52,14 @@ RED_AUTO_TEST_CASE(TestExecutionContext)
           {
           }
 
+          void set_alarm_timeout(timeval trigger_time) {
+              this->context.trigger_time = trigger_time;
+          }
+
+          void set_alarm_action(std::function<void(Event &)> on_timeout) {
+              this->actions.on_timeout = on_timeout;
+          }
+
           bool trigger_timeout(timeval now) {
             if (this->context.trigger_time <= this->context.now) {
                 return false;
@@ -65,20 +73,23 @@ RED_AUTO_TEST_CASE(TestExecutionContext)
           void exec_timeout() { this->actions.on_timeout(*this);}
     };
 
+
+    std::vector<Event> event_container;
+
     std::string s;
     std::function<void(Event&)> do_nothing = [](Event &){};
     std::function<void(Event&)> fn = [&s](Event&e){ s += "Event Triggered"; };
 
-    timeval wakeup{81, 0};
+    timeval origin{79, 0};
+    timeval wakeup = origin+std::chrono::seconds(2);
 
     Event e(wakeup, fn);
     // before time: nothing happens
-    RED_CHECK(!e.trigger_timeout(timeval{79, 0}));
+    RED_CHECK(!e.trigger_timeout(origin));
     // hen it's time of above alarm is triggered
-    RED_CHECK(e.trigger_timeout(timeval{81, 0}));
+    RED_CHECK(e.trigger_timeout(wakeup+std::chrono::seconds(1)));
     // but only once
-    RED_CHECK(!e.trigger_timeout(timeval{82, 0}));
-
+    RED_CHECK(!e.trigger_timeout(wakeup+std::chrono::seconds(2)));
     e.exec_timeout();
     RED_CHECK(s == std::string("Event Triggered"));
 }

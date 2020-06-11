@@ -663,7 +663,7 @@ struct Recv_CS_BitmapCodec
             /* TS_RFX_CAPSET */
             {
                 uint16_t blockType = stream.in_uint16_le();
-                uint32_t blockLen = stream.in_uint32_le();
+                /*uint32_t blockLen = */stream.in_uint32_le();
                 uint8_t codecId = stream.in_uint8();
                 uint16_t capsetType = stream.in_uint16_le();
                 uint16_t numIcaps = stream.in_uint16_le();

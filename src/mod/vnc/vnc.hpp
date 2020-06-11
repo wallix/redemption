@@ -29,6 +29,7 @@
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
+#include "transport/transport.hpp"
 #include "core/front_api.hpp"
 #include "core/server_notifier_api.hpp"
 #include "core/RDP/clipboard.hpp"

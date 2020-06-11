@@ -66,7 +66,7 @@
 // +--------------------------------+----------------------+
 
 enum {
-       OSMAJORTYPE_UNSPECIFIED
+       OSMAJORTYPE_UNSPECIFIED = 0x0000
      , OSMAJORTYPE_WINDOWS
      , OSMAJORTYPE_OS2
      , OSMAJORTYPE_MACINTOSH
@@ -120,7 +120,7 @@ const char * get_osMajorType_name(uint16_t osMajorType) {
 // +--------------------------------------+----------------------+
 
 enum {
-       OSMINORTYPE_UNSPECIFIED
+       OSMINORTYPE_UNSPECIFIED = 0x0000
      , OSMINORTYPE_WINDOWS_31X
      , OSMINORTYPE_WINDOWS_95
      , OSMINORTYPE_WINDOWS_NT
