@@ -1128,7 +1128,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::session_probe_alternate_directory_environment_variable&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 value
             );
         }

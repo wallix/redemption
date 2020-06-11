@@ -661,9 +661,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_bestsafe_integration = 0
 
-# The name of an environment variable which points to the alternative directory for starting Session Probe.
-# The maximum length of this name is 3 bytes.
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
 # If empty, the environment variable TMP will be used.
+# maxlen = 3
 #_hidden
 #session_probe_alternate_directory_environment_variable = 
 
