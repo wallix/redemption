@@ -32,44 +32,10 @@ RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
 std::string side_effect;
 
-RED_AUTO_TEST_CASE(TestExecutionContext)
+#include "core/events.hpp"
+
+RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
 {
-    struct Event {
-        struct Trigger {
-            bool active = false;
-            timeval now;
-            timeval trigger_time;
-            
-            void set_timeout_alarm(timeval trigger_time) {
-              this->active = true;
-              this->trigger_time = this->now = trigger_time;
-            }
-
-            bool trigger(timeval now) {
-                this->now = now;
-                if (not active) { return false; }
-                if (this->now >= this->trigger_time) {
-                    // one time alarm
-                    this->active = false;
-                    return true;
-                }
-                return false;
-            }
-        } alarm;
-
-        struct Actions {
-            // default action is do nothing
-            std::function<void(Event &)> on_timeout = [](Event &){};
-        } actions;
-
-        Event() {}
-
-        void exec_timeout() { this->actions.on_timeout(*this);}
-    };
-
-
-    std::vector<Event> event_container;
-
     std::string s;
 
     timeval origin{79, 0};
@@ -91,9 +57,19 @@ RED_AUTO_TEST_CASE(TestExecutionContext)
     // If I set an alarm in the past it will be triggered immediately
     e.alarm.set_timeout_alarm(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
+}
 
+RED_AUTO_TEST_CASE(TestEventContainer)
+{
+    std::string s;
+    EventContainer event_container;
+    timeval origin{79, 0};
+    timeval wakeup = origin+std::chrono::seconds(2);
+    Event e;
+    e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
     e.alarm.set_timeout_alarm(wakeup);
     event_container.push_back(std::move(e));
+
     auto t = origin;
     for (auto & event: event_container){
         RED_CHECK(!event.alarm.trigger(t));
@@ -104,14 +80,19 @@ RED_AUTO_TEST_CASE(TestExecutionContext)
     }
     t = t + std::chrono::seconds(1);
     for (auto & event: event_container){
-        RED_CHECK(event.alarm.trigger(t));
+        if (event.alarm.trigger(t)){
+            event.exec_timeout();
+            RED_CHECK(s == std::string("Event Triggered"));
+        }
+        else {
+            RED_CHECK(false);
+        }
     }
 
     t = t + std::chrono::seconds(1);
     for (auto & event: event_container){
         RED_CHECK(!event.alarm.trigger(t));
     }
-    
 }
 
 
