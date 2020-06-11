@@ -326,7 +326,8 @@ function run()
 
         socket.onclose = function(event) {
             console.log('RdpClient close');
-            rdpclient.delete();
+            // TODO fix that
+            try { rdpclient.delete(); } catch (e) {}
             rdpclient = null;
             canvasStopEvents();
         };
