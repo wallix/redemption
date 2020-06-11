@@ -32,66 +32,86 @@ RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
 
 std::string side_effect;
 
-
-
 RED_AUTO_TEST_CASE(TestExecutionContext)
 {
     struct Event {
-        struct Context {
-            timeval trigger_time;
+        struct Trigger {
+            bool active = false;
             timeval now;
-        } context;
+            timeval trigger_time;
+            
+            void set_timeout_alarm(timeval trigger_time) {
+              this->active = true;
+              this->trigger_time = this->now = trigger_time;
+            }
+
+            bool trigger(timeval now) {
+                this->now = now;
+                if (not active) { return false; }
+                if (this->now >= this->trigger_time) {
+                    // one time alarm
+                    this->active = false;
+                    return true;
+                }
+                return false;
+            }
+        } alarm;
 
         struct Actions {
-             std::function<void(Event &)> on_timeout;
+            // default action is do nothing
+            std::function<void(Event &)> on_timeout = [](Event &){};
         } actions;
 
-        Event(timeval trigger_time, std::function<void(Event &)> on_timeout)
-            : context{trigger_time}
-            ,  actions{on_timeout}
-          {
-          }
+        Event() {}
 
-          void set_alarm_timeout(timeval trigger_time) {
-              this->context.trigger_time = trigger_time;
-          }
-
-          void set_alarm_action(std::function<void(Event &)> on_timeout) {
-              this->actions.on_timeout = on_timeout;
-          }
-
-          bool trigger_timeout(timeval now) {
-            if (this->context.trigger_time <= this->context.now) {
-                return false;
-            }
-            if (now <= this->context.now) {
-                return false;
-            }
-            this->context.now = now;
-            return now >= this->context.trigger_time;
-          }
-          void exec_timeout() { this->actions.on_timeout(*this);}
+        void exec_timeout() { this->actions.on_timeout(*this);}
     };
 
 
     std::vector<Event> event_container;
 
     std::string s;
-    std::function<void(Event&)> do_nothing = [](Event &){};
-    std::function<void(Event&)> fn = [&s](Event&e){ s += "Event Triggered"; };
 
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
 
-    Event e(wakeup, fn);
+    Event e;
+    e.alarm.set_timeout_alarm(wakeup);
+    e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
+
     // before time: nothing happens
-    RED_CHECK(!e.trigger_timeout(origin));
-    // hen it's time of above alarm is triggered
-    RED_CHECK(e.trigger_timeout(wakeup+std::chrono::seconds(1)));
+    RED_CHECK(!e.alarm.trigger(origin));
+    // when it's time of above alarm is triggered
+    RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
     // but only once
-    RED_CHECK(!e.trigger_timeout(wakeup+std::chrono::seconds(2)));
+    RED_CHECK(!e.alarm.trigger(wakeup+std::chrono::seconds(2)));
     e.exec_timeout();
     RED_CHECK(s == std::string("Event Triggered"));
+    
+    // If I set an alarm in the past it will be triggered immediately
+    e.alarm.set_timeout_alarm(origin);
+    RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
+
+    e.alarm.set_timeout_alarm(wakeup);
+    event_container.push_back(std::move(e));
+    auto t = origin;
+    for (auto & event: event_container){
+        RED_CHECK(!event.alarm.trigger(t));
+    }
+    t = t + std::chrono::seconds(1);
+    for (auto & event: event_container){
+        RED_CHECK(!event.alarm.trigger(t));
+    }
+    t = t + std::chrono::seconds(1);
+    for (auto & event: event_container){
+        RED_CHECK(event.alarm.trigger(t));
+    }
+
+    t = t + std::chrono::seconds(1);
+    for (auto & event: event_container){
+        RED_CHECK(!event.alarm.trigger(t));
+    }
+    
 }
 
 
