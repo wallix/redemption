@@ -234,6 +234,15 @@ inline array_view_const_char assign_zbuf_from_cfg(
     std::string const & str
 ) { return {str.c_str(), str.size()}; }
 
+template<unsigned n>
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<std::string> & /*buf*/,
+    cfg_s_type<::configs::spec_types::fixed_string> /*type*/,
+    char const (&str)[n]
+) {
+    return array_view_const_char(str, strlen(str));
+}
+
 template<std::size_t N>
 array_view_const_char assign_zbuf_from_cfg(
     zstr_buffer_from<char[N]> & /*buf*/,
