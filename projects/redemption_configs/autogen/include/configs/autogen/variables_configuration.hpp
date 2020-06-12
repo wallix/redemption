@@ -5,6 +5,7 @@
 #pragma once
 
 #include "configs/autogen/authid.hpp"
+#include <cstdint>
 
 namespace configs
 {
@@ -222,13 +223,13 @@ namespace cfg
     };
     /// Warning: Service will be automatically restarted and active sessions will be disconnected <br/>
     /// The port set in this field must not be already used, otherwise the service will not run. <br/>
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {3389} <br/>
     struct globals::port {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{3389};
     };
@@ -617,7 +618,7 @@ namespace cfg
         type value{false};
     };
 
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {0} <br/>
     struct client::keyboard_layout {
@@ -626,8 +627,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section2 + 0};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -719,24 +720,24 @@ namespace cfg
         type value{true};
     };
     /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// default: {2} <br/>
     struct client::tls_min_level {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{2};
     };
     /// Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// default: {0} <br/>
     struct client::tls_max_level {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -1007,7 +1008,7 @@ namespace cfg
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<unsigned int>;
+        using sesman_and_spec_type = ::configs::spec_types::list<unsigned>;
         using mapped_type = sesman_and_spec_type;
         type value = "25";
     };
@@ -1078,7 +1079,7 @@ namespace cfg
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 0};
         using type = std::string;
-        using sesman_and_spec_type = ::configs::spec_types::list<unsigned int>;
+        using sesman_and_spec_type = ::configs::spec_types::list<unsigned>;
         using mapped_type = sesman_and_spec_type;
         type value = "";
     };
@@ -1116,7 +1117,7 @@ namespace cfg
         type value{false};
     };
     /// Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:tls_min_level <br/>
     /// default: {0} <br/>
@@ -1126,13 +1127,13 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 3};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
     /// Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3 <br/>
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:tls_max_level <br/>
     /// default: {0} <br/>
@@ -1142,8 +1143,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 4};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -2832,13 +2833,13 @@ namespace cfg
         type value{};
     };
     /// Port of ICAP server <br/>
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {1344} <br/>
     struct icap_server_down::port {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{1344};
     };
@@ -2899,13 +2900,13 @@ namespace cfg
         type value{};
     };
     /// Port of ICAP server <br/>
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {1344} <br/>
     struct icap_server_up::port {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{1344};
     };
@@ -3024,24 +3025,24 @@ namespace cfg
     /// Expressed in percentage, <br/>
     ///   0   - all of characters need be recognized <br/>
     ///   100 - accept all results <br/>
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {40} <br/>
     struct ocr::max_unrecog_char_rate {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = ::configs::spec_types::range<unsigned int, 0, 100>;
+        using type = unsigned;
+        using sesman_and_spec_type = ::configs::spec_types::range<unsigned, 0, 100>;
         using mapped_type = sesman_and_spec_type;
         type value{40};
     };
 
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {33} <br/>
     struct video::capture_groupid {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{33};
     };
@@ -3089,13 +3090,13 @@ namespace cfg
         type value{600};
     };
     /// Number of png captures to keep. <br/>
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {5} <br/>
     struct video::png_limit {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
@@ -3246,13 +3247,13 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value = "mp4";
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {5} <br/>
     struct video::framerate {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
@@ -3599,13 +3600,13 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// default: {2} <br/>
     struct debug::config {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{2};
     };
@@ -3763,7 +3764,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {1} <br/>
     struct context::selector_current_page {
@@ -3772,8 +3773,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 5};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
@@ -3819,7 +3820,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {0} <br/>
     struct context::selector_lines_per_page {
@@ -3828,12 +3829,12 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 9};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {1} <br/>
     struct context::selector_number_of_pages {
@@ -3842,8 +3843,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 10};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
@@ -3903,7 +3904,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {3389} <br/>
     struct context::target_port {
@@ -3912,8 +3913,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 15};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{3389};
     };
@@ -4100,7 +4101,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// sesman ⇒ proxy <br/>
     /// sesman::name: timeclose <br/>
     /// default: {0} <br/>
@@ -4110,8 +4111,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 29};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -4199,7 +4200,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {0} <br/>
     struct context::duration_max {
@@ -4208,8 +4209,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 36};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -4241,7 +4242,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇔ proxy <br/>
     /// default: {0} <br/>
     struct context::formflag {
@@ -4250,8 +4251,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 39};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -4523,7 +4524,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: unsigned <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::auth_notify_rail_exec_flags {
@@ -4532,8 +4533,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 57};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = unsigned;
+        using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
@@ -4551,7 +4552,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: uint16_t <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_exec_result {
@@ -4560,12 +4561,12 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 59};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint16_t;
+        using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: uint16_t <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
     struct context::auth_command_rail_exec_flags {
@@ -4574,8 +4575,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 60};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint16_t;
+        using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
@@ -4760,7 +4761,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::native_session_id {
@@ -4769,8 +4770,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 73};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
@@ -4816,7 +4817,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: uint32_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_invitation_error_code {
@@ -4825,8 +4826,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 77};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
@@ -4872,7 +4873,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned int <br/>
+    /// type: uint16_t <br/>
     /// sesman ⇐ proxy <br/>
     /// default: {} <br/>
     struct context::rd_shadow_invitation_port {
@@ -4881,8 +4882,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 81};
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint16_t;
+        using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
@@ -5193,9 +5194,9 @@ struct globals
 , cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
 , cfg::globals::rdp_keepalive_connection_interval
-, cfg::globals::port
 , cfg::globals::capture_chunk
 , cfg::globals::glyph_cache
+, cfg::globals::port
 , cfg::globals::nomouse
 , cfg::globals::encryptionLevel
 , cfg::globals::trace_type
@@ -5230,8 +5231,6 @@ struct session_log
 struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
-, cfg::client::tls_min_level
-, cfg::client::tls_max_level
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
@@ -5240,6 +5239,8 @@ struct client
 , cfg::client::auto_adjust_performance_flags
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
+, cfg::client::tls_min_level
+, cfg::client::tls_max_level
 , cfg::client::show_common_cipher_list
 , cfg::client::enable_nla
 , cfg::client::bogus_neg_request
@@ -5283,14 +5284,14 @@ struct mod_rdp
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::server_cert
 , cfg::mod_rdp::server_cert_response
-, cfg::mod_rdp::tls_min_level
-, cfg::mod_rdp::tls_max_level
 , cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
 , cfg::mod_rdp::disabled_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos
+, cfg::mod_rdp::tls_min_level
+, cfg::mod_rdp::tls_max_level
 , cfg::mod_rdp::show_common_cipher_list
 , cfg::mod_rdp::persistent_disk_bitmap_cache
 , cfg::mod_rdp::cache_waiting_list
@@ -5444,12 +5445,11 @@ struct video
 : cfg::video::break_interval
 , cfg::video::codec_id
 , cfg::video::ffmpeg_options
-, cfg::video::capture_groupid
 , cfg::video::png_interval
 , cfg::video::frame_interval
-, cfg::video::png_limit
-, cfg::video::framerate
+, cfg::video::capture_groupid
 , cfg::video::capture_flags
+, cfg::video::png_limit
 , cfg::video::replay_path
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
@@ -5461,6 +5461,7 @@ struct video
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
 , cfg::video::bogus_vlc_frame_rate
+, cfg::video::framerate
 , cfg::video::notimestamp
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
@@ -5486,7 +5487,6 @@ struct websocket
 
 struct debug
 : cfg::debug::fake_target_ip
-, cfg::debug::config
 , cfg::debug::primary_orders
 , cfg::debug::secondary_orders
 , cfg::debug::bitmap_update
@@ -5504,6 +5504,7 @@ struct debug
 , cfg::debug::pass_dialog_box
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
+, cfg::debug::config
 { static constexpr bool is_section = true; };
 
 struct remote_program
@@ -5577,39 +5578,39 @@ struct context
 , cfg::context::smartcard_login
 , cfg::context::application_driver_alternate_shell
 , cfg::context::application_driver_shell_arguments
-, cfg::context::selector_current_page
-, cfg::context::selector_lines_per_page
-, cfg::context::selector_number_of_pages
-, cfg::context::target_port
-, cfg::context::end_date_cnx
-, cfg::context::duration_max
-, cfg::context::formflag
-, cfg::context::auth_notify_rail_exec_flags
-, cfg::context::auth_command_rail_exec_exec_result
-, cfg::context::auth_command_rail_exec_flags
-, cfg::context::native_session_id
-, cfg::context::rd_shadow_invitation_error_code
-, cfg::context::rd_shadow_invitation_port
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width
 , cfg::context::selector
+, cfg::context::selector_current_page
+, cfg::context::selector_lines_per_page
+, cfg::context::selector_number_of_pages
+, cfg::context::target_port
 , cfg::context::accept_message
 , cfg::context::display_message
 , cfg::context::authenticated
 , cfg::context::keepalive
+, cfg::context::end_date_cnx
 , cfg::context::mode_console
 , cfg::context::authentication_challenge
+, cfg::context::duration_max
 , cfg::context::showform
+, cfg::context::formflag
 , cfg::context::forcemodule
 , cfg::context::disconnect_reason_ack
 , cfg::context::recording_started
 , cfg::context::rt_ready
 , cfg::context::perform_automatic_reconnection
+, cfg::context::auth_notify_rail_exec_flags
+, cfg::context::auth_command_rail_exec_exec_result
+, cfg::context::auth_command_rail_exec_flags
 , cfg::context::rail_disconnect_message_delay
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::is_wabam
+, cfg::context::native_session_id
 , cfg::context::rd_shadow_available
+, cfg::context::rd_shadow_invitation_error_code
+, cfg::context::rd_shadow_invitation_port
 , cfg::context::rail_module_host_mod_is_active
 { static constexpr bool is_section = true; };
 

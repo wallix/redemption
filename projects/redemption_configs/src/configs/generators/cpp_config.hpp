@@ -533,6 +533,7 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
         "#pragma once\n"
         "\n"
         "#include \"configs/autogen/authid.hpp\"\n"
+        "#include <cstdint>\n"
         "\n"
         "namespace configs\n"
         "{\n"

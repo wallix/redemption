@@ -42,14 +42,6 @@ using namespace cfg_attributes;
 
 namespace python
 {
-    template<class T, class R = void>
-    constexpr bool is_integral_type_v =
-        std::is_base_of<types::integer_base, T>::value
-     || std::is_integral<T>::value;
-
-    template<class T, class R = void>
-    using enable_if_integral_type = std::enable_if_t<is_integral_type_v<T>, R>;
-
     template<class T>
     void write_type(std::ostream& out, type_<std::string>, T const& x)
     {
@@ -68,7 +60,7 @@ namespace python
     }
 
     template<class Int, class T>
-    enable_if_integral_type<Int>
+    std::enable_if_t<traits::is_integer_v<Int>>
     write_type(std::ostream& out, type_<types::list<Int>>, T const& x)
     {
         out << "u'" << io_quoted2{x} << "'";
@@ -85,7 +77,7 @@ namespace python
         if constexpr (std::is_enum_v<T>) {
             out << +std::underlying_type_t<T>(x);
         }
-        else if constexpr (is_integral_type_v<T>) {
+        else if constexpr (traits::is_integer_v<T>) {
             out << +python_spec_writer::impl::stringize_integral(x);
         }
         else {
@@ -108,7 +100,7 @@ namespace python
     template<class T1, long min, long max, class T>
     void write_type(std::ostream& out, type_<types::range<T1, min, max>>, T const& x)
     {
-        write_type(out, type_<T>{}, x);
+        write_type(out, type_<T1>{}, x);
     }
 }
 

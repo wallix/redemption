@@ -203,11 +203,11 @@ namespace json
     template<class T, class L>
     void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::list<T>>, L const& x)
     {
-        static_assert(sesman_default_map::python::is_integral_type_v<T>, "not implemented");
+        static_assert(traits::is_integer_v<T>, "not implemented");
         out <<
             "          \"type\": \"integer\",\n"
         ;
-        if (std::is_unsigned<T>::value || std::is_base_of<types::unsigned_base, T>::value) {
+        if (traits::is_unsigned_v<T>) {
             out << "          \"min\": 0,\n";
         }
         out <<
@@ -330,12 +330,9 @@ namespace json
                 impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<X>>(x)});
             });
         }
-        else if constexpr (std::is_base_of_v<types::integer_base, T> || std::is_integral_v<T>) {
+        else if constexpr (traits::is_integer_v<T>) {
             out << "          \"type\": \"integer\",\n";
-            if constexpr (
-                std::is_unsigned_v<T>
-             || std::is_base_of_v<types::unsigned_base, T>
-            ) {
+            if constexpr (traits::is_unsigned_v<T>) {
                 out << "          \"min\": 0,\n";
             }
             out << "          \"default\": " << impl::stringize_integral(x) << ",\n";

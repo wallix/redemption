@@ -85,8 +85,10 @@ void write_type_info(std::ostream& out, type_enumerations& enums, type_<T>)
             impl::write_enum_info(out, e);
         });
     }
-    else if constexpr (std::is_unsigned_v<T> || std::is_base_of_v<types::unsigned_base, T>) {
+    else if constexpr (traits::is_unsigned_v<T>) {
         out << "min = 0";
+    }
+    else if constexpr (traits::is_signed_v<T>) {
     }
     else {
         static_assert(!sizeof(T), "missing implementation");
@@ -152,9 +154,7 @@ void write_type(std::ostream& out, type_enumerations&, type_<std::string>, T con
 
 template<class Int, class T>
 std::enable_if_t<
-    std::is_base_of<types::integer_base, Int>::value
-    or
-    std::is_integral<Int>::value
+    traits::is_integer_v<Int>
 >
 write_type(std::ostream& out, type_enumerations&, type_<Int>, T i)
 { out << impl::stringize_integral(i); }
