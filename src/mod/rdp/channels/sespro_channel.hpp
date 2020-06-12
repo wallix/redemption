@@ -59,7 +59,8 @@ enum {
     OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001,
     OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
     OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
-    OPTION_ENABLE_CLEANER                                       = 0x00000008
+    OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
+    OPTION_ENABLE_APPLICATION_DRIVER_CLEANER                    = 0x00000010
 };
 
 
@@ -606,6 +607,14 @@ public:
 
                     if (this->sespro_params.launch_application_driver_then_terminate) {
                         options |= OPTION_LAUNCH_APPLICATION_THEN_TERMINATE;
+                    }
+
+                    if (this->sespro_params.enable_self_cleaner) {
+                        options |= OPTION_ENABLE_SELF_CLEANER;
+                    }
+
+                    if (this->sespro_params.enable_application_driver_cleaner) {
+                        options |= OPTION_ENABLE_APPLICATION_DRIVER_CLEANER;
                     }
 
                     if (options)
