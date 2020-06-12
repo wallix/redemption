@@ -1076,6 +1076,22 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "session_probe_enable_cleaner")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_enable_cleaner&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "application_driver_enable_cleaner")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::application_driver_enable_cleaner&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "application_driver_exe_or_file")) {
             ::configs::parse_and_log(
                 context, key,
