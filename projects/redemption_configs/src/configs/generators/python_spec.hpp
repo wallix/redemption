@@ -53,7 +53,29 @@ namespace types = cfg_attributes::types;
 
 template<class T>
 void write_type_info(std::ostream& /*out*/, type_<T>)
-{}
+{
+    if constexpr (std::is_enum_v<T>) {
+    }
+    else if constexpr (std::is_base_of_v<types::unsigned_base, T>) {
+    }
+    else if constexpr (std::is_unsigned_v<T>) {
+    }
+    else {
+        static_assert(!sizeof(T), "missing implementation");
+    }
+}
+
+//@{
+template<unsigned N> void write_type_info(std::ostream&, type_<types::fixed_string<N>>) {}
+inline void write_type_info(std::ostream&, type_<bool>) {}
+inline void write_type_info(std::ostream&, type_<std::string>) {}
+inline void write_type_info(std::ostream&, type_<types::dirpath>) {}
+inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
+//@}
+
+template<unsigned N>
+void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
+{ out << "(is in hexadecimal format)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::hours>)
 { out << "(is in hour)\n"; }
@@ -71,9 +93,9 @@ template<class T, class Ratio>
 void write_type_info(std::ostream& out, type_<std::chrono::duration<T, Ratio>>)
 { out << "(is in " << Ratio::num << "/" << Ratio::den << " second)\n"; }
 
-template<class T, class Ratio, long min, long max>
-void write_type_info(std::ostream& out, type_<types::range<std::chrono::duration<T, Ratio>, min, max>>)
-{ write_type_info(out, type_<std::chrono::duration<T, Ratio>>{}); }
+template<class T, long min, long max>
+void write_type_info(std::ostream& out, type_<types::range<T, min, max>>)
+{ write_type_info(out, type_<T>{}); }
 
 template<class T>
 void write_type_info(std::ostream& out, type_<types::list<T>>)
@@ -222,9 +244,10 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_string
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations& enums, type_<types::dirpath>, T const & x)
+void write_type(std::ostream& out, type_enumerations&, type_<types::dirpath>, T const & x)
 {
-    write_type(out, enums, type_<typename types::dirpath::fixed_type>{}, x);
+    namespace globals = cfg_attributes::globals;
+    out << "string(max=" << globals::path_max <<  ", default='" << impl::quoted2(x) << "')";
 }
 
 template<class T>

@@ -97,7 +97,7 @@ namespace types
 
     struct ip_string {};
 
-    struct dirpath { using fixed_type = fixed_string<globals::path_max>; };
+    struct dirpath {};
 
     template<class T, long min, long max> struct range {};
 }

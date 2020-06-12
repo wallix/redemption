@@ -79,18 +79,18 @@ namespace python
         out << (x ? "True" : "False");
     }
 
-    template<class Int, class T>
-    enable_if_integral_type<Int>
-    write_type(std::ostream& out, type_<Int>, T const& i)
+    template<class T, class X>
+    void write_type(std::ostream& out, type_<T>, X const& x)
     {
-        out << +python_spec_writer::impl::stringize_integral(i);
-    }
-
-    template<class E, class T>
-    std::enable_if_t<std::is_enum<E>::value>
-    write_type(std::ostream& out, type_<E>, T const& e)
-    {
-        out << +std::underlying_type_t<E>(e);
+        if constexpr (std::is_enum_v<T>) {
+            out << +std::underlying_type_t<T>(x);
+        }
+        else if constexpr (is_integral_type_v<T>) {
+            out << +python_spec_writer::impl::stringize_integral(x);
+        }
+        else {
+            static_assert(!sizeof(T), "missing implementation");
+        }
     }
 
     template<class T1, class Ratio1, class T2, class Ratio2>
