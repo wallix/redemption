@@ -526,6 +526,57 @@ obj src/lib/scytale.cpp.lib.o :
   <include>$(REDEMPTION_TEST_PATH)/includes
 ;
 
+test-run tests/RAIL/test_client_execute :
+  $(REDEMPTION_TEST_PATH)/RAIL/test_client_execute.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/login_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_login.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/scroll.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/RAIL/client_execute.cpp
+  <covfile>src/RAIL/client_execute.hpp
+;
 test-run tests/acl/test_acl_serializer :
   $(REDEMPTION_TEST_PATH)/acl/test_acl_serializer.cpp
 :
@@ -5672,6 +5723,7 @@ obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includ
 obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : <variant>debug:<define>RED_COMPILE_TYPE=debug <variant>release:<define>RED_COMPILE_TYPE=release <variant>san:<define>RED_COMPILE_TYPE=san $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
 
+alias test_client_execute : tests/RAIL/test_client_execute ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_authentifier : tests/acl/test_authentifier ;
@@ -6015,6 +6067,7 @@ alias test_zlib : tests/utils/test_zlib ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
 if $(ENABLE_COVERAGE) = "on"
 {
+alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_authentifier.coverage : tests/acl/test_authentifier.coverage ;
@@ -6337,6 +6390,9 @@ alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
 alias test_zlib.coverage : tests/utils/test_zlib.coverage ;
 alias test_pattern.coverage : tests/utils/winpr/test_pattern.coverage ;
 }
+alias tests/RAIL.norec :
+  tests/RAIL/test_client_execute
+;
 alias tests/acl.norec :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
@@ -6772,10 +6828,11 @@ alias tests/utils.norec :
 alias tests/utils/winpr.norec :
   tests/utils/winpr/test_pattern
 ;
-alias tests/acl :
-  tests/acl.norec
+alias tests/RAIL :
+  tests/RAIL.norec
 ;
 alias tests :
+  tests/RAIL
   tests/acl
   tests/capture
   tests/client_mods
@@ -6790,6 +6847,9 @@ alias tests :
   tests/server
   tests/transport
   tests/utils
+;
+alias tests/acl :
+  tests/acl.norec
 ;
 alias tests/capture/ocr/locale :
   tests/capture/ocr/locale.norec
@@ -6971,6 +7031,7 @@ alias tests/utils/winpr :
   tests/utils/winpr.norec
 ;
 explicit
+  tests/RAIL.norec
   tests/acl.norec
   tests/capture/ocr/locale.norec
   tests/capture.norec
@@ -7020,8 +7081,9 @@ explicit
   tests/utils/winpr.norec
 ;
 explicit
-  tests/acl
+  tests/RAIL
   tests
+  tests/acl
   tests/capture/ocr/locale
   tests/capture/ocr
   tests/capture

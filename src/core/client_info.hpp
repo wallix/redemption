@@ -135,7 +135,7 @@ struct ClientInfo
     GlyphCacheCaps          glyph_cache_caps;
     RailCaps                rail_caps;
     WindowListCaps          window_list_caps;
-    
+
     uint8_t dummy1[32768];
     Recv_CS_BitmapCodecCaps bitmap_codec_caps;
     uint8_t dummy2[32768];
@@ -237,6 +237,11 @@ struct ClientInfo
 
             ::memcpy(this->autoReconnectCookie, infoPacket.extendedInfoPacket.autoReconnectCookie, sizeof(this->autoReconnectCookie));
         }
+    }
+
+    [[nodiscard]] Rect get_widget_rect() const
+    {
+        return this->cs_monitor.get_widget_rect(this->screen_info.width, this->screen_info.height);
     }
 };
 

@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -71,7 +71,7 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

@@ -53,7 +53,6 @@
 
 ClientExecute::ClientExecute(
     TimeBase& time_base,
-    TimerContainer& timer_events_,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
@@ -64,28 +63,32 @@ ClientExecute::ClientExecute(
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , verbose(verbose)
 , time_base(time_base)
-, timer_events_(timer_events_)
 , events(events)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::ClientExecute()");
 }
 
 ClientExecute::~ClientExecute()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::~ClientExecute()");
     this->reset(false);
 }
 
 void ClientExecute::set_verbose(bool verbose)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::set_verbose()");
     this->verbose = this->verbose | verbose;
 }
 
 void ClientExecute::enable_remote_program(bool enable)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::enable_remote_program()");
     this->rail_enabled = enable;
 }
 
 Rect ClientExecute::adjust_rect(Rect rect)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::adjust_rect(Rect %s)", rect);
     if (!this->rail_enabled) {
         return rect;
     }
@@ -112,6 +115,7 @@ Rect ClientExecute::adjust_rect(Rect rect)
 
 Rect ClientExecute::get_current_work_area_rect() const
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_current_work_area_rect()");
     assert(this->work_area_count);
 
     if (!this->window_rect.isempty()) {
@@ -139,25 +143,30 @@ Rect ClientExecute::get_current_work_area_rect() const
 
 Rect ClientExecute::get_window_rect() const
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_rect() -> %s", this->window_rect);
     return this->window_rect;
 }
 
 Point ClientExecute::get_window_offset() const
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset() -> (%d,%d)", this->window_offset_x, this->window_offset_y);
     return Point(this->window_offset_x, this->window_offset_y);
 }
 
 Rect ClientExecute::get_auxiliary_window_rect() const
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%d) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
+        LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%d) -> ()", this->auxiliary_window_id);
         return Rect();
     }
-
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%d) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
     return this->auxiliary_window_rect;
 }
 
 void ClientExecute::update_rects()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::update_rects()");
     if ((this->window_rect.cx - 2) % 4) {
         this->window_rect.cx -= ((this->window_rect.cx - 2) % 4);
     }
@@ -258,6 +267,7 @@ void ClientExecute::update_rects()
 
 void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::draw_resize_hosted_desktop_box()");
     RDPColor const bg_color = encode_color24()(BGRColor(mouse_over ? 0xCBCACA : 0xFFFFFF));
 
     auto const depth = gdi::ColorCtx::depth24();
@@ -364,6 +374,7 @@ void ClientExecute::draw_resize_hosted_desktop_box(bool mouse_over, const Rect r
 
 void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::draw_maximize_box()");
     RDPColor const bg_color = encode_color24()(BGRColor(mouse_over ? 0xCBCACA : 0xFFFFFF));
 
     auto const depth = gdi::ColorCtx::depth24();
@@ -441,7 +452,7 @@ void ClientExecute::draw_maximize_box(bool mouse_over, const Rect r)
 
 void ClientExecute::input_invalidate(const Rect r)
 {
-    //LOG(LOG_INFO, "ClientExecute::input_invalidate(): r=%s", r);
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::input_invalidate(): r=%s", r);
 
     if (!this->channel_) return;
 
@@ -537,6 +548,7 @@ void ClientExecute::input_invalidate(const Rect r)
 
 void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::initialize_move_size(%d,%d,%d)", xPos, yPos, pressed_mouse_button);
     assert(!this->move_size_initialized);
 
     this->pressed_mouse_button = pressed_mouse_button_;
@@ -580,7 +592,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
                 const bool from_or_to_client = true;
                 ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
-            LOG(LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Min Max Info PDU (0)");
+            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Min Max Info PDU (0)");
             smmipdu.log(LOG_INFO);
         }
 
@@ -633,7 +645,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
                 const bool from_or_to_client = true;
                 ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             }
-            LOG(LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Move/Size Start PDU (0)");
+            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Move/Size Start PDU (0)");
             smssoepdu.log(LOG_INFO);
         }
 
@@ -646,9 +658,9 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, int press
 // Return true if event is consumed.
 bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref)
 {
-    //LOG(LOG_INFO,
-    //    "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
-    //    pointerFlags, xPos, yPos, this->pressed_mouse_button);
+    LOG_IF(this->verbose, LOG_INFO,
+        "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
+        pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
     if (this->button_1_down_timer) {
         if (SlowPath::PTRFLAGS_BUTTON1 != pointerFlags) {
@@ -754,28 +766,27 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                     this->button_1_down = this->pressed_mouse_button;
 
-                    this->button_1_down_timer = this->timer_events_
-                    .create_timer_executor(this->time_base)
-                    .set_delay(std::chrono::milliseconds(400))
-                    .on_action(jln::one_shot([this]{
+                    Event event_down_timer;
+                    event_down_timer.alarm.set_timeout(this->time_base.get_current_time()
+                        +std::chrono::milliseconds{400});
+                    event_down_timer.actions.on_timeout = [this](Event &){
                         assert(bool(*this));
                         this->initialize_move_size(
                             this->button_1_down_x,
                             this->button_1_down_y,
                             this->button_1_down);
-                    }));
+                    };
+                    this->events.push_back(event_down_timer);
 
                     this->button_1_down_x = xPos;
                     this->button_1_down_y = yPos;
 
                     this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
 
-                    if (this->verbose) {
-                        LOG(LOG_INFO,
-                            "ClientExecute::input_mouse: Mouse button 1 pressed on %s delayed",
-                            ((this->button_1_down == MOUSE_BUTTON_PRESSED_NORTH) ? "north edge" :
-                                ((this->button_1_down == MOUSE_BUTTON_PRESSED_TITLEBAR) ? "title bar" : "south edge")));
-                    }
+                    LOG_IF(this->verbose, LOG_INFO,
+                        "ClientExecute::input_mouse: Mouse button 1 pressed on %s delayed",
+                        ((this->button_1_down == MOUSE_BUTTON_PRESSED_NORTH) ? "north edge" :
+                            ((this->button_1_down == MOUSE_BUTTON_PRESSED_TITLEBAR) ? "title bar" : "south edge")));
                 }
                 else {
                     this->initialize_move_size(xPos, yPos, this->pressed_mouse_button);
@@ -1239,9 +1250,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         else if ((MOUSE_BUTTON_PRESSED_NONE != this->pressed_mouse_button) &&
                     !this->maximized) {
             if (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button) {
-                if (this->verbose) {
-                    LOG(LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released from title bar");
-                }
+                LOG_IF(this->verbose, LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released from title bar");
 
                 int const diff_x = (xPos - this->captured_mouse_x);
                 int const diff_y = (yPos - this->captured_mouse_y);
@@ -1420,6 +1429,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
 }   // input_mouse
 
 void ClientExecute::adjust_window_to_mod() {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::adjust_window_to_mod()");
     this->maximized = false;
 
     Rect work_area_rect = this->get_current_work_area_rect();
@@ -1496,6 +1506,7 @@ void ClientExecute::adjust_window_to_mod() {
 
 void ClientExecute::maximize_restore_window()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::maximize_restore_window()");
     if (this->maximized) {
         this->maximized = false;
 
@@ -1640,7 +1651,7 @@ void ClientExecute::maximize_restore_window()
 
 void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop)
 {
-    //LOG(LOG_INFO, "ClientExecute::ready");
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::ready(%d,%d)", front_width, front_height);
 
     this->mod_  = &mod;
     this->font_ = &font;
@@ -1772,14 +1783,13 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
 
 ClientExecute::operator bool () const noexcept
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::operator bool ()");
     return this->channel_ && this->mod_;
 }   // bool
 
 void ClientExecute::reset(bool soft)
 {
-    if (this->verbose) {
-        LOG(LOG_INFO, "ClientExecute::reset (%s)", (soft ? "Soft" : "Hard"));
-    }
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::reset (%s)", (soft ? "Soft" : "Hard"));
     if (soft) {
         this->mod_ = nullptr;
 
@@ -1825,6 +1835,7 @@ void ClientExecute::reset(bool soft)
 // - its total length is the same as the chunk length
 void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::check_is_unit_throw(%s)", message);
     if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST))
               != (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST)){
         LOG(LOG_ERR, "ClientExecute::%s unexpected fragmentation flags=%.4x", message, flags);
@@ -1844,19 +1855,19 @@ void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, I
     }
 }
 
-void ClientExecute::process_client_activate_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
+void process_client_activate_pdu(gdi::GraphicApi & drawable_, uint32_t total_length, uint32_t flags, InStream& chunk,bool verbose)
 {
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientActivatePDU");
-
+    LOG_IF(verbose, LOG_INFO, "process_client_activate_pdu()");
     ClientActivatePDU capdu;
     capdu.receive(chunk);
 
-    if (this->verbose) {
+    if (verbose) {
         capdu.log(LOG_INFO);
     }
 
-    if ((capdu.WindowId() == INTERNAL_MODULE_WINDOW_ID) &&
-        (capdu.Enabled() == 0)) {
+    if ((capdu.WindowId() == INTERNAL_MODULE_WINDOW_ID)
+    && (capdu.Enabled() == 0))
+    {
         {
             RDP::RAIL::ActivelyMonitoredDesktop order;
 
@@ -1867,14 +1878,14 @@ void ClientExecute::process_client_activate_pdu(uint32_t total_length, uint32_t 
 
             order.ActiveWindowId(0xFFFFFFFF);
 
-            if (this->verbose) {
+            if (verbose) {
                 StaticOutStream<256> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                LOG(LOG_INFO, "process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->drawable_.draw(order);
+            drawable_.draw(order);
         }
 
         {
@@ -1888,64 +1899,59 @@ void ClientExecute::process_client_activate_pdu(uint32_t total_length, uint32_t 
             order.NumWindowIds(1);
             order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
 
-            if (this->verbose) {
+            if (verbose) {
                 StaticOutStream<256> out_s;
                 order.emit(out_s);
                 order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
+                LOG(LOG_INFO, "process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
             }
 
-            this->drawable_.draw(order);
+            drawable_.draw(order);
         }
     }
 }   // process_client_activate_pdu
 
-void ClientExecute::process_client_execute_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
+void process_client_execute_pdu(
+    WindowsExecuteShellParams & client_execute,
+    bool & should_ignore_first_client_execute_,
+    InStream& chunk, bool verbose)
 {
-    if (!this->channel_) return;
-
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientExecutePDU");
-
+    LOG_IF(verbose, LOG_INFO, "process_client_execute_pdu()");
     ClientExecutePDU cepdu;
     cepdu.receive(chunk);
 
-    if (this->verbose) {
+    if (verbose) {
         cepdu.log(LOG_INFO);
     }
 
     const char* exe_of_file = cepdu.get_client_execute().exe_or_file.c_str();
 
-    if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
-        (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
-        this->client_execute = cepdu.get_client_execute();
+    if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)
+    && (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
+        client_execute = cepdu.get_client_execute();
     }
 
-    this->should_ignore_first_client_execute_ = false;
+    should_ignore_first_client_execute_ = false;
 }   // process_client_execute_pdu
 
-void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk)
+void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStream& chunk, std::string window_title, bool verbose)
 {
-    if (!this->channel_) return;
-
-    this->check_is_unit_throw(total_length, flags, chunk, "ApplicationIdPDU");
-
+    LOG_IF(verbose, LOG_INFO, "process_client_get_application_id_pdu()");
     ClientGetApplicationIDPDU cgaipdu;
 
     cgaipdu.receive(chunk);
 
-    if (this->verbose) {
+    if (verbose) {
         cgaipdu.log(LOG_INFO);
     }
 
     {
-        StaticOutStream<1024> out_s;
         RAILPDUHeader header;
         header.emit_begin(out_s, TS_RAIL_ORDER_GET_APPID_RESP);
 
         ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
         server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-        server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
+        server_get_application_id_response_pdu.ApplicationId(window_title.c_str());
         server_get_application_id_response_pdu.emit(out_s);
 
         header.emit_end();
@@ -1954,7 +1960,7 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-        if (this->verbose) {
+        if (verbose) {
             {
                 const bool send              = true;
                 const bool from_or_to_client = true;
@@ -1965,16 +1971,13 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
                     "Send to client - Server Get Application ID Response PDU");
             server_get_application_id_response_pdu.log(LOG_INFO);
         }
-
-        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
-
-        server_execute_result_sent = true;
     }
 }   // process_client_get_application_id_pdu
 
 void ClientExecute::process_client_handshake_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_handshake_pdu()");
     if (!this->channel_) return;
 
     this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientHandshakePDU");
@@ -1987,23 +1990,9 @@ void ClientExecute::process_client_handshake_pdu(uint32_t total_length,
     }
 }   // process_client_handshake_pdu
 
-void ClientExecute::process_client_information_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
-{
-    if (!this->channel_) return;
-
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientInformationPDU");
-
-    ClientInformationPDU cipdu;
-    cipdu.receive(chunk);
-
-    if (this->verbose) {
-        cipdu.log(LOG_INFO);
-    }
-}   // process_client_information_pdu
-
 void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
 {
-
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_system_command_pdu");
     this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientSystemCommandPDU");
 
     ClientSystemCommandPDU cscpdu;
@@ -2162,6 +2151,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
 
 void ClientExecute::on_new_or_existing_window(Rect const & window_rect)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::on_new_or_existing_window()");
     if (!this->protocol_window_rect.isempty())
     {
         SubRegion sub_region;
@@ -2183,6 +2173,7 @@ void ClientExecute::on_new_or_existing_window(Rect const & window_rect)
 
 void ClientExecute::on_delete_window()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::on_delete_window()");
     assert(!this->protocol_window_rect.isempty());
 
     auto const depth = gdi::ColorCtx::depth24();
@@ -2196,6 +2187,7 @@ void ClientExecute::on_delete_window()
 void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_length,
     uint32_t flags, InStream& chunk)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu()");
     if (!this->channel_) return;
 
     this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientSystemParametersUpdatePDU");
@@ -2583,6 +2575,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
 void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
     uint32_t flags, InStream& chunk)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_window_move_pdu()");
     this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientWindowMovePDU");
 
     ClientWindowMovePDU cwmpdu;
@@ -2730,8 +2723,8 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
                         "Client Activate PDU");
             }
 
-            this->process_client_activate_pdu(
-                length, flags, chunk);
+            this->check_is_unit_throw(length, flags, chunk, "ProcessClientActivatePDU");
+            process_client_activate_pdu(this->drawable_, length, flags, chunk, this->verbose);
         break;
 
         case TS_RAIL_ORDER_CLIENTSTATUS:
@@ -2741,8 +2734,17 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
                         "Client Information PDU");
             }
 
-            this->process_client_information_pdu(
-                length, flags, chunk);
+            LOG_IF(this->verbose, LOG_INFO, "process_client_information_pdu()");
+            if (this->channel_){
+                this->check_is_unit_throw(length, flags, chunk, "ProcessClientInformationPDU");
+
+                ClientInformationPDU cipdu;
+                cipdu.receive(chunk);
+
+                if (this->verbose) {
+                    cipdu.log(LOG_INFO);
+                }
+            }
         break;
 
         //case TS_RAIL_ORDER_COMPARTMENTINFO:
@@ -2774,8 +2776,12 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
                         "Client Execute PDU");
             }
 
-            this->process_client_execute_pdu(
-                length, flags, chunk);
+            if (this->channel_) {
+                this->check_is_unit_throw(length, flags, chunk, "ProcessClientExecutePDU");
+                process_client_execute_pdu(this->client_execute,
+                                           this->should_ignore_first_client_execute_,
+                                           chunk, this->verbose);
+            }
         break;
 
         case TS_RAIL_ORDER_GET_APPID_REQ:
@@ -2785,8 +2791,13 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
                         "Client Get Application ID PDU");
             }
 
-            this->process_client_get_application_id_pdu(
-                length, flags, chunk);
+            if (this->channel_){
+                this->check_is_unit_throw(length, flags, chunk, "ApplicationIdPDU");
+                StaticOutStream<1024> out_s;
+                process_client_get_application_id_pdu(out_s, chunk, this->window_title, this->verbose);
+                this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
+                this->server_execute_result_sent = true;
+            }
         break;
 
         case TS_RAIL_ORDER_HANDSHAKE:
@@ -2892,13 +2903,19 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
 
 const WindowsExecuteShellParams & ClientExecute::get_client_execute()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_client_execute() ->");
+    this->client_execute.log(LOG_INFO);
     return this->client_execute;
 }
 
-bool ClientExecute::should_ignore_first_client_execute() const { return this->should_ignore_first_client_execute_; }
+bool ClientExecute::should_ignore_first_client_execute() const {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::should_ignore_first_client_execute() -> %d", this->should_ignore_first_client_execute_);
+    return this->should_ignore_first_client_execute_;
+}
 
 void ClientExecute::create_auxiliary_window(Rect const window_rect)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::create_auxiliary_window(%s)", window_rect);
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID != this->auxiliary_window_id) return;
 
     this->auxiliary_window_id = AUXILIARY_WINDOW_ID;
@@ -2957,6 +2974,7 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect)
 
 void ClientExecute::destroy_auxiliary_window()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::destroy_auxiliary_window()");
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) return;
 
     {
@@ -2983,11 +3001,13 @@ void ClientExecute::destroy_auxiliary_window()
 
 void ClientExecute::set_target_info(chars_view ti)
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::set_target_info()");
     str_append(this->window_title, ti, (ti.empty() ? "" : " - "), INTERNAL_MODULE_WINDOW_TITLE);
 }
 
 void ClientExecute::update_widget()
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::update_widget()");
     Rect widget_rect_new = this->window_rect.shrink(1);
     widget_rect_new.y  += TITLE_BAR_HEIGHT;
     widget_rect_new.cy -= TITLE_BAR_HEIGHT;
@@ -3004,17 +3024,23 @@ void ClientExecute::update_widget()
 
 bool ClientExecute::is_rail_enabled() const
 {
-    return this->rail_enabled;
+   LOG_IF(this->verbose, LOG_INFO, "ClientExecute::is_rail_enabled() -> %d", this->rail_enabled);
+   return this->rail_enabled;
 }
 
 bool ClientExecute::is_resizing_hosted_desktop_enabled() const
 {
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::is_resizing_hosted_desktop_enabled() -> %d, %d",
+        this->allow_resize_hosted_desktop_,
+        this->enable_resizing_hosted_desktop_
+    );
     return (this->allow_resize_hosted_desktop_ && this->enable_resizing_hosted_desktop_);
 }
 
 void ClientExecute::enable_resizing_hosted_desktop(bool enable)
 {
-    if (this->allow_resize_hosted_desktop_) {
+   LOG_IF(this->verbose, LOG_INFO, "ClientExecute::enable_resizing_hosted_desktop(%d)", enable);
+   if (this->allow_resize_hosted_desktop_) {
         this->enable_resizing_hosted_desktop_ = enable;
     }
 }

@@ -311,11 +311,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     }
 
     LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
-    Rect adjusted_client_execute_rect =
-        rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
-            client_info.screen_info.width,
-            client_info.screen_info.height
-        ));
+    Rect adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
 
     std::string target_info = str_concat(ini.get<cfg::context::target_str>(),':', ini.get<cfg::globals::primary_user_id>());
 

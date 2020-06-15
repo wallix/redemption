@@ -247,7 +247,7 @@ public:
         , timer_events_(timer_events_)
         , events(events)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(time_base, timer_events_, events, *this, *this, this->config.info.window_list_caps, false)
+        , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)

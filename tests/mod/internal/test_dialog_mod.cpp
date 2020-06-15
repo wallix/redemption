@@ -38,7 +38,7 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -64,7 +64,7 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -90,7 +90,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -134,7 +134,7 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;

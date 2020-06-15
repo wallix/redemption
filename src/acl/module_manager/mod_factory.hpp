@@ -86,7 +86,7 @@ public:
                SesmanInterface & sesman,
                TopFdContainer& fd_events_,
                TimerContainer & timer_events_,
-               EventContainer & event,
+               EventContainer & events,
                ClientInfo & client_info,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
@@ -256,10 +256,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             this->rail_client_execute,
             this->glyphs,
             this->theme
@@ -279,15 +276,11 @@ public:
             auth_error_message,
             this->ini,
             this->time_base,
-            this->timer_events_,
             this->events,
             this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             this->rail_client_execute,
             this->glyphs,
             this->theme,
@@ -308,15 +301,11 @@ public:
             auth_error_message,
             this->ini,
             this->time_base,
-            this->timer_events_,
             this->events,
             this->mod_wrapper, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             this->rail_client_execute,
             this->glyphs,
             this->theme,
@@ -334,10 +323,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             this->rail_client_execute,
             this->glyphs,
             this->theme
@@ -357,10 +343,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
             message,
             button,
@@ -383,10 +366,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
             message,
             button,
@@ -415,10 +395,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
             message,
             button,
@@ -444,10 +421,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
             message,
             this->rail_client_execute,
@@ -468,10 +442,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             this->rail_client_execute,
             this->glyphs,
             this->theme
@@ -515,10 +486,7 @@ public:
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.cs_monitor.get_widget_rect(
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height
-            )),
+            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             this->rail_client_execute,
             this->glyphs,
             this->theme

@@ -604,6 +604,12 @@ private:
             }
         };
 
+        for(auto &e: events){
+            if (e.alarm.active and not e.alarm.garbage){
+                ultimatum = std::min(e.alarm.trigger_time, ultimatum);
+            }
+        }
+
         timer_events_.for_each(timer_update_tv);
         this->show_ultimatum("ultimatum (timers) ="_zv, ultimatum, now);
 
@@ -686,7 +692,7 @@ public:
             Theme theme;
             ::load_theme(theme, ini);
 
-            ClientExecute rail_client_execute(time_base, timer_events_, events, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
+            ClientExecute rail_client_execute(time_base, events, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);

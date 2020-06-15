@@ -664,11 +664,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     const char * const name = "RDP Target";
 
-    Rect const adjusted_client_execute_rect =
-        rail_client_execute.adjust_rect(client_info.cs_monitor.get_widget_rect(
-                client_info.screen_info.width,
-                client_info.screen_info.height
-            ));
+    Rect const adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
 
     const bool host_mod_in_widget = (client_info.remote_program
         && !mod_rdp_params.remote_app_params.enable_remote_program);

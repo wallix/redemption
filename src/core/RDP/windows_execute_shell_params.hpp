@@ -23,11 +23,22 @@
 #pragma once
 
 #include <string>
+#include <sstream>
+#include "utils/log.hpp"
 
 struct WindowsExecuteShellParams {
     uint16_t    flags = 0;
     std::string exe_or_file;
     std::string working_dir;
     std::string arguments;
+
+    void log(int level) const {
+        std::ostringstream ostrflags; ostrflags << flags;
+        std::string str = "Flags: " + ostrflags.str() + " "
+                        + "exe_or_file: " + this->exe_or_file + " "
+                        + "working_dir: " + this->working_dir + " "
+                        + "arguments: " + this->arguments;
+        LOG(level, "WindowsExecuteShellParams: %s", str);
+    }
 };
 

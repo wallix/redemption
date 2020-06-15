@@ -92,7 +92,6 @@ CloseMod::CloseMod(
     std::string auth_error_message,
     CloseModVariables vars,
     TimeBase& time_base,
-    TimerContainer& timer_events_,
     EventContainer& events,
     GdProvider & gd_provider,
     FrontAPI & front, uint16_t width, uint16_t height,
@@ -112,7 +111,6 @@ CloseMod::CloseMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
 {
     this->screen.set_wh(this->front_width, this->front_height);
@@ -138,6 +136,7 @@ CloseMod::CloseMod(
         LOG(LOG_INFO, "Close Event");
         this->set_mod_signal(BACK_EVENT_STOP);
     };
+    events.push_back(std::move(close_event));
 
     Event refresh_event;
     refresh_event.alarm.set_timeout(time_base.get_current_time());
@@ -146,11 +145,10 @@ CloseMod::CloseMod(
     {
         LOG(LOG_INFO, "Refresh Event");
         auto elapsed = event.alarm.now.tv_sec-event.alarm.start_time.tv_sec;
-        auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()} 
+        auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()}
                         - std::chrono::seconds{elapsed};
         this->close_widget.refresh_timeleft(remaining.count());
     };
-    events.push_back(std::move(close_event));
     events.push_back(std::move(refresh_event));
 }
 
@@ -226,12 +224,16 @@ void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            this->first_click_down_timer = this->timer_events_
-                            .create_timer_executor(this->time_base)
-                            .set_delay(std::chrono::seconds(1))
-                            .on_action(jln::one_shot([this]{
+                            Event dc_event;
+                            dc_event.alarm.set_timeout(
+                                                this->time_base.get_current_time()
+                                                +std::chrono::seconds{1});
+                            dc_event.actions.on_timeout = [this](Event&)
+                            {
+                                LOG(LOG_INFO, "DCState::Wait");
                                 this->dc_state = DCState::Wait;
-                            }));
+                            };
+                            this->events.push_back(std::move(dc_event));
                         }
                     }
                 break;

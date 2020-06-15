@@ -958,7 +958,7 @@ public:
                 header.emit_begin(out_s, TS_RAIL_ORDER_CLIENTSTATUS);
 
                 ClientInformationPDU cipdu;
-                cipdu.Flags(0x1E7);
+                cipdu.set_flags(0x1E7);
                 cipdu.emit(out_s);
 
                 header.emit_end();

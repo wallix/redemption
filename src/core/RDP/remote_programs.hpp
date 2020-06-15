@@ -346,6 +346,19 @@ public:
 //  |                                                     | (section           |
 //  |                                                     |  2.2.1.3.1).       |
 //  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_HIGH_DPI_ICONS_SUPPORTED       | Indicates that the |
+//  | 0x00000020                                          | client supports    |
+//  |                                                     | icons up to 96×96  |
+//  |                                                     | pixels in size in  |
+//  |                                                     | the Window Icon PDU|
+//  |                                                     | (section           |
+//  |                                                     | 2.2.1.3.1.2.2).    |
+//  |                                                     | If this flag is not|
+//  |                                                     | present, icon      |
+//  |                                                     | dimensions are     |
+//  |                                                     | limited to 32×32   |
+//  |                                                     | pixels.            |
+//  +-----------------------------------------------------+--------------------+
 //  | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED      | Indicates that the |
 //  | 0x00000040                                          | client supports    |
 //  |                                                     | application        |
@@ -355,13 +368,34 @@ public:
 //  |                                                     | PDU (section       |
 //  |                                                     | 2.2.1.3.1).        |
 //  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED| Indicates that the |
+//  | 0x00000080                                          | client supports    |
+//  |                                                     | display-required   |
+//  |                                                     | power requests sent|
+//  |                                                     | using the Power    |
+//  |                                                     | Display Request PDU|
+//  |                                                     | (section           |
+//  |                                                     | 2.2.2.13.1).       |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED  | Indicates that the |
+//  | 0x00000200                                          | client is capable  |
+//  |                                                     | of processing      |
+//  |                                                     | Window Cloak State |
+//  |                                                     | Change PDUs        |
+//  |                                                     | (section           |
+//  |                                                     | 2.2.2.12.1) sent by|
+//  |                                                     | the server.        |
+//  +-----------------------------------------------------+--------------------+
 
 enum {
       TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE             = 0x00000001
     , TS_RAIL_CLIENTSTATUS_AUTORECONNECT                  = 0x00000002
     , TS_RAIL_CLIENTSTATUS_ZORDER_SYNC                    = 0x00000004
     , TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED = 0x00000010
+    , TS_RAIL_CLIENTSTATUS_HIGH_DPI_ICONS_SUPPORTED       = 0x00000020
     , TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED      = 0x00000040
+    , TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED= 0x00000080
+    , TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED  = 0x00000200
 };
 
 class ClientInformationPDU {
@@ -381,8 +415,12 @@ public:
 
     [[nodiscard]] uint32_t Flags() const { return this->Flags_; }
 
-    void Flags(uint32_t Flags_) {
+    void set_flags(uint32_t Flags_) {
         this->Flags_ = Flags_;
+    }
+
+    auto get_flags() {
+        return this->Flags_;
     }
 
     static size_t size() {

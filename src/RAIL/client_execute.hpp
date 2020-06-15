@@ -159,12 +159,11 @@ class ClientExecute : public windowing_api
     bool verbose;
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer& events;
 
 public:
     ClientExecute(
-        TimeBase& time_base, TimerContainer& timer_events_, EventContainer& events,
+        TimeBase& time_base, EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 
@@ -240,19 +239,7 @@ public:
 private:
     void maximize_restore_window();
 
-    void process_client_activate_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
-
-    void process_client_execute_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
-
-    void process_client_get_application_id_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
-
     void process_client_handshake_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
-
-    void process_client_information_pdu(
         uint32_t total_length, uint32_t flags, InStream& chunk);
 
     void process_client_system_command_pdu(
@@ -270,3 +257,14 @@ private:
 
     void on_delete_window();
 };  // class ClientExecute
+
+
+extern void process_client_execute_pdu(
+    WindowsExecuteShellParams & client_execute,
+    bool & should_ignore_first_client_execute_,
+    InStream& chunk, bool verbose);
+
+extern void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStream& chunk, std::string window_title, bool verbose);
+
+extern void process_client_activate_pdu(gdi::GraphicApi & drawable_, uint32_t total_length, uint32_t flags, InStream& chunk, bool verbose);
+

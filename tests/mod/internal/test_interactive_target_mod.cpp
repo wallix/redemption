@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModReject)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetModChallenge2)
     TimeBase time_base({0,0});
     TimerContainer timer_events_;
     EventContainer events;
-    ClientExecute client_execute(time_base, timer_events_, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
