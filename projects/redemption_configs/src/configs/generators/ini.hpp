@@ -85,18 +85,26 @@ void write_type_info(std::ostream& out, type_enumerations& enums, type_<T>)
             impl::write_enum_info(out, e);
         });
     }
-    else if (std::is_unsigned<T>::value || std::is_base_of<types::unsigned_base, T>::value) {
+    else if constexpr (traits::is_unsigned_v<T>) {
         out << "min = 0";
     }
+    else if constexpr (traits::is_signed_v<T>) {
+    }
+    else {
+        static_assert(!sizeof(T), "missing implementation");
+    }
 }
+
+//@{
+template<class T>
+void write_type_info(std::ostream&, type_enumerations&, type_<types::list<T>>) {}
+inline void write_type_info(std::ostream&, type_enumerations&, type_<std::string>) {}
+inline void write_type_info(std::ostream&, type_enumerations&, type_<types::ip_string>) {}
+//@}
 
 template<class T, class Ratio>
 void write_type_info(std::ostream& out, type_enumerations&, type_<std::chrono::duration<T, Ratio>> t)
 { python_spec_writer::write_type_info(out, t); }
-
-// template<class T, class Ratio>
-// void write_type_info(std::ostream& out, type_enumerations&, type_<std::chrono::duration<T, Ratio>>)
-// { out << "min = 0\n"; }
 
 inline void write_type_info(std::ostream& out, type_enumerations&, type_<bool>)
 { out << "value: 0 or 1"; }
@@ -108,16 +116,16 @@ void write_type_info(std::ostream& out, type_enumerations& enums, type_<types::r
     write_type_info(out, enums, type_<Int>{});
 }
 
-template<unsigned N, class T>
+template<unsigned N>
 void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_binary<N>>)
-{ out << "(hexadecimal string) size = " << N*2 << "\n"; }
+{ out << "(hexadecimal string of length " << N*2 << ")\n"; }
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_string<N>>)
 { out << "maxlen = " << N << "\n"; }
 
-inline void write_type_info(std::ostream& out, type_enumerations& enums, type_<types::dirpath>)
-{ write_type_info(out, enums, type_<typename types::dirpath::fixed_type>{}); }
+inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::dirpath>)
+{ out << "maxlen = " << globals::path_max << "\n"; }
 
 
 namespace impl
@@ -146,9 +154,7 @@ void write_type(std::ostream& out, type_enumerations&, type_<std::string>, T con
 
 template<class Int, class T>
 std::enable_if_t<
-    std::is_base_of<types::integer_base, Int>::value
-    or
-    std::is_integral<Int>::value
+    traits::is_integer_v<Int>
 >
 write_type(std::ostream& out, type_enumerations&, type_<Int>, T i)
 { out << impl::stringize_integral(i); }
@@ -171,8 +177,8 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_string
 { out << impl::quoted2(x); }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations& enums, type_<types::dirpath>, T const & x)
-{ write_type(out, enums, type_<typename types::dirpath::fixed_type>{}, x); }
+void write_type(std::ostream& out, type_enumerations&, type_<types::dirpath>, T const & x)
+{ out << impl::quoted2(x); }
 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::ip_string>, T const & x)

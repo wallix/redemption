@@ -50,10 +50,31 @@ constexpr char const* end_raw_string = ")gen_config_ini\"";
 
 using cfg_attributes::type_;
 namespace types = cfg_attributes::types;
+namespace traits = cfg_attributes::traits;
 
 template<class T>
 void write_type_info(std::ostream& /*out*/, type_<T>)
-{}
+{
+    if constexpr (std::is_enum_v<T>) {
+    }
+    else if constexpr (traits::is_integer_v<T>) {
+    }
+    else {
+        static_assert(!sizeof(T), "missing implementation");
+    }
+}
+
+//@{
+template<unsigned N> void write_type_info(std::ostream&, type_<types::fixed_string<N>>) {}
+inline void write_type_info(std::ostream&, type_<bool>) {}
+inline void write_type_info(std::ostream&, type_<std::string>) {}
+inline void write_type_info(std::ostream&, type_<types::dirpath>) {}
+inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
+//@}
+
+template<unsigned N>
+void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
+{ out << "(is in hexadecimal format)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::hours>)
 { out << "(is in hour)\n"; }
@@ -71,9 +92,9 @@ template<class T, class Ratio>
 void write_type_info(std::ostream& out, type_<std::chrono::duration<T, Ratio>>)
 { out << "(is in " << Ratio::num << "/" << Ratio::den << " second)\n"; }
 
-template<class T, class Ratio, long min, long max>
-void write_type_info(std::ostream& out, type_<types::range<std::chrono::duration<T, Ratio>, min, max>>)
-{ write_type_info(out, type_<std::chrono::duration<T, Ratio>>{}); }
+template<class T, long min, long max>
+void write_type_info(std::ostream& out, type_<types::range<T, min, max>>)
+{ write_type_info(out, type_<T>{}); }
 
 template<class T>
 void write_type_info(std::ostream& out, type_<types::list<T>>)
@@ -160,11 +181,17 @@ namespace impl
     inline exprio stringize_bool(cfg_attributes::cpp::expr e) { return {e.value}; }
 
     inline char const * stringize_integral(bool x) = delete;
-    inline char const * stringize_integral(types::integer_base) { return "0"; }
-    inline char const * stringize_integral(types::u16) { return "0"; }
-    inline char const * stringize_integral(types::u32) { return "0"; }
-    inline char const * stringize_integral(types::u64) { return "0"; }
-    template<class T> T const & stringize_integral(T const & x) { return x; }
+
+    template<class T>
+    decltype(auto) stringize_integral(T const & x)
+    {
+        if constexpr (traits::is_integer_v<T>) {
+            return "0";
+        }
+        else {
+            return x;
+        }
+    }
 
     template<class Int, long min, long max, class T>
     T stringize_integral(types::range<Int, min, max>)
@@ -186,14 +213,12 @@ void write_type(std::ostream& out, type_enumerations&, type_<std::string>, T con
 
 template<class Int, class T>
 std::enable_if_t<
-    std::is_base_of<types::integer_base, Int>::value
-    or
-    std::is_integral<Int>::value
+    traits::is_integer_v<Int>
 >
 write_type(std::ostream& out, type_enumerations&, type_<Int>, T i)
 {
     out << "integer(";
-    if (std::is_unsigned<Int>::value || std::is_base_of<types::unsigned_base, Int>::value) {
+    if (traits::is_unsigned_v<Int>) {
         out << "min=0, ";
     }
     out << "default=" << impl::stringize_integral(i) << ")";
@@ -222,9 +247,10 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_string
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations& enums, type_<types::dirpath>, T const & x)
+void write_type(std::ostream& out, type_enumerations&, type_<types::dirpath>, T const & x)
 {
-    write_type(out, enums, type_<typename types::dirpath::fixed_type>{}, x);
+    namespace globals = cfg_attributes::globals;
+    out << "string(max=" << globals::path_max <<  ", default='" << impl::quoted2(x) << "')";
 }
 
 template<class T>
@@ -275,7 +301,7 @@ namespace impl
             }
             out << desc;
         }
-        else if (std::is_integral<T>::value || std::is_same<T, HexFlag>::value) {
+        else if constexpr (std::is_integral<T>::value || std::is_same<T, HexFlag>::value) {
             out << ": " << io_replace(v.name, '_', ' ');
         }
         out << "\n";

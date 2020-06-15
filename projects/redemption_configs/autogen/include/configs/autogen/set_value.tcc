@@ -88,7 +88,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::globals::port&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<unsigned>{},
                 value
             );
         }
@@ -440,7 +440,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::tls_min_level&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<uint32_t>{},
                 value
             );
         }
@@ -448,7 +448,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::tls_max_level&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<uint32_t>{},
                 value
             );
         }
@@ -640,7 +640,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::disabled_orders&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<unsigned int>>{},
+                ::configs::spec_type<::configs::spec_types::list<unsigned>>{},
                 value
             );
         }
@@ -688,7 +688,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::disabled_orders&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::list<unsigned int>>{},
+                ::configs::spec_type<::configs::spec_types::list<unsigned>>{},
                 value
             );
         }
@@ -1648,7 +1648,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::icap_server_down::port&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<unsigned>{},
                 value
             );
         }
@@ -1704,7 +1704,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::icap_server_up::port&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<unsigned>{},
                 value
             );
         }
@@ -1808,7 +1808,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::ocr::max_unrecog_char_rate&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::range<unsigned int, 0, 100>>{},
+                ::configs::spec_type<::configs::spec_types::range<unsigned, 0, 100>>{},
                 value
             );
         }
@@ -1824,7 +1824,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::video::capture_groupid&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<unsigned>{},
                 value
             );
         }
@@ -1864,7 +1864,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::video::png_limit&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<unsigned>{},
                 value
             );
         }
@@ -1968,7 +1968,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::video::framerate&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
+                ::configs::spec_type<unsigned>{},
                 value
             );
         }

@@ -1225,9 +1225,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [crypto]
 
+# (hexadecimal string of length 64)
 #_hidden
 #encryption_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
 
+# (hexadecimal string of length 64)
 #_hidden
 #sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
 

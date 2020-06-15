@@ -41,6 +41,19 @@ namespace sesman_dialog_writer
 
 using namespace cfg_attributes;
 
+template<unsigned n>
+void write_type(std::ostream& out, type_<types::fixed_string<n>>, int)
+{
+    out << "std::string(maxlen=" << n << ")";
+}
+
+template<class T>
+void write_type(std::ostream& out, type_<T> type, char)
+{
+    cpp_config_writer::write_type(out, type);
+}
+
+
 class SesmanDialogWriterBase
 {
     std::ofstream out;
@@ -111,11 +124,11 @@ public:
                 << sesman_network_name(infos, names)
                 << "   ["
             ;
-            cpp_config_writer::write_type(this->out, cpp_type);
+            write_type(this->out, cpp_type, 1);
 
             if constexpr (is_t_convertible_v<Pack, sesman::type_>) {
                 this->out << dialog;
-                cpp_config_writer::write_type(this->out, sesman_type);
+                write_type(this->out, sesman_type, 1);
             }
 
             this->out << "]\n";

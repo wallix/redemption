@@ -125,21 +125,6 @@ namespace json
         ;
     }
 
-    template<class Int, class T>
-    std::enable_if_t<
-        std::is_base_of<types::integer_base, Int>::value
-        or
-        std::is_integral<Int>::value
-    >
-    write_type(std::ostream& out, type_enumerations& /*enums*/, type_<Int>, T const& i)
-    {
-        out << "          \"type\": \"integer\",\n";
-        if (std::is_unsigned<Int>::value || std::is_base_of<types::unsigned_base, Int>::value) {
-            out << "          \"min\": 0,\n";
-        }
-        out << "          \"default\": " << impl::stringize_integral(i) << ",\n";
-    }
-
     template<class Int, long min, long max, class T>
     void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::range<Int, min, max>>, T const& i)
     {
@@ -218,11 +203,11 @@ namespace json
     template<class T, class L>
     void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::list<T>>, L const& x)
     {
-        static_assert(sesman_default_map::python::is_integral_type_v<T>, "not implemented");
+        static_assert(traits::is_integer_v<T>, "not implemented");
         out <<
             "          \"type\": \"integer\",\n"
         ;
-        if (std::is_unsigned<T>::value || std::is_base_of<types::unsigned_base, T>::value) {
+        if (traits::is_unsigned_v<T>) {
             out << "          \"min\": 0,\n";
         }
         out <<
@@ -334,15 +319,27 @@ namespace json
         }
     }
 
-    template<class T, class E>
-    std::enable_if_t<std::is_enum_v<E>>
-    write_type(std::ostream& out, type_enumerations& enums, type_<T>, E const& x)
+    template<class T, class X>
+    void write_type(std::ostream& out, type_enumerations& enums, type_<T>, X const& x)
     {
-        static_assert(std::is_same<T, E>::value, "incompatible enum type, used connpolicy::set(...)");
-        using ll = long long;
-        apply_enumeration_for<T>(enums, [&](auto const & e) {
-            impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<E>>(x)});
-        });
+        if constexpr (std::is_enum_v<X>) {
+            static_assert(std::is_same<T, X>::value,
+                "incompatible enum type, used connpolicy::set(...)");
+            using ll = long long;
+            apply_enumeration_for<T>(enums, [&](auto const & e) {
+                impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<X>>(x)});
+            });
+        }
+        else if constexpr (traits::is_integer_v<T>) {
+            out << "          \"type\": \"integer\",\n";
+            if constexpr (traits::is_unsigned_v<T>) {
+                out << "          \"min\": 0,\n";
+            }
+            out << "          \"default\": " << impl::stringize_integral(x) << ",\n";
+        }
+        else {
+            static_assert(!sizeof(T), "missing implementation");
+        }
     }
 }
 
