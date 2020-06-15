@@ -70,6 +70,7 @@ inline void write_type_info(std::ostream&, type_<bool>) {}
 inline void write_type_info(std::ostream&, type_<std::string>) {}
 inline void write_type_info(std::ostream&, type_<types::dirpath>) {}
 inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
+inline void write_type_info(std::ostream&, type_<types::file_permission>) {}
 //@}
 
 template<unsigned N>
