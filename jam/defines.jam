@@ -115,3 +115,5 @@ constant BOOST_STACKTRACE : [ setvar BOOST_STACKTRACE : 0 ] ; # `-sBOOST_STACKTR
 constant FAST_CHECK : [ setvar FAST_CHECK : 0 ] ; # fast RED_CHECK(...) and co
 
 constant ENABLE_COVERAGE : [ setvar coverage : off ] ; # bjam -s coverage=on debug test_rect.coverage
+
+constant FORCE_LOGPRINT : [ setvar FORCE_LOGPRINT : 0 ] ;
