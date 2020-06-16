@@ -690,6 +690,17 @@ class ClientExecutePDU {
 
     WindowsExecuteShellParams client_execute;
 
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) {
+        uint8_t const * const utf16_data = in.get_current();
+        in.in_skip_bytes(utf16len);
+        const size_t size_of_utf8_string = utf16len / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        auto const original_sz = 0; //out.size();
+        out.resize(original_sz + size_of_utf8_string);
+        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
+        const size_t length_of_utf8_string = ::UTF16toUTF8(utf16_data, utf16len / 2, utf8_string, size_of_utf8_string);
+        out.resize(original_sz + length_of_utf8_string);
+    }
+
 public:
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->client_execute.flags);
@@ -717,26 +728,7 @@ public:
             offset_of_Arguments);
     }
 
-
-    // TODO: the name of the function is misleading it converts from utf16 to utf8
-
-    static inline void get_non_null_terminated_utf16_from_utf8(
-        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-        char const * context_error
-    ) {
-        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
-
-        uint8_t const * const utf16_data = in.get_current();
-        in.in_skip_bytes(length_of_utf16_data_in_bytes);
-
-        const size_t size_of_utf8_string = length_of_utf16_data_in_bytes / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        auto const original_sz = 0; //out.size();
-        out.resize(original_sz + size_of_utf8_string);
-        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
-        const size_t length_of_utf8_string = ::UTF16toUTF8(utf16_data, length_of_utf16_data_in_bytes / 2, utf8_string, size_of_utf8_string);
-        out.resize(original_sz + length_of_utf8_string);
-    }
-
+public:
     void receive(InStream & stream) {
         // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
         ::check_throw(stream, 8, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
@@ -747,12 +739,12 @@ public:
         uint16_t WorkingDirLength = stream.in_uint16_le();
         uint16_t ArgumentsLen     = stream.in_uint16_le();
 
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->client_execute.exe_or_file, stream, ExeOrFileLength, "Client Execute PDU");
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->client_execute.working_dir, stream, WorkingDirLength, "Client Execute PDU");
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->client_execute.arguments, stream, ArgumentsLen, "Client Execute PDU");
+        ::check_throw(stream, ExeOrFileLength, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->client_execute.exe_or_file, stream, ExeOrFileLength);
+        ::check_throw(stream, WorkingDirLength, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->client_execute.working_dir, stream, WorkingDirLength);
+        ::check_throw(stream, ArgumentsLen, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->client_execute.arguments, stream, ArgumentsLen);
     }
 
     [[nodiscard]] const WindowsExecuteShellParams& get_client_execute() const
@@ -941,29 +933,21 @@ class ServerExecuteResultPDU {
 
     std::string exe_or_file;
 
-
-    // TODO: the name of the function is misleading it converts from utf16 to utf8
-    static inline void get_non_null_terminated_utf16_from_utf8(
-        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-        char const * context_error
-    ) {
-        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
-
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) {
         uint8_t const * const utf16_data = in.get_current();
-        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+        in.in_skip_bytes(utf16len);
 
         const size_t size_of_utf8_string =
-            length_of_utf16_data_in_bytes / 2 *
+            utf16len / 2 *
             maximum_length_of_utf8_character_in_bytes + 1;
         auto const original_sz = 0; //out.size();
         out.resize(original_sz + size_of_utf8_string);
         uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
         const size_t length_of_utf8_string = ::UTF16toUTF8(
-            utf16_data, length_of_utf16_data_in_bytes / 2,
+            utf16_data, utf16len / 2,
             utf8_string, size_of_utf8_string);
         out.resize(original_sz + length_of_utf8_string);
     }
-
 
 public:
     void emit(OutStream & stream) const {
@@ -994,8 +978,8 @@ public:
 
         this->ExeOrFileLength   = stream.in_uint16_le();
 
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->exe_or_file, stream, this->ExeOrFileLength, "Server Execute Result PDU");
+        ::check_throw(stream, this->ExeOrFileLength, "Server Execute Result PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->exe_or_file, stream, this->ExeOrFileLength);
     }
 
     [[nodiscard]] uint16_t Flags() const { return this->Flags_; }
@@ -1095,24 +1079,19 @@ public:
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
-    // TODO: the name of the function is misleading it converts from utf16 to utf8
-    static inline void get_non_null_terminated_utf16_from_utf8(
-        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-        char const * context_error
-    ) {
-        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
-
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) 
+    {
         uint8_t const * const utf16_data = in.get_current();
-        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+        in.in_skip_bytes(utf16len);
 
         const size_t size_of_utf8_string =
-            length_of_utf16_data_in_bytes / 2 *
+            utf16len / 2 *
             maximum_length_of_utf8_character_in_bytes + 1;
         auto const original_sz = 0; //out.size();
         out.resize(original_sz + size_of_utf8_string);
         uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
         const size_t length_of_utf8_string = ::UTF16toUTF8(
-            utf16_data, length_of_utf16_data_in_bytes / 2,
+            utf16_data, utf16len / 2,
             utf8_string, size_of_utf8_string);
         out.resize(original_sz + length_of_utf8_string);
     }
@@ -1145,9 +1124,8 @@ public:
 
 //        assert(ColorSchemeLength >= 2);
 
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->color_scheme, stream, ColorSchemeLength/*stream.in_uint16_le()*/,
-            "High Contrast System Information Structure");
+        ::check_throw(stream, ColorSchemeLength, "High Contrast System Information Structure", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->color_scheme, stream, ColorSchemeLength);
     }
 
     [[nodiscard]] uint32_t Flags() const { return this->Flags_; }
