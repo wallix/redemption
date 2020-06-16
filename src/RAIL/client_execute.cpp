@@ -1855,6 +1855,7 @@ void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, I
     }
 }
 
+static void send_activate_window(uint32_t flag, gdi::GraphicApi & drawable_, bool verbose);
 
 void send_activate_window(uint32_t flag, gdi::GraphicApi & drawable_, bool verbose)
 {
@@ -1933,33 +1934,12 @@ void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStre
     }
 }   // process_client_get_application_id_pdu
 
-void ClientExecute::process_client_handshake_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk)
+void ClientExecute::process_client_system_command_pdu(InStream& chunk)
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_handshake_pdu()");
-    if (!this->channel_) return;
-
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientHandshakePDU");
-
-    HandshakePDU hspdu;
-    hspdu.receive(chunk);
-
-    if (this->verbose) {
-        hspdu.log(LOG_INFO);
-    }
-}   // process_client_handshake_pdu
-
-void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
-{
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_system_command_pdu");
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientSystemCommandPDU");
-
     ClientSystemCommandPDU cscpdu;
     cscpdu.receive(chunk);
 
-    if (this->verbose) {
-        cscpdu.log(LOG_INFO);
-    }
+    if (this->verbose) { cscpdu.log(LOG_INFO); }
 
     switch (cscpdu.Command()) {
         case SC_CLOSE:
@@ -1977,12 +1957,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
 
                     order.ActiveWindowId(0xFFFFFFFF);
 
-                    if (this->verbose) {
-                        StaticOutStream<256> out_s;
-                        order.emit(out_s);
-                        order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-                    }
+                    if (this->verbose) { order.log(LOG_INFO); }
 
                     this->drawable_.draw(order);
                 }
@@ -2022,12 +1997,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
                     order.Style(0x34EE0000);
                     order.ExtendedStyle(0x40310);
 
-                    if (this->verbose) {
-                        StaticOutStream<1024> out_s;
-                        order.emit(out_s);
-                        order.log(LOG_INFO);
-                        LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
-                    }
+                    if (this->verbose) { order.log(LOG_INFO); }
 
                     this->drawable_.draw(order);
                     this->on_delete_window();
@@ -2084,12 +2054,7 @@ void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uin
                 order.NumVisibilityRects(1);
                 order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-                if (this->verbose) {
-                    StaticOutStream<1024> out_s;
-                    order.emit(out_s);
-                    order.log(LOG_INFO);
-                    LOG(LOG_INFO, "ClientExecute::process_client_system_command_pdu: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
-                }
+                if (this->verbose) { order.log(LOG_INFO); }
 
                 this->drawable_.draw(order);
                 this->on_new_or_existing_window(adjusted_window_rect);
@@ -2143,14 +2108,8 @@ void ClientExecute::on_delete_window()
     this->protocol_window_rect.empty();
 }   // on_delete_window
 
-void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_length,
-    uint32_t flags, InStream& chunk)
+void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu()");
-    if (!this->channel_) return;
-
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientSystemParametersUpdatePDU");
-
     ClientSystemParametersUpdatePDU cspupdu;
     cspupdu.receive(chunk);
 
@@ -2190,12 +2149,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
             order.ActiveWindowId(0xFFFFFFFF);
             order.NumWindowIds(0);
 
-            if (this->verbose) {
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
         }
@@ -2239,12 +2193,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
             order.NumVisibilityRects(1);
             order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
-            if (this->verbose) {
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
             this->on_new_or_existing_window(adjusted_window_rect);
@@ -2258,12 +2207,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                     RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ARC_COMPLETED
                 );
 
-            if (this->verbose) {
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
         }
@@ -2279,12 +2223,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
             order.ActiveWindowId(INTERNAL_MODULE_WINDOW_ID);
             order.NumWindowIds(0);
 
-            if (this->verbose) {
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
         }
@@ -2300,12 +2239,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
             order.NumWindowIds(1);
             order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
 
-            if (this->verbose) {
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
         }
@@ -2472,12 +2406,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                 };
             order.icon_info.BitsColor(BitsColor, sizeof(BitsColor));
 
-            if (this->verbose) {
-                StaticOutStream<8192> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
 
@@ -2486,12 +2415,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
                     | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW /*NOLINT*/
                 );
 
-            if (this->verbose) {
-                StaticOutStream<8192> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_system_parameters_update_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
         }
@@ -2756,13 +2680,17 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
 
         case TS_RAIL_ORDER_HANDSHAKE:
             if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client Handshake PDU");
+                LOG(LOG_INFO, "ClientExecute::send_to_mod_rail_channel:Client Handshake PDU");
             }
 
-            this->process_client_handshake_pdu(
-                length, flags, chunk);
+            if (this->channel_) {
+                this->check_is_unit_throw(length, flags, chunk, "ProcessClientHandshakePDU");
+
+                HandshakePDU hspdu;
+                hspdu.receive(chunk);
+
+                if (this->verbose) { hspdu.log(LOG_INFO); }
+            }
         break;
 
         //case TS_RAIL_ORDER_LANGBARINFO:
@@ -2799,25 +2727,20 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
         //break;
 
         case TS_RAIL_ORDER_SYSCOMMAND:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client System Command PDU");
-            }
-
-            this->process_client_system_command_pdu(
-                length, flags, chunk);
+            LOG_IF(this->verbose, LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel:Client System Command PDU");
+            this->check_is_unit_throw(length, flags, chunk, "ProcessClientSystemCommandPDU");
+            this->process_client_system_command_pdu(chunk);
         break;
 
         case TS_RAIL_ORDER_SYSPARAM:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client System Parameters Update PDU");
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel:Client System Parameters Update PDU");
 
-            this->process_client_system_parameters_update_pdu(
-                length, flags, chunk);
+            if (this->channel_) {
+                this->check_is_unit_throw(length, flags, chunk, "ProcessClientSystemParametersUpdatePDU");
+                this->process_client_system_parameters_update_pdu(chunk);
+            }
         break;
 
         //case TS_RAIL_ORDER_SYSMENU:

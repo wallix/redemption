@@ -239,14 +239,9 @@ public:
 private:
     void maximize_restore_window();
 
-    void process_client_handshake_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
+    void process_client_system_command_pdu(InStream& chunk);
 
-    void process_client_system_command_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
-
-    void process_client_system_parameters_update_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
+    void process_client_system_parameters_update_pdu(InStream& chunk);
 
     void process_client_window_move_pdu(
         uint32_t total_length, uint32_t flags, InStream& chunk);
