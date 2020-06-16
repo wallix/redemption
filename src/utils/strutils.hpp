@@ -57,8 +57,15 @@ std::size_t strlcpy(char (&dest)[N], char const* src) noexcept
  * \return false if \c src is too long
  * @{
  */
-[[nodiscard]] bool strbcpy(char* dest, chars_view src, std::size_t n) noexcept;
-[[nodiscard]] bool strbcpy(char* dest, char const* src, std::size_t n) noexcept;
+[[nodiscard]] inline bool strbcpy(char* dest, chars_view src, std::size_t n) noexcept
+{
+    return strlcpy(dest, src, n) < n;
+}
+
+[[nodiscard]] inline bool strbcpy(char* dest, char const* src, std::size_t n) noexcept
+{
+    return strlcpy(dest, src, n) < n;
+}
 
 template<std::size_t N>
 [[nodiscard]] bool strbcpy(char (&dest)[N], chars_view src) noexcept
