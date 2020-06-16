@@ -24,7 +24,6 @@
 
 #include "configs/config.hpp"
 
-
 VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini)
 {
     return VideoParams{
@@ -109,6 +108,7 @@ WrmParams wrm_params_from_ini(
             | (ini.get<cfg::debug::secondary_orders>()
                 ? RDPSerializer::Verbose::secondary_orders : RDPSerializer::Verbose::none)
             | (ini.get<cfg::debug::bitmap_update>()
-                ? RDPSerializer::Verbose::bitmap_update : RDPSerializer::Verbose::none))
+               ? RDPSerializer::Verbose::bitmap_update : RDPSerializer::Verbose::none)),
+            ini.get<cfg::video::file_permissions>()
     };
 }

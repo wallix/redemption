@@ -128,6 +128,7 @@ Note: `W.member(type_<int>(), sesman::type_<bool>(), ...)` is ok.
 - `types::range<cpp_type, min, max>`
 - `types::fixed_string<n>`: size without zero-terminal.
 - `types::fixed_binary<n>`: size without zero-terminal.
+- `types::file_permission`
 
 
 

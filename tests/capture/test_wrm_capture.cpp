@@ -101,7 +101,8 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose)
+            int(wrm_verbose),
+            -1
         );
 
         TestGraphic gd_drawable(scr.cx, scr.cy);
@@ -211,7 +212,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0 //0xFFFF VERBOSE
+            0, //0xFFFF VERBOSE
+            -1
         );
 
         TestGraphic gd_drawable(scr.cx, scr.cy);
@@ -362,7 +364,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
             record_wd.dirname(), hash_wd.dirname(), "xxx",
-            now, 800, 600, groupid, nullptr);
+                                           now, 800, 600, groupid, nullptr, -1);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -432,7 +434,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
             record_wd.dirname(), hash_wd.dirname(), "xxx",
-            now, 800, 600, groupid, nullptr);
+                                           now, 800, 600, groupid, nullptr, -1);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -511,7 +513,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose)
+            int(wrm_verbose),
+            -1
         );
 
         TestGraphic gd_drawable(4, 1);
@@ -648,7 +651,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose)
+            int(wrm_verbose),
+            -1
         );
 
         auto const color_cxt = gdi::ColorCtx::depth24();

@@ -382,7 +382,8 @@ static int do_recompress(
             player.info.width,
             player.info.height,
             ini.get<cfg::video::capture_groupid>(),
-            nullptr
+            nullptr,
+            -1
         );
         {
             ChunkToFile recorder(

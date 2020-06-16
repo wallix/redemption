@@ -716,6 +716,7 @@ public:
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
             , 0
+            , -1
         );
 
         CaptureParams captureParams;

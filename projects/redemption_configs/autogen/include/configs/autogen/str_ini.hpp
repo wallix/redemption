@@ -1223,6 +1223,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #allow_rt_without_recording = 0
 
+# Allow to control permissions on recorded files with octal number
+# max = 0777, min = 0
+#_hidden
+#file_permissions = 288
+
 [crypto]
 
 # (hexadecimal string of length 64)

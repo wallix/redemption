@@ -178,7 +178,7 @@ void SessionLogFile::open(
     int groupid, bytes_view derivator)
 {
     assert(!this->ct.is_open());
-    this->ct.open(log_path.c_str(), hash_path.c_str(), groupid, derivator);
+    this->ct.open(log_path.c_str(), hash_path.c_str(), groupid, -1, derivator);
     // force to create the file
     this->ct.send("", 0);
 }

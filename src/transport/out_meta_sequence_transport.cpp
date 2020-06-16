@@ -86,7 +86,8 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     uint16_t width,
     uint16_t height,
     const int groupid,
-    ReportMessageApi * report_message)
+    ReportMessageApi * report_message,
+    uint32_t file_permissions)
 : meta_buf_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
 , wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
 , fstat(fstat)
@@ -97,11 +98,13 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
 , start_sec_(now.tv_sec)
 , stop_sec_(now.tv_sec)
 , cctx(cctx)
+, file_permissions_(file_permissions)
 {
     this->meta_buf_encrypt_transport.open(
         this->mf_.filename,
         this->hf_.filename,
-        S_IRUSR | S_IRGRP | S_IWUSR);
+        S_IRUSR | S_IRGRP | S_IWUSR,
+        file_permissions_);
 
     MwrmWriterBuf mwrm_file_buf;
     mwrm_file_buf.write_header(width, height, this->cctx.get_with_checksum());
@@ -143,7 +146,7 @@ void OutMetaSequenceTransport::do_send(const uint8_t * data, size_t len)
     if (!this->wrm_filter_encrypt_transport.is_open()) {
         const char * filename = this->filegen_.get_filename(this->num_file_);
         const char * hash_filename = this->filegen_.get_hash_filename(this->num_file_);
-        this->wrm_filter_encrypt_transport.open(filename, hash_filename, this->groupid_);
+        this->wrm_filter_encrypt_transport.open(filename, hash_filename, this->groupid_, file_permissions_);
     }
     this->wrm_filter_encrypt_transport.send(data, len);
 }

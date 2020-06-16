@@ -327,7 +327,7 @@ int scytale_writer_open(
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    CHECK_NOTHROW(handle->out_crypto_transport.open(record_path, hash_path, groupid/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(handle->out_crypto_transport.open(record_path, hash_path, groupid, -1/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 

@@ -127,6 +127,9 @@ void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_s
 inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::dirpath>)
 { out << "maxlen = " << globals::path_max << "\n"; }
 
+inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::file_permission>)
+{ out << "max = 0777, min = 0"; }
+
 
 namespace impl
 {
@@ -191,6 +194,10 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L 
         out << impl::quoted2(s);
     }
 }
+
+template<class T>
+void write_type(std::ostream& out, type_enumerations&, type_<types::file_permission>, T const & x)
+{ out << impl::stringize_integral(x); }
 
 namespace impl
 {

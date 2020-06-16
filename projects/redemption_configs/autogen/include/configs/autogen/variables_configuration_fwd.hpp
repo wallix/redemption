@@ -298,6 +298,7 @@ namespace cfg
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
         struct allow_rt_without_recording;
+        struct file_permissions;
     };
 
     struct capture {
