@@ -56,8 +56,10 @@ class ClientExecute : public windowing_api
 
     WindowsExecuteShellParams client_execute;
 
+public:
     bool should_ignore_first_client_execute_ = true;
 
+private:
     bool server_execute_result_sent = false;
 
     Rect task_bar_rect;
@@ -206,8 +208,6 @@ public:
 
     [[nodiscard]] const char * Arguments() const;
 
-    [[nodiscard]] bool should_ignore_first_client_execute() const;
-
     void create_auxiliary_window(Rect const window_rect) override;
 
     void destroy_auxiliary_window() override;
@@ -259,12 +259,7 @@ private:
 };  // class ClientExecute
 
 
-extern void process_client_execute_pdu(
-    WindowsExecuteShellParams & client_execute,
-    bool & should_ignore_first_client_execute_,
-    InStream& chunk, bool verbose);
-
 extern void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStream& chunk, std::string window_title, bool verbose);
 
-extern void process_client_activate_pdu(gdi::GraphicApi & drawable_, uint32_t total_length, uint32_t flags, InStream& chunk, bool verbose);
+extern void process_client_activate_pdu(gdi::GraphicApi & drawable_, InStream& chunk, bool verbose);
 

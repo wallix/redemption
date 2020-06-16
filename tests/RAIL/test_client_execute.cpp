@@ -133,6 +133,14 @@ RED_AUTO_TEST_CASE(TestProcessClientExecutePdu)
     auto order_length = chunk.in_uint16_le();
     RED_CHECK(order_length == 0x0028);
 
+    ClientExecutePDU cepdu;
+    cepdu.receive(chunk);
+
+    WindowsExecuteShellParams params = cepdu.get_client_execute();
+    RED_CHECK(params.flags == 8);
+    RED_CHECK(params.exe_or_file == std::string("||WABRemoteApp"));
+    RED_CHECK(params.working_dir == std::string(""));
+    RED_CHECK(params.arguments == std::string(""));
 }
 
 RED_AUTO_TEST_CASE(TestProcessClientActivatePDU)

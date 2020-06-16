@@ -583,7 +583,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
              || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
                 && not rap.client_execute.exe_or_file.empty())));
 
-        rap.should_ignore_first_client_execute = rail_client_execute.should_ignore_first_client_execute();
+        rap.should_ignore_first_client_execute = rail_client_execute.should_ignore_first_client_execute_;
         rap.enable_remote_program = ((client_info.remote_program
             || (ini.get<cfg::mod_rdp::wabam_uses_translated_remoteapp>()
                 && ini.get<cfg::context::is_wabam>()))

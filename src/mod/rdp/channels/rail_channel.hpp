@@ -281,8 +281,8 @@ private:
             cepdu.log(LOG_INFO);
         }
 
-        if (this->param_should_ignore_first_client_execute &&
-            !this->first_client_execute_ignored) {
+        if (this->param_should_ignore_first_client_execute
+        && !this->first_client_execute_ignored) {
             this->first_client_execute_ignored = true;
 
             LOG_IF(bool(this->verbose & RDPVerbose::rail), LOG_INFO,

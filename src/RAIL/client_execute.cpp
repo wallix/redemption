@@ -155,12 +155,11 @@ Point ClientExecute::get_window_offset() const
 
 Rect ClientExecute::get_auxiliary_window_rect() const
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%d) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%u) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
-        LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%d) -> ()", this->auxiliary_window_id);
+        LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%u) -> ()", this->auxiliary_window_id);
         return Rect();
     }
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%d) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
     return this->auxiliary_window_rect;
 }
 
@@ -1855,84 +1854,43 @@ void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, I
     }
 }
 
-void process_client_activate_pdu(gdi::GraphicApi & drawable_, uint32_t total_length, uint32_t flags, InStream& chunk,bool verbose)
+
+void send_activate_window(uint32_t flag, gdi::GraphicApi & drawable_, bool verbose)
 {
-    LOG_IF(verbose, LOG_INFO, "process_client_activate_pdu()");
-    ClientActivatePDU capdu;
-    capdu.receive(chunk);
+    RDP::RAIL::ActivelyMonitoredDesktop order;
+    order.header.FieldsPresentFlags(RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP|flag);
 
-    if (verbose) {
-        capdu.log(LOG_INFO);
-    }
-
-    if ((capdu.WindowId() == INTERNAL_MODULE_WINDOW_ID)
-    && (capdu.Enabled() == 0))
-    {
-        {
-            RDP::RAIL::ActivelyMonitoredDesktop order;
-
-            order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
-                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND
-                );
-
+    switch (flag) {
+        case RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND:
             order.ActiveWindowId(0xFFFFFFFF);
-
-            if (verbose) {
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
-
-            drawable_.draw(order);
-        }
-
-        {
-            RDP::RAIL::ActivelyMonitoredDesktop order;
-
-            order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP |
-                    RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER
-                );
-
+        break;
+        case RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER:
             order.NumWindowIds(1);
             order.window_ids(0, INTERNAL_MODULE_WINDOW_ID);
-
-            if (verbose) {
-                StaticOutStream<256> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "process_client_activate_pdu: Send ActivelyMonitoredDesktop to client: size=%zu", out_s.get_offset() - 1);
-            }
-
-            drawable_.draw(order);
-        }
+        break;
+        default:
+            LOG(LOG_ERR, "Unexpected flag %u in ClientExecute::send_activate_window", flag);
     }
+    if (verbose) {
+        order.log(LOG_INFO);
+        LOG(LOG_INFO, "process_client_activate_pdu: Send ActivelyMonitoredDesktop to client");
+    }
+    drawable_.draw(order);
+}
+
+void process_client_activate_pdu(gdi::GraphicApi & drawable_, InStream& chunk,bool verbose)
+{
+    ClientActivatePDU capdu;
+    capdu.receive(chunk);
+    if (verbose) { capdu.log(LOG_INFO); }
+
+    if ((capdu.WindowId() == INTERNAL_MODULE_WINDOW_ID) && (capdu.Enabled() == 0))
+    {
+        send_activate_window(RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND, drawable_, verbose);
+        send_activate_window(RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER, drawable_, verbose);
+   }
 }   // process_client_activate_pdu
 
-void process_client_execute_pdu(
-    WindowsExecuteShellParams & client_execute,
-    bool & should_ignore_first_client_execute_,
-    InStream& chunk, bool verbose)
-{
-    LOG_IF(verbose, LOG_INFO, "process_client_execute_pdu()");
-    ClientExecutePDU cepdu;
-    cepdu.receive(chunk);
-
-    if (verbose) {
-        cepdu.log(LOG_INFO);
-    }
-
-    const char* exe_of_file = cepdu.get_client_execute().exe_or_file.c_str();
-
-    if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)
-    && (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
-        client_execute = cepdu.get_client_execute();
-    }
-
-    should_ignore_first_client_execute_ = false;
-}   // process_client_execute_pdu
 
 void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStream& chunk, std::string window_title, bool verbose)
 {
@@ -2717,24 +2675,13 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
     switch (this->client_order_type)
     {
         case TS_RAIL_ORDER_ACTIVATE:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client Activate PDU");
-            }
-
+            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::send_to_mod_rail_channel:Client Activate PDU");
             this->check_is_unit_throw(length, flags, chunk, "ProcessClientActivatePDU");
-            process_client_activate_pdu(this->drawable_, length, flags, chunk, this->verbose);
+            process_client_activate_pdu(this->drawable_, chunk, this->verbose);
         break;
 
         case TS_RAIL_ORDER_CLIENTSTATUS:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client Information PDU");
-            }
-
-            LOG_IF(this->verbose, LOG_INFO, "process_client_information_pdu()");
+            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::send_to_mod_rail_channel:Client Information PDU");
             if (this->channel_){
                 this->check_is_unit_throw(length, flags, chunk, "ProcessClientInformationPDU");
 
@@ -2770,17 +2717,23 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
         //break;
 
         case TS_RAIL_ORDER_EXEC:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client Execute PDU");
-            }
+            LOG_IF(this->verbose, LOG_INFO, "ClientExecute::send_to_mod_rail_channel: Client Execute PDU");
 
             if (this->channel_) {
                 this->check_is_unit_throw(length, flags, chunk, "ProcessClientExecutePDU");
-                process_client_execute_pdu(this->client_execute,
-                                           this->should_ignore_first_client_execute_,
-                                           chunk, this->verbose);
+
+                ClientExecutePDU cepdu;
+                cepdu.receive(chunk);
+
+                if (this->verbose) { cepdu.log(LOG_INFO); }
+
+                const char* exe_of_file = cepdu.get_client_execute().exe_or_file.c_str();
+
+                if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)
+                && (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
+                    this->client_execute = cepdu.get_client_execute();
+                }
+                this->should_ignore_first_client_execute_ = false;
             }
         break;
 
@@ -2906,11 +2859,6 @@ const WindowsExecuteShellParams & ClientExecute::get_client_execute()
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_client_execute() ->");
     this->client_execute.log(LOG_INFO);
     return this->client_execute;
-}
-
-bool ClientExecute::should_ignore_first_client_execute() const {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::should_ignore_first_client_execute() -> %d", this->should_ignore_first_client_execute_);
-    return this->should_ignore_first_client_execute_;
 }
 
 void ClientExecute::create_auxiliary_window(Rect const window_rect)
