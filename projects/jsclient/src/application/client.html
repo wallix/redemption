@@ -81,6 +81,16 @@ WallixModule({
     // INITIAL_MEMORY: 268435456, // 16**7
 }).then((Module) => {
 
+// optional
+Module.log = function(priority, msg) {
+    const logger = (priority === 6) ? console.log
+                 : (priority === 4) ? console.warn
+                 : (priority === 3) ? console.error
+                 : (priority === 7) ? console.debug
+                 : console.log;
+    logger(msg);
+};
+
 const redemption = redemptionLoadModule(Module, window);
 
 const RDPClient = redemption.RDPClient;
