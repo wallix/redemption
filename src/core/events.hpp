@@ -22,9 +22,12 @@
 #pragma once
 
 struct Event {
+
+    std::string name;
+    void * lifespan_handle = nullptr;
+    bool garbage = false;
+
     struct Trigger {
-        bool garbage = false;
-        void * lifespan_handle = nullptr;
         bool active = false;
         timeval now;
         timeval trigger_time;
@@ -51,7 +54,7 @@ struct Event {
 
         bool trigger(timeval now) {
             this->now = now;
-            if (this->garbage){ return false; }
+//            if (this->garbage){ return false; }
             if (not this->active) { return false; }
             if (this->now >= this->trigger_time) {
                 if (this->period.count() == 0){
@@ -73,7 +76,9 @@ struct Event {
         std::function<void(Event &)> on_timeout = [](Event &){};
     } actions;
 
-    Event() {}
+    Event(std::string name, void * lifespan) 
+        : name(name)
+        , lifespan_handle(lifespan) {}
 
     void exec_timeout() { this->actions.on_timeout(*this);}
 };
@@ -84,8 +89,48 @@ using EventContainer = std::vector<Event>;
 inline void end_of_lifespan(EventContainer & events, void * lifespan)
 {
     for (auto & e: events){
-        if (e.alarm.lifespan_handle == lifespan){
-            e.alarm.garbage = true;
+        if (e.lifespan_handle == lifespan){
+            e.garbage = true;
         }
     }
 }
+
+inline void garbage_collector(EventContainer & events) {
+        for (size_t i = 0; i < events.size() ; i++){
+            if (events[i].garbage){
+                if (i < events.size() -1){
+                    events[i] = std::move(events.back());
+                }
+                events.pop_back();
+            }
+        }
+}
+
+// returns timeval{0, 0} si no alarm is set
+inline timeval next_timeout(EventContainer & events)
+{
+   timeval ultimatum = {0, 0};
+   for(auto &event: events){
+        if (not event.garbage and event.alarm.active){
+            ultimatum = event.alarm.trigger_time;
+            break;
+        }
+   }
+   for(auto &event: events){
+        if (not event.garbage and event.alarm.active){
+            ultimatum = std::min(event.alarm.trigger_time, ultimatum);
+        }
+    }
+    return ultimatum;
+}
+
+inline void execute_events(EventContainer & events, const timeval tv)
+{
+    for (auto & event: events){
+        if (not event.garbage && event.alarm.trigger(tv)){
+            event.exec_timeout();
+        }
+    }
+    garbage_collector(events);
+}
+

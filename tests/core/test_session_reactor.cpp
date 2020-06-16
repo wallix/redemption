@@ -41,7 +41,9 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
 
-    Event e;
+    // the second parameter of event is the event context
+    // it should be an object whose lifecycle match event functions lifecycle
+    Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
     e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
 
@@ -66,7 +68,9 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
 
-    Event e;
+    // the second parameter of event is the event context
+    // it should be an object whose lifecycle match event functions lifecycle
+    Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
     e.alarm.set_period(std::chrono::seconds{1});
     e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
@@ -86,7 +90,9 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     EventContainer event_container;
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
-    Event e;
+    // the second parameter of event is the event context
+    // it should be an object whose lifecycle match event functions lifecycle
+    Event e("Event", nullptr);
     e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
     e.alarm.set_timeout(wakeup);
     event_container.push_back(std::move(e));

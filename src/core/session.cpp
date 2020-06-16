@@ -604,11 +604,12 @@ private:
             }
         };
 
-        for(auto &e: events){
-            if (e.alarm.active and not e.alarm.garbage){
-                ultimatum = std::min(e.alarm.trigger_time, ultimatum);
-            }
+        auto tv = next_timeout(events);
+        // tv {0,0} means no timeout to trigger
+        if ((tv.tv_sec != 0) || (tv.tv_usec != 0)){
+            ultimatum = std::min(tv, ultimatum);
         }
+
 
         timer_events_.for_each(timer_update_tv);
         this->show_ultimatum("ultimatum (timers) ="_zv, ultimatum, now);
@@ -923,11 +924,7 @@ public:
 
                         auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
-                        for(auto & e: events){
-                            if (e.alarm.trigger(end_tv)){
-                                e.exec_timeout();
-                            }
-                        }
+                        execute_events(events, end_tv);
                         fd_events_.exec_timeout(end_tv);
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                             return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});

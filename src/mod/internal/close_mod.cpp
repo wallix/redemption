@@ -127,26 +127,22 @@ CloseMod::CloseMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    Event close_event;
-    close_event.alarm.lifespan_handle = static_cast<void*>(this);
+    Event close_event("Close:Close Event", this);
     close_event.alarm.set_timeout(
                         time_base.get_current_time()
                         +std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()});
     close_event.actions.on_timeout = [this](Event&e)
     {
-        LOG(LOG_INFO, "Close Event");
         this->set_mod_signal(BACK_EVENT_STOP);
-        e.alarm.garbage = true;
+        e.garbage = true;
     };
-    events.push_back(std::move(close_event));
+    this->events.push_back(std::move(close_event));
 
-    Event refresh_event;
-    refresh_event.alarm.lifespan_handle = static_cast<void*>(this);
+    Event refresh_event("Close:Refresh Event", this);
     refresh_event.alarm.set_timeout(time_base.get_current_time());
     refresh_event.alarm.set_period(std::chrono::seconds{1});
     refresh_event.actions.on_timeout = [this](Event& event)
     {
-        LOG(LOG_INFO, "Refresh Event");
         auto elapsed = event.alarm.now.tv_sec-event.alarm.start_time.tv_sec;
         auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()}
                         - std::chrono::seconds{elapsed};
@@ -228,7 +224,7 @@ void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                             this->first_click_down_timer->set_delay(std::chrono::seconds(1));
                         }
                         else {
-                            Event dc_event;
+                            Event dc_event("Close::DC Event", this);
                             dc_event.alarm.set_timeout(
                                                 this->time_base.get_current_time()
                                                 +std::chrono::seconds{1});

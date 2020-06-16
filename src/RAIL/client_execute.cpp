@@ -70,6 +70,7 @@ ClientExecute::ClientExecute(
 
 ClientExecute::~ClientExecute()
 {
+    end_of_lifespan(events, this);
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::~ClientExecute()");
     this->reset(false);
 }
@@ -765,7 +766,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                     this->button_1_down = this->pressed_mouse_button;
 
-                    Event event_down_timer;
+                    Event event_down_timer("Double Click Down Timer", this);
                     event_down_timer.alarm.set_timeout(this->time_base.get_current_time()
                         +std::chrono::milliseconds{400});
                     event_down_timer.actions.on_timeout = [this](Event &){
@@ -775,7 +776,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                             this->button_1_down_y,
                             this->button_1_down);
                     };
-                    this->events.push_back(event_down_timer);
+                    this->events.push_back(std::move(event_down_timer));
 
                     this->button_1_down_x = xPos;
                     this->button_1_down_y = yPos;

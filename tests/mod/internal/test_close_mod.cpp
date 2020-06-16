@@ -85,7 +85,6 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
-    TimerContainer timer_events_;
     EventContainer events;
     ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
@@ -113,61 +112,31 @@ RED_AUTO_TEST_CASE(TestCloseMod)
             glyphs, theme, false);
         d.init();
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-        RED_CHECK(events.size() == 2);
 
         RED_CHECK(events.size() == 2);
-        for (auto & event: events){
-            if (event.alarm.trigger({62,0})){
-                event.exec_timeout();
-            }
-        }
+        execute_events(events, timeval{62, 0});
     //    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
             "\x11\xe6\x7f\xdb\x20\x5a\x01\x1e\x74\x58\xf3\xb8\x44\xe9\xeb\x51\x30\xd0\x73\x3d");
 
-
         RED_CHECK(events.size() == 2);
-        for (auto & event: events){
-            if (event.alarm.trigger({580,0})){
-                event.exec_timeout();
-            }
-        }
+        execute_events(events, timeval{580, 0});
     //    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
             "\xf1\x93\xd8\x9f\x7a\x00\x14\x8b\x42\xd8\x4b\x70\x4d\x7c\x96\xdc\x7f\x92\xb2\xe0");
 
-        time_base.set_current_time({601, 0});
         RED_CHECK(events.size() == 2);
-        for (auto & event: events){
-            if (event.alarm.trigger(time_base.get_current_time())){
-                event.exec_timeout();
-            }
-        }
-        for (size_t i = 0; i < events.size() ; i++){
-            if (events[i].alarm.garbage){
-                if (i < events.size() -1){
-                    events[i] = std::move(events.back());
-                }
-                events.pop_back();
-            }
-        }
+        execute_events(events, timeval{600, 0});
         RED_CHECK(events.size() == 1);
 
-        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
+//        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
-            "\x3d\x0b\x77\x0b\x35\x44\x43\x3d\x0b\xa8\x20\x97\x2a\x24\xf3\x4d\x20\xe8\xff\xb4");
+            "\x3d\x73\xd1\xa3\x50\x06\x05\x5e\x37\xba\xab\x46\xb0\x37\x78\x53\xd6\xdf\xd3\x7c");
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
     }
     // When Close mod goes out of scope remaining events should be garbaged
     RED_CHECK(events.size() == 1);
-    for (size_t i = 0; i < events.size() ; i++){
-        if (events[i].alarm.garbage){
-            if (i < events.size() -1){
-                events[i] = std::move(events.back());
-            }
-            events.pop_back();
-        }
-    }
+    execute_events(events, timeval{600, 0});
     RED_CHECK(events.size() == 0);
 }
 
@@ -178,7 +147,6 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
-    TimerContainer timer_events_;
     EventContainer events;
     ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
@@ -197,12 +165,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    timeval tv1{1, 0};
-    for (auto & event: events){
-        if (event.alarm.trigger(tv1)){
-            event.exec_timeout();
-        }
-    }
+    execute_events(events, timeval{1,0});
 
     // ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),
