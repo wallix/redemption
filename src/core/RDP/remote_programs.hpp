@@ -688,7 +688,7 @@ enum {
 
 class ClientExecutePDU {
 
-    WindowsExecuteShellParams client_execute;
+    WindowsExecuteShellParams windows_execute_shell_params;
 
     static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) {
         uint8_t const * const utf16_data = in.get_current();
@@ -703,7 +703,7 @@ class ClientExecutePDU {
 
 public:
     void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->client_execute.flags);
+        stream.out_uint16_le(this->windows_execute_shell_params.flags);
 
         const uint32_t offset_of_ExeOrFile  = stream.get_offset();
         stream.out_clear_bytes(2);
@@ -714,17 +714,17 @@ public:
 
         const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->client_execute.exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
+            stream, this->windows_execute_shell_params.exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
             offset_of_ExeOrFile);
 
         const size_t maximum_length_of_WorkingDir_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->client_execute.working_dir, maximum_length_of_WorkingDir_in_bytes,
+            stream, this->windows_execute_shell_params.working_dir, maximum_length_of_WorkingDir_in_bytes,
             offset_of_WorkingDir);
 
         const size_t maximum_length_of_Arguments_in_bytes = 16000;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->client_execute.arguments, maximum_length_of_Arguments_in_bytes,
+            stream, this->windows_execute_shell_params.arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
     }
 
@@ -733,32 +733,29 @@ public:
         // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
         ::check_throw(stream, 8, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
 
-        this->client_execute.flags = stream.in_uint16_le();
+        this->windows_execute_shell_params.flags = stream.in_uint16_le();
 
         uint16_t ExeOrFileLength  = stream.in_uint16_le();
         uint16_t WorkingDirLength = stream.in_uint16_le();
         uint16_t ArgumentsLen     = stream.in_uint16_le();
 
         ::check_throw(stream, ExeOrFileLength, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
-        this->utf16_to_utf8sz(this->client_execute.exe_or_file, stream, ExeOrFileLength);
+        this->utf16_to_utf8sz(this->windows_execute_shell_params.exe_or_file, stream, ExeOrFileLength);
         ::check_throw(stream, WorkingDirLength, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
-        this->utf16_to_utf8sz(this->client_execute.working_dir, stream, WorkingDirLength);
+        this->utf16_to_utf8sz(this->windows_execute_shell_params.working_dir, stream, WorkingDirLength);
         ::check_throw(stream, ArgumentsLen, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
-        this->utf16_to_utf8sz(this->client_execute.arguments, stream, ArgumentsLen);
+        this->utf16_to_utf8sz(this->windows_execute_shell_params.arguments, stream, ArgumentsLen);
     }
 
-    [[nodiscard]] const WindowsExecuteShellParams& get_client_execute() const
+    [[nodiscard]] const WindowsExecuteShellParams& get_windows_execute_shell_params() const
     {
-        return this->client_execute;
+        return this->windows_execute_shell_params;
     }
 
-    void Flags(uint16_t flags) { this->client_execute.flags = flags; }
-
-    void ExeOrFile(const char * ExeOrFile_) { this->client_execute.exe_or_file = ExeOrFile_; }
-
-    void WorkingDir(const char * WorkingDir_) { this->client_execute.working_dir = WorkingDir_; }
-
-    void Arguments(const char * Arguments_) { this->client_execute.arguments = Arguments_; }
+    void Flags(uint16_t flags) { this->windows_execute_shell_params.flags = flags; }
+    void ExeOrFile(const char * ExeOrFile_) { this->windows_execute_shell_params.exe_or_file = ExeOrFile_; }
+    void WorkingDir(const char * WorkingDir_) { this->windows_execute_shell_params.working_dir = WorkingDir_; }
+    void Arguments(const char * Arguments_) { this->windows_execute_shell_params.arguments = Arguments_; }
 
     [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -767,7 +764,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->client_execute.exe_or_file, this->client_execute.exe_or_file.length() * 2);
+                out_stream, this->windows_execute_shell_params.exe_or_file, this->windows_execute_shell_params.exe_or_file.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -776,7 +773,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->client_execute.working_dir, this->client_execute.working_dir.length() * 2);
+                out_stream, this->windows_execute_shell_params.working_dir, this->windows_execute_shell_params.working_dir.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -785,7 +782,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->client_execute.arguments, this->client_execute.arguments.length() * 2);
+                out_stream, this->windows_execute_shell_params.arguments, this->windows_execute_shell_params.arguments.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -802,8 +799,8 @@ private:
 
         result = ::snprintf(buffer + length, size - length,
             "Flags=0x%X ExeOrFile=\"%s\" WorkingDir=\"%s\" Arguments=\"%s\"",
-            this->client_execute.flags, this->client_execute.exe_or_file.c_str(), this->client_execute.working_dir.c_str(),
-            this->client_execute.arguments.c_str());
+            this->windows_execute_shell_params.flags, this->windows_execute_shell_params.exe_or_file.c_str(), this->windows_execute_shell_params.working_dir.c_str(),
+            this->windows_execute_shell_params.arguments.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;

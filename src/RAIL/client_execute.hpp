@@ -54,7 +54,7 @@ class ClientExecute : public windowing_api
 
     uint16_t client_order_type = 0;
 
-    WindowsExecuteShellParams client_execute;
+    WindowsExecuteShellParams windows_execute_shell_params;
 
 public:
     bool should_ignore_first_client_execute_ = true;
@@ -198,7 +198,7 @@ public:
     // Return true if event is consumed.
     bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
 
-    const WindowsExecuteShellParams & get_client_execute();
+    const WindowsExecuteShellParams & get_windows_execute_shell_params();
 
     [[nodiscard]] uint16_t Flags() const;
 

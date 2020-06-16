@@ -575,13 +575,13 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     {
         auto & rap = mod_rdp_params.remote_app_params;
         rap.rail_client_execute = &rail_client_execute;
-        rap.client_execute = rail_client_execute.get_client_execute();
+        rap.windows_execute_shell_params = rail_client_execute.get_windows_execute_shell_params();
 
         bool const rail_is_required = (ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
             && ((mod_rdp_params.application_params.target_application
                 && *mod_rdp_params.application_params.target_application)
              || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
-                && not rap.client_execute.exe_or_file.empty())));
+                && not rap.windows_execute_shell_params.exe_or_file.empty())));
 
         rap.should_ignore_first_client_execute = rail_client_execute.should_ignore_first_client_execute_;
         rap.enable_remote_program = ((client_info.remote_program

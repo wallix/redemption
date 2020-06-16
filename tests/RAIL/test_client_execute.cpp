@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestProcessClientExecutePdu)
     ClientExecutePDU cepdu;
     cepdu.receive(chunk);
 
-    WindowsExecuteShellParams params = cepdu.get_client_execute();
+    WindowsExecuteShellParams params = cepdu.get_windows_execute_shell_params();
     RED_CHECK(params.flags == 8);
     RED_CHECK(params.exe_or_file == std::string("||WABRemoteApp"));
     RED_CHECK(params.working_dir == std::string(""));

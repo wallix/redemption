@@ -2727,11 +2727,11 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
 
                 if (this->verbose) { cepdu.log(LOG_INFO); }
 
-                const char* exe_of_file = cepdu.get_client_execute().exe_or_file.c_str();
+                const char* exe_of_file = cepdu.get_windows_execute_shell_params().exe_or_file.c_str();
 
                 if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)
                 && (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
-                    this->client_execute = cepdu.get_client_execute();
+                    this->windows_execute_shell_params = cepdu.get_windows_execute_shell_params();
                 }
                 this->should_ignore_first_client_execute_ = false;
             }
@@ -2854,11 +2854,11 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
 }   // send_to_mod_rail_channel
 
 
-const WindowsExecuteShellParams & ClientExecute::get_client_execute()
+const WindowsExecuteShellParams & ClientExecute::get_windows_execute_shell_params()
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_client_execute() ->");
-    this->client_execute.log(LOG_INFO);
-    return this->client_execute;
+    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_windows_execute_shell_params() ->");
+    this->windows_execute_shell_params.log(LOG_INFO);
+    return this->windows_execute_shell_params;
 }
 
 void ClientExecute::create_auxiliary_window(Rect const window_rect)

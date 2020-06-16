@@ -37,8 +37,8 @@ class FrontAPI;
 
 struct RemoteProgramsVirtualChannelParams
 {
-    WindowsExecuteShellParams client_execute;
-    WindowsExecuteShellParams client_execute_2;
+    WindowsExecuteShellParams windows_execute_shell_params;
+    WindowsExecuteShellParams windows_execute_shell_params_2;
 
     uninit_checked<RemoteProgramsSessionManager*> rail_session_manager;
 
@@ -60,9 +60,9 @@ private:
     uint16_t client_order_type = 0;
     uint16_t server_order_type = 0;
 
-    WindowsExecuteShellParams client_execute;
+    WindowsExecuteShellParams windows_execute_shell_params;
 
-    WindowsExecuteShellParams client_execute_2;
+    WindowsExecuteShellParams windows_execute_shell_params_2;
 
     RemoteProgramsSessionManager * param_rail_session_manager = nullptr;
 
@@ -136,8 +136,8 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
-    , client_execute(params.client_execute)
-    , client_execute_2(params.client_execute_2)
+    , windows_execute_shell_params(params.windows_execute_shell_params)
+    , windows_execute_shell_params_2(params.windows_execute_shell_params_2)
     , param_rail_session_manager(params.rail_session_manager)
     , param_should_ignore_first_client_execute(params.should_ignore_first_client_execute)
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
@@ -292,7 +292,7 @@ private:
             return false;
         }
 
-        const char* exe_of_file = cepdu.get_client_execute().exe_or_file.c_str();
+        const char* exe_of_file = cepdu.get_windows_execute_shell_params().exe_or_file.c_str();
 
 
         // TODO: code below means startwith, code can likely be simplified
@@ -307,7 +307,7 @@ private:
                 remoteapplicationprogram);
 
             this->vars.set_acl<cfg::context::auth_notify>("rail_exec");
-            this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.get_client_execute().flags);
+            this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.get_windows_execute_shell_params().flags);
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_exe_or_file>(remoteapplicationprogram);
         }
         else if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)) {
@@ -411,7 +411,7 @@ private:
         }
 
         if (!this->client_execute_pdu_sent) {
-            if (!this->client_execute.exe_or_file.empty()) {
+            if (!this->windows_execute_shell_params.exe_or_file.empty()) {
                 StaticOutStream<16384> out_s;
                 RAILPDUHeader header;
                 header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
@@ -420,10 +420,10 @@ private:
                 //TODO: define a constructor providing a WindowsExecuteShellParams structure
                 ClientExecutePDU cepdu;
 
-                cepdu.Flags(this->client_execute.flags);
-                cepdu.ExeOrFile(this->client_execute.exe_or_file.c_str());
-                cepdu.WorkingDir(this->client_execute.working_dir.c_str());
-                cepdu.Arguments(this->client_execute.arguments.c_str());
+                cepdu.Flags(this->windows_execute_shell_params.flags);
+                cepdu.ExeOrFile(this->windows_execute_shell_params.exe_or_file.c_str());
+                cepdu.WorkingDir(this->windows_execute_shell_params.working_dir.c_str());
+                cepdu.Arguments(this->windows_execute_shell_params.arguments.c_str());
 
                 cepdu.emit(out_s);
 
@@ -733,7 +733,7 @@ public:
         }
         else {
             if (!this->session_probe_channel
-             || this->client_execute.exe_or_file != serpdu.ExeOrFile()
+             || this->windows_execute_shell_params.exe_or_file != serpdu.ExeOrFile()
             ) {
                 this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
                     KVLog("exe_or_file"_av, serpdu.ExeOrFile()),
@@ -741,7 +741,7 @@ public:
             }
         }
 
-        if (this->client_execute.exe_or_file == serpdu.ExeOrFile()) {
+        if (this->windows_execute_shell_params.exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -756,7 +756,7 @@ public:
                 }
 
                 if (!this->exe_or_file_2_sent &&
-                    !this->client_execute_2.exe_or_file.empty()) {
+                    !this->windows_execute_shell_params_2.exe_or_file.empty()) {
                     this->exe_or_file_exec_ok = true;
 
                     this->try_launch_application();
@@ -771,7 +771,7 @@ public:
             return (!this->session_probe_channel);
         }
 
-        if (this->client_execute_2.exe_or_file == serpdu.ExeOrFile()) {
+        if (this->windows_execute_shell_params_2.exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -1013,17 +1013,17 @@ public:
             }
 
             {
-                if (!this->client_execute.exe_or_file.empty()) {
+                if (!this->windows_execute_shell_params.exe_or_file.empty()) {
                     StaticOutStream<16384> out_s;
                     RAILPDUHeader header;
                     header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
 
                     ClientExecutePDU cepdu;
 
-                    cepdu.Flags(this->client_execute.flags);
-                    cepdu.ExeOrFile(this->client_execute.exe_or_file.c_str());
-                    cepdu.WorkingDir(this->client_execute.working_dir.c_str());
-                    cepdu.Arguments(this->client_execute.arguments.c_str());
+                    cepdu.Flags(this->windows_execute_shell_params.flags);
+                    cepdu.ExeOrFile(this->windows_execute_shell_params.exe_or_file.c_str());
+                    cepdu.WorkingDir(this->windows_execute_shell_params.working_dir.c_str());
+                    cepdu.Arguments(this->windows_execute_shell_params.arguments.c_str());
 
                     cepdu.emit(out_s);
 
@@ -1464,7 +1464,7 @@ public:
 
     void confirm_session_probe_launch() {
         if (!this->exe_or_file_2_sent &&
-            !this->client_execute_2.exe_or_file.empty()) {
+            !this->windows_execute_shell_params_2.exe_or_file.empty()) {
             this->session_probe_launch_confirmed = true;
 
             this->try_launch_application();
@@ -1478,7 +1478,7 @@ private:
         }
 
         assert(!this->exe_or_file_2_sent &&
-            !this->client_execute_2.exe_or_file.empty());
+            !this->windows_execute_shell_params_2.exe_or_file.empty());
 
         this->exe_or_file_2_sent = true;
 
@@ -1488,10 +1488,10 @@ private:
 
         ClientExecutePDU cepdu;
 
-        cepdu.Flags(this->client_execute_2.flags);
-        cepdu.ExeOrFile(this->client_execute_2.exe_or_file.c_str());
-        cepdu.WorkingDir(this->client_execute_2.working_dir.c_str());
-        cepdu.Arguments(this->client_execute_2.arguments.c_str());
+        cepdu.Flags(this->windows_execute_shell_params_2.flags);
+        cepdu.ExeOrFile(this->windows_execute_shell_params_2.exe_or_file.c_str());
+        cepdu.WorkingDir(this->windows_execute_shell_params_2.working_dir.c_str());
+        cepdu.Arguments(this->windows_execute_shell_params_2.arguments.c_str());
 
         cepdu.emit(out_s);
 

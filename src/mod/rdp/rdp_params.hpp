@@ -155,7 +155,7 @@ struct ModRDPParams
 
         bool should_ignore_first_client_execute = false;
 
-        WindowsExecuteShellParams client_execute;
+        WindowsExecuteShellParams windows_execute_shell_params;
 
         ClientExecute * rail_client_execute = nullptr;
         std::chrono::milliseconds rail_disconnect_message_delay {};
@@ -379,11 +379,11 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    remote_app_params.rail_client_execute);
 
-        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    remote_app_params.client_execute.flags);
+        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    remote_app_params.windows_execute_shell_params.flags);
 
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.exe_or_file.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.working_dir.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.arguments.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.exe_or_file.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.working_dir.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.arguments.c_str());
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.use_client_provided_remoteapp);
 

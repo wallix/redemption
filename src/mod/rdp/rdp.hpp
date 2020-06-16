@@ -272,8 +272,8 @@ public:
         const std::chrono::milliseconds bypass_legal_notice_timeout;
 
     private:
-        WindowsExecuteShellParams client_execute;
-        WindowsExecuteShellParams real_client_execute;
+        WindowsExecuteShellParams windows_execute_shell_params;
+        WindowsExecuteShellParams real_windows_execute_shell_params;
 
     public:
         RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params)
@@ -875,8 +875,8 @@ private:
         remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
             this->session_probe.used_to_launch_remote_program;
 
-        remote_programs_virtual_channel_params.client_execute = this->remote_app.client_execute;
-        remote_programs_virtual_channel_params.client_execute_2 = this->remote_app.real_client_execute;
+        remote_programs_virtual_channel_params.windows_execute_shell_params = this->remote_app.windows_execute_shell_params;
+        remote_programs_virtual_channel_params.windows_execute_shell_params_2 = this->remote_app.real_windows_execute_shell_params;
 
         remote_programs_virtual_channel_params.rail_session_manager               =
             this->remote_programs_session_manager.get();
@@ -1225,7 +1225,7 @@ public:
         bool has_target = (application_params.target_application && *application_params.target_application);
         bool use_client_provided_remoteapp
           = (remote_app_params.use_client_provided_remoteapp
-          && not remote_app_params.client_execute.exe_or_file.empty());
+          && not remote_app_params.windows_execute_shell_params.exe_or_file.empty());
 
         if (has_target) {
             if (session_probe_params.used_to_launch_remote_program) {
@@ -1241,16 +1241,16 @@ public:
             }
             else {
                 mod_rdp_channels::replace_shell_arguments(
-                    this->remote_app.real_client_execute.arguments, application_params);
-                this->remote_app.real_client_execute.flags       = 0;
+                    this->remote_app.real_windows_execute_shell_params.arguments, application_params);
+                this->remote_app.real_windows_execute_shell_params.flags       = 0;
             }
-            this->remote_app.client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            this->remote_app.windows_execute_shell_params.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
         }
         else if (use_client_provided_remoteapp) {
-            this->remote_app.real_client_execute.arguments = remote_app_params.client_execute.arguments;
-            this->remote_app.real_client_execute.flags     = remote_app_params.client_execute.flags;
-            this->remote_app.client_execute.flags          = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            this->remote_app.real_windows_execute_shell_params.arguments = remote_app_params.windows_execute_shell_params.arguments;
+            this->remote_app.real_windows_execute_shell_params.flags     = remote_app_params.windows_execute_shell_params.flags;
+            this->remote_app.windows_execute_shell_params.flags          = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             this->session_probe.session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
         }
 
@@ -1259,11 +1259,11 @@ public:
              || !session_probe_params.used_to_launch_remote_program
             ) {
                 this->session_probe.channel_params.real_alternate_shell = "[None]";
-                this->remote_app.real_client_execute.exe_or_file = remote_app_params.client_execute.exe_or_file;
-                this->remote_app.real_client_execute.working_dir = remote_app_params.client_execute.working_dir;
+                this->remote_app.real_windows_execute_shell_params.exe_or_file = remote_app_params.windows_execute_shell_params.exe_or_file;
+                this->remote_app.real_windows_execute_shell_params.working_dir = remote_app_params.windows_execute_shell_params.working_dir;
             }
 
-            this->remote_app.client_execute.exe_or_file = session_probe_params.exe_or_file;
+            this->remote_app.windows_execute_shell_params.exe_or_file = session_probe_params.exe_or_file;
 
             // Executable file name of SP.
             char exe_var_str[16] {};
@@ -1285,17 +1285,17 @@ public:
               : str_concat("/#", this->session_probe.target_informations, ' ');
 
             if (session_probe_params.alternate_directory_environment_variable.empty()) {
-                this->remote_app.client_execute.working_dir = "%TMP%";
+                this->remote_app.windows_execute_shell_params.working_dir = "%TMP%";
             }
             else {
-                this->remote_app.client_execute.working_dir = "%";
-                this->remote_app.client_execute.working_dir.append(session_probe_params.alternate_directory_environment_variable);
-                this->remote_app.client_execute.working_dir.append("%");
+                this->remote_app.windows_execute_shell_params.working_dir = "%";
+                this->remote_app.windows_execute_shell_params.working_dir.append(session_probe_params.alternate_directory_environment_variable);
+                this->remote_app.windows_execute_shell_params.working_dir.append("%");
             }
-            LOG(LOG_INFO, "(SPADEV) WorkingDir: \"%s\"", this->remote_app.client_execute.working_dir.c_str());
+            LOG(LOG_INFO, "(SPADEV) WorkingDir: \"%s\"", this->remote_app.windows_execute_shell_params.working_dir.c_str());
 
-            this->remote_app.client_execute.arguments   = session_probe_params.arguments;
-            mod_rdp_channels::replace_probe_arguments(this->remote_app.client_execute.arguments,
+            this->remote_app.windows_execute_shell_params.arguments   = session_probe_params.arguments;
+            mod_rdp_channels::replace_probe_arguments(this->remote_app.windows_execute_shell_params.arguments,
                 "${EXE_VAR}", exe_var_str,
                 "${TITLE_VAR} ", title_param,
                 "/${COOKIE_VAR} ", cookie_param,
@@ -1309,15 +1309,15 @@ public:
         const ApplicationParams & application_params)
     {
         if (application_params.target_application && *application_params.target_application) {
-            this->remote_app.client_execute.exe_or_file = application_params.alternate_shell;
-            this->remote_app.client_execute.arguments   = get_shell_arguments(application_params);
-            this->remote_app.client_execute.working_dir = application_params.shell_working_dir;
-            this->remote_app.client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+            this->remote_app.windows_execute_shell_params.exe_or_file = application_params.alternate_shell;
+            this->remote_app.windows_execute_shell_params.arguments   = get_shell_arguments(application_params);
+            this->remote_app.windows_execute_shell_params.working_dir = application_params.shell_working_dir;
+            this->remote_app.windows_execute_shell_params.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
         }
         else if (remote_app_params.use_client_provided_remoteapp
-            && not remote_app_params.client_execute.exe_or_file.empty()
+            && not remote_app_params.windows_execute_shell_params.exe_or_file.empty()
         ) {
-            this->remote_app.client_execute = remote_app_params.client_execute;
+            this->remote_app.windows_execute_shell_params = remote_app_params.windows_execute_shell_params;
         }
     }
 
