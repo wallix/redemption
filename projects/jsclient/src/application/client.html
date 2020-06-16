@@ -350,7 +350,13 @@ canvas.fillStyle = 'black';
 canvas.fillRect(0,0,800,600);
 
 const url = new URL(window.location.href)
-const inputs = {user: user_input, pass: pass_input, ws: ws_input};
+const inputs = {
+    user: user_input,
+    pass: pass_input,
+    ws: ws_input,
+    width: width_input,
+    height: height_input,
+};
 for (const k in inputs) {
     const x = url.searchParams.get(k);
     if (x) {
