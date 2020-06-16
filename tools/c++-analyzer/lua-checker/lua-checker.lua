@@ -16,7 +16,6 @@ parser:option('--checks', "Comma-separated list of globs with optional '-' prefi
 parser:flag('--list-checks', "List all enabled checks and exit. Use with -checks=* to list all available checks")
 parser:option('--configs', 'Checker arguments', {}):argname{'<check>','<arguments>'}
     :count('*'):args(2):action(append_config)
-parser:option('--checks', "Comma-separated list of globs with optional '-' prefix. Globs are processed in order of appearance in the list. Globs without '-' prefix add checks with matching names to the set, globs with the '-' prefix remove checks with matching names from the set of enabled checks.")
 
 local args = parser:parse()
 
