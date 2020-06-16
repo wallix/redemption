@@ -51,7 +51,8 @@ struct Event {
 
         bool trigger(timeval now) {
             this->now = now;
-            if (not active) { return false; }
+            if (this->garbage){ return false; }
+            if (not this->active) { return false; }
             if (this->now >= this->trigger_time) {
                 if (this->period.count() == 0){
                     // one time alarm
@@ -80,3 +81,11 @@ struct Event {
 
 using EventContainer = std::vector<Event>;
 
+inline void end_of_lifespan(EventContainer & events, void * lifespan)
+{
+    for (auto & e: events){
+        if (e.alarm.lifespan_handle == lifespan){
+            e.alarm.garbage = true;
+        }
+    }
+}

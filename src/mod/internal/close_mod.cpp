@@ -128,17 +128,20 @@ CloseMod::CloseMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     Event close_event;
+    close_event.alarm.lifespan_handle = static_cast<void*>(this);
     close_event.alarm.set_timeout(
                         time_base.get_current_time()
                         +std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()});
-    close_event.actions.on_timeout = [this](Event&)
+    close_event.actions.on_timeout = [this](Event&e)
     {
         LOG(LOG_INFO, "Close Event");
         this->set_mod_signal(BACK_EVENT_STOP);
+        e.alarm.garbage = true;
     };
     events.push_back(std::move(close_event));
 
     Event refresh_event;
+    refresh_event.alarm.lifespan_handle = static_cast<void*>(this);
     refresh_event.alarm.set_timeout(time_base.get_current_time());
     refresh_event.alarm.set_period(std::chrono::seconds{1});
     refresh_event.actions.on_timeout = [this](Event& event)
@@ -154,6 +157,7 @@ CloseMod::CloseMod(
 
 CloseMod::~CloseMod()
 {
+    end_of_lifespan(events, this);
     this->vars.set<cfg::context::close_box_extra_message>("");
     this->screen.clear();
     this->rail_client_execute.reset(true);
