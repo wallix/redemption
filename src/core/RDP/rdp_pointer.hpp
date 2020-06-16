@@ -34,13 +34,14 @@
 #include <cassert>
 #include <cstring>
 
-
+/** @brief the size of a cursor */
 struct CursorSize {
     unsigned width;
     unsigned height;
     explicit CursorSize(unsigned w, unsigned h) : width(w), height(h) {}
 };
 
+/** @brief the hotspot coordinates of a cursor */
 struct Hotspot {
     unsigned x;
     unsigned y;
@@ -79,6 +80,7 @@ inline void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t con
     }
 }
 
+/** @brief a mouse pointer in the proxy */
 struct Pointer
 {
     friend class NewPointerUpdate;
@@ -124,14 +126,24 @@ public:
         , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
     };
 
+    bool haveRdpPointer = false;
+    BitsPerPixel original_bpp = BitsPerPixel(24);
+
 private:
     uint8_t data[DATA_SIZE] {};
+    uint16_t original_dlen = 0;
+    uint8_t original_data[DATA_SIZE] {};
+
     uint8_t mask[MASK_SIZE] {};
+    uint16_t original_mlen = 0;
+    uint8_t original_mask[MASK_SIZE] {};
 
     bool only_black_white = false;
 
     CursorSize dimensions {32,32};
     Hotspot hotspot {0, 0};
+    BitsPerPixel bpp {24};
+
 
 public:
     explicit Pointer() = default;
@@ -150,6 +162,22 @@ public:
         , hotspot(hs)
     {
     }
+
+    explicit Pointer(BitsPerPixel bpp, CursorSize d, Hotspot hs, uint16_t dlen, const uint8_t *data,
+            uint16_t mlen, const uint8_t *mask)
+        : haveRdpPointer(true)
+        , original_bpp(bpp)
+        , original_dlen(dlen)
+        , original_mlen(mlen)
+        , dimensions(d)
+        , hotspot(hs)
+        , bpp(bpp)
+    {
+        memcpy(original_data, data, dlen);
+        memcpy(original_mask, mask, mlen);
+    }
+
+    BitsPerPixel get_bpp() const { return bpp; }
 
     [[nodiscard]] CursorSize get_dimensions() const
     {
@@ -173,6 +201,9 @@ public:
         return {this->data, this->xor_data_size()};
     }
 
+    const uint8_t *get_original_data() const {
+        return this->original_data;
+    }
 
     [[nodiscard]] unsigned bit_mask_size() const {
         return this->dimensions.height * ::even_pad_length(::nbbytes(this->dimensions.width));
@@ -186,29 +217,35 @@ public:
         return (this->dimensions.width != 0 && this->dimensions.height != 0/* && this->bpp*/);
     }
 
-    void emit_pointer32x32(OutStream & result) const
-    {
-        result.out_uint8(this->get_hotspot().x);
-        result.out_uint8(this->get_hotspot().y);
-
-        result.out_copy_bytes(this->get_24bits_xor_mask());
-        result.out_copy_bytes(this->get_monochrome_and_mask());
-    }
-
     void emit_pointer2(OutStream & result) const
     {
         result.out_uint8(this->get_dimensions().width);
         result.out_uint8(this->get_dimensions().height);
-        result.out_uint8(24);
 
-        result.out_uint8(this->get_hotspot().x);
-        result.out_uint8(this->get_hotspot().y);
+        if (haveRdpPointer) {
+            result.out_uint8(static_cast<uint8_t>(this->original_bpp));
 
-        result.out_uint16_le(this->xor_data_size());
-        result.out_uint16_le(this->bit_mask_size());
+            result.out_uint8(this->get_hotspot().x);
+            result.out_uint8(this->get_hotspot().y);
 
-        result.out_copy_bytes(this->get_24bits_xor_mask());
-        result.out_copy_bytes(this->get_monochrome_and_mask());
+            result.out_uint16_le(this->original_dlen);
+            result.out_uint16_le(this->original_mlen);
+
+            result.out_copy_bytes(this->original_data, this->original_dlen);
+            result.out_copy_bytes(this->original_mask, this->original_mlen);
+
+        } else {
+            result.out_uint8(24);
+
+            result.out_uint8(this->get_hotspot().x);
+            result.out_uint8(this->get_hotspot().y);
+
+            result.out_uint16_le(this->xor_data_size());
+            result.out_uint16_le(this->bit_mask_size());
+
+            result.out_copy_bytes(this->get_24bits_xor_mask());
+            result.out_copy_bytes(this->get_monochrome_and_mask());
+        }
     }
 
     void cleanup_32_bpp_cursor(unsigned width, unsigned height) {
@@ -239,6 +276,30 @@ public:
                 }
             }
         }
+    }
+
+    std::string ascii_mask() const {
+        std::string ret;
+        const uint8_t *mask_ptr = this->mask;
+        uint16_t mask = 0x80;
+
+        for (unsigned y = 0; y < dimensions.height; y++) {
+            for (unsigned x = 0; x < dimensions.width; x++) {
+                if (*mask_ptr & mask) {
+                    ret += " ";
+                } else {
+                    ret += "#";
+                }
+
+                mask >>= 1;
+                if (mask == 00) {
+                    mask_ptr++;
+                    mask = 0x80;
+                }
+            }
+            ret += "\n";
+        }
+        return ret;
     }
 
 };
@@ -410,6 +471,20 @@ public:
     {
         const auto dimensions = this->cursor.get_dimensions();
         const auto hotspot = this->cursor.get_hotspot();
+
+        if (cursor.haveRdpPointer) {
+            stream.out_uint16_le(static_cast<uint16_t>(this->cursor.original_bpp));
+            stream.out_uint16_le(this->cache_idx);
+            stream.out_uint16_le(hotspot.x);
+            stream.out_uint16_le(hotspot.y);
+            stream.out_uint16_le(dimensions.width);
+            stream.out_uint16_le(dimensions.height);
+            stream.out_uint16_le(cursor.original_mlen);
+            stream.out_uint16_le(cursor.original_dlen);
+            stream.out_copy_bytes(cursor.original_data, cursor.original_dlen);
+            stream.out_copy_bytes(cursor.original_mask, cursor.original_mlen);
+            return;
+        }
 
 //    xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
 //      contained in the colorPtrAttr field.
@@ -592,12 +667,12 @@ struct ARGB32Pointer {
             uint8_t * target_data    = &this->data[4*(this->dimensions.height-1-y)*this->dimensions.width];
             uint8_t mask_count = 7;
             for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                uint8_t maskbit =  *src_mask & (1 << mask_count);
+                uint8_t maskbit = *src_mask & (1 << mask_count);
                 uint32_t posdata = 3*x;
                 uint32_t postarget = 4*x;
-                uint32_t pixel = src_data[posdata]+(src_data[posdata+1]<<8)+(src_data[posdata+2]<<16);
-                ::out_bytes_le(&target_data[postarget], 4, (pixel|(maskbit==0))?(0xF0000000+pixel):0);
-                src_mask += (mask_count==0)?1:0;
+                uint32_t pixel = src_data[posdata] + (src_data[posdata+1] << 8) + (src_data[posdata+2] << 16);
+                ::out_bytes_le(&target_data[postarget], 4, (pixel|(maskbit==0)) ? (0xFF000000+pixel) : 0);
+                src_mask += (mask_count==0) ? 1 : 0;
                 mask_count = (mask_count-1) & 7;
             }
         }
@@ -626,7 +701,7 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
                            uint16_t mlen, const uint8_t * mask,
                            bool clean_up_32_bpp_cursor)
 {
-    Pointer cursor(CursorSize(width, height), Hotspot(hsx, hsy));
+    Pointer cursor(data_bpp, CursorSize(width, height), Hotspot(hsx, hsy), dlen, data, mlen, mask);
 
     switch (data_bpp) {
     case BitsPerPixel{1}:
@@ -717,6 +792,8 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
         LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
     break;
     }
+
+   // LOG(LOG_ERR, "mask=%s", cursor.ascii_mask().c_str());
     return cursor;
 }
 
