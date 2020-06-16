@@ -37,8 +37,6 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
     EventContainer events;
     ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
@@ -52,7 +50,7 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     RED_CHECK_NE(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
 
-    LoginMod d(ini, time_base, timer_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
     d.init();
 
@@ -68,8 +66,6 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
     EventContainer events;
     ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
@@ -82,18 +78,13 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
 
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 
-    LoginMod d(ini, time_base, timer_events_, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
     d.init();
 
-    timeval tv = time_base.get_current_time();
-    timer_events_.exec_timer(tv);
-    fd_events_.exec_timeout(tv);
+    execute_events(events, timeval{0,0});
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_mod_signal());
 
-    tv.tv_sec += 2;
-    time_base.set_current_time(tv);
-    timer_events_.exec_timer(tv);
-    fd_events_.exec_timeout(tv);
+    execute_events(events, timeval{2,1});
     RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_mod_signal());
 }

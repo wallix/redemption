@@ -26,10 +26,11 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/flat_login.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 class ClientExecute;
 
@@ -73,6 +74,8 @@ class LoginMod : public mod_api, public NotifyApi
 
     DCState dc_state;
 
+    int first_click_down_timer = 0;
+
     enum class MouseOwner
     {
         ClientExecute,
@@ -82,7 +85,7 @@ class LoginMod : public mod_api, public NotifyApi
     MouseOwner current_mouse_owner;
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
+    EventContainer& events;
 
     LanguageButton language_button;
     FlatLogin login;
@@ -94,12 +97,8 @@ class LoginMod : public mod_api, public NotifyApi
     // Not initialized in constructor
     bool alt_key_pressed = false;
 
-    TimerPtr first_click_down_timer;
-
     int old_mouse_x = 0;
     int old_mouse_y = 0;
-
-    TimerPtr timeout_timer;
 
 private:
     void cancel_double_click_detection();
@@ -110,7 +109,7 @@ public:
     LoginMod(
         LoginModVariables vars,
         TimeBase& time_base,
-        TimerContainer& timer_events_,
+        EventContainer& events,
         char const * username, char const * password,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,

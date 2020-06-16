@@ -153,7 +153,7 @@ CloseMod::CloseMod(
 
 CloseMod::~CloseMod()
 {
-    end_of_lifespan(events, this);
+    end_of_lifespan(this->events, this);
     this->vars.set<cfg::context::close_box_extra_message>("");
     this->screen.clear();
     this->rail_client_execute.reset(true);
@@ -221,16 +221,22 @@ void CloseMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                         this->dc_state = DCState::FirstClickDown;
 
                         if (this->first_click_down_timer) {
-                            this->first_click_down_timer->set_delay(std::chrono::seconds(1));
+                            for(auto & event: this->events){
+                                if (event.id == this->first_click_down_timer){
+                                    event.alarm.set_timeout(
+                                                this->time_base.get_current_time()
+                                                +std::chrono::seconds{1});
+                                }
+                            }
                         }
                         else {
                             Event dc_event("Close::DC Event", this);
+                            this->first_click_down_timer = dc_event.id;
                             dc_event.alarm.set_timeout(
                                                 this->time_base.get_current_time()
                                                 +std::chrono::seconds{1});
                             dc_event.actions.on_timeout = [this](Event&)
                             {
-                                LOG(LOG_INFO, "DCState::Wait");
                                 this->dc_state = DCState::Wait;
                             };
                             this->events.push_back(std::move(dc_event));
@@ -353,8 +359,15 @@ void CloseMod::cancel_double_click_detection()
 {
     assert(this->rail_enabled);
 
-    this->first_click_down_timer.reset();
-
+    if (this->first_click_down_timer) {
+        for(auto & event: this->events){
+            if (event.id == this->first_click_down_timer){
+                event.garbage = true;
+                event.id = 0;
+            }
+        }
+    }
+    this->first_click_down_timer = 0;
     this->dc_state = DCState::Wait;
 }
 

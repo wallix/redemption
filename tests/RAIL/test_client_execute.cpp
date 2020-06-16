@@ -46,7 +46,6 @@
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/login_mod.hpp"
 #include "test_only/acl/sesman_wrapper.hpp" // for InifileWrapper
-#include "core/session_reactor.hpp"
 #include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/client_info.hpp"
@@ -103,7 +102,6 @@ RED_AUTO_TEST_CASE(TestClientExecute)
     EventContainer events;
     ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, true);
 
-    TimerContainer timer_events_;
     Theme theme;
 
     Keymap2 keymap;
@@ -113,7 +111,7 @@ RED_AUTO_TEST_CASE(TestClientExecute)
     Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
     Inifile ini;
-    LoginMod d(ini, time_base, timer_events_, "user", "pass", front.gd(), front,
+    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front,
         screen_info.width, screen_info.height, client_execute.adjust_rect(client_info.get_widget_rect()), client_execute, global_font(), theme);
     d.init();
 }

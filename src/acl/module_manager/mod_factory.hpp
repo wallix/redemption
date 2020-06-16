@@ -480,7 +480,7 @@ public:
         auto new_mod = new LoginMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             username,
             "", // password
             this->graphics, this->front,

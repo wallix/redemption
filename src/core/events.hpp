@@ -21,7 +21,18 @@
 
 #pragma once
 
+#include <utils/timeval_ops.hpp>
+#include <string>
+#include <functional>
+ 
 struct Event {
+    // TODO: the management of this counter may be moved to EventContainer later
+    // no need to use a static lifespan, EventContainer lifespan would be fine
+    // in this cas the id would be attributed when adding event to container
+    static int counter;
+    // event id, 0 means no event
+    // used to identify some event in event queue.
+    int id = 0;
 
     std::string name;
     void * lifespan_handle = nullptr;
@@ -77,8 +88,10 @@ struct Event {
     } actions;
 
     Event(std::string name, void * lifespan) 
-        : name(name)
-        , lifespan_handle(lifespan) {}
+        : id(Event::counter++)
+        , name(name)
+        , lifespan_handle(lifespan) 
+        {}
 
     void exec_timeout() { this->actions.on_timeout(*this);}
 };

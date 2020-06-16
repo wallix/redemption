@@ -58,7 +58,7 @@ namespace
 LoginMod::LoginMod(
     LoginModVariables vars,
     TimeBase& time_base,
-    TimerContainer& timer_events_,
+    EventContainer & events,
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
@@ -74,7 +74,7 @@ LoginMod::LoginMod(
     , dc_state(DCState::Wait)
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , timer_events_(timer_events_)
+    , events(events)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
@@ -121,13 +121,16 @@ LoginMod::LoginMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
-        this->timeout_timer = timer_events_
-        .create_timer_executor(time_base)
-        .set_delay(vars.get<cfg::globals::authentication_timeout>())
-        .on_action([this](auto ctx){
+        Event login_timeout_event("Log Box Timeout", this);
+        login_timeout_event.alarm.set_timeout(
+            this->time_base.get_current_time() 
+            + std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()));
+        login_timeout_event.actions.on_timeout = [this](Event&e)
+        {
             this->set_mod_signal(BACK_EVENT_STOP);
-            return ctx.terminate();
-        });
+            e.garbage = true;
+        };
+        this->events.push_back(std::move(login_timeout_event));
     }
 }
 
@@ -145,6 +148,7 @@ void LoginMod::init()
 
 LoginMod::~LoginMod()
 {
+    end_of_lifespan(this->events, this);
     this->rail_client_execute.reset(true);
     this->screen.clear();
 }
@@ -182,15 +186,25 @@ void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
                     this->dc_state = DCState::FirstClickDown;
 
                     if (this->first_click_down_timer) {
-                        this->first_click_down_timer->set_delay(std::chrono::seconds(1));
+                        for(auto & event: this->events){
+                            if (event.id == this->first_click_down_timer){
+                                event.alarm.set_timeout(
+                                            this->time_base.get_current_time()
+                                            +std::chrono::seconds{1});
+                            }
+                        }
                     }
                     else {
-                        this->first_click_down_timer = timer_events_
-                        .create_timer_executor(this->time_base)
-                        .set_delay(std::chrono::seconds(1))
-                        .on_action(jln::one_shot([this]{
+                        Event dc_event("Close::DC Event", this);
+                        this->first_click_down_timer = dc_event.id;
+                        dc_event.alarm.set_timeout(
+                                            this->time_base.get_current_time()
+                                            +std::chrono::seconds{1});
+                        dc_event.actions.on_timeout = [this](Event&)
+                        {
                             this->dc_state = DCState::Wait;
-                        }));
+                        };
+                        this->events.push_back(std::move(dc_event));
                     }
                 }
             break;
@@ -295,10 +309,16 @@ void LoginMod::refresh(Rect r)
 void LoginMod::cancel_double_click_detection()
 {
     assert(this->rail_enabled);
+    if (this->first_click_down_timer) {
+        for(auto & event: this->events){
+            if (event.id == this->first_click_down_timer){
+                event.garbage = true;
+                event.id = 0;
+            }
+        }
+    }
+    this->first_click_down_timer = 0;
 
-    this->first_click_down_timer.reset();
-
-    this->dc_state = DCState::Wait;
 }
 
 bool LoginMod::is_resizing_hosted_desktop_allowed() const

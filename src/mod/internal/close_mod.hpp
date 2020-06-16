@@ -25,12 +25,12 @@
 #include "configs/config_access.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
-#include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "acl/gd_provider.hpp"
 #include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 
 using CloseModVariables = vcfg::variables<
@@ -139,7 +139,7 @@ private:
 
     DCState dc_state;
 
-    TimerPtr first_click_down_timer;
+    int first_click_down_timer = 0;
 
     const bool rail_enabled;
 
