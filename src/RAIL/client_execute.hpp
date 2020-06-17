@@ -241,10 +241,13 @@ private:
 
     void process_client_system_command_pdu(InStream& chunk);
 
+    void process_client_get_application_id_pdu(InStream& chunk);
+
     void process_client_system_parameters_update_pdu(InStream& chunk);
 
-    void process_client_window_move_pdu(
-        uint32_t total_length, uint32_t flags, InStream& chunk);
+    void process_client_activate_pdu(InStream& chunk);
+
+    void process_client_window_move_pdu(InStream& chunk);
 
     Rect protocol_window_rect;
 
@@ -252,9 +255,4 @@ private:
 
     void on_delete_window();
 };  // class ClientExecute
-
-
-extern void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStream& chunk, std::string window_title, bool verbose);
-
-extern void process_client_activate_pdu(gdi::GraphicApi & drawable_, InStream& chunk, bool verbose);
 

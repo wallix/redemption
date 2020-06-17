@@ -1880,38 +1880,37 @@ void send_activate_window(uint32_t flag, gdi::GraphicApi & drawable_, bool verbo
     drawable_.draw(order);
 }
 
-void process_client_activate_pdu(gdi::GraphicApi & drawable_, InStream& chunk,bool verbose)
+void ClientExecute::process_client_activate_pdu(InStream& chunk)
 {
     ClientActivatePDU capdu;
     capdu.receive(chunk);
-    if (verbose) { capdu.log(LOG_INFO); }
+    if (this->verbose) { capdu.log(LOG_INFO); }
 
     if ((capdu.WindowId() == INTERNAL_MODULE_WINDOW_ID) && (capdu.Enabled() == 0))
     {
-        send_activate_window(RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND, drawable_, verbose);
-        send_activate_window(RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER, drawable_, verbose);
+        send_activate_window(RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ACTIVEWND,
+            this->drawable_, this->verbose);
+        send_activate_window(RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER,
+            this->drawable_, this->verbose);
    }
 }   // process_client_activate_pdu
 
 
-void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStream& chunk, std::string window_title, bool verbose)
+void ClientExecute::process_client_get_application_id_pdu(InStream& chunk)
 {
-    LOG_IF(verbose, LOG_INFO, "process_client_get_application_id_pdu()");
     ClientGetApplicationIDPDU cgaipdu;
-
     cgaipdu.receive(chunk);
 
-    if (verbose) {
-        cgaipdu.log(LOG_INFO);
-    }
+    if (this->verbose) { cgaipdu.log(LOG_INFO); }
 
     {
+        StaticOutStream<1024> out_s;
         RAILPDUHeader header;
         header.emit_begin(out_s, TS_RAIL_ORDER_GET_APPID_RESP);
 
         ServerGetApplicationIDResponsePDU server_get_application_id_response_pdu;
         server_get_application_id_response_pdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
-        server_get_application_id_response_pdu.ApplicationId(window_title.c_str());
+        server_get_application_id_response_pdu.ApplicationId(this->window_title.c_str());
         server_get_application_id_response_pdu.emit(out_s);
 
         header.emit_end();
@@ -1920,17 +1919,15 @@ void process_client_get_application_id_pdu(StaticOutStream<1024> & out_s, InStre
         const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
                                     | CHANNELS::CHANNEL_FLAG_LAST;
 
-        if (verbose) {
-            {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
-            }
-            LOG(LOG_INFO,
-                "ClientExecute::process_client_get_application_id_pdu: "
-                    "Send to client - Server Get Application ID Response PDU");
+        LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_get_application_id_pdu: Send to client - Server Get Application ID Response PDU");
+        if (this->verbose) {
+            const bool send              = true;
+            const bool from_or_to_client = true;
+            ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
             server_get_application_id_response_pdu.log(LOG_INFO);
         }
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
+        this->server_execute_result_sent = true;
     }
 }   // process_client_get_application_id_pdu
 
@@ -2455,18 +2452,12 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
     }   // else if (cspupdu.SystemParam() == SPI_SETDRAGFULLWINDOWS)
 }   // process_client_system_parameters_update_pdu
 
-void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
-    uint32_t flags, InStream& chunk)
+void ClientExecute::process_client_window_move_pdu(InStream& chunk)
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::process_client_window_move_pdu()");
-    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientWindowMovePDU");
-
     ClientWindowMovePDU cwmpdu;
     cwmpdu.receive(chunk);
 
-    if (this->verbose) {
-        cwmpdu.log(LOG_INFO);
-    }
+    if (this->verbose) { cwmpdu.log(LOG_INFO); }
 
     if (INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) {
         this->window_rect.x  = cwmpdu.iLeft() - this->window_offset_x;
@@ -2506,12 +2497,7 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
             order.VisibleOffsetX(adjusted_window_rect.x);
             order.VisibleOffsetY(adjusted_window_rect.y);
 
-            if (this->verbose) {
-                StaticOutStream<1024> out_s;
-                order.emit(out_s);
-                order.log(LOG_INFO);
-                LOG(LOG_INFO, "ClientExecute::process_client_window_move_pdu: Send NewOrExistingWindow to client: size=%zu", out_s.get_offset() - 1);
-            }
+            if (this->verbose) { order.log(LOG_INFO); }
 
             this->drawable_.draw(order);
         }
@@ -2568,21 +2554,16 @@ void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
         }
 
         this->pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
-
         this->update_widget();
-
         this->on_new_or_existing_window(adjusted_window_rect);
     }
 }   // process_client_window_move_pdu
 
 void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, uint32_t flags)
 {
-    if (this->verbose) {
-        LOG(LOG_INFO,
-            "ClientExecute::send_to_mod_rail_channel: "
-                "total_length=%zu flags=0x%08X chunk_data_length=%zu",
-            length, flags, chunk.get_capacity());
-    }
+    LOG_IF(this->verbose, LOG_INFO,
+        "ClientExecute::send_to_mod_rail_channel: total_length=%zu flags=0x%08X chunk_data_length=%zu",
+        length, flags, chunk.get_capacity());
 
     if (this->verbose) {
         const bool send              = false;
@@ -2602,7 +2583,7 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
         case TS_RAIL_ORDER_ACTIVATE:
             LOG_IF(this->verbose, LOG_INFO, "ClientExecute::send_to_mod_rail_channel:Client Activate PDU");
             this->check_is_unit_throw(length, flags, chunk, "ProcessClientActivatePDU");
-            process_client_activate_pdu(this->drawable_, chunk, this->verbose);
+            this->process_client_activate_pdu(chunk);
         break;
 
         case TS_RAIL_ORDER_CLIENTSTATUS:
@@ -2613,9 +2594,7 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
                 ClientInformationPDU cipdu;
                 cipdu.receive(chunk);
 
-                if (this->verbose) {
-                    cipdu.log(LOG_INFO);
-                }
+                if (this->verbose) { cipdu.log(LOG_INFO); }
             }
         break;
 
@@ -2663,25 +2642,18 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
         break;
 
         case TS_RAIL_ORDER_GET_APPID_REQ:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client Get Application ID PDU");
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel:Client Get Application ID PDU");
 
             if (this->channel_){
                 this->check_is_unit_throw(length, flags, chunk, "ApplicationIdPDU");
-                StaticOutStream<1024> out_s;
-                process_client_get_application_id_pdu(out_s, chunk, this->window_title, this->verbose);
-                this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
-                this->server_execute_result_sent = true;
+                this->process_client_get_application_id_pdu(chunk);
             }
         break;
 
         case TS_RAIL_ORDER_HANDSHAKE:
-            if (this->verbose) {
-                LOG(LOG_INFO, "ClientExecute::send_to_mod_rail_channel:Client Handshake PDU");
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel:Client Handshake PDU");
 
             if (this->channel_) {
                 this->check_is_unit_throw(length, flags, chunk, "ProcessClientHandshakePDU");
@@ -2755,24 +2727,18 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
         //break;
 
         case TS_RAIL_ORDER_WINDOWMOVE:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Client Window Move PDU");
-            }
-
-            this->process_client_window_move_pdu(
-                length, flags, chunk);
+            LOG_IF(this->verbose, LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel:Client Window Move PDU");
+            this->check_is_unit_throw(length, flags, chunk, "ProcessClientWindowMovePDU");
+            this->process_client_window_move_pdu(chunk);
         break;
 
         default:
-            if (this->verbose) {
-                LOG(LOG_INFO,
-                    "ClientExecute::send_to_mod_rail_channel: "
-                        "Delivering unprocessed messages %s(%u) to server.",
-                    get_RAIL_orderType_name(this->client_order_type),
-                    static_cast<unsigned>(this->client_order_type));
-            }
+            LOG_IF(this->verbose, LOG_INFO,
+                "ClientExecute::send_to_mod_rail_channel: Delivering unprocessed messages"
+                " %s(%u) to server.",
+                get_RAIL_orderType_name(this->client_order_type),
+                static_cast<unsigned>(this->client_order_type));
         break;
     }   // switch (this->client_order_type)
 }   // send_to_mod_rail_channel
