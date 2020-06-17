@@ -182,11 +182,23 @@ struct WrmPlayer
                 this->wrm_info.receive(this->in_stream);
                 this->_skip_chunk();
                 this->gd.resize_canvas(this->wrm_info.width, this->wrm_info.height);
-                const uint16_t reserved_by_watning_list = this->wrm_info.use_waiting_list;
+                const uint16_t reserved_by_waiting_list = this->wrm_info.use_waiting_list;
                 this->gd.set_bmp_cache_entries({
-                    uint16_t(this->wrm_info.cache_0_size + reserved_by_watning_list),
-                    uint16_t(this->wrm_info.cache_1_size + reserved_by_watning_list),
-                    uint16_t(this->wrm_info.cache_2_size + reserved_by_watning_list)
+                    gdi::GraphicApi::CacheEntry{
+                        checked_int{this->wrm_info.cache_0_entries + reserved_by_waiting_list},
+                        this->wrm_info.cache_0_size,
+                        this->wrm_info.cache_0_persistent
+                    },
+                    gdi::GraphicApi::CacheEntry{
+                        checked_int{this->wrm_info.cache_1_entries + reserved_by_waiting_list},
+                        this->wrm_info.cache_1_size,
+                        this->wrm_info.cache_1_persistent
+                    },
+                    gdi::GraphicApi::CacheEntry{
+                        checked_int{this->wrm_info.cache_2_entries + reserved_by_waiting_list},
+                        this->wrm_info.cache_2_size,
+                        this->wrm_info.cache_2_persistent
+                    },
                 });
                 // TODO this->wrm_info.compression_algorithm
                 break;

@@ -20,7 +20,6 @@ Author(s): Jonathan Poelen
 
 #include "redjs/browser_graphic.hpp"
 
-#include "redjs/image_data_from_bitmap.hpp"
 #include "redjs/image_data_from_pointer.hpp"
 
 #include "red_emscripten/em_asm.hpp"
@@ -141,7 +140,7 @@ namespace
         constexpr char const* draw_mem3blt = "drawMem3Blt";
 
         constexpr char const* set_bmp_cache = "setBmpCacheIndex";
-        constexpr char const* set_bmp_cache_size = "setBmpCacheSize";
+        constexpr char const* set_bmp_cache_entries = "setBmpCacheEntries";
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
@@ -359,13 +358,23 @@ void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::Color
     });
 }
 
-void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries)
+void BrowserGraphic::set_bmp_cache_entries(std::array<CacheEntry, 3> const & cache_entries)
 {
     this->image_data_index[0] = 0;
-    this->image_data_index[1] = nb_entries[0];
-    this->image_data_index[2] = this->image_data_index[1] + nb_entries[1];
-    uint32_t nb_image_datas = this->image_data_index[2] + nb_entries[2];
-    emval_call(this->callbacks, jsnames::set_bmp_cache_size, nb_image_datas);
+    this->image_data_index[1] = cache_entries[0].nb_entries;
+    this->image_data_index[2] = this->image_data_index[1] + cache_entries[1].nb_entries;
+
+    emval_call(this->callbacks, jsnames::set_bmp_cache_entries,
+        cache_entries[0].nb_entries,
+        cache_entries[0].bmp_size,
+        cache_entries[0].is_persistent,
+        cache_entries[1].nb_entries,
+        cache_entries[1].bmp_size,
+        cache_entries[1].is_persistent,
+        cache_entries[2].nb_entries,
+        cache_entries[2].bmp_size,
+        cache_entries[2].is_persistent
+    );
 }
 
 void BrowserGraphic::draw(RDPBmpCache const & cmd)
@@ -374,12 +383,12 @@ void BrowserGraphic::draw(RDPBmpCache const & cmd)
 
     uint32_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
 
-    auto img = image_data_from_bitmap(cmd.bmp);
-
     emval_call(this->callbacks, jsnames::set_bmp_cache,
-        img.data(),
-        img.width(),
-        img.height(),
+        cmd.bmp.data(),
+        cmd.bmp.bpp(),
+        cmd.bmp.cx(),
+        cmd.bmp.cy(),
+        uint32_t(cmd.bmp.line_size()),
         image_idx
     );
 }
@@ -642,12 +651,12 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPBitmapData");
 
-    redjs::ImageData image = image_data_from_bitmap(bmp);
-
     emval_call(this->callbacks, jsnames::draw_image,
-        image.data(),
-        image.width(),
-        image.height(),
+        bmp.data(),
+        bmp.bpp(),
+        bmp.cx(),
+        bmp.cy(),
+        uint32_t(bmp.line_size()),
         0xCC,
         cmd.dest_left,
         cmd.dest_top,

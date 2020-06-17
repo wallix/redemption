@@ -9,11 +9,17 @@ const redemptionLoadModule = function(Module, window)
         };
     };
 
+    const wCb_em2js_Bitmap = function(cb, thisp) {
+        return function(idata, bitsPerPixel, w, h, lineSize, ...args) {
+            const data = HEAPU8.subarray(idata, idata + lineSize * h);
+            return cb.call(thisp, data, bitsPerPixel, w, h, lineSize, ...args);
+        };
+    };
+
     const wCb_em2js_ImageData = function(cb, thisp) {
         return function(idata, w, h, ...args) {
-            const data = HEAPU8.subarray(idata, idata + w * h * 4);
-            // TODO Uint8ClampedArray(data) -> data ?
-            const image = new ImageData(new Uint8ClampedArray(data), w, h);
+            const array = new Uint8ClampedArray(HEAPU8.buffer, idata, w * h * 4);
+            const image = new ImageData(array, w, h);
             return cb.call(thisp, image, ...args);
         };
     };
@@ -42,12 +48,12 @@ const redemptionLoadModule = function(Module, window)
 
     // { funcname: [wrapCreator, defaultFunction], ... }
     const wrappersGd = {
-        setBmpCacheSize: identity,
-        setBmpCacheIndex: wCb_em2js_ImageData,
+        setBmpCacheEntries: identity,
+        setBmpCacheIndex: identity,
         drawMemBlt: identity,
         drawMem3Blt: wCb_em2js_Brush,
 
-        drawImage: wCb_em2js_ImageData,
+        drawImage: identity,
         drawRect: identity,
         drawScrBlt: identity,
         drawLineTo: identity,

@@ -124,9 +124,10 @@ project redjs
     # DISABLE_EXCEPTION_CATCHING = 1 - disable exception catching at all
     # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
     # <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
-    <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=2"
-    <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
-    <linkflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
+    <variant>debug:<cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
+    <variant>release:<cxxflags>"-s DISABLE_EXCEPTION_CATCHING=2"
+    <variant>release:<cxxflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
+    <variant>release:<linkflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
     # <linkflags>"-s SIMD=1"
     # <cxxflags>"-s FS_LOG=1"
 
@@ -210,6 +211,7 @@ alias unit_test.bc :
 constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
     <cxxflags>--bind
+    <cxxflags>"-s EXIT_RUNTIME=1"
 ;
 
 objjs log_test.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/log_as_logtest.cpp

@@ -19,6 +19,7 @@ Author(s): Jonathan Poelen
 */
 
 #include "redjs/image_data_from_bitmap.hpp"
+#include "red_emscripten/bind.hpp"
 
 #include "utils/bitmap.hpp"
 #include "utils/colors.hpp"
@@ -27,24 +28,24 @@ Author(s): Jonathan Poelen
 namespace redjs
 {
 
-ImageData image_data_from_bitmap(Bitmap const& bmp)
+static void image_data_from_bitmap_impl(
+    uint8_t* dest,
+    uint8_t const* bmp_data, uint16_t cx, uint16_t cy,
+    std::size_t line_size, BitsPerPixel bits_per_pixel,
+    BGRPalette const* palette)
 {
-    uint8_t* pdata = new uint8_t[bmp.cx() * bmp.cy() * 4];
-    ImageData img{bmp.cx(), bmp.cy(), std::unique_ptr<uint8_t[]>(pdata)};
-
-    auto init = [pdata, &img, &bmp](auto buf_to_color, auto dec) -> void
+    auto init = [&](auto buf_to_color, auto dec) -> void
     {
-        uint8_t * dest = pdata;
-        uint8_t const src_nbbytes = nb_bytes_per_pixel(dec.bpp);
-        uint8_t const* src = bmp.data() + bmp.line_size() * (bmp.cy() - 1);
-        size_t const step = bmp.line_size() + bmp.cx() * src_nbbytes;
-        uint8_t const* end = dest + img.size();
+        uint8_t const src_nbbytes = nb_bytes_per_pixel(bits_per_pixel);
+        uint8_t const* src = bmp_data + line_size * (cy - 1);
+        size_t const step = line_size + cx * src_nbbytes;
+        uint8_t const* end = dest + cx * cy * 4;
 
         while (dest < end) {
-            uint8_t const* endx = dest + img.width() * 4;
+            uint8_t const* endx = dest + cx * 4;
             while (dest < endx) {
                 BGRColor pixel = dec(buf_to_color(src));
-                if (dec.bpp == BitsPerPixel{24}) {
+                if (bits_per_pixel == BitsPerPixel{24}) {
                     pixel = BGRasRGBColor(pixel);
                 }
                 *dest++ = pixel.red();
@@ -61,15 +62,41 @@ ImageData image_data_from_bitmap(Bitmap const& bmp)
     auto buf2col_2B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8)); };
     auto buf2col_3B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8) | (p[2] << 16)); };
     using namespace shortcut_decode_with_palette;
-    switch (bmp.bpp()) {
-        case BitsPerPixel::BitsPP8:  init(buf2col_1B, dec8{bmp.palette()}); break;
-        case BitsPerPixel::BitsPP1:  init(buf2col_2B, dec15{}); break;
+    switch (bits_per_pixel) {
+        case BitsPerPixel::BitsPP8:  init(buf2col_1B, dec8{*palette}); break;
+        case BitsPerPixel::BitsPP15: init(buf2col_2B, dec15{}); break;
         case BitsPerPixel::BitsPP16: init(buf2col_2B, dec16{}); break;
         case BitsPerPixel::BitsPP24: init(buf2col_3B, dec24{}); break;
         default: assert(!"unknown bpp");
     }
+}
+
+ImageData image_data_from_bitmap(Bitmap const& bmp)
+{
+    uint8_t* pdata = new uint8_t[bmp.cx() * bmp.cy() * 4]; /* NOLINT */
+    ImageData img{bmp.cx(), bmp.cy(), std::unique_ptr<uint8_t[]>(pdata)};
+
+    image_data_from_bitmap_impl(
+        pdata,
+        bmp.data(), bmp.cx(), bmp.cy(),
+        bmp.line_size(), bmp.bpp(),
+        &bmp.palette());
 
     return img;
 }
 
+}
+
+EMSCRIPTEN_BINDINGS(image_data_func)
+{
+    redjs::function("loadRgbaImageFromIndex", +[](
+        intptr_t idest, intptr_t idata, uint8_t bits_per_pixel,
+        uint16_t w, uint16_t h, uint32_t line_size
+    ) {
+        auto* dest = reinterpret_cast<uint8_t*>(idest);
+        auto* data = reinterpret_cast<uint8_t const*>(idata);
+        redjs::image_data_from_bitmap_impl(
+            dest, data, w, h, line_size, BitsPerPixel(bits_per_pixel),
+            &BGRPalette::classic_332());
+    });
 }

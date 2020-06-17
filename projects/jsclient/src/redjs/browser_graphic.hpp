@@ -54,7 +54,7 @@ public:
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
     void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    void set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries) override;
+    void set_bmp_cache_entries(std::array<CacheEntry, 3> const & cache_entries) override;
     void draw(RDPBmpCache const & cmd) override;
     void draw(RDPMemBlt const & cmd, Rect clip) override;
     void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;

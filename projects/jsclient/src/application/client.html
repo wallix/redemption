@@ -40,7 +40,6 @@
 }
 </style>
 </div>
-<canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
 <section>
     <form id="login" method="get" action="#">
         <label for="ws">sck: </label><input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/>
@@ -102,9 +101,7 @@ const HEAPU16 = Module.HEAPU16;
 
 const ecanvasFocus = document.getElementById('canvasFocus');
 const ecanvas = document.getElementById('canvas');
-const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
-const canvas2 = ecanvas2.getContext('2d');
 const login = document.getElementById('login');
 const sendCbUtf8 = document.getElementById('sendCbUtf8');
 const sendCbFile = document.getElementById('sendCbFile');
@@ -297,7 +294,7 @@ function run()
             socket,
             ecanvas.width,
             ecanvas.height,
-            new RDPGraphics(ecanvas),
+            new RDPGraphics(ecanvas, Module),
             user_input.value,
             pass_input.value,
             /*0x04000000*/);
