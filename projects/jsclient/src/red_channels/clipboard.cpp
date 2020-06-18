@@ -114,6 +114,8 @@ ClipboardChannel::ClipboardChannel(Callback& cb, emscripten::val&& callbacks, bo
 : cb(cb)
 , callbacks(std::move(callbacks))
 , verbose(verbose)
+, channel_receiver(make_channel_receiver<&ClipboardChannel::receive>(
+    channel_names::cliprdr, this))
 {}
 
 ClipboardChannel::~ClipboardChannel()
@@ -171,8 +173,10 @@ void ClipboardChannel::send_request_format(uint32_t format_id, CustomFormat cust
     this->send_data(out_stream.get_produced_bytes());
 }
 
-void ClipboardChannel::receive(bytes_view data, uint32_t channel_flags)
+void ClipboardChannel::receive(bytes_view data, uint32_t total_data_len, uint32_t channel_flags)
 {
+    (void)total_data_len;
+
     switch (this->response_state)
     {
     case ResponseState::Data:

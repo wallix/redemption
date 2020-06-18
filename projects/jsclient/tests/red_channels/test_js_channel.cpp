@@ -33,7 +33,7 @@ using redjs::JsChannel;
 MAKE_BINDING_CALLBACKS(
     JsChannel,
     BasicChannelData,
-    ((d, receiveData, uint8_t, int flags))
+    ((d, receiveData, uint8_t, uint32_t total_len, uint32_t flags))
     ((c, free))
 )
 
@@ -47,22 +47,21 @@ RED_AUTO_TEST_CASE(TestJsChannel)
 
     auto p = JsChannel_ctx(name_id_ref);
 
-#define RECEIVE_DATAS(...) p->channel_ptr->receive(__VA_ARGS__); CTX_CHECK_DATAS(p)
 #define CALL_CB(...) p->channel_ptr->__VA_ARGS__; CTX_CHECK_DATAS(p)
 
     using namespace test_channel_data::JsChannel_structs;
 
-    RECEIVE_DATAS("abc"_av, chan_flags1)
+    CALL_CB(receive("abc"_av, 3, chan_flags1))
     {
-        CHECK_NEXT_DATA(receiveData("abc"_av, chan_flags1));
+        CHECK_NEXT_DATA(receiveData("abc"_av, 3, chan_flags1));
     };
 
-    RECEIVE_DATAS("def"_av, chan_flags2)
+    CALL_CB(receive("def"_av, 3, chan_flags2))
     {
-        CHECK_NEXT_DATA(receiveData("def"_av, chan_flags2));
+        CHECK_NEXT_DATA(receiveData("def"_av, 3, chan_flags2));
     };
 
-    CALL_CB(send_data("xyz"_av, 3, chan_flags2))
+    CALL_CB(send("xyz"_av, 3, chan_flags2))
     {
         CHECK_NEXT_DATA(BasicChannelData(name_id_ref, "xyz"_av, 3, chan_flags2));
     };

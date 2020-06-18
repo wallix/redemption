@@ -89,7 +89,9 @@ public:
     void begin_update() override;
     void end_update() override;
 
-    bool resize_canvas(uint16_t width, uint16_t height);
+    bool resize_canvas(ScreenInfo screen);
+
+    void update_pointer_position(uint16_t x, uint16_t y);
 
 private:
     Rect intersect(Rect const& a, Rect const& b);

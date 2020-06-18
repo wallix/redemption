@@ -31,9 +31,7 @@ namespace redjs
 BrowserFront::BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose)
 : gd(std::move(callbacks), width, height)
 , verbose(verbose)
-{
-    this->cl.push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
-}
+{}
 
 BrowserFront::~BrowserFront() = default;
 
@@ -42,9 +40,9 @@ PrimaryDrawingOrdersSupport BrowserFront::get_supported_orders() const
     return this->gd.get_supported_orders();
 }
 
-void BrowserFront::add_channel_receiver(ChannelReceiver&& channel_receiver)
+void BrowserFront::add_channel_receiver(ChannelReceiver channel_receiver)
 {
-    this->cl.push_back(CHANNELS::ChannelDef(channel_receiver.name(), 0, 0));
+    this->cl.push_back(CHANNELS::ChannelDef(channel_receiver.channel_name, 0, 0));
     this->channel_receivers.emplace_back(std::move(channel_receiver));
 }
 
@@ -67,36 +65,38 @@ bool BrowserFront::is_capture_in_progress() const
 BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 {
     if (bool(this->verbose & RDPVerbose::graphics)) {
-        LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d",
+        LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d)",
         screen_server.width, screen_server.height, screen_server.bpp);
     }
 
-    return this->gd.resize_canvas(screen_server.width, screen_server.height)
+    return this->gd.resize_canvas(screen_server)
         ? ResizeResult::instant_done
         : ResizeResult::fail;
 }
 
 void BrowserFront::send_to_channel(
-    const CHANNELS::ChannelDef & channel_def, bytes_view chunk_data,
-        std::size_t /*total_data_len*/, int flags)
+    CHANNELS::ChannelDef const& channel_def, bytes_view chunk_data,
+    std::size_t total_data_len, int channel_flags)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
         LOG_INFO, "BrowserFront::send_to_channel");
 
     for (ChannelReceiver& receiver : this->channel_receivers)
     {
-        if (receiver.name() == channel_def.name)
+        if (receiver.channel_name == channel_def.name)
         {
-            receiver(chunk_data, flags);
+            receiver(chunk_data, total_data_len, channel_flags);
             break;
         }
     }
 }
 
-void BrowserFront::update_pointer_position(uint16_t /*x*/, uint16_t /*y*/)
+void BrowserFront::update_pointer_position(uint16_t x, uint16_t y)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
         LOG_INFO, "BrowserFront::update_pointer_position");
+
+    this->gd.update_pointer_position(x, y);
 }
 
 } // namespace redjs

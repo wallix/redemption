@@ -49,9 +49,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 
-#include "utils/log.hpp"
+// include "utils/log.hpp"
 
-#include <numeric>
 #include <cinttypes>
 
 
@@ -147,6 +146,7 @@ namespace
         constexpr char const* set_pointer = "setPointer";
 
         constexpr char const* resize_canvas = "resizeCanvas";
+        constexpr char const* update_pointer_position = "updatePointerPosition";
     }
 }
 
@@ -206,13 +206,7 @@ PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
     return supported;
 }
 
-BrowserGraphic::~BrowserGraphic()
-{
-    auto free_mem = this->callbacks["free"];
-    if (!!free_mem) {
-        emval_call(this->callbacks, "free");
-    }
-}
+BrowserGraphic::~BrowserGraphic() = default;
 
 Rect BrowserGraphic::intersect(Rect const& a, Rect const& b)
 {
@@ -639,9 +633,7 @@ void BrowserGraphic::draw(const RDP::FrameMarker & cmd)
 {
     // LOG(LOG_INFO, "BrowserGraphic::FrameMarker");
 
-    emval_call(this->callbacks, jsnames::draw_frame_marker,
-        bool(cmd.action)
-    );
+    emval_call(this->callbacks, jsnames::draw_frame_marker, bool(cmd.action));
 }
 
 void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
@@ -718,22 +710,33 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
     }
 }
 
-void BrowserGraphic::begin_update() {}
-
-void BrowserGraphic::end_update() {}
-
-
-bool BrowserGraphic::resize_canvas(uint16_t width, uint16_t height)
+void BrowserGraphic::begin_update()
 {
-    this->width = width;
-    this->height = height;
+    // TODO used draw_frame_marker ?
+}
+
+void BrowserGraphic::end_update()
+{
+    // TODO used draw_frame_marker ?
+}
+
+bool BrowserGraphic::resize_canvas(ScreenInfo screen)
+{
+    this->width = screen.width;
+    this->height = screen.height;
 
     emval_call(this->callbacks, jsnames::resize_canvas,
-        width,
-        height
+        screen.width,
+        screen.height,
+        screen.bpp
     );
 
     return true;
+}
+
+void BrowserGraphic::update_pointer_position(uint16_t x, uint16_t y)
+{
+    emval_call(this->callbacks, jsnames::update_pointer_position, x, y);
 }
 
 } // namespace redjs

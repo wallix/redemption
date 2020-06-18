@@ -181,7 +181,9 @@ struct WrmPlayer
             {
                 this->wrm_info.receive(this->in_stream);
                 this->_skip_chunk();
-                this->gd.resize_canvas(this->wrm_info.width, this->wrm_info.height);
+                this->gd.resize_canvas({
+                  this->wrm_info.width, this->wrm_info.height, this->wrm_info.bpp
+                });
                 const uint16_t reserved_by_waiting_list = this->wrm_info.use_waiting_list;
                 this->gd.set_bmp_cache_entries({
                     gdi::GraphicApi::CacheEntry{

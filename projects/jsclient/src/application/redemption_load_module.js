@@ -82,6 +82,7 @@ const redemptionLoadModule = function(Module, window)
         cachedPointer: identity,
 
         resizeCanvas: identity,
+        updatePointerPosition: identity,
     };
 
     const wrappersFront = {
@@ -103,6 +104,7 @@ const redemptionLoadModule = function(Module, window)
             wrapEvents(rdpEvents, wrappersGd, events, undefined);
             wrapEvents(rdpEvents, wrappersFront, events, undefined);
             rdpEvents.drawFrameMarker = rdpEvents.drawFrameMarker || noop;
+            rdpEvents.updatePointerPosition = rdpEvents.updatePointerPosition || noop;
             rdpEvents.random = rdpEvents.random || function(idata, len) {
                 const data = HEAPU8.subarray(idata, idata + len);
                 window.crypto.getRandomValues(data);

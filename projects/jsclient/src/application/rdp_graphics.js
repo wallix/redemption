@@ -35,7 +35,7 @@ class RDPGraphics
         console.error(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
     }
 
-    resizeCanvas(w, h) {
+    resizeCanvas(w, h, /*bpp*/) {
         if (this.ecanvas.width !== w || this.ecanvas.height !== h) {
             // restore canvas after resize
             const imgData = this.canvas.getImageData(
