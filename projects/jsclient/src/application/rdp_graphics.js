@@ -31,6 +31,10 @@ class RDPGraphics
         this.module._free(this.imgBufferIndex);
     }
 
+    error(msg) {
+        console.error(msg);
+    }
+
     resizeCanvas(w, h) {
         if (this.ecanvas.width !== w || this.ecanvas.height !== h) {
             // restore canvas after resize
@@ -49,7 +53,6 @@ class RDPGraphics
         cache1_nb_entries, cache1_bmp_size, cache1_is_persistent,
         cache2_nb_entries, cache2_bmp_size, cache2_is_persistent,
     ) {
-        // TODO parameter for ImageDataPool
         this.cacheImages.length = cache0_nb_entries + cache1_nb_entries + cache2_nb_entries;
     }
 
@@ -63,50 +66,103 @@ class RDPGraphics
         this.cacheImages[imageIdx] = new ImageData(new Uint8ClampedArray(array), w, h);
     }
 
-    drawMemBlt(imageIdx, rop, sx, sy, dx, dy, dWidth, dHeight) {
-        // assume rop == 0xCC
-        const img = this.cacheImages[imageIdx];
-        const mincx = Math.min(img.width - sx, this.width - dx, dWidth);
-        const mincy = Math.min(img.height - sy, this.height - dy, dHeight);
+    _transformCopyImage(img, sx, sy, dx, dy, dw, dh, f) {
+        const destU32a = new Uint32Array(w * h);
+        const srcU32a = new Uint32Array(img.data.buffer);
 
-        if (mincx <= 0 || mincy <= 0) {
+        const src = img.data;
+        const imgW = img.width;
+        const srcInc = imgW - dw;
+        let isrc = sy * imgW + sx;
+
+        for (let idst = 0; idst < len; idx += imgW) {
+            data.set(src.subarray(idx, idx + w4), y);
+            for (let ie = idst + dw; idst < ie; ++idst, ++isrc) {
+                destU32a[idst] = f(srcU32a[isrc] & 0xffffff, destU32a[idst] & 0xffffff)
+                               | 0xff000000;
+            }
+            isrc += srcInc;
+        }
+
+        const array = new Uint8ClampedArray(destU32a.data.buffer);
+        const newImg = new ImageData(array, dw, dh);
+        this.canvas.putImageData(newImg, x, y);
+    }
+
+    drawMemBlt(imageIdx, rop, sx, sy, dx, dy, dw, dh) {
+        const img = this.cacheImages[imageIdx];
+        dw = Math.min(img.width - sx, this.width - dx, dw);
+        dh = Math.min(img.height - sy, this.height - dy, dh);
+
+        if (dw <= 0 || dh <= 0) {
             return;
         }
 
-        // console.log(sx, sy, mincx, mincy, dx, dy, img.width, img.height);
-        this.canvas.putImageData(img, dx, dy, sx, sy, mincx, mincy);
-        // this.canvas.drawImage(img, sx, sy, mincx, mincy, dx, dy, mincx, mincy);
+        switch (rop) {
+            case 0x00:
+                this.canvas.fillStyle = "#000";
+                this.canvas.fillRect(dx, dy, dw, dh);
+                break;
 
-        // switch (cmd.rop) {
-        // case 0xCC:  // dest
-        // case 0x55:  // dest = NOT source
-        // case 0x22:  // dest = dest AND (NOT source)
-        // case 0x66:  // dest = source XOR dest (SRCINVERT)
-        // case 0x88:  // dest = source AND dest (SRCAND)
-        // case 0xBB:  // dest = (NOT source) OR dest (MERGEPAINT)
-        // case 0xEE:  // dest = source OR dest (SRCPAINT)
-        //     break;
-        // default:
-        //     // should not happen
-        //     //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
-        //     break;
-        // }
+            case 0x55:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src) => src ^ 0xffffff);
+                break;
+
+            case 0xCC:
+                this.canvas.putImageData(img, dx, dy, sx, sy, dw, dh);
+                break;
+
+            case 0x22:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => ~src & dst);
+                break;
+
+            case 0x66:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src ^ dst);
+                break;
+
+            case 0x88:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src & dst);
+                break;
+
+            case 0xBB:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => ~src | dst);
+                break;
+
+            case 0xEE:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src | dst);
+                break;
+
+            case 0xff:
+                this.canvas.fillStyle = "#fff";
+                this.canvas.fillRect(dx, dy, dw, dh);
+                break;
+
+            default:
+                this.error('unsupported drawMemBlt rop', rop);
+                break;
+        }
     }
 
-    drawImage(u8array, bitsPerPixel, w, h, lineSize, rop, ...args) {
-        const bufferSize = w*h*4;
-        if (bufferSize > this.imgBufferSize) {
-            this.module._free(this.imgBufferIndex);
-            this.imgBufferSize = bufferSize;
-            this.imgBufferIndex = this.module._malloc(bufferSize);
+    drawImage(byteOffset, bitsPerPixel, w, h, lineSize, ...args) {
+        let destOffset;
+        if (bitsPerPixel != 32) {
+            const bufferSize = w*h*4;
+            if (bufferSize > this.imgBufferSize) {
+                this.module._free(this.imgBufferIndex);
+                this.imgBufferSize = bufferSize;
+                this.imgBufferIndex = this.module._malloc(bufferSize);
+            }
+
+            destOffset = this.imgBufferIndex;
+            this.module.loadRgbaImageFromIndex(destOffset, byteOffset,
+                                               bitsPerPixel, w, h, lineSize);
+        }
+        else {
+            destOffset = byteOffset;
         }
 
-        this.module.loadRgbaImageFromIndex(this.imgBufferIndex,
-                                           byteOffset, bitsPerPixel, w, h, lineSize);
         // buffer is referenced by Uint8ClampedArray
-        const array = new Uint8ClampedArray(this.module.buffer, this.imgBufferIndex, w*h*4);
-
-        // assume rop == 0xCC
+        const array = new Uint8ClampedArray(this.module.buffer, destOffset, w*h*4);
         this.canvas.putImageData(new ImageData(array, w, h), ...args);
     }
 
@@ -203,7 +259,7 @@ class RDPGraphics
         const u32a = new Uint32Array(imgData.data.buffer);
         const len = imgData.width * imgData.height;
         for (let i = 0; i < len; ++i) {
-            u32a[i] = f(u32a[i] & 0xff000000) | 0xff000000;
+            u32a[i] = f(u32a[i] & 0xffffff) | 0xff000000;
         }
         this.canvas.putImageData(imgData, x, y);
     }
@@ -218,7 +274,7 @@ class RDPGraphics
             const i = y * w;
             for (let x = 0; x < w; ++x) {
                 const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
-                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xff000000)
+                u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xffffff)
                           | 0xff000000;
             }
         }
@@ -269,7 +325,7 @@ class RDPGraphics
                 this.canvas.fillStyle = "#fff";
                 this.canvas.fillRect(x,y,w,h);
                 break;
-            default: console.log('unsupported PatBlt rop', rop);
+            default: this.error('unsupported PatBlt rop', rop);
         }
     }
 

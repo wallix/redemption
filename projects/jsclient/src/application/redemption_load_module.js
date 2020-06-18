@@ -64,7 +64,8 @@ const redemptionLoadModule = function(Module, window)
             return function(xStart, yStart, numDeltaEntries, deltaEntries,
                             clipX, clipY, clipW, clipH, brushData, ...args
             ) {
-                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+                const deltas = HEAP16.subarray(deltaEntries,
+                                               deltaEntries + numDeltaEntries * 2);
                 return cb.call(thisp, xStart, yStart, deltas,
                                clipX, clipY, clipW, clipH,
                                HEAPU8.subarray(brushData, brushData + 8),
@@ -97,7 +98,7 @@ const redemptionLoadModule = function(Module, window)
 
 
     class RDPClient {
-        constructor(socket, width, height, events, username, password, disabled_orders, verbosity) {
+        constructor(socket, width, height, events, username, password, disabledOrders, verbosity) {
             const rdpEvents = {};
             wrapEvents(rdpEvents, wrappersGd, events, undefined);
             wrapEvents(rdpEvents, wrappersFront, events, undefined);
@@ -112,7 +113,7 @@ const redemptionLoadModule = function(Module, window)
             this.native = new Module.RdpClient(
                 rdpEvents, width, height,
                 username || "", password || "",
-                disabled_orders || 0,
+                disabledOrders || 0,
                 verbosity & 0xffffffff,
                 (verbosity > 0xffffffff ? verbosity - 0xffffffff : 0)
             );

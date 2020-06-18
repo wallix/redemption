@@ -206,7 +206,13 @@ PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
     return supported;
 }
 
-BrowserGraphic::~BrowserGraphic() = default;
+BrowserGraphic::~BrowserGraphic()
+{
+    auto free_mem = this->callbacks["free"];
+    if (!!free_mem) {
+        emval_call(this->callbacks, "free");
+    }
+}
 
 Rect BrowserGraphic::intersect(Rect const& a, Rect const& b)
 {
@@ -519,9 +525,10 @@ void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx co
 
     emval_call(this->callbacks, jsnames::draw_image,
         img_data.get(),
+        BitsPerPixel::BitsPP32,
         clipped_glyph_fragment_rect.width(),
         clipped_glyph_fragment_rect.height(),
-        0xCC,
+        clipped_glyph_fragment_rect.width(),
         clipped_glyph_fragment_rect.x,
         clipped_glyph_fragment_rect.y
     );
@@ -657,7 +664,6 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
         bmp.cx(),
         bmp.cy(),
         uint32_t(bmp.line_size()),
-        0xCC,
         cmd.dest_left,
         cmd.dest_top,
         0,
