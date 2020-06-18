@@ -306,46 +306,42 @@ class RDPGraphics
         this.canvas.putImageData(imgData, orgX, orgY);
     }
 
-    _invert(x, y, w, h) {
-        this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff);
-    }
-
-    drawPatBlt(brushData, orgX, orgY, style, x, y, w, h, rop, color/*backColor*/, foreColor) {
+    drawPatBlt(brushData, orgX, orgY, style, x, y, w, h, rop, backColor, foreColor) {
         switch (rop) {
             case 0x00:
                 this.canvas.fillStyle = "#000";
                 this.canvas.fillRect(x,y,w,h);
                 break;
-            case 0x05: this._transformPixels(x,y,w,h, (src) => ~(color | src)); break;
+            case 0x05: this._transformPixels(x,y,w,h, (src) => ~(backColor | src)); break;
             case 0x0f: this._transformPixels(x,y,w,h, (src) => ~src); break;
-            case 0x50: this._transformPixels(x,y,w,h, (src) => src & ~color); break;
-            case 0x55: this._invert(x,y,w,h); break;
+            case 0x50: this._transformPixels(x,y,w,h, (src) => src & ~backColor); break;
+            case 0x55: this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff); break;
             case 0x5a:
                 if (style === 0x03) {
-                    this._transformPixelsBrush(x,y,w,h,color,foreColor,brushData,
+                    this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData,
                                                (src,c) => src ^ c);
                 }
                 else {
-                    this._transformPixels(x,y,w,h, (src) => color ^ src);
+                    this._transformPixels(x,y,w,h, (src) => backColor ^ src);
                 }
                 break;
-            case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(color & src)); break;
-            case 0xa0: this._transformPixels(x,y,w,h, (src) => color & src); break;
-            case 0xa5: this._transformPixels(x,y,w,h, (src) => ~(color ^ src)); break;
+            case 0x5f: this._transformPixels(x,y,w,h, (src) => ~(backColor & src)); break;
+            case 0xa0: this._transformPixels(x,y,w,h, (src) => backColor & src); break;
+            case 0xa5: this._transformPixels(x,y,w,h, (src) => ~(backColor ^ src)); break;
             case 0xaa: break;
-            case 0xaf: this._transformPixels(x,y,w,h, (src) => color | ~src); break;
+            case 0xaf: this._transformPixels(x,y,w,h, (src) => backColor | ~src); break;
             case 0xf0:
                 if (style === 0x03) {
-                    this._transformPixelsBrush(x,y,w,h,color,foreColor,brushData,
+                    this._transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData,
                                                (src,c) => src);
                 }
                 else {
-                    this.canvas.fillStyle = rgbToCss(color);
+                    this.canvas.fillStyle = rgbToCss(backColor);
                     this.canvas.fillRect(x,y,w,h);
                 }
                 break;
-            case 0xfa: this._transformPixels(x,y,w,h, (src) => src | color); break;
-            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~color); break;
+            case 0xfa: this._transformPixels(x,y,w,h, (src) => src | backColor); break;
+            case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~backColor); break;
             case 0xff:
                 this.canvas.fillStyle = "#fff";
                 this.canvas.fillRect(x,y,w,h);
@@ -363,7 +359,7 @@ class RDPGraphics
             this.canvas.fillStyle = "#000";
             this.canvas.fillRect(x,y,w,h);
             break;
-        case 0x55: this._invert(x,y,w,h); break;
+        case 0x55: this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff); break;
         // case 0xAA: break;
         case 0xff:
             this.canvas.fillStyle = "#fff";
