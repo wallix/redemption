@@ -349,10 +349,10 @@ void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::Color
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_pat_blt,
+            get_brush_data(cmd.brush).data(),
             cmd.brush.org_x,
             cmd.brush.org_y,
             cmd.brush.style,
-            get_brush_data(cmd.brush).data(),
             trect.x,
             trect.y,
             trect.cx,
@@ -428,10 +428,10 @@ void BrowserGraphic::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color
     MemBltPoints ps(cmd.rect.intersect(this->width, this->height), cmd.srcx, cmd.srcy, clip);
 
     emval_call(this->callbacks, jsnames::draw_mem3blt,
+        get_brush_data(cmd.brush).data(),
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
-        get_brush_data(cmd.brush).data(),
         image_idx,
         cmd.rop,
         ps.srcx,
@@ -565,10 +565,10 @@ void BrowserGraphic::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx col
         clip.y,
         clip.cx,
         clip.cy,
+        get_brush_data(cmd.brush).data(),
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
-        get_brush_data(cmd.brush).data(),
         color_decode(cmd.backColor, color_ctx),
         color_decode(cmd.foreColor, color_ctx),
         cmd.fillMode

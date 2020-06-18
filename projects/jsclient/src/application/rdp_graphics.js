@@ -31,8 +31,8 @@ class RDPGraphics
         this.module._free(this.imgBufferIndex);
     }
 
-    error(msg) {
-        console.error(msg);
+    unsupportedRop(cmd, rop) {
+        console.error(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
     }
 
     resizeCanvas(w, h) {
@@ -138,7 +138,32 @@ class RDPGraphics
                 break;
 
             default:
-                this.error('unsupported drawMemBlt rop', rop);
+                this.unsupportedRop('MemBlt', rop);
+                break;
+        }
+    }
+
+    drawMem3Blt(brushData, orgX, orgY, style,
+                imageIdx, rop, sx, sy, dx, dy, dw, dh, backColor, foreColor
+    ) {
+        const img = this.cacheImages[imageIdx];
+        dw = Math.min(img.width - sx, this.width - dx, dw);
+        dh = Math.min(img.height - sy, this.height - dy, dh);
+
+        if (dw <= 0 || dh <= 0) {
+            return;
+        }
+
+        foreColor &= 0xffffff;
+
+        switch (rop) {
+            case 0xB8:
+                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh,
+                                         (src, dst) => ((dst ^ foreColor) & src) ^ foreColor);
+                break;
+
+            default:
+                this.unsupportedRop('Mem3Blt', rop);
                 break;
         }
     }
@@ -298,7 +323,7 @@ class RDPGraphics
             case 0x5a:
                 if (style === 0x03) {
                     this._transformPixelsBrush(x,y,w,h,color,foreColor,brushData,
-                                                (src,c) => src ^ c);
+                                               (src,c) => src ^ c);
                 }
                 else {
                     this._transformPixels(x,y,w,h, (src) => color ^ src);
@@ -312,7 +337,7 @@ class RDPGraphics
             case 0xf0:
                 if (style === 0x03) {
                     this._transformPixelsBrush(x,y,w,h,color,foreColor,brushData,
-                                                (src,c) => src);
+                                               (src,c) => src);
                 }
                 else {
                     this.canvas.fillStyle = rgbToCss(color);
@@ -325,7 +350,10 @@ class RDPGraphics
                 this.canvas.fillStyle = "#fff";
                 this.canvas.fillRect(x,y,w,h);
                 break;
-            default: this.error('unsupported PatBlt rop', rop);
+
+            default:
+                this.unsupportedRop('PatBlt', rop);
+                break;
         }
     }
 
@@ -340,6 +368,10 @@ class RDPGraphics
         case 0xff:
             this.canvas.fillStyle = "#fff";
             this.canvas.fillRect(x,y,w,h);
+            break;
+
+        default:
+            this.unsupportedRop('DestBlt', rop);
             break;
         }
     }
