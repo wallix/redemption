@@ -65,6 +65,7 @@ ClientExecute::ClientExecute(
 , time_base(time_base)
 , events(events)
 {
+    this->mouse_context.verbose = verbose;
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::ClientExecute()");
 }
 
@@ -100,10 +101,10 @@ Rect ClientExecute::adjust_rect(Rect rect)
         this->mouse_context.window_rect.cx = rect.cx * 80 / 100;
         this->mouse_context.window_rect.cy = rect.cy * 80 / 100;
 
-        this->window_offset_x = (-rect.x);
-        this->window_offset_y = (-rect.y);
+        this->mouse_context.window_offset_x = (-rect.x);
+        this->mouse_context.window_offset_y = (-rect.y);
 
-        this->update_rects();
+        this->mouse_context.update_rects(this->allow_resize_hosted_desktop_);
     }
 
     Rect result_rect = this->mouse_context.window_rect.shrink(1);
@@ -121,7 +122,7 @@ Rect ClientExecute::get_current_work_area_rect() const
 
     if (!this->mouse_context.window_rect.isempty()) {
         const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(
-            this->window_offset_x, this->window_offset_y);
+            this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
         size_t current_surface_size = 0;
         Rect current_work_area = this->work_areas[0];
@@ -136,29 +137,17 @@ Rect ClientExecute::get_current_work_area_rect() const
             }
         }
 
-        return current_work_area.offset(-this->window_offset_x, -this->window_offset_y);
+        return current_work_area.offset(-this->mouse_context.window_offset_x, -this->mouse_context.window_offset_y);
     }
 
-    return this->work_areas[0].offset(-this->window_offset_x, -this->window_offset_y);
-}
-
-Rect ClientExecute::get_window_rect() const
-{
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_rect() -> %s", this->mouse_context.window_rect);
-    return this->mouse_context.window_rect;
-}
-
-Point ClientExecute::get_window_offset() const
-{
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset() -> (%d,%d)", this->window_offset_x, this->window_offset_y);
-    return Point(this->window_offset_x, this->window_offset_y);
+    return this->work_areas[0].offset(-this->mouse_context.window_offset_x, -this->mouse_context.window_offset_y);
 }
 
 Rect ClientExecute::get_auxiliary_window_rect() const
 {
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%u) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
+    LOG_IF(this->verbose, LOG_INFO, "MouseContext::get_window_offset(%u) -> (%s)", this->auxiliary_window_id, this->auxiliary_window_rect);
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
-        LOG_IF(this->verbose, LOG_INFO, "ClientExecute::get_window_offset(%u) -> ()", this->auxiliary_window_id);
+        LOG_IF(this->verbose, LOG_INFO, "MouseContext::get_window_offset(%u) -> ()", this->auxiliary_window_id);
         return Rect();
     }
     return this->auxiliary_window_rect;
@@ -446,8 +435,6 @@ void ClientExecute::input_invalidate(const Rect r)
     this->drawable_.sync();
 }   // input_invalidate
 
-#include "RAIL/mouse_context.cpp"
-
 void ClientExecute::adjust_window_to_mod() {
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::adjust_window_to_mod()");
     this->maximized = false;
@@ -471,9 +458,9 @@ void ClientExecute::adjust_window_to_mod() {
         this->mouse_context.window_rect.cy = prefered_window_dimension.h;
     }
 
-    this->update_rects();
+    this->mouse_context.update_rects(this->allow_resize_hosted_desktop_);
 
-    const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->window_offset_x, this->window_offset_y);
+    const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
     {
         RDP::RAIL::NewOrExistingWindow order;
@@ -551,9 +538,9 @@ void ClientExecute::maximize_restore_window()
             this->mouse_context.window_rect.cy = prefered_window_dimension.h;
         }
 
-        this->update_rects();
+        this->mouse_context.update_rects(this->allow_resize_hosted_desktop_);
 
-        const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
         {
             RDP::RAIL::NewOrExistingWindow order;
@@ -615,9 +602,9 @@ void ClientExecute::maximize_restore_window()
         this->mouse_context.window_rect.cx = work_area_rect.cx + 1 * 2;
         this->mouse_context.window_rect.cy = work_area_rect.cy + 1 * 2;
 
-        this->update_rects();
+        this->mouse_context.update_rects(this->allow_resize_hosted_desktop_);
 
-        const Rect adjusted_window_rect = work_area_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = work_area_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
         {
             RDP::RAIL::NewOrExistingWindow order;
@@ -682,7 +669,7 @@ void ClientExecute::ready(mod_api & mod, uint16_t front_width, uint16_t front_he
     this->allow_resize_hosted_desktop_    = allow_resize_hosted_desktop;
     this->enable_resizing_hosted_desktop_ = true;
 
-    this->update_rects();
+    this->mouse_context.update_rects(this->allow_resize_hosted_desktop_);
 
     Rect rect = this->mouse_context.window_rect;
     rect.cy = TITLE_BAR_HEIGHT;
@@ -1033,7 +1020,7 @@ void ClientExecute::process_client_system_command_pdu(InStream& chunk)
 
         case SC_RESTORE:
             {
-                const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->window_offset_x, this->window_offset_y);
+                const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
                 RDP::RAIL::NewOrExistingWindow order;
 
@@ -1147,7 +1134,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
                 this->work_areas[this->work_area_count].cx, this->work_areas[this->work_area_count].cy);
         }
 
-        this->virtual_screen_rect = this->virtual_screen_rect.disjunct(this->work_areas[this->work_area_count]);
+        this->mouse_context.virtual_screen_rect = this->mouse_context.virtual_screen_rect.disjunct(this->work_areas[this->work_area_count]);
 
         this->work_area_count++;
 
@@ -1189,7 +1176,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
-            const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
             order.OwnerWindowId(0x0);
             order.Style(0x14EE0000);
@@ -1479,14 +1466,14 @@ void ClientExecute::process_client_window_move_pdu(InStream& chunk)
     if (this->verbose) { cwmpdu.log(LOG_INFO); }
 
     if (INTERNAL_MODULE_WINDOW_ID == cwmpdu.WindowId()) {
-        this->mouse_context.window_rect.x  = cwmpdu.iLeft() - this->window_offset_x;
-        this->mouse_context.window_rect.y  = cwmpdu.iTop() - this->window_offset_y;
+        this->mouse_context.window_rect.x  = cwmpdu.iLeft() - this->mouse_context.window_offset_x;
+        this->mouse_context.window_rect.y  = cwmpdu.iTop() - this->mouse_context.window_offset_y;
         this->mouse_context.window_rect.cx = cwmpdu.eRight() - cwmpdu.iLeft();
         this->mouse_context.window_rect.cy = cwmpdu.eBottom() - cwmpdu.iTop();
 
-        this->update_rects();
+        this->mouse_context.update_rects(this->allow_resize_hosted_desktop_);
 
-        const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
         {
             RDP::RAIL::NewOrExistingWindow order;
@@ -1535,7 +1522,7 @@ void ClientExecute::process_client_window_move_pdu(InStream& chunk)
         }
 
         if (0 != move_size_type) {
-            const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->window_offset_x, this->window_offset_y);
+            const Rect adjusted_window_rect = this->mouse_context.window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
             StaticOutStream<256> out_s;
             RAILPDUHeader header;
@@ -1778,7 +1765,7 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect)
     this->auxiliary_window_id = AUXILIARY_WINDOW_ID;
 
     {
-        const Rect adjusted_window_rect = window_rect.offset(this->window_offset_x, this->window_offset_y);
+        const Rect adjusted_window_rect = window_rect.offset(this->mouse_context.window_offset_x, this->mouse_context.window_offset_y);
 
         RDP::RAIL::NewOrExistingWindow order;
 
@@ -1894,10 +1881,899 @@ bool ClientExecute::is_resizing_hosted_desktop_enabled() const
     return (this->allow_resize_hosted_desktop_ && this->enable_resizing_hosted_desktop_);
 }
 
-void ClientExecute::enable_resizing_hosted_desktop(bool enable)
+void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int pressed_mouse_button_)
 {
-   LOG_IF(this->verbose, LOG_INFO, "ClientExecute::enable_resizing_hosted_desktop(%d)", enable);
-   if (this->allow_resize_hosted_desktop_) {
-        this->enable_resizing_hosted_desktop_ = enable;
+    auto & self = this->mouse_context;
+
+    LOG_IF(self.verbose, LOG_INFO, "ClientExecute::initialize_move_size(%d,%d,%d)", xPos, yPos, self.pressed_mouse_button);
+    assert(!self.move_size_initialized);
+
+    self.pressed_mouse_button = pressed_mouse_button_;
+
+    self.captured_mouse_x = xPos;
+    self.captured_mouse_y = yPos;
+
+    self.window_rect_saved = self.window_rect;
+
+    // TS_RAIL_ORDER_MINMAXINFO
+    // Send to client - Server Min Max Info PDU (0)
+    {
+        StaticOutStream<256> out_s;
+        RAILPDUHeader header;
+        header.emit_begin(out_s, TS_RAIL_ORDER_MINMAXINFO);
+
+        const Rect adjusted_virtual_sreen_rect = self.virtual_screen_rect.offset(
+            self.window_offset_x, self.window_offset_y);
+
+        ServerMinMaxInfoPDU smmipdu;
+
+        smmipdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+        smmipdu.MaxWidth(adjusted_virtual_sreen_rect.cx - 1);
+        smmipdu.MaxHeight(adjusted_virtual_sreen_rect.cy - 1);
+        smmipdu.MaxPosX(adjusted_virtual_sreen_rect.eright());
+        smmipdu.MaxPosY(adjusted_virtual_sreen_rect.ebottom());
+        smmipdu.MinTrackWidth(INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH);
+        smmipdu.MinTrackHeight(INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT);
+        smmipdu.MaxTrackWidth(adjusted_virtual_sreen_rect.cx - 1);
+        smmipdu.MaxTrackHeight(adjusted_virtual_sreen_rect.cy - 1);
+
+        smmipdu.emit(out_s);
+
+        header.emit_end();
+
+        const size_t   length     = out_s.get_offset();
+        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                    | CHANNELS::CHANNEL_FLAG_LAST;
+
+        if (self.verbose) {
+            {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
+            }
+            LOG_IF(self.verbose, LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Min Max Info PDU (0)");
+            smmipdu.log(LOG_INFO);
+        }
+
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
     }
-}
+
+    // Send to client - Server Move/Size Start PDU (0)
+    
+    int move_size_type = 0;
+    uint16_t PosX = xPos;
+    uint16_t PosY = yPos;
+    switch (pressed_mouse_button_) {
+        case MouseContext::MOUSE_BUTTON_PRESSED_NORTH:     move_size_type = RAIL_WMSZ_TOP;         break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST: move_size_type = RAIL_WMSZ_TOPLEFT;     break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_WEST:      move_size_type = RAIL_WMSZ_LEFT;        break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST: move_size_type = RAIL_WMSZ_BOTTOMLEFT;  break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_SOUTH:     move_size_type = RAIL_WMSZ_BOTTOM;      break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST: move_size_type = RAIL_WMSZ_BOTTOMRIGHT; break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_EAST:      move_size_type = RAIL_WMSZ_RIGHT;       break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST: move_size_type = RAIL_WMSZ_TOPRIGHT;    break;
+        case MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR:
+            PosX = xPos - self.window_rect.x;
+            PosY = yPos - self.window_rect.y;
+            move_size_type = RAIL_WMSZ_MOVE;
+            break;
+    }
+
+    if (move_size_type) {
+        StaticOutStream<256> out_s;
+        RAILPDUHeader header;
+        header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+
+        ServerMoveSizeStartOrEndPDU smssoepdu;
+
+        smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+        smssoepdu.IsMoveSizeStart(1);
+        smssoepdu.MoveSizeType(move_size_type);
+        smssoepdu.PosXOrTopLeftX(PosX);
+        smssoepdu.PosYOrTopLeftY(PosY);
+
+        smssoepdu.emit(out_s);
+
+        header.emit_end();
+
+        const size_t   length     = out_s.get_offset();
+        const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                    | CHANNELS::CHANNEL_FLAG_LAST;
+
+        if (self.verbose) {
+            {
+                const bool send              = true;
+                const bool from_or_to_client = true;
+                ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
+            }
+            LOG_IF(self.verbose, LOG_INFO, "ClientExecute::initialize_move_size: Send to client - Server Move/Size Start PDU (0)");
+            smssoepdu.log(LOG_INFO);
+        }
+
+        this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
+    }   // if (move_size_type)
+
+    self.move_size_initialized = true;
+}   // initialize_move_size
+
+
+// Return true if event is consumed.
+bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref)
+{
+    const bool allow_resize_hosted_desktop = this->allow_resize_hosted_desktop_;
+    auto & self = this->mouse_context;
+
+    LOG_IF(self.verbose, LOG_INFO,
+        "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
+        pointerFlags, xPos, yPos, self.pressed_mouse_button);
+
+    // Mouse pointer managment
+    using SetPointerMode = gdi::GraphicApi::SetPointerMode;
+
+    if (!self.move_size_initialized) {
+        if (self.north.contains_pt(xPos, yPos)
+        ||  self.south.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
+                    this->drawable_.set_pointer(0, size_NS_pointer(), SetPointerMode::Insert);
+            }
+        }
+        else if (self.north_west_north.contains_pt(xPos, yPos)
+             ||  self.north_west_west.contains_pt(xPos, yPos)
+             ||  self.south_east_south.contains_pt(xPos, yPos)
+             ||  self.south_east_east.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
+                    this->drawable_.set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
+            }
+        }
+        else if (self.west.contains_pt(xPos, yPos)
+             ||  self.east.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
+                    this->drawable_.set_pointer(0, size_WE_pointer(), SetPointerMode::Insert);
+            }
+        }
+        else if (self.south_west_west.contains_pt(xPos, yPos)
+             ||  self.south_west_south.contains_pt(xPos, yPos)
+             ||  self.north_east_east.contains_pt(xPos, yPos)
+             ||  self.north_east_north.contains_pt(xPos, yPos)) {
+            if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
+                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
+                    this->drawable_.set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
+            }
+        }
+        else if ((self.title_bar_rect.contains_pt(xPos, yPos))
+             ||  (this->enable_resizing_hosted_desktop_ && self.resize_hosted_desktop_box_rect.contains_pt(xPos, yPos))
+             ||  (self.minimize_box_rect.contains_pt(xPos, yPos))
+             ||  (self.maximize_box_rect.contains_pt(xPos, yPos))
+             ||  (self.close_box_rect.contains_pt(xPos, yPos))) {
+            if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
+                this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
+                this->drawable_.set_pointer(0, normal_pointer(), SetPointerMode::Insert);
+            }
+        }
+        else {
+                this->current_mouse_pointer_type = Pointer::POINTER_NULL;
+                mouse_captured_ref = false;
+        }
+    }
+    // Mouse action managment
+
+    if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
+        if (MouseContext::MOUSE_BUTTON_PRESSED_NONE == self.pressed_mouse_button) {
+            if (!this->maximized) {
+                if (self.north.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NORTH;
+                }
+                else if (self.north_west_north.contains_pt(xPos, yPos)
+                     || self.north_west_west.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
+                }
+                else if (self.west.contains_pt(xPos, yPos)) {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_WEST;
+                }
+                else if (self.south_west_west.contains_pt(xPos, yPos)
+                     || self.south_west_south.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
+                }
+                else if (self.south.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_SOUTH;
+                }
+                else if (self.south_east_south.contains_pt(xPos, yPos)
+                     || self.south_east_east.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
+                }
+                else if (self.east.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_EAST;
+                }
+                else if (self.north_east_east.contains_pt(xPos, yPos)
+                     || self.north_east_north.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
+                }
+                else if (self.title_bar_rect.contains_pt(xPos, yPos))
+                {
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR;
+                }
+            }
+
+            if (MouseContext::MOUSE_BUTTON_PRESSED_NONE != self.pressed_mouse_button) {
+                if ((MouseContext::MOUSE_BUTTON_PRESSED_NORTH == self.pressed_mouse_button) ||
+                    (MouseContext::MOUSE_BUTTON_PRESSED_SOUTH == self.pressed_mouse_button) ||
+                    (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button)) {
+                    self.button_1_down = self.pressed_mouse_button;
+
+                    Event event_down_timer("Double Click Down Timer", this);
+                    event_down_timer.alarm.set_timeout(this->time_base.get_current_time()
+                        +std::chrono::milliseconds{400});
+                    event_down_timer.actions.on_timeout = [this](Event &){
+                        assert(this->is_ready());
+                        this->initialize_move_size(
+                            this->mouse_context.button_1_down_x,
+                            this->mouse_context.button_1_down_y,
+                            this->mouse_context.button_1_down);
+                    };
+                    this->events.push_back(std::move(event_down_timer));
+
+                    self.button_1_down_x = xPos;
+                    self.button_1_down_y = yPos;
+
+                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+
+                    LOG_IF(self.verbose, LOG_INFO,
+                        "ClientExecute::input_mouse: Mouse button 1 pressed on %s delayed",
+                        ((self.button_1_down == MouseContext::MOUSE_BUTTON_PRESSED_NORTH)
+                            ? "north edge"
+                            : ((self.button_1_down == MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR)
+                            ? "title bar"
+                            : "south edge")));
+                }
+                else {
+                    this->initialize_move_size(xPos, yPos, self.pressed_mouse_button);
+                }
+            }   // if (MouseContext::MOUSE_BUTTON_PRESSED_NONE != self.pressed_mouse_button)
+            else if (allow_resize_hosted_desktop 
+                 && self.resize_hosted_desktop_box_rect.contains_pt(xPos, yPos))
+            {
+                this->draw_resize_hosted_desktop_box(true, self.resize_hosted_desktop_box_rect);
+                this->drawable_.sync();
+                self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX;
+            }   // else if (self.maximize_box_rect.contains_pt(xPos, yPos))
+            else if (self.minimize_box_rect.contains_pt(xPos, yPos))
+            {
+                RDPOpaqueRect order(self.minimize_box_rect, encode_color24()(BGRColor{0xCBCACA}));
+
+                this->drawable_.draw(order, self.minimize_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.minimize_box_rect.x + 12,
+                                            self.minimize_box_rect.y + 3,
+                                            "−",
+                                            encode_color24()(BLACK),
+                                            encode_color24()(BGRColor{0xCBCACA}),
+                                            gdi::ColorCtx::depth24(),
+                                            self.minimize_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+
+                self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX;
+            }   // else if (self.minimize_box_rect.contains_pt(xPos, yPos))
+            else if (self.maximize_box_rect.contains_pt(xPos, yPos)) {
+                this->draw_maximize_box(true, self.maximize_box_rect);
+
+                this->drawable_.sync();
+
+                self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_MAXIMIZEBOX;
+            }   // else if (self.maximize_box_rect.contains_pt(xPos, yPos))
+            else if (self.close_box_rect.contains_pt(xPos, yPos)) {
+                RDPOpaqueRect order(self.close_box_rect, encode_color24()(BGRColor{0x2311E8}));
+
+                this->drawable_.draw(order, self.close_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.close_box_rect.x + 13,
+                                            self.close_box_rect.y + 3,
+                                            "x",
+                                            encode_color24()(WHITE),
+                                            encode_color24()(BGRColor{0x2311E8}),
+                                            gdi::ColorCtx::depth24(),
+                                            self.close_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+
+                self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_CLOSEBOX;
+            }   // else if (self.close_box_rect.contains_pt(xPos, yPos))
+        }   // if (MouseContext::MOUSE_BUTTON_PRESSED_NONE == self.pressed_mouse_button)
+    }   // if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags)
+    else if (SlowPath::PTRFLAGS_MOVE == pointerFlags) {
+        if (((MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_NORTH == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_WEST == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_SOUTH == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_EAST == self.pressed_mouse_button) ||
+                (MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST == self.pressed_mouse_button)) &&
+            !this->maximized) {
+
+            if (this->full_window_drag_enabled) {
+                int offset_x  = 0;
+                int offset_y  = 0;
+                int offset_cx = 0;
+                int offset_cy = 0;
+
+                switch (self.pressed_mouse_button) {
+                    case MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR:
+                        offset_x = xPos - self.captured_mouse_x;
+                        offset_y = yPos - self.captured_mouse_y;
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_NORTH: {
+                        const int offset_y_max = self.window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
+
+                        offset_y = std::min(yPos - self.captured_mouse_y, offset_y_max);
+                        offset_cy = -offset_y;
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST: {
+                        const int offset_x_max = self.window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
+                        const int offset_y_max = self.window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
+
+                        offset_x = std::min(xPos - self.captured_mouse_x, offset_x_max);
+                        offset_cx = -offset_x;
+
+                        offset_y = std::min(yPos - self.captured_mouse_y, offset_y_max);
+                        offset_cy = -offset_y;
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_WEST: {
+                        const int offset_x_max = self.window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
+
+                        offset_x = std::min(xPos - self.captured_mouse_x, offset_x_max);
+                        offset_cx = -offset_x;
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST: {
+                        const int offset_x_max = self.window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
+
+                        offset_x = std::min(xPos - self.captured_mouse_x, offset_x_max);
+                        offset_cx = -offset_x;
+
+                        const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - self.window_rect_saved.cy;
+
+                        offset_cy = std::max(yPos - self.captured_mouse_y, offset_cy_min);
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_SOUTH : {
+                        const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - self.window_rect_saved.cy;
+
+                        offset_cy = std::max(yPos - self.captured_mouse_y, offset_cy_min);
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST: {
+                        const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - self.window_rect_saved.cy;
+
+                        offset_cy = std::max(yPos - self.captured_mouse_y, offset_cy_min);
+
+                        const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - self.window_rect_saved.cx;
+
+                        offset_cx = std::max(xPos - self.captured_mouse_x, offset_cx_min);
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_EAST: {
+                        const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - self.window_rect_saved.cx;
+
+                        offset_cx = std::max(xPos - self.captured_mouse_x, offset_cx_min);
+                    }
+                    break;
+
+                    case MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST: {
+                        const int offset_y_max = self.window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
+
+                        offset_y = std::min(yPos - self.captured_mouse_y, offset_y_max);
+                        offset_cy = -offset_y;
+
+                        const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - self.window_rect_saved.cx;
+
+                        offset_cx = std::max(xPos - self.captured_mouse_x, offset_cx_min);
+                    }
+                    break;
+                }
+
+                self.window_rect = self.window_rect_saved;
+
+                self.window_rect.x  += offset_x;
+                self.window_rect.y  += offset_y;
+                self.window_rect.cx += offset_cx;
+                self.window_rect.cy += offset_cy;
+
+                self.update_rects(allow_resize_hosted_desktop);
+
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                            RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                const Rect adjusted_window_rect = self.window_rect.offset(self.window_offset_x, self.window_offset_y);
+
+                order.OwnerWindowId(0x0);
+                order.Style(0x14EE0000);
+                order.ExtendedStyle(0x40310);
+                order.ShowState(5);
+                order.TitleInfo(this->window_title.c_str());
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
+                order.WindowClientDeltaX(6);
+                order.WindowClientDeltaY(25);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
+
+                if (self.verbose) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (0)", out_s.get_offset() - 1);
+                }
+
+                this->drawable_.draw(order);
+
+                this->update_widget();
+
+                this->on_new_or_existing_window(adjusted_window_rect);
+            }   // if (this->full_window_drag_enabled)
+        }
+        else if (allow_resize_hosted_desktop 
+             && (MouseContext::MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == self.pressed_mouse_button)) {
+            this->draw_resize_hosted_desktop_box(
+                self.resize_hosted_desktop_box_rect.contains_pt(xPos, yPos),
+                self.resize_hosted_desktop_box_rect);
+
+            this->drawable_.sync();
+        }   // else if (MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX == self.pressed_mouse_button)
+        else if (MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX == self.pressed_mouse_button) {
+            if (self.minimize_box_rect.contains_pt(xPos, yPos)) {
+                RDPOpaqueRect order(self.minimize_box_rect, encode_color24()(BGRColor{0xCBCACA}));
+
+                this->drawable_.draw(order, self.minimize_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.minimize_box_rect.x + 12,
+                                            self.minimize_box_rect.y + 3,
+                                            "−",
+                                            encode_color24()(BLACK),
+                                            encode_color24()(BGRColor{0xCBCACA}),
+                                            gdi::ColorCtx::depth24(),
+                                            self.minimize_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+            }
+            else {
+                RDPOpaqueRect order(self.minimize_box_rect, encode_color24()(WHITE));
+
+                this->drawable_.draw(order, self.minimize_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.minimize_box_rect.x + 12,
+                                            self.minimize_box_rect.y + 3,
+                                            "−",
+                                            encode_color24()(BLACK),
+                                            encode_color24()(WHITE),
+                                            gdi::ColorCtx::depth24(),
+                                            self.minimize_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+            }
+        }   // else if (MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX == self.pressed_mouse_button)
+        else if (MouseContext::MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == self.pressed_mouse_button) {
+            this->draw_maximize_box(self.maximize_box_rect.contains_pt(xPos, yPos), self.maximize_box_rect);
+
+            this->drawable_.sync();
+        }   // else if (MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX == self.pressed_mouse_button)
+        else if (MouseContext::MOUSE_BUTTON_PRESSED_CLOSEBOX == self.pressed_mouse_button) {
+            if (self.close_box_rect.contains_pt(xPos, yPos)) {
+                RDPOpaqueRect order(self.close_box_rect, encode_color24()(BGRColor{0x2311E8}));
+
+                this->drawable_.draw(order, self.close_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.close_box_rect.x + 13,
+                                            self.close_box_rect.y + 3,
+                                            "x",
+                                            encode_color24()(WHITE),
+                                            encode_color24()(BGRColor{0x2311E8}),
+                                            gdi::ColorCtx::depth24(),
+                                            self.close_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+            }
+            else {
+                RDPOpaqueRect order(self.close_box_rect, encode_color24()(WHITE));
+
+                this->drawable_.draw(order, self.close_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.close_box_rect.x + 13,
+                                            self.close_box_rect.y + 3,
+                                            "x",
+                                            encode_color24()(BLACK),
+                                            encode_color24()(WHITE),
+                                            gdi::ColorCtx::depth24(),
+                                            self.close_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+            }
+        }   // else if (MouseContext::MOUSE_BUTTON_PRESSED_CLOSEBOX == self.pressed_mouse_button)
+    }   // else if (SlowPath::PTRFLAGS_MOVE == pointerFlags)
+    else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags) {
+        if (allow_resize_hosted_desktop 
+        && (MouseContext::MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX == self.pressed_mouse_button)) {
+            self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+
+            this->enable_resizing_hosted_desktop_ = (!this->enable_resizing_hosted_desktop_);
+
+            this->draw_resize_hosted_desktop_box(false, self.resize_hosted_desktop_box_rect);
+
+            this->drawable_.sync();
+
+            if (this->enable_resizing_hosted_desktop_) {
+                this->update_widget();
+            }
+        }   // if (this->allow_resize_hosted_desktop_ &&
+        else if (MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX == self.pressed_mouse_button) {
+            self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+
+            {
+                RDPOpaqueRect order(self.minimize_box_rect, encode_color24()(WHITE));
+
+                this->drawable_.draw(order, self.minimize_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.minimize_box_rect.x + 12,
+                                            self.minimize_box_rect.y + 3,
+                                            "−",
+                                            encode_color24()(BLACK),
+                                            encode_color24()(WHITE),
+                                            gdi::ColorCtx::depth24(),
+                                            self.minimize_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+            }
+
+            if (self.minimize_box_rect.contains_pt(xPos, yPos)) {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                            RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(0);
+                order.ClientAreaHeight(0);
+                order.WindowClientDeltaX(0);
+                order.WindowClientDeltaY(0);
+                order.ClientOffsetX(0);
+                order.ClientOffsetY(800);
+                order.VisibleOffsetX(0);
+                order.VisibleOffsetY(800);
+                order.WindowWidth(160);
+                order.WindowHeight(TITLE_BAR_HEIGHT);
+                order.WindowOffsetX(0);
+                order.WindowOffsetY(800);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, 160, TITLE_BAR_HEIGHT));
+                order.ShowState(2);
+                order.Style(0x34EE0000);
+                order.ExtendedStyle(0x40310);
+
+                if (self.verbose) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (1)", out_s.get_offset() - 1);
+                }
+
+                this->drawable_.draw(order);
+                this->on_delete_window();
+
+                if (this->mod_) {
+                    this->mod_->rdp_input_invalidate(
+                        Rect(
+                                self.window_rect.x,
+                                self.window_rect.y,
+                                self.window_rect.x + self.window_rect.cx,
+                                self.window_rect.y + self.window_rect.cy
+                            ));
+                }
+            }
+        }   // if (MouseContext::MOUSE_BUTTON_PRESSED_MINIMIZEBOX == self.pressed_mouse_button)
+        else if (MouseContext::MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == self.pressed_mouse_button) {
+            self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+
+            this->draw_maximize_box(false, self.maximize_box_rect);
+
+            this->drawable_.sync();
+
+            if (self.maximize_box_rect.contains_pt(xPos, yPos)) {
+                this->maximize_restore_window();
+            }
+        }   // else if (MouseContext::MOUSE_BUTTON_PRESSED_MAXIMIZEBOX == self.pressed_mouse_button)
+        else if (MouseContext::MOUSE_BUTTON_PRESSED_CLOSEBOX == self.pressed_mouse_button) {
+            self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+
+            {
+                RDPOpaqueRect order(self.close_box_rect, encode_color24()(WHITE));
+
+                this->drawable_.draw(order, self.close_box_rect, gdi::ColorCtx::depth24());
+
+                if (this->font_) {
+                    gdi::server_draw_text(this->drawable_,
+                                            *this->font_,
+                                            self.close_box_rect.x + 13,
+                                            self.close_box_rect.y + 3,
+                                            "x",
+                                            encode_color24()(BLACK),
+                                            encode_color24()(WHITE),
+                                            gdi::ColorCtx::depth24(),
+                                            self.close_box_rect
+                                            );
+                }
+
+                this->drawable_.sync();
+            }
+
+            if (self.close_box_rect.contains_pt(xPos, yPos)) {
+                LOG(LOG_INFO, "ClientExecute::input_mouse: Close by user (Close Box)");
+                throw Error(ERR_WIDGET);    // Close Box pressed
+            }
+        }   // else if (MouseContext::MOUSE_BUTTON_PRESSED_CLOSEBOX == self.pressed_mouse_button)
+        else if ((MouseContext::MOUSE_BUTTON_PRESSED_NONE != self.pressed_mouse_button) &&
+                    !this->maximized) {
+            if (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button) {
+                LOG_IF(this->verbose, LOG_INFO, "ClientExecute::input_mouse: Mouse button 1 released from title bar");
+
+                int const diff_x = (xPos - self.captured_mouse_x);
+                int const diff_y = (yPos - self.captured_mouse_y);
+
+                self.window_rect.x = self.window_rect_saved.x + diff_x;
+                self.window_rect.y = self.window_rect_saved.y + diff_y;
+
+                self.update_rects(allow_resize_hosted_desktop);
+            }   // if (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button)
+
+            int move_size_type = 0;
+            switch (self.pressed_mouse_button) {
+                case MouseContext::MOUSE_BUTTON_PRESSED_NORTH:     move_size_type = RAIL_WMSZ_TOP;         break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST: move_size_type = RAIL_WMSZ_TOPLEFT;     break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_WEST:      move_size_type = RAIL_WMSZ_LEFT;        break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST: move_size_type = RAIL_WMSZ_BOTTOMLEFT;  break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_SOUTH:     move_size_type = RAIL_WMSZ_BOTTOM;      break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST: move_size_type = RAIL_WMSZ_BOTTOMRIGHT; break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_EAST:      move_size_type = RAIL_WMSZ_RIGHT;       break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST: move_size_type = RAIL_WMSZ_TOPRIGHT;    break;
+                case MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR:  move_size_type = RAIL_WMSZ_MOVE;        break;
+            }
+
+            if (0 != move_size_type) {
+                StaticOutStream<256> out_s;
+                RAILPDUHeader header;
+                header.emit_begin(out_s, TS_RAIL_ORDER_LOCALMOVESIZE);
+
+                const Rect adjusted_window_rect = self.window_rect.offset(self.window_offset_x, self.window_offset_y);
+
+                ServerMoveSizeStartOrEndPDU smssoepdu;
+
+                smssoepdu.WindowId(INTERNAL_MODULE_WINDOW_ID);
+                smssoepdu.IsMoveSizeStart(0);
+                smssoepdu.MoveSizeType(move_size_type);
+                smssoepdu.PosXOrTopLeftX(adjusted_window_rect.x);
+                smssoepdu.PosYOrTopLeftY(adjusted_window_rect.y);
+
+                smssoepdu.emit(out_s);
+
+                header.emit_end();
+
+                const size_t   length     = out_s.get_offset();
+                const uint32_t flags      =   CHANNELS::CHANNEL_FLAG_FIRST
+                                            | CHANNELS::CHANNEL_FLAG_LAST;
+
+                if (self.verbose) {
+                    {
+                        const bool send              = true;
+                        const bool from_or_to_client = true;
+                        ::msgdump_c(send, from_or_to_client, length, flags, out_s.get_produced_bytes());
+                    }
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send to client - Server Move/Size End PDU (1)");
+                    smssoepdu.log(LOG_INFO);
+                }
+
+                this->front_.send_to_channel(*this->channel_, out_s.get_produced_bytes(), length, flags);
+
+                self.move_size_initialized = false;
+            }   // if (0 != move_size_type)
+
+            const Rect adjusted_window_rect = self.window_rect.offset(self.window_offset_x, self.window_offset_y);
+
+            {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                            RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
+
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
+
+                if (self.verbose) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (2)", out_s.get_offset() - 1);
+                }
+
+                this->drawable_.draw(order);
+            }
+
+            if (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button) {
+                this->update_widget();
+            }   // if (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button)
+
+            this->on_new_or_existing_window(adjusted_window_rect);
+
+            if (0 != move_size_type) {
+                self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+            }
+        }   // else if ((MouseContext::MOUSE_BUTTON_PRESSED_NONE != self.pressed_mouse_button) &&
+    }   // else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags)
+    else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags) {
+        if ((self.north.contains_pt(xPos, yPos) || self.south.contains_pt(xPos, yPos)) 
+        && !this->maximized) {
+            Rect work_area_rect = this->get_current_work_area_rect();
+
+            self.window_rect.y  = 0;
+            self.window_rect.cy = work_area_rect.cy - 1;
+
+            self.update_rects(allow_resize_hosted_desktop);
+
+            const Rect adjusted_window_rect = self.window_rect.offset(self.window_offset_x, self.window_offset_y);
+
+            {
+                RDP::RAIL::NewOrExistingWindow order;
+
+                order.header.FieldsPresentFlags(
+                            RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                        | (this->window_level_supported_ex ? RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREASIZE : 0)
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
+                        | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
+                    );
+                order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
+
+                order.ClientAreaWidth(adjusted_window_rect.cx - 6 * 2);
+                order.ClientAreaHeight(adjusted_window_rect.cy - 25 - 6);
+                order.WindowWidth(adjusted_window_rect.cx);
+                order.WindowHeight(adjusted_window_rect.cy);
+                order.NumVisibilityRects(1);
+                order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
+
+                order.ClientOffsetX(adjusted_window_rect.x + 6);
+                order.ClientOffsetY(adjusted_window_rect.y + 25);
+                order.WindowOffsetX(adjusted_window_rect.x);
+                order.WindowOffsetY(adjusted_window_rect.y);
+                order.VisibleOffsetX(adjusted_window_rect.x);
+                order.VisibleOffsetY(adjusted_window_rect.y);
+
+                if (self.verbose) {
+                    StaticOutStream<1024> out_s;
+                    order.emit(out_s);
+                    order.log(LOG_INFO);
+                    LOG(LOG_INFO, "ClientExecute::input_mouse: Send NewOrExistingWindow to client: size=%zu (3)", out_s.get_offset() - 1);
+                }
+
+                this->drawable_.draw(order);
+            }
+
+            this->update_widget();
+
+            this->on_new_or_existing_window(adjusted_window_rect);
+        }   // if (self.south.contains_pt(xPos, yPos))
+        else if (self.title_bar_rect.contains_pt(xPos, yPos)) {
+            this->maximize_restore_window();
+        }   // else if (self.title_bar_rect.contains_pt(xPos, yPos))
+        else if (self.title_bar_icon_rect.contains_pt(xPos, yPos)) {
+            LOG(LOG_INFO, "ClientExecute::input_mouse: Close by user (Title Bar Icon)");
+            throw Error(ERR_WIDGET);    // Title Bar Icon Double-clicked
+        }   // else if (self.title_bar_icon_rect.contains_pt(xPos, yPos))
+    }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
+
+    return false;
+}   // input_mouse
+

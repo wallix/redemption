@@ -832,7 +832,7 @@ inline u8_array_view lmv2_response(std::vector<uint8_t> & buffer)
     return {buffer.data(), 16};
 }
 
-inline u8_array_view lmv2_client_challenge(std::vector<uint8_t> & buffer)
+inline u8_array_view lmv2_client_challenge(u8_array_view buffer)
 {
     return {buffer.data() + 16, 8};
 }

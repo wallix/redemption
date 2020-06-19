@@ -18,65 +18,85 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
+#pragma once
 
-    struct MouseContext {
-        enum {
-            MOUSE_BUTTON_PRESSED_NONE,
+#include "utils/log.hpp"
+#include "utils/rect.hpp"
+#include "core/error.hpp"
+#include "core/RDP/remote_programs.hpp"
 
-            MOUSE_BUTTON_PRESSED_NORTH,
-            MOUSE_BUTTON_PRESSED_NORTHWEST,
-            MOUSE_BUTTON_PRESSED_WEST,
-            MOUSE_BUTTON_PRESSED_SOUTHWEST,
-            MOUSE_BUTTON_PRESSED_SOUTH,
-            MOUSE_BUTTON_PRESSED_SOUTHEAST,
-            MOUSE_BUTTON_PRESSED_EAST,
-            MOUSE_BUTTON_PRESSED_NORTHEAST,
+enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
+enum {BORDER_WIDTH_HEIGHT = 3 };
 
-            MOUSE_BUTTON_PRESSED_TITLEBAR,
-            MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX,
-            MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
-            MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
-            MOUSE_BUTTON_PRESSED_CLOSEBOX,
-        };
+struct MouseContext {
+    enum {
+        MOUSE_BUTTON_PRESSED_NONE,
 
-        Rect task_bar_rect;
+        MOUSE_BUTTON_PRESSED_NORTH,
+        MOUSE_BUTTON_PRESSED_NORTHWEST,
+        MOUSE_BUTTON_PRESSED_WEST,
+        MOUSE_BUTTON_PRESSED_SOUTHWEST,
+        MOUSE_BUTTON_PRESSED_SOUTH,
+        MOUSE_BUTTON_PRESSED_SOUTHEAST,
+        MOUSE_BUTTON_PRESSED_EAST,
+        MOUSE_BUTTON_PRESSED_NORTHEAST,
 
-        Rect window_rect;
-        Rect window_rect_saved;
-        Rect window_rect_normal;
-        Rect window_rect_old;
+        MOUSE_BUTTON_PRESSED_TITLEBAR,
+        MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX,
+        MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
+        MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
+        MOUSE_BUTTON_PRESSED_CLOSEBOX,
+    };
 
-        Rect title_bar_icon_rect;
-        Rect title_bar_rect;
-        Rect close_box_rect;
-        Rect minimize_box_rect;
-        Rect maximize_box_rect;
-        Rect resize_hosted_desktop_box_rect;
+    int window_offset_x = 0;
+    int window_offset_y = 0;
 
-        Rect north;
-        Rect north_west_north;
-        Rect north_west_west;
-        Rect west;
-        Rect south_west_west;
-        Rect south_west_south;
-        Rect south;
-        Rect south_east_south;
-        Rect south_east_east;
-        Rect east;
-        Rect north_east_east;
-        Rect north_east_north;
+    Rect virtual_screen_rect;
 
-        TimerPtr button_1_down_timer;
+    Rect task_bar_rect;
 
-        int button_1_down_x = 0;
-        int button_1_down_y = 0;
+    Rect window_rect;
+    Rect window_rect_saved;
+    Rect window_rect_normal;
+    Rect window_rect_old;
 
-        int button_1_down = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+    Rect title_bar_icon_rect;
+    Rect title_bar_rect;
+    Rect close_box_rect;
+    Rect minimize_box_rect;
+    Rect maximize_box_rect;
+    Rect resize_hosted_desktop_box_rect;
 
-        uint16_t captured_mouse_x = 0;
-        uint16_t captured_mouse_y = 0;
+    Rect north;
+    Rect north_west_north;
+    Rect north_west_west;
+    Rect west;
+    Rect south_west_west;
+    Rect south_west_south;
+    Rect south;
+    Rect south_east_south;
+    Rect south_east_east;
+    Rect east;
+    Rect north_east_east;
+    Rect north_east_north;
 
-        int pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
-        bool move_size_initialized = false;
-    } mouse_context;
+    int button_1_down_timer;
+
+    int button_1_down_x = 0;
+    int button_1_down_y = 0;
+
+    int button_1_down = MouseContext::MOUSE_BUTTON_PRESSED_NONE;
+
+    uint16_t captured_mouse_x = 0;
+    uint16_t captured_mouse_y = 0;
+
+    int pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
+    bool move_size_initialized = false;
+    bool verbose = false;
+
+    void update_rects(const bool allow_resize_hosted_desktop);
+    Rect get_window_rect() const;
+    Point get_window_offset() const;
+
+};
 

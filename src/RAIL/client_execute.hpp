@@ -41,8 +41,7 @@ class WindowListCaps;
 namespace CHANNELS { class ChannelDef; }
 namespace gdi { class GraphicApi; }
 
-enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
-enum {BORDER_WIDTH_HEIGHT = 3 };
+#include "RAIL/mouse_context.hpp"
 
 class ClientExecute : public windowing_api
 {
@@ -62,7 +61,15 @@ public:
 private:
     bool server_execute_result_sent = false;
 
-    #include "RAIL/mouse_context.hpp"
+    void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
+    
+    MouseContext mouse_context;
+    
+public:
+    // Return true if event is consumed.
+    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
+
+private:
 
     uint16_t front_width  = 0;
     uint16_t front_height = 0;
@@ -95,11 +102,6 @@ private:
 
     bool rail_enabled = false;
 
-    int window_offset_x = 0;
-    int window_offset_y = 0;
-
-    Rect virtual_screen_rect;
-
     bool verbose;
 
     TimeBase& time_base;
@@ -121,9 +123,15 @@ public:
 
     [[nodiscard]] Rect get_current_work_area_rect() const;
 
-    [[nodiscard]] Rect get_window_rect() const;
+    [[nodiscard]] Rect get_window_rect() const 
+    {
+        return this->mouse_context.get_window_rect();
+    }
 
-    [[nodiscard]] Point get_window_offset() const;
+    [[nodiscard]] Point get_window_offset() const
+    {
+        return this->mouse_context.get_window_offset();
+    }
 
     [[nodiscard]] Rect get_auxiliary_window_rect() const;
 
@@ -136,9 +144,6 @@ public:
     void send_to_mod_rail_channel(size_t length, InStream & chunk, uint32_t flags);
 
     void input_invalidate(const Rect r);
-
-    // Return true if event is consumed.
-    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
 
     const WindowsExecuteShellParams & get_windows_execute_shell_params();
 
@@ -160,18 +165,12 @@ public:
 
     [[nodiscard]] bool is_resizing_hosted_desktop_enabled() const;
 
-    void enable_resizing_hosted_desktop(bool enable);
-
 private:
     void update_widget();
-
-    void update_rects();
 
     void draw_resize_hosted_desktop_box(bool mouse_over, const Rect r);
 
     void draw_maximize_box(bool mouse_over, const Rect r);
-
-    void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
 
     void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message);
 
