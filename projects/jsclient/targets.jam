@@ -21,11 +21,9 @@ exe-js js_client :
   src/red_channels/clipboard.bc
   src/red_channels/clipboard_binding.bc
   src/red_channels/js_channel.bc
-  src/red_channels/js_channel_binding.bc
   src/redjs/browser_front.bc
   src/redjs/browser_graphic.bc
   src/redjs/browser_transport.bc
-  src/redjs/channel_receiver.bc
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
   src/system/ssl_mod_exp.bc
@@ -146,11 +144,9 @@ objjs src/main/js_player.bc : src/main/js_player.cpp ;
 objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;
 objjs src/red_channels/clipboard_binding.bc : src/red_channels/clipboard_binding.cpp ;
 objjs src/red_channels/js_channel.bc : src/red_channels/js_channel.cpp ;
-objjs src/red_channels/js_channel_binding.bc : src/red_channels/js_channel_binding.cpp ;
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_graphic.bc : src/redjs/browser_graphic.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
-objjs src/redjs/channel_receiver.bc : src/redjs/channel_receiver.cpp ;
 objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs src/system/ssl_mod_exp.bc : src/system/ssl_mod_exp.cpp ;

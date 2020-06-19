@@ -20,7 +20,6 @@ Author(s): Jonathan Poelen
 
 #include "redjs/browser_graphic.hpp"
 
-#include "redjs/image_data_from_bitmap.hpp"
 #include "redjs/image_data_from_pointer.hpp"
 
 #include "red_emscripten/em_asm.hpp"
@@ -50,9 +49,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 
-#include "utils/log.hpp"
+// include "utils/log.hpp"
 
-#include <numeric>
 #include <cinttypes>
 
 
@@ -141,13 +139,14 @@ namespace
         constexpr char const* draw_mem3blt = "drawMem3Blt";
 
         constexpr char const* set_bmp_cache = "setBmpCacheIndex";
-        constexpr char const* set_bmp_cache_size = "setBmpCacheSize";
+        constexpr char const* set_bmp_cache_entries = "setBmpCacheEntries";
 
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
         constexpr char const* set_pointer = "setPointer";
 
         constexpr char const* resize_canvas = "resizeCanvas";
+        constexpr char const* update_pointer_position = "updatePointerPosition";
     }
 }
 
@@ -344,10 +343,10 @@ void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::Color
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_pat_blt,
+            get_brush_data(cmd.brush).data(),
             cmd.brush.org_x,
             cmd.brush.org_y,
             cmd.brush.style,
-            get_brush_data(cmd.brush).data(),
             trect.x,
             trect.y,
             trect.cx,
@@ -359,13 +358,23 @@ void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::Color
     });
 }
 
-void BrowserGraphic::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries)
+void BrowserGraphic::set_bmp_cache_entries(std::array<CacheEntry, 3> const & cache_entries)
 {
     this->image_data_index[0] = 0;
-    this->image_data_index[1] = nb_entries[0];
-    this->image_data_index[2] = this->image_data_index[1] + nb_entries[1];
-    uint32_t nb_image_datas = this->image_data_index[2] + nb_entries[2];
-    emval_call(this->callbacks, jsnames::set_bmp_cache_size, nb_image_datas);
+    this->image_data_index[1] = cache_entries[0].nb_entries;
+    this->image_data_index[2] = this->image_data_index[1] + cache_entries[1].nb_entries;
+
+    emval_call(this->callbacks, jsnames::set_bmp_cache_entries,
+        cache_entries[0].nb_entries,
+        cache_entries[0].bmp_size,
+        cache_entries[0].is_persistent,
+        cache_entries[1].nb_entries,
+        cache_entries[1].bmp_size,
+        cache_entries[1].is_persistent,
+        cache_entries[2].nb_entries,
+        cache_entries[2].bmp_size,
+        cache_entries[2].is_persistent
+    );
 }
 
 void BrowserGraphic::draw(RDPBmpCache const & cmd)
@@ -374,12 +383,12 @@ void BrowserGraphic::draw(RDPBmpCache const & cmd)
 
     uint32_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
 
-    auto img = image_data_from_bitmap(cmd.bmp);
-
     emval_call(this->callbacks, jsnames::set_bmp_cache,
-        img.data(),
-        img.width(),
-        img.height(),
+        cmd.bmp.data(),
+        cmd.bmp.bpp(),
+        cmd.bmp.cx(),
+        cmd.bmp.cy(),
+        uint32_t(cmd.bmp.line_size()),
         image_idx
     );
 }
@@ -413,10 +422,10 @@ void BrowserGraphic::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color
     MemBltPoints ps(cmd.rect.intersect(this->width, this->height), cmd.srcx, cmd.srcy, clip);
 
     emval_call(this->callbacks, jsnames::draw_mem3blt,
+        get_brush_data(cmd.brush).data(),
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
-        get_brush_data(cmd.brush).data(),
         image_idx,
         cmd.rop,
         ps.srcx,
@@ -510,9 +519,10 @@ void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx co
 
     emval_call(this->callbacks, jsnames::draw_image,
         img_data.get(),
+        BitsPerPixel::BitsPP32,
         clipped_glyph_fragment_rect.width(),
         clipped_glyph_fragment_rect.height(),
-        0xCC,
+        clipped_glyph_fragment_rect.width(),
         clipped_glyph_fragment_rect.x,
         clipped_glyph_fragment_rect.y
     );
@@ -549,10 +559,10 @@ void BrowserGraphic::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx col
         clip.y,
         clip.cx,
         clip.cy,
+        get_brush_data(cmd.brush).data(),
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
-        get_brush_data(cmd.brush).data(),
         color_decode(cmd.backColor, color_ctx),
         color_decode(cmd.foreColor, color_ctx),
         cmd.fillMode
@@ -623,9 +633,7 @@ void BrowserGraphic::draw(const RDP::FrameMarker & cmd)
 {
     // LOG(LOG_INFO, "BrowserGraphic::FrameMarker");
 
-    emval_call(this->callbacks, jsnames::draw_frame_marker,
-        bool(cmd.action)
-    );
+    emval_call(this->callbacks, jsnames::draw_frame_marker, bool(cmd.action));
 }
 
 void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
@@ -642,13 +650,12 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
     // LOG(LOG_INFO, "BrowserGraphic::RDPBitmapData");
 
-    redjs::ImageData image = image_data_from_bitmap(bmp);
-
     emval_call(this->callbacks, jsnames::draw_image,
-        image.data(),
-        image.width(),
-        image.height(),
-        0xCC,
+        bmp.data(),
+        bmp.bpp(),
+        bmp.cx(),
+        bmp.cy(),
+        uint32_t(bmp.line_size()),
         cmd.dest_left,
         cmd.dest_top,
         0,
@@ -703,22 +710,33 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
     }
 }
 
-void BrowserGraphic::begin_update() {}
-
-void BrowserGraphic::end_update() {}
-
-
-bool BrowserGraphic::resize_canvas(uint16_t width, uint16_t height)
+void BrowserGraphic::begin_update()
 {
-    this->width = width;
-    this->height = height;
+    // TODO used draw_frame_marker ?
+}
+
+void BrowserGraphic::end_update()
+{
+    // TODO used draw_frame_marker ?
+}
+
+bool BrowserGraphic::resize_canvas(ScreenInfo screen)
+{
+    this->width = screen.width;
+    this->height = screen.height;
 
     emval_call(this->callbacks, jsnames::resize_canvas,
-        width,
-        height
+        screen.width,
+        screen.height,
+        screen.bpp
     );
 
     return true;
+}
+
+void BrowserGraphic::update_pointer_position(uint16_t x, uint16_t y)
+{
+    emval_call(this->callbacks, jsnames::update_pointer_position, x, y);
 }
 
 } // namespace redjs

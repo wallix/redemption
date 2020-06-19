@@ -17,6 +17,7 @@ JAM_INCLUDE_PATH ?= jam ;
 # # Compilation
 #
 # (show `cxx_*` options with `bjam cxx_help`)
+# (default configration with `bjam print_default`)
 #
 # Compile executables without tests (as user):
 #
@@ -104,13 +105,44 @@ actions gen_targets
 explicit targets.jam ;
 make targets.jam : : @gen_targets ;
 
-actions env_help { HELP_COLOR=$(jln_env_color) ./tools/bjam/bjam_help.sh project }
-explicit env_help ;
-make env_help : : @env_help ;
+rule bjam_help ( targets * : sources * : properties * )
+{
+    local ps = [ property-set.create $(properties) ] ;
+    local color = [ $(ps).get <cxx-color> ] ;
+    local options = ;
+    if $(color) = "never"
+    {
+        color = --color=never ;
+    }
+    else
+    {
+        color = --color=always ;
+    }
+    OPTIONS on $(targets) = $(color) [ $(ps).get <action><option> ] ;
+}
 
-actions cxx_help { HELP_COLOR=$(jln_env_color) ./tools/bjam/bjam_help.sh compiler }
-explicit cxx_help ;
-make cxx_help : : @cxx_help ;
+actions bjam_help
+{
+    ./tools/bjam/bjam_help.sh $(OPTIONS)
+}
+
+explicit env_help cxx_help ;
+make env_help : : @bjam_help <option>project ;
+make cxx_help : : @bjam_help <option>compiler ;
+
+
+rule print_default ( targets * : sources * : properties * )
+{
+    echo "Properties:" ;
+    local ps = [ property-set.create $(properties) ] ;
+    for p in [ $(ps).raw ]
+    {
+        echo "$(p)" ;
+    }
+}
+
+explicit print_default ;
+make print_default : : @print_default ;
 
 
 ## { test_web_video_mp4

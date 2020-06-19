@@ -22,6 +22,8 @@ Author(s): Jonathan Poelen
 
 
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "redjs/channel_receiver.hpp"
 
 #include <emscripten/val.h>
 
@@ -46,12 +48,12 @@ enum class Charset : bool
     Utf16,
 };
 
-struct ClipboardChannel
+struct ClipboardChannel : noncopyable
 {
     ClipboardChannel(Callback& cb, emscripten::val&& callbacks, bool verbose);
     ~ClipboardChannel();
 
-    void receive(bytes_view data, uint32_t flags);
+    void receive(bytes_view data, uint32_t total_data_len, uint32_t flags);
 
     void send_file_contents_request(
         uint32_t request_type,
@@ -66,6 +68,8 @@ struct ClipboardChannel
     void send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags);
     void send_data(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);
     void send_data(bytes_view av);
+
+    ChannelReceiver& get_channel_receiver() { return this->channel_receiver; }
 
 private:
     void process_filecontents_request(InStream& chunk);
@@ -110,6 +114,8 @@ private:
     ResponseState response_state = ResponseState::None;
     bool verbose;
     ResponseBuffer response_buffer;
+
+    ChannelReceiver channel_receiver;
 };
 
 } // namespace redjs::channel::clipboard

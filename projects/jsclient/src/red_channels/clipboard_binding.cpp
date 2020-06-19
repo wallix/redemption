@@ -31,19 +31,16 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
     namespace clipboard = redjs::channels::clipboard;
 
     redjs::class_<clipboard::ClipboardChannel>("ClipboardChannel")
-        .constructor<uintptr_t, emscripten::val, bool>([](
-            uintptr_t&& icb, emscripten::val&& callbacks, bool&& verbose
-        ) {
+        .constructor([](uintptr_t icb, emscripten::val&& callbacks, bool verbose) {
             auto* pcb = reinterpret_cast<Callback*>(icb);
             return new clipboard::ClipboardChannel(*pcb, std::move(callbacks), verbose);
         })
         .function_ptr("getChannelReceiver", [](clipboard::ClipboardChannel& clip) {
-            auto receiver = [&clip](bytes_view data, int channel_flags){
-                clip.receive(data, channel_flags);
-            };
-            return redjs::ChannelReceiver(channel_names::cliprdr, receiver);
+            return reinterpret_cast<uintptr_t>(&clip.get_channel_receiver());
         })
-        .function_ptr("sendRequestFormat", [](clipboard::ClipboardChannel& clip, uint32_t format_id, int custom_format_id) {
+        .function_ptr("sendRequestFormat", [](clipboard::ClipboardChannel& clip,
+            uint32_t format_id, int custom_format_id)
+        {
             clip.send_request_format(format_id, clipboard::CustomFormat(custom_format_id));
         })
         .function_ptr("sendFileContentsRequest", [](clipboard::ClipboardChannel& clip,
@@ -79,7 +76,8 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             clip.send_data({ptr, idata_len}, 0, 2/*last*/);
         })
         .function_ptr("addFormat", [](clipboard::ClipboardChannel& clip,
-            std::ptrdiff_t idata, std::size_t idata_len, uint32_t format_id, int charset, std::string name)
+            std::ptrdiff_t idata, std::size_t idata_len,
+            uint32_t format_id, int charset, std::string name)
         {
             auto* ptr = reinterpret_cast<uint8_t*>(idata);
             return clip.add_format({ptr, idata_len}, format_id, clipboard::Charset(charset), name);

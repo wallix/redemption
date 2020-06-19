@@ -40,7 +40,6 @@
 }
 </style>
 </div>
-<canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
 <section>
     <form id="login" method="get" action="#">
         <label for="ws">sck: </label><input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/>
@@ -49,6 +48,9 @@
         <label for="width">width: </label><input type="number" id="width" name="width" value="800" placeholder="Width"/>
         <label for="height">height: </label><input type="number" id="height" name="height" value="600" placeholder="Height"/>
         <input type="submit" value="New Connection">
+    </form>
+    <form id="disconnect" method="get" action="#">
+        <input type="submit" disabled="disabled" value="Disconnect">
     </form>
     <form id="sendCbFile" method="get" action="#">
         <input id="sendCbFile_data" name="myFile" type="file">
@@ -81,6 +83,16 @@ WallixModule({
     // INITIAL_MEMORY: 268435456, // 16**7
 }).then((Module) => {
 
+// optional
+Module.log = function(priority, msg) {
+    const logger = (priority === 6) ? console.log
+                 : (priority === 4) ? console.warn
+                 : (priority === 3) ? console.error
+                 : (priority === 7) ? console.debug
+                 : console.log;
+    logger(msg);
+};
+
 const redemption = redemptionLoadModule(Module, window);
 
 const RDPClient = redemption.RDPClient;
@@ -92,10 +104,9 @@ const HEAPU16 = Module.HEAPU16;
 
 const ecanvasFocus = document.getElementById('canvasFocus');
 const ecanvas = document.getElementById('canvas');
-const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
-const canvas2 = ecanvas2.getContext('2d');
 const login = document.getElementById('login');
+const disconnectButton = document.getElementById('disconnect');
 const sendCbUtf8 = document.getElementById('sendCbUtf8');
 const sendCbFile = document.getElementById('sendCbFile');
 // const receiveCbUtf8 = document.getElementById('receiveCbUtf8');
@@ -281,13 +292,22 @@ function run()
     ecanvas.width = Number(width_input.value) || 800;
     ecanvas.height = Number(height_input.value) || 600;
     const socket = newRDPSocket(ws_input.value);
+    const gd = new RDPGraphics(ecanvas, Module);
     socket.onopen = function(event) {
         console.log('RdpClient open');
+
+        disconnectButton.onsubmit = (e) => {
+            e.preventDefault();
+            gd.drawRect(0, 0, gd.width, gd.height, 0);
+            socket.close();
+        };
+        disconnectButton.firstElementChild.disabled = false;
+
         rdpclient = new RDPClient(
             socket,
             ecanvas.width,
             ecanvas.height,
-            new RDPGraphics(ecanvas),
+            gd,
             user_input.value,
             pass_input.value,
             /*0x04000000*/);
@@ -326,6 +346,8 @@ function run()
 
         socket.onclose = function(event) {
             console.log('RdpClient close');
+            disconnectButton.firstElementChild.disabled = true;
+            gd.free();
             // TODO fix that
             try { rdpclient.delete(); } catch (e) {}
             rdpclient = null;
@@ -350,7 +372,13 @@ canvas.fillStyle = 'black';
 canvas.fillRect(0,0,800,600);
 
 const url = new URL(window.location.href)
-const inputs = {user: user_input, pass: pass_input, ws: ws_input};
+const inputs = {
+    user: user_input,
+    pass: pass_input,
+    ws: ws_input,
+    width: width_input,
+    height: height_input,
+};
 for (const k in inputs) {
     const x = url.searchParams.get(k);
     if (x) {

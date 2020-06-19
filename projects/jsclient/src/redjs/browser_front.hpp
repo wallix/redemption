@@ -46,7 +46,7 @@ public:
 
     PrimaryDrawingOrdersSupport get_supported_orders() const;
 
-    void add_channel_receiver(ChannelReceiver&& channel);
+    void add_channel_receiver(ChannelReceiver channel);
 
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
@@ -61,7 +61,7 @@ public:
     }
 
     void send_to_channel(
-        const CHANNELS::ChannelDef& channel_def, bytes_view chunk_data,
+        CHANNELS::ChannelDef const& channel_def, bytes_view chunk_data,
         std::size_t total_data_len, int flags) override;
 
     void update_pointer_position(uint16_t x, uint16_t y) override;

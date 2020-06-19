@@ -20,6 +20,8 @@ Author(s): Jonathan Poelen
 
 #include "core/channel_names.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "redjs/channel_receiver.hpp"
 
 #include <emscripten/val.h>
 
@@ -28,17 +30,20 @@ class Callback;
 
 namespace redjs::channels
 {
-    struct JsChannel
+    struct JsChannel : noncopyable
     {
+        JsChannel(
+            Callback& cb, emscripten::val&& js_handler,
+            CHANNELS::ChannelNameId channel_name);
         ~JsChannel();
 
-        void receive(bytes_view data, int flags);
+        void receive(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);
 
-        void send_data(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);
+        void send(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);
 
         Callback& cb;
         emscripten::val js_handler;
-        CHANNELS::ChannelNameId channel_name_id;
+        ChannelReceiver channel_receiver;
     };
 }
 

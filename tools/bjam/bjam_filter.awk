@@ -8,7 +8,8 @@ BEGINFILE {
     }
     len = 0
     state = 0
-    nb_rep=split(replacements, rep, ";")
+
+    nb_rep=split(".c++.without-pch;;" replacements, rep, ";")
 }
 {
   if (/^Running [0-9]+ test cases?\.\.\.$/)

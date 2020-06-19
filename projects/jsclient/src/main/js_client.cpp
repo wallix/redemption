@@ -36,6 +36,7 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "utils/theme.hpp"
 
 #include "red_emscripten/bind.hpp"
@@ -121,7 +122,7 @@ struct RdpClient
 
     RdpClient(
         emscripten::val callbacks, uint16_t width, uint16_t height,
-        std::string const& username, std::string const& password,
+        zstring_view username, zstring_view password,
         PrimaryDrawingOrdersSupport disabled_orders, RDPVerbose verbose)
     : front(callbacks, width, height, verbose)
     , gd(front.graphic_api())
@@ -221,9 +222,9 @@ struct RdpClient
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
 
-    void add_channel_receiver(redjs::ChannelReceiver&& receiver)
+    void add_channel_receiver(redjs::ChannelReceiver receiver)
     {
-        this->front.add_channel_receiver(std::move(receiver));
+        this->front.add_channel_receiver(receiver);
     }
 
     Callback& get_callback()
@@ -242,7 +243,7 @@ EMSCRIPTEN_BINDINGS(client)
             uint32_t disabled_orders,
             uint32_t verbose_low_bits, uint32_t /*verbose_high_bits*/
         ) {
-            static_assert(sizeof(RDPVerbose) == 4);
+            static_assert(sizeof(RDPVerbose) == 4, "verbose_high_bits is unused");
             return new RdpClient(
                 std::move(callbacks), width, height, username, password,
                 PrimaryDrawingOrdersSupport(disabled_orders),
@@ -255,8 +256,11 @@ EMSCRIPTEN_BINDINGS(client)
         .function_ptr("getCallbackAsVoidPtr", [](RdpClient& client) {
             return reinterpret_cast<uintptr_t>(&client.get_callback());
         })
+        .function_ptr("addChannelReceiver", [](RdpClient& client, uintptr_t ichannel_receiver) {
+            client.add_channel_receiver(
+                *reinterpret_cast<redjs::ChannelReceiver const*>(ichannel_receiver));
+        })
         .function("sendFirstPacket", &RdpClient::send_first_packet)
-        .function("addChannelReceiver", &RdpClient::add_channel_receiver)
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)

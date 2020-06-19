@@ -270,7 +270,13 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
 
 #ifdef __EMSCRIPTEN__
-    virtual void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) = 0;
+    struct CacheEntry
+    {
+        uint16_t nb_entries;
+        uint16_t bmp_size;
+        bool is_persistent;
+    };
+    virtual void set_bmp_cache_entries(std::array<CacheEntry, 3> const & /*cache_entries*/) = 0;
     virtual void draw(RDPBmpCache         const & /*cmd*/) = 0;
     virtual void draw(RDPMemBlt           const & cmd, Rect clip) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx) = 0;
@@ -350,7 +356,7 @@ public:
     void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
     void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
 #ifdef __EMSCRIPTEN__
-    void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) override {}
+    void set_bmp_cache_entries(std::array<CacheEntry, 3> const & /*cache_entries*/) override {}
     void draw(RDPBmpCache         const & /*cmd*/) override {}
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}

@@ -120,7 +120,9 @@ void clip_receive(
     Padding padding_data = Padding{},
     uint32_t channel_flags = first_last_show_proto_channel_flags)
 {
-    clip.receive(Serializer(msgType, msgFlags, data, padding_data), channel_flags);
+    Serializer serializer(msgType, msgFlags, data, padding_data);
+    bytes_view av = serializer;
+    clip.receive(av, checked_int{av.size()}, channel_flags);
 }
 
 ChannelData data_chan(
@@ -462,6 +464,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //............ !
         ""_av;
     CALL_CB(receive(file_group_with_3_files.first(1600),
+        checked_int{file_group_with_3_files.size()},
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL))
     {
         CHECK_NEXT_DATA(formatDataResponseFileStart{3});
@@ -475,6 +478,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
             /*.lastWriteTimeLow=*/0, /*.lastWriteTimeHigh=*/0});
     };
     CALL_CB(receive(file_group_with_3_files.from_offset(1600),
+        checked_int{file_group_with_3_files.size()},
         CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL))
     {
         CHECK_NEXT_DATA(formatDataResponseFile{"ghi"_utf16_le,

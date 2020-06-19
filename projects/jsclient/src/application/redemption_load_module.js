@@ -9,11 +9,17 @@ const redemptionLoadModule = function(Module, window)
         };
     };
 
+    const wCb_em2js_Bitmap = function(cb, thisp) {
+        return function(idata, bitsPerPixel, w, h, lineSize, ...args) {
+            const data = HEAPU8.subarray(idata, idata + lineSize * h);
+            return cb.call(thisp, data, bitsPerPixel, w, h, lineSize, ...args);
+        };
+    };
+
     const wCb_em2js_ImageData = function(cb, thisp) {
         return function(idata, w, h, ...args) {
-            const data = HEAPU8.subarray(idata, idata + w * h * 4);
-            // TODO Uint8ClampedArray(data) -> data ?
-            const image = new ImageData(new Uint8ClampedArray(data), w, h);
+            const array = new Uint8ClampedArray(HEAPU8.buffer, idata, w * h * 4);
+            const image = new ImageData(array, w, h);
             return cb.call(thisp, image, ...args);
         };
     };
@@ -42,12 +48,12 @@ const redemptionLoadModule = function(Module, window)
 
     // { funcname: [wrapCreator, defaultFunction], ... }
     const wrappersGd = {
-        setBmpCacheSize: identity,
-        setBmpCacheIndex: wCb_em2js_ImageData,
+        setBmpCacheEntries: identity,
+        setBmpCacheIndex: identity,
         drawMemBlt: identity,
         drawMem3Blt: wCb_em2js_Brush,
 
-        drawImage: wCb_em2js_ImageData,
+        drawImage: identity,
         drawRect: identity,
         drawScrBlt: identity,
         drawLineTo: identity,
@@ -58,7 +64,8 @@ const redemptionLoadModule = function(Module, window)
             return function(xStart, yStart, numDeltaEntries, deltaEntries,
                             clipX, clipY, clipW, clipH, brushData, ...args
             ) {
-                const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+                const deltas = HEAP16.subarray(deltaEntries,
+                                               deltaEntries + numDeltaEntries * 2);
                 return cb.call(thisp, xStart, yStart, deltas,
                                clipX, clipY, clipW, clipH,
                                HEAPU8.subarray(brushData, brushData + 8),
@@ -75,6 +82,7 @@ const redemptionLoadModule = function(Module, window)
         cachedPointer: identity,
 
         resizeCanvas: identity,
+        updatePointerPosition: identity,
     };
 
     const wrappersFront = {
@@ -91,11 +99,12 @@ const redemptionLoadModule = function(Module, window)
 
 
     class RDPClient {
-        constructor(socket, width, height, events, username, password, disabled_orders, verbosity) {
+        constructor(socket, width, height, events, username, password, disabledOrders, verbosity) {
             const rdpEvents = {};
             wrapEvents(rdpEvents, wrappersGd, events, undefined);
             wrapEvents(rdpEvents, wrappersFront, events, undefined);
             rdpEvents.drawFrameMarker = rdpEvents.drawFrameMarker || noop;
+            rdpEvents.updatePointerPosition = rdpEvents.updatePointerPosition || noop;
             rdpEvents.random = rdpEvents.random || function(idata, len) {
                 const data = HEAPU8.subarray(idata, idata + len);
                 window.crypto.getRandomValues(data);
@@ -106,7 +115,7 @@ const redemptionLoadModule = function(Module, window)
             this.native = new Module.RdpClient(
                 rdpEvents, width, height,
                 username || "", password || "",
-                disabled_orders || 0,
+                disabledOrders || 0,
                 verbosity & 0xffffffff,
                 (verbosity > 0xffffffff ? verbosity - 0xffffffff : 0)
             );

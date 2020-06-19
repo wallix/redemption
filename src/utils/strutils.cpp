@@ -55,15 +55,4 @@ std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept
     return strlcpy(dest, chars_view{src, strlen(src)}, n);
 }
 
-
-bool strbcpy(char* dest, chars_view src, std::size_t n) noexcept
-{
-    return strlcpy(dest, src, n) < n;
-}
-
-bool strbcpy(char* dest, char const* src, std::size_t n) noexcept
-{
-    return strlcpy(dest, src, n) < n;
-}
-
 } // namespace utils

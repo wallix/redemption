@@ -228,9 +228,21 @@ public:
         (void)big_persistent;
         (void)verbose;
         gd.set_bmp_cache_entries({
-            uint16_t(small_entries + (enable_waiting_list ? 1 : 0)),
-            uint16_t(medium_entries + (enable_waiting_list ? 1 : 0)),
-            uint16_t(big_entries + (enable_waiting_list ? 1 : 0))
+            gdi::GraphicApi::CacheEntry{
+                uint16_t(small_entries + (enable_waiting_list ? 1 : 0)),
+                small_size,
+                small_persistent
+            },
+            gdi::GraphicApi::CacheEntry{
+                uint16_t(medium_entries + (enable_waiting_list ? 1 : 0)),
+                medium_size,
+                medium_persistent
+            },
+            gdi::GraphicApi::CacheEntry{
+                uint16_t(big_entries + (enable_waiting_list ? 1 : 0)),
+                big_size,
+                big_persistent
+            },
         });
 #else
         (void)gd;

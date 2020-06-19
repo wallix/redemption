@@ -225,8 +225,16 @@ public:
 struct Bitmap::PrivateData
 {
     using Data = Bitmap::DataBitmap;
+
     static Data & initialize(Bitmap & bmp, BitsPerPixel bpp, uint16_t cx, uint16_t cy)
-    { return *(bmp.data_bitmap = DataBitmap::construct(bpp, cx, cy)); }
+    {
+        assert(!bmp.data_bitmap);
+        return *(bmp.data_bitmap = DataBitmap::construct(bpp, cx, cy));
+    }
+
     static Data & initialize_png(Bitmap & bmp, uint16_t cx, uint16_t cy)
-    { return *(bmp.data_bitmap = DataBitmap::construct_png(cx, cy)); }
+    {
+        assert(!bmp.data_bitmap);
+        return *(bmp.data_bitmap = DataBitmap::construct_png(cx, cy));
+    }
 };

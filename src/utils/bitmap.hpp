@@ -51,8 +51,6 @@ public:
 
     struct PrivateData;
 
-    friend class PrivateData;
-
     Bitmap() noexcept = default;
 
     Bitmap(Bitmap && bmp) noexcept;
