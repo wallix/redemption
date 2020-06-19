@@ -62,58 +62,7 @@ public:
 private:
     bool server_execute_result_sent = false;
 
-    Rect task_bar_rect;
-
-    uint16_t captured_mouse_x = 0;
-    uint16_t captured_mouse_y = 0;
-
-    Rect window_rect;
-    Rect window_rect_saved;
-    Rect window_rect_normal;
-    Rect window_rect_old;
-
-    Rect title_bar_icon_rect;
-    Rect title_bar_rect;
-    Rect close_box_rect;
-    Rect minimize_box_rect;
-    Rect maximize_box_rect;
-    Rect resize_hosted_desktop_box_rect;
-
-    Rect north;
-    Rect north_west_north;
-    Rect north_west_west;
-    Rect west;
-    Rect south_west_west;
-    Rect south_west_south;
-    Rect south;
-    Rect south_east_south;
-    Rect south_east_east;
-    Rect east;
-    Rect north_east_east;
-    Rect north_east_north;
-
-    bool move_size_initialized = false;
-
-    enum {
-        MOUSE_BUTTON_PRESSED_NONE,
-
-        MOUSE_BUTTON_PRESSED_NORTH,
-        MOUSE_BUTTON_PRESSED_NORTHWEST,
-        MOUSE_BUTTON_PRESSED_WEST,
-        MOUSE_BUTTON_PRESSED_SOUTHWEST,
-        MOUSE_BUTTON_PRESSED_SOUTH,
-        MOUSE_BUTTON_PRESSED_SOUTHEAST,
-        MOUSE_BUTTON_PRESSED_EAST,
-        MOUSE_BUTTON_PRESSED_NORTHEAST,
-
-        MOUSE_BUTTON_PRESSED_TITLEBAR,
-        MOUSE_BUTTON_PRESSED_RESIZEHOSTEDDESKTOPBOX,
-        MOUSE_BUTTON_PRESSED_MINIMIZEBOX,
-        MOUSE_BUTTON_PRESSED_MAXIMIZEBOX,
-        MOUSE_BUTTON_PRESSED_CLOSEBOX,
-    };
-
-    int pressed_mouse_button = MOUSE_BUTTON_PRESSED_NONE;
+    #include "RAIL/mouse_context.hpp"
 
     uint16_t front_width  = 0;
     uint16_t front_height = 0;
@@ -143,13 +92,6 @@ private:
     bool enable_resizing_hosted_desktop_ = false;
 
     int current_mouse_pointer_type = Pointer::POINTER_NULL;
-
-    TimerPtr button_1_down_timer;
-
-    int button_1_down_x = 0;
-    int button_1_down_y = 0;
-
-    int button_1_down = MOUSE_BUTTON_PRESSED_NONE;
 
     bool rail_enabled = false;
 
@@ -187,7 +129,7 @@ public:
 
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop);
 
-    explicit operator bool () const noexcept;
+    bool is_ready() const noexcept;
 
     void reset(bool soft);
 

@@ -123,7 +123,7 @@ LoginMod::LoginMod(
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         Event login_timeout_event("Log Box Timeout", this);
         login_timeout_event.alarm.set_timeout(
-            this->time_base.get_current_time() 
+            this->time_base.get_current_time()
             + std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()));
         login_timeout_event.actions.on_timeout = [this](Event&e)
         {
@@ -137,7 +137,7 @@ LoginMod::LoginMod(
 
 void LoginMod::init()
 {
-    if (this->rail_enabled && !this->rail_client_execute) {
+    if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
                     *this, this->front_width, this->front_height,
                     this->font(), this->is_resizing_hosted_desktop_allowed());
@@ -164,6 +164,8 @@ void LoginMod::rdp_input_invalidate(Rect r)
 
 void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
+
+    LOG(LOG_INFO, "LoginMod::rdp_input_mouse(%04x, %d, %d)", unsigned(device_flags), x, y);
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
         y = this->old_mouse_y;
@@ -178,93 +180,89 @@ void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
         return;
     }
 
-    bool out_mouse_captured = false;
-    if (!this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
-        switch (this->dc_state) {
-            case DCState::Wait:
-                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    this->dc_state = DCState::FirstClickDown;
+    LOG(LOG_INFO, "LoginMod::rdp_input_mouse B(%04x, %d, %d) rail_enabled", unsigned(device_flags), x, y);
 
-                    if (this->first_click_down_timer) {
-                        for(auto & event: this->events){
-                            if (event.id == this->first_click_down_timer){
-                                event.alarm.set_timeout(
-                                            this->time_base.get_current_time()
-                                            +std::chrono::seconds{1});
-                            }
+    bool out_mouse_captured = false;
+    this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured);
+    switch (this->dc_state) {
+        case DCState::Wait:
+            if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                this->dc_state = DCState::FirstClickDown;
+
+                auto trigger_time = this->time_base.get_current_time()+std::chrono::seconds{1};
+                if (this->first_click_down_timer) {
+                    for(auto & event: this->events){
+                        if (event.id == this->first_click_down_timer){
+                            event.alarm.set_timeout(trigger_time);
                         }
                     }
-                    else {
-                        Event dc_event("Close::DC Event", this);
-                        this->first_click_down_timer = dc_event.id;
-                        dc_event.alarm.set_timeout(
-                                            this->time_base.get_current_time()
-                                            +std::chrono::seconds{1});
-                        dc_event.actions.on_timeout = [this](Event&)
-                        {
-                            this->dc_state = DCState::Wait;
-                        };
-                        this->events.push_back(std::move(dc_event));
-                    }
-                }
-            break;
-
-            case DCState::FirstClickDown:
-                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                    this->dc_state = DCState::FirstClickRelease;
-                }
-                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                 }
                 else {
-                    this->cancel_double_click_detection();
+                    Event dc_event("Close::DC Event", this);
+                    this->first_click_down_timer = dc_event.id;
+                    dc_event.alarm.set_timeout(trigger_time);
+                    dc_event.actions.on_timeout = [this](Event&){ this->dc_state = DCState::Wait; };
+                    this->events.push_back(std::move(dc_event));
                 }
-            break;
+            }
+        break;
 
-            case DCState::FirstClickRelease:
-                if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                    this->dc_state = DCState::SecondClickDown;
-                }
-                else {
-                    this->cancel_double_click_detection();
-                }
-            break;
+        case DCState::FirstClickDown:
+            if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                this->dc_state = DCState::FirstClickRelease;
+            }
+            else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+            }
+            else {
+                this->cancel_double_click_detection();
+            }
+        break;
 
-            case DCState::SecondClickDown:
-                if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                    this->dc_state = DCState::Wait;
+        case DCState::FirstClickRelease:
+            LOG(LOG_INFO, "rdp_input_mouse DCState::FirstClickRelease");
+            if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                this->dc_state = DCState::SecondClickDown;
+            }
+            else {
+                this->cancel_double_click_detection();
+            }
+        break;
 
-                    bool out_mouse_captured_2 = false;
+        case DCState::SecondClickDown:
+            LOG(LOG_INFO, "rdp_input_mouse DCState::SecondClickDown");
+            if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
+                this->dc_state = DCState::Wait;
 
-                    this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
+                bool out_mouse_captured_2 = false;
 
-                    this->cancel_double_click_detection();
-                }
-                else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                }
-                else {
-                    this->cancel_double_click_detection();
-                }
-            break;
-
-            default:
-                assert(false);
+                this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
 
                 this->cancel_double_click_detection();
-            break;
-        }
-
-        if (out_mouse_captured) {
-            this->allow_mouse_pointer_change(false);
-
-            this->current_mouse_owner = MouseOwner::ClientExecute;
-        }
-        else {
-            if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                this->redo_mouse_pointer_change(x, y);
             }
+            else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+            }
+            else {
+                this->cancel_double_click_detection();
+            }
+        break;
 
-            this->current_mouse_owner = MouseOwner::WidgetModule;
+        default:
+            assert(false);
+            this->cancel_double_click_detection();
+        break;
+    }
+
+    if (out_mouse_captured) {
+        this->allow_mouse_pointer_change(false);
+
+        this->current_mouse_owner = MouseOwner::ClientExecute;
+    }
+    else {
+        if (MouseOwner::WidgetModule != this->current_mouse_owner) {
+            this->redo_mouse_pointer_change(x, y);
         }
+
+        this->current_mouse_owner = MouseOwner::WidgetModule;
     }
 
     this->screen.rdp_input_mouse(device_flags, x, y, keymap);
@@ -359,7 +357,7 @@ void LoginMod::notify(Widget* sender, notify_event_t event)
 
 void LoginMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute){
+    if (this->rail_enabled && this->rail_client_execute.is_ready()){
         if (front_channel_name == CHANNELS::channel_names::rail) {
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }

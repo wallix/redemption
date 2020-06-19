@@ -137,13 +137,13 @@ bool Inactivity::check_user_activity(time_t now, bool & has_user_activity)
 {
     if (!has_user_activity) {
         if (now > this->last_activity_time + this->inactivity_timeout) {
+            this->last_activity_time = now;
             LOG(LOG_INFO, "Session User inactivity : closing");
             return true;
         }
     }
     else {
         has_user_activity = false;
-        this->last_activity_time = now;
     }
     return false;
 }

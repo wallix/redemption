@@ -24,7 +24,7 @@
 #include <utils/timeval_ops.hpp>
 #include <string>
 #include <functional>
- 
+
 struct Event {
     // TODO: the management of this counter may be moved to EventContainer later
     // no need to use a static lifespan, EventContainer lifespan would be fine
@@ -50,7 +50,7 @@ struct Event {
         void set_period(std::chrono::microseconds period) {
             this->period = period;
         }
-        
+
         // timeout alarm will call on_timeout once when trigger_time is reached
         // the trigger time must be reset with set_timeout
         // if we want to call the alarm again
@@ -87,10 +87,10 @@ struct Event {
         std::function<void(Event &)> on_timeout = [](Event &){};
     } actions;
 
-    Event(std::string name, void * lifespan) 
+    Event(std::string name, void * lifespan)
         : id(Event::counter++)
         , name(name)
-        , lifespan_handle(lifespan) 
+        , lifespan_handle(lifespan)
         {}
 
     void exec_timeout() { this->actions.on_timeout(*this);}
@@ -110,7 +110,7 @@ inline void end_of_lifespan(EventContainer & events, void * lifespan)
 
 inline void garbage_collector(EventContainer & events) {
         for (size_t i = 0; i < events.size() ; i++){
-            if (events[i].garbage){
+            while ((i < events.size()) && (events[i].garbage)){
                 if (i < events.size() -1){
                     events[i] = std::move(events.back());
                 }

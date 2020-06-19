@@ -84,7 +84,7 @@ DialogMod::DialogMod(
 
 void DialogMod::init()
 {
-    if (this->rail_enabled && !this->rail_client_execute) {
+    if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
                     *this, this->front_width, this->front_height,
                     this->font(), this->is_resizing_hosted_desktop_allowed());
@@ -308,7 +308,7 @@ void DialogMod::refused()
 
 void DialogMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute){
+    if (this->rail_enabled && this->rail_client_execute.is_ready()){
         if (front_channel_name == CHANNELS::channel_names::rail) {
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }
