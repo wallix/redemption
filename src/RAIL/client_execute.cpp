@@ -1997,6 +1997,39 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int
 }   // initialize_move_size
 
 
+void ClientExecute::set_mouse_pointer(uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref)
+{
+    using SetPointerMode = gdi::GraphicApi::SetPointerMode;
+    auto & self = this->mouse_context;
+    if ((self.title_bar_rect.contains_pt(xPos, yPos))
+         ||  (this->enable_resizing_hosted_desktop_
+            && self.resize_hosted_desktop_box_rect.contains_pt(xPos, yPos))
+         ||  (self.minimize_box_rect.contains_pt(xPos, yPos))
+         ||  (self.maximize_box_rect.contains_pt(xPos, yPos))
+         ||  (self.close_box_rect.contains_pt(xPos, yPos))) {
+        if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
+            this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
+            this->drawable_.set_pointer(0, normal_pointer(), SetPointerMode::Insert);
+        }
+    }
+    else {
+        for (int i = ZONE_N ; i <= ZONE_NEN ; i++){
+            if (get_zone(i, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)){
+                auto pointer_type = get_pointer_type(i);
+                if (pointer_type != this->current_mouse_pointer_type){
+                    this->current_mouse_pointer_type = pointer_type;
+                    auto pointer = get_pointer(i);
+                    this->drawable_.set_pointer(0, pointer, SetPointerMode::Insert);
+                }
+                return;
+            }
+        }
+        this->current_mouse_pointer_type = Pointer::POINTER_NULL;
+        mouse_captured_ref = false;
+    }
+}
+
+
 // Return true if event is consumed.
 bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref)
 {
@@ -2008,106 +2041,30 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         pointerFlags, xPos, yPos, self.pressed_mouse_button);
 
     // Mouse pointer managment
-    using SetPointerMode = gdi::GraphicApi::SetPointerMode;
-
     if (!self.move_size_initialized) {
-        if (get_zone(ZONE_N, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-        ||  get_zone(ZONE_S, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)) {
-            if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
-                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
-                    this->drawable_.set_pointer(0, size_NS_pointer(), SetPointerMode::Insert);
-            }
-        }
-        else if (get_zone(ZONE_NWN, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_NWW, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_SES, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_SEE, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)) {
-            if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
-                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
-                    this->drawable_.set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
-            }
-        }
-        else if (get_zone(ZONE_W, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_E, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)) {
-            if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
-                    this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
-                    this->drawable_.set_pointer(0, size_WE_pointer(), SetPointerMode::Insert);
-            }
-        }
-        else if (get_zone(ZONE_SWW, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_SWS, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_NEE, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-             ||  get_zone(ZONE_NEN, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)) {
-            if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
-                    this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
-                    this->drawable_.set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
-            }
-        }
-        else if ((self.title_bar_rect.contains_pt(xPos, yPos))
-             ||  (this->enable_resizing_hosted_desktop_ && self.resize_hosted_desktop_box_rect.contains_pt(xPos, yPos))
-             ||  (self.minimize_box_rect.contains_pt(xPos, yPos))
-             ||  (self.maximize_box_rect.contains_pt(xPos, yPos))
-             ||  (self.close_box_rect.contains_pt(xPos, yPos))) {
-            if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
-                this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
-                this->drawable_.set_pointer(0, normal_pointer(), SetPointerMode::Insert);
-            }
-        }
-        else {
-                this->current_mouse_pointer_type = Pointer::POINTER_NULL;
-                mouse_captured_ref = false;
-        }
+        this->set_mouse_pointer(xPos, yPos, mouse_captured_ref);
     }
     // Mouse action managment
-
     if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
         if (MouseContext::MOUSE_BUTTON_PRESSED_NONE == self.pressed_mouse_button) {
             if (!this->maximized) {
-                if (get_zone(ZONE_N, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NORTH;
-                }
-                else if (get_zone(ZONE_NWN, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-                     || get_zone(ZONE_NWW, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
-                }
-                else if (get_zone(ZONE_W, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)) {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_WEST;
-                }
-                else if (get_zone(ZONE_SWW, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-                     || get_zone(ZONE_SWS, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
-                }
-                else if (get_zone(ZONE_S, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_SOUTH;
-                }
-                else if (get_zone(ZONE_SES, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-                     || get_zone(ZONE_SEE, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
-                }
-                else if (get_zone(ZONE_E, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_EAST;
-                }
-                else if (get_zone(ZONE_NEE, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-                     || get_zone(ZONE_NEN, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
-                {
-                    self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
-                }
-                else if (self.title_bar_rect.contains_pt(xPos, yPos))
+                if (self.title_bar_rect.contains_pt(xPos, yPos))
                 {
                     self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR;
+                }
+                else {
+                    for (int i = ZONE_N ; i <= ZONE_NEN ; i++){
+                        if (get_zone(i, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)){
+                            self.pressed_mouse_button = get_button(i);
+                        }
+                    }
                 }
             }
 
             if (MouseContext::MOUSE_BUTTON_PRESSED_NONE != self.pressed_mouse_button) {
-                if ((MouseContext::MOUSE_BUTTON_PRESSED_NORTH == self.pressed_mouse_button) ||
-                    (MouseContext::MOUSE_BUTTON_PRESSED_SOUTH == self.pressed_mouse_button) ||
-                    (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button)) {
+                if ((MouseContext::MOUSE_BUTTON_PRESSED_NORTH == self.pressed_mouse_button)
+                || (MouseContext::MOUSE_BUTTON_PRESSED_SOUTH == self.pressed_mouse_button)
+                || (MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button)) {
                     self.button_1_down = self.pressed_mouse_button;
 
                     Event event_down_timer("Double Click Down Timer", this);
@@ -2201,17 +2158,17 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }   // if (MouseContext::MOUSE_BUTTON_PRESSED_NONE == self.pressed_mouse_button)
     }   // if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags)
     else if (SlowPath::PTRFLAGS_MOVE == pointerFlags) {
-        if (((MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_NORTH == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_WEST == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_SOUTH == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_EAST == self.pressed_mouse_button) ||
-                (MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST == self.pressed_mouse_button)) &&
-            !this->maximized) {
-
+        if (((MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_NORTH == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_WEST == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_SOUTH == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_EAST == self.pressed_mouse_button)
+            || (MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST == self.pressed_mouse_button))
+        && !this->maximized
+        ){
             if (this->full_window_drag_enabled) {
                 int offset_x  = 0;
                 int offset_y  = 0;

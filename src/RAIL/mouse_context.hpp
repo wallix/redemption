@@ -24,6 +24,7 @@
 #include "utils/rect.hpp"
 #include "core/error.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
 enum {BORDER_WIDTH_HEIGHT = 3 };
@@ -110,6 +111,61 @@ struct MouseContext {
 //        5         6         7
 
 enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN };
+
+
+static inline int get_button(size_t zone)
+{
+    switch (zone){
+    case ZONE_N  : return MouseContext::MOUSE_BUTTON_PRESSED_NORTH;
+    case ZONE_NWN: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
+    case ZONE_NWW: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
+    case ZONE_W  : return MouseContext::MOUSE_BUTTON_PRESSED_WEST;
+    case ZONE_SWW: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
+    case ZONE_SWS: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
+    case ZONE_S  : return MouseContext::MOUSE_BUTTON_PRESSED_SOUTH;
+    case ZONE_SES: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
+    case ZONE_SEE: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
+    case ZONE_E  : return MouseContext::MOUSE_BUTTON_PRESSED_EAST;
+    case ZONE_NEE: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
+    case ZONE_NEN: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
+    }
+}
+
+static inline int get_pointer_type(size_t zone)
+{
+    switch (zone){
+    case ZONE_N  : return Pointer::POINTER_SIZENS;
+    case ZONE_NWN: return Pointer::POINTER_SIZENWSE;
+    case ZONE_NWW: return Pointer::POINTER_SIZENWSE;
+    case ZONE_W  : return Pointer::POINTER_SIZEWE;
+    case ZONE_SWW: return Pointer::POINTER_SIZENESW;
+    case ZONE_SWS: return Pointer::POINTER_SIZENESW;
+    case ZONE_S  : return Pointer::POINTER_SIZENS;
+    case ZONE_SES: return Pointer::POINTER_SIZENWSE;
+    case ZONE_SEE: return Pointer::POINTER_SIZENWSE;
+    case ZONE_E  : return Pointer::POINTER_SIZEWE;
+    case ZONE_NEE: return Pointer::POINTER_SIZENESW;
+    case ZONE_NEN: return Pointer::POINTER_SIZENESW;
+    }
+}
+
+static inline Pointer get_pointer(size_t zone)
+{
+    switch (zone){
+    case ZONE_N  : return size_NS_pointer();
+    case ZONE_NWN: return size_NESW_pointer();
+    case ZONE_NWW: return size_NESW_pointer();
+    case ZONE_W  : return size_WE_pointer();
+    case ZONE_SWW: return size_NESW_pointer();
+    case ZONE_SWS: return size_NESW_pointer();
+    case ZONE_S  : return size_NS_pointer();
+    case ZONE_SES: return size_NESW_pointer();
+    case ZONE_SEE: return size_NESW_pointer();
+    case ZONE_E  : return size_WE_pointer();
+    case ZONE_NEE: return size_NESW_pointer();
+    case ZONE_NEN: return size_NESW_pointer();
+    }
+}
 
 
 static inline Rect get_zone(size_t zone, Rect w, uint16_t corner, uint16_t thickness)

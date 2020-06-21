@@ -107,6 +107,8 @@ private:
     TimeBase& time_base;
     EventContainer& events;
 
+    void set_mouse_pointer(uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
+
 public:
     ClientExecute(
         TimeBase& time_base, EventContainer& events,

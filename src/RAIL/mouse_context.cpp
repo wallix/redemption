@@ -70,20 +70,6 @@ void MouseContext::update_rects(const bool allow_resize_hosted_desktop)
 
     this->title_bar_rect.x  += 3 + 16 + 2;
     this->title_bar_rect.cx -= 3 + 16 + 2;
-
-//    this->north = get_zone(ZONE_N, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->north_west_north = get_zone(ZONE_NWN, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->north_west_west = get_zone(ZONE_NWW, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->west = get_zone(ZONE_W, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->south_west_west = get_zone(ZONE_SWW, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->south_west_south = get_zone(ZONE_SWS, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->south = get_zone(ZONE_S, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->south_east_south = get_zone(ZONE_SES, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->south_east_east  = get_zone(ZONE_SEE, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->east = get_zone(ZONE_E, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->north_east_east = get_zone(ZONE_NEE, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-//    this->north_east_north = get_zone(ZONE_NEN, (this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-
 }   // update_rects
 
 
