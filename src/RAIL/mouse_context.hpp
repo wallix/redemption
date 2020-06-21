@@ -67,19 +67,6 @@ struct MouseContext {
     Rect maximize_box_rect;
     Rect resize_hosted_desktop_box_rect;
 
-    Rect north;
-    Rect north_west_north;
-    Rect north_west_west;
-    Rect west;
-    Rect south_west_west;
-    Rect south_west_south;
-    Rect south;
-    Rect south_east_south;
-    Rect south_east_east;
-    Rect east;
-    Rect north_east_east;
-    Rect north_east_north;
-
     int button_1_down_timer;
 
     int button_1_down_x = 0;
@@ -99,4 +86,80 @@ struct MouseContext {
     Point get_window_offset() const;
 
 };
+
+//                          corner
+//                        |-------|
+//                  cx
+//    |---------------------------|
+//        1         0        11
+//    +--NWN--\-----N-----|--NEN--+      +   +
+//    |                           |      |   |
+// 2 NWW                         NEE 10  |   | corner
+//    |                           |      |   |
+//    +         N = North         +      |   +
+//    |         S = South         |      |
+//    |         E = East          |      |
+// 3  W         W = West          E 9    | cy
+//    |                           |      |
+//    |                           |      |
+//    +                           +      |
+//    |                           |      |
+// 4 SWW                         SEE 8   |
+//    |                           |      |
+//    +--SWS--\-----S-----|--SES--+      °
+//        5         6         7
+
+enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN };
+
+
+static inline Rect get_zone(size_t zone, Rect w, uint16_t corner, uint16_t thickness)
+{
+
+    uint8_t data[12][4] ={
+    // North
+    { 1, 0, 0},
+
+    // North West North
+    { 0, 0, 0},
+    // North West West
+    { 0, 0, 1},
+
+    // West
+    { 0, 1, 1},
+
+    // South West West
+    { 0, 2, 1},
+    // South West South
+    { 0, 2, 0},
+
+    // South
+    { 1, 2, 0},
+
+    // South East South
+    { 2, 2, 0},
+    // South East East
+    { 2, 2, 1},
+
+    // East
+    { 2, 1, 1},
+
+    // North East East
+    { 2, 0, 1},
+    // North East North
+    { 2, 0, 0},
+    };
+
+    // d[0] 0=left or 1=middle, 2=right
+    // d[1] 0=top or 1=middle or 2=bottom
+    // d[2] 0=horizontal 1=vectical
+
+    auto & d = data[zone];
+
+    return Rect(
+        w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
+        w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
+        (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
+        (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
+    );
+}
 

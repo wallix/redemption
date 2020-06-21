@@ -62,9 +62,9 @@ private:
     bool server_execute_result_sent = false;
 
     void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
-    
+
     MouseContext mouse_context;
-    
+
 public:
     // Return true if event is consumed.
     bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
@@ -123,7 +123,7 @@ public:
 
     [[nodiscard]] Rect get_current_work_area_rect() const;
 
-    [[nodiscard]] Rect get_window_rect() const 
+    [[nodiscard]] Rect get_window_rect() const
     {
         return this->mouse_context.get_window_rect();
     }

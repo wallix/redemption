@@ -30,78 +30,6 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH  640
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
-// Rect north;
-static Rect get_north(Rect window, int16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + corner, window.y, window.cx - 2 * corner, thickness);
-}
-
-// Rect north_west_north;
-static Rect get_north_west_north(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x, window.y, corner, thickness);
-}
-
-// Rect north_west_west;
-static Rect get_north_west_west(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x, window.y, thickness, corner);
-}
-
-// Rect west;
-static Rect get_west(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x, window.y + corner, thickness, window.cy - 2 * corner);
-}
-
-// Rect south_west_west;
-static Rect get_south_west_west(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x, window.y + window.cy - corner, thickness, corner);
-}
-
-// Rect south_west_south;
-static Rect get_south_west_south(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x, window.y + window.cy - thickness, corner, thickness);
-}
-
-// Rect south;
-static Rect get_south(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + corner, window.y + window.cy - thickness, window.cx - 2 * corner, thickness);
-}
-
-// Rect south_east_south;
-static Rect get_south_east_south(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + window.cx - corner, window.y + window.cy - thickness, corner, thickness);
-}
-
-// Rect south_east_east;
-static Rect get_south_east_east(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + window.cx - thickness, window.y + window.cy - corner, thickness, corner);
-}
-
-// Rect east;
-static Rect get_east(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + window.cx - thickness, window.y + corner, thickness, window.cy - 2 * corner);
-}
-
-// Rect north_east_east;
-static Rect get_north_east_east(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + window.cx - thickness, window.y + corner, thickness, window.cy - 2 * corner);
-}
-
-// Rect north_east_north;
-static Rect get_north_east_north(Rect window, uint16_t corner, uint16_t thickness)
-{
-    return Rect(window.x + window.cx - corner, window.y, corner, thickness);
-}
-
 void MouseContext::update_rects(const bool allow_resize_hosted_desktop)
 {
     LOG_IF(this->verbose, LOG_INFO, "MouseContext::update_rects()");
@@ -143,18 +71,18 @@ void MouseContext::update_rects(const bool allow_resize_hosted_desktop)
     this->title_bar_rect.x  += 3 + 16 + 2;
     this->title_bar_rect.cx -= 3 + 16 + 2;
 
-    this->north = get_north(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->north_west_north = get_north_west_north(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->north_west_west = get_north_west_west(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->west = get_west(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->south_west_west = get_south_west_west(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->south_west_south = get_south_west_south(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->south = get_south(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->south_east_south = get_south_east_south(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->south_east_east  = get_south_east_east(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->east = get_east(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->north_east_east = get_north_east_east(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
-    this->north_east_north = get_north_east_north(this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->north = get_zone(ZONE_N, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->north_west_north = get_zone(ZONE_NWN, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->north_west_west = get_zone(ZONE_NWW, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->west = get_zone(ZONE_W, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->south_west_west = get_zone(ZONE_SWW, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->south_west_south = get_zone(ZONE_SWS, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->south = get_zone(ZONE_S, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->south_east_south = get_zone(ZONE_SES, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->south_east_east  = get_zone(ZONE_SEE, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->east = get_zone(ZONE_E, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->north_east_east = get_zone(ZONE_NEE, this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
+//    this->north_east_north = get_zone(ZONE_NEN, (this->window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT);
 
 }   // update_rects
 
@@ -170,6 +98,4 @@ Point MouseContext::get_window_offset() const
     LOG_IF(this->verbose, LOG_INFO, "MouseContext::get_window_offset() -> (%d,%d)", this->window_offset_x, this->window_offset_y);
     return Point(this->window_offset_x, this->window_offset_y);
 }
-
-
 
