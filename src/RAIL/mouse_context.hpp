@@ -154,57 +154,47 @@ struct MouseContext {
         //    +--SWS--\-----S-----|--SES--+      °
         //        5         6         7
 
+        uint16_t corner = 24; // TITLE_BAR_HEIGHT
+        uint16_t thickness = 3; // BORDER_WIDTH_HEIGHT
+
         enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN,
                ZONE_ICON, ZONE_TITLE, ZONE_RESIZE, ZONE_MINI, ZONE_MAXI, ZONE_CLOSE };
 
-        static inline Rect get_zone(size_t zone, Rect w, uint16_t corner, uint16_t thickness)
+        inline Rect get_zone(size_t zone, Rect w)
         {
-            uint8_t data[12][4] ={
-            // North
-            { 1, 0, 0},
 
-            // North West North
-            { 0, 0, 0},
-            // North West West
-            { 0, 0, 1},
+            if (zone >= ZONE_N && zone <= ZONE_NEN){
+                uint8_t data[12][4] ={
+                { 1, 0, 0}, // North
+                { 0, 0, 0}, // North West North
+                { 0, 0, 1}, // North West West
+                { 0, 1, 1}, // West
+                { 0, 2, 1}, // South West West
+                { 0, 2, 0}, // South West South
+                { 1, 2, 0}, // South
+                { 2, 2, 0}, // South East South
+                { 2, 2, 1}, // South East East
+                { 2, 1, 1}, // East
+                { 2, 0, 1}, // North East East
+                { 2, 0, 0}, // North East North
+                };
 
-            // West
-            { 0, 1, 1},
+                // d[0] 0=left or 1=middle, 2=right
+                // d[1] 0=top or 1=middle or 2=bottom
+                // d[2] 0=horizontal 1=vectical
 
-            // South West West
-            { 0, 2, 1},
-            // South West South
-            { 0, 2, 0},
+                auto & d = data[zone];
 
-            // South
-            { 1, 2, 0},
-
-            // South East South
-            { 2, 2, 0},
-            // South East East
-            { 2, 2, 1},
-
-            // East
-            { 2, 1, 1},
-
-            // North East East
-            { 2, 0, 1},
-            // North East North
-            { 2, 0, 0},
-            };
-
-            // d[0] 0=left or 1=middle, 2=right
-            // d[1] 0=top or 1=middle or 2=bottom
-            // d[2] 0=horizontal 1=vectical
-
-            auto & d = data[zone];
-
-            return Rect(
-                w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
-                w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
-                (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
-                (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
-            );
+                return Rect(
+                    w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
+                    w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
+                    (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
+                    (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
+                );
+            }
+            else {
+                return Rect(0,0,0,0);
+            }
         }
 
         static inline int get_button(size_t zone)
