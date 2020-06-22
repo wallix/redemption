@@ -86,136 +86,181 @@ struct MouseContext {
     Rect get_window_rect() const;
     Point get_window_offset() const;
 
+    struct Zone {
+
+        //                 title_bar_rect
+        //                       |
+        // +---------------------|---------------------------------------------------+
+        // | +----+              |                       +----+ +----+ +----+ +----+ |
+        // | |    |              |                       |    | |    | |    | |    | |
+        // | |  | |                                      |  | | |  | | |  | | |  | | |
+        // | +--|-+                                      +--|-+ +--|-+ +--|-+ +--|-+ |
+        // +----|-------------------------------------------|------|------|------|---+
+        //      |                                           |      |      |      |
+        //  title_bar_icon_rect     esize_hosted desktop_box rect  |      |      |
+        //                                            minimize_box rect   |      |
+        //                                                   maximize_box_rect   |
+        //                                                            close_box_rect
+
+        //    ZOONE_ICON = Rect(w.x+1, w.y+1,21, TITLE_BAR_HEIGHT-1);
+
+        //    ZONE_TITLE = Rect(w.x+22,
+        //                      w.y+1,
+        //                      w.cx-23-TITLE_BAR_BUTTON_WIDTH*(3+(allow_resize_hosted_desktop?1:0)),
+        //                      TITLE_BAR_HEIGHT-1);
+
+        //    if (allow_resize_hosted_desktop) {
+        //        ZONE_RESIZE = Rect(w.x + w.cx-1-TITLE_BAR_BUTTON_WIDTH*4,
+        //                           w.y + 1,
+        //                           TITLE_BAR_BUTTON_WIDTH,
+        //                           TITLE_BAR_HEIGHT-1);
+        //    }
+
+        //    ZONE_MINI = = Rect(w.x+w.cx-1-TITLE_BAR_BUTTON_WIDTH*3,
+        //                       w.y+1,
+        //                       TITLE_BAR_BUTTON_WIDTH,
+        //                       TITLE_BAR_HEIGHT-1);
+
+        //    ZONE_MAXI = Rect(w.x+w.cx-1-TITLE_BAR_BUTTON_WIDTH*2,
+        //                     w.y+1,
+        //                     TITLE_BAR_BUTTON_WIDTH,
+        //                     TITLE_BAR_HEIGHT-1);
+
+        //    ZONE_CLOSE = Rect(w.x+w.cx-1-TITLE_BAR_BUTTON_WIDTH,
+        //                      w.y+1,
+        //                      TITLE_BAR_BUTTON_WIDTH,
+        //                      TITLE_BAR_HEIGHT-1);;
+
+
+        //                          corner
+        //                        |-------|
+        //                  cx
+        //    |---------------------------|
+        //        1         0        11
+        //    +--NWN--\-----N-----|--NEN--+      +   +
+        //    |                           |      |   |
+        // 2 NWW                         NEE 10  |   | corner
+        //    |                           |      |   |
+        //    +         N = North         +      |   +
+        //    |         S = South         |      |
+        //    |         E = East          |      |
+        // 3  W         W = West          E 9    | cy
+        //    |                           |      |
+        //    |                           |      |
+        //    +                           +      |
+        //    |                           |      |
+        // 4 SWW                         SEE 8   |
+        //    |                           |      |
+        //    +--SWS--\-----S-----|--SES--+      °
+        //        5         6         7
+
+        enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN,
+               ZONE_ICON, ZONE_TITLE, ZONE_RESIZE, ZONE_MINI, ZONE_MAXI, ZONE_CLOSE };
+
+        static inline Rect get_zone(size_t zone, Rect w, uint16_t corner, uint16_t thickness)
+        {
+            uint8_t data[12][4] ={
+            // North
+            { 1, 0, 0},
+
+            // North West North
+            { 0, 0, 0},
+            // North West West
+            { 0, 0, 1},
+
+            // West
+            { 0, 1, 1},
+
+            // South West West
+            { 0, 2, 1},
+            // South West South
+            { 0, 2, 0},
+
+            // South
+            { 1, 2, 0},
+
+            // South East South
+            { 2, 2, 0},
+            // South East East
+            { 2, 2, 1},
+
+            // East
+            { 2, 1, 1},
+
+            // North East East
+            { 2, 0, 1},
+            // North East North
+            { 2, 0, 0},
+            };
+
+            // d[0] 0=left or 1=middle, 2=right
+            // d[1] 0=top or 1=middle or 2=bottom
+            // d[2] 0=horizontal 1=vectical
+
+            auto & d = data[zone];
+
+            return Rect(
+                w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
+                w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
+                (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
+                (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
+            );
+        }
+
+        static inline int get_button(size_t zone)
+        {
+            switch (zone){
+            case ZONE_N  : return MouseContext::MOUSE_BUTTON_PRESSED_NORTH;
+            case ZONE_NWN: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
+            case ZONE_NWW: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
+            case ZONE_W  : return MouseContext::MOUSE_BUTTON_PRESSED_WEST;
+            case ZONE_SWW: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
+            case ZONE_SWS: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
+            case ZONE_S  : return MouseContext::MOUSE_BUTTON_PRESSED_SOUTH;
+            case ZONE_SES: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
+            case ZONE_SEE: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
+            case ZONE_E  : return MouseContext::MOUSE_BUTTON_PRESSED_EAST;
+            case ZONE_NEE: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
+            case ZONE_NEN: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
+            }
+        }
+
+        static inline int get_pointer_type(size_t zone)
+        {
+            switch (zone){
+            case ZONE_N  : return Pointer::POINTER_SIZENS;
+            case ZONE_NWN: return Pointer::POINTER_SIZENWSE;
+            case ZONE_NWW: return Pointer::POINTER_SIZENWSE;
+            case ZONE_W  : return Pointer::POINTER_SIZEWE;
+            case ZONE_SWW: return Pointer::POINTER_SIZENESW;
+            case ZONE_SWS: return Pointer::POINTER_SIZENESW;
+            case ZONE_S  : return Pointer::POINTER_SIZENS;
+            case ZONE_SES: return Pointer::POINTER_SIZENWSE;
+            case ZONE_SEE: return Pointer::POINTER_SIZENWSE;
+            case ZONE_E  : return Pointer::POINTER_SIZEWE;
+            case ZONE_NEE: return Pointer::POINTER_SIZENESW;
+            case ZONE_NEN: return Pointer::POINTER_SIZENESW;
+            }
+        }
+
+        static inline Pointer get_pointer(size_t zone)
+        {
+            switch (zone){
+            case ZONE_N  : return size_NS_pointer();
+            case ZONE_NWN: return size_NESW_pointer();
+            case ZONE_NWW: return size_NESW_pointer();
+            case ZONE_W  : return size_WE_pointer();
+            case ZONE_SWW: return size_NESW_pointer();
+            case ZONE_SWS: return size_NESW_pointer();
+            case ZONE_S  : return size_NS_pointer();
+            case ZONE_SES: return size_NESW_pointer();
+            case ZONE_SEE: return size_NESW_pointer();
+            case ZONE_E  : return size_WE_pointer();
+            case ZONE_NEE: return size_NESW_pointer();
+            case ZONE_NEN: return size_NESW_pointer();
+            }
+        }
+    } zone;
+
 };
-
-//                          corner
-//                        |-------|
-//                  cx
-//    |---------------------------|
-//        1         0        11
-//    +--NWN--\-----N-----|--NEN--+      +   +
-//    |                           |      |   |
-// 2 NWW                         NEE 10  |   | corner
-//    |                           |      |   |
-//    +         N = North         +      |   +
-//    |         S = South         |      |
-//    |         E = East          |      |
-// 3  W         W = West          E 9    | cy
-//    |                           |      |
-//    |                           |      |
-//    +                           +      |
-//    |                           |      |
-// 4 SWW                         SEE 8   |
-//    |                           |      |
-//    +--SWS--\-----S-----|--SES--+      °
-//        5         6         7
-
-enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN };
-
-
-static inline int get_button(size_t zone)
-{
-    switch (zone){
-    case ZONE_N  : return MouseContext::MOUSE_BUTTON_PRESSED_NORTH;
-    case ZONE_NWN: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
-    case ZONE_NWW: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHWEST;
-    case ZONE_W  : return MouseContext::MOUSE_BUTTON_PRESSED_WEST;
-    case ZONE_SWW: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
-    case ZONE_SWS: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHWEST;
-    case ZONE_S  : return MouseContext::MOUSE_BUTTON_PRESSED_SOUTH;
-    case ZONE_SES: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
-    case ZONE_SEE: return MouseContext::MOUSE_BUTTON_PRESSED_SOUTHEAST;
-    case ZONE_E  : return MouseContext::MOUSE_BUTTON_PRESSED_EAST;
-    case ZONE_NEE: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
-    case ZONE_NEN: return MouseContext::MOUSE_BUTTON_PRESSED_NORTHEAST;
-    }
-}
-
-static inline int get_pointer_type(size_t zone)
-{
-    switch (zone){
-    case ZONE_N  : return Pointer::POINTER_SIZENS;
-    case ZONE_NWN: return Pointer::POINTER_SIZENWSE;
-    case ZONE_NWW: return Pointer::POINTER_SIZENWSE;
-    case ZONE_W  : return Pointer::POINTER_SIZEWE;
-    case ZONE_SWW: return Pointer::POINTER_SIZENESW;
-    case ZONE_SWS: return Pointer::POINTER_SIZENESW;
-    case ZONE_S  : return Pointer::POINTER_SIZENS;
-    case ZONE_SES: return Pointer::POINTER_SIZENWSE;
-    case ZONE_SEE: return Pointer::POINTER_SIZENWSE;
-    case ZONE_E  : return Pointer::POINTER_SIZEWE;
-    case ZONE_NEE: return Pointer::POINTER_SIZENESW;
-    case ZONE_NEN: return Pointer::POINTER_SIZENESW;
-    }
-}
-
-static inline Pointer get_pointer(size_t zone)
-{
-    switch (zone){
-    case ZONE_N  : return size_NS_pointer();
-    case ZONE_NWN: return size_NESW_pointer();
-    case ZONE_NWW: return size_NESW_pointer();
-    case ZONE_W  : return size_WE_pointer();
-    case ZONE_SWW: return size_NESW_pointer();
-    case ZONE_SWS: return size_NESW_pointer();
-    case ZONE_S  : return size_NS_pointer();
-    case ZONE_SES: return size_NESW_pointer();
-    case ZONE_SEE: return size_NESW_pointer();
-    case ZONE_E  : return size_WE_pointer();
-    case ZONE_NEE: return size_NESW_pointer();
-    case ZONE_NEN: return size_NESW_pointer();
-    }
-}
-
-
-static inline Rect get_zone(size_t zone, Rect w, uint16_t corner, uint16_t thickness)
-{
-
-    uint8_t data[12][4] ={
-    // North
-    { 1, 0, 0},
-
-    // North West North
-    { 0, 0, 0},
-    // North West West
-    { 0, 0, 1},
-
-    // West
-    { 0, 1, 1},
-
-    // South West West
-    { 0, 2, 1},
-    // South West South
-    { 0, 2, 0},
-
-    // South
-    { 1, 2, 0},
-
-    // South East South
-    { 2, 2, 0},
-    // South East East
-    { 2, 2, 1},
-
-    // East
-    { 2, 1, 1},
-
-    // North East East
-    { 2, 0, 1},
-    // North East North
-    { 2, 0, 0},
-    };
-
-    // d[0] 0=left or 1=middle, 2=right
-    // d[1] 0=top or 1=middle or 2=bottom
-    // d[2] 0=horizontal 1=vectical
-
-    auto & d = data[zone];
-
-    return Rect(
-        w.x + ((d[0]==0)?0:(d[0]==1)?corner:(w.cx-((d[2]==0)?corner:thickness))),
-        w.y + ((d[1]==0)?0:(d[1]==1)?corner:(w.cy-((d[2]==1)?corner:thickness))),
-        (d[0]==1)?w.cx-2*corner:(d[2]==0)?corner:thickness,
-        (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
-    );
-}
 

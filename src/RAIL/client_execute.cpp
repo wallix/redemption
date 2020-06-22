@@ -2013,12 +2013,12 @@ void ClientExecute::set_mouse_pointer(uint16_t xPos, uint16_t yPos, bool& mouse_
         }
     }
     else {
-        for (int i = ZONE_N ; i <= ZONE_NEN ; i++){
-            if (get_zone(i, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)){
-                auto pointer_type = get_pointer_type(i);
+        for (int i = MouseContext::Zone::ZONE_N ; i <= MouseContext::Zone::ZONE_NEN ; i++){
+            if (this->mouse_context.zone.get_zone(i, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)){
+                auto pointer_type = this->mouse_context.zone.get_pointer_type(i);
                 if (pointer_type != this->current_mouse_pointer_type){
                     this->current_mouse_pointer_type = pointer_type;
-                    auto pointer = get_pointer(i);
+                    auto pointer = this->mouse_context.zone.get_pointer(i);
                     this->drawable_.set_pointer(0, pointer, SetPointerMode::Insert);
                 }
                 return;
@@ -2053,9 +2053,9 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     self.pressed_mouse_button = MouseContext::MOUSE_BUTTON_PRESSED_TITLEBAR;
                 }
                 else {
-                    for (int i = ZONE_N ; i <= ZONE_NEN ; i++){
-                        if (get_zone(i, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)){
-                            self.pressed_mouse_button = get_button(i);
+                    for (int i = MouseContext::Zone::ZONE_N ; i <= MouseContext::Zone::ZONE_NEN ; i++){
+                        if (this->mouse_context.zone.get_zone(i, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)){
+                            self.pressed_mouse_button = this->mouse_context.zone.get_button(i);
                         }
                     }
                 }
@@ -2669,8 +2669,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }   // else if ((MouseContext::MOUSE_BUTTON_PRESSED_NONE != self.pressed_mouse_button) &&
     }   // else if (SlowPath::PTRFLAGS_BUTTON1 == pointerFlags)
     else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags) {
-        if ((get_zone(ZONE_N, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
-        || get_zone(ZONE_S, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
+        if ((this->mouse_context.zone.get_zone(MouseContext::Zone::ZONE_N, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos)
+        || this->mouse_context.zone.get_zone(MouseContext::Zone::ZONE_S, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
         && !this->maximized) {
             Rect work_area_rect = this->get_current_work_area_rect();
 
@@ -2722,7 +2722,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
             this->update_widget();
 
             this->on_new_or_existing_window(adjusted_window_rect);
-        }   // if (get_zone(ZONE_S, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
+        }   // if (this->mouse_context.zone.get_zone(MouseContext::Zone::ZONE_S, self.window_rect, TITLE_BAR_HEIGHT, BORDER_WIDTH_HEIGHT).contains_pt(xPos, yPos))
         else if (self.title_bar_rect.contains_pt(xPos, yPos)) {
             this->maximize_restore_window();
         }   // else if (self.title_bar_rect.contains_pt(xPos, yPos))

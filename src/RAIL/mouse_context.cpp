@@ -32,56 +32,20 @@
 
 void MouseContext::update_rects(const bool allow_resize_hosted_desktop)
 {
-    LOG_IF(this->verbose, LOG_INFO, "MouseContext::update_rects()");
-
     if ((this->window_rect.cx - 2) % 4) {
         this->window_rect.cx -= ((this->window_rect.cx - 2) % 4);
     }
 
-    this->title_bar_rect = this->window_rect;
-    this->title_bar_rect.cy = TITLE_BAR_HEIGHT;
-    this->title_bar_rect.x++;
-    this->title_bar_rect.y++;
-    this->title_bar_rect.cx -= 2;
-    this->title_bar_rect.cy--;
-
-    this->title_bar_icon_rect    = this->title_bar_rect;
-    this->title_bar_icon_rect.cx = 3 + 16 + 2;
-
-    if (allow_resize_hosted_desktop) {
-        this->resize_hosted_desktop_box_rect     = this->title_bar_rect;
-        this->resize_hosted_desktop_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 4;
-        this->resize_hosted_desktop_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
-    }
-
-    this->minimize_box_rect     = this->title_bar_rect;
-    this->minimize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 3;
-    this->minimize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
-
-    this->maximize_box_rect     = this->title_bar_rect;
-    this->maximize_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH * 2;
-    this->maximize_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
-
-    this->close_box_rect     = this->title_bar_rect;
-    this->close_box_rect.x  += this->title_bar_rect.cx - TITLE_BAR_BUTTON_WIDTH;
-    this->close_box_rect.cx  = TITLE_BAR_BUTTON_WIDTH;
-
-    this->title_bar_rect.cx -= TITLE_BAR_BUTTON_WIDTH * (3 + (allow_resize_hosted_desktop? 1 : 0));
-
-    this->title_bar_rect.x  += 3 + 16 + 2;
-    this->title_bar_rect.cx -= 3 + 16 + 2;
 }   // update_rects
 
 
 Rect MouseContext::get_window_rect() const
 {
-    LOG_IF(this->verbose, LOG_INFO, "MouseContext::get_window_rect() -> %s", this->window_rect);
     return this->window_rect;
 }
 
 Point MouseContext::get_window_offset() const
 {
-    LOG_IF(this->verbose, LOG_INFO, "MouseContext::get_window_offset() -> (%d,%d)", this->window_offset_x, this->window_offset_y);
     return Point(this->window_offset_x, this->window_offset_y);
 }
 

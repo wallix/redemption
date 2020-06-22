@@ -234,18 +234,19 @@ RED_AUTO_TEST_CASE(TestDirections)
 {
     Rect window(100,100,200,200);
 
-    RED_CHECK(Rect(130,100,140,4) == get_zone(0, window, 30, 4));
-    RED_CHECK(Rect(100,100,30,4) == get_zone(1, window, 30, 4));
-    RED_CHECK(Rect(100,100,4,30) == get_zone(2, window, 30, 4));
-    RED_CHECK(Rect(100,130,4,140) == get_zone(3, window, 30, 4));
-    RED_CHECK(Rect(100,270,4,30) == get_zone(4, window, 30, 4));
-    RED_CHECK(Rect(100,296,30,4) == get_zone(5, window, 30, 4));
-    RED_CHECK(Rect(130,296,140,4) == get_zone(6, window, 30, 4));
-    RED_CHECK(Rect(270,296,30,4) == get_zone(7, window, 30, 4));
-    RED_CHECK(Rect(296,270,4,30) == get_zone(8, window, 30, 4));
-    RED_CHECK(Rect(296,130,4,140) == get_zone(9, window, 30, 4));
-    RED_CHECK(Rect(296,100,4,30) == get_zone(10, window, 30, 4));
-    RED_CHECK(Rect(270,100,30,4) == get_zone(11, window, 30, 4));
+    MouseContext::Zone zone;
 
+    RED_CHECK(Rect(130,100,140,4) == zone.get_zone(0, window, 30, 4));
+    RED_CHECK(Rect(100,100,30,4) == zone.get_zone(1, window, 30, 4));
+    RED_CHECK(Rect(100,100,4,30) == zone.get_zone(2, window, 30, 4));
+    RED_CHECK(Rect(100,130,4,140) == zone.get_zone(3, window, 30, 4));
+    RED_CHECK(Rect(100,270,4,30) == zone.get_zone(4, window, 30, 4));
+    RED_CHECK(Rect(100,296,30,4) == zone.get_zone(5, window, 30, 4));
+    RED_CHECK(Rect(130,296,140,4) == zone.get_zone(6, window, 30, 4));
+    RED_CHECK(Rect(270,296,30,4) == zone.get_zone(7, window, 30, 4));
+    RED_CHECK(Rect(296,270,4,30) == zone.get_zone(8, window, 30, 4));
+    RED_CHECK(Rect(296,130,4,140) == zone.get_zone(9, window, 30, 4));
+    RED_CHECK(Rect(296,100,4,30) == zone.get_zone(10, window, 30, 4));
+    RED_CHECK(Rect(270,100,30,4) == zone.get_zone(11, window, 30, 4));
 
 }
