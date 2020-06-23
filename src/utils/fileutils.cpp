@@ -412,7 +412,7 @@ int recursive_delete_directory(const char * directory_path)
     return return_value;
 }
 
-FileContentsError append_file_contents(const char * filename, std::string& buffer)
+FileContentsError append_file_contents(const char * filename, std::string& buffer, off_t max_size)
 {
     if (unique_fd ufd{open(filename, O_RDONLY)}) {
         struct stat statbuf;
@@ -420,7 +420,7 @@ FileContentsError append_file_contents(const char * filename, std::string& buffe
             return FileContentsError::Stat;
         }
 
-        ssize_t remaining = statbuf.st_size;
+        ssize_t remaining = std::min(statbuf.st_size, max_size);
         buffer.resize(buffer.size() + remaining);
         auto* p = buffer.data() + buffer.size() - remaining;
         ssize_t r;
