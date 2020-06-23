@@ -162,8 +162,7 @@ CloseMod::~CloseMod()
 void CloseMod::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
-        this->rail_client_execute.ready(
-            *this, this->front_width, this->front_height, this->font(),
+        this->rail_client_execute.ready(*this, this->front_width, this->front_height, this->font(),
             this->is_resizing_hosted_desktop_allowed());
 
         this->dvc_manager.ready(this->front);

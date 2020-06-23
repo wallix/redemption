@@ -251,11 +251,11 @@ RED_AUTO_TEST_CASE(TestDirections)
     RED_CHECK(Rect(296,100,4,30) == zone.get_zone(MouseContext::Zone::ZONE_NEE, window));
     RED_CHECK(Rect(270,100,30,4) == zone.get_zone(MouseContext::Zone::ZONE_NEN, window));
 
-    RED_CHECK(Rect(0,0,0,0) == zone.get_zone(MouseContext::Zone::ZONE_ICON, window));
-    RED_CHECK(Rect(0,0,0,0) == zone.get_zone(MouseContext::Zone::ZONE_TITLE, window));
-    RED_CHECK(Rect(0,0,0,0) == zone.get_zone(MouseContext::Zone::ZONE_RESIZE, window));
-    RED_CHECK(Rect(0,0,0,0) == zone.get_zone(MouseContext::Zone::ZONE_MINI, window));
-    RED_CHECK(Rect(0,0,0,0) == zone.get_zone(MouseContext::Zone::ZONE_MAXI, window));
-    RED_CHECK(Rect(0,0,0,0) == zone.get_zone(MouseContext::Zone::ZONE_CLOSE, window));
+    RED_CHECK(Rect(101,101,21,29) == zone.get_zone(MouseContext::Zone::ZONE_ICON, window));
+    RED_CHECK(Rect(122,101,66,29) == zone.get_zone(MouseContext::Zone::ZONE_TITLE, window));
+    RED_CHECK(Rect(151,101,37,29) == zone.get_zone(MouseContext::Zone::ZONE_RESIZE, window));
+    RED_CHECK(Rect(188,101,37,29) == zone.get_zone(MouseContext::Zone::ZONE_MINI, window));
+    RED_CHECK(Rect(225,101,37,29) == zone.get_zone(MouseContext::Zone::ZONE_MAXI, window));
+    RED_CHECK(Rect(262,101,37,29) == zone.get_zone(MouseContext::Zone::ZONE_CLOSE, window));
 
 }

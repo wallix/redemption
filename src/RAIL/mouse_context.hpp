@@ -97,39 +97,10 @@ struct MouseContext {
         // | +--|-+                                      +--|-+ +--|-+ +--|-+ +--|-+ |
         // +----|-------------------------------------------|------|------|------|---+
         //      |                                           |      |      |      |
-        //  title_bar_icon_rect     esize_hosted desktop_box rect  |      |      |
+        //  title_bar_icon_rect    resize_hosted desktop_box rect  |      |      |
         //                                            minimize_box rect   |      |
         //                                                   maximize_box_rect   |
         //                                                            close_box_rect
-
-        //    ZOONE_ICON = Rect(w.x+1, w.y+1,21, TITLE_BAR_HEIGHT-1);
-
-        //    ZONE_TITLE = Rect(w.x+22,
-        //                      w.y+1,
-        //                      w.cx-23-TITLE_BAR_BUTTON_WIDTH*(3+(allow_resize_hosted_desktop?1:0)),
-        //                      TITLE_BAR_HEIGHT-1);
-
-        //    if (allow_resize_hosted_desktop) {
-        //        ZONE_RESIZE = Rect(w.x + w.cx-1-TITLE_BAR_BUTTON_WIDTH*4,
-        //                           w.y + 1,
-        //                           TITLE_BAR_BUTTON_WIDTH,
-        //                           TITLE_BAR_HEIGHT-1);
-        //    }
-
-        //    ZONE_MINI = = Rect(w.x+w.cx-1-TITLE_BAR_BUTTON_WIDTH*3,
-        //                       w.y+1,
-        //                       TITLE_BAR_BUTTON_WIDTH,
-        //                       TITLE_BAR_HEIGHT-1);
-
-        //    ZONE_MAXI = Rect(w.x+w.cx-1-TITLE_BAR_BUTTON_WIDTH*2,
-        //                     w.y+1,
-        //                     TITLE_BAR_BUTTON_WIDTH,
-        //                     TITLE_BAR_HEIGHT-1);
-
-        //    ZONE_CLOSE = Rect(w.x+w.cx-1-TITLE_BAR_BUTTON_WIDTH,
-        //                      w.y+1,
-        //                      TITLE_BAR_BUTTON_WIDTH,
-        //                      TITLE_BAR_HEIGHT-1);;
 
 
         //                          corner
@@ -156,13 +127,24 @@ struct MouseContext {
 
         uint16_t corner = 24; // TITLE_BAR_HEIGHT
         uint16_t thickness = 3; // BORDER_WIDTH_HEIGHT
+        uint16_t button_width = 37; // TITLE_BAR_BUTTON_WIDTH
+        bool allow_resize = false;
 
         enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN,
-               ZONE_ICON, ZONE_TITLE, ZONE_RESIZE, ZONE_MINI, ZONE_MAXI, ZONE_CLOSE };
+               ZONE_ICON, ZONE_TITLE, ZONE_CLOSE, ZONE_MAXI, ZONE_MINI, ZONE_RESIZE};
 
         inline Rect get_zone(size_t zone, Rect w)
         {
-
+//            if (allow_resize_hosted_desktop)
+            if (zone >= ZONE_CLOSE && zone <= ZONE_RESIZE){
+                return Rect(w.x + w.cx-1-button_width*(zone-ZONE_CLOSE+1), w.y + 1, button_width, corner-1);
+            }
+            if (zone == ZONE_TITLE){
+                return Rect(w.x+22, w.y+1, w.cx-23-button_width*3, corner-1);
+            }
+            if (zone == ZONE_ICON){
+                return Rect(w.x+1, w.y+1,21, corner-1);
+            }
             if (zone >= ZONE_N && zone <= ZONE_NEN){
                 uint8_t data[12][4] ={
                 { 1, 0, 0}, // North
@@ -192,9 +174,7 @@ struct MouseContext {
                     (d[1]==1)?w.cy-2*corner:(d[2]==1)?corner:thickness
                 );
             }
-            else {
-                return Rect(0,0,0,0);
-            }
+            return Rect(0,0,0,0);
         }
 
         static inline int get_button(size_t zone)
