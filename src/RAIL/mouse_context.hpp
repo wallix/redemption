@@ -61,8 +61,6 @@ struct MouseContext {
     Rect window_rect_normal;
     Rect window_rect_old;
 
-    Rect title_bar_icon_rect;
-    Rect title_bar_rect;
     Rect close_box_rect;
     Rect minimize_box_rect;
     Rect maximize_box_rect;
