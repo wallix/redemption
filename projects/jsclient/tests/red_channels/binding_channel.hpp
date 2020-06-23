@@ -353,9 +353,7 @@ using js_function_ptr_t = typename js_function_ptr<PtrFunc>::type;
         );                                                                   \
                                                                              \
         return std::unique_ptr<test_channel_data::ChannelType ## _js>(       \
-            reinterpret_cast<test_channel_data::ChannelType ## _js*>(        \
-                iptr                                                         \
-            )                                                                \
+            reinterpret_cast<test_channel_data::ChannelType ## _js*>(iptr)   \
         );                                                                   \
     }
 

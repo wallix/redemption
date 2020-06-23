@@ -10,14 +10,6 @@ const redemptionLoadModule = function(Module, window)
         };
     };
 
-    const wCb_em2js_ImageData = function(cb, thisp) {
-        return function(idata, w, h, ...args) {
-            const array = new Uint8ClampedArray(HEAPU8.buffer, idata, w * h * 4);
-            const image = new ImageData(array, w, h);
-            return cb.call(thisp, image, ...args);
-        };
-    };
-
     const noop = function(){};
 
     // { funcname: [wrapCreator, defaultFunction], ... }
@@ -40,8 +32,8 @@ const redemptionLoadModule = function(Module, window)
         drawPatBlt: identity,
         drawFrameMarker: identity,
 
-        setPointer: wCb_em2js_ImageData,
-        newPointer: wCb_em2js_ImageData,
+        setPointer: identity,
+        newPointer: identity,
         cachedPointer: identity,
 
         resizeCanvas: identity,
@@ -127,7 +119,7 @@ const redemptionLoadModule = function(Module, window)
         }
 
         sendBufferedData() {
-            const out = this.native.getSendingData();
+            const out = this.native.getOutputData();
             if (out.length) {
                 this.socket.send(out);
 
@@ -139,12 +131,12 @@ const redemptionLoadModule = function(Module, window)
                 // this.counter = (this.counter || 0) + 1
                 // console.log(this.counter, "Send: " + text);
 
-                this.native.clearSendingData();
+                this.native.resetOutputData();
             }
         }
 
         addReceivingData(data) {
-            this.native.addReceivingData(data);
+            this.native.pushInputData(data);
         }
     };
 

@@ -10,6 +10,7 @@ class RDPGraphics
 {
     constructor(canvasElement, module) {
         this.module = module;
+        this.buffer = this.module.HEAPU8.buffer;
         this.imgBufferSize = 64*64*4;
         this.imgBufferIndex = module._malloc(this.imgBufferSize);
 
@@ -60,8 +61,7 @@ class RDPGraphics
         // assume w*h <= 64*64
         this.module.loadRgbaImageFromIndex(this.imgBufferIndex,
                                            byteOffset, bitsPerPixel, w, h, lineSize);
-        const array = this.module.HEAPU8.subarray(this.imgBufferIndex,
-                                                  this.imgBufferIndex + w*h*4);
+        const array = this.buffer.slice(this.imgBufferIndex, this.imgBufferIndex + w*h*4);
         // array is copied by Uint8ClampedArray
         this.cacheImages[imageIdx] = new ImageData(new Uint8ClampedArray(array), w, h);
     }
@@ -187,7 +187,7 @@ class RDPGraphics
         }
 
         // buffer is referenced by Uint8ClampedArray
-        const array = new Uint8ClampedArray(this.module.buffer, destOffset, w*h*4);
+        const array = new Uint8ClampedArray(this.buffer, destOffset, w*h*4);
         this.canvas.putImageData(new ImageData(array, w, h), ...args);
     }
 
@@ -372,21 +372,23 @@ class RDPGraphics
         }
     }
 
-    _image2CSS(image, x, y) {
-        this.ecusorCanvas.width = image.width;
-        this.ecusorCanvas.height = image.height;
+    _image2CSS(idata, w, h, x, y) {
+        const array = new Uint8ClampedArray(this.buffer, idata, w * h * 4);
+        const image = new ImageData(array, w, h);
+        this.ecusorCanvas.width = w;
+        this.ecusorCanvas.height = h;
         this.cusorCanvas.putImageData(image, 0, 0);
         const dataURL = this.ecusorCanvas.toDataURL();
         // console.log('url(' + dataURL + ') ' + x + ' ' + y + ', auto');
         return 'url(' + dataURL + ') ' + x + ' ' + y + ', auto';
     }
 
-    setPointer(image, x, y) {
-        this.ecanvas.style.cursor = this._image2CSS(image, x, y);
+    setPointer(idata, w, h, x, y) {
+        this.ecanvas.style.cursor = this._image2CSS(idata, w, h, x, y);
     }
 
-    newPointer(image, offset, x, y) {
-        const data = this._image2CSS(image, x, y);
+    newPointer(idata, w, h, offset, x, y) {
+        const data = this._image2CSS(idata, w, h, x, y);
         this.cachePointers[offset] = data;
         this.ecanvas.style.cursor = data;
     }
