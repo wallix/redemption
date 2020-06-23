@@ -40,10 +40,6 @@ const redemptionLoadModule = function(Module, window)
         updatePointerPosition: identity,
     };
 
-    const wrappersFront = {
-        random: identity,
-    };
-
     const wrapEvents = function(wrappedEvents, wrappers, events, defaultCb) {
         for (const eventName in wrappers) {
             const wrapCb = wrappers[eventName];
@@ -54,26 +50,8 @@ const redemptionLoadModule = function(Module, window)
 
 
     class RDPClient {
-        constructor(socket, width, height, events, username, password, disabledOrders, verbosity) {
-            const rdpEvents = {};
-            wrapEvents(rdpEvents, wrappersGd, events, undefined);
-            wrapEvents(rdpEvents, wrappersFront, events, undefined);
-            rdpEvents.drawFrameMarker = rdpEvents.drawFrameMarker || noop;
-            rdpEvents.updatePointerPosition = rdpEvents.updatePointerPosition || noop;
-            rdpEvents.random = rdpEvents.random || function(idata, len) {
-                const data = HEAPU8.subarray(idata, idata + len);
-                window.crypto.getRandomValues(data);
-            }
-
-            verbosity = verbosity || 0;
-
-            this.native = new Module.RdpClient(
-                rdpEvents, width, height,
-                username || "", password || "",
-                disabledOrders || 0,
-                verbosity & 0xffffffff,
-                (verbosity > 0xffffffff ? verbosity - 0xffffffff : 0)
-            );
+        constructor(socket, graphics, config) {
+            this.native = new Module.RdpClient(graphics, config);
             this.socket = socket;
             this._channels = [];
         }

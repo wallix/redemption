@@ -9,27 +9,30 @@ const rgbToCss = function(color) {
 class RDPGraphics
 {
     constructor(canvasElement, module) {
-        this.module = module;
-        this.buffer = this.module.HEAPU8.buffer;
-        this.imgBufferSize = 64*64*4;
-        this.imgBufferIndex = module._malloc(this.imgBufferSize);
+        // this.width = canvasElement.width;
+        // this.height = canvasElement.height;
 
-        this.ecanvas = canvasElement
-        this.canvas = canvasElement.getContext('2d');
-        this.ecusorCanvas = document.createElement('canvas')
-        this.cusorCanvas = this.ecusorCanvas.getContext('2d');
-        this.cachePointers = [];
-        this.cacheImages = [];
+        this._module = module;
+        this._buffer = module.HEAPU8.buffer;
+        this._imgBufferSize = 64*64*4;
+        this._imgBufferIndex = module._malloc(this._imgBufferSize);
 
-        this.width = canvasElement.width;
-        this.height = canvasElement.height;
+        this._ecanvas = canvasElement
+        this._canvas = canvasElement.getContext('2d');
+        this._ecusorCanvas = document.createElement('canvas')
+        this._cusorCanvas = this._ecusorCanvas.getContext('2d');
+        this._cachePointers = [];
+        this._cacheImages = [];
 
-        this.canvas.imageSmoothingEnabled = false;
+        this._canvas.imageSmoothingEnabled = false;
     }
 
     free() {
         console.log('RDPGraphics: free memory')
-        this.module._free(this.imgBufferIndex);
+        this._module._free(this._imgBufferIndex);
+    }
+
+    frameMarker(isFrameStart) {
     }
 
     unsupportedRop(cmd, rop) {
@@ -37,15 +40,17 @@ class RDPGraphics
     }
 
     resizeCanvas(w, h, /*bpp*/) {
-        if (this.ecanvas.width !== w || this.ecanvas.height !== h) {
+        console.log('RDPGraphics: resize(' + w + ', ' + h + ')');
+        this.width = w;
+        this.height = h;
+
+        if (this._ecanvas.width !== w || this._ecanvas.height !== h) {
             // restore canvas after resize
-            const imgData = this.canvas.getImageData(
-                0, 0, this.ecanvas.width, this.ecanvas.height);
-            this.ecanvas.width = w;
-            this.ecanvas.height = h;
-            this.width = w;
-            this.height = h;
-            this.canvas.putImageData(imgData, 0, 0);
+            const imgData = this._canvas.getImageData(
+                0, 0, this._ecanvas.width, this._ecanvas.height);
+            this._ecanvas.width = w;
+            this._ecanvas.height = h;
+            this._canvas.putImageData(imgData, 0, 0);
         }
     }
 
@@ -54,16 +59,16 @@ class RDPGraphics
         cache1_nb_entries, cache1_bmp_size, cache1_is_persistent,
         cache2_nb_entries, cache2_bmp_size, cache2_is_persistent,
     ) {
-        this.cacheImages.length = cache0_nb_entries + cache1_nb_entries + cache2_nb_entries;
+        this._cacheImages.length = cache0_nb_entries + cache1_nb_entries + cache2_nb_entries;
     }
 
     setBmpCacheIndex(byteOffset, bitsPerPixel, w, h, lineSize, imageIdx) {
         // assume w*h <= 64*64
-        this.module.loadRgbaImageFromIndex(this.imgBufferIndex,
+        this._module.loadRgbaImageFromIndex(this._imgBufferIndex,
                                            byteOffset, bitsPerPixel, w, h, lineSize);
-        const array = this.buffer.slice(this.imgBufferIndex, this.imgBufferIndex + w*h*4);
+        const array = this._buffer.slice(this._imgBufferIndex, this._imgBufferIndex + w*h*4);
         // array is copied by Uint8ClampedArray
-        this.cacheImages[imageIdx] = new ImageData(new Uint8ClampedArray(array), w, h);
+        this._cacheImages[imageIdx] = new ImageData(new Uint8ClampedArray(array), w, h);
     }
 
     _transformCopyImage(img, sx, sy, dx, dy, dw, dh, f) {
@@ -86,11 +91,11 @@ class RDPGraphics
 
         const array = new Uint8ClampedArray(destU32a.data.buffer);
         const newImg = new ImageData(array, dw, dh);
-        this.canvas.putImageData(newImg, x, y);
+        this._canvas.putImageData(newImg, x, y);
     }
 
     drawMemBlt(imageIdx, rop, sx, sy, dx, dy, dw, dh) {
-        const img = this.cacheImages[imageIdx];
+        const img = this._cacheImages[imageIdx];
         dw = Math.min(img.width - sx, this.width - dx, dw);
         dh = Math.min(img.height - sy, this.height - dy, dh);
 
@@ -100,8 +105,8 @@ class RDPGraphics
 
         switch (rop) {
             case 0x00:
-                this.canvas.fillStyle = "#000";
-                this.canvas.fillRect(dx, dy, dw, dh);
+                this._canvas.fillStyle = "#000";
+                this._canvas.fillRect(dx, dy, dw, dh);
                 break;
 
             case 0x55:
@@ -109,7 +114,7 @@ class RDPGraphics
                 break;
 
             case 0xCC:
-                this.canvas.putImageData(img, dx, dy, sx, sy, dw, dh);
+                this._canvas.putImageData(img, dx, dy, sx, sy, dw, dh);
                 break;
 
             case 0x22:
@@ -133,8 +138,8 @@ class RDPGraphics
                 break;
 
             case 0xff:
-                this.canvas.fillStyle = "#fff";
-                this.canvas.fillRect(dx, dy, dw, dh);
+                this._canvas.fillStyle = "#fff";
+                this._canvas.fillRect(dx, dy, dw, dh);
                 break;
 
             default:
@@ -146,7 +151,7 @@ class RDPGraphics
     drawMem3Blt(brushData, orgX, orgY, style,
                 imageIdx, rop, sx, sy, dx, dy, dw, dh, backColor, foreColor
     ) {
-        const img = this.cacheImages[imageIdx];
+        const img = this._cacheImages[imageIdx];
         dw = Math.min(img.width - sx, this.width - dx, dw);
         dh = Math.min(img.height - sy, this.height - dy, dh);
 
@@ -172,14 +177,14 @@ class RDPGraphics
         let destOffset;
         if (bitsPerPixel != 32) {
             const bufferSize = w*h*4;
-            if (bufferSize > this.imgBufferSize) {
-                this.module._free(this.imgBufferIndex);
-                this.imgBufferSize = bufferSize;
-                this.imgBufferIndex = this.module._malloc(bufferSize);
+            if (bufferSize > this._imgBufferSize) {
+                this._module._free(this._imgBufferIndex);
+                this._imgBufferSize = bufferSize;
+                this._imgBufferIndex = this._module._malloc(bufferSize);
             }
 
-            destOffset = this.imgBufferIndex;
-            this.module.loadRgbaImageFromIndex(destOffset, byteOffset,
+            destOffset = this._imgBufferIndex;
+            this._module.loadRgbaImageFromIndex(destOffset, byteOffset,
                                                bitsPerPixel, w, h, lineSize);
         }
         else {
@@ -187,21 +192,21 @@ class RDPGraphics
         }
 
         // buffer is referenced by Uint8ClampedArray
-        const array = new Uint8ClampedArray(this.buffer, destOffset, w*h*4);
-        this.canvas.putImageData(new ImageData(array, w, h), ...args);
+        const array = new Uint8ClampedArray(this._buffer, destOffset, w*h*4);
+        this._canvas.putImageData(new ImageData(array, w, h), ...args);
     }
 
     drawRect(x, y, w, h, color) {
         // console.log('drawRect');
-        this.canvas.fillStyle = rgbToCss(color);
-        this.canvas.fillRect(x,y,w,h);
+        this._canvas.fillStyle = rgbToCss(color);
+        this._canvas.fillRect(x,y,w,h);
     }
 
     drawScrBlt(sx, sy, w, h, dx, dy, rop) {
         // console.log('drawScrBlt');
-        const sourceImageData = this.canvas.getImageData(sx, sy, w, h);
+        const sourceImageData = this._canvas.getImageData(sx, sy, w, h);
         if (rop === 0xCC) {
-            this.canvas.putImageData(sourceImageData, dx, dy);
+            this._canvas.putImageData(sourceImageData, dx, dy);
         }
         else {
             let op;
@@ -212,17 +217,17 @@ class RDPGraphics
                 case 0xFF: op = 'lighten'; break;
                 default: op = 'source-over'; break;
             }
-            this.canvas.globalCompositeOperation = op;
-            this.canvas.putImageData(sourceImageData, dx, dy);
-            this.canvas.globalCompositeOperation = 'source-over';
+            this._canvas.globalCompositeOperation = op;
+            this._canvas.putImageData(sourceImageData, dx, dy);
+            this._canvas.globalCompositeOperation = 'source-over';
         }
     }
 
     drawLineTo(backMode, startX, startY, endX, endY, backColor, penStyle, penWidth, penColor) {
         // console.log('drawLineTo');
-        this.canvas.save();
-        this.canvas.fillStyle = rgbToCss(backColor);
-        this.canvas.strokeStyle = rgbToCss(penColor);
+        this._canvas.save();
+        this._canvas.fillStyle = rgbToCss(backColor);
+        this._canvas.strokeStyle = rgbToCss(penColor);
         // behavior of stroke is strange (transparency color with a odd penWidth)
         if (!penStyle && startX === endX) {
             if (endX < startX) {
@@ -231,7 +236,7 @@ class RDPGraphics
             if (endY < startY) {
                 [startY, endY] = [endY, startY];
             }
-            this.canvas.fillRect(startX, startY, penWidth||1, endY-startY+1);
+            this._canvas.fillRect(startX, startY, penWidth||1, endY-startY+1);
         }
         else if (!penStyle && startY === endY) {
             if (endY < startY) {
@@ -240,57 +245,57 @@ class RDPGraphics
             if (endX < startX) {
                 [startX, endX] = [endX, startX];
             }
-            this.canvas.fillRect(startX, startY, endX-startX+1, penWidth||1);
+            this._canvas.fillRect(startX, startY, endX-startX+1, penWidth||1);
         }
         else {
-            this.canvas.beginPath();
-            this.canvas.moveTo(startX, startY);
-            this.canvas.lineTo(endX, endY);
-            this.canvas.lineWidth = penWidth;
+            this._canvas.beginPath();
+            this._canvas.moveTo(startX, startY);
+            this._canvas.lineTo(endX, endY);
+            this._canvas.lineWidth = penWidth;
             switch (penStyle) {
-                case 1: this.canvas.setLineDash([ 10, 6, 10, 6 ]); break;
-                case 2: this.canvas.setLineDash([ 3, 3, 3, 3 ]); break;
-                case 3: this.canvas.setLineDash([ 9, 6, 3, 6 ]); break;
-                case 4: this.canvas.setLineDash([ 9, 3, 3, 3 ]); break;
-                case 5: this.canvas.setLineDash([ 16, 0, 16, 0 ]); break;
+                case 1: this._canvas.setLineDash([ 10, 6, 10, 6 ]); break;
+                case 2: this._canvas.setLineDash([ 3, 3, 3, 3 ]); break;
+                case 3: this._canvas.setLineDash([ 9, 6, 3, 6 ]); break;
+                case 4: this._canvas.setLineDash([ 9, 3, 3, 3 ]); break;
+                case 5: this._canvas.setLineDash([ 16, 0, 16, 0 ]); break;
             }
             // BackMode does not imply the transparency level of what is about too be drawn
             // canvas.globalAlpha = (backMode === 1 /* TRANSPARENT */? 0.0 : 1.0);
-            this.canvas.stroke();
+            this._canvas.stroke();
         }
-        this.canvas.restore();
+        this._canvas.restore();
     }
 
     drawPolyline(startX, startY, deltas, clipX, clipY, clipW, clipH, penColor) {
         // console.log('drawPolyline');
-        this.canvas.save();
-        this.canvas.strokeStyle = rgbToCss(penColor);
-        this.canvas.beginPath();
-        this.canvas.moveTo(startX, startY);
+        this._canvas.save();
+        this._canvas.strokeStyle = rgbToCss(penColor);
+        this._canvas.beginPath();
+        this._canvas.moveTo(startX, startY);
         let endX = startX;
         let endY = startY;
         const iend = deltas.length
         for (let i = 0; i < iend; i += 2) {
             endX += deltas[i];
             endY += deltas[i+1];
-            this.canvas.lineTo(endX, endY);
+            this._canvas.lineTo(endX, endY);
         }
-        this.canvas.stroke();
-        this.canvas.restore();
+        this._canvas.stroke();
+        this._canvas.restore();
     }
 
     _transformPixels(x, y, w, h, f) {
-        const imgData = this.canvas.getImageData(x, y, w, h);
+        const imgData = this._canvas.getImageData(x, y, w, h);
         const u32a = new Uint32Array(imgData.data.buffer);
         const len = imgData.width * imgData.height;
         for (let i = 0; i < len; ++i) {
             u32a[i] = f(u32a[i] & 0xffffff) | 0xff000000;
         }
-        this.canvas.putImageData(imgData, x, y);
+        this._canvas.putImageData(imgData, x, y);
     }
 
     _transformPixelsBrush(orgX, orgY, w, h, backColor, foreColor, brushData, f) {
-        const imgData = this.canvas.getImageData(orgX, orgY, w, h);
+        const imgData = this._canvas.getImageData(orgX, orgY, w, h);
         const u32a = new Uint32Array(imgData.data.buffer);
         w = imgData.width;
         h = imgData.height;
@@ -303,14 +308,14 @@ class RDPGraphics
                           | 0xff000000;
             }
         }
-        this.canvas.putImageData(imgData, orgX, orgY);
+        this._canvas.putImageData(imgData, orgX, orgY);
     }
 
     drawPatBlt(brushData, orgX, orgY, style, x, y, w, h, rop, backColor, foreColor) {
         switch (rop) {
             case 0x00:
-                this.canvas.fillStyle = "#000";
-                this.canvas.fillRect(x,y,w,h);
+                this._canvas.fillStyle = "#000";
+                this._canvas.fillRect(x,y,w,h);
                 break;
             case 0x05: this._transformPixels(x,y,w,h, (src) => ~(backColor | src)); break;
             case 0x0f: this._transformPixels(x,y,w,h, (src) => ~src); break;
@@ -336,15 +341,15 @@ class RDPGraphics
                                                (src,c) => src);
                 }
                 else {
-                    this.canvas.fillStyle = rgbToCss(backColor);
-                    this.canvas.fillRect(x,y,w,h);
+                    this._canvas.fillStyle = rgbToCss(backColor);
+                    this._canvas.fillRect(x,y,w,h);
                 }
                 break;
             case 0xfa: this._transformPixels(x,y,w,h, (src) => src | backColor); break;
             case 0xf5: this._transformPixels(x,y,w,h, (src) => src | ~backColor); break;
             case 0xff:
-                this.canvas.fillStyle = "#fff";
-                this.canvas.fillRect(x,y,w,h);
+                this._canvas.fillStyle = "#fff";
+                this._canvas.fillRect(x,y,w,h);
                 break;
 
             default:
@@ -356,14 +361,14 @@ class RDPGraphics
     drawDestBlt(x, y, w, h, rop) {
         switch (rop) {
         case 0x00:
-            this.canvas.fillStyle = "#000";
-            this.canvas.fillRect(x,y,w,h);
+            this._canvas.fillStyle = "#000";
+            this._canvas.fillRect(x,y,w,h);
             break;
         case 0x55: this._transformPixels(x,y,w,h, (src) => src ^ 0xffffff); break;
         // case 0xAA: break;
         case 0xff:
-            this.canvas.fillStyle = "#fff";
-            this.canvas.fillRect(x,y,w,h);
+            this._canvas.fillStyle = "#fff";
+            this._canvas.fillRect(x,y,w,h);
             break;
 
         default:
@@ -373,27 +378,30 @@ class RDPGraphics
     }
 
     _image2CSS(idata, w, h, x, y) {
-        const array = new Uint8ClampedArray(this.buffer, idata, w * h * 4);
+        const array = new Uint8ClampedArray(this._buffer, idata, w * h * 4);
         const image = new ImageData(array, w, h);
-        this.ecusorCanvas.width = w;
-        this.ecusorCanvas.height = h;
-        this.cusorCanvas.putImageData(image, 0, 0);
-        const dataURL = this.ecusorCanvas.toDataURL();
+        this._ecusorCanvas.width = w;
+        this._ecusorCanvas.height = h;
+        this._cusorCanvas.putImageData(image, 0, 0);
+        const dataURL = this._ecusorCanvas.toDataURL();
         // console.log('url(' + dataURL + ') ' + x + ' ' + y + ', auto');
         return 'url(' + dataURL + ') ' + x + ' ' + y + ', auto';
     }
 
     setPointer(idata, w, h, x, y) {
-        this.ecanvas.style.cursor = this._image2CSS(idata, w, h, x, y);
+        this._ecanvas.style.cursor = this._image2CSS(idata, w, h, x, y);
     }
 
     newPointer(idata, w, h, offset, x, y) {
         const data = this._image2CSS(idata, w, h, x, y);
-        this.cachePointers[offset] = data;
-        this.ecanvas.style.cursor = data;
+        this._cachePointers[offset] = data;
+        this._ecanvas.style.cursor = data;
     }
 
     cachedPointer(offset) {
-        this.ecanvas.style.cursor = this.cachePointers[offset];
+        this._ecanvas.style.cursor = this._cachePointers[offset];
+    }
+
+    updatePointerPosition(x, y) {
     }
 };

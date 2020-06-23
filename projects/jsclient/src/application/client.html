@@ -295,8 +295,6 @@ function decodeName(iname, inameLen, isUTF8)
 
 function run()
 {
-    ecanvas.width = Number(width_input.value) || 800;
-    ecanvas.height = Number(height_input.value) || 600;
     const socket = newRDPSocket(ws_input.value);
     const gd = new RDPGraphics(ecanvas, Module);
     socket.onopen = function(event) {
@@ -309,14 +307,15 @@ function run()
         };
         disconnectButton.firstElementChild.disabled = false;
 
-        rdpclient = new RDPClient(
-            socket,
-            ecanvas.width,
-            ecanvas.height,
-            gd,
-            user_input.value,
-            pass_input.value,
-            /*0x04000000*/);
+        rdpclient = new RDPClient(socket, gd, {
+            width: Number(width_input.value),
+            height: Number(height_input.value),
+            disabledDrawingOrders: 0,
+            username: user_input.value,
+            password: pass_input.value,
+            // getRandomValues: (data) => crypto.getRandomValues(data),
+            verbose: 0/*x04000000*/,
+        });
 
         const clipboard = newClipboardChannel(
             rdpclient.getCallback(),

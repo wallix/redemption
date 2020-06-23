@@ -60,38 +60,37 @@ struct RdpClient
     {
         void report(const char * reason, const char * message) override
         {
-            // TODO LOG(LOG_NOTICE)
-            RED_EM_ASM({
-                console.log("RdpClient: " + UTF8ToString($0, $1) + ": " + UTF8ToString($2, $3));
-            }, reason, strlen(reason), message, strlen(message));
+            LOG(LOG_NOTICE, "RdpClient: %s: %s", reason, message);
         }
 
-        void log6(LogId id, KVList kv_list) override
-        {
-            // TODO LOG(LOG_NOTICE)
-        }
+        void log6(LogId /*id*/, KVList /*kv_list*/) override
+        {}
     };
 
     struct JsRandom : Random
     {
-        JsRandom(emscripten::val callbacks) noexcept
-        : callbacks(std::move(callbacks))
+        static constexpr char const* get_random_values = "getRandomValues";
+
+        JsRandom(emscripten::val const& random)
+        : crypto(not random[get_random_values]
+            ? emscripten::val::global("crypto")
+            : random)
         {}
 
         void random(void* dest, std::size_t size) override
         {
-            redjs::emval_call(this->callbacks, "random",
-                array_view{static_cast<uint8_t const*>(dest), size});
+            redjs::emval_call(this->crypto, get_random_values,
+                array_view{static_cast<uint8_t*>(dest), size});
         }
 
-        emscripten::val callbacks;
+        emscripten::val crypto;
     };
 
     struct JsAuth : NullAuthentifier
     {
         void set_auth_error_message(const char * error_message) override
         {
-            LOG(LOG_ERR, "%s", error_message);
+            LOG(LOG_ERR, "RdpClient: %s", error_message);
         }
     };
 
@@ -126,18 +125,16 @@ struct RdpClient
     Font font;
 
     RdpClient(
-        emscripten::val callbacks, uint16_t width, uint16_t height,
-        zstring_view username, zstring_view password,
+        emscripten::val const& random, zstring_view username, zstring_view password,
+        emscripten::val graphics, ScreenInfo screen_info,
         PrimaryDrawingOrdersSupport disabled_orders, RDPVerbose verbose)
-    : front(callbacks, width, height, verbose)
+    : front(std::move(graphics), screen_info.width, screen_info.height, verbose)
     , gd(front.graphic_api())
     , time_base({0,0})
     , sesman(ini)
-    , js_rand(callbacks)
+    , js_rand(random)
     {
-        client_info.screen_info.width = width;
-        client_info.screen_info.height = height;
-        client_info.screen_info.bpp = BitsPerPixel{24};
+        client_info.screen_info = screen_info;
 
         PrimaryDrawingOrdersSupport supported_orders
             = front.get_supported_orders() - disabled_orders;
@@ -242,17 +239,38 @@ struct RdpClient
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor([](
-            emscripten::val&& callbacks, uint16_t width, uint16_t height,
-            std::string const& username, std::string const& password,
-            uint32_t disabled_orders,
-            uint32_t verbose_low_bits, uint32_t /*verbose_high_bits*/
-        ) {
-            static_assert(sizeof(RDPVerbose) == 4, "verbose_high_bits is unused");
+        .constructor([](emscripten::val&& graphics, emscripten::val&& config) {
+            auto get_string_or_empty = [](emscripten::val const& v, char const* name){
+                auto prop = v[name];
+                return not prop ? std::string() : prop.as<std::string>();
+            };
+
+            auto get_number_or = [](
+                emscripten::val const& v, char const* name, auto default_value
+            ){
+                auto prop = v[name];
+                return not prop ? default_value : prop.as<decltype(default_value)>();
+            };
+
+            ScreenInfo screen_info{
+                get_number_or(config, "width", uint16_t(800)),
+                get_number_or(config, "height", uint16_t(600)),
+                BitsPerPixel(get_number_or(config, "bpp", uint16_t(24)))
+            };
+
+            auto disabled_orders = get_number_or(config, "disabledDrawingOrders", uint32_t(0));
+
+            static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
+            auto verbose_flags = get_number_or(config, "verbose", uint32_t(0));
+
+            auto username = get_string_or_empty(config, "username");
+            auto password = get_string_or_empty(config, "password");
+
             return new RdpClient(
-                std::move(callbacks), width, height, username, password,
+                std::move(config), username, password,
+                std::move(graphics), screen_info,
                 PrimaryDrawingOrdersSupport(disabled_orders),
-                RDPVerbose(verbose_low_bits)
+                RDPVerbose(verbose_flags)
             );
         })
         .function_ptr("getOutputData", [](RdpClient& client) {

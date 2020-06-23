@@ -61,7 +61,6 @@ namespace
         return a.intersect(w, h).intersect(b);
     }
 
-    // TODO removed when RDPMultiScrBlt and RDPMultiOpaqueRect contains a rect member
     //@{
     Rect to_rect(RDPMultiDstBlt const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
@@ -143,7 +142,6 @@ namespace
         constexpr char const* draw_ellipse_cb = "drawEllipseSC";
         constexpr char const* draw_pat_blt = "drawPatBlt";
         constexpr char const* draw_dest_blt = "drawDestBlt";
-        constexpr char const* draw_frame_marker = "drawFrameMarker"; // mendatory
 
         constexpr char const* draw_image = "drawImage";
         constexpr char const* draw_memblt = "drawMemBlt";
@@ -155,6 +153,8 @@ namespace
         constexpr char const* cached_pointer = "cachedPointer";
         constexpr char const* new_pointer = "newPointer";
         constexpr char const* set_pointer = "setPointer";
+
+        constexpr char const* frame_marker = "frameMarker";
 
         constexpr char const* resize_canvas = "resizeCanvas";
         constexpr char const* update_pointer_position = "updatePointerPosition";
@@ -641,7 +641,8 @@ void BrowserGraphic::draw(const RDP::FrameMarker & cmd)
 {
     // LOG(LOG_INFO, "BrowserGraphic::FrameMarker");
 
-    emval_call(this->callbacks, jsnames::draw_frame_marker, bool(cmd.action));
+    emval_call(this->callbacks, jsnames::frame_marker,
+        cmd.action == RDP::FrameMarker::FrameStart);
 }
 
 void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
@@ -720,12 +721,12 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
 
 void BrowserGraphic::begin_update()
 {
-    // TODO used draw_frame_marker ?
+    emval_call(this->callbacks, jsnames::frame_marker, true);
 }
 
 void BrowserGraphic::end_update()
 {
-    // TODO used draw_frame_marker ?
+    emval_call(this->callbacks, jsnames::frame_marker, false);
 }
 
 bool BrowserGraphic::resize_canvas(ScreenInfo screen)
