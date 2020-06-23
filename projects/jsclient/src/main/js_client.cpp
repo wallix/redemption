@@ -56,13 +56,19 @@ using Ms = std::chrono::milliseconds;
 
 struct RdpClient
 {
-    struct JsReportMessage : NullReportMessage
+    struct JsReportMessage : ReportMessageApi
     {
         void report(const char * reason, const char * message) override
         {
+            // TODO LOG(LOG_NOTICE)
             RED_EM_ASM({
                 console.log("RdpClient: " + UTF8ToString($0, $1) + ": " + UTF8ToString($2, $3));
             }, reason, strlen(reason), message, strlen(message));
+        }
+
+        void log6(LogId id, KVList kv_list) override
+        {
+            // TODO LOG(LOG_NOTICE)
         }
     };
 
@@ -74,7 +80,8 @@ struct RdpClient
 
         void random(void* dest, std::size_t size) override
         {
-            redjs::emval_call(this->callbacks, "random", dest, size);
+            redjs::emval_call(this->callbacks, "random",
+                array_view{static_cast<uint8_t const*>(dest), size});
         }
 
         emscripten::val callbacks;
@@ -84,9 +91,7 @@ struct RdpClient
     {
         void set_auth_error_message(const char * error_message) override
         {
-            RED_EM_ASM({
-                console.log("RdpClient: " + UTF8ToString($0, $1));
-            }, error_message, strlen(error_message));
+            LOG(LOG_ERR, "%s", error_message);
         }
     };
 
@@ -188,17 +193,17 @@ struct RdpClient
         this->fd_events.exec_timeout(this->time_base.get_current_time());
     }
 
-    bytes_view get_sending_data_view() const
+    bytes_view get_output_buffer() const
     {
         return this->browser_trans.get_output_buffer();
     }
 
-    void clear_sending_data()
+    void reset_output_data()
     {
         this->browser_trans.clear_output_buffer();
     }
 
-    void add_receiving_data(std::string data)
+    void push_input_data(std::string data)
     {
         this->browser_trans.push_input_buffer(std::move(data));
         this->fd_events.exec_action([](int /*fd*/, auto& /*top*/){ return true; });
@@ -250,19 +255,19 @@ EMSCRIPTEN_BINDINGS(client)
                 RDPVerbose(verbose_low_bits)
             );
         })
-        .function_ptr("getSendingData", [](RdpClient& client) {
-            return redjs::emval_from_view(client.get_sending_data_view());
+        .function_ptr("getOutputData", [](RdpClient& client) {
+            return redjs::emval_from_view(client.get_output_buffer());
         })
         .function_ptr("getCallbackAsVoidPtr", [](RdpClient& client) {
-            return reinterpret_cast<uintptr_t>(&client.get_callback());
+            return redjs::to_memory_offset(client.get_callback());
         })
         .function_ptr("addChannelReceiver", [](RdpClient& client, uintptr_t ichannel_receiver) {
             client.add_channel_receiver(
-                *reinterpret_cast<redjs::ChannelReceiver const*>(ichannel_receiver));
+                redjs::from_memory_offset<redjs::ChannelReceiver const&>(ichannel_receiver));
         })
         .function("sendFirstPacket", &RdpClient::send_first_packet)
-        .function("clearSendingData", &RdpClient::clear_sending_data)
-        .function("addReceivingData", &RdpClient::add_receiving_data)
+        .function("resetOutputData", &RdpClient::reset_output_data)
+        .function("pushInputData", &RdpClient::push_input_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)
         .function("sendScancode", &RdpClient::rdp_input_scancode)
         .function("sendMouseEvent", &RdpClient::rdp_input_mouse)

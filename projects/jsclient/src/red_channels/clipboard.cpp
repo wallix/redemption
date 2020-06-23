@@ -100,13 +100,6 @@ namespace
         check_throw(in, 4, message, ERR_RDP_DATA_TRUNCATED);
         return in.in_uint32_le();
     }
-
-    template<class... Ts>
-    void emval_call_bytes(emscripten::val const& v,
-        char const* fname, bytes_view data, Ts const&... args)
-    {
-        emval_call(v, fname, data.data(), data.size(), args...);
-    };
 }
 
 
@@ -461,7 +454,7 @@ void ClipboardChannel::process_format_data_response(
             auto size_high = in_stream.in_uint32_le();
             auto size_low = in_stream.in_uint32_le();
             auto name = quick_utf16_av(in_stream.in_skip_bytes(constants::filename_attribute_size));
-            emval_call_bytes(this->callbacks, "formatDataResponseFile",
+            emval_call(this->callbacks, "formatDataResponseFile",
                 name, file_attrs, flags, size_low, size_high,
                 last_write_time_low, last_write_time_high);
         };
@@ -510,8 +503,9 @@ void ClipboardChannel::process_format_data_response(
                 break;
         }
 
-        emval_call_bytes(this->callbacks, "formatDataResponse",
-            data, this->remaining_data_len, this->requested_format_id, channel_flags & first_last_flags);
+        emval_call(this->callbacks, "formatDataResponse",
+            data, this->remaining_data_len, this->requested_format_id,
+            channel_flags & first_last_flags);
 
         if (is_last_packet)
         {
@@ -544,29 +538,31 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
     }
     this->remaining_data_len -= data.size();
 
-    emval_call_bytes(this->callbacks, "fileContentsResponse", data,
-        this->stream_id, this->remaining_data_len, channel_flags & first_last_flags);
+    emval_call(this->callbacks, "fileContentsResponse",
+        data, this->stream_id, this->remaining_data_len,
+        channel_flags & first_last_flags);
 }
 
 void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/)
 {
     emval_call(this->callbacks, "formatListStart");
 
+    auto is_utf8 = overload{
+        [](Cliprdr::AsciiName const&) { return true; },
+        [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
+    };
+
     Cliprdr::format_list_extract(
         chunk,
         is_long_format(this->general_flags),
         is_ascii_format(this->general_flags),
         [&](uint32_t format_id, auto name){
-            bool is_utf8 = overload{
-                [](Cliprdr::AsciiName const&) { return true; },
-                [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
-            }(name);
             CustomFormat custom_format_id = Cliprdr::file_group_descriptor_w.same_as(name)
                 ? CustomFormat::FileGroupDescriptorW
                 : CustomFormat::None;
 
-            emval_call_bytes(this->callbacks, "formatListFormat",
-                name.bytes, format_id, custom_format_id, is_utf8);
+            emval_call(this->callbacks, "formatListFormat",
+                name.bytes, format_id, custom_format_id, is_utf8(name));
         }
     );
 

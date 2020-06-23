@@ -46,8 +46,7 @@ void redjs::channels::JsChannel::receive(
 {
     redjs::emval_call(
         this->js_handler, "receiveData",
-        data.data(), checked_cast<uint32_t>(data.size()),
-        total_data_len, channel_flags);
+        data, total_data_len, channel_flags);
 }
 
 void redjs::channels::JsChannel::send(
@@ -77,12 +76,12 @@ EMSCRIPTEN_BINDINGS(channel_js_channel)
             char id_name[8]{};
             channel_name.copy(id_name, std::size(id_name));
 
-            auto* pcb = reinterpret_cast<Callback*>(icb);
+            auto* pcb = redjs::from_memory_offset<Callback*>(icb);
 
             return new JsChannel{*pcb, std::move(callbacks), CHANNELS::ChannelNameId{id_name}};
         })
         .function_ptr("getChannelReceiver", [](JsChannel& jschannel) {
-            return reinterpret_cast<uintptr_t>(&jschannel.channel_receiver);
+            return redjs::to_memory_offset(jschannel.channel_receiver);
         })
         .function_ptr("sendData", [](JsChannel& jschannel,
             std::string data, uint32_t total_data_len, uint32_t channel_flags)
@@ -93,7 +92,7 @@ EMSCRIPTEN_BINDINGS(channel_js_channel)
             uintptr_t idata, uint32_t idata_len,
             uint32_t total_data_len, uint32_t channel_flags)
         {
-            auto* ptr = reinterpret_cast<uint8_t const*>(idata);
+            auto* ptr = redjs::from_memory_offset<uint8_t const*>(idata);
             jschannel.send({ptr, idata_len}, total_data_len, channel_flags);
         })
     ;

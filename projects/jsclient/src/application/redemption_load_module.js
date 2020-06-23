@@ -4,15 +4,9 @@ const redemptionLoadModule = function(Module, window)
     const HEAP16 = Module.HEAP16;
 
     const identity = function(cb, thisp) {
+        // TODO return cb; ?
         return function(...args) {
             return cb.call(thisp, ...args);
-        };
-    };
-
-    const wCb_em2js_Bitmap = function(cb, thisp) {
-        return function(idata, bitsPerPixel, w, h, lineSize, ...args) {
-            const data = HEAPU8.subarray(idata, idata + lineSize * h);
-            return cb.call(thisp, data, bitsPerPixel, w, h, lineSize, ...args);
         };
     };
 
@@ -24,26 +18,6 @@ const redemptionLoadModule = function(Module, window)
         };
     };
 
-    const wCb_em2js_U8p = function(cb, thisp) {
-        return function(idata, len, ...args) {
-            const data = HEAPU8.subarray(idata, idata + len);
-            return cb.call(thisp, data, ...args);
-        };
-    };
-
-    const wCb_em2js_Deltas = function(cb, thisp) {
-        return function(xStart, yStart, numDeltaEntries, deltaEntries, ...args) {
-            const deltas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
-            return cb.call(thisp, xStart, yStart, deltas, ...args);
-        };
-    };
-
-    const wCb_em2js_Brush = function(cb, thisp) {
-        return function(brushData, ...args) {
-            cb.call(thisp, HEAPU8.subarray(brushData, brushData + 8), ...args);
-        };
-    };
-
     const noop = function(){};
 
     // { funcname: [wrapCreator, defaultFunction], ... }
@@ -51,30 +25,19 @@ const redemptionLoadModule = function(Module, window)
         setBmpCacheEntries: identity,
         setBmpCacheIndex: identity,
         drawMemBlt: identity,
-        drawMem3Blt: wCb_em2js_Brush,
+        drawMem3Blt: identity,
 
         drawImage: identity,
         drawRect: identity,
         drawScrBlt: identity,
         drawLineTo: identity,
         drawDestBlt: identity,
-        drawPolyline: wCb_em2js_Deltas,
-        drawPolygoneSC: wCb_em2js_Deltas,
-        drawPolygoneCB: function(cb, thisp) {
-            return function(xStart, yStart, numDeltaEntries, deltaEntries,
-                            clipX, clipY, clipW, clipH, brushData, ...args
-            ) {
-                const deltas = HEAP16.subarray(deltaEntries,
-                                               deltaEntries + numDeltaEntries * 2);
-                return cb.call(thisp, xStart, yStart, deltas,
-                               clipX, clipY, clipW, clipH,
-                               HEAPU8.subarray(brushData, brushData + 8),
-                               ...args);
-            };
-        },
+        drawPolyline: identity,
+        drawPolygoneSC: identity,
+        drawPolygoneCB: identity,
         drawEllipseSC: identity,
         drawEllipseCB: identity,
-        drawPatBlt: wCb_em2js_Brush,
+        drawPatBlt: identity,
         drawFrameMarker: identity,
 
         setPointer: wCb_em2js_ImageData,
@@ -86,7 +49,7 @@ const redemptionLoadModule = function(Module, window)
     };
 
     const wrappersFront = {
-        random: wCb_em2js_U8p,
+        random: identity,
     };
 
     const wrapEvents = function(wrappedEvents, wrappers, events, defaultCb) {
@@ -220,15 +183,15 @@ const redemptionLoadModule = function(Module, window)
     addChannelClass('ClipboardChannel', {
         setGeneralCapability: identity,
         formatListStart: identity,
-        formatListFormat: wCb_em2js_U8p,
+        formatListFormat: identity,
         formatListStop: identity,
-        formatDataResponse: wCb_em2js_U8p,
+        formatDataResponse: identity,
         formatDataResponseFileStart: identity,
-        formatDataResponseFile: wCb_em2js_U8p,
+        formatDataResponseFile: identity,
         formatDataResponseFileStop: identity,
         formatDataRequest: identity,
         fileContentsRequest: identity,
-        fileContentsResponse: wCb_em2js_U8p,
+        fileContentsResponse: identity,
         receiveResponseFail: identity,
         lock: identity,
         unlock: identity,
@@ -236,7 +199,7 @@ const redemptionLoadModule = function(Module, window)
     });
 
     addChannelClass('CustomChannel', {
-        receiveData: wCb_em2js_U8p,
+        receiveData: identity,
         free: identity,
     });
 

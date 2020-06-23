@@ -19,7 +19,9 @@ Author(s): Jonathan Poelen
 */
 
 #include "redjs/image_data_from_bitmap.hpp"
+
 #include "red_emscripten/bind.hpp"
+#include "red_emscripten/val.hpp"
 
 #include "utils/bitmap.hpp"
 #include "utils/colors.hpp"
@@ -93,8 +95,8 @@ EMSCRIPTEN_BINDINGS(image_data_func)
         intptr_t idest, intptr_t idata, uint8_t bits_per_pixel,
         uint16_t w, uint16_t h, uint32_t line_size
     ) {
-        auto* dest = reinterpret_cast<uint8_t*>(idest);
-        auto* data = reinterpret_cast<uint8_t const*>(idata);
+        auto* dest = redjs::from_memory_offset<uint8_t*>(idest);
+        auto* data = redjs::from_memory_offset<uint8_t const*>(idata);
         redjs::image_data_from_bitmap_impl(
             dest, data, w, h, line_size, BitsPerPixel(bits_per_pixel),
             &BGRPalette::classic_332());

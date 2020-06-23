@@ -43,16 +43,15 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
 #ifdef __EMSCRIPTEN__
-    char buffer[4096];
-    int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap); /*NOLINT*/
-    va_end(ap);
+    char buffer[1024];
+    int len = std::vsnprintf(buffer, sizeof(buffer), format, ap); /*NOLINT*/
     RED_EM_ASM({
         const msg = UTF8ToString($1, $2);
         if (Module.log) {
             Module.log($0, msg);
         }
         else {
-            console.log(UTF8ToString($1, $2));
+            console.log(msg);
         }
     }, priority, buffer, len);
 #else

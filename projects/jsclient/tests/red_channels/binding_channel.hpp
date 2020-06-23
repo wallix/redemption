@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/bind.hpp"
+#include "red_emscripten/val.hpp"
 #include "utils/stream.hpp"
 #include "core/channel_names.hpp"
 
@@ -107,6 +108,17 @@ struct WVector
 
     WVector(bytes_view av)
     : v(av.begin(), av.end())
+    {}
+
+    WVector(array_view<T> av)
+    : v(av.begin(), av.end())
+    {}
+
+    WVector(emscripten::val const& val)
+    : WVector(array_view{
+        redjs::from_memory_offset<T*>(val["byteOffset"].as<uintptr_t>()),
+        val["length"].as<unsigned>(),
+    })
     {}
 
     WVector() = default;
@@ -196,11 +208,10 @@ struct WVector
     }()
 
 #define MAKE_BINDING_FUNCTION_PTR_I_d(channel_type, classname, data_type, ...)         \
-    #classname, static_cast<void(*)(channel_type&, uintptr_t, uint32_t, __VA_ARGS__)>( \
-        [](channel_type& channel_ctx_, uintptr_t iptr_, uint32_t n_, auto... args) {   \
-            auto p_ = reinterpret_cast<data_type*>(iptr_);                             \
+    #classname, static_cast<void(*)(channel_type&, emscripten::val val, __VA_ARGS__)>( \
+        [](channel_type& channel_ctx_, emscripten::val val, auto... args) {            \
             channel_ctx_.datas.push_back(                                              \
-                structs::classname{WVector<data_type>{{p_, p_+n_}}, args...}           \
+                structs::classname{WVector<data_type>{val}, args...}                   \
             );                                                                         \
         }                                                                              \
     )

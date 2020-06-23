@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 #include "redjs/channel_receiver.hpp"
 
 #include "red_emscripten/bind.hpp"
+#include "red_emscripten/val.hpp"
 
 #include "core/channel_names.hpp"
 
@@ -32,11 +33,11 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
 
     redjs::class_<clipboard::ClipboardChannel>("ClipboardChannel")
         .constructor([](uintptr_t icb, emscripten::val&& callbacks, bool verbose) {
-            auto* pcb = reinterpret_cast<Callback*>(icb);
+            auto* pcb = redjs::from_memory_offset<Callback*>(icb);
             return new clipboard::ClipboardChannel(*pcb, std::move(callbacks), verbose);
         })
         .function_ptr("getChannelReceiver", [](clipboard::ClipboardChannel& clip) {
-            return reinterpret_cast<uintptr_t>(&clip.get_channel_receiver());
+            return redjs::to_memory_offset(clip.get_channel_receiver());
         })
         .function_ptr("sendRequestFormat", [](clipboard::ClipboardChannel& clip,
             uint32_t format_id, int custom_format_id)
@@ -65,13 +66,13 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             std::ptrdiff_t idata, std::size_t idata_len,
             uint32_t total_data_len, uint32_t channel_flags)
         {
-            auto* ptr = reinterpret_cast<uint8_t const*>(idata);
+            auto* ptr = redjs::from_memory_offset<uint8_t const*>(idata);
             clip.send_data({ptr, idata_len}, total_data_len, channel_flags);
         })
         .function_ptr("sendDataWithHeader", [](clipboard::ClipboardChannel& clip,
             uint16_t type, std::ptrdiff_t idata, std::size_t idata_len)
         {
-            auto* ptr = reinterpret_cast<uint8_t const*>(idata);
+            auto* ptr = redjs::from_memory_offset<uint8_t const*>(idata);
             clip.send_header(type, 1/*Ok*/, idata_len, 0);
             clip.send_data({ptr, idata_len}, 0, 2/*last*/);
         })
@@ -79,7 +80,7 @@ EMSCRIPTEN_BINDINGS(channel_clipboard)
             std::ptrdiff_t idata, std::size_t idata_len,
             uint32_t format_id, int charset, std::string name)
         {
-            auto* ptr = reinterpret_cast<uint8_t*>(idata);
+            auto* ptr = redjs::from_memory_offset<uint8_t*>(idata);
             return clip.add_format({ptr, idata_len}, format_id, clipboard::Charset(charset), name);
         })
         .function_ptr("sendFormat", [](clipboard::ClipboardChannel& clip,

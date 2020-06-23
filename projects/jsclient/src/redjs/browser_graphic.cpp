@@ -92,9 +92,9 @@ namespace
         }
     }
 
-    std::array<uint8_t, 8> get_brush_data(RDPBrush const& brush)
+    std::array<uint8_t, 8> to_brush_data(RDPBrush const& brush)
     {
-        std::array<uint8_t, 8> brush_data {
+        return std::array<uint8_t, 8>{{
             brush.extra[0],
             brush.extra[1],
             brush.extra[2],
@@ -103,8 +103,19 @@ namespace
             brush.extra[5],
             brush.extra[6],
             brush.hatch,
-        };
-        return brush_data;
+        }};
+    }
+
+    template<class Delta>
+    emscripten::val make_emval_delta_points(Delta const (&delta)[128], uint8_t num_entries)
+    {
+        static_assert(alignof(Delta) == 2);
+        static_assert(sizeof(Delta) == 2*2);
+
+        return redjs::emval_from_view(array_view{
+            reinterpret_cast<uint16_t const*>(delta), /* NOLINT */
+            num_entries * 2u
+        });
     }
 
     struct MemBltPoints
@@ -323,7 +334,7 @@ void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
-        get_brush_data(cmd.brush).data(),
+        to_brush_data(cmd.brush),
         trect.x,
         trect.y,
         trect.cx,
@@ -343,7 +354,7 @@ void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::Color
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_pat_blt,
-            get_brush_data(cmd.brush).data(),
+            to_brush_data(cmd.brush),
             cmd.brush.org_x,
             cmd.brush.org_y,
             cmd.brush.style,
@@ -422,7 +433,7 @@ void BrowserGraphic::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color
     MemBltPoints ps(cmd.rect.intersect(this->width, this->height), cmd.srcx, cmd.srcy, clip);
 
     emval_call(this->callbacks, jsnames::draw_mem3blt,
-        get_brush_data(cmd.brush).data(),
+        to_brush_data(cmd.brush),
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
@@ -535,8 +546,7 @@ void BrowserGraphic::draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx col
     emval_call(this->callbacks, jsnames::draw_polygone_sc,
         cmd.xStart,
         cmd.yStart,
-        cmd.NumDeltaEntries,
-        reinterpret_cast<void const*>(cmd.deltaPoints),
+        make_emval_delta_points(cmd.deltaPoints, cmd.NumDeltaEntries),
         clip.x,
         clip.y,
         clip.cx,
@@ -553,13 +563,12 @@ void BrowserGraphic::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx col
     emval_call(this->callbacks, jsnames::draw_polygone_cb,
         cmd.xStart,
         cmd.yStart,
-        cmd.NumDeltaEntries,
-        reinterpret_cast<void const*>(cmd.deltaPoints),
+        make_emval_delta_points(cmd.deltaPoints, cmd.NumDeltaEntries),
         clip.x,
         clip.y,
         clip.cx,
         clip.cy,
-        get_brush_data(cmd.brush).data(),
+        to_brush_data(cmd.brush),
         cmd.brush.org_x,
         cmd.brush.org_y,
         cmd.brush.style,
@@ -576,8 +585,7 @@ void BrowserGraphic::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx colo
     emval_call(this->callbacks, jsnames::draw_polyline,
         cmd.xStart,
         cmd.yStart,
-        cmd.NumDeltaEntries,
-        reinterpret_cast<void const*>(cmd.deltaEncodedPoints),
+        make_emval_delta_points(cmd.deltaEncodedPoints, cmd.NumDeltaEntries),
         clip.x,
         clip.y,
         clip.cx,
