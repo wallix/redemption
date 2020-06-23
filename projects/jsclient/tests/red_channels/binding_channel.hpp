@@ -92,15 +92,6 @@ struct BasicChannelData
     }
 };
 
-template<class>
-struct js_to_tuple;
-
-template<class... Ts>
-struct js_to_tuple<void(Ts...)>
-{
-    using type = std::tuple<Ts...>;
-};
-
 template<class T>
 struct WVector
 {
@@ -134,6 +125,41 @@ struct WVector
 };
 
 
+template<class T> struct js_tuple_element { using type = T; };
+template<> struct js_tuple_element<bytes_view> { using type = WVector<uint8_t>; };
+template<class T> struct js_tuple_element<array_view<T>> { using type = WVector<T>; };
+template<> struct js_tuple_element<writable_bytes_view> { using type = WVector<uint8_t>; };
+template<class T> struct js_tuple_element<writable_array_view<T>> { using type = WVector<T>; };
+
+template<class>
+struct js_to_tuple;
+
+template<class... Ts>
+struct js_to_tuple<void(Ts...)>
+{
+    using type = std::tuple<typename js_tuple_element<Ts>::type...>;
+};
+
+
+template<class T> struct js_function_param { using type = T; };
+template<> struct js_function_param<bytes_view> { using type = emscripten::val; };
+template<class T> struct js_function_param<array_view<T>> { using type = emscripten::val; };
+template<> struct js_function_param<writable_bytes_view> { using type = emscripten::val; };
+template<class T> struct js_function_param<writable_array_view<T>> { using type = emscripten::val; };
+
+template<class PtrFunc>
+struct js_function_ptr;
+
+template<class R, class... Ts>
+struct js_function_ptr<R(*)(Ts...)>
+{
+    using type = R(*)(typename js_function_param<Ts>::type...);
+};
+
+template<class PtrFunc>
+using js_function_ptr_t = typename js_function_ptr<PtrFunc>::type;
+
+
 //@{
 #define MAKE_BINDING_CPP_STRUCT(r, data, elem) MAKE_BINDING_CPP_STRUCT_I elem
 
@@ -157,9 +183,6 @@ struct WVector
 
 #define MAKE_BINDING_CPP_STRUCT_I_x_f(classname, body_func, ...) \
     MAKE_BINDING_CPP_STRUCT_I_x(classname, __VA_ARGS__)
-
-#define MAKE_BINDING_CPP_STRUCT_I_d(classname, data_type, ...) \
-    MAKE_BINDING_CPP_STRUCT_I_x(classname, WVector<data_type>, __VA_ARGS__)
 //@}
 
 //@{
@@ -187,11 +210,11 @@ struct WVector
         channel_ctx_.datas.push_back(structs::classname{});    \
     }
 
-#define MAKE_BINDING_FUNCTION_PTR_I_x(channel_type, classname, ...)    \
-    #classname, static_cast<void(*)(channel_type&, __VA_ARGS__)>(      \
-        [](channel_type& channel_ctx_, auto... args) {                 \
-            channel_ctx_.datas.push_back(structs::classname{args...}); \
-        }                                                              \
+#define MAKE_BINDING_FUNCTION_PTR_I_x(channel_type, classname, ...)                  \
+    #classname, static_cast<js_function_ptr_t<void(*)(channel_type&, __VA_ARGS__)>>( \
+        [](channel_type& channel_ctx_, auto... args) {                               \
+            channel_ctx_.datas.push_back(structs::classname{args...});               \
+        }                                                                            \
     )
 
 #define MAKE_BINDING_FUNCTION_PTR_I_x_f(channel_type, classname, body_func, ...) \
@@ -199,22 +222,13 @@ struct WVector
         struct FRet_ {                                                           \
             static auto impl(channel_type&, __VA_ARGS__) { body_func; }          \
         };                                                                       \
-        return static_cast<decltype(&FRet_::impl)>(                              \
+        return static_cast<js_function_ptr_t<decltype(&FRet_::impl)>>(           \
             [](channel_type& channel_ctx_, auto... args) {                       \
                 channel_ctx_.datas.push_back(structs::classname{args...});       \
                 return FRet_::impl(channel_ctx_, args...);                       \
             }                                                                    \
         );                                                                       \
     }()
-
-#define MAKE_BINDING_FUNCTION_PTR_I_d(channel_type, classname, data_type, ...)         \
-    #classname, static_cast<void(*)(channel_type&, emscripten::val val, __VA_ARGS__)>( \
-        [](channel_type& channel_ctx_, emscripten::val val, auto... args) {            \
-            channel_ctx_.datas.push_back(                                              \
-                structs::classname{WVector<data_type>{val}, args...}                   \
-            );                                                                         \
-        }                                                                              \
-    )
 //@}
 
 //@{
@@ -227,6 +241,15 @@ struct WVector
     classname: function(...args) { return this.self_.classname(...args); },
 //@}
 
+// c = no parameter
+// x = with parameter
+// x_f = with parameter and return
+// MAKE_BINDING_CALLBACKS(ChannelType, ModChannelDataType,
+//     ((c, funcname)),
+//     ((x, funcname, type1 [name1], type2 [name2], ...)),
+//     ((x_f, funcname, body_with_return, type1 [name1], type2 [name2], ...)),
+//     ...
+// )
 #define MAKE_BINDING_CALLBACKS(ChannelType, ModChannelDataType, S)           \
     namespace test_channel_data                                              \
     {                                                                        \
@@ -401,17 +424,6 @@ struct TestBindingCallback : Callback
 
     Datas& datas;
 };
-
-// template<class T>
-// using remove_cvref_t = std::remove_const_t<std::remove_reference_t<T>>;
-//
-// template<class T>
-// std::string_view get_type()
-// {
-//     return [](auto&& a) {
-//         return std::string_view(a+79, sizeof(a)-81);
-//     }(__PRETTY_FUNCTION__);
-// }
 
 #define CTX_CHECK_DATAS(ctx)                           \
     ctx->test_context([](unsigned i, std::size_t n){   \

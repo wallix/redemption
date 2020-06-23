@@ -33,7 +33,7 @@ using redjs::JsChannel;
 MAKE_BINDING_CALLBACKS(
     JsChannel,
     BasicChannelData,
-    ((d, receiveData, uint8_t, uint32_t total_len, uint32_t flags))
+    ((x, receiveData, bytes_view data, uint32_t total_len, uint32_t flags))
     ((c, free))
 )
 
