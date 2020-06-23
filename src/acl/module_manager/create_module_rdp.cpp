@@ -560,8 +560,8 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
 
-    mod_rdp_params.drive_params.proxy_managed_drives                = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
-    mod_rdp_params.drive_params.proxy_managed_prefix          = app_path(AppPath::DriveRedirection);
+    mod_rdp_params.drive_params.proxy_managed_drives   = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();
+    mod_rdp_params.drive_params.proxy_managed_prefix   = app_path(AppPath::DriveRedirection);
 
     mod_rdp_params.lang                                = language(ini);
 
@@ -775,11 +775,65 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         application_driver_script      = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
     }
     if (application_driver_exe_or_file) {
+        char const * session_probe_dir_remote = "\\\\tsclient\\SESPRO\\";
+
+        struct FILE_INFO {
+            std::string size;
+            std::string hash;
+        };
+
+        auto get_file_info = [](const char * directory, const char * filename) -> FILE_INFO {
+            FILE_INFO file_info;
+
+            std::string file_path(directory);
+            file_path += filename;
+            file_path += ".hash";
+
+            std::string file_contents;
+            (void)append_file_contents(file_path.c_str(), file_contents, 8192);
+
+            size_t pos = file_contents.find(' ');
+
+            if (std::string::npos != pos) {
+                file_info.size.assign(file_contents.c_str(), pos);
+                file_info.hash.assign(file_contents, pos + 1, std::string::npos);
+            }
+
+            return file_info;
+        };
+
         std::string & application_driver_alternate_shell = ini.get_mutable_ref<cfg::context::application_driver_alternate_shell>();
         application_driver_alternate_shell  = "\x02";
+        application_driver_alternate_shell += session_probe_dir_remote;
         application_driver_alternate_shell += application_driver_exe_or_file;
+
+        std::string session_probe_dir_local { app_path(AppPath::DriveRedirection) };
+        session_probe_dir_local += "/sespro/";
+
+        {
+            FILE_INFO file_info = get_file_info(session_probe_dir_local.c_str(), application_driver_exe_or_file);
+
+            application_driver_alternate_shell += "\x02";
+            application_driver_alternate_shell += file_info.size;
+
+            application_driver_alternate_shell += "\x02";
+            application_driver_alternate_shell += file_info.hash;
+        }
+
         application_driver_alternate_shell += "\x02";
+        application_driver_alternate_shell += session_probe_dir_remote;
         application_driver_alternate_shell += application_driver_script;
+
+        {
+            FILE_INFO file_info = get_file_info(session_probe_dir_local.c_str(), application_driver_script);
+
+            application_driver_alternate_shell += "\x02";
+            application_driver_alternate_shell += file_info.size;
+
+            application_driver_alternate_shell += "\x02";
+            application_driver_alternate_shell += file_info.hash;
+        }
+
         application_driver_alternate_shell += "\x02";
 
         mod_rdp_params.application_params.alternate_shell = application_driver_alternate_shell.c_str();
