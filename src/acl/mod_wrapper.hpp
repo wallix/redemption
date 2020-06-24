@@ -314,8 +314,8 @@ public:
         this->color = color_encode(BGRColor(BLACK), this->client_info.screen_info.bpp);
         this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->client_info.screen_info.bpp);
 
-        if (this->client_info.remote_program &&
-            (this->winapi == static_cast<windowing_api*>(&this->rail_client_execute))) {
+        if (this->client_info.remote_program
+        && (this->winapi == static_cast<windowing_api*>(&this->rail_client_execute))) {
 
             Rect current_work_area_rect = this->rail_client_execute.get_current_work_area_rect();
 

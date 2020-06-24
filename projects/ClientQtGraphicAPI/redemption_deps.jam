@@ -46,7 +46,6 @@ add_obj src/mod/vnc/encoder/zrle.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/zrle
 add_obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp : <define>ZLIB_CONST ;
 add_obj src/mod/vnc/vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/vnc.cpp : <define>ZLIB_CONST ;
 add_obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
-add_obj src/RAIL/mouse_context.o : $(REDEMPTION_SRC_PATH)/RAIL/mouse_context.cpp ;
 add_obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/system/linux/system/tls_check_certificate.cpp ;
 add_obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 add_obj src/transport/file_transport.o : $(REDEMPTION_SRC_PATH)/transport/file_transport.cpp ;
@@ -134,7 +133,6 @@ requirement_list += <library>src/mod/vnc/encoder/zrle.o ;
 requirement_list += <library>src/mod/vnc/new_mod_vnc.o ;
 requirement_list += <library>src/mod/vnc/vnc.o ;
 requirement_list += <library>src/RAIL/client_execute.o ;
-requirement_list += <library>src/RAIL/mouse_context.o ;
 requirement_list += <library>src/system/linux/system/tls_check_certificate.o ;
 requirement_list += <library>src/transport/crypto_transport.o ;
 requirement_list += <library>src/transport/file_transport.o ;
