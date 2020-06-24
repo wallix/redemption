@@ -262,6 +262,7 @@ public:
             case ZONE_NEE: return size_NESW_pointer();
             case ZONE_NEN: return size_NESW_pointer();
             }
+            return normal_pointer();
         }
     } zone;
 
