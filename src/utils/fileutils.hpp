@@ -24,6 +24,7 @@
 #pragma once
 
 #include <string>
+#include <limits>
 #include <sys/types.h> // mode_t
 
 #ifdef __EMSCRIPTEN__
