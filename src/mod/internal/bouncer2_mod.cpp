@@ -49,7 +49,7 @@ Bouncer2Mod::Bouncer2Mod(
         event.alarm.set_timeout(
             time_base.get_current_time()
             +std::chrono::milliseconds(33));
-        event.alarm.set_period(std::chrono::seconds{33});
+        event.alarm.set_period(std::chrono::milliseconds{33});
         event.actions.on_timeout = [this](Event&)
         {
             this->draw_event(this->gd_provider.get_graphics());
