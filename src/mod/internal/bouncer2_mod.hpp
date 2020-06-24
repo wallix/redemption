@@ -27,6 +27,7 @@
 #include "core/session_reactor.hpp"
 #include "utils/colors.hpp"
 #include "acl/gd_provider.hpp"
+#include "core/events.hpp"
 
 class FrontAPI;
 class SesmanInterface;
@@ -51,8 +52,8 @@ class Bouncer2Mod : public mod_api
     int mouse_y = 0;
 
     TimeBase& time_base;
+    EventContainer & events;
     GdProvider & gd_provider;
-    TimerPtr timer;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
@@ -60,10 +61,12 @@ public:
     Bouncer2Mod(
          TimeBase& time_base,
          GdProvider & gd_provider,
-         TimerContainer & timer_events_,
+         EventContainer & events,
          SesmanInterface & sesman,
          FrontAPI & front,
          uint16_t width, uint16_t height);
+
+    ~Bouncer2Mod();
 
     std::string module_name() override {return "Bouncer2 Mod";}
 

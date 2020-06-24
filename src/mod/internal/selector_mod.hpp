@@ -111,8 +111,6 @@ class SelectorMod : public mod_api, public NotifyApi
     }
 
 private:
-    void cancel_double_click_detection();
-
     [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
 
 protected:
@@ -129,17 +127,7 @@ private:
 
     bool alt_key_pressed = false;
 
-    enum class DCState
-    {
-        Wait,
-        FirstClickDown,
-        FirstClickRelease,
-        SecondClickDown,
-    };
-
-    DCState dc_state;
-
-    TimerPtr first_click_down_timer;
+    MouseState mouse_state;
 
     const bool rail_enabled;
 
@@ -156,7 +144,7 @@ private:
 
 protected:
     TimeBase& time_base;
-    TimerContainer& timer_events_;
+    EventContainer& events;
 
 private:
     LanguageButton language_button;
@@ -177,7 +165,7 @@ private:
 public:
     SelectorMod(
         Inifile & ini, SelectorModVariables vars, TimeBase& time_base,
-        TimerContainer& timer_events_,
+        EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);

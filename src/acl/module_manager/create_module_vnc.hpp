@@ -43,6 +43,7 @@ extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     TimeBase & time_base,
     TopFdContainer & fd_events_,
     TimerContainer& timer_events_,
+    EventContainer& events,
     SesmanInterface & sesman,
     TimeObj & timeobj
 );

@@ -39,6 +39,7 @@
 #include "utils/region.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
+#include "keyboard/mouse.hpp"
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
@@ -1161,7 +1162,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int
 
 
 // Return true if event is consumed.
-bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref)
+bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, Keymap2 * keymap, bool& mouse_captured_ref)
 {
     const bool allow_resize_hosted_desktop = this->allow_resize_hosted_desktop_;
 

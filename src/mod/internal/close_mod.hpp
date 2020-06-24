@@ -32,6 +32,7 @@
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 
+#include "keyboard/mouse.hpp"
 
 using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user, vcfg::accessmode::get | vcfg::accessmode::is_asked>,
@@ -111,8 +112,6 @@ public:
     void redo_mouse_pointer_change(int x, int y) { this->screen.redo_mouse_pointer_change(x, y); }
 
 private:
-    void cancel_double_click_detection();
-
     [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
 
 protected:
@@ -129,17 +128,7 @@ private:
 
     bool alt_key_pressed = false;
 
-    enum class DCState
-    {
-        Wait,
-        FirstClickDown,
-        FirstClickRelease,
-        SecondClickDown,
-    };
-
-    DCState dc_state;
-
-    int first_click_down_timer = 0;
+    MouseState mouse_state;
 
     const bool rail_enabled;
 

@@ -68,19 +68,10 @@ void RailModuleHostMod::refresh(Rect r)
     }
 }
 
-void RailModuleHostMod::cancel_double_click_detection()
-{
-    assert(this->rail_enabled);
-
-    this->first_click_down_timer.reset();
-
-    this->dc_state = DCState::Wait;
-}
-
 RailModuleHostMod::RailModuleHostMod(
     RailModuleHostModVariables vars,
     TimeBase& time_base,
-    TimerContainer& timer_events_,
+    EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
     ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
@@ -91,11 +82,11 @@ RailModuleHostMod::RailModuleHostMod(
     , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
-    , dc_state(DCState::Wait)
+    , mouse_state(time_base, events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , timer_events_(timer_events_)
+    , events(events)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
@@ -158,92 +149,33 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
 
         if (!this->rail_enabled) {
             this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+            return;
         }
-        else {
-            bool out_mouse_captured = false;
-            if (!this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
-                switch (this->dc_state) {
-                    case DCState::Wait:
-                        if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                            this->dc_state = DCState::FirstClickDown;
 
-                            if (this->first_click_down_timer) {
-                                this->first_click_down_timer->set_delay(std::chrono::seconds(1));
-                            }
-                            else {
-                                this->first_click_down_timer = timer_events_
-                                .create_timer_executor(this->time_base)
-                                .set_delay(std::chrono::seconds(1))
-                                .on_action(jln::one_shot([this]{
-                                    this->dc_state = DCState::Wait;
-                                }));
-                            }
-                        }
-                    break;
-
-                    case DCState::FirstClickDown:
-                        if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                            this->dc_state = DCState::FirstClickRelease;
-                        }
-                        else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                        }
-                        else {
-                            this->cancel_double_click_detection();
-                        }
-                    break;
-
-                    case DCState::FirstClickRelease:
-                        if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                            this->dc_state = DCState::SecondClickDown;
-                        }
-                        else {
-                            this->cancel_double_click_detection();
-                        }
-                    break;
-
-                    case DCState::SecondClickDown:
-                        if (device_flags == SlowPath::PTRFLAGS_BUTTON1) {
-                            this->dc_state = DCState::Wait;
-
-                            bool out_mouse_captured_2 = false;
-
-                            this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
-
-                            this->cancel_double_click_detection();
-                        }
-                        else if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
-                        }
-                        else {
-                            this->cancel_double_click_detection();
-                        }
-                    break;
-
-                    default:
-                        assert(false);
-
-                        this->cancel_double_click_detection();
-                    break;
-                }
-
-                if (out_mouse_captured) {
-                    this->allow_mouse_pointer_change(false);
-
-                    this->current_mouse_owner = MouseOwner::ClientExecute;
-                }
-                else {
-                    if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                        this->redo_mouse_pointer_change(x, y);
-                    }
-
-                    this->current_mouse_owner = MouseOwner::WidgetModule;
-                }
-            }
-
-            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+        bool out_mouse_captured = false;
+        if (!this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured)) {
+            this->mouse_state.chained_input_mouse = [this] (int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured){
+                return this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
+            };
+            this->mouse_state.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
 
             if (out_mouse_captured) {
-                this->allow_mouse_pointer_change(true);
+                this->allow_mouse_pointer_change(false);
+                this->current_mouse_owner = MouseOwner::ClientExecute;
             }
+            else {
+                if (MouseOwner::WidgetModule != this->current_mouse_owner) {
+                    this->redo_mouse_pointer_change(x, y);
+                }
+
+                this->current_mouse_owner = MouseOwner::WidgetModule;
+            }
+        }
+
+        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+
+        if (out_mouse_captured) {
+            this->allow_mouse_pointer_change(true);
         }
     }
 }
@@ -301,19 +233,27 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
         if (this->disconnection_reconnection_timer) {
-            this->disconnection_reconnection_timer->set_delay(std::chrono::seconds(1));
+            for(auto & event: this->events){
+                if (event.id == this->disconnection_reconnection_timer){
+                    event.alarm.set_timeout(
+                                this->time_base.get_current_time()
+                                +std::chrono::seconds{1});
+                }
+            }
         }
         else {
-            this->disconnection_reconnection_timer = this->timer_events_
-                .create_timer_executor(time_base, std::ref(*this))
-                .set_delay(std::chrono::seconds(1))
-                .on_action([](auto ctx, RailModuleHostMod& self){
-                if (self.rail_module_host.get_managed_mod().is_auto_reconnectable()) {
+            Event event("RAIL Module Host Disconnection Reconnection Timeout", this);
+            this->disconnection_reconnection_timer = event.id;
+            event.alarm.set_timeout(
+                this->time_base.get_current_time()
+                +std::chrono::seconds(1));
+            event.actions.on_timeout = [this](Event&)
+            {
+                if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
                     throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-                }
-//                return ctx.terminate();
-                return ctx.ready();
-            });
+                }                
+            };
+            this->events.push_back(std::move(event));
         }
     }
 }

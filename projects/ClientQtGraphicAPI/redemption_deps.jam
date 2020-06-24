@@ -21,6 +21,7 @@ add_obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/
 add_obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 add_obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
 add_obj src/core/report_error.o : $(REDEMPTION_SRC_PATH)/core/report_error.cpp ;
+add_obj src/core/session_reactor.o : $(REDEMPTION_SRC_PATH)/core/session_reactor.cpp ;
 add_obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 add_obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 add_obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
@@ -108,6 +109,7 @@ requirement_list += <library>src/core/RDP/orders/remoteFx.o ;
 requirement_list += <library>src/core/RDP/RDPDrawable.o ;
 requirement_list += <library>src/core/RDP/rlgr.o ;
 requirement_list += <library>src/core/report_error.o ;
+requirement_list += <library>src/core/session_reactor.o ;
 requirement_list += <library>src/gdi/clip_from_cmd.o ;
 requirement_list += <library>src/gdi/graphic_api.o ;
 requirement_list += <library>src/gdi/protected_graphics.o ;

@@ -185,7 +185,7 @@ public:
         auto new_mod = new Bouncer2Mod(
                             this->time_base,
                             this->mod_wrapper,
-                            this->timer_events_,
+                            this->events,
                             this->sesman,
                             this->front,
                             this->client_info.screen_info.width,
@@ -252,7 +252,7 @@ public:
             this->ini,
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -319,7 +319,7 @@ public:
         auto new_mod = new InteractiveTargetMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -339,7 +339,7 @@ public:
         auto new_mod = new DialogMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -362,7 +362,7 @@ public:
         auto new_mod = new DialogMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -391,7 +391,7 @@ public:
         auto new_mod = new DialogMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -417,7 +417,7 @@ public:
         auto new_mod = new WaitMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -438,7 +438,7 @@ public:
         auto new_mod = new TransitionMod(
             this->ini,
             this->time_base,
-            this->timer_events_,
+            this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -509,6 +509,7 @@ public:
             this->time_base,
             this->fd_events_,
             this->timer_events_,
+            this->events,
             this->sesman,
             this->file_system_license_store,
             this->gen,
@@ -528,6 +529,7 @@ public:
             this->time_base,
             this->fd_events_,
             this->timer_events_,
+            this->events,
             this->sesman,
             this->timeobj
         );

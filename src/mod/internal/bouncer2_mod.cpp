@@ -32,7 +32,7 @@
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
     GdProvider & gd_provider,
-    TimerContainer & timer_events_,
+    EventContainer & events,
     SesmanInterface & sesman,
     FrontAPI & front,
     uint16_t width, uint16_t height)
@@ -42,13 +42,25 @@ Bouncer2Mod::Bouncer2Mod(
 , sesman(sesman)
 , dancing_rect(0,0,100,100)
 , time_base(time_base)
+, events(events)
 , gd_provider(gd_provider)
-, timer(timer_events_.create_timer_executor(time_base)
-    .set_delay(std::chrono::milliseconds(33))
-    .on_action(jln::always_ready([this](){
-        this->draw_event(this->gd_provider.get_graphics());
-    })))
-{}
+{
+        Event event("Dialog Timeout", this);
+        event.alarm.set_timeout(
+            time_base.get_current_time()
+            +std::chrono::milliseconds(33));
+        event.alarm.set_period(std::chrono::seconds{33});
+        event.actions.on_timeout = [this](Event&)
+        {
+            this->draw_event(this->gd_provider.get_graphics());
+        };
+        this->events.push_back(std::move(event));
+}
+
+Bouncer2Mod::~Bouncer2Mod()
+{
+    end_of_lifespan(this->events, this);
+}
 
 Rect Bouncer2Mod::get_screen_rect() const
 {

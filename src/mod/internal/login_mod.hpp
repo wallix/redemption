@@ -31,6 +31,7 @@
 #include "mod/internal/widget/screen.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
+#include "keyboard/mouse.hpp"
 
 class ClientExecute;
 
@@ -64,17 +65,7 @@ class LoginMod : public mod_api, public NotifyApi
     const bool rail_enabled;
     DVCManager dvc_manager;
 
-    enum class DCState
-    {
-        Wait,
-        FirstClickDown,
-        FirstClickRelease,
-        SecondClickDown,
-    };
-
-    DCState dc_state;
-
-    int first_click_down_timer = 0;
+    MouseState mouse_state;
 
     enum class MouseOwner
     {
@@ -101,8 +92,6 @@ class LoginMod : public mod_api, public NotifyApi
     int old_mouse_y = 0;
 
 private:
-    void cancel_double_click_detection();
-
     [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
 
 public:

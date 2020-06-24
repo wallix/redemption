@@ -28,7 +28,8 @@
 #include "utils/rect.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/events.hpp"
-
+#include "keyboard/keymap2.hpp"
+#include "keyboard/mouse.hpp"
 
 #include <string>
 
@@ -41,7 +42,6 @@ class WindowListCaps;
 namespace CHANNELS { class ChannelDef; }
 namespace gdi { class GraphicApi; }
 
-enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
 enum {BORDER_WIDTH_HEIGHT = 3 };
 
 class ClientExecute : public windowing_api
@@ -267,7 +267,7 @@ public:
     } zone;
 
     // Return true if event is consumed.
-    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
+    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, Keymap2 * keymap, bool& mouse_captured_ref);
 
 private:
 

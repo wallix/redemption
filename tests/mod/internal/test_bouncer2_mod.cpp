@@ -37,7 +37,7 @@ int main()
 
     TimeBase time_base({0,0});
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
-    TimerContainer timer_events_;
-    Bouncer2Mod d(time_base, gd_provider, timer_events_, sesman, front, screen_info.width, screen_info.height);
+    EventContainer events;
+    Bouncer2Mod d(time_base, gd_provider, events, sesman, front, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

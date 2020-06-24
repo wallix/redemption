@@ -82,9 +82,6 @@ public:
         this->screen.redo_mouse_pointer_change(x, y);
     }
 
-private:
-    void cancel_double_click_detection();
-
 protected:
     uint16_t front_width;
     uint16_t front_height;
@@ -99,17 +96,8 @@ private:
 
     bool alt_key_pressed = false;
 
-    enum class DCState
-    {
-        Wait,
-        FirstClickDown,
-        FirstClickRelease,
-        SecondClickDown,
-    };
-
-    DCState dc_state;
-
-    TimerPtr first_click_down_timer;
+    MouseState mouse_state;
+    int disconnection_reconnection_timer = 0;
 
     const bool rail_enabled;
 
@@ -126,13 +114,13 @@ private:
 
 protected:
     TimeBase& time_base;
-    TimerContainer& timer_events_;
+    EventContainer& events;
 
 public:
     RailModuleHostMod(
         RailModuleHostModVariables vars,
         TimeBase& time_base,
-        TimerContainer& timer_events_,
+        EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
         ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
@@ -140,6 +128,7 @@ public:
 
     ~RailModuleHostMod() override
     {
+        end_of_lifespan(this->events, this);    
         this->rail_client_execute.reset(true);
         this->screen.clear();
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
@@ -199,6 +188,4 @@ private:
     RailModuleHostModVariables vars;
 
     bool can_resize_hosted_desktop = false;
-
-    TimerPtr disconnection_reconnection_timer; // Window resize
 };
