@@ -340,7 +340,7 @@ rule app ( name : src + : deps_for_path : deps_target * )
 
 make player_server.py : src/main/player_server.py _dummy : @copy_client ;
 
-app common_js : rdp_graphics.js redemption_load_module.js : _dummy ;
+app common_js : rdp_graphics.js : _dummy ;
 app rdpclient : to_scancode.js clipboard.js out_stream.js client.html : common_js ;
 app rdpplayer : player.html : common_js : player_server.py ;
 

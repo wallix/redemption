@@ -118,6 +118,9 @@ class Cliprdr
 {
     constructor(DOMBox, syncData, emccModule) {
         // TODO DOMBox, syncData -> {addFormats, setFileGroupId, ...}
+        this.UTF8Decoder = new TextDecoder("utf-8");
+        this.UTF16Decoder = new TextDecoder("utf-16");
+
         this.emccModule = emccModule;
         this.syncData = syncData;
         this.clipboard = null;
@@ -191,7 +194,7 @@ class Cliprdr
         };
     }
 
-    delete() {
+    free() {
         this.emccModule._free(this.buffer.i);
         this.DOMBox.removeChild(this.DOMFormats);
         this.DOMBox.removeChild(this.DOMFiles);
@@ -275,7 +278,8 @@ class Cliprdr
                         break;
 
                     case CustomCF.None:
-                        const name = (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(dataName);
+                        const decoder = (isUTF8 ? this.UTF8Decoder : this.UTF16Decoder);
+                        const name = decoder.decode(dataName);
                         button.appendChild(new Text(`${formatId}: ${name}`));
                         break;
                 }
@@ -329,7 +333,7 @@ class Cliprdr
     }
 
     formatDataResponseFile(utf16Name, attributes, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh) {
-        const filename = UTF16Decoder.decode(utf16Name);
+        const filename = this.UTF16Decoder.decode(utf16Name);
         console.log('formatDataResponseFile:', filename, attributes, flags, sizeLow, sizeHigh, lastWriteTimeLow, lastWriteTimeHigh);
         this.responseFiles.push({name: filename, size: (sizeHigh << 32) + sizeLow,})
     }

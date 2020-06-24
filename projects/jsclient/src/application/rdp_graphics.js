@@ -27,7 +27,7 @@ class RDPGraphics
         this._canvas.imageSmoothingEnabled = false;
     }
 
-    free() {
+    delete() {
         console.log('RDPGraphics: free memory')
         this._module._free(this._imgBufferIndex);
     }

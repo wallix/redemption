@@ -185,8 +185,14 @@ struct RdpClient
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
 
-    void send_first_packet()
+    void write_first_packet()
     {
+        this->fd_events.exec_timeout(this->time_base.get_current_time());
+    }
+
+    void set_time(timeval time)
+    {
+        this->time_base.set_current_time(time);
         this->fd_events.exec_timeout(this->time_base.get_current_time());
     }
 
@@ -200,26 +206,28 @@ struct RdpClient
         this->browser_trans.clear_output_buffer();
     }
 
-    void push_input_data(std::string data)
+    void process_input_data(std::string data)
     {
         this->browser_trans.push_input_buffer(std::move(data));
         this->fd_events.exec_action([](int /*fd*/, auto& /*top*/){ return true; });
     }
 
-    void rdp_input_scancode(uint16_t key, uint16_t flag)
+    void write_scancode_event(uint16_t scancode)
     {
+        uint16_t key = scancode & 0xFF;
+        uint16_t flag = scancode & 0xFF00;
         this->mod->rdp_input_scancode(
             key, 0, flag,
             this->time_base.get_current_time().tv_sec,
             nullptr);
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag)
+    void write_unicode_event(uint16_t unicode, uint16_t flag)
     {
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y)
+    void write_mouse_event(int device_flags, int x, int y)
     {
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
@@ -273,6 +281,9 @@ EMSCRIPTEN_BINDINGS(client)
                 RDPVerbose(verbose_flags)
             );
         })
+        .function_ptr("setTime", [](RdpClient& client, uint32_t seconds, uint32_t milliseconds) {
+            client.set_time({checked_int(seconds), checked_int(milliseconds*1000u)});
+        })
         .function_ptr("getOutputData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_output_buffer());
         })
@@ -283,11 +294,11 @@ EMSCRIPTEN_BINDINGS(client)
             client.add_channel_receiver(
                 redjs::from_memory_offset<redjs::ChannelReceiver const&>(ichannel_receiver));
         })
-        .function("sendFirstPacket", &RdpClient::send_first_packet)
+        .function("writeFirstPacket", &RdpClient::write_first_packet)
         .function("resetOutputData", &RdpClient::reset_output_data)
-        .function("pushInputData", &RdpClient::push_input_data)
-        .function("sendUnicode", &RdpClient::rdp_input_unicode)
-        .function("sendScancode", &RdpClient::rdp_input_scancode)
-        .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
+        .function("processInputData", &RdpClient::process_input_data)
+        .function("writeUnicodeEvent", &RdpClient::write_unicode_event)
+        .function("writeScancodeEvent", &RdpClient::write_scancode_event)
+        .function("writeMouseEvent", &RdpClient::write_mouse_event)
     ;
 }

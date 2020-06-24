@@ -88,7 +88,6 @@
 <script src="rdp_graphics.js"></script>
 <script src="out_stream.js"></script>
 <script src="clipboard.js"></script>
-<script src="redemption_load_module.js"></script>
 <script>
 
 WallixModule({
@@ -106,11 +105,8 @@ Module.log = function(priority, msg) {
     logger(msg);
 };
 
-const redemption = redemptionLoadModule(Module, window);
-
-const RDPClient = redemption.RDPClient;
-const newRDPSocket = redemption.newRDPSocket;
-const newClipboardChannel = redemption.newClipboardChannel;
+const RdpClient = Module.RdpClient;
+const ClipboardChannel = Module.ClipboardChannel;
 const HEAPU8 = Module.HEAPU8;
 const HEAPU16 = Module.HEAPU16;
 
@@ -136,44 +132,12 @@ const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
 
-let rdpclient;
-
 const KbdFlags = Object.freeze({
     Extended: 0x0100,
     Extended1: 0x0200,
     Down: 0x4000,
     Release: 0x8000,
 });
-
-function onKeyEvent(flag, evt)
-{
-    const scancode = toScancode(evt.code);
-    // console.log(flag, evt.key, evt.code, scancode)
-    if (scancode) {
-        // switch (scancode) {
-        // case 0x1d: // control left
-        // case 0x11d: // control right
-        //     console.log('control', flag !== KbdFlags.Release);
-        //     break;
-        // case 0x38: // alt left
-        // case 0x138: // alt right
-        //     console.log('alt', flag !== KbdFlags.Release);
-        //     break;
-        // case 0x2a: // shift left
-        // case 0x36: // shift right
-        //     console.log('shift', flag !== KbdFlags.Release);
-        //     break;
-        // case 0x15b: // win
-        //     console.log('meta', flag !== KbdFlags.Release);
-        //     break;
-        // }
-        evt.preventDefault();
-        rdpclient.sendScancode(scancode & 0xFF, (scancode & KbdFlags.Extended) | flag);
-    }
-    // else {
-    //     console.log(flag, evt.key, evt.keyCode)
-    // }
-}
 
 function mouseButtonToFlag(evt)
 {
@@ -187,124 +151,167 @@ function mouseButtonToFlag(evt)
     return 0x1000;
 }
 
-function onMouseEvent(flag, evt)
-{
-    evt.preventDefault();
-    // console.log(evt.offsetX, evt.offsetY, evt.button)
-    // console.log(flag, evt.button)
-    rdpclient.sendMouseEvent(flag | mouseButtonToFlag(evt), evt.offsetX, evt.offsetY);
-}
-
-
-const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
-const onKeyDown = (evt) => { onKeyEvent(0, evt); };
-const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
-
-const onMouseMove = (evt) => {
-    evt.preventDefault();
-    // console.log(evt.offsetX, evt.offsetY, evt.button)
-    rdpclient.sendMouseEvent(0x0800, evt.offsetX, evt.offsetY);
-};
-const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
-const onMouseUp = (evt) => { onMouseEvent(0, evt); };
-const onMouseWheel = (evt) => {
-    evt.preventDefault();
-    // 0x200 | delta
-    rdpclient.sendMouseEvent((evt.deltaY < 0) ? 0x287 : 0x388, 0, 0);
-};
-
-const docEvents = {
-    keyup: onKeyUp,
-    keydown: onKeyDown,
-    keypress: onKeyPress,
-};
-
-const canvasEvents = {
-    mousemove: onMouseMove,
-    mousedown: onMouseDown,
-    mouseup: onMouseUp,
-    wheel: onMouseWheel,
-    contextmenu: event => event.preventDefault()
-};
-
-const canvasFocusEvents = {
-    onblur: canvasBlur,
-    onfocus: canvasFocus,
-};
-
-const eventTable = [
-    [document, docEvents],
-    [ecanvas, canvasEvents],
-];
-
-function addEvents(elem, events)
-{
-    for (let [eventName, func] of Object.entries(events)) {
-        elem.addEventListener(eventName, func);
-    }
-}
-
-function removeEvents(elem, events)
-{
-    for (let [eventName, func] of Object.entries(events)) {
-        elem.removeEventListener(eventName, func);
-    }
-}
-
-function canvasStartEvents()
-{
-    for (const a of eventTable) {
-        addEvents(a[0], a[1]);
-    }
-    ecanvasFocus.onblur = canvasBlur;
-    ecanvasFocus.onfocus = canvasFocus;
-    canvasEnableFocus();
-}
-
-function canvasStopEvents()
-{
-    for (const a of eventTable) {
-        removeEvents(a[0], a[1]);
-    }
-    ecanvasFocus.onblur = () => {};
-    ecanvasFocus.onfocus = () => {};
-    ecanvas.onclick = () => {};
-}
-
-function canvasFocus()
-{
-    console.log('focus');
-    addEvents(document, docEvents);
-    ecanvas.onclick = (e) => e.preventDefault();
-}
-
-function canvasEnableFocus()
-{
-    // preventScroll don't work with firefox
-    ecanvasFocus.focus({preventScroll: true});
-}
-
-function canvasBlur()
-{
-    console.log('blur');
-    removeEvents(document, docEvents);
-    ecanvas.onclick = canvasEnableFocus;
-}
-
-const UTF8Decoder = new TextDecoder("utf-8");
-const UTF16Decoder = new TextDecoder("utf-16");
-const UTF16Encoder = new TextEncoder("utf-16");
-
-function decodeName(iname, inameLen, isUTF8)
-{
-    const uname = HEAPU8.subarray(iname, iname + inameLen);
-    return (isUTF8 ? UTF8Decoder : UTF16Decoder).decode(uname);
-}
-
 function run()
 {
-    const socket = newRDPSocket(ws_input.value);
+    const socket = new WebSocket(ws_input.value, "RDP");
+    socket.binaryType = 'arraybuffer';
+
+    let rdpclient;
+
+    const sendData = function() {
+        const out = rdpclient.getOutputData();
+        if (out.length) {
+            socket.send(out);
+            rdpclient.resetOutputData();
+        }
+    };
+
+    function onKeyEvent(flag, evt)
+    {
+        const scancode = toScancode(evt.code);
+        // console.log(flag, evt.key, evt.code, scancode)
+        if (scancode) {
+            // switch (scancode) {
+            // case 0x1d: // control left
+            // case 0x11d: // control right
+            //     console.log('control', flag !== KbdFlags.Release);
+            //     break;
+            // case 0x38: // alt left
+            // case 0x138: // alt right
+            //     console.log('alt', flag !== KbdFlags.Release);
+            //     break;
+            // case 0x2a: // shift left
+            // case 0x36: // shift right
+            //     console.log('shift', flag !== KbdFlags.Release);
+            //     break;
+            // case 0x15b: // win
+            //     console.log('meta', flag !== KbdFlags.Release);
+            //     break;
+            // }
+            evt.preventDefault();
+            rdpclient.writeScancodeEvent(scancode | flag);
+            sendData();
+        }
+        // else {
+        //     console.log(flag, evt.key, evt.keyCode)
+        // }
+    }
+
+    function onMouseEvent(flag, evt)
+    {
+        evt.preventDefault();
+        // console.log(evt.offsetX, evt.offsetY, evt.button)
+        // console.log(flag, evt.button)
+        rdpclient.writeMouseEvent(flag | mouseButtonToFlag(evt), evt.offsetX, evt.offsetY);
+        sendData();
+    }
+
+
+    const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
+    const onKeyDown = (evt) => { onKeyEvent(0, evt); };
+    const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
+
+    const onMouseMove = (evt) => {
+        evt.preventDefault();
+        // console.log(evt.offsetX, evt.offsetY, evt.button)
+        rdpclient.writeMouseEvent(0x0800, evt.offsetX, evt.offsetY);
+    };
+    const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
+    const onMouseUp = (evt) => { onMouseEvent(0, evt); };
+    const onMouseWheel = (evt) => {
+        evt.preventDefault();
+        // 0x200 | delta
+        rdpclient.writeMouseEvent((evt.deltaY < 0) ? 0x287 : 0x388, 0, 0);
+    };
+
+    const docEvents = {
+        keyup: onKeyUp,
+        keydown: onKeyDown,
+        keypress: onKeyPress,
+    };
+
+    const canvasEvents = {
+        mousemove: onMouseMove,
+        mousedown: onMouseDown,
+        mouseup: onMouseUp,
+        wheel: onMouseWheel,
+        contextmenu: event => event.preventDefault()
+    };
+
+    const canvasFocusEvents = {
+        onblur: canvasBlur,
+        onfocus: canvasFocus,
+    };
+
+    const eventTable = [
+        [document, docEvents],
+        [ecanvas, canvasEvents],
+    ];
+
+    function addEvents(elem, events)
+    {
+        for (let [eventName, func] of Object.entries(events)) {
+            elem.addEventListener(eventName, func);
+        }
+    }
+
+    function removeEvents(elem, events)
+    {
+        for (let [eventName, func] of Object.entries(events)) {
+            elem.removeEventListener(eventName, func);
+        }
+    }
+
+    function canvasStartEvents()
+    {
+        for (const a of eventTable) {
+            addEvents(a[0], a[1]);
+        }
+        ecanvasFocus.onblur = canvasBlur;
+        ecanvasFocus.onfocus = canvasFocus;
+        canvasEnableFocus();
+    }
+
+    function canvasStopEvents()
+    {
+        for (const a of eventTable) {
+            removeEvents(a[0], a[1]);
+        }
+        ecanvasFocus.onblur = () => {};
+        ecanvasFocus.onfocus = () => {};
+        ecanvas.onclick = () => {};
+    }
+
+    function canvasFocus()
+    {
+        console.log('focus');
+        addEvents(document, docEvents);
+        ecanvas.onclick = (e) => e.preventDefault();
+    }
+
+    function canvasEnableFocus()
+    {
+        // preventScroll don't work with firefox
+        ecanvasFocus.focus({preventScroll: true});
+    }
+
+    function canvasBlur()
+    {
+        console.log('blur');
+        removeEvents(document, docEvents);
+        ecanvas.onclick = canvasEnableFocus;
+    }
+
     const gd = new RDPGraphics(ecanvas, Module);
+    const channels = [];
+
+    const addChannel = function(channel) {
+        channels.push(channel);
+        rdpclient.addChannelReceiver(channel.getChannelReceiver());
+    }
+
+    const socketState = {socket: socket, isClosed: false};
+
     socket.onopen = function(event) {
         console.log('RdpClient open');
 
@@ -315,7 +322,7 @@ function run()
         };
         disconnectButton.firstElementChild.disabled = false;
 
-        rdpclient = new RDPClient(socket, gd, {
+        rdpclient = new RdpClient(gd, {
             width: Number(width_input.value),
             height: Number(height_input.value),
             bpp: Number(bpp_input.value),
@@ -326,31 +333,30 @@ function run()
             verbose: 0/*x04000000*/,
         });
 
-        const clipboard = newClipboardChannel(
-            rdpclient.getCallback(),
-            new Cliprdr(
-                cbFiles,
-                () => rdpclient.sendBufferedData(),
-                Module),
+        const cliprdr = new Cliprdr(cbFiles, sendData, Module);
+        const clipboard = new ClipboardChannel(
+            rdpclient.getCallbackAsVoidPtr(),
+            cliprdr,
             /*verbose = */0x04000000);
-        rdpclient.addChannel(clipboard);
+        cliprdr.setEmcChannel(clipboard);
+        addChannel(clipboard);
 
         sendCbUtf8.onsubmit = (e) => {
             e.preventDefault();
             clipboard.sendFormat(CF.UNICODETEXT, 0, "");
-            rdpclient.sendBufferedData();
+            sendData();
         };
 
         sendCbFile.onsubmit = (e) => {
             e.preventDefault();
             // TODO this is not Unicode
             clipboard.sendFormat(CustomCF.FileGroupDescriptorW, Charset.Unicode, "FileGroupDescriptorW");
-            rdpclient.sendBufferedData();
+            sendData();
         };
 
         socket.onmessage = function(event) {
-            rdpclient.addReceivingData(event.data);
-            rdpclient.sendBufferedData();
+            rdpclient.processInputData(event.data);
+            sendData();
         };
 
         socket.onerror = function(event) {
@@ -361,25 +367,32 @@ function run()
         socket.onclose = function(event) {
             console.log('RdpClient close');
             disconnectButton.firstElementChild.disabled = true;
-            gd.free();
-            // TODO fix that
-            try { rdpclient.delete(); } catch (e) {}
-            rdpclient = null;
+            rdpclient.delete();
+            gd.delete();
+            for (const channel of channels) {
+                channel.delete();
+            }
             canvasStopEvents();
+            socketState.isClosed = true;
         };
 
-        rdpclient.start();
+        rdpclient.writeFirstPacket();
+        sendData();
+
         canvasStartEvents();
     }
+
+    return socketState;
 }
+
+socketState = {isClosed: true};
 
 login.onsubmit = (e) => {
     e.preventDefault();
-    if (rdpclient) {
-        rdpclient.close();
-        canvasStopEvents();
+    if (!socketState.isClosed) {
+        socketState.socket.close();
     }
-    run();
+    socketState = run();
 };
 
 canvas.fillStyle = 'black';
@@ -401,7 +414,7 @@ for (const k in inputs) {
     }
 }
 
-run();
+socketState = run();
 
 });
 // const bytearray = new Uint8Array(event.data)
