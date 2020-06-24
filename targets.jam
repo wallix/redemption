@@ -39,7 +39,6 @@ exe headlessclient :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -143,7 +142,6 @@ exe rdpproxy :
   <library>src/core/mainloop.o
   <library>src/core/report_error.o
   <library>src/core/session.o
-  <library>src/core/session_reactor.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -338,7 +336,6 @@ exe rdpclient :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -545,7 +542,6 @@ test-run tests/RAIL/test_client_execute :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -676,7 +672,6 @@ test-run tests/acl/test_license_api :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -951,7 +946,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1043,7 +1037,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1110,7 +1103,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1172,7 +1164,6 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
@@ -1217,7 +1208,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
@@ -1262,7 +1252,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
@@ -1307,7 +1296,6 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
@@ -1353,7 +1341,6 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
@@ -2440,7 +2427,6 @@ test-run tests/core/test_mainloop :
   <library>src/core/mainloop.o
   <library>src/core/report_error.o
   <library>src/core/session.o
-  <library>src/core/session_reactor.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2584,7 +2570,6 @@ test-run tests/core/test_session :
   <library>src/core/font.o
   <library>src/core/report_error.o
   <library>src/core/session.o
-  <library>src/core/session_reactor.o
   <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2686,13 +2671,11 @@ test-run tests/core/test_session_reactor :
 :
   <library>src/core/error.o
   <library>src/core/events.o
-  <library>src/core/session_reactor.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/session_reactor.cpp
   <covfile>src/core/session_reactor.hpp
 ;
 test-run tests/front/test_front :
@@ -2729,7 +2712,6 @@ test-run tests/front/test_front :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2935,7 +2917,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -2969,7 +2950,6 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/close_mod.o
@@ -3048,7 +3028,6 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3095,7 +3074,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3142,7 +3120,6 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3189,7 +3166,6 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
@@ -3226,7 +3202,6 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3294,7 +3269,6 @@ test-run tests/mod/internal/test_wait_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3331,7 +3305,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget_test_mod.o
@@ -4089,7 +4062,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
@@ -4137,7 +4109,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/fileutils.o
@@ -4158,7 +4129,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/cfgloader.o
@@ -4182,7 +4152,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
@@ -4206,7 +4175,6 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -4239,7 +4207,6 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -4264,7 +4231,6 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -4320,7 +4286,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -4528,7 +4493,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
@@ -4792,7 +4756,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -5668,7 +5631,6 @@ obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/core/report_error.o : $(REDEMPTION_SRC_PATH)/core/report_error.cpp ;
 obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
-obj src/core/session_reactor.o : $(REDEMPTION_SRC_PATH)/core/session_reactor.cpp ;
 obj src/core/set_server_redirection_target.o : $(REDEMPTION_SRC_PATH)/core/set_server_redirection_target.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
