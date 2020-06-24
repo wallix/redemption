@@ -676,7 +676,7 @@ public:
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
         SesmanInterface sesman(ini);
-        Front front(time_base, timer_events_, sesman, front_trans, rnd, ini, cctx, authentifier,
+        Front front(time_base, events, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );
 

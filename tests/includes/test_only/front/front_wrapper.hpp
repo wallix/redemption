@@ -21,9 +21,9 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "core/front_api.hpp"
+#include "core/events.hpp"
 
 class TimeBase;
-class TimerContainer;
 class Transport;
 class Random;
 class CryptoContext;
@@ -41,7 +41,7 @@ class FrontWrapper : public FrontAPI
 public:
     FrontWrapper(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
+        EventContainer& events,
         SesmanInterface & sesman,
         Transport & trans,
         Random & gen,

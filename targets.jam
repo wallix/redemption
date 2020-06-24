@@ -4669,9 +4669,9 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -4729,9 +4729,9 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
-  <library>src/core/session_reactor.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -4789,6 +4789,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
   <library>src/core/session_reactor.o

@@ -144,7 +144,7 @@ CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
 
 FrontWrapper::FrontWrapper(
     TimeBase& time_base,
-    TimerContainer& timer_events_,
+    EventContainer& events,
     SesmanInterface & sesman,
     Transport & trans,
     Random & gen,
@@ -155,7 +155,7 @@ FrontWrapper::FrontWrapper(
 )
 : d(new D{FrontWrapper::D::MyFront{
     time_base,
-    timer_events_,
+    events,
     sesman,
     trans, gen, ini, cctx, report_message,
     fp_support

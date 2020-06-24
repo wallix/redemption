@@ -45,7 +45,7 @@ Bouncer2Mod::Bouncer2Mod(
 , events(events)
 , gd_provider(gd_provider)
 {
-        Event event("Dialog Timeout", this);
+        Event event("Bouncer Periodic Timer", this);
         event.alarm.set_timeout(
             time_base.get_current_time()
             +std::chrono::milliseconds(33));

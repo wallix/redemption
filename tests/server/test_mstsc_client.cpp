@@ -31,7 +31,6 @@
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
-#include "core/session_reactor.hpp"
 #include "acl/sesman.hpp"
 // Uncomment the code block below to generate testing data.
 // include "core/listen.hpp"
@@ -40,6 +39,8 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
+#include "utils/timebase.hpp"
+#include "core/events.hpp"
 #include "utils/timebase.hpp"
 
 // Uncomment the code block below to generate testing data.
@@ -104,9 +105,9 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool fastpath_support = true;
     NullReportMessage report_message;
     TimeBase timebase({0,0});
-    TimerContainer timer_events_;
+    EventContainer events;
     SesmanInterface sesman(ini);
-    FrontWrapper front(timebase, timer_events_, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
+    FrontWrapper front(timebase, events, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

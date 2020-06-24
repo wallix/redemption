@@ -88,7 +88,8 @@
 #include "core/front_api.hpp"
 #include "core/glyph_to_24_bitmap.hpp"
 #include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
@@ -641,11 +642,11 @@ private:
     bool is_first_memblt = true;
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
+    EventContainer& events;
     SesmanInterface & sesman;
-    TimerPtr handshake_timeout;
-    TimerPtr capture_timer;
-    TimerPtr flow_control_timer;
+    int handshake_timeout = 0;
+    int capture_timer = 0;
+    int flow_control_timer = 0;
 
     const std::chrono::milliseconds rdp_keepalive_connection_interval;
     const PrimaryDrawingOrdersSupport supported_orders;
@@ -765,7 +766,7 @@ public:
 
 public:
     Front( TimeBase& time_base
-         , TimerContainer& timer_events_
+         , EventContainer& events_
          // TODO: To Cut dependency with sesman, we should rather provide some front specific callback table
          // to send data to acl.
          , SesmanInterface & sesman
@@ -791,7 +792,7 @@ public:
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , report_message(report_message)
     , time_base(time_base)
-    , timer_events_(timer_events_)
+    , events(events_)
     , sesman(sesman)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
@@ -801,13 +802,17 @@ public:
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            this->handshake_timeout = this->timer_events_.create_timer_executor(this->time_base)
-            .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
-            .on_action([](auto ctx){
+            Event event("Front Handshake Timer", this);
+            this->handshake_timeout = event.id;
+            event.alarm.set_timeout(
+                time_base.get_current_time()
+                +this->ini.get<cfg::globals::handshake_timeout>());
+            event.actions.on_timeout = [this](Event&)
+            {
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
                 throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
-                return ctx.ready();
-            });
+            };
+            this->events.push_back(std::move(event));
         }
 
         // --------------------------------------------------------
@@ -840,10 +845,11 @@ public:
         }
 
         if (this->rdp_keepalive_connection_interval.count()) {
-            this->flow_control_timer = this->timer_events_
-            .create_timer_executor(this->time_base)
-            .set_delay(std::chrono::milliseconds(0))
-            .on_action([this](auto ctx){
+            Event event("Front Flow Control Timer", this);
+            this->flow_control_timer = event.id;
+            event.alarm.set_timeout(this->time_base.get_current_time());
+            event.actions.on_timeout = [this](Event& event)
+            {
                 if (this->state == FRONT_UP_AND_RUNNING) {
                     this->send_data_indication_ex_impl(
                         GCC::MCS_GLOBAL_CHANNEL,
@@ -855,15 +861,16 @@ public:
                             }
                         }
                     );
+                    event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
                 }
-
-                return ctx.ready_to(this->rdp_keepalive_connection_interval);
-            });
+            };
+            this->events.push_back(std::move(event));
         }
     }
 
     ~Front() override
     {
+        end_of_lifespan(this->events, this);
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
@@ -1107,20 +1114,21 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        this->capture_timer = this->timer_events_
-        .create_timer_executor(this->time_base)
-        .set_delay(std::chrono::milliseconds(0))
-        .on_action([this](auto ctx){
+        Event event("Front Capture Timer", this);
+        this->capture_timer = event.id;
+        event.alarm.set_timeout(this->time_base.get_current_time());
+        event.actions.on_timeout = [this](Event& event)
+        {
             auto const capture_ms = this->capture->periodic_snapshot(
-                ctx.get_current_time(),
+                event.alarm.now,
                 this->mouse_x, this->mouse_y,
                 false  // ignore frame in time interval
             ).ms();
-            return (decltype(capture_ms)::max() == capture_ms)
-                ? ctx.terminate()
-                : ctx.ready_to(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
-        });
+            if (capture_ms.max() < capture_ms){
+                event.alarm.set_timeout(event.alarm.now+std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
+            }
+        };
+        this->events.push_back(std::move(event));
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
@@ -1144,8 +1152,15 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            this->capture_timer.reset();
-
+            if (this->capture_timer) {
+                for(auto & event: this->events){
+                    if (event.id == this->capture_timer){
+                        event.garbage = true;
+                        event.id = 0;
+                    }
+                }
+            }
+            this->capture_timer = 0;
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -4238,7 +4253,15 @@ private:
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
-                this->handshake_timeout.reset();
+                if (this->handshake_timeout) {
+                    for(auto & event: this->events){
+                        if (event.id == this->handshake_timeout){
+                            event.garbage = true;
+                            event.id = 0;
+                        }
+                    }
+                }
+                this->handshake_timeout = 0;
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API
