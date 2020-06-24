@@ -53,6 +53,13 @@
         <label for="pass">pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
         <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
         <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
+        <label for="bpp">bpp: <select name="bpp" id="bpp">
+            <option value="8">8</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="24" selected="selected">24</option>
+            <option value="32">32</option>
+            </select></label>
         <input type="submit" value="New Connection">
     </form>
     <form id="disconnect" method="get" action="#">
@@ -124,6 +131,7 @@ const pass_input = document.getElementById('pass');
 const ws_input = document.getElementById('ws');
 const height_input = document.getElementById('height');
 const width_input = document.getElementById('width');
+const bpp_input = document.getElementById('bpp');
 const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
@@ -310,6 +318,7 @@ function run()
         rdpclient = new RDPClient(socket, gd, {
             width: Number(width_input.value),
             height: Number(height_input.value),
+            bpp: Number(bpp_input.value),
             disabledDrawingOrders: 0,
             username: user_input.value,
             password: pass_input.value,
@@ -383,6 +392,7 @@ const inputs = {
     ws: ws_input,
     width: width_input,
     height: height_input,
+    bpp: bpp_input,
 };
 for (const k in inputs) {
     const x = url.searchParams.get(k);

@@ -39,19 +39,14 @@ class RDPGraphics
         console.error(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
     }
 
-    resizeCanvas(w, h, /*bpp*/) {
-        console.log('RDPGraphics: resize(' + w + ', ' + h + ')');
+    resizeCanvas(w, h, bpp) {
+        console.log('RDPGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
+
         this.width = w;
         this.height = h;
-
-        if (this._ecanvas.width !== w || this._ecanvas.height !== h) {
-            // restore canvas after resize
-            const imgData = this._canvas.getImageData(
-                0, 0, this._ecanvas.width, this._ecanvas.height);
-            this._ecanvas.width = w;
-            this._ecanvas.height = h;
-            this._canvas.putImageData(imgData, 0, 0);
-        }
+        this._ecanvas.width = w;
+        this._ecanvas.height = h;
+        this.drawRect(0, 0, w, h, 0);
     }
 
     setBmpCacheEntries(

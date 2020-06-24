@@ -26,6 +26,7 @@ Author(s): Jonathan Poelen
 #include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "acl/license_api.hpp"
+#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
@@ -38,6 +39,7 @@ Author(s): Jonathan Poelen
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/zstring_view.hpp"
 #include "utils/theme.hpp"
+#include "utils/timebase.hpp"
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
@@ -47,8 +49,6 @@ Author(s): Jonathan Poelen
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
 #include "redjs/channel_receiver.hpp"
-#include "acl/sesman.hpp"
-#include "utils/timebase.hpp"
 
 #include <chrono>
 
@@ -255,7 +255,7 @@ EMSCRIPTEN_BINDINGS(client)
             ScreenInfo screen_info{
                 get_number_or(config, "width", uint16_t(800)),
                 get_number_or(config, "height", uint16_t(600)),
-                BitsPerPixel(get_number_or(config, "bpp", uint16_t(24)))
+                BitsPerPixel(get_number_or(config, "bpp", uint16_t(16)))
             };
 
             auto disabled_orders = get_number_or(config, "disabledDrawingOrders", uint32_t(0));
