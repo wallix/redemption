@@ -2394,7 +2394,8 @@ public:
         return;
     }
 
-    void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
+    void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override
+    {
         if ((UP_AND_RUNNING == this->connection_finalization_state)
             && !this->input_event_disabled) {
 
@@ -5516,7 +5517,8 @@ public:
     }   // send_persistent_key_list
 
     // TODO CGR: duplicated code in front
-    void send_synchronise() {
+    void send_synchronise()
+    {
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
             LOG_INFO, "mod_rdp::send_synchronise");
 
@@ -5532,7 +5534,8 @@ public:
             LOG_INFO, "mod_rdp::send_synchronise done");
     }
 
-    void send_fonts(int seq) {
+    void send_fonts(int seq)
+    {
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_fonts");
 
         this->send_pdu_type2(
@@ -5549,8 +5552,8 @@ public:
         LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "mod_rdp::send_fonts done");
     }
 
-    void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) override
+    {
         [[maybe_unused]] std::size_t channel_data_size = this->enable_fastpath_client_input_event
             ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
             : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
