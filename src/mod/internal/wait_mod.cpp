@@ -56,7 +56,7 @@ void WaitMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
         this->mouse_state.chained_input_mouse = [this] (int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured){
             return this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
         };
-        this->mouse_state.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
+        this->mouse_state.input_mouse(device_flags, x, y, keymap);
 
         if (out_mouse_captured) {
             this->allow_mouse_pointer_change(false);

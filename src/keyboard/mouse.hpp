@@ -70,7 +70,7 @@ struct MouseState {
         this->dc_state = MouseState::DCState::Wait;
     }
 
-    bool input_mouse(int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured)
+    bool input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         switch (this->dc_state) {
             case MouseState::DCState::Wait:
