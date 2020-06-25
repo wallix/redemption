@@ -24,7 +24,6 @@
 
 #include "configs/config.hpp"
 #include "configs/config_access.hpp"
-#include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"

@@ -56,7 +56,6 @@ class ReplayMod : public mod_api
     bool replay_on_loop;
     bool play_video_with_corrupted_bitmap;
     SesmanInterface & sesman;
-    TimerPtr timer;
 
 public:
     using Verbose = FileToGraphic::Verbose;

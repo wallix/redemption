@@ -18,7 +18,8 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
+#include "core/events.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"

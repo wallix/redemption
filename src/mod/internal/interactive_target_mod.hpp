@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "core/session_reactor.hpp"
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/notify_api.hpp"
@@ -31,6 +30,7 @@
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/mouse.hpp"
+#include "utils/timebase.hpp"
 
 
 using InteractiveTargetModVariables = vcfg::variables<

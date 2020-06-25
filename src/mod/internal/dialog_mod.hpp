@@ -25,7 +25,6 @@
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/language_button.hpp"
-#include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
@@ -139,7 +138,6 @@ private:
     FlatDialog dialog_widget;
 
     DialogModVariables vars;
-    TimerPtr timeout_timer;
 
     CopyPaste copy_paste;
 

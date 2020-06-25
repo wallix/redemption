@@ -433,7 +433,6 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
                 }
                 else {
                     this->end_of_data = true;
-                    this->timer->set_delay(std::chrono::seconds(1));
 
                     this->disconnect();
                     gd.sync();

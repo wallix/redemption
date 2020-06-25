@@ -23,6 +23,7 @@
 #include "mod/mod_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "core/events.hpp"
+#include <memory>
 
 class TimeBase;
 class FrontAPI;
