@@ -23,7 +23,8 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/session_reactor.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "keyboard/keymap2.hpp"
@@ -37,14 +38,16 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(TimeBase& time_base, GdProvider & gd_provider, TimerContainer & timer_events_, WidgetTestMod& /*mod*/)
+    WidgetTestModPrivate(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events, WidgetTestMod& /*mod*/)
       : time_base(time_base)
       , gd_provider(gd_provider)
+      , events(events)
     {
-        LOG(LOG_DEBUG, "WidgetTestModPrivate");
-        this->timer = timer_events_.create_timer_executor(time_base)
-            .set_delay(std::chrono::seconds(0))
-            .on_action([this](auto ctx){
+        Event event("WidgetTestMod Timer", this);
+        this->timer = event.id;
+        event.alarm.set_timeout(this->time_base.get_current_time());
+        event.actions.on_timeout = [this](Event&)
+        {
             update_lock update_lock{this->gd_provider.get_graphics()};
             int y = 10;
             for (auto s : {
@@ -81,23 +84,28 @@ struct WidgetTestMod::WidgetTestModPrivate
                     gdi::ColorCtx::depth24(), Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
                 y += font.max_height() + 10;
             }
-            // return ctx.set_delay(std::chrono::seconds(10)).ready();
-            return ctx.terminate();
-        });
+        };
+        this->events.push_back(std::move(event));
+    }
+    
+    ~WidgetTestModPrivate()
+    {
+        end_of_lifespan(this->events, this);
     }
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TimerPtr timer;
+    int timer;
+    EventContainer & events;
 };
 
 WidgetTestMod::WidgetTestMod(
     TimeBase& time_base,
     GdProvider & gd_provider,
-    TimerContainer & timer_events_,
+    EventContainer & events,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & /*font*/)
-: d(std::make_unique<WidgetTestModPrivate>(time_base, gd_provider, timer_events_, *this))
+: d(std::make_unique<WidgetTestModPrivate>(time_base, gd_provider, events, *this))
 {
     front.server_resize({width, height, BitsPerPixel{8}});
 }

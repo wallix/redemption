@@ -22,6 +22,7 @@
 
 #include "mod/mod_api.hpp"
 #include "acl/gd_provider.hpp"
+#include "core/events.hpp"
 
 class TimeBase;
 class FrontAPI;
@@ -32,7 +33,7 @@ class WidgetTestMod : public mod_api
 public:
     WidgetTestMod(TimeBase& time_base,
         GdProvider & gd_provider,
-        TimerContainer & timer_events_,
+        EventContainer & events,
         FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);
 
@@ -63,7 +64,6 @@ public:
     }
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
 
-private:
     class WidgetTestModPrivate;
     friend WidgetTestModPrivate;
     std::unique_ptr<WidgetTestModPrivate> d;

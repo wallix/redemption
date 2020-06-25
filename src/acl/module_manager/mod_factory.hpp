@@ -225,7 +225,7 @@ public:
         auto new_mod = new WidgetTestMod(
             this->time_base,
             this->mod_wrapper,
-            this->timer_events_,
+            this->events,
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
