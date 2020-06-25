@@ -151,8 +151,6 @@ private:
 
     WaitModVariables vars;
 
-    TimerPtr timeout_timer;
-
     CopyPaste copy_paste;
 
 public:
