@@ -22,6 +22,8 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 #include <memory>
 
@@ -55,6 +57,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     GdProvider & gd_provider,
     TopFdContainer & fd_events_,
     TimerContainer& timer_events_,
+    EventContainer & events,
     SesmanInterface & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,

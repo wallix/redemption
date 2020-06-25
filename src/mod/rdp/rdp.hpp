@@ -416,6 +416,7 @@ private:
     TimeBase & time_base;
     GdProvider & gd_provider;
     TimerContainer& timer_events_;
+    EventContainer & events;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -425,7 +426,8 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_,
+        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_, 
+        EventContainer & events,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -457,6 +459,7 @@ public:
     , time_base(time_base)
     , gd_provider(gd_provider)
     , timer_events_(timer_events_)
+    , events(events)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
@@ -1940,6 +1943,7 @@ class mod_rdp : public mod_api, public rdp_api
     TopFdPtr fd_event;
     TopFdContainer & fd_events_;
     TimerContainer& timer_events_;
+    EventContainer & events;
     SesmanInterface & sesman;
 
 #ifndef __EMSCRIPTEN__
@@ -2036,6 +2040,7 @@ public:
       , GdProvider & gd_provider
       , TopFdContainer & fd_events_
       , TimerContainer& timer_events_
+      , EventContainer & events
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -2057,7 +2062,7 @@ public:
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, gd_provider, timer_events_, file_validator_service,
+            report_message, gen, metrics, time_base, gd_provider, timer_events_, events, file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
         )
@@ -2109,6 +2114,7 @@ public:
         , gd_provider(gd_provider)
         , fd_events_(fd_events_)
         , timer_events_(timer_events_)
+        , events(events)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_)

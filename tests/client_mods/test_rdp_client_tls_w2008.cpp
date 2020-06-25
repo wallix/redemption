@@ -141,6 +141,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
+
     SesmanWrapper sesman;
 
 
@@ -150,7 +152,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, fd_events_,
-        timer_events_, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+        timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -270,6 +272,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
     SesmanWrapper sesman;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -278,7 +281,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, sesman.get_ini(),
-        time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
+        time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(), front, info,
         sesman.redir_info(), gen, timeobj, channels_authorizations, mod_rdp_params,
         tls_client_params, authentifier, report_message, license_store, sesman.get_ini(),
         nullptr, nullptr, mod_rdp_factory);

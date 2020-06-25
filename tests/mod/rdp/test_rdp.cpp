@@ -153,13 +153,14 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
     SesmanWrapper sesman;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
 
     auto mod = new_mod_rdp(
-        t, sesman.get_ini(), time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj, channels_authorizations,
+        t, sesman.get_ini(), time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj, channels_authorizations,
         mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
         sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -168,6 +169,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     auto end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
+    execute_events(events, end_tv);
     fd_events_.exec_timeout(end_tv);
 
     for (int count = 0; count < 40; ++count) {
@@ -181,6 +183,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 //    fd_events_.exec_timeout(end_tv);
 //    timer_events_.exec_timer(end_tv);
 //    fd_events_.exec_timeout(end_tv);
+//    execute_events(events, end_tv);
 
     //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
     //    (void)sck;

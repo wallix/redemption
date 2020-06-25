@@ -479,6 +479,7 @@ public:
                   , this->gd_forwarder
                   , this->fd_events_
                   , this->timer_events_
+                  , this->events
                   , this->sesman
                   , *this
                   , *this
@@ -1041,6 +1042,7 @@ public:
                 auto const end_tv = time_base.get_current_time();
                 this->timer_events_.exec_timer(end_tv);
                 this->fd_events_.exec_timeout(end_tv);
+                execute_events(this->events, end_tv);
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;

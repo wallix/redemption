@@ -275,6 +275,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
             TopFdContainer fd_events_;
             TimerContainer timer_events_;
+            EventContainer events;
             SesmanInterface sesman(ini);
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -282,7 +283,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(trans, ini, time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(trans, ini, time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -296,6 +297,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             auto const end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
+            execute_events(events, end_tv);
 
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
@@ -312,6 +314,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             auto end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
+            execute_events(events, end_tv);
 
             int n = 0;
             while (!fd_events_.is_empty() && (++n < 70)) {
@@ -517,6 +520,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
             TopFdContainer fd_events_;
             TimerContainer timer_events_;
+            EventContainer events;
             SesmanInterface sesman(ini);
 
 
@@ -525,7 +529,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, ini, time_base, gd_provider, fd_events_, timer_events_, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(t, ini, time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -538,6 +542,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             auto const end_tv = this->get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
+            execute_events(events, end_tv);
 
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
@@ -558,6 +563,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             auto end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
+            execute_events(events, end_tv);
 
             int n = 0;
             while (!fd_events_.is_empty() && (++n < 70)) {

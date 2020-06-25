@@ -279,6 +279,7 @@ int main(int argc, char** argv)
                 gd_forwarder,
                 fd_events_,
                 timer_events_,
+                events,
                 sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
