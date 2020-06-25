@@ -53,7 +53,6 @@ class CloseMod : public mod_api, public NotifyApi
 {
     FlatWabClose close_widget;
     CloseModVariables vars;
-    TimerPtr timeout_timer;
 
 public:
     CloseMod(

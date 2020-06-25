@@ -39,7 +39,6 @@ using TransitionModVariables = vcfg::variables<
 
 class ClientExecute;
 class TimeBase;
-class TimerContainer;
 
 
 class TransitionMod : public mod_api
