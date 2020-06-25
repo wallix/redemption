@@ -19,7 +19,9 @@ class RDPGraphics
 
         this._ecanvas = canvasElement
         this._canvas = canvasElement.getContext('2d');
-        this._ecusorCanvas = document.createElement('canvas')
+        this._ecusorCanvas = OffsreenCanvas
+            ? new OffsreenCanvas(0,0)
+            : document.createElement('canvas');
         this._cusorCanvas = this._ecusorCanvas.getContext('2d');
         this._cachePointers = [];
         this._cacheImages = [];
@@ -60,33 +62,56 @@ class RDPGraphics
     setBmpCacheIndex(byteOffset, bitsPerPixel, w, h, lineSize, imageIdx) {
         // assume w*h <= 64*64
         this._module.loadRgbaImageFromIndex(this._imgBufferIndex,
-                                           byteOffset, bitsPerPixel, w, h, lineSize);
+                                            byteOffset, bitsPerPixel, w, h, lineSize);
         const array = this._buffer.slice(this._imgBufferIndex, this._imgBufferIndex + w*h*4);
         // array is copied by Uint8ClampedArray
         this._cacheImages[imageIdx] = new ImageData(new Uint8ClampedArray(array), w, h);
     }
 
-    _transformCopyImage(img, sx, sy, dx, dy, dw, dh, f) {
-        const destU32a = new Uint32Array(w * h);
-        const srcU32a = new Uint32Array(img.data.buffer);
+    _transformImage2(dstImg, srcImg, sx, sy, x, y, f) {
+        const destU32a = new Uint32Array(dstImg.data.buffer);
+        const srcU32a = new Uint32Array(srcImg.data.buffer);
 
-        const src = img.data;
-        const imgW = img.width;
-        const srcInc = imgW - dw;
-        let isrc = sy * imgW + sx;
+        const w = dstImg.width;
+        const len = w * dstImg.height;
+        const srcInc = srcImg.width - w;
+        let isrc = sy * srcImg.width + sx;
 
-        for (let idst = 0; idst < len; idx += imgW) {
-            data.set(src.subarray(idx, idx + w4), y);
-            for (let ie = idst + dw; idst < ie; ++idst, ++isrc) {
+        for (let idst = 0; idst < len;) {
+            for (let ie = idst + w; idst < ie; ++idst, ++isrc) {
                 destU32a[idst] = f(srcU32a[isrc] & 0xffffff, destU32a[idst] & 0xffffff)
                                | 0xff000000;
             }
             isrc += srcInc;
         }
 
-        const array = new Uint8ClampedArray(destU32a.data.buffer);
-        const newImg = new ImageData(array, dw, dh);
-        this._canvas.putImageData(newImg, x, y);
+        this._canvas.putImageData(dstImg, x, y);
+    }
+
+    _transformDstImage(img, sx, sy, dx, dy, dw, dh, f) {
+        const dstImg = this._canvas.getImageData(dx, dy, dw, dh);
+        this._transformImage2(dstImg, img, sx, sy, dx, dy, f);
+    }
+
+    _copyImage(img, sx, sy, dw, dh) {
+        const u8av = img.data.buffer;
+        const dw4 = dw*4;
+        const w = img.width;
+        const data = new Uint8ClampedArray(dh*dw4);
+
+        if (0 === sx && w === dw) {
+            data.set(u8av.slice(sy*dw4, (sy+dh)*dw4));
+        }
+        else {
+            const w4 = w*4;
+            let i = sy*w4 + sx*4;
+            const ie = i + dh*w4;
+            for (; y < ie; ++y, i+=w4) {
+                data.set(u8av.slice(i, i+dw4));
+            }
+        }
+
+        return new ImageData(data, dw, dh);
     }
 
     drawMemBlt(imageIdx, rop, sx, sy, dx, dy, dw, dh) {
@@ -105,7 +130,8 @@ class RDPGraphics
                 break;
 
             case 0x55:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src) => src ^ 0xffffff);
+                const newImg = this._copyImage(img, sx, sy, dw, dh);
+                this._transformImage(newImg, dx, dy, (src) => src ^ 0xffffff);
                 break;
 
             case 0xCC:
@@ -113,23 +139,23 @@ class RDPGraphics
                 break;
 
             case 0x22:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => ~src & dst);
+                this._transformDstImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => ~src & dst);
                 break;
 
             case 0x66:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src ^ dst);
+                this._transformDstImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src ^ dst);
                 break;
 
             case 0x88:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src & dst);
+                this._transformDstImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src & dst);
                 break;
 
             case 0xBB:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => ~src | dst);
+                this._transformDstImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => ~src | dst);
                 break;
 
             case 0xEE:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src | dst);
+                this._transformDstImage(img, sx, sy, dx, dy, dw, dh, (src, dst) => src | dst);
                 break;
 
             case 0xff:
@@ -158,8 +184,8 @@ class RDPGraphics
 
         switch (rop) {
             case 0xB8:
-                this._transformCopyImage(img, sx, sy, dx, dy, dw, dh,
-                                         (src, dst) => ((dst ^ foreColor) & src) ^ foreColor);
+                this._transformDstImage(img, sx, sy, dx, dy, dw, dh,
+                                        (src, dst) => ((dst ^ foreColor) & src) ^ foreColor);
                 break;
 
             default:
@@ -197,24 +223,41 @@ class RDPGraphics
         this._canvas.fillRect(x,y,w,h);
     }
 
+    _transformPixels2(sx, sy, dx, dy, dw, dh, f) {
+        const dstImg = this._canvas.getImageData(dx, dy, w, h);
+        const srcImg = this._canvas.getImageData(sx, sy, w, h);
+        this._transformImage2(dstImg, srcImg, 0, 0, dx, dy, f);
+    }
+
     drawScrBlt(sx, sy, w, h, dx, dy, rop) {
         // console.log('drawScrBlt');
-        const sourceImageData = this._canvas.getImageData(sx, sy, w, h);
-        if (rop === 0xCC) {
-            this._canvas.putImageData(sourceImageData, dx, dy);
-        }
-        else {
-            let op;
-            switch (rop) {
-                case 0x00: op = 'darken'; break;
-                // case 0xF0: op = 'source-over'; break;
-                case 0x55: op = 'xor'; break;
-                case 0xFF: op = 'lighten'; break;
-                default: op = 'source-over'; break;
-            }
-            this._canvas.globalCompositeOperation = op;
-            this._canvas.putImageData(sourceImageData, dx, dy);
-            this._canvas.globalCompositeOperation = 'source-over';
+        switch (rop) {
+            case 0x00:
+                this._canvas.fillStyle = "#000";
+                this._canvas.fillRect(x,y,w,h);
+                break;
+            case 0x11: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~(src | dst)); break;
+            case 0x22: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~src & dst); break;
+            case 0x33: this._transformPixels(sx,sy,w,h, (src) => ~src); break;
+            case 0x44: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src & ~dst); break;
+            case 0x55: this._transformPixels(dx,dy,w,h, (dst) => ~dst); break;
+            case 0x66: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src ^ dst); break;
+            case 0x77: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~(src & dst)); break;
+            case 0x88: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src & dst); break;
+            case 0x99: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~(src ^ dst)); break;
+            case 0xaa: break;
+            case 0xbb: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~src | dst); break;
+            case 0xcc: this._canvas.putImageData(this._canvas.getImageData(sx,sy,w,h), dx,dy); break;
+            case 0xdd: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src | ~dst); break;
+            case 0xee: this._transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src | dst); break;
+            case 0xff:
+                this._canvas.fillStyle = "#fff";
+                this._canvas.fillRect(x,y,w,h);
+                break;
+
+            default:
+                this.unsupportedRop('ScrBlt', rop);
+                break;
         }
     }
 
@@ -280,13 +323,17 @@ class RDPGraphics
     }
 
     _transformPixels(x, y, w, h, f) {
-        const imgData = this._canvas.getImageData(x, y, w, h);
-        const u32a = new Uint32Array(imgData.data.buffer);
-        const len = imgData.width * imgData.height;
+        const img = this._canvas.getImageData(x, y, w, h);
+        this._transformImage(img, x, y, f);
+    }
+
+    _transformImage(img, x, y, f) {
+        const u32a = new Uint32Array(img.data.buffer);
+        const len = img.width * img.height;
         for (let i = 0; i < len; ++i) {
             u32a[i] = f(u32a[i] & 0xffffff) | 0xff000000;
         }
-        this._canvas.putImageData(imgData, x, y);
+        this._canvas.putImageData(img, x, y);
     }
 
     _transformPixelsBrush(orgX, orgY, w, h, backColor, foreColor, brushData, f) {
@@ -400,3 +447,7 @@ class RDPGraphics
     updatePointerPosition(x, y) {
     }
 };
+
+if (module) {
+    module.exports.RDPGraphics = RDPGraphics;
+}

@@ -8,6 +8,7 @@ cd emsdk &&
 ./emsdk install latest &&
 ./emsdk activate latest
 ```
+<!-- version: 12.9.1 -->
 
 ## Test
 
@@ -38,27 +39,27 @@ node test.js
 
     source $EMSDK_PATH/emsdk_env.sh
 
-
 ## Run bjam
 
     bjam -j7 toolset=clang js_client
-
-Or with tests:
-
-    bjam -j7 toolset=clang
 
 Debug mode:
 
     bjam -j7 toolset=clang debug js_client
 
-If you get some undefined symbol error, solve it as a link error for the main
-project. Rerun `bjam targets.jam`
+And tests with (after `source ./emsdk_env.sh`)
+
+    npm install canvas
+
+    bjam -j7 toolset=clang
+
+If you get some undefined symbol error, run `bjam targets.jam`.
 
 ## Debug with source-map
 
     npm install source-map-support
 
-    bjam source_map_support=yes ....
+    bjam debug source_map_support=yes ....
 
 
 ## Install

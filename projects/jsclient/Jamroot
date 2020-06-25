@@ -253,11 +253,9 @@ make targets.jam : : @gen_targets ;
 
 actions exenode
 {
-    if [ "$(SOURCE_MAP_SUPPORT)" = yes ]; then
-        node -r source-map-support/register $(>:S=.js) && : > $(<)
-    else
-        node $(>:S=.js) && : > $(<)
-    fi
+    [ "$(SOURCE_MAP_SUPPORT)" = yes ] && params=(-r source-map-support/register) || params=()
+    echo $PWD
+    NODE_PATH="$PWD" node ${params[@]} "$(>:S=.js)" && : > "$(<)"
 }
 
 rule test-run ( name : objs + : requirements * )
