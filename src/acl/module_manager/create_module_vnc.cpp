@@ -44,8 +44,64 @@ struct ModVNCWithMetrics : public mod_vnc
     };
 
     std::unique_ptr<ModMetrics> metrics;
-    TimerPtr metrics_timer;
-    using mod_vnc::mod_vnc;
+    int metrics_timer = 0;
+    
+    void set_metrics_timer(std::chrono::seconds log_interval)
+    {
+        Event event("VNC Metrics Timer", this);
+        this->metrics_timer = event.id;
+        event.alarm.set_timeout(this->time_base.get_current_time() + log_interval);
+        event.alarm.set_period(log_interval);
+        event.actions.on_timeout = [this](Event&event)
+        {
+            this->metrics->log(event.alarm.now);
+        };
+        this->events.push_back(std::move(event));
+    }
+
+    EventContainer & events;
+    TimeBase & time_base;
+
+    ModVNCWithMetrics(Transport & t
+           , TimeBase& time_base
+           , GdProvider & gd_provider
+           , TopFdContainer & fd_events_
+           , EventContainer & events
+           , const char * username
+           , const char * password
+           , FrontAPI & front
+           // TODO: front width and front height should be provided through info
+           , uint16_t front_width
+           , uint16_t front_height
+           , int keylayout
+           , int key_flags
+           , bool clipboard_up
+           , bool clipboard_down
+           , const char * encodings
+           , ClipboardEncodingType clipboard_server_encoding_type
+           , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
+           , ReportMessageApi & report_message
+           , bool server_is_macos
+           , bool server_is_unix
+           , bool cursor_pseudo_encoding_supported
+           , ClientExecute* rail_client_execute
+           , VNCVerbose verbose
+           , VNCMetrics * metrics
+           , SesmanInterface & sesman)
+    : mod_vnc(t, time_base, gd_provider, fd_events_, events, username, password, front, front_width, front_height,
+          keylayout, key_flags, clipboard_up, clipboard_down, encodings,
+          clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
+          report_message, server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
+          rail_client_execute, verbose, metrics, sesman)
+    , events(events)
+    , time_base(time_base)
+    {
+    }
+    
+    ~ModVNCWithMetrics() 
+    {
+        end_of_lifespan(this->events, this);
+    }
 };
 
 
@@ -65,7 +121,6 @@ public:
         std::string * error_message,
         TimeBase& time_base,
         TopFdContainer & fd_events_,
-        TimerContainer& timer_events_,
         EventContainer& events,
         SesmanInterface & sesman,
         const char* username,
@@ -213,7 +268,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     TopFdContainer & fd_events_,
-    TimerContainer& timer_events_,
     EventContainer& events,
     SesmanInterface & sesman,
     TimeObj & timeobj
@@ -268,7 +322,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         nullptr,
         time_base,
         fd_events_,
-        timer_events_,
         events,
         sesman,
         ini.get<cfg::globals::target_user>().c_str(),
@@ -297,13 +350,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
 
     if (enable_metrics) {
         new_mod->mod.metrics = std::move(metrics);
-        new_mod->mod.metrics_timer = timer_events_.create_timer_executor(time_base)
-            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-            .on_action([metrics = new_mod->mod.metrics.get()](auto ctx){
-                metrics->log(ctx.get_current_time());
-                return ctx.ready();
-            })
-        ;
+        new_mod->mod.set_metrics_timer(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()));
     }
 
     auto tmp_psocket_transport = &(new_mod->socket_transport);

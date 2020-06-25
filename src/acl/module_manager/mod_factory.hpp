@@ -528,7 +528,6 @@ public:
             this->glyphs, this->theme,
             this->time_base,
             this->fd_events_,
-            this->timer_events_,
             this->events,
             this->sesman,
             this->timeobj
