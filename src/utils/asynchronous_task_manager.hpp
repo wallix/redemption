@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "core/events.hpp"
+
 class TimeBase;
 class TimerContainer;
 class TopFdContainer;
@@ -66,5 +68,5 @@ public:
         ptr_function  f = [](void* /*unused*/, AsynchronousTask& /*unused*/) noexcept {};
     };
 
-    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, TimerContainer&, TerminateEventNotifier) = 0;
+    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, TimerContainer&, EventContainer & events, TerminateEventNotifier) = 0;
 };

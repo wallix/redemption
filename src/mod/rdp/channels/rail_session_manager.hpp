@@ -95,6 +95,7 @@ class RemoteProgramsSessionManager final
 
     TimeBase& time_base;
     TimerContainer& timer_events_;
+    EventContainer & events;
 
     TimerPtr waiting_screen_event;
 
@@ -134,6 +135,7 @@ public:
     explicit RemoteProgramsSessionManager(
         TimeBase& time_base,
         TimerContainer& timer_events_,
+        EventContainer & events,
         gdi::GraphicApi& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
@@ -152,6 +154,7 @@ public:
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
     , time_base(time_base)
     , timer_events_(timer_events_)
+    , events(events)
     {}
 
     void begin_update() override

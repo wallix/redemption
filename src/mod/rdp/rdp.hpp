@@ -161,15 +161,15 @@ private:
     }
 
 public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer& timer_events_)
-        : time_base(time_base), gd_provider(gd_provider), fd_events_(fd_events_), timer_events_(timer_events_)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer& timer_events_, EventContainer & events)
+        : time_base(time_base), gd_provider(gd_provider), fd_events_(fd_events_), timer_events_(timer_events_), events(events)
     {}
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, AsynchronousTask::TerminateEventNotifier{this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, this->events, AsynchronousTask::TerminateEventNotifier{this, remover()});
         }
     }
 
@@ -177,7 +177,7 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, AsynchronousTask::TerminateEventNotifier{this, remover()});
+            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, this->events, AsynchronousTask::TerminateEventNotifier{this, remover()});
         }
     }
 
@@ -187,11 +187,12 @@ public:
     GdProvider & gd_provider;
     TopFdContainer& fd_events_;
     TimerContainer& timer_events_;
+    EventContainer& events;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer&)
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer&, EventContainer & events)
     {}
 };
 #endif
@@ -426,8 +427,8 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, GdProvider & gd_provider, TimerContainer& timer_events_, 
-        EventContainer & events,
+        TimeBase & time_base, GdProvider & gd_provider, 
+        TimerContainer& timer_events_, EventContainer & events,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -521,7 +522,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->time_base, this->timer_events_, gd, mod_rdp, mod_rdp_params.lang,
+                this->time_base, this->timer_events_, events, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
@@ -781,6 +782,7 @@ private:
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.time_base,
                 asynchronous_tasks.timer_events_,
+                asynchronous_tasks.events,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
                 this->drive.file_system_drive_manager,
@@ -841,6 +843,7 @@ public:
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
             this->timer_events_,
+            this->events,
             this->session_probe_to_server_sender.get(),
             front,
             rdp,
@@ -1438,6 +1441,7 @@ public:
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     this->time_base,
                     this->timer_events_,
+                    this->events,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
@@ -2117,7 +2121,7 @@ public:
         , events(events)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_)
+        , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_, events)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)

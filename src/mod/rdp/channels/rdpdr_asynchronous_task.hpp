@@ -97,7 +97,7 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
         // LOG(LOG_INFO, "rdpdr_asynchronous_task::fd_events_.create_top_executor");
@@ -212,7 +212,7 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         this->timer_ptr = timer_events_
@@ -297,7 +297,7 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, TerminateEventNotifier terminate_notifier) override
+    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->timer_ptr);
         this->timer_ptr = timer_events_

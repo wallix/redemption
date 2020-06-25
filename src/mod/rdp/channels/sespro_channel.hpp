@@ -124,6 +124,7 @@ private:
 
     TimeBase& time_base;
     TimerContainer& timer_events_;
+    EventContainer& events;
     TimerPtr session_probe_timer;
     Callbacks & callbacks;
 
@@ -175,6 +176,7 @@ public:
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
         TimerContainer& timer_events_,
+        EventContainer& events,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,
@@ -201,6 +203,7 @@ public:
     , gen(gen)
     , time_base(time_base)
     , timer_events_(timer_events_)
+    , events(events)
     , callbacks(callbacks)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,

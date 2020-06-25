@@ -27,6 +27,7 @@
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "core/events.hpp"
 
 
 class TestToServerSender : public VirtualChannelDataSender {
@@ -71,8 +72,9 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
     rdpdr_drive_read_task.configure_event(
-        time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, timer_events_, events, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
 
@@ -85,6 +87,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     auto const end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
     fd_events_.exec_timeout(end_tv);
+    execute_events(events, end_tv);
     RED_CHECK(fd_events_.is_empty());
     RED_CHECK(!run_task);
 }
@@ -111,8 +114,9 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     TimeBase time_base({0,0});
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
     rdpdr_send_drive_io_response_task.configure_event(
-        time_base, fd_events_, timer_events_, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
+        time_base, fd_events_, timer_events_, events, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
             *b = false;
         }});
     RED_CHECK(fd_events_.is_empty());
@@ -123,6 +127,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     for (int i = 0; i < 100 && !timer_events_.is_empty(); ++i) {
         auto const end_tv = time_base.get_current_time();
         timer_events_.exec_timer(end_tv);
+        execute_events(events, end_tv);
         fd_events_.exec_timeout(end_tv);
         time_base.set_current_time(timeout);
         ++timeout.tv_sec;

@@ -4074,6 +4074,7 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
+  <library>src/core/events.o
   <library>src/utils/hexdump.o
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
@@ -4087,6 +4088,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/report_error.o
   <library>src/core/session_reactor.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
@@ -4135,6 +4137,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/session_reactor.o
   <library>src/gdi/graphic_api.o
@@ -4156,6 +4159,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/report_error.o
   <library>src/core/session_reactor.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -4180,6 +4184,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/report_error.o
   <library>src/core/session_reactor.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -4236,6 +4241,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
   <library>src/core/session_reactor.o
@@ -4261,6 +4267,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
   <library>src/core/session_reactor.o
@@ -5254,6 +5261,7 @@ test-run tests/utils/sugar/unordered_erase :
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
+  <library>src/core/events.o
   <covfile>src/utils/asynchronous_task_manager.hpp
 ;
 test-run tests/utils/test_base64 :
@@ -5546,7 +5554,10 @@ test-run tests/utils/test_region :
 test-run tests/utils/test_rle :
   $(REDEMPTION_TEST_PATH)/utils/test_rle.cpp
 :
+  <library>crypto
   <library>src/core/error.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/rle.cpp

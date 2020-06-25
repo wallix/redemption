@@ -77,6 +77,7 @@ public:
 
     TimeBase& time_base;
     TimerContainer& timer_events_;
+    EventContainer& events;
 
     const RDPVerbose verbose;
 
@@ -93,6 +94,7 @@ public:
     SessionProbeClipboardBasedLauncher(
         TimeBase& time_base,
         TimerContainer& timer_events_,
+        EventContainer& events,
         mod_api& mod,
         const char* alternate_shell,
         Params params,
@@ -102,6 +104,7 @@ public:
     , alternate_shell(alternate_shell)
     , time_base(time_base)
     , timer_events_(timer_events_)
+    , events(events)
     , verbose(verbose)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));

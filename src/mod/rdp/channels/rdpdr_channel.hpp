@@ -856,6 +856,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     TimeBase& time_base;
     TimerContainer& timer_events_;
+    EventContainer & events;
 
     TimerPtr initialization_timeout_event;
 
@@ -875,6 +876,7 @@ public:
     FileSystemVirtualChannel(
         TimeBase& time_base,
         TimerContainer& timer_events_,
+        EventContainer & events,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
@@ -913,6 +915,7 @@ public:
           base_params.verbose)
     , time_base(time_base)
     , timer_events_(timer_events_)
+    , events(events)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
     {}
