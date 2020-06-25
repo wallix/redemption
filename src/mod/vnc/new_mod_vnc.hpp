@@ -22,6 +22,8 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 #include <memory>
 
@@ -30,7 +32,6 @@ class FrontAPI;
 class ReportMessageApi;
 class TimeBase;
 class TopFdContainer;
-class TimerContainer;
 class Transport;
 class VNCMetrics;
 class SesmanInterface;
@@ -41,7 +42,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     TimeBase& time_base,
     GdProvider & gd_provider,
     TopFdContainer & fd_events_,
-    TimerContainer & timer_events_,
+    EventContainer & events,
     SesmanInterface & sesman,
     const char* username,
     const char* password,

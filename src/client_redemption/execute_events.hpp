@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "core/session_reactor.hpp"
 #include "utils/select.hpp"
+#include "core/events.hpp"
 
 
 enum class ExecuteEventsResult
@@ -36,7 +37,8 @@ inline ExecuteEventsResult execute_events(
     std::chrono::milliseconds timeout,
     TimeBase& time_base,
     TopFdContainer& fd_events_,
-    TimerContainer& timer_events_)
+    TimerContainer& timer_events_,
+    EventContainer& events)
 {
     unsigned max = 0;
     fd_set   rfds;
@@ -83,6 +85,7 @@ inline ExecuteEventsResult execute_events(
     time_base.set_current_time(tvtime());
     auto const end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
+    execute_events(events, end_tv);
     fd_events_.exec_timeout(end_tv);
 
     if (num) {

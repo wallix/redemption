@@ -297,11 +297,64 @@ public:
 
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
-        if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->time_base, this->fd_events_, this->timer_events_)) {
+        unsigned max = 0;
+        fd_set   rfds;
+        io_fd_zero(rfds);
+
+        auto g = [&rfds,&max](int fd, auto& /*top*/){
+            assert(fd != -1);
+            io_fd_set(fd, rfds);
+            max = std::max(max, unsigned(fd));
+        };
+        this->fd_events_.for_each(g);
+
+        this->time_base.set_current_time(tvtime());
+        // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
+        timeval tv =  timeval{0,0} + timeout;
+        auto update_tv = [&](timeval const& tv2){
+            if (tv2.tv_sec >= 0) {
+                tv = std::min(tv, tv2);
+            }
+        };
+        auto top_update_tv = [&](int /*fd*/, auto& top){
+            if (top.timer_data.is_enabled) {
+                update_tv(top.timer_data.tv);
+            }
+        };
+        auto timer_update_tv = [&](auto& timer){
+            update_tv(timer.tv);
+        };
+
+        this->timer_events_.for_each(timer_update_tv);
+        this->fd_events_.for_each(top_update_tv);
+
+        timeval timeoutastv = tv;
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
+
+        if (num < 0) {
+            if (errno == EINTR) {
+                // ExecuteEventsResult::Continue;
+                return 0;
+            }
+            // ExecuteEventsResult::Error
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
             return 9;
         }
+
+        this->time_base.set_current_time(tvtime());
+        auto const end_tv = this->time_base.get_current_time();
+        this->timer_events_.exec_timer(end_tv);
+        execute_events(this->events, end_tv);
+        this->fd_events_.exec_timeout(end_tv);
+
+        if (num) {
+            auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
+            this->fd_events_.exec_action(fd_isset);
+            // ExecuteEventsResult::Success;
+            return 0;
+        }
+        // ExecuteEventsResult::Timeout;
         return 0;
     }
 
@@ -462,7 +515,7 @@ public:
                   , this->time_base
                   , this->gd_forwarder
                   , this->fd_events_
-                  , this->timer_events_
+                  , this->events
                   , this->sesman
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()

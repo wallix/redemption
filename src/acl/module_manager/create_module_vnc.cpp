@@ -93,7 +93,7 @@ public:
                      , ini.get<cfg::context::target_port>()
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
-    , mod(this->socket_transport, time_base, mod_wrapper, fd_events_, timer_events_, username, password, front, front_width, front_height,
+    , mod(this->socket_transport, time_base, mod_wrapper, fd_events_, events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,

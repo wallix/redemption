@@ -59,6 +59,9 @@
 #include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
 
+#include "utils/timebase.hpp"
+#include "core/events.hpp"
+
 #ifndef __EMSCRIPTEN__
 # include "mod/vnc/vnc_metrics.hpp"
 #else
@@ -80,8 +83,6 @@ class UltraDSM;
 class mod_vnc;
 class GdProvider;
 class TopFdContainer;
-class TimerContainer;
-class TimeBase;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -364,7 +365,7 @@ public:
            , TimeBase& time_base
            , GdProvider & gd_provider
            , TopFdContainer & fd_events_
-           , TimerContainer & timer_events_
+           , EventContainer & events
            , const char * username
            , const char * password
            , FrontAPI & front

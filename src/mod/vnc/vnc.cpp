@@ -36,7 +36,7 @@ mod_vnc::mod_vnc( Transport & t
            , TimeBase& time_base
            , GdProvider & gd_provider
            , TopFdContainer & fd_events_
-           , TimerContainer & timer_events_
+           , EventContainer & events
            , const char * username
            , const char * password
            , FrontAPI & front

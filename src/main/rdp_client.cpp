@@ -45,6 +45,7 @@
 #include "acl/sesman.hpp"
 #include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "core/events.hpp"
 
 #include <iostream>
 #include <string>
@@ -154,6 +155,7 @@ int main(int argc, char** argv)
     TimeBase time_base(tvtime());
     TopFdContainer fd_events_;
     TimerContainer timer_events_;
+    EventContainer events;
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
@@ -181,7 +183,7 @@ int main(int argc, char** argv)
         }
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
-        return run_test_client(is_vnc ? "VNC" : "RDP", time_base, fd_events_, timer_events_, *mod,
+        return run_test_client(is_vnc ? "VNC" : "RDP", time_base, fd_events_, timer_events_, events, *mod,
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
@@ -206,7 +208,7 @@ int main(int argc, char** argv)
               , time_base
               , gd_forwarder
               , fd_events_
-              , timer_events_
+              , events
               , sesman
               , username.c_str()
               , password.c_str()
