@@ -74,7 +74,7 @@ inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
 //@}
 
 inline void write_type_info(std::ostream& out, type_<types::file_permission>)
-{ out << "(is in octal format)\n"; }
+{ out << "(is in octal or symbolic mode format (as chmod Linux command))\n"; }
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)

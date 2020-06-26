@@ -422,18 +422,90 @@ inline parse_error parse_from_cfg(
 {
     uint32_t tmp = 0;
 
-    if (auto [p, ec] = std::from_chars(value.begin(), value.end(), tmp, 8);
-        p != value.end() || ec != std::errc()
-    ){
-        return parse_error{"Cannot parse file permission because it's not an octal number"};
+    if ('0' <= value.c_str()[0] && value.c_str()[0] <= '9') {
+        if (auto [p, ec] = std::from_chars(value.begin(), value.end(), tmp, 8);
+            p != value.end() || ec != std::errc()
+        ){
+            return parse_error{"Cannot parse file permission because it's not an octal number"};
+        }
+
+        if (tmp > 0777) {
+            return parse_error{"Cannot have file permission higher than 0777 number"};
+        }
+
+        x = tmp;
+
+        return no_parse_error;
     }
 
-    if (tmp > 0777) {
-        return parse_error{"Cannot have file permission higher than 0777 number"};
-    }
+    char const* p = value.c_str();
 
-    x = tmp;
-    return no_parse_error;
+    auto consume_right = [&p]{
+        int r = 0;
+        for (;; ++p) {
+            switch (*p) {
+                case 'r': r |= 4; break;
+                case 'w': r |= 2; break;
+                case 'x': r |= 1; break;
+                default: return r;
+            }
+        }
+    };
+
+    parse_error parsing_error{
+        "Cannot parse file permission because it's not an octal number or a symbolic mode format"
+    };
+
+    for (;;) {
+        int mask;
+
+        switch (*p) {
+            case 'u': mask = 0700; ++p; break;
+            case 'g': mask = 0070; ++p; break;
+            case 'o': mask = 0007; ++p; break;
+            case 'a': mask = 0777; ++p; break;
+            case '+':
+            case '-':
+            case '=': mask = 0775; break;
+            default: return parsing_error;
+        }
+
+        int r;
+        switch (*p) {
+            case '=':
+                ++p;
+                r = consume_right();
+                tmp = ((r << 6) | (r << 3) | r) & mask;
+                break;
+            case '+':
+                ++p;
+                r = consume_right();
+                tmp |= ((r << 6) | (r << 3) | r) & mask;
+                break;
+            case '-':
+                ++p;
+                r = consume_right();
+                tmp &= ~(((r << 6) | (r << 3) | r) & mask);
+                break;
+            default:
+                continue;
+        }
+
+        switch (*p) {
+            case ',':
+                while (*++p == ' ') {
+                }
+                if (*p != '\0') {
+                    break;
+                }
+                [[fallthrough]];
+            case '\0':
+                x = tmp;
+                return no_parse_error;
+
+            default: return parsing_error;
+        }
+    }
 }
 
 } // anonymous namespace

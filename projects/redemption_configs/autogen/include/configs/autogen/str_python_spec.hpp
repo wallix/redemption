@@ -1048,7 +1048,7 @@ play_video_with_corrupted_bitmap = boolean(default=False)
 allow_rt_without_recording = boolean(default=False)
 
 # Allow to control permissions on recorded files.
-# (is in octal format)
+# (is in octal or symbolic mode format (as chmod Linux command))
 #_hidden
 file_permissions = string(default='440')
 

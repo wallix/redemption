@@ -118,17 +118,17 @@ void write_type_info(std::ostream& out, type_enumerations& enums, type_<types::r
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_binary<N>>)
-{ out << "(hexadecimal string of length " << N*2 << ")\n"; }
+{ out << "(hexadecimal string of length " << N*2 << ")"; }
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_string<N>>)
 { out << "maxlen = " << N << "\n"; }
 
 inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::dirpath>)
-{ out << "maxlen = " << globals::path_max << "\n"; }
+{ out << "maxlen = " << globals::path_max; }
 
 inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::file_permission>)
-{ out << "max = 777, min = 0"; }
+{ out << "(is in octal or symbolic mode format (as chmod Linux command))\nmax = 777, min = 0"; }
 
 
 namespace impl

@@ -32,6 +32,9 @@ REDEMPTION_DIAGNOSTIC_POP
 
 RED_TEST_DELEGATE_PRINT(parse_error, (x ? x.c_str() : "no error"));
 
+
+#include <ostream>
+
 namespace
 {
     bool operator == (parse_error const& lhs, parse_error const& rhs)
@@ -43,6 +46,24 @@ namespace
     {
         return lhs.c_str() != rhs.c_str();
     }
+
+    struct Octal
+    {
+        uint32_t i;
+
+        operator uint32_t () const
+        {
+            return i;
+        }
+
+        friend std::ostream& operator<<(std::ostream& out, Octal const& o)
+        {
+            char buf[16];
+            auto r = std::to_chars(buf, buf+16, o.i, 8);
+            out << "0";
+            return out.write(buf, r.ptr-buf);
+        }
+    };
 }
 
 RED_AUTO_TEST_CASE(TestEnumParser)
@@ -103,6 +124,7 @@ RED_AUTO_TEST_CASE(TestEnumParser)
     }
 }
 
+
 RED_AUTO_TEST_CASE(TestOtherParser)
 {
     // unsigned
@@ -111,29 +133,29 @@ RED_AUTO_TEST_CASE(TestOtherParser)
         configs::spec_type<unsigned> stype;
 
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0"_zv));
-        RED_CHECK_EQUAL(0, u);
+        RED_CHECK(0 == u);
 
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "3"_zv));
-        RED_CHECK_EQUAL(3, u);
+        RED_CHECK(3 == u);
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x3"_zv));
-        RED_CHECK_EQUAL(3, u);
+        RED_CHECK(3 == u);
 
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x00000007"_zv));
-        RED_CHECK_EQUAL(7, u);
+        RED_CHECK(7 == u);
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0000000000000007"_zv));
-        RED_CHECK_EQUAL(7, u);
+        RED_CHECK(7 == u);
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0007"_zv));
-        RED_CHECK_EQUAL(7, u);
+        RED_CHECK(7 == u);
 
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "1357"_zv));
-        RED_CHECK_EQUAL(1357, u);
+        RED_CHECK(1357 == u);
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x1357"_zv));
-        RED_CHECK_EQUAL(0x1357, u);
+        RED_CHECK(0x1357 == u);
 
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0A"_zv));
-        RED_CHECK_EQUAL(0x0a, u);
+        RED_CHECK(0x0a == u);
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x0a"_zv));
-        RED_CHECK_EQUAL(0x0a, u);
+        RED_CHECK(0x0a == u);
 
         RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "0x0000000I"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "-0"_zv));
@@ -149,13 +171,13 @@ RED_AUTO_TEST_CASE(TestOtherParser)
         configs::spec_type<int> stype;
 
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "3600"_zv));
-        RED_CHECK_EQUAL(3600, i);
+        RED_CHECK(3600 == i);
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0xA3600"_zv));
-        RED_CHECK_EQUAL(0xA3600, i);
+        RED_CHECK(0xA3600 == i);
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0"_zv));
-        RED_CHECK_EQUAL(0, i);
+        RED_CHECK(0 == i);
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-3600"_zv));
-        RED_CHECK_EQUAL(-3600, i);
+        RED_CHECK(-3600 == i);
 
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "999999999999999999999999999999"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ""_zv));
@@ -167,24 +189,63 @@ RED_AUTO_TEST_CASE(TestOtherParser)
         uint32_t i;
         configs::spec_type<configs::spec_types::file_permission> stype;
 
+        // octal
+
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0000777"_zv));
-        RED_CHECK_EQUAL(0777, i);
+        RED_CHECK(Octal{0777} == Octal{i});
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0000123"_zv));
-        RED_CHECK_EQUAL(0123, i);
+        RED_CHECK(Octal{0123} == Octal{i});
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0777"_zv));
-        RED_CHECK_EQUAL(0777, i);
+        RED_CHECK(Octal{0777} == Octal{i});
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "777"_zv));
-        RED_CHECK_EQUAL(0777, i);
+        RED_CHECK(Octal{0777} == Octal{i});
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "123"_zv));
-        RED_CHECK_EQUAL(0123, i);
+        RED_CHECK(Octal{0123} == Octal{i});
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "23"_zv));
-        RED_CHECK_EQUAL(023, i);
+        RED_CHECK(Octal{0023} == Octal{i});
 
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ""_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "1234"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "288"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-36"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a66"_zv));
+
+        // symbolic mode
+
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "=rwx"_zv));
+        RED_CHECK(Octal{0775} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "=rwxrrrxxw"_zv));
+        RED_CHECK(Octal{0775} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-r"_zv));
+        RED_CHECK(Octal{0000} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "+rw"_zv));
+        RED_CHECK(Octal{0664} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "u=rx"_zv));
+        RED_CHECK(Octal{0500} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "g=rx"_zv));
+        RED_CHECK(Octal{0050} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "o=rx"_zv));
+        RED_CHECK(Octal{0005} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "a=rwx"_zv));
+        RED_CHECK(Octal{0777} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "u=rw, g+r"_zv));
+        RED_CHECK(Octal{0640} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "u=rw, g=r"_zv));
+        RED_CHECK(Octal{0040} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "a=rwx, o-x"_zv));
+        RED_CHECK(Octal{0776} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "=w, +x, "_zv));
+        RED_CHECK(Octal{0331} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "="_zv));
+        RED_CHECK(Octal{0000} == Octal{i});
+
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a=rwxo-x"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "=rwx=x"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "=a,"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "aa"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "==w"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ","_zv));
     }
 
     // fixed_binary
@@ -193,9 +254,9 @@ RED_AUTO_TEST_CASE(TestOtherParser)
         configs::spec_type<configs::spec_types::fixed_binary> stype;
 
         RED_CHECK(no_parse_error == parse_from_cfg(d, stype, "12345678"_zv));
-        RED_CHECK_EQUAL("\x12\x34\x56\x78"_av, d);
+        RED_CHECK("\x12\x34\x56\x78"_av == d);
         RED_CHECK(no_parse_error == parse_from_cfg(d, stype, "abcdefab"_zv));
-        RED_CHECK_EQUAL("\xAB\xCD\xEF\xAB"_av, d);
+        RED_CHECK("\xAB\xCD\xEF\xAB"_av == d);
 
         RED_CHECK(no_parse_error != parse_from_cfg(d, stype, "ababab"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(d, stype, "ababababab"_zv));
