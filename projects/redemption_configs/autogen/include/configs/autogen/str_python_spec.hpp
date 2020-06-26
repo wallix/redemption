@@ -1047,9 +1047,10 @@ play_video_with_corrupted_bitmap = boolean(default=False)
 # Allow Realtime display (4eyes) without recording of session
 allow_rt_without_recording = boolean(default=False)
 
-# Allow to control permissions on recorded files with octal number
+# Allow to control permissions on recorded files.
+# (is in octal format)
 #_hidden
-file_permissions = string(default='288')
+file_permissions = string(default='440')
 
 [crypto]
 

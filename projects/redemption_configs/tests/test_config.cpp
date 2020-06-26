@@ -101,9 +101,10 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
+    RED_CHECK_EQUAL(0440,                             ini.get<cfg::video::file_permissions>());
 
     RED_CHECK_EQUAL(TraceType::localfile_hashed,
-                                                        ini.get<cfg::globals::trace_type>());
+                                                      ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());

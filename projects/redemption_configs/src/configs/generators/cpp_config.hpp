@@ -35,6 +35,7 @@
 #include <chrono>
 #include <memory>
 #include <bitset>
+#include <charconv>
 
 #include <cerrno>
 #include <cstring>
@@ -89,6 +90,18 @@ namespace impl
             throw std::runtime_error("invalide keys size");
         }
         out << "{{" << io_hexkey{d.value.c_str(), N, "0x", ", "} << "}}";
+    }
+
+    template<class U>
+    void write_assignable_default(std::ostream& out, type_<types::file_permission>, default_<U> const& d)
+    {
+        char octal[32]{};
+        auto r = std::to_chars(std::begin(octal), std::end(octal), d.value, 8);
+        if (r.ec != std::errc()) {
+            throw std::runtime_error(str_concat(
+                "invalide file_permission value: ", std::make_error_code(r.ec).message()));
+        }
+        out << "{0" << octal << "}";
     }
 }
 

@@ -3330,16 +3330,16 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// Allow to control permissions on recorded files with octal number <br/>
+    /// Allow to control permissions on recorded files. <br/>
     /// type: uint32_t <br/>
-    /// default: {288} <br/>
+    /// default: {0440} <br/>
     struct video::file_permissions {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = uint32_t;
         using sesman_and_spec_type = ::configs::spec_types::file_permission;
         using mapped_type = sesman_and_spec_type;
-        type value{288};
+        type value{0440};
     };
 
     /// basename without extension <br/>

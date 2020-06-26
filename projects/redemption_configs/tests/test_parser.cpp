@@ -142,7 +142,6 @@ RED_AUTO_TEST_CASE(TestConfigTools)
 
         RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "0x0000000I"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "I"_zv));
-
     }
 
     // int
@@ -158,5 +157,29 @@ RED_AUTO_TEST_CASE(TestConfigTools)
         RED_CHECK_EQUAL(0, i);
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-3600"_zv));
         RED_CHECK_EQUAL(-3600, i);
+    }
+
+    // file_permission
+    {
+        uint32_t i;
+        configs::spec_type<configs::spec_types::file_permission> stype;
+
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0000777"_zv));
+        RED_CHECK_EQUAL(0777, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0000123"_zv));
+        RED_CHECK_EQUAL(0123, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0777"_zv));
+        RED_CHECK_EQUAL(0777, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "777"_zv));
+        RED_CHECK_EQUAL(0777, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "123"_zv));
+        RED_CHECK_EQUAL(0123, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "23"_zv));
+        RED_CHECK_EQUAL(023, i);
+
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ""_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "1234"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "288"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-36"_zv));
     }
 }

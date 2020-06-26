@@ -34,6 +34,7 @@
 #include <chrono>
 #include <vector>
 #include <unordered_map>
+#include <charconv>
 
 #include <cerrno>
 #include <cstring>
@@ -70,8 +71,10 @@ inline void write_type_info(std::ostream&, type_<bool>) {}
 inline void write_type_info(std::ostream&, type_<std::string>) {}
 inline void write_type_info(std::ostream&, type_<types::dirpath>) {}
 inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
-inline void write_type_info(std::ostream&, type_<types::file_permission>) {}
 //@}
+
+inline void write_type_info(std::ostream& out, type_<types::file_permission>)
+{ out << "(is in octal format)\n"; }
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
@@ -269,7 +272,9 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::file_permission>, T const & x)
 {
-    out << "string(default='" << impl::stringize_integral(x) << "')";
+    char octal[32]{};
+    (void)std::to_chars(std::begin(octal), std::end(octal), x, 8);
+    out << "string(default='" << octal << "')";
 }
 
 namespace impl
