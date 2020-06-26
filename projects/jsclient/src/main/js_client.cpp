@@ -109,6 +109,7 @@ struct RdpClient
     TimeBase time_base;
     TopFdContainer fd_events;
     TimerContainer timer_events;
+    EventContainer events;
 
     Inifile ini;
     SesmanInterface sesman;
@@ -179,7 +180,7 @@ struct RdpClient
 
         this->mod = new_mod_rdp(
             browser_trans, ini, time_base, gd_forwarder,
-            fd_events, timer_events, sesman, gd, front, client_info,
+            fd_events, timer_events, events, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
