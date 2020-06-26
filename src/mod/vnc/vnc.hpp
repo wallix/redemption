@@ -330,7 +330,8 @@ private:
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TopFdPtr fd_event;
+    EventContainer & events;
+//    TopFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
