@@ -47,10 +47,9 @@ Debug mode:
 
     bjam -j7 toolset=clang debug js_client
 
-And tests with (after `source ./emsdk_env.sh`)
+And tests with
 
-    npm install canvas
-
+    bjam -j7 toolset=clang install_node_modules
     bjam -j7 toolset=clang
 
 If you get some undefined symbol error, run `bjam targets.jam`.

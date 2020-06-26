@@ -253,9 +253,9 @@ make targets.jam : : @gen_targets ;
 
 actions exenode
 {
-    [ "$(SOURCE_MAP_SUPPORT)" = yes ] && params=(-r source-map-support/register) || params=()
+    [ "$(SOURCE_MAP_SUPPORT)" = yes ] && params='-r source-map-support/register'
     echo $PWD
-    NODE_PATH="$PWD" node ${params[@]} "$(>:S=.js)" && : > "$(<)"
+    NODE_PATH="$PWD" node $params "$(>:S=.js)" && : > "$(<)"
 }
 
 rule test-run ( name : objs + : requirements * )
@@ -350,3 +350,10 @@ actions cwd
 }
 make cwd : _dummy : @cwd ;
 explicit cwd ;
+
+explicit install_node_modules ;
+make install_node_modules : _dummy : @install_node_modules ;
+actions install_node_modules
+{
+    npm install --local canvas source-map-support
+}
