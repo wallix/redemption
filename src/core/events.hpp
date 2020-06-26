@@ -25,6 +25,8 @@
 #include <string>
 #include <functional>
 
+#include "utils/log.hpp"
+
 struct Event {
     // TODO: the management of this counter may be moved to EventContainer later
     // no need to use a static lifespan, EventContainer lifespan would be fine
@@ -128,6 +130,7 @@ inline void end_of_lifespan(EventContainer & events, void * lifespan)
 inline void garbage_collector(EventContainer & events) {
         for (size_t i = 0; i < events.size() ; i++){
             while ((i < events.size()) && (events[i].garbage)){
+                LOG(LOG_INFO, "Removing Event: %s", events[i].name);
                 if (i < events.size() -1){
                     events[i] = std::move(events.back());
                 }
@@ -160,9 +163,15 @@ inline void execute_events(EventContainer & events, const timeval tv, const std:
         if (not event.garbage) {
             if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
                 event.alarm.set_timeout(tv+event.alarm.grace_delay);
+                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
                 event.exec_action();
+                // Not testing timeout now as fd event was triggered
+                continue;
             }
+        }
+        if (not event.garbage) {
             if (event.alarm.trigger(tv)){
+                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
                 event.exec_timeout();
             }
         }

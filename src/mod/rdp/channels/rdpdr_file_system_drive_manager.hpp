@@ -102,6 +102,8 @@ public:
         int drive_access_mode, std::string_view path, InStream & in_stream,
         bool & out_drive_created,
         VirtualChannelDataSender & to_server_sender,
+        TimeBase & time_base,
+        EventContainer & events,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         bool is_session_probe_image_flag,
         RDPVerbose verbose) = 0;
@@ -110,6 +112,8 @@ public:
         rdpdr::DeviceIORequest const & device_io_request,
         const char * path, InStream & in_stream,
         VirtualChannelDataSender & to_server_sender,
+        TimeBase & time_base,
+        EventContainer & events,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         RDPVerbose verbose) = 0;
 
@@ -118,6 +122,8 @@ public:
         rdpdr::DeviceReadRequest const & device_read_request,
         const char * path, InStream & in_stream,
         VirtualChannelDataSender & to_server_sender,
+        TimeBase & time_base,
+        EventContainer & events,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         RDPVerbose verbose) = 0;
 
@@ -126,6 +132,8 @@ public:
             rdpdr::DeviceControlRequest const & device_control_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) {
@@ -151,6 +159,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 
@@ -160,6 +169,8 @@ public:
                 server_drive_query_volume_information_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) {
@@ -342,6 +353,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 
@@ -350,6 +362,8 @@ public:
             rdpdr::ServerDriveQueryInformationRequest const & server_drive_query_information_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) {
@@ -465,6 +479,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 
@@ -473,6 +488,8 @@ public:
             rdpdr::ServerDriveSetInformationRequest const & server_drive_set_information_request,
             const char * path, int drive_access_mode, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose) {
         assert(this->fd > -1);
@@ -483,6 +500,7 @@ public:
                 "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
                 erref::NTSTATUS::STATUS_INVALID_PARAMETER,
                 to_server_sender,
+                time_base, events,
                 out_asynchronous_task,
                 verbose);
 
@@ -532,6 +550,7 @@ public:
                     erref::NTSTATUS::STATUS_SUCCESS,
                     server_drive_set_information_request.Length(),
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
             }
@@ -554,6 +573,7 @@ public:
                     erref::NTSTATUS::STATUS_SUCCESS,
                     server_drive_set_information_request.Length(),
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
             }
@@ -572,6 +592,7 @@ public:
                     erref::NTSTATUS::STATUS_SUCCESS,
                     server_drive_set_information_request.Length(),
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
             break;
@@ -608,6 +629,7 @@ public:
                              erref::NTSTATUS::STATUS_OBJECT_NAME_COLLISION
                             ),
                             to_server_sender,
+                            time_base, events,
                             out_asynchronous_task,
                             verbose);
 
@@ -623,6 +645,7 @@ public:
                     erref::NTSTATUS::STATUS_SUCCESS,
                     server_drive_set_information_request.Length(),
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
             }
@@ -645,6 +668,7 @@ public:
                     erref::NTSTATUS::STATUS_SUCCESS,
                     server_drive_set_information_request.Length(),
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
             }
@@ -662,6 +686,7 @@ public:
                 SendClientDriveIoUnsuccessfulResponse(device_io_request,
                                                       "ManagedFileSystemObject::ProcessServerDriveSetInformationRequest",
                                                       to_server_sender,
+                                                      time_base, events,
                                                       out_asynchronous_task,
                                                       verbose);
 
@@ -676,9 +701,11 @@ public:
             const char * path, int drive_access_mode, bool first_chunk,
             InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose
-      ) {
+            RDPVerbose verbose) 
+    {
         (void)path;
         (void)in_stream;
         (void)drive_access_mode;
@@ -688,6 +715,7 @@ public:
             device_io_request,
             "ManagedFileSystemObject::ProcessServerDriveWriteRequest",
             to_server_sender,
+            time_base, events,
             out_asynchronous_task,
             verbose);
 
@@ -700,6 +728,8 @@ public:
         rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
         const char * path, InStream & in_stream,
         VirtualChannelDataSender & to_server_sender,
+        TimeBase & time_base,
+        EventContainer & events,        
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
         RDPVerbose verbose) = 0;
 
@@ -709,7 +739,8 @@ protected:
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
             erref::NTSTATUS IoStatus,
-            RDPVerbose verbose) {
+            RDPVerbose verbose) 
+    {
         const rdpdr::SharedHeader shared_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
@@ -733,8 +764,11 @@ protected:
             const char * message,
             erref::NTSTATUS IoStatus,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose) 
+    {
         StaticOutStream<65536> out_stream;
 
         MakeClientDriveIoResponse(out_stream,
@@ -744,8 +778,9 @@ protected:
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.get_offset(),
-            to_server_sender, verbose);
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
+            verbose);
     }
 
     static void SendClientDriveSetInformationResponse(
@@ -754,8 +789,11 @@ protected:
             erref::NTSTATUS IoStatus,
             uint32_t Length,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose) 
+    {
         StaticOutStream<65536> out_stream;
 
         MakeClientDriveIoResponse(out_stream,
@@ -769,8 +807,9 @@ protected:
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.get_offset(),
-            to_server_sender, verbose);
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
+            verbose);
     }
 
 public:
@@ -779,8 +818,11 @@ public:
             const char * message,
             erref::NTSTATUS IoStatus,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose) 
+    {
         StaticOutStream<65536> out_stream;
 
         MakeClientDriveIoResponse(out_stream,
@@ -792,21 +834,26 @@ public:
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.get_offset(),
-            to_server_sender, verbose);
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender, 
+            time_base, events,
+            verbose);
     }
 
     static inline void SendClientDriveIoUnsuccessfulResponse(
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose) 
+    {
         SendClientDriveIoResponse(
             device_io_request,
             message,
             erref::NTSTATUS::STATUS_UNSUCCESSFUL,
             to_server_sender,
+            time_base, events,
             out_asynchronous_task,
             verbose);
     }
@@ -843,6 +890,8 @@ public:
             int drive_access_mode, std::string_view path, InStream & in_stream,
             bool & out_drive_created,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             bool is_session_probe_image_flag,
             RDPVerbose verbose
@@ -928,6 +977,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
 
         //if (this->dir) {
@@ -946,6 +996,8 @@ public:
             rdpdr::DeviceIORequest const & device_io_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -978,6 +1030,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
 
         assert(!this->dir);
@@ -988,6 +1041,8 @@ public:
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1011,6 +1066,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 
@@ -1019,6 +1075,8 @@ public:
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1186,6 +1244,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 };  // ManagedDirectory
@@ -1225,6 +1284,8 @@ public:
             int drive_access_mode, std::string_view path, InStream & in_stream,
             bool & out_drive_created,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             bool is_session_probe_image_flag,
             RDPVerbose verbose
@@ -1347,6 +1408,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
 
         //if (this->fd > -1) {
@@ -1361,6 +1423,8 @@ public:
             rdpdr::DeviceIORequest const & device_io_request, const char * path,
             InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1391,6 +1455,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
 
         assert(this->fd == -1);
@@ -1401,6 +1466,8 @@ public:
             rdpdr::DeviceReadRequest const & device_read_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1429,8 +1496,9 @@ public:
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
             out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-                out_flags, out_stream.get_data(), out_stream.get_offset(),
-                to_server_sender, verbose);
+                out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+                time_base, events,
+                verbose);
 
             return;
         }
@@ -1442,7 +1510,10 @@ public:
             this->fd, device_io_request.DeviceId(),
             device_io_request.CompletionId(),
             static_cast<uint32_t>(remaining_number_of_bytes_to_read),
-            Offset, to_server_sender, verbose);
+            Offset, to_server_sender, 
+            time_base,
+            events,
+            verbose);
     }
 
     void process_server_drive_control_request(
@@ -1450,6 +1521,8 @@ public:
             rdpdr::DeviceControlRequest const & device_control_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1475,6 +1548,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 
@@ -1490,6 +1564,8 @@ public:
             const char * path, int drive_access_mode,
             bool first_chunk, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1548,6 +1624,7 @@ public:
 
             out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
                 out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+                time_base, events,
                 verbose);
         }
     }
@@ -1557,6 +1634,8 @@ public:
             rdpdr::ServerDriveQueryDirectoryRequest const & server_drive_query_directory_request,
             const char * path, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose
       ) override {
@@ -1580,6 +1659,7 @@ public:
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
             out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            time_base, events,
             verbose);
     }
 };  // ManagedFile
@@ -1829,6 +1909,8 @@ private:
             rdpdr::DeviceIORequest const & device_io_request,
             std::string const & path, int drive_access_mode, InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose) {
         rdpdr::DeviceCreateRequest device_create_request;
@@ -1883,6 +1965,7 @@ private:
         managed_file_system_object->process_server_create_drive_request(
                 device_io_request, device_create_request, drive_access_mode,
                 path, in_stream, drive_created, to_server_sender,
+                time_base, events,
                 out_asynchronous_task, is_session_probe_image_flag, verbose);
         if (drive_created) {
             this->managed_file_system_objects.push_back({
@@ -1898,6 +1981,8 @@ public:
             bool first_chunk,
             InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
+            TimeBase & time_base,
+            EventContainer & events,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
             RDPVerbose verbose) {
         uint32_t DeviceId = device_io_request.DeviceId();
@@ -1950,7 +2035,7 @@ public:
 
                 this->process_server_create_drive_request(device_io_request,
                     path, drive_access_mode, in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+                    to_server_sender, time_base, events, out_asynchronous_task, verbose);
             break;
 
             case rdpdr::IRP_MJ_CLOSE:
@@ -1960,7 +2045,7 @@ public:
 
                 file_iter->object->process_server_close_drive_request(
                     device_io_request, path.c_str(), in_stream,
-                    to_server_sender, out_asynchronous_task, verbose);
+                    to_server_sender, time_base, events, out_asynchronous_task, verbose);
                 if(file_iter + 1 != this->managed_file_system_objects.end()) {
                     this->managed_file_system_objects[
                         file_iter - this->managed_file_system_objects.begin()
@@ -1993,7 +2078,7 @@ public:
 
                     file_iter->object->process_server_drive_read_request(
                         device_io_request, device_read_request, path.c_str(),
-                        in_stream, to_server_sender, out_asynchronous_task,
+                        in_stream, to_server_sender, time_base, events, out_asynchronous_task,
                         verbose);
                 }
             break;
@@ -2006,6 +2091,7 @@ public:
                 file_iter->object->ProcessServerDriveWriteRequest(
                     device_io_request, path.c_str(), drive_access_mode,
                     first_chunk, in_stream, to_server_sender,
+                    time_base, events,
                     out_asynchronous_task, verbose);
             break;
 
@@ -2025,6 +2111,7 @@ public:
                     file_iter->object->process_server_drive_control_request(
                         device_io_request, device_control_request,
                         path.c_str(), in_stream, to_server_sender,
+                        time_base, events,
                         out_asynchronous_task, verbose);
                 }
             break;
@@ -2049,6 +2136,7 @@ public:
                         device_io_request,
                         server_drive_query_volume_information_request,
                         path.c_str(), in_stream, to_server_sender,
+                        time_base, events,
                         out_asynchronous_task, verbose);
                 }
             break;
@@ -2070,7 +2158,8 @@ public:
                     file_iter->object->ProcessServerDriveQueryInformationRequest(
                         device_io_request,
                         server_drive_query_information_request, path.c_str(),
-                        in_stream, to_server_sender, out_asynchronous_task,
+                        in_stream, to_server_sender, time_base, events, 
+                        out_asynchronous_task,
                         verbose);
                 }
             break;
@@ -2093,6 +2182,7 @@ public:
                         device_io_request,
                         server_drive_set_information_request, path.c_str(),
                         drive_access_mode, in_stream, to_server_sender,
+                        time_base, events,
                         out_asynchronous_task, verbose);
                 }
             break;
@@ -2128,6 +2218,7 @@ public:
                                 device_io_request,
                                 server_drive_query_directory_request,
                                 path.c_str(), in_stream, to_server_sender,
+                                time_base, events,
                                 out_asynchronous_task, verbose);
                         }
                     break;
@@ -2161,6 +2252,7 @@ public:
                     "FileSystemDriveManager::process_device_IO_request",
                     erref::NTSTATUS::STATUS_SUCCESS,
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
 
@@ -2180,6 +2272,7 @@ public:
                     device_io_request,
                     "FileSystemDriveManager::process_device_IO_request",
                     to_server_sender,
+                    time_base, events,
                     out_asynchronous_task,
                     verbose);
             break;

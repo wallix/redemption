@@ -146,7 +146,7 @@ struct FileValidatorService;
 class SesmanInterface;
 
 #ifndef __EMSCRIPTEN__
-// TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?
+// TODO: isn't AsynchronousTaskContainer a general purpose class that should have it's own file ?
 struct AsynchronousTaskContainer
 {
 private:
@@ -169,7 +169,7 @@ public:
     {
         this->tasks.emplace_back(std::move(task));
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, this->events, AsynchronousTask::TerminateEventNotifier{this, remover()});
+            this->tasks.front()->configure_event();
         }
     }
 
@@ -177,7 +177,7 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, this->events, AsynchronousTask::TerminateEventNotifier{this, remover()});
+            this->tasks.front()->configure_event();
         }
     }
 
@@ -688,6 +688,8 @@ private:
         class ToServerAsynchronousSender : public VirtualChannelDataSender
         {
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
+            TimeBase & time_base;
+            EventContainer & events;
 
             AsynchronousTaskContainer& asynchronous_tasks;
 
@@ -696,9 +698,12 @@ private:
         public:
             explicit ToServerAsynchronousSender(
                 std::unique_ptr<VirtualChannelDataSender>&& to_server_synchronous_sender,
+                TimeBase & time_base, EventContainer & events,
                 AsynchronousTaskContainer& asynchronous_tasks,
                 RDPVerbose verbose)
             : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
+            , time_base(time_base)
+            , events(events)
             , asynchronous_tasks(asynchronous_tasks)
             , verbose(verbose)
             {}
@@ -714,6 +719,7 @@ private:
                     std::make_unique<RdpdrSendClientMessageTask>(
                         total_length, flags, chunk_data,
                         *this->to_server_synchronous_sender,
+                        this->time_base, this->events,
                         this->verbose
                     )
                 );
@@ -722,6 +728,7 @@ private:
 
         return std::make_unique<ToServerAsynchronousSender>(
             create_to_server_synchronous_sender(channel_name, stc),
+            this->time_base, this->events,
             asynchronous_tasks,
             this->verbose);
     }

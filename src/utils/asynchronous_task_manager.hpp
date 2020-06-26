@@ -21,52 +21,14 @@
 #pragma once
 
 #include "core/events.hpp"
-
-class TimeBase;
-class TimerContainer;
-class TopFdContainer;
+#include "utils/timebase.hpp"
 
 class AsynchronousTask
 {
 public:
+    TimeBase & time_base;
+    EventContainer & events;
+    AsynchronousTask(TimeBase & time_base, EventContainer & events): time_base(time_base), events(events) {}
     virtual ~AsynchronousTask() = default;
-
-    struct TerminateEventNotifier
-    {
-        using ptr_function = void(*)(void* data, AsynchronousTask&) noexcept;
-
-        explicit TerminateEventNotifier() = default;
-
-        template<class T, class F>
-        TerminateEventNotifier(T* p, F f)
-        noexcept(noexcept(static_cast<void(*)(T*, AsynchronousTask&) noexcept>(f)))
-        : data(p)
-        , f([](void* data, AsynchronousTask& t) noexcept {
-            char f[1]{};
-            reinterpret_cast<F&>(f)(static_cast<T*>(data), t); /*NOLINT*/
-        })
-        {}
-
-        template<class T>
-        TerminateEventNotifier(T* p, ptr_function f) noexcept
-        : data(p)
-        , f(f)
-        {}
-
-        TerminateEventNotifier(TerminateEventNotifier&&) = default;
-        TerminateEventNotifier(TerminateEventNotifier const&) = default;
-        TerminateEventNotifier& operator=(TerminateEventNotifier&&) = default;
-        TerminateEventNotifier& operator=(TerminateEventNotifier const&) = default;
-
-        void operator()(AsynchronousTask& self) noexcept
-        {
-            this->f(this->data, self);
-        }
-
-    private:
-        void* data = nullptr;
-        ptr_function  f = [](void* /*unused*/, AsynchronousTask& /*unused*/) noexcept {};
-    };
-
-    virtual void configure_event(TimeBase&, TopFdContainer & fd_events_, TimerContainer&, EventContainer & events, TerminateEventNotifier) = 0;
+    virtual void configure_event() = 0;
 };
