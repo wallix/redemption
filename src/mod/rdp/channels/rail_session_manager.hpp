@@ -26,7 +26,6 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/protected_graphics.hpp"
@@ -94,10 +93,7 @@ class RemoteProgramsSessionManager final
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer & events;
-
-    TimerPtr waiting_screen_event;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -134,7 +130,6 @@ public:
 
     explicit RemoteProgramsSessionManager(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
         EventContainer & events,
         gdi::GraphicApi& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
@@ -153,7 +148,6 @@ public:
     , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
     {}
 
@@ -460,16 +454,16 @@ public:
             }
         }
 
-        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) &&
-            this->has_previous_window) {
-
+        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) 
+        && this->has_previous_window) 
+        {
             this->currently_without_window = true;
-
-            this->waiting_screen_event = this->timer_events_
-            .create_timer_executor(this->time_base)
-            .set_delay(this->rail_disconnect_message_delay)
-            // this->process_event()
-            .on_action(jln::one_shot([this]{
+            Event event("Rail Waiting Screen Event", this);
+            event.alarm.set_timeout(
+                       this->time_base.get_current_time()
+                       +this->rail_disconnect_message_delay);
+            event.actions.on_timeout = [this](Event&event)
+            {
                 if (this->currently_without_window
                  && (DialogBoxType::NONE == this->dialog_box_type)
                  && this->has_previous_window
@@ -478,7 +472,9 @@ public:
                     this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
                     this->waiting_screen_draw(0);
                 }
-            }));
+                event.garbage = true;
+            };
+            this->events.push_back(std::move(event));
         }
 
         if (has_window) {

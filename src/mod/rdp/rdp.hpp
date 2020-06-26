@@ -522,7 +522,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->time_base, this->timer_events_, events, gd, mod_rdp, mod_rdp_params.lang,
+                this->time_base, events, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, authentifier,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
