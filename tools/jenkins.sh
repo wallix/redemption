@@ -45,6 +45,9 @@ if [ ! -d system_include/boost ]; then
     mkdir -p system_include
     ln -s /usr/include/boost/ system_include
 fi
+if [ ! -d node_modules ]; then
+    ln -s ~/node_jsclient/future/node_modules .
+fi
 set -o pipefail
 bjam -qj2 toolset=clang-$version debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
