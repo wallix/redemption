@@ -62,7 +62,7 @@ namespace
         for (;;) {
             loop:
             switch (*p) {
-                case '\0': return has_error;
+                case '\0': return !has_error;
                 case '\n': case '\r': ++p; continue;
 
                 // comment
@@ -74,7 +74,7 @@ namespace
                     for (;;) switch (*++p) /* NOLINT */ {
                         case ' ': case '\t': continue;
                         case '\n': case '\r': next_line(); ++p; goto loop;
-                        case '\0': return has_error;
+                        case '\0': return !has_error;
                         default: goto loop;
                     }
 
@@ -105,7 +105,7 @@ namespace
                                 case '\r':
                                     set_error("']' not found, assume new section");
                                     if (*p == '\0') {
-                                        return has_error;
+                                        return !has_error;
                                     }
                                     next_line();
                                     [[fallthrough]];
@@ -235,7 +235,7 @@ namespace
                 for (;;) switch (*p) /*NOLINT*/ {
                     default: ++p; continue;
                     case '\n': case '\r': next_line(); ++p; goto loop;
-                    case '\0': return has_error;
+                    case '\0': return !has_error;
                 }
         }
     }

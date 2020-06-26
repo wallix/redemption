@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE_WF(TestCfgloader, wf)
 
     Cfg cfg(funcs, PUSH_F(SectionOrKeyValue()));
     file.close();
-    configuration_load(cfg, wf.c_str());
+    RED_CHECK(configuration_load(cfg, wf.c_str()));
     RED_CHECK(0 == cfg.funcs.end() - cfg.f);
 }
 
@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE_WF(TestCfgloaderError, wf)
     Cfg cfg(funcs, PUSH_F(SectionOrKeyValue()));
     file.close();
     tu::log_buffered log;
-    configuration_load(cfg, wf.c_str());
+    RED_CHECK(!configuration_load(cfg, wf.c_str()));
     RED_CHECK(0 == cfg.funcs.end() - cfg.f);
     RED_CHECK(array_view(log.buf()) == str_concat(
         "ERR -- "_zv, wf.string(), ":1:4: ']' not found, assume new section\n"

@@ -38,6 +38,16 @@ namespace
 }
 
 
+RED_AUTO_TEST_CASE_WF(TestLoadDefaultIni, wf)
+{
+    Inifile ini;
+    std::ofstream(wf.c_str()) <<
+        #include "configs/autogen/str_ini.hpp"
+    ;
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
+}
+
+
 RED_AUTO_TEST_CASE_WF(TestConfigFromFile, wf)
 {
     // test we can read from a file (and not only from a stream)
@@ -48,10 +58,11 @@ RED_AUTO_TEST_CASE_WF(TestConfigFromFile, wf)
         "proxy_managed_drives = /tmp/raw/movie/\n"
         "bogus_sc_net_size = no\n"
     ;
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
     RED_CHECK_EQUAL("/tmp/raw/movie/", ini.get<cfg::mod_rdp::proxy_managed_drives>());
     RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
 }
+
 
 RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 {
@@ -345,7 +356,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     ;
 
     Inifile ini;
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
@@ -542,7 +553,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     ;
 
     Inifile ini;
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -711,7 +722,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     ;
 
     Inifile ini;
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -884,7 +895,7 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     ini.set<cfg::mod_rdp::shell_working_directory>("C:\\");
 
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1031,7 +1042,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     ;
 
     Inifile ini;
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1180,7 +1191,7 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
         "compression=0x3\n"
         "cache=0\n"
     ;
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
@@ -1451,7 +1462,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
         "bitmap_compression=no\n"
     ;
 
-    configuration_load(ini.configuration_holder(), wf.c_str());
+    RED_CHECK(!configuration_load(ini.configuration_holder(), wf.c_str()));
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
