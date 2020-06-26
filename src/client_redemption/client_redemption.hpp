@@ -345,10 +345,10 @@ public:
         this->time_base.set_current_time(tvtime());
         auto const end_tv = this->time_base.get_current_time();
         this->timer_events_.exec_timer(end_tv);
-        execute_events(this->events, end_tv);
         this->fd_events_.exec_timeout(end_tv);
 
         if (num) {
+            execute_events(this->events, end_tv, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
             auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
             this->fd_events_.exec_action(fd_isset);
             // ExecuteEventsResult::Success;
@@ -1042,12 +1042,13 @@ public:
                 auto const end_tv = time_base.get_current_time();
                 this->timer_events_.exec_timer(end_tv);
                 this->fd_events_.exec_timeout(end_tv);
-                execute_events(this->events, end_tv);
+                execute_events(this->events, end_tv, [](int fd){ return false; });
             } else {
                 auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                     return true /*this->socket->get_fd() == fd*/;
                 };
                 this->fd_events_.exec_action(is_mod_fd);
+                execute_events(this->events, time_base.get_current_time(), [](int fd){ return true; });
             }
         } catch (const Error & e) {
 

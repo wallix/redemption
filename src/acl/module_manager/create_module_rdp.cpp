@@ -914,7 +914,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     if (enable_validator) {
         new_mod->rdp_data.file_validator = std::move(file_validator);
-        LOG(LOG_INFO, "create_module_rdp::fd_events_.create_top_executor");
         new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(time_base, validator_fd)
         .set_timeout(std::chrono::milliseconds::max())
         .on_timeout(jln::always_ready([]{}))

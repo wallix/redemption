@@ -85,12 +85,14 @@ inline ExecuteEventsResult execute_events(
     time_base.set_current_time(tvtime());
     auto const end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    execute_events(events, end_tv);
+    execute_events(events, end_tv, [](int fd){ return false; });
+
     fd_events_.exec_timeout(end_tv);
 
     if (num) {
         auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
         fd_events_.exec_action(fd_isset);
+        execute_events(events, end_tv, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
         return ExecuteEventsResult::Success;
     }
 

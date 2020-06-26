@@ -156,13 +156,14 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     auto end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
     fd_events_.exec_timeout(end_tv);
-    execute_events(events, end_tv);
+    execute_events(events, end_tv, [](int){return false;});
 
     int n = 10;
     int count = 0;
     for (; count < n && !fd_events_.is_empty(); ++count) {
         auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
         fd_events_.exec_action(is_set);
+        execute_events(events, end_tv, [](int){return true;});
     }
     RED_CHECK_EQ(count, n);
 

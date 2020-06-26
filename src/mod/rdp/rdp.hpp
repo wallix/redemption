@@ -427,7 +427,7 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, GdProvider & gd_provider, 
+        TimeBase & time_base, GdProvider & gd_provider,
         TimerContainer& timer_events_, EventContainer & events,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
@@ -2276,7 +2276,6 @@ public:
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-        LOG(LOG_INFO, "**** rdp::fd_events_.create_top_executor");
         this->fd_event = this->fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
         .on_exit(check_error)
         .on_action([this](auto ctx){

@@ -100,23 +100,20 @@ public:
     void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
     {
         assert(!this->fdobject);
-        // LOG(LOG_INFO, "rdpdr_asynchronous_task::fd_events_.create_top_executor");
-        this->fdobject = fd_events_.create_top_executor(time_base,
-            this->file_descriptor, std::ref(*this), terminate_notifier)
-        .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
-            if (self.run()) {
+        this->fdobject = fd_events_.create_top_executor(time_base, this->file_descriptor, terminate_notifier)
+        .on_action([this](auto ctx, TerminateEventNotifier& terminate_notifier) {
+            if (this->run()) {
                 return ctx.need_more_data();
             }
             auto const r = ctx.terminate();
-            self.fdobject.detach();
-            terminate_notifier(self); // destroy this
+            this->fdobject.detach();
+            terminate_notifier(*this); // destroy this
             return r;
         })
         .on_exit(jln::propagate_exit())
         .set_timeout(std::chrono::seconds(1))
-        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier&){
-            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
-                self.file_descriptor);
+        .on_timeout([this](auto ctx, TerminateEventNotifier&){
+            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
             return ctx.ready();
         });
     }

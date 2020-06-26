@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             auto const end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
-            execute_events(events, end_tv);
+            execute_events(events, end_tv, [&](int sck)->bool {return true;});
 
             unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
                 (void)sck;
@@ -314,11 +314,12 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             auto end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
-            execute_events(events, end_tv);
+            execute_events(events, end_tv, [&](int sck)->bool {return true;});
 
             int n = 0;
             while (!fd_events_.is_empty() && (++n < 70)) {
                 auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
+                execute_events(events, end_tv, [&](int sck)->bool {return true;});
                 fd_events_.exec_action(is_set);
             }
 #endif
@@ -563,12 +564,14 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             auto end_tv = time_base.get_current_time();
             timer_events_.exec_timer(end_tv);
             fd_events_.exec_timeout(end_tv);
-            execute_events(events, end_tv);
+            execute_events(events, end_tv, [&](int sck)->bool {return true;});
+
 
             int n = 0;
             while (!fd_events_.is_empty() && (++n < 70)) {
                 auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
                 fd_events_.exec_action(is_set);
+                execute_events(events, end_tv, [&](int sck)->bool {return true;});
             }
 #endif
         }

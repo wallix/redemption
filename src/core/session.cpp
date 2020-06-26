@@ -782,6 +782,11 @@ public:
                 }
 
                 // if event lists are waiting for incoming data
+                for (auto & event: events){
+                    if (event.alarm.fd != -1){
+                        ioswitch.set_read_sck(event.alarm.fd);
+                    }
+                }
                 fd_events_.for_each([&](int fd, auto& /*top*/){
                         if (fd != INVALID_SOCKET){
                             ioswitch.set_read_sck(fd);
@@ -858,6 +863,7 @@ public:
                 switch (front.state) {
                 default:
                 {
+                    execute_events(events, now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
                     fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                         return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
                     });
@@ -924,7 +930,8 @@ public:
 
                         auto const end_tv = time_base.get_current_time();
                         timer_events_.exec_timer(end_tv);
-                        execute_events(events, end_tv);
+                        execute_events(events, end_tv,
+                            [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
                         fd_events_.exec_timeout(end_tv);
                         fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
                             return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});

@@ -169,10 +169,11 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     auto end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    execute_events(events, end_tv);
+    execute_events(events, end_tv,[](int /*fd*/){ return false; });
     fd_events_.exec_timeout(end_tv);
 
     for (int count = 0; count < 40; ++count) {
+        execute_events(events, end_tv,[](int /*fd*/){ return true; });
         auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
         fd_events_.exec_action(fd_is_set);
     }

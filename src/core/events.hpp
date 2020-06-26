@@ -39,11 +39,20 @@ struct Event {
     bool garbage = false;
 
     struct Trigger {
+        int fd = -1;
         bool active = false;
         timeval now;
         timeval trigger_time;
         timeval start_time;
         std::chrono::microseconds period = std::chrono::seconds{0};
+        std::chrono::microseconds grace_delay = std::chrono::seconds{0};
+
+        // fd is stored to enabled fd events detection
+        // if fd event is triggered timeout is incremented by grace delay
+        void set_fd(int fd, std::chrono::microseconds grace_delay) {
+            this->fd = fd;
+            this->grace_delay = grace_delay;
+        }
 
         // periodic alarm will call on_period every period interval,
         // starting at start_time.
@@ -85,6 +94,8 @@ struct Event {
     struct Actions {
         // default action is do nothing
         std::function<void(Event &)> on_timeout = [](Event &){};
+        // default action is do nothing
+        std::function<void(Event &)> on_action = [](Event &){};
     } actions;
 
     Event(std::string name, void * lifespan)
@@ -94,6 +105,7 @@ struct Event {
         {}
 
     void exec_timeout() { this->actions.on_timeout(*this);}
+    void exec_action() { this->actions.on_action(*this);}
 };
 
 
@@ -119,7 +131,7 @@ inline void garbage_collector(EventContainer & events) {
         }
 }
 
-// returns timeval{0, 0} si no alarm is set
+// returns timeval{0, 0} if no alarm is set
 inline timeval next_timeout(EventContainer & events)
 {
    timeval ultimatum = {0, 0};
@@ -137,11 +149,17 @@ inline timeval next_timeout(EventContainer & events)
     return ultimatum;
 }
 
-inline void execute_events(EventContainer & events, const timeval tv)
+inline void execute_events(EventContainer & events, const timeval tv, const std::function<bool(int fd)> & fn)
 {
     for (auto & event: events){
-        if (not event.garbage && event.alarm.trigger(tv)){
-            event.exec_timeout();
+        if (not event.garbage) {
+            if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
+                event.alarm.set_timeout(tv+event.alarm.grace_delay);
+                event.exec_action();
+            }
+            if (event.alarm.trigger(tv)){
+                event.exec_timeout();
+            }
         }
     }
     garbage_collector(events);
