@@ -45,7 +45,7 @@ namespace
     }
 }
 
-RED_AUTO_TEST_CASE(TestParserEnum)
+RED_AUTO_TEST_CASE(TestEnumParser)
 {
     char zbuffer[1024];
     auto zbuf_av = make_writable_array_view(zbuffer);
@@ -103,19 +103,14 @@ RED_AUTO_TEST_CASE(TestParserEnum)
     }
 }
 
-RED_AUTO_TEST_CASE(TestConfigTools)
+RED_AUTO_TEST_CASE(TestOtherParser)
 {
     // unsigned
     {
         unsigned u;
         configs::spec_type<unsigned> stype;
 
-        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, ""_zv));
-        RED_CHECK_EQUAL(0, u);
-
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0"_zv));
-        RED_CHECK_EQUAL(0, u);
-        RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "0x"_zv));
         RED_CHECK_EQUAL(0, u);
 
         RED_CHECK(no_parse_error == parse_from_cfg(u, stype, "3"_zv));
@@ -141,7 +136,11 @@ RED_AUTO_TEST_CASE(TestConfigTools)
         RED_CHECK_EQUAL(0x0a, u);
 
         RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "0x0000000I"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "-0"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "-1"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "0x"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(u, stype, "I"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(u, stype, ""_zv));
     }
 
     // int
@@ -151,12 +150,16 @@ RED_AUTO_TEST_CASE(TestConfigTools)
 
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "3600"_zv));
         RED_CHECK_EQUAL(3600, i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0xA3600"_zv));
+        RED_CHECK_EQUAL(0xA3600, i);
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0"_zv));
-        RED_CHECK_EQUAL(0, i);
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, ""_zv));
         RED_CHECK_EQUAL(0, i);
         RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-3600"_zv));
         RED_CHECK_EQUAL(-3600, i);
+
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "999999999999999999999999999999"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ""_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-0xA3600"_zv));
     }
 
     // file_permission
@@ -181,5 +184,21 @@ RED_AUTO_TEST_CASE(TestConfigTools)
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "1234"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "288"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-36"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a66"_zv));
+    }
+
+    // fixed_binary
+    {
+        std::array<unsigned char, 4> d;
+        configs::spec_type<configs::spec_types::fixed_binary> stype;
+
+        RED_CHECK(no_parse_error == parse_from_cfg(d, stype, "12345678"_zv));
+        RED_CHECK_EQUAL("\x12\x34\x56\x78"_av, d);
+        RED_CHECK(no_parse_error == parse_from_cfg(d, stype, "abcdefab"_zv));
+        RED_CHECK_EQUAL("\xAB\xCD\xEF\xAB"_av, d);
+
+        RED_CHECK(no_parse_error != parse_from_cfg(d, stype, "ababab"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(d, stype, "ababababab"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(d, stype, "aa-bb-cc"_zv));
     }
 }

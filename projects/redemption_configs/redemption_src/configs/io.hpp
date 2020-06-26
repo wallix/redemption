@@ -27,6 +27,7 @@
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/zstring_view.hpp"
 #include "utils/string_c.hpp"
+#include "utils/chex_to_int.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -186,16 +187,18 @@ parse_error parse_from_cfg(
         ).c_str()};
     }
 
-    char   hexval[3] = { 0 };
-    char * end{};
-    for (std::size_t i = 0; i < N; i++) {
-        hexval[0] = value[i*2];
-        hexval[1] = value[i*2+1];
-        key[i] = strtol(hexval, &end, 16);
-        if (end != hexval+2) {
-            return parse_error{"bad format, expected hexadecimal value"};
-        }
+    std::array<unsigned char, N> tmp;
+    char const* data = value.begin();
+    int err = 0;
+    for (std::size_t i = 0; i < N; ++i, data += 2) {
+        tmp[i] = (chex_to_int(data[0], err) << 4) | chex_to_int(data[1], err);
     }
+
+    if (err) {
+        return parse_error{"bad format, expected hexadecimal value"};
+    }
+
+    key = tmp;
 
     return no_parse_error;
 }
@@ -215,8 +218,19 @@ inline parse_error parse_from_cfg(
     return no_parse_error;
 }
 
-inline char const * ignore_0(char const * buf, char const * end)
-{ return std::find_if_not(buf, end, [](char c){ return c == '0'; }); }
+template<class TInt, TInt min, TInt max>
+parse_error make_invalid_range_error()
+{
+    using namespace jln::literals;
+
+    return parse_error{(
+        "invalid range in ["_c
+        + jln::integer_to_string_c_t<TInt, min>()
+        + ", "_c
+        + jln::integer_to_string_c_t<TInt, max>()
+        + "]"_c
+    ).c_str()};
+}
 
 template<bool InList = false, class TInt, TInt min, TInt max>
 parse_error parse_integral(
@@ -224,63 +238,37 @@ parse_error parse_integral(
     std::integral_constant<TInt, min> /*unused*/,
     std::integral_constant<TInt, max> /*unused*/)
 {
-    using namespace jln::literals;
+    if (REDEMPTION_UNLIKELY(value.empty())) {
+        return parse_error{"empty value"};
+    }
 
-    TInt val{};
-    {
-        std::size_t idx = 0;
-        int base = 10;
-        if (value.size() >= 2 && value[0] == '0' && value[1] == 'x') {
-            idx = 2;
-            base = 16;
-        }
-        std::size_t ignored = ignore_0(value.begin()+idx, value.end()) - value.begin();
-        std::size_t sz = value.size() - ignored;
+    TInt tmp;
+    int base = 10;
+    if (value.size() >= 2 && value[0] == '0' && value[1] == 'x') {
+        value = value.drop_front(2);
+        base = 16;
+    }
 
-        constexpr std::size_t buf_sz = ::configs::detail::integral_buffer_size<TInt>();
-        if (sz > buf_sz) {
-            return parse_error{(
-                "too large, limited to"_c + jln::ull_to_string_c_t<buf_sz>()
-            ).c_str()};
-        }
-        if (sz == 0) {
-            x = 0;
-            return no_parse_error;
+    auto r = std::from_chars(value.begin(), value.end(), tmp, base);
+
+    if (r.ec == std::errc() && r.ptr == value.end()) {
+        if (tmp < min || max < tmp) {
+            return make_invalid_range_error<TInt, min, max>();
         }
 
-        char buf[buf_sz+1];
-        memcpy(buf, value.begin() + ignored, sz);
-        buf[sz] = 0;
-        char * end{};
+        x = tmp;
+        return no_parse_error;
+    }
 
-        errno = 0;
-        if constexpr (std::is_signed<TInt>::value) {
-            val = strtoll(buf, &end, base);
-        }
-        else {
-            val = strtoull(buf, &end, base);
-        }
-
-        if (errno == ERANGE || std::size_t(end - buf) != sz) {
+    switch (r.ec) {
+        case std::errc::value_too_large:
+            return make_invalid_range_error<TInt, min, max>();
+        default:
             return InList
-                ? parse_error{"bad format, expected list of decimal, hexadecimal or octal"
+                ? parse_error{"bad format, expected list of decimal, hexadecimal"
                     " (ex: \"integral[, integral ...]*\")"}
-                : parse_error{"bad format, expected decimal, hexadecimal or octal"};
-        }
+                : parse_error{"bad format, expected decimal, hexadecimal"};
     }
-
-    if (val < min || max < val) {
-        return parse_error{(
-            "invalid range in ["_c
-            + jln::integer_to_string_c_t<TInt, min>()
-            + ", "_c
-            + jln::integer_to_string_c_t<TInt, max>()
-            + "]"_c
-        ).c_str()};
-    }
-
-    x = val;
-    return no_parse_error;
 }
 
 template<class T>
@@ -291,9 +279,13 @@ template<class T>
 using zero_integral = std::integral_constant<T, 0>;
 
 template<class TInt>
-typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
+std::enable_if_t<
+    std::is_integral_v<TInt> && !std::is_same_v<TInt, bool>,
+    parse_error>
 parse_from_cfg(TInt & x, ::configs::spec_type<TInt> /*type*/, zstring_view value)
-{ return parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>()); }
+{
+    return parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>());
+}
 
 template<class T,
     ::configs::spec_types::underlying_type_for_range_t<T> min,
@@ -310,13 +302,7 @@ parse_error parse_from_cfg(
         return err;
     }
     if (y < min || max < y) {
-        return parse_error{(
-            "invalid range in ["_c
-          + jln::integer_to_string_c_t<Int, min>()
-          + ", "_c
-          + jln::integer_to_string_c_t<Int, max>()
-          + "]"_c
-        ).c_str()};
+        return make_invalid_range_error<Int, min, max>();
     }
     x = T{y};
     return no_parse_error;
@@ -430,35 +416,23 @@ parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, zstring_view value)
         x, value, "bad value, expected: 1, on, yes, true, 0, off, no, false");
 }
 
-inline parse_error parse_from_cfg(uint32_t& x, ::configs::spec_type<::configs::spec_types::file_permission> /*type*/, zstring_view value)
+inline parse_error parse_from_cfg(
+    uint32_t& x, ::configs::spec_type<::configs::spec_types::file_permission> /*type*/,
+    zstring_view value)
 {
     uint32_t tmp = 0;
-    const char *error_msg = nullptr;
-    bool error_from_user_cfg = false;
 
-    if (auto res = std::from_chars(value.begin(), value.end(), tmp, 8);
-        res.ptr != value.end() || res.ec != std::errc())
-    {
-        error_msg = "Cannot parse file permission because it's not an octal number";
-        error_from_user_cfg = true;
+    if (auto [p, ec] = std::from_chars(value.begin(), value.end(), tmp, 8);
+        p != value.end() || ec != std::errc()
+    ){
+        return parse_error{"Cannot parse file permission because it's not an octal number"};
     }
-    else if (tmp > 0777)
-    {
-        error_msg = "Cannot have file permission higher than 0777 number";
-        error_from_user_cfg = true;
+
+    if (tmp > 0777) {
+        return parse_error{"Cannot have file permission higher than 0777 number"};
     }
-    if (error_from_user_cfg)
-    {
-        if (x > 0777)
-        {
-            error_msg = "Cannot parse file permission from user config and from default config";
-        }
-        return parse_error { error_msg };
-    }
-    else
-    {
-        x = tmp;
-    }
+
+    x = tmp;
     return no_parse_error;
 }
 
