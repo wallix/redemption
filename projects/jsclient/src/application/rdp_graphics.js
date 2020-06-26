@@ -1,3 +1,5 @@
+"strict";
+
 const rgbToCss = function(color) {
     return '#'+color.toString(16).padStart(6, '0');
 };
@@ -19,9 +21,12 @@ class RDPGraphics
 
         this._ecanvas = canvasElement
         this._canvas = canvasElement.getContext('2d');
-        this._ecusorCanvas = OffsreenCanvas
-            ? new OffsreenCanvas(0,0)
-            : document.createElement('canvas');
+        try {
+            this._ecusorCanvas = new OffsreenCanvas(0,0);
+        }
+        catch (e) {
+            this._ecusorCanvas = document.createElement('canvas');
+        }
         this._cusorCanvas = this._ecusorCanvas.getContext('2d');
         this._cachePointers = [];
         this._cacheImages = [];
@@ -94,24 +99,23 @@ class RDPGraphics
     }
 
     _copyImage(img, sx, sy, dw, dh) {
-        const u8av = img.data.buffer;
-        const dw4 = dw*4;
         const w = img.width;
-        const data = new Uint8ClampedArray(dh*dw4);
+        const h = img.height;
+        const u32av = new Uint32Array(img.data.buffer);
+        const data = new Uint32Array(dh*dw);
 
         if (0 === sx && w === dw) {
-            data.set(u8av.slice(sy*dw4, (sy+dh)*dw4));
+            data.set(u32av.subarray(sy*dw, dh*dw));
         }
         else {
-            const w4 = w*4;
-            let i = sy*w4 + sx*4;
-            const ie = i + dh*w4;
-            for (; y < ie; ++y, i+=w4) {
-                data.set(u8av.slice(i, i+dw4));
+            let i = sy*w + sx;
+            const ie = i + dh*w;
+            for (; i < ie; ++i, i+=w) {
+                data.set(u8av.slice(i, i+dw));
             }
         }
 
-        return new ImageData(data, dw, dh);
+        return new ImageData(new Uint8ClampedArray(data.buffer), dw, dh);
     }
 
     drawMemBlt(imageIdx, rop, sx, sy, dx, dy, dw, dh) {
@@ -448,6 +452,8 @@ class RDPGraphics
     }
 };
 
-if (module) {
+try {
     module.exports.RDPGraphics = RDPGraphics;
+}
+catch (e) {
 }

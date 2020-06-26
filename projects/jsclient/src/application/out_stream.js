@@ -1,3 +1,5 @@
+"strict";
+
 class OutStream
 {
     constructor(ptr, emccModule) {

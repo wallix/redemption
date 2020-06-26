@@ -1,3 +1,4 @@
+"strict";
 
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
 // 0xE0 -> 0x01

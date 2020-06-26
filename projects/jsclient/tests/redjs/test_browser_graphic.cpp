@@ -322,15 +322,53 @@ RED_JS_AUTO_TEST_CASE(
 
     // RDPBmpCache / RDPMemBlt
     {
-        gd.draw(RDPBmpCache(bmp24, 0, 0, false, false));
-        gd.draw(RDPMemBlt(0, Rect(10, 10, bmp24.cx(), bmp24.cy()), 0xCC, 0, 0, 0), screen);
-        gd.draw(RDPMemBlt(0, Rect(0, 10, bmp24.cx(), bmp24.cy()), 0x22, 0, 0, 0), screen);
-        gd.draw(RDPMemBlt(0, Rect(0, 20, bmp24.cx(), bmp24.cy()), 0x55, 0, 0, 0), screen);
+        gd.draw(RDPBmpCache(bmp24, 1, 7, false, false));
+        gd.draw(RDPMemBlt(1, Rect(0, 10, bmp24.cx(), bmp24.cy()), 0x22, 0, 0, 7), screen);
+        gd.draw(RDPMemBlt(1, Rect(0, 20, bmp24.cx(), bmp24.cy()), 0x55, 0, 0, 7), screen);
+        gd.draw(RDPMemBlt(1, Rect(0, 30, bmp24.cx(), bmp24.cy()), 0x22, 2, 2, 7), screen);
+        gd.draw(RDPMemBlt(1, Rect(10, 10, bmp24.cx(), bmp24.cy()), 0xCC, 0, 0, 7), screen);
     }
-    RED_CHECK(to_data_url(canvas) == "x"_av);
+    RED_CHECK(to_data_url(canvas) == "data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsCAYAAADtt+XCAAAABmJLR0QA/wD/AP+gvaeTA"
+        "AAGUUlEQVR4nO3bsYtl5RnA4e8Ot78wMCIjBMEi4AYCplOILAtbCLHYShYtdgU7dRs7UV"
+        "JYpdlsqgR2pkgQqy1HWFhECzuFQFKkWBDBRVwMzl9wUqRwdB24/nDvmavPU14OnHeGGX5"
+        "88827eOr1K9Nv//HG2D98dNx/6S/jr9+8NZjPYrGYewSAtSzv7u6PL1bXx9He5+PcwZtz"
+        "zwPAltg5uHBpvPDsjXFx9dW4ff7m3PMAsCV2zt+8OHb3b4/V9btj7/LR3PMAsCWWl49W4"
+        "82jvfHZuYOxevqjuecBYEsspmmaTn7wu2tXh0v1+bhEB7bF8vsfuFQHYB073//ApToA63"
+        "ggIC7VAVjHA3/CcqkOwDoWn1w/mP754p/GvStfjr2/vzpeWf3xBx90ub4ZLtGBbbHzxH/"
+        "vjeeOr41b998dr129c+qDd3f3x9Hq+ri0d3ncOLiwwREBOIuWV+/cGr9//N/j9vHH48p/"
+        "Xj71wYMLl8ZHn50bF1dPj8Nf3xx/GM9scEwAzprlBy/fHr+5d2UcX3ti3P/VY6c+eP7mx"
+        "fGv/cP/X65//sUY729wSgDOnJ13nzsed27dHx++dnUcP/LeqQ9ePlqNC5f2xrM3Dsbqqx"
+        "c2OCIAZ9EDm+jMyyU6sC0e2AMBgHUICACJgACQCAgAyc6nfz4ch18/Od55fnf87fjtuec"
+        "BYEusvYkOACetvYkOACetvYkOACetvYkOACfZRP8RNrEkPk0P/yWW3YGfgn/jBSAREAAS"
+        "AQEgERAAkp2vn/x0PL97OPccAGyZpf0PAIod+x8AFPZAfgR7IADfcokOQCIgACQCAkAiI"
+        "AAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJA"
+        "ICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkA"
+        "iIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAshhjTHMPAWfVNPn1OEsWi8XcI3CCEwgA"
+        "iYAAkAgIAImAAJAICACJgACQCAgAiYAAkAgIAImAAJAICACJgACQCAgAiYAAkAgIAImAA"
+        "JAICACJgACQCAgAiYAAkAgIAImAAJAICACJgACQCAgAiYAAkAgIAImAAJAICACJgACQCA"
+        "gAiYAAkAgIAImAAJAICACJgACQCAgAiYAAkAgIAImAAJAICACJgACQCAgAiYAAkAgIAIm"
+        "AAJAICACJgACQCAgAyXLuAaCa5h4AfuGcQABIBASAREAASAQEgERAAEgEBIBEQABIBASA"
+        "REAASAQEgERAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQABIBASAREAASAQEgERAA"
+        "EgEBIBkOfcAfNc0TQ//JYvFw3/HJmziewWcygkEgERAAEgEBIBEQABIBASAREAASAQEgE"
+        "RAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQAB"
+        "IBASAREAASJZzD8AMpmnuCfgZWiwe/js28aO7ia/j58IJBIBEQABIBASAREAASAQEgERA"
+        "AEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQABIB"
+        "ASAREAASAQEgERAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQABIBASAREAASAQEgE"
+        "RAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBEQABIBASAREAASAQEgERAAEgEBIBkMca"
+        "Y5h4CgO3jBAJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJA"
+        "IiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgA"
+        "CQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAg"
+        "JAIiAAJAICQCIgACQCAkAiIAAkAgJAspx7AAB+etMG3uEEAkAiIAAkAgJAIiAAJAICQCI"
+        "gACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAkAgJAIiAAJAICQCIgACQCAkAiIAAk"
+        "AgJAIiAAJAICQCIgACT/A6HYyuSVnM70AAAAAElFTkSuQmCC"_av);
 
 
     // Pointer
     gd.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
-    RED_CHECK(canvas["style"]["cursor"].as<std::string>() == "x"_av);
+    RED_CHECK(canvas["style"]["cursor"].as<std::string>() == "url(data:image/png;base64,"
+        "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABmJLR0QA/wD/AP+gvaeTA"
+        "AAAaElEQVRYhe2WSwrAIAwFfaX3v3K6ceF38VRaCjO7SEwGBWNKAPAxcpIjIqrNkkZrTs"
+        "3bSc4NKqEmdsv5AmUTSUtNj5CPPtorcLkO+SCAAAIIILCMNYxm7365/vY47mKX3XHcfUg"
+        "A4Hc8/F4zGEf7ahwAAAAASUVORK5CYII=) 15 16, auto"_av);
 }
