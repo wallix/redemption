@@ -104,6 +104,11 @@ struct Event {
         , lifespan_handle(lifespan)
         {}
 
+    void rename(const std::string string)
+    {
+        this->name = string;
+    }
+
     void exec_timeout() { this->actions.on_timeout(*this);}
     void exec_action() { this->actions.on_action(*this);}
 };

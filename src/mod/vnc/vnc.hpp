@@ -330,6 +330,7 @@ private:
     TimeBase& time_base;
     GdProvider & gd_provider;
     EventContainer & events;
+    int clipboard_timeout_timer = 0;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
@@ -387,6 +388,10 @@ public:
            , SesmanInterface & sesman);
 
     std::string module_name() override {return "VNC Mod";}
+
+    ~mod_vnc(){
+        end_of_lifespan(this->events, this);
+    }
 
     void init() override;
 
