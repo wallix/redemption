@@ -1588,18 +1588,26 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "log_if_accepted"_zv) {
+        else if (key == "block_invalid_file_up"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
+                static_cast<cfg::file_verification::block_invalid_file_up&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
         }
-        else if (key == "verify_before_transfer"_zv) {
+        else if (key == "block_invalid_file_down"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::file_verification::verify_before_transfer&>(this->variables).value,
+                static_cast<cfg::file_verification::block_invalid_file_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "log_if_accepted"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::log_if_accepted&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );

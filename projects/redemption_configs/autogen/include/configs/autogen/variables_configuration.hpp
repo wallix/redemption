@@ -18,21 +18,21 @@ namespace configs
         inline constexpr int section4 = 89; /* mod_vnc */
         // inline constexpr int section5 = 97; /* metrics */
         inline constexpr int section6 = 97; /* file_verification */
-        inline constexpr int section7 = 104; /* file_storage */
-        // inline constexpr int section8 = 105; /* icap_server_down */
-        // inline constexpr int section9 = 105; /* icap_server_up */
-        inline constexpr int section10 = 105; /* mod_replay */
-        // inline constexpr int section11 = 106; /* ocr */
-        inline constexpr int section12 = 106; /* video */
-        inline constexpr int section13 = 111; /* capture */
-        inline constexpr int section14 = 114; /* crypto */
-        // inline constexpr int section15 = 116; /* websocket */
-        // inline constexpr int section16 = 116; /* debug */
-        inline constexpr int section17 = 116; /* remote_program */
-        inline constexpr int section18 = 117; /* translation */
-        // inline constexpr int section19 = 120; /* internal_mod */
-        inline constexpr int section20 = 120; /* context */
-        // inline constexpr int section21 = 203; /* theme */
+        inline constexpr int section7 = 105; /* file_storage */
+        // inline constexpr int section8 = 106; /* icap_server_down */
+        // inline constexpr int section9 = 106; /* icap_server_up */
+        inline constexpr int section10 = 106; /* mod_replay */
+        // inline constexpr int section11 = 107; /* ocr */
+        inline constexpr int section12 = 107; /* video */
+        inline constexpr int section13 = 112; /* capture */
+        inline constexpr int section14 = 115; /* crypto */
+        // inline constexpr int section15 = 117; /* websocket */
+        // inline constexpr int section16 = 117; /* debug */
+        inline constexpr int section17 = 117; /* remote_program */
+        inline constexpr int section18 = 118; /* translation */
+        // inline constexpr int section19 = 121; /* internal_mod */
+        inline constexpr int section20 = 121; /* context */
+        // inline constexpr int section21 = 204; /* theme */
     }
 }
 
@@ -2756,11 +2756,13 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Block file transfer from client to server on invalid file verification. <br/>
+    /// File verification on upload must be enabled via option Enable up. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
-    /// sesmanName: file_verification:log_if_accepted <br/>
-    /// default: {true} <br/>
-    struct file_verification::log_if_accepted {
+    /// sesmanName: file_verification:block_invalid_file_up <br/>
+    /// default: {false} <br/>
+    struct file_verification::block_invalid_file_up {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -2769,13 +2771,15 @@ namespace cfg
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{true};
+        type value{false};
     };
+    /// Block file transfer from server to client on invalid file verification. <br/>
+    /// File verification on download must be enabled via option Enable down. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
-    /// sesmanName: file_verification:verify_before_transfer <br/>
+    /// sesmanName: file_verification:block_invalid_file_down <br/>
     /// default: {false} <br/>
-    struct file_verification::verify_before_transfer {
+    struct file_verification::block_invalid_file_down {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -2785,6 +2789,21 @@ namespace cfg
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
+    };
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: file_verification:log_if_accepted <br/>
+    /// default: {true} <br/>
+    struct file_verification::log_if_accepted {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 6};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
     };
     /// File greather are automatically rejected. <br/>
     /// (is in mebibyte) <br/>
@@ -2797,7 +2816,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 6};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 7};
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
@@ -5412,8 +5431,9 @@ struct file_verification
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
+, cfg::file_verification::block_invalid_file_up
+, cfg::file_verification::block_invalid_file_down
 , cfg::file_verification::log_if_accepted
-, cfg::file_verification::verify_before_transfer
 , cfg::file_verification::max_file_size_rejected
 { static constexpr bool is_section = true; };
 
@@ -5783,8 +5803,9 @@ using VariablesAclPack = Pack<
 , cfg::file_verification::enable_down
 , cfg::file_verification::clipboard_text_up
 , cfg::file_verification::clipboard_text_down
+, cfg::file_verification::block_invalid_file_up
+, cfg::file_verification::block_invalid_file_down
 , cfg::file_verification::log_if_accepted
-, cfg::file_verification::verify_before_transfer
 , cfg::file_verification::max_file_size_rejected
 , cfg::file_storage::store_file
 , cfg::mod_replay::replay_on_loop
@@ -5895,14 +5916,14 @@ struct BitFlags {
 
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111011111111111
-, 0b1111111111110011111111111111111111111111111111111111111111111111
-, 0b1111101111111111111111111111111111111111111111111110110111110111
-, 0b0000000000000000000000000000000000000000000000000000011111111111
+, 0b1111111111100111111111111111111111111111111111111111111111111111
+, 0b1111011111111111111111111111111111111111111111111101101111101111
+, 0b0000000000000000000000000000000000000000000000000000111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000000000001000000000000
+, 0b0000000000000000000000000000000000000000000000000010000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs

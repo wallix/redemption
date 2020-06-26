@@ -229,11 +229,14 @@ cp_spec = {
         u'file_verification:clipboard_text_down': (
             'clipboard_text_down', False
         ),
+        u'file_verification:block_invalid_file_up': (
+            'block_invalid_file_up', False
+        ),
+        u'file_verification:block_invalid_file_down': (
+            'block_invalid_file_down', False
+        ),
         u'file_verification:log_if_accepted': (
             'log_if_accepted', True
-        ),
-        u'file_verification:verify_before_transfer': (
-            'verify_before_transfer', False
         ),
         u'file_verification:max_file_size_rejected': (
             'max_file_size_rejected', 1024

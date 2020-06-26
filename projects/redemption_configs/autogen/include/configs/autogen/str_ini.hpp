@@ -966,13 +966,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #clipboard_text_down = 0
 
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
 # value: 0 or 1
 #_hidden
-#log_if_accepted = 1
+#block_invalid_file_up = 0
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+# value: 0 or 1
+#_hidden
+#block_invalid_file_down = 0
 
 # value: 0 or 1
 #_hidden
-#verify_before_transfer = 0
+#log_if_accepted = 1
 
 # File greather are automatically rejected.
 # (is in mebibyte)

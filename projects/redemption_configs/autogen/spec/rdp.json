@@ -783,16 +783,21 @@
           "description": "Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."
         },
         {
+          "name": "block_invalid_file_up",
+          "type": "bool",
+          "default": false,
+          "description": "Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."
+        },
+        {
+          "name": "block_invalid_file_down",
+          "type": "bool",
+          "default": false,
+          "description": "Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."
+        },
+        {
           "name": "log_if_accepted",
           "type": "bool",
           "default": true,
-          "advanced": true,
-          "description": ""
-        },
-        {
-          "name": "verify_before_transfer",
-          "type": "bool",
-          "default": false,
           "advanced": true,
           "description": ""
         },

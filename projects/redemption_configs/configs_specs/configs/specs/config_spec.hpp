@@ -705,8 +705,11 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
 
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_up", desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_down", desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."}, set(false));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "verify_before_transfer", set(false));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"File greather are automatically rejected.\n(is in mebibyte)"}, set(1024));
     });
 

@@ -793,7 +793,9 @@ namespace
             clipboard_virtual_channel_params.validator_params.log_if_accepted = true;
             clipboard_virtual_channel_params.validator_params.enable_clipboard_text_up = true;
             clipboard_virtual_channel_params.validator_params.enable_clipboard_text_down = true;
-            clipboard_virtual_channel_params.validator_params.verify_before_transfer
+            clipboard_virtual_channel_params.validator_params.block_invalid_file_down
+                = this->verify_before_transfer;
+            clipboard_virtual_channel_params.validator_params.block_invalid_file_up
                 = this->verify_before_transfer;
             return clipboard_virtual_channel_params;
         }

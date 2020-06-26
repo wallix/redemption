@@ -351,11 +351,16 @@ clipboard_text_up = boolean(default=False)
 # File verification on download must be enabled via option Enable down.
 clipboard_text_down = boolean(default=False)
 
-#_advanced
-log_if_accepted = boolean(default=True)
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
+block_invalid_file_up = boolean(default=False)
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+block_invalid_file_down = boolean(default=False)
 
 #_advanced
-verify_before_transfer = boolean(default=False)
+log_if_accepted = boolean(default=True)
 
 # File greather are automatically rejected.
 # (is in mebibyte)

@@ -2324,10 +2324,11 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     }
     else {
         LOG(LOG_INFO, "ClipboardVirtualChannel: enable file validator service:"
-            " up=%s  down=%s  verify_before_transfer=%d",
+            " up=%s  down=%s  block_invalid_file_up=%d block_invalid_file_down=%d",
             p.validator_params.up_target_name,
             p.validator_params.down_target_name,
-            params.validator_params.verify_before_transfer);
+            params.validator_params.block_invalid_file_up,
+            params.validator_params.block_invalid_file_down);
     }
     return p;
 }())
@@ -2338,11 +2339,11 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , proxy_managed(to_client_sender_ == nullptr)
 , client_ctx(
     this->params.validator_params.up_target_name,
-    this->params.validator_params.verify_before_transfer,
+    this->params.validator_params.block_invalid_file_up,
     this->params.validator_params.max_file_size_rejected)
 , server_ctx(
     this->params.validator_params.down_target_name,
-    this->params.validator_params.verify_before_transfer,
+    this->params.validator_params.block_invalid_file_down,
     this->params.validator_params.max_file_size_rejected)
 {}
 
