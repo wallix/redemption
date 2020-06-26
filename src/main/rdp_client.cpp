@@ -207,7 +207,6 @@ int main(int argc, char** argv)
                 trans
               , time_base
               , gd_forwarder
-              , fd_events_
               , events
               , sesman
               , username.c_str()

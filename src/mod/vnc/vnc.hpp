@@ -82,7 +82,6 @@ class VNCMetrics;
 class UltraDSM;
 class mod_vnc;
 class GdProvider;
-class TopFdContainer;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -331,7 +330,6 @@ private:
     TimeBase& time_base;
     GdProvider & gd_provider;
     EventContainer & events;
-//    TopFdPtr fd_event;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
@@ -365,7 +363,6 @@ public:
     mod_vnc( Transport & t
            , TimeBase& time_base
            , GdProvider & gd_provider
-           , TopFdContainer & fd_events_
            , EventContainer & events
            , const char * username
            , const char * password

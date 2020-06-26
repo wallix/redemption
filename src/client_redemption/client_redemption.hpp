@@ -515,7 +515,6 @@ public:
                     *this->socket
                   , this->time_base
                   , this->gd_forwarder
-                  , this->fd_events_
                   , this->events
                   , this->sesman
                   , this->config.user_name.c_str()

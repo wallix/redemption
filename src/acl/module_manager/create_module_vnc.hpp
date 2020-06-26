@@ -26,11 +26,10 @@
 
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
-
-#include "core/session_reactor.hpp"
 #include "acl/mod_wrapper.hpp"
-
 #include "acl/mod_pack.hpp"
+#include "utils/timebase.hpp"
+#include "core/events.hpp"
 
 class AuthApi;
 
@@ -41,7 +40,6 @@ extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     Font & glyphs,
     Theme & theme,
     TimeBase & time_base,
-    TopFdContainer & fd_events_,
     EventContainer& events,
     SesmanInterface & sesman,
     TimeObj & timeobj

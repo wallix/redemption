@@ -31,7 +31,6 @@ class ClientExecute;
 class FrontAPI;
 class ReportMessageApi;
 class TimeBase;
-class TopFdContainer;
 class Transport;
 class VNCMetrics;
 class SesmanInterface;
@@ -41,7 +40,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     TimeBase& time_base,
     GdProvider & gd_provider,
-    TopFdContainer & fd_events_,
     EventContainer & events,
     SesmanInterface & sesman,
     const char* username,

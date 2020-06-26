@@ -527,7 +527,6 @@ public:
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,
-            this->fd_events_,
             this->events,
             this->sesman,
             this->timeobj
