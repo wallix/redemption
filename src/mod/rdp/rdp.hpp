@@ -149,35 +149,63 @@ class SesmanInterface;
 // TODO: isn't AsynchronousTaskContainer a general purpose class that should have it's own file ?
 struct AsynchronousTaskContainer
 {
-private:
-    static auto remover() noexcept
+public:
+    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events)
+        : time_base(time_base), gd_provider(gd_provider), events(events)
     {
-        return [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
-            (void)task;
-            assert(&task == pself->tasks.front().get());
-            pself->tasks.pop_front();
-            pself->next();
-        };
+        LOG(LOG_INFO, "New Asynchronous Task Container");
     }
 
-public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer& timer_events_, EventContainer & events)
-        : time_base(time_base), gd_provider(gd_provider), fd_events_(fd_events_), timer_events_(timer_events_), events(events)
-    {}
+    ~AsynchronousTaskContainer()
+    {
+        LOG(LOG_INFO, "Delete Asynchronous Task Container");
+        end_of_lifespan(this->events, this);
+    }
+
+    static void remover(AsynchronousTaskContainer * self, AsynchronousTask * task)
+    {
+        LOG(LOG_INFO, "remover for task %p", task);
+        (void)task;
+        assert(task == self->tasks.front().get());
+        self->tasks.pop_front();
+        self->next();
+    }
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
+        LOG(LOG_INFO, "Add task to Asynchronous Task Container");
         this->tasks.emplace_back(std::move(task));
+        LOG(LOG_INFO, "Task = %p", this->tasks.front().get());
+
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event();
+            LOG(LOG_INFO, "Configure event from Add");
+            auto container_task = this->tasks.front().get();
+            auto event = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            event.actions.on_teardown = [this, container_task](Event&event)
+            {
+                LOG(LOG_INFO, "%s on_teardown", event.name);
+                AsynchronousTaskContainer::remover(this, container_task);
+                event.garbage = true;
+            };
+            this->events.push_back(event);
         }
     }
 
 private:
     void next()
     {
+        LOG(LOG_INFO, "Next Task task for Asynchronous Task Container");
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event();
+            LOG(LOG_INFO, "Configure event from Next");
+            auto container_task = this->tasks.front().get();
+            auto event  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            event.actions.on_teardown = [this, container_task](Event&event)
+            {
+                LOG(LOG_INFO, "%s on_teardown", event.name);
+                AsynchronousTaskContainer::remover(this, container_task);
+                event.garbage = true;
+            };
+            this->events.push_back(event);
         }
     }
 
@@ -185,14 +213,12 @@ private:
 public:
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TopFdContainer& fd_events_;
-    TimerContainer& timer_events_;
     EventContainer& events;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer&, EventContainer & events)
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, EventContainer & events)
     {}
 };
 #endif
@@ -788,7 +814,6 @@ private:
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.time_base,
-                asynchronous_tasks.timer_events_,
                 asynchronous_tasks.events,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
@@ -2128,7 +2153,7 @@ public:
         , events(events)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_, events)
+        , asynchronous_tasks(time_base, gd_provider, events)
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)

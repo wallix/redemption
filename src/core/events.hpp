@@ -39,6 +39,7 @@ struct Event {
     std::string name;
     void * lifespan_handle = nullptr;
     bool garbage = false;
+    bool teardown = false;
 
     struct Trigger {
         int fd = -1;
@@ -94,17 +95,18 @@ struct Event {
     } alarm;
 
     struct Actions {
-        // default action is do nothing
         std::function<void(Event &)> on_timeout = [](Event &){};
-        // default action is do nothing
         std::function<void(Event &)> on_action = [](Event &){};
+        std::function<void(Event &)> on_teardown = [](Event &){};
     } actions;
 
     Event(std::string name, void * lifespan)
         : id(Event::counter++)
         , name(name)
         , lifespan_handle(lifespan)
-        {}
+        {
+            LOG(LOG_INFO, "Creation of new event (%d): %s", this->id, this->name.c_str());
+        }
 
     void rename(const std::string string)
     {
@@ -113,6 +115,8 @@ struct Event {
 
     void exec_timeout() { this->actions.on_timeout(*this);}
     void exec_action() { this->actions.on_action(*this);}
+    void exec_teardown() { this->actions.on_teardown(*this);}
+
 };
 
 
@@ -127,9 +131,21 @@ inline void end_of_lifespan(EventContainer & events, void * lifespan)
     }
 }
 
+
+inline void exec_teardowns(EventContainer & events) {
+        for (size_t i = 0; i < events.size() ; i++){
+            if(events[i].teardown){
+                events[i].exec_teardown();
+                events[i].teardown = false;
+                events[i].garbage = true;
+            }
+        }
+}
+
+
 inline void garbage_collector(EventContainer & events) {
         for (size_t i = 0; i < events.size() ; i++){
-            while ((i < events.size()) && (events[i].garbage)){
+            while ((i < events.size()) && events[i].garbage){
                 LOG(LOG_INFO, "Removing Event: %s", events[i].name);
                 if (i < events.size() -1){
                     events[i] = std::move(events.back());
@@ -144,13 +160,13 @@ inline timeval next_timeout(EventContainer & events)
 {
    timeval ultimatum = {0, 0};
    for(auto &event: events){
-        if (not event.garbage and event.alarm.active){
+        if (not (event.garbage or event.teardown) and event.alarm.active){
             ultimatum = event.alarm.trigger_time;
             break;
         }
    }
    for(auto &event: events){
-        if (not event.garbage and event.alarm.active){
+        if (not (event.garbage or event.teardown) and event.alarm.active){
             ultimatum = std::min(event.alarm.trigger_time, ultimatum);
         }
     }
@@ -159,8 +175,12 @@ inline timeval next_timeout(EventContainer & events)
 
 inline void execute_events(EventContainer & events, const timeval tv, const std::function<bool(int fd)> & fn)
 {
+    LOG(LOG_INFO, "=== Execute Events Loop ===");
+
     for (auto & event: events){
-        if (not event.garbage) {
+        LOG(LOG_INFO, "Examining (%d): %s", event.id, event.name.c_str());
+
+        if (not (event.garbage or event.teardown)) {
             if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
                 event.alarm.set_timeout(tv+event.alarm.grace_delay);
                 LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
@@ -169,13 +189,14 @@ inline void execute_events(EventContainer & events, const timeval tv, const std:
                 continue;
             }
         }
-        if (not event.garbage) {
+        if (not (event.garbage or event.teardown)) {
             if (event.alarm.trigger(tv)){
                 LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
                 event.exec_timeout();
             }
         }
     }
+    exec_teardowns(events);
     garbage_collector(events);
 }
 

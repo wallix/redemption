@@ -65,16 +65,28 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
     TimeBase time_base({0,0});
+    auto now = time_base.get_current_time();
     EventContainer events;
 
     RdpdrDriveReadTask rdpdr_drive_read_task(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
-        test_to_server_sender, 
+        test_to_server_sender,
         time_base,
         events,
         to_verbose_flags(0));
 
-    rdpdr_drive_read_task.configure_event();
+    std::deque<AsynchronousTask*> tasks;
+
+    std::function<void(Event&)> remover = [&tasks](Event&) -> void
+    {
+        tasks.pop_front();
+    };
+
+    auto event = rdpdr_drive_read_task.configure_event(now, nullptr);
+    event.actions.on_teardown = remover;
+    events.push_back(std::move(event));
+    AsynchronousTask* task(&rdpdr_drive_read_task);
+    tasks.push_back(task);
 
     RED_CHECK(!events.empty());
     auto end_tv = time_base.get_current_time();
@@ -85,6 +97,7 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     }
     execute_events(events, end_tv, [](int/*fd*/){ return true; });
     RED_CHECK(events.empty());
+    RED_CHECK(tasks.empty());
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -101,6 +114,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     TestToServerSender test_to_server_sender(check_transport);
 
     TimeBase time_base({0,0});
+    auto now = time_base.get_current_time();
     EventContainer events;
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
@@ -111,7 +125,20 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         events,
         to_verbose_flags(0));
 
-    rdpdr_send_drive_io_response_task.configure_event();
+    std::deque<AsynchronousTask*> tasks;
+
+    std::function<void(Event&)> remover = [&tasks](Event&) -> void
+    {
+        tasks.pop_front();
+    };
+
+    auto event = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
+    event.actions.on_teardown = remover;
+    events.push_back(std::move(event));
+    AsynchronousTask * task(&rdpdr_send_drive_io_response_task);
+    tasks.push_back(task);
+
+
     RED_CHECK(!events.empty());
 
     timeval timeout = time_base.get_current_time();
@@ -122,4 +149,5 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         ++timeout.tv_sec;
     }
     RED_CHECK(events.empty());
+    RED_CHECK(tasks.empty());
 }

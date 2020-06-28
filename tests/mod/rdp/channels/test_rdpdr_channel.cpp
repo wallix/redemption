@@ -185,11 +185,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         const char * proxy_managed_drive_prefix   = "";
 
         TimeBase time_base({0,0});
-        TimerContainer timer_events_;
         EventContainer events;
         SesmanWrapper sesman;
         FileSystemVirtualChannel file_system_virtual_channel(
-            time_base, timer_events_, events, &to_client_sender, &to_server_sender,
+            time_base, events, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
 
         RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel, sesman), ERR_TRANSPORT_NO_MORE_DATA);

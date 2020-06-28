@@ -855,10 +855,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     }
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer & events;
-
-    TimerPtr initialization_timeout_event;
+    int initialization_timeout_event = 0;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
     {
@@ -875,7 +873,6 @@ public:
 
     FileSystemVirtualChannel(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
         EventContainer & events,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
@@ -914,7 +911,6 @@ public:
           params.smartcard_passthrough,
           base_params.verbose)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
@@ -1850,7 +1846,15 @@ public:
                     client_announce_reply.log(LOG_INFO);
                 }
 
-                this->initialization_timeout_event.reset();
+                if (this->initialization_timeout_event) {
+                    for(auto & event: this->events){
+                        if (event.id == this->initialization_timeout_event){
+                            event.garbage = true;
+                            event.id = 0;
+                        }
+                    }
+                }
+                this->initialization_timeout_event = 0;
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -1992,10 +1996,14 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event = this->timer_events_
-            .create_timer_executor(this->time_base, this)
-            .set_delay(this->initialization_timeout)
-            .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
+            Event event("Initialisation timeout Event", this);
+            this->initialization_timeout_event = event.id;
+            event.alarm.set_timeout(this->time_base.get_current_time()+this->initialization_timeout);
+            event.actions.on_timeout = [this](Event&)
+            {
+                this->process_event();
+            };
+            this->events.push_back(std::move(event));
             return true;
         }
 
@@ -2834,8 +2842,15 @@ public:
 
 private:
     void process_event() {
-        this->initialization_timeout_event.reset();
-
+        if (this->initialization_timeout_event) {
+            for(auto & event: this->events){
+                if (event.id == this->initialization_timeout_event){
+                    event.garbage = true;
+                    event.id = 0;
+                }
+            }
+        }
+        this->initialization_timeout_event = 0;
         uint8_t message_buffer[1024];
 
         {

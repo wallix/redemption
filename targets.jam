@@ -4049,8 +4049,15 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
   <library>src/core/events.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
@@ -5227,8 +5234,6 @@ test-run tests/utils/sugar/unordered_erase :
 test-run tests/utils/test_asynchronous_task_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
 :
-  <library>src/core/events.o
-  <covfile>src/utils/asynchronous_task_manager.hpp
 ;
 test-run tests/utils/test_base64 :
   $(REDEMPTION_TEST_PATH)/utils/test_base64.cpp
@@ -6377,7 +6382,6 @@ alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
 alias test_unique_fd.coverage : tests/utils/sugar/test_unique_fd.coverage ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
-alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
 alias test_base64.coverage : tests/utils/test_base64.coverage ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap.coverage : tests/utils/test_bitmap.coverage ;
