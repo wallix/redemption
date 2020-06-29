@@ -27,6 +27,8 @@
 
 #include "configs/config.hpp"
 #include "configs/autogen/str_authid.hpp"
+#include <algorithm>
+#include <sstream>
 #include <fstream>
 
 namespace
@@ -41,9 +43,19 @@ namespace
 RED_AUTO_TEST_CASE_WF(TestLoadDefaultIni, wf)
 {
     Inifile ini;
-    std::ofstream(wf.c_str()) <<
+    std::stringstream out;
+    out <<
         #include "configs/autogen/str_ini.hpp"
     ;
+
+    std::string contents = out.str();
+
+    // remove comments
+    auto end = std::remove_if(contents.begin(), contents.end(), [](char const& c){
+        return c == '#' && (&c)[1] != ' ' && (&c)[1] != '_';
+    });
+
+    std::ofstream(wf.c_str()).write(contents.data(), end - contents.begin());
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 }
 
