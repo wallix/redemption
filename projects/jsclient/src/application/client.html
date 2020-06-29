@@ -56,8 +56,8 @@
         <label for="bpp">bpp: <select name="bpp" id="bpp">
             <option value="8">8</option>
             <option value="15">15</option>
-            <option value="16">16</option>
-            <option value="24" selected="selected">24</option>
+            <option value="16" selected="selected">16</option>
+            <option value="24">24</option>
             <option value="32">32</option>
             </select></label>
         <input type="submit" value="New Connection">
@@ -151,6 +151,8 @@ function mouseButtonToFlag(evt)
     return 0x1000;
 }
 
+const gd = new RDPGraphics(ecanvas, Module);
+
 function run()
 {
     const socket = new WebSocket(ws_input.value, "RDP");
@@ -202,7 +204,7 @@ function run()
         evt.preventDefault();
         // console.log(evt.offsetX, evt.offsetY, evt.button)
         // console.log(flag, evt.button)
-        rdpclient.writeMouseEvent(flag | mouseButtonToFlag(evt), evt.offsetX, evt.offsetY);
+        rdpclient.writeMouseEvent(evt.offsetX, evt.offsetY, flag | mouseButtonToFlag(evt));
         sendData();
     }
 
@@ -214,14 +216,14 @@ function run()
     const onMouseMove = (evt) => {
         evt.preventDefault();
         // console.log(evt.offsetX, evt.offsetY, evt.button)
-        rdpclient.writeMouseEvent(0x0800, evt.offsetX, evt.offsetY);
+        rdpclient.writeMouseEvent(evt.offsetX, evt.offsetY, 0x0800);
     };
     const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
     const onMouseUp = (evt) => { onMouseEvent(0, evt); };
     const onMouseWheel = (evt) => {
         evt.preventDefault();
         // 0x200 | delta
-        rdpclient.writeMouseEvent((evt.deltaY < 0) ? 0x287 : 0x388, 0, 0);
+        rdpclient.writeMouseEvent(0, 0, (evt.deltaY < 0) ? 0x287 : 0x388);
     };
 
     const docEvents = {
@@ -302,7 +304,6 @@ function run()
         ecanvas.onclick = canvasEnableFocus;
     }
 
-    const gd = new RDPGraphics(ecanvas, Module);
     const channels = [];
 
     const addChannel = function(channel) {
@@ -368,7 +369,7 @@ function run()
             console.log('RdpClient close');
             disconnectButton.firstElementChild.disabled = true;
             rdpclient.delete();
-            gd.delete();
+            // gd.delete();
             for (const channel of channels) {
                 channel.delete();
             }
@@ -395,8 +396,7 @@ login.onsubmit = (e) => {
     socketState = run();
 };
 
-canvas.fillStyle = 'black';
-canvas.fillRect(0,0,800,600);
+gd.drawRect(0, 0, gd.width, gd.height, 0);
 
 const url = new URL(window.location.href)
 const inputs = {
@@ -405,12 +405,20 @@ const inputs = {
     ws: ws_input,
     width: width_input,
     height: height_input,
-    bpp: bpp_input,
 };
 for (const k in inputs) {
     const x = url.searchParams.get(k);
     if (x) {
-        inputs[k].value = x
+        inputs[k].value = x;
+    }
+}
+const selects = {
+    bpp: bpp_input,
+};
+for (const k in selects) {
+    const x = parseInt(url.searchParams.get(k));
+    if (x >= 0) {
+        selects[k].selectedIndex = x;
     }
 }
 

@@ -11,8 +11,8 @@ const rgbToCss = function(color) {
 class RDPGraphics
 {
     constructor(canvasElement, module) {
-        // this.width = canvasElement.width;
-        // this.height = canvasElement.height;
+        this.width = canvasElement.width;
+        this.height = canvasElement.height;
 
         this._module = module;
         this._buffer = module.HEAPU8.buffer;

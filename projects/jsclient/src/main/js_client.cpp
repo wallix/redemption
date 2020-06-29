@@ -228,7 +228,7 @@ struct RdpClient
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
-    void write_mouse_event(int device_flags, int x, int y)
+    void write_mouse_event(int x, int y, int device_flags)
     {
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
