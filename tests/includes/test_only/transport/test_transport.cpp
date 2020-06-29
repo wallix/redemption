@@ -23,9 +23,8 @@
 #include <new>
 #include <memory>
 #include <stdexcept>
-#include <sstream>
+#include <charconv>
 
-#include <sstream>
 #include <string>
 
 #include <algorithm>
@@ -33,6 +32,7 @@
 
 #include "transport/transport.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -356,9 +356,16 @@ MemoryTransport::~MemoryTransport()
 bool MemoryTransport::disconnect()
 {
     if (this->remaining_is_error && this->in_stream.get_offset() != this->out_stream.get_offset()) {
-        std::ostringstream out;
-        out << "~MemoryTransport() remaining=" << this->in_stream.get_offset() << " len=" << this->out_stream.get_offset();
-        throw test_transport::RemainingError{out.str()};
+        char buf1[64];
+        char buf2[64];
+        using std::begin;
+        using std::end;
+        auto r1 = std::to_chars(begin(buf1), end(buf1), this->in_stream.get_offset());
+        auto r2 = std::to_chars(begin(buf1), end(buf1), this->out_stream.get_offset());
+        throw test_transport::RemainingError{str_concat(
+            "~MemoryTransport() remaining=", chars_view{buf1, r1.ptr},
+            " len=", chars_view{buf2, r2.ptr}
+        )};
     }
     return true;
 }

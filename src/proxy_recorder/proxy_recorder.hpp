@@ -46,7 +46,6 @@
 
 #include <vector>
 #include <chrono>
-#include <iostream>
 
 #include <cerrno>
 #include <cstring>

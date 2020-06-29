@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "utils/sugar/array.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include "cxx/cxx.hpp"
 
@@ -88,7 +89,7 @@ struct array_view
 
     constexpr array_view(const_pointer first, const_pointer last) noexcept
     : p(first)
-    , sz(last - first)
+    , sz(checked_int{last - first})
     {}
 
     template<class U, class = typename detail::filter_dangerous_implicit_array_view<U, decltype(

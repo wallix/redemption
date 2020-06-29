@@ -23,7 +23,6 @@
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
-#include <iostream>
 
 #include "test_only/transport/test_transport.hpp"
 

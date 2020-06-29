@@ -51,8 +51,6 @@
 #include "system/tls_check_certificate.hpp"
 
 #include <cstring>
-#include <iomanip>
-#include <sstream>
 
 
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(

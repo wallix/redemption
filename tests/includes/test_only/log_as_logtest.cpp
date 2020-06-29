@@ -34,9 +34,6 @@ REDEMPTION_DIAGNOSTIC_POP
 # include "red_emscripten/em_asm.hpp"
 #endif
 
-#include <iostream>
-#include <sstream>
-
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>

@@ -25,6 +25,8 @@
 #include "utils/select.hpp"
 #include "system/scoped_ssl_init.hpp"
 
+#include <iostream>
+
 
 using PacketType = RecorderFile::PacketType;
 

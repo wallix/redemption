@@ -23,7 +23,6 @@
 #include "test_only/check_sig.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "test_only/test_framework/working_directory.hpp"
-#include <iostream>
 
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
@@ -85,7 +84,7 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cy()));
 
 //    dump_png24("labelgrid-0.png", drawable, true);
-    
+
     RED_CHECK_SIG(drawable,
         "\x86\xc2\x96\xbc\x1e\x22\xf4\x9d\x6f\xa3\xf5\x76\x26\xd9\x00\x95\x0b\xa2\xee\x38");
 
