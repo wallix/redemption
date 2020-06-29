@@ -37,9 +37,7 @@
 class AsynchronousTask
 {
 public:
-    TimeBase & time_base;
-    EventContainer & events;
-    AsynchronousTask(TimeBase & time_base, EventContainer & events): time_base(time_base), events(events) {}
+    AsynchronousTask() = default;
     virtual ~AsynchronousTask() = default;
     virtual Event configure_event(timeval now, void * lifespan) = 0;
 };
@@ -95,11 +93,8 @@ public:
                        uint32_t number_of_bytes_to_read,
                        off64_t Offset,
                        VirtualChannelDataSender & to_server_sender,
-                       TimeBase & time_base,
-                       EventContainer & events,
                        RDPVerbose verbose)
-    : AsynchronousTask(time_base, events)
-    , file_descriptor(file_descriptor)
+    : file_descriptor(file_descriptor)
     , DeviceId(DeviceId)
     , CompletionId(CompletionId)
     , total_number_of_bytes_to_read(number_of_bytes_to_read)
@@ -212,11 +207,8 @@ public:
                                  const uint8_t * data,
                                  size_t data_length,
                                  VirtualChannelDataSender & to_server_sender,
-                                 TimeBase & time_base,
-                                 EventContainer & events,
                                  RDPVerbose verbose)
-    : AsynchronousTask(time_base, events)
-    , flags(flags)
+    : flags(flags)
     , data(std::make_unique<uint8_t[]>(data_length))
     , data_length(data_length)
     , remaining_number_of_bytes_to_send(data_length)
@@ -293,11 +285,8 @@ public:
         uint32_t flags,
         bytes_view chunked_data,
         VirtualChannelDataSender & to_server_sender,
-        TimeBase & time_base,
-        EventContainer & events,
         RDPVerbose verbose)
-    : AsynchronousTask(time_base, events)
-    , total_length(total_length)
+    : total_length(total_length)
     , flags(flags)
     , chunked_data(std::make_unique<uint8_t[]>(chunked_data.size()))
     , chunked_data_length(chunked_data.size())

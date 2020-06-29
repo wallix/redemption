@@ -71,8 +71,6 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     RdpdrDriveReadTask rdpdr_drive_read_task(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
         test_to_server_sender,
-        time_base,
-        events,
         to_verbose_flags(0));
 
     std::deque<AsynchronousTask*> tasks;
@@ -121,8 +119,6 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
         contents.size(), test_to_server_sender,
-        time_base,
-        events,
         to_verbose_flags(0));
 
     std::deque<AsynchronousTask*> tasks;

@@ -745,7 +745,6 @@ private:
                     std::make_unique<RdpdrSendClientMessageTask>(
                         total_length, flags, chunk_data,
                         *this->to_server_synchronous_sender,
-                        this->time_base, this->events,
                         this->verbose
                     )
                 );
