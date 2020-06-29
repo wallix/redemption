@@ -72,7 +72,13 @@ private:
     BrowserGraphic gd;
     RDPVerbose verbose;
     CHANNELS::ChannelDefArray cl;
-    std::vector<ChannelReceiver> channel_receivers;
+
+    struct Channel
+    {
+        void* ctx;
+        ChannelReceiver::receiver_func_t do_receive;
+    };
+    std::vector<Channel> channels;
 };
 
 }

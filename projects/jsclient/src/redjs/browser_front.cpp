@@ -42,8 +42,9 @@ PrimaryDrawingOrdersSupport BrowserFront::get_supported_orders() const
 
 void BrowserFront::add_channel_receiver(ChannelReceiver channel_receiver)
 {
-    this->cl.push_back(CHANNELS::ChannelDef(channel_receiver.channel_name, 0, 0));
-    this->channel_receivers.emplace_back(std::move(channel_receiver));
+    int channid = int(this->cl.size()) + 1;
+    this->cl.push_back(CHANNELS::ChannelDef(channel_receiver.channel_name, 0, channid));
+    this->channels.emplace_back(Channel{channel_receiver.ctx, channel_receiver.do_receive});
 }
 
 bool BrowserFront::can_be_start_capture()
@@ -60,7 +61,6 @@ bool BrowserFront::is_capture_in_progress() const
 {
     return false;
 }
-
 
 BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 {
@@ -79,16 +79,11 @@ void BrowserFront::send_to_channel(
     std::size_t total_data_len, int channel_flags)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
-        LOG_INFO, "BrowserFront::send_to_channel");
+        LOG_INFO, "BrowserFront::send_to_channel('%s', ...)", channel_def.name.c_str());
 
-    for (ChannelReceiver& receiver : this->channel_receivers)
-    {
-        if (receiver.channel_name == channel_def.name)
-        {
-            receiver(chunk_data, total_data_len, channel_flags);
-            break;
-        }
-    }
+    size_t idx = checked_int(&channel_def - &this->cl[0]);
+    Channel& chann = this->channels[idx];
+    chann.do_receive(chann.ctx, chunk_data, total_data_len, channel_flags);
 }
 
 void BrowserFront::update_pointer_position(uint16_t x, uint16_t y)

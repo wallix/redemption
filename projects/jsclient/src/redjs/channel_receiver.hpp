@@ -21,11 +21,8 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "core/channel_names.hpp"
-
-#include <functional>
 
 
 namespace redjs
