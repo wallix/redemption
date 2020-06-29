@@ -77,7 +77,6 @@
 #include "core/RDPEA/audio_output.hpp"
 
 #include "core/session_reactor.hpp"
-#include "mod/rdp/channels/sespro_channel.hpp"
 #include "core/log_id.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -141,7 +140,7 @@ struct FileValidatorService;
 
 #include <cstdlib>
 #include <deque>
-#include <bitset>
+
 
 class SesmanInterface;
 
@@ -188,12 +187,6 @@ public:
     TopFdContainer& fd_events_;
     TimerContainer& timer_events_;
     EventContainer& events;
-};
-#else
-struct AsynchronousTaskContainer
-{
-    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer&, EventContainer & events)
-    {}
 };
 #endif
 
@@ -415,7 +408,6 @@ private:
     const RDPVerbose verbose;
 
     TimeBase & time_base;
-    GdProvider & gd_provider;
     TimerContainer& timer_events_;
     EventContainer & events;
     FileValidatorService * file_validator_service;
@@ -427,8 +419,7 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, GdProvider & gd_provider,
-        TimerContainer& timer_events_, EventContainer & events,
+        TimeBase & time_base, TimerContainer& timer_events_, EventContainer & events,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -458,7 +449,6 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , time_base(time_base)
-    , gd_provider(gd_provider)
     , timer_events_(timer_events_)
     , events(events)
     , file_validator_service(file_validator_service)
@@ -839,7 +829,6 @@ public:
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
         sp_vc_params.show_maximized = !this->remote_app.enable_remote_program;
 
-#ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
             this->timer_events_,
@@ -854,8 +843,6 @@ public:
             sp_vc_params,
             this->callbacks
             );
-#endif
-
     }
 
 private:
@@ -909,7 +896,6 @@ private:
                 remote_programs_virtual_channel_params);
     }
 
-public:
     // TODO: make that private again when callers will be moved to channels
     static void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = front.get_channel_list().get_by_name(mod_channel_name);
@@ -918,6 +904,7 @@ public:
         }
     }
 
+public:
     void process_cliprdr_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
         ServerTransportContext & stc,
@@ -1034,9 +1021,7 @@ public:
     void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         SesmanInterface & sesman
     ) {
-#ifndef __EMSCRIPTEN__
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
-#endif
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
         channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
@@ -1556,14 +1541,12 @@ public:
 
         channel.process_client_message(length, flags, chunk.remaining_bytes());
     }
-#endif
 
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
         bytes_view chunk, size_t length, uint32_t flags,
         ServerTransportContext & stc)
     {
-#ifndef __EMSCRIPTEN__
         if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
             InStream clone(chunk);
             rdpsnd::streamLogClient(clone, flags);
@@ -1573,7 +1556,6 @@ public:
             LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk.size());
             channel.log(-1u);
         }
-#endif
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -1616,9 +1598,7 @@ public:
             while (remaining_data_length);
         }
 
-#ifndef __EMSCRIPTEN__
         LOG_IF(bool(this->verbose & RDPVerbose::channels), LOG_INFO, "mod_rdp::send_to_channel done");
-#endif
     }
 
     void send_to_mod_channel(
@@ -1637,7 +1617,6 @@ public:
             return;
         }
 
-#ifndef __EMSCRIPTEN__
         if (bool(this->verbose & RDPVerbose::channels)) {
             mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
         }
@@ -1664,18 +1643,8 @@ public:
                 IF_ENABLE_METRICS(client_other_channel_data(length));
                 this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
         }
-#else
-        this->send_to_channel(*mod_channel, {chunk.get_data(), chunk.get_capacity()}, length, flags, stc);
-        (void)front;
-        (void)asynchronous_tasks;
-        (void)client_general_caps;
-        (void)vars;
-        (void)client_rail_caps;
-        (void)client_name;
-#endif
     }
 
-#ifndef __EMSCRIPTEN__
     // This function can be called several times. If a remaining session_probe is running on the
     // target serveur, the session probe channels is already there before the session probe launcher is created
     void do_enable_session_probe(
@@ -1844,6 +1813,7 @@ public:
 
 class mod_rdp : public mod_api, public rdp_api
 {
+#ifndef __EMSCRIPTEN__
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
         mod_rdp & mod;
         SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {}
@@ -1854,6 +1824,7 @@ class mod_rdp : public mod_api, public rdp_api
         virtual void disable_graphics_update() override { mod.disable_graphics_update(); }
         virtual void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
     } spvc_callbacks;
+#endif
 
     mod_rdp_channels channels;
 
@@ -1946,9 +1917,10 @@ class mod_rdp : public mod_api, public rdp_api
     GdProvider & gd_provider;
     TopFdPtr fd_event;
     TopFdContainer & fd_events_;
+#ifndef __EMSCRIPTEN__
     TimerContainer& timer_events_;
-    EventContainer & events;
     SesmanInterface & sesman;
+#endif
 
 #ifndef __EMSCRIPTEN__
     TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
@@ -1958,7 +1930,9 @@ class mod_rdp : public mod_api, public rdp_api
 
     const bool bogus_refresh_rect;
 
+#ifndef __EMSCRIPTEN__
     AsynchronousTaskContainer asynchronous_tasks;
+#endif
 
     Translation::language_t lang;
 
@@ -2005,9 +1979,7 @@ class mod_rdp : public mod_api, public rdp_api
 
 #ifndef __EMSCRIPTEN__
     bool const session_probe_start_launch_timeout_timer_only_after_logon;
-#endif
 
-#ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
     FileValidatorService * file_validator_service;
 #endif
@@ -2063,13 +2035,17 @@ public:
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpFactory& mod_rdp_factory
     )
+#ifndef __EMSCRIPTEN__
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, gd_provider, timer_events_, events, file_validator_service,
+            report_message, gen, metrics, time_base, timer_events_, events, file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
         )
+#else
+        : channels(channels_authorizations)
+#endif
         , redir_info(redir_info)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
@@ -2117,11 +2093,14 @@ public:
         , time_base(time_base)
         , gd_provider(gd_provider)
         , fd_events_(fd_events_)
+        #ifndef __EMSCRIPTEN__
         , timer_events_(timer_events_)
-        , events(events)
         , sesman(sesman)
+        #endif
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
+        #ifndef __EMSCRIPTEN__
         , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_, events)
+        #endif
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -2147,6 +2126,13 @@ public:
         , file_validator_service(file_validator_service)
         #endif
     {
+        #ifdef __EMSCRIPTEN__
+        (void)timer_events_;
+        (void)events;
+        (void)mod_rdp_factory;
+        (void)sesman;
+        #endif
+
         if (this->enable_remotefx){
             LOG(LOG_INFO, "RemoteFX enabled on proxy");
         }
@@ -2179,9 +2165,10 @@ public:
         gd.draw(cmd, r, gdi::ColorCtx::depth24());
         gd.end_update();
 
-        const std::chrono::seconds open_session_timeout = (mod_rdp_params.open_session_timeout!=0s)
-                                                        ?  mod_rdp_params.open_session_timeout
-                                                        :  15s;
+        const std::chrono::seconds open_session_timeout
+            = (mod_rdp_params.open_session_timeout != 0s)
+                ?  mod_rdp_params.open_session_timeout
+                :  15s;
 
         auto check_error = [this](auto /*ctx*/, jln::ExitR er){
             LOG(LOG_INFO, "**** rdp::fd_events_.on_error()");
@@ -2297,7 +2284,7 @@ public:
                 .replace_action([this](auto ctx){
                     auto & gd = this->gd_provider.get_graphics();
                     if (this->buf.remaining()){
-                        this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                        this->draw_event(this->gd_provider.get_graphics());
                     }
                     this->private_rdp_negociation.reset();
                     #ifndef __EMSCRIPTEN__
@@ -2306,7 +2293,7 @@ public:
                     }
                     #endif
                     this->buf.load_data(this->trans);
-                    this->draw_event(gd, this->sesman);
+                    this->draw_event(gd);
                     return ctx.replace_action([this](auto ctx){
                         auto & gd = this->gd_provider.get_graphics();
                         #ifndef __EMSCRIPTEN__
@@ -2315,7 +2302,7 @@ public:
                         }
                         #endif
                         this->buf.load_data(this->trans);
-                        this->draw_event(gd, this->sesman);
+                        this->draw_event(gd);
                         return ctx.need_more_data();
                     });
                 });
@@ -2396,7 +2383,7 @@ public:
                 this->negociation_result =
                     this->private_rdp_negociation->rdp_negociation.get_result();
                 if (this->buf.remaining()) {
-                    this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                    this->draw_event(this->gd_provider.get_graphics());
                 }
             }
         }
@@ -2496,12 +2483,22 @@ public:
 
         ServerTransportContext stc{
             this->trans, this->encrypt, this->negociation_result};
+#ifndef __EMSCRIPTEN__
         this->channels.send_to_mod_channel(
             front_channel_name, chunk, length, flags,
             this->front, stc, this->asynchronous_tasks,
             this->client_general_caps, this->vars,
             this->client_rail_caps, this->client_name
         );
+#else
+        if (CHANNELS::ChannelDef const * mod_channel
+            = this->channels.mod_channel_list.get_by_name(front_channel_name)
+        ) {
+            bytes_view data {chunk.get_data(), chunk.get_capacity()};
+            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+            virtual_channel_pdu.send_to_server(stc, mod_channel->chanid, length, flags, data);
+        }
+#endif
     }
 
     // Method used by session to transmit sesman answer for auth_channel
@@ -2926,7 +2923,7 @@ public:
         }
     }
 
-    void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream, SesmanInterface & sesman)
+    void connected_slow_path(gdi::GraphicApi & drawable, InStream & stream)
     {
         // read tpktHeader (4 bytes = 3 0 len)
         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
@@ -2985,7 +2982,6 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
 #ifndef __EMSCRIPTEN__
-
             // If channel name is our virtual channel, then don't send data to front
             if ((mod_channel.name == this->channels.auth_channel) && this->channels.enable_auth_channel) {
                 ServerTransportContext stc{
@@ -2999,7 +2995,6 @@ public:
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
 
-#ifndef __EMSCRIPTEN__
                 if (!this->channels.session_probe_virtual_channel) {
                     this->channels.create_session_probe_virtual_channel(
                             this->front, stc,
@@ -3011,7 +3006,6 @@ public:
                             this->client_general_caps,
                             this->client_name);
                 }
-#endif
                 this->channels.process_session_probe_event(sec.payload, length, flags, chunk_size, sesman);
             }
             // Clipboard is a Clipboard PDU
@@ -3460,7 +3454,7 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
+    void draw_event(gdi::GraphicApi & gd)
     {
         while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
@@ -3479,7 +3473,7 @@ public:
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
                 }
                 else {
-                    this->connected_slow_path(drawable, x224_data, sesman);
+                    this->connected_slow_path(drawable, x224_data);
                 }
             }
             catch(Error const & e){

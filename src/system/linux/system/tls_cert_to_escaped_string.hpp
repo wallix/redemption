@@ -29,7 +29,6 @@
 
 namespace
 {
-#ifndef __EMSCRIPTEN__
     bool cert_to_escaped_string(X509& cert, std::string& output)
     {
         // TODO unique_ptr<BIO, BIO_delete>
@@ -54,7 +53,4 @@ namespace
 
         return true;
     }
-#endif
 } // anonymous namespace
-
-REDEMPTION_DIAGNOSTIC_POP
