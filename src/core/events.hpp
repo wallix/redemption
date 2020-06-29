@@ -175,10 +175,21 @@ inline timeval next_timeout(EventContainer & events)
 
 inline void execute_events(EventContainer & events, const timeval tv, const std::function<bool(int fd)> & fn)
 {
-    LOG(LOG_INFO, "=== Execute Events Loop ===");
+    if (events.size() > 0){
+        LOG(LOG_INFO, "=== Execute Events Loop ===");
+    }
 
     for (auto & event: events){
-        LOG(LOG_INFO, "Examining (%d): %s", event.id, event.name.c_str());
+        LOG(LOG_INFO, "now=%d:%d Examining (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d %s%s%s",
+            int(tv.tv_sec%1000),int(tv.tv_usec),
+            event.id, event.name.c_str(),
+            int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec),
+            event.alarm.fd,
+            int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec),
+            event.alarm.active?"active ":"",
+            event.teardown?"teardown ":"",
+            event.garbage?"garbage":""
+            );
 
         if (not (event.garbage or event.teardown)) {
             if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
