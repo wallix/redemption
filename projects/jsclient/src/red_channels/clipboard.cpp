@@ -639,3 +639,71 @@ bytes_view ClipboardChannel::ResponseBuffer::as_bytes() const
 }
 
 } // namespace redjs::channel::clipboard
+
+
+#include "red_emscripten/bind.hpp"
+
+EMSCRIPTEN_BINDINGS(channel_clipboard)
+{
+    namespace clipboard = redjs::channels::clipboard;
+
+    redjs::class_<clipboard::ClipboardChannel>("ClipboardChannel")
+        .constructor([](uintptr_t icb, emscripten::val&& callbacks, bool verbose) {
+            auto* pcb = redjs::from_memory_offset<Callback*>(icb);
+            return new clipboard::ClipboardChannel(*pcb, std::move(callbacks), verbose);
+        })
+        .function_ptr("getChannelReceiver", [](clipboard::ClipboardChannel& clip) {
+            return redjs::to_memory_offset(clip.get_channel_receiver());
+        })
+        .function_ptr("sendRequestFormat", [](clipboard::ClipboardChannel& clip,
+            uint32_t format_id, int custom_format_id)
+        {
+            clip.send_request_format(format_id, clipboard::CustomFormat(custom_format_id));
+        })
+        .function_ptr("sendFileContentsRequest", [](clipboard::ClipboardChannel& clip,
+            uint32_t request_type, uint32_t stream_id, uint32_t lindex,
+            uint32_t pos_low, uint32_t pos_high, uint32_t max_bytes_to_read,
+            bool has_lock_id, uint32_t lock_id)
+        {
+            clip.send_file_contents_request(request_type,
+                stream_id, lindex, pos_low, pos_high, max_bytes_to_read, has_lock_id, lock_id);
+        })
+        .function_ptr("sendHeader", [](clipboard::ClipboardChannel& clip,
+            uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags)
+        {
+            clip.send_header(type, flags, total_data_len, channel_flags);
+        })
+        .function_ptr("sendData", [](clipboard::ClipboardChannel& clip,
+            std::string data, uint32_t total_data_len, uint32_t channel_flags)
+        {
+            clip.send_data(data, total_data_len, channel_flags);
+        })
+        .function_ptr("sendRawData", [](clipboard::ClipboardChannel& clip,
+            std::ptrdiff_t idata, std::size_t idata_len,
+            uint32_t total_data_len, uint32_t channel_flags)
+        {
+            auto* ptr = redjs::from_memory_offset<uint8_t const*>(idata);
+            clip.send_data({ptr, idata_len}, total_data_len, channel_flags);
+        })
+        .function_ptr("sendDataWithHeader", [](clipboard::ClipboardChannel& clip,
+            uint16_t type, std::ptrdiff_t idata, std::size_t idata_len)
+        {
+            auto* ptr = redjs::from_memory_offset<uint8_t const*>(idata);
+            clip.send_header(type, 1/*Ok*/, idata_len, 0);
+            clip.send_data({ptr, idata_len}, 0, 2/*last*/);
+        })
+        .function_ptr("addFormat", [](clipboard::ClipboardChannel& clip,
+            std::ptrdiff_t idata, std::size_t idata_len,
+            uint32_t format_id, int charset, std::string name)
+        {
+            auto* ptr = redjs::from_memory_offset<uint8_t*>(idata);
+            return clip.add_format({ptr, idata_len}, format_id, clipboard::Charset(charset), name);
+        })
+        .function_ptr("sendFormat", [](clipboard::ClipboardChannel& clip,
+            uint32_t format_id, int charset, std::string name)
+        {
+            clip.send_format(format_id, clipboard::Charset(charset), name);
+        })
+        // .function("receive", &clipboard::ClipboardChannel::receive)
+    ;
+}
