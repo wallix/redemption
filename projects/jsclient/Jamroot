@@ -287,6 +287,7 @@ rule test-run-js ( name : src : objs + : deps * )
 {
     objjs $(name).bc : $(src) :
         <include>$(REDEMPTION_TEST_PATH)/includes
+        <include>tests/includes
         <define>RED_TEST_MODULE=$(name)
         <define>BOOST_AUTO_TEST_MAIN
         <define>BOOST_TEST_DYN_LINK

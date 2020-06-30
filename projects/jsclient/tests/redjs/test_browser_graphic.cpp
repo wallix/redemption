@@ -19,26 +19,9 @@ Author(s): Jonathan Poelen
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/js_auto_test_case.hpp"
 
 #include "redjs/browser_graphic.hpp"
-#include "red_emscripten/em_asm.hpp"
-#include <emscripten/bind.h>
-
-#define RED_JS_AUTO_TEST_CASE(name, func_params, ...)        \
-    void test_ ## name ## _impl func_params;                 \
-                                                             \
-    EMSCRIPTEN_BINDINGS(test_ ## name ## _binding)           \
-    {                                                        \
-        emscripten::function(#name, test_ ## name ## _impl); \
-    }                                                        \
-                                                             \
-    RED_AUTO_TEST_CASE(name)                                 \
-    {                                                        \
-        RED_EM_ASM({ Module. name (__VA_ARGS__); });         \
-    }                                                        \
-                                                             \
-    void test_ ## name ## _impl func_params
-
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
