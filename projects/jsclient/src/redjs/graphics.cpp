@@ -22,7 +22,6 @@ Author(s): Jonathan Poelen
 
 #include "redjs/image_data_from_pointer.hpp"
 
-#include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
 #include "red_emscripten/constants.hpp"
 
@@ -750,6 +749,7 @@ void Graphics::update_pointer_position(uint16_t x, uint16_t y)
 }
 
 } // namespace redjs
+
 
 RED_JS_BINDING_CONSTANTS(
     GraphicOrders,

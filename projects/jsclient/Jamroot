@@ -216,7 +216,9 @@ constant TEST_DEPENDENCIES :
 
 objjs log_test.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/log_as_logtest.cpp
     : <include>$(REDEMPTION_TEST_PATH)/includes ;
-alias log_print.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
+objjs _log_print.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
+objjs _log_level.bc : src/redjs/log_level.cpp ;
+alias log_print.bc : _log_print.bc _log_level.bc ;
 
 objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test

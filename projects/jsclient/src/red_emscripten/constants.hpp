@@ -21,6 +21,8 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include <boost/preprocessor/seq/for_each.hpp>
+#include <emscripten/emscripten.h>
+
 
 // usage: RED_JS_BINDING_CONSTANTS(ScopeName, ((name1, value1))((name2, value2)))
 #define RED_JS_BINDING_CONSTANTS(name, S)             \

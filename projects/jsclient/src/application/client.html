@@ -96,11 +96,12 @@ WallixModule({
 }).then((Module) => {
 
 // optional
+console.log(Module.LogLevel)
 Module.log = function(priority, msg) {
-    const logger = (priority === 6) ? console.log
-                 : (priority === 4) ? console.warn
-                 : (priority === 3) ? console.error
-                 : (priority === 7) ? console.debug
+    const logger = (priority === Module.LogLevel.Info) ? console.log
+                 : (priority === Module.LogLevel.Warning) ? console.warn
+                 : (priority === Module.LogLevel.Error) ? console.error
+                 : (priority === Module.LogLevel.Debug) ? console.debug
                  : console.log;
     logger(msg);
 };
