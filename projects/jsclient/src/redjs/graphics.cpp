@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
+#include "red_emscripten/constants.hpp"
 
 #include "gdi/screen_info.hpp"
 #include "core/RDP/bitmapupdate.hpp"
@@ -749,3 +750,34 @@ void Graphics::update_pointer_position(uint16_t x, uint16_t y)
 }
 
 } // namespace redjs
+
+RED_JS_BINDING_CONSTANTS(
+    GraphicOrders,
+
+    (("OpaqueRect", PrimaryDrawingOrdersSupport(TS_NEG_OPAQUERECT_INDEX).as_uint()))
+    (("MultiOpaqueRect", PrimaryDrawingOrdersSupport(TS_NEG_MULTIOPAQUERECT_INDEX).as_uint()))
+
+    (("DstBlt", PrimaryDrawingOrdersSupport(TS_NEG_DSTBLT_INDEX).as_uint()))
+    (("MultiDstBlt", PrimaryDrawingOrdersSupport(TS_NEG_MULTIDSTBLT_INDEX).as_uint()))
+
+    (("PatBlt", PrimaryDrawingOrdersSupport(TS_NEG_PATBLT_INDEX).as_uint()))
+    (("MultiPatBlt", PrimaryDrawingOrdersSupport(TS_NEG_MULTIPATBLT_INDEX).as_uint()))
+
+    (("ScrBlt", PrimaryDrawingOrdersSupport(TS_NEG_SCRBLT_INDEX).as_uint()))
+    (("MultiScrBlt", PrimaryDrawingOrdersSupport(TS_NEG_MULTISCRBLT_INDEX).as_uint()))
+
+    (("MemBlt", PrimaryDrawingOrdersSupport(TS_NEG_MEMBLT_INDEX).as_uint()))
+    (("Mem3Blt", PrimaryDrawingOrdersSupport(TS_NEG_MEM3BLT_INDEX).as_uint()))
+
+    (("LineTo", PrimaryDrawingOrdersSupport(TS_NEG_LINETO_INDEX).as_uint()))
+    (("Polyline", PrimaryDrawingOrdersSupport(TS_NEG_POLYLINE_INDEX).as_uint()))
+
+    (("PolygonSC", PrimaryDrawingOrdersSupport(TS_NEG_POLYGON_SC_INDEX).as_uint()))
+    (("PolygonCB", PrimaryDrawingOrdersSupport(TS_NEG_POLYGON_CB_INDEX).as_uint()))
+
+    (("EllipseSC", PrimaryDrawingOrdersSupport(TS_NEG_ELLIPSE_SC_INDEX).as_uint()))
+    (("EllipseCB", PrimaryDrawingOrdersSupport(TS_NEG_ELLIPSE_CB_INDEX).as_uint()))
+
+    (("FastGlyph", PrimaryDrawingOrdersSupport(TS_NEG_FAST_GLYPH_INDEX).as_uint()))
+    (("Glyph", PrimaryDrawingOrdersSupport(TS_NEG_GLYPH_INDEX).as_uint()))
+);

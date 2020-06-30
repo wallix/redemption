@@ -244,7 +244,7 @@ struct RdpClient
     }
 };
 
-// Binding code
+
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")

@@ -35,7 +35,7 @@ class RDPGraphics
     }
 
     delete() {
-        console.log('RDPGraphics: free memory')
+        // console.log('RDPGraphics: free memory')
         this._module._free(this._imgBufferIndex);
     }
 
@@ -47,7 +47,7 @@ class RDPGraphics
     }
 
     resizeCanvas(w, h, bpp) {
-        console.log('RDPGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
+        // console.log('RDPGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
 
         this.width = w;
         this.height = h;

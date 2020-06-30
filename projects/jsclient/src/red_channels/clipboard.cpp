@@ -512,7 +512,6 @@ void ClipboardChannel::process_format_data_response(
             this->requested_format_id = 0;
         }
     }
-
 }
 
 void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t channel_flags, uint32_t data_len)
