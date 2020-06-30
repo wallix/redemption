@@ -51,6 +51,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/rdp_pointer.hpp"
 #include "utils/bitmap.hpp"
 
+#include <bitset>
+
 
 RED_JS_AUTO_TEST_CASE(
     TestBrowserGraphics,
@@ -78,6 +80,26 @@ RED_JS_AUTO_TEST_CASE(
 
     redjs::BrowserGraphic gd(drawable, 0, 0);
     gd.resize_canvas(ScreenInfo{screen.cx, screen.cy, BitsPerPixel(24)});
+
+    using bitset = std::bitset<PrimaryDrawingOrdersSupport::max>;
+    RED_CHECK(bitset{(
+        PrimaryDrawingOrdersSupport{}
+        | TS_NEG_DSTBLT_INDEX
+        | TS_NEG_PATBLT_INDEX
+        | TS_NEG_SCRBLT_INDEX
+        | TS_NEG_MEMBLT_INDEX
+        | TS_NEG_MEM3BLT_INDEX
+        | TS_NEG_LINETO_INDEX
+        | TS_NEG_OPAQUERECT_INDEX
+        | TS_NEG_MULTIDSTBLT_INDEX
+        | TS_NEG_MULTIPATBLT_INDEX
+        | TS_NEG_MULTISCRBLT_INDEX
+        | TS_NEG_MULTIOPAQUERECT_INDEX
+        // | TS_NEG_POLYGON_SC_INDEX
+        // | TS_NEG_POLYGON_CB_INDEX
+        | TS_NEG_POLYLINE_INDEX
+        | TS_NEG_GLYPH_INDEX
+    ).as_uint()} == bitset{gd.get_supported_orders().as_uint()});
 
 
     // RDPOpaqueRect

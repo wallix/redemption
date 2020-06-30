@@ -30,6 +30,8 @@ Author(s): Jonathan Poelen
 #include "redjs/channel_receiver.hpp"
 #include "redjs/browser_graphic.hpp"
 
+#include "emscripten/val.h"
+
 #include <vector>
 #include <string_view>
 

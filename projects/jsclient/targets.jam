@@ -104,6 +104,27 @@ test-run-js tests/red_channels/test_js_channel :
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run-js tests/redjs/test_browser_front :
+  tests/redjs/test_browser_front.cpp
+:
+  src/redjs/browser_front.bc
+  src/redjs/browser_graphic.bc
+  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_data_from_pointer.bc
+  src/system/ssl_mod_exp.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/gdi/graphic_api.bc
+  src/mod/rdp/rdp_negociation_data.bc
+  src/utils/bitmap.bc
+  src/utils/bitmap_data_allocator.bc
+  src/utils/hexdump.bc
+  src/utils/rle.bc
+  src/utils/stacktrace.bc
+  src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run-js tests/redjs/test_browser_graphic :
   tests/redjs/test_browser_graphic.cpp
 :
@@ -197,6 +218,7 @@ objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 
 alias test_clipboard : tests/red_channels/test_clipboard ;
 alias test_js_channel : tests/red_channels/test_js_channel ;
+alias test_browser_front : tests/redjs/test_browser_front ;
 alias test_browser_graphic : tests/redjs/test_browser_graphic ;
 alias test_browser_transport : tests/redjs/test_browser_transport ;
 alias test_image_data_test_from_bitmap : tests/redjs/test_image_data_test_from_bitmap ;
@@ -207,6 +229,7 @@ alias tests/red_channels.norec :
   tests/red_channels/test_js_channel
 ;
 alias tests/redjs.norec :
+  tests/redjs/test_browser_front
   tests/redjs/test_browser_graphic
   tests/redjs/test_browser_transport
   tests/redjs/test_image_data_test_from_bitmap
