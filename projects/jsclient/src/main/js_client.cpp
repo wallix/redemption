@@ -267,7 +267,7 @@ EMSCRIPTEN_BINDINGS(client)
                 BitsPerPixel(get_number_or(config, "bpp", uint16_t(16)))
             };
 
-            auto disabled_orders = get_number_or(config, "disabledDrawingOrders", uint32_t(0));
+            auto disabled_orders = get_number_or(config, "disabledGraphicOrders", uint32_t(0));
 
             static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
             auto verbose_flags = get_number_or(config, "verbose", uint32_t(0));
