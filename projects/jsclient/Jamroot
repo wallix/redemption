@@ -179,7 +179,7 @@ using emscripten ;
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    <cxxflags>"-s NODERAWFS"
+    # <cxxflags>"-s NODERAWFS"
 ;
 
 objjs register_exception.bc :
