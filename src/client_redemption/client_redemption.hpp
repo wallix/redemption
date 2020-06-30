@@ -92,7 +92,6 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     TimeBase& time_base;
-    TopFdContainer& fd_events_;
     TimerContainer& timer_events_;
     EventContainer& events;
 
@@ -235,7 +234,6 @@ public:
 
 public:
     ClientRedemption(TimeBase& time_base,
-                     TopFdContainer& fd_events_,
                      TimerContainer& timer_events_,
                      EventContainer& events,
                      ClientRedemptionConfig & config)
@@ -243,7 +241,6 @@ public:
         , client_sck(-1)
         , _callback(this)
         , time_base(time_base)
-        , fd_events_(fd_events_)
         , timer_events_(timer_events_)
         , events(events)
         , close_box_extra_message_ref("Close")
@@ -301,12 +298,19 @@ public:
         fd_set   rfds;
         io_fd_zero(rfds);
 
-        auto g = [&rfds,&max](int fd, auto& /*top*/){
+        auto g = [&rfds,&max](int fd){
             assert(fd != -1);
             io_fd_set(fd, rfds);
             max = std::max(max, unsigned(fd));
         };
-        this->fd_events_.for_each(g);
+        for (auto & event: events){
+            if (event.garbage or event.teardown){
+                continue;
+            }
+            if (event.alarm.fd != -1){
+                g(event.alarm.fd);
+            }
+        }
 
         this->time_base.set_current_time(tvtime());
         // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
@@ -316,17 +320,21 @@ public:
                 tv = std::min(tv, tv2);
             }
         };
-        auto top_update_tv = [&](int /*fd*/, auto& top){
-            if (top.timer_data.is_enabled) {
-                update_tv(top.timer_data.tv);
-            }
-        };
         auto timer_update_tv = [&](auto& timer){
             update_tv(timer.tv);
         };
 
         this->timer_events_.for_each(timer_update_tv);
-        this->fd_events_.for_each(top_update_tv);
+        for (auto & event: events){
+            if (event.garbage or event.teardown){
+                continue;
+            }
+            if (event.alarm.fd != -1){
+                if (event.alarm.active) {
+                    update_tv(event.alarm.trigger_time);
+                }
+            }
+        }
 
         timeval timeoutastv = tv;
 
@@ -345,16 +353,10 @@ public:
         this->time_base.set_current_time(tvtime());
         auto const end_tv = this->time_base.get_current_time();
         this->timer_events_.exec_timer(end_tv);
-        this->fd_events_.exec_timeout(end_tv);
 
         if (num) {
             execute_events(this->events, end_tv, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
-            auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
-            this->fd_events_.exec_action(fd_isset);
-            // ExecuteEventsResult::Success;
-            return 0;
         }
-        // ExecuteEventsResult::Timeout;
         return 0;
     }
 
@@ -477,7 +479,6 @@ public:
                   , this->ini
                   , this->time_base
                   , this->gd_forwarder
-                  , this->fd_events_
                   , this->timer_events_
                   , this->events
                   , this->sesman
@@ -1040,13 +1041,8 @@ public:
             if (is_timeout) {
                 auto const end_tv = time_base.get_current_time();
                 this->timer_events_.exec_timer(end_tv);
-                this->fd_events_.exec_timeout(end_tv);
                 execute_events(this->events, end_tv, [](int fd){ return false; });
             } else {
-                auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
-                    return true /*this->socket->get_fd() == fd*/;
-                };
-                this->fd_events_.exec_action(is_mod_fd);
                 execute_events(this->events, time_base.get_current_time(), [](int fd){ return true; });
             }
         } catch (const Error & e) {

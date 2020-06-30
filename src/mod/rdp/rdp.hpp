@@ -187,7 +187,7 @@ public:
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
-            this->events.push_back(event);
+            this->events.push_back(std::move(event));
         }
     }
 
@@ -1975,8 +1975,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TopFdPtr fd_event;
-    TopFdContainer & fd_events_;
     TimerContainer& timer_events_;
     EventContainer & events;
     SesmanInterface & sesman;
@@ -2073,7 +2071,6 @@ public:
       , Inifile & ini
       , TimeBase& time_base
       , GdProvider & gd_provider
-      , TopFdContainer & fd_events_
       , TimerContainer& timer_events_
       , EventContainer & events
       , SesmanInterface & sesman
@@ -2147,7 +2144,6 @@ public:
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
         , gd_provider(gd_provider)
-        , fd_events_(fd_events_)
         , timer_events_(timer_events_)
         , events(events)
         , sesman(sesman)
@@ -2214,49 +2210,6 @@ public:
                                                         ?  mod_rdp_params.open_session_timeout
                                                         :  15s;
 
-        auto check_error = [this](auto /*ctx*/, jln::ExitR er){
-            LOG(LOG_INFO, "**** rdp::fd_events_.on_error()");
-
-            if (er.status != jln::ExitR::Exception) {
-                return er.to_result();
-            }
-
-            switch (er.error.id) {
-            case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-            case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
-            case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
-            case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
-            case ERR_NLA_AUTHENTICATION_FAILED:
-                return er.to_result();
-            default: break;
-            }
-
-            const char * statestr = "UNKNOWN_STATE";
-            const char * statedescr = "Unknown state.";
-            switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
-                #define CASE(e, trkey)                      \
-                    case RdpNegociation::State::e:          \
-                        statestr = "RDP_" #e;               \
-                        statedescr = TR(trkey, this->lang); \
-                    break
-                CASE(NEGO_INITIATE, trkeys::err_mod_rdp_nego);
-                CASE(NEGO, trkeys::err_mod_rdp_nego);
-                CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
-                CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
-                CASE(CHANNEL_JOIN_CONFIRM, trkeys::mod_rdp_channel_join_confirme);
-                CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
-                CASE(TERMINATED, trkeys::err_mod_rdp_nego);
-                #undef CASE
-            }
-
-            str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
-
-            LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
-                statestr, statedescr);
-            er.error = Error(ERR_SESSION_UNKNOWN_BACKEND);
-            return er.to_result();
-        };
-
         this->private_rdp_negociation = std::make_unique<PrivateRdpNegociation>(
             open_session_timeout, program, directory,
             this->channels.channels_authorizations, this->channels.mod_channel_list,
@@ -2307,39 +2260,40 @@ public:
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-        this->fd_event = this->fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
-        .on_exit(check_error)
-        .on_action([this](auto ctx){
-            bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+// ====================================================================
 
-            // RdpNego::recv_next_data set a new fd if tls
-            int const fd = this->trans.get_fd();
-            if (fd >= 0) {
-                ctx.set_fd(fd);
-            }
+        Event event("RDP Negociation", this);
+        event.alarm.set_timeout(this->time_base.get_current_time()
+            + this->private_rdp_negociation->open_session_timeout);
+        event.alarm.set_fd(this->trans.get_fd(), std::chrono::seconds{3600});
+        event.actions.on_action = [this](Event&event)
+        {
+            try {
+                LOG(LOG_INFO, "%s on_action", event.name);
+                bool const negotiation_finished = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
-            if (!is_finish) {
-                return ctx.need_more_data();
-            }
-            else {
-                this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-                return ctx.disable_timeout()
-                .replace_exit(jln::propagate_exit())
-                .replace_action([this](auto ctx){
-                    auto & gd = this->gd_provider.get_graphics();
-                    if (this->buf.remaining()){
-                        this->draw_event(this->gd_provider.get_graphics(), this->sesman);
-                    }
-                    this->private_rdp_negociation.reset();
-                    #ifndef __EMSCRIPTEN__
-                    if (this->channels.remote_programs_session_manager) {
-                        this->channels.remote_programs_session_manager->set_drawable(&gd);
-                    }
-                    #endif
-                    this->buf.load_data(this->trans);
-                    this->draw_event(gd, this->sesman);
-                    return ctx.replace_action([this](auto ctx){
+                // RdpNego::recv_next_data may reconnect and change fd if tls
+                int const fd = this->trans.get_fd();
+                if (fd >= 0) {
+                    event.alarm.set_fd(fd, event.alarm.grace_delay);
+                }
+
+                if (negotiation_finished) {
+                    this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+                    event.alarm.set_timeout(this->time_base.get_current_time()
+                        // trigger timeout after 1 hour inactivity
+                        + std::chrono::seconds{3600});
+                    // Timeout Does nothing anyway
+                    event.actions.on_timeout = [this](Event&/*event*/) {};
+                    // Replace event by Normal RDP fd event
+                    event.rename("First Incoming RDP PDU Event");
+                    event.actions.on_action = [this](Event&event)
+                    {
                         auto & gd = this->gd_provider.get_graphics();
+                        if (this->buf.remaining()){
+                            this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+                        }
+                        this->private_rdp_negociation.reset();
                         #ifndef __EMSCRIPTEN__
                         if (this->channels.remote_programs_session_manager) {
                             this->channels.remote_programs_session_manager->set_drawable(&gd);
@@ -2347,31 +2301,55 @@ public:
                         #endif
                         this->buf.load_data(this->trans);
                         this->draw_event(gd, this->sesman);
-                        return ctx.need_more_data();
-                    });
-                });
-            }
-        })
-        .set_timeout(this->private_rdp_negociation->open_session_timeout)
-        .on_timeout([this](auto ctx){
-            if (this->error_message) {
-                *this->error_message = "Logon timer expired!";
-            }
 
-            this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
-
-    #ifndef __EMSCRIPTEN__
-            if (this->channels.session_probe.enable_session_probe) {
-                this->enable_input_event();
-                this->enable_graphics_update();
+                        event.rename("Incoming RDP PDU Event");
+                        event.actions.on_action = [this](Event&/*event*/)
+                        {
+                            auto & gd = this->gd_provider.get_graphics();
+                            #ifndef __EMSCRIPTEN__
+                            if (this->channels.remote_programs_session_manager) {
+                                this->channels.remote_programs_session_manager->set_drawable(&gd);
+                            }
+                            #endif
+                            this->buf.load_data(this->trans);
+                            this->draw_event(gd, this->sesman);
+                        };
+                    };
+                }
             }
-    #endif
-            LOG(LOG_ERR,
-                "Logon timer expired on %s. The session will be disconnected.",
+            catch (Error & error) {
+                event.garbage = true;
+                this->throw_error(error);
+            };
+        };
+        event.actions.on_timeout = [this](Event&event)
+        {
+            try {
+                LOG(LOG_INFO, "%s on_timeout", event.name);
+                if (this->error_message) {
+                    *this->error_message = "Logon timer expired!";
+                }
+
+                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+        #ifndef __EMSCRIPTEN__
+                if (this->channels.session_probe.enable_session_probe) {
+                    this->enable_input_event();
+                    this->enable_graphics_update();
+                }
+        #endif
+                LOG(LOG_ERR,
+                    "Logon timer expired on %s. The session will be disconnected.",
                 this->logon_info.hostname());
-            return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
-        });
-
+                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
+            }
+            catch (Error & error) {
+                event.garbage = true;
+                this->throw_error(error);
+            };
+        };
+        this->events.push_back(event);
+// ====================================================================
+//        .on_exit(check_error)
     }   // mod_rdp
 
 
@@ -2404,6 +2382,60 @@ public:
             this->redir_info = RedirectionInfo();
         }
     }
+
+
+    void throw_error(Error & error)
+    {
+        LOG(LOG_INFO, "**** mod_rdp::fd event exception");
+        switch (error.id) {
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+        case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+        case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+        case ERR_NLA_AUTHENTICATION_FAILED:
+            throw error;
+        default: break;
+        }
+
+        const char * statestr = "UNKNOWN_STATE";
+        const char * statedescr = "Unknown state.";
+        switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
+            case RdpNegociation::State::NEGO_INITIATE:
+                statestr = "RDP_NEGO_INITIATE";
+                statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
+            break;
+            case RdpNegociation::State::NEGO:
+                statestr = "RDP_NEGO";
+                statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
+            break;
+            case RdpNegociation::State::BASIC_SETTINGS_EXCHANGE:
+                statestr = "RDP_BASIC_SETTINGS_EXCHANGE";
+                statedescr = TR(trkeys::err_mod_rdp_basic_settings_exchange, this->lang);
+            break;
+            case RdpNegociation::State::CHANNEL_CONNECTION_ATTACH_USER:
+                statestr = "RDP_CHANNEL_CONNECTION_ATTACH_USER";
+                statedescr = TR(trkeys::err_mod_rdp_channel_connection_attach_user, this->lang);
+            break;
+            case RdpNegociation::State::CHANNEL_JOIN_CONFIRM:
+                statestr = "RDP_CHANNEL_JOIN_CONFIRM";
+                statedescr = TR(trkeys::mod_rdp_channel_join_confirme, this->lang);
+            break;
+            case RdpNegociation::State::GET_LICENSE:
+                statestr = "RDP_GET_LICENSE";
+                statedescr = TR(trkeys::mod_rdp_get_license, this->lang);
+            break;
+            case RdpNegociation::State::TERMINATED:
+                statestr = "RDP_TERMINATED";
+                statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
+            break;
+        }
+        str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
+
+        LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
+            statestr, statedescr);
+        throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+    }
+
 
     void acl_update() override
     {
@@ -5105,7 +5137,7 @@ public:
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
 
-        this->fd_event->disable_timeout();
+//        this->fd_event->disable_timeout();
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {

@@ -581,7 +581,6 @@ private:
 
     timeval prepare_timeout(timeval ultimatum, timeval now,
                 const Front & front,
-                TopFdContainer & fd_events_,
                 TimerContainer & timer_events_,
                 EventContainer & events,
                 bool front_pending,
@@ -613,9 +612,6 @@ private:
 
         timer_events_.for_each(timer_update_tv);
         this->show_ultimatum("ultimatum (timers) ="_zv, ultimatum, now);
-
-        fd_events_.for_each(top_update_tv);
-        this->show_ultimatum("ultimatm (fd) ="_zv, ultimatum, now);
 
         if (front.front_must_notify_resize) {
             ultimatum = now;
@@ -667,7 +663,6 @@ public:
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         TimeBase time_base(tvtime());
-        TopFdContainer fd_events_;
         TimerContainer timer_events_;
         EventContainer events;
 
@@ -697,7 +692,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, fd_events_, timer_events_, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, timer_events_, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
@@ -783,15 +778,10 @@ public:
 
                 // if event lists are waiting for incoming data
                 for (auto & event: events){
-                    if (event.alarm.fd != -1){
+                    if (event.alarm.fd != INVALID_SOCKET){
                         ioswitch.set_read_sck(event.alarm.fd);
                     }
                 }
-                fd_events_.for_each([&](int fd, auto& /*top*/){
-                        if (fd != INVALID_SOCKET){
-                            ioswitch.set_read_sck(fd);
-                        }
-                });
 
                 if (acl.is_connected()) {
                     ioswitch.set_read_sck(acl.acl_serial->auth_trans->get_sck());
@@ -802,7 +792,6 @@ public:
 
                 timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                         front,
-                        fd_events_,
                         timer_events_,
                         events,
                         front_trans.has_tls_pending_data(),
@@ -864,9 +853,6 @@ public:
                 default:
                 {
                     execute_events(events, now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
-                    fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                        return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);
-                    });
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
@@ -932,9 +918,6 @@ public:
                         timer_events_.exec_timer(end_tv);
                         execute_events(events, end_tv,
                             [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
-                        fd_events_.exec_timeout(end_tv);
-                        fd_events_.exec_action([&ioswitch](int fd, auto& /*e*/){
-                            return fd != INVALID_SOCKET && ioswitch.is_set_for_reading(fd);});
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {

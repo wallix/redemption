@@ -153,7 +153,6 @@ int main(int argc, char** argv)
     NullReportMessage report_message;
     TimeSystem system_timeobj;
     TimeBase time_base(tvtime());
-    TopFdContainer fd_events_;
     TimerContainer timer_events_;
     EventContainer events;
 
@@ -183,7 +182,7 @@ int main(int argc, char** argv)
         }
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
-        return run_test_client(is_vnc ? "VNC" : "RDP", time_base, fd_events_, timer_events_, events, *mod,
+        return run_test_client(is_vnc ? "VNC" : "RDP", time_base, timer_events_, events, *mod,
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
@@ -276,7 +275,6 @@ int main(int argc, char** argv)
                 trans, ini,
                 time_base,
                 gd_forwarder,
-                fd_events_,
                 timer_events_,
                 events,
                 sesman,

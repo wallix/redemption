@@ -179,13 +179,15 @@ inline void execute_events(EventContainer & events, const timeval tv, const std:
         LOG(LOG_INFO, "=== Execute Events Loop ===");
     }
 
-    for (auto & event: events){
-        LOG(LOG_INFO, "now=%d:%d Examining (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d %s%s%s",
+    for (size_t i = 0 ; i < events.size(); i++){
+        auto & event = events[i];
+        LOG(LOG_INFO, "now=%d:%d Examining (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
             int(tv.tv_sec%1000),int(tv.tv_usec),
             event.id, event.name.c_str(),
             int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec),
             event.alarm.fd,
             int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec),
+            event.alarm.grace_delay.count(),
             event.alarm.active?"active ":"",
             event.teardown?"teardown ":"",
             event.garbage?"garbage":""

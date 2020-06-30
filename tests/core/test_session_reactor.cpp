@@ -276,7 +276,6 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     using Ptr = jln::SharedPtr;
     using Dt = jln::NotifyDeleteType;
     TimeBase time_base(timeval{10, 222});
-    TopFdContainer fd_events_;
     TimerContainer timer_events_;
 
     RED_CHECK_EQ(time_base.get_current_time().tv_sec, 10);
@@ -328,14 +327,12 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     auto end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
 
-    fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "");
 
     // set_current_time + execute timers, to simulate times flying
     time_base.set_current_time({11, 222});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
@@ -343,7 +340,6 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     time_base.set_current_time({13, 0});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
     RED_CHECK(bool(timer2));
@@ -351,14 +347,12 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     time_base.set_current_time({14, 0});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\n");
     RED_CHECK(bool(timer2));
 
     time_base.set_current_time({15, 0});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\n");
     RED_CHECK(bool(timer2));
 
@@ -369,53 +363,14 @@ RED_AUTO_TEST_CASE(TestTimeBaseTimer)
     time_base.set_current_time({16, 0});
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
 
     time_base.set_current_time({16, 0});
 
     end_tv = time_base.get_current_time();
     timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\nd2\ntimer4\n");
 }
 
-
-RED_AUTO_TEST_CASE_WF(TestTimeBaseFd, wf)
-{
-    TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-
-    std::string s;
-
-    unique_fd ufd(wf.c_str(), O_CREAT | O_RDONLY, 0777);
-    int const fd1 = ufd.fd();
-    RED_REQUIRE_GT(fd1, 0);
-
-    TopFdPtr fd_event = fd_events_.create_top_executor(time_base, fd1, std::ref(s))
-    .on_action([](auto ctx, std::string& s){
-        s += "fd1:";
-        return ctx.next();
-    })
-    .on_exit(jln::propagate_exit([](std::string& s){
-        s += "~fd1:";
-    }))
-    .set_timeout({})
-    .on_timeout([](auto ctx, std::string&){ return ctx.ready(); });
-
-    TopFdPtr fd_event_2 = fd_events_.create_top_executor(time_base, fd1)
-    .on_action([&s](auto ctx){
-        s += "fd2:";
-        return ctx.next();
-    })
-    .on_exit(jln::propagate_exit([&s](){
-        s += "~fd2:";
-    }))
-    .set_timeout({})
-    .on_timeout([](auto ctx){ return ctx.ready(); });
-
-    fd_events_.exec_action(fd_is_set);
-    RED_CHECK_EQ(s, "fd2:~fd2:fd1:~fd1:");
-}
 
 RED_AUTO_TEST_CASE(TestTimeBaseSequence)
 {
@@ -521,7 +476,6 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
 //    };
 
 //    TimeBase time_base;
-//    TopFdContainer fd_events_;
 
 //    v.emplace_back(std::make_unique<S>());
 //    v.back()->foo(time_base, events_, f);
@@ -531,6 +485,5 @@ RED_AUTO_TEST_CASE(TestTimeBaseSequence)
 //    v.emplace_back(std::make_unique<S>());
 //    v.back()->foo(time_base, events_, f);
 //    events_.exec_action();
-//    fd_events_.exec_action([]([[maybe_unused]] auto&&... xs){return false;});
 //    RED_CHECK_EQ(v.size(), 0);
 //}

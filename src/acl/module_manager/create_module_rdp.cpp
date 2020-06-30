@@ -103,9 +103,11 @@ struct RdpData
         FileValidatorTransport trans;
         // TODO wait result (add delay)
         FileValidatorService service;
-        TopFdPtr validator_event;
+        TimeBase & time_base;
+        EventContainer & events;
+        mod_rdp * mod = nullptr;
 
-        FileValidator(unique_fd&& fd, CtxError&& ctx_error)
+        FileValidator(unique_fd&& fd, CtxError&& ctx_error, TimeBase & time_base, EventContainer & events)
         : ctx_error(std::move(ctx_error))
         , trans(std::move(fd), ReportError([this](Error err){
             file_verification_error(
@@ -118,7 +120,24 @@ struct RdpData
             return err;
         }))
         , service(this->trans)
-        {}
+        , time_base(time_base)
+        , events(events)
+        {
+            Event event("File Validator Event", this);
+            event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds(3600));
+            event.alarm.set_fd(this->trans.get_fd(),std::chrono::seconds(3600));
+            event.actions.on_timeout = [this](Event&event)
+            {
+                event.alarm.set_timeout(event.alarm.now+std::chrono::seconds(3600));
+            };
+            event.actions.on_action = [this](Event&/*event*/)
+            {
+                if (this->mod){
+                    this->mod->DLP_antivirus_check_channels_files();
+                }
+            };
+            this->events.push_back(std::move(event));
+        }
 
         ~FileValidator()
         {
@@ -127,6 +146,7 @@ struct RdpData
             }
             catch (...) {
             }
+            end_of_lifespan(this->events, this);
         }
     };
 
@@ -187,7 +207,6 @@ public:
         const char * name, unique_fd sck, uint32_t verbose
       , std::string * error_message
       , TimeBase& time_base
-      , TopFdContainer & fd_events_
       , TimerContainer& timer_events_
       , EventContainer & events
       , SesmanInterface & sesman
@@ -215,7 +234,7 @@ public:
                      , to_verbose_flags(verbose), error_message)
 
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, ini, time_base, mod_wrapper, fd_events_, timer_events_, events, sesman, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, ini, time_base, mod_wrapper, timer_events_, events, sesman, gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
         , this->dispatcher /*report_message*/, license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -429,7 +448,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Font & glyphs,
     Theme & theme,
     TimeBase & time_base,
-    TopFdContainer& fd_events_,
     TimerContainer& timer_events_,
     EventContainer& events,
     SesmanInterface & sesman,
@@ -713,7 +731,8 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
                     timer_events_, front
-                });
+                },
+                time_base, events);
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
                 "client_ip"_av, ini.get<cfg::globals::host>(),
@@ -890,7 +909,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         ini.get<cfg::debug::mod_rdp>(),
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
         time_base,
-        fd_events_,
         timer_events_,
         events,
         sesman,
@@ -914,13 +932,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
     if (enable_validator) {
         new_mod->rdp_data.file_validator = std::move(file_validator);
-        new_mod->rdp_data.file_validator->validator_event = fd_events_.create_top_executor(time_base, validator_fd)
-        .set_timeout(std::chrono::milliseconds::max())
-        .on_timeout(jln::always_ready([]{}))
-        .on_exit(jln::propagate_exit())
-        .on_action(jln::always_ready([rdp=new_mod.get()]() {
-            rdp->DLP_antivirus_check_channels_files();
-        }));
+        new_mod->rdp_data.file_validator->mod = &new_mod->mod;
     }
 
     if (enable_metrics) {

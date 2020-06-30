@@ -84,7 +84,6 @@ public:
 inline int run_connection_test(
     char const * type,
     TimeBase& time_base,
-    TopFdContainer & fd_events_,
     TimerContainer & timer_events_,
     EventContainer & events,
     mod_api& mod)
@@ -98,7 +97,6 @@ inline int run_connection_test(
 
         switch (execute_events(
             timeout, time_base,
-            fd_events_,
             timer_events_,
             events)) {
             case ExecuteEventsResult::Error:
@@ -127,7 +125,6 @@ inline int run_connection_test(
 inline int wait_for_screenshot(
     char const* type,
         TimeBase& time_base,
-        TopFdContainer & fd_events_,
         TimerContainer & timer_events_,
         EventContainer & events,
         std::chrono::milliseconds inactivity_time,
@@ -145,7 +142,7 @@ inline int wait_for_screenshot(
 
         std::chrono::milliseconds timeout = std::min(max_time - elapsed, inactivity_time);
 
-        switch (execute_events(timeout, time_base, fd_events_, timer_events_, events)) {
+        switch (execute_events(timeout, time_base, timer_events_, events)) {
             case ExecuteEventsResult::Error:
                 LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
                 return 1;
@@ -164,14 +161,13 @@ inline int wait_for_screenshot(
 inline int run_test_client(
     char const* type,
         TimeBase& time_base,
-        TopFdContainer & fd_events_,
         TimerContainer & timer_events_,
         EventContainer & events,
         mod_api& mod, std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
     std::string const& screen_output)
 {
     try {
-        if (int err = run_connection_test(type, time_base, fd_events_, timer_events_, events, mod)) {
+        if (int err = run_connection_test(type, time_base, timer_events_, events, mod)) {
             return err;
         }
 
@@ -188,7 +184,7 @@ inline int run_test_client(
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);
 
-        if (int err = wait_for_screenshot(type, time_base, fd_events_, timer_events_, events, inactivity_time, max_time)) {
+        if (int err = wait_for_screenshot(type, time_base, timer_events_, events, inactivity_time, max_time)) {
             return err;
         }
 

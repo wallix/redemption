@@ -151,7 +151,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
-    TopFdContainer fd_events_;
     TimerContainer timer_events_;
     EventContainer events;
     SesmanWrapper sesman;
@@ -161,7 +160,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, fd_events_,
+    auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, 
         timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -170,12 +169,11 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     int n = 74;
     int count = 0;
-    for (; count < n && !fd_events_.is_empty(); ++count) {
-        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        fd_events_.exec_action(is_set);
+    events[0].alarm.fd = 0;
+    for (; count < n && !events.empty(); ++count) {
+        execute_events(events, timeval{1,0},[](int){return true;});
     }
     RED_CHECK_EQ(count, n);
-
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
 }
@@ -281,7 +279,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
-    TopFdContainer fd_events_;
     TimerContainer timer_events_;
     EventContainer events;
     SesmanWrapper sesman;
@@ -291,7 +288,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, fd_events_,
+    auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, 
         timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
@@ -301,9 +298,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     int n = 74;
     int count = 0;
-    for (; count < n && !fd_events_.is_empty(); ++count) {
-        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        fd_events_.exec_action(is_set);
+    events[0].alarm.fd = 0;
+    for (; count < n && !events.empty(); ++count) {
+        execute_events(events, timeval{1,0},[](int){return true;});
     }
     RED_CHECK_EQ(count, n);
 

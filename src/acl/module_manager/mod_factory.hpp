@@ -61,7 +61,6 @@ class ModFactory
     ModWrapper & mod_wrapper;
     TimeBase & time_base;
     SesmanInterface & sesman;
-    TopFdContainer& fd_events_;
     TimerContainer & timer_events_;
     EventContainer & events;
     ClientInfo & client_info;
@@ -84,7 +83,6 @@ public:
     ModFactory(ModWrapper & mod_wrapper,
                TimeBase & time_base,
                SesmanInterface & sesman,
-               TopFdContainer& fd_events_,
                TimerContainer & timer_events_,
                EventContainer & events,
                ClientInfo & client_info,
@@ -104,7 +102,6 @@ public:
         : mod_wrapper(mod_wrapper)
         , time_base(time_base)
         , sesman(sesman)
-        , fd_events_(fd_events_)
         , timer_events_(timer_events_)
         , events(events)
         , client_info(client_info)
@@ -507,7 +504,6 @@ public:
             this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,
-            this->fd_events_,
             this->timer_events_,
             this->events,
             this->sesman,
