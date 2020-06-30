@@ -36,11 +36,11 @@ namespace redjs
 
 class ImageData;
 
-class BrowserGraphic : public gdi::GraphicApi
+class Graphics : public gdi::GraphicApi
 {
 public:
-    BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height);
-    ~BrowserGraphic();
+    Graphics(emscripten::val callbacks, uint16_t width, uint16_t height);
+    ~Graphics();
 
     PrimaryDrawingOrdersSupport get_supported_orders() const;
 

@@ -46,8 +46,8 @@ Author(s): Jonathan Poelen
 #include "red_emscripten/val.hpp"
 
 #include "redjs/image_data.hpp"
-#include "redjs/browser_transport.hpp"
-#include "redjs/browser_front.hpp"
+#include "redjs/transport.hpp"
+#include "redjs/front.hpp"
 #include "redjs/channel_receiver.hpp"
 
 #include <chrono>
@@ -97,11 +97,11 @@ struct RdpClient
     ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> mod;
 
-    redjs::BrowserTransport browser_trans;
+    redjs::Transport trans;
 
     ClientInfo client_info;
 
-    redjs::BrowserFront front;
+    redjs::Front front;
     gdi::GraphicApi& gd;
     GdForwarder<gdi::GraphicApi> gd_forwarder{gd};
 
@@ -179,7 +179,7 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string_view{});
 
         this->mod = new_mod_rdp(
-            browser_trans, ini, time_base, gd_forwarder,
+            trans, ini, time_base, gd_forwarder,
             fd_events, timer_events, events, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,
@@ -199,17 +199,17 @@ struct RdpClient
 
     bytes_view get_output_buffer() const
     {
-        return this->browser_trans.get_output_buffer();
+        return this->trans.get_output_buffer();
     }
 
     void reset_output_data()
     {
-        this->browser_trans.clear_output_buffer();
+        this->trans.clear_output_buffer();
     }
 
     void process_input_data(std::string data)
     {
-        this->browser_trans.push_input_buffer(std::move(data));
+        this->trans.push_input_buffer(std::move(data));
         this->fd_events.exec_action([](int /*fd*/, auto& /*top*/){ return true; });
     }
 

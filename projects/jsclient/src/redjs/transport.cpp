@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/browser_transport.hpp"
+#include "redjs/transport.hpp"
 #include "utils/log.hpp"
 
 #include <cstring>
@@ -31,13 +31,13 @@ namespace
 namespace redjs
 {
 
-BrowserTransport::TlsResult BrowserTransport::enable_client_tls(ServerNotifier& /*server_notifier*/, const TLSClientParams & /*tls_client_params*/)
+Transport::TlsResult Transport::enable_client_tls(ServerNotifier& /*server_notifier*/, const TLSClientParams & /*tls_client_params*/)
 {
-    LOG(LOG_ERR, "BrowserTransport: enable_client_tls is not implemented.");
+    LOG(LOG_ERR, "Transport: enable_client_tls is not implemented.");
     return TlsResult::Fail;
 }
 
-size_t BrowserTransport::do_partial_read(uint8_t * data, size_t len)
+size_t Transport::do_partial_read(uint8_t * data, size_t len)
 {
     if (input_buffers.empty()) {
         throw Error(ERR_TRANSPORT_NO_MORE_DATA);
@@ -64,35 +64,35 @@ size_t BrowserTransport::do_partial_read(uint8_t * data, size_t len)
 
     size_t const data_len = len - remaining;
 
-    // LOG(LOG_DEBUG, "BrowserTransport::read %zu bytes", data_len);
+    // LOG(LOG_DEBUG, "Transport::read %zu bytes", data_len);
     // hexdump(data - data_len, data_len);
 
     return data_len;
 }
 
-void BrowserTransport::do_send(const uint8_t * buffer, size_t len)
+void Transport::do_send(const uint8_t * buffer, size_t len)
 {
-    // LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, output_buffer.size() + len);
+    // LOG(LOG_DEBUG, "Transport::send %zu bytes (total %zu)", len, output_buffer.size() + len);
     // hexdump(buffer, len);
     this->output_buffer.insert(this->output_buffer.end(), buffer, buffer + len);
 }
 
-int BrowserTransport::get_fd() const
+int Transport::get_fd() const
 {
     return FD_TRANS;
 }
 
-void BrowserTransport::push_input_buffer(std::string&& data)
+void Transport::push_input_buffer(std::string&& data)
 {
     this->input_buffers.emplace_back(std::move(data));
 }
 
-bytes_view BrowserTransport::get_output_buffer() const noexcept
+bytes_view Transport::get_output_buffer() const noexcept
 {
     return this->output_buffer;
 }
 
-void BrowserTransport::clear_output_buffer() noexcept
+void Transport::clear_output_buffer() noexcept
 {
     this->output_buffer.clear();
 }

@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/browser_graphic.hpp"
+#include "redjs/graphics.hpp"
 
 #include "redjs/image_data_from_pointer.hpp"
 
@@ -170,14 +170,14 @@ inline uint32_t emval_call_arg(BGRColor const& bgr) noexcept
 namespace redjs
 {
 
-BrowserGraphic::BrowserGraphic(emscripten::val callbacks, uint16_t width, uint16_t height)
+Graphics::Graphics(emscripten::val callbacks, uint16_t width, uint16_t height)
 : width(width)
 , height(height)
 , callbacks(std::move(callbacks))
 {
 }
 
-PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
+PrimaryDrawingOrdersSupport Graphics::get_supported_orders() const
 {
     PrimaryDrawingOrdersSupport supported = TS_NEG_GLYPH_INDEX;
     auto set = [&](char const* name, auto f){
@@ -217,16 +217,16 @@ PrimaryDrawingOrdersSupport BrowserGraphic::get_supported_orders() const
     return supported;
 }
 
-BrowserGraphic::~BrowserGraphic() = default;
+Graphics::~Graphics() = default;
 
-Rect BrowserGraphic::intersect(Rect const& a, Rect const& b)
+Rect Graphics::intersect(Rect const& a, Rect const& b)
 {
     return a.intersect(width, height).intersect(b);
 }
 
-void BrowserGraphic::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPOpaqueRect");
+    // LOG(LOG_INFO, "Graphics::RDPOpaqueRect");
 
     const Rect trect = intersect(clip, cmd.rect);
 
@@ -239,9 +239,9 @@ void BrowserGraphic::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx co
     );
 }
 
-void BrowserGraphic::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPMultiOpaqueRect");
+    // LOG(LOG_INFO, "Graphics::RDPMultiOpaqueRect");
 
     const auto color = color_decode(cmd._Color, color_ctx);
     draw_multi(this->width, this->height, cmd, clip, [color, this](const Rect & trect) {
@@ -255,9 +255,9 @@ void BrowserGraphic::draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorC
     });
 }
 
-void BrowserGraphic::draw(const RDPScrBlt & cmd, Rect clip)
+void Graphics::draw(const RDPScrBlt & cmd, Rect clip)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPScrBlt");
+    // LOG(LOG_INFO, "Graphics::RDPScrBlt");
 
     const Rect drect = intersect(clip, cmd.rect);
     // adding delta move dest to source
@@ -275,9 +275,9 @@ void BrowserGraphic::draw(const RDPScrBlt & cmd, Rect clip)
     );
 }
 
-void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
+void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPMultiScrBlt");
+    // LOG(LOG_INFO, "Graphics::RDPMultiScrBlt");
 
     const int deltax = cmd.nXSrc - cmd.rect.x;
     const int deltay = cmd.nYSrc - cmd.rect.y;
@@ -295,9 +295,9 @@ void BrowserGraphic::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     });
 }
 
-void BrowserGraphic::draw(const RDPDestBlt & cmd, Rect clip)
+void Graphics::draw(const RDPDestBlt & cmd, Rect clip)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPDestBlt");
+    // LOG(LOG_INFO, "Graphics::RDPDestBlt");
 
     const Rect trect = intersect(clip, cmd.rect);
     emval_call(this->callbacks, jsnames::draw_dest_blt,
@@ -309,9 +309,9 @@ void BrowserGraphic::draw(const RDPDestBlt & cmd, Rect clip)
     );
 }
 
-void BrowserGraphic::draw(const RDPMultiDstBlt & cmd, Rect clip)
+void Graphics::draw(const RDPMultiDstBlt & cmd, Rect clip)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPMultiDstBlt");
+    // LOG(LOG_INFO, "Graphics::RDPMultiDstBlt");
 
     draw_multi(this->width, this->height, cmd, clip, [&](const Rect & trect) {
         emval_call(this->callbacks, jsnames::draw_dest_blt,
@@ -324,9 +324,9 @@ void BrowserGraphic::draw(const RDPMultiDstBlt & cmd, Rect clip)
     });
 }
 
-void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPPatBlt");
+    // LOG(LOG_INFO, "Graphics::RDPPatBlt");
 
     const Rect trect = intersect(clip, cmd.rect);
 
@@ -345,9 +345,9 @@ void BrowserGraphic::draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_
     );
 }
 
-void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPMultiPatBlt");
+    // LOG(LOG_INFO, "Graphics::RDPMultiPatBlt");
 
     auto back_color = color_decode(cmd.BackColor, color_ctx);
     auto fore_color = color_decode(cmd.ForeColor, color_ctx);
@@ -369,7 +369,7 @@ void BrowserGraphic::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::Color
     });
 }
 
-void BrowserGraphic::set_bmp_cache_entries(std::array<CacheEntry, 3> const & cache_entries)
+void Graphics::set_bmp_cache_entries(std::array<CacheEntry, 3> const & cache_entries)
 {
     this->image_data_index[0] = 0;
     this->image_data_index[1] = cache_entries[0].nb_entries;
@@ -388,9 +388,9 @@ void BrowserGraphic::set_bmp_cache_entries(std::array<CacheEntry, 3> const & cac
     );
 }
 
-void BrowserGraphic::draw(RDPBmpCache const & cmd)
+void Graphics::draw(RDPBmpCache const & cmd)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPBmpCache");
+    // LOG(LOG_INFO, "Graphics::RDPBmpCache");
 
     uint32_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
 
@@ -404,9 +404,9 @@ void BrowserGraphic::draw(RDPBmpCache const & cmd)
     );
 }
 
-void BrowserGraphic::draw(RDPMemBlt const & cmd, Rect clip)
+void Graphics::draw(RDPMemBlt const & cmd, Rect clip)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPMemBlt");
+    // LOG(LOG_INFO, "Graphics::RDPMemBlt");
 
     const uint32_t image_idx = this->image_data_index[cmd.cache_id & 0b11] + cmd.cache_idx;
 
@@ -424,9 +424,9 @@ void BrowserGraphic::draw(RDPMemBlt const & cmd, Rect clip)
     );
 }
 
-void BrowserGraphic::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPMem3Blt");
+    // LOG(LOG_INFO, "Graphics::RDPMem3Blt");
 
     const uint32_t image_idx = this->image_data_index[cmd.cache_id & 0b11] + cmd.cache_idx;
 
@@ -450,9 +450,9 @@ void BrowserGraphic::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color
     );
 }
 
-void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPLineTo");
+    // LOG(LOG_INFO, "Graphics::RDPLineTo");
 
     LineEquation equa(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
 
@@ -473,9 +473,9 @@ void BrowserGraphic::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_
     );
 }
 
-void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
+void Graphics::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPGlyphIndex");
+    // LOG(LOG_INFO, "Graphics::RDPGlyphIndex");
 
     Rect screen_rect = clip.intersect(this->width, this->height);
     if (screen_rect.isempty()){
@@ -539,9 +539,9 @@ void BrowserGraphic::draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx co
     );
 }
 
-void BrowserGraphic::draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPPolygonSC");
+    // LOG(LOG_INFO, "Graphics::RDPPolygonSC");
 
     emval_call(this->callbacks, jsnames::draw_polygone_sc,
         cmd.xStart,
@@ -556,9 +556,9 @@ void BrowserGraphic::draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx col
     );
 }
 
-void BrowserGraphic::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPPolygonCB");
+    // LOG(LOG_INFO, "Graphics::RDPPolygonCB");
 
     emval_call(this->callbacks, jsnames::draw_polygone_cb,
         cmd.xStart,
@@ -578,9 +578,9 @@ void BrowserGraphic::draw(RDPPolygonCB const & cmd, Rect clip, gdi::ColorCtx col
     );
 }
 
-void BrowserGraphic::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPPolyline");
+    // LOG(LOG_INFO, "Graphics::RDPPolyline");
 
     emval_call(this->callbacks, jsnames::draw_polyline,
         cmd.xStart,
@@ -594,9 +594,9 @@ void BrowserGraphic::draw(RDPPolyline const & cmd, Rect clip, gdi::ColorCtx colo
     );
 }
 
-void BrowserGraphic::draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPEllipseSC");
+    // LOG(LOG_INFO, "Graphics::RDPEllipseSC");
 
     emval_call(this->callbacks, jsnames::draw_ellipse_sc,
         cmd.el.ileft(),
@@ -613,9 +613,9 @@ void BrowserGraphic::draw(RDPEllipseSC const & cmd, Rect clip, gdi::ColorCtx col
     );
 }
 
-void BrowserGraphic::draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+void Graphics::draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPEllipseCB");
+    // LOG(LOG_INFO, "Graphics::RDPEllipseCB");
 
     emval_call(this->callbacks, jsnames::draw_ellipse_cb,
         cmd.el.ileft(),
@@ -633,31 +633,31 @@ void BrowserGraphic::draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx col
     );
 }
 
-void BrowserGraphic::draw(const RDPColCache   & /*unused*/) { }
+void Graphics::draw(const RDPColCache   & /*unused*/) { }
 
-void BrowserGraphic::draw(const RDPBrushCache & /*unused*/) { }
+void Graphics::draw(const RDPBrushCache & /*unused*/) { }
 
-void BrowserGraphic::draw(const RDP::FrameMarker & cmd)
+void Graphics::draw(const RDP::FrameMarker & cmd)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::FrameMarker");
+    // LOG(LOG_INFO, "Graphics::FrameMarker");
 
     emval_call(this->callbacks, jsnames::frame_marker,
         cmd.action == RDP::FrameMarker::FrameStart);
 }
 
-void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::WindowIcon & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::CachedIcon & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::DeletedWindow & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/) { }
-void BrowserGraphic::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::WindowIcon & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::CachedIcon & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::DeletedWindow & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/) { }
+void Graphics::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) { }
 
 
-void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
+void Graphics::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::RDPBitmapData");
+    // LOG(LOG_INFO, "Graphics::RDPBitmapData");
 
     emval_call(this->callbacks, jsnames::draw_image,
         bmp.data(),
@@ -674,16 +674,16 @@ void BrowserGraphic::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
     );
 }
 
-void BrowserGraphic::set_palette(const BGRPalette& /*unused*/) { }
+void Graphics::set_palette(const BGRPalette& /*unused*/) { }
 
-void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/) { }
+void Graphics::draw(RDPSetSurfaceCommand const & /*cmd*/) { }
 
-void BrowserGraphic::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }
+void Graphics::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) { }
 
 
-void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
+void Graphics::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
 {
-    // LOG(LOG_INFO, "BrowserGraphic::Pointer %d", mode);
+    // LOG(LOG_INFO, "Graphics::Pointer %d", mode);
 
     switch (mode) {
     case SetPointerMode::Cached:
@@ -719,17 +719,17 @@ void BrowserGraphic::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetP
     }
 }
 
-void BrowserGraphic::begin_update()
+void Graphics::begin_update()
 {
     emval_call(this->callbacks, jsnames::frame_marker, true);
 }
 
-void BrowserGraphic::end_update()
+void Graphics::end_update()
 {
     emval_call(this->callbacks, jsnames::frame_marker, false);
 }
 
-bool BrowserGraphic::resize_canvas(ScreenInfo screen)
+bool Graphics::resize_canvas(ScreenInfo screen)
 {
     this->width = screen.width;
     this->height = screen.height;
@@ -743,7 +743,7 @@ bool BrowserGraphic::resize_canvas(ScreenInfo screen)
     return true;
 }
 
-void BrowserGraphic::update_pointer_position(uint16_t x, uint16_t y)
+void Graphics::update_pointer_position(uint16_t x, uint16_t y)
 {
     emval_call(this->callbacks, jsnames::update_pointer_position, x, y);
 }

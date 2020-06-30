@@ -38,7 +38,7 @@ Author(s): Jonathan Poelen
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
-#include "redjs/browser_graphic.hpp"
+#include "redjs/graphics.hpp"
 
 #include <chrono>
 
@@ -406,7 +406,7 @@ private:
     StateChunk ssc;
     WrmMetaChunk wrm_info;
     GlyphCache gly_cache;
-    redjs::BrowserGraphic gd;
+    redjs::Graphics gd;
 };
 
 EMSCRIPTEN_BINDINGS(player)

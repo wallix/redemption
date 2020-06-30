@@ -20,14 +20,14 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "redjs/browser_front.hpp"
+#include "redjs/front.hpp"
 
 #include <bitset>
 
 
-RED_AUTO_TEST_CASE(TestBrowserFront)
+RED_AUTO_TEST_CASE(TestFront)
 {
-    redjs::BrowserFront front{emscripten::val::object(), 800, 600, RDPVerbose(0)};
+    redjs::Front front{emscripten::val::object(), 800, 600, RDPVerbose(0)};
 
     using bitset = std::bitset<PrimaryDrawingOrdersSupport::max>;
     RED_CHECK(bitset{(

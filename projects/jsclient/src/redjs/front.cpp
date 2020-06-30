@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/browser_front.hpp"
+#include "redjs/front.hpp"
 #include "red_emscripten/em_asm.hpp"
 
 #include "gdi/screen_info.hpp"
@@ -28,44 +28,44 @@ Author(s): Jonathan Poelen
 namespace redjs
 {
 
-BrowserFront::BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose)
+Front::Front(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose)
 : gd(std::move(callbacks), width, height)
 , verbose(verbose)
 {}
 
-BrowserFront::~BrowserFront() = default;
+Front::~Front() = default;
 
-PrimaryDrawingOrdersSupport BrowserFront::get_supported_orders() const
+PrimaryDrawingOrdersSupport Front::get_supported_orders() const
 {
     return this->gd.get_supported_orders();
 }
 
-void BrowserFront::add_channel_receiver(ChannelReceiver channel_receiver)
+void Front::add_channel_receiver(ChannelReceiver channel_receiver)
 {
     int channid = int(this->cl.size()) + 1;
     this->cl.push_back(CHANNELS::ChannelDef(channel_receiver.channel_name, 0, channid));
     this->channels.emplace_back(Channel{channel_receiver.ctx, channel_receiver.do_receive});
 }
 
-bool BrowserFront::can_be_start_capture()
+bool Front::can_be_start_capture()
 {
     return false;
 }
 
-bool BrowserFront::must_be_stop_capture()
+bool Front::must_be_stop_capture()
 {
     return false;
 }
 
-bool BrowserFront::is_capture_in_progress() const
+bool Front::is_capture_in_progress() const
 {
     return false;
 }
 
-BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
+Front::ResizeResult Front::server_resize(ScreenInfo screen_server)
 {
     if (bool(this->verbose & RDPVerbose::graphics)) {
-        LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d)",
+        LOG(LOG_INFO, "Front::server_resize(width=%d, height=%d, bpp=%d)",
         screen_server.width, screen_server.height, screen_server.bpp);
     }
 
@@ -74,22 +74,22 @@ BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
         : ResizeResult::fail;
 }
 
-void BrowserFront::send_to_channel(
+void Front::send_to_channel(
     CHANNELS::ChannelDef const& channel_def, bytes_view chunk_data,
     std::size_t total_data_len, int channel_flags)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::channels),
-        LOG_INFO, "BrowserFront::send_to_channel('%s', ...)", channel_def.name.c_str());
+        LOG_INFO, "Front::send_to_channel('%s', ...)", channel_def.name.c_str());
 
     size_t idx = checked_int(&channel_def - &this->cl[0]);
     Channel& chann = this->channels[idx];
     chann.do_receive(chann.ctx, chunk_data, total_data_len, channel_flags);
 }
 
-void BrowserFront::update_pointer_position(uint16_t x, uint16_t y)
+void Front::update_pointer_position(uint16_t x, uint16_t y)
 {
     LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
-        LOG_INFO, "BrowserFront::update_pointer_position");
+        LOG_INFO, "Front::update_pointer_position");
 
     this->gd.update_pointer_position(x, y);
 }

@@ -20,11 +20,11 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "redjs/browser_transport.hpp"
+#include "redjs/transport.hpp"
 
-RED_AUTO_TEST_CASE(TestBrowserTransport)
+RED_AUTO_TEST_CASE(TestTransport)
 {
-    redjs::BrowserTransport trans;
+    redjs::Transport trans;
 
     RED_CHECK(trans.get_output_buffer() == ""_av);
     trans.push_input_buffer("abc");

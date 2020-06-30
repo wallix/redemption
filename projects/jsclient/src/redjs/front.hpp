@@ -28,7 +28,7 @@ Author(s): Jonathan Poelen
 #include "core/front_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "redjs/channel_receiver.hpp"
-#include "redjs/browser_graphic.hpp"
+#include "redjs/graphics.hpp"
 
 #include "emscripten/val.h"
 
@@ -40,11 +40,11 @@ class ScreenInfo;
 namespace redjs
 {
 
-class BrowserFront : public FrontAPI
+class Front : public FrontAPI
 {
 public:
-    BrowserFront(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose);
-    ~BrowserFront();
+    Front(emscripten::val callbacks, uint16_t width, uint16_t height, RDPVerbose verbose);
+    ~Front();
 
     PrimaryDrawingOrdersSupport get_supported_orders() const;
 
@@ -71,7 +71,7 @@ public:
     gdi::GraphicApi& graphic_api() noexcept { return this->gd; }
 
 private:
-    BrowserGraphic gd;
+    Graphics gd;
     RDPVerbose verbose;
     CHANNELS::ChannelDefArray cl;
 

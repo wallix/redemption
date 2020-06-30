@@ -21,7 +21,7 @@ Author(s): Jonathan Poelen
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/js_auto_test_case.hpp"
 
-#include "redjs/browser_graphic.hpp"
+#include "redjs/graphics.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -38,7 +38,7 @@ Author(s): Jonathan Poelen
 
 
 RED_JS_AUTO_TEST_CASE(
-    TestBrowserGraphics,
+    TestGraphics,
     (emscripten::val drawable),
     (() => {
         const Drawable = require("src/application/rdp_graphics").RDPGraphics;
@@ -61,7 +61,7 @@ RED_JS_AUTO_TEST_CASE(
     Rect screen{0, 0, 400, 300};
     gdi::ColorCtx color_ctx(gdi::Depth::depth24(), nullptr);
 
-    redjs::BrowserGraphic gd(drawable, 0, 0);
+    redjs::Graphics gd(drawable, 0, 0);
     gd.resize_canvas(ScreenInfo{screen.cx, screen.cy, BitsPerPixel(24)});
 
     using bitset = std::bitset<PrimaryDrawingOrdersSupport::max>;

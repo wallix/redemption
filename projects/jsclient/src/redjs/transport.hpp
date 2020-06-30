@@ -32,7 +32,7 @@ Author(s): Jonathan Poelen
 namespace redjs
 {
 
-struct BrowserTransport : Transport
+struct Transport : ::Transport
 {
     TlsResult enable_client_tls(
         ServerNotifier& server_notifier, const TLSClientParams & tls_client_params) override;
