@@ -38,7 +38,7 @@
 #cbDownload {
     display: hidden
 }
-#login {
+#login, fieldset {
     column-count: auto;
 }
 #login label {
@@ -48,18 +48,30 @@
 </div>
 <section>
     <form id="login" method="get" action="#">
-        <label for="ws">sck: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
-        <label for="user">user: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
-        <label for="pass">pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
-        <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
-        <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
-        <label for="bpp">bpp: <select name="bpp" id="bpp">
-            <option value="8">8</option>
-            <option value="15">15</option>
-            <option value="16" selected="selected">16</option>
-            <option value="24">24</option>
-            <option value="32">32</option>
+        <fieldset>
+            <legend>Connection</legend>
+            <label for="ws">url: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
+            <label for="user">User: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
+            <label for="pass">Pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
+        </fieldset>
+        <fieldset>
+            <legend>Graphique</legend>
+            <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
+            <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
+            <label for="bpp">bpp: <select name="bpp" id="bpp">
+                <option value="8">8</option>
+                <option value="15">15</option>
+                <option value="16" selected="selected">16</option>
+                <option value="24">24</option>
+                <option value="32">32</option>
             </select></label>
+            <label for="disabledGraphics">disabled: <select name="disabledGraphics" id="disabledGraphics" multiple>
+            </select></label>
+        </fieldset>
+        <fieldset>
+            <legend>Autres</legend>
+            <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
+        </fieldset>
         <input type="submit" value="New Connection">
     </form>
     <form id="disconnect" method="get" action="#">
@@ -88,12 +100,16 @@
 <script src="rdp_graphics.js"></script>
 <script src="out_stream.js"></script>
 <script src="clipboard.js"></script>
+
 <script>
+let _Module;
 
 WallixModule({
     // INITIAL_MEMORY: 16777216, // 16**6
     // INITIAL_MEMORY: 268435456, // 16**7
 }).then((Module) => {
+
+_Module = Module;
 
 // optional
 console.log(Module.LogLevel)
@@ -124,6 +140,8 @@ const sendCbUtf8_data = document.getElementById('sendCbUtf8_data');
 const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
 const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
+const disabled_graphics_input = document.getElementById('disabledGraphics');
+const verbose_input = document.getElementById('verbose');
 const pass_input = document.getElementById('pass');
 const ws_input = document.getElementById('ws');
 const height_input = document.getElementById('height');
@@ -150,6 +168,18 @@ function mouseButtonToFlag(evt)
     // case 4: return 0x0002;
     }
     return 0x1000;
+}
+
+function MultiSelectToInt(e, constants)
+{
+    let flags = 0;
+    for (let i = 0; i < e.length; i++) {
+        if (e.options[i].selected) {
+            console.log()
+            flags |= constants[e.options[i].value];
+        }
+    }
+    return flags;
 }
 
 const gd = new RDPGraphics(ecanvas, Module);
@@ -328,11 +358,11 @@ function run()
             width: Number(width_input.value),
             height: Number(height_input.value),
             bpp: Number(bpp_input.value),
-            disabledDrawingOrders: 0,
+            disabledDrawingOrders: MultiSelectToInt(disabled_graphics_input, Module.GraphicOrders),
             username: user_input.value,
             password: pass_input.value,
             // getRandomValues: (data) => crypto.getRandomValues(data),
-            verbose: 0/*x04000000*/,
+            verbose: Number(verbose_input.value) || 0/*0x04000000*/,
         });
 
         const cliprdr = new Cliprdr(cbFiles, sendData, Module);
@@ -397,9 +427,12 @@ login.onsubmit = (e) => {
     socketState = run();
 };
 
+
 gd.drawRect(0, 0, gd.width, gd.height, 0);
 
-const url = new URL(window.location.href)
+
+const url = new URL(window.location.href);
+
 const inputs = {
     user: user_input,
     pass: pass_input,
@@ -413,13 +446,34 @@ for (const k in inputs) {
         inputs[k].value = x;
     }
 }
+
 const selects = {
     bpp: bpp_input,
+    verbose: verbose_input,
 };
 for (const k in selects) {
     const x = parseInt(url.searchParams.get(k));
     if (x >= 0) {
         selects[k].selectedIndex = x;
+    }
+}
+
+const selectFlags = {
+    disabledGraphics: [disabled_graphics_input, Module.GraphicOrders],
+}
+for (const k in selectFlags) {
+    const x = parseInt(url.searchParams.get(k));
+    const select = selectFlags[k][0];
+    const flags = selectFlags[k][1];
+    for (name in flags) {
+        const opt = document.createElement('option');
+        const flag = flags[name];
+        opt.value = name;
+        opt.textContent = `${name} (0x${flag.toString(2).length.toString(16).padStart(2, '0')})`;
+        select.appendChild(opt);
+        if (x & flag) {
+            opt.selected = "selected";
+        }
     }
 }
 
