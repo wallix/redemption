@@ -144,8 +144,7 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event = this->timer_events_
-            .create_timer_executor(this->time_base)
+            this->event = this->timer_events_.create_timer_executor(this->time_base)
             .set_delay(this->params.clipboard_initialization_delay_ms)
             .on_action(jln::one_shot([&]{ this->on_event(); }));
         }
@@ -384,8 +383,7 @@ public:
             };
         };
 
-        this->event = this->timer_events_
-            .create_timer_executor(this->time_base, std::ref(*this))
+        this->event = this->timer_events_.create_timer_executor(this->time_base, std::ref(*this))
             .set_delay(this->params.short_delay_ms)
             .on_action(jln::sequencer(
                 "Windows (down)"_f(

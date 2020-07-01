@@ -2289,6 +2289,7 @@ public:
                     event.rename("First Incoming RDP PDU Event");
                     event.actions.on_action = [this](Event&event)
                     {
+                        LOG(LOG_INFO, "%s on_action", event.name);
                         auto & gd = this->gd_provider.get_graphics();
                         if (this->buf.remaining()){
                             this->draw_event(this->gd_provider.get_graphics(), this->sesman);
@@ -2303,8 +2304,9 @@ public:
                         this->draw_event(gd, this->sesman);
 
                         event.rename("Incoming RDP PDU Event");
-                        event.actions.on_action = [this](Event&/*event*/)
+                        event.actions.on_action = [this](Event&event)
                         {
+                            LOG(LOG_INFO, "%s on_action", event.name);
                             auto & gd = this->gd_provider.get_graphics();
                             #ifndef __EMSCRIPTEN__
                             if (this->channels.remote_programs_session_manager) {
@@ -2324,6 +2326,7 @@ public:
         };
         event.actions.on_timeout = [this](Event&event)
         {
+            LOG(LOG_INFO, "%s on_timeout", event.name);
             try {
                 LOG(LOG_INFO, "%s on_timeout", event.name);
                 if (this->error_message) {
@@ -2386,7 +2389,7 @@ public:
 
     void throw_error(Error & error)
     {
-        LOG(LOG_INFO, "**** mod_rdp::fd event exception");
+        LOG(LOG_INFO, "throw error mod_rdp::fd event exception %u: %s", error.id, error.errmsg());
         switch (error.id) {
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
         case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:

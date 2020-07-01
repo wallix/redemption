@@ -123,6 +123,124 @@ RED_AUTO_TEST_CASE(TestEventContainer)
 }
 
 
+// on each call to sequencer the curent method is called
+// then the sequencer is positionned to the next one
+// The sequencer position can also be explicitely reset
+// to some arbitrary method in the sequence.
+
+
+RED_AUTO_TEST_CASE(TestNewEmptySequencer)
+{
+    Sequencer chain = {false, 0, {}};
+    Event e("Chain", nullptr);
+    e.actions.on_timeout = chain;
+    e.exec_timeout();
+    RED_CHECK(e.garbage == true);
+}
+
+
+RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
+{
+    struct Context {
+        size_t counter = 0;
+    } context;
+    Sequencer chain = {false, 0, {
+        { "first",
+            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            {
+                context.counter = 1;
+            }
+        },
+        { "second",
+            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            {
+                context.counter = 2;
+            }
+        },
+        { "third",
+            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            {
+                context.counter = 3;
+            }
+        },
+        { "fourth",
+            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            {
+                context.counter = 4;
+            }
+        }
+    }};
+    Event e("Chain", nullptr);
+    e.actions.on_timeout = chain;
+    RED_CHECK(context.counter == 0);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 1);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 2);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 3);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 4);
+    RED_CHECK(e.garbage == true);
+}
+
+RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
+{
+    struct Context {
+        size_t counter = 0;
+    } context;
+    
+    Sequencer chain = {false, 0, {
+        { "first",
+            [&context](Event&/*event*/,Sequencer&sequencer)
+            {
+                if (context.counter == 0){
+                    context.counter = 1;
+                    sequencer.next_state("third");
+                }
+                else {
+                    context.counter = 10;
+                    sequencer.next_state("fourth");
+                }
+            }
+        },
+        { "second",
+            [&context](Event&/*event*/,Sequencer&sequencer)
+            {
+                context.counter = 2;
+                sequencer.next_state("first");
+            }
+        },
+        { "third",
+            [&context](Event&/*event*/,Sequencer&sequencer)
+            {
+                context.counter = 3;
+                sequencer.next_state("second");
+            }
+        },
+        { "fourth",
+            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            {
+                context.counter = 4;
+            }
+        }
+    }};
+    Event e("Chain", nullptr);
+    e.actions.on_timeout = chain;
+    RED_CHECK(context.counter == 0);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 1);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 3);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 2);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 10);
+    e.exec_timeout();
+    RED_CHECK(context.counter == 4);
+    RED_CHECK(e.garbage == true);
+}
+
 RED_AUTO_TEST_CASE(TestSimpleTimer)
 {
     LOG(LOG_INFO, "TestSimpleTimer");

@@ -120,6 +120,48 @@ struct Event {
 };
 
 
+struct Sequencer {
+    struct Item {
+        std::string label;
+        std::function<void(Event&event,Sequencer&sequencer)> action;
+    };
+    bool reset = false;
+    size_t current = 0;
+    std::vector<Item> sequence;
+    void operator()(Event & event){
+        if (this->current >= this->sequence.size()){
+            event.garbage = true;
+            return;
+        }
+        this->reset = false;
+        try {
+            sequence[this->current].action(event,*this);
+        }
+        catch(...){
+            event.garbage = true;
+            throw;
+        }
+        if (not this->reset){
+            this->current++;
+            if (this->current >= this->sequence.size()){
+                event.garbage = true;
+                return;
+            }
+        }
+    }
+    
+    void next_state(std::string_view label){
+        for(size_t i = 0 ; i < this->sequence.size() ; i++){
+            if (this->sequence[i].label == label){
+                this->reset = true;
+                this->current = i;
+                return;
+            }
+        }
+    }
+};
+
+
 using EventContainer = std::vector<Event>;
 
 inline void end_of_lifespan(EventContainer & events, void * lifespan)
