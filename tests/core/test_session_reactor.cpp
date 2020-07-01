@@ -131,9 +131,9 @@ RED_AUTO_TEST_CASE(TestEventContainer)
 
 RED_AUTO_TEST_CASE(TestNewEmptySequencer)
 {
-    Sequencer chain = {false, 0, {}};
+    Sequencer chain = {false, 0, true, {}};
     Event e("Chain", nullptr);
-    e.actions.on_timeout = chain;
+    e.actions.on_timeout = std::move(chain);
     e.exec_timeout();
     RED_CHECK(e.garbage == true);
 }
@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
     struct Context {
         size_t counter = 0;
     } context;
-    Sequencer chain = {false, 0, {
+    Sequencer chain = {false, 0, false, {
         { "first",
             [&context](Event&/*event*/,Sequencer&/*sequencer*/)
             {
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
         }
     }};
     Event e("Chain", nullptr);
-    e.actions.on_timeout = chain;
+    e.actions.on_timeout = std::move(chain);
     RED_CHECK(context.counter == 0);
     e.exec_timeout();
     RED_CHECK(context.counter == 1);
@@ -190,7 +190,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
         size_t counter = 0;
     } context;
     
-    Sequencer chain = {false, 0, {
+    Sequencer chain = {false, 0, true, {
         { "first",
             [&context](Event&/*event*/,Sequencer&sequencer)
             {
@@ -226,7 +226,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
         }
     }};
     Event e("Chain", nullptr);
-    e.actions.on_timeout = chain;
+    e.actions.on_timeout = std::move(chain);
     RED_CHECK(context.counter == 0);
     e.exec_timeout();
     RED_CHECK(context.counter == 1);

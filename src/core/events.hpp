@@ -26,6 +26,7 @@
 #include <functional>
 
 #include "utils/log.hpp"
+#include "core/error.hpp"
 
 struct Event {
     // TODO: the management of this counter may be moved to EventContainer later
@@ -127,27 +128,44 @@ struct Sequencer {
     };
     bool reset = false;
     size_t current = 0;
+    int verbose = true;
     std::vector<Item> sequence;
     void operator()(Event & event){
         if (this->current >= this->sequence.size()){
+            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence Terminated",
+                event.name);
             event.garbage = true;
             return;
         }
         this->reset = false;
         try {
+            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - %s",
+                event.name, sequence[this->current].label);
             sequence[this->current].action(event,*this);
         }
+        catch(Error & error){
+            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence terminated on Exception %s",
+                event.name, error.errmsg());
+            event.garbage = true;
+            throw;
+        }
         catch(...){
+            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence terminated on Exception",
+                event.name);
             event.garbage = true;
             throw;
         }
         if (not this->reset){
             this->current++;
             if (this->current >= this->sequence.size()){
-                event.garbage = true;
+                LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence Terminated On Last Item",
+                    event.name);
+                    event.garbage = true;
                 return;
             }
         }
+        LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Next sequence item: %s",
+                event.name, this->sequence[this->current].label);
     }
     
     void next_state(std::string_view label){
@@ -158,6 +176,7 @@ struct Sequencer {
                 return;
             }
         }
+        LOG(LOG_ERR, "Sequence item %.*s not found", int(label.size()), label.data());
     }
 };
 
