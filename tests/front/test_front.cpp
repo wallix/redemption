@@ -247,8 +247,11 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, ini, time_base, gd_provider, fd_events_, timer_events_, events, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
+        t, time_base, gd_provider, fd_events_, timer_events_, events, sesman,
+        front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
+        authentifier, report_message, license_store, ini, metrics,
+        file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
     RED_CHECK_EQUAL(front.screen_info().width, 1024);
@@ -412,7 +415,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // front.clear_channels();
     //
     // NullAuthentifier authentifier;
-    // auto mod = new_mod_rdp(t, ini, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

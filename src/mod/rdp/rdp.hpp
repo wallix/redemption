@@ -1841,7 +1841,6 @@ class mod_rdp : public mod_api, public rdp_api
     uint32_t monitor_count = 0;
 
     Transport & trans;
-    Inifile & ini;
     CryptContext encrypt {};
     RdpNegociationResult negociation_result;
 
@@ -2011,7 +2010,6 @@ public:
 
     explicit mod_rdp(
         Transport & trans
-      , Inifile & ini
       , TimeBase& time_base
       , GdProvider & gd_provider
       , TopFdContainer & fd_events_
@@ -2053,7 +2051,6 @@ public:
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
-        , ini(ini)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk
@@ -2364,7 +2361,7 @@ public:
     void acl_update() override
     {
         if (this->enable_server_cert_external_validation) {
-            auto const& message = this->ini.get<cfg::mod_rdp::server_cert_response>();
+            auto const& message = this->vars.get<cfg::mod_rdp::server_cert_response>();
             if (message.empty()) {
                 return;
             }

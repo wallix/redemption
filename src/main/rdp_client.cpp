@@ -273,7 +273,7 @@ int main(int argc, char** argv)
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, ini,
+                trans,
                 time_base,
                 gd_forwarder,
                 fd_events_,

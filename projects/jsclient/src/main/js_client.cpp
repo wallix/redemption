@@ -162,12 +162,12 @@ struct RdpClient
             verbose
         );
 
-        mod_rdp_params.device_id           = "device_id";
+        mod_rdp_params.device_id           = "device_id";   // for certificate path only
         mod_rdp_params.enable_tls          = false;
         mod_rdp_params.enable_nla          = false;
         mod_rdp_params.enable_fastpath     = true;
         mod_rdp_params.enable_new_pointer  = true;
-        mod_rdp_params.enable_glyph_cache  = true;
+        mod_rdp_params.enable_glyph_cache  = supported_orders.test(TS_NEG_GLYPH_INDEX);
         mod_rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
         mod_rdp_params.ignore_auth_channel = true;
 
@@ -179,7 +179,7 @@ struct RdpClient
         const ChannelsAuthorizations channels_authorizations("*", std::string_view{});
 
         this->mod = new_mod_rdp(
-            trans, ini, time_base, gd_forwarder,
+            trans, time_base, gd_forwarder,
             fd_events, timer_events, events, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, channels_authorizations,
             mod_rdp_params, TLSClientParams{}, authentifier, report_message,

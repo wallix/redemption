@@ -215,10 +215,11 @@ public:
                      , to_verbose_flags(verbose), error_message)
 
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, ini, time_base, mod_wrapper, fd_events_, timer_events_, events, sesman, gd, front, info, redir_info, gen, timeobj
-        , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
-        , this->dispatcher /*report_message*/, license_store
-        , vars, metrics, file_validator_service, this->get_rdp_factory())
+    , mod( this->socket_transport, time_base, mod_wrapper, fd_events_, timer_events_
+         , events, sesman, gd, front, info, redir_info, gen, timeobj
+         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
+         , this->dispatcher /*report_message*/, license_store
+         , vars, metrics, file_validator_service, this->get_rdp_factory())
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {

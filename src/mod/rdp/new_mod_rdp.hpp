@@ -52,7 +52,6 @@ namespace gdi { class GraphicApi; }
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
-    Inifile & ini,
     TimeBase& time_base,
     GdProvider & gd_provider,
     TopFdContainer & fd_events_,

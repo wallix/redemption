@@ -474,7 +474,6 @@ public:
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket
-                  , this->ini
                   , this->time_base
                   , this->gd_forwarder
                   , this->fd_events_

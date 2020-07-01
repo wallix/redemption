@@ -192,10 +192,12 @@ RdpNegociation::RdpNegociation(
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,
         [](const char* device_id){
-            size_t lg_certif_path = strlen(app_path(AppPath::Certif));
+            // TODO return str_concat(certif_path, '/', device_id)
+            auto certif_path = app_path(AppPath::Certif);
+            size_t lg_certif_path = certif_path.size();
             size_t lg_dev_id = strlen(device_id);
             auto buffer = std::make_unique<char[]>(lg_certif_path + lg_dev_id + 2);
-            memcpy(buffer.get(), app_path(AppPath::Certif), lg_certif_path);
+            memcpy(buffer.get(), certif_path.data(), lg_certif_path);
             buffer[lg_certif_path] = '/';
             memcpy(buffer.get()+lg_certif_path+1, device_id, lg_dev_id+1);
             return buffer;
