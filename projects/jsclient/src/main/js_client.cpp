@@ -52,9 +52,80 @@ Author(s): Jonathan Poelen
 
 #include <chrono>
 
-using Ms = std::chrono::milliseconds;
+namespace
+{
+    template<class T>
+    std::string get_or_default(emscripten::val const& v, char const* name)
+    {
+        auto prop = v[name];
+        return not prop ? T() : prop.as<T>();
+    };
 
-struct RdpClient
+    template<class T>
+    T get_or(emscripten::val const& v, char const* name, T default_value)
+    {
+        auto prop = v[name];
+        if constexpr (std::is_enum_v<T>) {
+            static_assert(sizeof(T) <= 4);
+            using U = std::underlying_type_t<T>;
+            return not prop ? default_value : T(prop.as<U>());
+        }
+        else {
+            return not prop ? default_value : prop.as<T>();
+        }
+    };
+
+    std::string get_or(emscripten::val const& v, char const* name, char const* default_value)
+    {
+        auto prop = v[name];
+        return not prop ? default_value : prop.as<std::string>();
+    }
+
+    template<class T>
+    ::utils::flags_t<T> get_or(
+        emscripten::val const& v, char const* name,
+        ::utils::flags_t<T> default_value)
+    {
+        using return_type = ::utils::flags_t<T>;
+
+        using Int = typename return_type::bitfield;
+        static_assert(sizeof(Int) <= 4);
+
+        auto prop = v[name];
+        return not prop ? default_value : return_type(prop.as<Int>());
+    }
+
+    template<class Rep, class Period>
+    std::chrono::duration<Rep, Period> get_or(
+        emscripten::val const& v, char const* name,
+        std::chrono::duration<Rep, Period> default_value)
+    {
+        using Duration = std::chrono::duration<Rep, Period>;
+        using Int = std::conditional_t<(sizeof(Rep) > 4), uint32_t, std::make_unsigned_t<Rep>>;
+
+        auto prop = v[name];
+        return not prop ? default_value : Duration(prop.as<Int>());
+    };
+
+
+    ScreenInfo make_screen_info(emscripten::val const& config)
+    {
+        return ScreenInfo{
+            get_or(config, "width", uint16_t(800)),
+            get_or(config, "height", uint16_t(600)),
+            get_or(config, "bpp", BitsPerPixel(16))
+        };
+    }
+
+    RDPVerbose make_rdp_verbose(emscripten::val const& config)
+    {
+        static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
+        return get_or(config, "verbose", RDPVerbose(0));
+        // | (get_or(config, "verbose2", uint32_t(0)) << 32);
+    }
+}
+
+class RdpClient
 {
     struct JsReportMessage : ReportMessageApi
     {
@@ -125,64 +196,154 @@ struct RdpClient
     Theme theme;
     Font font;
 
+public:
     RdpClient(
-        emscripten::val const& random, zstring_view username, zstring_view password,
-        emscripten::val graphics, ScreenInfo screen_info,
-        PrimaryDrawingOrdersSupport disabled_orders, RDPVerbose verbose)
+        emscripten::val&& graphics,
+        emscripten::val const& config)
+    : RdpClient(std::move(graphics), config, make_screen_info(config), make_rdp_verbose(config))
+    {}
+
+    RdpClient(
+        emscripten::val&& graphics,
+        emscripten::val const& config,
+        ScreenInfo screen_info,
+        RDPVerbose verbose)
     : front(std::move(graphics), screen_info.width, screen_info.height, verbose)
     , gd(front.graphic_api())
     , time_base({0,0})
     , sesman(ini)
-    , js_rand(random)
+    , js_rand(config)
     {
+        using namespace std::chrono_literals;
+
         client_info.screen_info = screen_info;
 
-        PrimaryDrawingOrdersSupport supported_orders
+        const auto disabled_orders
+            = get_or(config, "disabledGraphicOrders", PrimaryDrawingOrdersSupport());
+
+        const bool enable_remotefx = get_or(config, "enableRemoteFx", false);
+        const bool enable_large_pointer = get_or(config, "enableLargePointer", true);
+
+
+        // init client_info
+        //@{
+        const PrimaryDrawingOrdersSupport supported_orders
             = front.get_supported_orders() - disabled_orders;
         for (unsigned i = 0; i < NB_ORDER_SUPPORT; ++i) {
             client_info.order_caps.orderSupport[i] = supported_orders.test(OrdersIndexes(i));
         }
 
+        auto cookie = get_or_default<std::string>(config, "reconnectCookie");
+        auto cookie_len = cookie.size();
+        if (cookie.size() > cookie_len) {
+            LOG(LOG_NOTICE, "RdpClient: cookie.length = %zu too large", cookie_len);
+            cookie_len = std::size(client_info.autoReconnectCookie);
+        }
+        client_info.cbAutoReconnectCookie = cookie_len;
+        memcpy(client_info.autoReconnectCookie, cookie.data(), cookie_len);
 
-        ini.set<cfg::mod_rdp::server_redirection_support>(false);
-        ini.set<cfg::mod_rdp::enable_nla>(false);
-        ini.set<cfg::client::tls_fallback_legacy>(true);
+        client_info.keylayout = get_or(config, "keylayout", 0);
+        client_info.console_session = get_or(config, "consoleSession", false);
+        client_info.rdp5_performanceflags = get_or(config, "performanceFlags", false);
+        // TODO client_info.client_time_zone = get_or(config, "timezone", false);
+
+        client_info.bitmap_codec_caps.haveRemoteFxCodec = enable_remotefx;
+        client_info.has_sound_code = get_or(config, "enableSound", false);
+
+        // TODO client_info.alternate_shell = get_or(config, "enableSound", false);
+        // TODO client_info.working_dir = get_or(config, "enableSound", false);
+
+        client_info.large_pointer_caps.largePointerSupportFlags
+            = enable_large_pointer ? LARGE_POINTER_FLAG_96x96 : 0;
+        client_info.multi_fragment_update_caps.MaxRequestSize
+            = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
+        if (enable_large_pointer) {
+            client_info.multi_fragment_update_caps.MaxRequestSize = std::max(
+                client_info.multi_fragment_update_caps.MaxRequestSize,
+                uint32_t(38'055)
+            );
+        }
+        // TODO
+        // client_info.general_caps.extraflags
+        //     = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
+        // TODO
+        // client_info.rail_caps.RailSupportLevel
+        //     = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
+        // TODO
+        // client_info.window_list_caps
+        //     = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
+        //@}
 
 
-        ModRDPParams mod_rdp_params(
-            username.c_str(),
-            password.c_str(),
+        // init rdp_params
+        //@{
+        ModRDPParams rdp_params(
+            get_or_default<std::string>(config, "username").c_str(),
+            get_or_default<std::string>(config, "password").c_str(),
             "0.0.0.0",
-            "0.0.0.0", // client ip is silenced
-            /*front.keymap.key_flags*/ 0,
+            get_or(config, "clientAddress", "0.0.0.0").c_str(),
+            get_or(config, "keyFlags", 0),
             font,
             theme,
             server_auto_reconnect_packet,
             close_box_extra_message,
-            verbose
-        );
+            verbose);
 
-        mod_rdp_params.device_id           = "device_id";   // for certificate path only
-        mod_rdp_params.enable_tls          = false;
-        mod_rdp_params.enable_nla          = false;
-        mod_rdp_params.enable_fastpath     = true;
-        mod_rdp_params.enable_new_pointer  = true;
-        mod_rdp_params.enable_glyph_cache  = supported_orders.test(TS_NEG_GLYPH_INDEX);
-        mod_rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
-        mod_rdp_params.ignore_auth_channel = true;
+        rdp_params.cache_verbose = get_or(config, "cacheVerbose", BmpCache::Verbose(0));
+
+        rdp_params.device_id           = "device_id"; // for certificate path only
+        rdp_params.enable_tls          = false;
+        rdp_params.enable_nla          = false;
+        rdp_params.enable_fastpath     = true;
+        rdp_params.enable_new_pointer  = true;
+        rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
+        rdp_params.ignore_auth_channel = true;
+
+        rdp_params.enable_remotefx = enable_remotefx;
+        rdp_params.enable_restricted_admin_mode = get_or(config, "restrictedAdminMode", false);
+
+        rdp_params.rdp_compression = RdpCompression::rdp6_1;
+
+        rdp_params.open_session_timeout = get_or(config, "openSessionTimeout", 20s);
+
+        rdp_params.disconnect_on_logon_user_change
+            = get_or(config, "disconnectOnLogonUserChange", false);
+
+        rdp_params.hide_client_name = get_or(config, "hideClientName", false);
+        rdp_params.disabled_orders = disabled_orders;
+        rdp_params.enable_glyph_cache = supported_orders.test(TS_NEG_GLYPH_INDEX);
+
+        rdp_params.enable_persistent_disk_bitmap_cache
+            = get_or(config, "enablePersistentDiskBitmapCache", false);
+        rdp_params.enable_cache_waiting_list
+            = get_or(config, "enableCacheWaitingList", false);
+        rdp_params.persist_bitmap_cache_on_disk
+            = get_or(
+                config, "persistBitmapCacheOnDisk",
+                rdp_params.enable_persistent_disk_bitmap_cache);
+
+        rdp_params.lang = get_or(config, "lang", Translation::EN);
+
+        rdp_params.adjust_performance_flags_for_recording = false;
+        rdp_params.large_pointer_support = enable_large_pointer;
+        rdp_params.perform_automatic_reconnection
+            = get_or(config, "performAutomaticReconnection", false);
+
+        rdp_params.split_domain = get_or(config, "splitDomain", false);
+
+        rdp_params.error_message = &ini.get_mutable_ref<cfg::context::auth_error_message>();
+        //@}
 
 
         if (bool(verbose & RDPVerbose::basic_trace)) {
-            mod_rdp_params.log();
+            rdp_params.log();
         }
-
-        const ChannelsAuthorizations channels_authorizations("*", std::string_view{});
 
         this->mod = new_mod_rdp(
             trans, time_base, gd_forwarder,
             fd_events, timer_events, events, sesman, gd, front, client_info,
-            redir_info, js_rand, lcg_timeobj, channels_authorizations,
-            mod_rdp_params, TLSClientParams{}, authentifier, report_message,
+            redir_info, js_rand, lcg_timeobj, ChannelsAuthorizations("*", ""),
+            rdp_params, TLSClientParams{}, authentifier, report_message,
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
 
@@ -244,44 +405,10 @@ struct RdpClient
     }
 };
 
-
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor([](emscripten::val&& graphics, emscripten::val&& config) {
-            auto get_string_or_empty = [](emscripten::val const& v, char const* name){
-                auto prop = v[name];
-                return not prop ? std::string() : prop.as<std::string>();
-            };
-
-            auto get_number_or = [](
-                emscripten::val const& v, char const* name, auto default_value
-            ){
-                auto prop = v[name];
-                return not prop ? default_value : prop.as<decltype(default_value)>();
-            };
-
-            ScreenInfo screen_info{
-                get_number_or(config, "width", uint16_t(800)),
-                get_number_or(config, "height", uint16_t(600)),
-                BitsPerPixel(get_number_or(config, "bpp", uint16_t(16)))
-            };
-
-            auto disabled_orders = get_number_or(config, "disabledGraphicOrders", uint32_t(0));
-
-            static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
-            auto verbose_flags = get_number_or(config, "verbose", uint32_t(0));
-
-            auto username = get_string_or_empty(config, "username");
-            auto password = get_string_or_empty(config, "password");
-
-            return new RdpClient(
-                std::move(config), username, password,
-                std::move(graphics), screen_info,
-                PrimaryDrawingOrdersSupport(disabled_orders),
-                RDPVerbose(verbose_flags)
-            );
-        })
+        .constructor<emscripten::val /*gd*/, emscripten::val /*config*/>()
         .function_ptr("setTime", [](RdpClient& client, uint32_t seconds, uint32_t milliseconds) {
             client.set_time({checked_int(seconds), checked_int(milliseconds*1000u)});
         })
