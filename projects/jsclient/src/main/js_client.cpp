@@ -174,7 +174,7 @@ class RdpClient
 
     redjs::Front front;
     gdi::GraphicApi& gd;
-    GdForwarder<gdi::GraphicApi> gd_forwarder{gd};
+    GdForwarder gd_forwarder{gd};
 
     JsReportMessage report_message;
     TimeBase time_base;

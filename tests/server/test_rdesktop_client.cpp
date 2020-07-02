@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
-    GdForwarder<FrontWrapper> gd_forwarder(front);
+    GdForwarder gd_forwarder(front);
     TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
     mod.init();
 

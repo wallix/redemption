@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestFront)
         report_message, fastpath_support);
     null_mod no_mod;
 
-    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
+    GdForwarder gd_provider(front.gd());
 
     TimerContainer timer_events_;
 

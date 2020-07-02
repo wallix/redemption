@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
+    GdForwarder gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     EventContainer events;
@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
+    GdForwarder gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     EventContainer events;

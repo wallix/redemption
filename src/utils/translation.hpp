@@ -344,6 +344,19 @@ namespace trkeys
         "Fail while connecting session on the target.",
         "Échec lors de la connexion de la session sur la cible."
     );
+
+    TR_KV(file_verification_wait,
+        "File being analyzed: ",
+        "Fichier en cours d'analyse: "
+    );
+    TR_KV(file_verification_accepted,
+        "Valid file: ",
+        "Fichier valide: "
+    );
+    TR_KV(file_verification_rejected,
+        "Invalid file: ",
+        "Fichier invalide: "
+    );
 #undef TR_KV
 #undef TR_KV_FMT
 } // namespace trkeys

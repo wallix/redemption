@@ -272,7 +272,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 #endif
 
             TimeBase time_base({0,0});
-            GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
+            GdForwarder gd_provider(front.gd());
             TopFdContainer fd_events_;
             TimerContainer timer_events_;
             EventContainer events;
@@ -520,7 +520,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 
             TimeBase time_base({0,0});
-            GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
+            GdForwarder gd_provider(front.gd());
             TopFdContainer fd_events_;
             TimerContainer timer_events_;
             EventContainer events;

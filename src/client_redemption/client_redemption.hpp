@@ -231,7 +231,7 @@ public:
 
     std::string       local_IP;
     bool wab_diag_channel_on = false;
-    GdForwarder<ClientRedemption> gd_forwarder;
+    GdForwarder gd_forwarder;
 
 public:
     ClientRedemption(TimeBase& time_base,

@@ -34,6 +34,7 @@
 #include "core/log_id.hpp"
 #include "capture/fdx_capture.hpp"
 #include "mod/file_validator_service.hpp"
+#include "acl/gd_provider.hpp"
 
 #include "./test_channel.hpp"
 #include "test_only/acl/sesman_wrapper.hpp"
@@ -100,6 +101,8 @@ namespace
     constexpr uint32_t last_flags
         = CHANNELS::CHANNEL_FLAG_LAST
         | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+
+    GdForwarder gd_provider{gdi::null_gd()};
 } // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
@@ -108,6 +111,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
     FileValidatorService * ipca_service = nullptr;
 
     BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+
+    EventContainer events;
 
     struct D
     {
@@ -139,7 +144,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         SesmanWrapper sesman;
 
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, time_base,
+            &to_client_sender, &to_server_sender, time_base, events, gd_provider,
             base_params, d.cb_params, ipca_service, {nullptr, false});
 
         RED_CHECK_EXCEPTION_ERROR_ID(
@@ -171,9 +176,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_server_sender;
 
     TimeBase time_base({0,0});
+    EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base,
+        &to_client_sender, &to_server_sender, time_base, events, gd_provider,
         base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -206,10 +212,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     TimeBase time_base({0,0});
+    EventContainer events;
     SesmanWrapper sesman;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base,
+        &to_client_sender, &to_server_sender, time_base, events, gd_provider,
         base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
@@ -819,6 +826,8 @@ namespace
             FrontSenderTest to_client_sender;
             ModSenderTest to_server_sender;
 
+            EventContainer events;
+
             ClipboardVirtualChannel clipboard_virtual_channel;
 
         public:
@@ -835,7 +844,7 @@ namespace
             , to_server_sender(msg_comparator)
             , clipboard_virtual_channel(
                 &to_client_sender, &to_server_sender,
-                timebase,
+                timebase, events, gd_provider,
                 BaseVirtualChannel::Params(report_message, verbose),
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,

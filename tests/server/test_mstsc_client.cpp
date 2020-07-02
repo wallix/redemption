@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
 
-    GdForwarder<FrontWrapper> gd_forwarder(front);
+    GdForwarder gd_forwarder(front);
     TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
     mod.init();
 //    mod.draw_event(front);

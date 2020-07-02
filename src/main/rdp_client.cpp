@@ -199,7 +199,7 @@ int main(int argc, char** argv)
     NullAuthentifier authentifier;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
-    GdForwarder<gdi::GraphicApi> gd_forwarder(gdi::null_gd());
+    GdForwarder gd_forwarder(gdi::null_gd());
 
     if (is_vnc) {
         return run([&](Transport& trans){

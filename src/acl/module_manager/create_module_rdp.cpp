@@ -694,6 +694,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
     vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     vp.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
+    vp.lang = language(ini);
 
     bool enable_validator = ini.get<cfg::file_verification::enable_up>()
         || ini.get<cfg::file_verification::enable_down>();

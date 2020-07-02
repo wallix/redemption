@@ -410,6 +410,7 @@ private:
     TimeBase & time_base;
     TimerContainer& timer_events_;
     EventContainer & events;
+    GdProvider & gd_provider;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -420,6 +421,7 @@ public:
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, TimerContainer& timer_events_, EventContainer & events,
+        GdProvider & gd_provider,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -451,6 +453,7 @@ public:
     , time_base(time_base)
     , timer_events_(timer_events_)
     , events(events)
+    , gd_provider(gd_provider)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
@@ -605,6 +608,8 @@ private:
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
             this->time_base,
+            this->events,
+            this->gd_provider,
             base_params,
             std::move(cvc_params),
             file_validator_service,
@@ -2037,9 +2042,8 @@ public:
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, timer_events_, events, file_validator_service,
-            mod_rdp_factory,
-            spvc_callbacks
+            report_message, gen, metrics, time_base, timer_events_, events,
+            gd_provider, file_validator_service, mod_rdp_factory, spvc_callbacks
         )
 #else
         : channels(channels_authorizations)

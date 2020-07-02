@@ -21,19 +21,22 @@
 #pragma once
 
 #include "gdi/graphic_api.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
-struct GdProvider {
+struct GdProvider : private noncopyable
+{
     virtual gdi::GraphicApi & get_graphics() = 0;
     virtual bool is_ready_to_draw() = 0;
     virtual void display_osd_message(std::string const & message) = 0;
     virtual ~GdProvider() = default;
 };
 
-template<class GD>
-class GdForwarder : public GdProvider {
-    GD & gd;
+class GdForwarder : public GdProvider
+{
+    gdi::GraphicApi & gd;
+
 public:
-    GdForwarder(GD & gd) : gd(gd) {}
+    GdForwarder(gdi::GraphicApi & gd) : gd(gd) {}
     gdi::GraphicApi & get_graphics() override { return this->gd; }
     bool is_ready_to_draw() override { return true; }
     void display_osd_message(std::string const & message) override { (void)message; }

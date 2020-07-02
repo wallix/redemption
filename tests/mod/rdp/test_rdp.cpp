@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     SesmanWrapper sesman;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
-    GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
+    GdForwarder gd_provider(front.gd());
 
     auto mod = new_mod_rdp(
         t, time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(),

@@ -297,8 +297,8 @@ public:
 
     [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
 
-    [[nodiscard]] const char* get_message() const {
-        return this->osd_message.c_str();
+    [[nodiscard]] std::string const& get_message() const {
+        return this->osd_message;
     }
 
     void prepare_osd_message()
@@ -538,8 +538,7 @@ public:
                     std::string msg;
                     msg.reserve(64);
                     if (ini.get<cfg::client::show_target_user_in_f12_message>()) {
-                        msg  = ini.get<cfg::globals::target_user>();
-                        msg += "@";
+                        str_append(msg, ini.get<cfg::globals::target_user>(), '@');
                     }
                     msg += ini.get<cfg::globals::target_device>();
                     const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
@@ -548,9 +547,8 @@ public:
                         const auto elapsed_time = enddate - now;
                         // only if "reasonable" time
                         if (elapsed_time < 60*60*24*366L) {
-                            msg += "  [";
-                            msg += time_before_closing(elapsed_time, Translator(ini));
-                            msg += ']';
+                            str_append(msg,
+                                "  [", time_before_closing(elapsed_time, Translator(ini)), ']');
                         }
                     }
                     if (msg != this->get_message()) {

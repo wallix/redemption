@@ -18,6 +18,7 @@ Copyright (C) Wallix 2010-2020
 Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 */
 
+#include "acl/gd_provider.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
@@ -30,6 +31,7 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/unordered_erase.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "utils/timeval_ops.hpp"
 
 #include <cassert>
 #include <cinttypes>
@@ -130,6 +132,90 @@ struct ClipboardVirtualChannel::ClipCtx::FileContentsRange::TflFile
     }
 };
 
+struct ClipboardVirtualChannel::OSD::D
+{
+    template<class TFn, class FFn>
+    static decltype(auto) find_osd_event(
+        EventContainer& events, int id_event, TFn true_fn, FFn false_fn)
+    {
+        if (id_event != -1) {
+            for (Event& event : events) {
+                if (event.id == id_event) {
+                    return true_fn(event);
+                }
+            }
+        }
+        return false_fn();
+    }
+
+    static void osd_clear_event(ClipboardVirtualChannel& self)
+    {
+        OSD& osd = self.osd;
+
+        find_osd_event(osd.events, osd.id_event,
+            [&osd](Event& event) {
+                osd.id_event = -1;
+                event.garbage = true;
+            },
+            []{}
+        );
+    }
+
+    static void osd_prepare_message(ClipboardVirtualChannel& self, std::string const& filename)
+    {
+        assert(
+            &filename == &self.client_ctx.nolock_data.data.file_name
+         || &filename == &self.server_ctx.nolock_data.data.file_name);
+
+        if (self.osd.enable_osd) {
+            self.osd.msg_type = OSD::MsgType::WaitValidator;
+            Event& event = find_osd_event(self.osd.events, self.osd.id_event,
+                [](Event& event) -> Event& {
+                    event.garbage = false;
+                    return event;
+                },
+                [&self, &filename]() -> Event& {
+                    Event& event = self.osd.events.emplace_back("FileVerifOSD", &self);
+                    event.actions.on_timeout = [&self, &filename](Event& event){
+                        self.osd.gd_provider.display_osd_message(str_concat(
+                            TR(trkeys::file_verification_wait, self.osd.lang), filename));
+                        self.osd.id_event = -1;
+                        event.garbage = true;
+                    };
+                    self.osd.id_event = event.id;
+                    return event;
+                }
+            );
+            event.alarm.set_timeout(self.time_base.get_current_time() + self.osd.delay);
+        }
+    }
+
+    static void osd_disable_message(ClipboardVirtualChannel& self, std::string_view filename)
+    {
+        osd_dlp_response(self, filename, false);
+    }
+
+    static void osd_dlp_response(
+        ClipboardVirtualChannel& self,
+        std::string_view filename, bool is_accepted)
+    {
+        if (self.osd.msg_type == OSD::MsgType::WaitValidator) {
+            if (not is_accepted) {
+                self.osd.gd_provider.display_osd_message(str_concat(
+                    TR(trkeys::file_verification_rejected, self.osd.lang), filename));
+            }
+            else if (self.osd.id_event == -1) {
+                self.osd.gd_provider.display_osd_message(str_concat(
+                    TR(trkeys::file_verification_accepted, self.osd.lang), filename));
+            }
+
+            osd_clear_event(self);
+
+            self.osd.msg_type = OSD::MsgType::Nothing;
+        }
+    }
+};
+
 enum class ClipboardVirtualChannel::ClipCtx::TransferState : uint8_t
 {
     Empty,
@@ -146,15 +232,17 @@ enum class ClipboardVirtualChannel::ClipCtx::TransferState : uint8_t
 
 struct ClipboardVirtualChannel::ClipCtx::NoLockData::D
 {
-    static void init_empty(NoLockData& nolock_data)
+    static void init_empty(NoLockData& nolock_data, ClipboardVirtualChannel& self)
     {
         assert(!nolock_data.data.tfl_file_ptr);
         nolock_data.transfer_state = TransferState::Empty;
+        OSD::D::osd_disable_message(self, nolock_data.data.file_name);
     }
 
     static void init_text(
         NoLockData& nolock_data, FileValidatorId file_validator_id, bool is_unicode)
     {
+        assert(nolock_data.transfer_state == TransferState::Empty);
         nolock_data.data.file_validator_id = file_validator_id;
         nolock_data.is_unicode = is_unicode;
         nolock_data.transfer_state = TransferState::Text;
@@ -164,6 +252,7 @@ struct ClipboardVirtualChannel::ClipCtx::NoLockData::D
         NoLockData& nolock_data,
         StreamId stream_id, FileGroupId lindex)
     {
+        assert(nolock_data.transfer_state == TransferState::Empty);
         nolock_data.data.stream_id = stream_id;
         nolock_data.data.lindex = lindex;
         nolock_data.transfer_state = TransferState::Size;
@@ -174,6 +263,7 @@ struct ClipboardVirtualChannel::ClipCtx::NoLockData::D
         StreamId stream_id, FileGroupId lindex,
         uint32_t file_size_requested, uint64_t file_size, std::string_view file_name)
     {
+        assert(nolock_data.transfer_state == TransferState::Empty);
         nolock_data.data.stream_id = stream_id;
         nolock_data.data.lindex = lindex;
         nolock_data.data.first_file_size_requested = file_size_requested;
@@ -944,7 +1034,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 break;
         }
 
-        NoLockData::D::init_empty(clip.nolock_data);
+        NoLockData::D::init_empty(clip.nolock_data, self);
     }
 
     static void reset_clip(
@@ -1147,17 +1237,17 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 {
                     case ClipCtx::TransferState::WaitingContinuationRange:
                         Self::broken_file_transfer(self, clip, file_rng);
-                        NoLockData::D::init_empty(clip.nolock_data);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
                         break;
 
                     case ClipCtx::TransferState::WaitingValidator:
                         Self::stop_wait_validation(self, clip, file_rng);
-                        NoLockData::D::init_empty(clip.nolock_data);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
                         break;
 
                     case ClipCtx::TransferState::SyncRange:
                         Self::stop_valid_transfer(self, clip, file_rng);
-                        NoLockData::D::init_empty(clip.nolock_data);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
                         break;
 
                     case ClipCtx::TransferState::Size:
@@ -1242,7 +1332,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                                 throw Error(ERR_RDP_PROTOCOL);
                         }
 
-                        NoLockData::D::init_empty(clip.nolock_data);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
 
                         NoLockData::D::init_text(
                             clip.nolock_data,
@@ -1282,7 +1372,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                             Self::finalize_text_transfer(
                                 self, clip, clip.nolock_data.data.file_validator_id);
-                            NoLockData::D::init_empty(clip.nolock_data);
+                            NoLockData::D::init_empty(clip.nolock_data, self);
                         }
                     }
 
@@ -1425,7 +1515,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     if (file_contents_request_pdu.dwFlags() == RDPECLIP::FILECONTENTS_RANGE) {
                         if (file_rng.lindex != ifile) {
                             Self::stop_valid_transfer(self, clip, file_rng);
-                            NoLockData::D::init_empty(clip.nolock_data);
+                            NoLockData::D::init_empty(clip.nolock_data, self);
                             return init_contents_range();
                         }
 
@@ -1489,7 +1579,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         }
 
                         Self::stop_valid_transfer(self, clip, file_rng);
-                        NoLockData::D::init_empty(clip.nolock_data);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
                         LOG(LOG_ERR,
                             "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                                 " Unsupported random access for a FILECONTENTS_RANGE (2)");
@@ -1497,7 +1587,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     }
 
                     Self::stop_valid_transfer(self, clip, file_rng);
-                    NoLockData::D::init_empty(clip.nolock_data);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
                     return init_contents_size();
                 }
 
@@ -1512,19 +1602,19 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         }
                         else {
                             Self::broken_file_transfer(self, clip, file_rng);
-                            NoLockData::D::init_empty(clip.nolock_data);
+                            NoLockData::D::init_empty(clip.nolock_data, self);
                             return init_contents_range();
                         }
                     }
                     else {
                         Self::broken_file_transfer(self, clip, file_rng);
-                        NoLockData::D::init_empty(clip.nolock_data);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
                         return init_contents_size();
                     }
 
                 case ClipCtx::TransferState::WaitingValidator:
                     Self::stop_wait_validation(self, clip, clip.nolock_data.data);
-                    NoLockData::D::init_empty(clip.nolock_data);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
                     [[fallthrough]];
 
                 case ClipCtx::TransferState::Empty:
@@ -1743,7 +1833,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     safe_int(stream_id),
                     &receiver);
                 Self::stop_validation_before_transfer(self, clip, file_rng);
-                NoLockData::D::init_empty(clip.nolock_data);
+                NoLockData::D::init_empty(clip.nolock_data, self);
                 return false;
             }
 
@@ -1789,7 +1879,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         in_stream.remaining_bytes());
                 }
 
-                NoLockData::D::init_empty(clip.nolock_data);
+                NoLockData::D::init_empty(clip.nolock_data, self);
                 break;
 
             case ClipCtx::TransferState::RequestedRange: {
@@ -1804,6 +1894,8 @@ struct ClipboardVirtualChannel::ClipCtx::D
                             "ClipboardVirtualChannel::process_filecontents_response:"
                             " Wait before transfer");
                         send_message_is_ok = false;
+
+                        OSD::D::osd_prepare_message(self, clip.nolock_data.data.file_name);
 
                         NoLockData::D::requested_range_to_get_range(
                             clip.nolock_data, validator_id, new_tfl());
@@ -1840,7 +1932,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
                         if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                             if (finalize_file_transfer(clip.nolock_data.data)) {
-                                NoLockData::D::init_empty(clip.nolock_data);
+                                NoLockData::D::init_empty(clip.nolock_data, self);
                             }
                             else {
                                 NoLockData::D::set_waiting_continuation_range(clip.nolock_data);
@@ -1849,7 +1941,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     }
                 }
                 else {
-                    NoLockData::D::init_empty(clip.nolock_data);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
                 }
 
                 break;
@@ -1862,7 +1954,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                         if (finalize_file_transfer(clip.nolock_data.data)) {
-                            NoLockData::D::init_empty(clip.nolock_data);
+                            NoLockData::D::init_empty(clip.nolock_data, self);
                         }
                         else {
                             NoLockData::D::set_waiting_continuation_range(clip.nolock_data);
@@ -1871,7 +1963,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 }
                 else {
                     Self::broken_file_transfer(self, clip, clip.nolock_data.data);
-                    NoLockData::D::init_empty(clip.nolock_data);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
                 }
 
                 break;
@@ -1911,7 +2003,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         if (set_finalize_file_transfer(file_rng)) {
                             Self::_close_file_rng_tfl(self, file_rng,
                                 Mwrm3::TransferedStatus::Completed);
-                            NoLockData::D::init_empty(clip.nolock_data);
+                            NoLockData::D::init_empty(clip.nolock_data, self);
                         }
                         else {
                             NoLockData::D::set_waiting_continuation_range(clip.nolock_data);
@@ -1921,7 +2013,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 else {
                     Self::stop_valid_transfer(self, clip, file_rng);
                     Self::log_file_info(self, file_rng, (&clip == &self.server_ctx));
-                    NoLockData::D::init_empty(clip.nolock_data);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
                 }
 
                 break;
@@ -1976,7 +2068,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                                         self, file_rng, Mwrm3::TransferedStatus::Broken);
                                 }
                                 send_zero_data();
-                                NoLockData::D::init_empty(clip.nolock_data);
+                                NoLockData::D::init_empty(clip.nolock_data, self);
                                 break;
 
                             case ValidatorState::Success:
@@ -2014,7 +2106,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     Self::stop_validation_before_transfer(self, clip, file_rng);
 
                     send_zero_data();
-                    NoLockData::D::init_empty(clip.nolock_data);
+                    NoLockData::D::init_empty(clip.nolock_data, self);
                 }
 
                 break;
@@ -2306,10 +2398,13 @@ struct ClipboardVirtualChannel::ClipCtx::D
     }
 };
 
+
 ClipboardVirtualChannel::ClipboardVirtualChannel(
     VirtualChannelDataSender* to_client_sender_,
     VirtualChannelDataSender* to_server_sender_,
     TimeBase& time_base,
+    EventContainer& events,
+    GdProvider& gd_provider,
     const BaseVirtualChannel::Params & base_params,
     const ClipboardVirtualChannelParams & params,
     FileValidatorService * file_validator_service,
@@ -2345,10 +2440,20 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     this->params.validator_params.down_target_name,
     this->params.validator_params.block_invalid_file_down,
     this->params.validator_params.max_file_size_rejected)
+, osd{
+    events,
+    gd_provider,
+    this->params.validator_params.osd_delay,
+    (this->params.validator_params.osd_delay.count()
+        && (this->params.validator_params.block_invalid_file_down
+         || this->params.validator_params.block_invalid_file_up)),
+    this->params.validator_params.lang}
 {}
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()
 {
+    OSD::D::osd_clear_event(*this);
+
     try {
         using namespace std::string_view_literals;
 
@@ -2406,7 +2511,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 
                 case ClipCtx::TransferState::RequestedRange:
                 case ClipCtx::TransferState::Size:
-                    ClipCtx::NoLockData::D::init_empty(clip.nolock_data);
+                    ClipCtx::NoLockData::D::init_empty(clip.nolock_data, *this);
                     break;
 
                 case ClipCtx::TransferState::Text:
@@ -2416,7 +2521,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                             this->report_message,
                             direction, status);
                     }
-                    ClipCtx::NoLockData::D::init_empty(clip.nolock_data);
+                    ClipCtx::NoLockData::D::init_empty(clip.nolock_data, *this);
                     break;
 
                 case ClipCtx::TransferState::GetRange:
@@ -2426,7 +2531,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                 case ClipCtx::TransferState::Range:
                 case ClipCtx::TransferState::WaitingContinuationRange:
                     close_rng(clip.nolock_data.data);
-                    ClipCtx::NoLockData::D::init_empty(clip.nolock_data);
+                    ClipCtx::NoLockData::D::init_empty(clip.nolock_data, *this);
                     break;
             }
 
@@ -2789,7 +2894,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                 case ClipCtx::TransferState::Text:
                     if (clip.nolock_data.data.file_validator_id == file_validator_id) {
                         process_text(ClipCtx::D::to_direction(*this, clip));
-                        ClipCtx::NoLockData::D::init_empty(clip.nolock_data);
+                        ClipCtx::NoLockData::D::init_empty(clip.nolock_data, *this);
                         return true;
                     }
                     break;
@@ -2815,7 +2920,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                         }
                         else {
                             filecontents_response_zerodata(sender, file_rng.response_size);
-                            ClipCtx::NoLockData::D::init_empty(clip.nolock_data);
+                            ClipCtx::NoLockData::D::init_empty(clip.nolock_data, *this);
                         }
                         return true;
                     }
@@ -2840,7 +2945,15 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                 return false;
             };
 
-            if (not process_clip(this->client_ctx) && not process_clip(this->server_ctx)) {
+            if (process_clip(this->client_ctx)) {
+                OSD::D::osd_dlp_response(
+                    *this, this->client_ctx.nolock_data.data.file_name, is_accepted);
+            }
+            else if (process_clip(this->server_ctx)) {
+                OSD::D::osd_dlp_response(
+                    *this, this->server_ctx.nolock_data.data.file_name, is_accepted);
+            }
+            else {
                 LOG(LOG_INFO, "ClipboardVirtualChannel::DLP_antivirus_check_channels_files:"
                     " unknown validatorId(%u)", file_validator_id);
             }

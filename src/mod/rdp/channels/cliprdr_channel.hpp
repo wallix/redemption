@@ -22,8 +22,9 @@
 
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
-#include "core/RDP/clipboard/format_name.hpp"
 #include "mod/file_validator_service.hpp"
+#include "core/RDP/clipboard/format_name.hpp"
+#include "core/events.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include <vector>
@@ -31,6 +32,7 @@
 #include <string>
 
 
+class GdProvider;
 class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
@@ -48,6 +50,8 @@ public:
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         TimeBase& time_base,
+        EventContainer& events,
+        GdProvider& gd_provider,
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
@@ -353,6 +357,24 @@ private:
     ClientCtx client_ctx;
     ServerCtx server_ctx;
 
+    struct OSD
+    {
+        EventContainer& events;
+        GdProvider& gd_provider;
+        const std::chrono::seconds delay;
+        const bool enable_osd;
+        Translation::language_t lang;
+
+        enum class MsgType : bool { Nothing, WaitValidator };
+
+        int id_event = -1;
+        MsgType msg_type = MsgType::Nothing;
+
+        class D;
+    };
+
+    OSD osd;
+
     std::vector<FileValidatorDataList> file_validator_list;
     std::vector<TextValidatorDataList> text_validator_list;
 
@@ -364,4 +386,3 @@ private:
 
     void remove_text_validator(TextValidatorDataList* p);
 }; // class ClipboardVirtualChannel
-

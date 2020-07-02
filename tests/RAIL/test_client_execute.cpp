@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestClientExecute)
     client_info.cs_monitor = cs_monitor;
     client_info.cs_core = cs_core;
 
-    GdForwarder<gdi::GraphicApi> gd_forwarder(front.gd());
+    GdForwarder gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     EventContainer events;

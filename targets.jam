@@ -4064,7 +4064,9 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
+  <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/gdi/graphic_api.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
