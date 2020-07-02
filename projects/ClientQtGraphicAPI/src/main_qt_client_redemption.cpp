@@ -51,9 +51,9 @@ public:
         TimeBase & time_base,
         TopFdContainer& fd_events,
         TimerContainer & timer_events,
+        EventContainer& events,
         ClientRedemptionConfig & config)
-    : ClientRedemption(
-        time_base, fd_events, timer_events, config)
+    : ClientRedemption(time_base, fd_events, timer_events, events, config)
     , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
     , qt_socket_listener(time_base, fd_events, timer_events,
@@ -341,6 +341,7 @@ int main(int argc, char** argv)
     TimeBase time_base({0,0});
     TopFdContainer fd_events;
     TimerContainer timer_events;
+    EventContainer events;
 
     QApplication app(argc, argv);
 
@@ -350,7 +351,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_init;
 
-    ClientRedemptionQt client_qt(time_base, fd_events, timer_events, config);
+    ClientRedemptionQt client_qt(time_base, fd_events, timer_events, events, config);
 
     app.exec();
 }

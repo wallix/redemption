@@ -57,7 +57,7 @@ if $(qtversion) = 5
     constant QT5_TOOL_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
     constant QT5_LIB_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
     # TODO search include phonon directory
-    constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/phonon/Phonon ] ;
+    constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/KDE ] ;
 
     constant QT_INCLUDES : $(QT5_INCLUDE) $(QT5_PHONON_INCLUDE) ;
 }
