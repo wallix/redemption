@@ -349,7 +349,10 @@ class Sesman():
         self.record_filebase = None
         self.full_log_path = None
 
-        self.engine = engine.Engine()
+        legacy_auth = SESMANCONF[u'sesman'].get(
+            u'legacy_wabengine_auth', False
+        )
+        self.engine = engine.Engine(legacy_auth)
 
         self.effective_login = None
 
