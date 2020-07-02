@@ -3223,12 +3223,13 @@ private:
                 }
 
                 if (this->ini.get<cfg::client::enable_remotefx>()
-                    && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
+                 && this->client_info.screen_info.bpp == BitsPerPixel{32}
+                ) {
                     Emit_SC_BitmapCodecCaps bitmap_codec_caps;
                     ScreenInfo &screen_info = this->client_info.screen_info;
                     maxRequestSize = std::max(maxRequestSize, static_cast<uint32_t>(screen_info.width * screen_info.height * 4));
 
-                    std::vector<uint8_t> supported_codecs = {CODEC_GUID_REMOTEFX};
+                    std::array<uint8_t, 1> supported_codecs{CODEC_GUID_REMOTEFX};
                     bitmap_codec_caps.emit(stream, supported_codecs);
 
                     if (bool(this->verbose & Verbose::basic_trace3)) {
