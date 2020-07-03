@@ -131,26 +131,26 @@ struct Sequencer {
     int verbose = true;
     std::vector<Item> sequence;
     void operator()(Event & event){
+        this->reset = false;
         if (this->current >= this->sequence.size()){
-            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence Terminated",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence Terminated",
                 event.name);
             event.garbage = true;
             return;
         }
-        this->reset = false;
         try {
-            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - %s",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: %s",
                 event.name, sequence[this->current].label);
             sequence[this->current].action(event,*this);
         }
         catch(Error & error){
-            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence terminated on Exception %s",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence terminated on Exception %s",
                 event.name, error.errmsg());
             event.garbage = true;
             throw;
         }
         catch(...){
-            LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence terminated on Exception",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence terminated on Exception",
                 event.name);
             event.garbage = true;
             throw;
@@ -158,17 +158,19 @@ struct Sequencer {
         if (not this->reset){
             this->current++;
             if (this->current >= this->sequence.size()){
-                LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Sequence Terminated On Last Item",
+                LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence Terminated On Last Item",
                     event.name);
                     event.garbage = true;
                 return;
             }
         }
-        LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Next sequence item: %s",
-                event.name, this->sequence[this->current].label);
+        this->reset = false;
+//        LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Next sequence item: %s",
+//                event.name, this->sequence[this->current].label);
     }
-    
+
     void next_state(std::string_view label){
+        LOG(LOG_ERR, "Moving to out of Sequence item %.*s", int(label.size()), label.data());
         for(size_t i = 0 ; i < this->sequence.size() ; i++){
             if (this->sequence[i].label == label){
                 this->reset = true;
@@ -237,27 +239,40 @@ inline timeval next_timeout(EventContainer & events)
 inline void execute_events(EventContainer & events, const timeval tv, const std::function<bool(int fd)> & fn)
 {
     if (events.size() > 0){
-        LOG(LOG_INFO, "=== Execute Events Loop ===");
+//        LOG(LOG_INFO, "=== Execute Events Loop ===");
     }
 
     for (size_t i = 0 ; i < events.size(); i++){
         auto & event = events[i];
-        LOG(LOG_INFO, "now=%d:%d Examining (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
-            int(tv.tv_sec%1000),int(tv.tv_usec),
-            event.id, event.name.c_str(),
-            int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec),
-            event.alarm.fd,
-            int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec),
-            event.alarm.grace_delay.count(),
-            event.alarm.active?"active ":"",
-            event.teardown?"teardown ":"",
-            event.garbage?"garbage":""
-            );
+//        if (event.alarm.fd != -1){
+//            LOG(LOG_INFO, "now=%d:%d Examining Fd Event (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
+//                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
+//                event.id, event.name.c_str(),
+//                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
+//                event.alarm.fd,
+//                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
+//                event.alarm.grace_delay.count(),
+//                event.alarm.active?"active ":"",
+//                event.teardown?"teardown ":"",
+//                event.garbage?"garbage":""
+//                );
+//        }
+//        else {
+//            LOG(LOG_INFO, "now=%d:%d Examining Timeout Event (%d): %s (%d:%d) TriggerTime=%d:%d %s%s%s",
+//                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
+//                event.id, event.name.c_str(),
+//                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
+//                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
+//                event.alarm.active?"active ":"",
+//                event.teardown?"teardown ":"",
+//                event.garbage?"garbage":""
+//                );
+//        }
 
         if (not (event.garbage or event.teardown)) {
             if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
                 event.alarm.set_timeout(tv+event.alarm.grace_delay);
-                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
+//                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
                 event.exec_action();
                 // Not testing timeout now as fd event was triggered
                 continue;
@@ -265,7 +280,7 @@ inline void execute_events(EventContainer & events, const timeval tv, const std:
         }
         if (not (event.garbage or event.teardown)) {
             if (event.alarm.trigger(tv)){
-                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
+//                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
                 event.exec_timeout();
             }
         }

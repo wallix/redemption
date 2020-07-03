@@ -105,7 +105,7 @@ public:
     , time_base(time_base)
     , timer_events_(timer_events_)
     , events(events)
-    , verbose(verbose)
+    , verbose(verbose|RDPVerbose::sesprobe_launcher)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
         this->params.long_delay_ms                     = std::max(this->params.long_delay_ms, std::chrono::milliseconds(500));
@@ -359,16 +359,19 @@ public:
     {
         std::chrono::milliseconds delay_ms = this->params.short_delay_ms;
         return this->time_base.get_current_time()+this->to_microseconds(delay_ms, this->delay_coefficient);
-    }    
+    }
 
     timeval get_long_delay_timeout()
     {
         std::chrono::milliseconds delay_ms = this->params.long_delay_ms;
         return this->time_base.get_current_time()+this->to_microseconds(delay_ms, this->delay_coefficient);
-    }    
+    }
 
     void make_delay_sequencer()
     {
+
+        LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher make_delay_sequencer()");
+
         using jln::value;
         using namespace jln::literals;
 
@@ -433,7 +436,7 @@ public:
                 event.alarm.set_timeout(this->get_short_delay_timeout());
             }
         },
-        { "Ctrl (up)",            
+        { "Ctrl (up)",
             [this](Event&event,Sequencer&/*sequencer*/)
             {
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
@@ -495,10 +498,12 @@ public:
 
     void make_run_sequencer()
     {
+        LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher make_run_sequencer()");
+
         using jln::value;
         using namespace jln::literals;
 
-        Sequencer chain = {false, 0, true||bool(this->verbose & RDPVerbose::sesprobe_launcher), 
+        Sequencer chain = {false, 0, true||bool(this->verbose & RDPVerbose::sesprobe_launcher),
         {{ "Windows (down)",
             [this](Event&event,Sequencer&/*sequencer*/)
             {
@@ -509,7 +514,7 @@ public:
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
                     SlowPath::KBDFLAGS_EXTENDED, 91, 0/*param2*/);
 
-                event.alarm.set_timeout(this->get_short_delay_timeout());                
+                event.alarm.set_timeout(this->get_short_delay_timeout());
             }
         },
         { "r (down)",
@@ -517,7 +522,7 @@ public:
             {
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
                     0, 19, 0/*param2*/);
-                event.alarm.set_timeout(this->get_short_delay_timeout());                
+                event.alarm.set_timeout(this->get_short_delay_timeout());
             }
         },
         { "r (up)",
@@ -525,7 +530,7 @@ public:
             {
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
                     SlowPath::KBDFLAGS_RELEASE, 19, 0/*param2*/);
-                event.alarm.set_timeout(this->get_short_delay_timeout());                
+                event.alarm.set_timeout(this->get_short_delay_timeout());
             }
         },
         { "Windows (up)",
@@ -533,7 +538,7 @@ public:
             {
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
                     SlowPath::KBDFLAGS_EXTENDED |SlowPath::KBDFLAGS_RELEASE, 91, 0/*param2*/);
-                event.alarm.set_timeout(this->get_long_delay_timeout());                
+                event.alarm.set_timeout(this->get_long_delay_timeout());
             }
         },
         { "Ctrl (down)",
@@ -571,10 +576,13 @@ public:
             }
         },
         { "Enter (down)",
-            [this](Event&event,Sequencer&/*sequencer*/)
+            [this](Event&event,Sequencer&sequencer)
             {
                 ++this->copy_paste_loop_counter;
                 if (!this->format_data_requested) {
+                    LOG(LOG_INFO, ":=> on_event: Back to begining of the sequence");
+                    // Back to the beginning of the sequence
+                    sequencer.next_state("Windows (down)");
                     return event.alarm.set_timeout(this->get_short_delay_timeout());
                 }
                 if (this->image_readed) {
@@ -589,6 +597,7 @@ public:
             [this](Event&event,Sequencer&/*sequencer*/)
             {
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, SlowPath::KBDFLAGS_RELEASE, 28, 0/*param2*/);
+                LOG(LOG_INFO, "========= state changed to State::WAIT (%d) ====", this->state);
                 this->state = State::WAIT;
                 event.alarm.set_timeout(this->get_short_delay_timeout());
                 event.garbage = true;
@@ -613,6 +622,7 @@ public:
                     return (this->state < State::WAIT);
                 }
 
+                LOG(LOG_INFO, "========= state changed to State::DELAY (%d) ====", this->state);
                 this->state = State::DELAY;
 
                 make_delay_sequencer();
@@ -625,6 +635,7 @@ public:
             else if (this->delay_wainting_clipboard_response) {
                 this->delay_wainting_clipboard_response = false;
 
+                LOG(LOG_INFO, "========= state changed to State::RUN (%d) ====", this->state);
                 this->state = State::RUN;
 
                 make_run_sequencer();
@@ -641,6 +652,7 @@ public:
             return (this->state < State::WAIT);
         }
 
+        LOG(LOG_INFO, "========= state changed to State::RUN B (%d) ====", this->state);
         this->state = State::RUN;
 
         make_run_sequencer();
@@ -717,6 +729,8 @@ public:
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
             "SessionProbeClipboardBasedLauncher :=> stop");
+
+        LOG(LOG_INFO, "========= state changed to State::STOP (%d) ====", this->state);
 
         this->state = State::STOP;
         if (this->event_id) {
