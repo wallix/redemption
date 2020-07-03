@@ -1954,8 +1954,8 @@ class mod_rdp : public mod_api, public rdp_api
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-#ifndef __EMSCRIPTEN__
     EventContainer & events;
+#ifndef __EMSCRIPTEN__
     SesmanInterface & sesman;
 #endif
 
@@ -2127,8 +2127,8 @@ public:
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
         , gd_provider(gd_provider)
-        #ifndef __EMSCRIPTEN__
         , events(events)
+        #ifndef __EMSCRIPTEN__
         , sesman(sesman)
         #endif
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
@@ -2161,7 +2161,6 @@ public:
         #endif
     {
         #ifdef __EMSCRIPTEN__
-        (void)timer_events_;
         (void)events;
         (void)mod_rdp_factory;
         (void)sesman;
@@ -2278,7 +2277,7 @@ public:
                         // trigger timeout after 1 hour inactivity
                         + std::chrono::seconds{3600});
                     // Timeout Does nothing anyway
-                    event.actions.on_timeout = [this](Event&/*event*/) {};
+                    event.actions.on_timeout = [](Event&/*event*/) {};
                     // Replace event by Normal RDP fd event
                     event.rename("First Incoming RDP PDU Event");
                     event.actions.on_action = [this](Event&event)
@@ -2345,8 +2344,6 @@ public:
             };
         };
         this->events.push_back(event);
-// ====================================================================
-//        .on_exit(check_error)
     }   // mod_rdp
 
 
@@ -5293,12 +5290,12 @@ public:
                                 }
                             }
                         }
-                        
+
                         Event event("Bypass Legal Notice Timer", this);
                         this->remoteapp_one_shot_bypass_window_legalnotice = event.id;
                         event.alarm.set_timeout(this->time_base.get_current_time()
                                         + this->channels.remote_app.bypass_legal_notice_delay);
-                        Sequencer chain = {false, 0, false, 
+                        Sequencer chain = {false, 0, false,
                         {
                             { "one",
                                 [this](Event&event,Sequencer&/*sequencer*/)

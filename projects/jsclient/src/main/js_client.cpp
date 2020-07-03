@@ -22,7 +22,6 @@ Author(s): Jonathan Poelen
 # define __EMSCRIPTEN__
 #endif
 
-#include "core/session_reactor.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "acl/license_api.hpp"
@@ -30,7 +29,6 @@ Author(s): Jonathan Poelen
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -265,8 +263,6 @@ class RdpClient
 
     JsReportMessage report_message;
     TimeBase time_base;
-    TopFdContainer fd_events;
-    TimerContainer timer_events;
     EventContainer events;
 
     Inifile ini;
@@ -428,8 +424,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd_forwarder,
-            fd_events, timer_events, events, sesman, gd, front, client_info,
+            trans, time_base, gd_forwarder, events, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{}, authentifier, report_message,
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -437,13 +432,18 @@ public:
 
     void write_first_packet()
     {
-        this->fd_events.exec_timeout(this->time_base.get_current_time());
+        // TODO timer only
+        execute_events(this->events, this->time_base.get_current_time(), [](int /*fd*/){
+            return false;
+        });
     }
 
     void set_time(timeval time)
     {
         this->time_base.set_current_time(time);
-        this->fd_events.exec_timeout(this->time_base.get_current_time());
+        execute_events(this->events, this->time_base.get_current_time(), [](int /*fd*/){
+            return true;
+        });
     }
 
     bytes_view get_output_buffer() const
@@ -459,7 +459,10 @@ public:
     void process_input_data(std::string data)
     {
         this->trans.push_input_buffer(std::move(data));
-        this->fd_events.exec_action([](int /*fd*/, auto& /*top*/){ return true; });
+        // TODO action only
+        execute_events(this->events, this->time_base.get_current_time(), [](int /*fd*/){
+            return true;
+        });
     }
 
     void write_scancode_event(uint16_t scancode)
