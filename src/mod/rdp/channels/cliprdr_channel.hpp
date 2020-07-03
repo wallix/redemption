@@ -64,7 +64,7 @@ public:
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task, SesmanInterface & sesman) override;
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override;
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->clipboard_monitor_ready_notifier = launcher;

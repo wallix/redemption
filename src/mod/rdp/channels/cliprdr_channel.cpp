@@ -2444,8 +2444,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 
 void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
     uint32_t flags, bytes_view chunk_data,
-    std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-    SesmanInterface & /*sesman*/)
+    std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
 {
     (void)out_asynchronous_task;
 

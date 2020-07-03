@@ -76,8 +76,8 @@ public:
     bool    delay_wainting_clipboard_response = false;
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer& events;
+    SesmanInterface& sesman;
 
     const RDPVerbose verbose;
 
@@ -93,8 +93,8 @@ public:
 public:
     SessionProbeClipboardBasedLauncher(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
         EventContainer& events,
+        SesmanInterface & sesman,
         mod_api& mod,
         const char* alternate_shell,
         Params params,
@@ -103,8 +103,8 @@ public:
     , mod(mod)
     , alternate_shell(alternate_shell)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
+    , sesman(sesman)
     , verbose(verbose|RDPVerbose::sesprobe_launcher)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
@@ -190,7 +190,7 @@ public:
         return false;
     }
 
-    bool on_device_announce_responded(bool bSucceeded, SesmanInterface & sesman) override {
+    bool on_device_announce_responded(bool bSucceeded) override {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
             "SessionProbeClipboardBasedLauncher :=> on_device_announce_responded, Succeeded=%s", (bSucceeded ? "Yes" : "No"));
 
@@ -208,7 +208,7 @@ public:
                 this->drive_redirection_initialized = false;
 
                 if (this->sesprob_channel) {
-                    this->sesprob_channel->abort_launch(sesman);
+                    this->sesprob_channel->abort_launch();
                 }
             }
         }

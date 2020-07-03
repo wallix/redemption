@@ -444,6 +444,7 @@ private:
     GdProvider & gd_provider;
     TimerContainer& timer_events_;
     EventContainer & events;
+    SesmanInterface & sesman;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -455,6 +456,7 @@ public:
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider,
         TimerContainer& timer_events_, EventContainer & events,
+        SesmanInterface & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -487,6 +489,7 @@ public:
     , gd_provider(gd_provider)
     , timer_events_(timer_events_)
     , events(events)
+    , sesman(sesman)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
@@ -875,6 +878,7 @@ public:
             this->time_base,
             this->timer_events_,
             this->events,
+            this->sesman,
             this->session_probe_to_server_sender.get(),
             front,
             rdp,
@@ -967,7 +971,7 @@ public:
         }
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
         assert(!out_asynchronous_task);
     }   // process_cliprdr_event
 
@@ -1070,7 +1074,7 @@ public:
 #endif
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         assert(!out_asynchronous_task);
     }
@@ -1093,7 +1097,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         assert(!out_asynchronous_task);
     }
@@ -1152,7 +1156,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
@@ -1210,7 +1214,7 @@ public:
         FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
         }
@@ -1471,8 +1475,8 @@ public:
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     this->time_base,
-                    this->timer_events_,
                     this->events,
+                    this->sesman,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
@@ -1756,7 +1760,7 @@ public:
             }
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
             if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
-                this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+                this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
@@ -1788,7 +1792,7 @@ public:
             }
 
             if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
-                this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+                this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
 
             if (this->remote_app.enable_remote_program) {
@@ -2094,7 +2098,9 @@ public:
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, gd_provider, timer_events_, events, file_validator_service,
+            report_message, gen, metrics, time_base, gd_provider, timer_events_, events,
+            sesman,
+            file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
         )
@@ -5134,7 +5140,7 @@ public:
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel &&
             this->session_probe_start_launch_timeout_timer_only_after_logon) {
-            this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+            this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 #endif
 
@@ -5207,7 +5213,7 @@ public:
 
             if (this->channels.session_probe_virtual_channel &&
                 this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+                this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
 #endif
         }
