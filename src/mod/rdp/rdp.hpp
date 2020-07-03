@@ -876,7 +876,6 @@ public:
 #ifndef __EMSCRIPTEN__
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
-            this->timer_events_,
             this->events,
             this->sesman,
             this->session_probe_to_server_sender.get(),
@@ -1984,7 +1983,7 @@ class mod_rdp : public mod_api, public rdp_api
     SesmanInterface & sesman;
 
 #ifndef __EMSCRIPTEN__
-    TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
+    int remoteapp_one_shot_bypass_window_legalnotice = 0;
 #endif
 
     bool deactivation_reactivation_in_progress = false;
@@ -5177,7 +5176,16 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+            if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                for(auto & event: this->events){
+                    if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                        event.garbage = true;
+                        event.id = 0;
+                        this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                        break;
+                    }
+                }
+            }
 #endif
         }
         break;
@@ -5191,7 +5199,16 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+            if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                for(auto & event: this->events){
+                    if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                        event.garbage = true;
+                        event.id = 0;
+                        this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                        break;
+                    }
+                }
+            }
 #endif
         }
         break;
@@ -5240,7 +5257,16 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-                this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+                if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                    for(auto & event: this->events){
+                        if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                            event.garbage = true;
+                            event.id = 0;
+                            this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                            break;
+                        }
+                    }
+                }
 #endif
             }
 
@@ -5261,32 +5287,59 @@ public:
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->timer_events_
-                        .create_timer_executor(this->time_base)
-                        .set_delay(this->channels.remote_app.bypass_legal_notice_delay)
-                        .on_action(jln::sequencer(
-                            [this](auto ctx) {
-                                LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
-                                this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
-                                this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
-
-                                if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
-                                    ctx.set_delay(this->channels.remote_app.bypass_legal_notice_timeout);
-
-                                    return ctx.next();
+                        if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                            for(auto & event: this->events){
+                                if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                                    event.garbage = true;
+                                    event.id = 0;
                                 }
-                                return ctx.terminate();
-                            },
-                            [this](auto ctx) {
-                                this->on_remoteapp_redirect_user_screen(
-                                    this->authentifier, RDP::LOGON_FAILED_OTHER);
-                                return ctx.terminate();
                             }
-                        ));
+                        }
+                        
+                        Event event("Bypass Legal Notice Timer", this);
+                        this->remoteapp_one_shot_bypass_window_legalnotice = event.id;
+                        event.alarm.set_timeout(this->time_base.get_current_time()
+                                        + this->channels.remote_app.bypass_legal_notice_delay);
+                        Sequencer chain = {false, 0, false, 
+                        {
+                            { "one",
+                                [this](Event&event,Sequencer&/*sequencer*/)
+                                {
+                                    LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
+                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
+                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
+
+                                    if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
+                                        event.alarm.set_timeout(this->time_base.get_current_time()
+                                            + this->channels.remote_app.bypass_legal_notice_timeout);
+                                        return;
+                                    }
+                                    event.garbage = true;
+                                }
+                            },
+                            { "two",
+                                [this](Event&event,Sequencer&/*sequencer*/)
+                                {
+                                    this->on_remoteapp_redirect_user_screen(
+                                        this->authentifier, RDP::LOGON_FAILED_OTHER);
+                                    event.garbage = true;
+                                }
+                            }
+                        }};
+                        event.actions.on_timeout = chain;
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+                    if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                        for(auto & event: this->events){
+                            if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                                event.garbage = true;
+                                event.id = 0;
+                                this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                                break;
+                            }
+                        }
+                    }
                 }
 #endif
             }

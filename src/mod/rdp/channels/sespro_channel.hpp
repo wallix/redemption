@@ -123,7 +123,6 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer& events;
     int session_probe_timer = 0;
     Callbacks & callbacks;
@@ -176,7 +175,6 @@ public:
 
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
         EventContainer& events,
         SesmanInterface & sesman,
         VirtualChannelDataSender* to_server_sender_,
@@ -204,7 +202,6 @@ public:
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
     , callbacks(callbacks)
     , sesman(sesman)

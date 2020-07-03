@@ -5231,10 +5231,6 @@ test-run tests/utils/sugar/unordered_erase :
   $(REDEMPTION_TEST_PATH)/utils/sugar/unordered_erase.cpp
 :
 ;
-test-run tests/utils/test_asynchronous_task_manager :
-  $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
-:
-;
 test-run tests/utils/test_base64 :
   $(REDEMPTION_TEST_PATH)/utils/test_base64.cpp
 :
@@ -6054,7 +6050,6 @@ alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
 alias unordered_erase : tests/utils/sugar/unordered_erase ;
-alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_base64 : tests/utils/test_base64 ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitmap : tests/utils/test_bitmap ;
@@ -6813,7 +6808,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/unordered_erase
 ;
 alias tests/utils.norec :
-  tests/utils/test_asynchronous_task_manager
   tests/utils/test_base64
   tests/utils/test_bitfu
   tests/utils/test_bitmap
