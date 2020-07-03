@@ -3,31 +3,18 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body {
-            display: flex;
-        }
-        form {
-            /* display:inline; */
-            /* vertical-align:top; */
-            margin-bottom: 2em
-        }
 
-        input {
-            /* display: flex; */
-            /* flex-direction: column; */
-        }
+body {
+    display: flex;
+}
+form {
+    margin-bottom: 2em
+}
 
-        section {
-            background: cyan
-        }
-    </style>
-</head>
-<body>
+section {
+    background: cyan
+}
 
-<div>
-<canvas id="canvas" width="800" height="600"></canvas>
-<input id="canvasFocus" type="text"/>
-<style>
 #canvasFocus {
     width: 0px;
     height: 0px;
@@ -44,54 +31,76 @@
 #login label {
     display: inline-block
 }
-</style>
+
+    </style>
+</head>
+<body>
+
+<div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <input id="canvasFocus" type="text"/>
 </div>
 <section>
     <form id="login" method="get" action="#">
         <fieldset>
-            <legend>Connection</legend>
-            <label for="ws">url: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
-            <label for="user">User: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
-            <label for="pass">Pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
+            <legend>Client</legend>
+            <fieldset>
+                <legend>Identification</legend>
+                <label for="ws">url: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
+                <label for="user">User: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
+                <label for="pass">Pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
+            </fieldset>
+            <fieldset>
+                <legend>Graphics</legend>
+                <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
+                <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
+                <label for="bpp">bpp: <select name="bpp" id="bpp">
+                    <option value="8">8</option>
+                    <option value="15">15</option>
+                    <option value="16" selected="selected">16</option>
+                    <option value="24">24</option>
+                    <option value="32">32</option>
+                </select></label>
+                <label for="disabledGraphics">disabled: <select name="disabledGraphics" id="disabledGraphics" multiple>
+                </select></label>
+            </fieldset>
+            <fieldset>
+                <legend>Others</legend>
+                <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
+                <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea>
+            </fieldset>
+            <p>
+                <input type="submit" value="New Connection"/>
+                <button id="disconnect" type="button" disabled="disabled">Disconnect</button>
+            </p>
         </fieldset>
-        <fieldset>
-            <legend>Graphique</legend>
-            <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
-            <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
-            <label for="bpp">bpp: <select name="bpp" id="bpp">
-                <option value="8">8</option>
-                <option value="15">15</option>
-                <option value="16" selected="selected">16</option>
-                <option value="24">24</option>
-                <option value="32">32</option>
-            </select></label>
-            <label for="disabledGraphics">disabled: <select name="disabledGraphics" id="disabledGraphics" multiple>
-            </select></label>
-        </fieldset>
-        <fieldset>
-            <legend>Autres</legend>
-            <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
-        </fieldset>
-        <input type="submit" value="New Connection">
     </form>
-    <form id="disconnect" method="get" action="#">
-        <input type="submit" disabled="disabled" value="Disconnect">
-    </form>
+
     <form id="sendCbFile" method="get" action="#">
-        <input id="sendCbFile_data" name="myFile" type="file">
-        <input type="submit" value="Send File">
+        <fieldset>
+            <legend>File Clipboard</legend>
+            <input id="sendCbFile_data" name="myFile" type="file"/>
+            <input type="submit" value="Send File"/>
+        </fieldset>
     </form>
+
     <form id="sendCbUtf8" method="get" action="#">
-        <textarea id="sendCbUtf8_data"></textarea>
-        <input type="submit" value="Send Clipboard">
+        <fieldset>
+            <legend>Text Clipboard</legend>
+            <textarea id="sendCbUtf8_data"></textarea>
+            <input type="submit" value="Send Clipboard"/>
+        </fieldset>
     </form>
-    <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
-        <!-- <input type="submit" value="Send Clipboard"> -->
-        <textarea id="receiveCbUtf8_data"></textarea>
-    <!-- </form> -->
-    <p id="cbFmts"></p>
-    <p id="cbFiles"></p>
-    <a id="cbDownload"></a>
+
+    <div>
+        <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
+            <!-- <input type="submit" value="Send Clipboard"> -->
+            <textarea id="receiveCbUtf8_data"></textarea>
+        <!-- </form> -->
+        <p id="cbFmts"></p>
+        <p id="cbFiles"></p>
+        <a id="cbDownload"></a>
+    </div>
 
 <section>
 
@@ -102,8 +111,31 @@
 <script src="clipboard.js"></script>
 
 <script>
-let _Module;
+const ecanvasFocus = document.getElementById('canvasFocus');
+const ecanvas = document.getElementById('canvas');
+const canvas = ecanvas.getContext('2d');
+const login = document.getElementById('login');
+const disconnectButton = document.getElementById('disconnect');
+const sendCbUtf8 = document.getElementById('sendCbUtf8');
+const sendCbFile = document.getElementById('sendCbFile');
+// const receiveCbUtf8 = document.getElementById('receiveCbUtf8');
+const sendCbUtf8_data = document.getElementById('sendCbUtf8_data');
+const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
+const sendCbFile_data = document.getElementById('sendCbFile_data');
+const user_input = document.getElementById('user');
+const disabled_graphics_input = document.getElementById('disabledGraphics');
+const verbose_input = document.getElementById('verbose');
+const jsonConfig_input = document.getElementById('jsonConfig');
+const pass_input = document.getElementById('pass');
+const ws_input = document.getElementById('ws');
+const height_input = document.getElementById('height');
+const width_input = document.getElementById('width');
+const bpp_input = document.getElementById('bpp');
+const cbFmts = document.getElementById('cbFmts');
+const cbFiles = document.getElementById('cbFiles');
+const cbDownload = document.getElementById('cbDownload');
 
+let _Module;
 WallixModule({
     // INITIAL_MEMORY: 16777216, // 16**6
     // INITIAL_MEMORY: 268435456, // 16**7
@@ -126,30 +158,6 @@ const RdpClient = Module.RdpClient;
 const ClipboardChannel = Module.ClipboardChannel;
 const HEAPU8 = Module.HEAPU8;
 const HEAPU16 = Module.HEAPU16;
-
-
-const ecanvasFocus = document.getElementById('canvasFocus');
-const ecanvas = document.getElementById('canvas');
-const canvas = ecanvas.getContext('2d');
-const login = document.getElementById('login');
-const disconnectButton = document.getElementById('disconnect');
-const sendCbUtf8 = document.getElementById('sendCbUtf8');
-const sendCbFile = document.getElementById('sendCbFile');
-// const receiveCbUtf8 = document.getElementById('receiveCbUtf8');
-const sendCbUtf8_data = document.getElementById('sendCbUtf8_data');
-const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
-const sendCbFile_data = document.getElementById('sendCbFile_data');
-const user_input = document.getElementById('user');
-const disabled_graphics_input = document.getElementById('disabledGraphics');
-const verbose_input = document.getElementById('verbose');
-const pass_input = document.getElementById('pass');
-const ws_input = document.getElementById('ws');
-const height_input = document.getElementById('height');
-const width_input = document.getElementById('width');
-const bpp_input = document.getElementById('bpp');
-const cbFmts = document.getElementById('cbFmts');
-const cbFiles = document.getElementById('cbFiles');
-const cbDownload = document.getElementById('cbDownload');
 
 const KbdFlags = Object.freeze({
     Extended: 0x0100,
@@ -175,8 +183,7 @@ function MultiSelectToInt(e, constants)
     let flags = 0;
     for (let i = 0; i < e.length; i++) {
         if (e.options[i].selected) {
-            console.log()
-            flags |= constants[e.options[i].value];
+            flags |= constants[e.options[i].value] || 0;
         }
     }
     return flags;
@@ -184,7 +191,7 @@ function MultiSelectToInt(e, constants)
 
 const gd = new RDPGraphics(ecanvas, Module);
 
-function run()
+function run(openCb, closeCb)
 {
     const socket = new WebSocket(ws_input.value, "RDP");
     socket.binaryType = 'arraybuffer';
@@ -342,19 +349,12 @@ function run()
         rdpclient.addChannelReceiver(channel.getChannelReceiver());
     }
 
-    const socketState = {socket: socket, isClosed: false};
+    let isClosed = false;
 
     socket.onopen = function(event) {
         console.log('RdpClient open');
 
-        disconnectButton.onsubmit = (e) => {
-            e.preventDefault();
-            gd.drawRect(0, 0, gd.width, gd.height, 0);
-            socket.close();
-        };
-        disconnectButton.firstElementChild.disabled = false;
-
-        rdpclient = new RdpClient(gd, {
+        rdpclient = new RdpClient(gd, Object.assign({
             width: Number(width_input.value),
             height: Number(height_input.value),
             bpp: Number(bpp_input.value),
@@ -363,7 +363,7 @@ function run()
             password: pass_input.value,
             // getRandomValues: (data) => crypto.getRandomValues(data),
             verbose: Number(verbose_input.value) || 0/*0x04000000*/,
-        });
+        }, JSON.parse(jsonConfig_input.value || '{}')));
 
         const cliprdr = new Cliprdr(cbFiles, sendData, Module);
         const clipboard = new ClipboardChannel(
@@ -398,38 +398,33 @@ function run()
 
         socket.onclose = function(event) {
             console.log('RdpClient close');
-            disconnectButton.firstElementChild.disabled = true;
             rdpclient.delete();
             // gd.delete();
             for (const channel of channels) {
                 channel.delete();
             }
             canvasStopEvents();
-            socketState.isClosed = true;
+            isClosed = true;
+
+            closeCb();
         };
 
         rdpclient.writeFirstPacket();
         sendData();
 
         canvasStartEvents();
+
+        openCb();
     }
 
-    return socketState;
+    return () => {
+        if (!isClosed) {
+            gd.drawRect(0, 0, gd.width, gd.height, 0);
+            socket.close();
+            isClosed = true;
+        }
+    };
 }
-
-socketState = {isClosed: true};
-
-login.onsubmit = (e) => {
-    e.preventDefault();
-    if (!socketState.isClosed) {
-        socketState.socket.close();
-    }
-    socketState = run();
-};
-
-
-gd.drawRect(0, 0, gd.width, gd.height, 0);
-
 
 const url = new URL(window.location.href);
 
@@ -439,6 +434,7 @@ const inputs = {
     ws: ws_input,
     width: width_input,
     height: height_input,
+    config: jsonConfig_input,
 };
 for (const k in inputs) {
     const x = url.searchParams.get(k);
@@ -465,6 +461,14 @@ for (const k in selectFlags) {
     const x = parseInt(url.searchParams.get(k));
     const select = selectFlags[k][0];
     const flags = selectFlags[k][1];
+
+    const opt = document.createElement('option');
+    opt.textContent = 'None (0x00)';
+    select.appendChild(opt);
+    if (!x) {
+        opt.selected = true;
+    }
+
     for (name in flags) {
         const opt = document.createElement('option');
         const flag = flags[name];
@@ -472,12 +476,35 @@ for (const k in selectFlags) {
         opt.textContent = `${name} (0x${flag.toString(2).length.toString(16).padStart(2, '0')})`;
         select.appendChild(opt);
         if (x & flag) {
-            opt.selected = "selected";
+            opt.selected = true;
         }
     }
 }
 
-socketState = run();
+
+gd.drawRect(0, 0, gd.width, gd.height, 0);
+
+let closeClient = ()=>{};
+function openClient()
+{
+    closeClient();
+    closeClient = run(
+        () => { disconnectButton.disabled = false; },
+        () => { disconnectButton.disabled = true; },
+    );
+};
+
+login.onsubmit = (e) => {
+    e.preventDefault();
+    openClient();
+};
+
+disconnectButton.onclick = (e) => {
+    e.preventDefault();
+    closeClient();
+};
+
+openClient();
 
 });
 // const bytearray = new Uint8Array(event.data)
