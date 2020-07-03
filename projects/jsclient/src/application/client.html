@@ -144,12 +144,13 @@ WallixModule({
 _Module = Module;
 
 // optional
-console.log(Module.LogLevel)
+const LogLevel = Module.LogLevel;
+console.log(LogLevel);
 Module.log = function(priority, msg) {
-    const logger = (priority === Module.LogLevel.Info) ? console.log
-                 : (priority === Module.LogLevel.Warning) ? console.warn
-                 : (priority === Module.LogLevel.Error) ? console.error
-                 : (priority === Module.LogLevel.Debug) ? console.debug
+    const logger = (priority === LogLevel.Info) ? console.log
+                 : (priority === LogLevel.Warning) ? console.warn
+                 : (priority === LogLevel.Error) ? console.error
+                 : (priority === LogLevel.Debug) ? console.debug
                  : console.log;
     logger(msg);
 };
@@ -158,6 +159,7 @@ const RdpClient = Module.RdpClient;
 const ClipboardChannel = Module.ClipboardChannel;
 const HEAPU8 = Module.HEAPU8;
 const HEAPU16 = Module.HEAPU16;
+const MouseFlags = Module.MouseFlags;
 
 const KbdFlags = Object.freeze({
     Extended: 0x0100,
@@ -172,8 +174,8 @@ function mouseButtonToFlag(evt)
     case 0: return 0x1000; // left button
     case 1: return 0x4000; // middle button
     case 2: return 0x2000; // right button
-    // case 3: return 0x0001;
-    // case 4: return 0x0002;
+    case 3: return 0x0001;
+    case 4: return 0x0002;
     }
     return 0x1000;
 }
@@ -229,6 +231,7 @@ function run(openCb, closeCb)
             //     break;
             // }
             evt.preventDefault();
+            evt.stopImmediatePropagation();
             rdpclient.writeScancodeEvent(scancode | flag);
             sendData();
         }
@@ -237,31 +240,24 @@ function run(openCb, closeCb)
         // }
     }
 
-    function onMouseEvent(flag, evt)
+    function sendMouseEvent(evt, flags)
     {
         evt.preventDefault();
-        // console.log(evt.offsetX, evt.offsetY, evt.button)
-        // console.log(flag, evt.button)
-        rdpclient.writeMouseEvent(evt.offsetX, evt.offsetY, flag | mouseButtonToFlag(evt));
+        evt.stopImmediatePropagation();
+        rdpclient.writeMouseEvent(evt.offsetX, evt.offsetY, flags);
         sendData();
     }
-
 
     const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
     const onKeyDown = (evt) => { onKeyEvent(0, evt); };
     const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
 
-    const onMouseMove = (evt) => {
-        evt.preventDefault();
-        // console.log(evt.offsetX, evt.offsetY, evt.button)
-        rdpclient.writeMouseEvent(evt.offsetX, evt.offsetY, 0x0800);
-    };
-    const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
-    const onMouseUp = (evt) => { onMouseEvent(0, evt); };
+    const onMouseMove = (evt) => sendMouseEvent(evt, MouseFlags.Move);
+    const onMouseDown = (evt) => sendMouseEvent(evt, MouseFlags.Down | mouseButtonToFlag(evt));
+    const onMouseUp = (evt) => sendMouseEvent(evt, MouseFlags.Up | mouseButtonToFlag(evt));
     const onMouseWheel = (evt) => {
-        evt.preventDefault();
-        // 0x200 | delta
-        rdpclient.writeMouseEvent(0, 0, (evt.deltaY < 0) ? 0x287 : 0x388);
+        const delta = (evt.deltaY < 0) ? MouseFlags.WheelRotationMask : MouseFlags.WheelNegative;
+        sendMouseEvent(evt, MouseFlags.VerticalWheel | delta);
     };
 
     const docEvents = {
@@ -275,7 +271,10 @@ function run(openCb, closeCb)
         mousedown: onMouseDown,
         mouseup: onMouseUp,
         wheel: onMouseWheel,
-        contextmenu: event => event.preventDefault()
+        contextmenu: event => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
     };
 
     const canvasFocusEvents = {
@@ -326,7 +325,10 @@ function run(openCb, closeCb)
     {
         console.log('focus');
         addEvents(document, docEvents);
-        ecanvas.onclick = (e) => e.preventDefault();
+        ecanvas.onclick = (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        };
     }
 
     function canvasEnableFocus()
@@ -375,12 +377,14 @@ function run(openCb, closeCb)
 
         sendCbUtf8.onsubmit = (e) => {
             e.preventDefault();
+            e.stopImmediatePropagation();
             clipboard.sendFormat(CF.UNICODETEXT, 0, "");
             sendData();
         };
 
         sendCbFile.onsubmit = (e) => {
             e.preventDefault();
+            e.stopImmediatePropagation();
             // TODO this is not Unicode
             clipboard.sendFormat(CustomCF.FileGroupDescriptorW, Charset.Unicode, "FileGroupDescriptorW");
             sendData();
@@ -496,11 +500,13 @@ function openClient()
 
 login.onsubmit = (e) => {
     e.preventDefault();
+    e.stopImmediatePropagation();
     openClient();
 };
 
 disconnectButton.onclick = (e) => {
     e.preventDefault();
+    e.stopImmediatePropagation();
     closeClient();
 };
 

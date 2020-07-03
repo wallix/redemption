@@ -24,6 +24,8 @@ Author(s): Jonathan Poelen
 #include "gdi/screen_info.hpp"
 #include "utils/log.hpp"
 
+#include "red_emscripten/constants.hpp"
+
 
 namespace redjs
 {
@@ -95,3 +97,27 @@ void Front::update_pointer_position(uint16_t x, uint16_t y)
 }
 
 } // namespace redjs
+
+
+// 2.2.8.1.1.3.1.1.3 Mouse Event (TS_POINTER_EVENT)
+RED_JS_BINDING_CONSTANTS(
+    MouseFlags,
+
+    // 2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET): TS_INPUT_FLAG_MOUSE_HWHEEL
+    (("HorizontalWheel", 0x0400))
+    (("VerticalWheel", 0x0200))
+    (("WheelNegative", 0x0100))
+    (("WheelRotationMask", 0x00FF))
+
+    (("Move", 0x0800))
+    (("Up", 0))
+    (("Down", 0x8000))
+
+    (("LeftButton", 0x1000))
+    (("RightButton", 0x2000))
+    (("MiddleButton", 0x4000))
+
+    // 2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET): INPUT_FLAG_MOUSEX
+    (("Button4", 0x0001))
+    (("Button5", 0x0002))
+);
