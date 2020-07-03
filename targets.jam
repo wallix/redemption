@@ -2358,6 +2358,19 @@ test-run tests/core/test_error :
   <covfile>src/core/error.cpp
   <covfile>src/core/error.hpp
 ;
+test-run tests/core/test_events :
+  $(REDEMPTION_TEST_PATH)/core/test_events.cpp
+:
+  <library>src/core/error.o
+  <library>src/core/events.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/core/events.cpp
+  <covfile>src/core/events.hpp
+;
 test-run tests/core/test_font :
   $(REDEMPTION_TEST_PATH)/core/test_font.cpp
 :
@@ -2665,18 +2678,6 @@ test-run tests/core/test_session :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session.cpp
   <covfile>src/core/session.hpp
-;
-test-run tests/core/test_session_reactor :
-  $(REDEMPTION_TEST_PATH)/core/test_session_reactor.cpp
-:
-  <library>src/core/error.o
-  <library>src/core/events.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/session_reactor.hpp
 ;
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
@@ -5521,10 +5522,7 @@ test-run tests/utils/test_region :
 test-run tests/utils/test_rle :
   $(REDEMPTION_TEST_PATH)/utils/test_rle.cpp
 :
-  <library>crypto
   <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/rle.cpp
@@ -5906,6 +5904,7 @@ alias test_check_files : tests/core/test_check_files ;
 alias test_client_info : tests/core/test_client_info ;
 alias test_dynamic_channels_authorizations : tests/core/test_dynamic_channels_authorizations ;
 alias test_error : tests/core/test_error ;
+alias test_events : tests/core/test_events ;
 alias test_font : tests/core/test_font ;
 alias test_front_api : tests/core/test_front_api ;
 alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
@@ -5914,7 +5913,6 @@ alias test_log_id : tests/core/test_log_id ;
 alias test_mainloop : tests/core/test_mainloop ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_session : tests/core/test_session ;
-alias test_session_reactor : tests/core/test_session_reactor ;
 alias test_front : tests/front/test_front ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
@@ -6239,6 +6237,7 @@ alias test_check_files.coverage : tests/core/test_check_files.coverage ;
 alias test_client_info.coverage : tests/core/test_client_info.coverage ;
 alias test_dynamic_channels_authorizations.coverage : tests/core/test_dynamic_channels_authorizations.coverage ;
 alias test_error.coverage : tests/core/test_error.coverage ;
+alias test_events.coverage : tests/core/test_events.coverage ;
 alias test_font.coverage : tests/core/test_font.coverage ;
 alias test_front_api.coverage : tests/core/test_front_api.coverage ;
 alias test_glyph_to_24_bitmap.coverage : tests/core/test_glyph_to_24_bitmap.coverage ;
@@ -6247,7 +6246,6 @@ alias test_log_id.coverage : tests/core/test_log_id.coverage ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session.coverage : tests/core/test_session.coverage ;
-alias test_session_reactor.coverage : tests/core/test_session_reactor.coverage ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api.coverage : tests/gdi/test_graphic_api.coverage ;
 alias test_graphic_cmd_color.coverage : tests/gdi/test_graphic_cmd_color.coverage ;
@@ -6618,6 +6616,7 @@ alias tests/core.norec :
   tests/core/test_client_info
   tests/core/test_dynamic_channels_authorizations
   tests/core/test_error
+  tests/core/test_events
   tests/core/test_font
   tests/core/test_front_api
   tests/core/test_glyph_to_24_bitmap
@@ -6626,7 +6625,6 @@ alias tests/core.norec :
   tests/core/test_mainloop
   tests/core/test_server_notifier_api
   tests/core/test_session
-  tests/core/test_session_reactor
 ;
 alias tests/front.norec :
   tests/front/test_front
