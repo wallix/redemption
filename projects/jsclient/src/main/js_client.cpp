@@ -55,24 +55,67 @@ Author(s): Jonathan Poelen
 namespace
 {
     template<class T>
+    struct val_as_impl
+    {
+        T operator()(emscripten::val const& prop) const
+        {
+            if constexpr (std::is_enum_v<T>) {
+                static_assert(sizeof(T) <= 4);
+                using U = std::underlying_type_t<T>;
+                return T(prop.as<U>());
+            }
+            else if constexpr (std::is_integral_v<T>) {
+                static_assert(sizeof(T) <= 4);
+                return prop.as<T>();
+            }
+            else {
+                return prop.as<T>();
+            }
+        }
+    };
+
+    template<class Rep, class Period>
+    struct val_as_impl<std::chrono::duration<Rep, Period>>
+    {
+        using result_type = std::chrono::duration<Rep, Period>;
+
+        result_type operator()(emscripten::val const& prop) const
+        {
+            using Int = std::conditional_t<(sizeof(Rep) > 4), uint32_t, std::make_unsigned_t<Rep>>;
+            return result_type(prop.as<Int>());
+        }
+    };
+
+    template<class T>
+    struct val_as_impl<::utils::flags_t<T>>
+    {
+        using result_type = ::utils::flags_t<T>;
+
+        result_type operator()(emscripten::val const& prop) const
+        {
+            using Int = typename result_type::bitfield;
+            static_assert(sizeof(Int) <= 4);
+            return result_type(prop.as<Int>());
+        }
+    };
+
+    template<class T>
+    constexpr inline val_as_impl<T> val_as {};
+
+
+    template<class T>
     std::string get_or_default(emscripten::val const& v, char const* name)
     {
         auto prop = v[name];
         return not prop ? T() : prop.as<T>();
     };
 
+
     template<class T>
     T get_or(emscripten::val const& v, char const* name, T default_value)
     {
         auto prop = v[name];
-        if constexpr (std::is_enum_v<T>) {
-            static_assert(sizeof(T) <= 4);
-            using U = std::underlying_type_t<T>;
-            return not prop ? default_value : T(prop.as<U>());
-        }
-        else {
-            return not prop ? default_value : prop.as<T>();
-        }
+        return not prop ? default_value : val_as<T>(prop);
     };
 
     std::string get_or(emscripten::val const& v, char const* name, char const* default_value)
@@ -81,31 +124,75 @@ namespace
         return not prop ? default_value : prop.as<std::string>();
     }
 
+
     template<class T>
-    ::utils::flags_t<T> get_or(
-        emscripten::val const& v, char const* name,
-        ::utils::flags_t<T> default_value)
+    void set_if(emscripten::val const& v, char const* name, T& value)
     {
-        using return_type = ::utils::flags_t<T>;
-
-        using Int = typename return_type::bitfield;
-        static_assert(sizeof(Int) <= 4);
-
         auto prop = v[name];
-        return not prop ? default_value : return_type(prop.as<Int>());
+        if (not not prop) {
+            value = val_as<T>(prop);
+        }
     }
 
-    template<class Rep, class Period>
-    std::chrono::duration<Rep, Period> get_or(
-        emscripten::val const& v, char const* name,
-        std::chrono::duration<Rep, Period> default_value)
-    {
-        using Duration = std::chrono::duration<Rep, Period>;
-        using Int = std::conditional_t<(sizeof(Rep) > 4), uint32_t, std::make_unsigned_t<Rep>>;
 
+    template<class F>
+    void extract_if(emscripten::val const& v, char const* name, F f)
+    {
         auto prop = v[name];
-        return not prop ? default_value : Duration(prop.as<Int>());
+        if (!!prop) {
+            f(prop);
+        }
     };
+
+    writable_bytes_view extract_bytes(
+        emscripten::val const& v, char const* name, writable_bytes_view view)
+    {
+        auto prop = v[name];
+        if (not prop) {
+            return view.first(0);
+        }
+
+        auto str = prop.as<std::string>();
+        auto len = str.size();
+        if (view.size() >= len) {
+            LOG(LOG_NOTICE, "RdpClient: %s.length = %zu too large (max = %zu)",
+                name, len, view.size());
+            len = view.size();
+        }
+
+        memcpy(view.as_u8p(), str.data(), len);
+        return view.first(len);
+    }
+
+    writable_bytes_view extract_str(
+        emscripten::val const& v, char const* name, writable_bytes_view view)
+    {
+        auto av = extract_bytes(v, name, view.drop_back(1));
+        av.data()[av.size()] = '\0';
+        return av;
+    }
+
+    void extract_datetime(
+        emscripten::val const& v,
+        uint8_t (&name)[64],
+        SystemTime& system_time,
+        uint32_t& bias)
+    {
+        auto writable_name = make_writable_array_view(name);
+        auto av_name = extract_bytes(v, "name", writable_name);
+        memset(av_name.end(), 0, writable_name.size() - av_name.size());
+
+        set_if(v, "year", system_time.wYear);
+        set_if(v, "month", system_time.wMonth);
+        set_if(v, "dayOfWeek", system_time.wDayOfWeek);
+        set_if(v, "day", system_time.wDay);
+        set_if(v, "hour", system_time.wHour);
+        set_if(v, "minute", system_time.wMinute);
+        set_if(v, "second", system_time.wSecond);
+        set_if(v, "millisecond", system_time.wMilliseconds);
+
+        set_if(v, "bias", bias);
+    }
 
 
     ScreenInfo make_screen_info(emscripten::val const& config)
@@ -233,45 +320,48 @@ public:
             client_info.order_caps.orderSupport[i] = supported_orders.test(OrdersIndexes(i));
         }
 
-        auto cookie = get_or_default<std::string>(config, "reconnectCookie");
-        auto cookie_len = cookie.size();
-        if (cookie.size() > cookie_len) {
-            LOG(LOG_NOTICE, "RdpClient: cookie.length = %zu too large", cookie_len);
-            cookie_len = std::size(client_info.autoReconnectCookie);
-        }
-        client_info.cbAutoReconnectCookie = cookie_len;
-        memcpy(client_info.autoReconnectCookie, cookie.data(), cookie_len);
+        auto cookie = extract_bytes(config, "cookie",
+            make_writable_array_view(client_info.autoReconnectCookie));
+        client_info.cbAutoReconnectCookie = cookie.size();
 
-        client_info.keylayout = get_or(config, "keylayout", 0);
-        client_info.console_session = get_or(config, "consoleSession", false);
-        client_info.rdp5_performanceflags = get_or(config, "performanceFlags", false);
-        // TODO client_info.client_time_zone = get_or(config, "timezone", false);
+        set_if(config, "keylayout", client_info.keylayout);
+        set_if(config, "consoleSession", client_info.console_session);
+        set_if(config, "performanceFlags", client_info.rdp5_performanceflags);
+
+        extract_if(config, "timezone", [&](emscripten::val const& timezone){
+            extract_if(timezone, "standard", [&](emscripten::val const& datetime){
+                extract_datetime(datetime,
+                    client_info.client_time_zone.DaylightName,
+                    client_info.client_time_zone.DaylightDate,
+                    client_info.client_time_zone.DaylightBias
+                );
+            });
+            extract_if(timezone, "daylight", [&](emscripten::val const& datetime){
+                extract_datetime(datetime,
+                    client_info.client_time_zone.StandardName,
+                    client_info.client_time_zone.StandardDate,
+                    client_info.client_time_zone.StandardBias
+                );
+            });
+        });
 
         client_info.bitmap_codec_caps.haveRemoteFxCodec = enable_remotefx;
         client_info.has_sound_code = get_or(config, "enableSound", false);
 
-        // TODO client_info.alternate_shell = get_or(config, "enableSound", false);
-        // TODO client_info.working_dir = get_or(config, "enableSound", false);
+        uint32_t maxRequestSize = client_info.multi_fragment_update_caps.MaxRequestSize;
+        set_if(config, "fragmentUpdateMaxRequestSize", maxRequestSize);
 
-        client_info.large_pointer_caps.largePointerSupportFlags
-            = enable_large_pointer ? LARGE_POINTER_FLAG_96x96 : 0;
-        client_info.multi_fragment_update_caps.MaxRequestSize
-            = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
+        extract_str(config, "alternateShell",
+            make_writable_array_view(client_info.alternate_shell));
+        extract_str(config, "workingDirectory",
+            make_writable_array_view(client_info.working_dir));
+
         if (enable_large_pointer) {
-            client_info.multi_fragment_update_caps.MaxRequestSize = std::max(
-                client_info.multi_fragment_update_caps.MaxRequestSize,
-                uint32_t(38'055)
-            );
+            client_info.large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
+            maxRequestSize = std::max(maxRequestSize, uint32_t(38'055));
         }
-        // TODO
-        // client_info.general_caps.extraflags
-        //     = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
-        // TODO
-        // client_info.rail_caps.RailSupportLevel
-        //     = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
-        // TODO
-        // client_info.window_list_caps
-        //     = get_or(config, "fragmentUpdateMaxRequestSize", uint32_t(0));
+
+        client_info.multi_fragment_update_caps.MaxRequestSize = maxRequestSize;
         //@}
 
 
@@ -300,16 +390,15 @@ public:
         rdp_params.ignore_auth_channel = true;
 
         rdp_params.enable_remotefx = enable_remotefx;
-        rdp_params.enable_restricted_admin_mode = get_or(config, "restrictedAdminMode", false);
+        set_if(config, "restrictedAdminMode", rdp_params.enable_restricted_admin_mode);
 
         rdp_params.rdp_compression = RdpCompression::rdp6_1;
 
         rdp_params.open_session_timeout = get_or(config, "openSessionTimeout", 20s);
 
-        rdp_params.disconnect_on_logon_user_change
-            = get_or(config, "disconnectOnLogonUserChange", false);
+        set_if(config, "disconnectOnLogonUserChange", rdp_params.disconnect_on_logon_user_change);
 
-        rdp_params.hide_client_name = get_or(config, "hideClientName", false);
+        set_if(config, "hideClientName", rdp_params.hide_client_name);
         rdp_params.disabled_orders = disabled_orders;
         rdp_params.enable_glyph_cache = supported_orders.test(TS_NEG_GLYPH_INDEX);
 
@@ -322,14 +411,13 @@ public:
                 config, "persistBitmapCacheOnDisk",
                 rdp_params.enable_persistent_disk_bitmap_cache);
 
-        rdp_params.lang = get_or(config, "lang", Translation::EN);
+        set_if(config, "lang", rdp_params.lang);
 
         rdp_params.adjust_performance_flags_for_recording = false;
         rdp_params.large_pointer_support = enable_large_pointer;
-        rdp_params.perform_automatic_reconnection
-            = get_or(config, "performAutomaticReconnection", false);
+        set_if(config, "performAutomaticReconnection", rdp_params.perform_automatic_reconnection);
 
-        rdp_params.split_domain = get_or(config, "splitDomain", false);
+        set_if(config, "splitDomain", rdp_params.split_domain);
 
         rdp_params.error_message = &ini.get_mutable_ref<cfg::context::auth_error_message>();
         //@}
