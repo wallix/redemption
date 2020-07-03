@@ -27,7 +27,7 @@
 #include "acl/license_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "core/client_info.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -134,7 +134,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
-    TimerContainer timer_events_;
     EventContainer events;
     SesmanWrapper sesman;
 
@@ -145,7 +144,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, sesman.get_ini(), time_base, gd_provider, 
-    timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+    events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -153,7 +152,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     auto end_tv = time_base.get_current_time();
-    timer_events_.exec_timer(end_tv);
     execute_events(events, end_tv, [](int){return false;});
 
     int n = 10;

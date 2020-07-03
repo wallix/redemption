@@ -29,7 +29,7 @@
 
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
@@ -581,7 +581,6 @@ private:
 
     timeval prepare_timeout(timeval ultimatum, timeval now,
                 const Front & front,
-                TimerContainer & timer_events_,
                 EventContainer & events,
                 bool front_pending,
                 bool mod_pending)
@@ -608,10 +607,6 @@ private:
         if ((tv.tv_sec != 0) || (tv.tv_usec != 0)){
             ultimatum = std::min(tv, ultimatum);
         }
-
-
-        timer_events_.for_each(timer_update_tv);
-        this->show_ultimatum("ultimatum (timers) ="_zv, ultimatum, now);
 
         if (front.front_must_notify_resize) {
             ultimatum = now;
@@ -663,7 +658,6 @@ public:
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         TimeBase time_base(tvtime());
-        TimerContainer timer_events_;
         EventContainer events;
 
         TimeSystem timeobj;
@@ -692,7 +686,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, timer_events_, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
@@ -792,7 +786,6 @@ public:
 
                 timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
                         front,
-                        timer_events_,
                         events,
                         front_trans.has_tls_pending_data(),
                         mod_data_pending
@@ -915,7 +908,6 @@ public:
                         }
 
                         auto const end_tv = time_base.get_current_time();
-                        timer_events_.exec_timer(end_tv);
                         execute_events(events, end_tv,
                             [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
 

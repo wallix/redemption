@@ -26,7 +26,7 @@
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/window_constants.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"

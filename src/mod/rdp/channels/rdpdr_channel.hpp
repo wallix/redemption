@@ -23,7 +23,7 @@
 
 #include "core/log_id.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"

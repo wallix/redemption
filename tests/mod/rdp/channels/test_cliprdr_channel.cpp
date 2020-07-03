@@ -27,7 +27,7 @@
 #include "test_only/lcg_random.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "core/RDP/clipboard.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "capture/cryptofile.hpp"

@@ -50,7 +50,6 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
-#include "core/session_reactor.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -174,11 +173,8 @@ RED_AUTO_TEST_CASE(TestFront)
 
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
 
-    TimerContainer timer_events_;
-
     while (!front.is_up_and_running()) {
         front.incoming(no_mod, sesman);
-        RED_CHECK(timer_events_.is_empty());
         RED_CHECK(events.empty());
     }
 
@@ -246,7 +242,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, ini, time_base, gd_provider, timer_events_, events, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        t, ini, time_base, gd_provider, events, sesman, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
@@ -335,7 +331,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
     TimeBase time_base({0,0});
-    TimerContainer timer_events_;
     EventContainer events;
 
     NullReportMessage report_message;

@@ -28,7 +28,7 @@
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 
@@ -382,11 +382,7 @@ public:
 
         LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher make_delay_sequencer()");
 
-        using jln::value;
-        using namespace jln::literals;
-
-//        Sequencer chain = {false, 0, bool(this->verbose & RDPVerbose::sesprobe_launcher), {
-        Sequencer chain = {false, 0, true, {
+        Sequencer chain = {false, 0, bool(this->verbose & RDPVerbose::sesprobe_launcher), {
         { "Windows (down)",
             [this](Event&event,Sequencer&sequencer)
             {
@@ -524,10 +520,7 @@ public:
     {
         LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher make_run_sequencer()");
 
-        using jln::value;
-        using namespace jln::literals;
-
-        Sequencer chain = {false, 0, true||bool(this->verbose & RDPVerbose::sesprobe_launcher),
+        Sequencer chain = {false, 0, bool(this->verbose & RDPVerbose::sesprobe_launcher),
         {{ "Windows (down)",
             [this](Event&event,Sequencer&/*sequencer*/)
             {

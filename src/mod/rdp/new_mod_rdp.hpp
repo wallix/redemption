@@ -55,7 +55,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     Inifile & ini,
     TimeBase& time_base,
     GdProvider & gd_provider,
-    TimerContainer& timer_events_,
     EventContainer & events,
     SesmanInterface & sesman,
     gdi::GraphicApi& gd,

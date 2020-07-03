@@ -20,7 +20,7 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "utils/select.hpp"
 #include "core/events.hpp"
 
@@ -36,7 +36,6 @@ enum class ExecuteEventsResult
 inline ExecuteEventsResult execute_events(
     std::chrono::milliseconds timeout,
     TimeBase& time_base,
-    TimerContainer& timer_events_,
     EventContainer& events)
 {
     unsigned max = 0;
@@ -70,8 +69,6 @@ inline ExecuteEventsResult execute_events(
         update_tv(timer.tv);
     };
 
-    timer_events_.for_each(timer_update_tv);
-
     for (auto & event: events){
         if (event.garbage or event.teardown){
             continue;
@@ -97,7 +94,6 @@ inline ExecuteEventsResult execute_events(
 
     time_base.set_current_time(tvtime());
     auto const end_tv = time_base.get_current_time();
-    timer_events_.exec_timer(end_tv);
     execute_events(events, end_tv, [](int /*fd*/){ return false; });
 
     if (num) {

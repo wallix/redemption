@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"

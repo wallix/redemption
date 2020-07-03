@@ -27,8 +27,6 @@
 
 #include <string>
 
-//RED_TEST_DELEGATE_PRINT_ENUM(jln::R);
-
 std::string side_effect;
 
 #include "core/events.hpp"

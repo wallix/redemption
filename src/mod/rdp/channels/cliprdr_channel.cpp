@@ -23,7 +23,7 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "capture/fdx_capture.hpp"
 #include "core/error.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/log_id.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "utils/log.hpp"

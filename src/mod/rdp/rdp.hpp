@@ -76,7 +76,7 @@
 
 #include "core/RDPEA/audio_output.hpp"
 
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "core/log_id.hpp"
 #include "core/channel_list.hpp"
@@ -442,7 +442,6 @@ private:
 
     TimeBase & time_base;
     GdProvider & gd_provider;
-    TimerContainer& timer_events_;
     EventContainer & events;
     SesmanInterface & sesman;
     FileValidatorService * file_validator_service;
@@ -455,7 +454,7 @@ public:
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider,
-        TimerContainer& timer_events_, EventContainer & events,
+        EventContainer & events,
         SesmanInterface & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
@@ -487,7 +486,6 @@ public:
     , verbose(verbose)
     , time_base(time_base)
     , gd_provider(gd_provider)
-    , timer_events_(timer_events_)
     , events(events)
     , sesman(sesman)
     , file_validator_service(file_validator_service)
@@ -1978,7 +1976,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TimerContainer& timer_events_;
     EventContainer & events;
     SesmanInterface & sesman;
 
@@ -2074,7 +2071,6 @@ public:
       , Inifile & ini
       , TimeBase& time_base
       , GdProvider & gd_provider
-      , TimerContainer& timer_events_
       , EventContainer & events
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
@@ -2097,7 +2093,7 @@ public:
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, gd_provider, timer_events_, events,
+            report_message, gen, metrics, time_base, gd_provider, events,
             sesman,
             file_validator_service,
             mod_rdp_factory,
@@ -2149,7 +2145,6 @@ public:
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
         , gd_provider(gd_provider)
-        , timer_events_(timer_events_)
         , events(events)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)

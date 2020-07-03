@@ -92,7 +92,6 @@ public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer& events;
 
     std::unique_ptr<Transport> _socket_in_recorder;
@@ -234,14 +233,12 @@ public:
 
 public:
     ClientRedemption(TimeBase& time_base,
-                     TimerContainer& timer_events_,
                      EventContainer& events,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
         , time_base(time_base)
-        , timer_events_(timer_events_)
         , events(events)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
@@ -324,7 +321,6 @@ public:
             update_tv(timer.tv);
         };
 
-        this->timer_events_.for_each(timer_update_tv);
         for (auto & event: events){
             if (event.garbage or event.teardown){
                 continue;
@@ -352,7 +348,6 @@ public:
 
         this->time_base.set_current_time(tvtime());
         auto const end_tv = this->time_base.get_current_time();
-        this->timer_events_.exec_timer(end_tv);
 
         if (num) {
             execute_events(this->events, end_tv, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
@@ -479,7 +474,6 @@ public:
                   , this->ini
                   , this->time_base
                   , this->gd_forwarder
-                  , this->timer_events_
                   , this->events
                   , this->sesman
                   , *this
@@ -1040,7 +1034,6 @@ public:
         try {
             if (is_timeout) {
                 auto const end_tv = time_base.get_current_time();
-                this->timer_events_.exec_timer(end_tv);
                 execute_events(this->events, end_tv, [](int fd){ return false; });
             } else {
                 execute_events(this->events, time_base.get_current_time(), [](int fd){ return true; });

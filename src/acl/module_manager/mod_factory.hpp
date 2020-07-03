@@ -25,7 +25,7 @@
 
 #include "acl/mod_pack.hpp"
 
-#include "core/session_reactor.hpp" // for TimeBase
+#include "utils/timebase.hpp"
 #include "core/client_info.hpp"     // for ClientInfo
 #include "core/front_api.hpp"       // for FrontAPI
 #include "gdi/graphic_api.hpp"      // for GraphicApi
@@ -61,7 +61,6 @@ class ModFactory
     ModWrapper & mod_wrapper;
     TimeBase & time_base;
     SesmanInterface & sesman;
-    TimerContainer & timer_events_;
     EventContainer & events;
     ClientInfo & client_info;
     FrontAPI & front;
@@ -83,7 +82,6 @@ public:
     ModFactory(ModWrapper & mod_wrapper,
                TimeBase & time_base,
                SesmanInterface & sesman,
-               TimerContainer & timer_events_,
                EventContainer & events,
                ClientInfo & client_info,
                FrontAPI & front,
@@ -102,7 +100,6 @@ public:
         : mod_wrapper(mod_wrapper)
         , time_base(time_base)
         , sesman(sesman)
-        , timer_events_(timer_events_)
         , events(events)
         , client_info(client_info)
         , front(front)
@@ -504,7 +501,6 @@ public:
             this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,
-            this->timer_events_,
             this->events,
             this->sesman,
             this->file_system_license_store,

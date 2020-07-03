@@ -32,7 +32,7 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "acl/gd_provider.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/channels_authorizations.hpp"
 
 #include "test_only/front/fake_front.hpp"
@@ -151,7 +151,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
-    TimerContainer timer_events_;
     EventContainer events;
     SesmanWrapper sesman;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -159,7 +158,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     GdForwarder<gdi::GraphicApi> gd_provider(front.gd());
 
     auto mod = new_mod_rdp(
-        t, sesman.get_ini(), time_base, gd_provider, timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj, channels_authorizations,
+        t, sesman.get_ini(), time_base, gd_provider, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj, channels_authorizations,
         mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
         sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -167,7 +166,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
     auto end_tv = time_base.get_current_time();
-    timer_events_.exec_timer(end_tv);
     events[0].alarm.fd = 0;
     execute_events(events, end_tv,[](int /*fd*/){ return false; });
     for (int count=0; count < 100 && !events.empty(); ++count) {

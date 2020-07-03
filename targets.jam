@@ -5521,7 +5521,10 @@ test-run tests/utils/test_region :
 test-run tests/utils/test_rle :
   $(REDEMPTION_TEST_PATH)/utils/test_rle.cpp
 :
+  <library>crypto
   <library>src/core/error.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/rle.cpp
