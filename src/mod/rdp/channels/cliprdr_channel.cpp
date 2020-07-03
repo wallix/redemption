@@ -1462,7 +1462,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 return true;
             }
 
-            LOG(LOG_ERR,
+            LOG(LOG_WARNING,
                 "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " Invalid lindex %u", lindex);
             return send_error();
@@ -1481,14 +1481,14 @@ struct ClipboardVirtualChannel::ClipCtx::D
             auto init_contents_range = [&]{
                 if (check_valid_lindex(clip.files)) {
                     if (file_contents_request_pdu.position() != 0) {
-                        LOG(LOG_ERR,
+                        LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                                 " Unsupported random access for a FILECONTENTS_RANGE");
                         return send_error();
                     }
 
                     if (file_contents_request_pdu.cbRequested() > clip.max_file_size_rejected) {
-                        LOG(LOG_ERR,
+                        LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                                 " file too big are automatically rejected");
                         return send_error();
@@ -1580,7 +1580,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
                         Self::stop_valid_transfer(self, clip, file_rng);
                         NoLockData::D::init_empty(clip.nolock_data, self);
-                        LOG(LOG_ERR,
+                        LOG(LOG_WARNING,
                             "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                                 " Unsupported random access for a FILECONTENTS_RANGE (2)");
                         return send_error();
@@ -1635,7 +1635,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
             }
         }
         else if (not file_contents_request_pdu.has_optional_clipDataId()) {
-            LOG(LOG_ERR, "Not lock_id with CB_CAN_LOCK_CLIPDATA");
+            LOG(LOG_WARNING, "Not lock_id with CB_CAN_LOCK_CLIPDATA");
             send_error();
             return false;
         }
@@ -1645,7 +1645,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
             auto* lock_data = clip.locked_data.search_lock_by_id(lock_id);
 
             if (not lock_data) {
-                LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
+                LOG(LOG_WARNING, "ClipboardVirtualChannel::process_filecontents_request_pdu:"
                     " unknown clipDataId (%u)", lock_id);
                 return send_error();
             }
