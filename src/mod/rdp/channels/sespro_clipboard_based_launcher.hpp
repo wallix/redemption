@@ -391,7 +391,7 @@ public:
             [this](Event&event,Sequencer&sequencer)
             {
                 if (this->delay_format_list_received) {
-                    event.alarm.set_timeout(this->get_short_delay_timeout());
+                    event.alarm.set_timeout(event.alarm.now);
                     return sequencer.next_state("Send format list");
                 }
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
@@ -426,7 +426,7 @@ public:
             [this](Event&event,Sequencer&sequencer)
             {
                 if (this->delay_format_list_received) {
-                    event.alarm.set_timeout(this->get_short_delay_timeout());
+                    event.alarm.set_timeout(event.alarm.now);
                     return sequencer.next_state("Send format list");
                 }
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 29, 0/*param2*/);
@@ -461,10 +461,10 @@ public:
             {
                 if (time(nullptr) < this->delay_end_time){
                     this->delay_coefficient += 0.5f;
-                    event.alarm.set_timeout(this->get_short_delay_timeout());
+                    event.alarm.set_timeout(event.alarm.now);
                     return sequencer.next_state("Windows (down)");
                 }
-                event.alarm.set_timeout(this->get_short_delay_timeout());
+                event.alarm.set_timeout(event.alarm.now);
                 return sequencer.next_state("Send format list");
             }
         },
@@ -607,7 +607,8 @@ public:
                     LOG(LOG_INFO, ":=> on_event: Back to begining of the sequence");
                     // Back to the beginning of the sequence
                     sequencer.next_state("Windows (down)");
-                    return event.alarm.set_timeout(this->get_long_delay_timeout());
+                    event.alarm.set_timeout(event.alarm.now);
+                    return;
                 }
                 if (this->image_readed) {
                     event.garbage = true;
