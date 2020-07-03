@@ -145,11 +145,21 @@ public:
 
         if (this->state == State::START) {
             Event event("On Clipboard Monitor Ready Event", this);
+            if (this->event_id) {
+                for(auto & event: this->events){
+                    if (event.id == this->event_id){
+                        event.garbage = true;
+                        event.id = 0;
+                    }
+                }
+            }
+            this->event_id = 0;
             this->event_id = event.id;
             event.alarm.set_timeout(this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms);
             event.actions.on_timeout = [this](Event&event)
             {
-                this->on_event();event.garbage=true;
+                this->on_event();
+                event.garbage=true;
             };
             this->events.push_back(std::move(event));
         }
@@ -381,6 +391,7 @@ public:
             [this](Event&event,Sequencer&sequencer)
             {
                 if (this->delay_format_list_received) {
+                    event.alarm.set_timeout(this->get_short_delay_timeout());
                     return sequencer.next_state("Send format list");
                 }
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
@@ -415,6 +426,7 @@ public:
             [this](Event&event,Sequencer&sequencer)
             {
                 if (this->delay_format_list_received) {
+                    event.alarm.set_timeout(this->get_short_delay_timeout());
                     return sequencer.next_state("Send format list");
                 }
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 29, 0/*param2*/);
@@ -445,12 +457,14 @@ public:
             }
         },
         { "Wait",
-            [this](Event&/*event*/,Sequencer&sequencer)
+            [this](Event&event,Sequencer&sequencer)
             {
                 if (time(nullptr) < this->delay_end_time){
                     this->delay_coefficient += 0.5f;
+                    event.alarm.set_timeout(this->get_short_delay_timeout());
                     return sequencer.next_state("Windows (down)");
                 }
+                event.alarm.set_timeout(this->get_short_delay_timeout());
                 return sequencer.next_state("Send format list");
             }
         },
@@ -490,6 +504,16 @@ public:
         }};
 
         Event event("SessionProbeClipboardBasedLauncher Event", this);
+        if (this->event_id) {
+            for(auto & event: this->events){
+                if (event.id == this->event_id){
+                    event.garbage = true;
+                    event.id = 0;
+                }
+            }
+        }
+        this->event_id = 0;
+        this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
         chain.verbose = true; // bool(this->verbose & RDPVerbose::sesprobe_launcher);
         event.actions.on_timeout = std::move(chain);
@@ -583,7 +607,7 @@ public:
                     LOG(LOG_INFO, ":=> on_event: Back to begining of the sequence");
                     // Back to the beginning of the sequence
                     sequencer.next_state("Windows (down)");
-                    return event.alarm.set_timeout(this->get_short_delay_timeout());
+                    return event.alarm.set_timeout(this->get_long_delay_timeout());
                 }
                 if (this->image_readed) {
                     event.garbage = true;
@@ -605,6 +629,16 @@ public:
         }}};
 
         Event event("SessionProbeClipboardBasedLauncher Event", this);
+        if (this->event_id) {
+            for(auto & event: this->events){
+                if (event.id == this->event_id){
+                    event.garbage = true;
+                    event.id = 0;
+                }
+            }
+        }
+        this->event_id = 0;
+        this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
         chain.verbose = true; //bool(this->verbose & RDPVerbose::sesprobe_launcher);
         event.actions.on_timeout = std::move(chain);
