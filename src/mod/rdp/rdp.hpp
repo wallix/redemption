@@ -173,17 +173,17 @@ public:
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
-        LOG(LOG_INFO, "Add task to Asynchronous Task Container");
         this->tasks.emplace_back(std::move(task));
-        LOG(LOG_INFO, "Task = %p", this->tasks.front().get());
+
+        // TODO: we could simplify that code by keeping only the current task as event
+        // and creating the next event only when poping task and changing event
+        // instead of creating events early
 
         if (this->tasks.size() == 1u) {
-            LOG(LOG_INFO, "Configure event from Add");
             auto container_task = this->tasks.front().get();
             auto event = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
             event.actions.on_teardown = [this, container_task](Event&event)
             {
-                LOG(LOG_INFO, "%s on_teardown", event.name);
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
@@ -194,14 +194,11 @@ public:
 private:
     void next()
     {
-        LOG(LOG_INFO, "Next Task task for Asynchronous Task Container");
         if (!this->tasks.empty()) {
-            LOG(LOG_INFO, "Configure event from Next");
             auto container_task = this->tasks.front().get();
             auto event  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
             event.actions.on_teardown = [this, container_task](Event&event)
             {
-                LOG(LOG_INFO, "%s on_teardown", event.name);
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
@@ -2384,6 +2381,7 @@ public:
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
         }
+        end_of_lifespan(this->events, this);
     }
 
 

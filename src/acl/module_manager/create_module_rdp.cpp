@@ -175,6 +175,11 @@ struct RdpData
      : time_base(time_base)
      , events(events)
     {}
+    
+    ~RdpData()
+    {
+        end_of_lifespan(this->events, this);
+    }
 };
 
 

@@ -956,6 +956,7 @@ public:
             );
         }
 #endif  // #ifndef NDEBUG
+        end_of_lifespan(this->events, this);
     }
 
     void disable_session_probe_drive() {

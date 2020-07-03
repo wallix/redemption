@@ -218,6 +218,11 @@ public:
         this->front.set_consent_ui_visible(false);
     }
 
+    ~SessionProbeVirtualChannel()
+    {
+        end_of_lifespan(this->events, this);
+    }
+
     void enable_bogus_refresh_rect_ex_support(bool enable) {
         this->param_bogus_refresh_rect_ex = enable;
     }

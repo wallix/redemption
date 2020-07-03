@@ -108,7 +108,7 @@ public:
 
     Event configure_event(timeval now, void * lifespan) override
     {
-        Event event("RdpdrDriveReadTask Asynchronous Fd Event", lifespan);
+        Event event("RdpdrDriveReadTask", lifespan);
         event.alarm.set_timeout(now+std::chrono::seconds{1});
         event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
         event.actions.on_action = [this](Event&event)
@@ -221,7 +221,7 @@ public:
 
     Event configure_event(timeval now, void * lifespan) override
     {
-        Event event("RdpdrSendDriveIOResponseTask Asynchronous Timer Event", lifespan);
+        Event event("RdpdrSendDriveIOResponseTask", lifespan);
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
         event.actions.on_timeout = [this](Event&event)
         {
@@ -302,7 +302,7 @@ public:
 
     Event configure_event(timeval now, void * lifespan) override
     {
-        Event event("RdpdrSendClientMessageTask Asynchronous Timer Event", lifespan);
+        Event event("RdpdrSendClientMessageTask", lifespan);
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
         event.actions.on_timeout = [this](Event&event)
         {

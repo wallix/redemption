@@ -121,6 +121,11 @@ public:
             ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
     }
 
+    ~SessionProbeClipboardBasedLauncher()
+    {
+        end_of_lifespan(this->events, this);
+    }
+
     bool on_clipboard_initialize() override {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
             "SessionProbeClipboardBasedLauncher :=> on_clipboard_initialize");
@@ -144,7 +149,7 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            Event event("On Clipboard Monitor Ready Event", this);
+            Event event("SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this);
             if (this->event_id) {
                 for(auto & event: this->events){
                     if (event.id == this->event_id){

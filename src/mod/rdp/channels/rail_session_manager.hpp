@@ -151,6 +151,11 @@ public:
     , events(events)
     {}
 
+    ~RemoteProgramsSessionManager()
+    {
+        end_of_lifespan(this->events, this);
+    }
+    
     void begin_update() override
     {
         if (this->drawable) {
