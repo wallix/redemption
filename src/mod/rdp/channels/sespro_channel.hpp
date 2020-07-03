@@ -26,7 +26,7 @@
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/window_constants.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"
@@ -123,10 +123,10 @@ private:
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer& events;
-    TimerPtr session_probe_timer;
+    int session_probe_timer = 0;
     Callbacks & callbacks;
+    SesmanInterface & sesman;
 
     bool launch_aborted = false;
 
@@ -175,8 +175,8 @@ public:
 
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
         EventContainer& events,
+        SesmanInterface & sesman,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,
@@ -202,9 +202,9 @@ public:
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
     , callbacks(callbacks)
+    , sesman(sesman)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
@@ -218,6 +218,11 @@ public:
         this->front.set_consent_ui_visible(false);
     }
 
+    ~SessionProbeVirtualChannel()
+    {
+        end_of_lifespan(this->events, this);
+    }
+
     void enable_bogus_refresh_rect_ex_support(bool enable) {
         this->param_bogus_refresh_rect_ex = enable;
     }
@@ -226,7 +231,7 @@ public:
         return this->session_probe_ready;
     }
 
-    void start_launch_timeout_timer(SesmanInterface & sesman)
+    void start_launch_timeout_timer()
     {
         if (this->sespro_params.effective_launch_timeout.count() > 0
          && !this->session_probe_ready
@@ -234,35 +239,65 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                this->session_probe_timer = this->timer_events_
-                    .create_timer_executor(this->time_base)
-                    .set_delay(this->sespro_params.effective_launch_timeout)
-                    .on_action([this, &sesman](auto ctx){
-                        this->process_event_launch(sesman);
-                        return ctx.ready_to(this->sespro_params.effective_launch_timeout);
-                    });
+                if (this->session_probe_timer) {
+                    for(auto & event: this->events){
+                        if (event.id == this->session_probe_timer){
+                            event.garbage = true;
+                            event.id = 0;
+                        }
+                    }
+                    this->session_probe_timer = 0;
+                }
+                Event event("Session Probe Timer", this);
+                this->session_probe_timer = event.id;
+                event.alarm.set_timeout(this->time_base.get_current_time()
+                    +this->sespro_params.effective_launch_timeout);
+                event.actions.on_timeout = [this](Event&event){
+                    this->process_event_launch();
+                    event.alarm.set_timeout(this->time_base.get_current_time()
+                        +this->sespro_params.effective_launch_timeout);
+                };
+                this->events.push_back(std::move(event));
                 this->session_probe_launch_timeout_timer_started = true;
             }
         }
     }
 
-    void abort_launch(SesmanInterface & sesman)
+    void abort_launch()
     {
         this->launch_aborted = true;
 
-        this->session_probe_timer = this->timer_events_
-            .create_timer_executor(this->time_base)
-            .set_delay(this->sespro_params.launcher_abort_delay)
-            .on_action([this, &sesman](jln::TimerContext ctx){
-                this->process_event_launch(sesman);
-                return ctx.terminate();
-                });
+        if (this->session_probe_timer) {
+            for(auto & event: this->events){
+                if (event.id == this->session_probe_timer){
+                    event.garbage = true;
+                    event.id = 0;
+                }
+            }
+            this->session_probe_timer = 0;
+        }
+        Event event("Session Probe Timer", this);
+        this->session_probe_timer = event.id;
+        event.alarm.set_timeout(this->time_base.get_current_time()
+            +this->sespro_params.launcher_abort_delay);
+        event.actions.on_timeout = [this](Event&event){
+            this->process_event_launch();
+            event.garbage = true;
+        };
+        this->events.push_back(std::move(event));
     }
 
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
-            this->session_probe_timer->set_delay(this->sespro_params.effective_launch_timeout);
-
+            if (this->session_probe_timer) {
+                for(auto & event: this->events){
+                    if (event.id == this->session_probe_timer){
+                        event.alarm.set_timeout(this->time_base.get_current_time()
+                            +this->sespro_params.effective_launch_timeout);
+                        break;
+                    }
+                }
+            }
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                 "SessionProbeVirtualChannel::give_additional_launch_time");
         }
@@ -296,12 +331,21 @@ private:
             "SessionProbeVirtualChannel::request_keep_alive: "
                 "Session Probe keep alive requested");
 
-        this->session_probe_timer->set_delay(this->sespro_params.keepalive_timeout);
+        if (this->session_probe_timer) {
+            for(auto & event: this->events){
+                if (event.id == this->session_probe_timer){
+                    event.alarm.set_timeout(this->time_base.get_current_time()
+                        +this->sespro_params.keepalive_timeout);
+                    break;
+                }
+            }
+        }
+
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
 
-    void process_event_launch(SesmanInterface & sesman)
+    void process_event_launch()
     {
         LOG(((this->sespro_params.on_launch_failure ==
                 SessionProbeOnLaunchFailure::disconnect_user) ?
@@ -316,7 +360,16 @@ private:
             this->session_probe_stop_launch_sequence_notifier = nullptr;
         }
 
-        this->session_probe_timer.reset();
+        if (this->session_probe_timer) {
+            for(auto & event: this->events){
+                if (event.id == this->session_probe_timer){
+                    event.garbage = true;
+                    event.id = 0;
+                    this->session_probe_timer = 0;
+                    break;
+                }
+            }
+        }
 
         this->callbacks.enable_graphics_update();
         this->callbacks.enable_input_event();
@@ -421,8 +474,7 @@ private:
 public:
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask>& out_asynchronous_task,
-        SesmanInterface & sesman) override
+        std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
     {
         (void)out_asynchronous_task;
 
@@ -534,7 +586,16 @@ public:
                     this->file_system_virtual_channel.disable_session_probe_drive();
                 }
 
-                this->session_probe_timer.reset();
+                if (this->session_probe_timer) {
+                    for(auto & event: this->events){
+                        if (event.id == this->session_probe_timer){
+                            event.garbage = true;
+                            event.id = 0;
+                            this->session_probe_timer = 0;
+                            break;
+                        }
+                    }
+                }
 
                 this->rdp.sespro_launch_process_ended();
 
@@ -549,13 +610,25 @@ public:
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
 
-                    this->session_probe_timer = this->timer_events_
-                        .create_timer_executor(this->time_base)
-                        .set_delay(this->sespro_params.keepalive_timeout)
-                        .on_action([this](auto ctx){
-                            this->process_event_ready();
-                            return ctx.ready_to(this->sespro_params.keepalive_timeout);
-                        });
+                    if (this->session_probe_timer) {
+                        for(auto & event: this->events){
+                            if (event.id == this->session_probe_timer){
+                                event.garbage = true;
+                                event.id = 0;
+                            }
+                        }
+                        this->session_probe_timer = 0;
+                    }
+                    Event event("Session Probe Keepalive Timer", this);
+                    this->session_probe_timer = event.id;
+                    event.alarm.set_timeout(this->time_base.get_current_time()
+                        +this->sespro_params.keepalive_timeout);
+                    event.actions.on_timeout = [this](Event&event){
+                        this->process_event_ready();
+                        event.alarm.set_timeout(this->time_base.get_current_time()
+                            +this->sespro_params.keepalive_timeout);
+                    };
+                    this->events.push_back(std::move(event));
                 }
 
                 send_client_message([](OutStream & out_s) {

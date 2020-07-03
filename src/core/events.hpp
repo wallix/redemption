@@ -26,6 +26,9 @@
 #include <string>
 #include <functional>
 
+#include "utils/log.hpp"
+#include "core/error.hpp"
+
 struct Event {
     // TODO: the management of this counter may be moved to EventContainer later
     // no need to use a static lifespan, EventContainer lifespan would be fine
@@ -38,6 +41,7 @@ struct Event {
     std::string name;
     void * lifespan_handle = nullptr;
     bool garbage = false;
+    bool teardown = false;
 
     struct Trigger {
         int fd = -1;
@@ -93,17 +97,18 @@ struct Event {
     } alarm;
 
     struct Actions {
-        // default action is do nothing
         std::function<void(Event &)> on_timeout = [](Event &){};
-        // default action is do nothing
         std::function<void(Event &)> on_action = [](Event &){};
+        std::function<void(Event &)> on_teardown = [](Event &){};
     } actions;
 
     Event(std::string name, void * lifespan)
         : id(Event::counter++)
         , name(name)
         , lifespan_handle(lifespan)
-        {}
+        {
+            LOG(LOG_INFO, "Creation of new event (%d): %s", this->id, this->name.c_str());
+        }
 
     void rename(const std::string string)
     {
@@ -112,6 +117,70 @@ struct Event {
 
     void exec_timeout() { this->actions.on_timeout(*this);}
     void exec_action() { this->actions.on_action(*this);}
+    void exec_teardown() { this->actions.on_teardown(*this);}
+
+};
+
+
+struct Sequencer {
+    struct Item {
+        std::string label;
+        std::function<void(Event&event,Sequencer&sequencer)> action;
+    };
+    bool reset = false;
+    size_t current = 0;
+    int verbose = true;
+    std::vector<Item> sequence;
+    void operator()(Event & event){
+        this->reset = false;
+        if (this->current >= this->sequence.size()){
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence Terminated",
+                event.name);
+            event.garbage = true;
+            return;
+        }
+        try {
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: %s",
+                event.name, sequence[this->current].label);
+            sequence[this->current].action(event,*this);
+        }
+        catch(Error & error){
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence terminated on Exception %s",
+                event.name, error.errmsg());
+            event.garbage = true;
+            throw;
+        }
+        catch(...){
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence terminated on Exception",
+                event.name);
+            event.garbage = true;
+            throw;
+        }
+        if (not this->reset){
+            this->current++;
+            if (this->current >= this->sequence.size()){
+                LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence Terminated On Last Item",
+                    event.name);
+                    event.garbage = true;
+                return;
+            }
+        }
+        this->reset = false;
+//        LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Next sequence item: %s",
+//                event.name, this->sequence[this->current].label);
+    }
+
+    void next_state(std::string_view label){
+        LOG(LOG_ERR, "Moving to out of Sequence item %.*s", int(label.size()), label.data());
+        for(size_t i = 0 ; i < this->sequence.size() ; i++){
+            if (this->sequence[i].label == label){
+                this->reset = true;
+                this->current = i;
+                return;
+            }
+        }
+        LOG(LOG_ERR, "Sequence item %.*s not found", int(label.size()), label.data());
+    }
 };
 
 
@@ -126,9 +195,22 @@ inline void end_of_lifespan(EventContainer & events, void * lifespan)
     }
 }
 
+
+inline void exec_teardowns(EventContainer & events) {
+        for (size_t i = 0; i < events.size() ; i++){
+            if(events[i].teardown){
+                events[i].exec_teardown();
+                events[i].teardown = false;
+                events[i].garbage = true;
+            }
+        }
+}
+
+
 inline void garbage_collector(EventContainer & events) {
         for (size_t i = 0; i < events.size() ; i++){
-            while ((i < events.size()) && (events[i].garbage)){
+            while ((i < events.size()) && events[i].garbage){
+                LOG(LOG_INFO, "Removing Event: %s", events[i].name);
                 if (i < events.size() -1){
                     events[i] = std::move(events.back());
                 }
@@ -142,13 +224,13 @@ inline timeval next_timeout(EventContainer & events)
 {
    timeval ultimatum = {0, 0};
    for(auto &event: events){
-        if (not event.garbage and event.alarm.active){
+        if (not (event.garbage or event.teardown) and event.alarm.active){
             ultimatum = event.alarm.trigger_time;
             break;
         }
    }
    for(auto &event: events){
-        if (not event.garbage and event.alarm.active){
+        if (not (event.garbage or event.teardown) and event.alarm.active){
             ultimatum = std::min(event.alarm.trigger_time, ultimatum);
         }
     }
@@ -157,17 +239,54 @@ inline timeval next_timeout(EventContainer & events)
 
 inline void execute_events(EventContainer & events, const timeval tv, const std::function<bool(int fd)> & fn)
 {
-    for (auto & event: events){
-        if (not event.garbage) {
+    if (events.size() > 0){
+//        LOG(LOG_INFO, "=== Execute Events Loop ===");
+    }
+
+    for (size_t i = 0 ; i < events.size(); i++){
+        auto & event = events[i];
+//        if (event.alarm.fd != -1){
+//            LOG(LOG_INFO, "now=%d:%d Examining Fd Event (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
+//                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
+//                event.id, event.name.c_str(),
+//                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
+//                event.alarm.fd,
+//                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
+//                event.alarm.grace_delay.count(),
+//                event.alarm.active?"active ":"",
+//                event.teardown?"teardown ":"",
+//                event.garbage?"garbage":""
+//                );
+//        }
+//        else {
+//            LOG(LOG_INFO, "now=%d:%d Examining Timeout Event (%d): %s (%d:%d) TriggerTime=%d:%d %s%s%s",
+//                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
+//                event.id, event.name.c_str(),
+//                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
+//                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
+//                event.alarm.active?"active ":"",
+//                event.teardown?"teardown ":"",
+//                event.garbage?"garbage":""
+//                );
+//        }
+
+        if (not (event.garbage or event.teardown)) {
             if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
                 event.alarm.set_timeout(tv+event.alarm.grace_delay);
+//                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
                 event.exec_action();
+                // Not testing timeout now as fd event was triggered
+                continue;
             }
+        }
+        if (not (event.garbage or event.teardown)) {
             if (event.alarm.trigger(tv)){
+//                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
                 event.exec_timeout();
             }
         }
     }
+    exec_teardowns(events);
     garbage_collector(events);
 }
 

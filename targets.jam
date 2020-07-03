@@ -2358,6 +2358,19 @@ test-run tests/core/test_error :
   <covfile>src/core/error.cpp
   <covfile>src/core/error.hpp
 ;
+test-run tests/core/test_events :
+  $(REDEMPTION_TEST_PATH)/core/test_events.cpp
+:
+  <library>src/core/error.o
+  <library>src/core/events.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/core/events.cpp
+  <covfile>src/core/events.hpp
+;
 test-run tests/core/test_font :
   $(REDEMPTION_TEST_PATH)/core/test_font.cpp
 :
@@ -2665,18 +2678,6 @@ test-run tests/core/test_session :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session.cpp
   <covfile>src/core/session.hpp
-;
-test-run tests/core/test_session_reactor :
-  $(REDEMPTION_TEST_PATH)/core/test_session_reactor.cpp
-:
-  <library>src/core/error.o
-  <library>src/core/events.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/session_reactor.hpp
 ;
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
@@ -4049,8 +4050,15 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
   <library>src/core/events.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
@@ -5226,12 +5234,6 @@ test-run tests/utils/sugar/unordered_erase :
   $(REDEMPTION_TEST_PATH)/utils/sugar/unordered_erase.cpp
 :
 ;
-test-run tests/utils/test_asynchronous_task_manager :
-  $(REDEMPTION_TEST_PATH)/utils/test_asynchronous_task_manager.cpp
-:
-  <library>src/core/events.o
-  <covfile>src/utils/asynchronous_task_manager.hpp
-;
 test-run tests/utils/test_base64 :
   $(REDEMPTION_TEST_PATH)/utils/test_base64.cpp
 :
@@ -5907,6 +5909,7 @@ alias test_check_files : tests/core/test_check_files ;
 alias test_client_info : tests/core/test_client_info ;
 alias test_dynamic_channels_authorizations : tests/core/test_dynamic_channels_authorizations ;
 alias test_error : tests/core/test_error ;
+alias test_events : tests/core/test_events ;
 alias test_font : tests/core/test_font ;
 alias test_front_api : tests/core/test_front_api ;
 alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
@@ -5915,7 +5918,6 @@ alias test_log_id : tests/core/test_log_id ;
 alias test_mainloop : tests/core/test_mainloop ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_session : tests/core/test_session ;
-alias test_session_reactor : tests/core/test_session_reactor ;
 alias test_front : tests/front/test_front ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
@@ -6054,7 +6056,6 @@ alias test_static_vector : tests/utils/sugar/test_static_vector ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
 alias test_update_lock : tests/utils/sugar/test_update_lock ;
 alias unordered_erase : tests/utils/sugar/unordered_erase ;
-alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_base64 : tests/utils/test_base64 ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitmap : tests/utils/test_bitmap ;
@@ -6241,6 +6242,7 @@ alias test_check_files.coverage : tests/core/test_check_files.coverage ;
 alias test_client_info.coverage : tests/core/test_client_info.coverage ;
 alias test_dynamic_channels_authorizations.coverage : tests/core/test_dynamic_channels_authorizations.coverage ;
 alias test_error.coverage : tests/core/test_error.coverage ;
+alias test_events.coverage : tests/core/test_events.coverage ;
 alias test_font.coverage : tests/core/test_font.coverage ;
 alias test_front_api.coverage : tests/core/test_front_api.coverage ;
 alias test_glyph_to_24_bitmap.coverage : tests/core/test_glyph_to_24_bitmap.coverage ;
@@ -6249,7 +6251,6 @@ alias test_log_id.coverage : tests/core/test_log_id.coverage ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session.coverage : tests/core/test_session.coverage ;
-alias test_session_reactor.coverage : tests/core/test_session_reactor.coverage ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api.coverage : tests/gdi/test_graphic_api.coverage ;
 alias test_graphic_cmd_color.coverage : tests/gdi/test_graphic_cmd_color.coverage ;
@@ -6379,7 +6380,6 @@ alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_static_vector.coverage : tests/utils/sugar/test_static_vector.coverage ;
 alias test_unique_fd.coverage : tests/utils/sugar/test_unique_fd.coverage ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
-alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
 alias test_base64.coverage : tests/utils/test_base64.coverage ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap.coverage : tests/utils/test_bitmap.coverage ;
@@ -6621,6 +6621,7 @@ alias tests/core.norec :
   tests/core/test_client_info
   tests/core/test_dynamic_channels_authorizations
   tests/core/test_error
+  tests/core/test_events
   tests/core/test_font
   tests/core/test_front_api
   tests/core/test_glyph_to_24_bitmap
@@ -6629,7 +6630,6 @@ alias tests/core.norec :
   tests/core/test_mainloop
   tests/core/test_server_notifier_api
   tests/core/test_session
-  tests/core/test_session_reactor
 ;
 alias tests/front.norec :
   tests/front/test_front
@@ -6814,7 +6814,6 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/unordered_erase
 ;
 alias tests/utils.norec :
-  tests/utils/test_asynchronous_task_manager
   tests/utils/test_base64
   tests/utils/test_bitfu
   tests/utils/test_bitmap

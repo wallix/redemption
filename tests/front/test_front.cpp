@@ -50,7 +50,6 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
-#include "core/session_reactor.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -159,7 +158,6 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
     TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
     EventContainer events;
     SesmanInterface sesman(ini);
 
@@ -175,11 +173,8 @@ RED_AUTO_TEST_CASE(TestFront)
 
     GdForwarder gd_provider(front.gd());
 
-    TimerContainer timer_events_;
-
     while (!front.is_up_and_running()) {
         front.incoming(no_mod, sesman);
-        RED_CHECK(timer_events_.is_empty());
         RED_CHECK(events.empty());
     }
 
@@ -247,7 +242,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, fd_events_, timer_events_, events, sesman,
+        t, time_base, gd_provider, events, sesman, 
         front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
         authentifier, report_message, license_store, ini, metrics,
@@ -265,10 +260,11 @@ RED_AUTO_TEST_CASE(TestFront)
 
     int count = 0;
     int n = 38;
-    for (; count < n && !fd_events_.is_empty(); ++count) {
-        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        fd_events_.exec_action(is_set);
+    events[0].alarm.fd = 0;
+    for (; count < n && !events.empty(); ++count) {
+        execute_events(events, timeval{1,0},[](int){return true;});
     }
+    
     RED_CHECK_EQ(count, n);
 //    front.dump_png("trace_w2008_");
 }
@@ -338,8 +334,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
     TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
     EventContainer events;
 
     NullReportMessage report_message;
@@ -354,12 +348,6 @@ RED_AUTO_TEST_CASE(TestFront2)
 
 //    RED_REQUIRE(!events_.is_empty());
 //    time_base.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
-
-//    auto fn = [&]() {
-//        auto const end_tv = time_base.get_current_time();
-//        timer_events_.exec_timer(end_tv);
-//        fd_events_.exec_timeout(end_tv);
-//    };
 
 //    RED_CHECK_EXCEPTION_ERROR_ID(fn(), ERR_RDP_HANDSHAKE_TIMEOUT);
 

@@ -32,7 +32,7 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "acl/gd_provider.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/channels_authorizations.hpp"
 
 #include "test_only/front/fake_front.hpp"
@@ -151,8 +151,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
     EventContainer events;
     SesmanWrapper sesman;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -160,41 +158,21 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     GdForwarder gd_provider(front.gd());
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(),
-        front, info, sesman.redir_info(), gen, timeobj, channels_authorizations,
-        mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
+        t, time_base, gd_provider, events, sesman, 
+        front.gd(), front, info, sesman.redir_info(), 
+        gen, timeobj, channels_authorizations,
+        mod_rdp_params, tls_client_params, authentifier, 
+        report_message, license_store,
         sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
     auto end_tv = time_base.get_current_time();
-    timer_events_.exec_timer(end_tv);
+    events[0].alarm.fd = 0;
     execute_events(events, end_tv,[](int /*fd*/){ return false; });
-    fd_events_.exec_timeout(end_tv);
-
-    for (int count = 0; count < 40; ++count) {
-        execute_events(events, end_tv,[](int /*fd*/){ return true; });
-        auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        fd_events_.exec_action(fd_is_set);
+    for (int count=0; count < 100 && !events.empty(); ++count) {
+        execute_events(events, timeval{1,0},[](int){return true;});
     }
-
-
-//    auto const end_tv = time_base.get_current_time();
-//    timer_events_.exec_timer(end_tv);
-//    fd_events_.exec_timeout(end_tv);
-//    timer_events_.exec_timer(end_tv);
-//    fd_events_.exec_timeout(end_tv);
-//    execute_events(events, end_tv);
-
-    //unique_server_loop(unique_fd(t.get_fd()), [&](int sck)->bool {
-    //    (void)sck;
-    //    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-    //    fd_events_.exec_action(fd_is_set);
-    //    LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
-    //    return !mod->is_up_and_running();
-    //});
-
-    //front.dump_png("trace_w2008_");
 }
 

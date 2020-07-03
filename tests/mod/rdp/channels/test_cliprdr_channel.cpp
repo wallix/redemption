@@ -27,7 +27,7 @@
 #include "test_only/lcg_random.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "core/RDP/clipboard.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "capture/cryptofile.hpp"
@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
         /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
         /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00\x00\x00\x00\x00"                 // ............
                 ""_av,
-            out_asynchronous_task, sesman);
+            out_asynchronous_task);
 
 // ClipboardVirtualChannel::process_client_message: total_length=24 flags=0x00000013 chunk_data_length=24
 // Recv done on channel (24) n bytes
@@ -307,7 +307,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     clipboard_virtual_channel.process_server_message(
             16, first_last_flags,
         /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"_av,
-            out_asynchronous_task, sesman);
+            out_asynchronous_task);
 
 // ClipboardVirtualChannel::process_client_message: total_length=8 flags=0x00000013 chunk_data_length=8
 // Recv done on channel (8) n bytes
@@ -892,7 +892,7 @@ namespace
                 }
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
                 this->clipboard_virtual_channel.process_server_message(
-                    total_len, flags, av, this->out_asynchronous_task, sesman);
+                    total_len, flags, av, this->out_asynchronous_task);
                 // RED_TEST(!this->out_asynchronous_task);
             }
 

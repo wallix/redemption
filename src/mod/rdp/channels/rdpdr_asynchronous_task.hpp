@@ -21,17 +21,26 @@
 
 #pragma once
 
-#include "utils/asynchronous_task_manager.hpp"
 #include "core/channel_list.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
-#include "core/session_reactor.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cerrno>
+
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
+
+class AsynchronousTask
+{
+public:
+    AsynchronousTask() = default;
+    virtual ~AsynchronousTask() = default;
+    virtual Event configure_event(timeval now, void * lifespan) = 0;
+};
 
 inline void rdpdr_in_file_seek(int fd, int64_t offset, int whence)
 {
@@ -75,8 +84,6 @@ class RdpdrDriveReadTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
-    TopFdPtr fdobject;
-
     const RDPVerbose verbose;
 
 public:
@@ -97,25 +104,28 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
+    ~RdpdrDriveReadTask(){LOG(LOG_INFO, "Delete RdpdrDriveReadTask"); }
+
+    Event configure_event(timeval now, void * lifespan) override
     {
-        assert(!this->fdobject);
-        this->fdobject = fd_events_.create_top_executor(time_base, this->file_descriptor, terminate_notifier)
-        .on_action([this](auto ctx, TerminateEventNotifier& terminate_notifier) {
-            if (this->run()) {
-                return ctx.need_more_data();
+        Event event("RdpdrDriveReadTask", lifespan);
+        event.alarm.set_timeout(now+std::chrono::seconds{1});
+        event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
+        event.actions.on_action = [this](Event&event)
+        {
+            LOG(LOG_INFO, "%s on_action", event.name);
+            if (this->run()){
+                return;
             }
-            auto const r = ctx.terminate();
-            this->fdobject.detach();
-            terminate_notifier(*this); // destroy this
-            return r;
-        })
-        .on_exit(jln::propagate_exit())
-        .set_timeout(std::chrono::seconds(1))
-        .on_timeout([this](auto ctx, TerminateEventNotifier&){
+            event.teardown = true;
+        };
+        event.actions.on_timeout = [this](Event&event)
+        {
+            LOG(LOG_INFO, "%s on_timeout", event.name);
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-            return ctx.ready();
-        });
+            event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
+        };
+        return event;
     }
 
     bool run()
@@ -192,8 +202,6 @@ class RdpdrSendDriveIOResponseTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
-    TimerPtr timer_ptr;
-
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
                                  const uint8_t * data,
@@ -209,24 +217,22 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
+    ~RdpdrSendDriveIOResponseTask(){LOG(LOG_INFO, "Delete RdpdrSendDriveIOResponseTask"); }
+
+    Event configure_event(timeval now, void * lifespan) override
     {
-        assert(!this->timer_ptr);
-        this->timer_ptr = timer_events_
-        .create_timer_executor(time_base, std::ref(*this), terminate_notifier)
-        .set_notify_delete([](
-            jln::NotifyDeleteType d,
-            AsynchronousTask& task,
-            AsynchronousTask::TerminateEventNotifier& terminate_notifier
-        ){
-            if (d == jln::NotifyDeleteType::DeleteByAction) {
-                terminate_notifier(task);
+        Event event("RdpdrSendDriveIOResponseTask", lifespan);
+        event.alarm.set_timeout(now+std::chrono::milliseconds{1});
+        event.actions.on_timeout = [this](Event&event)
+        {
+            LOG(LOG_INFO, "%s on_timeout", event.name);
+            if (this->run()){
+                event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                return;
             }
-        })
-        .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, TerminateEventNotifier&){
-            return self.run() ? ctx.ready() : ctx.terminate();
-        });
+            event.teardown = true;
+        };
+        return event;
     }
 
     bool run()
@@ -273,8 +279,6 @@ class RdpdrSendClientMessageTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    TimerPtr timer_ptr;
-
 public:
     RdpdrSendClientMessageTask(
         size_t total_length,
@@ -294,25 +298,19 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(TimeBase& time_base, TopFdContainer & fd_events_, TimerContainer& timer_events_, EventContainer & events, TerminateEventNotifier terminate_notifier) override
+    ~RdpdrSendClientMessageTask(){LOG(LOG_INFO, "Delete RdpdrSendClientMessageTask"); }
+
+    Event configure_event(timeval now, void * lifespan) override
     {
-        assert(!this->timer_ptr);
-        this->timer_ptr = timer_events_
-        .create_timer_executor(time_base, std::ref(*this), terminate_notifier)
-        .set_notify_delete([](
-            jln::NotifyDeleteType d,
-            AsynchronousTask& task,
-            AsynchronousTask::TerminateEventNotifier& terminate_notifier
-        ){
-            if (d == jln::NotifyDeleteType::DeleteByAction) {
-                terminate_notifier(task);
-            }
-        })
-        .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendClientMessageTask& self, TerminateEventNotifier&){
-            self.run();
-            return ctx.terminate();
-        });
+        Event event("RdpdrSendClientMessageTask", lifespan);
+        event.alarm.set_timeout(now+std::chrono::milliseconds{1});
+        event.actions.on_timeout = [this](Event&event)
+        {
+            LOG(LOG_INFO, "%s on_timeout", event.name);
+            this->run();
+            event.teardown = true;
+        };
+        return event;
     }
 
     bool run()

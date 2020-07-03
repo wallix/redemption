@@ -1,0 +1,397 @@
+grosjean@cgrthc:/ssd/d/wallix-redemption/future$ ./bin/gcc-9.2.1/san/rdpproxy -nf
+Stopping rdpproxy
+Looking if pid_file /var/run/redemption/rdpproxy.pid exists
+Reading pid_file /var/run/redemption/rdpproxy.pid
+Stopping process id 10473
+/proc/10473/cmdline: No such file or directory
+rdpproxy: INFO (10643/10643) -- ReDemPtion 8.1.19 starting
+rdpproxy: INFO (10643/10643) -- Listen: binding socket 4 on 0.0.0.0:3389
+rdpproxy: INFO (10643/10643) -- Listen: listening on socket 4
+rdpproxy: INFO (10656/10656) -- auth::Authentifier
+rdpproxy: INFO (10656/10656) -- KEEP ALIVE CONSTRUCTOR
+rdpproxy: INFO (10656/10656) -- INACTIVITY CONSTRUCTOR
+rdpproxy: INFO (10656/10656) -- CR Recv: PROTOCOL TLS
+rdpproxy: INFO (10656/10656) -- CR Recv: PROTOCOL HYBRID
+rdpproxy: INFO (10656/10656) -- -----------------> Front::incoming: TLS Support Enabled nla=false
+rdpproxy: INFO (10656/10656) -- Enable TLS
+rdpproxy: INFO (10656/10656) -- CC Send: PROTOCOL TLS
+rdpproxy: INFO (10656/10656) -- SocketTransport::enable_server_tls() start (RDP Client)
+rdpproxy: INFO (10656/10656) -- Enable server TLS
+rdpproxy: INFO (10656/10656) -- TLSContext::enable_server_tls() set SSL options
+rdpproxy: INFO (10656/10656) -- TLSContext::X509_get_pubkey()
+rdpproxy: INFO (10656/10656) -- TLSContext::i2d_PublicKey()
+rdpproxy: INFO (10656/10656) -- TLSContext::i2d_PublicKey()
+rdpproxy: INFO (10656/10656) -- Incoming connection to Bastion using TLS version TLSv1.3
+rdpproxy: INFO (10656/10656) -- TLSContext::Negociated cipher used TLS_AES_256_GCM_SHA384
+rdpproxy: INFO (10656/10656) -- SocketTransport::enable_server_tls() done (RDP Client)
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=c001 length=234
+rdpproxy: INFO (10656/10656) -- Client Color Depth is 16
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=c004 length=12
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=c002 length=12
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=c003 length=44
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=c006 length=8
+rdpproxy: INFO (10656/10656) -- Front::incoming: Secure Settings Exchange
+rdpproxy: INFO (10656/10656) -- RDP-5 Style logon
+rdpproxy: INFO (10656/10656) -- Front::incoming: Keyboard Layout = 0x409
+rdpproxy: INFO (10656/10656) -- Front::incoming: ACTIVATED (new license request)
+rdpproxy: INFO (10656/10656) -- RDP INPUT UP AND RUNNING ==================
+rdpproxy: INFO (10656/10656) -- set_acl_auth_info: auth_user=k
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 25
+rdpproxy: INFO (10656/10656) -- sending bpp=16
+rdpproxy: INFO (10656/10656) -- sending width=1024
+rdpproxy: INFO (10656/10656) -- sending height=768
+rdpproxy: INFO (10656/10656) -- sending selector_current_page=1
+rdpproxy: INFO (10656/10656) -- sending selector_device_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_group_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_proto_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_lines_per_page=0
+rdpproxy: INFO (10656/10656) -- sending target_password=ASK
+rdpproxy: INFO (10656/10656) -- sending target_host=ASK
+rdpproxy: INFO (10656/10656) -- sending proto_dest=ASK
+rdpproxy: INFO (10656/10656) -- sending password=<hidden>
+rdpproxy: INFO (10656/10656) -- sending reporting=
+rdpproxy: INFO (10656/10656) -- sending auth_channel_target=
+rdpproxy: INFO (10656/10656) -- sending accept_message=False
+rdpproxy: INFO (10656/10656) -- sending display_message=False
+rdpproxy: INFO (10656/10656) -- sending real_target_device=
+rdpproxy: INFO (10656/10656) -- sending login=k
+rdpproxy: INFO (10656/10656) -- sending ip_client=127.0.0.1
+rdpproxy: INFO (10656/10656) -- sending ip_target=127.0.0.1
+rdpproxy: INFO (10656/10656) -- sending target_device=ASK
+rdpproxy: INFO (10656/10656) -- sending target_login=ASK
+rdpproxy: INFO (10656/10656) -- sending psid=159319027410656
+rdpproxy: INFO (10656/10656) -- sending keyboard_layout=1033
+rdpproxy: INFO (10656/10656) -- sending selector=ASK
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 467
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 205
+rdpproxy: INFO (10656/10656) -- receiving 'selector_group_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'ip_client'='127.0.0.1'
+rdpproxy: INFO (10656/10656) -- receiving 'module'='selector'
+rdpproxy: INFO (10656/10656) -- receiving 'target_login'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_device_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_proto_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'language'='fr'
+rdpproxy: INFO (10656/10656) -- receiving 'target_device'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_number_of_pages'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'login'='k'
+rdpproxy: INFO (10656/10656) -- receiving 'proto_dest'=''
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x7ffd8d3e4ac0 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Setting new mod MODULE_INTERNAL_WIDGET_SELECTOR (was <unknown>)
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000018800 is BACK_EVENT_REFRESH
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 8
+rdpproxy: INFO (10656/10656) -- sending selector_lines_per_page=26
+rdpproxy: INFO (10656/10656) -- sending selector_current_page=1
+rdpproxy: INFO (10656/10656) -- sending selector_group_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_device_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_proto_filter=
+rdpproxy: INFO (10656/10656) -- sending target_login=ASK
+rdpproxy: INFO (10656/10656) -- sending target_device=ASK
+rdpproxy: INFO (10656/10656) -- sending selector=ASK
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 174
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 1355
+rdpproxy: INFO (10656/10656) -- receiving 'opt_message'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_group_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'ip_client'='127.0.0.1'
+rdpproxy: INFO (10656/10656) -- receiving 'module'='selector'
+rdpproxy: INFO (10656/10656) -- receiving 'target_login'='windowswindowswindowswindowskerberosnlawindowsnlanlawindowswindowswindowsvncinternalwindowswindowsinternalwindowsinternalapplicationwindowswindowswindowswindowswindowswindows'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_device_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_proto_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'target_device'='Administrateur@2016QA@local@win2016qa:rdpAdministrator@local@WIN4489:rdpAdministrator@proxykdc.lab@local@win2k12:rdpAdministrator@proxykdc.lab@local@winkdc2012:rdpChristophe@local@win2008rzh:rdpChristophe@local@win2008rzh:rdpPROXYKDC\hercule@local@WIN10CGR:rdpPROXYKDC\hercule@local@win10:rdpPROXYKDC\hercule@local@win10:rdpRED\tartempion@local@win2k12r2:rdpTester@RED@local@win2012LIC:rdpadministrateur@local@win2k:rdpany@local@debian:vncany@local@solaris:vncany@local@vnc10:vncany@local@vnctiger:vncany@local@win2k3sp2:vnccgrosjean@local@win10cgr:rdpinternal@local@bouncer2:INTERNALnotepaduser@local@NOTEPAD:APPqa@local@WIN10JF:rdpqa\administrateur@local@win2k3:rdpqa\administrateur@local@win2k3:rdpqa\administrateur@local@win2k8:rdpqa\administrateur@local@win2k8r2:rdpuser1@local@vnc55:vnc'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_current_page'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_number_of_pages'='2'
+rdpproxy: INFO (10656/10656) -- receiving 'login'='k'
+rdpproxy: INFO (10656/10656) -- receiving 'proto_dest'='RDPRDPRDPRDPRDPRDPRDPRDPRDPRDPRDPRDPVNCVNCVNCVNCVNCRDPINTERNALAPPRDPRDPRDPRDPRDPVNC'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000018800 is BACK_EVENT_REFRESH
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 7
+rdpproxy: INFO (10656/10656) -- sending selector_current_page=1
+rdpproxy: INFO (10656/10656) -- sending selector_group_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_device_filter=zin!)
+rdpproxy: INFO (10656/10656) -- sending selector_proto_filter=
+rdpproxy: INFO (10656/10656) -- sending target_login=ASK
+rdpproxy: INFO (10656/10656) -- sending target_device=ASK
+rdpproxy: INFO (10656/10656) -- sending selector=ASK
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 151
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 236
+rdpproxy: INFO (10656/10656) -- receiving 'opt_message'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_group_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'ip_client'='127.0.0.1'
+rdpproxy: INFO (10656/10656) -- receiving 'module'='selector'
+rdpproxy: INFO (10656/10656) -- receiving 'target_login'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_device_filter'='zin!)'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_proto_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'target_device'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_current_page'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_number_of_pages'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'login'='k'
+rdpproxy: INFO (10656/10656) -- receiving 'proto_dest'=''
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000018800 is BACK_EVENT_REFRESH
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 7
+rdpproxy: INFO (10656/10656) -- sending selector_current_page=1
+rdpproxy: INFO (10656/10656) -- sending selector_group_filter=
+rdpproxy: INFO (10656/10656) -- sending selector_device_filter=10
+rdpproxy: INFO (10656/10656) -- sending selector_proto_filter=
+rdpproxy: INFO (10656/10656) -- sending target_login=ASK
+rdpproxy: INFO (10656/10656) -- sending target_device=ASK
+rdpproxy: INFO (10656/10656) -- sending selector=ASK
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 148
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 466
+rdpproxy: INFO (10656/10656) -- receiving 'opt_message'=''
+rdpproxy: INFO (10656/10656) -- receiving 'selector_group_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'ip_client'='127.0.0.1'
+rdpproxy: INFO (10656/10656) -- receiving 'module'='selector'
+rdpproxy: INFO (10656/10656) -- receiving 'target_login'='windowsnlanlawindowswindowswindows'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_device_filter'='10'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_proto_filter'=''
+rdpproxy: INFO (10656/10656) -- receiving 'target_device'='PROXYKDC\hercule@local@WIN10CGR:rdpPROXYKDC\hercule@local@win10:rdpPROXYKDC\hercule@local@win10:rdpany@local@vnc10:vnccgrosjean@local@win10cgr:rdpqa@local@WIN10JF:rdp'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_current_page'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'selector_number_of_pages'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'login'='k'
+rdpproxy: INFO (10656/10656) -- receiving 'proto_dest'='RDPRDPRDPVNCRDPRDP'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000018800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 4
+rdpproxy: INFO (10656/10656) -- sending login=cgrosjean@local@win10cgr:rdp:windows:k
+rdpproxy: INFO (10656/10656) -- sending target_login=ASK
+rdpproxy: INFO (10656/10656) -- sending target_device=ASK
+rdpproxy: INFO (10656/10656) -- sending proto_dest=ASK
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 96
+rdpproxy: INFO (10656/10656) -- Setting new mod MODULE_INTERNAL_TRANSITION (was MODULE_INTERNAL_WIDGET_SELECTOR)
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 102
+rdpproxy: INFO (10656/10656) -- receiving 'target_login'='cgrosjean@local'
+rdpproxy: INFO (10656/10656) -- receiving 'login'='k'
+rdpproxy: INFO (10656/10656) -- receiving 'target_service'='rdp'
+rdpproxy: INFO (10656/10656) -- receiving 'module'='transitory'
+rdpproxy: INFO (10656/10656) -- receiving 'target_device'='win10cgr'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 18
+rdpproxy: INFO (10656/10656) -- receiving 'forcemodule'='True'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 19
+rdpproxy: INFO (10656/10656) -- receiving 'module'='transitory'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = 
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 3059
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:enable_restricted_admin_mode'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mode_console'='allow'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_launch_timeout'='40000'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_idle_session_limit'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_use_smart_launcher'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_enable_crash_dump'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_childless_window_as_unidentified_input_field'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'module'='RDP'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_clipboard_based_launcher_clipboard_initialization_delay'='2000'
+rdpproxy: INFO (10656/10656) -- receiving 'target_login'='cgrosjean'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:use_client_provided_remoteapp'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_clipboard_based_launcher_start_delay'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_on_launch_failure'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:enable_kerberos'='True'
+rdpproxy: WARNING (10656/10656) -- ◢ In src/acl/acl_serializer.cpp:690
+rdpproxy: WARNING (10656/10656) -- Unexpected receiving 'enable_session_probe_launch_mask' - 'False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:tls_max_level'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_enable_launch_mask'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'target_host'='10.10.43.9'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_enable_log_rotation'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'primary_user_id'='k'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_launcher_abort_delay'='2000'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_enable_log'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'context:session_probe_process_monitoring_rules'=''
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:server_redirection_support'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_disconnected_session_limit'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:use_client_provided_alternate_shell'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:enable_remotefx'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'context:use_session_probe_to_launch_remote_program'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_keepalive_timeout'='5000'
+rdpproxy: INFO (10656/10656) -- receiving 'proxy_opt'='RDP_CLIPBOARD_UP,RDP_CLIPBOARD_DOWN'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:wabam_uses_translated_remoteapp'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:force_smartcard_authentication'='False'
+rdpproxy: WARNING (10656/10656) -- ◢ In projects/redemption_configs/redemption_src/configs/config.cpp:64
+rdpproxy: WARNING (10656/10656) -- parsing error with acl parameter 'mod_rdp:session_probe_disabled_features' for "864": invalid range in [0, 511]
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_on_account_manipulation'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_memory_usage_limit'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'context:session_probe_extra_system_processes'=''
+rdpproxy: INFO (10656/10656) -- receiving 'encryption_key'='<hidden>'
+rdpproxy: INFO (10656/10656) -- receiving 'context:session_probe_outbound_connection_monitoring_rules'=''
+rdpproxy: INFO (10656/10656) -- receiving 'context:rail_disconnect_message_delay'='3000'
+rdpproxy: INFO (10656/10656) -- receiving 'target_port'='3389'
+rdpproxy: INFO (10656/10656) -- receiving 'disable_tsk_switch_shortcuts'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_start_launch_timeout_timer_only_after_logon'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'context:session_probe_windows_of_these_applications_as_unidentified_input_field'=''
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:enable_nla'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'password'='<hidden>'
+rdpproxy: INFO (10656/10656) -- receiving 'device_id'='0000'
+rdpproxy: INFO (10656/10656) -- receiving 'record_filebase'='SESSIONID-0000,k@127.0.0.1,cgrosjean@win10cgr,20200626-185128,cgrthc,1014'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_end_disconnected_session'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:show_common_cipher_list'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:cipher_string'='ALL'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_on_keepalive_timeout'='1'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_launch_fallback_timeout'='10000'
+rdpproxy: INFO (10656/10656) -- receiving 'recording_started'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_handle_usage_limit'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'target_str'='cgrosjean@local@win10cgr:rdp:windows'
+rdpproxy: INFO (10656/10656) -- receiving 'session_id'='SESSIONID-0000'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_disconnected_application_limit'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'sign_key'='<hidden>'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:load_balance_info'=''
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_clipboard_based_launcher_short_delay'='50'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_public_session'='False'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:use_native_remoteapp_capability'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:session_probe_clipboard_based_launcher_long_delay'='500'
+rdpproxy: INFO (10656/10656) -- receiving 'target_password'='<hidden>'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:enable_session_probe'='True'
+rdpproxy: INFO (10656/10656) -- receiving 'mod_rdp:tls_min_level'='0'
+rdpproxy: INFO (10656/10656) -- receiving 'record_subdirectory'='2020-06-26'
+rdpproxy: INFO (10656/10656) -- receiving 'proto_dest'='RDP'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = SESSIONID-0000
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- Reading mod_signal from 0x632000030800 is BACK_EVENT_NEXT
+rdpproxy: INFO (10656/10656) -- WindowsExecuteShellParams: Flags: 0 exe_or_file:  working_dir:  arguments: 
+rdpproxy: [rdpproxy] psid="159319027410656" user="k" type="TARGET_CONNECTION" target="cgrosjean" host="10.10.43.9" port="3389"
+rdpproxy: INFO (10656/10656) -- connecting to 10.10.43.9:3389
+rdpproxy: INFO (10656/10656) -- connection to 10.10.43.9:3389 (10.10.43.9) succeeded : socket 7
+rdpproxy: INFO (10656/10656) -- Remote RDP Server domain="" login="cgrosjean" host="cgrthc"
+rdpproxy: INFO (10656/10656) -- RemoteFX enabled on proxy
+rdpproxy: INFO (10656/10656) -- (SPADEV) Chdir: "CD %TMP%&"
+rdpproxy: INFO (10656/10656) -- RdpNego: TLS=Enabled NLA=Enabled adminMode=Disabled
+rdpproxy: INFO (10656/10656) -- Server key layout is 409
+rdpproxy: INFO (10656/10656) -- **** Start Negociation
+rdpproxy: INFO (10656/10656) -- Setting new mod MODULE_RDP (was MODULE_INTERNAL_TRANSITION)
+rdpproxy: INFO (10656/10656) -- RdpNego::NEGO_STATE_NLA
+rdpproxy: INFO (10656/10656) -- NEG_RSP_TYPE=2 NEG_RSP_FLAGS=31 NEG_RSP_LENGTH=8 NEG_RSP_SELECTED_PROTOCOL=2
+rdpproxy: INFO (10656/10656) -- CC Recv: PROTOCOL HYBRID
+rdpproxy: INFO (10656/10656) -- activating TLS (HYBRID)
+rdpproxy: INFO (10656/10656) -- Client TLS start
+rdpproxy: INFO (10656/10656) -- TLS Client cipher list: ALL
+rdpproxy: INFO (10656/10656) -- SSL_connect()
+rdpproxy: INFO (10656/10656) -- auth::start_keep_alive
+rdpproxy: INFO (10656/10656) -- RdpNego::recv_next_data::SslHybrid
+rdpproxy: INFO (10656/10656) -- RdpNego::recv_next_data::SslHybrid
+rdpproxy: INFO (10656/10656) -- SSL_get_peer_certificate()
+rdpproxy: INFO (10656/10656) -- certificate directory is: '/etc/rdpproxy/cert/0000'
+rdpproxy: INFO (10656/10656) -- certificate file is: '/etc/rdpproxy/cert/0000/rdp,10.10.43.9,3389,X509.pem'
+rdpproxy: INFO (10656/10656) -- nb1=1078 nb2=1078
+rdpproxy: INFO (10656/10656) -- TLS::X509 existing::issuer=CN = WIN10CGR.proxykdc.lab
+rdpproxy: INFO (10656/10656) -- TLS::X509 existing::subject=CN = WIN10CGR.proxykdc.lab
+rdpproxy: INFO (10656/10656) -- TLS::X509 existing::fingerprint=51:70:ec:4b:03:b4:e9:27:26:ff:83:be:55:c1:2e:66:46:da:20:9b
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="SERVER_CERTIFICATE_MATCH_SUCCESS" description="X.509 server certificate match"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="CERTIFICATE_CHECK_SUCCESS" description="Connexion to server allowed"
+rdpproxy: INFO (10656/10656) -- TLS::X509::issuer=CN = WIN10CGR.proxykdc.lab
+rdpproxy: INFO (10656/10656) -- TLS::X509::subject=CN = WIN10CGR.proxykdc.lab
+rdpproxy: INFO (10656/10656) -- TLS::X509::fingerprint=51:70:ec:4b:03:b4:e9:27:26:ff:83:be:55:c1:2e:66:46:da:20:9b
+rdpproxy: INFO (10656/10656) -- TLSContext::X509_get_pubkey()
+rdpproxy: INFO (10656/10656) -- TLSContext::i2d_PublicKey()
+rdpproxy: INFO (10656/10656) -- Connected to target using TLS version TLSv1.2
+rdpproxy: INFO (10656/10656) -- SocketTransport::enable_client_tls() done
+rdpproxy: INFO (10656/10656) -- activating CREDSSP
+rdpproxy: INFO (10656/10656) -- Credssp: KERBEROS Authentication
+rdpproxy: INFO (10656/10656) -- set KRB5CCNAME to FILE:/tmp/krb_red_10656
+rdpproxy: INFO (10656/10656) -- Parse name cgrosjean
+rdpproxy: INFO (10656/10656) -- Using principal: cgrosjean@PROXYKDC.LAB
+rdpproxy: INFO (10656/10656) -- Init creds password failed: Wrong password or no such user
+rdpproxy: ERR (10656/10656) -- ◢ In src/core/RDP/nla/nla_client_kerberos.hpp:764
+rdpproxy: ERR (10656/10656) -- Kerberos InitSecurityInterface status: No Credentials 0x8009030E, fallback to NTLM
+rdpproxy: DEBUG (10656/10656) -- Create Error: Exception ERR_CREDSSP_KERBEROS_INIT_FAILED no: 23001
+rdpproxy: INFO (10656/10656) -- No Credential cache to destroy
+rdpproxy: INFO (10656/10656) -- CREDSSP Kerberos Authentication Failed, fallback to NTLM
+rdpproxy: INFO (10656/10656) -- RdpNego::recv_next_data::Credssp
+rdpproxy: INFO (10656/10656) -- Target Name (56 16)
+rdpproxy: INFO (10656/10656) -- /* 0000 */ 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00, 0x44, 0x00, 0x43, 0x00,  // P.R.O.X.Y.K.D.C.
+rdpproxy: INFO (10656/10656) -- Target Info (72 158)
+rdpproxy: INFO (10656/10656) -- /* 0000 */ 0x02, 0x00, 0x10, 0x00, 0x50, 0x00, 0x52, 0x00, 0x4f, 0x00, 0x58, 0x00, 0x59, 0x00, 0x4b, 0x00,  // ....P.R.O.X.Y.K.
+rdpproxy: INFO (10656/10656) -- /* 0010 */ 0x44, 0x00, 0x43, 0x00, 0x01, 0x00, 0x10, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x31, 0x00,  // D.C.....W.I.N.1.
+rdpproxy: INFO (10656/10656) -- /* 0020 */ 0x30, 0x00, 0x43, 0x00, 0x47, 0x00, 0x52, 0x00, 0x04, 0x00, 0x18, 0x00, 0x70, 0x00, 0x72, 0x00,  // 0.C.G.R.....p.r.
+rdpproxy: INFO (10656/10656) -- /* 0030 */ 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00,  // o.x.y.k.d.c...l.
+rdpproxy: INFO (10656/10656) -- /* 0040 */ 0x61, 0x00, 0x62, 0x00, 0x03, 0x00, 0x2a, 0x00, 0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x31, 0x00,  // a.b...*.W.I.N.1.
+rdpproxy: INFO (10656/10656) -- /* 0050 */ 0x30, 0x00, 0x43, 0x00, 0x47, 0x00, 0x52, 0x00, 0x2e, 0x00, 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00,  // 0.C.G.R...p.r.o.
+rdpproxy: INFO (10656/10656) -- /* 0060 */ 0x78, 0x00, 0x79, 0x00, 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00,  // x.y.k.d.c...l.a.
+rdpproxy: INFO (10656/10656) -- /* 0070 */ 0x62, 0x00, 0x05, 0x00, 0x18, 0x00, 0x70, 0x00, 0x72, 0x00, 0x6f, 0x00, 0x78, 0x00, 0x79, 0x00,  // b.....p.r.o.x.y.
+rdpproxy: INFO (10656/10656) -- /* 0080 */ 0x6b, 0x00, 0x64, 0x00, 0x63, 0x00, 0x2e, 0x00, 0x6c, 0x00, 0x61, 0x00, 0x62, 0x00, 0x07, 0x00,  // k.d.c...l.a.b...
+rdpproxy: INFO (10656/10656) -- /* 0090 */ 0x08, 0x00, 0xf0, 0x7b, 0xdd, 0x05, 0xda, 0x4b, 0xd6, 0x01, 0x00, 0x00, 0x00, 0x00,              // ...{...K......
+rdpproxy: INFO (10656/10656) -- using /dev/urandom as random source
+rdpproxy: INFO (10656/10656) -- using /dev/urandom as random source
+rdpproxy: INFO (10656/10656) -- using /dev/urandom as random source
+rdpproxy: INFO (10656/10656) -- RdpNego::recv_next_data::Credssp
+rdpproxy: INFO (10656/10656) -- TSCredentialsPassword: Domain User Password
+rdpproxy: INFO (10656/10656) -- Sending CS_CORE to server: color_depth 16
+rdpproxy: INFO (10656/10656) -- CS_Cluster: Server Redirection Supported
+rdpproxy: INFO (10656/10656) -- ChannelDef[0]::(name = rdpdr, flags = 0xC0800000, chanid = 1004)
+rdpproxy: INFO (10656/10656) -- ChannelDef[1]::(name = rdpsnd, flags = 0xC0000000, chanid = 1005)
+rdpproxy: INFO (10656/10656) -- ChannelDef[2]::(name = cliprdr, flags = 0xC0A00000, chanid = 1006)
+rdpproxy: INFO (10656/10656) -- Enable session probe
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=0c01 length=16
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=0c03 length=16
+rdpproxy: INFO (10656/10656) -- GCC::UserData tag=0c02 length=12
+rdpproxy: INFO (10656/10656) -- =================== SC_SECURITY =============
+rdpproxy: INFO (10656/10656) -- No encryption
+rdpproxy: INFO (10656/10656) -- send extended login info (RDP5-style) 107db :cgrosjean
+rdpproxy: INFO (10656/10656) -- RdpNegociation: Get license: username="cgrosjean"
+rdpproxy: INFO (10656/10656) -- RdpNegociation: get_license LIC::RecvFactory::bMsgType=255
+rdpproxy: INFO (10656/10656) -- /* 0000 */ 0xff, 0x03, 0x10, 0x00, 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00,  // ................
+rdpproxy: INFO (10656/10656) -- mod_rdp::recv_demand_active
+rdpproxy: INFO (10656/10656) -- use rdp5
+rdpproxy: INFO (10656/10656) -- Rdp::receiving the server-to-client Monitor Layout PDU MonitorLayoutPDU monitorCount=1 ((left=0, top=0, right=1023, bottom=767, primary=yes(0x1)))
+rdpproxy: INFO (10656/10656) -- Resizing to 1024x768x16
+rdpproxy: INFO (10656/10656) -- Server_resize: Resizing client to : 1024 x 768 x 16
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="SESSION_ESTABLISHED_SUCCESSFULLY"
+rdpproxy: INFO (10656/10656) -- FileSystemVirtualChannel::enable_session_probe_drive: count=1
+rdpproxy: INFO (10656/10656) -- Front::can_be_start_capture: Capture is not necessary
+rdpproxy: INFO (10656/10656) -- process save session info : Logon extended info
+rdpproxy: INFO (10656/10656) -- process save session info : Logon Errors Info
+rdpproxy: INFO (10656/10656) -- ErrorNotificationType=LOGON_MSG_SESSION_CONTINUE(0xFFFFFFFE) "The logon process is continuing." SessionIdentifier=5
+rdpproxy: INFO (10656/10656) -- process save session info : Logon long
+rdpproxy: INFO (10656/10656) -- Logon Info Version 2 (data): Domain="WIN10CGR" UserName="cgrosjean" SessionId=5
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 3
+rdpproxy: INFO (10656/10656) -- sending native_session_id=5
+rdpproxy: INFO (10656/10656) -- sending keepalive=ASK
+rdpproxy: INFO (10656/10656) -- sending reporting=OPEN_SESSION_SUCCESSFUL:win10cgr:OK.
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 83
+rdpproxy: INFO (10656/10656) -- Mod_rdp: disable input event.
+rdpproxy: INFO (10656/10656) -- Mod_rdp: Enable graphics update.
+rdpproxy: INFO (10656/10656) -- process save session info : Logon extended info
+rdpproxy: INFO (10656/10656) -- process save session info : Auto-reconnect cookie
+rdpproxy: INFO (10656/10656) -- ServerAutoReconnectPacket: Version=1 LogonId=5
+rdpproxy: INFO (10656/10656) -- 0000 2a d8 d8 ee 7e 2f 34 be a7 ec 96 cc ac 56 ef a2  *...~/4......V..
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 16
+rdpproxy: INFO (10656/10656) -- receiving 'keepalive'='True'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = SESSIONID-0000
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" format="CF_TEXT(1)" size="210"
+rdpproxy: INFO (10656/10656) -- SessionProbeVirtualChannel::process_server_message: Session Probe is ready.
+rdpproxy: INFO (10656/10656) -- FileSystemVirtualChannel::disable_session_probe_drive: count=0
+rdpproxy: INFO (10656/10656) -- using /dev/urandom as random source
+rdpproxy: INFO (10656/10656) -- SessionProbeVirtualChannel::process_server_message: SessionProbePID=7676
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 1
+rdpproxy: INFO (10656/10656) -- sending rd_shadow_available=True
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 26
+rdpproxy: INFO (10656/10656) -- SessionProbe: Initialization completed.
+rdpproxy: INFO (10656/10656) -- Mod_rdp: enable input event.
+rdpproxy: INFO (10656/10656) -- Mod_rdp: Enable graphics update.
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="NEW_PROCESS" command_line="\"C:\\WINDOWS\\system32\\backgroundTaskHost.exe\" -ServerName:CortanaUI.AppXy7vb4pc2dr3kc93kfc509b1d0arkfb2x.mca"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="INPUT_LANGUAGE" identifier="0x0409" display_name="English (United States)"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="UNIDENTIFIED_INPUT_FIELD_GET_FOCUS" status="yes"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="COMPLETED_PROCESS" command_line="\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="NEW_PROCESS" command_line="C:\\WINDOWS\\system32\\DllHost.exe /Processid:{49F171DD-B51A-40D3-9A6C-52D674CC729D}"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="COMPLETED_PROCESS" command_line="C:\\WINDOWS\\System32\\mobsync.exe -Embedding"
+rdpproxy: [RDP Session] session_id="SESSIONID-0000" client_ip="127.0.0.1" target_ip="10.10.43.9" user="k" device="win10cgr" service="rdp" account="cgrosjean" type="COMPLETED_PROCESS" command_line="C:\\Windows\\system32\\userinit.exe"
+rdpproxy: INFO (10656/10656) -- Begin Sending data to ACL: numbers of changed fields = 1
+rdpproxy: INFO (10656/10656) -- sending keepalive=ASK
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (send) 14
+rdpproxy: INFO (10656/10656) -- ACL SERIALIZER : Data size without header (receive) = 16
+rdpproxy: INFO (10656/10656) -- receiving 'keepalive'='True'
+rdpproxy: INFO (10656/10656) -- SESSION_ID = SESSIONID-0000
+rdpproxy: INFO (10656/10656) -- auth::keep_alive ACL incoming event
+
+

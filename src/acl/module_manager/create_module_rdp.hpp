@@ -27,7 +27,7 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "keyboard/keymap2.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
 
@@ -42,8 +42,6 @@ extern ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Font & glyphs,
     Theme & theme,
     TimeBase & time_base,
-    TopFdContainer& fd_events_,
-    TimerContainer& timer_events_,
     EventContainer& events,
     SesmanInterface & sesman,
     LicenseApi & file_system_license_store,

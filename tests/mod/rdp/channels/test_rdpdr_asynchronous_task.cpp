@@ -64,32 +64,38 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
+    TimeBase time_base({0,0});
+    auto now = time_base.get_current_time();
+    EventContainer events;
+
     RdpdrDriveReadTask rdpdr_drive_read_task(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
-        test_to_server_sender, to_verbose_flags(0));
+        test_to_server_sender,
+        to_verbose_flags(0));
 
-    bool run_task = true;
-    TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
-    EventContainer events;
-    rdpdr_drive_read_task.configure_event(
-        time_base, fd_events_, timer_events_, events, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
-            *b = false;
-        }});
+    std::deque<AsynchronousTask*> tasks;
 
-    RED_CHECK(!fd_events_.is_empty());
-    RED_CHECK(run_task);
-    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-    for (int i = 0; i < 100 && !fd_events_.is_empty(); ++i) {
-        fd_events_.exec_action(fd_is_set);
+    std::function<void(Event&)> remover = [&tasks](Event&) -> void
+    {
+        tasks.pop_front();
+    };
+
+    auto event = rdpdr_drive_read_task.configure_event(now, nullptr);
+    event.actions.on_teardown = remover;
+    events.push_back(std::move(event));
+    AsynchronousTask* task(&rdpdr_drive_read_task);
+    tasks.push_back(task);
+
+    RED_CHECK(!events.empty());
+    auto end_tv = time_base.get_current_time();
+    for (int i = 0; i < 100 && !events.empty(); ++i) {
+        time_base.set_current_time(end_tv);
+        execute_events(events, end_tv, [](int/*fd*/){ return true; });
+        end_tv.tv_sec++;
     }
-    auto const end_tv = time_base.get_current_time();
-    timer_events_.exec_timer(end_tv);
-    fd_events_.exec_timeout(end_tv);
-    execute_events(events, end_tv, [](int fd){ return true; });
-    RED_CHECK(fd_events_.is_empty());
-    RED_CHECK(!run_task);
+    execute_events(events, end_tv, [](int/*fd*/){ return true; });
+    RED_CHECK(events.empty());
+    RED_CHECK(tasks.empty());
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -105,33 +111,39 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     TestToServerSender test_to_server_sender(check_transport);
 
+    TimeBase time_base({0,0});
+    auto now = time_base.get_current_time();
+    EventContainer events;
+
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
-        contents.size(), test_to_server_sender, to_verbose_flags(0));
+        contents.size(), test_to_server_sender,
+        to_verbose_flags(0));
 
-    bool run_task = true;
-    TimeBase time_base({0,0});
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
-    EventContainer events;
-    rdpdr_send_drive_io_response_task.configure_event(
-        time_base, fd_events_, timer_events_, events, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
-            *b = false;
-        }});
-    RED_CHECK(fd_events_.is_empty());
+    std::deque<AsynchronousTask*> tasks;
 
-    RED_CHECK(!timer_events_.is_empty());
+    std::function<void(Event&)> remover = [&tasks](Event&) -> void
+    {
+        tasks.pop_front();
+    };
+
+    auto event = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
+    event.actions.on_teardown = remover;
+    events.push_back(std::move(event));
+    AsynchronousTask * task(&rdpdr_send_drive_io_response_task);
+    tasks.push_back(task);
+
+
+    RED_CHECK(!events.empty());
 
     timeval timeout = time_base.get_current_time();
-    for (int i = 0; i < 100 && !timer_events_.is_empty(); ++i) {
+    for (int i = 0; i < 100 && !events.empty(); ++i) {
         auto const end_tv = time_base.get_current_time();
-        timer_events_.exec_timer(end_tv);
-        execute_events(events, end_tv, [](int fd){return false;});
-        fd_events_.exec_timeout(end_tv);
+        execute_events(events, end_tv, [](int/*fd*/){return false;});
         time_base.set_current_time(timeout);
         ++timeout.tv_sec;
     }
-    RED_CHECK(timer_events_.is_empty());
-    RED_CHECK(!run_task);
+    RED_CHECK(events.empty());
+    RED_CHECK(tasks.empty());
 }

@@ -76,7 +76,7 @@
 
 #include "core/RDPEA/audio_output.hpp"
 
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/log_id.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -145,30 +145,48 @@ struct FileValidatorService;
 class SesmanInterface;
 
 #ifndef __EMSCRIPTEN__
-// TODO: isn't AsynchronousTaskContainer is general purpose class that should have it's own file ?
+// TODO: isn't AsynchronousTaskContainer a general purpose class that should have it's own file ?
 struct AsynchronousTaskContainer
 {
-private:
-    static auto remover() noexcept
+public:
+    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events)
+        : time_base(time_base), gd_provider(gd_provider), events(events)
     {
-        return [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
-            (void)task;
-            assert(&task == pself->tasks.front().get());
-            pself->tasks.pop_front();
-            pself->next();
-        };
+        LOG(LOG_INFO, "New Asynchronous Task Container");
     }
 
-public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, TopFdContainer& fd_events_, TimerContainer& timer_events_, EventContainer & events)
-        : time_base(time_base), gd_provider(gd_provider), fd_events_(fd_events_), timer_events_(timer_events_), events(events)
-    {}
+    ~AsynchronousTaskContainer()
+    {
+        LOG(LOG_INFO, "Delete Asynchronous Task Container");
+        end_of_lifespan(this->events, this);
+    }
+
+    static void remover(AsynchronousTaskContainer * self, AsynchronousTask * task)
+    {
+        LOG(LOG_INFO, "remover for task %p", task);
+        (void)task;
+        assert(task == self->tasks.front().get());
+        self->tasks.pop_front();
+        self->next();
+    }
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
         this->tasks.emplace_back(std::move(task));
+
+        // TODO: we could simplify that code by keeping only the current task as event
+        // and creating the next event only when poping task and changing event
+        // instead of creating events early
+
         if (this->tasks.size() == 1u) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, this->events, AsynchronousTask::TerminateEventNotifier{this, remover()});
+            auto container_task = this->tasks.front().get();
+            auto event = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            event.actions.on_teardown = [this, container_task](Event&event)
+            {
+                AsynchronousTaskContainer::remover(this, container_task);
+                event.garbage = true;
+            };
+            this->events.push_back(std::move(event));
         }
     }
 
@@ -176,7 +194,14 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            this->tasks.front()->configure_event(this->time_base, this->fd_events_, this->timer_events_, this->events, AsynchronousTask::TerminateEventNotifier{this, remover()});
+            auto container_task = this->tasks.front().get();
+            auto event  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            event.actions.on_teardown = [this, container_task](Event&event)
+            {
+                AsynchronousTaskContainer::remover(this, container_task);
+                event.garbage = true;
+            };
+            this->events.push_back(event);
         }
     }
 
@@ -184,9 +209,13 @@ private:
 public:
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TopFdContainer& fd_events_;
-    TimerContainer& timer_events_;
     EventContainer& events;
+};
+#else
+struct AsynchronousTaskContainer
+{
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, EventContainer & events)
+    {}
 };
 #endif
 
@@ -408,9 +437,9 @@ private:
     const RDPVerbose verbose;
 
     TimeBase & time_base;
-    TimerContainer& timer_events_;
-    EventContainer & events;
     GdProvider & gd_provider;
+    EventContainer & events;
+    SesmanInterface & sesman;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -420,8 +449,9 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, TimerContainer& timer_events_, EventContainer & events,
-        GdProvider & gd_provider,
+        TimeBase & time_base, GdProvider & gd_provider,
+        EventContainer & events,
+        SesmanInterface & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -451,9 +481,9 @@ public:
     , report_message(report_message)
     , verbose(verbose)
     , time_base(time_base)
-    , timer_events_(timer_events_)
-    , events(events)
     , gd_provider(gd_provider)
+    , events(events)
+    , sesman(sesman)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
@@ -683,6 +713,8 @@ private:
         class ToServerAsynchronousSender : public VirtualChannelDataSender
         {
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
+            TimeBase & time_base;
+            EventContainer & events;
 
             AsynchronousTaskContainer& asynchronous_tasks;
 
@@ -691,9 +723,12 @@ private:
         public:
             explicit ToServerAsynchronousSender(
                 std::unique_ptr<VirtualChannelDataSender>&& to_server_synchronous_sender,
+                TimeBase & time_base, EventContainer & events,
                 AsynchronousTaskContainer& asynchronous_tasks,
                 RDPVerbose verbose)
             : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
+            , time_base(time_base)
+            , events(events)
             , asynchronous_tasks(asynchronous_tasks)
             , verbose(verbose)
             {}
@@ -717,6 +752,7 @@ private:
 
         return std::make_unique<ToServerAsynchronousSender>(
             create_to_server_synchronous_sender(channel_name, stc),
+            this->time_base, this->events,
             asynchronous_tasks,
             this->verbose);
     }
@@ -776,7 +812,6 @@ private:
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                 asynchronous_tasks.time_base,
-                asynchronous_tasks.timer_events_,
                 asynchronous_tasks.events,
                 this->file_system_to_client_sender.get(),
                 this->file_system_to_server_sender.get(),
@@ -836,8 +871,8 @@ public:
 
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
-            this->timer_events_,
             this->events,
+            this->sesman,
             this->session_probe_to_server_sender.get(),
             front,
             rdp,
@@ -928,7 +963,7 @@ public:
         }
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
         assert(!out_asynchronous_task);
     }   // process_cliprdr_event
 
@@ -1029,7 +1064,7 @@ public:
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         assert(!out_asynchronous_task);
     }
@@ -1052,7 +1087,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         assert(!out_asynchronous_task);
     }
@@ -1111,7 +1146,7 @@ public:
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
 
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
@@ -1169,7 +1204,7 @@ public:
         FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task, sesman);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
         if (out_asynchronous_task) {
             asynchronous_tasks.add(std::move(out_asynchronous_task));
         }
@@ -1430,8 +1465,8 @@ public:
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     this->time_base,
-                    this->timer_events_,
                     this->events,
+                    this->sesman,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
@@ -1699,7 +1734,7 @@ public:
             }
             this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe.session_probe_launcher.get());
             if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
-                this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+                this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
             this->session_probe.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->session_probe.session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
@@ -1731,7 +1766,7 @@ public:
             }
 
             if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
-                this->session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+                this->session_probe_virtual_channel->start_launch_timeout_timer();
             }
 
             if (this->remote_app.enable_remote_program) {
@@ -1919,15 +1954,13 @@ class mod_rdp : public mod_api, public rdp_api
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    TopFdPtr fd_event;
-    TopFdContainer & fd_events_;
 #ifndef __EMSCRIPTEN__
-    TimerContainer& timer_events_;
+    EventContainer & events;
     SesmanInterface & sesman;
 #endif
 
 #ifndef __EMSCRIPTEN__
-    TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
+    int remoteapp_one_shot_bypass_window_legalnotice = 0;
 #endif
 
     bool deactivation_reactivation_in_progress = false;
@@ -2017,8 +2050,6 @@ public:
         Transport & trans
       , TimeBase& time_base
       , GdProvider & gd_provider
-      , TopFdContainer & fd_events_
-      , TimerContainer& timer_events_
       , EventContainer & events
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
@@ -2042,8 +2073,11 @@ public:
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, timer_events_, events,
-            gd_provider, file_validator_service, mod_rdp_factory, spvc_callbacks
+            report_message, gen, metrics, time_base, gd_provider, events,
+            sesman,
+            file_validator_service,
+            mod_rdp_factory,
+            spvc_callbacks
         )
 #else
         : channels(channels_authorizations)
@@ -2093,14 +2127,13 @@ public:
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
         , gd_provider(gd_provider)
-        , fd_events_(fd_events_)
         #ifndef __EMSCRIPTEN__
-        , timer_events_(timer_events_)
+        , events(events)
         , sesman(sesman)
         #endif
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         #ifndef __EMSCRIPTEN__
-        , asynchronous_tasks(time_base, gd_provider, fd_events_, timer_events_, events)
+        , asynchronous_tasks(time_base, gd_provider, events)
         #endif
         , lang(mod_rdp_params.lang)
         , session_time_start(timeobj.get_time().tv_sec)
@@ -2171,49 +2204,6 @@ public:
                 ?  mod_rdp_params.open_session_timeout
                 :  15s;
 
-        auto check_error = [this](auto /*ctx*/, jln::ExitR er){
-            LOG(LOG_INFO, "**** rdp::fd_events_.on_error()");
-
-            if (er.status != jln::ExitR::Exception) {
-                return er.to_result();
-            }
-
-            switch (er.error.id) {
-            case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-            case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
-            case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
-            case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
-            case ERR_NLA_AUTHENTICATION_FAILED:
-                return er.to_result();
-            default: break;
-            }
-
-            const char * statestr = "UNKNOWN_STATE";
-            const char * statedescr = "Unknown state.";
-            switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
-                #define CASE(e, trkey)                      \
-                    case RdpNegociation::State::e:          \
-                        statestr = "RDP_" #e;               \
-                        statedescr = TR(trkey, this->lang); \
-                    break
-                CASE(NEGO_INITIATE, trkeys::err_mod_rdp_nego);
-                CASE(NEGO, trkeys::err_mod_rdp_nego);
-                CASE(BASIC_SETTINGS_EXCHANGE, trkeys::err_mod_rdp_basic_settings_exchange);
-                CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
-                CASE(CHANNEL_JOIN_CONFIRM, trkeys::mod_rdp_channel_join_confirme);
-                CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
-                CASE(TERMINATED, trkeys::err_mod_rdp_nego);
-                #undef CASE
-            }
-
-            str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
-
-            LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
-                statestr, statedescr);
-            er.error = Error(ERR_SESSION_UNKNOWN_BACKEND);
-            return er.to_result();
-        };
-
         this->private_rdp_negociation = std::make_unique<PrivateRdpNegociation>(
             open_session_timeout, program, directory,
             this->channels.channels_authorizations, this->channels.mod_channel_list,
@@ -2264,39 +2254,41 @@ public:
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-        this->fd_event = this->fd_events_.create_top_executor(this->time_base, this->trans.get_fd())
-        .on_exit(check_error)
-        .on_action([this](auto ctx){
-            bool const is_finish = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+// ====================================================================
 
-            // RdpNego::recv_next_data set a new fd if tls
-            int const fd = this->trans.get_fd();
-            if (fd >= 0) {
-                ctx.set_fd(fd);
-            }
+        Event event("RDP Negociation", this);
+        event.alarm.set_timeout(this->time_base.get_current_time()
+            + this->private_rdp_negociation->open_session_timeout);
+        event.alarm.set_fd(this->trans.get_fd(), std::chrono::seconds{3600});
+        event.actions.on_action = [this](Event&event)
+        {
+            try {
+                LOG(LOG_INFO, "%s on_action", event.name);
+                bool const negotiation_finished = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
-            if (!is_finish) {
-                return ctx.need_more_data();
-            }
-            else {
-                this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-                return ctx.disable_timeout()
-                .replace_exit(jln::propagate_exit())
-                .replace_action([this](auto ctx){
-                    auto & gd = this->gd_provider.get_graphics();
-                    if (this->buf.remaining()){
-                        this->draw_event(this->gd_provider.get_graphics());
-                    }
-                    this->private_rdp_negociation.reset();
-                    #ifndef __EMSCRIPTEN__
-                    if (this->channels.remote_programs_session_manager) {
-                        this->channels.remote_programs_session_manager->set_drawable(&gd);
-                    }
-                    #endif
-                    this->buf.load_data(this->trans);
-                    this->draw_event(gd);
-                    return ctx.replace_action([this](auto ctx){
+                // RdpNego::recv_next_data may reconnect and change fd if tls
+                int const fd = this->trans.get_fd();
+                if (fd >= 0) {
+                    event.alarm.set_fd(fd, event.alarm.grace_delay);
+                }
+
+                if (negotiation_finished) {
+                    this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+                    event.alarm.set_timeout(this->time_base.get_current_time()
+                        // trigger timeout after 1 hour inactivity
+                        + std::chrono::seconds{3600});
+                    // Timeout Does nothing anyway
+                    event.actions.on_timeout = [this](Event&/*event*/) {};
+                    // Replace event by Normal RDP fd event
+                    event.rename("First Incoming RDP PDU Event");
+                    event.actions.on_action = [this](Event&event)
+                    {
+                        LOG(LOG_INFO, "%s on_action", event.name);
                         auto & gd = this->gd_provider.get_graphics();
+                        if (this->buf.remaining()){
+                            this->draw_event(this->gd_provider.get_graphics());
+                        }
+                        this->private_rdp_negociation.reset();
                         #ifndef __EMSCRIPTEN__
                         if (this->channels.remote_programs_session_manager) {
                             this->channels.remote_programs_session_manager->set_drawable(&gd);
@@ -2304,31 +2296,57 @@ public:
                         #endif
                         this->buf.load_data(this->trans);
                         this->draw_event(gd);
-                        return ctx.need_more_data();
-                    });
-                });
-            }
-        })
-        .set_timeout(this->private_rdp_negociation->open_session_timeout)
-        .on_timeout([this](auto ctx){
-            if (this->error_message) {
-                *this->error_message = "Logon timer expired!";
-            }
 
-            this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
-
-    #ifndef __EMSCRIPTEN__
-            if (this->channels.session_probe.enable_session_probe) {
-                this->enable_input_event();
-                this->enable_graphics_update();
+                        event.rename("Incoming RDP PDU Event");
+                        event.actions.on_action = [this](Event&event)
+                        {
+                            LOG(LOG_INFO, "%s on_action", event.name);
+                            auto & gd = this->gd_provider.get_graphics();
+                            #ifndef __EMSCRIPTEN__
+                            if (this->channels.remote_programs_session_manager) {
+                                this->channels.remote_programs_session_manager->set_drawable(&gd);
+                            }
+                            #endif
+                            this->buf.load_data(this->trans);
+                            this->draw_event(gd);
+                        };
+                    };
+                }
             }
-    #endif
-            LOG(LOG_ERR,
-                "Logon timer expired on %s. The session will be disconnected.",
+            catch (Error & error) {
+                event.garbage = true;
+                this->throw_error(error);
+            };
+        };
+        event.actions.on_timeout = [this](Event&event)
+        {
+            LOG(LOG_INFO, "%s on_timeout", event.name);
+            try {
+                LOG(LOG_INFO, "%s on_timeout", event.name);
+                if (this->error_message) {
+                    *this->error_message = "Logon timer expired!";
+                }
+
+                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+        #ifndef __EMSCRIPTEN__
+                if (this->channels.session_probe.enable_session_probe) {
+                    this->enable_input_event();
+                    this->enable_graphics_update();
+                }
+        #endif
+                LOG(LOG_ERR,
+                    "Logon timer expired on %s. The session will be disconnected.",
                 this->logon_info.hostname());
-            return ctx.exception(Error(ERR_RDP_OPEN_SESSION_TIMEOUT));
-        });
-
+                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
+            }
+            catch (Error & error) {
+                event.garbage = true;
+                this->throw_error(error);
+            };
+        };
+        this->events.push_back(event);
+// ====================================================================
+//        .on_exit(check_error)
     }   // mod_rdp
 
 
@@ -2360,7 +2378,62 @@ public:
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
         }
+        end_of_lifespan(this->events, this);
     }
+
+
+    void throw_error(Error & error)
+    {
+        LOG(LOG_INFO, "throw error mod_rdp::fd event exception %u: %s", error.id, error.errmsg());
+        switch (error.id) {
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+        case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CORRUPTED:
+        case ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE:
+        case ERR_NLA_AUTHENTICATION_FAILED:
+            throw error;
+        default: break;
+        }
+
+        const char * statestr = "UNKNOWN_STATE";
+        const char * statedescr = "Unknown state.";
+        switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
+            case RdpNegociation::State::NEGO_INITIATE:
+                statestr = "RDP_NEGO_INITIATE";
+                statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
+            break;
+            case RdpNegociation::State::NEGO:
+                statestr = "RDP_NEGO";
+                statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
+            break;
+            case RdpNegociation::State::BASIC_SETTINGS_EXCHANGE:
+                statestr = "RDP_BASIC_SETTINGS_EXCHANGE";
+                statedescr = TR(trkeys::err_mod_rdp_basic_settings_exchange, this->lang);
+            break;
+            case RdpNegociation::State::CHANNEL_CONNECTION_ATTACH_USER:
+                statestr = "RDP_CHANNEL_CONNECTION_ATTACH_USER";
+                statedescr = TR(trkeys::err_mod_rdp_channel_connection_attach_user, this->lang);
+            break;
+            case RdpNegociation::State::CHANNEL_JOIN_CONFIRM:
+                statestr = "RDP_CHANNEL_JOIN_CONFIRM";
+                statedescr = TR(trkeys::mod_rdp_channel_join_confirme, this->lang);
+            break;
+            case RdpNegociation::State::GET_LICENSE:
+                statestr = "RDP_GET_LICENSE";
+                statedescr = TR(trkeys::mod_rdp_get_license, this->lang);
+            break;
+            case RdpNegociation::State::TERMINATED:
+                statestr = "RDP_TERMINATED";
+                statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
+            break;
+        }
+        str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
+
+        LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
+            statestr, statedescr);
+        throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+    }
+
 
     void acl_update() override
     {
@@ -5064,13 +5137,13 @@ public:
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel &&
             this->session_probe_start_launch_timeout_timer_only_after_logon) {
-            this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+            this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 #endif
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
 
-        this->fd_event->disable_timeout();
+//        this->fd_event->disable_timeout();
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe) {
@@ -5101,7 +5174,16 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+            if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                for(auto & event: this->events){
+                    if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                        event.garbage = true;
+                        event.id = 0;
+                        this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                        break;
+                    }
+                }
+            }
 #endif
         }
         break;
@@ -5115,7 +5197,16 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+            if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                for(auto & event: this->events){
+                    if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                        event.garbage = true;
+                        event.id = 0;
+                        this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                        break;
+                    }
+                }
+            }
 #endif
         }
         break;
@@ -5137,7 +5228,7 @@ public:
 
             if (this->channels.session_probe_virtual_channel &&
                 this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                this->channels.session_probe_virtual_channel->start_launch_timeout_timer(sesman);
+                this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
 #endif
         }
@@ -5164,7 +5255,16 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-                this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+                if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                    for(auto & event: this->events){
+                        if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                            event.garbage = true;
+                            event.id = 0;
+                            this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                            break;
+                        }
+                    }
+                }
 #endif
             }
 
@@ -5185,32 +5285,59 @@ public:
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->timer_events_
-                        .create_timer_executor(this->time_base)
-                        .set_delay(this->channels.remote_app.bypass_legal_notice_delay)
-                        .on_action(jln::sequencer(
-                            [this](auto ctx) {
-                                LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
-                                this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
-                                this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
-
-                                if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
-                                    ctx.set_delay(this->channels.remote_app.bypass_legal_notice_timeout);
-
-                                    return ctx.next();
+                        if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                            for(auto & event: this->events){
+                                if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                                    event.garbage = true;
+                                    event.id = 0;
                                 }
-                                return ctx.terminate();
-                            },
-                            [this](auto ctx) {
-                                this->on_remoteapp_redirect_user_screen(
-                                    this->authentifier, RDP::LOGON_FAILED_OTHER);
-                                return ctx.terminate();
                             }
-                        ));
+                        }
+                        
+                        Event event("Bypass Legal Notice Timer", this);
+                        this->remoteapp_one_shot_bypass_window_legalnotice = event.id;
+                        event.alarm.set_timeout(this->time_base.get_current_time()
+                                        + this->channels.remote_app.bypass_legal_notice_delay);
+                        Sequencer chain = {false, 0, false, 
+                        {
+                            { "one",
+                                [this](Event&event,Sequencer&/*sequencer*/)
+                                {
+                                    LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
+                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
+                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
+
+                                    if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
+                                        event.alarm.set_timeout(this->time_base.get_current_time()
+                                            + this->channels.remote_app.bypass_legal_notice_timeout);
+                                        return;
+                                    }
+                                    event.garbage = true;
+                                }
+                            },
+                            { "two",
+                                [this](Event&event,Sequencer&/*sequencer*/)
+                                {
+                                    this->on_remoteapp_redirect_user_screen(
+                                        this->authentifier, RDP::LOGON_FAILED_OTHER);
+                                    event.garbage = true;
+                                }
+                            }
+                        }};
+                        event.actions.on_timeout = chain;
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    this->remoteapp_one_shot_bypass_window_legalnotice.reset();
+                    if (this->remoteapp_one_shot_bypass_window_legalnotice) {
+                        for(auto & event: this->events){
+                            if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
+                                event.garbage = true;
+                                event.id = 0;
+                                this->remoteapp_one_shot_bypass_window_legalnotice = 0;
+                                break;
+                            }
+                        }
+                    }
                 }
 #endif
             }

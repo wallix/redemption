@@ -23,7 +23,7 @@
 
 #include "core/log_id.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
@@ -799,8 +799,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }
 
         void process_server_device_announce_response(uint32_t total_length,
-            uint32_t flags, InStream& chunk, SesmanInterface & sesman
-        ) {
+            uint32_t flags, InStream& chunk)
+        {
             (void)total_length;
             (void)flags;
             this->waiting_for_server_device_announce_response = false;
@@ -826,7 +826,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 this->file_system_drive_manager.get_session_probe_drive_id()) {
                 if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
                     if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded(
-                            (server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS), sesman)) {
+                            (server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS))) {
                         this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
                     }
                 }
@@ -855,10 +855,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     }
 
     TimeBase& time_base;
-    TimerContainer& timer_events_;
     EventContainer & events;
-
-    TimerPtr initialization_timeout_event;
+    int initialization_timeout_event = 0;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
     {
@@ -875,7 +873,6 @@ public:
 
     FileSystemVirtualChannel(
         TimeBase& time_base,
-        TimerContainer& timer_events_,
         EventContainer & events,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
@@ -914,7 +911,6 @@ public:
           params.smartcard_passthrough,
           base_params.verbose)
     , time_base(time_base)
-    , timer_events_(timer_events_)
     , events(events)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
@@ -960,6 +956,7 @@ public:
             );
         }
 #endif  // #ifndef NDEBUG
+        end_of_lifespan(this->events, this);
     }
 
     void disable_session_probe_drive() {
@@ -1850,7 +1847,15 @@ public:
                     client_announce_reply.log(LOG_INFO);
                 }
 
-                this->initialization_timeout_event.reset();
+                if (this->initialization_timeout_event) {
+                    for(auto & event: this->events){
+                        if (event.id == this->initialization_timeout_event){
+                            event.garbage = true;
+                            event.id = 0;
+                        }
+                    }
+                }
+                this->initialization_timeout_event = 0;
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -1992,10 +1997,14 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event = this->timer_events_
-            .create_timer_executor(this->time_base, this)
-            .set_delay(this->initialization_timeout)
-            .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
+            Event event("Initialisation timeout Event", this);
+            this->initialization_timeout_event = event.id;
+            event.alarm.set_timeout(this->time_base.get_current_time()+this->initialization_timeout);
+            event.actions.on_timeout = [this](Event&)
+            {
+                this->process_event();
+            };
+            this->events.push_back(std::move(event));
             return true;
         }
 
@@ -2687,8 +2696,7 @@ public:
 
     void process_server_message(uint32_t total_length,
         uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-        SesmanInterface & sesman)
+        std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
             override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
@@ -2747,7 +2755,7 @@ public:
                         "Server Device Announce Response");
 
                 this->device_redirection_manager.process_server_device_announce_response(
-                    total_length, flags, chunk, sesman);
+                    total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST:
@@ -2833,8 +2841,15 @@ public:
 
 private:
     void process_event() {
-        this->initialization_timeout_event.reset();
-
+        if (this->initialization_timeout_event) {
+            for(auto & event: this->events){
+                if (event.id == this->initialization_timeout_event){
+                    event.garbage = true;
+                    event.id = 0;
+                }
+            }
+        }
+        this->initialization_timeout_event = 0;
         uint8_t message_buffer[1024];
 
         {

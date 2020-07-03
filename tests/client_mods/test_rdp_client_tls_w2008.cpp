@@ -27,7 +27,7 @@
 #include "acl/license_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "core/client_info.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/report_message_api.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -139,8 +139,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
     EventContainer events;
 
     SesmanWrapper sesman;
@@ -151,8 +149,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, fd_events_,
-        timer_events_, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+    auto mod = new_mod_rdp(t, time_base, gd_provider, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -163,9 +160,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     int n = 72;
     int count = 0;
-    for (; count < n && !fd_events_.is_empty(); ++count) {
-        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        fd_events_.exec_action(is_set);
+    for (; count < n && !events.empty(); ++count) {
+        execute_events(events, timeval{1,0},[](int){return true;});
     }
     RED_CHECK_EQ(count, n);
 
@@ -270,8 +266,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
-    TopFdContainer fd_events_;
-    TimerContainer timer_events_;
     EventContainer events;
     SesmanWrapper sesman;
 
@@ -280,10 +274,12 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t,
-        time_base, gd_provider, fd_events_, timer_events_, events, sesman, front.gd(), front, info,
-        sesman.redir_info(), gen, timeobj, channels_authorizations, mod_rdp_params,
-        tls_client_params, authentifier, report_message, license_store, sesman.get_ini(),
+    auto mod = new_mod_rdp(t, time_base, gd_provider, 
+        events, sesman, front.gd(), front, info,
+        sesman.redir_info(), gen, timeobj, 
+        channels_authorizations, mod_rdp_params,
+        tls_client_params, authentifier, 
+        report_message, license_store, sesman.get_ini(),
         nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -293,10 +289,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     int n = 42;
     int count = 0;
-    for (; count < n && !fd_events_.is_empty(); ++count) {
-        auto is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-        fd_events_.exec_action(is_set);
+    for (; count < n && !events.empty(); ++count) {
+        execute_events(events, timeval{1,0},[](int){return true;});
     }
+    
     RED_CHECK_EQ(count, n);
 
     // t.disable_remaining_error();
