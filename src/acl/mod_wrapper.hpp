@@ -433,9 +433,10 @@ public:
 
     void set_mod(ModuleIndex next_state, ModPack mod_pack)
     {
-        LOG(LOG_INFO, "Setting new mod %s (was %s)",
+        LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
             get_module_name(next_state),
-            get_module_name(this->current_mod));
+            get_module_name(this->current_mod),
+            mod_pack.psocket_transport);
 
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
