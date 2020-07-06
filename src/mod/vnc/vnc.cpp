@@ -1449,12 +1449,7 @@ void mod_vnc::check_timeout()
         size_t chunk_size = length;
 
         this->clipboard_requesting_for_data_is_delayed = false;
-        for (auto & event: this->events){
-            if (event.id == clipboard_timeout_timer){
-                event.garbage = true;
-            }
-        }
-        this->clipboard_timeout_timer = 0;
+        erase_event(this->events, this->clipboard_timeout_timer);
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , length
@@ -1494,12 +1489,7 @@ bool mod_vnc::lib_clip_data(Buf64k & buf)
 
         // Can stop RDP to VNC clipboard infinite loop.
         this->clipboard_requesting_for_data_is_delayed = false;
-        for (auto & event: this->events){
-            if (event.id == clipboard_timeout_timer){
-                event.garbage = true;
-            }
-        }
-        this->clipboard_timeout_timer = 0;
+        erase_event(this->events, this->clipboard_timeout_timer);
     }
     else {
         LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -1715,13 +1705,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     chunk_size = out_s.get_offset();
 
                     this->clipboard_requesting_for_data_is_delayed = false;
-                    for (auto & event: this->events){
-                        if (event.id == clipboard_timeout_timer){
-                            event.garbage = true;
-                        }
-                    }
-                    this->clipboard_timeout_timer = 0;
-
+                    erase_event(this->events, this->clipboard_timeout_timer);
                     this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , chunk_size // total length is chunk_size

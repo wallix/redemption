@@ -5171,16 +5171,7 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            if (this->remoteapp_one_shot_bypass_window_legalnotice) {
-                for(auto & event: this->events){
-                    if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
-                        event.garbage = true;
-                        event.id = 0;
-                        this->remoteapp_one_shot_bypass_window_legalnotice = 0;
-                        break;
-                    }
-                }
-            }
+            erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
         }
         break;
@@ -5194,16 +5185,7 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            if (this->remoteapp_one_shot_bypass_window_legalnotice) {
-                for(auto & event: this->events){
-                    if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
-                        event.garbage = true;
-                        event.id = 0;
-                        this->remoteapp_one_shot_bypass_window_legalnotice = 0;
-                        break;
-                    }
-                }
-            }
+            erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
         }
         break;
@@ -5252,16 +5234,7 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-                if (this->remoteapp_one_shot_bypass_window_legalnotice) {
-                    for(auto & event: this->events){
-                        if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
-                            event.garbage = true;
-                            event.id = 0;
-                            this->remoteapp_one_shot_bypass_window_legalnotice = 0;
-                            break;
-                        }
-                    }
-                }
+                erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
             }
 
@@ -5282,15 +5255,7 @@ public:
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        if (this->remoteapp_one_shot_bypass_window_legalnotice) {
-                            for(auto & event: this->events){
-                                if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
-                                    event.garbage = true;
-                                    event.id = 0;
-                                }
-                            }
-                        }
-
+                        erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
                         Event event("Bypass Legal Notice Timer", this);
                         this->remoteapp_one_shot_bypass_window_legalnotice = event.id;
                         event.alarm.set_timeout(this->time_base.get_current_time()
@@ -5325,16 +5290,7 @@ public:
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    if (this->remoteapp_one_shot_bypass_window_legalnotice) {
-                        for(auto & event: this->events){
-                            if (event.id == this->remoteapp_one_shot_bypass_window_legalnotice){
-                                event.garbage = true;
-                                event.id = 0;
-                                this->remoteapp_one_shot_bypass_window_legalnotice = 0;
-                                break;
-                            }
-                        }
-                    }
+                    erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
                 }
 #endif
             }

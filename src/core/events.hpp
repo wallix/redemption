@@ -290,3 +290,25 @@ inline void execute_events(EventContainer & events, const timeval tv, const std:
     garbage_collector(events);
 }
 
+inline void erase_event(EventContainer & events, int & event_id)
+{
+    if (event_id) {
+        for(auto & event: events){
+            if (event.id == event_id){
+                event.garbage = true;
+                event.id = 0;
+            }
+        }
+    }
+    event_id = 0;
+}
+
+inline void reset_timeout(EventContainer & events, const timeval trigger_time, const int event_id)
+{
+    for(auto & event: events){
+        if (event.id == event_id){
+            event.alarm.set_timeout(trigger_time);
+        }
+    }
+}
+

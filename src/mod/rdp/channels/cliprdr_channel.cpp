@@ -135,8 +135,7 @@ struct ClipboardVirtualChannel::ClipCtx::FileContentsRange::TflFile
 struct ClipboardVirtualChannel::OSD::D
 {
     template<class TFn, class FFn>
-    static decltype(auto) find_osd_event(
-        EventContainer& events, int id_event, TFn true_fn, FFn false_fn)
+    static decltype(auto) find_osd_event(EventContainer& events, int id_event, TFn true_fn, FFn false_fn)
     {
         if (id_event != -1) {
             for (Event& event : events) {

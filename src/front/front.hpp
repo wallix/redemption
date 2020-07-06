@@ -1152,15 +1152,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            if (this->capture_timer) {
-                for(auto & event: this->events){
-                    if (event.id == this->capture_timer){
-                        event.garbage = true;
-                        event.id = 0;
-                    }
-                }
-            }
-            this->capture_timer = 0;
+            erase_event(this->events, this->capture_timer);
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -4254,15 +4246,7 @@ private:
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
-                if (this->handshake_timeout) {
-                    for(auto & event: this->events){
-                        if (event.id == this->handshake_timeout){
-                            event.garbage = true;
-                            event.id = 0;
-                        }
-                    }
-                }
-                this->handshake_timeout = 0;
+                erase_event(this->events, this->handshake_timeout);
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API

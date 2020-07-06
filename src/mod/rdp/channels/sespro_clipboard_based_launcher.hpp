@@ -150,15 +150,7 @@ public:
 
         if (this->state == State::START) {
             Event event("SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this);
-            if (this->event_id) {
-                for(auto & event: this->events){
-                    if (event.id == this->event_id){
-                        event.garbage = true;
-                        event.id = 0;
-                    }
-                }
-            }
-            this->event_id = 0;
+            erase_event(this->events, this->event_id);
             this->event_id = event.id;
             event.alarm.set_timeout(this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms);
             event.actions.on_timeout = [this](Event&event)
@@ -505,15 +497,7 @@ public:
         }};
 
         Event event("SessionProbeClipboardBasedLauncher Event", this);
-        if (this->event_id) {
-            for(auto & event: this->events){
-                if (event.id == this->event_id){
-                    event.garbage = true;
-                    event.id = 0;
-                }
-            }
-        }
-        this->event_id = 0;
+        erase_event(this->events, this->event_id);
         this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
         chain.verbose = true; // bool(this->verbose & RDPVerbose::sesprobe_launcher);
@@ -628,15 +612,7 @@ public:
         }}};
 
         Event event("SessionProbeClipboardBasedLauncher Event", this);
-        if (this->event_id) {
-            for(auto & event: this->events){
-                if (event.id == this->event_id){
-                    event.garbage = true;
-                    event.id = 0;
-                }
-            }
-        }
-        this->event_id = 0;
+        erase_event(this->events, this->event_id);
         this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
         chain.verbose = true; //bool(this->verbose & RDPVerbose::sesprobe_launcher);
@@ -766,15 +742,7 @@ public:
         LOG(LOG_INFO, "========= state changed to State::STOP (%d) ====", this->state);
 
         this->state = State::STOP;
-        if (this->event_id) {
-            for(auto & event: this->events){
-                if (event.id == this->event_id){
-                    event.garbage = true;
-                    event.id = 0;
-                }
-            }
-        }
-        this->event_id = 0;
+        erase_event(this->events, this->event_id);
 
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {

@@ -150,7 +150,7 @@ struct RdpData
 
     std::unique_ptr<ModMetrics> metrics;
     int metrics_timer = 0;
-    
+
     void set_metrics_timer(std::chrono::seconds log_interval)
     {
         Event event("RDP Metrics Timer", this);
@@ -164,18 +164,18 @@ struct RdpData
         this->events.push_back(std::move(event));
     }
 
-    EventContainer & events;
     TimeBase & time_base;
+    EventContainer & events;
 
     std::unique_ptr<FileValidator> file_validator;
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
-    
+
     RdpData(TimeBase & time_base, EventContainer & events)
      : time_base(time_base)
      , events(events)
     {}
-    
+
     ~RdpData()
     {
         end_of_lifespan(this->events, this);

@@ -1846,16 +1846,7 @@ public:
                     client_announce_reply.receive(chunk);
                     client_announce_reply.log(LOG_INFO);
                 }
-
-                if (this->initialization_timeout_event) {
-                    for(auto & event: this->events){
-                        if (event.id == this->initialization_timeout_event){
-                            event.garbage = true;
-                            event.id = 0;
-                        }
-                    }
-                }
-                this->initialization_timeout_event = 0;
+                erase_event(this->events, this->initialization_timeout_event);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -2841,15 +2832,7 @@ public:
 
 private:
     void process_event() {
-        if (this->initialization_timeout_event) {
-            for(auto & event: this->events){
-                if (event.id == this->initialization_timeout_event){
-                    event.garbage = true;
-                    event.id = 0;
-                }
-            }
-        }
-        this->initialization_timeout_event = 0;
+        erase_event(this->events, this->initialization_timeout_event);
         uint8_t message_buffer[1024];
 
         {
