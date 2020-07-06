@@ -948,9 +948,8 @@ public:
     void process_cliprdr_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
         FrontAPI& front,
         ServerTransportContext & stc,
-        FileValidatorService * file_validator_service,
-        SesmanInterface & sesman
-    ) {
+        FileValidatorService * file_validator_service)
+    {
         if (!this->clipboard_virtual_channel) {
             this->create_clipboard_virtual_channel(front, stc, file_validator_service);
         }
@@ -1058,9 +1057,8 @@ public:
         authentifier.set_pm_request(checkout_channel_message.c_str());
     }
 
-    void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
-        SesmanInterface & sesman
-    ) {
+    void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
+    {
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -1074,9 +1072,8 @@ public:
             FrontAPI& front,
             ServerTransportContext & stc,
             const ModRdpVariables & vars,
-            RailCaps const & client_rail_caps,
-            SesmanInterface & sesman
-            ) {
+            RailCaps const & client_rail_caps)
+    {
         (void)rail_channel;
 
         if (!this->remote_programs_virtual_channel) {
@@ -1135,8 +1132,8 @@ public:
     void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
                                 FrontAPI& front,
                                 ServerTransportContext & stc,
-                                AsynchronousTaskContainer & asynchronous_tasks,
-                                SesmanInterface & sesman) {
+                                AsynchronousTaskContainer & asynchronous_tasks)
+    {
 
         if (!this->dynamic_channel_virtual_channel) {
             this->create_dynamic_channel_virtual_channel(front, stc);
@@ -1170,8 +1167,8 @@ public:
                             ServerTransportContext & stc,
                             AsynchronousTaskContainer & asynchronous_tasks,
                             GeneralCaps const & client_general_caps,
-                            const char (& client_name)[128],
-                            SesmanInterface & sesman) {
+                            const char (& client_name)[128])
+    {
         if (!this->file_system.enable_rdpdr_data_analysis
         &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
         &&  !this->drive.file_system_drive_manager.has_managed_drive()) {
@@ -1700,8 +1697,7 @@ public:
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
         const Translation::language_t & lang,
-        FileValidatorService * file_validator_service,
-        SesmanInterface & sesman)
+        FileValidatorService * file_validator_service)
     {
         assert(this->session_probe.enable_session_probe);
         if (this->session_probe.session_probe_launcher){
@@ -3077,14 +3073,14 @@ public:
                             this->client_general_caps,
                             this->client_name);
                 }
-                this->channels.process_session_probe_event(sec.payload, length, flags, chunk_size, sesman);
+                this->channels.process_session_probe_event(sec.payload, length, flags, chunk_size);
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service, sesman);
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->file_validator_service);
             }
             else if (mod_channel.name == channel_names::rail) {
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
@@ -3092,19 +3088,19 @@ public:
                     this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_rail_event(
                     mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, stc, this->vars, this->client_rail_caps, sesman);
+                    this->front, stc, this->vars, this->client_rail_caps);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, sesman);
+                this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, sesman);
+                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks);
             }
             else {
                 LOG(LOG_INFO, "mod_rdp::process unknown channel: mod_channel.name=%" PRIX64 " %s",uint64_t(mod_channel.name), mod_channel.name);
@@ -3291,8 +3287,7 @@ public:
                                         this->monitor_count,
                                         this->bogus_refresh_rect,
                                         this->lang,
-                                        this->file_validator_service,
-                                        sesman);
+                                        this->file_validator_service);
                                 }
 #endif
                                 this->already_upped_and_running = true;
