@@ -79,7 +79,7 @@ DialogMod::DialogMod(
         {
             this->accepted();
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 }
 
@@ -190,7 +190,7 @@ bool DialogMod::is_resizing_hosted_desktop_allowed() const
 
 DialogMod::~DialogMod()
 {
-    end_of_lifespan(this->events, this);
+    this->events.end_of_lifespan(this);
     this->screen.clear();
     this->rail_client_execute.reset(true);
 }

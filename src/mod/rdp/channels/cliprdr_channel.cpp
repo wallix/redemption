@@ -138,7 +138,7 @@ struct ClipboardVirtualChannel::OSD::D
     static decltype(auto) find_osd_event(EventContainer& events, int id_event, TFn true_fn, FFn false_fn)
     {
         if (id_event != -1) {
-            for (Event& event : events) {
+            for (Event& event : events.queue) {
                 if (event.id == id_event) {
                     return true_fn(event);
                 }
@@ -174,7 +174,7 @@ struct ClipboardVirtualChannel::OSD::D
                     return event;
                 },
                 [&self, &filename]() -> Event& {
-                    Event& event = self.osd.events.emplace_back("FileVerifOSD", &self);
+                    Event& event = self.osd.events.queue.emplace_back("FileVerifOSD", &self);
                     event.actions.on_timeout = [&self, &filename](Event& event){
                         self.osd.gd_provider.display_osd_message(str_concat(
                             TR(trkeys::file_verification_wait, self.osd.lang), filename));

@@ -158,7 +158,7 @@ public:
     ~AsynchronousTaskContainer()
     {
         LOG(LOG_INFO, "Delete Asynchronous Task Container");
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     static void remover(AsynchronousTaskContainer * self, AsynchronousTask * task)
@@ -186,7 +186,7 @@ public:
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
     }
 
@@ -201,7 +201,7 @@ private:
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
-            this->events.push_back(event);
+            this->events.add(std::move(event));
         }
     }
 
@@ -2339,7 +2339,7 @@ public:
                 this->throw_error(error);
             };
         };
-        this->events.push_back(event);
+        this->events.add(std::move(event));
     }   // mod_rdp
 
 
@@ -2371,7 +2371,7 @@ public:
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
         }
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
 
@@ -5166,7 +5166,8 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
+                                                this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
         }
         break;
@@ -5180,7 +5181,8 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
+                                                this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
         }
         break;
@@ -5229,7 +5231,9 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-                erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
+                                                this->remoteapp_one_shot_bypass_window_legalnotice);
+
 #endif
             }
 
@@ -5250,7 +5254,8 @@ public:
                         this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
+                                                this->remoteapp_one_shot_bypass_window_legalnotice);
                         Event event("Bypass Legal Notice Timer", this);
                         this->remoteapp_one_shot_bypass_window_legalnotice = event.id;
                         event.alarm.set_timeout(this->time_base.get_current_time()
@@ -5285,7 +5290,8 @@ public:
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    erase_event(this->events, this->remoteapp_one_shot_bypass_window_legalnotice);
+                    this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
+                                                this->remoteapp_one_shot_bypass_window_legalnotice);
                 }
 #endif
             }

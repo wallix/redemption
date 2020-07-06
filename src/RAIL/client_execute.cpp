@@ -71,7 +71,7 @@ ClientExecute::ClientExecute(
 
 ClientExecute::~ClientExecute()
 {
-    end_of_lifespan(events, this);
+    this->events.end_of_lifespan(this);
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::~ClientExecute()");
     this->reset(false);
 }
@@ -1224,7 +1224,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                             this->button_1_down_y,
                             this->button_1_down);
                     };
-                    this->events.push_back(std::move(event_down_timer));
+                    this->events.add(std::move(event_down_timer));
 
                     this->button_1_down_x = xPos;
                     this->button_1_down_y = yPos;

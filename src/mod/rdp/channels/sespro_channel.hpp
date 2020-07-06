@@ -220,7 +220,7 @@ public:
 
     ~SessionProbeVirtualChannel()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     void enable_bogus_refresh_rect_ex_support(bool enable) {
@@ -239,7 +239,7 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                erase_event(this->events, this->session_probe_timer);
+                this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
                 Event event("Session Probe Timer", this);
                 this->session_probe_timer = event.id;
                 event.alarm.set_timeout(this->time_base.get_current_time()
@@ -249,7 +249,7 @@ public:
                     event.alarm.set_timeout(this->time_base.get_current_time()
                         +this->sespro_params.effective_launch_timeout);
                 };
-                this->events.push_back(std::move(event));
+                this->events.add(std::move(event));
                 this->session_probe_launch_timeout_timer_started = true;
             }
         }
@@ -259,7 +259,7 @@ public:
     {
         this->launch_aborted = true;
 
-        erase_event(this->events, this->session_probe_timer);
+        this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
         Event event("Session Probe Timer", this);
         this->session_probe_timer = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()
@@ -268,14 +268,13 @@ public:
             this->process_event_launch();
             event.garbage = true;
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
             if (this->session_probe_timer) {
-                reset_timeout(this->events,
-                              this->time_base.get_current_time()+this->sespro_params.effective_launch_timeout,
+                this->events.reset_timeout(this->time_base.get_current_time()+this->sespro_params.effective_launch_timeout,
                               this->session_probe_timer);
             }
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
@@ -312,8 +311,7 @@ private:
                 "Session Probe keep alive requested");
 
         if (this->session_probe_timer) {
-            reset_timeout(this->events,
-                        this->time_base.get_current_time()+this->sespro_params.keepalive_timeout,
+            this->events.reset_timeout(this->time_base.get_current_time()+this->sespro_params.keepalive_timeout,
                         this->session_probe_timer);
         }
 
@@ -336,7 +334,7 @@ private:
             this->session_probe_stop_launch_sequence_notifier = nullptr;
         }
 
-        erase_event(this->events, this->session_probe_timer);
+        this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
 
         this->callbacks.enable_graphics_update();
         this->callbacks.enable_input_event();
@@ -553,7 +551,7 @@ public:
                     this->file_system_virtual_channel.disable_session_probe_drive();
                 }
 
-                erase_event(this->events, this->session_probe_timer);
+                this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
                 this->rdp.sespro_launch_process_ended();
 
                 // The order of the messages sent is very important!
@@ -567,7 +565,7 @@ public:
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
 
-                    erase_event(this->events, this->session_probe_timer);
+                    this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
                     Event event("Session Probe Keepalive Timer", this);
                     this->session_probe_timer = event.id;
                     event.alarm.set_timeout(this->time_base.get_current_time()
@@ -577,7 +575,7 @@ public:
                         event.alarm.set_timeout(this->time_base.get_current_time()
                             +this->sespro_params.keepalive_timeout);
                     };
-                    this->events.push_back(std::move(event));
+                    this->events.add(std::move(event));
                 }
 
                 send_client_message([](OutStream & out_s) {

@@ -390,7 +390,7 @@ public:
     std::string module_name() override {return "VNC Mod";}
 
     ~mod_vnc(){
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     void init() override;

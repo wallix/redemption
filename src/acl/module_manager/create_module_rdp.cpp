@@ -134,7 +134,7 @@ struct RdpData
                     this->mod->DLP_antivirus_check_channels_files();
                 }
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
 
         ~FileValidator()
@@ -144,7 +144,7 @@ struct RdpData
             }
             catch (...) {
             }
-            end_of_lifespan(this->events, this);
+            this->events.end_of_lifespan(this);
         }
     };
 
@@ -161,7 +161,7 @@ struct RdpData
         {
             this->metrics->log(event.alarm.now);
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 
     TimeBase & time_base;
@@ -178,7 +178,7 @@ struct RdpData
 
     ~RdpData()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 };
 
@@ -904,11 +904,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
 
     unique_fd client_sck =
-        connect_to_target_host(ini,
-                               time_base,
-                               report_message,
-                               trkeys::authentification_rdp_fail,
-                               ini.get<cfg::mod_rdp::enable_ipv6>());
+        connect_to_target_host(ini, report_message, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())

@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, 
+    auto mod = new_mod_rdp(t, time_base, gd_provider,
         events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
@@ -152,15 +152,15 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     auto end_tv = time_base.get_current_time();
-    execute_events(events, end_tv, [](int){return false;});
+    events.execute_events(end_tv, [](int){return false;});
 
     int n = 10;
     int count = 0;
-    events[0].alarm.fd = 0;
-    for (; count < n && !events.empty(); ++count) {
-        execute_events(events, timeval{1,0},[](int){return true;});
+    events.queue[0].alarm.fd = 0;
+    for (; count < n && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;});
     }
-   
+
     RED_CHECK_EQ(count, n);
 
     RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");

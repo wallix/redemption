@@ -24,14 +24,13 @@
 #include "utils/png.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/file.hpp"
-
+#include "utils/timebase.hpp"
+#include "utils/select.hpp"
+#include "core/events.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "cxx/cxx.hpp"
-#include "client_redemption/execute_events.hpp"
-#include "core/events.hpp"
-
 
 class ClientFront : public FrontAPI
 {
@@ -94,35 +93,53 @@ inline int run_connection_test(
     for (;;) {
         LOG(LOG_INFO, "run_connection_test");
 
-        switch (execute_events(
-            timeout, time_base,
-            events)) {
-            case ExecuteEventsResult::Error:
+        timeval now = tvtime();
+        unsigned max = 0;
+        fd_set   rfds;
+        io_fd_zero(rfds);
+
+        timeval ultimatum =  now + timeout;
+
+        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
+        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
+        if (ultimatum < now){
+            ultimatum = now;
+        }
+        std::chrono::microseconds difftime = ultimatum - now;
+        timeval timeoutastv = timeval{difftime.count()/1000000u,difftime.count()%1000000};
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
+
+        if (num < 0) {
+            if (errno != EINTR) {
                 LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
                 return 1;
-            case ExecuteEventsResult::Continue:
-                break;
-            case ExecuteEventsResult::Timeout:
-                ++timeout_counter;
-                LOG(LOG_INFO, "%s CLIENT :: Timeout (%d/%d)", type, timeout_counter, timeout_counter_max);
-                if (timeout_counter == timeout_counter_max) {
-                    return 2;
-                }
-                break;
-            case ExecuteEventsResult::Success:
-                if (mod.is_up_and_running()) {
-                    LOG(LOG_INFO, "%s CLIENT :: Done", type);
-                    return 0;
-                }
-                break;
+            }
+            continue;
         }
+
+        timeval now_after_select = tvtime();
+        events.execute_events(now_after_select, [](int /*fd*/){ return false; });
+        if (num) {
+            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
+            if (mod.is_up_and_running()) {
+                LOG(LOG_INFO, "%s CLIENT :: Done", type);
+                return 0;
+            }
+            continue;
+        }
+        ++timeout_counter;
+        LOG(LOG_INFO, "%s CLIENT :: Timeout (%d/%d)", type, timeout_counter, timeout_counter_max);
+        if (timeout_counter == timeout_counter_max) {
+            return 2;
+        }
+        continue;
     }
 }
 
 // return 0 : do screenshot, don't do screenshot an error occurred
 inline int wait_for_screenshot(
     char const* type,
-        TimeBase& time_base,
         EventContainer & events,
         std::chrono::milliseconds inactivity_time,
         std::chrono::milliseconds max_time)
@@ -139,19 +156,41 @@ inline int wait_for_screenshot(
 
         std::chrono::milliseconds timeout = std::min(max_time - elapsed, inactivity_time);
 
-        switch (execute_events(timeout, time_base, events)) {
-            case ExecuteEventsResult::Error:
+        timeval now = tvtime();
+        unsigned max = 0;
+        fd_set   rfds;
+        io_fd_zero(rfds);
+
+        timeval ultimatum =  now + timeout;
+
+        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
+        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
+        if (ultimatum < now){
+            ultimatum = now;
+        }
+        std::chrono::microseconds difftime = ultimatum - now;
+        timeval timeoutastv = timeval{difftime.count()/1000000u,difftime.count()%1000000};
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
+
+        if (num < 0) {
+            if (errno != EINTR) {
                 LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
                 return 1;
-            case ExecuteEventsResult::Success:
-                LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
-                REDEMPTION_CXX_FALLTHROUGH;
-            case ExecuteEventsResult::Continue:
-            case ExecuteEventsResult::Timeout:
-                if (timeout == 0ms) {
-                    return 0;
-                }
+            }
         }
+
+        timeval now_after_select = tvtime();
+        events.execute_events(now_after_select, [](int /*fd*/){ return false; });
+        if (num > 0) {
+            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
+            LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
+        }
+        events.execute_events(now_after_select, [](int /*fd*/){ return false; });
+        if (timeout == 0ms) {
+            return 0;
+        }
+        continue;
     }
 }
 
@@ -180,7 +219,7 @@ inline int run_test_client(
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);
 
-        if (int err = wait_for_screenshot(type, time_base, events, inactivity_time, max_time)) {
+        if (int err = wait_for_screenshot(type, events, inactivity_time, max_time)) {
             return err;
         }
 

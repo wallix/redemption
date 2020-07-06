@@ -112,7 +112,7 @@ mod_vnc::mod_vnc( Transport & t
             this->draw_event(this->gd_provider.get_graphics(), this->sesman);
         };
     };
-    this->events.push_back(std::move(event));
+    this->events.add(std::move(event));
 }
 
 bool mod_vnc::ms_logon(Buf64k & buf)
@@ -1449,7 +1449,7 @@ void mod_vnc::check_timeout()
         size_t chunk_size = length;
 
         this->clipboard_requesting_for_data_is_delayed = false;
-        erase_event(this->events, this->clipboard_timeout_timer);
+        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , length
@@ -1489,7 +1489,7 @@ bool mod_vnc::lib_clip_data(Buf64k & buf)
 
         // Can stop RDP to VNC clipboard infinite loop.
         this->clipboard_requesting_for_data_is_delayed = false;
-        erase_event(this->events, this->clipboard_timeout_timer);
+        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
     }
     else {
         LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -1705,7 +1705,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     chunk_size = out_s.get_offset();
 
                     this->clipboard_requesting_for_data_is_delayed = false;
-                    erase_event(this->events, this->clipboard_timeout_timer);
+                    this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
                     this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , chunk_size // total length is chunk_size
@@ -1726,7 +1726,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                         event.alarm.set_timeout(this->time_base.get_current_time()
                                 +(MINIMUM_TIMEVAL - timeval_diff));
                         event.actions.on_timeout = [this](Event&){this->check_timeout();};
-                        this->events.push_back(std::move(event));
+                        this->events.add(std::move(event));
                     }
                     else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated)
                         &&  ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)

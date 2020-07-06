@@ -54,7 +54,9 @@
 #include "capture/capture_params.hpp"
 #include "capture/wrm_capture.hpp"
 
-#include "client_redemption/execute_events.hpp"
+#include "utils/timebase.hpp"
+#include "utils/select.hpp"
+#include "core/events.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
@@ -291,48 +293,20 @@ public:
 
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
+        timeval now = tvtime();
         unsigned max = 0;
         fd_set   rfds;
         io_fd_zero(rfds);
 
-        auto g = [&rfds,&max](int fd){
-            assert(fd != -1);
-            io_fd_set(fd, rfds);
-            max = std::max(max, unsigned(fd));
-        };
-        for (auto & event: events){
-            if (event.garbage or event.teardown){
-                continue;
-            }
-            if (event.alarm.fd != -1){
-                g(event.alarm.fd);
-            }
+        timeval ultimatum =  now + timeout;
+
+        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
+        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
+        if (ultimatum < now){
+            ultimatum = now;
         }
-
-        this->time_base.set_current_time(tvtime());
-        // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-        timeval tv =  timeval{0,0} + timeout;
-        auto update_tv = [&](timeval const& tv2){
-            if (tv2.tv_sec >= 0) {
-                tv = std::min(tv, tv2);
-            }
-        };
-        auto timer_update_tv = [&](auto& timer){
-            update_tv(timer.tv);
-        };
-
-        for (auto & event: events){
-            if (event.garbage or event.teardown){
-                continue;
-            }
-            if (event.alarm.fd != -1){
-                if (event.alarm.active) {
-                    update_tv(event.alarm.trigger_time);
-                }
-            }
-        }
-
-        timeval timeoutastv = tv;
+        std::chrono::microseconds difftime = ultimatum - now;
+        timeval timeoutastv = {difftime.count()/1000000u,difftime.count()%1000000u};
 
         int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
 
@@ -346,11 +320,11 @@ public:
             return 9;
         }
 
-        this->time_base.set_current_time(tvtime());
-        auto const end_tv = this->time_base.get_current_time();
+        timeval now_after_select = tvtime();
 
+        this->events.execute_events(now_after_select, [&rfds](int fd){ return false; });
         if (num) {
-            execute_events(this->events, end_tv, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
+            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
         }
         return 0;
     }
@@ -361,7 +335,6 @@ public:
             case ClientRedemptionConfig::MOD_VNC:
                 this->_callback.init_layout(this->config.modVNCParamsData.keylayout);
                 break;
-
             default: this->_callback.init_layout(this->config.info.keylayout);
                 break;
         }
@@ -1033,9 +1006,9 @@ public:
         try {
             if (is_timeout) {
                 auto const end_tv = time_base.get_current_time();
-                execute_events(this->events, end_tv, [](int fd){ return false; });
+                this->events.execute_events(end_tv, [](int fd){ return false; });
             } else {
-                execute_events(this->events, time_base.get_current_time(), [](int fd){ return true; });
+                this->events.execute_events(time_base.get_current_time(), [](int fd){ return true; });
             }
         } catch (const Error & e) {
 

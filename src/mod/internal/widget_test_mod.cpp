@@ -85,12 +85,12 @@ struct WidgetTestMod::WidgetTestModPrivate
                 y += font.max_height() + 10;
             }
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
-    
+
     ~WidgetTestModPrivate()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     TimeBase& time_base;

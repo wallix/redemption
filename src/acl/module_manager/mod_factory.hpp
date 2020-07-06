@@ -51,7 +51,6 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
 #include "core/report_message_api.hpp"
-#include "acl/connect_to_target_host.hpp"
 #include "acl/file_system_license_store.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"

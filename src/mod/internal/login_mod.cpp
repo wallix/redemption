@@ -130,7 +130,7 @@ LoginMod::LoginMod(
             this->set_mod_signal(BACK_EVENT_STOP);
             e.garbage = true;
         };
-        this->events.push_back(std::move(login_timeout_event));
+        this->events.add(std::move(login_timeout_event));
     }
 }
 
@@ -148,7 +148,7 @@ void LoginMod::init()
 
 LoginMod::~LoginMod()
 {
-    end_of_lifespan(this->events, this);
+    this->events.end_of_lifespan(this);
     this->rail_client_execute.reset(true);
     this->screen.clear();
 }

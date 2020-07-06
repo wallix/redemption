@@ -153,9 +153,9 @@ public:
 
     ~RemoteProgramsSessionManager()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
-    
+
     void begin_update() override
     {
         if (this->drawable) {
@@ -459,8 +459,8 @@ public:
             }
         }
 
-        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) 
-        && this->has_previous_window) 
+        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type)
+        && this->has_previous_window)
         {
             this->currently_without_window = true;
             Event event("Rail Waiting Screen Event", this);
@@ -479,7 +479,7 @@ public:
                 }
                 event.garbage = true;
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
 
         if (has_window) {

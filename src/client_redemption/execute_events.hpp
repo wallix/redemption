@@ -33,55 +33,21 @@ enum class ExecuteEventsResult
     Timeout,
 };
 
-inline ExecuteEventsResult execute_events(
-    std::chrono::milliseconds timeout,
-    TimeBase& time_base,
-    EventContainer& events)
+inline ExecuteEventsResult execute_events(std::chrono::milliseconds timeout, EventContainer& events)
 {
+    timeval now = tvtime();
     unsigned max = 0;
     fd_set   rfds;
     io_fd_zero(rfds);
 
-    auto g = [&rfds,&max](int fd){
-        assert(fd != -1);
-        io_fd_set(fd, rfds);
-        max = std::max(max, unsigned(fd));
-    };
-    for (auto & event: events){
-        if (event.garbage or event.teardown){
-            continue;
-        }
-        if (event.alarm.fd != -1){
-            g(event.alarm.fd);
-        }
+    timeval ultimatum =  now + timeout;
+
+    events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
+    events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);};);
+    if (ultimatum < now){
+        ultimatum = now;
     }
-
-    time_base.set_current_time(tvtime());
-    // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
-    timeval tv =  timeval{0,0} + timeout;
-    auto update_tv = [&](timeval const& tv2){
-        if (tv2.tv_sec >= 0) {
-            tv = std::min(tv, tv2);
-        }
-    };
-
-    auto timer_update_tv = [&](auto& timer){
-        update_tv(timer.tv);
-    };
-
-    for (auto & event: events){
-        if (event.garbage or event.teardown){
-            continue;
-        }
-        if (event.alarm.fd != -1){
-            if (event.alarm.active) {
-                update_tv(event.alarm.trigger_time);
-            }
-        }
-    }
-
-
-    timeval timeoutastv = tv;
+    timeval timeoutastv = ultimatum - now;
 
     int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
 
@@ -92,14 +58,11 @@ inline ExecuteEventsResult execute_events(
         return ExecuteEventsResult::Error;
     }
 
-    time_base.set_current_time(tvtime());
-    auto const end_tv = time_base.get_current_time();
-    execute_events(events, end_tv, [](int /*fd*/){ return false; });
-
+    timeval now_after_select = tvtime();
+    events.execute_events(now_after_select, [](int /*fd*/){ return false; });
     if (num) {
-        execute_events(events, end_tv, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
+        events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
         return ExecuteEventsResult::Success;
     }
-
     return ExecuteEventsResult::Timeout;
 }

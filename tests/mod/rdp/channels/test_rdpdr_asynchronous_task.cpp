@@ -82,19 +82,19 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     auto event = rdpdr_drive_read_task.configure_event(now, nullptr);
     event.actions.on_teardown = remover;
-    events.push_back(std::move(event));
+    events.add(std::move(event));
     AsynchronousTask* task(&rdpdr_drive_read_task);
     tasks.push_back(task);
 
-    RED_CHECK(!events.empty());
+    RED_CHECK(!events.queue.empty());
     auto end_tv = time_base.get_current_time();
-    for (int i = 0; i < 100 && !events.empty(); ++i) {
+    for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
         time_base.set_current_time(end_tv);
-        execute_events(events, end_tv, [](int/*fd*/){ return true; });
+        events.execute_events(end_tv, [](int/*fd*/){ return true; });
         end_tv.tv_sec++;
     }
-    execute_events(events, end_tv, [](int/*fd*/){ return true; });
-    RED_CHECK(events.empty());
+    events.execute_events(end_tv, [](int/*fd*/){ return true; });
+    RED_CHECK(events.queue.empty());
     RED_CHECK(tasks.empty());
 }
 
@@ -130,20 +130,20 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     auto event = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
     event.actions.on_teardown = remover;
-    events.push_back(std::move(event));
+    events.add(std::move(event));
     AsynchronousTask * task(&rdpdr_send_drive_io_response_task);
     tasks.push_back(task);
 
 
-    RED_CHECK(!events.empty());
+    RED_CHECK(!events.queue.empty());
 
     timeval timeout = time_base.get_current_time();
-    for (int i = 0; i < 100 && !events.empty(); ++i) {
+    for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
         auto const end_tv = time_base.get_current_time();
-        execute_events(events, end_tv, [](int/*fd*/){return false;});
+        events.execute_events(end_tv, [](int/*fd*/){return false;});
         time_base.set_current_time(timeout);
         ++timeout.tv_sec;
     }
-    RED_CHECK(events.empty());
+    RED_CHECK(events.queue.empty());
     RED_CHECK(tasks.empty());
 }

@@ -644,18 +644,10 @@ public:
             }
 
             bool run_session = true;
-            auto old_time = now;
 
             using namespace std::chrono_literals;
 
-            unsigned count = 0;
             while (run_session) {
-//                if (count%10==0 || (now.tv_sec > old_time.tv_sec+2)){
-//                    LOG(LOG_INFO, "Looping %s Current Module %s", acl.show().c_str(),
-//                        ini.get<cfg::context::module>());
-//                    old_time = now;
-//                    count++;
-//                }
 
                 time_base.set_current_time(now);
 
@@ -722,13 +714,8 @@ public:
                     ioswitch.set_read_sck(front_trans.sck);
                 }
 
-                // if event lists are waiting for incoming data
-                for (auto & event: events){
-                    LOG(LOG_INFO, "event.garbage=%s event.alarm.fd=%d", event.garbage?"true":"false", event.alarm.fd);
-                    if ((not event.garbage) and event.alarm.fd != INVALID_SOCKET){
-                        ioswitch.set_read_sck(event.alarm.fd);
-                    }
-                }
+                // gather fd from events
+                events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
                 if (acl.is_connected()) {
                     LOG(LOG_INFO, "acl_sck fd=%d", acl.acl_serial->auth_trans->get_sck());
@@ -736,7 +723,7 @@ public:
                 }
 
                 timeval ultimatum = ioswitch.get_timeout();
-                auto tv = next_timeout(events);
+                auto tv = events.next_timeout();
                 // tv {0,0} means no timeout to trigger
                 if ((tv.tv_sec != 0) || (tv.tv_usec != 0)){
                     ultimatum = std::min(tv, ultimatum);
@@ -810,7 +797,7 @@ public:
                 switch (front.state) {
                 default:
                 {
-                    execute_events(events, now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
+                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
@@ -873,8 +860,7 @@ public:
                         }
 
                         auto const end_tv = time_base.get_current_time();
-                        execute_events(events, end_tv,
-                            [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
+                        events.execute_events(end_tv, [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {

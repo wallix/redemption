@@ -52,13 +52,13 @@ struct MouseState {
 
     ~MouseState()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     void cancel_double_click_detection()
     {
         //    assert(this->rail_enabled);
-        erase_event(this->events,this->first_click_down_timer);
+        this->first_click_down_timer = this->events.erase_event(this->first_click_down_timer);
         this->dc_state = MouseState::DCState::Wait;
     }
 
@@ -70,8 +70,7 @@ struct MouseState {
                     this->dc_state = MouseState::DCState::FirstClickDown;
 
                     if (this->first_click_down_timer) {
-                        reset_timeout(this->events,
-                                      this->time_base.get_current_time()+std::chrono::seconds{1},
+                        this->events.reset_timeout(this->time_base.get_current_time()+std::chrono::seconds{1},
                                       this->first_click_down_timer);
                     }
                     else {
@@ -84,7 +83,7 @@ struct MouseState {
                         {
                             this->dc_state = MouseState::DCState::Wait;
                         };
-                        this->events.push_back(std::move(dc_event));
+                        this->events.add(std::move(dc_event));
                     }
                 }
             break;

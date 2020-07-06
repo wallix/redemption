@@ -123,7 +123,7 @@ public:
 
     ~SessionProbeClipboardBasedLauncher()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     bool on_clipboard_initialize() override {
@@ -150,7 +150,7 @@ public:
 
         if (this->state == State::START) {
             Event event("SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this);
-            erase_event(this->events, this->event_id);
+            this->event_id = this->events.erase_event(this->event_id);
             this->event_id = event.id;
             event.alarm.set_timeout(this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms);
             event.actions.on_timeout = [this](Event&event)
@@ -158,7 +158,7 @@ public:
                 this->on_event();
                 event.garbage=true;
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
 
         if (this->sesprob_channel) {
@@ -497,12 +497,12 @@ public:
         }};
 
         Event event("SessionProbeClipboardBasedLauncher Event", this);
-        erase_event(this->events, this->event_id);
+        this->event_id = this->events.erase_event(this->event_id);
         this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
         chain.verbose = true; // bool(this->verbose & RDPVerbose::sesprobe_launcher);
         event.actions.on_timeout = std::move(chain);
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 
     void make_run_sequencer()
@@ -612,12 +612,12 @@ public:
         }}};
 
         Event event("SessionProbeClipboardBasedLauncher Event", this);
-        erase_event(this->events, this->event_id);
+        this->event_id = this->events.erase_event(this->event_id);
         this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
         chain.verbose = true; //bool(this->verbose & RDPVerbose::sesprobe_launcher);
         event.actions.on_timeout = std::move(chain);
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 
     bool on_server_format_list_response() override
@@ -742,7 +742,7 @@ public:
         LOG(LOG_INFO, "========= state changed to State::STOP (%d) ====", this->state);
 
         this->state = State::STOP;
-        erase_event(this->events, this->event_id);
+        this->event_id = this->events.erase_event(this->event_id);
 
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {

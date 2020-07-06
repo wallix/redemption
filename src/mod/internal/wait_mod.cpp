@@ -166,7 +166,7 @@ WaitMod::WaitMod(
     {
         this->refused();
     };
-    this->events.push_back(std::move(event));
+    this->events.add(std::move(event));
 }
 
 void WaitMod::init()
@@ -182,7 +182,7 @@ void WaitMod::init()
 
 WaitMod::~WaitMod()
 {
-    end_of_lifespan(this->events, this);
+    this->events.end_of_lifespan(this);
     this->rail_client_execute.reset(true);
     this->screen.clear();
 }

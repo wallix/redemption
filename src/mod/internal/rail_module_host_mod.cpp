@@ -234,8 +234,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
 
         if (this->disconnection_reconnection_timer) {
-            reset_timeout(this->events,
-                          this->time_base.get_current_time()+std::chrono::seconds{1},
+            this->events.reset_timeout(this->time_base.get_current_time()+std::chrono::seconds{1},
                           this->disconnection_reconnection_timer);
 
         }
@@ -251,7 +250,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
                     throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
                 }
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
     }
 }

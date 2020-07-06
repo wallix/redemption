@@ -127,7 +127,7 @@ public:
 
     ~RailModuleHostMod() override
     {
-        end_of_lifespan(this->events, this);    
+        this->events.end_of_lifespan(this);
         this->rail_client_execute.reset(true);
         this->screen.clear();
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
