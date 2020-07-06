@@ -193,7 +193,7 @@ namespace
     }
 
 
-    ScreenInfo make_screen_info(emscripten::val const& config)
+    ScreenInfo extract_screen_info(emscripten::val const& config)
     {
         return ScreenInfo{
             get_or(config, "width", uint16_t(800)),
@@ -202,7 +202,7 @@ namespace
         };
     }
 
-    RDPVerbose make_rdp_verbose(emscripten::val const& config)
+    RDPVerbose extract_rdp_verbose(emscripten::val const& config)
     {
         static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
         return get_or(config, "verbose", RDPVerbose(0));
@@ -280,10 +280,11 @@ class RdpClient
     Font font;
 
 public:
-    RdpClient(
-        emscripten::val&& graphics,
-        emscripten::val const& config)
-    : RdpClient(std::move(graphics), config, make_screen_info(config), make_rdp_verbose(config))
+    RdpClient(emscripten::val&& graphics, emscripten::val const& config)
+    : RdpClient(
+        std::move(graphics), config,
+        extract_screen_info(config),
+        extract_rdp_verbose(config))
     {}
 
     RdpClient(
@@ -293,7 +294,15 @@ public:
         RDPVerbose verbose)
     : front(std::move(graphics), screen_info.width, screen_info.height, verbose)
     , gd(front.graphic_api())
-    , time_base({0,0})
+    , time_base([&]{
+        uint32_t seconds = 0;
+        uint32_t milliseconds = 0;
+        extract_if(config, "time", [&](emscripten::val const& time){
+            set_if(time, "second", seconds);
+            set_if(time, "millisecond", milliseconds);
+        });
+        return timeval{checked_int{seconds}, checked_int{milliseconds}};
+    }())
     , sesman(ini)
     , js_rand(config)
     {
@@ -363,11 +372,15 @@ public:
 
         // init rdp_params
         //@{
+        const auto username = get_or_default<std::string>(config, "username");
+        const auto password = get_or_default<std::string>(config, "password");
+        const auto client_addr = get_or(config, "clientAddress", "0.0.0.0");
+
         ModRDPParams rdp_params(
-            get_or_default<std::string>(config, "username").c_str(),
-            get_or_default<std::string>(config, "password").c_str(),
+            username.c_str(),
+            password.c_str(),
             "0.0.0.0",
-            get_or(config, "clientAddress", "0.0.0.0").c_str(),
+            client_addr.c_str(),
             get_or(config, "keyFlags", 0),
             font,
             theme,
@@ -432,18 +445,27 @@ public:
 
     void write_first_packet()
     {
-        // TODO timer only
-        this->events.execute_events(this->time_base.get_current_time(), [](int /*fd*/){
-            return false;
-        });
+        this->set_time(this->time_base.get_current_time());
     }
 
     void set_time(timeval time)
     {
         this->time_base.set_current_time(time);
-        this->events.execute_events(this->time_base.get_current_time(), [](int /*fd*/){
-            return true;
-        });
+
+        assert(this->events.queue.size() == 1);
+        Event& event = this->events.queue[0];
+        if (event.alarm.trigger(time)){
+            event.exec_timeout();
+        }
+    }
+
+    void process_input_data(std::string data)
+    {
+        this->trans.push_input_buffer(std::move(data));
+
+        assert(this->events.queue.size() == 1);
+        Event& event = this->events.queue[0];
+        event.exec_action();
     }
 
     bytes_view get_output_buffer() const
@@ -454,15 +476,6 @@ public:
     void reset_output_data()
     {
         this->trans.clear_output_buffer();
-    }
-
-    void process_input_data(std::string data)
-    {
-        this->trans.push_input_buffer(std::move(data));
-        // TODO action only
-        this->events.execute_events(this->time_base.get_current_time(), [](int /*fd*/){
-            return true;
-        });
     }
 
     void write_scancode_event(uint16_t scancode)

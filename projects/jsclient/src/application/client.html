@@ -145,7 +145,6 @@ _Module = Module;
 
 // optional
 const LogLevel = Module.LogLevel;
-console.log(LogLevel);
 Module.log = function(priority, msg) {
     const logger = (priority === LogLevel.Info) ? console.log
                  : (priority === LogLevel.Warning) ? console.warn
@@ -354,9 +353,7 @@ function run(openCb, closeCb)
     let isClosed = false;
 
     socket.onopen = function(event) {
-        console.log('RdpClient open');
-
-        rdpclient = new RdpClient(gd, Object.assign({
+        const config = Object.assign({
             width: Number(width_input.value),
             height: Number(height_input.value),
             bpp: Number(bpp_input.value),
@@ -365,7 +362,11 @@ function run(openCb, closeCb)
             password: pass_input.value,
             // getRandomValues: (data) => crypto.getRandomValues(data),
             verbose: Number(verbose_input.value) || 0/*0x04000000*/,
-        }, JSON.parse(jsonConfig_input.value || '{}')));
+        }, JSON.parse(jsonConfig_input.value || '{}'));
+
+        console.log('RdpClient open', config);
+
+        rdpclient = new RdpClient(gd, config);
 
         const cliprdr = new Cliprdr(cbFiles, sendData, Module);
         const clipboard = new ClipboardChannel(
