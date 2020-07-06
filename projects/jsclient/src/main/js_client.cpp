@@ -433,7 +433,7 @@ public:
     void write_first_packet()
     {
         // TODO timer only
-        execute_events(this->events, this->time_base.get_current_time(), [](int /*fd*/){
+        this->events.execute_events(this->time_base.get_current_time(), [](int /*fd*/){
             return false;
         });
     }
@@ -441,7 +441,7 @@ public:
     void set_time(timeval time)
     {
         this->time_base.set_current_time(time);
-        execute_events(this->events, this->time_base.get_current_time(), [](int /*fd*/){
+        this->events.execute_events(this->time_base.get_current_time(), [](int /*fd*/){
             return true;
         });
     }
@@ -460,7 +460,7 @@ public:
     {
         this->trans.push_input_buffer(std::move(data));
         // TODO action only
-        execute_events(this->events, this->time_base.get_current_time(), [](int /*fd*/){
+        this->events.execute_events(this->time_base.get_current_time(), [](int /*fd*/){
             return true;
         });
     }
