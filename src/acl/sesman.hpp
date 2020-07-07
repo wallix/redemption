@@ -31,13 +31,16 @@
 #include "configs/config.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "acl/auth_api.hpp"
 #include "acl/authentifier.hpp"
 
-struct SesmanInterface
+struct SesmanInterface : public AuthApi
 {
     Inifile & ini;
+private:
     AuthApi & authentifier;
 
+public:
     bool screen_info_sent = false;
     ScreenInfo screen_info;
 
@@ -52,6 +55,47 @@ struct SesmanInterface
     SesmanInterface(Inifile & ini, AuthApi & authentifier)
     : ini(ini), authentifier(authentifier)
     {
+    }
+
+
+    void set_auth_channel_target(const char * target) override
+    {
+        this->authentifier.set_auth_channel_target(target);
+    }
+
+    void set_auth_error_message(const char * error_message) override
+    {
+        this->authentifier.set_auth_error_message(error_message);
+    }
+
+    void disconnect_target() override
+    {
+        this->authentifier.disconnect_target();
+    }
+
+    void set_pm_request(const char * request) override
+    {
+        this->authentifier.set_pm_request(request);
+    }
+
+    void set_native_session_id(unsigned int session_id) override
+    {
+        this->authentifier.set_native_session_id(session_id);
+    }
+
+    void rd_shadow_available() override
+    {
+        this->authentifier.rd_shadow_available();
+    }
+
+    void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * request, const char * id, const char * addr, uint16_t port) override
+    {
+        this->authentifier.rd_shadow_invitation(error_code, error_message, request, id, addr, port);
+    }
+
+    void set_smartcard_login(const char * login) override
+    {
+        this->authentifier.set_smartcard_login(login);
     }
 
     void set_screen_info(ScreenInfo screen_info)

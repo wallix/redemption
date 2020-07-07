@@ -545,7 +545,7 @@ public:
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
                 this->time_base, events, gd, mod_rdp, mod_rdp_params.lang,
-                mod_rdp_params.font, mod_rdp_params.theme, this->sesman.authentifier,
+                mod_rdp_params.font, mod_rdp_params.theme, this->sesman,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
                 mod_rdp_params.remote_app_params.rail_disconnect_message_delay,
@@ -1017,7 +1017,7 @@ public:
         else {
             LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
 
-            this->sesman.authentifier.set_auth_channel_target(auth_channel_message.c_str());
+            this->sesman.set_auth_channel_target(auth_channel_message.c_str());
         }
     }
 
@@ -1047,7 +1047,7 @@ public:
         this->checkout_channel_chanid = checkout_channel.chanid;
 
 //        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
-        this->sesman.authentifier.set_pm_request(checkout_channel_message.c_str());
+        this->sesman.set_pm_request(checkout_channel_message.c_str());
     }
 
     void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
@@ -5048,7 +5048,7 @@ public:
 
         switch (errorInfo){
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
-            this->sesman.authentifier.set_auth_error_message(TR(trkeys::disconnected_by_otherconnection, this->lang));
+            this->sesman.set_auth_error_message(TR(trkeys::disconnected_by_otherconnection, this->lang));
             break;
         case ERRINFO_REMOTEAPPSNOTENABLED:
             this->remote_apps_not_enabled = true;
@@ -5057,7 +5057,7 @@ public:
     }   // process_error_info
 
     void process_logon_info(const char * domain, const char * username, uint32_t native_session_id) {
-        this->sesman.authentifier.set_native_session_id(native_session_id);
+        this->sesman.set_native_session_id(native_session_id);
 
         char domain_username_format_0[2048];
         char domain_username_format_1[2048];
@@ -5069,7 +5069,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.file_system.smartcard_passthrough) {
-            this->sesman.authentifier.set_smartcard_login(domain_username_format_0);
+            this->sesman.set_smartcard_login(domain_username_format_0);
         }
 #endif
 
@@ -5282,7 +5282,7 @@ public:
         std::string errmsg = "(RemoteApp) ";
 
         errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(ErrorNotificationData);
-        this->sesman.authentifier.set_auth_error_message(errmsg.c_str());
+        this->sesman.set_auth_error_message(errmsg.c_str());
         throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
     }
 
@@ -6238,8 +6238,8 @@ public:
 
     void sespro_ending_in_progress() override
     {
-//        this->authentifier.disconnect_target();
-        this->sesman.authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
+//        this->sesman.disconnect_target();
+        this->sesman.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
 

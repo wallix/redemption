@@ -126,7 +126,7 @@ private:
     EventContainer& events;
     int session_probe_timer = 0;
     Callbacks & callbacks;
-    SesmanInterface & sesman;
+    AuthApi & sesman;
 
     bool launch_aborted = false;
 
@@ -1546,7 +1546,7 @@ public:
                     if (parameters_.size() == 1) {
                         if ((!::strcasecmp(parameters_[0].c_str(), "yes")) &&
                             this->sespro_params.session_shadowing_support) {
-                            this->sesman.authentifier.rd_shadow_available();
+                            this->sesman.rd_shadow_available();
                         }
                     }
                     else {
@@ -1565,10 +1565,10 @@ public:
                             const char *   shadow_addr = parameters_[4].c_str();
                             const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
 
-                            this->sesman.authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
+                            this->sesman.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }
                         else {
-                            this->sesman.authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
+                            this->sesman.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
                         }
                     }
                     else {
@@ -1700,7 +1700,7 @@ public:
                     "Invalid shadow session type! Operation canceled. Type=%s",
                 type);
 
-            this->sesman.authentifier.rd_shadow_invitation(
+            this->sesman.rd_shadow_invitation(
                     0x80004005, // E_FAIL
                     "The shadow session type specified is invalid!",
                     userdata,
