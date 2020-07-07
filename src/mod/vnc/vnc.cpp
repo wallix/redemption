@@ -2053,7 +2053,7 @@ void mod_vnc::init()
 }
 
 
-void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
+void mod_vnc::rdp_gdi_up_and_running()
 {
     if (this->gd_provider.is_ready_to_draw()
     && this->state == WAIT_CLIENT_UP_AND_RUNNING){

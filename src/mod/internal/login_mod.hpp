@@ -129,7 +129,7 @@ public:
 
     [[nodiscard]] Rect get_screen_rect() const { return this->screen.get_rect(); }
 
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
 
     void rdp_input_invalidate(Rect r) override;

@@ -166,9 +166,9 @@ public:
     }
 
     // from RdpInput
-    void rdp_gdi_up_and_running(ScreenInfo & si) override
+    void rdp_gdi_up_and_running() override
     {
-        this->mod.rdp_gdi_up_and_running(si);
+        this->mod.rdp_gdi_up_and_running();
     }
 
     void rdp_gdi_down() override

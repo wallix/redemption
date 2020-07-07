@@ -120,11 +120,10 @@ RailModuleHost& RailModuleHostMod::get_module_host()
 }
 
 // RdpInput
-void RailModuleHostMod::rdp_gdi_up_and_running(ScreenInfo & screen_info)
+void RailModuleHostMod::rdp_gdi_up_and_running()
 {
     mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.rdp_gdi_up_and_running(screen_info);
+    mod.rdp_gdi_up_and_running();
 }
 
 void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)

@@ -133,7 +133,7 @@ struct RdpInput : private noncopyable
     }
 
     // Client Notify module that gdi is up and running
-    virtual void rdp_gdi_up_and_running(ScreenInfo & screen_info) = 0;
+    virtual void rdp_gdi_up_and_running() = 0;
 
     // Client Notify module that gdi is not up and running any more
     virtual void rdp_gdi_down() = 0;

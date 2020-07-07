@@ -4255,7 +4255,7 @@ private:
                     this->ini.get<cfg::context::is_wabam>()) {
                     this->force_using_cache_bitmap_r2();
                 }
-                cb.rdp_gdi_up_and_running(this->client_info.screen_info);
+                cb.rdp_gdi_up_and_running();
                 sesman.set_screen_info(this->client_info.screen_info);
                 sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
 

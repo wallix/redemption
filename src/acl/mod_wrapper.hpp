@@ -599,8 +599,8 @@ public:
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     { this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2); }
 
-    void rdp_gdi_up_and_running(ScreenInfo & screen_info)
-    { this->get_mod()->rdp_gdi_up_and_running(screen_info); }
+    void rdp_gdi_up_and_running()
+    { this->get_mod()->rdp_gdi_up_and_running(); }
 
     void rdp_gdi_down()
     { this->get_mod()->rdp_gdi_down(); }

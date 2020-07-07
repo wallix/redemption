@@ -115,7 +115,7 @@ public:
                                int16_t /*param1*/, int16_t /*param2*/) override
     {}
 
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}
 

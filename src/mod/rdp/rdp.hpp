@@ -5649,7 +5649,7 @@ public:
         }
     }
 
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
 
     void rdp_input_invalidate(Rect r) override {

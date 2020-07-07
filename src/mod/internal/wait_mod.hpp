@@ -67,7 +67,7 @@ class WaitMod : public mod_api, public NotifyApi
         return this->screen.get_rect();
     }
 
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}
 

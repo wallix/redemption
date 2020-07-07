@@ -1742,7 +1742,7 @@ private:
 
 public:
     // Front calls this member function when it became up and running.
-    void rdp_gdi_up_and_running(ScreenInfo & ) override;
+    void rdp_gdi_up_and_running() override;
     void rdp_gdi_down() override {}
 
 private:

@@ -51,7 +51,7 @@ template<class ForwardTo> class CallbackForwarder : public Callback
         this->wrap.create_shadow_session(userdata, type);
     }
     // RdpInput
-    std::string module_name() override 
+    std::string module_name() override
     {
         return "WrappedMod" + this->wrap.module_name();
     }
@@ -82,9 +82,9 @@ template<class ForwardTo> class CallbackForwarder : public Callback
     }
 
 // Client Notify module that gdi is up and running
-    void rdp_gdi_up_and_running(ScreenInfo & screen_info) override
+    void rdp_gdi_up_and_running() override
     {
-        this->wrap.rdp_gdi_up_and_running(screen_info);
+        this->wrap.rdp_gdi_up_and_running();
     }
 
 // Client Notify module that gdi is not up and running any more
@@ -97,7 +97,7 @@ template<class ForwardTo> class CallbackForwarder : public Callback
     {
         this->wrap.rdp_allow_display_updates(left, top, right, bottom);
     }
-    
+
     void rdp_suppress_display_updates() override
     {
         this->wrap.rdp_suppress_display_updates();
