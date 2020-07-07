@@ -405,7 +405,7 @@ struct TestBindingCallback : Callback
         override {}
     void refresh(Rect /*unused*/) override {}
     void rdp_gdi_down() override {}
-    void rdp_gdi_up_and_running(ScreenInfo & /*unused*/) override {}
+    void rdp_gdi_up_and_running() override {}
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
