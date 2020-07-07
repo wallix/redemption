@@ -161,7 +161,7 @@ namespace configs
         "keepalive"_zv,
         "session_id"_zv,
         "timeclose"_zv,
-        "mode_console"_zv,
+        "context:mode_console"_zv,
         "real_target_device"_zv,
         "authentication_challenge"_zv,
         "ticket"_zv,

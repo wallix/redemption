@@ -338,7 +338,11 @@ cfg::context::authenticated ⇔ authenticated   [bool]
 cfg::context::keepalive ⇐ keepalive   [bool]
 cfg::context::session_id ⇐ session_id   [std::string]
 cfg::context::end_date_cnx ⇐ timeclose   [uint32_t]
-cfg::context::mode_console ⇐ mode_console   [RdpModeConsole]
+cfg::context::mode_console ⇐ context:mode_console   [RdpModeConsole]
+    Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
+      allow: Forward Console mode request from client to the target.
+      force: Force Console mode on target regardless of client request.
+      forbid: Block Console mode request from client.
 cfg::context::real_target_device ⇔ real_target_device   [std::string]
 cfg::context::authentication_challenge ⇐ authentication_challenge   [bool]
 cfg::context::ticket ⇔ ticket   [std::string]

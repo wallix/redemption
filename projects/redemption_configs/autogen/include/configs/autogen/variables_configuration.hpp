@@ -4146,8 +4146,10 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
+    /// Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option) <br/>
     /// type: RdpModeConsole <br/>
-    /// sesman ⇒ proxy <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: context:mode_console <br/>
     /// default:  = static_cast<type>(0) <br/>
     struct context::mode_console {
         static constexpr bool is_sesman_to_proxy = true;

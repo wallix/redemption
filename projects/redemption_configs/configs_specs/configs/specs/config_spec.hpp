@@ -794,7 +794,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::u32>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow));
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "real_target_device");
 
