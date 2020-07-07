@@ -78,13 +78,13 @@ mod_vnc::mod_vnc( Transport & t
     , events(events)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
+    , sesman(sesman)
 #endif
     , choosenAuth(VNC_AUTH_INVALID)
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
     , server_data_buf(*this)
     , tlsSwitch(false)
     , frame_buffer_update_ctx(this->zd, verbose)
-    , sesman(sesman)
     , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
@@ -109,7 +109,7 @@ mod_vnc::mod_vnc( Transport & t
         event.actions.on_timeout = [this](Event&){};
         event.actions.on_action = [this](Event&)
         {
-            this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+            this->draw_event(this->gd_provider.get_graphics());
         };
     };
     this->events.add(std::move(event));
@@ -469,7 +469,7 @@ bool mod_vnc::doTlsSwitch()
 }
 
 
-void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
+void mod_vnc::draw_event(gdi::GraphicApi & gd)
 {
     bool can_read = true;
 
@@ -519,7 +519,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
     [[maybe_unused]]
     uint64_t const data_server_before = this->server_data_buf.remaining();
 
-    while (this->draw_event_impl(gd, sesman) && !this->tlsSwitch) {
+    while (this->draw_event_impl(gd) && !this->tlsSwitch) {
     }
 
     uint64_t const data_server_after = this->server_data_buf.remaining();
@@ -750,7 +750,7 @@ bool mod_vnc::treatVeNCrypt() {
 }
 
 
-bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
+bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
 {
     switch (this->state)
     {

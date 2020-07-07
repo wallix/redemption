@@ -1101,7 +1101,7 @@ protected:
     bool tlsSwitch;
 
 public:
-    void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman);
+    void draw_event(gdi::GraphicApi & gd);
 
 private:
     static const char *securityTypeString(uint32_t t);
@@ -1112,7 +1112,7 @@ private:
 
     bool treatVeNCrypt();
 
-    bool draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman);
+    bool draw_event_impl(gdi::GraphicApi & gd);
 
 private:
     void check_timeout();

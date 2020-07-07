@@ -82,7 +82,6 @@ public:
 
 inline int run_connection_test(
     char const * type,
-    TimeBase& time_base,
     EventContainer & events,
     mod_api& mod)
 {
@@ -196,13 +195,12 @@ inline int wait_for_screenshot(
 
 inline int run_test_client(
     char const* type,
-        TimeBase& time_base,
         EventContainer & events,
         mod_api& mod, std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
     std::string const& screen_output)
 {
     try {
-        if (int err = run_connection_test(type, time_base, events, mod)) {
+        if (int err = run_connection_test(type, events, mod)) {
             return err;
         }
 

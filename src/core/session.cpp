@@ -702,7 +702,7 @@ public:
 
                 // sockets for mod or front aren't managed using fd events
                 if (mod_wrapper.get_mod_transport()) {
-                    LOG(LOG_INFO, "get_mod_transport fd=%d", mod_wrapper.get_mod_transport()->sck);
+//                    LOG(LOG_INFO, "get_mod_transport fd=%d", mod_wrapper.get_mod_transport()->sck);
                     int fd = mod_wrapper.get_mod_transport()->sck;
                     if (fd != INVALID_SOCKET) {
                         ioswitch.set_read_sck(fd);
@@ -710,7 +710,7 @@ public:
                 }
 
                 if (front_trans.sck != INVALID_SOCKET) {
-                    LOG(LOG_INFO, "front_trans.sck fd=%d", front_trans.sck);
+//                    LOG(LOG_INFO, "front_trans.sck fd=%d", front_trans.sck);
                     ioswitch.set_read_sck(front_trans.sck);
                 }
 
@@ -718,7 +718,7 @@ public:
                 events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
                 if (acl.is_connected()) {
-                    LOG(LOG_INFO, "acl_sck fd=%d", acl.acl_serial->auth_trans->get_sck());
+//                    LOG(LOG_INFO, "acl_sck fd=%d", acl.acl_serial->auth_trans->get_sck());
                     ioswitch.set_read_sck(acl.acl_serial->auth_trans->get_sck());
                 }
 
