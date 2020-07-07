@@ -25,11 +25,25 @@ section {
 #cbDownload {
     display: hidden
 }
+#login > fieldset {
+    padding-bottom: 0;
+}
 #login, fieldset {
     column-count: auto;
 }
 #login label {
     display: inline-block
+}
+
+#clipForms form {
+    padding: 0;
+    margin: 0;
+    display: inline-block
+}
+
+#login, #clipForms {
+    margin:0;
+    padding: 0px 5px 0px 5px;
 }
 
     </style>
@@ -43,54 +57,57 @@ section {
 <section>
     <form id="login" method="get" action="#">
         <fieldset>
-            <legend>Client</legend>
-            <fieldset>
-                <legend>Identification</legend>
-                <label for="ws">url: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
-                <label for="user">User: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
-                <label for="pass">Pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
-            </fieldset>
-            <fieldset>
-                <legend>Graphics</legend>
-                <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
-                <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
-                <label for="bpp">bpp: <select name="bpp" id="bpp">
-                    <option value="8">8</option>
-                    <option value="15">15</option>
-                    <option value="16" selected="selected">16</option>
-                    <option value="24">24</option>
-                    <option value="32">32</option>
-                </select></label>
-                <label for="disabledGraphics">disabled: <select name="disabledGraphics" id="disabledGraphics" multiple>
-                </select></label>
-            </fieldset>
-            <fieldset>
-                <legend>Others</legend>
-                <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
-                <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea>
-            </fieldset>
-            <p>
-                <input type="submit" value="New Connection"/>
-                <button id="disconnect" type="button" disabled="disabled">Disconnect</button>
-            </p>
+            <legend>Identification</legend>
+            <label for="ws">url: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
+            <label for="user">User: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
+            <label for="pass">Pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
         </fieldset>
+        <fieldset>
+            <legend>Graphics</legend>
+            <label for="width">width: <input type="number" id="width" name="width" value="800" placeholder="Width"/></label>
+            <label for="height">height: <input type="number" id="height" name="height" value="600" placeholder="Height"/></label>
+            <label for="bpp">bpp: <select name="bpp" id="bpp">
+                <option value="8">8</option>
+                <option value="15">15</option>
+                <option value="16" selected="selected">16</option>
+                <option value="24">24</option>
+                <option value="32">32</option>
+            </select></label>
+            <label for="disabledGraphics">disabled: <select name="disabledGraphics" id="disabledGraphics" multiple>
+            </select></label>
+        </fieldset>
+        <fieldset>
+            <legend>Others</legend>
+            <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
+            <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea>
+        </fieldset>
+        <p>
+            <input type="submit" value="New Connection"/>
+            <button id="disconnect" type="button" disabled="disabled">Disconnect</button>
+        </p>
     </form>
 
-    <form id="sendCbFile" method="get" action="#">
-        <fieldset>
-            <legend>File Clipboard</legend>
-            <input id="sendCbFile_data" name="myFile" type="file"/>
-            <input type="submit" value="Send File"/>
-        </fieldset>
-    </form>
+    <hr/>
 
-    <form id="sendCbUtf8" method="get" action="#">
-        <fieldset>
-            <legend>Text Clipboard</legend>
-            <textarea id="sendCbUtf8_data"></textarea>
-            <input type="submit" value="Send Clipboard"/>
-        </fieldset>
-    </form>
+    <div id="clipForms">
+        <form id="sendCbFile" method="get" action="#">
+            <fieldset>
+                <legend>File Clipboard</legend>
+                <input id="sendCbFile_data" name="myFile" type="file"/>
+                <input type="submit" value="Send File"/>
+            </fieldset>
+        </form>
+
+        <form id="sendCbUtf8" method="get" action="#">
+            <fieldset>
+                <legend>Text Clipboard</legend>
+                <textarea id="sendCbUtf8_data"></textarea>
+                <input type="submit" value="Send Text"/>
+            </fieldset>
+        </form>
+    </div>
+
+    <hr/>
 
     <div>
         <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
