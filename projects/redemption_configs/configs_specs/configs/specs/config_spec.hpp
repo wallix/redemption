@@ -432,6 +432,12 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_at_end_of_session_freeze_connection_and_wait", set(true));
 
 
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_exe_or_file", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_script_argument", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_chrome_uia_script", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_ie_script", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
+
+
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
@@ -866,12 +872,15 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "application_driver_alternate_shell");
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "application_driver_shell_arguments");
     });
-    
+
     W.section("theme", [&]
     {
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_theme", desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"}, set(false));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "bgcolor", set("dark_blue_bis"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "fgcolor", set("white"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "separator_color", set("light_blue"));
@@ -879,27 +888,27 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "error_color", set("yellow"));
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "logo", set(false));
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "logo_path", set(""));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_bgcolor", set("white"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_fgcolor", set("black"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_focus_color", set("winblue"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_bgcolor", set("black"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_fgcolor", set("light_yellow"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_border_color", set("black"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_bgcolor", set("pale_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_fgcolor", set("black"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_bgcolor", set("light_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_fgcolor", set("black"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_bgcolor", set("medium_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_fgcolor", set("white"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_bgcolor", set("winblue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_fgcolor", set("white"));
-        
+
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_bgcolor", set("medium_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_fgcolor", set("white"));
     });

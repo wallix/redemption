@@ -57,7 +57,8 @@ enum {
 // Session Probe Options
 enum {
     OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001,
-    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002
+    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
+    OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004
 };
 
 
@@ -500,7 +501,7 @@ public:
                         this->options);
                 }
 
-                bool const delay_disabled_launch_mask = (options & OPTION_DELAY_DISABLED_LAUNCH_MASK);
+                bool const delay_disabled_launch_mask = (this->options & OPTION_DELAY_DISABLED_LAUNCH_MASK);
 
 
                 error_type err_id = NO_ERROR;
@@ -545,7 +546,9 @@ public:
                     }
                 }
 
-                this->file_system_virtual_channel.disable_session_probe_drive();
+                if (!this->sespro_params.launch_application_driver) {
+                    this->file_system_virtual_channel.disable_session_probe_drive();
+                }
 
                 this->session_probe_timer.reset();
 
@@ -598,6 +601,10 @@ public:
 
                     if (this->sespro_params.update_disabled_features) {
                         options |= OPTION_UPDATE_DISABLED_FEATURES;
+                    }
+
+                    if (this->sespro_params.launch_application_driver_then_terminate) {
+                        options |= OPTION_LAUNCH_APPLICATION_THEN_TERMINATE;
                     }
 
                     if (options)

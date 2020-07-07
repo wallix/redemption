@@ -578,6 +578,18 @@ session_probe_on_account_manipulation = option(0, 1, 2, default=0)
 #_advanced
 session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=True)
 
+#_hidden
+application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(')
+
+#_hidden
+application_driver_script_argument = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(')
+
+#_hidden
+application_driver_chrome_uia_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(')
+
+#_hidden
+application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
+
 # Keep known server certificates on WAB
 #_hidden
 server_cert_store = boolean(default=True)

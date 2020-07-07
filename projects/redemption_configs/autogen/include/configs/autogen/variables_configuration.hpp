@@ -2304,6 +2304,54 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// type: char[257] <br/>
+    /// value = REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE <br/>
+    struct mod_rdp::application_driver_exe_or_file {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "application_driver_exe_or_file";
+        using type = char[257];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+        using mapped_type = sesman_and_spec_type;
+        type value = REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE;
+    };
+    /// type: char[257] <br/>
+    /// value = REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT <br/>
+    struct mod_rdp::application_driver_script_argument {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "application_driver_script_argument";
+        using type = char[257];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+        using mapped_type = sesman_and_spec_type;
+        type value = REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT;
+    };
+    /// type: char[257] <br/>
+    /// value = REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT <br/>
+    struct mod_rdp::application_driver_chrome_uia_script {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "application_driver_chrome_uia_script";
+        using type = char[257];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+        using mapped_type = sesman_and_spec_type;
+        type value = REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT;
+    };
+    /// type: char[257] <br/>
+    /// value = REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT <br/>
+    struct mod_rdp::application_driver_ie_script {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "application_driver_ie_script";
+        using type = char[257];
+        using sesman_and_spec_type = ::configs::spec_types::fixed_string;
+        using mapped_type = sesman_and_spec_type;
+        type value = REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT;
+    };
     /// Keep known server certificates on WAB <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy    [name: server_cert::server_cert_store] <br/>
@@ -5529,6 +5577,28 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// type: std::string <br/>
+    /// value{} <br/>
+    struct context::application_driver_alternate_shell {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "application_driver_alternate_shell";
+        using type = std::string;
+        using mapped_type = type;
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// value{} <br/>
+    struct context::application_driver_shell_arguments {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "application_driver_shell_arguments";
+        using type = std::string;
+        using mapped_type = type;
+        type value{};
+    };
 
     /// Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc) <br/>
     /// type: bool <br/>
@@ -5990,6 +6060,10 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait
+, cfg::mod_rdp::application_driver_exe_or_file
+, cfg::mod_rdp::application_driver_script_argument
+, cfg::mod_rdp::application_driver_chrome_uia_script
+, cfg::mod_rdp::application_driver_ie_script
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message
@@ -6218,6 +6292,8 @@ struct context
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::smartcard_login
+, cfg::context::application_driver_alternate_shell
+, cfg::context::application_driver_shell_arguments
 , cfg::context::selector_current_page
 , cfg::context::selector_lines_per_page
 , cfg::context::selector_number_of_pages

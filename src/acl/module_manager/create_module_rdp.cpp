@@ -638,6 +638,43 @@ void ModuleManager::create_mod_rdp(
         }
 
 
+    // ================== Application Driver =========================
+    char const * application_driver_exe_or_file            = nullptr;
+    char const * application_driver_script                 = nullptr;
+    if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "*APP_DRIVER_IE*")) {
+        application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script      = ini.get<cfg::mod_rdp::application_driver_ie_script>();
+    }
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "*APP_DRIVER_CHROME_UIA*")) {
+        application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script      = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
+    }
+    if (application_driver_exe_or_file) {
+        std::string & application_driver_alternate_shell = ini.get_mutable_ref<cfg::context::application_driver_alternate_shell>();
+        application_driver_alternate_shell  = "\x02";
+        application_driver_alternate_shell += application_driver_exe_or_file;
+        application_driver_alternate_shell += "\x02";
+        application_driver_alternate_shell += application_driver_script;
+        application_driver_alternate_shell += "\x02";
+
+        mod_rdp_params.application_params.alternate_shell = application_driver_alternate_shell.c_str();
+
+
+        std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
+
+        application_driver_shell_arguments  = ini.get<cfg::mod_rdp::application_driver_script_argument>();
+        application_driver_shell_arguments += " ";
+        application_driver_shell_arguments += ini.get<cfg::mod_rdp::shell_arguments>();
+
+        mod_rdp_params.application_params.shell_arguments = application_driver_shell_arguments.c_str();
+
+        mod_rdp_params.session_probe_params.enable_session_probe                               = true;
+        mod_rdp_params.session_probe_params.vc_params.launch_application_driver                = true;
+        mod_rdp_params.session_probe_params.vc_params.launch_application_driver_then_terminate = !(ini.get<cfg::mod_rdp::enable_session_probe>());
+    }
+    // ================== End Application Driver ======================
+
+
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
             authentifier,

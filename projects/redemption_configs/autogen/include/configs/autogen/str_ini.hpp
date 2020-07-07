@@ -679,6 +679,22 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #session_probe_at_end_of_session_freeze_connection_and_wait = 1
 
+# maxlen = 256
+#_hidden
+#application_driver_exe_or_file = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_script_argument = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_chrome_uia_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
+
 # Keep known server certificates on WAB
 # value: 0 or 1
 #_hidden
