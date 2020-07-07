@@ -232,7 +232,6 @@ RED_AUTO_TEST_CASE(TestFront)
     LCGTime timeobj;
 
     front.clear_channels();
-    NullAuthentifier authentifier;
     NullLicenseStore license_store;
     class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
@@ -247,7 +246,7 @@ RED_AUTO_TEST_CASE(TestFront)
         report_message, sesman,
         front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
-        authentifier, license_store, ini, metrics,
+        license_store, ini, metrics,
         file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
@@ -404,8 +403,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     //
     // front.clear_channels();
     //
-    // NullAuthentifier authentifier;
-    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, report_message, ini, nullptr);
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -575,8 +573,7 @@ RED_AUTO_TEST_CASE(TestFront3)
 
     front.clear_channels();
 
-    NullAuthentifier authentifier;
-    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, report_message, ini);
 
 
     if (verbose > 2){

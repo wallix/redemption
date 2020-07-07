@@ -69,7 +69,6 @@ class ModFactory
     Theme & theme;
     ClientExecute & rail_client_execute;
     ReportMessageApi & report_message;
-    AuthApi & authentifier;
     Keymap2 & keymap;
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
     Random & gen;
@@ -90,7 +89,6 @@ public:
                Theme & theme,
                ClientExecute & rail_client_execute,
                ReportMessageApi & report_message,
-               AuthApi & authentifier,
                Keymap2 & keymap,
                Random & gen,
                TimeObj & timeobj,
@@ -108,7 +106,6 @@ public:
         , theme(theme)
         , rail_client_execute(rail_client_execute)
         , report_message(report_message)
-        , authentifier(authentifier)
         , keymap(keymap)
         , gen(gen)
         , timeobj(timeobj)
@@ -497,7 +494,6 @@ public:
     auto create_rdp_mod() -> ModPack
     {
         auto new_mod_pack = create_mod_rdp(this->mod_wrapper,
-            this->authentifier,
             this->report_message,
             this->ini,
             this->mod_wrapper.get_graphics(),
@@ -520,7 +516,7 @@ public:
     auto create_vnc_mod() -> ModPack
     {
 
-        auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->authentifier, this->report_message, this->ini,
+        auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->report_message, this->ini,
             mod_wrapper.get_graphics(), this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,

@@ -459,7 +459,6 @@ public:
                   , channels_authorizations
                   , mod_rdp_params
                   , tls_client_params
-                  , this->authentifier
                   , this->licensestore
                   , this->ini
                   , nullptr

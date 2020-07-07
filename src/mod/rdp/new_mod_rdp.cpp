@@ -38,7 +38,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
     const TLSClientParams & tls_client_params,
-    AuthApi& authentifier,
     LicenseApi& license_store,
     ModRdpVariables vars,
     RDPMetrics * metrics,
@@ -50,6 +49,5 @@ std::unique_ptr<mod_api> new_mod_rdp(
         trans,
         time_base, gd_provider, events,
         report_message, sesman, gd, front, info, redir_info, gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-        license_store, vars, metrics, file_validator_service, mod_rdp_factory);
+        channels_authorizations, mod_rdp_params, tls_client_params, license_store, vars, metrics, file_validator_service, mod_rdp_factory);
 }

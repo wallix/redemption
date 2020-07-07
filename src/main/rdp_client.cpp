@@ -280,7 +280,7 @@ int main(int argc, char** argv)
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, licensestore,
+                channels_authorizations, mod_rdp_params, tls_client_params, licensestore,
                 ini, nullptr, nullptr, mod_rdp_factory);
         });
     };

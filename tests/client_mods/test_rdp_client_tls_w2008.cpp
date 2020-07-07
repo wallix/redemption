@@ -134,7 +134,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     // To always get the same client random, in tests
     LCGRandom gen;
     LCGTime timeobj;
-    NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
@@ -152,7 +151,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     auto mod = new_mod_rdp(t, time_base, gd_provider, events,
         report_message, sesman,
         front.gd(), front, info, sesman.redir_info(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
+        channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -263,7 +262,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     // To always get the same client random, in tests
     LCGRandom gen;
     LCGTime timeobj;
-    NullAuthentifier authentifier;
     NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
@@ -282,7 +280,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
         front.gd(), front, info,
         sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params,
-        tls_client_params, authentifier,
+        tls_client_params,
         license_store, sesman.get_ini(),
         nullptr, nullptr, mod_rdp_factory);
 

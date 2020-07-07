@@ -245,7 +245,6 @@ public:
       , const ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
-      , AuthApi & authentifier
       , LogCategoryFlags dont_log_category
       , LicenseApi & license_store
       , ModRdpVariables vars
@@ -260,7 +259,7 @@ public:
 
     , dispatcher(report_message, front, dont_log_category)
     , mod(this->socket_transport, time_base, mod_wrapper, events, this->dispatcher /*report_message*/, sesman,gd, front, info, redir_info, gen, timeobj
-        , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
+        , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
     , rdp_data(time_base, events)
@@ -468,7 +467,7 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 
 
 ModPack create_mod_rdp(ModWrapper & mod_wrapper,
-    AuthApi& authentifier, ReportMessageApi& report_message,
+    ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
@@ -944,7 +943,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         channels_authorizations,
         mod_rdp_params,
         tls_client_params,
-        authentifier,
         dont_log_category,
         file_system_license_store,
         ini,

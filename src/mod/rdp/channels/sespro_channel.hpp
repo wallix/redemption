@@ -22,6 +22,7 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
+#include "acl/sesman.hpp"
 #include "gdi/screen_functions.hpp"
 #include "core/error.hpp"
 #include "core/log_id.hpp"
@@ -103,7 +104,6 @@ private:
     FrontAPI& front;
 
     rdp_api& rdp;
-    AuthApi& authentifier;
 
     FileSystemVirtualChannel& file_system_virtual_channel;
 
@@ -180,7 +180,6 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,
-        AuthApi& authentifier,
         FileSystemVirtualChannel& file_system_virtual_channel,
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
@@ -198,7 +197,6 @@ public:
     , param_show_maximized(params.show_maximized)
     , front(front)
     , rdp(rdp)
-    , authentifier(authentifier)
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
     , time_base(time_base)
@@ -1548,7 +1546,7 @@ public:
                     if (parameters_.size() == 1) {
                         if ((!::strcasecmp(parameters_[0].c_str(), "yes")) &&
                             this->sespro_params.session_shadowing_support) {
-                            this->authentifier.rd_shadow_available();
+                            this->sesman.authentifier.rd_shadow_available();
                         }
                     }
                     else {
@@ -1567,10 +1565,10 @@ public:
                             const char *   shadow_addr = parameters_[4].c_str();
                             const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
 
-                            this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
+                            this->sesman.authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }
                         else {
-                            this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
+                            this->sesman.authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
                         }
                     }
                     else {
@@ -1702,7 +1700,7 @@ public:
                     "Invalid shadow session type! Operation canceled. Type=%s",
                 type);
 
-            this->authentifier.rd_shadow_invitation(
+            this->sesman.authentifier.rd_shadow_invitation(
                     0x80004005, // E_FAIL
                     "The shadow session type specified is invalid!",
                     userdata,

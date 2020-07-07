@@ -115,7 +115,7 @@ private:
 
 public:
 
-    ModWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini, AuthApi & /*authentifier*/,
+    ModWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, uint32_t verbose,
         std::string * error_message,
         TimeBase& time_base,
@@ -259,7 +259,7 @@ public:
 };
 
 ModPack create_mod_vnc(ModWrapper & mod_wrapper,
-    AuthApi& authentifier, ReportMessageApi& report_message,
+    ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
@@ -308,7 +308,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
         mod_wrapper,
         ini,
-        authentifier,
         name,
         std::move(client_sck),
         ini.get<cfg::debug::mod_vnc>(),

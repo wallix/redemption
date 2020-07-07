@@ -168,7 +168,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             // To always get the same client random, in tests
             LCGRandom gen;
             LCGTime timeobj;
-            NullAuthentifier authentifier;
 
 #ifdef GENERATE_TESTING_DATA
             class CaptureLicenseStore : public LicenseApi
@@ -284,7 +283,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             auto mod = new_mod_rdp(trans, time_base, gd_provider, events, report_message, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, license_store, ini,
+                channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
             RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -452,7 +451,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             // To always get the same client random, in tests
             LCGRandom gen;
             LCGTime timeobj;
-            NullAuthentifier authentifier;
 
             class ReplayLicenseStore : public LicenseApi
             {
@@ -522,7 +520,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             auto mod = new_mod_rdp(t, time_base, gd_provider, events, report_message, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, license_store, ini,
+                channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
             RED_CHECK_EQUAL(info.screen_info.width, 1024);

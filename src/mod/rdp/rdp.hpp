@@ -499,7 +499,6 @@ public:
         gdi::GraphicApi& gd,
         mod_api & mod_rdp,
         const ModRDPParams & mod_rdp_params,
-        AuthApi & authentifier,
         const ClientInfo & info,
         // TODO OutParam<...>
         char (&program)[512],
@@ -546,7 +545,7 @@ public:
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
                 this->time_base, events, gd, mod_rdp, mod_rdp_params.lang,
-                mod_rdp_params.font, mod_rdp_params.theme, authentifier,
+                mod_rdp_params.font, mod_rdp_params.theme, this->sesman.authentifier,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
                 mod_rdp_params.remote_app_params.rail_disconnect_message_delay,
@@ -835,8 +834,7 @@ public:
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    rdp_api& rdp, AuthApi& authentifier,
-                    const Translation::language_t & lang,
+                    rdp_api& rdp, const Translation::language_t & lang,
                     const bool bogus_refresh_rect,
                     const uint32_t monitor_count,
                     GeneralCaps const & client_general_caps,
@@ -876,7 +874,6 @@ public:
             this->session_probe_to_server_sender.get(),
             front,
             rdp,
-            authentifier,
             file_system_virtual_channel,
             this->gen,
             base_params,
@@ -974,9 +971,7 @@ public:
         ServerTransportContext & stc,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
-        const char (& client_name)[128],
-        AuthApi& authentifier
-    ) {
+        const char (& client_name)[128]) {
         (void)length;
         (void)chunk_size;
         assert(stream.in_remain() == chunk_size);
@@ -1022,15 +1017,13 @@ public:
         else {
             LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
 
-            authentifier.set_auth_channel_target(auth_channel_message.c_str());
+            this->sesman.authentifier.set_auth_channel_target(auth_channel_message.c_str());
         }
     }
 
     void process_checkout_event(
         const CHANNELS::ChannelDef & checkout_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
-        AuthApi& authentifier
-    ) {
+        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)length;
         (void)chunk_size;
         assert(stream.in_remain() == chunk_size);
@@ -1054,7 +1047,7 @@ public:
         this->checkout_channel_chanid = checkout_channel.chanid;
 
 //        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
-        authentifier.set_pm_request(checkout_channel_message.c_str());
+        this->sesman.authentifier.set_pm_request(checkout_channel_message.c_str());
     }
 
     void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
@@ -1688,7 +1681,6 @@ public:
         FrontAPI& front,
         ServerTransportContext & stc,
         rdp_api& rdp,
-        AuthApi& authentifier,
         AsynchronousTaskContainer & asynchronous_tasks,
         GeneralCaps const & client_general_caps,
         const ModRdpVariables & vars,
@@ -1721,8 +1713,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    rdp, authentifier,
-                    lang,
+                    rdp, lang,
                     bogus_refresh_rect,
                     monitor_count,
                     client_general_caps,
@@ -1753,8 +1744,7 @@ public:
                 this->create_session_probe_virtual_channel(
                     front, stc,
                     asynchronous_tasks,
-                    rdp, authentifier,
-                    lang,
+                    rdp, lang,
                     bogus_refresh_rect,
                     monitor_count,
                     client_general_caps,
@@ -1912,7 +1902,6 @@ class mod_rdp : public mod_api, public rdp_api
     const RDPVerbose verbose;
     const BmpCache::Verbose cache_verbose;
 
-    AuthApi & authentifier;
     LicenseApi& license_store;
 
     std::string& close_box_extra_message_ref;
@@ -2058,7 +2047,6 @@ public:
       , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
-      , AuthApi & authentifier
       , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
@@ -2094,7 +2082,6 @@ public:
         , last_key_flags_sent(key_flags)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
-        , authentifier(authentifier)
         , license_store(license_store)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
@@ -2181,7 +2168,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         this->channels.init_remote_program_and_session_probe(
-            gd, *this, mod_rdp_params, this->authentifier, info, program, directory);
+            gd, *this, mod_rdp_params, info, program, directory);
 #endif
 
         this->negociation_result.front_width = info.screen_info.width;
@@ -2471,8 +2458,7 @@ public:
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, stc,
                                 this->asynchronous_tasks,
-                                *this, this->authentifier,
-                                this->lang,
+                                *this, this->lang,
                                 this->bogus_refresh_rect,
                                 this->monitor_count,
                                 this->client_general_caps,
@@ -3011,18 +2997,8 @@ public:
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
 
             this->connection_finalization_state = DISCONNECTED;
-
-//#ifndef __EMSCRIPTEN__
-//            if ((!this->channels.session_probe_virtual_channel
-//                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
-//             && !this->remote_apps_not_enabled) {
-//                this->authentifier.disconnect_target();
-//            }
-//#endif
             this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
-
             this->log_disconnection(bool(this->verbose & RDPVerbose::sesprobe));
-
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
 
@@ -3053,10 +3029,10 @@ public:
             if ((mod_channel.name == this->channels.auth_channel) && this->channels.enable_auth_channel) {
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
+                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
-                this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
+                this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::sespro) {
                 ServerTransportContext stc{
@@ -3066,8 +3042,7 @@ public:
                     this->channels.create_session_probe_virtual_channel(
                             this->front, stc,
                             this->asynchronous_tasks,
-                            *this, this->authentifier,
-                            this->lang,
+                            *this, this->lang,
                             this->bogus_refresh_rect,
                             this->monitor_count,
                             this->client_general_caps,
@@ -3278,7 +3253,6 @@ public:
                                         this->front,
                                         stc,
                                         *this,
-                                        this->authentifier,
                                         this->asynchronous_tasks,
                                         this->client_general_caps,
                                         this->vars,
@@ -5074,7 +5048,7 @@ public:
 
         switch (errorInfo){
         case ERRINFO_DISCONNECTED_BY_OTHERCONNECTION:
-            this->authentifier.set_auth_error_message(TR(trkeys::disconnected_by_otherconnection, this->lang));
+            this->sesman.authentifier.set_auth_error_message(TR(trkeys::disconnected_by_otherconnection, this->lang));
             break;
         case ERRINFO_REMOTEAPPSNOTENABLED:
             this->remote_apps_not_enabled = true;
@@ -5083,7 +5057,7 @@ public:
     }   // process_error_info
 
     void process_logon_info(const char * domain, const char * username, uint32_t native_session_id) {
-        this->authentifier.set_native_session_id(native_session_id);
+        this->sesman.authentifier.set_native_session_id(native_session_id);
 
         char domain_username_format_0[2048];
         char domain_username_format_1[2048];
@@ -5095,7 +5069,7 @@ public:
 
 #ifndef __EMSCRIPTEN__
         if (this->channels.file_system.smartcard_passthrough) {
-            this->authentifier.set_smartcard_login(domain_username_format_0);
+            this->sesman.authentifier.set_smartcard_login(domain_username_format_0);
         }
 #endif
 
@@ -5251,7 +5225,7 @@ public:
                         (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
                         (!this->channels.remote_app.bypass_legal_notice_delay.count())
                     ) {
-                        this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
+                        this->on_remoteapp_redirect_user_screen(lei.ErrorNotificationData);
                     }
                     else {
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
@@ -5280,8 +5254,7 @@ public:
                             { "two",
                                 [this](Event&event,Sequencer&/*sequencer*/)
                                 {
-                                    this->on_remoteapp_redirect_user_screen(
-                                        this->authentifier, RDP::LOGON_FAILED_OTHER);
+                                    this->on_remoteapp_redirect_user_screen(RDP::LOGON_FAILED_OTHER);
                                     event.garbage = true;
                                 }
                             }
@@ -5303,13 +5276,13 @@ public:
     }
 
     [[noreturn]]
-    static void on_remoteapp_redirect_user_screen(AuthApi& authentifier, uint32_t ErrorNotificationData) {
+    void on_remoteapp_redirect_user_screen(uint32_t ErrorNotificationData) {
         LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
 
         std::string errmsg = "(RemoteApp) ";
 
         errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(ErrorNotificationData);
-        authentifier.set_auth_error_message(errmsg.c_str());
+        this->sesman.authentifier.set_auth_error_message(errmsg.c_str());
         throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
     }
 
@@ -6266,7 +6239,7 @@ public:
     void sespro_ending_in_progress() override
     {
 //        this->authentifier.disconnect_target();
-        this->authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
+        this->sesman.authentifier.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
 

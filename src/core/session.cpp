@@ -640,7 +640,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
