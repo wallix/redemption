@@ -2311,7 +2311,7 @@ public:
             catch (Error & error) {
                 event.garbage = true;
                 this->throw_error(error);
-            };
+            }
         };
         event.actions.on_timeout = [this](Event&event)
         {
@@ -2337,7 +2337,7 @@ public:
             catch (Error & error) {
                 event.garbage = true;
                 this->throw_error(error);
-            };
+            }
         };
         this->events.add(std::move(event));
     }   // mod_rdp
