@@ -23,13 +23,16 @@
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 #include "core/RDP/clipboard.hpp"
+#include "core/session_reactor.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
 #include "capture/fdx_capture.hpp"
 #include "mod/file_validator_service.hpp"
+#include "utils/translation.hpp"
 
 #include <vector>
 #include <memory>
 #include <string>
+#include <functional>
 
 
 class CliprdFileInfo;
@@ -51,7 +54,8 @@ public:
         const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
-        FileStorage file_storage);
+        FileStorage file_storage,
+        std::function<void(std::string msg)> display_osd_message = [](std::string){});
 
     ~ClipboardVirtualChannel();
 
@@ -224,7 +228,7 @@ private:
 
             using ValidatorState = FileContentsRange::ValidatorState;
 
-            void init_empty();
+            void init_empty(ClipboardVirtualChannel& self);
             void init_text(FileValidatorId file_validator_id, bool is_unicode);
             void init_size(StreamId stream_id, FileGroupId lindex);
             void init_requested_range(
@@ -383,6 +387,21 @@ private:
 
     ClientCtx client_ctx;
     ServerCtx server_ctx;
+
+    struct OSD
+    {
+        const std::chrono::seconds delay;
+        const bool enable_osd;
+        Translation::language_t lang;
+        std::function<void(std::string msg)> display_osd_message;
+
+        SessionReactor::TimerPtr timer {};
+        std::string const* filename = nullptr;
+
+        class D;
+    };
+
+    OSD osd;
 
     std::vector<FileValidatorDataList> file_validator_list;
     std::vector<TextValidatorDataList> text_validator_list;
