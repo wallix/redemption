@@ -21,12 +21,14 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include <functional>
+#include <string>
 
 class FdxCapture;
 
 struct ModRdpFactory
 {
     std::function<FdxCapture*()> get_fdx_capture = []{ return static_cast<FdxCapture*>(nullptr); };
+    std::function<void(std::string)> osd_message = [](std::string){};
     // should be within get_clipboard_channel()
     bool always_file_storage = false;
 };

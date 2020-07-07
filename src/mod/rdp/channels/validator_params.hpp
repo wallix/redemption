@@ -20,7 +20,10 @@
 
 #pragma once
 
+#include "utils/translation.hpp"
+
 #include <string>
+#include <chrono>
 
 
 struct ValidatorParams
@@ -32,4 +35,6 @@ struct ValidatorParams
     bool enable_clipboard_text_down = false;
     bool verify_before_transfer = false;
     uint64_t max_file_size_rejected = 1024*1024*1024;
+    std::chrono::seconds osd_delay = std::chrono::seconds(5);
+    Translation::language_t lang = Translation::EN;
 };

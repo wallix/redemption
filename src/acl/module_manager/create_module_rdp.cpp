@@ -382,6 +382,7 @@ void ModuleManager::create_mod_rdp(
         (1ull << (64 - 20 /* mebibyte */)) - 1u,
         ini.get<cfg::file_verification::max_file_size_rejected>()
     ) * 1024u * 1024u;
+    mod_rdp_params.validator_params.lang = language(ini);
 
     mod_rdp_params.enable_remotefx = ini.get<cfg::mod_rdp::enable_remotefx>();
 
@@ -693,6 +694,9 @@ void ModuleManager::create_mod_rdp(
             assert(&ini == &this->ini);
             new_mod->get_rdp_factory().always_file_storage
               = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
+            new_mod->get_rdp_factory().osd_message = [this](std::string msg){
+                this->osd_message(std::move(msg), false);
+            };
             switch (ini.get<cfg::file_storage::store_file>())
             {
                 case RdpStoreFile::never:

@@ -592,7 +592,8 @@ private:
             ClipboardVirtualChannel::FileStorage{
                 this->mod_rdp_factory.get_fdx_capture(),
                 this->mod_rdp_factory.always_file_storage
-            }
+            },
+            this->mod_rdp_factory.osd_message
         );
     }
 
