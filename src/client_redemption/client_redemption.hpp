@@ -106,7 +106,7 @@ public:
     std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
-    SesmanInterface sesman {ini};
+    SesmanInterface sesman;
     Theme theme;
     Font font;
     std::string close_box_extra_message_ref;
@@ -242,6 +242,7 @@ public:
         , _callback(this)
         , time_base(time_base)
         , events(events)
+        , sesman(ini, authentifier)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -447,6 +448,7 @@ public:
                   , this->time_base
                   , this->gd_forwarder
                   , this->events
+                  , this->reportMessage
                   , this->sesman
                   , *this
                   , *this
@@ -458,7 +460,6 @@ public:
                   , mod_rdp_params
                   , tls_client_params
                   , this->authentifier
-                  , this->reportMessage
                   , this->licensestore
                   , this->ini
                   , nullptr

@@ -429,8 +429,6 @@ public:
     std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
 private:
-    ReportMessageApi& report_message;
-
     RDPECLIP::CliprdrLogState cliprdrLogStatus;
     rdpdr::RdpDrStatus rdpdrLogStatus;
 
@@ -439,6 +437,7 @@ private:
     TimeBase & time_base;
     GdProvider & gd_provider;
     EventContainer & events;
+    ReportMessageApi& report_message;
     SesmanInterface & sesman;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
@@ -448,9 +447,10 @@ public:
     mod_rdp_channels(
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
-        ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
+        Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider,
         EventContainer & events,
+        ReportMessageApi & report_message,
         SesmanInterface & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
@@ -478,11 +478,11 @@ public:
     , file_system(mod_rdp_params.file_system_params)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
     , mod_rdp_factory(mod_rdp_factory)
-    , report_message(report_message)
     , verbose(verbose)
     , time_base(time_base)
     , gd_provider(gd_provider)
     , events(events)
+    , report_message(report_message)
     , sesman(sesman)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
@@ -1913,7 +1913,6 @@ class mod_rdp : public mod_api, public rdp_api
     const BmpCache::Verbose cache_verbose;
 
     AuthApi & authentifier;
-    ReportMessageApi & report_message;
     LicenseApi& license_store;
 
     std::string& close_box_extra_message_ref;
@@ -1951,6 +1950,7 @@ class mod_rdp : public mod_api, public rdp_api
     TimeBase& time_base;
     GdProvider & gd_provider;
     EventContainer & events;
+    ReportMessageApi & report_message;
 #ifndef __EMSCRIPTEN__
     SesmanInterface & sesman;
 #endif
@@ -2047,6 +2047,7 @@ public:
       , TimeBase& time_base
       , GdProvider & gd_provider
       , EventContainer & events
+      , ReportMessageApi & report_message
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -2058,7 +2059,6 @@ public:
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , AuthApi & authentifier
-      , ReportMessageApi & report_message
       , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
@@ -2069,8 +2069,8 @@ public:
         : spvc_callbacks(*this)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            report_message, gen, metrics, time_base, gd_provider, events,
-            sesman,
+            gen, metrics, time_base, gd_provider, events,
+            report_message, sesman,
             file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
@@ -2095,7 +2095,6 @@ public:
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , authentifier(authentifier)
-        , report_message(report_message)
         , license_store(license_store)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
         , enable_fastpath(mod_rdp_params.enable_fastpath)
@@ -2124,6 +2123,7 @@ public:
         , time_base(time_base)
         , gd_provider(gd_provider)
         , events(events)
+        , report_message(report_message)
         #ifndef __EMSCRIPTEN__
         , sesman(sesman)
         #endif

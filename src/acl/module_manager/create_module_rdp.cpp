@@ -234,6 +234,7 @@ public:
       , std::string * error_message
       , TimeBase& time_base
       , EventContainer & events
+      , ReportMessageApi & report_message
       , SesmanInterface & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -245,7 +246,6 @@ public:
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , AuthApi & authentifier
-      , ReportMessageApi & report_message
       , LogCategoryFlags dont_log_category
       , LicenseApi & license_store
       , ModRdpVariables vars
@@ -259,9 +259,9 @@ public:
                      , to_verbose_flags(verbose), error_message)
 
     , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, time_base, mod_wrapper, events, sesman, gd, front, info, redir_info, gen, timeobj
+    , mod(this->socket_transport, time_base, mod_wrapper, events, this->dispatcher /*report_message*/, sesman,gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params, authentifier
-        , this->dispatcher /*report_message*/, license_store
+        , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
     , rdp_data(time_base, events)
     , mod_wrapper(mod_wrapper)
@@ -933,6 +933,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
         time_base,
         events,
+        report_message,
         sesman,
         drawable,
         front,
@@ -944,7 +945,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         mod_rdp_params,
         tls_client_params,
         authentifier,
-        report_message,
         dont_log_category,
         file_system_license_store,
         ini,

@@ -158,11 +158,11 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     GdForwarder gd_provider(front.gd());
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, sesman,
+        t, time_base, gd_provider, events, report_message, sesman,
         front.gd(), front, info, sesman.redir_info(),
         gen, timeobj, channels_authorizations,
         mod_rdp_params, tls_client_params, authentifier,
-        report_message, license_store,
+        license_store,
         sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 800);

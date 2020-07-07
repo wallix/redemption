@@ -32,9 +32,6 @@ struct AuthApi : noncopyable
 
     virtual void disconnect_target() = 0;
 
-    virtual void new_remote_mod() = 0;
-    virtual void delete_remote_mod() = 0;
-
     virtual void set_pm_request(const char * request) = 0;
 
     virtual void set_native_session_id(unsigned int session_id) = 0;
@@ -62,12 +59,6 @@ struct NullAuthentifier : AuthApi
     }
 
     void disconnect_target() override
-    {}
-
-    void new_remote_mod() override
-    {}
-
-    void delete_remote_mod() override
     {}
 
     void set_pm_request(const char * request) override

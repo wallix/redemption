@@ -216,6 +216,18 @@ enum error_type
 #undef MAKE_ENUM
 #undef MAKE_ENUM_V
 
+inline const char * error_name(error_type id)
+{
+#define MAKE_NAME(e) case e: return "" #e "";
+#define MAKE_NAME_V(e, x) case e: return "" #e "";
+    switch (id){
+        EACH_ERROR(MAKE_NAME, MAKE_NAME_V)
+    }
+#undef MAKE_NAME
+#undef MAKE_NAME_V
+    return "ERR_COMPILER_ERROR";
+}
+
 
 struct Error
 {

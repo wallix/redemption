@@ -17,6 +17,7 @@ exe headlessclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
@@ -39,6 +40,7 @@ exe headlessclient :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -82,6 +84,7 @@ exe headlessclient :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
@@ -323,6 +326,7 @@ exe rdpclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -374,6 +378,7 @@ exe rdpclient :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
@@ -534,14 +539,19 @@ test-run tests/RAIL/test_client_execute :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -560,6 +570,10 @@ test-run tests/RAIL/test_client_execute :
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -567,6 +581,8 @@ test-run tests/RAIL/test_client_execute :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -659,6 +675,7 @@ test-run tests/acl/test_license_api :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -698,6 +715,7 @@ test-run tests/acl/test_license_api :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
@@ -708,6 +726,7 @@ test-run tests/acl/test_license_api :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -933,6 +952,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -946,6 +966,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -963,6 +984,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -970,6 +992,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/primitives/primitives.o
@@ -1024,6 +1048,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -1037,6 +1062,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1054,6 +1080,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -1061,6 +1088,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/primitives/primitives.o
@@ -1090,6 +1119,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -1103,6 +1133,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1120,6 +1151,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -1127,6 +1159,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/primitives/primitives.o
@@ -2693,6 +2727,7 @@ test-run tests/front/test_front :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/capture.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2713,6 +2748,7 @@ test-run tests/front/test_front :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2734,6 +2770,7 @@ test-run tests/front/test_front :
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -2741,6 +2778,8 @@ test-run tests/front/test_front :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2751,6 +2790,7 @@ test-run tests/front/test_front :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -2912,24 +2952,37 @@ test-run tests/mod/internal/test_bouncer2_mod :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/acl/acl_serializer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -2943,14 +2996,19 @@ test-run tests/mod/internal/test_close_mod :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/close_mod.o
@@ -2964,6 +3022,10 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -2971,6 +3033,8 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4066,23 +4130,29 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/graphic_api.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4139,16 +4209,25 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/acl/acl_serializer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
@@ -4291,6 +4370,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/acl_serializer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -4304,6 +4384,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -4321,6 +4402,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -4328,6 +4410,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/primitives/primitives.o
@@ -4636,10 +4720,12 @@ test-run tests/server/test_mstsc_client :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/acl_serializer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -4654,6 +4740,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -4666,6 +4753,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -4673,6 +4761,8 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -4681,6 +4771,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -4696,10 +4787,12 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/acl_serializer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -4714,6 +4807,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -4726,6 +4820,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -4733,6 +4828,8 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -4741,6 +4838,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -4756,10 +4854,12 @@ test-run tests/server/test_rdesktop_client :
   <library>ffmpeg
   <library>gssapi_krb5
   <library>krb5
+  <library>openssl
   <library>png
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/acl_serializer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -4774,6 +4874,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/report_error.o
+  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -4786,6 +4887,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/snappy_compression_transport.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -4793,6 +4895,8 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -4801,6 +4905,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o

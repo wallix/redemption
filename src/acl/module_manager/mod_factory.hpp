@@ -119,6 +119,8 @@ public:
 
     auto create_mod(ModuleIndex target_module) -> ModPack
     {
+        LOG(LOG_INFO, "++++++++++++++++++++ create_mod(%s) +++++++++++++++++++++++", get_module_name(target_module));
+
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
@@ -259,6 +261,8 @@ public:
 
     auto create_close_mod() -> ModPack
     {
+        LOG(LOG_INFO, "----------------------- create_close_mod() -> ModPack -----------------");
+
         bool back_to_selector = false;
         std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
         if (auth_error_message.empty()) {
@@ -284,6 +288,9 @@ public:
 
     auto create_close_mod_back_to_selector() -> ModPack
     {
+
+        LOG(LOG_INFO, "----------------------- create_close_mod_back_to_selector() -> ModPack -----------------");
+
         bool back_to_selector = true;
         std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
         if (auth_error_message.empty()) {

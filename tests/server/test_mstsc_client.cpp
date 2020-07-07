@@ -42,6 +42,7 @@
 #include "utils/timebase.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 // Uncomment the code block below to generate testing data.
 //#include <netinet/tcp.h>
@@ -106,7 +107,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     NullReportMessage report_message;
     TimeBase timebase({0,0});
     EventContainer events;
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
     FrontWrapper front(timebase, events, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;

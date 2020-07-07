@@ -33,7 +33,10 @@ InifileWrapper::~InifileWrapper()
 struct SesmanWrapper::D
 {
     Inifile ini;
-    SesmanInterface sesman{ini};
+    CryptoContext cctx;
+    Authentifier authentifier;
+    SesmanInterface sesman;
+    D() : authentifier(this->ini, cctx, to_verbose_flags(0)), sesman(this->ini, authentifier) {}
 };
 
 SesmanWrapper::SesmanWrapper()

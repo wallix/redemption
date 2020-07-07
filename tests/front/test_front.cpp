@@ -50,6 +50,7 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/acl/sesman_wrapper.hpp"
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -159,7 +160,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
 
 
     NullReportMessage report_message;
@@ -242,10 +243,11 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, sesman,
+        t, time_base, gd_provider, events,
+        report_message, sesman,
         front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
-        authentifier, report_message, license_store, ini, metrics,
+        authentifier, license_store, ini, metrics,
         file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
@@ -339,7 +341,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
-    SesmanInterface sesman(ini);
+    SesmanWrapper sesman;
     MyFront front(time_base, events, sesman, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support);
     null_mod no_mod;

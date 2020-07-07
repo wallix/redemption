@@ -149,9 +149,11 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+    auto mod = new_mod_rdp(t, time_base, gd_provider, events,
+        report_message, sesman,
+        front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-        report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
+        license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
@@ -275,11 +277,13 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, sesman, front.gd(), front, info,
+        events,
+        report_message, sesman,
+        front.gd(), front, info,
         sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params,
         tls_client_params, authentifier,
-        report_message, license_store, sesman.get_ini(),
+        license_store, sesman.get_ini(),
         nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);

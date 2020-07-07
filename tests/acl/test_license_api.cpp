@@ -46,6 +46,7 @@
 #include "test_only/core/font.hpp"
 #include "transport/socket_transport.hpp"
 #include <chrono>
+#include "test_only/acl/sesman_wrapper.hpp"
 
 //#define GENERATE_TESTING_DATA
 
@@ -274,16 +275,16 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
             EventContainer events;
-            SesmanInterface sesman(ini);
+            SesmanWrapper sesman;
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
             ModRdpFactory mod_rdp_factory;
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, report_message, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
             RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -511,7 +512,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
             EventContainer events;
-            SesmanInterface sesman(ini);
+            SesmanWrapper sesman;
 
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -519,9 +520,9 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, time_base, gd_provider, events, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(t, time_base, gd_provider, events, report_message, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini,
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
             RED_CHECK_EQUAL(info.screen_info.width, 1024);

@@ -189,12 +189,13 @@ int main(int argc, char** argv)
     if (!ini_file.empty()) {
         configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
-    SesmanInterface sesman(ini);
+
+    NullAuthentifier authentifier;
+    SesmanInterface sesman(ini, authentifier);
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;
     LCGTime lcg_timeobj;
-    NullAuthentifier authentifier;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
     GdForwarder gd_forwarder(gdi::null_gd());
@@ -275,11 +276,11 @@ int main(int argc, char** argv)
                 time_base,
                 gd_forwarder,
                 events,
-                sesman,
+                report_message, sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore,
+                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, licensestore,
                 ini, nullptr, nullptr, mod_rdp_factory);
         });
     };

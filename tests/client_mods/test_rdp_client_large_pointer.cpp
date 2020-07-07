@@ -160,8 +160,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
+        events, report_message, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+        channels_authorizations, mod_rdp_params, tls_client_params, authentifier, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
@@ -287,9 +287,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
+        events, report_message, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
-        report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
+        license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);

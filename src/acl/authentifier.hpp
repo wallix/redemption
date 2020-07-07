@@ -136,7 +136,7 @@ public:
         }
     }
 
-    void new_remote_mod() override
+    void new_remote_mod()
     {
         if (this->acl_serial){
             this->cctx.set_master_key(ini.get<cfg::crypto::key0>());
@@ -162,7 +162,7 @@ public:
         }
     }
 
-    void delete_remote_mod() override
+    void delete_remote_mod()
     {
         if (this->acl_serial && this->session_log_is_open) {
             this->acl_serial->close_session_log();

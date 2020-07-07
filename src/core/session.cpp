@@ -161,6 +161,9 @@ private:
 
 private:
     int end_session_exception(Error const& e, Inifile & ini) {
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!! END SESSION EXCEPTION: %u: %s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+             e.id, error_name(e.id));
+
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS)
@@ -233,7 +236,7 @@ private:
             return 1;
         }
         else if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
-            LOG(LOG_INFO, "Close because of by user Inactivity");
+            LOG(LOG_INFO, "Close because of user Inactivity");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
             return 1;
         }
@@ -245,6 +248,8 @@ private:
             LOG(LOG_INFO, "Closed because target Logon failed");
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
         }
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!XXXXXXX END SESSION EXCEPTION: %u: %s XXXXXXX!!!!!!!!!!!!!!!!!!!!!",
+                 e.id, error_name(e.id));
         return 1;
     }
 
@@ -605,6 +610,7 @@ public:
         std::string disconnection_message_error;
 
         Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
+        SesmanInterface sesman(ini, authentifier);
 
         TimeBase time_base(tvtime());
         EventContainer events;
@@ -613,7 +619,6 @@ public:
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
-        SesmanInterface sesman(ini);
         Front front(time_base, events, sesman, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );

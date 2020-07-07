@@ -31,9 +31,13 @@
 #include "configs/config.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "acl/authentifier.hpp"
 
 struct SesmanInterface
 {
+    Inifile & ini;
+    AuthApi & authentifier;
+
     bool screen_info_sent = false;
     ScreenInfo screen_info;
 
@@ -44,10 +48,9 @@ struct SesmanInterface
 
     bool server_cert_sent = false;
     std::string blob_server_cert;
-    Inifile & ini;
 
-    SesmanInterface(Inifile & ini)
-    : ini(ini)
+    SesmanInterface(Inifile & ini, AuthApi & authentifier)
+    : ini(ini), authentifier(authentifier)
     {
     }
 
