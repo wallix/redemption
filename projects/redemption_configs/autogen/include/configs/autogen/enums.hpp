@@ -488,8 +488,11 @@ operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
 
 enum class RdpModeConsole : unsigned char
 {
+    // Forward Console mode request from client to the target.
     allow = 0,
+    // Force Console mode on target regardless of client request.
     force = 1,
+    // Block Console mode request from client.
     forbid = 2,
 };
 
