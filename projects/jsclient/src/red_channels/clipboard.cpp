@@ -89,9 +89,9 @@ namespace
         return Cliprdr::IsLongFormat(bool(general_flags & RDPECLIP::CB_USE_LONG_FORMAT_NAMES));
     }
 
-    Cliprdr::IsAscii is_ascii_format(uint32_t general_flags)
+    Cliprdr::IsAscii is_ascii_format(uint32_t msg_flags)
     {
-        return Cliprdr::IsAscii(bool(general_flags & RDPECLIP::CB_ASCII_NAMES));
+        return Cliprdr::IsAscii(bool(msg_flags & RDPECLIP::CB_ASCII_NAMES));
     }
 
     uint32_t get_uint32_le_or_throw(bytes_view data, char const* message)
@@ -224,7 +224,7 @@ void ClipboardChannel::receive(bytes_view data, uint32_t total_data_len, uint32_
             "Server Format List PDU data length(%u) longer than chunk(%zu)",
             header.dataLen(), chunk.in_remain());
 
-        this->process_format_list(chunk, channel_flags);
+        this->process_format_list(chunk, channel_flags, header.msgFlags());
         break;
 
     case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
@@ -521,7 +521,7 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
     if (is_first_packet)
     {
         InStream in_stream(data);
-        ::check_throw(in_stream, 4, "FileContentsResponse::receive", ERR_RDP_DATA_TRUNCATED);
+        ::check_throw(in_stream, 4, "process_filecontents_response", ERR_RDP_DATA_TRUNCATED);
         this->stream_id = in_stream.in_uint32_le();
         this->remaining_data_len = data_len - 4u;
         data = in_stream.remaining_bytes();
@@ -542,20 +542,20 @@ void ClipboardChannel::process_filecontents_response(bytes_view data, uint32_t c
         channel_flags & first_last_flags);
 }
 
-void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/)
+void ClipboardChannel::process_format_list(InStream& chunk, uint32_t /*channel_flags*/, uint16_t msg_flags)
 {
     emval_call(this->callbacks, "formatListStart");
 
     auto is_utf8 = overload{
         [](Cliprdr::AsciiName const&) { return true; },
-        [](Cliprdr::UnicodeName const& unicode) { return unicode.bytes.empty(); },
+        [](Cliprdr::UnicodeName const&) { return false; },
     };
 
     Cliprdr::format_list_extract(
         chunk,
         is_long_format(this->general_flags),
-        is_ascii_format(this->general_flags),
-        [&](uint32_t format_id, auto name){
+        is_ascii_format(msg_flags),
+        [&](uint32_t format_id, auto const& name){
             CustomFormat custom_format_id = Cliprdr::file_group_descriptor_w.same_as(name)
                 ? CustomFormat::FileGroupDescriptorW
                 : CustomFormat::None;

@@ -149,7 +149,7 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
 
     using namespace test_channel_data::ClipboardChannel_structs;
 
-    const bool is_utf = true;
+    const bool is_utf8 = false;
     const bool not_utf = false;
 
     RECEIVE_DATAS(CB_CLIP_CAPS, CB_RESPONSE__NONE_,
@@ -181,10 +181,10 @@ RED_AUTO_TEST_CASE(TestClipboardChannel)
         "\x07\x00\x00\x00\x00\x00"_av, Padding(4))
     {
         CHECK_NEXT_DATA(formatListStart{});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_UNICODETEXT, 0, is_utf});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_LOCALE, 0, is_utf});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_TEXT, 0, is_utf});
-        CHECK_NEXT_DATA(formatListFormat{""_av, CF_OEMTEXT, 0, is_utf});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_UNICODETEXT, 0, is_utf8});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_LOCALE, 0, is_utf8});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_TEXT, 0, is_utf8});
+        CHECK_NEXT_DATA(formatListFormat{""_av, CF_OEMTEXT, 0, is_utf8});
         CHECK_NEXT_DATA(formatListStop{});
         CHECK_NEXT_DATA(data_chan(CB_FORMAT_LIST_RESPONSE, CB_RESPONSE_OK));
     };

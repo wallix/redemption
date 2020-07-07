@@ -54,14 +54,17 @@ class OutStream
         this.i += array.length;
     }
 
-    copyStringAsAlignedUTF16(str) {
-        // Module.stringToUTF16(str, this.i, 0x7FFFFFFF/*, this.iend - this.i*/) + 2;
+    copyStringAsAlignedUTF16(str, maxBytesToWrite) {
+        if (maxBytesToWrite === undefined) {
+            maxBytesToWrite = 0x7FFFFFFF;
+        }
         let iheap = this.i / 2;
-        const iend = str.length;
+        const iend = (maxBytesToWrite < str.length * 2) ? (maxBytesToWrite >> 2) : str.length;
         const HEAPU16 = this.emccModule.HEAPU16;
         for (let i = 0; i < iend; ++i, ++iheap) {
             HEAPU16[iheap] = str.charCodeAt(i);
         }
-        this.i = iheap * 2
+        this.i = iheap * 2;
+        return iend * 2;
     }
 }
