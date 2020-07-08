@@ -256,22 +256,7 @@ make targets.jam : : @gen_targets ;
 actions exenode
 {
     [ "$(SOURCE_MAP_SUPPORT)" = yes ] && params='-r source-map-support/register'
-    echo $PWD
-    NODE_PATH="$PWD" node $params "$(>:S=.js)" && : > "$(<)"
-}
-
-rule test-run ( name : objs + : requirements * )
-{
-    if src/core/error.bc in $(objs)
-    {
-        objs += register_exception.bc ;
-    }
-
-    exejs $(name).em
-        : $(objs) unit_test.bc log_test.bc
-        : $(TEST_DEPENDENCIES) $(requirements)
-        ;
-    make $(name) : $(name).em : @exenode ;
+    NODE_PATH="$PWD" node $params "$(>[0]:S=.js)" && : > "$(<)"
 }
 
 rule exe-js ( name : src : objs * : deps * )
@@ -285,8 +270,23 @@ rule exe-js ( name : src : objs * : deps * )
     alias $(name) : $(name).em ;
 }
 
-rule test-run-js ( name : src : objs + : deps * )
+rule test-run-js ( name : sources + : objs + : deps * )
 {
+    local src = ;
+    local jssources = ;
+
+    for s in $(sources)
+    {
+        if $(src)
+        {
+            jssources += $(s) ;
+        }
+        else
+        {
+            src = $(s) ;
+        }
+    }
+
     objjs $(name).bc : $(src) :
         <include>$(REDEMPTION_TEST_PATH)/includes
         <include>tests/includes
@@ -294,7 +294,17 @@ rule test-run-js ( name : src : objs + : deps * )
         <define>BOOST_AUTO_TEST_MAIN
         <define>BOOST_TEST_DYN_LINK
     ;
-    test-run $(name) : $(name).bc $(objs) : $(deps) ;
+
+    if src/core/error.bc in $(objs)
+    {
+        objs += register_exception.bc ;
+    }
+
+    exejs $(name).em
+        : $(name).bc $(objs) unit_test.bc log_test.bc
+        : $(TEST_DEPENDENCIES) $(deps)
+        ;
+    make $(name) : $(name).em $(jssources) : @exenode ;
 }
 
 actions nothing { }

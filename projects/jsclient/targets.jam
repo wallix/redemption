@@ -128,7 +128,7 @@ test-run-js tests/redjs/test_front :
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run-js tests/redjs/test_graphics :
-  tests/redjs/test_graphics.cpp
+  tests/redjs/test_graphics.cpp src/application/rdp_graphics.js
 :
   src/redjs/graphics.bc
   src/redjs/image_data_from_bitmap.bc
