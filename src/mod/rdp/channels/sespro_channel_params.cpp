@@ -124,7 +124,7 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
 
             const char * rule_c_str = rule_string.c_str();
 
-            const char * info_separator = strchr(rule_c_str, ':');
+            const char * info_separator = strrchr(rule_c_str, ':');
 
             if (info_separator)
             {
