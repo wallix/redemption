@@ -8,7 +8,6 @@ const rgbToCss = function(color) {
 //     ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
 //  && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
 
-
 const newRdpPointer = function(canvasElement, module) {
     const _ecusorCanvas = (function(){
         try {
@@ -67,7 +66,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
     let _imgBufferSize = 64*64*4;
     let _imgBufferIndex = module._malloc(_imgBufferSize);
 
-    const _ctx2d = canvasElement.getContext('2d');
+    const _ctx2d = canvasElement.getContext('2d', {alpha: false});
     const _cacheImages = [];
 
     _ctx2d.imageSmoothingEnabled = false;
