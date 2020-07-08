@@ -41,6 +41,6 @@ extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     TimeObj & timeobj
 );

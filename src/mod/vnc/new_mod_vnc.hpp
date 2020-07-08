@@ -33,7 +33,7 @@ class ReportMessageApi;
 class TimeBase;
 class Transport;
 class VNCMetrics;
-class SesmanInterface;
+class AuthApi;
 class GdProvider;
 
 std::unique_ptr<mod_api> new_mod_vnc(
@@ -41,7 +41,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     TimeBase& time_base,
     GdProvider & gd_provider,
     EventContainer & events,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     const char* username,
     const char* password,
     FrontAPI& front,

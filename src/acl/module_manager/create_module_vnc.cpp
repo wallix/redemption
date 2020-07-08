@@ -86,7 +86,7 @@ struct ModVNCWithMetrics : public mod_vnc
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , VNCMetrics * metrics
-           , SesmanInterface & sesman)
+           , AuthApi & sesman)
     : mod_vnc(t, time_base, gd_provider, events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
@@ -120,7 +120,7 @@ public:
         std::string * error_message,
         TimeBase& time_base,
         EventContainer& events,
-        SesmanInterface & sesman,
+        AuthApi & sesman,
         const char* username,
         const char* password,
         FrontAPI& front,
@@ -266,7 +266,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     TimeObj & timeobj
     )
 {

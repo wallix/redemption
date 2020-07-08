@@ -27,7 +27,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     TimeBase& time_base,
     GdProvider & gd_provider,
     EventContainer & events,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     const char* username,
     const char* password,
     FrontAPI& front,

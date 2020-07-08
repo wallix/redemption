@@ -21,8 +21,9 @@ Author(s): Jonathan Poelen
 #pragma once
 
 class Inifile;
-class SesmanInterface;
+class AuthApi;
 class RedirectionInfo;
+class SesmanInterface;
 
 struct InifileWrapper
 {
@@ -48,7 +49,9 @@ struct SesmanWrapper
     SesmanWrapper();
     ~SesmanWrapper();
 
-    operator SesmanInterface& () &;
+    operator AuthApi& () &;
+
+    SesmanInterface& get_sesman() &;
 
     Inifile& get_ini();
     RedirectionInfo& redir_info();

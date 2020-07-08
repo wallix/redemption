@@ -135,14 +135,12 @@ struct FileValidatorService;
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
-#include "acl/sesman.hpp"
+#include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
 
 #include <cstdlib>
 #include <deque>
 
-
-class SesmanInterface;
 
 #ifndef __EMSCRIPTEN__
 // TODO: isn't AsynchronousTaskContainer a general purpose class that should have it's own file ?
@@ -438,7 +436,7 @@ private:
     GdProvider & gd_provider;
     EventContainer & events;
     ReportMessageApi& report_message;
-    SesmanInterface & sesman;
+    AuthApi & sesman;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -451,7 +449,7 @@ public:
         TimeBase & time_base, GdProvider & gd_provider,
         EventContainer & events,
         ReportMessageApi & report_message,
-        SesmanInterface & sesman,
+        AuthApi & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -1941,7 +1939,7 @@ class mod_rdp : public mod_api, public rdp_api
     EventContainer & events;
     ReportMessageApi & report_message;
 #ifndef __EMSCRIPTEN__
-    SesmanInterface & sesman;
+    AuthApi & sesman;
 #endif
 
 #ifndef __EMSCRIPTEN__
@@ -2037,7 +2035,7 @@ public:
       , GdProvider & gd_provider
       , EventContainer & events
       , ReportMessageApi & report_message
-      , SesmanInterface & sesman
+      , AuthApi & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info

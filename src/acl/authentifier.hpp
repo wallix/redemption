@@ -207,4 +207,14 @@ public:
             this->acl_serial->ini.set_acl<cfg::context::smartcard_login>(login);
         }
     }
+
+    void set_server_cert(std::string const& blob_str) override
+    {
+    }
+
+    void set_acl_server_cert() override
+    {
+    }
+
+
 };

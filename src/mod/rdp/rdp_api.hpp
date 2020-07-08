@@ -22,8 +22,6 @@
 
 #include <cstdint>
 
-class SesmanInterface;
-
 struct rdp_api
 {
     virtual void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,

@@ -23,6 +23,7 @@
 #include "utils/sugar/noncopyable.hpp"
 
 #include <cstdint>
+#include <string>
 
 struct AuthApi : noncopyable
 {
@@ -42,7 +43,12 @@ struct AuthApi : noncopyable
 
     virtual void set_smartcard_login(const char * login) = 0;
 
+    virtual void set_server_cert(std::string const& blob_str) = 0;
+
+    virtual void set_acl_server_cert() = 0;
+
     virtual ~AuthApi() = default;
+
 };
 
 
@@ -88,4 +94,14 @@ struct NullAuthentifier : AuthApi
     {
         (void)login;
     }
+
+    void set_server_cert(std::string const& blob_str) override
+    {
+        (void)blob_str;
+    }
+
+    void set_acl_server_cert() override
+    {
+    }
+
 };

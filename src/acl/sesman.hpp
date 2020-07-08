@@ -98,6 +98,24 @@ public:
         this->authentifier.set_smartcard_login(login);
     }
 
+    void set_server_cert(std::string const& blob_str) override
+    {
+        this->blob_server_cert = blob_str;
+        this->server_cert_sent = false;
+    }
+
+    void set_acl_server_cert() override
+    {
+        if (!this->server_cert_sent) {
+            this->ini.set_acl<cfg::mod_rdp::server_cert>(this->blob_server_cert);
+            this->ini.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
+            this->ini.ask<cfg::mod_rdp::server_cert_response>();
+            this->server_cert_sent = true;
+        }
+    }
+
+
+
     void set_screen_info(ScreenInfo screen_info)
     {
         this->screen_info_sent = false;
@@ -142,22 +160,6 @@ public:
                 this->ini.set_acl<cfg::context::password>(password);
             }
             this->auth_info_sent = true;
-        }
-    }
-
-    void set_server_cert(std::string const& blob_str)
-    {
-        this->blob_server_cert = blob_str;
-        this->server_cert_sent = false;
-    }
-
-    void set_acl_server_cert()
-    {
-        if (!this->server_cert_sent) {
-            this->ini.set_acl<cfg::mod_rdp::server_cert>(this->blob_server_cert);
-            this->ini.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
-            this->ini.ask<cfg::mod_rdp::server_cert_response>();
-            this->server_cert_sent = true;
         }
     }
 

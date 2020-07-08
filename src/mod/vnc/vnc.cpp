@@ -56,7 +56,7 @@ mod_vnc::mod_vnc( Transport & t
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
-           , SesmanInterface & sesman
+           , AuthApi & sesman
            )
     : front(front)
     , t(VncTransport(*this, t))

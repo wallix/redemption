@@ -21,13 +21,13 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "mod/mod_api.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 
 #include <memory>
 
-class AuthApi;
 class ClientInfo;
 class FrontAPI;
 class LicenseApi;
@@ -44,7 +44,6 @@ class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
 class ModRdpFactory;
-class SesmanInterface;
 class GdProvider;
 class ChannelsAuthorizations;
 
@@ -56,7 +55,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     GdProvider & gd_provider,
     EventContainer & events,
     ReportMessageApi& report_message,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,

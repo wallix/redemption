@@ -78,6 +78,7 @@ class VNCMetrics;
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/newline_convert.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "acl/auth_api.hpp"
 
 class UltraDSM;
 class mod_vnc;
@@ -334,7 +335,7 @@ private:
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
-    SesmanInterface & sesman;
+    AuthApi & sesman;
 #endif
     /** @brief type of VNC authentication */
     enum VncAuthType : uint16_t {
@@ -385,7 +386,7 @@ public:
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
-           , SesmanInterface & sesman);
+           , AuthApi & sesman);
 
     std::string module_name() override {return "VNC Mod";}
 

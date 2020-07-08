@@ -28,7 +28,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     GdProvider & gd_provider,
     EventContainer & events,
     ReportMessageApi& report_message,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,

@@ -235,7 +235,7 @@ public:
       , TimeBase& time_base
       , EventContainer & events
       , ReportMessageApi & report_message
-      , SesmanInterface & sesman
+      , AuthApi & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
@@ -474,7 +474,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    SesmanInterface & sesman,
+    AuthApi & sesman,
     LicenseApi & file_system_license_store,
     Random & gen,
     TimeObj & timeobj,

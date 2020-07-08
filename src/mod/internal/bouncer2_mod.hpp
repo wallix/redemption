@@ -30,7 +30,6 @@
 #include "utils/timebase.hpp"
 
 class FrontAPI;
-class SesmanInterface;
 
 class Bouncer2Mod : public mod_api
 {
@@ -39,7 +38,6 @@ class Bouncer2Mod : public mod_api
     uint16_t front_width;
     uint16_t front_height;
     FrontAPI & front;
-    SesmanInterface & sesman;
 
     int speedx = 2;
     int speedy = 2;
@@ -62,7 +60,6 @@ public:
          TimeBase& time_base,
          GdProvider & gd_provider,
          EventContainer & events,
-         SesmanInterface & sesman,
          FrontAPI & front,
          uint16_t width, uint16_t height);
 

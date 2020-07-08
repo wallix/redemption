@@ -59,7 +59,7 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     TimeBase & time_base;
-    SesmanInterface & sesman;
+    AuthApi & sesman;
     EventContainer & events;
     ClientInfo & client_info;
     FrontAPI & front;
@@ -79,7 +79,7 @@ class ModFactory
 public:
     ModFactory(ModWrapper & mod_wrapper,
                TimeBase & time_base,
-               SesmanInterface & sesman,
+               AuthApi & sesman,
                EventContainer & events,
                ClientInfo & client_info,
                FrontAPI & front,
@@ -178,7 +178,6 @@ public:
                             this->time_base,
                             this->mod_wrapper,
                             this->events,
-                            this->sesman,
                             this->front,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);
@@ -189,7 +188,6 @@ public:
     {
             auto new_mod = new ReplayMod(
                 this->time_base,
-                this->sesman,
                 this->graphics, this->front,
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()

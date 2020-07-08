@@ -30,9 +30,6 @@
 
 #include <memory>
 
-class SesmanInterface;
-
-
 class BaseVirtualChannel
 {
 private:

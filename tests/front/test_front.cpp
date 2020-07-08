@@ -168,14 +168,14 @@ RED_AUTO_TEST_CASE(TestFront)
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        time_base, events, sesman, front_trans, gen1, ini , cctx,
+        time_base, events, sesman.get_sesman(), front_trans, gen1, ini , cctx,
         report_message, fastpath_support);
     null_mod no_mod;
 
     GdForwarder gd_provider(front.gd());
 
     while (!front.is_up_and_running()) {
-        front.incoming(no_mod, sesman);
+        front.incoming(no_mod, sesman.get_sesman());
         RED_CHECK(events.queue.empty());
     }
 
@@ -341,7 +341,7 @@ RED_AUTO_TEST_CASE(TestFront2)
 
     RED_TEST_PASSPOINT();
     SesmanWrapper sesman;
-    MyFront front(time_base, events, sesman, front_trans, gen1, ini
+    MyFront front(time_base, events, sesman.get_sesman(), front_trans, gen1, ini
                  , cctx, report_message, fastpath_support);
     null_mod no_mod;
 

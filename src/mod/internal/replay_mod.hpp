@@ -31,7 +31,6 @@
 #include "utils/timebase.hpp"
 
 class FrontAPI;
-class SesmanInterface;
 
 class ReplayMod : public mod_api
 {
@@ -55,13 +54,11 @@ class ReplayMod : public mod_api
 
     bool replay_on_loop;
     bool play_video_with_corrupted_bitmap;
-    SesmanInterface & sesman;
 
 public:
     using Verbose = FileToGraphic::Verbose;
 
     ReplayMod( TimeBase& time_base
-             , SesmanInterface & sesman
              , gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path

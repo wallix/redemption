@@ -31,6 +31,7 @@
 #include "utils/timebase.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "acl/auth_api.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 public:
@@ -77,7 +78,7 @@ public:
 
     TimeBase& time_base;
     EventContainer& events;
-    SesmanInterface& sesman;
+    AuthApi& sesman;
 
     const RDPVerbose verbose;
 
@@ -94,7 +95,7 @@ public:
     SessionProbeClipboardBasedLauncher(
         TimeBase& time_base,
         EventContainer& events,
-        SesmanInterface & sesman,
+        AuthApi & sesman,
         mod_api& mod,
         const char* alternate_shell,
         Params params,

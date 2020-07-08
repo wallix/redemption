@@ -34,9 +34,9 @@ struct SesmanWrapper::D
 {
     Inifile ini;
     CryptoContext cctx;
-    Authentifier authentifier;
+    NullAuthentifier authentifier;
     SesmanInterface sesman;
-    D() : authentifier(this->ini, cctx, to_verbose_flags(0)), sesman(this->ini, authentifier) {}
+    D() : sesman(this->ini, this->authentifier) {}
 };
 
 SesmanWrapper::SesmanWrapper()
@@ -58,7 +58,12 @@ RedirectionInfo& SesmanWrapper::redir_info()
     return d->ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 }
 
-SesmanWrapper::operator SesmanInterface &() &
+SesmanWrapper::operator AuthApi &() &
+{
+    return d->sesman;
+}
+
+SesmanInterface& SesmanWrapper::get_sesman() &
 {
     return d->sesman;
 }

@@ -758,7 +758,6 @@ public:
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->time_base
-              , this->sesman
               , *this
               , *this
               , this->config._movie_full_path.c_str()

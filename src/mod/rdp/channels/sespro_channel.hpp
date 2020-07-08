@@ -22,7 +22,6 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
-#include "acl/sesman.hpp"
 #include "gdi/screen_functions.hpp"
 #include "core/error.hpp"
 #include "core/log_id.hpp"
@@ -176,7 +175,7 @@ public:
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
         EventContainer& events,
-        SesmanInterface & sesman,
+        AuthApi & sesman,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,

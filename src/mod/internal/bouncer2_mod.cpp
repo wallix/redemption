@@ -26,20 +26,17 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "acl/sesman.hpp"
 #include "core/front_api.hpp"
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
     GdProvider & gd_provider,
     EventContainer & events,
-    SesmanInterface & sesman,
     FrontAPI & front,
     uint16_t width, uint16_t height)
 : front_width(width)
 , front_height(height)
 , front(front)
-, sesman(sesman)
 , dancing_rect(0,0,100,100)
 , time_base(time_base)
 , events(events)

@@ -107,12 +107,12 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     TimeBase time_base({0,0});
     EventContainer events;
     SesmanWrapper sesman;
-    FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
+    FrontWrapper front(time_base, events, sesman.get_sesman(), front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {
-        front.incoming(no_mod, sesman);
+        front.incoming(no_mod, sesman.get_sesman());
     }
 
     //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
