@@ -25,5 +25,4 @@
 
 #pragma once
 
-#define VERSION "8.0.49"
-
+#define VERSION "8.0.51"
