@@ -845,6 +845,34 @@
           "description": "Disable keyboard log:\n(Please see also \"Keyboard input masking level\" in \"session_log\" section of \"Connection Policy\".)"
         }
       ]
+    },
+    {
+      "name": "context",
+      "members": [
+        {
+          "name": "mode_console",
+          "type": "option",
+          "default": "allow",
+          "values": [
+            {
+               "value": "allow",
+               "label": "Allow",
+               "description": "Forward Console mode request from client to the target."
+            },
+            {
+               "value": "force",
+               "label": "Force",
+               "description": "Force Console mode on target regardless of client request."
+            },
+            {
+               "value": "forbid",
+               "label": "Forbid",
+               "description": "Block Console mode request from client."
+            }
+          ],
+          "description": "Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"
+        }
+      ]
     }
   ]
 }

@@ -240,6 +240,11 @@ cp_spec = {
             'disable_keyboard_log', 1
         ),
     },
+    'context': {
+        u'context:mode_console': (
+            'mode_console', 0
+        ),
+    },
     'vnc': {
         u'mod_vnc:server_is_macos': (
             'server_is_macos', False

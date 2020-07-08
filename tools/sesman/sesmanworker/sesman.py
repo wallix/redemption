@@ -1776,7 +1776,6 @@ class Sesman():
                 module = u'INTERNAL'
             kv[u'module'] = module
             # proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
-            kv[u'mode_console'] = u"allow"
 
         self.shared[u'recording_started'] = 'False'
 

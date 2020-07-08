@@ -158,7 +158,7 @@ constexpr array_view_const_char const authstr[] = {
     "keepalive"_av,
     "session_id"_av,
     "timeclose"_av,
-    "mode_console"_av,
+    "context:mode_console"_av,
     "real_target_device"_av,
     "authentication_challenge"_av,
     "ticket"_av,
