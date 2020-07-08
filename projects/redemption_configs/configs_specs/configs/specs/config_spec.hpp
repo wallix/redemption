@@ -197,6 +197,7 @@ void config_spec_definition(Writer && W)
             "!!!May cause FreeRDP-based client to CRASH!!!\n"
             "Set to 0 to disable this feature."
         }, set(0));
+
     });
 
     W.section("session_log", [&]
@@ -502,6 +503,8 @@ void config_spec_definition(Writer && W)
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
+
     });
 
     W.section("metrics", [&]
@@ -765,8 +768,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "session_id");
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<unsigned>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
-
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "real_target_device");
 

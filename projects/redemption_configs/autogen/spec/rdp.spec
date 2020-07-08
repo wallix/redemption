@@ -114,6 +114,12 @@ enable_restricted_admin_mode = boolean(default=False)
 # Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 force_smartcard_authentication = boolean(default=False)
 
+# Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
+#   allow: Forward Console mode request from client to the target.
+#   force: Force Console mode on target regardless of client request.
+#   forbid: Block Console mode request from client.
+mode_console = option('allow', 'force', 'forbid', default='allow')
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced
@@ -370,12 +376,4 @@ store_file = option('never', 'always', 'on_invalid_verification', default='never
 #_advanced
 #_hex
 disable_keyboard_log = integer(min=0, max=3, default=1)
-
-[context]
-
-# Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
-#   allow: Forward Console mode request from client to the target.
-#   force: Force Console mode on target regardless of client request.
-#   forbid: Block Console mode request from client.
-mode_console = option('allow', 'force', 'forbid', default='allow')
 
