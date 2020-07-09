@@ -23,6 +23,8 @@
 #include "utils/sugar/noncopyable.hpp"
 
 #include <cstdint>
+#include <string_view>
+
 
 struct AuthApi : noncopyable
 {
@@ -35,7 +37,7 @@ struct AuthApi : noncopyable
     virtual void new_remote_mod() = 0;
     virtual void delete_remote_mod() = 0;
 
-    virtual void set_pm_request(const char * request) = 0;
+    virtual void set_pm_request(std::string_view request) = 0;
 
     virtual void set_native_session_id(unsigned int session_id) = 0;
 
@@ -70,7 +72,7 @@ struct NullAuthentifier : AuthApi
     void delete_remote_mod() override
     {}
 
-    void set_pm_request(const char * request) override
+    void set_pm_request(std::string_view request) override
     {
         (void)request;
     }

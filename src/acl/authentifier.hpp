@@ -170,7 +170,7 @@ public:
         }
     }
 
-    void set_pm_request(const char * request) override {
+    void set_pm_request(std::string_view request) override {
         if (this->acl_serial){
             this->acl_serial->ini.set_acl<cfg::context::pm_request>(request);
         }

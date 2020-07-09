@@ -1037,14 +1037,13 @@ public:
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
 
-        // TODO stream.remaining_bytes()
-        std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
-
         this->checkout_channel_flags  = flags;
         this->checkout_channel_chanid = checkout_channel.chanid;
 
-//        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
-        authentifier.set_pm_request(checkout_channel_message.c_str());
+        bytes_view checkout_channel_message = stream.remaining_bytes();
+
+        authentifier.set_pm_request(std::string_view(
+            checkout_channel_message.as_charp(), checkout_channel_message.size()));
     }
 
     void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
