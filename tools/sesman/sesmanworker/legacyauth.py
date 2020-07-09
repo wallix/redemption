@@ -15,7 +15,7 @@ except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
-        from fake.proxyengine import *
+        from .fake.proxyengine import *
         Logger().info("================================")
         Logger().info("==== Load Fake AUTH ENGINE =====")
         Logger().info("================================")
