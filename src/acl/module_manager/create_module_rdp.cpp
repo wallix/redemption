@@ -134,7 +134,7 @@ struct RdpData
                     this->mod->DLP_antivirus_check_channels_files();
                 }
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
 
         ~FileValidator()
@@ -144,13 +144,13 @@ struct RdpData
             }
             catch (...) {
             }
-            end_of_lifespan(this->events, this);
+            this->events.end_of_lifespan(this);
         }
     };
 
     std::unique_ptr<ModMetrics> metrics;
     int metrics_timer = 0;
-    
+
     void set_metrics_timer(std::chrono::seconds log_interval)
     {
         Event event("RDP Metrics Timer", this);
@@ -161,24 +161,24 @@ struct RdpData
         {
             this->metrics->log(event.alarm.now);
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 
-    EventContainer & events;
     TimeBase & time_base;
+    EventContainer & events;
 
     std::unique_ptr<FileValidator> file_validator;
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
-    
+
     RdpData(TimeBase & time_base, EventContainer & events)
      : time_base(time_base)
      , events(events)
     {}
-    
+
     ~RdpData()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 };
 
@@ -282,7 +282,7 @@ public:
 
     // from RdpInput
 
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}
 
@@ -482,7 +482,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
-    switch (ini.get<cfg::context::mode_console>()) {
+    switch (ini.get<cfg::mod_rdp::mode_console>()) {
         case RdpModeConsole::force:
             client_info.console_session = true;
             LOG(LOG_INFO, "Session::mode console : force");
@@ -904,11 +904,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
 
 
     unique_fd client_sck =
-        connect_to_target_host(ini,
-                               time_base,
-                               report_message,
-                               trkeys::authentification_rdp_fail,
-                               ini.get<cfg::mod_rdp::enable_ipv6>());
+        connect_to_target_host(ini, report_message, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())

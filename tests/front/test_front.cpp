@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     while (!front.is_up_and_running()) {
         front.incoming(no_mod, sesman);
-        RED_CHECK(events.empty());
+        RED_CHECK(events.queue.empty());
     }
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
@@ -242,7 +242,7 @@ RED_AUTO_TEST_CASE(TestFront)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, sesman, 
+        t, time_base, gd_provider, events, sesman,
         front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
         authentifier, report_message, license_store, ini, metrics,
@@ -260,11 +260,11 @@ RED_AUTO_TEST_CASE(TestFront)
 
     int count = 0;
     int n = 38;
-    events[0].alarm.fd = 0;
-    for (; count < n && !events.empty(); ++count) {
-        execute_events(events, timeval{1,0},[](int){return true;});
+    events.queue[0].alarm.fd = 0;
+    for (; count < n && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;});
     }
-    
+
     RED_CHECK_EQ(count, n);
 //    front.dump_png("trace_w2008_");
 }

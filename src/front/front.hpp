@@ -812,7 +812,7 @@ public:
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
                 throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
 
         // --------------------------------------------------------
@@ -864,13 +864,13 @@ public:
                     event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
                 }
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
     }
 
     ~Front() override
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
@@ -1128,7 +1128,7 @@ public:
                 event.alarm.set_timeout(event.alarm.now+std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
             }
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
@@ -1152,15 +1152,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            if (this->capture_timer) {
-                for(auto & event: this->events){
-                    if (event.id == this->capture_timer){
-                        event.garbage = true;
-                        event.id = 0;
-                    }
-                }
-            }
-            this->capture_timer = 0;
+            this->capture_timer = this->events.erase_event(this->capture_timer);
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -4254,15 +4246,7 @@ private:
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
-                if (this->handshake_timeout) {
-                    for(auto & event: this->events){
-                        if (event.id == this->handshake_timeout){
-                            event.garbage = true;
-                            event.id = 0;
-                        }
-                    }
-                }
-                this->handshake_timeout = 0;
+                this->handshake_timeout = this->events.erase_event(this->handshake_timeout);
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API
@@ -4271,7 +4255,7 @@ private:
                     this->ini.get<cfg::context::is_wabam>()) {
                     this->force_using_cache_bitmap_r2();
                 }
-                cb.rdp_gdi_up_and_running(this->client_info.screen_info);
+                cb.rdp_gdi_up_and_running();
                 sesman.set_screen_info(this->client_info.screen_info);
                 sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
 

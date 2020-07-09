@@ -956,7 +956,7 @@ public:
             );
         }
 #endif  // #ifndef NDEBUG
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     void disable_session_probe_drive() {
@@ -1846,16 +1846,7 @@ public:
                     client_announce_reply.receive(chunk);
                     client_announce_reply.log(LOG_INFO);
                 }
-
-                if (this->initialization_timeout_event) {
-                    for(auto & event: this->events){
-                        if (event.id == this->initialization_timeout_event){
-                            event.garbage = true;
-                            event.id = 0;
-                        }
-                    }
-                }
-                this->initialization_timeout_event = 0;
+                this->initialization_timeout_event = this->events.erase_event(this->initialization_timeout_event);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -2004,7 +1995,7 @@ public:
             {
                 this->process_event();
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
             return true;
         }
 
@@ -2841,15 +2832,7 @@ public:
 
 private:
     void process_event() {
-        if (this->initialization_timeout_event) {
-            for(auto & event: this->events){
-                if (event.id == this->initialization_timeout_event){
-                    event.garbage = true;
-                    event.id = 0;
-                }
-            }
-        }
-        this->initialization_timeout_event = 0;
+        this->initialization_timeout_event = this->events.erase_event(this->initialization_timeout_event);
         uint8_t message_buffer[1024];
 
         {

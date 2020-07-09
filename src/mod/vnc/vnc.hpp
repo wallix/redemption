@@ -390,7 +390,7 @@ public:
     std::string module_name() override {return "VNC Mod";}
 
     ~mod_vnc(){
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 
     void init() override;
@@ -1101,7 +1101,7 @@ protected:
     bool tlsSwitch;
 
 public:
-    void draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman);
+    void draw_event(gdi::GraphicApi & gd);
 
 private:
     static const char *securityTypeString(uint32_t t);
@@ -1112,7 +1112,7 @@ private:
 
     bool treatVeNCrypt();
 
-    bool draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman);
+    bool draw_event_impl(gdi::GraphicApi & gd);
 
 private:
     void check_timeout();
@@ -1742,7 +1742,7 @@ private:
 
 public:
     // Front calls this member function when it became up and running.
-    void rdp_gdi_up_and_running(ScreenInfo & ) override;
+    void rdp_gdi_up_and_running() override;
     void rdp_gdi_down() override {}
 
 private:

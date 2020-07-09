@@ -136,7 +136,7 @@ CloseMod::CloseMod(
         this->set_mod_signal(BACK_EVENT_STOP);
         e.garbage = true;
     };
-    this->events.push_back(std::move(close_event));
+    this->events.add(std::move(close_event));
 
     Event refresh_event("Close:Refresh Event", this);
     refresh_event.alarm.set_timeout(time_base.get_current_time());
@@ -148,12 +148,12 @@ CloseMod::CloseMod(
                         - std::chrono::seconds{elapsed};
         this->close_widget.refresh_timeleft(remaining.count());
     };
-    events.push_back(std::move(refresh_event));
+    events.add(std::move(refresh_event));
 }
 
 CloseMod::~CloseMod()
 {
-    end_of_lifespan(this->events, this);
+    this->events.end_of_lifespan(this);
     this->vars.set<cfg::context::close_box_extra_message>("");
     this->screen.clear();
     this->rail_client_execute.reset(true);

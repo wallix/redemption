@@ -78,13 +78,13 @@ mod_vnc::mod_vnc( Transport & t
     , events(events)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
+    , sesman(sesman)
 #endif
     , choosenAuth(VNC_AUTH_INVALID)
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
     , server_data_buf(*this)
     , tlsSwitch(false)
-    , frame_buffer_update_ctx(this->zd, this->verbose)
-    , sesman(sesman)
+    , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
@@ -109,10 +109,10 @@ mod_vnc::mod_vnc( Transport & t
         event.actions.on_timeout = [this](Event&){};
         event.actions.on_action = [this](Event&)
         {
-            this->draw_event(this->gd_provider.get_graphics(), this->sesman);
+            this->draw_event(this->gd_provider.get_graphics());
         };
     };
-    this->events.push_back(std::move(event));
+    this->events.add(std::move(event));
 }
 
 bool mod_vnc::ms_logon(Buf64k & buf)
@@ -469,7 +469,7 @@ bool mod_vnc::doTlsSwitch()
 }
 
 
-void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
+void mod_vnc::draw_event(gdi::GraphicApi & gd)
 {
     bool can_read = true;
 
@@ -519,7 +519,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd, SesmanInterface & sesman)
     [[maybe_unused]]
     uint64_t const data_server_before = this->server_data_buf.remaining();
 
-    while (this->draw_event_impl(gd, sesman) && !this->tlsSwitch) {
+    while (this->draw_event_impl(gd) && !this->tlsSwitch) {
     }
 
     uint64_t const data_server_after = this->server_data_buf.remaining();
@@ -750,7 +750,7 @@ bool mod_vnc::treatVeNCrypt() {
 }
 
 
-bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd, SesmanInterface & sesman)
+bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
 {
     switch (this->state)
     {
@@ -1449,12 +1449,7 @@ void mod_vnc::check_timeout()
         size_t chunk_size = length;
 
         this->clipboard_requesting_for_data_is_delayed = false;
-        for (auto & event: this->events){
-            if (event.id == clipboard_timeout_timer){
-                event.garbage = true;
-            }
-        }
-        this->clipboard_timeout_timer = 0;
+        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , length
@@ -1494,12 +1489,7 @@ bool mod_vnc::lib_clip_data(Buf64k & buf)
 
         // Can stop RDP to VNC clipboard infinite loop.
         this->clipboard_requesting_for_data_is_delayed = false;
-        for (auto & event: this->events){
-            if (event.id == clipboard_timeout_timer){
-                event.garbage = true;
-            }
-        }
-        this->clipboard_timeout_timer = 0;
+        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
     }
     else {
         LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -1715,13 +1705,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     chunk_size = out_s.get_offset();
 
                     this->clipboard_requesting_for_data_is_delayed = false;
-                    for (auto & event: this->events){
-                        if (event.id == clipboard_timeout_timer){
-                            event.garbage = true;
-                        }
-                    }
-                    this->clipboard_timeout_timer = 0;
-
+                    this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
                     this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , chunk_size // total length is chunk_size
@@ -1742,7 +1726,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                         event.alarm.set_timeout(this->time_base.get_current_time()
                                 +(MINIMUM_TIMEVAL - timeval_diff));
                         event.actions.on_timeout = [this](Event&){this->check_timeout();};
-                        this->events.push_back(std::move(event));
+                        this->events.add(std::move(event));
                     }
                     else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated)
                         &&  ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)
@@ -2069,7 +2053,7 @@ void mod_vnc::init()
 }
 
 
-void mod_vnc::rdp_gdi_up_and_running(ScreenInfo & screen_info)
+void mod_vnc::rdp_gdi_up_and_running()
 {
     if (this->gd_provider.is_ready_to_draw()
     && this->state == WAIT_CLIENT_UP_AND_RUNNING){

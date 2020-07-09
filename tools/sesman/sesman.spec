@@ -16,6 +16,10 @@ auth_mode_passthrough=boolean(default=False)
 # Default login (for passthrough mode, disabled if empty).
 default_login=string(default='')
 
+# Use legacy wabengine authentication interface
+#_advanced
+legacy_wabengine_auth = boolean(default=False)
+
 # Debug Logs
 #_advanced
 debug=boolean(default=False)

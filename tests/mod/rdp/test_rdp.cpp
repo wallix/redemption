@@ -158,10 +158,10 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     GdForwarder gd_provider(front.gd());
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, sesman, 
-        front.gd(), front, info, sesman.redir_info(), 
+        t, time_base, gd_provider, events, sesman,
+        front.gd(), front, info, sesman.redir_info(),
         gen, timeobj, channels_authorizations,
-        mod_rdp_params, tls_client_params, authentifier, 
+        mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store,
         sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -169,10 +169,10 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
     auto end_tv = time_base.get_current_time();
-    events[0].alarm.fd = 0;
-    execute_events(events, end_tv,[](int /*fd*/){ return false; });
-    for (int count=0; count < 100 && !events.empty(); ++count) {
-        execute_events(events, timeval{1,0},[](int){return true;});
+    events.queue[0].alarm.fd = 0;
+    events.execute_events(end_tv,[](int /*fd*/){ return false; });
+    for (int count=0; count < 100 && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;});
     }
 }
 

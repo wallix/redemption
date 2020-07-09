@@ -127,7 +127,7 @@ public:
 
     ~RailModuleHostMod() override
     {
-        end_of_lifespan(this->events, this);    
+        this->events.end_of_lifespan(this);
         this->rail_client_execute.reset(true);
         this->screen.clear();
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
@@ -148,7 +148,7 @@ public:
 
     void rdp_gdi_down() override {}
 
-    void rdp_gdi_up_and_running(ScreenInfo &) override;
+    void rdp_gdi_up_and_running() override;
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
     {

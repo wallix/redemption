@@ -349,7 +349,10 @@ class Sesman():
         self.record_filebase = None
         self.full_log_path = None
 
-        self.engine = engine.Engine()
+        legacy_auth = SESMANCONF[u'sesman'].get(
+            u'legacy_wabengine_auth', False
+        )
+        self.engine = engine.Engine(legacy_auth)
 
         self.effective_login = None
 
@@ -1772,7 +1775,6 @@ class Sesman():
                 module = u'INTERNAL'
             kv[u'module'] = module
             # proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
-            kv[u'mode_console'] = u"allow"
 
         self.shared[u'recording_started'] = 'False'
 

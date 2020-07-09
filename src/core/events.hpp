@@ -22,6 +22,7 @@
 #pragma once
 
 #include "utils/timeval_ops.hpp"
+#include "utils/invalid_socket.hpp"
 #include <vector>
 #include <string>
 #include <functional>
@@ -183,110 +184,172 @@ struct Sequencer {
     }
 };
 
+struct EventContainer {
+    std::vector<Event> queue;
 
-using EventContainer = std::vector<Event>;
-
-inline void end_of_lifespan(EventContainer & events, void * lifespan)
-{
-    for (auto & e: events){
-        if (e.lifespan_handle == lifespan){
-            e.garbage = true;
-        }
-    }
-}
-
-
-inline void exec_teardowns(EventContainer & events) {
-        for (size_t i = 0; i < events.size() ; i++){
-            if(events[i].teardown){
-                events[i].exec_teardown();
-                events[i].teardown = false;
-                events[i].garbage = true;
+    void get_fds(std::function<void(int fd)> fn)
+    {
+        for (auto & event: this->queue){
+            if ((not (event.garbage or event.teardown)) and event.alarm.fd != INVALID_SOCKET){
+                fn(event.alarm.fd);
             }
         }
-}
+    }
 
+    void get_fds_timeouts(std::function<void(timeval tv)> fn)
+    {
+        for (auto & event: this->queue){
+            if ((not (event.garbage or event.teardown)) and event.alarm.fd != INVALID_SOCKET){
+                fn(event.alarm.trigger_time);
+            }
+        }
+    }
 
-inline void garbage_collector(EventContainer & events) {
-        for (size_t i = 0; i < events.size() ; i++){
-            while ((i < events.size()) && events[i].garbage){
-                LOG(LOG_INFO, "Removing Event: %s", events[i].name);
-                if (i < events.size() -1){
-                    events[i] = std::move(events.back());
+    void get_timeouts(std::function<void(timeval tv)> fn)
+    {
+        for (auto & event: this->queue){
+            if ((not (event.garbage or event.teardown)) and event.alarm.fd == INVALID_SOCKET){
+                fn(event.alarm.trigger_time);
+            }
+        }
+    }
+
+    void execute_events(const timeval tv, const std::function<bool(int fd)> & fn)
+    {
+        if (this->queue.size() > 0){
+    //        LOG(LOG_INFO, "=== Execute  Loop ===");
+        }
+
+        for (size_t i = 0 ; i < this->queue.size(); i++){
+            auto & event = this->queue[i];
+    //        if (event.alarm.fd != -1){
+    //            LOG(LOG_INFO, "now=%d:%d Examining Fd Event (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
+    //                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
+    //                event.id, event.name.c_str(),
+    //                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
+    //                event.alarm.fd,
+    //                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
+    //                event.alarm.grace_delay.count(),
+    //                event.alarm.active?"active ":"",
+    //                event.teardown?"teardown ":"",
+    //                event.garbage?"garbage":""
+    //                );
+    //        }
+    //        else {
+    //            LOG(LOG_INFO, "now=%d:%d Examining Timeout Event (%d): %s (%d:%d) TriggerTime=%d:%d %s%s%s",
+    //                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
+    //                event.id, event.name.c_str(),
+    //                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
+    //                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
+    //                event.alarm.active?"active ":"",
+    //                event.teardown?"teardown ":"",
+    //                event.garbage?"garbage":""
+    //                );
+    //        }
+
+            if (not (event.garbage or event.teardown)) {
+                if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
+                    event.alarm.set_timeout(tv+event.alarm.grace_delay);
+    //                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
+                    event.exec_action();
+                    // Not testing timeout now as fd event was triggered
+                    continue;
                 }
-                events.pop_back();
+            }
+            if (not (event.garbage or event.teardown)) {
+                if (event.alarm.trigger(tv)){
+    //                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
+                    event.exec_timeout();
+                }
             }
         }
-}
-
-// returns timeval{0, 0} if no alarm is set
-inline timeval next_timeout(EventContainer & events)
-{
-   timeval ultimatum = {0, 0};
-   for(auto &event: events){
-        if (not (event.garbage or event.teardown) and event.alarm.active){
-            ultimatum = event.alarm.trigger_time;
-            break;
-        }
-   }
-   for(auto &event: events){
-        if (not (event.garbage or event.teardown) and event.alarm.active){
-            ultimatum = std::min(event.alarm.trigger_time, ultimatum);
-        }
-    }
-    return ultimatum;
-}
-
-inline void execute_events(EventContainer & events, const timeval tv, const std::function<bool(int fd)> & fn)
-{
-    if (events.size() > 0){
-//        LOG(LOG_INFO, "=== Execute Events Loop ===");
+        this->exec_teardowns();
+        this->garbage_collector();
     }
 
-    for (size_t i = 0 ; i < events.size(); i++){
-        auto & event = events[i];
-//        if (event.alarm.fd != -1){
-//            LOG(LOG_INFO, "now=%d:%d Examining Fd Event (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
-//                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
-//                event.id, event.name.c_str(),
-//                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
-//                event.alarm.fd,
-//                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
-//                event.alarm.grace_delay.count(),
-//                event.alarm.active?"active ":"",
-//                event.teardown?"teardown ":"",
-//                event.garbage?"garbage":""
-//                );
-//        }
-//        else {
-//            LOG(LOG_INFO, "now=%d:%d Examining Timeout Event (%d): %s (%d:%d) TriggerTime=%d:%d %s%s%s",
-//                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
-//                event.id, event.name.c_str(),
-//                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
-//                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
-//                event.alarm.active?"active ":"",
-//                event.teardown?"teardown ":"",
-//                event.garbage?"garbage":""
-//                );
-//        }
 
-        if (not (event.garbage or event.teardown)) {
-            if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
-                event.alarm.set_timeout(tv+event.alarm.grace_delay);
-//                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
-                event.exec_action();
-                // Not testing timeout now as fd event was triggered
-                continue;
-            }
-        }
-        if (not (event.garbage or event.teardown)) {
-            if (event.alarm.trigger(tv)){
-//                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
-                event.exec_timeout();
+    void exec_teardowns() {
+        for (size_t i = 0; i < this->queue.size() ; i++){
+            if (not this->queue[i].garbage
+            and this->queue[i].teardown){
+                this->queue[i].exec_teardown();
+                this->queue[i].teardown = false;
+                this->queue[i].garbage = true;
             }
         }
     }
-    exec_teardowns(events);
-    garbage_collector(events);
-}
+
+
+    void garbage_collector() {
+        for (size_t i = 0; i < this->queue.size() ; i++){
+            while ((i < this->queue.size()) && this->queue[i].garbage){
+                LOG(LOG_INFO, "Removing Event: %s", this->queue[i].name);
+                if (i < this->queue.size() -1){
+                    this->queue[i] = std::move(this->queue.back());
+                }
+                this->queue.pop_back();
+            }
+        }
+    }
+
+    void end_of_lifespan(void * lifespan)
+    {
+        for (auto & e: this->queue){
+            if (e.lifespan_handle == lifespan){
+                e.garbage = true;
+            }
+        }
+    }
+
+    // returns timeval{0, 0} if no alarm is set
+    timeval next_timeout()
+    {
+       timeval ultimatum = {0, 0};
+       for(auto &event: this->queue){
+            if (not (event.garbage or event.teardown) and event.alarm.active){
+                ultimatum = event.alarm.trigger_time;
+                break;
+            }
+       }
+       for(auto &event: this->queue){
+            if (not (event.garbage or event.teardown)
+            and event.alarm.active){
+                ultimatum = std::min(event.alarm.trigger_time, ultimatum);
+            }
+        }
+        return ultimatum;
+    }
+
+
+    int erase_event(int & event_id)
+    {
+        if (event_id) {
+            for(auto & event: this->queue){
+                if (not (event.garbage or event.teardown)
+                and (event.id == event_id)){
+                    event.garbage = true;
+                    event.id = 0;
+                    event_id = 0;
+                }
+            }
+        }
+        return event_id;
+    }
+
+    void reset_timeout(const timeval trigger_time, const int event_id)
+    {
+        for(auto & event: this->queue){
+            if (not (event.garbage or event.teardown)
+            and (event.id == event_id)){
+                event.alarm.set_timeout(trigger_time);
+            }
+        }
+    }
+
+    void add(Event && event)
+    {
+        this->queue.push_back(std::move(event));
+    }
+
+};
 

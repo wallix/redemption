@@ -120,11 +120,10 @@ RailModuleHost& RailModuleHostMod::get_module_host()
 }
 
 // RdpInput
-void RailModuleHostMod::rdp_gdi_up_and_running(ScreenInfo & screen_info)
+void RailModuleHostMod::rdp_gdi_up_and_running()
 {
     mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.rdp_gdi_up_and_running(screen_info);
+    mod.rdp_gdi_up_and_running();
 }
 
 void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
@@ -232,14 +231,11 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
+
         if (this->disconnection_reconnection_timer) {
-            for(auto & event: this->events){
-                if (event.id == this->disconnection_reconnection_timer){
-                    event.alarm.set_timeout(
-                                this->time_base.get_current_time()
-                                +std::chrono::seconds{1});
-                }
-            }
+            this->events.reset_timeout(this->time_base.get_current_time()+std::chrono::seconds{1},
+                          this->disconnection_reconnection_timer);
+
         }
         else {
             Event event("RAIL Module Host Disconnection Reconnection Timeout", this);
@@ -251,9 +247,9 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
             {
                 if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
                     throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-                }                
+                }
             };
-            this->events.push_back(std::move(event));
+            this->events.add(std::move(event));
         }
     }
 }

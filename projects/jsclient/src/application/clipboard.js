@@ -116,6 +116,75 @@ class IdGenerator
     }
 }
 
+const chunkSize = 1600;
+const headerSize = 8;
+const fileDescSize = 592;
+const bufferSize = fileDescSize * 3 + headerSize;
+
+class CliprdrBuffer
+{
+    constructor(Module, clipboard) {
+        this.n = bufferSize;
+        this.ptr = Module._malloc(this.n);
+        this.stream = new OutStream(this.ptr, Module);
+        this.clipboard = clipboard;
+        this.Module = Module;
+        this.totalLen = 0;
+        this.channelflags = 0;
+        this.remainingLen = 0;
+    }
+
+    delete() {
+        this.Module._free(this.ptr);
+    }
+
+    beginFormatDescriptorList(count) {
+        this.stream.i = this.ptr;
+        this.stream.u16le(CbType.DataResponse);
+        this.stream.u16le(MsgFlags.Ok);
+        this.stream.u32le(fileDescSize * count);
+        this.totalLen = fileDescSize * count + 8;
+        this.remainingLen = this.totalLen;
+        this.channelflags = ChannelFlags.First;
+        if (this.remainingLen <= chunkSize) {
+            this.channelflags |= ChannelFlags.Last;
+        }
+    }
+
+    addFormatDescriptor(filename, flags, attrs, lastModified, size) {
+        this.stream.u32le(1/*files.length*/);
+        this.stream.u32le(flags);
+        this.stream.bzero(32);
+        this.stream.u32le(attrs);
+        this.stream.bzero(16);
+        // lastWriteTime: specifies the number of 100-nanoseconds intervals that have elapsed since 1 January 1601.
+        this.stream.u64le((lastModified + 11644473600) * 10000000);
+        this.stream.u64lem(size);
+        const byteLength = this.stream.copyStringAsAlignedUTF16(filename, 520 - 2);
+        this.stream.bzero(520 - byteLength);
+
+        const len = this.stream.i - this.ptr;
+        if (len > chunkSize) {
+            this.clipboard.sendRawData(this.ptr, chunkSize, this.totalLen, this.channelflags);
+            const overflowBuffer = new Uint8Array(Module.HEAPU8.buffer,
+                                                  this.ptr + chunkSize,
+                                                  len);
+            this.stream.i = this.ptr;
+            this.stream.copyAsArray(overflowBuffer);
+            this.remainingLen -= chunkSize;
+            this.channelflags = (this.remainingLen <= chunkSize) ? ChannelFlags.Last : 0;
+        }
+    }
+
+    endFormatDescriptorList() {
+        if (this.stream.i != this.ptr) {
+            const len = this.stream.i - this.ptr;
+            this.clipboard.sendRawData(this.ptr, len, this.totalLen, this.channelflags);
+        }
+    }
+}
+
+
 class Cliprdr
 {
     constructor(DOMBox, syncData, emccModule) {
@@ -200,6 +269,7 @@ class Cliprdr
         this.emccModule._free(this.buffer.i);
         this.DOMBox.removeChild(this.DOMFormats);
         this.DOMBox.removeChild(this.DOMFiles);
+        this.cliprdrBuffer.delete();
     }
 
     _processWithBuffer(bufLen, f) {
@@ -223,6 +293,7 @@ class Cliprdr
 
     setEmcChannel(chann) {
         this.clipboard = chann;
+        this.cliprdrBuffer = new CliprdrBuffer(this.emccModule, chann);
     }
 
     setGeneralCapability(generalFlags) {
@@ -367,13 +438,14 @@ class Cliprdr
 
         if (channelFlags & ChannelFlags.Last) {
             const newOffset = fileStream.offset + fileStream.bytesToRead;
+            console.log('newOffset: ', newOffset);
             if (fileStream.file.size > newOffset && fileStream.isActive) {
                 fileStream.datas.push(data.buffer.slice(
                     data.byteOffset, data.byteOffset + data.byteLength));
                 // TODO lock + pos + hugeFileSupport
                 this.clipboard.sendFileContentsRequest(
                     FileContentsOp.Range, streamId, fileStream.ifile,
-                    0, newOffset, fileStream.bytesToRead, 0, 0);
+                    newOffset, 0, fileStream.bytesToRead, 0, 0);
                 fileStream.offset = newOffset;
             }
             else {
@@ -387,9 +459,11 @@ class Cliprdr
                 this.streamIdGenerator.releaseId(streamId);
 
                 const blob = new Blob(fileStream.datas, {type: "application/octet-stream"});
-                cbDownload.href = URL.createObjectURL(blob);
+                const objectURL = URL.createObjectURL(blob);
+                cbDownload.href = objectURL;
                 cbDownload.download = fileStream.file.name;
                 cbDownload.click();
+                URL.revokeObjectURL(objectURL);
             }
         }
         else {
@@ -434,35 +508,23 @@ class Cliprdr
             }
 
             case CustomCF.FileGroupDescriptorW: {
-                const file = sendCbFile_data.files[0]
+                const file = sendCbFile_data.files[0];
+
+                if (file.size > 4294967296
+                 && !(this.generalFlags & CbGeneralFlags.HugeFileSupportEnabled)
+                ) {
+                    console.error('Huge file doesn\'t supported');
+                    this.clipboard.sendHeader(CbType.DataResponse, MsgFlags.Fail, 0);
+                }
 
                 const flags = FileFlags.FileSize | FileFlags.ShowProgressUI /*| FileFlags.WriteTime*/;
                 const attrs = FileAttributes.Normal;
-                const stream = new OutStream(this.buffer.i, this.emccModule);
 
-                stream.u16le(CbType.DataResponse);
-                stream.u16le(MsgFlags.Ok);
-                const headerSizePos = stream.i;
-                stream.skip(4);
+                this.cliprdrBuffer.beginFormatDescriptorList(1);
+                this.cliprdrBuffer.addFormatDescriptor(
+                    file.name, flags, attrs, file.lastModified, file.size);
+                this.cliprdrBuffer.endFormatDescriptorList();
 
-                stream.u32le(1/*files.length*/);
-                stream.u32le(flags);
-                stream.bzero(32);
-                stream.u32le(attrs);
-                stream.bzero(16);
-                // lastWriteTime: specifies the number of 100-nanoseconds intervals that have elapsed since 1 January 1601.
-                stream.u64le((file.lastModified + 11644473600) * 10000000);
-                stream.u64lem(file.size);
-                stream.copyStringAsAlignedUTF16(file.name);
-                stream.bzero(520 - file.name.length * 2);
-
-                const totalLen = stream.i - this.buffer.i;
-                stream.i = headerSizePos;
-                stream.u32le(totalLen);
-
-                console.log(totalLen);
-
-                this.clipboard.sendRawData(this.buffer.i, totalLen, totalLen, ChannelFlags.First | ChannelFlags.Last);
                 break;
             }
         }

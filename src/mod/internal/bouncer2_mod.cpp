@@ -54,12 +54,12 @@ Bouncer2Mod::Bouncer2Mod(
         {
             this->draw_event(this->gd_provider.get_graphics());
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
 }
 
 Bouncer2Mod::~Bouncer2Mod()
 {
-    end_of_lifespan(this->events, this);
+    this->events.end_of_lifespan(this);
 }
 
 Rect Bouncer2Mod::get_screen_rect() const

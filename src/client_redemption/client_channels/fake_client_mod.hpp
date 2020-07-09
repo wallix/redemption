@@ -80,7 +80,7 @@ public:
         }
     }
 
-    void rdp_gdi_up_and_running(ScreenInfo & /*screen_info*/) override {}
+    void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}
 

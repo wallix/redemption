@@ -52,7 +52,7 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     RED_CHECK(!e.alarm.trigger(wakeup+std::chrono::seconds(2)));
     e.exec_timeout();
     RED_CHECK(s == std::string("Event Triggered"));
-    
+
     // If I set an alarm in the past it will be triggered immediately
     e.alarm.set_timeout(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
 RED_AUTO_TEST_CASE(TestEventContainer)
 {
     std::string s;
-    EventContainer event_container;
+    EventContainer events;
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
     // the second parameter of event is the event context
@@ -92,18 +92,18 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     Event e("Event", nullptr);
     e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
     e.alarm.set_timeout(wakeup);
-    event_container.push_back(std::move(e));
+    events.add(std::move(e));
 
     auto t = origin;
-    for (auto & event: event_container){
+    for (auto & event: events.queue){
         RED_CHECK(!event.alarm.trigger(t));
     }
     t = t + std::chrono::seconds(1);
-    for (auto & event: event_container){
+    for (auto & event: events.queue){
         RED_CHECK(!event.alarm.trigger(t));
     }
     t = t + std::chrono::seconds(1);
-    for (auto & event: event_container){
+    for (auto & event: events.queue){
         if (event.alarm.trigger(t)){
             event.exec_timeout();
             RED_CHECK(s == std::string("Event Triggered"));
@@ -114,7 +114,7 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     }
 
     t = t + std::chrono::seconds(1);
-    for (auto & event: event_container){
+    for (auto & event: events.queue){
         RED_CHECK(!event.alarm.trigger(t));
     }
 }
@@ -186,7 +186,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
     struct Context {
         size_t counter = 0;
     } context;
-    
+
     Sequencer chain = {false, 0, true, {
         { "first",
             [&context](Event&/*event*/,Sequencer&sequencer)

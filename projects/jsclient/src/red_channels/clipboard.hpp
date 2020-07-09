@@ -78,7 +78,7 @@ private:
     void process_monitor_ready();
     void process_format_data_response(bytes_view data, uint32_t channel_flags, uint32_t data_len);
     void process_filecontents_response(bytes_view data, uint32_t channel_flags, uint32_t data_len);
-    void process_format_list(InStream& chunk, uint32_t channel_flags);
+    void process_format_list(InStream& chunk, uint32_t channel_flags, uint16_t msg_flags);
 
     struct ResponseBuffer
     {

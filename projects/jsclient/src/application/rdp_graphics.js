@@ -8,7 +8,7 @@ const rgbToCss = function(color) {
 //     ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
 //  && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
 
-class RDPGraphics
+class RdpGraphics
 {
     constructor(canvasElement, module) {
         this.width = canvasElement.width;
@@ -35,7 +35,7 @@ class RDPGraphics
     }
 
     delete() {
-        // console.log('RDPGraphics: free memory')
+        // console.log('RdpGraphics: free memory')
         this._module._free(this._imgBufferIndex);
     }
 
@@ -47,7 +47,7 @@ class RDPGraphics
     }
 
     resizeCanvas(w, h, bpp) {
-        // console.log('RDPGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
+        // console.log('RdpGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
 
         this.width = w;
         this.height = h;
@@ -453,7 +453,7 @@ class RDPGraphics
 };
 
 try {
-    module.exports.RDPGraphics = RDPGraphics;
+    module.exports.RdpGraphics = RdpGraphics;
 }
 catch (e) {
 }

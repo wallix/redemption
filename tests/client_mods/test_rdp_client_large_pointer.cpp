@@ -159,7 +159,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, 
+    auto mod = new_mod_rdp(t, time_base, gd_provider,
         events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
 
@@ -168,9 +168,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     int n = 74;
     int count = 0;
-    events[0].alarm.fd = 0;
-    for (; count < n && !events.empty(); ++count) {
-        execute_events(events, timeval{1,0},[](int){return true;});
+    events.queue[0].alarm.fd = 0;
+    for (; count < n && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;});
     }
     RED_CHECK_EQ(count, n);
 
@@ -286,7 +286,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, 
+    auto mod = new_mod_rdp(t, time_base, gd_provider,
         events, sesman, front.gd(), front, info, sesman.redir_info(), gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, authentifier,
         report_message, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
@@ -296,9 +296,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     int n = 74;
     int count = 0;
-    events[0].alarm.fd = 0;
-    for (; count < n && !events.empty(); ++count) {
-        execute_events(events, timeval{1,0},[](int){return true;});
+    events.queue[0].alarm.fd = 0;
+    for (; count < n && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;});
     }
     RED_CHECK_EQ(count, n);
 

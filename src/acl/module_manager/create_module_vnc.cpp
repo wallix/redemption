@@ -45,7 +45,7 @@ struct ModVNCWithMetrics : public mod_vnc
 
     std::unique_ptr<ModMetrics> metrics;
     int metrics_timer = 0;
-    
+
     void set_metrics_timer(std::chrono::seconds log_interval)
     {
         Event event("VNC Metrics Timer", this);
@@ -56,7 +56,7 @@ struct ModVNCWithMetrics : public mod_vnc
         {
             this->metrics->log(event.alarm.now);
         };
-        this->events.push_back(std::move(event));
+        this->events.add(std::move(event));
     }
 
     EventContainer & events;
@@ -96,10 +96,10 @@ struct ModVNCWithMetrics : public mod_vnc
     , time_base(time_base)
     {
     }
-    
-    ~ModVNCWithMetrics() 
+
+    ~ModVNCWithMetrics()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
 };
 
@@ -166,9 +166,9 @@ public:
     }
 
     // from RdpInput
-    void rdp_gdi_up_and_running(ScreenInfo & si) override
+    void rdp_gdi_up_and_running() override
     {
-        this->mod.rdp_gdi_up_and_running(si);
+        this->mod.rdp_gdi_up_and_running();
     }
 
     void rdp_gdi_down() override
@@ -273,11 +273,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
     unique_fd client_sck =
-        connect_to_target_host(ini,
-                               time_base,
-                               report_message,
-                               trkeys::authentification_vnc_fail,
-                               ini.get<cfg::mod_vnc::enable_ipv6>());
+        connect_to_target_host(ini, report_message, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
 
     const char * const name = "VNC Target";
 

@@ -27,7 +27,7 @@
 
 struct null_mod : public mod_api
 {
-    null_mod() 
+    null_mod()
     {
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
@@ -38,7 +38,7 @@ struct null_mod : public mod_api
     void rdp_input_invalidate(const Rect) override {}
     void refresh(const Rect) override {}
     bool is_up_and_running() const override { return true; }
-    void rdp_gdi_up_and_running(ScreenInfo & ) override {}
+    void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
 

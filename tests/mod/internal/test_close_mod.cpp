@@ -113,21 +113,21 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         d.init();
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-        RED_CHECK(events.size() == 2);
-        execute_events(events, timeval{62, 0},[](int){return false;});
+        RED_CHECK(events.queue.size() == 2);
+        events.execute_events(timeval{62, 0},[](int){return false;});
     //    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
             "\x11\xe6\x7f\xdb\x20\x5a\x01\x1e\x74\x58\xf3\xb8\x44\xe9\xeb\x51\x30\xd0\x73\x3d");
 
-        RED_CHECK(events.size() == 2);
-        execute_events(events, timeval{580, 0},[](int){return false;});
+        RED_CHECK(events.queue.size() == 2);
+        events.execute_events(timeval{580, 0},[](int){return false;});
     //    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
             "\xf1\x93\xd8\x9f\x7a\x00\x14\x8b\x42\xd8\x4b\x70\x4d\x7c\x96\xdc\x7f\x92\xb2\xe0");
 
-        RED_CHECK(events.size() == 2);
-        execute_events(events, timeval{600, 0},[](int){return false;});
-        RED_CHECK(events.size() == 1);
+        RED_CHECK(events.queue.size() == 2);
+        events.execute_events(timeval{600, 0},[](int){return false;});
+        RED_CHECK(events.queue.size() == 1);
 
 //        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
@@ -135,9 +135,9 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
     }
     // When Close mod goes out of scope remaining events should be garbaged
-    RED_CHECK(events.size() == 1);
-    execute_events(events, timeval{600, 0},[](int){return false;});
-    RED_CHECK(events.size() == 0);
+    RED_CHECK(events.queue.size() == 1);
+    events.execute_events(timeval{600, 0},[](int){return false;});
+    RED_CHECK(events.queue.size() == 0);
 }
 
 RED_AUTO_TEST_CASE(TestCloseModSelector)
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    execute_events(events, timeval{1,0},[](int){return false;});
+    events.execute_events(timeval{1,0},[](int){return false;});
 
     // ::dump_png24("TestCloseModSelector1.png", ConstImageDataView(front), true);
     RED_CHECK_SIG(ConstImageDataView(front),

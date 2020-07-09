@@ -579,57 +579,6 @@ private:
         }
     }
 
-    timeval prepare_timeout(timeval ultimatum, timeval now,
-                const Front & front,
-                EventContainer & events,
-                bool front_pending,
-                bool mod_pending)
-    {
-        this->show_ultimatum(""_zv, ultimatum, now);
-        auto top_update_tv = [&](int /*fd*/, auto& top){
-            if (top.timer_data.is_enabled) {
-                if (top.timer_data.tv.tv_sec >= 0) {
-                    this->show_ultimatum("top timer ="_zv, top.timer_data.tv, now);
-                    ultimatum = std::min(ultimatum, top.timer_data.tv);
-                }
-            }
-        };
-
-        auto timer_update_tv = [&](auto& timer){
-            if (timer.tv.tv_sec >= 0) {
-                this->show_ultimatum("timer ="_zv, timer.tv, now);
-                ultimatum = std::min(ultimatum, timer.tv);
-            }
-        };
-
-        auto tv = next_timeout(events);
-        // tv {0,0} means no timeout to trigger
-        if ((tv.tv_sec != 0) || (tv.tv_usec != 0)){
-            ultimatum = std::min(tv, ultimatum);
-        }
-
-        if (front.front_must_notify_resize) {
-            ultimatum = now;
-            this->show_ultimatum("ultimatum (front must notify resize) ="_zv, ultimatum, now);
-        }
-
-        if (mod_pending) {
-            ultimatum = now;
-            this->show_ultimatum("(mod tls pending)"_zv, ultimatum, now);
-        }
-
-        if (front_pending) {
-            ultimatum = now;
-            this->show_ultimatum("(front tls pending)"_zv, ultimatum, now);
-        }
-
-//        for (auto & e: events){
-//        }
-
-        return ultimatum;
-    }
-
-
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
     {
         if (front.front_must_notify_resize) {
@@ -695,22 +644,12 @@ public:
             }
 
             bool run_session = true;
-            auto old_time = now;
 
             using namespace std::chrono_literals;
 
-            unsigned count = 0;
             while (run_session) {
-//                if (count%10==0 || (now.tv_sec > old_time.tv_sec+2)){
-//                    LOG(LOG_INFO, "Looping %s Current Module %s", acl.show().c_str(),
-//                        ini.get<cfg::context::module>());
-//                    old_time = now;
-//                    count++;
-//                }
 
                 time_base.set_current_time(now);
-
-                Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
 
                 bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
                 bool mod_has_waiting_data_to_write   = mod_wrapper.get_mod_transport()
@@ -719,6 +658,7 @@ public:
                 // =============================================================
                 // This block takes care of outgoing data waiting in buffers because system write buffer is full
                 if (front_has_waiting_data_to_write || mod_has_waiting_data_to_write){
+                    Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
                     if (front_has_waiting_data_to_write){
                         ioswitch.set_write_sck(front_trans.sck);
                     }
@@ -758,8 +698,11 @@ public:
                 // timeout or immediate wakeups are managed using timeout
                 // =============================================================
 
+                Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
+
                 // sockets for mod or front aren't managed using fd events
                 if (mod_wrapper.get_mod_transport()) {
+//                    LOG(LOG_INFO, "get_mod_transport fd=%d", mod_wrapper.get_mod_transport()->sck);
                     int fd = mod_wrapper.get_mod_transport()->sck;
                     if (fd != INVALID_SOCKET) {
                         ioswitch.set_read_sck(fd);
@@ -767,30 +710,39 @@ public:
                 }
 
                 if (front_trans.sck != INVALID_SOCKET) {
+//                    LOG(LOG_INFO, "front_trans.sck fd=%d", front_trans.sck);
                     ioswitch.set_read_sck(front_trans.sck);
                 }
 
-                // if event lists are waiting for incoming data
-                for (auto & event: events){
-                    if (event.alarm.fd != INVALID_SOCKET){
-                        ioswitch.set_read_sck(event.alarm.fd);
-                    }
-                }
+                // gather fd from events
+                events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
                 if (acl.is_connected()) {
+//                    LOG(LOG_INFO, "acl_sck fd=%d", acl.acl_serial->auth_trans->get_sck());
                     ioswitch.set_read_sck(acl.acl_serial->auth_trans->get_sck());
                 }
 
-                bool mod_data_pending = (mod_wrapper.get_mod_transport()
-                        && mod_wrapper.get_mod_transport()->has_tls_pending_data());
+                timeval ultimatum = ioswitch.get_timeout();
+                auto tv = events.next_timeout();
+                // tv {0,0} means no timeout to trigger
+                if ((tv.tv_sec != 0) || (tv.tv_usec != 0)){
+                    ultimatum = std::min(tv, ultimatum);
+                }
 
-                timeval ultimatum = prepare_timeout(ioswitch.get_timeout(), now,
-                        front,
-                        events,
-                        front_trans.has_tls_pending_data(),
-                        mod_data_pending
-                        );
+                if (front.front_must_notify_resize) {
+                    ultimatum = now;
+                    this->show_ultimatum("ultimatum (front must notify resize) ="_zv, ultimatum, now);
+                }
 
+                if ((mod_wrapper.get_mod_transport() && mod_wrapper.get_mod_transport()->has_tls_pending_data())) {
+                    ultimatum = now;
+                    this->show_ultimatum("(mod tls pending)"_zv, ultimatum, now);
+                }
+
+                if (front_trans.has_tls_pending_data()) {
+                    ultimatum = now;
+                    this->show_ultimatum("(front tls pending)"_zv, ultimatum, now);
+                }
                 ioswitch.set_timeout(ultimatum);
 
                 int num = ioswitch.select(now);
@@ -845,7 +797,7 @@ public:
                 switch (front.state) {
                 default:
                 {
-                    execute_events(events, now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
+                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
@@ -908,8 +860,7 @@ public:
                         }
 
                         auto const end_tv = time_base.get_current_time();
-                        execute_events(events, end_tv,
-                            [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
+                        events.execute_events(end_tv, [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {

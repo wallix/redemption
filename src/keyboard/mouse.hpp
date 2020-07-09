@@ -43,30 +43,22 @@ struct MouseState {
     TimeBase & time_base;
     EventContainer & events;
     std::function<bool(int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured)> chained_input_mouse;
-    
-    MouseState(TimeBase & time_base, EventContainer& events) 
+
+    MouseState(TimeBase & time_base, EventContainer& events)
         : time_base(time_base)
-        , events(events) 
+        , events(events)
     {
     }
-    
+
     ~MouseState()
     {
-        end_of_lifespan(this->events, this);
+        this->events.end_of_lifespan(this);
     }
-    
+
     void cancel_double_click_detection()
     {
         //    assert(this->rail_enabled);
-        if (this->first_click_down_timer) {
-            for(auto & event: this->events){
-                if (event.id == this->first_click_down_timer){
-                    event.garbage = true;
-                    event.id = 0;
-                }
-            }
-        }
-        this->first_click_down_timer = 0;
+        this->first_click_down_timer = this->events.erase_event(this->first_click_down_timer);
         this->dc_state = MouseState::DCState::Wait;
     }
 
@@ -78,13 +70,8 @@ struct MouseState {
                     this->dc_state = MouseState::DCState::FirstClickDown;
 
                     if (this->first_click_down_timer) {
-                        for(auto & event: this->events){
-                            if (event.id == this->first_click_down_timer){
-                                event.alarm.set_timeout(
-                                            this->time_base.get_current_time()
-                                            +std::chrono::seconds{1});
-                            }
-                        }
+                        this->events.reset_timeout(this->time_base.get_current_time()+std::chrono::seconds{1},
+                                      this->first_click_down_timer);
                     }
                     else {
                         Event dc_event("Mouse::DC Event", this);
@@ -96,7 +83,7 @@ struct MouseState {
                         {
                             this->dc_state = MouseState::DCState::Wait;
                         };
-                        this->events.push_back(std::move(dc_event));
+                        this->events.add(std::move(dc_event));
                     }
                 }
             break;

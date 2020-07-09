@@ -181,9 +181,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("RdpModeConsole")
-      .value("allow")
-      .value("force")
-      .value("forbid")
+      .value("allow", "Forward Console mode request from client to the target.")
+      .value("force", "Force Console mode on target regardless of client request.")
+      .value("forbid", "Block Console mode request from client.")
       .set_string_parser()
     ;
 

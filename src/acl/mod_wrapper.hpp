@@ -433,9 +433,10 @@ public:
 
     void set_mod(ModuleIndex next_state, ModPack mod_pack)
     {
-        LOG(LOG_INFO, "Setting new mod %s (was %s)",
+        LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
             get_module_name(next_state),
-            get_module_name(this->current_mod));
+            get_module_name(this->current_mod),
+            mod_pack.psocket_transport);
 
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -598,8 +599,8 @@ public:
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     { this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2); }
 
-    void rdp_gdi_up_and_running(ScreenInfo & screen_info)
-    { this->get_mod()->rdp_gdi_up_and_running(screen_info); }
+    void rdp_gdi_up_and_running()
+    { this->get_mod()->rdp_gdi_up_and_running(); }
 
     void rdp_gdi_down()
     { this->get_mod()->rdp_gdi_down(); }
