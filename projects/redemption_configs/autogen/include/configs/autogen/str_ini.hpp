@@ -296,7 +296,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #show_target_user_in_f12_message = 0
 
 # value: 0 or 1
-#enable_new_pointer_update = 1
+#enable_new_pointer_update = 0
 
 # value: 0 or 1
 #bogus_ios_glyph_support_level = 1

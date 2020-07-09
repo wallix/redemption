@@ -248,7 +248,7 @@ ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')
 
 show_target_user_in_f12_message = boolean(default=False)
 
-enable_new_pointer_update = boolean(default=True)
+enable_new_pointer_update = boolean(default=False)
 
 bogus_ios_glyph_support_level = boolean(default=True)
 

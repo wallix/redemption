@@ -64,7 +64,7 @@ mod_vnc::mod_vnc( Transport & t
     , dsmEncryption(false)
     , width(front_width)
     , height(front_height)
-    , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection | VNCVerbose::cursor_encoder*/)
+    , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
     , keymapSym(keylayout, key_flags, server_is_unix, server_is_macos, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)

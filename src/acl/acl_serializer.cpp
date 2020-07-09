@@ -216,10 +216,8 @@ namespace
 
 AclSerializer::AclSerializer(Inifile & ini, TimeBase & timebase)
 : ini(ini)
-, auth_trans(nullptr)
 , timebase(timebase)
 , session_id{}
-, log_file(nullptr)
 , remote_answer(false)
 , verbose(to_verbose_flags(ini.get<cfg::debug::auth>()))
 {
