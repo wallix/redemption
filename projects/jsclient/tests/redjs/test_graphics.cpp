@@ -41,7 +41,7 @@ RED_JS_AUTO_TEST_CASE(
     TestGraphics,
     (emscripten::val drawable),
     (() => {
-        const Drawable = require("src/application/rdp_graphics").RDPGraphics;
+        const Drawable = require("src/application/rdp_graphics").RdpGraphics;
         const { ImageData, createCanvas, Canvas } = require("node_modules/canvas");
 
         global.OffsreenCanvas = Canvas;
