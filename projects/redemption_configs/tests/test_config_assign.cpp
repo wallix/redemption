@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);
     ini.set<cfg::context::message>(s);
-    ini.set<cfg::context::mode_console>(RdpModeConsole::allow);
+    ini.set<cfg::mod_rdp::mode_console>(RdpModeConsole::allow);
     ini.set_acl<cfg::context::module>(1);
     ini.set_acl<cfg::context::opt_bpp>(ColorDepth::depth15);
     ini.set_acl<cfg::context::opt_height>(1);

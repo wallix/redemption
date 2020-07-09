@@ -482,7 +482,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
-    switch (ini.get<cfg::context::mode_console>()) {
+    switch (ini.get<cfg::mod_rdp::mode_console>()) {
         case RdpModeConsole::force:
             client_info.console_session = true;
             LOG(LOG_INFO, "Session::mode console : force");
