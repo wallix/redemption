@@ -173,28 +173,10 @@ Module.log = function(priority, msg) {
 
 const RdpClient = Module.RdpClient;
 const ClipboardChannel = Module.ClipboardChannel;
-const HEAPU8 = Module.HEAPU8;
-const HEAPU16 = Module.HEAPU16;
 const MouseFlags = Module.MouseFlags;
-
-const KbdFlags = Object.freeze({
-    Extended: 0x0100,
-    Extended1: 0x0200,
-    Down: 0x4000,
-    Release: 0x8000,
-});
-
-function mouseButtonToFlag(evt)
-{
-    switch (evt.button) {
-    case 0: return 0x1000; // left button
-    case 1: return 0x4000; // middle button
-    case 2: return 0x2000; // right button
-    case 3: return 0x0001;
-    case 4: return 0x0002;
-    }
-    return 0x1000;
-}
+const SlowPathKbdFlags = Module.SlowPathKbdFlags;
+const FastPathKbdFlags = Module.FastPathKbdFlags;
+const InputFlags = Module.InputFlags;
 
 function MultiSelectToInt(e, constants)
 {
@@ -208,6 +190,7 @@ function MultiSelectToInt(e, constants)
 }
 
 const gd = new RdpGraphics(ecanvas, Module);
+const resizeCanvasBase = gd.resizeCanvas;
 
 function run(openCb, closeCb)
 {
@@ -215,6 +198,10 @@ function run(openCb, closeCb)
     socket.binaryType = 'arraybuffer';
 
     let rdpclient;
+
+    let hWheelSupport = false;
+    let MouseXSupport = false;
+    let KbdFlags = SlowPathKbdFlags;
 
     const sendData = function() {
         const out = rdpclient.getOutputData();
@@ -268,12 +255,33 @@ function run(openCb, closeCb)
     const onKeyDown = (evt) => { onKeyEvent(0, evt); };
     const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
 
+    function sendMouseButton(evt, flag)
+    {
+        switch (evt.button) {
+        case 0: return sendMouseEvent(evt, flag | MouseFlags.LeftButton);
+        case 1: return sendMouseEvent(evt, flag | MouseFlags.MiddleButton);
+        case 2: return sendMouseEvent(evt, flag | MouseFlags.RightButton);
+        case 3: if (MouseXSupport) return sendMouseEvent(evt, flag | MouseFlags.Button4); break;
+        case 4: if (MouseXSupport) return sendMouseEvent(evt, flag | MouseFlags.Button5); break;
+        }
+    }
+
     const onMouseMove = (evt) => sendMouseEvent(evt, MouseFlags.Move);
-    const onMouseDown = (evt) => sendMouseEvent(evt, MouseFlags.Down | mouseButtonToFlag(evt));
-    const onMouseUp = (evt) => sendMouseEvent(evt, MouseFlags.Up | mouseButtonToFlag(evt));
+    const onMouseDown = (evt) => sendMouseButton(evt, MouseFlags.Down);
+    const onMouseUp = (evt) => sendMouseButton(evt, MouseFlags.Up);
     const onMouseWheel = (evt) => {
-        const delta = (evt.deltaY < 0) ? MouseFlags.WheelRotationMask : MouseFlags.WheelNegative;
-        sendMouseEvent(evt, MouseFlags.VerticalWheel | delta);
+        if (evt.deltaY) {
+            const delta = (evt.deltaY < 0)
+                ? MouseFlags.WheelRotationMask
+                : MouseFlags.WheelNegative;
+            sendMouseEvent(evt, MouseFlags.VerticalWheel | delta);
+        }
+        else if (evt.deltaX && hWheelSupport) {
+            const delta = (evt.deltaX < 0)
+                ? MouseFlags.WheelRotationMask
+                : MouseFlags.WheelNegative;
+            sendMouseEvent(evt, MouseFlags.HorizontalWheel | delta);
+        }
     };
 
     const docEvents = {
@@ -360,6 +368,25 @@ function run(openCb, closeCb)
         ecanvas.onclick = canvasEnableFocus;
     }
 
+    function updateInput() {
+        const inputFlags = rdpclient.getInputFlags();
+        console.log(`inputFlags: 0x${inputFlags.toString(16)}`);
+        for (const k in InputFlags) {
+            console.log(`   ${k}: ${(inputFlags & InputFlags[k]) ? 1 : 0} (0x${InputFlags[k].toString(16)})`);
+        }
+        // TODO doesn't work
+        // KbdFlags = (inputFlags & InputFlags.FastPath) ? FastPathKbdFlags : SlowPathKbdFlags;
+        hWheelSupport = Boolean(inputFlags & InputFlags.HorizontalWheel);
+        MouseXSupport = Boolean(inputFlags & InputFlags.MouseX);
+        canvasStopEvents();
+        canvasStartEvents();
+    }
+
+    gd.resizeCanvas = function(...args) {
+        resizeCanvasBase.call(gd, ...args);
+        updateInput();
+    };
+
     const channels = [];
 
     const addChannel = function(channel) {
@@ -433,8 +460,6 @@ function run(openCb, closeCb)
 
         rdpclient.writeFirstPacket();
         sendData();
-
-        canvasStartEvents();
 
         openCb();
     }

@@ -104,20 +104,77 @@ RED_JS_BINDING_CONSTANTS(
     MouseFlags,
 
     // 2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET): TS_INPUT_FLAG_MOUSE_HWHEEL
-    (("HorizontalWheel", 0x0400))
-    (("VerticalWheel", 0x0200))
-    (("WheelNegative", 0x0100))
+    (("HorizontalWheel",   0x0400))
+    (("VerticalWheel",     0x0200))
+    (("WheelNegative",     0x0100))
     (("WheelRotationMask", 0x00FF))
 
     (("Move", 0x0800))
-    (("Up", 0))
+    (("Up",   0))
     (("Down", 0x8000))
 
-    (("LeftButton", 0x1000))
-    (("RightButton", 0x2000))
+    (("LeftButton",   0x1000))
+    (("RightButton",  0x2000))
     (("MiddleButton", 0x4000))
 
     // 2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET): INPUT_FLAG_MOUSEX
     (("Button4", 0x0001))
     (("Button5", 0x0002))
+);
+
+//@{
+// EXTENDED: Indicates that the keystroke message contains an extended scancode.
+// For enhanced 101-key and 102-key keyboards, extended keys include the right ALT
+// and right CTRL keys on the main section of the keyboard; the INS, DEL, HOME, END,
+// PAGE UP, PAGE DOWN and ARROW keys in the clusters to the left of the numeric
+// keypad; and the Divide ("/") and ENTER keys in the numeric keypad.
+//
+// EXTENDED1: Used to send keyboard events triggered by the PAUSE key.
+// A PAUSE key press and release MUST be sent as the following sequence of keyboard events:
+//     CTRL (0x1D) DOWN
+//     NUMLOCK (0x45) DOWN
+//     CTRL (0x1D) UP
+//     NUMLOCK (0x45) UP
+// The CTRL DOWN and CTRL UP events MUST both include the KBDFLAGS_EXTENDED1 flag.
+//
+// KBDFLAGS_DOWN: Indicates that the key was down prior to this event.
+//
+// KBDFLAGS_RELEASE: The absence of this flag indicates a key-down event,
+// while its presence indicates a key-release event.
+
+// 2.2.8.1.1.3.1.1.1 Keyboard Event (TS_KEYBOARD_EVENT)
+RED_JS_BINDING_CONSTANTS(
+    SlowPathKbdFlags,
+
+    (("Down",      0x4000))
+    (("Release",   0x8000))
+    (("Extended",  0x0100))
+    (("Extended1", 0x0200))
+);
+
+// 2.2.8.1.2.2.1 Fast-Path Keyboard Event (TS_FP_KEYBOARD_EVENT)
+RED_JS_BINDING_CONSTANTS(
+    FastPathKbdFlags,
+
+    (("Down",      0x00))
+    (("Release",   0x01))
+    (("Extended",  0x02))
+    (("Extended1", 0x04))
+);
+
+// Unicode:
+// 2.2.8.1.1.3.1.1.2 Unicode Keyboard Event (TS_UNICODE_KEYBOARD_EVENT)
+// 2.2.8.1.2.2.2 Fast-Path Unicode Keyboard Event (TS_FP_UNICODE_KEYBOARD_EVENT)
+// Release Only
+//@}
+
+// 2.2.7.1.6 Input Capability Set (TS_INPUT_CAPABILITYSET)
+RED_JS_BINDING_CONSTANTS(
+    InputFlags,
+
+    (("Scancodes",       0x0001))
+    (("MouseX",          0x0004))
+    (("FastPath",        0x0008 | 0x0020))
+    (("Unicode",         0x0010))
+    (("HorizontalWheel", 0x0100))
 );

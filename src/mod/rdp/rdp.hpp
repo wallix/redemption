@@ -1874,6 +1874,8 @@ class mod_rdp : public mod_api, public rdp_api
     bool enable_fastpath_client_input_event = false;
     bool remote_apps_not_enabled = false;
 
+    ModRDPParams::ServerInfo * server_info_ref;
+
     FrontAPI& front;
 
     rdp_orders orders;
@@ -2072,6 +2074,7 @@ public:
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
+        , server_info_ref(mod_rdp_params.server_info_ref)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk
@@ -5402,6 +5405,9 @@ public:
                 auto input_caps = this->receive_caps<InputCaps>(stream, capset_length);
                 this->enable_fastpath_client_input_event =
                     (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+                if (this->server_info_ref) {
+                    this->server_info_ref->input_flags = input_caps.inputFlags;
+                }
             }
             break;
             case CAPSTYPE_RAIL:
@@ -6407,11 +6413,6 @@ private:
 
         return channel_data_size;
     }
-
-//    void init_negociate_event_(
-//        const ClientInfo & info, Random & gen, TimeObj & timeobj,
-//        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-//        const std::chrono::seconds open_session_timeout);
 };
 
 #undef IF_ENABLE_METRICS

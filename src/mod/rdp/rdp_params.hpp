@@ -198,6 +198,13 @@ struct ModRDPParams
 
     DynamicChannelsParams dynamic_channels_params;
 
+    struct ServerInfo
+    {
+        uint16_t input_flags = 0;
+    };
+
+    ServerInfo* server_info_ref = nullptr;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
