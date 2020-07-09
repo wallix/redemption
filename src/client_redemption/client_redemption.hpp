@@ -86,7 +86,6 @@ public:
 
 private:
     TimeSystem        timeSystem;
-    NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
     NullLicenseStore  licensestore;
 
@@ -106,7 +105,7 @@ public:
     std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
-    SesmanInterface sesman;
+    Sesman sesman;
     Theme theme;
     Font font;
     std::string close_box_extra_message_ref;
@@ -242,7 +241,7 @@ public:
         , _callback(this)
         , time_base(time_base)
         , events(events)
-        , sesman(ini, authentifier)
+        , sesman(ini)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -757,8 +756,7 @@ public:
     {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
-                this->time_base
-              , *this
+                *this
               , *this
               , this->config._movie_full_path.c_str()
               , 0             //this->config.info.width

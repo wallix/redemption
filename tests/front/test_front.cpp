@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(TestFront)
     GdForwarder gd_provider(front.gd());
 
     while (!front.is_up_and_running()) {
-        front.incoming(no_mod, sesman.get_sesman());
+        front.incoming(no_mod);
         RED_CHECK(events.queue.empty());
     }
 
@@ -451,7 +451,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
     uint32_t verbose = 3;
-    SesmanInterface & sesman;
+    Sesman & sesman;
 
     Inifile ini;
     ini.set<cfg::debug::front>(verbose);

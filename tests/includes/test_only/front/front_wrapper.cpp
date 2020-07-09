@@ -110,14 +110,14 @@ void FrontWrapper::set_up_and_running()
     d->front.state = Front::FRONT_UP_AND_RUNNING;
 }
 
-void FrontWrapper::incoming(Callback & cb, SesmanInterface & sesman)
+void FrontWrapper::incoming(Callback & cb)
 {
     d->front.rbuf.load_data(d->front.trans);
     while (d->front.rbuf.next(TpduBuffer::PDU))
     {
         bytes_view tpdu = d->front.rbuf.current_pdu_buffer();
         uint8_t current_pdu_type = d->front.rbuf.current_pdu_get_type();
-        d->front.incoming(tpdu, current_pdu_type, cb, sesman);
+        d->front.incoming(tpdu, current_pdu_type, cb);
     }
 }
 
@@ -145,7 +145,7 @@ CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
 FrontWrapper::FrontWrapper(
     TimeBase& time_base,
     EventContainer& events,
-    SesmanInterface & sesman,
+    Sesman & sesman,
     Transport & trans,
     Random & gen,
     Inifile & ini,

@@ -35,7 +35,7 @@ namespace CHANNELS {
     class ChannelDef;
 }
 
-class SesmanInterface;
+class Sesman;
 class MonitorLayoutPDU;
 
 class FrontAPI : noncopyable

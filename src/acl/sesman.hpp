@@ -32,79 +32,257 @@
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
-#include "acl/authentifier.hpp"
+#include "core/report_message_api.hpp"
 
-struct SesmanInterface : public AuthApi
+struct Sesman : public AuthApi, public ReportMessageApi
 {
     Inifile & ini;
-private:
-    AuthApi & authentifier;
 
-public:
-    bool screen_info_sent = false;
+    struct LogParam
+    {
+        LogId id;
+        struct KV
+        {
+            std::string key;
+            std::string value;
+        };
+        std::vector<KV> kv_list;
+
+        LogParam(LogId id, KVList list)
+        : id(id)
+        {
+            kv_list.reserve(list.size());
+            for (auto const& kv : list) {
+                this->kv_list.emplace_back(KV{
+                    std::string(kv.key.data(), kv.key.size()),
+                    std::string(kv.value.data(), kv.value.size()),
+                });
+            }
+        }
+    };
+
+    bool session_log_is_open = false;
+    std::vector<LogParam> buffered_log_params;
+
+    bool screen_info_sent = true;
     ScreenInfo screen_info;
 
-    bool auth_info_sent = false;
+    bool auth_info_sent = true;
     std::string username;
     std::string domain;
     std::string password;
 
-    bool server_cert_sent = false;
+    bool server_cert_sent = true;
     std::string blob_server_cert;
 
-    SesmanInterface(Inifile & ini, AuthApi & authentifier)
-    : ini(ini), authentifier(authentifier)
+    bool recording_started_sent = true;
+
+    bool rt_ready_sent = true;
+
+    bool smartcard_login_sent = true;
+    std::string smartcard_login;
+
+    bool rd_shadow_invitation_sent = true;
+    uint32_t error_code;
+    std::string shadow_error_message;
+    std::string userdata;
+    std::string id;
+    std::string addr;
+    uint16_t port;
+
+    bool rd_shadow_available_sent = true;
+
+    bool native_session_id_sent = true;
+    uint32_t native_session_id;
+
+    bool pm_request_sent = true;
+    std::string request;
+
+    bool disconnect_target_sent = true;
+
+    bool auth_error_message_sent = true;
+    std::string auth_error_message;
+
+    bool auth_channel_target_sent = true;
+    std::string auth_channel_target;
+
+    bool report_sent = true;
+    struct Report {
+        std::string reason;
+        std::string message;
+    };
+
+    std::vector<Report> reports;
+
+    Sesman(Inifile & ini) : ini(ini) {}
+
+    void log6(LogId id, KVList kv_list) override
     {
+        this->buffered_log_params.emplace_back(id, kv_list);
+    }
+
+    void new_remote_mod()
+    {
+//        if (this->acl_serial){
+//            this->cctx.set_master_key(ini.get<cfg::crypto::key0>());
+//            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+//            this->cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+
+//            this->acl_serial->start_session_log();
+//            this->session_log_is_open = true;
+//        }
+    }
+
+    void delete_remote_mod()
+    {
+//        if (this->acl_serial && this->session_log_is_open) {
+//            this->acl_serial->close_session_log();
+//            this->session_log_is_open = false;
+//        }
     }
 
 
-    void set_auth_channel_target(const char * target) override
+    void set_server_cert(std::string const& blob_str) override
     {
-        this->authentifier.set_auth_channel_target(target);
+        this->server_cert_sent = false;
+        this->blob_server_cert = blob_str;
     }
 
-    void set_auth_error_message(const char * error_message) override
+    void set_screen_info(ScreenInfo screen_info) override
     {
-        this->authentifier.set_auth_error_message(error_message);
+        this->screen_info_sent = false;
+        this->screen_info = screen_info;
     }
 
-    void disconnect_target() override
+    void set_auth_info(std::string const& username, std::string const& domain, std::string const& password) override
     {
-        this->authentifier.disconnect_target();
+        this->auth_info_sent = false;
+        this->username = username;
+        this->domain = domain;
+        this->password = password;
     }
 
-    void set_pm_request(const char * request) override
+    void set_recording_started() override
     {
-        this->authentifier.set_pm_request(request);
+        this->recording_started_sent = false;
     }
 
-    void set_native_session_id(unsigned int session_id) override
+    void set_rt_ready() override
     {
-        this->authentifier.set_native_session_id(session_id);
-    }
-
-    void rd_shadow_available() override
-    {
-        this->authentifier.rd_shadow_available();
-    }
-
-    void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * request, const char * id, const char * addr, uint16_t port) override
-    {
-        this->authentifier.rd_shadow_invitation(error_code, error_message, request, id, addr, port);
+        this->rt_ready_sent = false;
     }
 
     void set_smartcard_login(const char * login) override
     {
-        this->authentifier.set_smartcard_login(login);
+        this->smartcard_login_sent = false;
+        if (!login){
+            this->smartcard_login = "";
+        }
+        else {
+            this->smartcard_login = std::string(login);
+        }
     }
 
-    void set_server_cert(std::string const& blob_str) override
+    void set_rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * userdata, const char * id, const char * addr, uint16_t port) override
     {
-        this->blob_server_cert = blob_str;
-        this->server_cert_sent = false;
+        this->rd_shadow_invitation_sent = false;
+        this->error_code = error_code;
+        this->shadow_error_message = error_message;
+        this->userdata = userdata;
+        this->id = id;
+        this->addr = addr;
+        this->port = port;
     }
 
-    void set_acl_server_cert() override
+    void set_rd_shadow_available() override
+    {
+        this->rd_shadow_available_sent = true;
+    }
+
+    void set_native_session_id(unsigned int session_id) override
+    {
+        this->native_session_id_sent = false;
+        this->native_session_id = session_id;
+    }
+
+    void set_pm_request(const char * request) override
+    {
+        this->pm_request_sent = false;
+        this->request = request;
+    }
+
+    void set_disconnect_target() override
+    {
+        this->disconnect_target_sent = false;
+    }
+
+    void set_auth_error_message(const char * error_message) override
+    {
+        this->auth_error_message = error_message;
+        this->auth_error_message_sent = false;
+    }
+
+    void set_auth_channel_target(const char * target) override
+    {
+        this->auth_channel_target_sent = false;
+        this->auth_channel_target = target;
+    }
+
+    void report(const char * reason, const char * message) override
+    {
+        this->report_sent = false;
+        Report report{reason, message};
+        this->reports.push_back(report);
+    }
+
+
+    // flush_acl is only called from session and is no part of AuthApi interface
+    void flush_acl()
+    {
+        this->flush_acl_server_cert();
+        this->flush_acl_screen_info();
+        this->flush_acl_auth_info();
+        this->flush_acl_recording_started();
+        this->flush_acl_rt_ready();
+        this->flush_acl_smartcard_login();
+        this->flush_acl_rd_shadow_invitation();
+        this->flush_acl_native_session_id();
+        this->flush_acl_pm_request();
+        this->flush_acl_disconnect_target();
+        this->flush_acl_auth_error_message();
+        this->flush_acl_auth_channel_target();
+    }
+
+    void flush_acl_report(std::function<void(std::string,std::string)> fn)
+    {
+        for(auto & report: this->reports){
+            fn(report.reason, report.message);
+//            serializer.report(report.reason, report.message);
+        }
+        this->reports.clear();
+    }
+
+    void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> log6)
+    {
+        if (!this->buffered_log_params.empty()) {
+            std::vector<KVLog> v;
+            for (LogParam const & log_param : this->buffered_log_params) {
+                v.reserve(log_param.kv_list.size());
+                for (auto const& kv : log_param.kv_list) {
+                    v.emplace_back(KVLog{kv.key, kv.value});
+                }
+                //serializer.log6(log_param.id, {v});
+                log6(log_param.id, {v});
+                v.clear();
+            }
+            this->buffered_log_params.clear();
+            this->buffered_log_params.shrink_to_fit();
+        }
+    }
+
+private:
+
+    void flush_acl_server_cert()
     {
         if (!this->server_cert_sent) {
             this->ini.set_acl<cfg::mod_rdp::server_cert>(this->blob_server_cert);
@@ -114,15 +292,7 @@ public:
         }
     }
 
-
-
-    void set_screen_info(ScreenInfo screen_info)
-    {
-        this->screen_info_sent = false;
-        this->screen_info = screen_info;
-    }
-
-    void set_acl_screen_info()
+    void flush_acl_screen_info()
     {
         if (!this->screen_info_sent) {
             this->ini.set_acl<cfg::context::opt_width>(this->screen_info.width);
@@ -132,15 +302,7 @@ public:
         }
     }
 
-    void set_auth_info(std::string const& username, std::string const& domain, std::string const& password)
-    {
-        this->auth_info_sent = false;
-        this->username = username;
-        this->domain = domain;
-        this->password = password;
-    }
-
-    void set_acl_auth_info()
+    void flush_acl_auth_info()
     {
         if (!this->auth_info_sent) {
             std::string username = this->username;
@@ -150,7 +312,7 @@ public:
                 username = username + std::string("@") + domain;
             }
 
-            LOG(LOG_INFO, "set_acl_auth_info: auth_user=%s", username);
+            LOG(LOG_INFO, "flush_acl_auth_info: auth_user=%s", username);
             this->ini.set_acl<cfg::globals::auth_user>(username);
             this->ini.ask<cfg::context::selector>();
             this->ini.ask<cfg::globals::target_user>();
@@ -163,53 +325,95 @@ public:
         }
     }
 
-    void set_acl_recording_started()
+    void flush_acl_recording_started()
     {
-        this->ini.set_acl<cfg::context::recording_started>(true);
-    }
-
-    void set_acl_rt_ready()
-    {
-        if (!this->ini.get<cfg::context::rt_ready>()) {
-            this->ini.set_acl<cfg::context::rt_ready>(true);
+        if (!this->recording_started_sent){
+            this->ini.set_acl<cfg::context::recording_started>(true);
+            this->recording_started_sent = true;
         }
     }
 
-    bool has_ocr_pattern_check()
+
+    void flush_acl_rt_ready()
     {
-        return ::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str());
+        if (!this->rt_ready_sent){
+            if (!this->ini.get<cfg::context::rt_ready>()) {
+                this->ini.set_acl<cfg::context::rt_ready>(true);
+            }
+            this->rt_ready_sent= true;
+        }
     }
 
-    bool has_kbd_pattern_check()
+    void flush_acl_smartcard_login()
     {
-        return ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str());
+        if (!this->smartcard_login_sent){
+            this->ini.set_acl<cfg::context::smartcard_login>(this->smartcard_login);
+            this->smartcard_login_sent = true;
+        }
     }
 
-    bool is_capture_necessary()
+    void flush_acl_rd_shadow_invitation()
     {
-        return (ini.get<cfg::video::allow_rt_without_recording>()
-            || ini.get<cfg::globals::is_rec>()
-            || !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
-            || ::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-            || ::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        if (!this->rd_shadow_invitation_sent){
+            this->ini.set_acl<cfg::context::rd_shadow_invitation_error_code>(this->error_code);
+            this->ini.set_acl<cfg::context::rd_shadow_invitation_error_message>(this->shadow_error_message);
+            this->ini.set_acl<cfg::context::rd_shadow_userdata>(this->userdata);
+            this->ini.set_acl<cfg::context::rd_shadow_invitation_id>(this->id);
+            this->ini.set_acl<cfg::context::rd_shadow_invitation_addr>(this->addr);
+            this->ini.set_acl<cfg::context::rd_shadow_invitation_port>(this->port);
+            this->rd_shadow_invitation_sent = true;
+        }
     }
 
-    void show_session_config()
+    void flush_acl_rd_shadow_available()
     {
-        LOG(LOG_INFO, "record_filebase    = %s", ini.get<cfg::capture::record_filebase>());
-        LOG(LOG_INFO, "auth_user     = %s", ini.get<cfg::globals::auth_user>());
-        LOG(LOG_INFO, "host          = %s", ini.get<cfg::globals::host>());
-        LOG(LOG_INFO, "target_device = %s", ini.get<cfg::globals::target_device>());
-        LOG(LOG_INFO, "target_user   = %s", ini.get<cfg::globals::target_user>());
+        if(!this->rd_shadow_available_sent){
+            this->ini.set_acl<cfg::context::rd_shadow_available>(true);
+            this->rd_shadow_available_sent = true;
+        }
     }
 
-    BitsPerPixel wrm_color_depth()
+    void flush_acl_native_session_id()
     {
-        return (ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16)
-               ? BitsPerPixel{16}
-               : BitsPerPixel{24};
+        if (!this->native_session_id_sent){
+            this->ini.set_acl<cfg::context::native_session_id>(this->native_session_id);
+            this->native_session_id_sent = true;
+        }
     }
+
+    void flush_acl_pm_request()
+    {
+        if (!this->pm_request_sent){
+            this->ini.set_acl<cfg::context::pm_request>(request);
+            this->pm_request_sent = true;
+        }
+    }
+
+    void flush_acl_disconnect_target()
+    {
+        if (!this->disconnect_target_sent)
+        {
+            // Call disconnect_target >>> Show Close Box (with back to selector)
+            this->ini.set_acl<cfg::context::module>("close");
+            this->disconnect_target_sent = true;
+        }
+    }
+
+    void flush_acl_auth_error_message()
+    {
+        if (!this->auth_error_message_sent){
+            this->ini.set<cfg::context::auth_error_message>(this->auth_error_message);
+            this->auth_error_message_sent = true;
+        }
+    }
+
+    void flush_acl_auth_channel_target()
+    {
+        if (!this->auth_channel_target_sent){
+            this->ini.set_acl<cfg::context::auth_channel_target>(this->auth_channel_target);
+            this->auth_channel_target_sent = true;
+        }
+    }
+
 };
 

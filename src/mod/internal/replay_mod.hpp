@@ -58,8 +58,7 @@ class ReplayMod : public mod_api
 public:
     using Verbose = FileToGraphic::Verbose;
 
-    ReplayMod( TimeBase& time_base
-             , gdi::GraphicApi & drawable
+    ReplayMod(gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path
              , uint16_t width

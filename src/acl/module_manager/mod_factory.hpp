@@ -186,9 +186,7 @@ public:
 
     auto create_mod_replay() -> ModPack
     {
-            auto new_mod = new ReplayMod(
-                this->time_base,
-                this->graphics, this->front,
+            auto new_mod = new ReplayMod(this->graphics, this->front,
                 [this]{
                     auto movie_path = this->ini.get<cfg::video::replay_path>().as_string()
                                     + this->ini.get<cfg::globals::target_user>();

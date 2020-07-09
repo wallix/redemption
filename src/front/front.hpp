@@ -643,7 +643,7 @@ private:
 
     TimeBase& time_base;
     EventContainer& events;
-    SesmanInterface & sesman;
+    Sesman & sesman;
     int handshake_timeout = 0;
     int capture_timer = 0;
     int flow_control_timer = 0;
@@ -769,7 +769,7 @@ public:
          , EventContainer& events_
          // TODO: To Cut dependency with sesman, we should rather provide some front specific callback table
          // to send data to acl.
-         , SesmanInterface & sesman
+         , Sesman & sesman
          , Transport & trans
          , Random & gen
          , Inifile & ini
@@ -973,6 +973,45 @@ public:
         this->orders.graphics_update_pdu().update_pointer_position(xPos, yPos);
     }
 
+
+    bool has_ocr_pattern_check()
+    {
+        return ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str());
+    }
+
+    bool has_kbd_pattern_check()
+    {
+        return ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_notify>().c_str());
+    }
+
+    bool is_capture_necessary()
+    {
+        return (this->ini.get<cfg::video::allow_rt_without_recording>()
+            || this->ini.get<cfg::globals::is_rec>()
+            || !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str()));
+    }
+
+    void show_session_config()
+    {
+        LOG(LOG_INFO, "record_filebase    = %s", this->ini.get<cfg::capture::record_filebase>());
+        LOG(LOG_INFO, "auth_user     = %s", this->ini.get<cfg::globals::auth_user>());
+        LOG(LOG_INFO, "host          = %s", this->ini.get<cfg::globals::host>());
+        LOG(LOG_INFO, "target_device = %s", this->ini.get<cfg::globals::target_device>());
+        LOG(LOG_INFO, "target_user   = %s", this->ini.get<cfg::globals::target_user>());
+    }
+
+    BitsPerPixel wrm_color_depth()
+    {
+        return (this->ini.get<cfg::video::wrm_color_depth_selection_strategy>()
+                == ColorDepthSelectionStrategy::depth16)
+               ? BitsPerPixel{16}
+               : BitsPerPixel{24};
+    }
+
     // ===========================================================================
     bool can_be_start_capture() override
     {
@@ -986,7 +1025,7 @@ public:
             return false;
         }
 
-        if (!this->sesman.is_capture_necessary())
+        if (!this->is_capture_necessary())
         {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
@@ -996,10 +1035,10 @@ public:
 
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::can_be_start_capture");
-            this->sesman.show_session_config();
+            this->show_session_config();
         }
 
-        this->capture_bpp = this->sesman.wrm_color_depth();
+        this->capture_bpp = this->wrm_color_depth();
 
         // TODO remove this after unifying capture interface
         VideoParams video_params = video_params_from_ini(std::chrono::seconds::zero(), ini);
@@ -1020,7 +1059,7 @@ public:
             }
         }
 
-        bool const capture_pattern_checker = this->sesman.has_ocr_pattern_check();
+        bool const capture_pattern_checker = this->has_ocr_pattern_check();
 
         const CaptureFlags capture_flags =
             (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
@@ -1037,7 +1076,7 @@ public:
         const bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
-          || this->sesman.has_kbd_pattern_check();
+          || this->has_kbd_pattern_check();
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
@@ -1137,11 +1176,11 @@ public:
         this->update_keyboard_input_mask_state();
 
         if (capture_wrm) {
-            this->sesman.set_acl_recording_started();
+            this->sesman.set_recording_started();
         }
 
         if (capture_png){
-            this->sesman.set_acl_rt_ready();
+            this->sesman.set_rt_ready();
         }
 
         return true;
@@ -2459,7 +2498,7 @@ public:
     // connection management information and virtual channel messages (exchanged
     // between client-side plug-ins and server-side applications).
 
-    void global_channel_slowpath_activate(InStream & stream, Callback & cb, SesmanInterface & sesman)
+    void global_channel_slowpath_activate(InStream & stream, Callback & cb)
     {
         ShareControl_Recv sctrl(stream);
 
@@ -2499,7 +2538,7 @@ public:
             // when fonts have been received
             // we will not exit this loop until we are in this state.
             //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-            this->process_data(sctrl.payload, cb, sesman);
+            this->process_data(sctrl.payload, cb);
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: Received DATAPDU done");
 
@@ -2534,7 +2573,7 @@ public:
         stream.in_skip_bytes(stream.in_remain());
     }
 
-    void process_data_tpdu_activate(bytes_view tpdu, Callback & cb, SesmanInterface & sesman)
+    void process_data_tpdu_activate(bytes_view tpdu, Callback & cb)
     {
         InStream new_x224_stream(tpdu);
         X224::DT_TPDU_Recv x224(new_x224_stream);
@@ -2563,7 +2602,7 @@ public:
             this->virtual_channel_slowpath_activate(mcs.channelId, sec.payload);
         }
         else {
-            this->global_channel_slowpath_activate(sec.payload, cb, sesman);
+            this->global_channel_slowpath_activate(sec.payload, cb);
         }
 
         if (!sec.payload.check_end())
@@ -2576,7 +2615,7 @@ public:
     }
 
 
-    void global_channel_slowpath_running(InStream & stream, Callback & cb, SesmanInterface & sesman)
+    void global_channel_slowpath_running(InStream & stream, Callback & cb)
     {
         ShareControl_Recv sctrl(stream);
         switch (sctrl.pduType) {
@@ -2595,7 +2634,7 @@ public:
             // when fonts have been received
             // we will not exit this loop until we are in this state.
             //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-            this->process_data(sctrl.payload, cb, sesman);
+            this->process_data(sctrl.payload, cb);
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: Received DATAPDU done");
 
@@ -2621,7 +2660,7 @@ public:
         }
     }
 
-    void process_data_tpdu_running(bytes_view tpdu, Callback & cb, SesmanInterface & sesman)
+    void process_data_tpdu_running(bytes_view tpdu, Callback & cb)
     {
         InStream new_x224_stream(tpdu);
         X224::DT_TPDU_Recv x224(new_x224_stream);
@@ -2683,7 +2722,7 @@ public:
             sec.payload.in_skip_bytes(chunk_size);
         }
         else {
-            this->global_channel_slowpath_running(sec.payload, cb, sesman);
+            this->global_channel_slowpath_running(sec.payload, cb);
         }
 
         if (!sec.payload.check_end())
@@ -2695,7 +2734,7 @@ public:
         }
     }
 
-    void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb, SesmanInterface & sesman)
+    void activate_and_process_data(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
     {
         // fastpath
         if (current_pdu_type == Extractors::FASTPATH) {
@@ -2710,11 +2749,11 @@ public:
                 LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
-            this->process_data_tpdu_activate(tpdu, cb, sesman);
+            this->process_data_tpdu_activate(tpdu, cb);
         }
     }
 
-    void up_and_running(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb, SesmanInterface & sesman)
+    void up_and_running(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb)
     {
         // fastpath
         if (current_pdu_type == Extractors::FASTPATH) {
@@ -2728,7 +2767,7 @@ public:
                 LOG(LOG_ERR, "Front::incoming: Unexpected non data PDU (got %d)", current_pdu_type);
                 throw Error(ERR_X224_EXPECTED_DATA_PDU);
             }
-            this->process_data_tpdu_running(tpdu, cb, sesman);
+            this->process_data_tpdu_running(tpdu, cb);
         }
     }
 
@@ -2801,7 +2840,7 @@ public:
         }
     }
 
-    void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb, SesmanInterface & sesman) /*NOLINT*/
+    void incoming(bytes_view tpdu, uint8_t current_pdu_type, Callback & cb) /*NOLINT*/
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO, "Front::incoming");
 
@@ -2894,12 +2933,12 @@ public:
         case ACTIVATE_AND_PROCESS_DATA:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
-            this->activate_and_process_data(tpdu, current_pdu_type, cb, sesman);
+            this->activate_and_process_data(tpdu, current_pdu_type, cb);
         break;
         case FRONT_UP_AND_RUNNING:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
                 "Front::incoming: FRONT_UP_AND_RUNNING");
-            this->up_and_running(tpdu, current_pdu_type, cb, sesman);
+            this->up_and_running(tpdu, current_pdu_type, cb);
         break;
         }
     }
@@ -3880,7 +3919,7 @@ private:
     }
 
     /* PDUTYPE_DATAPDU */
-    void process_data(InStream & stream, Callback & cb, SesmanInterface & sesman)
+    void process_data(InStream & stream, Callback & cb)
     {
         LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO, "Front::process_data");
         ShareData_Recv sdata_in(stream, nullptr);
@@ -4256,8 +4295,8 @@ private:
                     this->force_using_cache_bitmap_r2();
                 }
                 cb.rdp_gdi_up_and_running();
-                sesman.set_screen_info(this->client_info.screen_info);
-                sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
+                this->sesman.set_screen_info(this->client_info.screen_info);
+                this->sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
 
                 if (BitsPerPixel{8} != this->mod_bpp) {
                     this->send_palette();

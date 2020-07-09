@@ -218,7 +218,7 @@ public:
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
                 (this->disconnect_now_button_rect.contains_pt(x, y))) {
                 LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-                this->authentifier.disconnect_target();
+                this->authentifier.set_disconnect_target();
                 throw Error(ERR_DISCONNECT_BY_USER);
             }
         }
@@ -233,7 +233,7 @@ public:
         // 28 for escape key
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-            this->authentifier.disconnect_target();
+            this->authentifier.set_disconnect_target();
             throw Error(ERR_DISCONNECT_BY_USER);
         }
     }

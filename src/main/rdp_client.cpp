@@ -190,8 +190,7 @@ int main(int argc, char** argv)
         configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
 
-    NullAuthentifier authentifier;
-    SesmanInterface sesman(ini, authentifier);
+    Sesman sesman(ini);
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;

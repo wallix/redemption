@@ -23,7 +23,7 @@
 #include "acl/module_manager/mod_factory.hpp"
 #include "core/session.hpp"
 
-#include "acl/authentifier.hpp"
+#include "acl/acl_serializer.hpp"
 #include "acl/sesman.hpp"
 #include "acl/mod_pack.hpp"
 
@@ -131,11 +131,8 @@ private:
                      CryptoContext& cctx,
                      Random& rnd,
                      Inifile& ini,
-                     Authentifier & authentifier,
                      Fstat & fstat)
     {
-        // authentifier never opened or closed by me (close box)
-        // now is authentifier start time
         acl_serial = std::make_unique<AclSerializer>(ini, time_base);
 
         unique_fd client_sck = addr_connect_non_blocking(ini.get<cfg::globals::authfile>().c_str(),
@@ -156,7 +153,6 @@ private:
         acl_serial->set_auth_trans(auth_trans.get());
         acl_serial->set_log_file(log_file.get());
         acl.set_acl_serial(acl_serial.get());
-        authentifier.set_acl_serial(acl_serial.get());
     }
 
 private:
@@ -283,13 +279,12 @@ private:
     }
 
 
-    void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Authentifier & authentifier, Front & front)
+    void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Front & front)
     {
         if (mod_wrapper.current_mod != next_state) {
             if ((mod_wrapper.current_mod == MODULE_RDP) ||
                 (mod_wrapper.current_mod == MODULE_VNC)) {
                 front.must_be_stop_capture();
-                authentifier.delete_remote_mod();
             }
         }
 
@@ -300,7 +295,7 @@ private:
     bool front_up_and_running(Acl & acl, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
-                              Authentifier & authentifier,
+                              Sesman & sesman,
                               ClientExecute & rail_client_execute)
     {
         // There are modified fields to send to sesman
@@ -313,14 +308,14 @@ private:
         if (signal == BACK_EVENT_NEXT){
             if (mod_wrapper.is_connected()){
                 if (acl.is_connected()){
-                    authentifier.disconnect_target();
+                    sesman.set_disconnect_target();
                     acl.acl_serial->remote_answer = false;
                     acl.acl_serial->send_acl_data();
                     mod_wrapper.remove_mod();
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                     auto next_state = MODULE_INTERNAL_TRANSITION;
-                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
                     throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
                 }
                 // No close box any more, STOP SESSION LOOP
@@ -349,7 +344,7 @@ private:
                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 auto next_state = MODULE_INTERNAL_TRANSITION;
-                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
             }
             break;
             case BACK_EVENT_REFRESH:
@@ -400,9 +395,9 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
-                            authentifier.new_remote_mod();
+                            sesman.new_remote_mod();
                         }
-                        this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                        this->new_mod(next_state, mod_wrapper, mod_factory, front);
                         if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                             ini.get<cfg::globals::allow_using_multiple_monitors>() &&
                             (front.client_info.cs_monitor.monitorCount > 1)) {
@@ -415,7 +410,7 @@ private:
                         ini.set<cfg::context::auth_error_message>("");
                     }
                     catch (...) {
-                        authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
+                        sesman.log6(LogId::SESSION_CREATION_FAILED, {});
                         front.must_be_stop_capture();
 
                         throw;
@@ -436,14 +431,14 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
-                            authentifier.new_remote_mod();
+                            sesman.new_remote_mod();
                         }
-                        this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                        this->new_mod(next_state, mod_wrapper, mod_factory, front);
 
                         ini.set<cfg::context::auth_error_message>("");
                     }
                     catch (...) {
-                        authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
+                        sesman.log6(LogId::SESSION_CREATION_FAILED, {});
                         throw;
                     }
 
@@ -455,7 +450,7 @@ private:
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
                 }
                 break;
                 case MODULE_UNKNOWN:
@@ -479,7 +474,7 @@ private:
                         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                         break;
                     }
-                    this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
                 }
                 }
             }
@@ -584,7 +579,7 @@ private:
         }
     }
 
-    void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper, SesmanInterface & sesman)
+    void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper)
     {
         if (front.front_must_notify_resize) {
             LOG(LOG_INFO, "Notify resize to front");
@@ -597,7 +592,7 @@ private:
         {
             bytes_view tpdu = front.rbuf.current_pdu_buffer();
             uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-            front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback(), sesman);
+            front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
         }
     }
 
@@ -609,8 +604,7 @@ public:
         TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
 
-        Authentifier authentifier(ini, cctx, to_verbose_flags(ini.get<cfg::debug::auth>()));
-        SesmanInterface sesman(ini, authentifier);
+        Sesman sesman(ini);
 
         TimeBase time_base(tvtime());
         EventContainer events;
@@ -619,7 +613,7 @@ public:
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
-        Front front(time_base, events, sesman, front_trans, rnd, ini, cctx, authentifier,
+        Front front(time_base, events, sesman, front_trans, rnd, ini, cctx, sesman,
             ini.get<cfg::client::fast_path>()
         );
 
@@ -640,7 +634,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, authentifier, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, sesman, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
@@ -775,7 +769,7 @@ public:
                     bool const front_is_set = front_trans.has_tls_pending_data()
                         || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
                     if (front_is_set){
-                        this->front_incoming_data(front_trans, front, mod_wrapper, sesman);
+                        this->front_incoming_data(front_trans, front, mod_wrapper);
                     }
                 } catch (Error const& e) {
                     // RemoteApp disconnection initiated by user
@@ -799,6 +793,34 @@ public:
                     continue;
                 }
 
+                // exchange data with sesman
+                if (acl.is_connected()){
+                    if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
+                        acl.receive();
+                        if (!ini.changed_field_size()) {
+                            mod_wrapper.acl_update();
+                        }
+                    }
+
+                    // propagate changes made in sesman structure to actual acl changes
+                    sesman.flush_acl();
+                    sesman.flush_acl_report([&acl](std::string reason,std::string message)
+                    {
+                        acl.acl_serial->report(reason.c_str(), message.c_str());
+                    });
+                    sesman.flush_acl_log6([&acl](LogId id, KVList kv_list)
+                    {
+                        acl.acl_serial->log6(id, kv_list);
+                    });
+                    // send over wire if any field changed
+                    if (this->ini.changed_field_size()) {
+                        acl.acl_serial->remote_answer = false;
+                        acl.acl_serial->send_acl_data();
+                    }
+                    continue;
+                }
+
+
                 switch (front.state) {
                 default:
                 {
@@ -810,7 +832,7 @@ public:
                     if (acl.is_not_yet_connected()) {
                         try {
                             this->connect_acl(acl, time_base, acl_serial, auth_trans, log_file,
-                                              cctx, rnd, ini, authentifier, fstat);
+                                              cctx, rnd, ini, fstat);
                         }
                         catch (...) {
                             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
@@ -822,31 +844,11 @@ public:
                                 log_proxy::set_user("");
 
                                 auto next_state = MODULE_INTERNAL_CLOSE;
-                                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
                                 run_session = true;
                             }
                         }
                         continue;
-                    }
-
-
-                    if (acl.is_connected()){
-                        if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
-                            acl.receive();
-                            if (!ini.changed_field_size()) {
-                                mod_wrapper.acl_update();
-                            }
-                        }
-
-                        if (!sesman.auth_info_sent){
-                            sesman.set_acl_screen_info();
-                            sesman.set_acl_auth_info();
-                            if (this->ini.changed_field_size()) {
-                                acl.acl_serial->remote_answer = false;
-                                acl.acl_serial->send_acl_data();
-                            }
-                            continue;
-                        }
                     }
 
                     try {
@@ -889,7 +891,7 @@ public:
                             acl.keepalive.start(now.tv_sec);
                         }
 
-                        run_session = this->front_up_and_running(acl, ini, mod_factory, mod_wrapper, front, authentifier, rail_client_execute);
+                        run_session = this->front_up_and_running(acl, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
                         run_session = false;
@@ -899,14 +901,14 @@ public:
                         case 1: // Close Box
                         {
                             acl.keepalive.stop();
-                            authentifier.disconnect_target();
+                            sesman.set_disconnect_target();
                             mod_wrapper.last_disconnect();
 //                            authentifier.set_acl_serial(nullptr);
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
 
                                 auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-                                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
                                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                                 run_session = true;
                             }
@@ -917,7 +919,7 @@ public:
                         }
                         break;
                         case 3:
-                            set_server_redirection_target(ini, authentifier);
+                            set_server_redirection_target(ini, sesman);
                         REDEMPTION_CXX_FALLTHROUGH;
                         case 2: // TODO: should we put some counter to avoid retrying indefinitely?
                             LOG(LOG_INFO, "Retry RDP");
@@ -929,7 +931,7 @@ public:
 
                             auto next_state = MODULE_RDP;
                             try {
-                                this->new_mod(next_state, mod_wrapper, mod_factory, authentifier, front);
+                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
 
                                 if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                                     ini.get<cfg::globals::allow_using_multiple_monitors>() &&
@@ -945,7 +947,7 @@ public:
                                 ini.set<cfg::context::auth_error_message>("");
                             }
                             catch (...) {
-                                authentifier.log6(LogId::SESSION_CREATION_FAILED, {});
+                                sesman.log6(LogId::SESSION_CREATION_FAILED, {});
                                 front.must_be_stop_capture();
 
                                 throw;

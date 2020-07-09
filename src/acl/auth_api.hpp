@@ -21,31 +21,38 @@
 #pragma once
 
 #include "utils/sugar/noncopyable.hpp"
+#include "gdi/screen_info.hpp"
 
 #include <cstdint>
 #include <string>
 
 struct AuthApi : noncopyable
 {
-    virtual void set_auth_channel_target(const char * target) = 0;
+    virtual void set_rd_shadow_available() = 0;
 
-    virtual void set_auth_error_message(const char * error_message) = 0;
-
-    virtual void disconnect_target() = 0;
-
-    virtual void set_pm_request(const char * request) = 0;
-
-    virtual void set_native_session_id(unsigned int session_id) = 0;
-
-    virtual void rd_shadow_available() = 0;
-
-    virtual void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * request, const char * id, const char * addr, uint16_t port) = 0;
+    virtual void set_rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * request, const char * id, const char * addr, uint16_t port) = 0;
 
     virtual void set_smartcard_login(const char * login) = 0;
 
     virtual void set_server_cert(std::string const& blob_str) = 0;
 
-    virtual void set_acl_server_cert() = 0;
+    virtual void set_screen_info(ScreenInfo screen_info) = 0;
+
+    virtual void set_auth_info(std::string const& username, std::string const& domain, std::string const& password) = 0;
+
+    virtual void set_recording_started() = 0;
+
+    virtual void set_rt_ready() = 0;
+
+    virtual void set_native_session_id(unsigned int session_id) = 0;
+
+    virtual void set_pm_request(const char * request) = 0;
+
+    virtual void set_disconnect_target() = 0;
+
+    virtual void set_auth_error_message(const char * error_message) = 0;
+
+    virtual void set_auth_channel_target(const char * target) = 0;
 
     virtual ~AuthApi() = default;
 
@@ -54,54 +61,13 @@ struct AuthApi : noncopyable
 
 struct NullAuthentifier : AuthApi
 {
-    void set_auth_channel_target(const char * target) override
-    {
-        (void)target;
-    }
-
-    void set_auth_error_message(const char * error_message) override
-    {
-        (void)error_message;
-    }
-
-    void disconnect_target() override
-    {}
-
-    void set_pm_request(const char * request) override
-    {
-        (void)request;
-    }
-
-    void set_native_session_id(unsigned int session_id) override
-    {
-        (void)session_id;
-    }
-
-    void rd_shadow_available() override
-    {}
-
-    void rd_shadow_invitation(uint32_t error_code, const char * error_message, const char * userdata, const char * id, const char * addr, uint16_t port) override
-    {
-        (void)error_code;
-        (void)error_message;
-        (void)userdata;
-        (void)id;
-        (void)addr;
-        (void)port;
-    }
-
-    void set_smartcard_login(const char * login) override
-    {
-        (void)login;
-    }
-
-    void set_server_cert(std::string const& blob_str) override
-    {
-        (void)blob_str;
-    }
-
-    void set_acl_server_cert() override
-    {
-    }
-
+    void set_pm_request(const char * /*request*/) override {}
+    void set_disconnect_target() override {}
+    void set_auth_error_message(const char * /*error_message*/) override {}
+    void set_auth_channel_target(const char * /*target*/) override {}
+    void set_native_session_id(unsigned int /*session_id*/) override {}
+    void set_rd_shadow_available() override {}
+    void set_rd_shadow_invitation(uint32_t /*error_code*/, const char * /*error_message*/, const char * /*userdata*/, const char * /*id*/, const char * /*addr*/, uint16_t /*port*/) override {}
+    void set_smartcard_login(const char * /*login*/) override {}
+    void set_server_cert(std::string const& /*blob_str*/) override {}
 };

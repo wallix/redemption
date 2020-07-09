@@ -225,6 +225,7 @@ public:
             case ZONE_NEE: return MOUSE_BUTTON_PRESSED_NORTHEAST;
             case ZONE_NEN: return MOUSE_BUTTON_PRESSED_NORTHEAST;
             }
+            return MOUSE_BUTTON_PRESSED_NONE;
         }
 
         static inline int get_pointer_type(size_t zone)

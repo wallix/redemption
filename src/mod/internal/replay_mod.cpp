@@ -255,8 +255,7 @@ struct ReplayMod::Reader
 };
 
 ReplayMod::ReplayMod(
-    TimeBase& time_base
-  , gdi::GraphicApi & drawable_
+    gdi::GraphicApi & drawable_
   , FrontAPI & front
   , const char * replay_path
   , uint16_t width

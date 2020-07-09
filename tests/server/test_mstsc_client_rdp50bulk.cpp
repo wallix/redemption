@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {
-        front.incoming(no_mod, sesman.get_sesman());
+        front.incoming(no_mod);
     }
 
     //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);

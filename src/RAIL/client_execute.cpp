@@ -58,10 +58,10 @@ ClientExecute::ClientExecute(
     WindowListCaps const & window_list_caps, bool verbose)
 : front_(front)
 , drawable_(drawable)
+, verbose(verbose)
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin), BLACK))
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
-, verbose(verbose)
 , time_base(time_base)
 , events(events)
 {
@@ -1162,7 +1162,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int
 
 
 // Return true if event is consumed.
-bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, Keymap2 * keymap, bool& mouse_captured_ref)
+bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, Keymap2 * /*keymap*/, bool& mouse_captured_ref)
 {
     const bool allow_resize_hosted_desktop = this->allow_resize_hosted_desktop_;
 

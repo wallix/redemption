@@ -23,7 +23,7 @@ Author(s): Jonathan Poelen
 class Inifile;
 class AuthApi;
 class RedirectionInfo;
-class SesmanInterface;
+class Sesman;
 
 struct InifileWrapper
 {
@@ -51,7 +51,7 @@ struct SesmanWrapper
 
     operator AuthApi& () &;
 
-    SesmanInterface& get_sesman() &;
+    Sesman& get_sesman() &;
 
     Inifile& get_ini();
     RedirectionInfo& redir_info();

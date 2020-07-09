@@ -1039,6 +1039,8 @@ public:
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
 
+        // TODO: add data_length and version check
+
         std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         this->checkout_channel_flags  = flags;
@@ -2224,7 +2226,6 @@ public:
                 // LOG(LOG_INFO, "cert pem: %s", blob_str);
 
                 this->sesman.set_server_cert(blob_str);
-                this->sesman.set_acl_server_cert();
 
                 return result;
             });
@@ -6236,7 +6237,7 @@ public:
 
     void sespro_ending_in_progress() override
     {
-//        this->sesman.disconnect_target();
+//        this->sesman.set_disconnect_target();
         this->sesman.set_auth_error_message(TR(trkeys::session_logoff_in_progress, this->lang));
         this->set_mod_signal(BACK_EVENT_NEXT);
     }
