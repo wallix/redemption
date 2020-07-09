@@ -58,3 +58,31 @@ static inline void put_pixel_24bpp(uint8_t* data, size_t line_bytes, size_t x, s
     dest[1] = static_cast<uint8_t>(value >> (8 * 1));
     dest[2] = static_cast<uint8_t>(value >> (8 * 2));
 }
+
+static inline void put_pixel_32bpp(uint8_t* data, size_t line_bytes, size_t x, size_t y, uint32_t value) {
+    uint8_t* dest = data + (y * line_bytes) + (x * 4);
+
+    dest[0] = static_cast<uint8_t>(value >> (8 * 0));
+    dest[1] = static_cast<uint8_t>(value >> (8 * 1));
+    dest[2] = static_cast<uint8_t>(value >> (8 * 2));
+    dest[3] = static_cast<uint8_t>(value >> (8 * 3));
+}
+
+static inline void put_pixel_24alpha(uint8_t* data, size_t line_bytes, size_t x, size_t y, uint32_t value) {
+    uint8_t* dest = data + y * line_bytes + x * 3;
+    uint8_t frontAlpha = (value >> (8 * 3)) & 0xff;
+
+    if (frontAlpha == 0xff) {
+        /* front is totally opaque */
+        dest[0] = static_cast<uint8_t>(value >> (8 * 0));
+        dest[1] = static_cast<uint8_t>(value >> (8 * 1));
+        dest[2] = static_cast<uint8_t>(value >> (8 * 2));
+    } else if (frontAlpha != 0x00) {
+        /* front is not totally transparent */
+        uint8_t backAlpha = (0xff - frontAlpha);
+
+        dest[0] = static_cast<uint8_t>( ((dest[0] * backAlpha) + frontAlpha * (value & 0xff)) / 0xff);
+        dest[1] = static_cast<uint8_t>( ((dest[1] * backAlpha) + frontAlpha * ((value >> 8) & 0xff)) / 0xff);
+        dest[2] = static_cast<uint8_t>( ((dest[2] * backAlpha) + frontAlpha * ((value >> 16) & 0xff)) / 0xff);
+    }
+}
