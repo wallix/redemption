@@ -203,6 +203,7 @@ namespace cfg {
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
+        struct mode_console;
     };
 
     struct mod_vnc {
@@ -385,7 +386,6 @@ namespace cfg {
         struct keepalive;
         struct session_id;
         struct end_date_cnx;
-        struct mode_console;
         struct real_target_device;
         struct authentication_challenge;
         struct ticket;

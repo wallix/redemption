@@ -259,7 +259,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>());
 
-    RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::context::mode_console>());
+    RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::mod_rdp::mode_console>());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::real_target_device>());
 
@@ -1907,9 +1907,9 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>());
 
     // mode_console
-    ini.get_acl_field(cfg::context::mode_console::index).set(cstr_array_view("forbid"));
+    ini.get_acl_field(cfg::mod_rdp::mode_console::index).set(cstr_array_view("forbid"));
 
-    RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::context::mode_console>());
+    RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::mod_rdp::mode_console>());
 
     // real_target_device
     ini.get_acl_field(cfg::context::real_target_device::index).set(cstr_array_view("10.0.0.1"));

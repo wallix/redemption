@@ -74,7 +74,7 @@ void ModuleManager::create_mod_rdp(
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
 
-    switch (ini.get<cfg::context::mode_console>()) {
+    switch (ini.get<cfg::mod_rdp::mode_console>()) {
         case RdpModeConsole::force:
             client_info.console_session = true;
             LOG(LOG_INFO, "Session::mode console : force");
