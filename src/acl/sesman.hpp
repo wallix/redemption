@@ -61,6 +61,7 @@ struct Sesman : public AuthApi, public ReportMessageApi
         }
     };
 
+    bool log6_sent = false;
     bool session_log_is_open = false;
     std::vector<LogParam> buffered_log_params;
 
@@ -118,23 +119,19 @@ struct Sesman : public AuthApi, public ReportMessageApi
 
     void log6(LogId id, KVList kv_list) override
     {
+        this->log6_sent = false;
         this->buffered_log_params.emplace_back(id, kv_list);
     }
 
     void new_remote_mod()
     {
-//        if (this->acl_serial){
-//            this->cctx.set_master_key(ini.get<cfg::crypto::key0>());
-//            this->cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-//            this->cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-//            this->acl_serial->start_session_log();
-//            this->session_log_is_open = true;
-//        }
+        LOG(LOG_INFO, "================ new_remote_mod()");
+        this->session_log_is_open = true;
     }
 
     void delete_remote_mod()
     {
+        LOG(LOG_INFO, "================ delete_remote_mod()");
 //        if (this->acl_serial && this->session_log_is_open) {
 //            this->acl_serial->close_session_log();
 //            this->session_log_is_open = false;
@@ -255,28 +252,33 @@ struct Sesman : public AuthApi, public ReportMessageApi
 
     void flush_acl_report(std::function<void(std::string,std::string)> fn)
     {
-        for(auto & report: this->reports){
-            fn(report.reason, report.message);
-//            serializer.report(report.reason, report.message);
+        if (!this->report_sent) {
+            for(auto & report: this->reports){
+                fn(report.reason, report.message);
+            }
+            this->reports.clear();
+            this->report_sent = true;
         }
-        this->reports.clear();
     }
 
     void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> log6)
     {
-        if (!this->buffered_log_params.empty()) {
-            std::vector<KVLog> v;
-            for (LogParam const & log_param : this->buffered_log_params) {
-                v.reserve(log_param.kv_list.size());
-                for (auto const& kv : log_param.kv_list) {
-                    v.emplace_back(KVLog{kv.key, kv.value});
+        if (!this->log6_sent) {
+            if (!this->buffered_log_params.empty()) {
+                std::vector<KVLog> v;
+                for (LogParam const & log_param : this->buffered_log_params) {
+                    v.reserve(log_param.kv_list.size());
+                    for (auto const& kv : log_param.kv_list) {
+                        v.emplace_back(KVLog{kv.key, kv.value});
+                    }
+                    //serializer.log6(log_param.id, {v});
+                    log6(log_param.id, {v});
+                    v.clear();
                 }
-                //serializer.log6(log_param.id, {v});
-                log6(log_param.id, {v});
-                v.clear();
+                this->buffered_log_params.clear();
+                this->buffered_log_params.shrink_to_fit();
             }
-            this->buffered_log_params.clear();
-            this->buffered_log_params.shrink_to_fit();
+            this->log6_sent = true;
         }
     }
 

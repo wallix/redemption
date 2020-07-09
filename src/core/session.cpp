@@ -292,7 +292,7 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool front_up_and_running(Acl & acl, Inifile& ini,
+    bool front_up_and_running(Acl & acl, CryptoContext & cctx, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Sesman & sesman,
@@ -395,6 +395,13 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
+                            if (acl.acl_serial){
+                                cctx.set_master_key(ini.get<cfg::crypto::key0>());
+                                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+                                cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+
+                                acl.acl_serial->start_session_log();
+                            }
                             sesman.new_remote_mod();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -431,6 +438,12 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
+                            if (acl.acl_serial){
+                                cctx.set_master_key(ini.get<cfg::crypto::key0>());
+                                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
+                                cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+                                acl.acl_serial->start_session_log();
+                            }
                             sesman.new_remote_mod();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -817,7 +830,6 @@ public:
                         acl.acl_serial->remote_answer = false;
                         acl.acl_serial->send_acl_data();
                     }
-                    continue;
                 }
 
 
@@ -891,7 +903,7 @@ public:
                             acl.keepalive.start(now.tv_sec);
                         }
 
-                        run_session = this->front_up_and_running(acl, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
+                        run_session = this->front_up_and_running(acl, cctx, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
                         run_session = false;
