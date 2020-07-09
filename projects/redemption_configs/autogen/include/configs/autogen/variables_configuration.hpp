@@ -908,14 +908,14 @@ namespace cfg
         type value{false};
     };
     /// type: bool <br/>
-    /// default: {false} <br/>
+    /// default: {true} <br/>
     struct client::enable_new_pointer_update {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{false};
+        type value{true};
     };
     /// type: bool <br/>
     /// default: {true} <br/>
