@@ -55,9 +55,10 @@ public:
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             bool showform = false, unsigned flags = FlatForm::NONE, int duration_max = 0); /*NOLINT*/
+             bool showform = false, unsigned flags = FlatForm::NONE,
+             std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
-    ~FlatWait() override;
+    ~FlatWait();
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 

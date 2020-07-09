@@ -126,7 +126,6 @@ private:
     EventContainer& events;
     int session_probe_timer = 0;
     Callbacks & callbacks;
-    SesmanInterface & sesman;
 
     bool launch_aborted = false;
 
@@ -176,7 +175,6 @@ public:
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
         EventContainer& events,
-        SesmanInterface & sesman,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,
@@ -204,7 +202,6 @@ public:
     , time_base(time_base)
     , events(events)
     , callbacks(callbacks)
-    , sesman(sesman)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"

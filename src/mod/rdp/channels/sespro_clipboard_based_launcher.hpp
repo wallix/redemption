@@ -77,7 +77,6 @@ public:
 
     TimeBase& time_base;
     EventContainer& events;
-    SesmanInterface& sesman;
 
     const RDPVerbose verbose;
 
@@ -94,7 +93,6 @@ public:
     SessionProbeClipboardBasedLauncher(
         TimeBase& time_base,
         EventContainer& events,
-        SesmanInterface & sesman,
         mod_api& mod,
         const char* alternate_shell,
         Params params,
@@ -104,7 +102,6 @@ public:
     , alternate_shell(alternate_shell)
     , time_base(time_base)
     , events(events)
-    , sesman(sesman)
     , verbose(verbose|RDPVerbose::sesprobe_launcher)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));

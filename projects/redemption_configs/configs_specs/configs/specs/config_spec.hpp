@@ -804,8 +804,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "ticket");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "comment");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "duration");
-        // TODO mest be a chrono::duration type
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), "duration_max", set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::chrono::minutes>(), "duration_max", set(0));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "waitinforeturn");
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "showform", set(false));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), "formflag", set(0));

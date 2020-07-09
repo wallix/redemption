@@ -38,7 +38,7 @@ public:
                 BGRColor bg_color,
                 int group_id = 0); /*NOLINT*/
 
-    ~WidgetImage() override;
+    ~WidgetImage();
 
     void rdp_input_invalidate(Rect clip) override;
 

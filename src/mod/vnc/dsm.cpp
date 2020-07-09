@@ -328,10 +328,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
         LOG(LOG_ERR, "Invalid challengeLen for serverIdentification");
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
-    const uint8_t *serverIdentification = s.get_current();
-    if (serverIdentificationLen > 0) {
-        s.in_skip_bytes(serverIdentificationLen);
-    }
+    bytes_view serverIdentification = s.in_skip_bytes(serverIdentificationLen);
 
     if (!s.in_check_rem(4 + 2)) {
         LOG(LOG_ERR, "Invalid challengeLen for challenge and wClientAuthPublicKeyIdentifierLength");

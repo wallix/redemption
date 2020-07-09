@@ -4232,7 +4232,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// type: unsigned <br/>
+    /// type: std::chrono::minutes <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {0} <br/>
     struct context::duration_max {
@@ -4241,8 +4241,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 35};
-        using type = unsigned;
-        using sesman_and_spec_type = unsigned;
+        using type = std::chrono::minutes;
+        using sesman_and_spec_type = std::chrono::minutes;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -5579,6 +5579,7 @@ struct context
 , cfg::context::ticket
 , cfg::context::comment
 , cfg::context::duration
+, cfg::context::duration_max
 , cfg::context::waitinforeturn
 , cfg::context::module
 , cfg::context::proxy_opt
@@ -5627,7 +5628,6 @@ struct context
 , cfg::context::keepalive
 , cfg::context::end_date_cnx
 , cfg::context::authentication_challenge
-, cfg::context::duration_max
 , cfg::context::showform
 , cfg::context::formflag
 , cfg::context::forcemodule

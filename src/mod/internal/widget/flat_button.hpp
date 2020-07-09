@@ -62,7 +62,7 @@ public:
                      unsigned border_width, Font const & font, int xtext = 0, int ytext = 0, /*NOLINT*/
                      bool logo = false/*, notify_event_t notify_event = NOTIFY_SUBMIT*/); /*NOLINT*/
 
-    ~WidgetFlatButton() override;
+    ~WidgetFlatButton();
 
     void set_xy(int16_t x, int16_t y) override;
 

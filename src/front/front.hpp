@@ -807,7 +807,7 @@ public:
             event.alarm.set_timeout(
                 time_base.get_current_time()
                 +this->ini.get<cfg::globals::handshake_timeout>());
-            event.actions.on_timeout = [this](Event&)
+            event.actions.on_timeout = [](Event&)
             {
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
                 throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);

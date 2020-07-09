@@ -124,7 +124,7 @@ struct RdpData
             Event event("File Validator Event", this);
             event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds(3600));
             event.alarm.set_fd(this->trans.get_fd(),std::chrono::seconds(3600));
-            event.actions.on_timeout = [this](Event&event)
+            event.actions.on_timeout = [](Event&event)
             {
                 event.alarm.set_timeout(event.alarm.now+std::chrono::seconds(3600));
             };

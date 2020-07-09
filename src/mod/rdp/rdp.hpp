@@ -439,7 +439,6 @@ private:
     TimeBase & time_base;
     GdProvider & gd_provider;
     EventContainer & events;
-    SesmanInterface & sesman;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
     SessionProbeVirtualChannel::Callbacks & callbacks;
@@ -451,7 +450,6 @@ public:
         ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider,
         EventContainer & events,
-        SesmanInterface & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
         SessionProbeVirtualChannel::Callbacks & callbacks
@@ -483,7 +481,6 @@ public:
     , time_base(time_base)
     , gd_provider(gd_provider)
     , events(events)
-    , sesman(sesman)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
     , callbacks(callbacks)
@@ -713,8 +710,6 @@ private:
         class ToServerAsynchronousSender : public VirtualChannelDataSender
         {
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
-            TimeBase & time_base;
-            EventContainer & events;
 
             AsynchronousTaskContainer& asynchronous_tasks;
 
@@ -723,12 +718,9 @@ private:
         public:
             explicit ToServerAsynchronousSender(
                 std::unique_ptr<VirtualChannelDataSender>&& to_server_synchronous_sender,
-                TimeBase & time_base, EventContainer & events,
                 AsynchronousTaskContainer& asynchronous_tasks,
                 RDPVerbose verbose)
             : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
-            , time_base(time_base)
-            , events(events)
             , asynchronous_tasks(asynchronous_tasks)
             , verbose(verbose)
             {}
@@ -752,7 +744,6 @@ private:
 
         return std::make_unique<ToServerAsynchronousSender>(
             create_to_server_synchronous_sender(channel_name, stc),
-            this->time_base, this->events,
             asynchronous_tasks,
             this->verbose);
     }
@@ -777,7 +768,6 @@ private:
             std::make_unique<DynamicChannelVirtualChannel>(
                 this->dynamic_channel_to_client_sender.get(),
                 this->dynamic_channel_to_server_sender.get(),
-                this->time_base,
                 base_params,
                 dynamic_channel_virtual_channel_params);
     }
@@ -872,7 +862,6 @@ public:
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
             this->events,
-            this->sesman,
             this->session_probe_to_server_sender.get(),
             front,
             rdp,
@@ -1048,6 +1037,7 @@ public:
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
 
+        // TODO stream.remaining_bytes()
         std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
         this->checkout_channel_flags  = flags;
@@ -1463,7 +1453,6 @@ public:
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     this->time_base,
                     this->events,
-                    this->sesman,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
@@ -2070,7 +2059,6 @@ public:
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
             report_message, gen, metrics, time_base, gd_provider, events,
-            sesman,
             file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
@@ -2311,7 +2299,7 @@ public:
             catch (Error & error) {
                 event.garbage = true;
                 this->throw_error(error);
-            };
+            }
         };
         event.actions.on_timeout = [this](Event&event)
         {
@@ -2337,7 +2325,7 @@ public:
             catch (Error & error) {
                 event.garbage = true;
                 this->throw_error(error);
-            };
+            }
         };
         this->events.add(std::move(event));
     }   // mod_rdp
@@ -2375,7 +2363,7 @@ public:
     }
 
 
-    void throw_error(Error & error)
+    [[noreturn]] void throw_error(Error & error)
     {
         LOG(LOG_INFO, "throw error mod_rdp::fd event exception %u: %s", error.id, error.errmsg());
         switch (error.id) {

@@ -179,7 +179,6 @@ public:
                             this->time_base,
                             this->mod_wrapper,
                             this->events,
-                            this->sesman,
                             this->front,
                             this->client_info.screen_info.width,
                             this->client_info.screen_info.height);

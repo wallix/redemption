@@ -26,35 +26,30 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "acl/sesman.hpp"
 #include "core/front_api.hpp"
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
     GdProvider & gd_provider,
     EventContainer & events,
-    SesmanInterface & sesman,
     FrontAPI & front,
     uint16_t width, uint16_t height)
 : front_width(width)
 , front_height(height)
 , front(front)
-, sesman(sesman)
 , dancing_rect(0,0,100,100)
-, time_base(time_base)
 , events(events)
 , gd_provider(gd_provider)
 {
-        Event event("Bouncer Periodic Timer", this);
-        event.alarm.set_timeout(
-            time_base.get_current_time()
-            +std::chrono::milliseconds(33));
-        event.alarm.set_period(std::chrono::milliseconds{33});
-        event.actions.on_timeout = [this](Event&)
-        {
-            this->draw_event(this->gd_provider.get_graphics());
-        };
-        this->events.add(std::move(event));
+    auto delay = std::chrono::milliseconds(33);
+    Event event("Bouncer Periodic Timer", this);
+    event.alarm.set_timeout(time_base.get_current_time() + delay);
+    event.alarm.set_period(delay);
+    event.actions.on_timeout = [this](Event&)
+    {
+        this->draw_event(this->gd_provider.get_graphics());
+    };
+    this->events.add(std::move(event));
 }
 
 Bouncer2Mod::~Bouncer2Mod()

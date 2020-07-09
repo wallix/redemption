@@ -226,7 +226,7 @@ struct ReplayMod::Reader
     }
 
     REDEMPTION_CXX_NODISCARD
-    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front, SesmanInterface & sesman)
+    bool server_resize(gdi::GraphicApi & drawable, FrontAPI& front, SesmanInterface & /*sesman*/)
     {
         bool is_resized = false;
         switch (front.server_resize(

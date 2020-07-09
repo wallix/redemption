@@ -37,20 +37,16 @@ class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations;
 
-    TimeBase& time_base;
-
 public:
     explicit DynamicChannelVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        TimeBase& time_base,
         const BaseVirtualChannel::Params & base_params,
         const DynamicChannelVirtualChannelParam & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
     , dynamic_channels_authorizations(params.allowed_channels, params.denied_channels)
-    , time_base(time_base)
     {}
 
     void process_client_message(uint32_t total_length,
