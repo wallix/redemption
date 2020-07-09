@@ -134,7 +134,7 @@ struct Sesman : public AuthApi, public ReportMessageApi
         LOG(LOG_INFO, "================ delete_remote_mod()");
 //        if (this->acl_serial && this->session_log_is_open) {
 //            this->acl_serial->close_session_log();
-//            this->session_log_is_open = false;
+            this->session_log_is_open = false;
 //        }
     }
 

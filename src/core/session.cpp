@@ -451,6 +451,7 @@ private:
                         ini.set<cfg::context::auth_error_message>("");
                     }
                     catch (...) {
+                        sesman.delete_remote_mod();
                         sesman.log6(LogId::SESSION_CREATION_FAILED, {});
                         throw;
                     }
