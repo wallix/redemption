@@ -362,16 +362,13 @@ private:
             {
                 auto & module_cstr = ini.get<cfg::context::module>();
                 auto next_state = get_module_id(module_cstr);
-//                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(next_state));
-
                 switch (next_state){
                 case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
                 {
                     acl.acl_serial->remote_answer = false;
                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
-                    return true;
                 }
-                break;
+                return true;
                 case MODULE_RDP:
                 {
                     if (mod_wrapper.is_connected()) {
@@ -451,7 +448,6 @@ private:
                     throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
                 case MODULE_INTERNAL_CLOSE_BACK:
                     throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
-                break;
                 default:
                 {
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
@@ -559,16 +555,6 @@ private:
             }
         }
         return true;
-    }
-
-
-    void show_ultimatum(zstring_view info, timeval ultimatum, timeval now)
-    {
-        return;
-        timeval timeoutastv = to_timeval(difftimeval(ultimatum, now));
-        if (timeoutastv == timeval{0, 0}){
-            LOG(LOG_INFO, "%s %ld.%ld s", info, timeoutastv.tv_sec, timeoutastv.tv_usec/100000);
-        }
     }
 
     void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper)
@@ -722,17 +708,14 @@ public:
 
                 if (front.front_must_notify_resize) {
                     ultimatum = now;
-                    this->show_ultimatum("ultimatum (front must notify resize) ="_zv, ultimatum, now);
                 }
 
                 if ((mod_wrapper.get_mod_transport() && mod_wrapper.get_mod_transport()->has_tls_pending_data())) {
                     ultimatum = now;
-                    this->show_ultimatum("(mod tls pending)"_zv, ultimatum, now);
                 }
 
                 if (front_trans.has_tls_pending_data()) {
                     ultimatum = now;
-                    this->show_ultimatum("(front tls pending)"_zv, ultimatum, now);
                 }
                 ioswitch.set_timeout(ultimatum);
 

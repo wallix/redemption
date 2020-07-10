@@ -27,6 +27,5 @@
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
     NullAuthentifier null;
-
-    RED_CHECK(&null != nullptr);
+//    RED_CHECK(&null != nullptr);
 }

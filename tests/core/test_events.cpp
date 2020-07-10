@@ -27,8 +27,6 @@
 
 #include <string>
 
-std::string side_effect;
-
 #include "core/events.hpp"
 
 RED_AUTO_TEST_CASE(TestOneShotTimerEvent)

@@ -438,7 +438,7 @@ namespace
             return false;
         }
 
-        friend std::ostream& operator<<(std::ostream& out, Msg const& msg)
+        friend std::ostream& operator<<(std::ostream& out, Msg const& msg)/*NOLINT*/
         {
             char const* names[]{
                 "Log6", "ToMod", "ToFront", "ToValidator", "Nothing", "Missing"
@@ -770,7 +770,7 @@ namespace
         bool verify_before_transfer = false;
         ValidationResult validation_result = ValidationResult::Wait;
 
-        friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)
+        friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)/*NOLINT*/
         {
             out <<
                 "with validator: " << d.with_validator <<
