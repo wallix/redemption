@@ -124,7 +124,7 @@ struct RdpData
             Event event("File Validator Event", this);
             event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds(3600));
             event.alarm.set_fd(this->trans.get_fd(),std::chrono::seconds(3600));
-            event.actions.on_timeout = [this](Event&event)
+            event.actions.on_timeout = [](Event&event)
             {
                 event.alarm.set_timeout(event.alarm.now+std::chrono::seconds(3600));
             };
@@ -481,7 +481,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
-    switch (ini.get<cfg::context::mode_console>()) {
+    switch (ini.get<cfg::mod_rdp::mode_console>()) {
         case RdpModeConsole::force:
             client_info.console_session = true;
             LOG(LOG_INFO, "Session::mode console : force");

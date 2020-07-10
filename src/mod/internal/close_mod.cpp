@@ -26,23 +26,15 @@
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
 
-static FlatWabClose build_close_widget(gdi::GraphicApi & drawable,
-                                Rect const widget_rect,
-                                CloseMod & mod,
-                                WidgetScreen & screen,
-                                std::string auth_error_message,
-                                CloseModVariables vars,
-                                Font const& font, Theme const& theme, bool back_selector);
-
-static FlatWabClose build_close_widget(gdi::GraphicApi & drawable,
-                                Rect const widget_rect,
-                                CloseMod & mod,
-                                WidgetScreen & screen,
-                                std::string auth_error_message,
-                                CloseModVariables vars,
-                                Font const& font, Theme const& theme, bool back_selector)
+static FlatWabClose build_close_widget(
+    gdi::GraphicApi & drawable,
+    Rect const widget_rect,
+    CloseMod & mod,
+    WidgetScreen & screen,
+    std::string auth_error_message,
+    CloseModVariables vars,
+    Font const& font, Theme const& theme, bool back_selector)
 {
-
     struct temporary_text
     {
         char text[255];
@@ -70,20 +62,18 @@ static FlatWabClose build_close_widget(gdi::GraphicApi & drawable,
         }
     };
 
+    const bool is_asked = (
+        vars.is_asked<cfg::globals::auth_user>()
+     || vars.is_asked<cfg::globals::target_device>());
 
-    FlatWabClose widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-                        screen, &mod, auth_error_message.c_str(),
-                        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
-                            ? nullptr
-                            : vars.get<cfg::globals::auth_user>().c_str(),
-                        (vars.is_asked<cfg::globals::auth_user>() || vars.is_asked<cfg::globals::target_device>())
-                            ? nullptr
-                            : temporary_text(vars).text,
-                        true,
-                        vars.get<cfg::context::close_box_extra_message>().c_str(),
-                        font, theme, language(vars), back_selector);
-
-    return widget;
+    return FlatWabClose(
+        drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        screen, &mod, auth_error_message.c_str(),
+        is_asked ? nullptr : vars.get<cfg::globals::auth_user>().c_str(),
+        is_asked ? nullptr : temporary_text(vars).text,
+        true,
+        vars.get<cfg::context::close_box_extra_message>().c_str(),
+        font, theme, language(vars), back_selector);
 }
 
 

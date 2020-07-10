@@ -49,7 +49,6 @@ class Bouncer2Mod : public mod_api
     int mouse_x = 0;
     int mouse_y = 0;
 
-    TimeBase& time_base;
     EventContainer & events;
     GdProvider & gd_provider;
 

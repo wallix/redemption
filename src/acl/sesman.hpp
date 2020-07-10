@@ -192,7 +192,7 @@ struct Sesman : public AuthApi, public ReportMessageApi
         this->native_session_id = session_id;
     }
 
-    void set_pm_request(const char * request) override
+    void set_pm_request(std::string_view request) override
     {
         this->pm_request_sent = false;
         this->request = request;

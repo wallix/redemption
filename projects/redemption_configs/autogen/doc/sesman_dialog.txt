@@ -219,6 +219,11 @@ cfg::mod_rdp::force_smartcard_authentication ⇐ mod_rdp:force_smartcard_authent
     Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 cfg::mod_rdp::enable_ipv6 ⇐ mod_rdp:enable_ipv6   [bool]
     Enable target connection on ipv6
+cfg::mod_rdp::mode_console ⇐ mod_rdp:mode_console   [RdpModeConsole]
+    Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
+      allow: Forward Console mode request from client to the target.
+      force: Force Console mode on target regardless of client request.
+      forbid: Block Console mode request from client.
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).
@@ -338,17 +343,12 @@ cfg::context::authenticated ⇔ authenticated   [bool]
 cfg::context::keepalive ⇐ keepalive   [bool]
 cfg::context::session_id ⇐ session_id   [std::string]
 cfg::context::end_date_cnx ⇐ timeclose   [uint32_t]
-cfg::context::mode_console ⇐ context:mode_console   [RdpModeConsole]
-    Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
-      allow: Forward Console mode request from client to the target.
-      force: Force Console mode on target regardless of client request.
-      forbid: Block Console mode request from client.
 cfg::context::real_target_device ⇔ real_target_device   [std::string]
 cfg::context::authentication_challenge ⇐ authentication_challenge   [bool]
 cfg::context::ticket ⇔ ticket   [std::string]
 cfg::context::comment ⇔ comment   [std::string]
 cfg::context::duration ⇔ duration   [std::string]
-cfg::context::duration_max ⇐ duration_max   [unsigned]
+cfg::context::duration_max ⇐ duration_max   [std::chrono::minutes]
 cfg::context::waitinforeturn ⇔ waitinforeturn   [std::string]
 cfg::context::showform ⇐ showform   [bool]
 cfg::context::formflag ⇔ formflag   [unsigned]

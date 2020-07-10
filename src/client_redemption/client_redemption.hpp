@@ -322,7 +322,7 @@ public:
 
         timeval now_after_select = tvtime();
 
-        this->events.execute_events(now_after_select, [&rfds](int /*fd*/){ return false; });
+        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; });
         if (num) {
             this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
         }

@@ -77,7 +77,7 @@ public:
                  bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
                  Translation::language_t lang, bool back_selector = false); /*NOLINT*/
 
-    ~FlatWabClose() override;
+    ~FlatWabClose();
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 

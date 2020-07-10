@@ -76,6 +76,9 @@ cp_spec = {
         u'mod_rdp:enable_ipv6': (
             'enable_ipv6', False
         ),
+        u'mod_rdp:mode_console': (
+            'mode_console', 0
+        ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
         ),
@@ -250,11 +253,6 @@ cp_spec = {
     'video': {
         u'video:disable_keyboard_log': (
             'disable_keyboard_log', 1
-        ),
-    },
-    'context': {
-        u'context:mode_console': (
-            'mode_console', 0
         ),
     },
     'vnc': {

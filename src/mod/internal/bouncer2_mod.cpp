@@ -38,20 +38,18 @@ Bouncer2Mod::Bouncer2Mod(
 , front_height(height)
 , front(front)
 , dancing_rect(0,0,100,100)
-, time_base(time_base)
 , events(events)
 , gd_provider(gd_provider)
 {
-        Event event("Bouncer Periodic Timer", this);
-        event.alarm.set_timeout(
-            time_base.get_current_time()
-            +std::chrono::milliseconds(33));
-        event.alarm.set_period(std::chrono::milliseconds{33});
-        event.actions.on_timeout = [this](Event&)
-        {
-            this->draw_event(this->gd_provider.get_graphics());
-        };
-        this->events.add(std::move(event));
+    auto delay = std::chrono::milliseconds(33);
+    Event event("Bouncer Periodic Timer", this);
+    event.alarm.set_timeout(time_base.get_current_time() + delay);
+    event.alarm.set_period(delay);
+    event.actions.on_timeout = [this](Event&)
+    {
+        this->draw_event(this->gd_provider.get_graphics());
+    };
+    this->events.add(std::move(event));
 }
 
 Bouncer2Mod::~Bouncer2Mod()

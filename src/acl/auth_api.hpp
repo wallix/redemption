@@ -24,7 +24,7 @@
 #include "gdi/screen_info.hpp"
 
 #include <cstdint>
-#include <string>
+#include <string_view>
 
 struct AuthApi : noncopyable
 {
@@ -46,7 +46,7 @@ struct AuthApi : noncopyable
 
     virtual void set_native_session_id(unsigned int session_id) = 0;
 
-    virtual void set_pm_request(const char * request) = 0;
+    virtual void set_pm_request(std::string_view request) = 0;
 
     virtual void set_disconnect_target() = 0;
 
@@ -61,7 +61,7 @@ struct AuthApi : noncopyable
 
 struct NullAuthentifier : AuthApi
 {
-    void set_pm_request(const char * /*request*/) override {}
+    void set_pm_request(std::string_view /*request*/) override {}
     void set_disconnect_target() override {}
     void set_auth_error_message(const char * /*error_message*/) override {}
     void set_auth_channel_target(const char * /*target*/) override {}

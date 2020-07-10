@@ -65,7 +65,6 @@ ClientExecute::ClientExecute(
 , time_base(time_base)
 , events(events)
 {
-    this->verbose = verbose;
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::ClientExecute()");
 }
 
@@ -1857,7 +1856,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     return false;
 }   // input_mouse
 
-void ClientExecute::update_rects(const bool allow_resize_hosted_desktop)
+void ClientExecute::update_rects(const bool /*allow_resize_hosted_desktop*/)
 {
     if ((this->window_rect.cx - 2) % 4) {
         this->window_rect.cx -= ((this->window_rect.cx - 2) % 4);

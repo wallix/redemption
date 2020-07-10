@@ -224,9 +224,7 @@ install install-share
     ;
 
 install install-etc
-    : [ glob
-        $(REDEMPTION_ETC_DH_GLOG)
-    ]
+    : [ glob $(REDEMPTION_ETC_DH_GLOG) ]
     :
     : <location>$(INSTALLDIR)$(ETC_PREFIX)
     ;

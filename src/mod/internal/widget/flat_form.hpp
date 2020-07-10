@@ -26,6 +26,9 @@
 #include "mod/internal/widget/edit.hpp"
 #include "utils/translation.hpp"
 
+#include <chrono>
+
+
 class Theme;
 
 class FlatForm : public WidgetParent
@@ -47,7 +50,7 @@ public:
     Translator tr;
 
     unsigned flags;
-    int duration_max;
+    std::chrono::minutes duration_max;
 
     enum {
         NONE               = 0x00,
@@ -64,12 +67,14 @@ public:
     FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             unsigned flags = NONE, int duration_max = 0); /*NOLINT*/
+             unsigned flags = NONE,
+             std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
     FlatForm(gdi::GraphicApi& drawable,
              Widget & parent, NotifyApi* notifier, int group_id,
              Font const & font, Theme const & theme, Translation::language_t lang,
-             unsigned flags = NONE, int duration_max = 0); /*NOLINT*/
+             unsigned flags = NONE,
+             std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
     ~FlatForm() override;
 

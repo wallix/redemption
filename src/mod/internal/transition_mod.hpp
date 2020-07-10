@@ -104,8 +104,6 @@ private:
     ClientExecute & rail_client_execute;
     DVCManager dvc_manager;
 
-    bool alt_key_pressed = false;
-
     MouseState mouse_state;
 
     const bool rail_enabled;

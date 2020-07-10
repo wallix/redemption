@@ -267,7 +267,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_target_user_in_f12_message", set(false));
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_new_pointer_update", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_new_pointer_update", set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
 
@@ -519,6 +519,9 @@ void config_spec_definition(Writer && W)
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
+
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
+
     });
 
     W.section("metrics", [&]
@@ -794,8 +797,6 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::u32>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
 
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
-
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "real_target_device");
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "authentication_challenge");
@@ -803,8 +804,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "ticket");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "comment");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "duration");
-        // TODO mest be a chrono::duration type
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), "duration_max", set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::chrono::minutes>(), "duration_max", set(0));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "waitinforeturn");
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "showform", set(false));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), "formflag", set(0));

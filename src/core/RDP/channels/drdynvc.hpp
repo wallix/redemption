@@ -588,12 +588,13 @@ public:
         else if (ChannelId <= std::numeric_limits<uint16_t>::max()) {
             this->cbId = 1;
         }
-        else if (ChannelId <= std::numeric_limits<uint32_t>::max()) {
+        else/* if (ChannelId <= std::numeric_limits<uint32_t>::max())*/ {
+            static_assert(std::is_same<uint32_t, decltype(ChannelId)>::value);
             this->cbId = 2;
         }
-        else {
-            this->cbId = 3;
-        }
+        // else {
+        //     this->cbId = 3;
+        // }
     }
 
     void receive(InStream & stream) {

@@ -710,8 +710,6 @@ private:
         class ToServerAsynchronousSender : public VirtualChannelDataSender
         {
             std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
-            TimeBase & time_base;
-            EventContainer & events;
 
             AsynchronousTaskContainer& asynchronous_tasks;
 
@@ -720,12 +718,9 @@ private:
         public:
             explicit ToServerAsynchronousSender(
                 std::unique_ptr<VirtualChannelDataSender>&& to_server_synchronous_sender,
-                TimeBase & time_base, EventContainer & events,
                 AsynchronousTaskContainer& asynchronous_tasks,
                 RDPVerbose verbose)
             : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
-            , time_base(time_base)
-            , events(events)
             , asynchronous_tasks(asynchronous_tasks)
             , verbose(verbose)
             {}
@@ -749,7 +744,6 @@ private:
 
         return std::make_unique<ToServerAsynchronousSender>(
             create_to_server_synchronous_sender(channel_name, stc),
-            this->time_base, this->events,
             asynchronous_tasks,
             this->verbose);
     }
@@ -774,7 +768,6 @@ private:
             std::make_unique<DynamicChannelVirtualChannel>(
                 this->dynamic_channel_to_client_sender.get(),
                 this->dynamic_channel_to_server_sender.get(),
-                this->time_base,
                 base_params,
                 dynamic_channel_virtual_channel_params);
     }
@@ -1039,15 +1032,12 @@ public:
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
 
-        // TODO: add data_length and version check
-
-        std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
-
         this->checkout_channel_flags  = flags;
         this->checkout_channel_chanid = checkout_channel.chanid;
 
-//        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
-        this->sesman.set_pm_request(checkout_channel_message.c_str());
+        bytes_view checkout_channel_message = stream.remaining_bytes();
+
+        this->sesman.set_pm_request(std::string_view(checkout_channel_message.as_charp(), checkout_channel_message.size()));
     }
 
     void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
@@ -1456,7 +1446,6 @@ public:
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
                     this->time_base,
                     this->events,
-                    this->sesman,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
                     this->verbose);
@@ -1876,6 +1865,8 @@ class mod_rdp : public mod_api, public rdp_api
     bool enable_fastpath_client_input_event = false;
     bool remote_apps_not_enabled = false;
 
+    ModRDPParams::ServerInfo * server_info_ref;
+
     FrontAPI& front;
 
     rdp_orders orders;
@@ -2073,6 +2064,7 @@ public:
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
+        , server_info_ref(mod_rdp_params.server_info_ref)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk
@@ -2235,8 +2227,6 @@ public:
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-// ====================================================================
-
         Event event("RDP Negociation", this);
         event.alarm.set_timeout(this->time_base.get_current_time()
             + this->private_rdp_negociation->open_session_timeout);
@@ -2361,7 +2351,7 @@ public:
     }
 
 
-    void throw_error(Error & error)
+    [[noreturn]] void throw_error(Error & error)
     {
         LOG(LOG_INFO, "throw error mod_rdp::fd event exception %u: %s", error.id, error.errmsg());
         switch (error.id) {
@@ -5387,6 +5377,9 @@ public:
                 auto input_caps = this->receive_caps<InputCaps>(stream, capset_length);
                 this->enable_fastpath_client_input_event =
                     (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+                if (this->server_info_ref) {
+                    this->server_info_ref->input_flags = input_caps.inputFlags;
+                }
             }
             break;
             case CAPSTYPE_RAIL:
@@ -6392,11 +6385,6 @@ private:
 
         return channel_data_size;
     }
-
-//    void init_negociate_event_(
-//        const ClientInfo & info, Random & gen, TimeObj & timeobj,
-//        const ModRDPParams & mod_rdp_params, const TLSClientParams & tls_client_params, char const* program, char const* directory,
-//        const std::chrono::seconds open_session_timeout);
 };
 
 #undef IF_ENABLE_METRICS

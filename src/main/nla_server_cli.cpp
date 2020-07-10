@@ -334,7 +334,6 @@ public:
     }
 
 private:
-
     int connection_counter = 0;
     bool enable_kerberos;
     bool forkable;

@@ -249,6 +249,8 @@ class RdpClient
             LOG(LOG_ERR, "RdpClient: %s", error_message);
         }
     };
+    TimeBase time_base;
+    EventContainer events;
 
     ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> mod;
@@ -262,8 +264,6 @@ class RdpClient
     GdForwarder gd_forwarder{gd};
 
     JsReportMessage report_message;
-    TimeBase time_base;
-    EventContainer events;
 
     Inifile ini;
     SesmanInterface sesman;
@@ -279,6 +279,8 @@ class RdpClient
     Theme theme;
     Font font;
 
+    ModRDPParams::ServerInfo server_info {};
+
 public:
     RdpClient(emscripten::val&& graphics, emscripten::val const& config)
     : RdpClient(
@@ -292,9 +294,7 @@ public:
         emscripten::val const& config,
         ScreenInfo screen_info,
         RDPVerbose verbose)
-    : front(std::move(graphics), screen_info.width, screen_info.height, verbose)
-    , gd(front.graphic_api())
-    , time_base([&]{
+    : time_base([&]{
         uint32_t seconds = 0;
         uint32_t milliseconds = 0;
         extract_if(config, "time", [&](emscripten::val const& time){
@@ -303,6 +303,8 @@ public:
         });
         return timeval{checked_int{seconds}, checked_int{milliseconds}};
     }())
+    , front(std::move(graphics), screen_info.width, screen_info.height, verbose)
+    , gd(front.graphic_api())
     , sesman(ini)
     , js_rand(config)
     {
@@ -388,15 +390,18 @@ public:
             close_box_extra_message,
             verbose);
 
+        rdp_params.server_info_ref = &server_info;
+
         rdp_params.cache_verbose = get_or(config, "cacheVerbose", BmpCache::Verbose(0));
 
         rdp_params.device_id           = "device_id"; // for certificate path only
         rdp_params.enable_tls          = false;
         rdp_params.enable_nla          = false;
-        rdp_params.enable_fastpath     = true;
-        rdp_params.enable_new_pointer  = true;
         rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
         rdp_params.ignore_auth_channel = true;
+
+        set_if(config, "enableFastPath", rdp_params.enable_fastpath);
+        set_if(config, "enableNewPointer", rdp_params.enable_new_pointer);
 
         rdp_params.enable_remotefx = enable_remotefx;
         set_if(config, "restrictedAdminMode", rdp_params.enable_restricted_admin_mode);
@@ -507,6 +512,11 @@ public:
     {
         return *this->mod;
     }
+
+    uint16_t get_input_flags() const
+    {
+        return this->server_info.input_flags;
+    }
 };
 
 EMSCRIPTEN_BINDINGS(client)
@@ -532,5 +542,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("writeUnicodeEvent", &RdpClient::write_unicode_event)
         .function("writeScancodeEvent", &RdpClient::write_scancode_event)
         .function("writeMouseEvent", &RdpClient::write_mouse_event)
+        .function("getInputFlags", &RdpClient::get_input_flags)
     ;
 }
