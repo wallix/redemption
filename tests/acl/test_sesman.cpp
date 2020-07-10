@@ -22,11 +22,13 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "acl/auth_api.hpp"
+#include "acl/sesman.hpp"
+#include "configs/config.hpp"
 
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
-    NullAuthentifier null;
+    Inifile ini;
+    Sesman sesman(ini);
 
-    RED_CHECK(&null != nullptr);
+    RED_CHECK(sesman.reports.empty());
 }

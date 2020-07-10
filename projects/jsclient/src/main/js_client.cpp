@@ -266,7 +266,7 @@ class RdpClient
     JsReportMessage report_message;
 
     Inifile ini;
-    SesmanInterface sesman;
+    Sesman sesman;
 
     JsRandom js_rand;
     LCGTime lcg_timeobj;
@@ -442,9 +442,9 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd_forwarder, events, sesman, gd, front, client_info,
+            trans, time_base, gd_forwarder, events, report_message, sesman, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, ChannelsAuthorizations("*", ""),
-            rdp_params, TLSClientParams{}, authentifier, report_message,
+            rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
 

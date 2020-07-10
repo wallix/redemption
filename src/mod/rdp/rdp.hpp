@@ -209,7 +209,7 @@ public:
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & gd_provider, EventContainer & events)
+    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & /*gd_provider*/, EventContainer & /*events*/)
     {}
 };
 #endif
@@ -1928,9 +1928,7 @@ class mod_rdp : public mod_api, public rdp_api
     GdProvider & gd_provider;
     EventContainer & events;
     ReportMessageApi & report_message;
-#ifndef __EMSCRIPTEN__
     AuthApi & sesman;
-#endif
 
 #ifndef __EMSCRIPTEN__
     int remoteapp_one_shot_bypass_window_legalnotice = 0;
@@ -2100,9 +2098,7 @@ public:
         , gd_provider(gd_provider)
         , events(events)
         , report_message(report_message)
-        #ifndef __EMSCRIPTEN__
         , sesman(sesman)
-        #endif
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         #ifndef __EMSCRIPTEN__
         , asynchronous_tasks(time_base, gd_provider, events)

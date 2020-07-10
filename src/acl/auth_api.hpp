@@ -70,4 +70,8 @@ struct NullAuthentifier : AuthApi
     void set_rd_shadow_invitation(uint32_t /*error_code*/, const char * /*error_message*/, const char * /*userdata*/, const char * /*id*/, const char * /*addr*/, uint16_t /*port*/) override {}
     void set_smartcard_login(const char * /*login*/) override {}
     void set_server_cert(std::string const& /*blob_str*/) override {}
+    void set_screen_info(ScreenInfo /*screen_info*/) override {}
+    void set_auth_info(std::string const& /*username*/, std::string const& /*domain*/, std::string const& /*password*/) override {}
+    void set_recording_started() override {}
+    void set_rt_ready() override {}
 };
