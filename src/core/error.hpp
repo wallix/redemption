@@ -225,7 +225,7 @@ inline const char * error_name(error_type id)
     }
 #undef MAKE_NAME
 #undef MAKE_NAME_V
-    return "ERR_COMPILER_ERROR";
+    return "COMPILER_ERROR";
 }
 
 
