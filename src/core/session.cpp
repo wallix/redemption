@@ -127,11 +127,7 @@ private:
                      TimeBase & time_base,
                      std::unique_ptr<AclSerializer> & acl_serial,
                      std::unique_ptr<Transport> & auth_trans,
-                     std::unique_ptr<SessionLogFile> & log_file,
-                     CryptoContext& cctx,
-                     Random& rnd,
-                     Inifile& ini,
-                     Fstat & fstat)
+                     Inifile& ini)
     {
         acl_serial = std::make_unique<AclSerializer>(ini, time_base);
 
@@ -147,11 +143,7 @@ private:
             ini.get<cfg::globals::authfile>().c_str(), 0,
             std::chrono::seconds(1), SocketTransport::Verbose::none);
 
-        log_file = std::make_unique<SessionLogFile>(cctx, rnd, fstat,
-                                   report_error_from_reporter(acl_serial.get()));
-
         acl_serial->set_auth_trans(auth_trans.get());
-        acl_serial->set_log_file(log_file.get());
         acl.set_acl_serial(acl_serial.get());
     }
 
@@ -292,7 +284,8 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool front_up_and_running(Acl & acl, CryptoContext & cctx, Inifile& ini,
+    bool front_up_and_running(Acl & acl, std::unique_ptr<SessionLogFile> & log_file,
+                              CryptoContext & cctx, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Sesman & sesman,
@@ -395,14 +388,8 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
-                            if (acl.acl_serial){
-                                cctx.set_master_key(ini.get<cfg::crypto::key0>());
-                                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-                                cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-
-                                acl.acl_serial->start_session_log();
-                            }
-                            sesman.new_remote_mod();
+                            log_file->start_session_log();
+                            sesman.set_connect_target();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
                         if (ini.get<cfg::globals::bogus_refresh_rect>() &&
@@ -438,20 +425,14 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
-                            if (acl.acl_serial){
-                                cctx.set_master_key(ini.get<cfg::crypto::key0>());
-                                cctx.set_hmac_key(ini.get<cfg::crypto::key1>());
-                                cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
-                                acl.acl_serial->start_session_log();
-                            }
-                            sesman.new_remote_mod();
+                            log_file->start_session_log();
+                            sesman.set_connect_target();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
 
                         ini.set<cfg::context::auth_error_message>("");
                     }
                     catch (...) {
-                        sesman.delete_remote_mod();
                         sesman.log6(LogId::SESSION_CREATION_FAILED, {});
                         throw;
                     }
@@ -647,7 +628,7 @@ public:
             ClientExecute rail_client_execute(time_base, events, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
-            ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini);
+            ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini, sesman);
             ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, sesman, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
@@ -817,20 +798,25 @@ public:
                     }
 
                     // propagate changes made in sesman structure to actual acl changes
-                    sesman.flush_acl();
                     sesman.flush_acl_report([&acl](std::string reason,std::string message)
                     {
                         acl.acl_serial->report(reason.c_str(), message.c_str());
                     });
-                    sesman.flush_acl_log6([&acl](LogId id, KVList kv_list)
+                    sesman.flush_acl_log6([&acl,&log_file](LogId id, KVList kv_list)
                     {
                         acl.acl_serial->log6(id, kv_list);
+                        log_file->log6(id, kv_list);
                     });
+                    sesman.flush_acl();
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
                         acl.acl_serial->remote_answer = false;
                         acl.acl_serial->send_acl_data();
                     }
+                    sesman.flush_acl_disconnect_target([&log_file]()
+                    {
+                        log_file->close_session_log();
+                    });
                 }
 
 
@@ -844,8 +830,10 @@ public:
                 {
                     if (acl.is_not_yet_connected()) {
                         try {
-                            this->connect_acl(acl, time_base, acl_serial, auth_trans, log_file,
-                                              cctx, rnd, ini, fstat);
+                            this->connect_acl(acl, time_base, acl_serial, auth_trans, ini);
+                            log_file = std::make_unique<SessionLogFile>(ini, time_base, cctx, rnd, fstat,
+                                       report_error_from_reporter(acl_serial.get()));
+
                         }
                         catch (...) {
                             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
@@ -904,7 +892,7 @@ public:
                             acl.keepalive.start(now.tv_sec);
                         }
 
-                        run_session = this->front_up_and_running(acl, cctx, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
+                        run_session = this->front_up_and_running(acl, log_file, cctx, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
                         run_session = false;

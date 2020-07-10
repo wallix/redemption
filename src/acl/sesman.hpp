@@ -33,6 +33,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
 #include "core/report_message_api.hpp"
+#include "acl/sesman.hpp"
 
 struct Sesman : public AuthApi, public ReportMessageApi
 {
@@ -123,21 +124,10 @@ struct Sesman : public AuthApi, public ReportMessageApi
         this->buffered_log_params.emplace_back(id, kv_list);
     }
 
-    void new_remote_mod()
+    void set_connect_target()
     {
-        LOG(LOG_INFO, "================ new_remote_mod()");
         this->session_log_is_open = true;
     }
-
-    void delete_remote_mod()
-    {
-        LOG(LOG_INFO, "================ delete_remote_mod()");
-//        if (this->acl_serial && this->session_log_is_open) {
-//            this->acl_serial->close_session_log();
-            this->session_log_is_open = false;
-//        }
-    }
-
 
     void set_server_cert(std::string const& blob_str) override
     {
@@ -245,7 +235,6 @@ struct Sesman : public AuthApi, public ReportMessageApi
         this->flush_acl_rd_shadow_invitation();
         this->flush_acl_native_session_id();
         this->flush_acl_pm_request();
-        this->flush_acl_disconnect_target();
         this->flush_acl_auth_error_message();
         this->flush_acl_auth_channel_target();
     }
@@ -260,6 +249,20 @@ struct Sesman : public AuthApi, public ReportMessageApi
             this->report_sent = true;
         }
     }
+
+    void flush_acl_disconnect_target(std::function<void(void)> close_log)
+    {
+        if (!this->disconnect_target_sent)
+        {
+            if (this->session_log_is_open){
+                close_log();
+                this->session_log_is_open = false;
+            }
+            this->ini.set_acl<cfg::context::module>("close");
+            this->disconnect_target_sent = true;
+        }
+    }
+
 
     void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> log6)
     {
@@ -388,16 +391,6 @@ private:
         if (!this->pm_request_sent){
             this->ini.set_acl<cfg::context::pm_request>(request);
             this->pm_request_sent = true;
-        }
-    }
-
-    void flush_acl_disconnect_target()
-    {
-        if (!this->disconnect_target_sent)
-        {
-            // Call disconnect_target >>> Show Close Box (with back to selector)
-            this->ini.set_acl<cfg::context::module>("close");
-            this->disconnect_target_sent = true;
         }
     }
 

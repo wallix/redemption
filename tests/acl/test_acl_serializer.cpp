@@ -75,9 +75,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
 
     ini.set<cfg::context::forcemodule>(true);
     RED_CHECK_NO_THROW(acl.send_acl_data());
@@ -91,9 +90,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     };
     ThrowTransport transexcpt;
     AclSerializer aclexcpt(ini, timebase);
-    SessionLogFile log_file_excpt(cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
+    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
     aclexcpt.set_auth_trans(&transexcpt);
-    aclexcpt.set_log_file(&log_file_excpt);
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
@@ -121,9 +119,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport trans(stream.get_produced_bytes());
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -160,9 +157,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
     AclSerializer aclexcpt(ini, timebase);
-    SessionLogFile log_file_excpt(cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
+    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
     aclexcpt.set_auth_trans(&transexcpt);
-    aclexcpt.set_log_file(&log_file_excpt);
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
@@ -185,9 +181,8 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 
     GeneratorTransport trans(s);
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -237,9 +232,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     init_keys(cctx);
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
@@ -284,9 +278,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
 
     std::string result(sz_string, 'a');
     RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
@@ -328,9 +321,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
 
     RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
 
@@ -353,9 +345,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 
     GeneratorTransport trans(s);
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
     acl.set_auth_trans(&trans);
-    acl.set_log_file(&log_file);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -404,16 +395,20 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     GeneratorTransport trans(""_av);
     AclSerializer acl_serial(ini, timebase);
-    SessionLogFile log_file(cctx, rnd, fstat, report_error_from_reporter(&acl_serial));
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl_serial));
     acl_serial.set_auth_trans(&trans);
-    acl_serial.set_log_file(&log_file);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
-    acl_serial.start_session_log();
+    log_file.start_session_log();
 
     {
         tu::log_buffered logbuf;
+
+        log_file.log6(LogId::INPUT_LANGUAGE, {
+            KVLog("identifier"_av,   "ident"_av),
+            KVLog("display_name"_av, "name"_av),
+        });
 
         acl_serial.log6(LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
@@ -428,6 +423,11 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     {
         tu::log_buffered logbuf;
+
+        log_file.log6(LogId::CONNECTION_FAILED, {
+            KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
+            KVLog("msg2"_av, "vnc"_av),
+        });
 
         acl_serial.log6(LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
@@ -449,13 +449,18 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
         });
+        log_file.log6(LogId::DRIVE_REDIRECTION_RENAME, {
+            KVLog("app"_av, "rdp"_av),
+            KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
+            KVLog("filePath"_av, "/dir/new_file.ext"_av),
+        });
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\nJan 01 1970 00:50:33 host message CEF:1|Wallix|Bastion|" VERSION "|15|DRIVE_REDIRECTION_RENAME|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 app=rdp oldFilePath=/dir/old_file.ext filePath=/dir/new_file.ext\n");
 
         RED_CHECK(logbuf.buf() == expected6);
     }
 
-    acl_serial.close_session_log();
+    log_file.close_session_log();
 
     RED_CHECK_FILE_CONTENTS(logfile,
         "1970-01-01 01:00:00 type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
@@ -475,7 +480,9 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     Fstat fstat;
     CryptoContext cctx;
     init_keys(cctx);
-    SessionLogFile log_file(cctx, rnd, fstat, ReportError([](Error e){
+    TimeBase timebase({0, 0});
+    Inifile ini;
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, ReportError([](Error e){
         RED_FAIL(e.errmsg());
         return e;
     }));
@@ -485,7 +492,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     log_file.open(filename, hashname, 0, logname);
     log_file.write_line(1512484183, cstr_array_view("test first"));
     log_file.write_line(1512484185, cstr_array_view("test second"));
-    log_file.close();
+    log_file.close_session_log();
 
     RED_CHECK_FILE_CONTENTS(filename,
         "2017-12-05 15:29:43 test first\n"

@@ -30,6 +30,7 @@
 #include "transport/socket_transport.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/timebase.hpp"
+#include "acl/session_logfile.hpp"
 
 #include <string>
 #include <chrono>
@@ -108,25 +109,6 @@ public:
 };
 
 
-class SessionLogFile
-{
-    OutCryptoTransport ct;
-
-public:
-    SessionLogFile(CryptoContext & cctx, Random & rnd, Fstat & fstat, ReportError report_error);
-
-    ~SessionLogFile();
-
-    void open(
-        std::string const& log_path, std::string const& hash_path,
-        int groupid, bytes_view derivator);
-
-    void close();
-
-    void write_line(std::time_t time, chars_view av);
-};
-
-
 class AclSerializer final : public ReportMessageApi
 {
 public:
@@ -136,7 +118,6 @@ public:
 private:
     TimeBase & timebase;
     char session_id[256];
-    SessionLogFile * log_file;
 
 private:
 public:
@@ -166,15 +147,10 @@ public:
     }
 
     void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
-    void set_log_file(SessionLogFile * log_file) { this->log_file = log_file; }
 
     void report(const char * reason, const char * message) override;
 
     void log6(LogId id, KVList kv_list) override;
-
-    void start_session_log();
-
-    void close_session_log();
 
     void in_items();
 

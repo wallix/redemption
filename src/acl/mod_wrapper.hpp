@@ -24,6 +24,7 @@
 #include "acl/gd_provider.hpp"
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
+#include "acl/session_logfile.hpp"
 #include "acl/time_before_closing.hpp"
 #include "configs/config.hpp"
 #include "core/callback_forwarder.hpp"
@@ -261,6 +262,7 @@ private:
     windowing_api* &winapi;
     private:
     Inifile & ini;
+    Sesman & sesman;
 
     std::string osd_message;
     Rect clip;
@@ -272,7 +274,7 @@ private:
     Keymap2 & keymap;
 
 public:
-    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
+    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini, Sesman & sesman)
     : callback(*this)
     , gfilter(graphics, callback, palette, Rect{})
     , g(gfilter)
@@ -281,6 +283,7 @@ public:
     , rail_client_execute(rail_client_execute)
     , winapi(winapi)
     , ini(ini)
+    , sesman(sesman)
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
     , keymap(keymap)
@@ -433,6 +436,15 @@ public:
 
     void set_mod(ModuleIndex next_state, ModPack mod_pack)
     {
+        // The end of session is done when existing RDP or VNC connected module
+        // The open counterpart is done before opening socket
+        if (next_state != this->current_mod){
+            if ((this->current_mod == MODULE_RDP)
+            ||  (this->current_mod == MODULE_VNC)){
+                sesman.set_disconnect_target();
+            }
+        }
+
         LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
             get_module_name(next_state),
             get_module_name(this->current_mod),

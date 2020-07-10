@@ -158,54 +158,6 @@ time_t Inactivity::get_inactivity_timeout()
     return this->inactivity_timeout;
 }
 
-
-SessionLogFile::SessionLogFile(CryptoContext & cctx, Random & rnd, Fstat & fstat, ReportError report_error)
-: ct(cctx, rnd, fstat, std::move(report_error))
-{}
-
-SessionLogFile::~SessionLogFile()
-{
-    try {
-        this->close();
-    }
-    catch (Error const& e) {
-        LOG(LOG_ERR, "~SessionLogFile: %s", e.errmsg());
-    }
-}
-
-void SessionLogFile::open(
-    std::string const& log_path, std::string const& hash_path,
-    int groupid, bytes_view derivator)
-{
-    assert(!this->ct.is_open());
-    this->ct.open(log_path.c_str(), hash_path.c_str(), groupid, -1, derivator);
-    // force to create the file
-    this->ct.send("", 0);
-}
-
-void SessionLogFile::close()
-{
-    if (this->ct.is_open()) {
-        uint8_t qhash[MD_HASH::DIGEST_LENGTH];
-        uint8_t fhash[MD_HASH::DIGEST_LENGTH];
-        this->ct.close(qhash, fhash);
-    }
-}
-
-void SessionLogFile::write_line(std::time_t time, chars_view av)
-{
-    assert(this->ct.is_open());
-
-    char mbstr[100];
-    auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&time));
-    if (len) {
-        this->ct.send(mbstr, len);
-    }
-
-    this->ct.send(av.data(), av.size());
-    this->ct.send("\n", 1);
-}
-
 namespace
 {
     enum {
@@ -402,7 +354,7 @@ void AclSerializer::log6(LogId id, KVList kv_list)
     buffer_info.reserve(kv_list.size() * 50 + 30);
 
     time_t const time_now = time.tv_sec;
-    this->log_file->write_line(time_now, log_format_set_info(buffer_info, id, kv_list));
+    log_format_set_info(buffer_info, id, kv_list);
 
     auto target_ip = [this]{
         char c = this->ini.get<cfg::context::target_host>()[0];
@@ -444,35 +396,6 @@ void AclSerializer::log6(LogId id, KVList kv_list)
 
         LOG_SIEM("%s", buffer_info);
     }
-}
-
-void AclSerializer::start_session_log()
-{
-    const int groupid = ini.get<cfg::video::capture_groupid>();
-    auto const& subdir = this->ini.get<cfg::capture::record_subdirectory>();
-    auto const& record_dir = this->ini.get<cfg::video::record_path>();
-    auto const& hash_dir = this->ini.get<cfg::video::hash_path>();
-    auto const& filebase = this->ini.get<cfg::capture::record_filebase>();
-
-    std::string record_path = str_concat(record_dir.as_string(), subdir, '/');
-    std::string hash_path = str_concat(hash_dir.as_string(), subdir, '/');
-
-    for (auto* s : {&record_path, &hash_path}) {
-        if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
-            LOG(LOG_ERR,
-                "AclSerializer::start_session_log: Failed to create directory: \"%s\"", *s);
-        }
-    }
-
-    std::string basename = str_concat(filebase, ".log");
-    record_path += basename;
-    hash_path += basename;
-    this->log_file->open(record_path, hash_path, groupid, /*derivator=*/basename);
-}
-
-void AclSerializer::close_session_log()
-{
-    this->log_file->close();
 }
 
 namespace
