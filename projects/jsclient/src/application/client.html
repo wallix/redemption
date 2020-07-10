@@ -11,7 +11,11 @@ form {
     margin-bottom: 2em
 }
 
-section {
+#login {
+    background: orange
+}
+
+#clip {
     background: cyan
 }
 
@@ -58,7 +62,7 @@ section {
     <form id="login" method="get" action="#">
         <fieldset>
             <legend>Identification</legend>
-            <label for="ws">url: <input type="url" id="ws" name="ws" value="ws://localhost:3390" placeholder="websocket"/></label>
+            <label for="url">url: <input type="url" id="url" name="url" value="ws://localhost:3390" placeholder="websocket"/></label>
             <label for="user">User: <input type="text" id="user" name="user" value="x" placeholder="Username"/></label>
             <label for="pass">Pass: <input type="text" id="pass" name="pass" value="x" placeholder="Password"/></label>
         </fieldset>
@@ -79,7 +83,8 @@ section {
         <fieldset>
             <legend>Others</legend>
             <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
-            <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea>
+            <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
+            <label for="useUnicode">unicode: <input type="checkbox" id="useUnicode" checked="1"/></label>
         </fieldset>
         <p>
             <input type="submit" value="New Connection"/>
@@ -88,36 +93,36 @@ section {
         </p>
     </form>
 
-    <hr/>
+    <div id="clip">
+        <div id="clipForms">
+            <form id="sendCbFile" method="get" action="#">
+                <fieldset>
+                    <legend>File Clipboard</legend>
+                    <input id="sendCbFile_data" name="myFile" type="file"/>
+                    <input type="submit" value="Send File"/>
+                </fieldset>
+            </form>
 
-    <div id="clipForms">
-        <form id="sendCbFile" method="get" action="#">
-            <fieldset>
-                <legend>File Clipboard</legend>
-                <input id="sendCbFile_data" name="myFile" type="file"/>
-                <input type="submit" value="Send File"/>
-            </fieldset>
-        </form>
+            <form id="sendCbUtf8" method="get" action="#">
+                <fieldset>
+                    <legend>Text Clipboard</legend>
+                    <textarea id="sendCbUtf8_data"></textarea>
+                    <input type="submit" value="Send Text"/>
+                </fieldset>
+            </form>
+        </div>
 
-        <form id="sendCbUtf8" method="get" action="#">
-            <fieldset>
-                <legend>Text Clipboard</legend>
-                <textarea id="sendCbUtf8_data"></textarea>
-                <input type="submit" value="Send Text"/>
-            </fieldset>
-        </form>
-    </div>
+        <hr/>
 
-    <hr/>
-
-    <div>
-        <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
-            <!-- <input type="submit" value="Send Clipboard"> -->
-            <textarea id="receiveCbUtf8_data"></textarea>
-        <!-- </form> -->
-        <p id="cbFmts"></p>
-        <p id="cbFiles"></p>
-        <a id="cbDownload"></a>
+        <div>
+            <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
+                <!-- <input type="submit" value="Send Clipboard"> -->
+                <textarea id="receiveCbUtf8_data"></textarea>
+            <!-- </form> -->
+            <p id="cbFmts"></p>
+            <p id="cbFiles"></p>
+            <a id="cbDownload"></a>
+        </div>
     </div>
 
 <section>
@@ -143,9 +148,10 @@ const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const disabled_graphics_input = document.getElementById('disabledGraphics');
 const verbose_input = document.getElementById('verbose');
+const useUnicode_input = document.getElementById('useUnicode');
 const jsonConfig_input = document.getElementById('jsonConfig');
 const pass_input = document.getElementById('pass');
-const ws_input = document.getElementById('ws');
+const url_input = document.getElementById('url');
 const height_input = document.getElementById('height');
 const width_input = document.getElementById('width');
 const bpp_input = document.getElementById('bpp');
@@ -195,13 +201,14 @@ const resizeCanvasBase = gd.resizeCanvas;
 
 function run(openCb, closeCb)
 {
-    const socket = new WebSocket(ws_input.value, "RDP");
+    const socket = new WebSocket(url_input.value, "RDP");
     socket.binaryType = 'arraybuffer';
 
     let rdpclient;
 
     let hWheelSupport = false;
     let MouseXSupport = false;
+    let onKeyEvent = unicodeKeyEvent;
 
     const sendData = function() {
         const out = rdpclient.getOutputData();
@@ -211,10 +218,10 @@ function run(openCb, closeCb)
         }
     };
 
-    function onKeyEvent(flag, evt)
+    function scancodeKeyEvent(flag, evt)
     {
         const scancode = toScancode(evt.code);
-        // console.log(flag, evt.key, evt.code, scancode)
+        // console.log(flag, evt.key, evt.code, scancode, evt.isComposing);
         if (scancode) {
             // switch (scancode) {
             // case 0x1d: // control left
@@ -241,6 +248,27 @@ function run(openCb, closeCb)
         // else {
         //     console.log(flag, evt.key, evt.keyCode)
         // }
+    }
+
+    function unicodeKeyEvent(flag, evt)
+    {
+        // console.log(flag, evt.key, evt.code);
+        if (evt.key === 'Dead') return;
+
+        evt.preventDefault();
+        evt.stopImmediatePropagation();
+
+        const scancode = unicodeScancodeTable[evt.code];
+        if (scancode) {
+            rdpclient.writeScancodeEvent(scancode | flag);
+        }
+        else {
+            const unicode = evt.key.codePointAt(0);
+            // console.log(evt.key, unicode);
+            rdpclient.writeUnicodeEvent(unicode, flag);
+        }
+
+        sendData();
     }
 
     function sendMouseEvent(evt, flags)
@@ -376,6 +404,9 @@ function run(openCb, closeCb)
         }
         hWheelSupport = Boolean(inputFlags & InputFlags.HorizontalWheel);
         MouseXSupport = Boolean(inputFlags & InputFlags.MouseX);
+        onKeyEvent = (inputFlags & InputFlags.Unicode) && useUnicode.checked
+            ? unicodeKeyEvent
+            : scancodeKeyEvent;
         canvasStopEvents();
         canvasStartEvents();
     }
@@ -484,38 +515,31 @@ function updatePermalink()
     permalink.href=newurl;
 }
 
+const identity = (x) => x;
+const isTrue = (x) => x === 'true';
+const number = (x) => Number(x) || 0;
 const inputs = {
-    user: user_input,
-    pass: pass_input,
-    ws: ws_input,
-    width: width_input,
-    height: height_input,
-    verbose: verbose_input,
-    config: jsonConfig_input,
+    user: [user_input, 'value', identity],
+    pass: [pass_input, 'value', identity],
+    url: [url_input, 'value', identity],
+    width: [width_input, 'value', number],
+    height: [height_input, 'value', number],
+    verbose: [verbose_input, 'value', number],
+    config: [jsonConfig_input, 'value', identity],
+    unicode: [useUnicode_input, 'checked', isTrue],
+    bpp: [bpp_input, 'selectedIndex', parseInt],
 };
 for (const k in inputs) {
-    const x = url.searchParams.get(k);
+    const d = inputs[k];
+    const input = d[0];
+    const mem = d[1];
+    const x = d[2](url.searchParams.get(k));
     if (x) {
-        inputs[k].value = x;
+        input[mem] = x;
     }
-    urlparams[k] = inputs[k].value;
-    inputs[k].addEventListener('input', (e) => {
-        urlparams[k] = inputs[k].value;
-        updatePermalink();
-    }, false);
-}
-
-const selects = {
-    bpp: bpp_input,
-};
-for (const k in selects) {
-    const x = parseInt(url.searchParams.get(k));
-    if (x >= 0) {
-        selects[k].selectedIndex = x;
-    }
-    urlparams[k] = x;
-    selects[k].addEventListener('input', (e) => {
-        urlparams[k] = selects[k].selectedIndex;
+    urlparams[k] = input[mem];
+    input.addEventListener('input', (e) => {
+        urlparams[k] = input[mem];
         updatePermalink();
     }, false);
 }
