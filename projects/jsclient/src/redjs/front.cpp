@@ -144,22 +144,12 @@ RED_JS_BINDING_CONSTANTS(
 
 // 2.2.8.1.1.3.1.1.1 Keyboard Event (TS_KEYBOARD_EVENT)
 RED_JS_BINDING_CONSTANTS(
-    SlowPathKbdFlags,
+    KbdFlags,
 
     (("Down",      0x4000))
     (("Release",   0x8000))
     (("Extended",  0x0100))
     (("Extended1", 0x0200))
-);
-
-// 2.2.8.1.2.2.1 Fast-Path Keyboard Event (TS_FP_KEYBOARD_EVENT)
-RED_JS_BINDING_CONSTANTS(
-    FastPathKbdFlags,
-
-    (("Down",      0x00))
-    (("Release",   0x01))
-    (("Extended",  0x02))
-    (("Extended1", 0x04))
 );
 
 // Unicode:
