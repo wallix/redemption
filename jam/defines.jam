@@ -74,7 +74,7 @@ rule defines ( properties * )
     defs += <define>CERTIF_PATH='\"$(CERT_PREFIX)\"' ;
     defs += <define>PERSISTENT_PATH='\"$(PERSISTENT_PATH)\"' ;
     defs += <define>DRIVE_REDIRECTION_PATH='\"$(DRIVE_REDIRECTION_PATH)\"' ;
-    defs += <define>PID_PATH='\"$(INSTALLDIR)$(PID_PATH)\"' ;
+    defs += <define>PID_PATH='\"$(PID_PATH)\"' ;
     return $(defs) ;
 }
 
