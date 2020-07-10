@@ -174,8 +174,10 @@ Module.log = function(priority, msg) {
     const logger = (priority === LogLevel.Info) ? console.log
                  : (priority === LogLevel.Warning) ? console.warn
                  : (priority === LogLevel.Error) ? console.error
-                 : (priority === LogLevel.Debug) ? console.debug
-                 : console.log;
+                 : (priority === LogLevel.Debug) ? (s) => {
+                    console.debug("%c%s", 'color:yellow', s)
+                 }
+                 : console.info;
     logger(msg);
 };
 
@@ -398,10 +400,13 @@ function run(openCb, closeCb)
 
     function updateInput() {
         const inputFlags = rdpclient.getInputFlags();
-        console.log(`inputFlags: 0x${inputFlags.toString(16)}`);
+        const keyboardLayout = rdpclient.getKeyboardLayout();
+        console.log(`keyboardLayout: 0x${keyboardLayout.toString(16)}`);
+        console.group(`inputFlags: 0x${inputFlags.toString(16)}`);
         for (const k in InputFlags) {
-            console.log(`   ${k}: ${(inputFlags & InputFlags[k]) ? 1 : 0} (0x${InputFlags[k].toString(16)})`);
+            console.log(`${k}: ${(inputFlags & InputFlags[k]) ? 1 : 0} (0x${InputFlags[k].toString(16)})`);
         }
+        console.groupEnd();
         hWheelSupport = Boolean(inputFlags & InputFlags.HorizontalWheel);
         MouseXSupport = Boolean(inputFlags & InputFlags.MouseX);
         onKeyEvent = (inputFlags & InputFlags.Unicode) && useUnicode.checked
@@ -437,7 +442,7 @@ function run(openCb, closeCb)
             verbose: Number(verbose_input.value) || 0/*0x04000000*/,
         }, JSON.parse(jsonConfig_input.value || '{}'));
 
-        console.log('RdpClient open', config);
+        console.table(config);
 
         rdpclient = new RdpClient(gd, config);
 

@@ -82,7 +82,7 @@ struct ClientInfo
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
     int build = 0;
-    int keylayout = 0;
+    uint32_t keylayout = 0;
     char username[257] = {0};
     char password[257] = {0};
     char domain[257] = {0};

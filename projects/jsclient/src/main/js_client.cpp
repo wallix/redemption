@@ -517,6 +517,11 @@ public:
     {
         return this->server_info.input_flags;
     }
+
+    uint32_t get_keyboard_layout() const
+    {
+        return this->server_info.keyboard_layout;
+    }
 };
 
 EMSCRIPTEN_BINDINGS(client)
@@ -543,5 +548,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("writeScancodeEvent", &RdpClient::write_scancode_event)
         .function("writeMouseEvent", &RdpClient::write_mouse_event)
         .function("getInputFlags", &RdpClient::get_input_flags)
+        .function("getKeyboardLayout", &RdpClient::get_keyboard_layout)
     ;
 }

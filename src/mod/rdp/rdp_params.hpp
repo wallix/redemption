@@ -201,6 +201,7 @@ struct ModRDPParams
     struct ServerInfo
     {
         uint16_t input_flags = 0;
+        uint32_t keyboard_layout = 0;
     };
 
     ServerInfo* server_info_ref = nullptr;

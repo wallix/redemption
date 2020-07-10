@@ -5367,6 +5367,7 @@ public:
                     (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
                 if (this->server_info_ref) {
                     this->server_info_ref->input_flags = input_caps.inputFlags;
+                    this->server_info_ref->keyboard_layout = input_caps.keyboardLayout;
                 }
             }
             break;

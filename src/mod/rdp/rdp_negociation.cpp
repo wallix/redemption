@@ -269,7 +269,7 @@ RdpNegociation::RdpNegociation(
     //  characters are both null terminators.
     SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
 
-    LOG(LOG_INFO, "Server key layout is %x", unsigned(this->keylayout));
+    LOG(LOG_INFO, "Server key layout is 0x%x", unsigned(this->keylayout));
 
     this->nego.set_identity(this->logon_info.username(),
                             this->logon_info.domain(),

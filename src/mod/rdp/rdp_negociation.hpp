@@ -125,7 +125,7 @@ private:
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t autoReconnectCookie[28] = { 0 };
 
-    const int keylayout;
+    const uint32_t keylayout;
 
     uint32_t server_public_key_len = 0;
     uint8_t client_crypt_random[512] {};
