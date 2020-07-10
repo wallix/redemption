@@ -260,14 +260,22 @@ function run(openCb, closeCb)
         evt.preventDefault();
         evt.stopImmediatePropagation();
 
-        const scancode = unicodeScancodeTable[evt.code];
-        if (scancode) {
-            rdpclient.writeScancodeEvent(scancode | flag);
+        if (evt.ctrlKey || evt.metaKey || evt.altKey) {
+            const scancode = toScancode(evt.code);
+            if (scancode) {
+                rdpclient.writeScancodeEvent(scancode | flag);
+            }
         }
         else {
-            const unicode = evt.key.codePointAt(0);
-            // console.log(evt.key, unicode);
-            rdpclient.writeUnicodeEvent(unicode, flag);
+            const scancode = unicodeScancodeTable[evt.code];
+            if (scancode) {
+                rdpclient.writeScancodeEvent(scancode | flag);
+            }
+            else {
+                const unicode = evt.key.codePointAt(0);
+                // console.log(evt.key, unicode);
+                rdpclient.writeUnicodeEvent(unicode, flag);
+            }
         }
 
         sendData();
