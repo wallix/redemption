@@ -84,6 +84,7 @@ section {
         <p>
             <input type="submit" value="New Connection"/>
             <button id="disconnect" type="button" disabled="disabled">Disconnect</button>
+            <a id="permalink" href="#">Permalink</a>
         </p>
     </form>
 
@@ -151,6 +152,7 @@ const bpp_input = document.getElementById('bpp');
 const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
+const permalink = document.getElementById('permalink');
 
 let _Module;
 WallixModule({
@@ -471,12 +473,24 @@ function run(openCb, closeCb)
 
 const url = new URL(window.location.href);
 
+urlparams = {};
+function updatePermalink()
+{
+    let newurl = url.href.substr(0, url.href.length-url.search.length);
+    newurl += '?';
+    for (const k in urlparams) {
+        newurl += `${k}=${urlparams[k]}&`;
+    }
+    permalink.href=newurl;
+}
+
 const inputs = {
     user: user_input,
     pass: pass_input,
     ws: ws_input,
     width: width_input,
     height: height_input,
+    verbose: verbose_input,
     config: jsonConfig_input,
 };
 for (const k in inputs) {
@@ -484,17 +498,26 @@ for (const k in inputs) {
     if (x) {
         inputs[k].value = x;
     }
+    urlparams[k] = inputs[k].value;
+    inputs[k].addEventListener('input', (e) => {
+        urlparams[k] = inputs[k].value;
+        updatePermalink();
+    }, false);
 }
 
 const selects = {
     bpp: bpp_input,
-    verbose: verbose_input,
 };
 for (const k in selects) {
     const x = parseInt(url.searchParams.get(k));
     if (x >= 0) {
         selects[k].selectedIndex = x;
     }
+    urlparams[k] = x;
+    selects[k].addEventListener('input', (e) => {
+        urlparams[k] = selects[k].selectedIndex;
+        updatePermalink();
+    }, false);
 }
 
 const selectFlags = {
@@ -522,7 +545,15 @@ for (const k in selectFlags) {
             opt.selected = true;
         }
     }
+
+    urlparams[k] = x;
+    select.addEventListener('input', (e) => {
+        urlparams[k] = MultiSelectToInt(select, flags);
+        updatePermalink();
+    }, false);
 }
+
+updatePermalink();
 
 
 gd.drawRect(0, 0, gd.width, gd.height, 0);
