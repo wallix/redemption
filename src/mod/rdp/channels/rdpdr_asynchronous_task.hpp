@@ -104,7 +104,7 @@ public:
     , verbose(verbose)
     {}
 
-    ~RdpdrDriveReadTask(){LOG(LOG_INFO, "Delete RdpdrDriveReadTask"); }
+    ~RdpdrDriveReadTask(){}
 
     Event configure_event(timeval now, void * lifespan) override
     {
@@ -183,7 +183,7 @@ public:
             this->to_server_sender(this->length, out_flags, out_stream.get_produced_bytes());
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
+            LOG_IF(bool(this->verbose & RDPVerbose::asynchronous_task), LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
             throw;
         }
         return (this->remaining_number_of_bytes_to_read != 0);
@@ -215,7 +215,7 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    ~RdpdrSendDriveIOResponseTask(){LOG(LOG_INFO, "Delete RdpdrSendDriveIOResponseTask"); }
+    ~RdpdrSendDriveIOResponseTask(){}
 
     Event configure_event(timeval now, void * lifespan) override
     {
@@ -295,7 +295,7 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    ~RdpdrSendClientMessageTask(){LOG(LOG_INFO, "Delete RdpdrSendClientMessageTask"); }
+    ~RdpdrSendClientMessageTask(){}
 
     Event configure_event(timeval now, void * lifespan) override
     {

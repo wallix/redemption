@@ -445,10 +445,10 @@ public:
             }
         }
 
-        LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
-            get_module_name(next_state),
-            get_module_name(this->current_mod),
-            mod_pack.psocket_transport);
+//        LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
+//            get_module_name(next_state),
+//            get_module_name(this->current_mod),
+//            mod_pack.psocket_transport);
 
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -460,6 +460,7 @@ public:
         this->current_mod = next_state;
         this->clear_osd_message();
 
+        this->remove_mod();
         this->modi = mod_pack.mod.get();
 
         this->rail_module_host_mod_ptr = mod_pack.rail_module_host_ptr;

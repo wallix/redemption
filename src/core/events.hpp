@@ -134,24 +134,23 @@ struct Sequencer {
     void operator()(Event & event){
         this->reset = false;
         if (this->current >= this->sequence.size()){
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence Terminated",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence Terminated",
                 event.name);
             event.garbage = true;
             return;
         }
         try {
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: %s",
-                event.name, sequence[this->current].label);
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: %s", event.name, sequence[this->current].label);
             sequence[this->current].action(event,*this);
         }
         catch(Error & error){
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence terminated on Exception %s",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence terminated on Exception %s",
                 event.name, error.errmsg());
             event.garbage = true;
             throw;
         }
         catch(...){
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence terminated on Exception",
+            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence terminated on Exception",
                 event.name);
             event.garbage = true;
             throw;
@@ -159,7 +158,7 @@ struct Sequencer {
         if (not this->reset){
             this->current++;
             if (this->current >= this->sequence.size()){
-                LOG_IF(this->verbose, LOG_INFO, "%s :=> on_event: Sequence Terminated On Last Item",
+                LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence Terminated On Last Item",
                     event.name);
                     event.garbage = true;
                 return;
@@ -176,7 +175,9 @@ struct Sequencer {
                 return;
             }
         }
-        LOG(LOG_ERR, "Sequence item %.*s not found", int(label.size()), label.data());
+        LOG(LOG_ERR, "Sequence item %.*s not found : ending sequencer", int(label.size()), label.data());
+        assert(false);
+        this->current = this->sequence.size();
     }
 };
 

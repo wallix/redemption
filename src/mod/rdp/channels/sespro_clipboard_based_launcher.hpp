@@ -103,7 +103,7 @@ public:
     , alternate_shell(alternate_shell)
     , time_base(time_base)
     , events(events)
-    , verbose(verbose|RDPVerbose::sesprobe_launcher)
+    , verbose(verbose)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
         this->params.long_delay_ms                     = std::max(this->params.long_delay_ms, std::chrono::milliseconds(500));
@@ -289,7 +289,7 @@ public:
             case State::WAIT:
             case State::STOP:
             default:
-                LOG(LOG_WARNING, "SessionProbeClipboardBasedLauncher::on_event: State=%d", this->state);
+                LOG(LOG_WARNING, "SessionProbeClipboardBasedLauncher::on_event: Unexpected State=%d", this->state);
                 assert(false);
             break;
         }   // switch (this->state)
@@ -505,8 +505,6 @@ public:
 
     void make_run_sequencer()
     {
-        LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher make_run_sequencer()");
-
         Sequencer chain = {false, 0, bool(this->verbose & RDPVerbose::sesprobe_launcher),
         {{ "Windows (down)",
             [this](Event&event,Sequencer&/*sequencer*/)
@@ -584,7 +582,6 @@ public:
             {
                 ++this->copy_paste_loop_counter;
                 if (!this->format_data_requested) {
-                    LOG(LOG_INFO, ":=> on_event: Back to begining of the sequence");
                     // Back to the beginning of the sequence
                     sequencer.next_state("Windows (down)");
                     event.alarm.set_timeout(event.alarm.now);

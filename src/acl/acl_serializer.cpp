@@ -542,7 +542,7 @@ namespace
             if (bool(this->verbose & Verbose::buffer)) {
                 LOG_IF(this->has_next_buffer,
                     LOG_INFO, "ACL SERIALIZER : multi buffer (receive)");
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %" PRIdPTR, this->e - this->p);
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size (receive) = %" PRIdPTR "(without header)", this->e - this->p);
             }
         }
     };

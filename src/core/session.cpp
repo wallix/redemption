@@ -149,8 +149,8 @@ private:
 
 private:
     int end_session_exception(Error const& e, Inifile & ini) {
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!! END SESSION EXCEPTION: %u: %s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-             e.id, error_name(e.id));
+//        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!! END SESSION EXCEPTION: %u: %s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+//             e.id, error_name(e.id));
 
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
@@ -282,8 +282,7 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool front_up_and_running(Acl & acl, std::unique_ptr<SessionLogFile> & log_file,
-                              CryptoContext & cctx, Inifile& ini,
+    bool front_up_and_running(Acl & acl, std::unique_ptr<SessionLogFile> & log_file, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Sesman & sesman,
@@ -363,7 +362,7 @@ private:
             {
                 auto & module_cstr = ini.get<cfg::context::module>();
                 auto next_state = get_module_id(module_cstr);
-                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(next_state));
+//                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(next_state));
 
                 switch (next_state){
                 case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
@@ -890,7 +889,7 @@ public:
                             acl.keepalive.start(now.tv_sec);
                         }
 
-                        run_session = this->front_up_and_running(acl, log_file, cctx, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
+                        run_session = this->front_up_and_running(acl, log_file, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
                         run_session = false;

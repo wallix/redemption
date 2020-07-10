@@ -24,7 +24,8 @@
 
 #include <string.h>
 #include <array>
-#include <utils/translation.hpp>
+#include "utils/translation.hpp"
+#include "utils/log.hpp"
 
 
 class EndSessionWarning
@@ -42,7 +43,8 @@ public:
     }
 
     std::string update_osd_state(Translation::language_t lang, time_t start_time, time_t end_time, time_t now) {
-        std::string out_msg; 
+        LOG(LOG_INFO, "Update OSD STATE");
+        std::string out_msg;
 
         if (this->osd_state == OSD_STATE_NOT_YET_COMPUTED) {
             this->osd_state = (
