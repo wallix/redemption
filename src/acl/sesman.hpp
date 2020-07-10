@@ -33,6 +33,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
 #include "core/report_message_api.hpp"
+#include <functional>
 
 struct Sesman : public AuthApi, public ReportMessageApi
 {
@@ -410,4 +411,3 @@ private:
     }
 
 };
-
