@@ -113,7 +113,6 @@ public:
         event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
         event.actions.on_action = [this](Event&event)
         {
-            LOG(LOG_INFO, "%s on_action", event.name);
             if (this->run()){
                 return;
             }
@@ -121,7 +120,6 @@ public:
         };
         event.actions.on_timeout = [this](Event&event)
         {
-            LOG(LOG_INFO, "%s on_timeout", event.name);
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
             event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
         };
@@ -225,7 +223,6 @@ public:
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
         event.actions.on_timeout = [this](Event&event)
         {
-            LOG(LOG_INFO, "%s on_timeout", event.name);
             if (this->run()){
                 event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
                 return;
@@ -306,7 +303,6 @@ public:
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
         event.actions.on_timeout = [this](Event&event)
         {
-            LOG(LOG_INFO, "%s on_timeout", event.name);
             this->run();
             event.teardown = true;
         };

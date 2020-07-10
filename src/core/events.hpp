@@ -108,7 +108,6 @@ struct Event {
         , name(name)
         , lifespan_handle(lifespan)
         {
-            LOG(LOG_INFO, "Creation of new event (%d): %s", this->id, this->name.c_str());
         }
 
     void rename(const std::string string)
@@ -167,12 +166,9 @@ struct Sequencer {
             }
         }
         this->reset = false;
-//        LOG_IF(this->verbose, LOG_INFO, "on_event: %s - Next sequence item: %s",
-//                event.name, this->sequence[this->current].label);
     }
 
     void next_state(std::string_view label){
-        LOG(LOG_ERR, "Moving to out of Sequence item %.*s", int(label.size()), label.data());
         for(size_t i = 0 ; i < this->sequence.size() ; i++){
             if (this->sequence[i].label == label){
                 this->reset = true;
@@ -216,49 +212,17 @@ struct EventContainer {
 
     void execute_events(const timeval tv, const std::function<bool(int fd)> & fn)
     {
-        if (this->queue.size() > 0){
-    //        LOG(LOG_INFO, "=== Execute  Loop ===");
-        }
-
         for (size_t i = 0 ; i < this->queue.size(); i++){
             auto & event = this->queue[i];
-    //        if (event.alarm.fd != -1){
-    //            LOG(LOG_INFO, "now=%d:%d Examining Fd Event (%d): %s (%d:%d) fd=%d TriggerTime=%d:%d grace_delay=%ld %s%s%s",
-    //                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
-    //                event.id, event.name.c_str(),
-    //                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
-    //                event.alarm.fd,
-    //                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
-    //                event.alarm.grace_delay.count(),
-    //                event.alarm.active?"active ":"",
-    //                event.teardown?"teardown ":"",
-    //                event.garbage?"garbage":""
-    //                );
-    //        }
-    //        else {
-    //            LOG(LOG_INFO, "now=%d:%d Examining Timeout Event (%d): %s (%d:%d) TriggerTime=%d:%d %s%s%s",
-    //                int(tv.tv_sec%1000),int(tv.tv_usec)/1000,
-    //                event.id, event.name.c_str(),
-    //                int(event.alarm.start_time.tv_sec%1000),int(event.alarm.start_time.tv_usec)/1000,
-    //                int(event.alarm.trigger_time.tv_sec%1000),int(event.alarm.trigger_time.tv_usec)/1000,
-    //                event.alarm.active?"active ":"",
-    //                event.teardown?"teardown ":"",
-    //                event.garbage?"garbage":""
-    //                );
-    //        }
-
             if (not (event.garbage or event.teardown)) {
                 if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
                     event.alarm.set_timeout(tv+event.alarm.grace_delay);
-    //                LOG(LOG_INFO, "Triggering Fd Event: %s", event.name);
                     event.exec_action();
-                    // Not testing timeout now as fd event was triggered
                     continue;
                 }
             }
             if (not (event.garbage or event.teardown)) {
                 if (event.alarm.trigger(tv)){
-    //                LOG(LOG_INFO, "Triggering Timeout Event: %s", event.name);
                     event.exec_timeout();
                 }
             }
@@ -283,7 +247,6 @@ struct EventContainer {
     void garbage_collector() {
         for (size_t i = 0; i < this->queue.size() ; i++){
             while ((i < this->queue.size()) && this->queue[i].garbage){
-                LOG(LOG_INFO, "Removing Event: %s", this->queue[i].name);
                 if (i < this->queue.size() -1){
                     this->queue[i] = std::move(this->queue.back());
                 }

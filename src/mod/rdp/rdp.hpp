@@ -150,18 +150,15 @@ public:
     explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events)
         : time_base(time_base), gd_provider(gd_provider), events(events)
     {
-        LOG(LOG_INFO, "New Asynchronous Task Container");
     }
 
     ~AsynchronousTaskContainer()
     {
-        LOG(LOG_INFO, "Delete Asynchronous Task Container");
         this->events.end_of_lifespan(this);
     }
 
     static void remover(AsynchronousTaskContainer * self, AsynchronousTask * task)
     {
-        LOG(LOG_INFO, "remover for task %p", task);
         (void)task;
         assert(task == self->tasks.front().get());
         self->tasks.pop_front();
@@ -2234,7 +2231,6 @@ public:
         event.actions.on_action = [this](Event&event)
         {
             try {
-                LOG(LOG_INFO, "%s on_action", event.name);
                 bool const negotiation_finished = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
                 // RdpNego::recv_next_data may reconnect and change fd if tls
@@ -2254,7 +2250,6 @@ public:
                     event.rename("First Incoming RDP PDU Event");
                     event.actions.on_action = [this](Event&event)
                     {
-                        LOG(LOG_INFO, "%s on_action", event.name);
                         auto & gd = this->gd_provider.get_graphics();
                         if (this->buf.remaining()){
                             this->draw_event(this->gd_provider.get_graphics());
@@ -2269,9 +2264,8 @@ public:
                         this->draw_event(gd);
 
                         event.rename("Incoming RDP PDU Event");
-                        event.actions.on_action = [this](Event&event)
+                        event.actions.on_action = [this](Event&/*event*/)
                         {
-                            LOG(LOG_INFO, "%s on_action", event.name);
                             auto & gd = this->gd_provider.get_graphics();
                             #ifndef __EMSCRIPTEN__
                             if (this->channels.remote_programs_session_manager) {
@@ -2291,9 +2285,7 @@ public:
         };
         event.actions.on_timeout = [this](Event&event)
         {
-            LOG(LOG_INFO, "%s on_timeout", event.name);
             try {
-                LOG(LOG_INFO, "%s on_timeout", event.name);
                 if (this->error_message) {
                     *this->error_message = "Logon timer expired!";
                 }

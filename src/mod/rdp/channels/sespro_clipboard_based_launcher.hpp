@@ -602,7 +602,6 @@ public:
             [this](Event&event,Sequencer&/*sequencer*/)
             {
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, SlowPath::KBDFLAGS_RELEASE, 28, 0/*param2*/);
-                LOG(LOG_INFO, "========= state changed to State::WAIT (%d) ====", this->state);
                 this->state = State::WAIT;
                 event.alarm.set_timeout(this->get_short_delay_timeout());
                 event.garbage = true;
@@ -629,7 +628,6 @@ public:
                     return (this->state < State::WAIT);
                 }
 
-                LOG(LOG_INFO, "========= state changed to State::DELAY (%d) ====", this->state);
                 this->state = State::DELAY;
 
                 make_delay_sequencer();
@@ -642,7 +640,6 @@ public:
             else if (this->delay_wainting_clipboard_response) {
                 this->delay_wainting_clipboard_response = false;
 
-                LOG(LOG_INFO, "========= state changed to State::RUN (%d) ====", this->state);
                 this->state = State::RUN;
 
                 make_run_sequencer();
@@ -659,7 +656,6 @@ public:
             return (this->state < State::WAIT);
         }
 
-        LOG(LOG_INFO, "========= state changed to State::RUN B (%d) ====", this->state);
         this->state = State::RUN;
 
         make_run_sequencer();
@@ -736,8 +732,6 @@ public:
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
             "SessionProbeClipboardBasedLauncher :=> stop");
-
-        LOG(LOG_INFO, "========= state changed to State::STOP (%d) ====", this->state);
 
         this->state = State::STOP;
         this->event_id = this->events.erase_event(this->event_id);

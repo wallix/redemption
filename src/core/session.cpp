@@ -236,8 +236,6 @@ private:
             LOG(LOG_INFO, "Closed because target Logon failed");
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
         }
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!XXXXXXX END SESSION EXCEPTION: %u: %s XXXXXXX!!!!!!!!!!!!!!!!!!!!!",
-                 e.id, error_name(e.id));
         return 1;
     }
 
@@ -365,7 +363,7 @@ private:
             {
                 auto & module_cstr = ini.get<cfg::context::module>();
                 auto next_state = get_module_id(module_cstr);
-//                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(next_state));
+                LOG(LOG_INFO, "----------> ACL next_module : %s %u <--------", module_cstr, unsigned(next_state));
 
                 switch (next_state){
                 case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
