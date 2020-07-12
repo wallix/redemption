@@ -39,13 +39,11 @@
 
 #include "test_only/check_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
-#include "test_only/acl/sesman_wrapper.hpp" // for InifileWrapper
 #include "test_only/core/font.hpp" // for global_font()
 #include "configs/config.hpp"
 #include "core/events.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/login_mod.hpp"
-#include "test_only/acl/sesman_wrapper.hpp" // for InifileWrapper
 #include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/client_info.hpp"
