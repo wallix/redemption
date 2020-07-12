@@ -40,7 +40,9 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
-#include "test_only/acl/sesman_wrapper.hpp"
+#include "acl/sesman.hpp"
+#include "configs/config.hpp"
+
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
@@ -134,8 +136,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
     EventContainer events;
-    SesmanWrapper sesman;
-
+    Inifile ini;
+    Sesman sesman(ini);
+    auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
@@ -145,8 +148,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     auto mod = new_mod_rdp(t, time_base, gd_provider,
         events,
         report_message, sesman,
-        front.gd(), front, info, sesman.redir_info(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, license_store, sesman.get_ini(), nullptr, nullptr, mod_rdp_factory);
+        front.gd(), front, info, redir_info, gen, timeobj,
+        channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);

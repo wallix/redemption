@@ -45,12 +45,13 @@
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "core/channels_authorizations.hpp"
-#include "acl/sesman.hpp"
 #include "acl/gd_provider.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
-#include "test_only/acl/sesman_wrapper.hpp"
+#include "acl/sesman.hpp"
+#include "configs/config.hpp"
+
 
 namespace dump2008 {
     #include "fixtures/dump_w2008.hpp"
@@ -160,7 +161,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    SesmanWrapper sesman;
+    Sesman sesman(ini);
 
 
     NullReportMessage report_message;
@@ -168,7 +169,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        time_base, events, sesman.get_sesman(), front_trans, gen1, ini , cctx,
+        time_base, events, sesman, front_trans, gen1, ini , cctx,
         report_message, fastpath_support);
     null_mod no_mod;
 
@@ -340,8 +341,8 @@ RED_AUTO_TEST_CASE(TestFront2)
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
-    SesmanWrapper sesman;
-    MyFront front(time_base, events, sesman.get_sesman(), front_trans, gen1, ini
+    Sesman sesman(ini);
+    MyFront front(time_base, events, sesman, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support);
     null_mod no_mod;
 

@@ -573,7 +573,6 @@ test-run tests/RAIL/test_client_execute :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/working_directory.o
@@ -707,7 +706,6 @@ test-run tests/acl/test_license_api :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -989,7 +987,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -1080,7 +1077,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -1146,7 +1142,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -2781,7 +2776,6 @@ test-run tests/front/test_front :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -3007,7 +3001,6 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4145,7 +4138,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4211,7 +4203,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -4402,7 +4393,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -4752,7 +4742,6 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -4813,7 +4802,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -4874,7 +4862,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/acl/sesman_wrapper.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/front_wrapper.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -5828,7 +5815,6 @@ obj src/utils/stacktrace.o : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOO
 obj src/utils/strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
-obj tests/includes/test_only/acl/sesman_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/acl/sesman_wrapper.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test_only/core/font.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/front_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/front_wrapper.cpp : $(CXXFLAGS_TEST) ;

@@ -46,7 +46,9 @@
 #include "test_only/core/font.hpp"
 #include "transport/socket_transport.hpp"
 #include <chrono>
-#include "test_only/acl/sesman_wrapper.hpp"
+#include "acl/sesman.hpp"
+#include "configs/config.hpp"
+
 
 //#define GENERATE_TESTING_DATA
 
@@ -274,7 +276,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
             EventContainer events;
-            SesmanWrapper sesman;
+            Sesman sesman(ini);
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
             ModRdpFactory mod_rdp_factory;
@@ -510,7 +512,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
             EventContainer events;
-            SesmanWrapper sesman;
+            Sesman sesman(ini);
 
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};

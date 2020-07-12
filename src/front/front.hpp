@@ -114,6 +114,7 @@
 
 #include "proxy_recorder/nego_server.hpp"
 #include "acl/sesman.hpp"
+#include "configs/config.hpp"
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 

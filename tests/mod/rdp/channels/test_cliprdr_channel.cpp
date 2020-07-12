@@ -37,7 +37,8 @@
 #include "acl/gd_provider.hpp"
 
 #include "./test_channel.hpp"
-#include "test_only/acl/sesman_wrapper.hpp"
+#include "configs/config.hpp"
+#include "acl/sesman.hpp"
 
 namespace
 {
@@ -141,7 +142,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToServerSender to_server_sender(t);
 
         TimeBase time_base({0,0});
-        SesmanWrapper sesman;
+        Inifile ini;
+        Sesman sesman(ini);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, time_base, events, gd_provider,
@@ -213,7 +215,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    SesmanWrapper sesman;
+    Inifile ini;
+    Sesman sesman(ini);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base, events, gd_provider,
@@ -835,6 +838,7 @@ namespace
                 MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
                 TimeBase & timebase,
+                Sesman & sesman,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
             : report_message(msg_comparator)
@@ -853,6 +857,7 @@ namespace
                     d.always_file_storage
                 }
             )
+            , sesman(sesman)
             {}
 
             bool dlp_message_accept(FileValidatorId id)
@@ -879,7 +884,7 @@ namespace
 
         private:
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-            SesmanWrapper sesman;
+            Sesman & sesman;
 
         public:
             void process_server_message(
@@ -985,7 +990,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
     ClipDataTest{false, true, true, false}
 })
 {
+    Inifile ini;
     TimeBase timebase({0,0});
+    Sesman sesman(ini);
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
@@ -993,6 +1000,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
         msg_comparator,
         fdx_ctx.get(),
         timebase,
+        sesman,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1188,6 +1196,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
 })
 {
     TimeBase timebase({0,0});
+    Inifile ini;
+    Sesman sesman(ini);
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
@@ -1195,6 +1205,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
         msg_comparator,
         fdx_ctx.get(),
         timebase,
+        sesman,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1640,6 +1651,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
 {
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
+    Inifile ini;
+    Sesman sesman(ini);
 
     bytes_view temp_av;
     MsgComparator msg_comparator;
@@ -1653,6 +1666,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         msg_comparator,
         fdx_ctx.get(),
         timebase,
+        sesman,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -2726,6 +2740,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     TimeBase timebase({0,0});
+    Inifile ini;
+    Sesman sesman(ini);
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 10;
@@ -2734,6 +2750,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
         msg_comparator,
         fdx_ctx.get(),
         timebase,
+        sesman,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 

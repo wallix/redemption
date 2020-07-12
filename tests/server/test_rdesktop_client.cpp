@@ -30,9 +30,9 @@
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
-#include "acl/sesman.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
+#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //#include "core/listen.hpp"
@@ -41,7 +41,6 @@
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
-#include "test_only/acl/sesman_wrapper.hpp"
 
 // Uncomment the code block below to generate testing data.
 //#include <netinet/tcp.h>
@@ -106,8 +105,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     NullReportMessage report_message;
     TimeBase time_base({0,0});
     EventContainer events;
-    SesmanWrapper sesman;
-    FrontWrapper front(time_base, events, sesman.get_sesman(), front_trans, gen, ini, cctx, report_message, fastpath_support);
+    Sesman sesman(ini);
+    FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 
