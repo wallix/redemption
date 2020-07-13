@@ -274,7 +274,10 @@ public:
 
     ~ModRDPWithSocketAndMetrics()
     {
-        log_proxy::target_disconnection(this->sesman.get_auth_error_message())
+//        log_proxy::target_disconnection(this->sesman.get_auth_error_message())
+//        this->mod_wrapper.set_mod_transport(nullptr);
+        log_proxy::target_disconnection(
+            this->ini.template get<cfg::context::auth_error_message>().c_str());
     }
 
     // from RdpInput

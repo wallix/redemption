@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <string_view>
+#include <string>
 
 struct AuthApi : noncopyable
 {
@@ -53,6 +54,8 @@ struct AuthApi : noncopyable
     virtual void set_auth_error_message(const char * error_message) = 0;
 
     virtual void set_auth_channel_target(const char * target) = 0;
+    
+    virtual std::string get_auth_error_message() = 0;
 
     virtual ~AuthApi() = default;
 
@@ -64,6 +67,7 @@ struct NullAuthentifier : AuthApi
     void set_pm_request(std::string_view /*request*/) override {}
     void set_disconnect_target() override {}
     void set_auth_error_message(const char * /*error_message*/) override {}
+    std::string get_auth_error_message() override { return ""; }
     void set_auth_channel_target(const char * /*target*/) override {}
     void set_native_session_id(unsigned int /*session_id*/) override {}
     void set_rd_shadow_available() override {}
