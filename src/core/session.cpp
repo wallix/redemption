@@ -343,9 +343,9 @@ private:
             break;
             case BACK_EVENT_STOP:
                 throw Error(ERR_UNEXPECTED);
-            }
+            } // switch (signal)
             return true;
-        }
+        } // acl ini changed_field_size
 
         if (acl.is_connected() && acl.acl_serial->remote_answer) {
             BackEvent_t signal = mod_wrapper.get_mod_signal();
@@ -355,7 +355,7 @@ private:
             default:
             case BACK_EVENT_NONE:
                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-            return true;
+            break;
             case BACK_EVENT_NEXT:
             {
                 auto & module_cstr = ini.get<cfg::context::module>();
@@ -365,8 +365,8 @@ private:
                 {
                     acl.acl_serial->remote_answer = false;
                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
-                }
-                return true;
+                } // case next_state == MODULE_TRANSITORY  in switch (next_state) 
+                break;
                 case MODULE_RDP:
                 {
                     if (mod_wrapper.is_connected()) {
@@ -384,9 +384,9 @@ private:
                             sesman.set_connect_target();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                        if (ini.get<cfg::globals::bogus_refresh_rect>() &&
-                            ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                            (front.client_info.cs_monitor.monitorCount > 1)) {
+                        if (ini.get<cfg::globals::bogus_refresh_rect>() 
+                        && ini.get<cfg::globals::allow_using_multiple_monitors>() 
+                        && (front.client_info.cs_monitor.monitorCount > 1)) {
                             mod_wrapper.get_mod()->rdp_suppress_display_updates();
                             mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
                                 front.client_info.screen_info.width, front.client_info.screen_info.height);
@@ -398,10 +398,9 @@ private:
                     catch (...) {
                         sesman.log6(LogId::SESSION_CREATION_FAILED, {});
                         front.must_be_stop_capture();
-
                         throw;
                     }
-                }
+                } // case next_state == MODULE_RDP  in switch (next_state) 
                 break;
                 case MODULE_VNC:
                 {
@@ -429,7 +428,7 @@ private:
                         throw;
                     }
 
-                }
+                } // case next_state == MODULE_VNC  in switch (next_state) 
                 break;
                 case MODULE_INTERNAL:
                 {
@@ -438,7 +437,7 @@ private:
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
                     this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                }
+                } // case next_state == MODULE_INTERNAL  in switch (next_state) 
                 break;
                 case MODULE_UNKNOWN:
                     throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
@@ -461,12 +460,13 @@ private:
                         break;
                     }
                     this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                }
-                }
-            }
-            return true;
-            }
+                } // case default in switch (next_state) 
+                } // switch (next_state)
+            } // case BACK_EVENT_NEXT in switch(signal)
+            break;
+            } // switch(signal)
 
+            return true;
             if (!ini.get<cfg::context::disconnect_reason>().empty()) {
                 acl.manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
                 ini.set<cfg::context::disconnect_reason>("");

@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 
     Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
-    InifileWrapper ini;
+    Inifile ini;
 
     Inifile ini2;
     ini2.set<cfg::context::auth_error_message>("toto");
@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     RED_CHECK(ini2.get<cfg::context::auth_error_message>().empty());
 
     {
-        CloseMod d("message", ini.get_ini(), time_base, events, gd_forwarder, front,
+        CloseMod d("message", ini, time_base, events, gd_forwarder, front,
             screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
             glyphs, theme, false);
         d.init();
@@ -157,8 +157,8 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
 
     Font glyphs = Font(app_path(AppPath::DefaultFontFile), false);
 
-    InifileWrapper ini;
-    CloseMod d("message", ini.get_ini(), time_base, events, gd_forwarder, front,
+    Inifile ini;
+    CloseMod d("message", ini, time_base, events, gd_forwarder, front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         glyphs, theme, true);
     d.init();
