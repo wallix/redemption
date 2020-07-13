@@ -72,9 +72,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
 
     _canvas.imageSmoothingEnabled = false;
 
-    const unsupportedRop = ropError || function(cmd, rop) {
-        err(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
-    };
+    const unsupportedRop = ropError;
 
     const _transformImage2 = function(dstImg, srcImg, sx, sy, x, y, f) {
         const destU32a = new Uint32Array(dstImg.data.buffer);
@@ -484,6 +482,183 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
     };
 };
 
+const newRdpGL = function(canvasElement, module, ropError) {
+    let _width = canvasElement.width;
+    let _height = canvasElement.height;
+
+    const unsupportedRop = ropError;
+
+    const glOptions = {
+        preserveDrawingBuffer: true,
+        antialias: false,
+        alpha: false,
+    };
+    const gl = canvasElement.getContext('webgl', glOptions)
+            || canvasElement.getContext('webgl-expirimental', glOptions);
+
+    const compileShader = function(code, type) {
+        const shader = gl.createShader(type);
+
+        gl.shaderSource(shader, code);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.error(`Error compiling ${type === gl.VERTEX_SHADER ? "vertex" : "fragment"} shader:`);
+            console.error(gl.getShaderInfoLog(shader));
+            throw new Error(gl.getError());
+        }
+        return shader;
+    };
+
+    const shaderProgram = gl.createProgram();
+
+    const fragmentShader = {
+        type: gl.FRAGMENT_SHADER,
+        initialized: false,
+        shader: undefined,
+        code: `
+            // precision highp float;
+            precision mediump float;
+
+            uniform vec3 uColor;
+
+            void main() {
+                gl_FragColor = vec4(uColor.x, uColor.y, uColor.z, 1.0);
+            }`
+    };
+
+    const vertexShader = {
+        type: gl.VERTEX_SHADER,
+        initialized: false,
+        shader: undefined,
+        code: '',
+    };
+
+    const updateVertexShaderCode = function() {
+        vertexShader.initialized = false;
+        vertexShader.code = `
+            attribute vec2 aVertexPosition;
+
+            void main() {
+                vec2 transform
+                    = (aVertexPosition + vec2(-${_width/2}, -${_height/2}))
+                    * vec2(1.0, -${_width/_height})
+                ;
+                gl_Position = vec4(transform, 0.0, ${_width/2});
+            }`
+        ;
+    };
+
+
+    const buildShaderProgram = function() {
+        let recomp = false;
+        for (const desc of [vertexShader, fragmentShader]) {
+            if (desc.initialized) {
+                continue;
+            }
+            desc.initialized = true;
+            recomp = true;
+            const shader = compileShader(desc.code, desc.type);
+            if (shader) {
+                if (desc.shader) {
+                    gl.detachShader(shaderProgram, desc.shader);
+                }
+                gl.attachShader(shaderProgram, shader);
+                desc.shader = shader;
+            }
+        }
+
+        if (recomp) {
+            gl.linkProgram(shaderProgram);
+
+            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                console.error("Error linking shader program:");
+                console.error(gl.getProgramInfoLog(shaderProgram));
+                throw new Error(gl.getError());
+            }
+        }
+    };
+
+    let vertexBuffer;
+
+    const initShaders = function(){
+        updateVertexShaderCode();
+        buildShaderProgram();
+
+        gl.viewport(0, 0, _width, _height);
+        gl.clearColor(.0, .0, .0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(shaderProgram);
+    };
+
+    initShaders();
+    vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+
+    const drawRect = function(x, y, w, h, color) {
+        // console.log('drawRect');
+        const vertex = [
+            x+w,y, x,y+h, x,y,
+            x+w,y, x,y+h, x+w,y+h
+        ];
+
+        let vertexArray = new Float32Array(vertex);
+        gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
+
+        const vertexNumComponents = 2;
+        const vertexCount = vertexArray.length / vertexNumComponents;
+
+        const aVertexPosition = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+
+        gl.enableVertexAttribArray(aVertexPosition);
+        gl.vertexAttribPointer(aVertexPosition, vertexNumComponents, gl.FLOAT, false, 0, 0);
+
+        const red   = ((color >> 16) & 0xff) / 255.;
+        const green = ((color >> 8 ) & 0xff) / 255.;
+        const blue  = ((color      ) & 0xff) / 255.;
+
+        const uColor = gl.getUniformLocation(shaderProgram, "uColor");
+
+        gl.uniform3fv(uColor, [red, green, blue]);
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+    };
+
+    return {
+        get width() { return _width; },
+        get height() { return _height; },
+
+        delete() {
+            gl.deleteProgram(shaderProgram);
+        },
+
+        frameMarker: function(isFrameStart) {
+        },
+
+        drawRect: drawRect,
+
+        // mendatory for drawRect
+        drawPatBlt: function(...args) {},
+
+        resizeCanvas: function(w, h, bpp) {
+            console.log('RdpGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
+            if (_width != w || _height != h) {
+                canvasElement.width = _width = w;
+                canvasElement.height = _height = h;
+                updateVertexShaderCode();
+                initShaders();
+            }
+            drawRect(0, 0, w, h, 0);
+        },
+
+        drawImage: function(...args) {
+            console.log('img')
+        },
+    };
+};
+
 const createCtx = function(...contexts) {
     const deleters = [];
     for (const ctx of contexts) {
@@ -502,16 +677,22 @@ const createCtx = function(...contexts) {
     const ret = Object.assign(...contexts);
     ret.delete = deleter;
     return ret;
-}
+};
 
 const newRdpGraphics = function(canvasElement, module, ropError) {
-    return createCtx(newRdpCanvas(canvasElement, module, ropError),
+    ropError = ropError || function(cmd, rop) {
+        err(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
+    };
+    // return createCtx(newRdpCanvas(canvasElement, module, ropError),
+    //                  newRdpPointer(canvasElement, module));
+    return createCtx(newRdpGL(canvasElement, module, ropError),
                      newRdpPointer(canvasElement, module));
 };
 
 try {
     module.exports.newRdpGraphics = newRdpGraphics;
     module.exports.newRdpCanvas = newRdpCanvas;
+    module.exports.newRdpGL = newRdpGL;
     module.exports.newRdpPointer = newRdpPointer;
 }
 catch (e) {

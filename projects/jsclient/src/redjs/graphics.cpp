@@ -184,17 +184,18 @@ PrimaryDrawingOrdersSupport Graphics::get_supported_orders() const
         supported |= !!callbacks[name] ? f : PrimaryDrawingOrdersSupport{};
     };
 
-    supported |= PrimaryDrawingOrdersSupport{}
-        | TS_NEG_OPAQUERECT_INDEX       // mendatory support
-        | TS_NEG_MULTIOPAQUERECT_INDEX; // based on opaque rect
-
     set(jsnames::draw_scr_blt, PrimaryDrawingOrdersSupport{}
         | TS_NEG_SCRBLT_INDEX
         | TS_NEG_MULTISCRBLT_INDEX);
 
+    // enable draw_rect and draw_pat_blt
     set(jsnames::draw_pat_blt, PrimaryDrawingOrdersSupport{}
         | TS_NEG_PATBLT_INDEX
         | TS_NEG_MULTIPATBLT_INDEX);
+
+    set(jsnames::draw_rect, PrimaryDrawingOrdersSupport{}
+        // OpaqueRect depends of PatBlt
+        | TS_NEG_MULTIOPAQUERECT_INDEX);
 
     set(jsnames::draw_dest_blt, PrimaryDrawingOrdersSupport{}
         | TS_NEG_DSTBLT_INDEX
@@ -375,17 +376,20 @@ void Graphics::set_bmp_cache_entries(std::array<CacheEntry, 3> const & cache_ent
     this->image_data_index[1] = cache_entries[0].nb_entries;
     this->image_data_index[2] = this->image_data_index[1] + cache_entries[1].nb_entries;
 
-    emval_call(this->callbacks, jsnames::set_bmp_cache_entries,
-        cache_entries[0].nb_entries,
-        cache_entries[0].bmp_size,
-        cache_entries[0].is_persistent,
-        cache_entries[1].nb_entries,
-        cache_entries[1].bmp_size,
-        cache_entries[1].is_persistent,
-        cache_entries[2].nb_entries,
-        cache_entries[2].bmp_size,
-        cache_entries[2].is_persistent
-    );
+    auto f = this->callbacks[jsnames::set_bmp_cache_entries];
+    if (!!f) {
+        f(
+            cache_entries[0].nb_entries,
+            cache_entries[0].bmp_size,
+            cache_entries[0].is_persistent,
+            cache_entries[1].nb_entries,
+            cache_entries[1].bmp_size,
+            cache_entries[1].is_persistent,
+            cache_entries[2].nb_entries,
+            cache_entries[2].bmp_size,
+            cache_entries[2].is_persistent
+        );
+    }
 }
 
 void Graphics::draw(RDPBmpCache const & cmd)
