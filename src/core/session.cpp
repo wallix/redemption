@@ -289,7 +289,7 @@ private:
                               ClientExecute & rail_client_execute)
     {
         // There are modified fields to send to sesman
-        BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
+        BackEvent_t signal = mod_wrapper.get_mod_signal();
         if (signal == BACK_EVENT_STOP){
             LOG(LOG_INFO, "Stop signal sent by close box");
             return false;
@@ -301,7 +301,6 @@ private:
                     sesman.set_disconnect_target();
                     acl.acl_serial->remote_answer = false;
                     acl.acl_serial->send_acl_data();
-                    mod_wrapper.remove_mod();
                     rail_client_execute.enable_remote_program(front.client_info.remote_program);
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                     auto next_state = MODULE_INTERNAL_TRANSITION;
@@ -330,7 +329,6 @@ private:
             {
                 acl.acl_serial->remote_answer = false;
                 acl.acl_serial->send_acl_data();
-                mod_wrapper.remove_mod();
                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 auto next_state = MODULE_INTERNAL_TRANSITION;
@@ -350,7 +348,7 @@ private:
         }
 
         if (acl.is_connected() && acl.acl_serial->remote_answer) {
-            BackEvent_t signal = mod_wrapper.get_mod()->get_mod_signal();
+            BackEvent_t signal = mod_wrapper.get_mod_signal();
             acl.acl_serial->remote_answer = false;
 
             switch (signal){
@@ -905,7 +903,6 @@ public:
                         case 2: // TODO: should we put some counter to avoid retrying indefinitely?
                             LOG(LOG_INFO, "Retry RDP");
                             acl.acl_serial->remote_answer = false;
-                            mod_wrapper.remove_mod();
 
                             rail_client_execute.enable_remote_program(front.client_info.remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
@@ -943,9 +940,7 @@ public:
                 } // switch front_state
             } // loop
 
-            if (mod_wrapper.get_mod()) {
-                mod_wrapper.get_mod()->disconnect();
-            }
+            mod_wrapper.disconnect();
             front.disconnect();
         }
         catch (Error const& e) {

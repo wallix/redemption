@@ -412,6 +412,11 @@ public:
         return this->modi;
     }
 
+    BackEvent_t get_mod_signal()
+    {
+        return this->get_mod()->get_mod_signal();
+    }
+
     void remove_mod()
     {
         if (this->modi != &this->no_mod){
@@ -654,7 +659,14 @@ public:
 
     void disconnect()
     {
-        this->get_mod()->disconnect();
+        if (this->modi != &this->no_mod) {
+            try {
+                this->get_mod()->disconnect();
+            }
+            catch (Error const& e) {
+                LOG(LOG_ERR, "disconnect raised exception", e.id);
+            }
+        }
     }
 
     [[nodiscard]] Dimension get_dim() const
