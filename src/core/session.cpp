@@ -149,8 +149,9 @@ private:
 
 private:
     int end_session_exception(Error const& e, Inifile & ini) {
-//        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!! END SESSION EXCEPTION: %u: %s !!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
-//             e.id, error_name(e.id));
+        if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
+            return 1;
+        }
 
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
@@ -170,14 +171,8 @@ private:
                 ini.set<cfg::mod_rdp::enable_session_probe>(false);
                 return 2;
             }
-            if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
-                this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-                return 1;
-            }
-            else {
-                ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
-                return 1;
-            }
+            this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
+            return 1;
         }
         else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
             LOG(LOG_INFO, "Retry Session Probe Disconnection Reconnection");
@@ -200,9 +195,7 @@ private:
             }
             else {
                 LOG(LOG_ERR, "Start Session Failed: forbidden redirection = %s", e.errmsg());
-                if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
-                    this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-                }
+                this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
                 return 1;
             }
         }
@@ -232,10 +225,7 @@ private:
             LOG(LOG_INFO, "Acl confirmed user close");
             return 1;
         }
-        if (ERR_RAIL_LOGON_FAILED_OR_WARNING != e.id) {
-            LOG(LOG_INFO, "Closed because target Logon failed");
-            this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-        }
+        this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
         return 1;
     }
 
