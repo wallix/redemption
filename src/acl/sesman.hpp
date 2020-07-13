@@ -203,6 +203,12 @@ struct Sesman : public AuthApi, public ReportMessageApi
         this->disconnect_target_sent = false;
     }
 
+    std::string get_auth_error_message(const char * error_message) override
+    {
+        return this->auth_error_message;
+    }
+
+
     void set_auth_error_message(const char * error_message) override
     {
         this->auth_error_message = error_message;

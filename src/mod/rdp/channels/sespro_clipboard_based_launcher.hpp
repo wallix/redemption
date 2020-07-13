@@ -498,7 +498,6 @@ public:
         this->event_id = this->events.erase_event(this->event_id);
         this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
-        chain.verbose = true; // bool(this->verbose & RDPVerbose::sesprobe_launcher);
         event.actions.on_timeout = std::move(chain);
         this->events.add(std::move(event));
     }
@@ -609,7 +608,6 @@ public:
         this->event_id = this->events.erase_event(this->event_id);
         this->event_id = event.id;
         event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
-        chain.verbose = true; //bool(this->verbose & RDPVerbose::sesprobe_launcher);
         event.actions.on_timeout = std::move(chain);
         this->events.add(std::move(event));
     }
