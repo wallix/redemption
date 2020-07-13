@@ -486,6 +486,8 @@ const newRdpGL = function(canvasElement, module, ropError) {
     let _width = canvasElement.width;
     let _height = canvasElement.height;
 
+    const _buffer = module.HEAPU8.buffer;
+
     const unsupportedRop = ropError;
 
     const glOptions = {
@@ -494,7 +496,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
         alpha: false,
     };
     const gl = canvasElement.getContext('webgl', glOptions)
-            || canvasElement.getContext('webgl-expirimental', glOptions);
+            || canvasElement.getContext('experimental-webgl', glOptions);
 
     const compileShader = function(code, type) {
         const shader = gl.createShader(type);
@@ -653,8 +655,115 @@ const newRdpGL = function(canvasElement, module, ropError) {
             drawRect(0, 0, w, h, 0);
         },
 
-        drawImage: function(...args) {
-            console.log('img')
+        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, x, y, ...args) {
+            // console.log('img');
+            const bufLen = w*h*4;
+            const pbuf = module._malloc(bufLen);
+            module.loadRgbaImageFromIndex(pbuf, byteOffset, bitsPerPixel, w, h, lineSize);
+            const img = new Uint8Array(_buffer, pbuf, bufLen);
+
+            // const texture = gl.createTexture();
+            // gl.bindTexture(gl.TEXTURE_2D, texture);
+            // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+            // create shaders
+            var vertexShaderSrc =
+            "attribute vec2 aVertex;" +
+            "attribute vec2 aUV;" +
+            "varying vec2 vTex;" +
+            "uniform vec2 pos;" +
+            "void main(void) {" +
+            `  gl_Position = vec4((aVertex + vec2(-${_width/2}, -${_height/2}))
+                    * vec2(1.0, -${_width/_height}), 0.0, ${_width/2});` +
+            "  vTex = aUV;" +
+            "}";
+
+            var fragmentShaderSrc =
+            "precision highp float;" +
+            "varying vec2 vTex;" +
+            "uniform sampler2D sampler0;" +
+            "void main(void){" +
+            "  gl_FragColor = texture2D(sampler0, vTex);"+
+            "}";
+
+            var vertShaderObj = gl.createShader(gl.VERTEX_SHADER);
+            var fragShaderObj = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(vertShaderObj, vertexShaderSrc);
+            gl.shaderSource(fragShaderObj, fragmentShaderSrc);
+            gl.compileShader(vertShaderObj);
+            gl.compileShader(fragShaderObj);
+
+            var progObj = gl.createProgram();
+            gl.attachShader(progObj, vertShaderObj);
+            gl.attachShader(progObj, fragShaderObj);
+
+            gl.linkProgram(progObj);
+            gl.useProgram(progObj);
+
+            vertexBuff = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            // -1, 1, -1, -1, 1, -1, 1, 1
+            // x,y, x+w,y, x,y+h, x+w,y+h
+            x,y+h, x,y, x+w,y, x+w,y+h]), gl.STATIC_DRAW);
+
+            texBuff = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, texBuff);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1, 0, 0, 1, 0, 1, 1]), gl.STATIC_DRAW);
+
+            vloc = gl.getAttribLocation(progObj, "aVertex");
+            tloc = gl.getAttribLocation(progObj, "aUV");
+            uLoc = gl.getUniformLocation(progObj, "pos");
+
+            tex = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+            gl.enableVertexAttribArray(vloc);
+            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
+            gl.vertexAttribPointer(vloc, 2, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(tloc);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texBuff);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.vertexAttribPointer(tloc, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniform2fv(uLoc, [x,y]);
+
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+
+
+            gl.deleteProgram(progObj);
+
+
+
+            // function isPowerOf2(value) {
+            //     return (value & (value - 1)) == 0;
+            // }
+            //
+            // // WebGL1 has different requirements for power of 2 images
+            // // vs non power of 2 images so check if the image is a
+            // // power of 2 in both dimensions.
+            // if (isPowerOf2(w) && isPowerOf2(h)) {
+            // // Yes, it's a power of 2. Generate mips.
+            //     gl.generateMipmap(gl.TEXTURE_2D);
+            // } else {
+            //     // No, it's not a power of 2. Turn of mips and set
+            //     // wrapping to clamp to edge
+            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            // }
+            //
+            // gl.bindTexture(gl.TEXTURE_2D, null);
+
+            module._free(pbuf);
         },
     };
 };
