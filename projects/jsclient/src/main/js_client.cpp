@@ -25,7 +25,6 @@ Author(s): Jonathan Poelen
 #include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "acl/license_api.hpp"
-#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
@@ -212,17 +211,6 @@ namespace
 
 class RdpClient
 {
-    struct JsReportMessage : ReportMessageApi
-    {
-        void report(const char * reason, const char * message) override
-        {
-            LOG(LOG_NOTICE, "RdpClient: %s: %s", reason, message);
-        }
-
-        void log6(LogId /*id*/, KVList /*kv_list*/) override
-        {}
-    };
-
     struct JsRandom : Random
     {
         static constexpr char const* get_random_values = "getRandomValues";
@@ -242,12 +230,20 @@ class RdpClient
         emscripten::val crypto;
     };
 
-    struct JsAuth : NullAuthentifier
+    struct JsReportMessage : NullReportMessage
     {
         void set_auth_error_message(const char * error_message) override
         {
             LOG(LOG_ERR, "RdpClient: %s", error_message);
         }
+
+        void report(const char * reason, const char * message) override
+        {
+            LOG(LOG_NOTICE, "RdpClient: %s: %s", reason, message);
+        }
+
+        // void log6(LogId /*id*/, KVList /*kv_list*/) override
+        // {}
     };
     TimeBase time_base;
     EventContainer events;
@@ -263,14 +259,11 @@ class RdpClient
     gdi::GraphicApi& gd;
     GdForwarder gd_forwarder{gd};
 
-    JsReportMessage report_message;
-
     Inifile ini;
-    Sesman sesman;
 
     JsRandom js_rand;
     LCGTime lcg_timeobj;
-    JsAuth authentifier;
+    JsReportMessage report_message;
     NullLicenseStore license_store;
     RedirectionInfo redir_info;
 
@@ -305,7 +298,6 @@ public:
     }())
     , front(std::move(graphics), screen_info.width, screen_info.height, verbose)
     , gd(front.graphic_api())
-    , sesman(ini)
     , js_rand(config)
     {
         using namespace std::chrono_literals;
@@ -442,7 +434,8 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd_forwarder, events, report_message, sesman, gd, front, client_info,
+            trans, time_base, gd_forwarder, events, report_message, report_message,
+            gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);

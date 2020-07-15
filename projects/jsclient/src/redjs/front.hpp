@@ -70,6 +70,16 @@ public:
 
     gdi::GraphicApi& graphic_api() noexcept { return this->gd; }
 
+    void session_update(timeval now, LogId id, KVList kv_list) override
+    {
+        (void)now;
+        (void)id;
+        (void)kv_list;
+    }
+
+    void possible_active_window_change() override
+    {}
+
 private:
     Graphics gd;
     RDPVerbose verbose;
