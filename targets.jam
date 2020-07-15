@@ -614,11 +614,6 @@ test-run tests/acl/test_auth_api :
 :
   <covfile>src/acl/auth_api.hpp
 ;
-test-run tests/acl/test_dispatch_report_message :
-  $(REDEMPTION_TEST_PATH)/acl/test_dispatch_report_message.cpp
-:
-  <covfile>src/acl/dispatch_report_message.hpp
-;
 test-run tests/acl/test_end_session_warning :
   $(REDEMPTION_TEST_PATH)/acl/test_end_session_warning.cpp
 :
@@ -5804,7 +5799,6 @@ obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH
 alias test_client_execute : tests/RAIL/test_client_execute ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
-alias test_dispatch_report_message : tests/acl/test_dispatch_report_message ;
 alias test_end_session_warning : tests/acl/test_end_session_warning ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_sesman : tests/acl/test_sesman ;
@@ -6147,7 +6141,6 @@ if $(ENABLE_COVERAGE) = "on"
 alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
-alias test_dispatch_report_message.coverage : tests/acl/test_dispatch_report_message.coverage ;
 alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
 alias test_sesman.coverage : tests/acl/test_sesman.coverage ;
@@ -6472,7 +6465,6 @@ alias tests/RAIL.norec :
 alias tests/acl.norec :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
-  tests/acl/test_dispatch_report_message
   tests/acl/test_end_session_warning
   tests/acl/test_license_api
   tests/acl/test_sesman
