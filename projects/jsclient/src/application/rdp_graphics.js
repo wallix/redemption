@@ -482,6 +482,10 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
     };
 };
 
+const isPowerOf2 = function(value) {
+    return (value & (value - 1)) === 0;
+}
+
 const newRdpGL = function(canvasElement, module, ropError) {
     let _width = canvasElement.width;
     let _height = canvasElement.height;
@@ -498,121 +502,155 @@ const newRdpGL = function(canvasElement, module, ropError) {
     const gl = canvasElement.getContext('webgl', glOptions)
             || canvasElement.getContext('experimental-webgl', glOptions);
 
-    const compileShader = function(code, type) {
-        const shader = gl.createShader(type);
-
-        gl.shaderSource(shader, code);
-        gl.compileShader(shader);
-
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            console.error(`Error compiling ${type === gl.VERTEX_SHADER ? "vertex" : "fragment"} shader:`);
-            console.error(gl.getShaderInfoLog(shader));
-            throw new Error(gl.getError());
-        }
-        return shader;
+    const createShaderCtx = function(type, code) {
+        return {
+            type: type,
+            compiled: false,
+            shader: gl.createShader(type),
+            code: code
+        };
     };
 
-    const shaderProgram = gl.createProgram();
+    const rectFragmentShader = createShaderCtx(gl.FRAGMENT_SHADER, `
+        // precision highp float;
+        precision mediump float;
 
-    const fragmentShader = {
-        type: gl.FRAGMENT_SHADER,
-        initialized: false,
-        shader: undefined,
-        code: `
-            // precision highp float;
-            precision mediump float;
+        uniform vec3 uColor;
 
-            uniform vec3 uColor;
+        void main() {
+            gl_FragColor = vec4(uColor.x, uColor.y, uColor.z, 1.0);
+        }`);
 
-            void main() {
-                gl_FragColor = vec4(uColor.x, uColor.y, uColor.z, 1.0);
-            }`
-    };
+    const imgFragmentShader = createShaderCtx(gl.FRAGMENT_SHADER, `
+        // precision highp float;
+        precision mediump float;
+        varying vec2 vTex;
+        uniform sampler2D sampler0;
+        void main(void){
+            gl_FragColor = texture2D(sampler0, vTex);
+        }`);
 
-    const vertexShader = {
-        type: gl.VERTEX_SHADER,
-        initialized: false,
-        shader: undefined,
-        code: '',
-    };
+    const rectVertexShader = createShaderCtx(gl.VERTEX_SHADER, '');
+    const imgVertexShader = createShaderCtx(gl.VERTEX_SHADER, '');
+
+    const rectProgram = gl.createProgram();
+    const imgProgram = gl.createProgram();
+
+    const programs = [
+        [rectProgram, rectVertexShader, rectFragmentShader],
+        [imgProgram, imgVertexShader, imgFragmentShader],
+    ];
+
+    for (const [prog, vs, fs] of programs) {
+        gl.attachShader(prog, vs.shader);
+        gl.attachShader(prog, fs.shader);
+    }
 
     const updateVertexShaderCode = function() {
-        vertexShader.initialized = false;
-        vertexShader.code = `
+        rectVertexShader.compiled = false;
+        rectVertexShader.code = `
             attribute vec2 aVertexPosition;
 
             void main() {
-                vec2 transform
-                    = (aVertexPosition + vec2(-${_width/2}, -${_height/2}))
-                    * vec2(1.0, -${_width/_height})
-                ;
-                gl_Position = vec4(transform, 0.0, ${_width/2});
+                // clip from 0 to 2
+                vec2 zeroToTwo = aVertexPosition / vec2(${_width/2}, ${_height/2});
+
+                // convert 0->2 to -1->+1
+                vec2 clipSpace = (zeroToTwo - 1.0);
+
+                // flip y coordinate
+                vec2 transform = clipSpace * vec2(1, -1);
+
+                gl_Position = vec4(transform, 0, 1);
+            }`
+        ;
+
+        imgVertexShader.compiled = false;
+        imgVertexShader.code = `
+            attribute vec2 aVertexPosition;
+            attribute vec2 aUV;
+            // uniform vec2 pos;
+
+            varying vec2 vTex;
+
+            void main(void) {
+                gl_Position = vec4(
+                    ( aVertexPosition + vec2(-${_width/2}, -${_height/2}) )
+                    * vec2(1.0, -${_width/_height}),
+                    0.0, ${_width/2}
+                );
+                vTex = aUV;
             }`
         ;
     };
 
+    const compileShader = function(shaderCtx) {
+        if (shaderCtx.compiled) {
+            return;
+        }
 
-    const buildShaderProgram = function() {
-        let recomp = false;
-        for (const desc of [vertexShader, fragmentShader]) {
-            if (desc.initialized) {
-                continue;
-            }
-            desc.initialized = true;
-            recomp = true;
-            const shader = compileShader(desc.code, desc.type);
-            if (shader) {
-                if (desc.shader) {
-                    gl.detachShader(shaderProgram, desc.shader);
-                }
-                gl.attachShader(shaderProgram, shader);
-                desc.shader = shader;
+        gl.shaderSource(shaderCtx.shader, shaderCtx.code);
+        gl.compileShader(shaderCtx.shader);
+    };
+
+    const buildPrograms = function() {
+        for (const [prog, vs, fs] of programs) {
+            compileShader(vs);
+            compileShader(fs);
+        }
+
+        // link in parallel threads
+        for (const [prog, vs, fs] of programs) {
+            gl.linkProgram(prog);
+        }
+
+        let hasError = false;
+        for (const [prog, vs, fs] of programs) {
+            if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+                console.error('Link failed: ' + gl.getProgramInfoLog(prog));
+                console.error('vs info-log: ' + gl.getShaderInfoLog(vs.shader));
+                console.error('fs info-log: ' + gl.getShaderInfoLog(fs.shader));
+                hasError = true;
             }
         }
 
-        if (recomp) {
-            gl.linkProgram(shaderProgram);
-
-            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-                console.error("Error linking shader program:");
-                console.error(gl.getProgramInfoLog(shaderProgram));
-                throw new Error(gl.getError());
-            }
+        if (hasError) {
+            throw new Error(gl.getError());
         }
     };
 
-    let vertexBuffer;
-
     const initShaders = function(){
         updateVertexShaderCode();
-        buildShaderProgram();
+        buildPrograms();
 
         gl.viewport(0, 0, _width, _height);
         gl.clearColor(.0, .0, .0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
-
-        gl.useProgram(shaderProgram);
     };
 
     initShaders();
-    vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 
+    const rectVertexBuffer = gl.createBuffer();
+    const texVertexBuffer = gl.createBuffer();
+    const texture = gl.createTexture();
 
     const drawRect = function(x, y, w, h, color) {
         // console.log('drawRect');
+        gl.useProgram(rectProgram);
+
         const vertex = [
             x+w,y, x,y+h, x,y,
             x+w,y, x,y+h, x+w,y+h
         ];
 
         let vertexArray = new Float32Array(vertex);
+        gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
 
         const vertexNumComponents = 2;
         const vertexCount = vertexArray.length / vertexNumComponents;
 
-        const aVertexPosition = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+        const aVertexPosition = gl.getAttribLocation(rectProgram, "aVertexPosition");
 
         gl.enableVertexAttribArray(aVertexPosition);
         gl.vertexAttribPointer(aVertexPosition, vertexNumComponents, gl.FLOAT, false, 0, 0);
@@ -621,7 +659,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
         const green = ((color >> 8 ) & 0xff) / 255.;
         const blue  = ((color      ) & 0xff) / 255.;
 
-        const uColor = gl.getUniformLocation(shaderProgram, "uColor");
+        const uColor = gl.getUniformLocation(rectProgram, "uColor");
 
         gl.uniform3fv(uColor, [red, green, blue]);
 
@@ -633,7 +671,9 @@ const newRdpGL = function(canvasElement, module, ropError) {
         get height() { return _height; },
 
         delete() {
-            gl.deleteProgram(shaderProgram);
+            for (const [prog, vs, fs] of programs) {
+                gl.deleteProgram(prog);
+            }
         },
 
         frameMarker: function(isFrameStart) {
@@ -649,7 +689,6 @@ const newRdpGL = function(canvasElement, module, ropError) {
             if (_width != w || _height != h) {
                 canvasElement.width = _width = w;
                 canvasElement.height = _height = h;
-                updateVertexShaderCode();
                 initShaders();
             }
             drawRect(0, 0, w, h, 0);
@@ -657,111 +696,63 @@ const newRdpGL = function(canvasElement, module, ropError) {
 
         drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, x, y, ...args) {
             // console.log('img');
+            gl.useProgram(imgProgram);
+
             const bufLen = w*h*4;
             const pbuf = module._malloc(bufLen);
             module.loadRgbaImageFromIndex(pbuf, byteOffset, bitsPerPixel, w, h, lineSize);
             const img = new Uint8Array(_buffer, pbuf, bufLen);
 
-            // const texture = gl.createTexture();
-            // gl.bindTexture(gl.TEXTURE_2D, texture);
-            // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
-
-            // create shaders
-            var vertexShaderSrc =
-            "attribute vec2 aVertex;" +
-            "attribute vec2 aUV;" +
-            "varying vec2 vTex;" +
-            "uniform vec2 pos;" +
-            "void main(void) {" +
-            `  gl_Position = vec4((aVertex + vec2(-${_width/2}, -${_height/2}))
-                    * vec2(1.0, -${_width/_height}), 0.0, ${_width/2});` +
-            "  vTex = aUV;" +
-            "}";
-
-            var fragmentShaderSrc =
-            "precision highp float;" +
-            "varying vec2 vTex;" +
-            "uniform sampler2D sampler0;" +
-            "void main(void){" +
-            "  gl_FragColor = texture2D(sampler0, vTex);"+
-            "}";
-
-            var vertShaderObj = gl.createShader(gl.VERTEX_SHADER);
-            var fragShaderObj = gl.createShader(gl.FRAGMENT_SHADER);
-            gl.shaderSource(vertShaderObj, vertexShaderSrc);
-            gl.shaderSource(fragShaderObj, fragmentShaderSrc);
-            gl.compileShader(vertShaderObj);
-            gl.compileShader(fragShaderObj);
-
-            var progObj = gl.createProgram();
-            gl.attachShader(progObj, vertShaderObj);
-            gl.attachShader(progObj, fragShaderObj);
-
-            gl.linkProgram(progObj);
-            gl.useProgram(progObj);
-
-            vertexBuff = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
+            gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            // -1, 1, -1, -1, 1, -1, 1, 1
-            // x,y, x+w,y, x,y+h, x+w,y+h
-            x,y+h, x,y, x+w,y, x+w,y+h]), gl.STATIC_DRAW);
+                x,    y+h,
+                x,    y,
+                x+w,  y,
+                x+w,  y+h
+            ]), gl.STATIC_DRAW);
 
-            texBuff = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, texBuff);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 1, 0, 0, 1, 0, 1, 1]), gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                0, 1,
+                0, 0,
+                1, 0,
+                1, 1
+            ]), gl.STATIC_DRAW);
 
-            vloc = gl.getAttribLocation(progObj, "aVertex");
-            tloc = gl.getAttribLocation(progObj, "aUV");
-            uLoc = gl.getUniformLocation(progObj, "pos");
+            vloc = gl.getAttribLocation(imgProgram, "aVertexPosition");
+            tloc = gl.getAttribLocation(imgProgram, "aUV");
+            // uLoc = gl.getUniformLocation(imgProgram, "pos");
 
-            tex = gl.createTexture();
-            gl.bindTexture(gl.TEXTURE_2D, tex);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
 
+            // WebGL1 has different requirements for power of 2 images
+            // vs non power of 2 images so check if the image is a
+            // power of 2 in both dimensions.
+            if (isPowerOf2(w) && isPowerOf2(h)) {
+                gl.generateMipmap(gl.TEXTURE_2D);
+            }
+            else {
+                // wrapping to clamp to edge
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+
+            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
             gl.enableVertexAttribArray(vloc);
-            gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuff);
+            gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
             gl.vertexAttribPointer(vloc, 2, gl.FLOAT, false, 0, 0);
 
             gl.enableVertexAttribArray(tloc);
-            gl.bindBuffer(gl.ARRAY_BUFFER, texBuff);
-            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
             gl.vertexAttribPointer(tloc, 2, gl.FLOAT, false, 0, 0);
 
-            gl.uniform2fv(uLoc, [x,y]);
+            // gl.uniform2fv(uLoc, [x,y]);
 
             gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-
-
-
-            gl.deleteProgram(progObj);
-
-
-
-            // function isPowerOf2(value) {
-            //     return (value & (value - 1)) == 0;
-            // }
-            //
-            // // WebGL1 has different requirements for power of 2 images
-            // // vs non power of 2 images so check if the image is a
-            // // power of 2 in both dimensions.
-            // if (isPowerOf2(w) && isPowerOf2(h)) {
-            // // Yes, it's a power of 2. Generate mips.
-            //     gl.generateMipmap(gl.TEXTURE_2D);
-            // } else {
-            //     // No, it's not a power of 2. Turn of mips and set
-            //     // wrapping to clamp to edge
-            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            //     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            // }
-            //
-            // gl.bindTexture(gl.TEXTURE_2D, null);
 
             module._free(pbuf);
         },
