@@ -663,18 +663,17 @@ void Graphics::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
     // LOG(LOG_INFO, "Graphics::RDPBitmapData");
 
+    const uint16_t dw = cmd.dest_right - cmd.dest_left + 1;
+    const uint16_t dh = cmd.dest_bottom - cmd.dest_top + 1;
+
     emval_call(this->callbacks, jsnames::draw_image,
         bmp.data(),
         bmp.bpp(),
-        bmp.cx(),
-        bmp.cy(),
+        std::min(bmp.cx(), dw),
+        std::min(bmp.cy(), dh),
         uint32_t(bmp.line_size()),
         cmd.dest_left,
-        cmd.dest_top,
-        0,
-        0,
-        cmd.dest_right - cmd.dest_left + 1,
-        cmd.dest_bottom - cmd.dest_top + 1
+        cmd.dest_top
     );
 }
 

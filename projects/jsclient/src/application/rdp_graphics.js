@@ -293,7 +293,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
             }
         },
 
-        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, ...args) {
+        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize) {
             let destOffset;
             if (bitsPerPixel != 32) {
                 const bufferSize = w*h*4;
@@ -313,7 +313,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
 
             // buffer is referenced by Uint8ClampedArray
             const array = new Uint8ClampedArray(_buffer, destOffset, w*h*4);
-            _canvas.putImageData(new ImageData(array, w, h), ...args);
+            _canvas.putImageData(new ImageData(array, w, h));
         },
 
         drawScrBlt: function(sx, sy, w, h, dx, dy, rop) {
@@ -639,13 +639,10 @@ const newRdpGL = function(canvasElement, module, ropError) {
         gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
 
-        const vertexNumComponents = 2;
-        const vertexCount = vertexArray.length / vertexNumComponents;
-
         const aVertexPosition = gl.getAttribLocation(rectProgram, "aVertexPosition");
 
         gl.enableVertexAttribArray(aVertexPosition);
-        gl.vertexAttribPointer(aVertexPosition, vertexNumComponents, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(aVertexPosition, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
 
         const red   = ((color >> 16) & 0xff) / 255.;
         const green = ((color >> 8 ) & 0xff) / 255.;
@@ -655,7 +652,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
 
         gl.uniform3fv(uColor, [red, green, blue]);
 
-        gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+        gl.drawArrays(gl.TRIANGLES, 0, /*vertexCount=*/6);
     };
 
     return {
@@ -684,7 +681,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
             drawRect(0, 0, w, h, 0);
         },
 
-        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, x, y, ...args) {
+        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, x, y) {
             // console.log('img');
             gl.useProgram(imgProgram);
 
@@ -734,15 +731,15 @@ const newRdpGL = function(canvasElement, module, ropError) {
 
             gl.enableVertexAttribArray(vloc);
             gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
-            gl.vertexAttribPointer(vloc, 2, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(vloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
 
             gl.enableVertexAttribArray(tloc);
             gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
-            gl.vertexAttribPointer(tloc, 2, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribPointer(tloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
 
             // gl.uniform2fv(uLoc, [x,y]);
 
-            gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, /*vertexCount=*/4);
 
             module._free(pbuf);
         },
