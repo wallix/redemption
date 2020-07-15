@@ -49,7 +49,6 @@ mod_vnc::mod_vnc( Transport & t
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , ReportMessageApi & report_message
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
@@ -71,7 +70,6 @@ mod_vnc::mod_vnc( Transport & t
     , encodings(encodings)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
-    , report_message(report_message)
     , rail_client_execute(rail_client_execute)
     , time_base(time_base)
     , gd_provider(gd_provider)
@@ -166,7 +164,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
     // set almost null cursor, this is the little dot cursor
     drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-    this->report_message.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
+    this->sesman.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
 
     Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -2094,7 +2092,7 @@ void mod_vnc::disconnect()
         int((seconds % 3600) / 60),
         int(seconds % 60));
 
-    this->report_message.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
+    this->sesman.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
 
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
         "type=SESSION_DISCONNECTION duration=%s", duration_str);

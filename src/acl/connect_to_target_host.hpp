@@ -26,7 +26,7 @@
 #include "utils/log.hpp"
 #include "configs/config.hpp"
 #include "utils/timebase.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log_siem.hpp"
@@ -46,9 +46,9 @@
 #include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 
-static inline unique_fd connect_to_target_host(Inifile & ini, ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, bool enable_ipv6 = false)
+static inline unique_fd connect_to_target_host(Inifile & ini, AuthApi& sesman, trkeys::TrKey const& authentification_fail, bool enable_ipv6 = false)
 {
-    auto throw_error = [&ini, &report_message](char const* error_message, int id) {
+    auto throw_error = [&ini, &sesman](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
             R"(target="%s" host="%s" port="%u" reason="%s")",
             ini.get<cfg::globals::target_user>(),
@@ -56,7 +56,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, ReportMessageApi& 
             ini.get<cfg::context::target_port>(),
             error_message);
 
-        report_message.log6(LogId::CONNECTION_FAILED, {});
+        sesman.log6(LogId::CONNECTION_FAILED, {});
 
        ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(ini)));
 

@@ -217,7 +217,6 @@ int main(int argc, char** argv)
               , true          /* clipboard */
               , true          /* clipboard */
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-              , report_message
               , false
               , false          /*remove_server_alt_state_for_char*/
               , true           /* support Cursor Pseudo-Encoding */

@@ -24,7 +24,6 @@
 
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "mod/metrics_hmac.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -79,7 +78,6 @@ struct ModVNCWithMetrics : public mod_vnc
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , ReportMessageApi & report_message
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
@@ -90,7 +88,7 @@ struct ModVNCWithMetrics : public mod_vnc
     : mod_vnc(t, time_base, gd_provider, events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
-          report_message, server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
+          server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
           rail_client_execute, verbose, metrics, sesman)
     , events(events)
     , time_base(time_base)
@@ -133,7 +131,6 @@ public:
         const char * encodings,
         mod_vnc::ClipboardEncodingType clipboard_server_encoding_type,
         VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop,
-        ReportMessageApi& report_message,
         bool server_is_apple,
         bool send_alt_ksym,
         bool cursor_pseudo_encoding_supported,
@@ -149,7 +146,7 @@ public:
     , mod(this->socket_transport, time_base, mod_wrapper, events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
-          report_message, server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
+          server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
           rail_client_execute, vnc_verbose, metrics, sesman)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
@@ -259,7 +256,6 @@ public:
 };
 
 ModPack create_mod_vnc(ModWrapper & mod_wrapper,
-    ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
@@ -273,7 +269,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
     unique_fd client_sck =
-        connect_to_target_host(ini, report_message, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
+        connect_to_target_host(ini, sesman, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
 
     const char * const name = "VNC Target";
 
@@ -330,7 +326,6 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
             ? mod_vnc::ClipboardEncodingType::UTF8
             : mod_vnc::ClipboardEncodingType::Latin1,
         ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-        report_message,
         ini.get<cfg::mod_vnc::server_is_macos>(),
         ini.get<cfg::mod_vnc::server_unix_alt>(),
         ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),

@@ -323,7 +323,6 @@ private:
     bool clipboard_owned_by_client = true;
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
     uint32_t clipboard_general_capability_flags = 0;
-    ReportMessageApi & report_message;
     time_t beginning;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
@@ -379,7 +378,6 @@ public:
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , ReportMessageApi & report_message
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported

@@ -29,7 +29,6 @@ Author(s): Jonathan Poelen
 
 class ClientExecute;
 class FrontAPI;
-class ReportMessageApi;
 class TimeBase;
 class Transport;
 class VNCMetrics;
@@ -52,7 +51,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     bool clipboard_up,
     bool clipboard_down,
     const char * encodings,
-    ReportMessageApi& report_message,
     bool server_is_macos,
     bool send_alt_ksym,
     bool cursor_pseudo_encoding_supported,

@@ -493,7 +493,6 @@ public:
                   , true
                   , true
                   , this->config.modVNCParamsData.vnc_encodings.c_str()
-                  , this->reportMessage
                   , this->config.modVNCParamsData.is_apple
                   , true                                    // alt server unix
                   , true                                    // support Cursor Pseudo-encoding

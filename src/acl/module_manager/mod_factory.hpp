@@ -512,7 +512,7 @@ public:
     auto create_vnc_mod() -> ModPack
     {
 
-        auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->report_message, this->ini,
+        auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->ini,
             mod_wrapper.get_graphics(), this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,

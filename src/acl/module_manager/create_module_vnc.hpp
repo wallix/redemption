@@ -34,7 +34,6 @@
 class AuthApi;
 
 extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
-    ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
