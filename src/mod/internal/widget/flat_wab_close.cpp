@@ -66,8 +66,8 @@ FlatWabClose::FlatWabClose(
                                             theme.global.focus_color, 2, font,
                                             6, 2) : nullptr)
 , img(drawable,
-        theme.global.logo ? theme.global.logo_path.c_str() :
-        app_path(AppPath::LoginWabBlue),
+      theme.global.enable_theme ? theme.global.logo_path.c_str() :
+      app_path(AppPath::LoginWabBlue),
       *this,
       nullptr,
       theme.global.bgcolor,

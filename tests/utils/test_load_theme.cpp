@@ -28,12 +28,12 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values)
 {
     Theme colors;
 
+    RED_CHECK(!colors.global.enable_theme);
     RED_CHECK_EQUAL(colors.global.bgcolor, DARK_BLUE_BIS);
     RED_CHECK_EQUAL(colors.global.fgcolor, WHITE);
     RED_CHECK_EQUAL(colors.global.separator_color, LIGHT_BLUE);
     RED_CHECK_EQUAL(colors.global.focus_color, WINBLUE);
     RED_CHECK_EQUAL(colors.global.error_color, YELLOW);
-    RED_CHECK(!colors.global.logo);
     RED_CHECK_EQUAL(colors.global.logo_path, "");
 
     RED_CHECK_EQUAL(colors.edit.bgcolor, WHITE);
@@ -65,13 +65,11 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_i
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(false);
-
     ini.set<cfg::theme::bgcolor>("orange");
     ini.set<cfg::theme::fgcolor>("white");
     ini.set<cfg::theme::separator_color>("brown");
     ini.set<cfg::theme::focus_color>("dark_red");
     ini.set<cfg::theme::error_color>("red");
-    ini.set<cfg::theme::logo>(true);
     ini.set<cfg::theme::logo_path>(str_concat(app_path(AppPath::Cfg),
                                               "/themes/test_theme/logo.png"));
 
@@ -102,12 +100,12 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_i
 
     load_theme(colors, ini);
 
+    RED_CHECK(!colors.global.enable_theme);
     RED_CHECK_EQUAL(colors.global.bgcolor, DARK_BLUE_BIS);
     RED_CHECK_EQUAL(colors.global.fgcolor, WHITE);
     RED_CHECK_EQUAL(colors.global.separator_color, LIGHT_BLUE);
     RED_CHECK_EQUAL(colors.global.focus_color, WINBLUE);
     RED_CHECK_EQUAL(colors.global.error_color, YELLOW);
-    RED_CHECK(!colors.global.logo);
     RED_CHECK_EQUAL(colors.global.logo_path, "");
 
     RED_CHECK_EQUAL(colors.edit.bgcolor, WHITE);
@@ -139,13 +137,11 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(true);
-
     ini.set<cfg::theme::bgcolor>("0xDD8015");
     ini.set<cfg::theme::fgcolor>("0xffffff");
     ini.set<cfg::theme::separator_color>("0xC56A00");
     ini.set<cfg::theme::focus_color>("#0xAD1C22");
     ini.set<cfg::theme::error_color>("#ff0000");
-    ini.set<cfg::theme::logo>(true);
     ini.set<cfg::theme::logo_path>(str_concat(app_path(AppPath::Cfg),
                                               "/themes/test_theme/logo.png"));
 
@@ -176,12 +172,12 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
 
     load_theme(colors, ini);
 
+    RED_CHECK(colors.global.enable_theme);
     RED_CHECK_EQUAL(colors.global.bgcolor, ORANGE);
     RED_CHECK_EQUAL(colors.global.fgcolor, WHITE);
     RED_CHECK_EQUAL(colors.global.separator_color, BROWN);
     RED_CHECK_EQUAL(colors.global.focus_color, DARK_RED);
     RED_CHECK_EQUAL(colors.global.error_color, RED);
-    RED_CHECK(colors.global.logo);
     RED_CHECK_EQUAL(colors.global.logo_path,
                     str_concat(app_path(AppPath::Cfg),
                                "/themes/test_theme/logo.png"));
@@ -215,7 +211,6 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(true);
-
     ini.set<cfg::theme::bgcolor>("ABCDEFGH0xDD8015");
     ini.set<cfg::theme::fgcolor>("AC#0xffffffABCDEFGH");
     ini.set<cfg::theme::separator_color>("#0xC56A00MOP");
@@ -252,6 +247,7 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
 
     constexpr BGRColor null_bgr;
 
+    RED_CHECK(colors.global.enable_theme);
     RED_CHECK_EQUAL(colors.global.bgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.global.fgcolor, null_bgr);
     RED_CHECK_EQUAL(colors.global.separator_color, null_bgr);

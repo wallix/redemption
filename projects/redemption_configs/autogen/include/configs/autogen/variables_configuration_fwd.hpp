@@ -456,7 +456,6 @@ namespace cfg
         struct separator_color;
         struct focus_color;
         struct error_color;
-        struct logo;
         struct logo_path;
         struct edit_bgcolor;
         struct edit_fgcolor;

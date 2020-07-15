@@ -1523,12 +1523,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #error_color = yellow
 
-# value: 0 or 1
-#_hidden
-#logo = 0
-
-#_hidden
-#logo_path = 
+# File path for upload logo
+#_image=/var/wab/images/rdp-oem-logo.png
+#logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
 
 #_advanced
 #edit_bgcolor = white
