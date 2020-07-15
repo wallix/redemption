@@ -758,13 +758,12 @@ void Graphics::update_pointer_position(uint16_t x, uint16_t y)
 RED_JS_BINDING_CONSTANTS(
     GraphicOrders,
 
-    (("OpaqueRect", PrimaryDrawingOrdersSupport(TS_NEG_OPAQUERECT_INDEX).as_uint()))
     (("MultiOpaqueRect", PrimaryDrawingOrdersSupport(TS_NEG_MULTIOPAQUERECT_INDEX).as_uint()))
 
     (("DstBlt", PrimaryDrawingOrdersSupport(TS_NEG_DSTBLT_INDEX).as_uint()))
     (("MultiDstBlt", PrimaryDrawingOrdersSupport(TS_NEG_MULTIDSTBLT_INDEX).as_uint()))
 
-    (("PatBlt", PrimaryDrawingOrdersSupport(TS_NEG_PATBLT_INDEX).as_uint()))
+    (("PatBltAndOpaqueRect", PrimaryDrawingOrdersSupport(TS_NEG_PATBLT_INDEX).as_uint()))
     (("MultiPatBlt", PrimaryDrawingOrdersSupport(TS_NEG_MULTIPATBLT_INDEX).as_uint()))
 
     (("ScrBlt", PrimaryDrawingOrdersSupport(TS_NEG_SCRBLT_INDEX).as_uint()))
