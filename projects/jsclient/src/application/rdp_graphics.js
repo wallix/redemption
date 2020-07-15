@@ -502,16 +502,23 @@ const newRdpGL = function(canvasElement, module, ropError) {
     const gl = canvasElement.getContext('webgl', glOptions)
             || canvasElement.getContext('experimental-webgl', glOptions);
 
-    const createShaderCtx = function(type, code) {
-        return {
-            type: type,
-            compiled: false,
-            shader: gl.createShader(type),
-            code: code
-        };
+    const compilePairShader = function(prog, code) {
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+
+        gl.attachShader(prog, fragmentShader);
+        gl.attachShader(prog, vertexShader);
+
+        gl.shaderSource(fragmentShader, code);
+        gl.compileShader(fragmentShader);
+
+        return [vertexShader, fragmentShader];
     };
 
-    const rectFragmentShader = createShaderCtx(gl.FRAGMENT_SHADER, `
+    const rectProgram = gl.createProgram();
+    const imgProgram = gl.createProgram();
+
+    const [rectVertexShader, rectFragmentShader] = compilePairShader(rectProgram, `
         // precision highp float;
         precision mediump float;
 
@@ -521,83 +528,67 @@ const newRdpGL = function(canvasElement, module, ropError) {
             gl_FragColor = vec4(uColor.x, uColor.y, uColor.z, 1.0);
         }`);
 
-    const imgFragmentShader = createShaderCtx(gl.FRAGMENT_SHADER, `
+    const [imgVertexShader, imgFragmentShader] = compilePairShader(imgProgram, `
         // precision highp float;
         precision mediump float;
-        varying vec2 vTex;
         uniform sampler2D sampler0;
-        void main(void){
+
+        varying vec2 vTex;
+
+        void main() {
             gl_FragColor = texture2D(sampler0, vTex);
         }`);
-
-    const rectVertexShader = createShaderCtx(gl.VERTEX_SHADER, '');
-    const imgVertexShader = createShaderCtx(gl.VERTEX_SHADER, '');
-
-    const rectProgram = gl.createProgram();
-    const imgProgram = gl.createProgram();
 
     const programs = [
         [rectProgram, rectVertexShader, rectFragmentShader],
         [imgProgram, imgVertexShader, imgFragmentShader],
     ];
 
-    for (const [prog, vs, fs] of programs) {
-        gl.attachShader(prog, vs.shader);
-        gl.attachShader(prog, fs.shader);
-    }
+    const compileShader = function(shader, code){
+        gl.shaderSource(shader, code);
+        gl.compileShader(shader);
+    };
 
-    const updateVertexShaderCode = function() {
-        rectVertexShader.compiled = false;
-        rectVertexShader.code = `
+    const deletePrograms = function() {
+        for (const [prog, vs, fs] of programs) {
+            gl.deleteProgram(prog);
+        }
+    };
+
+    const buildPrograms = function() {
+        const computePosition = `
+            // clip from 0 to 2
+            vec2 zeroToTwo = aVertexPosition / vec2(${_width/2}, ${_height/2});
+
+            // convert 0->2 to -1->+1
+            vec2 clipSpace = (zeroToTwo - 1.0);
+
+            // flip y coordinate
+            vec2 finalPosition = clipSpace * vec2(1, -1);
+
+            gl_Position = vec4(finalPosition, 0, 1);
+        `;
+
+        compileShader(rectVertexShader, `
             attribute vec2 aVertexPosition;
 
             void main() {
-                // clip from 0 to 2
-                vec2 zeroToTwo = aVertexPosition / vec2(${_width/2}, ${_height/2});
-
-                // convert 0->2 to -1->+1
-                vec2 clipSpace = (zeroToTwo - 1.0);
-
-                // flip y coordinate
-                vec2 transform = clipSpace * vec2(1, -1);
-
-                gl_Position = vec4(transform, 0, 1);
+                ${computePosition}
             }`
-        ;
+        );
 
-        imgVertexShader.compiled = false;
-        imgVertexShader.code = `
+        compileShader(imgVertexShader, `
             attribute vec2 aVertexPosition;
             attribute vec2 aUV;
             // uniform vec2 pos;
 
             varying vec2 vTex;
 
-            void main(void) {
-                gl_Position = vec4(
-                    ( aVertexPosition + vec2(-${_width/2}, -${_height/2}) )
-                    * vec2(1.0, -${_width/_height}),
-                    0.0, ${_width/2}
-                );
+            void main() {
+                ${computePosition}
                 vTex = aUV;
             }`
-        ;
-    };
-
-    const compileShader = function(shaderCtx) {
-        if (shaderCtx.compiled) {
-            return;
-        }
-
-        gl.shaderSource(shaderCtx.shader, shaderCtx.code);
-        gl.compileShader(shaderCtx.shader);
-    };
-
-    const buildPrograms = function() {
-        for (const [prog, vs, fs] of programs) {
-            compileShader(vs);
-            compileShader(fs);
-        }
+        );
 
         // link in parallel threads
         for (const [prog, vs, fs] of programs) {
@@ -608,19 +599,20 @@ const newRdpGL = function(canvasElement, module, ropError) {
         for (const [prog, vs, fs] of programs) {
             if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
                 console.error('Link failed: ' + gl.getProgramInfoLog(prog));
-                console.error('vs info-log: ' + gl.getShaderInfoLog(vs.shader));
-                console.error('fs info-log: ' + gl.getShaderInfoLog(fs.shader));
+                console.error('vs info-log: ' + gl.getShaderInfoLog(vs));
+                console.error('fs info-log: ' + gl.getShaderInfoLog(fs));
                 hasError = true;
             }
         }
 
         if (hasError) {
-            throw new Error(gl.getError());
+            const err = gl.getError();
+            deletePrograms();
+            throw new Error(err);
         }
     };
 
     const initShaders = function(){
-        updateVertexShaderCode();
         buildPrograms();
 
         gl.viewport(0, 0, _width, _height);
@@ -671,9 +663,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
         get height() { return _height; },
 
         delete() {
-            for (const [prog, vs, fs] of programs) {
-                gl.deleteProgram(prog);
-            }
+            deletePrograms();
         },
 
         frameMarker: function(isFrameStart) {
