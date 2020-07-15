@@ -793,7 +793,7 @@ public:
                 switch (front.state) {
                 default:
                 {
-                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);});
+                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);}, ini.get<cfg::debug::session>());
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
@@ -837,8 +837,7 @@ public:
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
 
-                        auto const end_tv = time_base.get_current_time();
-                        events.execute_events(end_tv, [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);});
+                        events.execute_events(now, [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);}, ini.get<cfg::debug::session>());
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {

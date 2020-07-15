@@ -851,6 +851,7 @@ public:
             event.alarm.set_timeout(this->time_base.get_current_time());
             event.actions.on_timeout = [this](Event& event)
             {
+                event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
                 if (this->state == FRONT_UP_AND_RUNNING) {
                     this->send_data_indication_ex_impl(
                         GCC::MCS_GLOBAL_CHANNEL,
@@ -862,7 +863,6 @@ public:
                             }
                         }
                     );
-                    event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
                 }
             };
             this->events.add(std::move(event));
@@ -1164,9 +1164,8 @@ public:
                 this->mouse_x, this->mouse_y,
                 false  // ignore frame in time interval
             ).ms();
-            if (capture_ms.max() < capture_ms){
-                event.alarm.set_timeout(event.alarm.now+std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
-            }
+            event.alarm.set_timeout(event.alarm.now
+                +std::chrono::duration_cast<std::chrono::milliseconds>(((capture_ms.max() < capture_ms)?capture_ms.max():capture_ms)));
         };
         this->events.add(std::move(event));
 

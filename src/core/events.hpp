@@ -50,7 +50,6 @@ struct Event {
         timeval now;
         timeval trigger_time;
         timeval start_time;
-        std::chrono::microseconds period = std::chrono::seconds{0};
         std::chrono::microseconds grace_delay = std::chrono::seconds{0};
 
         // fd is stored to enabled fd events detection
@@ -58,12 +57,6 @@ struct Event {
         void set_fd(int fd, std::chrono::microseconds grace_delay) {
             this->fd = fd;
             this->grace_delay = grace_delay;
-        }
-
-        // periodic alarm will call on_period every period interval,
-        // starting at start_time.
-        void set_period(std::chrono::microseconds period) {
-            this->period = period;
         }
 
         // timeout alarm will call on_timeout once when trigger_time is reached
@@ -74,23 +67,20 @@ struct Event {
           this->trigger_time = this->start_time = this->now = trigger_time;
         }
 
+        void reset_timeout(timeval trigger_time) {
+          this->active = true;
+          this->trigger_time = this->now = trigger_time;
+        }
+
         void stop_alarm(){
             this->active = false;
         }
 
         bool trigger(timeval now) {
             this->now = now;
-//            if (this->garbage){ return false; }
             if (not this->active) { return false; }
             if (this->now >= this->trigger_time) {
-                if (this->period.count() == 0){
-                    // one time alarm
-                    this->active = false;
-                }
-                // periodic alarm : if some ticks were lost
-                // the periodic alarm won't try to catch up
-                // it will reset the interval based on current time
-                this->trigger_time = now + this->period;
+                this->active = false;
                 return true;
             }
             return false;
@@ -211,25 +201,42 @@ struct EventContainer {
         }
     }
 
-    void execute_events(const timeval tv, const std::function<bool(int fd)> & fn)
+    void execute_events(const timeval tv, const std::function<bool(int fd)> & fn, bool verbose = false)
     {
+        LOG_IF(verbose, LOG_INFO, "~~~~~~~~~~~~~~~~ EXECUTE EVENTS ~~~~~~~~~~~~~~~~~~");
         for (size_t i = 0 ; i < this->queue.size(); i++){
             auto & event = this->queue[i];
+
+            LOG_IF(verbose, LOG_INFO, "=========== Queued Event '%s' timeout=%d now=%d =========",
+                event.name, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
+            if (event.garbage) {
+                LOG_IF(verbose, LOG_INFO, "------- GARBAGE EVENT --------");
+            }
+            if (event.teardown) {
+                LOG_IF(verbose, LOG_INFO, "------- TEARDOWN EVENT --------");
+            }
+
             if (not (event.garbage or event.teardown)) {
                 if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
+                    LOG_IF(verbose, LOG_INFO, "------- FD TRIGGER --------");
                     event.alarm.set_timeout(tv+event.alarm.grace_delay);
                     event.exec_action();
                     continue;
                 }
             }
             if (not (event.garbage or event.teardown)) {
+                if (!event.alarm.active){
+                    LOG_IF(verbose, LOG_INFO, "------- TIMEOUT EXPIRED --------");
+                }
                 if (event.alarm.trigger(tv)){
+                    LOG_IF(verbose, LOG_INFO, "------- TIMEOUT TRIGGER --------");
                     event.exec_timeout();
                 }
             }
         }
         this->exec_teardowns();
         this->garbage_collector();
+        LOG_IF(verbose, LOG_INFO, "~~~~~~~~~~~~~~~~ EXECUTE EVENTS DONE ~~~~~~~~~~~~~");
     }
 
 

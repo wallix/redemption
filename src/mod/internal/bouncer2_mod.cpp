@@ -41,12 +41,12 @@ Bouncer2Mod::Bouncer2Mod(
 , events(events)
 , gd_provider(gd_provider)
 {
-    auto delay = std::chrono::milliseconds(33);
     Event event("Bouncer Periodic Timer", this);
-    event.alarm.set_timeout(time_base.get_current_time() + delay);
-    event.alarm.set_period(delay);
-    event.actions.on_timeout = [this](Event&)
+    event.alarm.set_timeout(time_base.get_current_time() + std::chrono::milliseconds(33));
+    event.actions.on_timeout = [this](Event&event)
     {
+        auto delay = std::chrono::milliseconds(33);
+        event.alarm.reset_timeout(event.alarm.now+delay);
         this->draw_event(this->gd_provider.get_graphics());
     };
     this->events.add(std::move(event));
