@@ -79,6 +79,10 @@ form {
             </select></label>
             <label for="disabledGraphics">disabled: <select name="disabledGraphics" id="disabledGraphics" multiple>
             </select></label>
+            <label for="gdimpl">Impl: <select name="gdimpl" id="gdimpl">
+                <option value="2d" selected="selected">Canvas 2d</option>
+                <option value="webgl">WebGL</option>
+            </select>
         </fieldset>
         <fieldset>
             <legend>Others</legend>
@@ -134,8 +138,9 @@ form {
 <script src="clipboard.js"></script>
 
 <script>
+// new canvas whether new gdimpl
+let ecanvas = document.getElementById('canvas');
 const ecanvasFocus = document.getElementById('canvasFocus');
-const ecanvas = document.getElementById('canvas');
 const login = document.getElementById('login');
 const disconnectButton = document.getElementById('disconnect');
 const sendCbUtf8 = document.getElementById('sendCbUtf8');
@@ -154,6 +159,7 @@ const url_input = document.getElementById('url');
 const height_input = document.getElementById('height');
 const width_input = document.getElementById('width');
 const bpp_input = document.getElementById('bpp');
+const gdimpl_input = document.getElementById('gdimpl');
 const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
@@ -197,11 +203,17 @@ function MultiSelectToInt(e, constants)
     return flags;
 }
 
-const gd = newRdpGraphics(ecanvas, Module);
-const resizeCanvasBase = gd.resizeCanvas;
+const gdImplTable = {
+    ['2d']:newRdpGraphics2D,
+    webgl:newRdpGraphicsGL,
+};
 
 function run(openCb, closeCb)
 {
+    console.info('Graphics implementation: ' + gdimpl_input.value);
+    const gd = gdImplTable[gdimpl_input.value](ecanvas, Module);
+    gd.drawRect(0, 0, gd.width, gd.height, 0);
+
     const socket = new WebSocket(url_input.value, "RDP");
     socket.binaryType = 'arraybuffer';
 
@@ -423,6 +435,7 @@ function run(openCb, closeCb)
         canvasStartEvents();
     }
 
+    const resizeCanvasBase = gd.resizeCanvas;
     gd.resizeCanvas = function(...args) {
         resizeCanvasBase.call(gd, ...args);
         updateInput();
@@ -496,6 +509,8 @@ function run(openCb, closeCb)
             canvasStopEvents();
             isClosed = true;
 
+            gd.delete();
+
             closeCb();
         };
 
@@ -540,6 +555,7 @@ const inputs = {
     config: [jsonConfig_input, 'value', identity],
     unicode: [useUnicode_input, 'checked', isTrue],
     bpp: [bpp_input, 'selectedIndex', parseInt],
+    gdimpl: [gdimpl_input, 'selectedIndex', identity],
 };
 for (const k in inputs) {
     const d = inputs[k];
@@ -592,15 +608,31 @@ for (const k in selectFlags) {
 updatePermalink();
 
 
-gd.drawRect(0, 0, gd.width, gd.height, 0);
+let currentGdImpl = gdimpl_input.selectedIndex;
 
 let closeClient = ()=>{};
+let previousConnCtx = {};
 function openClient()
 {
+    const newGdImpl = gdimpl_input.selectedIndex;
+    if (currentGdImpl != newGdImpl) {
+        currentGdImpl = newGdImpl;
+        newCanvas = document.createElement('canvas');
+        newCanvas.width = Number(width_input.value) || 800;
+        newCanvas.height = Number(height_input.value) || 600;
+        ecanvas.replaceWith(newCanvas);
+        ecanvas = newCanvas;
+    }
+
+    disconnectButton.disabled = true;
+
+    previousConnCtx.disconnectButton = {};
+    const connCtx = {disconnectButton};
+    previousConnCtx = connCtx;
     closeClient();
     closeClient = run(
-        () => { disconnectButton.disabled = false; },
-        () => { disconnectButton.disabled = true; },
+        () => { connCtx.disconnectButton.disabled = false; },
+        () => { connCtx.disconnectButton.disabled = true; },
     );
 };
 

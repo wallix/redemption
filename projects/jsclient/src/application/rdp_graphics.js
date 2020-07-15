@@ -788,18 +788,25 @@ const createCtx = function(...contexts) {
     return ret;
 };
 
-const newRdpGraphics = function(canvasElement, module, ropError) {
-    ropError = ropError || function(cmd, rop) {
-        err(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
-    };
-    // return createCtx(newRdpCanvas(canvasElement, module, ropError),
-    //                  newRdpPointer(canvasElement, module));
+const defaultRopError = function(cmd, rop) {
+    err(`${cmd}: Unsupported rop 0x${rop.toString(16).padStart(2, '0')}`);
+};
+
+const newRdpGraphics2D = function(canvasElement, module, ropError) {
+    ropError = ropError || defaultRopError;
+    return createCtx(newRdpCanvas(canvasElement, module, ropError),
+                     newRdpPointer(canvasElement, module));
+};
+
+const newRdpGraphicsGL = function(canvasElement, module, ropError) {
+    ropError = ropError || defaultRopError;
     return createCtx(newRdpGL(canvasElement, module, ropError),
                      newRdpPointer(canvasElement, module));
 };
 
 try {
-    module.exports.newRdpGraphics = newRdpGraphics;
+    module.exports.newRdpGraphics2D = newRdpGraphics2D;
+    module.exports.newRdpGraphicsGL = newRdpGraphicsGL;
     module.exports.newRdpCanvas = newRdpCanvas;
     module.exports.newRdpGL = newRdpGL;
     module.exports.newRdpPointer = newRdpPointer;
