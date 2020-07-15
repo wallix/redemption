@@ -148,9 +148,10 @@ private:
     }
 
 private:
-    int end_session_exception(Error const& e, Inifile & ini) {
+    int end_session_exception(Error const& e, Inifile & ini) 
+    {
         if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
-            return 1;
+            ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
         }
 
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
@@ -225,6 +226,7 @@ private:
             LOG(LOG_INFO, "Acl confirmed user close");
             return 1;
         }
+
         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
         return 1;
     }
