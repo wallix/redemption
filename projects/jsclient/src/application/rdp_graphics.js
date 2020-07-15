@@ -67,10 +67,10 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
     let _imgBufferSize = 64*64*4;
     let _imgBufferIndex = module._malloc(_imgBufferSize);
 
-    const _canvas = canvasElement.getContext('2d');
+    const _ctx2d = canvasElement.getContext('2d');
     const _cacheImages = [];
 
-    _canvas.imageSmoothingEnabled = false;
+    _ctx2d.imageSmoothingEnabled = false;
 
     const unsupportedRop = ropError;
 
@@ -91,11 +91,11 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
             isrc += srcInc;
         }
 
-        _canvas.putImageData(dstImg, x, y);
+        _ctx2d.putImageData(dstImg, x, y);
     };
 
     const _transformDstImage = function(img, sx, sy, dx, dy, dw, dh, f) {
-        const dstImg = _canvas.getImageData(dx, dy, dw, dh);
+        const dstImg = _ctx2d.getImageData(dx, dy, dw, dh);
         _transformImage2(dstImg, img, sx, sy, dx, dy, f);
     };
 
@@ -120,8 +120,8 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
     };
 
     const _transformPixels2 = function(sx, sy, dx, dy, dw, dh, f) {
-        const dstImg = _canvas.getImageData(dx, dy, w, h);
-        const srcImg = _canvas.getImageData(sx, sy, w, h);
+        const dstImg = _ctx2d.getImageData(dx, dy, w, h);
+        const srcImg = _ctx2d.getImageData(sx, sy, w, h);
         _transformImage2(dstImg, srcImg, 0, 0, dx, dy, f);
     };
 
@@ -131,16 +131,16 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
         for (let i = 0; i < len; ++i) {
             u32a[i] = f(u32a[i] & 0xffffff) | 0xff000000;
         }
-        _canvas.putImageData(img, x, y);
+        _ctx2d.putImageData(img, x, y);
     };
 
     const _transformPixels = function(x, y, w, h, f) {
-        const img = _canvas.getImageData(x, y, w, h);
+        const img = _ctx2d.getImageData(x, y, w, h);
         _transformImage(img, x, y, f);
     };
 
     const _transformPixelsBrush = function(orgX, orgY, w, h, backColor, foreColor, brushData, f) {
-        const imgData = _canvas.getImageData(orgX, orgY, w, h);
+        const imgData = _ctx2d.getImageData(orgX, orgY, w, h);
         const u32a = new Uint32Array(imgData.data.buffer);
         w = imgData.width;
         h = imgData.height;
@@ -153,19 +153,20 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                         | 0xff000000;
             }
         }
-        _canvas.putImageData(imgData, orgX, orgY);
+        _ctx2d.putImageData(imgData, orgX, orgY);
     };
 
     const drawRect = function(x, y, w, h, color) {
         // console.log('drawRect');
-        _canvas.fillStyle = rgbToCss(color);
-        _canvas.fillRect(x,y,w,h);
+        _ctx2d.fillStyle = rgbToCss(color);
+        _ctx2d.fillRect(x,y,w,h);
     };
 
     return {
         // @{
         // implementation for hack
-        _canvas: _canvas,
+        _canvas: canvasElement,
+        _ctx2d: _ctx2d,
         _cacheImages: _cacheImages,
         _transformImage2: _transformImage2,
         _transformDstImage: _transformDstImage,
@@ -224,8 +225,8 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
 
             switch (rop) {
                 case 0x00:
-                    _canvas.fillStyle = "#000";
-                    _canvas.fillRect(dx, dy, dw, dh);
+                    _ctx2d.fillStyle = "#000";
+                    _ctx2d.fillRect(dx, dy, dw, dh);
                     break;
 
                 case 0x55:
@@ -234,7 +235,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                     break;
 
                 case 0xCC:
-                    _canvas.putImageData(img, dx, dy, sx, sy, dw, dh);
+                    _ctx2d.putImageData(img, dx, dy, sx, sy, dw, dh);
                     break;
 
                 case 0x22:
@@ -258,8 +259,8 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                     break;
 
                 case 0xff:
-                    _canvas.fillStyle = "#fff";
-                    _canvas.fillRect(dx, dy, dw, dh);
+                    _ctx2d.fillStyle = "#fff";
+                    _ctx2d.fillRect(dx, dy, dw, dh);
                     break;
 
                 default:
@@ -293,7 +294,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
             }
         },
 
-        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize) {
+        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, dx, dy) {
             let destOffset;
             if (bitsPerPixel != 32) {
                 const bufferSize = w*h*4;
@@ -313,15 +314,15 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
 
             // buffer is referenced by Uint8ClampedArray
             const array = new Uint8ClampedArray(_buffer, destOffset, w*h*4);
-            _canvas.putImageData(new ImageData(array, w, h));
+            _ctx2d.putImageData(new ImageData(array, w, h), dx, dy);
         },
 
         drawScrBlt: function(sx, sy, w, h, dx, dy, rop) {
             // console.log('drawScrBlt');
             switch (rop) {
                 case 0x00:
-                    _canvas.fillStyle = "#000";
-                    _canvas.fillRect(x,y,w,h);
+                    _ctx2d.fillStyle = "#000";
+                    _ctx2d.fillRect(x,y,w,h);
                     break;
                 case 0x11: _transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~(src | dst)); break;
                 case 0x22: _transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~src & dst); break;
@@ -334,12 +335,12 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                 case 0x99: _transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~(src ^ dst)); break;
                 case 0xaa: break;
                 case 0xbb: _transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => ~src | dst); break;
-                case 0xcc: _canvas.putImageData(_canvas.getImageData(sx,sy,w,h), dx,dy); break;
+                case 0xcc: _ctx2d.putImageData(_ctx2d.getImageData(sx,sy,w,h), dx,dy); break;
                 case 0xdd: _transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src | ~dst); break;
                 case 0xee: _transformPixels2(sx,sy,dx,dy,w,h, (src, dst) => src | dst); break;
                 case 0xff:
-                    _canvas.fillStyle = "#fff";
-                    _canvas.fillRect(x,y,w,h);
+                    _ctx2d.fillStyle = "#fff";
+                    _ctx2d.fillRect(x,y,w,h);
                     break;
 
                 default:
@@ -352,9 +353,9 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
             backMode, startX, startY, endX, endY, backColor, penStyle, penWidth, penColor
         ) {
             // console.log('drawLineTo');
-            _canvas.save();
-            _canvas.fillStyle = rgbToCss(backColor);
-            _canvas.strokeStyle = rgbToCss(penColor);
+            _ctx2d.save();
+            _ctx2d.fillStyle = rgbToCss(backColor);
+            _ctx2d.strokeStyle = rgbToCss(penColor);
             // behavior of stroke is strange (transparency color with a odd penWidth)
             if (!penStyle && startX === endX) {
                 if (endX < startX) {
@@ -363,7 +364,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                 if (endY < startY) {
                     [startY, endY] = [endY, startY];
                 }
-                _canvas.fillRect(startX, startY, penWidth||1, endY-startY+1);
+                _ctx2d.fillRect(startX, startY, penWidth||1, endY-startY+1);
             }
             else if (!penStyle && startY === endY) {
                 if (endY < startY) {
@@ -372,50 +373,50 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                 if (endX < startX) {
                     [startX, endX] = [endX, startX];
                 }
-                _canvas.fillRect(startX, startY, endX-startX+1, penWidth||1);
+                _ctx2d.fillRect(startX, startY, endX-startX+1, penWidth||1);
             }
             else {
-                _canvas.beginPath();
-                _canvas.moveTo(startX, startY);
-                _canvas.lineTo(endX, endY);
-                _canvas.lineWidth = penWidth;
+                _ctx2d.beginPath();
+                _ctx2d.moveTo(startX, startY);
+                _ctx2d.lineTo(endX, endY);
+                _ctx2d.lineWidth = penWidth;
                 switch (penStyle) {
-                    case 1: _canvas.setLineDash([ 10, 6, 10, 6 ]); break;
-                    case 2: _canvas.setLineDash([ 3, 3, 3, 3 ]); break;
-                    case 3: _canvas.setLineDash([ 9, 6, 3, 6 ]); break;
-                    case 4: _canvas.setLineDash([ 9, 3, 3, 3 ]); break;
-                    case 5: _canvas.setLineDash([ 16, 0, 16, 0 ]); break;
+                    case 1: _ctx2d.setLineDash([ 10, 6, 10, 6 ]); break;
+                    case 2: _ctx2d.setLineDash([ 3, 3, 3, 3 ]); break;
+                    case 3: _ctx2d.setLineDash([ 9, 6, 3, 6 ]); break;
+                    case 4: _ctx2d.setLineDash([ 9, 3, 3, 3 ]); break;
+                    case 5: _ctx2d.setLineDash([ 16, 0, 16, 0 ]); break;
                 }
                 // BackMode does not imply the transparency level of what is about too be drawn
                 // canvas.globalAlpha = (backMode === 1 /* TRANSPARENT */? 0.0 : 1.0);
-                _canvas.stroke();
+                _ctx2d.stroke();
             }
-            _canvas.restore();
+            _ctx2d.restore();
         },
 
         drawPolyline: function(startX, startY, deltas, clipX, clipY, clipW, clipH, penColor) {
             // console.log('drawPolyline');
-            _canvas.save();
-            _canvas.strokeStyle = rgbToCss(penColor);
-            _canvas.beginPath();
-            _canvas.moveTo(startX, startY);
+            _ctx2d.save();
+            _ctx2d.strokeStyle = rgbToCss(penColor);
+            _ctx2d.beginPath();
+            _ctx2d.moveTo(startX, startY);
             let endX = startX;
             let endY = startY;
             const iend = deltas.length
             for (let i = 0; i < iend; i += 2) {
                 endX += deltas[i];
                 endY += deltas[i+1];
-                _canvas.lineTo(endX, endY);
+                _ctx2d.lineTo(endX, endY);
             }
-            _canvas.stroke();
-            _canvas.restore();
+            _ctx2d.stroke();
+            _ctx2d.restore();
         },
 
         drawPatBlt: function(brushData, orgX, orgY, style, x, y, w, h, rop, backColor, foreColor) {
             switch (rop) {
                 case 0x00:
-                    _canvas.fillStyle = "#000";
-                    _canvas.fillRect(x,y,w,h);
+                    _ctx2d.fillStyle = "#000";
+                    _ctx2d.fillRect(x,y,w,h);
                     break;
                 case 0x05: _transformPixels(x,y,w,h, (src) => ~(backColor | src)); break;
                 case 0x0f: _transformPixels(x,y,w,h, (src) => ~src); break;
@@ -441,15 +442,15 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                                               (src,c) => src);
                     }
                     else {
-                        _canvas.fillStyle = rgbToCss(backColor);
-                        _canvas.fillRect(x,y,w,h);
+                        _ctx2d.fillStyle = rgbToCss(backColor);
+                        _ctx2d.fillRect(x,y,w,h);
                     }
                     break;
                 case 0xfa: _transformPixels(x,y,w,h, (src) => src | backColor); break;
                 case 0xf5: _transformPixels(x,y,w,h, (src) => src | ~backColor); break;
                 case 0xff:
-                    _canvas.fillStyle = "#fff";
-                    _canvas.fillRect(x,y,w,h);
+                    _ctx2d.fillStyle = "#fff";
+                    _ctx2d.fillRect(x,y,w,h);
                     break;
 
                 default:
@@ -461,14 +462,14 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
         drawDestBlt: function(x, y, w, h, rop) {
             switch (rop) {
             case 0x00:
-                _canvas.fillStyle = "#000";
-                _canvas.fillRect(x,y,w,h);
+                _ctx2d.fillStyle = "#000";
+                _ctx2d.fillRect(x,y,w,h);
                 break;
             case 0x55: _transformPixels(x,y,w,h, (src) => src ^ 0xffffff); break;
             // case 0xAA: break;
             case 0xff:
-                _canvas.fillStyle = "#fff";
-                _canvas.fillRect(x,y,w,h);
+                _ctx2d.fillStyle = "#fff";
+                _ctx2d.fillRect(x,y,w,h);
                 break;
 
             default:

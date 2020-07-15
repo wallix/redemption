@@ -33,8 +33,6 @@ RED_AUTO_TEST_CASE(TestFront)
     RED_CHECK(bitset{(
         PrimaryDrawingOrdersSupport{}
         | TS_NEG_GLYPH_INDEX
-        | TS_NEG_MULTIOPAQUERECT_INDEX
-        | TS_NEG_OPAQUERECT_INDEX
     ).as_uint()} == bitset{front.get_supported_orders().as_uint()});
 
     struct Chann

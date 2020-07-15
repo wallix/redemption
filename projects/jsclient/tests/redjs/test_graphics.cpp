@@ -41,7 +41,7 @@ RED_JS_AUTO_TEST_CASE(
     TestGraphics,
     (emscripten::val drawable),
     (() => {
-        const Drawable = require("src/application/rdp_graphics").RdpGraphics;
+        const Drawable = require("src/application/rdp_graphics").newRdpGraphics2D;
         const { ImageData, createCanvas, Canvas } = require("node_modules/canvas");
 
         global.OffsreenCanvas = Canvas;
@@ -50,10 +50,14 @@ RED_JS_AUTO_TEST_CASE(
         const canvas = createCanvas(0, 0);
         canvas.style = {}; /* for cursor style */
 
-        return new Drawable(canvas, Module);
+        const gd = new Drawable(canvas, Module);
+        gd.ecanvas = canvas;
+        return gd;
     })()
 ) {
-    auto canvas = drawable["_ecanvas"];
+    auto canvas = drawable["ecanvas"];
+    RED_REQUIRE(!!canvas);
+
     auto to_data_url = [](emscripten::val& canvas){
         return canvas.call<std::string>("toDataURL");
     };
@@ -73,7 +77,6 @@ RED_JS_AUTO_TEST_CASE(
         | TS_NEG_MEMBLT_INDEX
         | TS_NEG_MEM3BLT_INDEX
         | TS_NEG_LINETO_INDEX
-        | TS_NEG_OPAQUERECT_INDEX
         | TS_NEG_MULTIDSTBLT_INDEX
         | TS_NEG_MULTIPATBLT_INDEX
         | TS_NEG_MULTISCRBLT_INDEX
