@@ -25,9 +25,7 @@
 #include <cstdint>
 
 #include <sys/time.h>
-
-
-class ReportMessageApi;
+#include "acl/auth_api.hpp"
 
 struct CaptureParams
 {

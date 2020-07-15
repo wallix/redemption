@@ -36,6 +36,7 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/crypto/ssl_lib.hpp"
+#include "acl/auth_api.hpp"
 
 #include <functional> // std::reference_wrapper
 #include <memory>
@@ -48,7 +49,6 @@ class FrontAPI;
 class ModRDPParams;
 class Random;
 class RedirectionInfo;
-class ReportMessageApi;
 class TimeObj;
 class Transport;
 namespace CHANNELS

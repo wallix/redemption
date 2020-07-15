@@ -190,7 +190,9 @@ void AclSerializer::report(const char * reason, const char * message)
 }
 
 void AclSerializer::server_redirection_target() {
-    set_server_redirection_target(this->ini, *this);
+    auto message = set_server_redirection_target(this->ini);
+    this->report("SERVER_REDIRECTION", message.c_str());
+
 }
 
 namespace

@@ -24,7 +24,7 @@
 
 #include "capture/fdx_capture.hpp"
 #include "acl/connect_to_target_host.hpp"
-#include "acl/dispatch_report_message.hpp"
+//#include "acl/dispatch_report_message.hpp"
 #include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -45,6 +45,7 @@ namespace
 {
     void file_verification_error(
         FrontAPI& front,
+        timeval now,
         ReportMessageApi& report_message,
         chars_view up_target_name,
         chars_view down_target_name,
@@ -57,7 +58,7 @@ namespace
                         KVLog("status"_av, msg),
                 };
                 report_message.log6(LogId::FILE_VERIFICATION_ERROR, data);
-                front.session_update(LogId::FILE_VERIFICATION_ERROR, data);
+                front.session_update(now, LogId::FILE_VERIFICATION_ERROR, data);
             }
         }
     }
@@ -110,6 +111,7 @@ struct RdpData
         , trans(std::move(fd), ReportError([this](Error err){
             file_verification_error(
                 this->ctx_error.front,
+                this->time_base.get_current_time(),
                 this->ctx_error.report_message,
                 this->ctx_error.up_target_name,
                 this->ctx_error.down_target_name,
@@ -189,7 +191,8 @@ class ModRDPWithSocketAndMetrics final : public mod_api
 public:
     SocketTransport socket_transport;
     ModRdpFactory rdp_factory;
-    DispatchReportMessage dispatcher;
+//    DispatchReportMessage dispatcher;
+    AuthApi & sesman;
     mod_rdp mod;
 
     FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
@@ -245,7 +248,6 @@ public:
       , const ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
-      , LogCategoryFlags dont_log_category
       , LicenseApi & license_store
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
@@ -257,8 +259,8 @@ public:
                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                      , to_verbose_flags(verbose), error_message)
 
-    , dispatcher(report_message, front, dont_log_category)
-    , mod(this->socket_transport, time_base, mod_wrapper, events, this->dispatcher /*report_message*/, sesman,gd, front, info, redir_info, gen, timeobj
+    , sesman(sesman)
+    , mod(this->socket_transport, time_base, mod_wrapper, events, report_message/*this->dispatcher*/ /*report_message*/, sesman,gd, front, info, redir_info, gen, timeobj
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -267,6 +269,7 @@ public:
     , ini(ini)
     {
         this->mod_wrapper.target_info_is_shown = false;
+        this->sesman.begin_dispatch_to_capture();
 //        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
@@ -278,6 +281,7 @@ public:
 //        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
+        this->sesman.end_dispatch_to_capture();
     }
 
     // from RdpInput
@@ -697,16 +701,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         mod_rdp_params.session_probe_params.vc_params.enable_self_cleaner = ini.get<cfg::mod_rdp::session_probe_enable_cleaner>();
     }
 
-    using LogCategoryFlags = DispatchReportMessage::LogCategoryFlags;
-
-    LogCategoryFlags dont_log_category;
-    if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
-        dont_log_category |= LogCategoryId::Drive;
-    }
-    if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
-        dont_log_category |= LogCategoryId::Clipboard;
-    }
-
     const char * const name = "RDP Target";
 
     Rect const adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
@@ -769,7 +763,9 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         else {
             LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
             file_verification_error(
-                front, report_message,
+                front, 
+                time_base.get_current_time(),
+                report_message,
                 mod_rdp_params.validator_params.up_target_name,
                 mod_rdp_params.validator_params.down_target_name,
                 "Unable to connect to FileValidator service"_av
@@ -944,7 +940,6 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         channels_authorizations,
         mod_rdp_params,
         tls_client_params,
-        dont_log_category,
         file_system_license_store,
         ini,
         enable_metrics ? &metrics->protocol_metrics : nullptr,

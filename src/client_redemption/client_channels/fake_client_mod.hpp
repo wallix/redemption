@@ -316,6 +316,10 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(ScreenInfo /*screen_server*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
+    
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void possible_active_window_change() override {}
+
 };
 
 

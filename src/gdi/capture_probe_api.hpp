@@ -38,5 +38,13 @@ struct CaptureProbeApi : private noncopyable
     virtual void possible_active_window_change() = 0;
 };
 
+struct NullCaptureProbe : public CaptureProbeApi
+{
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void possible_active_window_change() override {}
+
+};
+
+
 }  // namespace gdi
 

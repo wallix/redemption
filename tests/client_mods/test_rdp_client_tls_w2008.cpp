@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     GdForwarder gd_provider(front.gd());
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
     auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
 
@@ -271,7 +271,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     GdForwarder gd_provider(front.gd());
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
     auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};

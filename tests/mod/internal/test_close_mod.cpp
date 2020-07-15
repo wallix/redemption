@@ -51,6 +51,9 @@ public:
     {}
     ~FakeFront() = default;
 
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void possible_active_window_change() override {}
+
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }
     bool is_capture_in_progress() const override { return false; }
@@ -120,17 +123,17 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 
         RED_CHECK(events.queue.size() == 2);
         events.execute_events(timeval{580, 0},[](int){return false;});
-    //    ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
+        // ::dump_png24("TestCloseMod.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
-            "\xf1\x93\xd8\x9f\x7a\x00\x14\x8b\x42\xd8\x4b\x70\x4d\x7c\x96\xdc\x7f\x92\xb2\xe0");
+            "\xbf\x55\xa1\x7d\xd7\xbf\xcd\x27\x1f\x1b\x18\xe8\xdc\xea\x15\xb2\x56\x73\x45\x10");
 
         RED_CHECK(events.queue.size() == 2);
         events.execute_events(timeval{600, 0},[](int){return false;});
         RED_CHECK(events.queue.size() == 1);
 
-//        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
+        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
-            "\x3d\x73\xd1\xa3\x50\x06\x05\x5e\x37\xba\xab\x46\xb0\x37\x78\x53\xd6\xdf\xd3\x7c");
+            "\x3d\x0b\x77\x0b\x35\x44\x43\x3d\x0b\xa8\x20\x97\x2a\x24\xf3\x4d\x20\xe8\xff\xb4");
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
     }
     // When Close mod goes out of scope remaining events should be garbaged

@@ -55,6 +55,9 @@ public:
 
     gdi::GraphicApi& gd() noexcept;
 
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void possible_active_window_change() override {}
+
 private:
     class D;
     std::unique_ptr<D> d;

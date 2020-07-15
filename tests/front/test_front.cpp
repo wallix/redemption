@@ -161,7 +161,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
 
 
     NullReportMessage report_message;
@@ -341,7 +341,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     NullReportMessage report_message;
 
     RED_TEST_PASSPOINT();
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
     MyFront front(time_base, events, sesman, front_trans, gen1, ini
                  , cctx, report_message, fastpath_support);
     null_mod no_mod;

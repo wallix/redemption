@@ -20,7 +20,6 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-class ReportMessageApi;
 class Inifile;
 
-void set_server_redirection_target(Inifile& ini, ReportMessageApi& reporter);
+std::string set_server_redirection_target(Inifile& ini);

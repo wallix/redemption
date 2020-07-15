@@ -30,12 +30,15 @@
 #include "utils/pattutils.hpp"
 #include "configs/config.hpp"
 #include "gdi/screen_info.hpp"
+#include "gdi/capture_probe_api.hpp"
+#include "core/log_id.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
 #include "core/report_message_api.hpp"
+#include "utils/timebase.hpp"
 #include <functional>
 
-struct Sesman : public AuthApi, public ReportMessageApi
+struct Sesman : public ReportMessageApi
 {
     Inifile & ini;
 
@@ -116,12 +119,51 @@ struct Sesman : public AuthApi, public ReportMessageApi
 
     std::vector<Report> reports;
 
-    Sesman(Inifile & ini) : ini(ini) {}
+    bool dispatch_to_capture = false;
+    gdi::CaptureProbeApi * front = nullptr;
+    LogCategoryFlags dont_log;
+
+    TimeBase & time_base;
+
+    void begin_dispatch_to_capture() override
+    {
+        dispatch_to_capture = true;
+
+        if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
+            this->dont_log |= LogCategoryId::Drive;
+        }
+        if (bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm)) {
+            this->dont_log |= LogCategoryId::Clipboard;
+        }
+    }
+    void end_dispatch_to_capture() override
+    {
+        dispatch_to_capture = false;
+        this->dont_log = ::LogCategoryFlags();
+    }
+
+
+    Sesman(Inifile & ini, TimeBase & time_base) : ini(ini), time_base(time_base) {}
+
+    void set_front(gdi::CaptureProbeApi * front)
+    {
+        this->front = front;
+    }
 
     void log6(LogId id, KVList kv_list) override
     {
         this->log6_sent = false;
         this->buffered_log_params.emplace_back(id, kv_list);
+
+        if (!this->dispatch_to_capture) {
+            return;
+        }
+
+        if (dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
+            return ;
+        }
+
+        this->front->session_update(this->time_base.get_current_time(), id, kv_list);
     }
 
     void set_connect_target()

@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 
         TimeBase time_base({0,0});
         Inifile ini;
-        Sesman sesman(ini);
+        Sesman sesman(ini, time_base);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, time_base, events, gd_provider,
@@ -216,7 +216,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     TimeBase time_base({0,0});
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base, events, gd_provider,
@@ -837,7 +837,7 @@ namespace
             ChannelCtx(
                 MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
-                TimeBase & timebase,
+                TimeBase & time_base,
                 Sesman & sesman,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
@@ -848,7 +848,7 @@ namespace
             , to_server_sender(msg_comparator)
             , clipboard_virtual_channel(
                 &to_client_sender, &to_server_sender,
-                timebase, events, gd_provider,
+                time_base, events, gd_provider,
                 BaseVirtualChannel::Params(report_message, verbose),
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
@@ -991,15 +991,15 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
 })
 {
     Inifile ini;
-    TimeBase timebase({0,0});
-    Sesman sesman(ini);
+    TimeBase time_base({0,0});
+    Sesman sesman(ini, time_base);
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        timebase,
+        time_base,
         sesman,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
@@ -1195,16 +1195,16 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     ClipDataTest{false, true, true},
 })
 {
-    TimeBase timebase({0,0});
+    TimeBase time_base({0,0});
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        timebase,
+        time_base,
         sesman,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
@@ -1652,12 +1652,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
     Inifile ini;
-    Sesman sesman(ini);
+    TimeBase time_base({0,0});
+    Sesman sesman(ini, time_base);
 
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
-    TimeBase timebase({0,0});
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 30;
@@ -1665,7 +1665,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        timebase,
+        time_base,
         sesman,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
@@ -2739,9 +2739,9 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
-    TimeBase timebase({0,0});
+    TimeBase time_base({0,0});
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 10;
@@ -2749,7 +2749,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        timebase,
+        time_base,
         sesman,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);

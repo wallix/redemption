@@ -21,12 +21,11 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "regex/regex.hpp"
 
 #include <memory>
 #include <string>
-
-class ReportMessageApi;
 
 namespace utils {
 

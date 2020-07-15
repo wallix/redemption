@@ -2364,9 +2364,7 @@ public:
                                             SlowPath::PTRFLAGS_BUTTON2 |
                                             SlowPath::PTRFLAGS_BUTTON3)) &&
                         !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                        if (this->capture) {
-                            this->capture->possible_active_window_change();
-                        }
+                        this->possible_active_window_change();
                     }
                 }
                 break;
@@ -2387,9 +2385,7 @@ public:
                     if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
                                             SlowPath::PTRXFLAGS_BUTTON2)) &&
                         !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                        if (this->capture) {
-                            this->capture->possible_active_window_change();
-                        }
+                        this->possible_active_window_change();
                     }
                 }
                 break;
@@ -3021,9 +3017,10 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        this->session_update(LogId::PROBE_STATUS, {
-            KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
-        });
+        this->session_update(this->time_base.get_current_time(),
+            LogId::PROBE_STATUS, {
+                KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
+            });
     }
 
     void set_keylayout(int LCID) override {
@@ -3052,11 +3049,20 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(LogId id, KVList kv_list) override {
+    void session_update(timeval now, LogId id, KVList kv_list) override 
+    {
         if (this->capture) {
-            this->capture->session_update(this->time_base.get_current_time(), id, kv_list);
+            this->capture->session_update(now, id, kv_list);
         }
     }
+
+    void possible_active_window_change() override
+    {
+        if (this->capture) {
+            this->capture->possible_active_window_change();
+        }
+    }
+
 
 private:
     /*****************************************************************************/
@@ -4019,9 +4025,7 @@ private:
                                                     SlowPath::PTRFLAGS_BUTTON2 |
                                                     SlowPath::PTRFLAGS_BUTTON3)) &&
                                 !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                                if (this->capture) {
-                                    this->capture->possible_active_window_change();
-                                }
+                                this->possible_active_window_change();
                             }
                         }
                         break;
@@ -4041,9 +4045,7 @@ private:
                             if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
                                                     SlowPath::PTRXFLAGS_BUTTON2)) &&
                                 !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                                if (this->capture) {
-                                    this->capture->possible_active_window_change();
-                                }
+                                this->possible_active_window_change();
                             }
                         }
                         break;
@@ -5083,9 +5085,7 @@ private:
         }
 
         if (this->keymap.is_application_switching_shortcut_pressed) {
-            if (this->capture) {
-                this->capture->possible_active_window_change();
-            }
+            this->possible_active_window_change();
         }
     }
 

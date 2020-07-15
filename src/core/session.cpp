@@ -357,7 +357,7 @@ private:
                 {
                     acl.acl_serial->remote_answer = false;
                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
-                } // case next_state == MODULE_TRANSITORY  in switch (next_state) 
+                } // case next_state == MODULE_TRANSITORY  in switch (next_state)
                 break;
                 case MODULE_RDP:
                 {
@@ -376,8 +376,8 @@ private:
                             sesman.set_connect_target();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                        if (ini.get<cfg::globals::bogus_refresh_rect>() 
-                        && ini.get<cfg::globals::allow_using_multiple_monitors>() 
+                        if (ini.get<cfg::globals::bogus_refresh_rect>()
+                        && ini.get<cfg::globals::allow_using_multiple_monitors>()
                         && (front.client_info.cs_monitor.monitorCount > 1)) {
                             mod_wrapper.get_mod()->rdp_suppress_display_updates();
                             mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
@@ -392,7 +392,7 @@ private:
                         front.must_be_stop_capture();
                         throw;
                     }
-                } // case next_state == MODULE_RDP  in switch (next_state) 
+                } // case next_state == MODULE_RDP  in switch (next_state)
                 break;
                 case MODULE_VNC:
                 {
@@ -420,7 +420,7 @@ private:
                         throw;
                     }
 
-                } // case next_state == MODULE_VNC  in switch (next_state) 
+                } // case next_state == MODULE_VNC  in switch (next_state)
                 break;
                 case MODULE_INTERNAL:
                 {
@@ -429,7 +429,7 @@ private:
                     log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
                     this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                } // case next_state == MODULE_INTERNAL  in switch (next_state) 
+                } // case next_state == MODULE_INTERNAL  in switch (next_state)
                 break;
                 case MODULE_UNKNOWN:
                     throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
@@ -452,7 +452,7 @@ private:
                         break;
                     }
                     this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                } // case default in switch (next_state) 
+                } // case default in switch (next_state)
                 } // switch (next_state)
             } // case BACK_EVENT_NEXT in switch(signal)
             break;
@@ -572,8 +572,6 @@ public:
         TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
 
-        Sesman sesman(ini);
-
         TimeBase time_base(tvtime());
         EventContainer events;
 
@@ -581,9 +579,12 @@ public:
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
+        Sesman sesman(ini, time_base);
+
         Front front(time_base, events, sesman, front_trans, rnd, ini, cctx, sesman,
             ini.get<cfg::client::fast_path>()
         );
+        sesman.set_front(&front);
 
         timeval now = tvtime();
 
@@ -889,7 +890,11 @@ public:
                         }
                         break;
                         case 3:
-                            set_server_redirection_target(ini, sesman);
+                        {
+                            auto message = set_server_redirection_target(ini);
+                            sesman.report("SERVER_REDIRECTION", message.c_str());
+                        }
+
                         REDEMPTION_CXX_FALLTHROUGH;
                         case 2: // TODO: should we put some counter to avoid retrying indefinitely?
                             LOG(LOG_INFO, "Retry RDP");

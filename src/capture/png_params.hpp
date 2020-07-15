@@ -24,8 +24,6 @@
 
 #include <chrono>
 
-class ReportMessageApi;
-
 struct PngParams
 {
     unsigned png_width;

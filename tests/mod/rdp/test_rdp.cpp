@@ -154,7 +154,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     TimeBase time_base({0,0});
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
     GdForwarder gd_provider(front.gd());

@@ -241,7 +241,7 @@ public:
         , _callback(this)
         , time_base(time_base)
         , events(events)
-        , sesman(ini)
+        , sesman(ini, time_base)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)

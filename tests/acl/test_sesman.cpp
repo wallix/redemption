@@ -27,8 +27,9 @@
 
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
+    TimeBase time_base({0,0});
     Inifile ini;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
 
     RED_CHECK(sesman.reports.empty());
 }

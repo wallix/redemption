@@ -190,7 +190,7 @@ int main(int argc, char** argv)
         configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
 
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;
@@ -290,7 +290,10 @@ int main(int argc, char** argv)
         return eid  ? 1 : 0;
     }
 
-    set_server_redirection_target(ini, report_message);
+    {
+        auto message = set_server_redirection_target(ini);
+        report_message.report("SERVER_REDIRECTION", message.c_str());
+    }
 
     return run_rdp() ? 2 : 0;
 }

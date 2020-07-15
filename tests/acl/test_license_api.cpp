@@ -276,7 +276,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
             EventContainer events;
-            Sesman sesman(ini);
+            Sesman sesman(ini, time_base);
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
             ModRdpFactory mod_rdp_factory;
@@ -321,7 +321,10 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             if (e.id == ERR_RDP_SERVER_REDIR) {
                 LOG(LOG_INFO, "SERVER REDIRECTION");
 
-                set_server_redirection_target(ini, report_message);
+                {
+                    auto message = set_server_redirection_target(ini);
+                    report_message.report("SERVER_REDIRECTION", message.c_str());
+                }
 
                 do_work = true;
 
@@ -512,7 +515,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
             EventContainer events;
-            Sesman sesman(ini);
+            Sesman sesman(ini, time_base);
 
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -562,7 +565,10 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             if (e.id == ERR_RDP_SERVER_REDIR) {
                 LOG(LOG_INFO, "SERVER REDIRECTION");
 
-                set_server_redirection_target(ini, report_message);
+                {
+                    auto message = set_server_redirection_target(ini);
+                    report_message.report("SERVER_REDIRECTION", message.c_str());
+                }
 
                 do_work = true;
 

@@ -23,6 +23,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 
 #include "utils/rle.cpp" // Yolo :O
 #include "utils/stream.hpp"

@@ -664,7 +664,7 @@ public:
                 this->get_mod()->disconnect();
             }
             catch (Error const& e) {
-                LOG(LOG_ERR, "disconnect raised exception", e.id);
+                LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
             }
         }
     }

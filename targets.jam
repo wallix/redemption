@@ -617,27 +617,6 @@ test-run tests/acl/test_auth_api :
 test-run tests/acl/test_dispatch_report_message :
   $(REDEMPTION_TEST_PATH)/acl/test_dispatch_report_message.cpp
 :
-  <library>app_path_test.o
-  <library>crypto
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/pattutils.o
-  <library>src/utils/rle.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/front/fake_front.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/dispatch_report_message.hpp
 ;
 test-run tests/acl/test_end_session_warning :

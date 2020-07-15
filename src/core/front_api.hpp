@@ -38,7 +38,7 @@ namespace CHANNELS {
 
 class MonitorLayoutPDU;
 
-class FrontAPI : noncopyable
+class FrontAPI : public gdi::CaptureProbeApi /*, private noncopyable*/
 {
 public:
     virtual bool can_be_start_capture() = 0;
@@ -72,7 +72,6 @@ public:
     virtual void set_focus_on_password_textbox(bool /*unused*/) {}
     virtual void set_focus_on_unidentified_input_field(bool /*unused*/) {}
     virtual void set_consent_ui_visible(bool /*unused*/) {}
-    virtual void session_update(LogId id, KVList kv_list) { (void)id; (void)kv_list; }
 
     ////////////////////////////////
     // RemoteApp.

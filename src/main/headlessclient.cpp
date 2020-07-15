@@ -86,6 +86,8 @@ public:
 
     ~ClientRedemptionHeadless() = default;
 
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) {}
+    void possible_active_window_change() {}
 
     void close() override {}
 

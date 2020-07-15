@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     NullReportMessage report_message;
     TimeBase time_base({0,0});
     EventContainer events;
-    Sesman sesman(ini);
+    Sesman sesman(ini, time_base);
     FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;

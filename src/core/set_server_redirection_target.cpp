@@ -25,7 +25,7 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/cast.hpp"
 
 
-void set_server_redirection_target(Inifile& ini, ReportMessageApi& reporter)
+std::string set_server_redirection_target(Inifile& ini)
 {
     // SET new target in ini
     RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
@@ -44,7 +44,5 @@ void set_server_redirection_target(Inifile& ini, ReportMessageApi& reporter)
     }
     LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
     ini.set_acl<cfg::context::target_host>(host);
-    char message[770];
-    sprintf(message, "%s@%s", change_user, host);
-    reporter.report("SERVER_REDIRECTION", message);
+    return std::string(change_user) + '@' + std::string(host);
 }

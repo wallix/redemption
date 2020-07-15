@@ -67,14 +67,17 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     // it should be an object whose lifecycle match event functions lifecycle
     Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
-    e.alarm.set_period(std::chrono::seconds{1});
-    e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
+    e.actions.on_timeout = [&s](Event&event){
+        event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
+        s += "Event Triggered"; 
+    };
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
     // when it's time of above alarm is triggered
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
-    // but only once
+    e.actions.on_timeout(e);
+    // and again after period, because event reset alarm
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(2)));
 }
 

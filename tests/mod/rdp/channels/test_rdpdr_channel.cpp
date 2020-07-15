@@ -29,6 +29,7 @@
 
 #include "./test_channel.hpp"
 #include "acl/sesman.hpp"
+#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 
 namespace
@@ -188,7 +189,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         TimeBase time_base({0,0});
         EventContainer events;
         Inifile ini;
-        Sesman sesman(ini);
+        Sesman sesman(ini, time_base);
         FileSystemVirtualChannel file_system_virtual_channel(
             time_base, events, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);

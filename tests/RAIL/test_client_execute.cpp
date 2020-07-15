@@ -71,6 +71,9 @@ public:
     void update_pointer_position(uint16_t /*x*/, uint16_t /*y*/) override {}
     operator ConstImageDataView() const { return this->data.gd; }
     gdi::GraphicApi& gd() noexcept { return this->data.gd; }
+    
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void possible_active_window_change() override {}
 
 private:
     struct D

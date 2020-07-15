@@ -85,10 +85,16 @@ void FrontWrapper::set_consent_ui_visible(bool set)
     d->front.set_consent_ui_visible(set);
 }
 
-void FrontWrapper::session_update(LogId id, KVList kv_list)
+void FrontWrapper::session_update(timeval now, LogId id, KVList kv_list)
 {
-    d->front.session_update(id, kv_list);
+    d->front.session_update(now, id, kv_list);
 }
+
+void FrontWrapper::possible_active_window_change()
+{
+    d->front.possible_active_window_change();
+}
+
 
 void FrontWrapper::send_savesessioninfo()
 {
