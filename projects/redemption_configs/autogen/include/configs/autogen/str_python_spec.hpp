@@ -1310,11 +1310,9 @@ focus_color = string(default='winblue')
 #_advanced
 error_color = string(default='yellow')
 
-#_hidden
-logo = boolean(default=False)
-
-#_hidden
-logo_path = string(default='')
+# File path for upload logo
+#_image=/var/wab/images/rdp-oem-logo.png
+logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
 
 #_advanced
 edit_bgcolor = string(default='white')

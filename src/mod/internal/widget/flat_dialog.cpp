@@ -60,7 +60,7 @@ FlatDialog::FlatDialog(
             theme.global.focus_color, 2, font, 6, 2)
         : std::unique_ptr<WidgetFlatButton>())
     , img(drawable,
-          theme.global.logo ? theme.global.logo_path.c_str() :
+          theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
           *this,
           nullptr,

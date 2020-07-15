@@ -187,6 +187,7 @@ namespace spec
             advanced_in_gui = 1 << 4,
             iptables_in_gui = 1 << 5,
             password_in_gui = 1 << 6,
+            image_in_gui    = 1 << 7,
         };
 
         constexpr attr operator | (attr x, attr y) {
@@ -212,6 +213,7 @@ namespace spec
                 | attr::advanced_in_gui
                 | attr::iptables_in_gui
                 | attr::password_in_gui
+                | attr::image_in_gui
             ;
             static_assert(!(bool(v1 & attr::hidden_in_gui) && bool(v2 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
             static_assert(!(bool(v2 & attr::hidden_in_gui) && bool(v1 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
@@ -235,6 +237,7 @@ namespace spec
         inline constexpr internal::spec_attr_t<internal::attr::advanced_in_gui> advanced_in_gui{};
         inline constexpr internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
         inline constexpr internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
+        inline constexpr internal::spec_attr_t<internal::attr::image_in_gui>    image_in_gui{};
 
         inline constexpr auto loggable = log_policy::loggable;
         inline constexpr auto unloggable = log_policy::unloggable;

@@ -231,9 +231,9 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
     const char *extra_message = nullptr;
     Theme colors;
 
-    colors.global.logo = true;
+    colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
-
+    
     FlatWabClose flat_wab_close(drawable,
                                 0,
                                 0,

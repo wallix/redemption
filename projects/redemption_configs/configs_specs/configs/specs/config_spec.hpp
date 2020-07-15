@@ -914,8 +914,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "separator_color", set("light_blue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "focus_color", set("winblue"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "error_color", set("yellow"));
-        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "logo", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "logo_path", set(""));
+        W.member(image_in_gui, no_sesman, L, type_<std::string>(), "logo_path", desc{"File path for upload logo"}, spec::name{"logo"}, set(CPP_EXPR(REDEMPTION_CONFIG_THEME_LOGO)));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_bgcolor", set("white"));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_fgcolor", set("black"));

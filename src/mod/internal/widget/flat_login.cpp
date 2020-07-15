@@ -122,7 +122,7 @@ FlatLogin::FlatLogin(
              WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , scrollable_login_message_label(drawable, *this, font, theme, this->login_message_label)
     , img(drawable,
-          theme.global.logo ? theme.global.logo_path.c_str() :
+          theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
           *this,
           nullptr,

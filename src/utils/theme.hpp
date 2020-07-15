@@ -28,12 +28,12 @@
 struct Theme
 {
     struct {
+        bool enable_theme = false;
         BGRColor bgcolor = DARK_BLUE_BIS;
         BGRColor fgcolor = WHITE;
         BGRColor separator_color = LIGHT_BLUE;
         BGRColor focus_color = WINBLUE;
         BGRColor error_color = YELLOW;
-        bool logo = false;
         std::string logo_path;
     } global;
 

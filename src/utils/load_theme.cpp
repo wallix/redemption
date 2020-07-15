@@ -122,7 +122,9 @@ namespace
 
 void load_theme(Theme& theme, Inifile& ini) noexcept
 {
-    if (!ini.get<cfg::theme::enable_theme>()) {
+    theme.global.enable_theme = ini.get<cfg::theme::enable_theme>();
+    if (!theme.global.enable_theme)
+    {
         return;
     }
 
@@ -136,10 +138,7 @@ void load_theme(Theme& theme, Inifile& ini) noexcept
         color_from_cstr(ini.get<cfg::theme::focus_color>());
     theme.global.error_color =
         color_from_cstr(ini.get<cfg::theme::error_color>());
-    theme.global.logo =
-        ini.get<cfg::theme::logo>();
-    theme.global.logo_path =
-        ini.get<cfg::theme::logo_path>();
+    theme.global.logo_path = ini.get<cfg::theme::logo_path>();
 
     theme.edit.bgcolor =
         color_from_cstr(ini.get<cfg::theme::edit_bgcolor>());

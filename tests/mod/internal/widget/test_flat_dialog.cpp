@@ -436,9 +436,10 @@ RED_AUTO_TEST_CASE(TraceFlatDialog_transparent_png_with_theme_color)
     NotifyApi *notifier = nullptr;
     Theme colors;
 
+
+    colors.global.enable_theme = true;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
-    colors.global.logo = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
     WidgetFlatButton *extra_button = nullptr;

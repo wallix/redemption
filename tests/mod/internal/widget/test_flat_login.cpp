@@ -287,7 +287,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
     WidgetFlatButton *extra_button = nullptr;
     Theme colors;
 
-    colors.global.logo = true;
+    colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
     FlatLogin flat_login(drawable,
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_target_field)
     WidgetFlatButton *extra_button = nullptr;
     Theme colors;
 
-    colors.global.logo = true;
+    colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
 
     FlatLogin flat_login(drawable,
