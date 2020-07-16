@@ -27,101 +27,101 @@
 #include <type_traits>
 
 #include <cerrno>
+#include <functional>
 
+//class ReportError
+//{
+//public:
+//    template<class F>
+//    explicit ReportError(F && f) /*NOLINT*/
+//    : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
+//    {}
 
-class ReportError
-{
-public:
-    template<class F>
-    explicit ReportError(F && f) /*NOLINT*/
-    : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
-    {}
+//    explicit ReportError(std::nullptr_t = nullptr) /*NOLINT*/
+//    : impl(new NullImpl)
+//    {}
 
-    explicit ReportError(std::nullptr_t = nullptr) /*NOLINT*/
-    : impl(new NullImpl)
-    {}
+//    ReportError(ReportError && other) = default;
 
-    ReportError(ReportError && other) = default;
+//    ReportError(ReportError const & other)
+//    : impl(other.impl->clone())
+//    {}
 
-    ReportError(ReportError const & other)
-    : impl(other.impl->clone())
-    {}
+//    ReportError(ReportError & other)
+//    : impl(other.impl->clone())
+//    {}
 
-    ReportError(ReportError & other)
-    : impl(other.impl->clone())
-    {}
+//    ReportError & operator = (ReportError &&) = delete;
+//    ReportError & operator = (ReportError const &) = delete;
 
-    ReportError & operator = (ReportError &&) = delete;
-    ReportError & operator = (ReportError const &) = delete;
+//    Error get_error(Error err)
+//    {
+//        return this->impl->get_error(err);
+//    }
 
-    Error get_error(Error err)
-    {
-        return this->impl->get_error(err);
-    }
+//    Error operator()(Error err)
+//    {
+//        return this->get_error(err);
+//    }
 
-    Error operator()(Error err)
-    {
-        return this->get_error(err);
-    }
+//private:
+//    struct ImplBase;
+//    using ImplPtr = std::unique_ptr<ImplBase>;
 
-private:
-    struct ImplBase;
-    using ImplPtr = std::unique_ptr<ImplBase>;
+//    struct ImplBase
+//    {
+//        virtual Error get_error(Error err) = 0;
+//        [[nodiscard]] virtual ImplPtr clone() const = 0;
+//        virtual ~ImplBase() = default;
+//    };
 
-    struct ImplBase
-    {
-        virtual Error get_error(Error err) = 0;
-        [[nodiscard]] virtual ImplPtr clone() const = 0;
-        virtual ~ImplBase() = default;
-    };
+//    struct NullImpl : ImplBase
+//    {
+//        Error get_error(Error err) override;
+//        [[nodiscard]] ImplPtr clone() const override { return ImplPtr(new NullImpl); }
+//    };
 
-    struct NullImpl : ImplBase
-    {
-        Error get_error(Error err) override;
-        [[nodiscard]] ImplPtr clone() const override { return ImplPtr(new NullImpl); }
-    };
+//    template<class F>
+//    struct FuncImpl : ImplBase
+//    {
+//        F fun;
+//        template<class Fu>
+//        explicit FuncImpl(Fu && f) /*NOLINT*/ : fun(std::forward<Fu>(f)) {}
+//        Error get_error(Error err) override { return fun(err); }
+//        [[nodiscard]] ImplPtr clone() const override { return ImplPtr(new FuncImpl(fun)); }
+//    };
 
-    template<class F>
-    struct FuncImpl : ImplBase
-    {
-        F fun;
-        template<class Fu>
-        explicit FuncImpl(Fu && f) /*NOLINT*/ : fun(std::forward<Fu>(f)) {}
-        Error get_error(Error err) override { return fun(err); }
-        [[nodiscard]] ImplPtr clone() const override { return ImplPtr(new FuncImpl(fun)); }
-    };
+//    ImplPtr impl;
+//};
 
-    ImplPtr impl;
-};
+//template<class F>
+//void report_and_transform_error(Error& error, F && report)
+//{
+//    if (error.errnum == ENOSPC) {
+//        error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+//        report("FILESYSTEM_FULL", "100|unknown");
+//    }
+//}
 
-template<class F>
-void report_and_transform_error(Error& error, F && report)
-{
-    if (error.errnum == ENOSPC) {
-        error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-        report("FILESYSTEM_FULL", "100|unknown");
-    }
-}
+//struct LogReporter
+//{
+//    void operator()(char const * reason, char const * message);
+//};
 
-struct LogReporter
-{
-    void operator()(char const * reason, char const * message);
-};
+//struct ReportMessageReporter
+//{
+//    ReportMessageReporter(AuthApi & sesman)
+//    : sesman(sesman)
+//    {}
 
-struct ReportMessageReporter
-{
-    ReportMessageReporter(AuthApi & sesman)
-    : sesman(sesman)
-    {}
+//    void operator()(char const * reason, char const * message)
+//    {
+//        sesman.report(reason, message);
+//    }
 
-    void operator()(char const * reason, char const * message)
-    {
-        sesman.report(reason, message);
-    }
+//private:
+//    AuthApi & sesman;
+//};
 
-private:
-    AuthApi & sesman;
-};
-
-ReportError report_error_from_reporter(AuthApi & sesman);
-ReportError report_error_from_reporter(AuthApi * sesman);
+//ReportError report_error_from_reporter(AuthApi & sesman);
+//ReportError report_error_from_reporter(AuthApi * sesman);

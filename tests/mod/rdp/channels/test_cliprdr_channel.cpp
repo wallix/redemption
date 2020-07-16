@@ -749,7 +749,7 @@ namespace
             record_path.dirname().string(),
             hash_path.dirname().string(),
             "sid,blabla", sid, -1, cctx, rnd, fstat,
-            ReportError()};
+            [](const Error & /*error*/){}};
     };
 
     auto add_file(FdxTestCtx& data_test, std::string_view suffix)

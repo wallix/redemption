@@ -659,21 +659,16 @@ ocrypto::Result ocrypto::write(bytes_view data)
 
 OutCryptoTransport::OutCryptoTransport(
     CryptoContext & cctx, Random & rnd, Fstat & fstat,
-    ReportError report_error
+    std::function<void(const Error & error)> notify_error
 ) noexcept
 : encrypter(cctx, rnd)
-, out_file(invalid_fd(), std::move(report_error))
+, out_file(invalid_fd(), notify_error)
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
 {
     this->tmpname[0] = 0;
     this->finalname[0] = 0;
-}
-
-ReportError & OutCryptoTransport::get_report_error()
-{
-    return this->out_file.get_report_error();
 }
 
 OutCryptoTransport::~OutCryptoTransport()

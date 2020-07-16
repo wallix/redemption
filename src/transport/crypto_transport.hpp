@@ -165,12 +165,10 @@ public:
 
     explicit OutCryptoTransport(
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
-        ReportError report_error
+        std::function<void(const Error & error)> notify_error
     ) noexcept;
 
     [[nodiscard]] const char * get_finalname() const noexcept { return this->finalname; }
-
-    ReportError & get_report_error();
 
     ~OutCryptoTransport();
 

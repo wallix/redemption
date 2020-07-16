@@ -60,18 +60,18 @@ namespace
 //@{
 
 VideoTransportBase::VideoTransportBase(const int groupid, AuthApi * sesman)
-: out_file(invalid_fd(), sesman
-    ? ReportError([sesman](Error error){
+: out_file(invalid_fd(), [sesman](const Error & error){
         video_transport_log_error(error);
-        report_and_transform_error(error, ReportMessageReporter{*sesman});
-        return error;
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            if (sesman){
+                sesman->report("FILESYSTEM_FULL", "100|unknown");
+            }
+            else {
+                LOG(LOG_ERR, "FILESYSTEM_FULL:100|unknown");
+            }
+        }
     })
-    : ReportError([](Error error){
-        video_transport_log_error(error);
-        report_and_transform_error(error, LogReporter{});
-        return error;
-    })
-  )
 , groupid(groupid)
 {
     this->tmp_filename[0] = 0;
@@ -108,7 +108,9 @@ void VideoTransportBase::force_open()
            , this->tmp_filename
            , strerror(errnum), errnum);
         this->status = false;
-        throw this->out_file.get_report_error()(Error(ERR_TRANSPORT_OPEN_FAILED, errnum));
+        Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
+        this->out_file.notify_error(error);
+        throw error;
     }
 
     if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {

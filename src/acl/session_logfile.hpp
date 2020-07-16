@@ -49,8 +49,8 @@ class SessionLogFile
     bool logfile_is_open = false;
 
 public:
-    SessionLogFile(Inifile&ini, TimeBase & time_base, CryptoContext & cctx, Random & rnd, Fstat & fstat, ReportError report_error)
-    : ini(ini), time_base(time_base), cctx(cctx), ct(cctx, rnd, fstat, std::move(report_error))
+    SessionLogFile(Inifile&ini, TimeBase & time_base, CryptoContext & cctx, Random & rnd, Fstat & fstat, std::function<void(const Error & error)> notify_error)
+    : ini(ini), time_base(time_base), cctx(cctx), ct(cctx, rnd, fstat, notify_error)
     {}
 
     ~SessionLogFile()

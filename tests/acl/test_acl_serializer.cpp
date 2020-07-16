@@ -75,7 +75,17 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+
+
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
     ini.set<cfg::context::forcemodule>(true);
@@ -90,7 +100,17 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     };
     ThrowTransport transexcpt;
     AclSerializer aclexcpt(ini, timebase);
-    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
+    
+    auto notify_error_excpt = [&aclexcpt](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            aclexcpt.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    
+    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error_excpt);
     aclexcpt.set_auth_trans(&transexcpt);
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
@@ -119,7 +139,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport trans(stream.get_produced_bytes());
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
@@ -157,7 +186,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
     AclSerializer aclexcpt(ini, timebase);
-    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&aclexcpt));
+    
+    auto notify_error_excpt = [&aclexcpt](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            aclexcpt.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error_excpt);
     aclexcpt.set_auth_trans(&transexcpt);
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
@@ -181,7 +219,16 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 
     GeneratorTransport trans(s);
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+    
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
@@ -232,7 +279,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     init_keys(cctx);
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+    
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
@@ -278,7 +334,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+    
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
     std::string result(sz_string, 'a');
@@ -321,7 +386,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+    
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
     RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
@@ -345,7 +419,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 
     GeneratorTransport trans(s);
     AclSerializer acl(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl));
+    
+    auto notify_error = [&acl](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
@@ -395,7 +478,16 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
 
     GeneratorTransport trans(""_av);
     AclSerializer acl_serial(ini, timebase);
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, report_error_from_reporter(&acl_serial));
+    
+    auto notify_error = [&acl_serial](const Error & error)
+    {
+        if (error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            acl_serial.report("FILESYSTEM_FULL", "100|unknown");
+        }
+    };
+    
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl_serial.set_auth_trans(&trans);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
@@ -482,10 +574,9 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
     init_keys(cctx);
     TimeBase timebase({0, 0});
     Inifile ini;
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, ReportError([](Error e){
+    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, [&](const Error & e){
         RED_FAIL(e.errmsg());
-        return e;
-    }));
+    });
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 

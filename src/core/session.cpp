@@ -803,7 +803,12 @@ public:
                         try {
                             this->connect_acl(acl, time_base, acl_serial, auth_trans, ini);
                             log_file = std::make_unique<SessionLogFile>(ini, time_base, cctx, rnd, fstat,
-                                       report_error_from_reporter(acl_serial.get()));
+                                    [&sesman](const Error & error){
+                                        if (error.errnum == ENOSPC) {
+                                            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                                            sesman.report("FILESYSTEM_FULL", "100|unknown");
+                                        }
+                                    });
 
                         }
                         catch (...) {

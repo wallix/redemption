@@ -88,8 +88,20 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     const int groupid,
     AuthApi * sesman,
     uint32_t file_permissions)
-: meta_buf_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(sesman))
-, wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(sesman))
+: meta_buf_encrypt_transport(cctx, rnd, fstat, 
+    [&sesman](const Error & error){
+        if (sesman && error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            sesman->report("FILESYSTEM_FULL", "100|unknown");
+        }
+    })
+, wrm_filter_encrypt_transport(cctx, rnd, fstat,
+    [&sesman](const Error & error){
+        if (sesman && error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            sesman->report("FILESYSTEM_FULL", "100|unknown");
+        }
+    })
 , fstat(fstat)
 , filegen_(path, hash_path, basename, ".wrm")
 , groupid_(groupid)

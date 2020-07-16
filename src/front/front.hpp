@@ -1234,7 +1234,12 @@ public:
             str_concat(app_path(AppPath::Persistent), "/client").c_str(),
             this->ini.get<cfg::globals::host>().c_str(),
             this->orders.bpp(),
-            report_error_from_reporter(this->sesman),
+            [this](const Error & error){
+                if (error.errnum == ENOSPC) {
+                    // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    this->sesman.report("FILESYSTEM_FULL", "100|unknown");
+                }
+            },
             convert_verbose_flags(this->verbose)
         );
     }

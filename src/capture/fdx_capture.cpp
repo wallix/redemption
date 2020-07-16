@@ -116,7 +116,7 @@ namespace
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
     std::string fdx_filebase, std::string_view sid,
-    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
+    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, std::function<void(const Error & error)> notify_error)
 : name_generator(
     record_path = remove_end_slash(record_path),
     hash_path = remove_end_slash(hash_path),
@@ -124,9 +124,9 @@ FdxCapture::FdxCapture(
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
-, report_error(std::move(report_error))
+, notify_error(notify_error)
 , groupid(groupid)
-, out_crypto_transport(this->cctx, this->rnd, this->fstat, this->report_error)
+, out_crypto_transport(this->cctx, this->rnd, this->fstat, this->notify_error)
 {
     // create directory
     std::string directory;
@@ -154,7 +154,7 @@ FdxCapture::FdxCapture(
 
 FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 : file_id(fdx.name_generator.get_current_id())
-, trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.report_error)
+, trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.notify_error)
 , direction(direction)
 {
     auto derivator = fdx.name_generator.get_current_basename();

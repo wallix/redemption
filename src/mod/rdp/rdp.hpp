@@ -2058,7 +2058,12 @@ public:
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk
                 , mod_rdp_params.remote_app_params.convert_remoteapp_to_desktop, mod_rdp_params.verbose
-                , report_error_from_reporter(sesman))
+                , [&sesman](const Error & error){
+                    if (error.errnum == ENOSPC) {
+                        // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                        sesman.report("FILESYSTEM_FULL", "100|unknown");
+                    }
+                })
         , key_flags(mod_rdp_params.key_flags)
         , last_key_flags_sent(key_flags)
         , verbose(mod_rdp_params.verbose)

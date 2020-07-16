@@ -22,26 +22,26 @@
 #include "utils/log.hpp"
 
 
-void LogReporter::operator()(char const * reason, char const * message)
-{
-    LOG(LOG_ERR, "%s:%s", reason, message);
-}
+//void LogReporter::operator()(char const * reason, char const * message)
+//{
+//    LOG(LOG_ERR, "%s:%s", reason, message);
+//}
 
-Error ReportError::NullImpl::get_error(Error err)
-{
-    report_and_transform_error(err, LogReporter{});
-    return err;
-}
+//Error ReportError::NullImpl::get_error(Error err)
+//{
+//    report_and_transform_error(err, LogReporter{});
+//    return err;
+//}
 
-ReportError report_error_from_reporter(AuthApi & sesman)
-{
-    return ReportError([&sesman](Error error) {
-        report_and_transform_error(error, ReportMessageReporter{sesman});
-        return error;
-    });
-}
+//ReportError report_error_from_reporter(AuthApi & sesman)
+//{
+//    return ReportError([&sesman](Error error) {
+//        report_and_transform_error(error, ReportMessageReporter{sesman});
+//        return error;
+//    });
+//}
 
-ReportError report_error_from_reporter(AuthApi * sesman)
-{
-    return sesman ? report_error_from_reporter(*sesman) : ReportError();
-}
+//ReportError report_error_from_reporter(AuthApi * sesman)
+//{
+//    return sesman ? report_error_from_reporter(*sesman) : ReportError();
+//}

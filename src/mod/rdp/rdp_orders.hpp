@@ -119,12 +119,12 @@ private:
     bool silent_reject_windowing_orders;
 
 #ifndef __EMSCRIPTEN__
-    ReportError report_error;
+    std::function<void(const Error & error)> notify_error;
 #endif
 
 public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
-              , bool persist_bitmap_cache_on_disk, bool silent_reject_windowing_orders, RDPVerbose verbose, ReportError report_error)
+              , bool persist_bitmap_cache_on_disk, bool silent_reject_windowing_orders, RDPVerbose verbose, std::function<void(const Error & error)> notify_error)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , memblt(0, Rect(), 0, 0, 0, 0)
     , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
@@ -144,11 +144,10 @@ public:
 #endif
     , silent_reject_windowing_orders(silent_reject_windowing_orders)
 #ifndef __EMSCRIPTEN__
-    , report_error(std::move(report_error))
+    , notify_error(notify_error)
     {}
 #else
     {
-        (void)report_error;
         (void)enable_persistent_disk_bitmap_cache;
         (void)persist_bitmap_cache_on_disk;
         assert(!enable_persistent_disk_bitmap_cache);
@@ -205,7 +204,7 @@ private:
           app_path(AppPath::PersistentRdp),
           this->target_host.c_str(),
           this->bmp_cache->bpp,
-          this->report_error,
+          this->notify_error,
           convert_verbose_flags(this->verbose)
       );
     }

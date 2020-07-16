@@ -450,7 +450,7 @@ inline void save_persistent_disk_bitmap_cache(
     const char * persistent_path,
     const char * target_host,
     BitsPerPixel bpp,
-    ReportError report_error,
+    std::function<void(const Error & error)> notify_error,
     BmpCachePersister::Verbose verbose
 )
 {
@@ -479,7 +479,7 @@ inline void save_persistent_disk_bitmap_cache(
     try
     {
         {
-            OutFileTransport oft(unique_fd{fd}, std::move(report_error));
+            OutFileTransport oft(unique_fd{fd}, notify_error);
             BmpCachePersister::save_all_to_disk(bmp_cache, oft, verbose);
         }
 

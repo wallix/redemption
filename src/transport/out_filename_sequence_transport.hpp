@@ -69,7 +69,7 @@ public:
         const char * const filename,
         const char * const extension,
         const int groupid,
-        ReportError report_error);
+        std::function<void(const Error & error)> notify_error);
 
     ~OutFilenameSequenceTransport();
 

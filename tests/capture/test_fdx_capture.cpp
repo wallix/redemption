@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_empty_fdx, wd)
         record_path.dirname().string(),
         hash_path.dirname().string(),
         "sid,blabla", sid, -1, cctx, rnd, fstat,
-        ReportError());
+        [](const Error & /*error*/){});
 
     (void)record_path.create_subdirectory(sid);
     (void)hash_path.create_subdirectory(sid);
@@ -141,7 +141,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
         record_path.dirname().string(),
         hash_path.dirname().string(),
         "sid,blabla", sid, -1, cctx, rnd, fstat,
-        ReportError());
+        [](const Error & /*error*/){});
 
     auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};
     auto sig2 = Mwrm3::Sha256Signature{"ABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av};
@@ -267,7 +267,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
         record_path.dirname().string(),
         hash_path.dirname().string(),
         "sid,blabla", sid, -1, cctx, rnd, fstat,
-        ReportError());
+        [](const Error & /*error*/){});
 
     auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};
 

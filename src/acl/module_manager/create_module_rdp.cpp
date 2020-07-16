@@ -83,7 +83,9 @@ struct RdpData
                 size_t r = FileTransport::do_partial_read(buffer, len);
                 if (r == 0) {
                     LOG(LOG_ERR, "ModuleManager::create_mod_rdp: ModRDPWithMetrics::FileValidator::do_partial_read: No data read!");
-                    throw this->get_report_error()(Error(ERR_TRANSPORT_NO_MORE_DATA, errno));
+                    Error error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+                    this->notify_error(error);
+                    throw error;
                 }
                 return r;
             }
@@ -107,7 +109,7 @@ struct RdpData
 
         FileValidator(unique_fd&& fd, CtxError&& ctx_error, TimeBase & time_base, EventContainer & events)
         : ctx_error(std::move(ctx_error))
-        , trans(std::move(fd), ReportError([this](Error err){
+        , trans(std::move(fd), [this](const Error & err){
             file_verification_error(
                 this->ctx_error.front,
                 this->time_base.get_current_time(),
@@ -117,7 +119,7 @@ struct RdpData
                 err.errmsg()
             );
             return err;
-        }))
+        })
         , service(this->trans)
         , time_base(time_base)
         , events(events)
@@ -210,7 +212,7 @@ public:
                 filebase,
                 session_id, groupid, cctx, gen, this->rdp_data.fstat,
                 /* TODO should be a log (siem?)*/
-                ReportError());
+                [](const Error & error){});
 
             ini.set_acl<cfg::capture::fdx_path>(this->rdp_data.fdx_capture->get_fdx_path());
         }

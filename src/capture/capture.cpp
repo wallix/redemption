@@ -679,7 +679,15 @@ protected:
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
-        capture_params.groupid, report_error_from_reporter(capture_params.sesman))
+        capture_params.groupid,
+        [&capture_params](const Error & error){
+            if (capture_params.sesman){
+                if (error.errnum == ENOSPC) {
+                    // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
+                }
+            }
+        })
     , drawable(drawable)
     , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
@@ -1211,13 +1219,22 @@ public:
             }
             Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
             if (capture_params.sesman) {
-                report_and_transform_error(
-                    error, ReportMessageReporter{*capture_params.sesman});
+               if (error.errnum == ENOSPC) {
+                   error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                   // ReportMessageReporter
+                   capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
+                }
             }
             throw error; /* NOLINT */
         }
         return fd;
-    }()}, report_error_from_reporter(capture_params.sesman))
+        }()},
+        [&capture_params](const Error & error){
+            if (error.errnum == ENOSPC) {
+                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
+            }
+        })
     , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
     , session_log_agent(this->meta, meta_params)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
