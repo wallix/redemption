@@ -34,11 +34,10 @@
 #include "core/log_id.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
-#include "core/report_message_api.hpp"
 #include "utils/timebase.hpp"
 #include <functional>
 
-struct Sesman : public ReportMessageApi
+struct Sesman : public AuthApi
 {
     Inifile & ini;
 

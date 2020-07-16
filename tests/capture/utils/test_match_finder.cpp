@@ -23,7 +23,6 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/log_id.hpp"
-#include "core/report_message_api.hpp"
 #include "capture/utils/match_finder.hpp"
 #include <string_view>
 
@@ -154,7 +153,7 @@ RED_AUTO_TEST_CASE(search)
 
 RED_AUTO_TEST_CASE(report_notify)
 {
-    struct : NullReportMessage {
+    struct : NullAuthentifier {
         bool has_log = false;
         bool has_report = false;
 
@@ -179,7 +178,7 @@ RED_AUTO_TEST_CASE(report_notify)
 
 RED_AUTO_TEST_CASE(report_kill)
 {
-    struct : NullReportMessage {
+    struct : NullAuthentifier {
         bool has_log = false;
         bool has_report = false;
 

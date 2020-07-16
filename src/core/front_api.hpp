@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "core/report_message_api.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"

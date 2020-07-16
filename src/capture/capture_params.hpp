@@ -35,7 +35,7 @@ struct CaptureParams
     char const * record_tmp_path;
     char const * record_path;
     int groupid;
-    ReportMessageApi * report_message;
+    AuthApi * sesman;
 
     SmartVideoCropping smart_video_cropping;
 

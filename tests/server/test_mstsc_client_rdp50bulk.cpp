@@ -29,7 +29,7 @@
 #include "mod/internal/test_card_mod.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/front_wrapper.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 // Uncomment the code block below to generate testing data.
 // include "core/listen.hpp"
 // include "core/session.hpp"
@@ -103,11 +103,10 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     LCGRandom gen;
     CryptoContext cctx;
     const bool fastpath_support = true;
-    NullReportMessage report_message;
     TimeBase time_base({0,0});
     EventContainer events;
     Sesman sesman(ini, time_base);
-    FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, report_message, fastpath_support);
+    FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

@@ -25,7 +25,6 @@
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 #include "core/log_id.hpp"
-#include "core/report_message_api.hpp"
 #include "main/version.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "utils/fileutils.hpp"

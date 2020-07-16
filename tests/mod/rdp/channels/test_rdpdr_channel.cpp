@@ -163,8 +163,11 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
         RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-        NullReportMessage report_message;
-        BaseVirtualChannel::Params base_params(report_message, verbose);
+        TimeBase time_base({0,0});
+        EventContainer events;
+        Inifile ini;
+        Sesman sesman(ini, time_base);
+        BaseVirtualChannel::Params base_params(sesman, verbose);
 
         FileSystemDriveManager file_system_drive_manager;
 
@@ -186,10 +189,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         uint32_t     random_number                = 5245;
         const char * proxy_managed_drive_prefix   = "";
 
-        TimeBase time_base({0,0});
-        EventContainer events;
-        Inifile ini;
-        Sesman sesman(ini, time_base);
         FileSystemVirtualChannel file_system_virtual_channel(
             time_base, events, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);

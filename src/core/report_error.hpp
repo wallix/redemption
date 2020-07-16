@@ -21,7 +21,6 @@
 #pragma once
 
 #include "core/error.hpp"
-#include "core/report_message_api.hpp"
 #include "acl/auth_api.hpp"
 #include <memory>
 #include <utility>

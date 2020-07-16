@@ -156,14 +156,13 @@ FrontWrapper::FrontWrapper(
     Random & gen,
     Inifile & ini,
     CryptoContext & cctx,
-    ReportMessageApi & report_message,
     bool fp_support // If true, fast-path must be supported
 )
 : d(new D{FrontWrapper::D::MyFront{
     time_base,
     events,
     sesman,
-    trans, gen, ini, cctx, report_message,
+    trans, gen, ini, cctx,
     fp_support
 }})
 {}

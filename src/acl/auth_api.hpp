@@ -89,8 +89,6 @@ struct AuthApi : noncopyable
 
 };
 
-struct ReportMessageApi : public AuthApi {};
-
 struct NullAuthentifier : AuthApi
 {
     void report(const char * /* reason */, const char * /* message */) override {}
@@ -114,25 +112,3 @@ struct NullAuthentifier : AuthApi
     void set_rt_ready() override {}
 };
 
-struct NullReportMessage : ReportMessageApi
-{
-    void report(const char * /* reason */, const char * /* message */) override {}
-    void log6(LogId /*id*/, KVList /*kv_list*/) override {}
-    void begin_dispatch_to_capture() override {}
-    void end_dispatch_to_capture() override {}
-
-    void set_pm_request(std::string_view /*request*/) override {}
-    void set_disconnect_target() override {}
-    void set_auth_error_message(const char * /*error_message*/) override {}
-    std::string get_auth_error_message() override { return ""; }
-    void set_auth_channel_target(const char * /*target*/) override {}
-    void set_native_session_id(unsigned int /*session_id*/) override {}
-    void set_rd_shadow_available() override {}
-    void set_rd_shadow_invitation(uint32_t /*error_code*/, const char * /*error_message*/, const char * /*userdata*/, const char * /*id*/, const char * /*addr*/, uint16_t /*port*/) override {}
-    void set_smartcard_login(const char * /*login*/) override {}
-    void set_server_cert(std::string const& /*blob_str*/) override {}
-    void set_screen_info(ScreenInfo /*screen_info*/) override {}
-    void set_auth_info(std::string const& /*username*/, std::string const& /*domain*/, std::string const& /*password*/) override {}
-    void set_recording_started() override {}
-    void set_rt_ready() override {}
-};

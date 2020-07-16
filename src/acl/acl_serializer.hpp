@@ -25,7 +25,7 @@
 #pragma once
 
 #include "core/back_event_t.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/verbose_flags.hpp"
@@ -109,7 +109,7 @@ public:
 };
 
 
-class AclSerializer final : public ReportMessageApi
+class AclSerializer final : public AuthApi
 {
 public:
     Inifile & ini;

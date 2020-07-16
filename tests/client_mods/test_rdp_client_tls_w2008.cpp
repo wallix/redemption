@@ -28,7 +28,7 @@
 #include "acl/gd_provider.hpp"
 #include "core/client_info.hpp"
 #include "utils/timebase.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -136,7 +136,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     // To always get the same client random, in tests
     LCGRandom gen;
     LCGTime timeobj;
-    NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
@@ -265,7 +264,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     // To always get the same client random, in tests
     LCGRandom gen;
     LCGTime timeobj;
-    NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());

@@ -27,7 +27,6 @@ class TimeBase;
 class Transport;
 class Random;
 class CryptoContext;
-class ReportMessageApi;
 class Inifile;
 class Callback;
 
@@ -47,7 +46,6 @@ public:
         Random & gen,
         Inifile & ini,
         CryptoContext & cctx,
-        ReportMessageApi & report_message,
         bool fp_support // If true, fast-path must be supported
     );
 

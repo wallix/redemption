@@ -21,7 +21,7 @@
 #pragma once
 
 #include "core/log_id.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <string>

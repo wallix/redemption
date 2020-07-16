@@ -741,7 +741,7 @@ public:
         captureParams.record_tmp_path = record_path.c_str();
         captureParams.record_path = record_path.c_str();
         captureParams.groupid = 0;
-        captureParams.report_message = nullptr;
+        captureParams.sesman = nullptr;
 
         this->capture = std::make_unique<Capture>(
             this->config.info.screen_info.width, this->config.info.screen_info.height,

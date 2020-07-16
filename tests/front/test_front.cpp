@@ -40,7 +40,7 @@
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "core/channel_list.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
@@ -164,13 +164,11 @@ RED_AUTO_TEST_CASE(TestFront)
     Sesman sesman(ini, time_base);
 
 
-    NullReportMessage report_message;
-
     RED_TEST_PASSPOINT();
 
     MyFront front(
         time_base, events, sesman, front_trans, gen1, ini , cctx,
-        report_message, fastpath_support);
+        fastpath_support);
     null_mod no_mod;
 
     GdForwarder gd_provider(front.gd());
@@ -338,12 +336,10 @@ RED_AUTO_TEST_CASE(TestFront2)
     TimeBase time_base({0,0});
     EventContainer events;
 
-    NullReportMessage report_message;
-
     RED_TEST_PASSPOINT();
     Sesman sesman(ini, time_base);
     MyFront front(time_base, events, sesman, front_trans, gen1, ini
-                 , cctx, report_message, fastpath_support);
+                 , cctx, fastpath_support);
     null_mod no_mod;
 
 //    RED_TEST_PASSPOINT();
@@ -507,7 +503,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    NullReportMessage report_message;
+    NullAuthentifier report_message;
     MyFront front( front_trans, gen1, ini
                  , cctx, report_message, fastpath_support
                  , now - ini.get<cfg::globals::handshake_timeout>().count());

@@ -87,7 +87,7 @@
 #include "core/font.hpp"
 #include "core/front_api.hpp"
 #include "core/glyph_to_24_bitmap.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
@@ -624,7 +624,7 @@ private:
 
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
-    ReportMessageApi & report_message;
+    AuthApi & sesman;
 
     uint16_t rail_channel_id = 0;
 
@@ -644,7 +644,6 @@ private:
 
     TimeBase& time_base;
     EventContainer& events;
-    Sesman & sesman;
     int handshake_timeout = 0;
     int capture_timer = 0;
     int flow_control_timer = 0;
@@ -768,14 +767,11 @@ public:
 public:
     Front( TimeBase& time_base
          , EventContainer& events_
-         // TODO: To Cut dependency with sesman, we should rather provide some front specific callback table
-         // to send data to acl.
-         , Sesman & sesman
+         , AuthApi & sesman
          , Transport & trans
          , Random & gen
          , Inifile & ini
          , CryptoContext & cctx
-         , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
@@ -791,10 +787,9 @@ public:
     , server_fastpath_update_support(false)
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , report_message(report_message)
+    , sesman(sesman)
     , time_base(time_base)
     , events(events_)
-    , sesman(sesman)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
@@ -1124,7 +1119,7 @@ public:
             record_tmp_path,
             record_path.c_str(),
             groupid,
-            &this->report_message,
+            &this->sesman,
             ini.get<cfg::video::smart_video_cropping>(),
             ini.get<cfg::debug::capture>()
         };
@@ -1239,7 +1234,7 @@ public:
             str_concat(app_path(AppPath::Persistent), "/client").c_str(),
             this->ini.get<cfg::globals::host>().c_str(),
             this->orders.bpp(),
-            report_error_from_reporter(this->report_message),
+            report_error_from_reporter(this->sesman),
             convert_verbose_flags(this->verbose)
         );
     }
@@ -3049,7 +3044,7 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(timeval now, LogId id, KVList kv_list) override 
+    void session_update(timeval now, LogId id, KVList kv_list) override
     {
         if (this->capture) {
             this->capture->session_update(now, id, kv_list);

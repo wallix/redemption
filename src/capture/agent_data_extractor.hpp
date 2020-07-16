@@ -20,7 +20,7 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 
 #include <array>
 

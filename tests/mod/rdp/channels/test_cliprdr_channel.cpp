@@ -108,10 +108,12 @@ namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 {
-    NullReportMessage report_message;
+    TimeBase time_base({0,0});
+    Inifile ini;
+    Sesman sesman(ini, time_base);
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+    BaseVirtualChannel::Params base_params(sesman, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     EventContainer events;
 
@@ -141,10 +143,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToClientSender to_client_sender(t);
         TestToServerSender to_server_sender(t);
 
-        TimeBase time_base({0,0});
-        Inifile ini;
-        Sesman sesman(ini, time_base);
-
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, time_base, events, gd_provider,
             base_params, d.cb_params, ipca_service, {nullptr, false});
@@ -164,10 +162,12 @@ public:
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
-    NullReportMessage report_message;
+    TimeBase time_base({0,0});
+    Inifile ini;
+    Sesman sesman(ini, time_base);
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+    BaseVirtualChannel::Params base_params(sesman, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -177,7 +177,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_client_sender;
     NullSender to_server_sender;
 
-    TimeBase time_base({0,0});
     EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
@@ -200,10 +199,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
-    NullReportMessage report_message;
+    TimeBase time_base({0,0});
+    EventContainer events;
+    Inifile ini;
+    Sesman sesman(ini, time_base);
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(report_message, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+    BaseVirtualChannel::Params base_params(sesman, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -212,11 +214,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     NullSender to_client_sender;
     NullSender to_server_sender;
-
-    TimeBase time_base({0,0});
-    EventContainer events;
-    Inifile ini;
-    Sesman sesman(ini, time_base);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base, events, gd_provider,
@@ -628,7 +625,7 @@ namespace
         }
     };
 
-    class ReportMessageTest : public NullReportMessage
+    class ReportMessageTest : public NullAuthentifier
     {
         MsgComparator& msg_comparator;
 

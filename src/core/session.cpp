@@ -581,8 +581,8 @@ public:
 
         Sesman sesman(ini, time_base);
 
-        Front front(time_base, events, sesman, front_trans, rnd, ini, cctx, sesman,
-            ini.get<cfg::client::fast_path>()
+        Front front(time_base, events, sesman,
+            front_trans, rnd, ini, cctx, ini.get<cfg::client::fast_path>()
         );
         sesman.set_front(&front);
 

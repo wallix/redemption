@@ -86,10 +86,10 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     uint16_t width,
     uint16_t height,
     const int groupid,
-    ReportMessageApi * report_message,
+    AuthApi * sesman,
     uint32_t file_permissions)
-: meta_buf_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
-, wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(report_message))
+: meta_buf_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(sesman))
+, wrm_filter_encrypt_transport(cctx, rnd, fstat, report_error_from_reporter(sesman))
 , fstat(fstat)
 , filegen_(path, hash_path, basename, ".wrm")
 , groupid_(groupid)
