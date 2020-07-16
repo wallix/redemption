@@ -131,7 +131,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         events.execute_events(timeval{600, 0},[](int){return false;});
         RED_CHECK(events.queue.size() == 1);
 
-        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
+//        ::dump_png24("TestCloseModFin.png", ConstImageDataView(front), true);
         RED_CHECK_SIG(ConstImageDataView(front),
             "\x3d\x0b\x77\x0b\x35\x44\x43\x3d\x0b\xa8\x20\x97\x2a\x24\xf3\x4d\x20\xe8\xff\xb4");
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
