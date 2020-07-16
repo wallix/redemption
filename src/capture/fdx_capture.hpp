@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include "core/report_error.hpp"
+#include <functional>
+
 #include "capture/mwrm3.hpp"
 #include "transport/crypto_transport.hpp"
 

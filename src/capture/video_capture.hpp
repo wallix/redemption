@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "capture/video_params.hpp"
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"

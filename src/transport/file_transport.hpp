@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "core/report_error.hpp"
+#include <functional>
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 

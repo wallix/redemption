@@ -27,11 +27,10 @@
 #include <string>
 
 #include <cinttypes>
+#include <functional>
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-
-#include "core/report_error.hpp"
 
 #include "core/RDP/protocol.hpp"
 

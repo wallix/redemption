@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "transport/crypto_transport.hpp"
 
 
