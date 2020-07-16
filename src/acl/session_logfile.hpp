@@ -35,7 +35,7 @@
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/fileutils.hpp"
 #include "main/version.hpp"
-
+#include "utils/log_siem.hpp"
 #include <string>
 #include <chrono>
 
@@ -259,6 +259,39 @@ namespace
         append("account=\"",    account);
     }
 
+   
+    inline void log_siem_syslog(LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
+    {
+        if (ini.get<cfg::session_log::enable_session_log>()) {
+        
+            auto target_ip = [&ini]{
+                char c = ini.get<cfg::context::target_host>()[0];
+                using av = chars_view;
+                return ('0' <= c && '9' <= c)
+                    ? av(ini.get<cfg::context::target_host>())
+                    : av(ini.get<cfg::context::ip_target>());
+            };
+
+            std::string buffer_info;
+            buffer_info.reserve(kv_list.size() * 50 + 30);
+            log_format_set_info(buffer_info, id, kv_list);
+
+            std::string buffer;
+            log_format_set_siem(
+                buffer,
+                session_type,
+                ini.get<cfg::globals::auth_user>(),
+                ini.get<cfg::globals::target_user>(),
+                ini.get<cfg::context::session_id>(),
+                ini.get<cfg::globals::host>(),
+                target_ip(),
+                ini.get<cfg::globals::target_device>(),
+                ini.get<cfg::context::target_service>());
+
+            LOG_SIEM("%s%s", buffer.c_str(), buffer_info.c_str());
+        }
+    }
+
     inline void log_format_set_arcsight(
         std::string& buffer,
         LogId id,
@@ -292,5 +325,35 @@ namespace
         );
         kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
     }
+
+    inline void log_siem_arcsight(std::time_t time_now, LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
+    {
+        if (ini.get<cfg::session_log::enable_arcsight_log>()) {
+
+            auto target_ip = [&ini]{
+                char c = ini.get<cfg::context::target_host>()[0];
+                using av = chars_view;
+                return ('0' <= c && '9' <= c)
+                    ? av(ini.get<cfg::context::target_host>())
+                    : av(ini.get<cfg::context::ip_target>());
+            };
+
+            std::string buffer;
+            log_format_set_arcsight(
+                buffer, id, time_now,
+                session_type,
+                ini.get<cfg::globals::auth_user>(),
+                ini.get<cfg::globals::target_user>(),
+                ini.get<cfg::context::session_id>(),
+                ini.get<cfg::globals::host>(),
+                target_ip(),
+                ini.get<cfg::globals::target_device>(),
+                ini.get<cfg::context::target_service>(),
+                kv_list);
+
+            LOG_SIEM("%s", buffer);
+        }
+    }
+    
 }
 

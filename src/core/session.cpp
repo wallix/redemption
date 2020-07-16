@@ -769,20 +769,25 @@ public:
                     }
 
                     // propagate changes made in sesman structure to actual acl changes
-                    sesman.flush_acl_report([&ini,&acl](std::string reason,std::string message)
-                    {
-                        ini.ask<cfg::context::keepalive>();
-                        char report[1024];
-                        snprintf(report, sizeof(report), "%s:%s:%s", reason,
-                        ini.get<cfg::globals::target_device>().c_str(), message);
-                        ini.set_acl<cfg::context::reporting>(report);
-                        acl.acl_serial->send_acl_data();
-                    });
-                    sesman.flush_acl_log6([&acl,&log_file](LogId id, KVList kv_list)
-                    {
-                        acl.acl_serial->log6(id, kv_list);
-                        log_file->log6(id, kv_list);
-                    });
+                    sesman.flush_acl_report(
+                        [&ini,&acl](zstring_view reason, zstring_view message)
+                        {
+                            ini.ask<cfg::context::keepalive>();
+                            char report[1024];
+                            snprintf(report, sizeof(report), "%s:%s:%s", reason.c_str(),
+                                ini.get<cfg::globals::target_device>().c_str(), message.c_str());
+                            ini.set_acl<cfg::context::reporting>(report);
+                            acl.acl_serial->send_acl_data();
+                        });
+                    sesman.flush_acl_log6(
+                        [&ini,&acl,&log_file,now](LogId id, KVList kv_list)
+                        {
+    //                        const timeval time = timebase.get_current_time();
+                            /* Log to SIEM (redirected syslog) */
+                            log_siem_syslog(id, kv_list, ini, acl.acl_serial->session_type);
+                            log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl.acl_serial->session_type);
+                            log_file->log6(id, kv_list);
+                        });
                     sesman.flush_acl();
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {

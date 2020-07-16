@@ -179,62 +179,6 @@ AclSerializer::~AclSerializer()
 {
 }
 
-//void AclSerializer::server_redirection_target() {
-//    auto message = set_server_redirection_target(this->ini);
-//    this->report("SERVER_REDIRECTION", message.c_str());
-
-//}
-
-void AclSerializer::log6(LogId id, KVList kv_list)
-{
-    const timeval time = this->timebase.get_current_time();
-    std::string buffer_info;
-    buffer_info.reserve(kv_list.size() * 50 + 30);
-
-    time_t const time_now = time.tv_sec;
-    log_format_set_info(buffer_info, id, kv_list);
-
-    auto target_ip = [this]{
-        char c = this->ini.get<cfg::context::target_host>()[0];
-        using av = chars_view;
-        return ('0' <= c && '9' <= c)
-            ? av(this->ini.get<cfg::context::target_host>())
-            : av(this->ini.get<cfg::context::ip_target>());
-    };
-
-    /* Log to SIEM (redirected syslog) */
-    if (this->ini.get<cfg::session_log::enable_session_log>()) {
-        std::string buffer;
-        log_format_set_siem(
-            buffer,
-            this->session_type,
-            this->ini.get<cfg::globals::auth_user>(),
-            this->ini.get<cfg::globals::target_user>(),
-            this->ini.get<cfg::context::session_id>(),
-            this->ini.get<cfg::globals::host>(),
-            target_ip(),
-            this->ini.get<cfg::globals::target_device>(),
-            this->ini.get<cfg::context::target_service>());
-
-        LOG_SIEM("%s%s", buffer.c_str(), buffer_info.c_str());
-    }
-
-    if (this->ini.get<cfg::session_log::enable_arcsight_log>()) {
-        log_format_set_arcsight(
-            buffer_info, id, time_now,
-            this->session_type,
-            this->ini.get<cfg::globals::auth_user>(),
-            this->ini.get<cfg::globals::target_user>(),
-            this->ini.get<cfg::context::session_id>(),
-            this->ini.get<cfg::globals::host>(),
-            target_ip(),
-            this->ini.get<cfg::globals::target_device>(),
-            this->ini.get<cfg::context::target_service>(),
-            kv_list);
-
-        LOG_SIEM("%s", buffer_info);
-    }
-}
 
 namespace
 {

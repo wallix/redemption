@@ -147,9 +147,6 @@ public:
     }
 
     void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
-
-    void log6(LogId id, KVList kv_list) ;
-
     void in_items();
     void incoming();
     void send_acl_data();
