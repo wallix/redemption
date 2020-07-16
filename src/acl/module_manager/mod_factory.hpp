@@ -50,7 +50,6 @@
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
-#include "core/report_message_api.hpp"
 #include "acl/file_system_license_store.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
@@ -68,7 +67,6 @@ class ModFactory
     Font & glyphs;
     Theme & theme;
     ClientExecute & rail_client_execute;
-    ReportMessageApi & report_message;
     Keymap2 & keymap;
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
     Random & gen;
@@ -88,7 +86,6 @@ public:
                Font & glyphs,
                Theme & theme,
                ClientExecute & rail_client_execute,
-               ReportMessageApi & report_message,
                Keymap2 & keymap,
                Random & gen,
                TimeObj & timeobj,
@@ -105,7 +102,6 @@ public:
         , glyphs(glyphs)
         , theme(theme)
         , rail_client_execute(rail_client_execute)
-        , report_message(report_message)
         , keymap(keymap)
         , gen(gen)
         , timeobj(timeobj)

@@ -25,7 +25,6 @@
 #pragma once
 
 #include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/timebase.hpp"
 #include "acl/mod_wrapper.hpp"

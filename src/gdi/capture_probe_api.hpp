@@ -23,7 +23,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 
 struct timeval;
 

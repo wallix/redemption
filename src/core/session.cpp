@@ -148,7 +148,7 @@ private:
     }
 
 private:
-    int end_session_exception(Error const& e, Inifile & ini) 
+    int end_session_exception(Error const& e, Inifile & ini)
     {
         if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
             ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
@@ -603,7 +603,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini, sesman);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, sesman, front.keymap, rnd, timeobj, cctx);
+            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, front.keymap, rnd, timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);

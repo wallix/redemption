@@ -19,7 +19,6 @@ Author(s): Jonathan Poelen
 */
 
 #include "configs/config.hpp"
-#include "core/report_message_api.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"

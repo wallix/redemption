@@ -39,7 +39,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/rdp_pointer.hpp"
-#include "core/report_message_api.hpp"
 
 #include "gdi/screen_functions.hpp"
 #include "gdi/graphic_api.hpp"

@@ -24,9 +24,8 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "utils/uninit_checked.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
-#include "core/report_message_api.hpp"
-
 
 #include <memory>
 

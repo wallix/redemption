@@ -150,7 +150,6 @@ int main(int argc, char** argv)
     ScopedSslInit scoped_ssl;
 
     ClientFront front(client_info.screen_info, verbose);
-    NullReportMessage report_message;
     TimeSystem system_timeobj;
     TimeBase time_base(tvtime());
     EventContainer events;
@@ -291,7 +290,7 @@ int main(int argc, char** argv)
 
     {
         auto message = set_server_redirection_target(ini);
-        report_message.report("SERVER_REDIRECTION", message.c_str());
+        sesman.report("SERVER_REDIRECTION", message.c_str());
     }
 
     return run_rdp() ? 2 : 0;
