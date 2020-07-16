@@ -27,7 +27,6 @@ Author(s): Jonathan Poelen
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -230,7 +229,7 @@ class RdpClient
         emscripten::val crypto;
     };
 
-    struct JsReportMessage : NullReportMessage
+    struct JsAuthentitifier : NullAuthentifier
     {
         void set_auth_error_message(const char * error_message) override
         {
@@ -245,6 +244,7 @@ class RdpClient
         // void log6(LogId /*id*/, KVList /*kv_list*/) override
         // {}
     };
+
     TimeBase time_base;
     EventContainer events;
 
@@ -263,7 +263,7 @@ class RdpClient
 
     JsRandom js_rand;
     LCGTime lcg_timeobj;
-    JsReportMessage report_message;
+    JsAuthentitifier authentifier;
     NullLicenseStore license_store;
     RedirectionInfo redir_info;
 
@@ -434,8 +434,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd_forwarder, events, report_message, report_message,
-            gd, front, client_info,
+            trans, time_base, gd_forwarder, events, authentifier, gd, front, client_info,
             redir_info, js_rand, lcg_timeobj, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);

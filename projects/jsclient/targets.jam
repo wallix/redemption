@@ -36,7 +36,6 @@ exe-js js_client :
   src/core/error.bc
   src/core/events.bc
   src/core/font.bc
-  src/core/report_error.bc
   src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
   src/mod/rdp/new_mod_rdp.bc
@@ -107,11 +106,13 @@ test-run-js tests/red_channels/test_js_channel :
 test-run-js tests/redjs/test_front :
   tests/redjs/test_front.cpp
 :
+  app_path_test.bc
   src/redjs/front.bc
   src/redjs/graphics.bc
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
   src/system/ssl_mod_exp.bc
+  projects/redemption_configs/redemption_src/configs/config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -120,6 +121,7 @@ test-run-js tests/redjs/test_front :
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
   src/utils/hexdump.bc
+  src/utils/pattutils.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
   src/utils/utf.bc
@@ -197,7 +199,6 @@ objjs src/core/channels_authorizations.bc : $(REDEMPTION_SRC_PATH)/core/channels
 objjs src/core/error.bc : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 objjs src/core/events.bc : $(REDEMPTION_SRC_PATH)/core/events.cpp ;
 objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
-objjs src/core/report_error.bc : $(REDEMPTION_SRC_PATH)/core/report_error.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
