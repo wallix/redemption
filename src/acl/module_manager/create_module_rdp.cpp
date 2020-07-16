@@ -212,7 +212,7 @@ public:
                 filebase,
                 session_id, groupid, cctx, gen, this->rdp_data.fstat,
                 /* TODO should be a log (siem?)*/
-                [](const Error & error){});
+                [](const Error & /*error*/){});
 
             ini.set_acl<cfg::capture::fdx_path>(this->rdp_data.fdx_capture->get_fdx_path());
         }

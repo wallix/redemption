@@ -249,7 +249,8 @@ struct ReplayMod::Reader
         }
 
         this->reader.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-        front.can_be_start_capture();
+        // TODO: see why we may want to start capture while replaying code
+        front.can_be_start_capture(false);
         return is_resized;
     }
 };

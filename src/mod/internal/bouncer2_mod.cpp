@@ -115,9 +115,9 @@ int Bouncer2Mod::interaction()
 // This should come from BACK!
 void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
-    if (!this->capture_started && this->front.can_be_start_capture()){
+    if (!this->capture_started && this->front.can_be_start_capture(true)){
         this->capture_started = true;
-        LOG(LOG_INFO, "Bouncer Mod : capture started");
+        LOG(LOG_INFO, "Bouncer Mod : capture started (forced)");
     }
 
     auto const color_ctx = gdi::ColorCtx::depth24();

@@ -47,7 +47,7 @@ public:
     void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
     void possible_active_window_change() override {}
 
-    bool can_be_start_capture() override
+    bool can_be_start_capture(bool /*force_capture*/) override
     {
         return false;
     }

@@ -909,7 +909,7 @@ public:
                         }
                         else {
                             this->must_be_stop_capture();
-                            this->can_be_start_capture();
+                            this->can_be_start_capture(false);
                         }
                     }
 
@@ -1009,7 +1009,7 @@ public:
     }
 
     // ===========================================================================
-    bool can_be_start_capture() override
+    bool can_be_start_capture(bool force_capture) override
     {
         // Recording is enabled.
         // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types for set_auth_info set_screen_info
@@ -1021,7 +1021,9 @@ public:
             return false;
         }
 
-        if (!this->is_capture_necessary())
+        // force capture allow to capture video from test modules
+        // even if sanity check is_capture_necessary() disagree with it
+        if (!this->is_capture_necessary() && !force_capture)
         {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;

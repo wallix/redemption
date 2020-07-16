@@ -65,7 +65,7 @@ namespace dump2008 {
 class MyFront : public FrontWrapper
 {
 public:
-    bool can_be_start_capture() override { return false; }
+    bool can_be_start_capture(bool /*force_capture*/) override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     using FrontWrapper::FrontWrapper;
@@ -417,7 +417,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     //
     // LOG(LOG_INFO, "Before Start Capture");
     //
-    // front.can_be_start_capture(sesman);
+    // front.can_be_start_capture(false);
     //
     // uint32_t count = 0;
     // BackEvent_t res = BACK_EVENT_NONE;
@@ -585,7 +585,7 @@ RED_AUTO_TEST_CASE(TestFront3)
 
     LOG(LOG_INFO, "Before Start Capture");
 
-    front.can_be_start_capture(sesman);
+    front.can_be_start_capture(false);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;
