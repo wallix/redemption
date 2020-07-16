@@ -86,7 +86,6 @@ public:
 
 private:
     TimeSystem        timeSystem;
-    NullReportMessage reportMessage;
     NullLicenseStore  licensestore;
 
 public:
@@ -447,7 +446,6 @@ public:
                   , this->time_base
                   , this->gd_forwarder
                   , this->events
-                  , this->reportMessage
                   , this->sesman
                   , *this
                   , *this

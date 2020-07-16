@@ -47,18 +47,18 @@ protected:
         return this->to_server_sender;
     }
 
-    ReportMessageApi & report_message;
+    AuthApi & sesman;
     const RDPVerbose verbose;
 
 public:
     // TODO: move that to BaseVirtualChannelConstructor
     struct Params
     {
-        ReportMessageApi & report_message;
+        AuthApi & sesman;
         RDPVerbose verbose;
 
-        explicit Params(ReportMessageApi & report_message, RDPVerbose verbose)
-          : report_message(report_message)
+        explicit Params(AuthApi & sesman, RDPVerbose verbose)
+          : sesman(sesman)
           , verbose(verbose)
         {}
     };
@@ -70,7 +70,7 @@ protected:
         const Params & params)
     : to_client_sender(to_client_sender_)
     , to_server_sender(to_server_sender_)
-    , report_message(params.report_message)
+    , sesman(params.sesman)
     , verbose(params.verbose)
     {}
 

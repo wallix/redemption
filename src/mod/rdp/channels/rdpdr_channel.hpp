@@ -1481,7 +1481,7 @@ public:
                             auto device_name = (p_device_name) ? *p_device_name : ""_av;
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
 
-                            this->report_message.log6(
+                            this->sesman.log6(
                                 LogId::DRIVE_REDIRECTION_USE, {
                                 KVLog("device_name"_av, device_name),
                                 KVLog("device_type"_av, device_type_name),
@@ -1564,7 +1564,7 @@ public:
                                         target_iter->end_of_file, digest_s);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    this->report_message.log6(
+                                    this->sesman.log6(
                                         LogId::DRIVE_REDIRECTION_READ_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
@@ -1577,7 +1577,7 @@ public:
                                         file_path, file_size_str, digest_s);
                                 }
                                 else {
-                                    this->report_message.log6(
+                                    this->sesman.log6(
                                         LogId::DRIVE_REDIRECTION_READ, {
                                         KVLog("file_name"_av, file_path),
                                     });
@@ -1603,7 +1603,7 @@ public:
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
 
-                                    this->report_message.log6(
+                                    this->sesman.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
@@ -1616,7 +1616,7 @@ public:
                                         file_path, file_size_str, digest_s);
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    this->report_message.log6(
+                                    this->sesman.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE, {
                                         KVLog("file_name"_av, file_path),
                                     });
@@ -1728,7 +1728,7 @@ public:
                         case rdpdr::FileDispositionInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                this->report_message.log6(
+                                this->sesman.log6(
                                     LogId::DRIVE_REDIRECTION_DELETE, {
                                     KVLog("file_name"_av, file_path),
                                 });
@@ -1748,7 +1748,7 @@ public:
                         case rdpdr::FileRenameInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                this->report_message.log6(
+                                this->sesman.log6(
                                     LogId::DRIVE_REDIRECTION_RENAME, {
                                     KVLog("old_file_name"_av, target_iter->file_path),
                                     KVLog("new_file_name"_av, file_path),

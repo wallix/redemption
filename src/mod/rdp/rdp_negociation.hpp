@@ -74,7 +74,7 @@ private:
     {
     public:
         explicit RDPServerNotifier(
-            ReportMessageApi& report_message,
+            AuthApi& sesman,
             bool server_cert_store,
             ServerCertCheck server_cert_check,
             std::unique_ptr<char[]>&& certif_path,
@@ -100,7 +100,7 @@ private:
         const std::array<ServerNotification, 5> server_status_messages;
 
         const RDPVerbose verbose;
-        ReportMessageApi& report_message;
+        AuthApi& sesman;
     };
 
 private:
@@ -194,7 +194,7 @@ public:
         Random& gen,
         TimeObj& timeobj,
         const ModRDPParams& mod_rdp_params,
-        ReportMessageApi& report_message,
+        AuthApi& sesman,
         LicenseApi& license_store,
         bool has_managed_drive,
         bool convert_remoteapp_to_desktop,

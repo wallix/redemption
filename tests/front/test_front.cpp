@@ -244,7 +244,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     auto mod = new_mod_rdp(
         t, time_base, gd_provider, events,
-        report_message, sesman,
+        sesman,
         front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, metrics,

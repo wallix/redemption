@@ -33,15 +33,15 @@ Error ReportError::NullImpl::get_error(Error err)
     return err;
 }
 
-ReportError report_error_from_reporter(ReportMessageApi & reporter)
+ReportError report_error_from_reporter(AuthApi & sesman)
 {
-    return ReportError([&reporter](Error error) {
-        report_and_transform_error(error, ReportMessageReporter{reporter});
+    return ReportError([&sesman](Error error) {
+        report_and_transform_error(error, ReportMessageReporter{sesman});
         return error;
     });
 }
 
-ReportError report_error_from_reporter(ReportMessageApi * reporter)
+ReportError report_error_from_reporter(AuthApi * sesman)
 {
-    return reporter ? report_error_from_reporter(*reporter) : ReportError();
+    return sesman ? report_error_from_reporter(*sesman) : ReportError();
 }

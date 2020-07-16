@@ -490,7 +490,6 @@ public:
     auto create_rdp_mod() -> ModPack
     {
         auto new_mod_pack = create_mod_rdp(this->mod_wrapper,
-            this->report_message,
             this->ini,
             this->mod_wrapper.get_graphics(),
             this->front,

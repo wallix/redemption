@@ -34,7 +34,7 @@
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
@@ -54,7 +54,7 @@
 
 
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
-    ReportMessageApi& report_message,
+    AuthApi& sesman,
     bool server_cert_store,
     ServerCertCheck server_cert_check,
     std::unique_ptr<char[]>&& certif_path,
@@ -78,7 +78,7 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
     return a;
 }())
 , verbose(verbose)
-, report_message(report_message)
+, sesman(sesman)
 {}
 
 void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::string_view error_msg)
@@ -86,7 +86,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::s
     auto notification_type = this->server_status_messages[underlying_cast(status)];
     if (bool(notification_type & ServerNotification::syslog)) {
         auto log6 = [&](LogId id, zstring_view message){
-            this->report_message.log6(id, {KVLog("description"_av, message),});
+            this->sesman.log6(id, {KVLog("description"_av, message),});
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
         };
 
@@ -157,7 +157,7 @@ RdpNegociation::RdpNegociation(
     Random& gen,
     TimeObj& timeobj,
     const ModRDPParams& mod_rdp_params,
-    ReportMessageApi& report_message,
+    AuthApi& sesman,
     LicenseApi& license_store,
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop,
@@ -188,7 +188,7 @@ RdpNegociation::RdpNegociation(
     , gen(gen)
     , verbose(mod_rdp_params.verbose /*| (RDPVerbose::security|RDPVerbose::basic_trace)*/)
     , server_notifier(
-        report_message,
+        sesman,
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,
         [](const char* device_id){

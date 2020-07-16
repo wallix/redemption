@@ -36,7 +36,6 @@ class Random;
 class CryptoContext;
 
 extern ModPack create_mod_rdp(ModWrapper & mod_wrapper,
-    ReportMessageApi& report_message,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,

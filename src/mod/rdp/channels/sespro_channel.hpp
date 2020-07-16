@@ -138,7 +138,7 @@ private:
 
     void log6(LogId id, KVList kv_list)
     {
-        this->report_message.log6(id, kv_list);
+        this->sesman.log6(id, kv_list);
 
         if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
             std::string msg;
@@ -387,7 +387,7 @@ private:
 
                 if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
                     this->sespro_params.on_keepalive_timeout) {
-                    this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                    this->sesman.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                 }
                 else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
                             this->sespro_params.on_keepalive_timeout) {
@@ -525,7 +525,7 @@ public:
 
                     if (!this->sespro_params.allow_multiple_handshake &&
                         (this->reconnection_cookie != remote_reconnection_cookie)) {
-                        this->report_message.report("SESSION_PROBE_RECONNECTION", "");
+                        this->sesman.report("SESSION_PROBE_RECONNECTION", "");
                     }
                 }
                 else {
@@ -1161,7 +1161,7 @@ public:
                             "app_name=%s  raw_result=%s",
                             parameters_[0], parameters_[1]);
 
-                        this->report_message.report(
+                        this->sesman.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
                     else {
@@ -1182,7 +1182,7 @@ public:
                             "app_name=%s  raw_result=%s  raw_result_message=%s",
                             parameters_[0], parameters_[1], parameters_[2]);
 
-                        this->report_message.report(
+                        this->sesman.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
                     else {
@@ -1257,7 +1257,7 @@ public:
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
                                     parameters_[3].c_str(), parameters_[4].c_str());
 
-                                this->report_message.report(
+                                this->sesman.report(
                                     (deny ? "FINDCONNECTION_DENY" : "FINDCONNECTION_NOTIFY"),
                                     message);
                             }
@@ -1266,7 +1266,7 @@ public:
                                 if (::strtoul(parameters_[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
-                                    this->report_message.report(
+                                    this->sesman.report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1315,7 +1315,7 @@ public:
                                 snprintf(message, sizeof(message), "%s|%s|%s",
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str());
 
-                                this->report_message.report(
+                                this->sesman.report(
                                     (deny ? "FINDPROCESS_DENY" : "FINDPROCESS_NOTIFY"),
                                     message);
                             }
@@ -1324,7 +1324,7 @@ public:
                                 if (::strtoul(parameters_[3].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block process!");
-                                    this->report_message.report(
+                                    this->sesman.report(
                                         "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1366,7 +1366,7 @@ public:
                                 parameters_[0].c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
                                 parameters_[3].c_str(), parameters_[4].c_str(), parameters_[5].c_str());
 
-                            this->report_message.report(
+                            this->sesman.report(
                                 (deny ? "ACCOUNTMANIPULATION_DENY" : "ACCOUNTMANIPULATION_NOTIFY"),
                                 message);
                         }

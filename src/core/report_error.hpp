@@ -22,7 +22,7 @@
 
 #include "core/error.hpp"
 #include "core/report_message_api.hpp"
-
+#include "acl/auth_api.hpp"
 #include <memory>
 #include <utility>
 #include <type_traits>
@@ -111,18 +111,18 @@ struct LogReporter
 
 struct ReportMessageReporter
 {
-    ReportMessageReporter(ReportMessageApi & reporter)
-    : reporter(reporter)
+    ReportMessageReporter(AuthApi & sesman)
+    : sesman(sesman)
     {}
 
     void operator()(char const * reason, char const * message)
     {
-        reporter.report(reason, message);
+        sesman.report(reason, message);
     }
 
 private:
-    ReportMessageApi & reporter;
+    AuthApi & sesman;
 };
 
-ReportError report_error_from_reporter(ReportMessageApi & reporter);
-ReportError report_error_from_reporter(ReportMessageApi * reporter);
+ReportError report_error_from_reporter(AuthApi & sesman);
+ReportError report_error_from_reporter(AuthApi * sesman);

@@ -274,7 +274,7 @@ int main(int argc, char** argv)
                 time_base,
                 gd_forwarder,
                 events,
-                report_message, sesman,
+                sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,

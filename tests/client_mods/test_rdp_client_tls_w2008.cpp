@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider, events,
-        report_message, sesman,
+        sesman,
         front.gd(), front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, nullptr, nullptr, mod_rdp_factory);
@@ -281,7 +281,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
         events,
-        report_message, sesman,
+        sesman,
         front.gd(), front, info,
         redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params,

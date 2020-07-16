@@ -735,7 +735,7 @@ public:
             if (!this->session_probe_channel
              || this->windows_execute_shell_params.exe_or_file != serpdu.ExeOrFile()
             ) {
-                this->report_message.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
+                this->sesman.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
                     KVLog("exe_or_file"_av, serpdu.ExeOrFile()),
                 });
             }

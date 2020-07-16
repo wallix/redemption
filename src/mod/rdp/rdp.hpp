@@ -82,7 +82,6 @@
 #include "core/channel_names.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
-#include "core/report_message_api.hpp"
 #include "gdi/screen_functions.hpp"
 
 #ifndef __EMSCRIPTEN__
@@ -432,7 +431,6 @@ private:
     TimeBase & time_base;
     GdProvider & gd_provider;
     EventContainer & events;
-    ReportMessageApi& report_message;
     AuthApi & sesman;
     FileValidatorService * file_validator_service;
     ValidatorParams validator_params;
@@ -445,7 +443,6 @@ public:
         Random & gen, RDPMetrics * metrics,
         TimeBase & time_base, GdProvider & gd_provider,
         EventContainer & events,
-        ReportMessageApi & report_message,
         AuthApi & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
@@ -477,7 +474,6 @@ public:
     , time_base(time_base)
     , gd_provider(gd_provider)
     , events(events)
-    , report_message(report_message)
     , sesman(sesman)
     , file_validator_service(file_validator_service)
     , validator_params(mod_rdp_params.validator_params)
@@ -618,7 +614,7 @@ private:
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         ClipboardVirtualChannelParams cvc_params;
         cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
@@ -752,7 +748,7 @@ private:
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         DynamicChannelVirtualChannelParam dynamic_channel_virtual_channel_params;
 
@@ -784,7 +780,7 @@ private:
                                             : nullptr);
         this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
-        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         FileSystemVirtualChannelParams fsvc_params;
 
@@ -839,7 +835,7 @@ public:
 
         FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
 
-        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         SessionProbeVirtualChannel::Params sp_vc_params;
 
@@ -886,7 +882,7 @@ private:
         this->remote_programs_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
-        BaseVirtualChannel::Params base_params(this->report_message, this->verbose);
+        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         RemoteProgramsVirtualChannelParams remote_programs_virtual_channel_params;
 
@@ -1927,7 +1923,6 @@ class mod_rdp : public mod_api, public rdp_api
     TimeBase& time_base;
     GdProvider & gd_provider;
     EventContainer & events;
-    ReportMessageApi & report_message;
     AuthApi & sesman;
 
 #ifndef __EMSCRIPTEN__
@@ -2022,7 +2017,6 @@ public:
       , TimeBase& time_base
       , GdProvider & gd_provider
       , EventContainer & events
-      , ReportMessageApi & report_message
       , AuthApi & sesman
       , gdi::GraphicApi & gd
       , FrontAPI & front
@@ -2044,7 +2038,7 @@ public:
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
             gen, metrics, time_base, gd_provider, events,
-            report_message, sesman,
+            sesman,
             file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
@@ -2064,7 +2058,7 @@ public:
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk
                 , mod_rdp_params.remote_app_params.convert_remoteapp_to_desktop, mod_rdp_params.verbose
-                , report_error_from_reporter(report_message))
+                , report_error_from_reporter(sesman))
         , key_flags(mod_rdp_params.key_flags)
         , last_key_flags_sent(key_flags)
         , verbose(mod_rdp_params.verbose)
@@ -2097,7 +2091,6 @@ public:
         , time_base(time_base)
         , gd_provider(gd_provider)
         , events(events)
-        , report_message(report_message)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         #ifndef __EMSCRIPTEN__
@@ -2178,7 +2171,7 @@ public:
             this->decrypt, this->encrypt, this->logon_info,
             this->channels.enable_auth_channel,
             this->trans, this->front, info, this->redir_info,
-            gen, timeobj, mod_rdp_params, this->report_message, this->license_store,
+            gen, timeobj, mod_rdp_params, this->sesman, this->license_store,
     #ifndef __EMSCRIPTEN__
             this->channels.drive.file_system_drive_manager.has_managed_drive()
          || this->channels.session_probe.enable_session_probe,
@@ -2286,7 +2279,7 @@ public:
                     *this->error_message = "Logon timer expired!";
                 }
 
-                this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
+                this->sesman.report("CONNECTION_FAILED", "Logon timer expired.");
         #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
                     this->enable_input_event();
@@ -2316,7 +2309,7 @@ public:
 #endif
 
         if (DISCONNECTED == this->connection_finalization_state) {
-            this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            this->sesman.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
         }
 
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -2974,7 +2967,7 @@ public:
             LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
 
             this->connection_finalization_state = DISCONNECTED;
-            this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            this->sesman.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
             this->log_disconnection(bool(this->verbose & RDPVerbose::sesprobe));
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
@@ -3207,7 +3200,7 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
+                                this->sesman.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -3526,7 +3519,7 @@ public:
                         ((UP_AND_RUNNING == this->connection_finalization_state) ?
                         "SESSION_EXCEPTION" : "SESSION_EXCEPTION_NO_RECORD");
 
-                    this->report_message.report(reason, e.errmsg());
+                    this->sesman.report(reason, e.errmsg());
                 }
 
                 if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
@@ -5064,7 +5057,7 @@ public:
 
             this->connection_finalization_state = DISCONNECTED;
 
-            this->report_message.report("OPEN_SESSION_FAILED", "Unauthorized logon user change detected.");
+            this->sesman.report("OPEN_SESSION_FAILED", "Unauthorized logon user change detected.");
 
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s%s%s) -> (%s%s%s). "
@@ -5084,7 +5077,7 @@ public:
         }
 #endif
 
-        this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
+        this->sesman.report("OPEN_SESSION_SUCCESSFUL", "OK.");
 
 //        this->fd_event->disable_timeout();
 
@@ -6024,7 +6017,7 @@ public:
         if (this->is_up_and_running()) {
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
                 LOG_INFO, "mod_rdp::disconnect()");
-            this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
+            this->sesman.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
             // this->send_shutdown_request();
             // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
@@ -6046,7 +6039,7 @@ private:
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
-            this->report_message.log6(LogId::SESSION_DISCONNECTION,
+            this->sesman.log6(LogId::SESSION_DISCONNECTION,
                 {KVLog("duration"_av, {duration_str, len}),});
 
             LOG_IF(enable_verbose, LOG_INFO,

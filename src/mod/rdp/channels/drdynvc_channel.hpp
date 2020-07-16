@@ -185,7 +185,7 @@ public:
                             out_stream.get_produced_bytes());
                     }
 
-                    this->report_message.log6((is_authorized
+                    this->sesman.log6((is_authorized
                             ? LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED
                             : LogId::DYNAMIC_CHANNEL_CREATION_REJECTED),
                         {KVLog("channel_name"_av, { channel_name, strlen(channel_name)})});

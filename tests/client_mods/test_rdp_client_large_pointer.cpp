@@ -164,7 +164,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, report_message, sesman, front.gd(), front, info, redir_info, gen, timeobj,
+        events, sesman, front.gd(), front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -292,7 +292,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, report_message, sesman, front.gd(), front, info, redir_info, gen, timeobj,
+        events, sesman, front.gd(), front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);

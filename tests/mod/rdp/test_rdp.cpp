@@ -26,7 +26,6 @@
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 #include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
@@ -149,7 +148,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     // To always get the same client random, in tests
     LCGRandom gen;
     LCGTime timeobj;
-    NullReportMessage report_message;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     EventContainer events;
@@ -162,7 +160,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, report_message, sesman,
+        t, time_base, gd_provider, events, sesman,
         front.gd(), front, info, redir_info,
         gen, timeobj, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,

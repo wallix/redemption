@@ -562,14 +562,14 @@ namespace
 
     void dlpav_report_text(
         FileValidatorId file_validator_id,
-        ReportMessageApi& report_message,
+        AuthApi& sesman,
         Direction direction,
         std::string_view result_content)
     {
         char buf[24];
         unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
             underlying_cast(file_validator_id));
-        report_message.log6(LogId::TEXT_VERIFICATION, {
+        sesman.log6(LogId::TEXT_VERIFICATION, {
             KVLog("direction"_av, to_dlpav_str_direction(direction)),
             KVLog("copy_id"_av, {buf, n}),
             KVLog("status"_av, result_content),
@@ -578,11 +578,11 @@ namespace
 
     void dlpav_report_file(
         std::string_view file_name,
-        ReportMessageApi& report_message,
+        AuthApi& sesman,
         Direction direction,
         std::string_view result_content)
     {
-        report_message.log6(LogId::FILE_VERIFICATION, {
+        sesman.log6(LogId::FILE_VERIFICATION, {
             KVLog("direction"_av, to_dlpav_str_direction(direction)),
             KVLog("file_name"_av, file_name),
             KVLog("status"_av, result_content),
@@ -2210,7 +2210,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
         size_t file_size_len = std::snprintf(file_size, std::size(file_size), "%lu",
             real_file_size(file_contents_range));
 
-        self.report_message.log6(
+        self.sesman.log6(
             from_remote_session
                 ? LogId::CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION
                 : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
@@ -2335,7 +2335,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
         if (log_current_activity) {
             if (utf8_string.empty()) {
-                self.report_message.log6(is_client_to_server
+                self.sesman.log6(is_client_to_server
                     ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION
                     : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION,
                 {
@@ -2344,7 +2344,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 });
             }
             else {
-                self.report_message.log6(is_client_to_server
+                self.sesman.log6(is_client_to_server
                     ? LogId::CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX
                     : LogId::CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX,
                 {
@@ -2443,7 +2443,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
         for (auto& text_validator : this->text_validator_list) {
             dlpav_report_text(
                 text_validator.file_validator_id,
-                this->report_message,
+                this->sesman,
                 text_validator.direction, status);
         }
 
@@ -2458,7 +2458,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 
             dlpav_report_file(
                 file_validator.file_name,
-                this->report_message,
+                this->sesman,
                 file_validator.direction, status);
         }
 
@@ -2480,7 +2480,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                 if (bool(rng.file_validator_id)) {
                     dlpav_report_file(
                         file_name,
-                        this->report_message,
+                        this->sesman,
                         direction, status);
                 }
             };
@@ -2499,7 +2499,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
                     if (bool(clip.nolock_data.data.file_validator_id)) {
                         dlpav_report_text(
                             clip.nolock_data.data.file_validator_id,
-                            this->report_message,
+                            this->sesman,
                             direction, status);
                     }
                     ClipCtx::NoLockData::D::init_empty(clip.nolock_data, *this);
@@ -2806,7 +2806,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
             if (!is_accepted || this->params.validator_params.log_if_accepted) {
                 dlpav_report_text(
                     file_validator_id,
-                    this->report_message,
+                    this->sesman,
                     direction, result_content);
             }
         };
@@ -2815,7 +2815,7 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
             if (!is_accepted || this->params.validator_params.log_if_accepted) {
                 dlpav_report_file(
                     file_name,
-                    this->report_message,
+                    this->sesman,
                     direction, result_content);
             }
         };

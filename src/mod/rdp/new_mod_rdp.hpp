@@ -31,7 +31,6 @@ Author(s): Jonathan Poelen
 class ClientInfo;
 class FrontAPI;
 class LicenseApi;
-class ReportMessageApi;
 class TimeBase;
 class TopFdContainer;
 class TimerContainer;
@@ -54,7 +53,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     TimeBase& time_base,
     GdProvider & gd_provider,
     EventContainer & events,
-    ReportMessageApi& report_message,
     AuthApi & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,

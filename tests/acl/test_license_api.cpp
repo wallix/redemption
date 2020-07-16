@@ -31,7 +31,6 @@
 #include "utils/timebase.hpp"
 #include "core/client_info.hpp"
 #include "core/listen.hpp"
-#include "core/report_message_api.hpp"
 #include "core/channels_authorizations.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -84,8 +83,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
     FakeFront front(info.screen_info);
 
-    NullReportMessage report_message;
-
     Inifile ini;
 
     ini.set_acl<cfg::context::target_host>("10.10.44.230");
@@ -100,6 +97,10 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
     #include "fixtures/test_license_api_woel_2.hpp"
     #include "fixtures/test_license_api_license.hpp"
 #endif
+
+    TimeBase time_base({0,0});
+    EventContainer events;
+    Sesman sesman(ini, time_base);
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
@@ -170,6 +171,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             // To always get the same client random, in tests
             LCGRandom gen;
             LCGTime timeobj;
+
 
 #ifdef GENERATE_TESTING_DATA
             class CaptureLicenseStore : public LicenseApi
@@ -273,17 +275,14 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 #endif
 
-            TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
-            EventContainer events;
-            Sesman sesman(ini, time_base);
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
             ModRdpFactory mod_rdp_factory;
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, report_message, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -323,7 +322,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
                 {
                     auto message = set_server_redirection_target(ini);
-                    report_message.report("SERVER_REDIRECTION", message.c_str());
+                    sesman.report("SERVER_REDIRECTION", message.c_str());
                 }
 
                 do_work = true;
@@ -370,8 +369,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
     FakeFront front(info.screen_info);
 
-    NullReportMessage report_message;
-
     Inifile ini;
 
     ini.set_acl<cfg::context::target_host>("10.10.44.230");
@@ -386,6 +383,10 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
     #include "fixtures/test_license_api_wel_2.hpp"
 #endif
     #include "fixtures/test_license_api_license.hpp"
+
+    TimeBase time_base({0,0});
+    EventContainer events;
+    Sesman sesman(ini, time_base);
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
@@ -512,10 +513,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             } license_store(license_client_name, license_version, license_scope, license_company_name,
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 
-            TimeBase time_base({0,0});
             GdForwarder gd_provider(front.gd());
-            EventContainer events;
-            Sesman sesman(ini, time_base);
 
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -523,7 +521,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, time_base, gd_provider, events, report_message, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(t, time_base, gd_provider, events, sesman, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -567,7 +565,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
                 {
                     auto message = set_server_redirection_target(ini);
-                    report_message.report("SERVER_REDIRECTION", message.c_str());
+                    sesman.report("SERVER_REDIRECTION", message.c_str());
                 }
 
                 do_work = true;
