@@ -34,6 +34,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/fileutils.hpp"
+#include "main/version.hpp"
 
 #include <string>
 #include <chrono>
@@ -138,7 +139,158 @@ public:
             this->logfile_is_open = false;
         }
     }
-
-
 };
+
+namespace
+{
+    template<std::size_t N>
+    struct StringBuf
+    {
+        [[nodiscard]] std::string_view sv() const noexcept
+        {
+            return {buf, len};
+        }
+
+        std::size_t capacity() noexcept
+        {
+            return N;
+        }
+
+        char* data() noexcept
+        {
+            return buf;
+        }
+
+        void setsize(std::size_t n) noexcept
+        {
+            len = n;
+        }
+
+    private:
+        char buf[N];
+        std::size_t len;
+    };
+
+    StringBuf<64> from_gmtime(std::time_t time) noexcept
+    {
+        StringBuf<64> buf;
+
+        struct tm t;
+        gmtime_r(&time, &t);
+
+        constexpr char const* months[]{
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        };
+
+        // MMM(text) dd yyyy hh:mm:ss
+        int len = snprintf(buf.data(), buf.capacity(), "%s %02d %04d %02d:%02d:%02d",
+            months[t.tm_mon], t.tm_mday, 1900 + t.tm_year, t.tm_hour, t.tm_min, t.tm_sec);
+        assert(len > 0);
+        buf.setsize(len);
+
+        return buf;
+    }
+
+    constexpr inline chars_view ints_s[]{
+        "0"_av, "1"_av, "2"_av, "3"_av, "4"_av, "5"_av, "6"_av, "7"_av, "8"_av, "9"_av,
+        "10"_av, "11"_av, "12"_av, "13"_av, "14"_av, "15"_av, "16"_av, "17"_av, "18"_av,
+        "19"_av, "20"_av, "21"_av, "22"_av, "23"_av, "24"_av, "25"_av, "26"_av, "27"_av,
+        "28"_av, "29"_av, "30"_av, "31"_av, "32"_av, "33"_av, "34"_av, "35"_av, "36"_av,
+        "37"_av, "38"_av, "39"_av, "40"_av, "41"_av, "42"_av, "43"_av, "44"_av, "45"_av,
+        "46"_av, "47"_av, "48"_av, "49"_av, "50"_av, "51"_av, "52"_av, "53"_av, "54"_av,
+        "55"_av, "56"_av, "57"_av, "58"_av, "59"_av, "60"_av, "61"_av, "62"_av, "63"_av,
+        "64"_av, "65"_av, "66"_av, "67"_av, "68"_av, "69"_av, "70"_av, "71"_av, "72"_av,
+        "73"_av, "74"_av, "75"_av, "76"_av, "77"_av, "78"_av, "79"_av, "80"_av, "81"_av,
+        "82"_av, "83"_av, "84"_av, "85"_av, "86"_av, "87"_av, "88"_av, "89"_av, "90"_av,
+        "91"_av, "92"_av, "93"_av, "94"_av, "95"_av, "96"_av, "97"_av, "98"_av, "99"_av,
+        "100"_av, "101"_av, "102"_av, "103"_av, "104"_av, "105"_av, "106"_av, "107"_av,
+        "108"_av, "109"_av, "110"_av, "111"_av, "112"_av, "113"_av, "114"_av, "115"_av,
+        "116"_av, "117"_av, "118"_av, "119"_av, "120"_av,
+    };
+
+    namespace table_formats
+    {
+        constexpr auto arcsight()
+        {
+            std::array<char, 256> t{};
+            t[int('=')] = '=';
+            t[int('\\')] = '\\';
+            t[int('\n')] = 'n';
+            t[int('\r')] = 'r';
+            return t;
+        }
+
+        constexpr inline auto arcsight_table = arcsight();
+        constexpr inline auto& siem_table = qvalue_table_formats::log_table;
+    }
+
+    inline void log_format_set_siem(
+        std::string& buffer,
+        chars_view session_type,
+        chars_view user,
+        chars_view account,
+        chars_view session_id,
+        chars_view host,
+        chars_view target_ip,
+        chars_view device,
+        chars_view service)
+    {
+        buffer.clear();
+        auto append = [&](auto* key, chars_view value){
+            buffer += key;
+            escaped_qvalue(buffer, value, table_formats::siem_table);
+            buffer += "\" ";
+        };
+
+        if (session_type.empty()) {
+            buffer += "[Neutral Session] ";
+        }
+        else {
+            buffer += '[';
+            buffer.append(session_type.data(), session_type.size());
+            buffer += " Session] ";
+        }
+        append("session_id=\"", session_id);
+        append("client_ip=\"",  host);
+        append("target_ip=\"",  target_ip);
+        append("user=\"",       user);
+        append("device=\"",     device);
+        append("service=\"",    service);
+        append("account=\"",    account);
+    }
+
+    inline void log_format_set_arcsight(
+        std::string& buffer,
+        LogId id,
+        std::time_t time,
+        chars_view session_type,
+        chars_view user,
+        chars_view account,
+        chars_view session_id,
+        chars_view host,
+        chars_view target_ip,
+        chars_view device,
+        chars_view service,
+        KVList kv_list)
+    {
+        static_assert(std::size(ints_s) >= std::size(detail::log_id_string_map));
+        buffer.clear();
+        str_append(buffer,
+            from_gmtime(time).sv(),
+            " host message CEF:1|Wallix|Bastion|" VERSION "|",
+            ints_s[unsigned(id)], '|',
+            detail::log_id_string_map[unsigned(id)], "|"
+            "5" /*TODO severity*/
+            "|WallixBastionSessionType=", session_type.empty() ? "Neutral"_av : session_type,
+            " WallixBastionSessionId=", session_id,
+            " WallixBastionHost=", host,
+            " WallixBastionTargetIP=", target_ip,
+            " WallixBastionUser=", user,
+            " WallixBastionDevice=", device,
+            " WallixBastionService=", service,
+            " WallixBastionAccount=", account
+        );
+        kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
+    }
+}
 

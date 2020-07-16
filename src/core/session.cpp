@@ -769,9 +769,14 @@ public:
                     }
 
                     // propagate changes made in sesman structure to actual acl changes
-                    sesman.flush_acl_report([&acl](std::string reason,std::string message)
+                    sesman.flush_acl_report([&ini,&acl](std::string reason,std::string message)
                     {
-                        acl.acl_serial->report(reason.c_str(), message.c_str());
+                        ini.ask<cfg::context::keepalive>();
+                        char report[1024];
+                        snprintf(report, sizeof(report), "%s:%s:%s", reason,
+                        ini.get<cfg::globals::target_device>().c_str(), message);
+                        ini.set_acl<cfg::context::reporting>(report);
+                        acl.acl_serial->send_acl_data();
                     });
                     sesman.flush_acl_log6([&acl,&log_file](LogId id, KVList kv_list)
                     {

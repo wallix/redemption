@@ -35,6 +35,7 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/log_buffered.hpp"
+#include "acl/sesman.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -75,12 +76,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     TimeBase timebase({0, 0});
 
     AclSerializer acl(ini, timebase);
+    Sesman sesman(ini, timebase);
 
-    auto notify_error = [&acl](const Error & error)
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
 
@@ -100,17 +102,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     };
     ThrowTransport transexcpt;
     AclSerializer aclexcpt(ini, timebase);
-    
-    auto notify_error_excpt = [&aclexcpt](const Error & error)
-    {
-        if (error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            aclexcpt.report("FILESYSTEM_FULL", "100|unknown");
-        }
-    };
-    
-    
-    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error_excpt);
+       
+    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error);
     aclexcpt.set_auth_trans(&transexcpt);
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
@@ -140,11 +133,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     GeneratorTransport trans(stream.get_produced_bytes());
     AclSerializer acl(ini, timebase);
 
-    auto notify_error = [&acl](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
 
@@ -187,15 +182,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     transexcpt.disable_remaining_error();
     AclSerializer aclexcpt(ini, timebase);
     
-    auto notify_error_excpt = [&aclexcpt](const Error & error)
-    {
-        if (error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            aclexcpt.report("FILESYSTEM_FULL", "100|unknown");
-        }
-    };
-    
-    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error_excpt);
+    SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error);
     aclexcpt.set_auth_trans(&transexcpt);
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
@@ -220,11 +207,13 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     GeneratorTransport trans(s);
     AclSerializer acl(ini, timebase);
     
-    auto notify_error = [&acl](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
     
@@ -280,11 +269,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     AclSerializer acl(ini, timebase);
     
-    auto notify_error = [&acl](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
     
@@ -335,11 +326,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     AclSerializer acl(ini, timebase);
     
-    auto notify_error = [&acl](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
     
@@ -387,11 +380,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
 
     AclSerializer acl(ini, timebase);
     
-    auto notify_error = [&acl](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
     
@@ -420,11 +415,13 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     GeneratorTransport trans(s);
     AclSerializer acl(ini, timebase);
     
-    auto notify_error = [&acl](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
     
@@ -479,11 +476,13 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     GeneratorTransport trans(""_av);
     AclSerializer acl_serial(ini, timebase);
     
-    auto notify_error = [&acl_serial](const Error & error)
+    Sesman sesman(ini, timebase);
+
+    auto notify_error = [&sesman](const Error & error)
     {
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            acl_serial.report("FILESYSTEM_FULL", "100|unknown");
+            sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
     
