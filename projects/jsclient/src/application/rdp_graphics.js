@@ -85,7 +85,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
         for (let idst = 0; idst < len;) {
             for (let ie = idst + w; idst < ie; ++idst, ++isrc) {
                 destU32a[idst] = f(srcU32a[isrc] & 0xffffff, destU32a[idst] & 0xffffff)
-                                | 0xff000000;
+                               | 0xff000000;
             }
             isrc += srcInc;
         }
@@ -149,7 +149,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
             for (let x = 0; x < w; ++x) {
                 const selectColor = (brushU8 & ((1 << 7) >> ((x + orgX) % 8)));
                 u32a[i+x] = f(selectColor ? backColor : foreColor, u32a[i+x] & 0xffffff)
-                        | 0xff000000;
+                          | 0xff000000;
             }
         }
         _ctx2d.putImageData(imgData, orgX, orgY);
@@ -490,7 +490,8 @@ const newRdpGL = function(canvasElement, module, ropError) {
     let _width = canvasElement.width;
     let _height = canvasElement.height;
 
-    const _buffer = module.HEAPU8.buffer;
+    const _u8buffer = module.HEAPU8.buffer;
+    const _u16buffer = module.HEAPU16.buffer;
 
     const unsupportedRop = ropError;
 
@@ -531,12 +532,12 @@ const newRdpGL = function(canvasElement, module, ropError) {
     const [imgVertexShader, imgFragmentShader] = compilePairShader(imgProgram, `
         // precision highp float;
         precision mediump float;
-        uniform sampler2D sampler0;
+        uniform sampler2D texture;
 
         varying vec2 vTex;
 
         void main() {
-            gl_FragColor = texture2D(sampler0, vTex);
+            gl_FragColor = texture2D(texture, vTex);
         }`);
 
     const programs = [
@@ -660,6 +661,9 @@ const newRdpGL = function(canvasElement, module, ropError) {
         get height() { return _height; },
 
         delete() {
+            // TODO deleteVertexArray
+            // TODO deleteTexture
+            // TODO deleteBuffer
             deletePrograms();
         },
 
@@ -681,37 +685,60 @@ const newRdpGL = function(canvasElement, module, ropError) {
             drawRect(0, 0, w, h, 0);
         },
 
-        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, x, y) {
+        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, dx, dy) {
             // console.log('img');
             gl.useProgram(imgProgram);
 
-            const bufLen = w*h*4;
-            const pbuf = module._malloc(bufLen);
-            module.loadRgbaImageFromIndex(pbuf, byteOffset, bitsPerPixel, w, h, lineSize);
-            const img = new Uint8Array(_buffer, pbuf, bufLen);
-
             gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                x,    y+h,
-                x,    y,
-                x+w,  y,
-                x+w,  y+h
-            ]), gl.STATIC_DRAW);
 
+            let bytesPerPixel;
+
+            switch (bitsPerPixel) {
+                case 16:
+                    bytesPerPixel = 2;
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        dx,    dy,
+                        dx,    dy+h,
+                        dx+w,  dy+h,
+                        dx+w,  dy,
+                    ]), gl.STATIC_DRAW);
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D, 0, gl.RGB, lineSize / 2, h, 0,
+                        gl.RGB, gl.UNSIGNED_SHORT_5_6_5,
+                        new Uint16Array(_u16buffer, byteOffset, lineSize*h));
+                    break;
+
+                default:
+                    bytesPerPixel = ~~((bitsPerPixel + 7) / 8);
+                    const bufLen = w*h*4;
+                    const pbuf = module._malloc(bufLen);
+                    module.loadRgbaImageFromIndex(pbuf, byteOffset, bitsPerPixel,
+                                                  w, h, lineSize);
+                    const img = new Uint8Array(_u8buffer, pbuf, bufLen);
+
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        dx,    dy+h,
+                        dx,    dy,
+                        dx+w,  dy,
+                        dx+w,  dy+h,
+                    ]), gl.STATIC_DRAW);
+
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+
+                    module._free(pbuf);
+            }
+
+            const xratio = w * bytesPerPixel / lineSize;
             gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
                 0, 1,
                 0, 0,
-                1, 0,
-                1, 1
+                xratio, 0,
+                xratio, 1,
             ]), gl.STATIC_DRAW);
-
-            vloc = gl.getAttribLocation(imgProgram, "aVertexPosition");
-            tloc = gl.getAttribLocation(imgProgram, "aUV");
-            // uLoc = gl.getUniformLocation(imgProgram, "pos");
-
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
 
             // WebGL1 has different requirements for power of 2 images
             // vs non power of 2 images so check if the image is a
@@ -729,6 +756,10 @@ const newRdpGL = function(canvasElement, module, ropError) {
             // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
+            vloc = gl.getAttribLocation(imgProgram, "aVertexPosition");
+            tloc = gl.getAttribLocation(imgProgram, "aUV");
+            // uLoc = gl.getUniformLocation(imgProgram, "pos");
+
             gl.enableVertexAttribArray(vloc);
             gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
             gl.vertexAttribPointer(vloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
@@ -740,8 +771,6 @@ const newRdpGL = function(canvasElement, module, ropError) {
             // gl.uniform2fv(uLoc, [x,y]);
 
             gl.drawArrays(gl.TRIANGLE_FAN, 0, /*vertexCount=*/4);
-
-            module._free(pbuf);
         },
     };
 };
