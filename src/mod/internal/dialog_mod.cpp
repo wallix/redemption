@@ -71,15 +71,13 @@ DialogMod::DialogMod(
     }
 
     if (vars.get<cfg::debug::pass_dialog_box>()) {
-        Event event("Dialog Timeout", this);
-        event.alarm.set_timeout(
-            this->time_base.get_current_time()
-            +std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()));
-        event.actions.on_timeout = [this](Event&)
-        {
-            this->accepted();
-        };
-        this->events.add(std::move(event));
+        this->events.create_event_timeout(
+            "Dialog Timeout", this,
+            this->time_base.get_current_time()+std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()),
+            [this](Event&)
+            {
+                this->accepted();
+            });
     }
 }
 

@@ -47,15 +47,14 @@ struct ModVNCWithMetrics : public mod_vnc
 
     void set_metrics_timer(std::chrono::seconds log_interval)
     {
-        Event event("VNC Metrics Timer", this);
-        this->metrics_timer = event.id;
-        event.alarm.set_timeout(this->time_base.get_current_time() + log_interval);
-        event.actions.on_timeout = [this,log_interval](Event&event)
-        {
-            event.alarm.reset_timeout(event.alarm.now + log_interval);
-            this->metrics->log(event.alarm.now);
-        };
-        this->events.add(std::move(event));
+        this->metrics_timer = this->events.create_event_timeout(
+            "VNC Metrics Timer", this,
+            this->time_base.get_current_time() + log_interval,
+            [this,log_interval](Event&event)
+            {
+                event.alarm.reset_timeout(event.alarm.now + log_interval);
+                this->metrics->log(event.alarm.now);
+            });
     }
 
     EventContainer & events;

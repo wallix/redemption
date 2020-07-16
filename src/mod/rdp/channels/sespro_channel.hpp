@@ -237,16 +237,16 @@ public:
 
             if (!this->session_probe_launch_timeout_timer_started) {
                 this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
-                Event event("Session Probe Timer", this);
-                this->session_probe_timer = event.id;
-                event.alarm.set_timeout(this->time_base.get_current_time()
-                    +this->sespro_params.effective_launch_timeout);
-                event.actions.on_timeout = [this](Event&event){
-                    this->process_event_launch();
-                    event.alarm.set_timeout(this->time_base.get_current_time()
-                        +this->sespro_params.effective_launch_timeout);
-                };
-                this->events.add(std::move(event));
+                // TODO: could be replace event timeout
+                this->session_probe_timer = this->events.create_event_timeout(
+                    "Session Probe Timer", this,
+                    this->time_base.get_current_time()+this->sespro_params.effective_launch_timeout,
+                    [this](Event&event)
+                    {
+                        this->process_event_launch();
+                        event.alarm.reset_timeout(this->time_base.get_current_time()
+                            +this->sespro_params.effective_launch_timeout);
+                    });
                 this->session_probe_launch_timeout_timer_started = true;
             }
         }
@@ -257,15 +257,13 @@ public:
         this->launch_aborted = true;
 
         this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
-        Event event("Session Probe Timer", this);
-        this->session_probe_timer = event.id;
-        event.alarm.set_timeout(this->time_base.get_current_time()
-            +this->sespro_params.launcher_abort_delay);
-        event.actions.on_timeout = [this](Event&event){
-            this->process_event_launch();
-            event.garbage = true;
-        };
-        this->events.add(std::move(event));
+        // TODO: could be a replace/create 
+        this->session_probe_timer = this->events.create_event_timeout("Session Probe Timer", this,
+            this->time_base.get_current_time()+this->sespro_params.launcher_abort_delay,
+            [this](Event&event){
+                this->process_event_launch();
+                event.garbage = true;
+            });
     }
 
     void give_additional_launch_time() {
@@ -563,16 +561,14 @@ public:
                             "Session Probe keep alive requested");
 
                     this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
-                    Event event("Session Probe Keepalive Timer", this);
-                    this->session_probe_timer = event.id;
-                    event.alarm.set_timeout(this->time_base.get_current_time()
-                        +this->sespro_params.keepalive_timeout);
-                    event.actions.on_timeout = [this](Event&event){
-                        this->process_event_ready();
-                        event.alarm.set_timeout(this->time_base.get_current_time()
-                            +this->sespro_params.keepalive_timeout);
-                    };
-                    this->events.add(std::move(event));
+                    this->session_probe_timer = this->events.create_event_timeout(
+                        "Session Probe Keepalive Timer", this,
+                        this->time_base.get_current_time()+this->sespro_params.keepalive_timeout,
+                        [this](Event&event)
+                        {
+                            this->process_event_ready();
+                            event.alarm.reset_timeout(event.alarm.now+this->sespro_params.keepalive_timeout);
+                        });
                 }
 
                 send_client_message([](OutStream & out_s) {

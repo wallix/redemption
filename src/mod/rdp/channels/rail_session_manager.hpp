@@ -463,23 +463,21 @@ public:
         && this->has_previous_window)
         {
             this->currently_without_window = true;
-            Event event("Rail Waiting Screen Event", this);
-            event.alarm.set_timeout(
-                       this->time_base.get_current_time()
-                       +this->rail_disconnect_message_delay);
-            event.actions.on_timeout = [this](Event&event)
-            {
-                if (this->currently_without_window
-                 && (DialogBoxType::NONE == this->dialog_box_type)
-                 && this->has_previous_window
-                ) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
-                    this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
-                    this->waiting_screen_draw(0);
-                }
-                event.garbage = true;
-            };
-            this->events.add(std::move(event));
+            this->events.create_event_timeout(
+                "Rail Waiting Screen Event", this,
+                this->time_base.get_current_time()+this->rail_disconnect_message_delay,
+                [this](Event&event)
+                {
+                    if (this->currently_without_window
+                     && (DialogBoxType::NONE == this->dialog_box_type)
+                     && this->has_previous_window
+                    ) {
+                        LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
+                        this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+                        this->waiting_screen_draw(0);
+                    }
+                    event.garbage = true;
+                });
         }
 
         if (has_window) {

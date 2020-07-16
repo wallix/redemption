@@ -43,49 +43,48 @@ struct WidgetTestMod::WidgetTestModPrivate
       , gd_provider(gd_provider)
       , events(events)
     {
-        Event event("WidgetTestMod Timer", this);
-        this->timer = event.id;
-        event.alarm.set_timeout(this->time_base.get_current_time());
-        event.actions.on_timeout = [this](Event&)
-        {
-            update_lock update_lock{this->gd_provider.get_graphics()};
-            int y = 10;
-            for (auto s : {
-                // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
-                // "/home/jpoelen/rawdisk2/Laksaman_15.rbf",
-                // "/home/jpoelen/rawdisk2/Laksaman_16.rbf",
-                // "/home/jpoelen/rawdisk2/Laksaman_17.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Light_14.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Light_15.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Light_16.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Light_17.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Thin_14.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Thin_15.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Thin_16.rbf",
-                "/home/jpoelen/rawdisk2/Lato-Thin_17.rbf",
-                "/home/jpoelen/rawdisk2/Lohit-Telugu_14.rbf",
-                "/home/jpoelen/rawdisk2/Lohit-Telugu_15.rbf",
-                "/home/jpoelen/rawdisk2/Lohit-Telugu_16.rbf",
-                "/home/jpoelen/rawdisk2/Lohit-Telugu_17.rbf",
-                // "/home/jpoelen/rawdisk2/NanumSquareR_14.rbf",
-                // "/home/jpoelen/rawdisk2/NanumSquareR_15.rbf",
-                // "/home/jpoelen/rawdisk2/NanumSquareR_16.rbf",
-                // "/home/jpoelen/rawdisk2/NanumSquareR_17.rbf",
-                // "/home/jpoelen/rawdisk2/Suruma_14.rbf",
-                // "/home/jpoelen/rawdisk2/Suruma_15.rbf",
-                // "/home/jpoelen/rawdisk2/Suruma_16.rbf",
-                // "/home/jpoelen/rawdisk2/Suruma_17.rbf",
-            }) {
-                Font font(s);
-                auto * text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`!@#$%^&*()_=[]'\",./<>?|:{}¹²³ cl◀◂▸▶▲▼▤▥➜¤€’¥×\\æœúíàéèçùµÉÀð.";
-                gdi::server_draw_text(
-                    this->gd_provider.get_graphics(), font, 10, y, text,
-                    encode_color24()(BGRColor(0xeeb6c1)), encode_color24()(BGRColor(0x747132)),
-                    gdi::ColorCtx::depth24(), Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
-                y += font.max_height() + 10;
-            }
-        };
-        this->events.add(std::move(event));
+        this->timer = this->events.create_event_timeout(
+            "WidgetTestMod Timer", this,
+            this->time_base.get_current_time(),
+            [this](Event&)
+            {
+                update_lock update_lock{this->gd_provider.get_graphics()};
+                int y = 10;
+                for (auto s : {
+                    // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
+                    // "/home/jpoelen/rawdisk2/Laksaman_15.rbf",
+                    // "/home/jpoelen/rawdisk2/Laksaman_16.rbf",
+                    // "/home/jpoelen/rawdisk2/Laksaman_17.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Light_14.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Light_15.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Light_16.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Light_17.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Thin_14.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Thin_15.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Thin_16.rbf",
+                    "/home/jpoelen/rawdisk2/Lato-Thin_17.rbf",
+                    "/home/jpoelen/rawdisk2/Lohit-Telugu_14.rbf",
+                    "/home/jpoelen/rawdisk2/Lohit-Telugu_15.rbf",
+                    "/home/jpoelen/rawdisk2/Lohit-Telugu_16.rbf",
+                    "/home/jpoelen/rawdisk2/Lohit-Telugu_17.rbf",
+                    // "/home/jpoelen/rawdisk2/NanumSquareR_14.rbf",
+                    // "/home/jpoelen/rawdisk2/NanumSquareR_15.rbf",
+                    // "/home/jpoelen/rawdisk2/NanumSquareR_16.rbf",
+                    // "/home/jpoelen/rawdisk2/NanumSquareR_17.rbf",
+                    // "/home/jpoelen/rawdisk2/Suruma_14.rbf",
+                    // "/home/jpoelen/rawdisk2/Suruma_15.rbf",
+                    // "/home/jpoelen/rawdisk2/Suruma_16.rbf",
+                    // "/home/jpoelen/rawdisk2/Suruma_17.rbf",
+                }) {
+                    Font font(s);
+                    auto * text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`!@#$%^&*()_=[]'\",./<>?|:{}¹²³ cl◀◂▸▶▲▼▤▥➜¤€’¥×\\æœúíàéèçùµÉÀð.";
+                    gdi::server_draw_text(
+                        this->gd_provider.get_graphics(), font, 10, y, text,
+                        encode_color24()(BGRColor(0xeeb6c1)), encode_color24()(BGRColor(0x747132)),
+                        gdi::ColorCtx::depth24(), Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
+                    y += font.max_height() + 10;
+                }
+            });
     }
 
     ~WidgetTestModPrivate()

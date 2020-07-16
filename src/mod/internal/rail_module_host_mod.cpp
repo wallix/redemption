@@ -238,18 +238,15 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
 
         }
         else {
-            Event event("RAIL Module Host Disconnection Reconnection Timeout", this);
-            this->disconnection_reconnection_timer = event.id;
-            event.alarm.set_timeout(
-                this->time_base.get_current_time()
-                +std::chrono::seconds(1));
-            event.actions.on_timeout = [this](Event&)
-            {
-                if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
-                    throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-                }
-            };
-            this->events.add(std::move(event));
+            this->disconnection_reconnection_timer = this->events.create_event_timeout(
+                "RAIL Module Host Disconnection Reconnection Timeout", this,
+                this->time_base.get_current_time()+std::chrono::seconds(1),
+                [this](Event&)
+                {
+                    if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
+                        throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                    }
+                });
         }
     }
 }

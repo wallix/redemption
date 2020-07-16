@@ -1988,14 +1988,13 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            Event event("Initialisation timeout Event", this);
-            this->initialization_timeout_event = event.id;
-            event.alarm.set_timeout(this->time_base.get_current_time()+this->initialization_timeout);
-            event.actions.on_timeout = [this](Event&)
-            {
-                this->process_event();
-            };
-            this->events.add(std::move(event));
+            this->initialization_timeout_event = this->events.create_event_timeout(
+                "Initialisation timeout Event", this,
+                this->time_base.get_current_time()+this->initialization_timeout,
+                [this](Event&)
+                {
+                    this->process_event();
+                });
             return true;
         }
 
