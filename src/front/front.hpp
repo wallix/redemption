@@ -798,17 +798,15 @@ public:
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            Event event("Front Handshake Timer", this);
-            this->handshake_timeout = event.id;
-            event.alarm.set_timeout(
-                time_base.get_current_time()
-                +this->ini.get<cfg::globals::handshake_timeout>());
-            event.actions.on_timeout = [](Event&)
-            {
-                LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
-                throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
-            };
-            this->events.add(std::move(event));
+            
+            this->handshake_timeout = this->events.create_event_timeout(
+                "Front Handshake Timer", this,
+                time_base.get_current_time()+this->ini.get<cfg::globals::handshake_timeout>(),
+                [](Event&)
+                {
+                    LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
+                    throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+                });
         }
 
         // --------------------------------------------------------
@@ -841,26 +839,26 @@ public:
         }
 
         if (this->rdp_keepalive_connection_interval.count()) {
-            Event event("Front Flow Control Timer", this);
-            this->flow_control_timer = event.id;
-            event.alarm.set_timeout(this->time_base.get_current_time());
-            event.actions.on_timeout = [this](Event& event)
-            {
-                event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
-                if (this->state == FRONT_UP_AND_RUNNING) {
-                    this->send_data_indication_ex_impl(
-                        GCC::MCS_GLOBAL_CHANNEL,
-                        [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
-                            ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
-                            if (bool(this->verbose & Verbose::global_channel)) {
-                                LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
-                                hexdump_d(stream.get_data(), stream.get_offset());
+
+            this->flow_control_timer = this->events.create_event_timeout(
+                "Front Flow Control Timer", this,
+                this->time_base.get_current_time(),
+                [this](Event& event)
+                {
+                    event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
+                    if (this->state == FRONT_UP_AND_RUNNING) {
+                        this->send_data_indication_ex_impl(
+                            GCC::MCS_GLOBAL_CHANNEL,
+                            [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
+                                ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
+                                if (bool(this->verbose & Verbose::global_channel)) {
+                                    LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
+                                    hexdump_d(stream.get_data(), stream.get_offset());
+                                }
                             }
-                        }
-                    );
-                }
-            };
-            this->events.add(std::move(event));
+                        );
+                    }
+                });
         }
     }
 
@@ -1151,20 +1149,19 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        Event event("Front Capture Timer", this);
-        this->capture_timer = event.id;
-        event.alarm.set_timeout(this->time_base.get_current_time());
-        event.actions.on_timeout = [this](Event& event)
-        {
-            auto const capture_ms = this->capture->periodic_snapshot(
-                event.alarm.now,
-                this->mouse_x, this->mouse_y,
-                false  // ignore frame in time interval
-            ).ms();
-            event.alarm.set_timeout(event.alarm.now
-                +std::chrono::duration_cast<std::chrono::milliseconds>(((capture_ms.max() < capture_ms)?capture_ms.max():capture_ms)));
-        };
-        this->events.add(std::move(event));
+        this->capture_timer = this->events.create_event_timeout(
+            "Front Capture Timer", this,
+            this->time_base.get_current_time(),
+            [this](Event& event)
+            {
+                auto const capture_ms = this->capture->periodic_snapshot(
+                    event.alarm.now,
+                    this->mouse_x, this->mouse_y,
+                    false  // ignore frame in time interval
+                ).ms();
+                event.alarm.set_timeout(event.alarm.now
+                    +std::chrono::duration_cast<std::chrono::milliseconds>(((capture_ms.max() < capture_ms)?capture_ms.max():capture_ms)));
+            });
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);

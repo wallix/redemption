@@ -322,5 +322,17 @@ struct EventContainer {
         this->queue.push_back(std::move(event));
     }
 
+    int create_event_timeout(std::string name, void * lifespan,
+        timeval trigger_time,
+        std::function<void(Event&)> timeout)
+    {
+        Event event(name, lifespan);
+        event.alarm.set_timeout(trigger_time);
+        event.actions.on_timeout = timeout;
+        int event_id = event.id;
+        this->queue.push_back(std::move(event));
+        return event_id;
+    }
+
 };
 

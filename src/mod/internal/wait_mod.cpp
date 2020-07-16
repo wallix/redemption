@@ -158,15 +158,13 @@ WaitMod::WaitMod(
     this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    Event event("Wait Mod Timeout", this);
-    event.alarm.set_timeout(
-        this->time_base.get_current_time()
-        +std::chrono::seconds(600));
-    event.actions.on_timeout = [this](Event&)
-    {
-        this->refused();
-    };
-    this->events.add(std::move(event));
+    this->events.create_event_timeout("Wait Mod Timeout", this,
+        this->time_base.get_current_time()+std::chrono::seconds(600),
+        [this](Event&)
+        {
+            this->refused();
+        }
+    );
 }
 
 void WaitMod::init()
