@@ -557,6 +557,17 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_enable_log_rotation = 1
 
+# min = 0, max = 6
+#   0: Off
+#   1: Fatal
+#   2: Error
+#   3: Info
+#   4: Warning
+#   5: Debug
+#   6: Detail
+#_hidden
+#session_probe_log_level = 5
+
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000

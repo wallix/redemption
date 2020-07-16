@@ -787,6 +787,36 @@ parse_error parse_from_cfg(ClientAddressSent & x, ::configs::spec_type<ClientAdd
 
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
+    cfg_s_type<SessionProbeLogLevel> /*type*/,
+    SessionProbeLogLevel x
+){
+    static_assert(sizeof(SessionProbeLogLevel) <= sizeof(unsigned long));
+    int sz = snprintf(zbuf.data(), zbuf.size(), "%lu", static_cast<unsigned long>(x));
+    return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
+}
+
+parse_error parse_from_cfg(SessionProbeLogLevel & x, ::configs::spec_type<SessionProbeLogLevel> /*type*/, zstring_view value)
+{
+    using ul = unsigned long;
+    using enum_int = std::underlying_type_t<SessionProbeLogLevel>;
+    static_assert(min_integral<ul>::value <= min_integral<enum_int>::value);
+    static_assert(max_integral<ul>::value >= max_integral<enum_int>::value);
+
+    ul xi = 0;
+    if (parse_error err = parse_integral(
+        xi, value,
+        zero_integral<ul>(),
+        std::integral_constant<ul, 6>()
+    )) {
+        return err;
+    }
+
+    x = static_cast<SessionProbeLogLevel>(xi);
+    return no_parse_error;
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
     cfg_s_type<ColorDepth> /*type*/,
     ColorDepth x
 ){

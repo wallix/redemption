@@ -1003,13 +1003,35 @@ public:
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("EnableLog=Yes"_av);
 
-                    if (this->sespro_params.enable_log_rotation) {
-                        if (0x0103 <= this->other_version) {
-                            out_s.out_uint8('\x01');
+                    if (0x0103 <= this->other_version) {
+                        out_s.out_uint8('\x01');
+                        if (this->sespro_params.enable_log_rotation) {
                             out_s.out_copy_bytes("Yes"_av);
                         }
                         else {
-                            LOG(LOG_INFO,
+                            out_s.out_copy_bytes("No"_av);
+                        }
+
+                        if (0x0104 <= this->other_version) {
+                            out_s.out_uint8('\x01');
+
+                            char cstr[128];
+                            int len = std::snprintf(cstr, sizeof(cstr), "%d",
+                                static_cast<int>(this->sespro_params.log_level));
+                            out_s.out_copy_bytes(cstr, size_t(len));
+                        }
+                        else {
+                            if (this->sespro_params.log_level >= SessionProbeLogLevel::Off) {
+                                LOG(LOG_WARNING,
+                                    "SessionProbeVirtualChannel::process_event: "
+                                        "Log levels are not supported by Session Probe! OtherVersion=0x%X",
+                                    this->other_version);
+                            }
+                        }
+                    }
+                    else {
+                        if (this->sespro_params.enable_log_rotation) {
+                            LOG(LOG_WARNING,
                                 "SessionProbeVirtualChannel::process_event: "
                                     "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
                                 this->other_version);

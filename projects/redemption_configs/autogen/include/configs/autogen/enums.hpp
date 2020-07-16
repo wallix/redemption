@@ -611,6 +611,26 @@ operator << (std::basic_ostream<Ch, Tr> & os, ClientAddressSent e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class SessionProbeLogLevel : unsigned char
+{
+    Off = 0,
+    Fatal = 1,
+    Error = 2,
+    Info = 3,
+    Warning = 4,
+    Debug = 5,
+    Detail = 6,
+};
+
+inline bool is_valid_enum_value(SessionProbeLogLevel e)
+{ return static_cast<unsigned long>(e) <= 6; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeLogLevel e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {

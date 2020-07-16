@@ -378,6 +378,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_enable_log", connpolicy::name{"enable_log"}, set(false));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_enable_log_rotation", connpolicy::name{"enable_log_rotation"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeLogLevel>(), "session_probe_log_level", connpolicy::name{"log_level"}, set(SessionProbeLogLevel::Debug));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), "session_probe_disconnected_application_limit", connpolicy::name{"disconnected_application_limit"}, desc{
             "This policy setting allows you to configure a time limit for disconnected application sessions.\n"

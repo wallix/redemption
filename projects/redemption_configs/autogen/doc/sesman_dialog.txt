@@ -120,6 +120,14 @@ cfg::mod_rdp::session_probe_end_disconnected_session ⇐ mod_rdp:session_probe_e
     Session Probe must be enabled to use this feature.
 cfg::mod_rdp::session_probe_enable_log ⇐ mod_rdp:session_probe_enable_log   [bool]
 cfg::mod_rdp::session_probe_enable_log_rotation ⇐ mod_rdp:session_probe_enable_log_rotation   [bool]
+cfg::mod_rdp::session_probe_log_level ⇐ mod_rdp:session_probe_log_level   [SessionProbeLogLevel]
+      0: Off
+      1: Fatal
+      2: Error
+      3: Info
+      4: Warning
+      5: Debug
+      6: Detail
 cfg::mod_rdp::session_probe_disconnected_application_limit ⇐ mod_rdp:session_probe_disconnected_application_limit   [std::chrono::milliseconds]
     This policy setting allows you to configure a time limit for disconnected application sessions.
     0 to disable timeout.

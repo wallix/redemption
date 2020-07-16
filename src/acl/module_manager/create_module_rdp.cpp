@@ -441,6 +441,7 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
         ini.get<cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field>().c_str());
     spp.vc_params.enable_log = ini.get<cfg::mod_rdp::session_probe_enable_log>();
     spp.vc_params.enable_log_rotation = ini.get<cfg::mod_rdp::session_probe_enable_log_rotation>();
+    spp.vc_params.log_level = ini.get<cfg::mod_rdp::session_probe_log_level>();
     spp.vc_params.allow_multiple_handshake = ini.get<cfg::mod_rdp::session_probe_allow_multiple_handshake>();
     spp.vc_params.enable_crash_dump = ini.get<cfg::mod_rdp::session_probe_enable_crash_dump>();
     spp.vc_params.handle_usage_limit = ini.get<cfg::mod_rdp::session_probe_handle_usage_limit>();

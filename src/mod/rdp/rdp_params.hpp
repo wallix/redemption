@@ -279,6 +279,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.customize_executable_name);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.enable_log);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.enable_log_rotation);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.log_level);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.start_delay_ms);

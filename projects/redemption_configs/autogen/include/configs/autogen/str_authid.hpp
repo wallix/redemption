@@ -64,6 +64,7 @@ namespace configs
         "mod_rdp:session_probe_end_disconnected_session"_zv,
         "mod_rdp:session_probe_enable_log"_zv,
         "mod_rdp:session_probe_enable_log_rotation"_zv,
+        "mod_rdp:session_probe_log_level"_zv,
         "mod_rdp:session_probe_disconnected_application_limit"_zv,
         "mod_rdp:session_probe_disconnected_session_limit"_zv,
         "mod_rdp:session_probe_idle_session_limit"_zv,

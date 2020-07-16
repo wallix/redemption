@@ -218,6 +218,16 @@ inline void config_type_definition(type_enumerations & e)
       .value("proxy", "Send proxy client address or target connexion")
       .value("front", "Send user client address of front connexion")
     ;
+
+    e.enumeration_list("SessionProbeLogLevel")
+      .value("Off").exclude()
+      .value("Fatal")
+      .value("Error")
+      .value("Info")
+      .value("Warning")
+      .value("Debug")
+      .value("Detail")
+    ;
 }
 
 }

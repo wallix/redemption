@@ -122,6 +122,9 @@ cp_spec = {
         u'mod_rdp:session_probe_enable_log_rotation': (
             'enable_log_rotation', True
         ),
+        u'mod_rdp:session_probe_log_level': (
+            'log_level', 5
+        ),
         u'mod_rdp:session_probe_disconnected_application_limit': (
             'disconnected_application_limit', 0
         ),

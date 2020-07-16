@@ -350,6 +350,50 @@
           "description": ""
         },
         {
+          "name": "log_level",
+          "type": "option",
+          "default": 5,
+          "values": [
+            {
+               "value": 0,
+               "label": "Off",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "Fatal",
+               "description": ""
+            },
+            {
+               "value": 2,
+               "label": "Error",
+               "description": ""
+            },
+            {
+               "value": 3,
+               "label": "Info",
+               "description": ""
+            },
+            {
+               "value": 4,
+               "label": "Warning",
+               "description": ""
+            },
+            {
+               "value": 5,
+               "label": "Debug",
+               "description": ""
+            },
+            {
+               "value": 6,
+               "label": "Detail",
+               "description": ""
+            }
+          ],
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "disconnected_application_limit",
           "type": "integer",
           "min": 0,

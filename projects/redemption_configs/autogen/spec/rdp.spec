@@ -182,6 +182,16 @@ enable_log = boolean(default=False)
 #_advanced
 enable_log_rotation = boolean(default=True)
 
+#   0: Off
+#   1: Fatal
+#   2: Error
+#   3: Info
+#   4: Warning
+#   5: Debug
+#   6: Detail
+#_advanced
+log_level = option(0, 1, 2, 3, 4, 5, 6, default=5)
+
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # (is in millisecond)
