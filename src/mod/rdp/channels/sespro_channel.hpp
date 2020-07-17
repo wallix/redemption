@@ -1561,8 +1561,8 @@ public:
 
                 else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_SUPPORTED")) {
                     if (parameters_.size() == 1) {
-                        if ((!::strcasecmp(parameters_[0].c_str(), "yes")) &&
-                            this->sespro_params.session_shadowing_support) {
+                        if ((!::strcasecmp(parameters_[0].c_str(), "yes")) 
+                        && this->sespro_params.session_shadowing_support) {
                             this->sesman.set_rd_shadow_available();
                         }
                     }
