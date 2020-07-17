@@ -694,6 +694,8 @@ const newRdpGL = function(canvasElement, module, ropError) {
             let bytesPerPixel;
 
             switch (bitsPerPixel) {
+                case 15:
+                    module.transformBmp15ToBmp16FromIndex(byteOffset, w, h, lineSize);
                 case 16:
                     bytesPerPixel = 2;
                     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([

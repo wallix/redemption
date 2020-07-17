@@ -38,6 +38,7 @@
 #include "utils/rect.hpp"
 #include "utils/rle.hpp"
 #include "utils/stream.hpp"
+#include "utils/pixel_conversion.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
@@ -354,37 +355,30 @@ Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
         };
 
         this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
-        auto buf2col_1B = [ ](uint8_t const * p) { return RDPColor::from(p[0]); };
-        auto buf2col_2B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8)); };
-        auto buf2col_3B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8) | (p[2] << 16)); };
-        auto buf2col_4B = [=](uint8_t const * p) { return RDPColor::from(p[0] | (p[1] << 8) | (p[2] << 16)); };
-        auto col2buf_1B = [ ](RDPColor c, uint8_t * p) {                   p[0] = c.as_bgr().red(); };
-        auto col2buf_2B = [=](RDPColor c, uint8_t * p) { col2buf_1B(c, p); p[1] = c.as_bgr().green(); };
-        auto col2buf_3B = [=](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); };
-        auto col2buf_4B = [=](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); p[3] = 0xff; };
+        namespace fns = pixel_conversion_fns;
         using namespace shortcut_encode;
         using namespace shortcut_decode_with_palette;
         switch ((underlying_cast(bmp.bpp()) << 8) + underlying_cast(out_bpp)) {
-            case  (8<<8)+15: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
-            case  (8<<8)+16: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
-            case  (8<<8)+24: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
-            case  (8<<8)+32: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_4B, enc32()); break;
-            case (15<<8)+8 : bpp2bpp(buf2col_2B, dec15(), col2buf_1B, enc8()); break;
-            case (15<<8)+16: bpp2bpp(buf2col_2B, dec15(), col2buf_2B, enc16()); break;
-            case (15<<8)+24: bpp2bpp(buf2col_2B, dec15(), col2buf_3B, enc24()); break;
-            case (15<<8)+32: bpp2bpp(buf2col_2B, dec15(), col2buf_4B, enc32()); break;
-            case (16<<8)+8 : bpp2bpp(buf2col_2B, dec16(), col2buf_1B, enc8()); break;
-            case (16<<8)+15: bpp2bpp(buf2col_2B, dec16(), col2buf_2B, enc15()); break;
-            case (16<<8)+24: bpp2bpp(buf2col_2B, dec16(), col2buf_3B, enc24()); break;
-            case (16<<8)+32: bpp2bpp(buf2col_2B, dec16(), col2buf_4B, enc32()); break;
-            case (24<<8)+8 : bpp2bpp(buf2col_3B, dec24(), col2buf_1B, enc8()); break;
-            case (24<<8)+15: bpp2bpp(buf2col_3B, dec24(), col2buf_2B, enc15()); break;
-            case (24<<8)+16: bpp2bpp(buf2col_3B, dec24(), col2buf_2B, enc16()); break;
-            case (24<<8)+32: bpp2bpp(buf2col_3B, dec24(), col2buf_4B, enc32()); break;
-            case (32<<8)+8 : bpp2bpp(buf2col_4B, dec32(), col2buf_1B, enc8()); break;
-            case (32<<8)+15: bpp2bpp(buf2col_4B, dec32(), col2buf_2B, enc15()); break;
-            case (32<<8)+16: bpp2bpp(buf2col_4B, dec32(), col2buf_2B, enc16()); break;
-            case (32<<8)+24: bpp2bpp(buf2col_4B, dec32(), col2buf_3B, enc24()); break;
+            case  (8<<8)+15: bpp2bpp(fns::buf2col_1B, dec8{bmp.palette()}, fns::col2buf_2B, enc15()); break;
+            case  (8<<8)+16: bpp2bpp(fns::buf2col_1B, dec8{bmp.palette()}, fns::col2buf_2B, enc16()); break;
+            case  (8<<8)+24: bpp2bpp(fns::buf2col_1B, dec8{bmp.palette()}, fns::col2buf_3B, enc24()); break;
+            case  (8<<8)+32: bpp2bpp(fns::buf2col_1B, dec8{bmp.palette()}, fns::col2buf_4B, enc32()); break;
+            case (15<<8)+8 : bpp2bpp(fns::buf2col_2B, dec15(), fns::col2buf_1B, enc8()); break;
+            case (15<<8)+16: bpp2bpp(fns::buf2col_2B, dec15(), fns::col2buf_2B, enc16()); break;
+            case (15<<8)+24: bpp2bpp(fns::buf2col_2B, dec15(), fns::col2buf_3B, enc24()); break;
+            case (15<<8)+32: bpp2bpp(fns::buf2col_2B, dec15(), fns::col2buf_4B, enc32()); break;
+            case (16<<8)+8 : bpp2bpp(fns::buf2col_2B, dec16(), fns::col2buf_1B, enc8()); break;
+            case (16<<8)+15: bpp2bpp(fns::buf2col_2B, dec16(), fns::col2buf_2B, enc15()); break;
+            case (16<<8)+24: bpp2bpp(fns::buf2col_2B, dec16(), fns::col2buf_3B, enc24()); break;
+            case (16<<8)+32: bpp2bpp(fns::buf2col_2B, dec16(), fns::col2buf_4B, enc32()); break;
+            case (24<<8)+8 : bpp2bpp(fns::buf2col_3B, dec24(), fns::col2buf_1B, enc8()); break;
+            case (24<<8)+15: bpp2bpp(fns::buf2col_3B, dec24(), fns::col2buf_2B, enc15()); break;
+            case (24<<8)+16: bpp2bpp(fns::buf2col_3B, dec24(), fns::col2buf_2B, enc16()); break;
+            case (24<<8)+32: bpp2bpp(fns::buf2col_3B, dec24(), fns::col2buf_4B, enc32()); break;
+            case (32<<8)+8 : bpp2bpp(fns::buf2col_4B, dec32(), fns::col2buf_1B, enc8()); break;
+            case (32<<8)+15: bpp2bpp(fns::buf2col_4B, dec32(), fns::col2buf_2B, enc15()); break;
+            case (32<<8)+16: bpp2bpp(fns::buf2col_4B, dec32(), fns::col2buf_2B, enc16()); break;
+            case (32<<8)+24: bpp2bpp(fns::buf2col_4B, dec32(), fns::col2buf_3B, enc24()); break;
             default: assert(!"unknown bpp");
         }
         if (out_bpp == BitsPerPixel{8}) {

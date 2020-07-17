@@ -18,12 +18,21 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/image_data.hpp"
+#include <cstdint>
+#include <cstddef>
 
-class Bitmap;
-
+class BGRPalette;
+enum class BitsPerPixel : uint8_t;
 
 namespace redjs
 {
-    ImageData image_data_from_bitmap(Bitmap const& bmp);
+    void convert_bitmap_to_image_data(
+        uint8_t* dest,
+        uint8_t const* bmp_data, uint16_t cx, uint16_t cy,
+        std::size_t line_size, BitsPerPixel bits_per_pixel,
+        BGRPalette const* palette);
+
+    void transform_bitmap15_to_bitmap16(
+        uint8_t* bmp_data, uint16_t cx, uint16_t cy,
+        std::size_t line_size);
 }

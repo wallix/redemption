@@ -41,7 +41,7 @@ done
     --src $d/src/redjs \
     --src $d/src/system \
     --deps-src src/mod/rdp/new_mod_rdp.hpp,$d/src/red_channels/\*.cpp \
-    --deps-src $d/src/redjs/graphics.hpp,$d/src/redjs/image_data_from_bitmap.cpp \
+    --deps-src $d/src/redjs/graphics.hpp,$d/src/redjs/image_conversions.cpp \
     --include $d/src/ \
     --src-system emscripten \
     --lib '' \

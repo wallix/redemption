@@ -22,7 +22,7 @@ exe-js js_client :
   src/red_channels/js_channel.bc
   src/redjs/front.bc
   src/redjs/graphics.bc
-  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_conversions.bc
   src/redjs/image_data_from_pointer.bc
   src/redjs/transport.bc
   src/system/ssl_mod_exp.bc
@@ -60,7 +60,7 @@ exe-js js_player :
   src/main/js_player.bc
 :
   src/redjs/graphics.bc
-  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_conversions.bc
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
   src/core/font.bc
@@ -109,7 +109,7 @@ test-run-js tests/redjs/test_front :
   app_path_test.bc
   src/redjs/front.bc
   src/redjs/graphics.bc
-  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_conversions.bc
   src/redjs/image_data_from_pointer.bc
   src/system/ssl_mod_exp.bc
   projects/redemption_configs/redemption_src/configs/config.bc
@@ -131,7 +131,7 @@ test-run-js tests/redjs/test_graphics :
   tests/redjs/test_graphics.cpp src/application/rdp_graphics.js
 :
   src/redjs/graphics.bc
-  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_conversions.bc
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
   src/core/font.bc
@@ -144,10 +144,10 @@ test-run-js tests/redjs/test_graphics :
   src/utils/utf.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run-js tests/redjs/test_image_data_test_from_bitmap :
-  tests/redjs/test_image_data_test_from_bitmap.cpp
+test-run-js tests/redjs/test_image_conversions :
+  tests/redjs/test_image_conversions.cpp
 :
-  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_conversions.bc
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
@@ -155,8 +155,8 @@ test-run-js tests/redjs/test_image_data_test_from_bitmap :
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
-test-run-js tests/redjs/test_image_data_test_from_pointer :
-  tests/redjs/test_image_data_test_from_pointer.cpp
+test-run-js tests/redjs/test_image_data_from_pointer :
+  tests/redjs/test_image_data_from_pointer.cpp
 :
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
@@ -185,7 +185,7 @@ objjs src/red_channels/clipboard.bc : src/red_channels/clipboard.cpp ;
 objjs src/red_channels/js_channel.bc : src/red_channels/js_channel.cpp ;
 objjs src/redjs/front.bc : src/redjs/front.cpp ;
 objjs src/redjs/graphics.bc : src/redjs/graphics.cpp ;
-objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
+objjs src/redjs/image_conversions.bc : src/redjs/image_conversions.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs src/redjs/transport.bc : src/redjs/transport.cpp ;
 objjs src/system/ssl_mod_exp.bc : src/system/ssl_mod_exp.cpp ;
@@ -221,8 +221,8 @@ alias test_clipboard : tests/red_channels/test_clipboard ;
 alias test_js_channel : tests/red_channels/test_js_channel ;
 alias test_front : tests/redjs/test_front ;
 alias test_graphics : tests/redjs/test_graphics ;
-alias test_image_data_test_from_bitmap : tests/redjs/test_image_data_test_from_bitmap ;
-alias test_image_data_test_from_pointer : tests/redjs/test_image_data_test_from_pointer ;
+alias test_image_conversions : tests/redjs/test_image_conversions ;
+alias test_image_data_from_pointer : tests/redjs/test_image_data_from_pointer ;
 alias test_transport : tests/redjs/test_transport ;
 alias test_ssl_mod_exp : tests/system/test_ssl_mod_exp ;
 alias tests/red_channels.norec :
@@ -232,8 +232,8 @@ alias tests/red_channels.norec :
 alias tests/redjs.norec :
   tests/redjs/test_front
   tests/redjs/test_graphics
-  tests/redjs/test_image_data_test_from_bitmap
-  tests/redjs/test_image_data_test_from_pointer
+  tests/redjs/test_image_conversions
+  tests/redjs/test_image_data_from_pointer
   tests/redjs/test_transport
 ;
 alias tests/system.norec :

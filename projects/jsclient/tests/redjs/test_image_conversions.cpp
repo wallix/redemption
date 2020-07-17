@@ -20,12 +20,14 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "redjs/image_data_from_bitmap.hpp"
+#include "redjs/image_conversions.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_private_data.hpp"
 
+#include <vector>
+
 template<class Encoder>
-redjs::ImageData create_image_4x_2y(Encoder encoder)
+static Bitmap create_bmp_4x_2y(Encoder encoder)
 {
     Bitmap bitmap;
 
@@ -56,31 +58,55 @@ redjs::ImageData create_image_4x_2y(Encoder encoder)
     data = enc(data, BGRColor(0x0033aa));
     data = enc(data, BGRColor(0x030a3a));
 
-    redjs::ImageData img = redjs::image_data_from_bitmap(bitmap);
-
-    RED_CHECK(img.width() == bitmap.cx());
-    RED_CHECK(img.height() == bitmap.cy());
-    RED_CHECK(img.size() == bitmap.cx()*bitmap.cy()*4u);
-
-    return img;
+    return bitmap;
 }
 
-RED_AUTO_TEST_CASE(TestImageData16)
+template<class Encoder>
+static std::vector<uint8_t> create_image_4x_2y(Encoder encoder)
 {
-    redjs::ImageData img = create_image_4x_2y(encode_color16());
+    std::vector<uint8_t> output_data;
 
-    RED_CHECK(make_array_view(img.data(), img.size()) ==
+    Bitmap bitmap = create_bmp_4x_2y(encoder);
+    output_data.resize(bitmap.cx() * bitmap.cy() * 4);
+
+    redjs::convert_bitmap_to_image_data(
+        output_data.data(),
+        bitmap.data(), bitmap.cx(), bitmap.cy(),
+        bitmap.line_size(), bitmap.bpp(),
+        &bitmap.palette());
+
+    return output_data;
+}
+
+static bytes_view bmp2av(Bitmap const& bmp)
+{
+    return {bmp.data(), bmp.bmp_size()};
+}
+
+RED_AUTO_TEST_CASE(TestBmp16ToImageData)
+{
+    RED_CHECK(make_array_view(create_image_4x_2y(encode_color16())) ==
         "\x31\x00\xad\xff\x00\xaa\x31\xff\xad\x30\x00\xff\x39\x08\x00\xff"
         "\x00\x00\xff\xff\x00\xff\x00\xff\xff\x00\x00\xff\x52\x34\x10\xff"_av
     );
 }
 
-RED_AUTO_TEST_CASE(TestImageData24)
+RED_AUTO_TEST_CASE(TestBmp24ToImageData)
 {
-    redjs::ImageData img = create_image_4x_2y(encode_color24());
-
-    RED_CHECK(make_array_view(img.data(), img.size()) ==
+    RED_CHECK(create_image_4x_2y(encode_color24()) ==
         "\xaa\x00\x33\xff\x33\xaa\x00\xff\x00\x33\xaa\xff\x03\x0a\x3a\xff"
         "\xff\x00\x00\xff\x00\xff\x00\xff\x00\x00\xff\xff\x12\x34\x56\xff"_av
     );
+}
+
+RED_AUTO_TEST_CASE(TestBmp15ToBmp16)
+{
+    Bitmap bmp15 = create_bmp_4x_2y(encode_color15());
+
+    redjs::transform_bitmap15_to_bitmap16(
+        const_cast<uint8_t*>(bmp15.data()), /*NOLINT*/
+        bmp15.cx(), bmp15.cy(), bmp15.line_size());
+
+    RED_CHECK(bmp2av(bmp15) ==
+        "\x1f\x00\xe0\x07\x00\xf8\x82\x51\x15\x30\x66\x05\x80\xa9\x40\x38"_av);
 }
