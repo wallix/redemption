@@ -75,6 +75,45 @@ void convert_bitmap_to_image_data(
     }
 }
 
+namespace
+{
+    template<class Byte, class F>
+    void for_each_pixel(
+        Byte* src, uint16_t cx, uint16_t cy,
+        std::size_t line_size, BytesPerPixel nbbytes,
+        F f)
+    {
+        uint8_t const* end = src + line_size * cy;
+        ptrdiff_t const src_nbbytes = ptrdiff_t(nbbytes);
+        ptrdiff_t const step = ptrdiff_t(line_size - std::size_t(cx * src_nbbytes));
+
+        for (; src < end; src += step) {
+            for (uint8_t const* endx = src + cx * src_nbbytes
+                ; src < endx; src += src_nbbytes
+            ) {
+                f(src);
+            }
+        }
+
+    }
+}
+
+void convert_bitmap8_to_bgr(
+    uint8_t* dest,
+    uint8_t const* bmp_data, uint16_t cx, uint16_t cy,
+    std::size_t line_size, BGRPalette const& palette)
+{
+    namespace fns = pixel_conversion_fns;
+    using namespace shortcut_encode;
+
+    auto color_to_buf = fns::col2buf_3B;
+    auto enc = enc24{};
+
+    for_each_pixel(bmp_data, cx, cy, line_size, BytesPerPixel(1), [&](uint8_t const* p) {
+        color_to_buf(enc(palette[*p]), dest);
+        dest += 3;
+    });
+}
 
 void transform_bitmap15_to_bitmap16(
     uint8_t* bmp_data, uint16_t cx, uint16_t cy,
@@ -84,30 +123,21 @@ void transform_bitmap15_to_bitmap16(
     using namespace shortcut_decode_with_palette;
     using namespace shortcut_encode;
 
-    ptrdiff_t const src_nbbytes = 2;
-    ptrdiff_t const step = ptrdiff_t(line_size - std::size_t(cx * src_nbbytes));
-    uint8_t* src = bmp_data;
-    uint8_t const* end = bmp_data + line_size * cy;
-
     auto buf_to_color = fns::buf2col_2B;
     auto color_to_buf = fns::col2buf_2B;
     auto dec = dec15{};
     auto enc = enc16{};
 
-    for (; src < end; src += step) {
-        for (uint8_t const* endx = src + cx * src_nbbytes
-            ; src < endx; src += src_nbbytes
-        ) {
-            color_to_buf(enc(dec(buf_to_color(src))), src);
-        }
-    }
+    for_each_pixel(bmp_data, cx, cy, line_size, BytesPerPixel(2), [&](uint8_t* p) {
+        color_to_buf(enc(dec(buf_to_color(p))), p);
+    });
 }
 
 }
 
 EMSCRIPTEN_BINDINGS(image_data_func)
 {
-    redjs::function("loadRgbaImageFromIndex", +[](
+    redjs::function("convertBmpToImageData", +[](
         intptr_t idest, intptr_t idata, uint8_t bits_per_pixel,
         uint16_t w, uint16_t h, uint32_t line_size
     ) {
@@ -116,6 +146,17 @@ EMSCRIPTEN_BINDINGS(image_data_func)
         redjs::convert_bitmap_to_image_data(
             dest, data, w, h, line_size, BitsPerPixel(bits_per_pixel),
             &BGRPalette::classic_332());
+    });
+
+    redjs::function("convertBmp8ToRGB", +[](
+        intptr_t idest, intptr_t idata,
+        uint16_t w, uint16_t h, uint32_t line_size
+    ) {
+        auto* dest = redjs::from_memory_offset<uint8_t*>(idest);
+        auto* data = redjs::from_memory_offset<uint8_t const*>(idata);
+        redjs::convert_bitmap8_to_bgr(
+            dest, data, w, h, line_size,
+            BGRPalette::classic_332());
     });
 
     redjs::function("transformBmp15ToBmp16FromIndex", +[](

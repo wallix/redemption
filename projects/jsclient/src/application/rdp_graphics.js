@@ -206,8 +206,8 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
 
         setBmpCacheIndex: function(byteOffset, bitsPerPixel, w, h, lineSize, imageIdx) {
             // assume w*h <= 64*64
-            module.loadRgbaImageFromIndex(_imgBufferIndex,
-                                          byteOffset, bitsPerPixel, w, h, lineSize);
+            module.convertBmpToImageData(_imgBufferIndex,
+                                         byteOffset, bitsPerPixel, w, h, lineSize);
             const array = _buffer.slice(_imgBufferIndex, _imgBufferIndex + w*h*4);
             // array is copied by Uint8ClampedArray
             _cacheImages[imageIdx] = new ImageData(new Uint8ClampedArray(array), w, h);
@@ -304,8 +304,8 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                 }
 
                 destOffset = _imgBufferIndex;
-                module.loadRgbaImageFromIndex(destOffset, byteOffset,
-                                              bitsPerPixel, w, h, lineSize);
+                module.convertBmpToImageData(destOffset, byteOffset,
+                                             bitsPerPixel, w, h, lineSize);
             }
             else {
                 destOffset = byteOffset;
@@ -706,6 +706,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
         drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, dx, dy) {
             // console.log('img');
             let bytesPerPixel;
+            let program = imgProgram;
             gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
 
             switch (bitsPerPixel) {
@@ -728,6 +729,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
                     break;
 
                 case 24:
+                    program = img24Program;
                     gl.useProgram(img24Program);
                     bytesPerPixel = 3;
                     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
@@ -738,6 +740,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
                     ]), gl.STATIC_DRAW);
                     gl.bindTexture(gl.TEXTURE_2D, texture);
                     gl.texImage2D(
+                        // what to do if is not divisible by 3?
                         gl.TEXTURE_2D, 0, gl.RGB, lineSize / 3, h, 0,
                         gl.RGB, gl.UNSIGNED_BYTE,
                         new Uint8Array(_u8buffer, byteOffset, lineSize*h));
@@ -759,27 +762,32 @@ const newRdpGL = function(canvasElement, module, ropError) {
                         new Uint8Array(_u8buffer, byteOffset, lineSize*h));
                     break;
 
-                default:
+                case 8:
                     gl.useProgram(imgProgram);
-                    bytesPerPixel = ~~((bitsPerPixel + 7) / 8);
-                    const bufLen = w*h*4;
+                    bytesPerPixel = 1;
+                    const bufLen = w*h*3;
                     const pbuf = module._malloc(bufLen);
-                    module.loadRgbaImageFromIndex(pbuf, byteOffset, bitsPerPixel,
-                                                  w, h, lineSize);
+                    module.convertBmp8ToRGB(pbuf, byteOffset, w, h, lineSize);
                     const img = new Uint8Array(_u8buffer, pbuf, bufLen);
 
                     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                        dx,    dy+h,
                         dx,    dy,
-                        dx+w,  dy,
+                        dx,    dy+h,
                         dx+w,  dy+h,
+                        dx+w,  dy,
                     ]), gl.STATIC_DRAW);
 
                     gl.bindTexture(gl.TEXTURE_2D, texture);
+                    // TODO don't works
                     gl.texImage2D(
-                        gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, img);
+                        gl.TEXTURE_2D, 0, gl.RGB, w, h, 0, gl.RGB, gl.UNSIGNED_BYTE, img);
 
                     module._free(pbuf);
+                    break;
+
+                default:
+                    console.error(`invalid bitsPerPixel: ${bitsPerPixel}`);
+                    return ;
             }
 
             const xratio = w * bytesPerPixel / lineSize;
@@ -807,9 +815,9 @@ const newRdpGL = function(canvasElement, module, ropError) {
             // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
             // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-            vloc = gl.getAttribLocation(imgProgram, "aVertexPosition");
-            tloc = gl.getAttribLocation(imgProgram, "aUV");
-            // uLoc = gl.getUniformLocation(imgProgram, "pos");
+            vloc = gl.getAttribLocation(program, "aVertexPosition");
+            tloc = gl.getAttribLocation(program, "aUV");
+            // uLoc = gl.getUniformLocation(program, "pos");
 
             gl.enableVertexAttribArray(vloc);
             gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);

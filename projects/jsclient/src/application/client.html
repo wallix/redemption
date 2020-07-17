@@ -562,10 +562,7 @@ for (const k in inputs) {
     const input = d[0];
     const mem = d[1];
     const x = d[2](url.searchParams.get(k));
-    if (x) {
-        input[mem] = x;
-    }
-    urlparams[k] = input[mem];
+    urlparams[k] = input[mem] = x;
     input.addEventListener('input', (e) => {
         urlparams[k] = input[mem];
         updatePermalink();
