@@ -31,6 +31,7 @@
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "RAIL/client_execute.hpp"
+#include "acl/sesman.hpp"
 
 
 using SelectorModVariables = vcfg::variables<
@@ -145,6 +146,7 @@ private:
 protected:
     TimeBase& time_base;
     EventContainer& events;
+    AuthApi & sesman;
 
 private:
     LanguageButton language_button;
@@ -166,6 +168,7 @@ public:
     SelectorMod(
         Inifile & ini, SelectorModVariables vars, TimeBase& time_base,
         EventContainer& events,
+        AuthApi & sesman,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);

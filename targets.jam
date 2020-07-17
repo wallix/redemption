@@ -592,6 +592,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/hexdump.o
   <library>src/utils/log_siem.o
   <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o

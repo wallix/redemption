@@ -107,6 +107,13 @@ struct Sesman : public AuthApi
     bool auth_error_message_sent = true;
     std::string auth_error_message;
 
+    bool selector_page_sent = true;
+    unsigned current_page = 0;
+    std::string group_filter;
+    std::string device_filter;
+    std::string proto_filter;
+
+
     bool auth_channel_target_sent = true;
     std::string auth_channel_target;
 
@@ -169,6 +176,18 @@ struct Sesman : public AuthApi
     {
         this->session_log_is_open = true;
     }
+
+
+    void set_selector_page(unsigned current, std::string group, std::string device, std::string proto) override
+    {
+        this->selector_page_sent = false;
+        this->current_page = current;
+        this->group_filter = group;
+        this->device_filter = device;
+        this->proto_filter = proto;
+
+    }
+
 
     void set_server_cert(std::string const& blob_str) override
     {
@@ -284,6 +303,8 @@ struct Sesman : public AuthApi
         this->flush_acl_pm_request();
         this->flush_acl_auth_error_message();
         this->flush_acl_auth_channel_target();
+        this->flush_acl_selector_page();
+
     }
 
     void flush_acl_report(std::function<void(std::string,std::string)> fn)
@@ -333,6 +354,24 @@ struct Sesman : public AuthApi
     }
 
 private:
+
+    void flush_acl_selector_page()
+    {
+        if (!this->selector_page_sent) {
+            this->selector_page_sent = true;
+
+            this->ini.set_acl<cfg::context::selector_current_page>(this->current_page);
+
+            this->ini.set_acl<cfg::context::selector_group_filter>(this->group_filter);
+            this->ini.set_acl<cfg::context::selector_device_filter>(this->device_filter);
+            this->ini.set_acl<cfg::context::selector_proto_filter>(this->proto_filter);
+
+            this->ini.ask<cfg::globals::target_user>();
+            this->ini.ask<cfg::globals::target_device>();
+            this->ini.ask<cfg::context::selector>();
+        }
+    }
+
 
     void flush_acl_server_cert()
     {

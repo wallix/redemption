@@ -151,6 +151,7 @@ SelectorMod::SelectorMod(
     SelectorModVariables vars,
     TimeBase& time_base,
     EventContainer& events,
+    AuthApi & sesman,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
@@ -166,6 +167,7 @@ SelectorMod::SelectorMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , events(events)
+    , sesman(sesman)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
@@ -216,8 +218,8 @@ SelectorMod::SelectorMod(
 
     this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, nb_max_row);
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
-    this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
+    this->ask_page();
 }
 
 
@@ -258,18 +260,10 @@ void SelectorMod::acl_update()
 
 void SelectorMod::ask_page()
 {
-    this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
-
-    this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filters[0].get_text());
-    this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filters[1].get_text());
-    this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filters[2].get_text());
-
-    this->vars.ask<cfg::globals::target_user>();
-    this->vars.ask<cfg::globals::target_device>();
-    this->vars.ask<cfg::context::selector>();
-
-    // Asking from data from ACL
-    this->set_mod_signal(BACK_EVENT_REFRESH);
+    this->sesman.set_selector_page(this->current_page,
+        this->selector.edit_filters[0].get_text(),
+        this->selector.edit_filters[1].get_text(),
+        this->selector.edit_filters[2].get_text());
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -494,7 +488,7 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
         this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
-        this->ask_page();
         this->selector.rdp_input_invalidate(this->selector.get_rect());
+        this->ask_page();
     }
 }

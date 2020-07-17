@@ -327,12 +327,6 @@ private:
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             }
             break;
-            case BACK_EVENT_REFRESH:
-                acl.acl_serial->remote_answer = false;
-                acl.acl_serial->send_acl_data();
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                return true;
-            break;
             case BACK_EVENT_STOP:
                 throw Error(ERR_UNEXPECTED);
             } // switch (signal)
@@ -458,7 +452,6 @@ private:
             break;
             } // switch(signal)
 
-            return true;
             if (!ini.get<cfg::context::disconnect_reason>().empty()) {
                 acl.manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
                 ini.set<cfg::context::disconnect_reason>("");
@@ -853,7 +846,12 @@ public:
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
 
-                        events.execute_events(now, [&ioswitch](int fd){return ioswitch.is_set_for_reading(fd);}, ini.get<cfg::debug::session>());
+                        events.execute_events(now,
+                            [&ioswitch](int fd)
+                                {
+                                    return ioswitch.is_set_for_reading(fd);
+                                },
+                                ini.get<cfg::debug::session>());
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {

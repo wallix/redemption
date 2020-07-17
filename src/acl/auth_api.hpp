@@ -84,6 +84,8 @@ struct AuthApi : noncopyable
     virtual void set_auth_channel_target(const char * target) = 0;
 
     virtual std::string get_auth_error_message() = 0;
+    
+    virtual void set_selector_page(unsigned current, std::string group, std::string device, std::string proto) = 0;
 
     virtual ~AuthApi() = default;
 
@@ -110,5 +112,9 @@ struct NullAuthentifier : AuthApi
     void set_auth_info(std::string const& /*username*/, std::string const& /*domain*/, std::string const& /*password*/) override {}
     void set_recording_started() override {}
     void set_rt_ready() override {}
+    void set_selector_page(unsigned /*current*/, 
+                           std::string /*group*/, 
+                           std::string /*device*/, 
+                           std::string /*proto*/) override {}
 };
 

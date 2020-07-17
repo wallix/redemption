@@ -237,6 +237,7 @@ public:
             this->ini,
             this->time_base,
             this->events,
+            this->sesman,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,

@@ -27,14 +27,12 @@ enum BackEvent_t
     BACK_EVENT_NONE = 0,
     BACK_EVENT_NEXT,     // MODULE FINISHED, ASKING FOR NEXT MODULE
     BACK_EVENT_STOP = 4, // MODULE FINISHED, ASKING TO LEAVE SESSION
-    BACK_EVENT_REFRESH,  // MODULE ASKED DATA TO ACL, WAITING FOR ACL REFRESH
 };
 
 inline zstring_view signal_name(BackEvent_t signal)
 {
      return signal == BACK_EVENT_NONE ? "BACK_EVENT_NONE"_zv
           : signal == BACK_EVENT_NEXT  ?"BACK_EVENT_NEXT"_zv
-          : signal == BACK_EVENT_REFRESH ? "BACK_EVENT_REFRESH"_zv
           : signal == BACK_EVENT_STOP ? "BACK_EVENT_STOP"_zv
           : "BACK_EVENT_UNKNOWN"_zv;
 }
