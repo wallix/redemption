@@ -298,13 +298,13 @@ struct Sesman : public AuthApi
         this->flush_acl_recording_started(verbose);
         this->flush_acl_rt_ready(verbose);
         this->flush_acl_smartcard_login(verbose);
+        this->flush_acl_rd_shadow_available(verbose);
         this->flush_acl_rd_shadow_invitation(verbose);
         this->flush_acl_native_session_id(verbose);
         this->flush_acl_pm_request(verbose);
         this->flush_acl_auth_error_message(verbose);
         this->flush_acl_auth_channel_target(verbose);
         this->flush_acl_selector_page(verbose);
-
     }
 
     void flush_acl_report(std::function<void(std::string,std::string)> fn)
