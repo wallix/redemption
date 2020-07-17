@@ -30,6 +30,7 @@ struct null_mod : public mod_api
     null_mod()
     {
         this->set_mod_signal(BACK_EVENT_NEXT);
+        // throw Error(ERR_BACK_EVENT_NEXT);
     }
     std::string module_name() override {return "Null Mod";}
     void rdp_input_mouse(int,int,int,Keymap2 *) override {}

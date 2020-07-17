@@ -769,11 +769,13 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
             this->set_mod_signal(BACK_EVENT_NEXT);
             this->front.must_be_stop_capture();
+//            throw Error(ERR_BACK_EVENT_NEXT);
         }
         catch (...) {
             LOG(LOG_ERR, "unexpected exception raised in VNC");
             this->set_mod_signal(BACK_EVENT_NEXT);
             this->front.must_be_stop_capture();
+//            throw Error(ERR_BACK_EVENT_NEXT);
         }
 
         return false;

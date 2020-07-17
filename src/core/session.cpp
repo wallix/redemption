@@ -280,6 +280,7 @@ private:
                               Sesman & sesman,
                               ClientExecute & rail_client_execute)
     {
+        mod_wrapper.show_current_mod(bool(ini.get<cfg::debug::session>()&0x01));
         // There are modified fields to send to sesman
         BackEvent_t signal = mod_wrapper.get_mod_signal();
         if (signal == BACK_EVENT_STOP){
@@ -340,7 +341,6 @@ private:
             switch (signal){
             default:
             case BACK_EVENT_NONE:
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
             break;
             case BACK_EVENT_NEXT:
             {
@@ -438,7 +438,7 @@ private:
                     case MODULE_INTERNAL_CLOSE:
                         log_proxy::set_user("");
                         break;
-                    case MODULE_INTERNAL_WIDGET_LOGIN:
+                    case MODULE_INTERNAL_LOGIN:
                         log_proxy::set_user("");
                         break;
                     default:
@@ -754,12 +754,15 @@ public:
 
                 // exchange data with sesman
                 if (acl.is_connected()){
+                    LOG(LOG_INFO, "sesman exchange");
                     if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
                         acl.receive();
                         if (!ini.changed_field_size()) {
                             mod_wrapper.acl_update();
                         }
                     }
+
+                    LOG(LOG_INFO, "flushing");
 
                     // propagate changes made in sesman structure to actual acl changes
                     sesman.flush_acl_report(
@@ -781,7 +784,8 @@ public:
                             log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl.acl_serial->session_type);
                             log_file->log6(id, kv_list);
                         });
-                    sesman.flush_acl();
+                    LOG(LOG_INFO, "sesman.flush_acl; %d field changed", this->ini.changed_field_size());
+                    sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
                         acl.acl_serial->remote_answer = false;
@@ -791,13 +795,14 @@ public:
                     {
                         log_file->close_session_log();
                     });
+                    
                 }
 
 
                 switch (front.state) {
                 default:
                 {
-                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);}, ini.get<cfg::debug::session>());
+                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);}, bool(ini.get<cfg::debug::session>()&0x02));
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
@@ -848,10 +853,10 @@ public:
 
                         events.execute_events(now,
                             [&ioswitch](int fd)
-                                {
-                                    return ioswitch.is_set_for_reading(fd);
-                                },
-                                ini.get<cfg::debug::session>());
+                            {
+                                return ioswitch.is_set_for_reading(fd);
+                            },
+                            bool(ini.get<cfg::debug::session>()&0x02));
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {

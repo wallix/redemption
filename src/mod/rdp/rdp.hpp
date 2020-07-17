@@ -3547,8 +3547,6 @@ public:
                     }
                 }
 
-                this->set_mod_signal(BACK_EVENT_NEXT);
-
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enable_session_probe) {
                     this->enable_input_event();
@@ -3576,6 +3574,8 @@ public:
                         statedescr);
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
+                this->set_mod_signal(BACK_EVENT_NEXT);
+//                throw Error(ERR_BACK_EVENT_NEXT);
             }
         }
     }   // draw_event

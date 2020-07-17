@@ -437,6 +437,7 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
 
                     if (!this->wait_for_escape) {
                         this->set_mod_signal(BACK_EVENT_STOP);
+                        // throw Error(ERR_BACK_EVENT_NEXT);
                     }
 
                     break;
@@ -448,6 +449,7 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
             this->auth_error_message = "The recorded file is inaccessible or corrupted!";
             this->set_mod_signal(BACK_EVENT_NEXT);
+            // throw Error(ERR_BACK_EVENT_NEXT);
         }
         else {
             throw;

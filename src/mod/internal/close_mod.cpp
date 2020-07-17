@@ -173,6 +173,7 @@ void CloseMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::globals::target_device>();
         this->vars.ask<cfg::context::target_protocol>();
         this->set_mod_signal(BACK_EVENT_NEXT);
+        // throw Error(ERR_BACK_EVENT_NEXT);
     }
 }
 

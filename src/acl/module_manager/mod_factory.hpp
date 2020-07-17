@@ -128,7 +128,7 @@ public:
             return this->create_widget_test_mod();
         case MODULE_INTERNAL_CARD:
             return this->create_test_card_mod();
-        case MODULE_INTERNAL_WIDGET_SELECTOR:
+        case MODULE_INTERNAL_SELECTOR:
             return this->create_selector_mod();
         case MODULE_INTERNAL_CLOSE:
             return this->create_close_mod();
@@ -146,7 +146,7 @@ public:
             return this->create_wait_info_mod();
         case MODULE_INTERNAL_TRANSITION:
             return this->create_transition_mod();
-        case MODULE_INTERNAL_WIDGET_LOGIN:
+        case MODULE_INTERNAL_LOGIN:
             return this->create_login_mod();
         case MODULE_RDP:
         {

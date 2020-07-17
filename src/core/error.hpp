@@ -204,7 +204,9 @@
                                                              \
     fv(ERR_CRYPTO_BUFFER_TOO_SMALL, 25500)                   \
     f(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL)                    \
-    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)
+    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)           \
+                                                             \
+    fv(ERR_BACK_EVENT_NEXT, 30000)
 
 
 #define MAKE_ENUM(e) e,

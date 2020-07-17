@@ -274,7 +274,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
         this->set_mod_signal(BACK_EVENT_NEXT);
-
+        // throw Error(ERR_BACK_EVENT_NEXT);
         break;
     }
     case NOTIFY_SUBMIT: {
@@ -295,6 +295,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->vars.ask<cfg::context::target_protocol>();
 
                 this->set_mod_signal(BACK_EVENT_NEXT);
+                // throw Error(ERR_BACK_EVENT_NEXT);
             }
         }
         else if (widget->group_id == this->selector.apply.group_id) {

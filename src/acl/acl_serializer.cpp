@@ -54,12 +54,12 @@ KeepAlive::KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
 , connected(false)
 , verbose(verbose)
 {
-    LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
+    LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEPALIVE CONSTRUCTOR");
 }
 
 KeepAlive::~KeepAlive()
 {
-    LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEP ALIVE DESTRUCTOR");
+    LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEPALIVE DESTRUCTOR");
 }
 
 bool KeepAlive::is_started()

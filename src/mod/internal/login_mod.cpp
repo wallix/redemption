@@ -127,8 +127,8 @@ LoginMod::LoginMod(
             + std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()));
         login_timeout_event.actions.on_timeout = [this](Event&e)
         {
-            this->set_mod_signal(BACK_EVENT_STOP);
             e.garbage = true;
+            this->set_mod_signal(BACK_EVENT_STOP);
         };
         this->events.add(std::move(login_timeout_event));
     }
@@ -261,6 +261,7 @@ void LoginMod::notify(Widget* sender, notify_event_t event)
         this->vars.ask<cfg::context::target_protocol>();
         this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
         this->set_mod_signal(BACK_EVENT_NEXT);
+        // throw Error(ERR_BACK_EVENT_NEXT);
         break;
     }
     case NOTIFY_CANCEL:

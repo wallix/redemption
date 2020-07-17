@@ -290,20 +290,20 @@ struct Sesman : public AuthApi
 
 
     // flush_acl is only called from session and is no part of AuthApi interface
-    void flush_acl()
+    void flush_acl(bool verbose)
     {
-        this->flush_acl_server_cert();
-        this->flush_acl_screen_info();
-        this->flush_acl_auth_info();
-        this->flush_acl_recording_started();
-        this->flush_acl_rt_ready();
-        this->flush_acl_smartcard_login();
-        this->flush_acl_rd_shadow_invitation();
-        this->flush_acl_native_session_id();
-        this->flush_acl_pm_request();
-        this->flush_acl_auth_error_message();
-        this->flush_acl_auth_channel_target();
-        this->flush_acl_selector_page();
+        this->flush_acl_server_cert(verbose);
+        this->flush_acl_screen_info(verbose);
+        this->flush_acl_auth_info(verbose);
+        this->flush_acl_recording_started(verbose);
+        this->flush_acl_rt_ready(verbose);
+        this->flush_acl_smartcard_login(verbose);
+        this->flush_acl_rd_shadow_invitation(verbose);
+        this->flush_acl_native_session_id(verbose);
+        this->flush_acl_pm_request(verbose);
+        this->flush_acl_auth_error_message(verbose);
+        this->flush_acl_auth_channel_target(verbose);
+        this->flush_acl_selector_page(verbose);
 
     }
 
@@ -355,11 +355,10 @@ struct Sesman : public AuthApi
 
 private:
 
-    void flush_acl_selector_page()
+    void flush_acl_selector_page(bool verbose)
     {
         if (!this->selector_page_sent) {
-            this->selector_page_sent = true;
-
+            LOG_IF(verbose, LOG_INFO, "flush_acl_selector_page()");
             this->ini.set_acl<cfg::context::selector_current_page>(this->current_page);
 
             this->ini.set_acl<cfg::context::selector_group_filter>(this->group_filter);
@@ -369,13 +368,15 @@ private:
             this->ini.ask<cfg::globals::target_user>();
             this->ini.ask<cfg::globals::target_device>();
             this->ini.ask<cfg::context::selector>();
+            this->selector_page_sent = true;
         }
     }
 
 
-    void flush_acl_server_cert()
+    void flush_acl_server_cert(bool verbose)
     {
         if (!this->server_cert_sent) {
+            LOG_IF(verbose, LOG_INFO, "flush_acl_server_cert()");
             this->ini.set_acl<cfg::mod_rdp::server_cert>(this->blob_server_cert);
             this->ini.get_mutable_ref<cfg::mod_rdp::server_cert_response>() = "";
             this->ini.ask<cfg::mod_rdp::server_cert_response>();
@@ -383,9 +384,10 @@ private:
         }
     }
 
-    void flush_acl_screen_info()
+    void flush_acl_screen_info(bool verbose)
     {
         if (!this->screen_info_sent) {
+            LOG_IF(verbose, LOG_INFO, "flush_acl_screen_info()");
             this->ini.set_acl<cfg::context::opt_width>(this->screen_info.width);
             this->ini.set_acl<cfg::context::opt_height>(this->screen_info.height);
             this->ini.set_acl<cfg::context::opt_bpp>(safe_int(screen_info.bpp));
@@ -393,7 +395,7 @@ private:
         }
     }
 
-    void flush_acl_auth_info()
+    void flush_acl_auth_info(bool verbose)
     {
         if (!this->auth_info_sent) {
             std::string username = this->username;
@@ -403,7 +405,8 @@ private:
                 username = username + std::string("@") + domain;
             }
 
-            LOG(LOG_INFO, "flush_acl_auth_info: auth_user=%s", username);
+            LOG_IF(verbose, LOG_INFO, "flush_acl_auth_info(auth_user=%s)", username);
+
             this->ini.set_acl<cfg::globals::auth_user>(username);
             this->ini.ask<cfg::context::selector>();
             this->ini.ask<cfg::globals::target_user>();
@@ -416,36 +419,40 @@ private:
         }
     }
 
-    void flush_acl_recording_started()
+    void flush_acl_recording_started(bool verbose)
     {
         if (!this->recording_started_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_recording_started()");
             this->ini.set_acl<cfg::context::recording_started>(true);
             this->recording_started_sent = true;
         }
     }
 
 
-    void flush_acl_rt_ready()
+    void flush_acl_rt_ready(bool verbose)
     {
         if (!this->rt_ready_sent){
             if (!this->ini.get<cfg::context::rt_ready>()) {
+                LOG_IF(verbose, LOG_INFO, "flush_acl_rt_ready()");
                 this->ini.set_acl<cfg::context::rt_ready>(true);
             }
             this->rt_ready_sent= true;
         }
     }
 
-    void flush_acl_smartcard_login()
+    void flush_acl_smartcard_login(bool verbose)
     {
         if (!this->smartcard_login_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_smartcard_login()");
             this->ini.set_acl<cfg::context::smartcard_login>(this->smartcard_login);
             this->smartcard_login_sent = true;
         }
     }
 
-    void flush_acl_rd_shadow_invitation()
+    void flush_acl_rd_shadow_invitation(bool verbose)
     {
         if (!this->rd_shadow_invitation_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_rd_shadow_invitation()");
             this->ini.set_acl<cfg::context::rd_shadow_invitation_error_code>(this->error_code);
             this->ini.set_acl<cfg::context::rd_shadow_invitation_error_message>(this->shadow_error_message);
             this->ini.set_acl<cfg::context::rd_shadow_userdata>(this->userdata);
@@ -456,44 +463,48 @@ private:
         }
     }
 
-    void flush_acl_rd_shadow_available()
+    void flush_acl_rd_shadow_available(bool verbose)
     {
         if(!this->rd_shadow_available_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_rd_shadow_available()");
             this->ini.set_acl<cfg::context::rd_shadow_available>(true);
             this->rd_shadow_available_sent = true;
         }
     }
 
-    void flush_acl_native_session_id()
+    void flush_acl_native_session_id(bool verbose)
     {
         if (!this->native_session_id_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_native_session_id()");
             this->ini.set_acl<cfg::context::native_session_id>(this->native_session_id);
             this->native_session_id_sent = true;
         }
     }
 
-    void flush_acl_pm_request()
+    void flush_acl_pm_request(bool verbose)
     {
         if (!this->pm_request_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_pm_request()");
             this->ini.set_acl<cfg::context::pm_request>(request);
             this->pm_request_sent = true;
         }
     }
 
-    void flush_acl_auth_error_message()
+    void flush_acl_auth_error_message(bool verbose)
     {
         if (!this->auth_error_message_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_auth_error_message()");
             this->ini.set<cfg::context::auth_error_message>(this->auth_error_message);
             this->auth_error_message_sent = true;
         }
     }
 
-    void flush_acl_auth_channel_target()
+    void flush_acl_auth_channel_target(bool verbose)
     {
         if (!this->auth_channel_target_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_auth_channel_target()");
             this->ini.set_acl<cfg::context::auth_channel_target>(this->auth_channel_target);
             this->auth_channel_target_sent = true;
         }
     }
-
 };

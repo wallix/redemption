@@ -126,6 +126,7 @@ TransitionMod::TransitionMod(
                            widget_rect.y + (widget_rect.cy - dim.h) / 2);
     this->ttmessage.rdp_input_invalidate(this->ttmessage.get_rect());
     this->set_mod_signal(BACK_EVENT_NEXT);
+    // throw Error(ERR_BACK_EVENT_NEXT);
 }
 
 TransitionMod::~TransitionMod()
