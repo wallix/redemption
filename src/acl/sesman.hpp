@@ -243,7 +243,7 @@ struct Sesman : public AuthApi
 
     void set_rd_shadow_available() override
     {
-        this->rd_shadow_available_sent = true;
+        this->rd_shadow_available_sent = false;
     }
 
     void set_native_session_id(unsigned int session_id) override
