@@ -327,14 +327,28 @@ Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
 {
     //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
     if (out_bpp != bmp.bpp()) {
-        auto bpp2bpp = [this, bmp](auto buf_to_color, auto dec, auto color_to_buf, auto enc) -> void
+        const uint16_t bmp_cx = bmp.cx();
+        const uint16_t bmp_cy = bmp.cy();
+        auto bpp2bpp = [this, &bmp, bmp_cx, bmp_cy](
+            auto buf_to_color, auto dec, auto color_to_buf, auto enc
+        ) -> void
         {
             uint8_t * dest = this->data_bitmap->get();
             const uint8_t * src = bmp.data_bitmap->get();
+            const uint8_t * end = src + bmp.line_size() * bmp_cy;
             const uint8_t src_nbbytes = nb_bytes_per_pixel(dec.bpp);
             const uint8_t Bpp = nb_bytes_per_pixel(enc.bpp);
-            for (size_t y = 0; y < bmp.cy(); y++) {
-                for (size_t x = 0; x < bmp.cx(); x++) {
+            ptrdiff_t const src_step = ptrdiff_t(bmp.line_size() - std::size_t(bmp_cx * src_nbbytes));
+            ptrdiff_t const dest_step = ptrdiff_t(this->line_size() - std::size_t(bmp_cx * Bpp));
+            for (; src < end
+                ; void(src += src_step)
+                , dest += dest_step
+            ) {
+                for (uint8_t const* endx = src + bmp_cx * src_nbbytes
+                    ; src < endx
+                    ; void(src += src_nbbytes)
+                    , dest += Bpp
+                ){
                     BGRColor pixel = dec(buf_to_color(src));
                     constexpr bool enc_8_15_16 = enc.bpp == BitsPerPixel{8}
                                               || enc.bpp == BitsPerPixel{15}
@@ -342,19 +356,15 @@ Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
                     constexpr bool dec_8_15_16 = dec.bpp == BitsPerPixel{8}
                                               || dec.bpp == BitsPerPixel{15}
                                               || dec.bpp == BitsPerPixel{16};
-                    if (enc_8_15_16 != dec_8_15_16) {
+                    if constexpr (enc_8_15_16 != dec_8_15_16) {
                         pixel = BGRasRGBColor(pixel);
                     }
                     color_to_buf(enc(pixel), dest);
-                    dest += Bpp;
-                    src += src_nbbytes;
                 }
-                src += bmp.line_size() - bmp.cx() * src_nbbytes;
-                dest += this->line_size() - bmp.cx() * Bpp;
             }
         };
 
-        this->data_bitmap = DataBitmap::construct(out_bpp, bmp.cx(), bmp.cy());
+        this->data_bitmap = DataBitmap::construct(out_bpp, bmp_cx, bmp_cy);
         namespace fns = pixel_conversion_fns;
         using namespace shortcut_encode;
         using namespace shortcut_decode_with_palette;
