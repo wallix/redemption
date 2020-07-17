@@ -29,6 +29,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <cstddef>
+#include <utility>
 
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
@@ -188,7 +189,7 @@ struct BGRPalette
 
     template<class BGRValue>
     explicit BGRPalette(BGRValue const (&a)[256]) noexcept
-    : BGRPalette(a, std::integral_constant<std::size_t, 4>{}, 0, 1, 2, 3)
+    : BGRPalette(a, std::make_index_sequence<256>{})
     {}
 
     template<class... BGRValues, typename std::enable_if<sizeof...(BGRValues) == 256, int>::type = 1>
@@ -198,7 +199,26 @@ struct BGRPalette
 
     static const BGRPalette & classic_332() noexcept
     {
-        static const BGRPalette palette([](BGRColor c) { return c; }, 1);
+        static const BGRPalette palette = ([]{
+            BGRColor palette[256];
+            /* rgb332 palette */
+            for (int bindex = 0; bindex < 4; bindex++) {
+                for (int gindex = 0; gindex < 8; gindex++) {
+                    for (int rindex = 0; rindex < 8; rindex++) {
+                        palette[(rindex << 5) | (gindex << 2) | bindex] = BGRColor(uint32_t(
+                            // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                            (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
+                            // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
+                          | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
+                            // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
+                          | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))
+                        ));
+                    }
+                }
+            }
+
+            return BGRPalette(palette);
+        })();
         return palette;
     }
 
@@ -232,61 +252,19 @@ struct BGRPalette
 private:
     BGRColor palette[256];
 
-    #ifndef IN_IDE_PARSER
-    template<std::size_t n, class... Ts>
-    explicit BGRPalette(std::integral_constant<std::size_t, n> /*unused*/, Ts... ints) noexcept
-    : BGRPalette(std::integral_constant<std::size_t, n*4>{}, ints..., ints..., ints..., ints...)
-    {}
-    #endif
-
-    template<class... Ts>
-    explicit BGRPalette(std::integral_constant<std::size_t, 256> /*unused*/, Ts... ints) noexcept
-    : palette{BGRColor(ints)...}
-    {}
-
-    #ifndef IN_IDE_PARSER
-    template<class BGRValue, std::size_t n, class... Ts>
-    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, n> /*unused*/, Ts... ints) noexcept
-    : BGRPalette(a, std::integral_constant<std::size_t, n*4>{},
-        ints...,
-        (ints + sizeof...(ints))...,
-        (ints + sizeof...(ints) * 2)...,
-        (ints + sizeof...(ints) * 3)...
-    )
-    {}
-    #endif
-
-    template<class BGRValue, class... Ts>
-    explicit BGRPalette(BGRValue const (&a)[256], std::integral_constant<std::size_t, 256> /*unused*/, Ts... ints) noexcept
+    template<class BGRValue, std::size_t... ints>
+    explicit BGRPalette(
+        BGRValue const (&a)[256],
+        std::integer_sequence<std::size_t, ints...>
+    ) noexcept
     : palette{BGRColor(a[ints])...}
     {}
-
-    template<class Transform>
-    /*constexpr*/ BGRPalette(Transform trans, int /*unused*/) noexcept
-    {
-        /* rgb332 palette */
-        for (int bindex = 0; bindex < 4; bindex++) {
-            for (int gindex = 0; gindex < 8; gindex++) {
-                for (int rindex = 0; rindex < 8; rindex++) {
-                    this->palette[(rindex << 5) | (gindex << 2) | bindex] =
-                    trans(BGRColor(
-                        // r1 r2 r2 r1 r2 r3 r1 r2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-                        (((rindex<<5)|(rindex<<2)|(rindex>>1))<<16)
-                        // 0 0 0 0 0 0 0 0 g1 g2 g3 g1 g2 g3 g1 g2 0 0 0 0 0 0 0 0
-                      | (((gindex<<5)|(gindex<<2)|(gindex>>1))<< 8)
-                        // 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 b1 b2 b1 b2 b1 b2 b1 b2
-                      | ((bindex<<6)|(bindex<<4)|(bindex<<2)|(bindex))
-                    ));
-                }
-            }
-        }
-    }
 };
 
 template<class... BGRValues>
 BGRPalette make_rgb_palette(BGRValues... bgr_values) noexcept
 {
-    static_assert(sizeof...(bgr_values) == 256 );
+    static_assert(sizeof...(bgr_values) == 256);
     return BGRPalette(BGRasRGBColor(BGRColor(bgr_values))...);
 }
 
@@ -294,7 +272,11 @@ inline BGRPalette make_bgr_palette_from_bgrx_array(uint8_t const (&a)[256 * 4]) 
 {
     uint32_t bgr_array[256];
     for (int i = 0; i < 256; ++i) {
-        bgr_array[i] = (a[i * 4 + 2] << 16) | (a[i * 4 + 1] << 8) | (a[i * 4 + 0] << 0);
+        bgr_array[i] = uint32_t(
+            (a[i * 4 + 2] << 16)
+          | (a[i * 4 + 1] << 8)
+          | (a[i * 4 + 0] << 0)
+        );
     }
     return BGRPalette(bgr_array);
 }
