@@ -518,6 +518,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
 
     const rectProgram = gl.createProgram();
     const imgProgram = gl.createProgram();
+    const img24Program = gl.createProgram();
 
     const [rectVertexShader, rectFragmentShader] = compilePairShader(rectProgram, `
         // precision highp float;
@@ -540,9 +541,25 @@ const newRdpGL = function(canvasElement, module, ropError) {
             gl_FragColor = texture2D(texture, vTex);
         }`);
 
+    const [img24VertexShader, img24FragmentShader] = compilePairShader(img24Program, `
+        // precision highp float;
+        precision mediump float;
+        uniform sampler2D texture;
+
+        varying vec2 vTex;
+
+        void main() {
+            vec4 color = texture2D(texture, vTex);
+            float tmp = color.x;
+            color.x = color.z;
+            color.z = tmp;
+            gl_FragColor = color;
+        }`);
+
     const programs = [
         [rectProgram, rectVertexShader, rectFragmentShader],
         [imgProgram, imgVertexShader, imgFragmentShader],
+        [img24Program, img24VertexShader, img24FragmentShader],
     ];
 
     const compileShader = function(shader, code){
@@ -578,7 +595,7 @@ const newRdpGL = function(canvasElement, module, ropError) {
             }`
         );
 
-        compileShader(imgVertexShader, `
+        const imgSource = `
             attribute vec2 aVertexPosition;
             attribute vec2 aUV;
             // uniform vec2 pos;
@@ -588,8 +605,9 @@ const newRdpGL = function(canvasElement, module, ropError) {
             void main() {
                 ${computePosition}
                 vTex = aUV;
-            }`
-        );
+            }`;
+        compileShader(imgVertexShader, imgSource);
+        compileShader(img24VertexShader, imgSource);
 
         // link in parallel threads
         for (const [prog, vs, fs] of programs) {
@@ -687,16 +705,14 @@ const newRdpGL = function(canvasElement, module, ropError) {
 
         drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, dx, dy) {
             // console.log('img');
-            gl.useProgram(imgProgram);
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
-
             let bytesPerPixel;
+            gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
 
             switch (bitsPerPixel) {
                 case 15:
                     module.transformBmp15ToBmp16FromIndex(byteOffset, w, h, lineSize);
                 case 16:
+                    gl.useProgram(imgProgram);
                     bytesPerPixel = 2;
                     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
                         dx,    dy,
@@ -708,10 +724,43 @@ const newRdpGL = function(canvasElement, module, ropError) {
                     gl.texImage2D(
                         gl.TEXTURE_2D, 0, gl.RGB, lineSize / 2, h, 0,
                         gl.RGB, gl.UNSIGNED_SHORT_5_6_5,
-                        new Uint16Array(_u16buffer, byteOffset, lineSize*h));
+                        new Uint16Array(_u16buffer, byteOffset, lineSize/2*h));
+                    break;
+
+                case 24:
+                    gl.useProgram(img24Program);
+                    bytesPerPixel = 3;
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        dx,    dy,
+                        dx,    dy+h,
+                        dx+w,  dy+h,
+                        dx+w,  dy,
+                    ]), gl.STATIC_DRAW);
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D, 0, gl.RGB, lineSize / 3, h, 0,
+                        gl.RGB, gl.UNSIGNED_BYTE,
+                        new Uint8Array(_u8buffer, byteOffset, lineSize*h));
+                    break;
+
+                case 32:
+                    gl.useProgram(img24Program);
+                    bytesPerPixel = 4;
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        dx,    dy,
+                        dx,    dy+h,
+                        dx+w,  dy+h,
+                        dx+w,  dy,
+                    ]), gl.STATIC_DRAW);
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.texImage2D(
+                        gl.TEXTURE_2D, 0, gl.RGBA, lineSize / 4, h, 0,
+                        gl.RGBA, gl.UNSIGNED_BYTE,
+                        new Uint8Array(_u8buffer, byteOffset, lineSize*h));
                     break;
 
                 default:
+                    gl.useProgram(imgProgram);
                     bytesPerPixel = ~~((bitsPerPixel + 7) / 8);
                     const bufLen = w*h*4;
                     const pbuf = module._malloc(bufLen);
