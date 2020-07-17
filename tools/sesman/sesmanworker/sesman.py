@@ -1036,7 +1036,7 @@ class Sesman():
 
                         else:
                             _number_of_pages = (
-                                1 + (len(services) - 1) / _lines_per_page
+                                1 + (len(services) - 1) // _lines_per_page
                             )
                             if _current_page >= _number_of_pages:
                                 _current_page = _number_of_pages - 1
