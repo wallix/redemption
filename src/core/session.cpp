@@ -754,15 +754,12 @@ public:
 
                 // exchange data with sesman
                 if (acl.is_connected()){
-                    LOG(LOG_INFO, "sesman exchange");
                     if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
                         acl.receive();
                         if (!ini.changed_field_size()) {
                             mod_wrapper.acl_update();
                         }
                     }
-
-                    LOG(LOG_INFO, "flushing");
 
                     // propagate changes made in sesman structure to actual acl changes
                     sesman.flush_acl_report(
@@ -784,7 +781,6 @@ public:
                             log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl.acl_serial->session_type);
                             log_file->log6(id, kv_list);
                         });
-                    LOG(LOG_INFO, "sesman.flush_acl; %d field changed", this->ini.changed_field_size());
                     sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
@@ -796,6 +792,9 @@ public:
                         log_file->close_session_log();
                     });
                     
+                }
+                else {
+                   LOG_IF(bool(ini.get<cfg::debug::session>()&0x04), LOG_INFO, "acl not connected()");
                 }
 
 
