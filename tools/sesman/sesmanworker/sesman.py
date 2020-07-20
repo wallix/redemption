@@ -1510,7 +1510,7 @@ class Sesman():
         if request_fields:
             flag = self._get_rf_flags(request_fields)
             # duration_max is in minutes
-            duration_max = self._get_rf_duration_max(request_fields) / 60
+            duration_max = self._get_rf_duration_max(request_fields) // 60
         if self.hide_approval_back_selector:
             flag |= 0x10000
         if status == APPROVAL_NONE:
