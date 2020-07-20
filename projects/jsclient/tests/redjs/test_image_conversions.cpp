@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestBmp15ToBmp16)
 
     redjs::transform_bitmap15_to_bitmap16(
         const_cast<uint8_t*>(bmp15.data()), /*NOLINT*/
-        bmp15.cx(), bmp15.cy(), bmp15.line_size());
+        bmp15.cy(), bmp15.line_size());
 
     RED_CHECK(bmp2av(bmp15) ==
         "\x1f\x00\xe0\x07\x00\xf8\x82\x51\x15\x30\x66\x05\x80\xa9\x40\x38"_av);
@@ -116,12 +116,12 @@ RED_AUTO_TEST_CASE(TestBmp8ToBmp24)
     Bitmap bmp8 = create_bmp_4x_2y(encode_color8());
     uint8_t buf[4*2*3];
 
-    redjs::convert_bitmap8_to_bgr(
+    redjs::convert_bitmap8_to_bitmap16(
         buf, bmp8.data(),
-        bmp8.cx(), bmp8.cy(), bmp8.line_size(),
+        bmp8.cy(), bmp8.line_size(),
         BGRPalette::classic_332());
 
     RED_CHECK(make_array_view(buf) ==
-        "\xff\x00\x00\x00\xff\x00\x00\x00\xff\x00\x24\x49\xaa\x00\x24\x00"
-        "\xb6\x00\x00\x24\xb6\x00\x00\x24"_av);
+        "\x00\xf8\xe0\x07\x1f\x00\x29\x01\x04\xa8\xa0\x05\x36\x01\x04\x00"
+        "\x00\x04\x00\x00\x20\x00\x00\x00"_av);
 }

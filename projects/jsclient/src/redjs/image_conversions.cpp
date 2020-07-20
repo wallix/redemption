@@ -75,49 +75,24 @@ void convert_bitmap_to_image_data(
     }
 }
 
-namespace
-{
-    template<class Byte, class F>
-    void for_each_pixel(
-        Byte* src, uint16_t cx, uint16_t cy,
-        std::size_t line_size, BytesPerPixel nbbytes,
-        F f)
-    {
-        uint8_t const* end = src + line_size * cy;
-        ptrdiff_t const src_nbbytes = ptrdiff_t(nbbytes);
-        ptrdiff_t const step = ptrdiff_t(line_size - std::size_t(cx * src_nbbytes));
-
-        for (; src < end; src += step) {
-            for (uint8_t const* endx = src + cx * src_nbbytes
-                ; src < endx; src += src_nbbytes
-            ) {
-                f(src);
-            }
-        }
-
-    }
-}
-
-void convert_bitmap8_to_bgr(
+void convert_bitmap8_to_bitmap16(
     uint8_t* dest,
-    uint8_t const* bmp_data, uint16_t cx, uint16_t cy,
+    uint8_t const* bmp_data, uint16_t cy,
     std::size_t line_size, BGRPalette const& palette)
 {
     namespace fns = pixel_conversion_fns;
     using namespace shortcut_encode;
 
     auto color_to_buf = fns::col2buf_3B;
-    auto enc = enc24{};
+    auto enc = enc16{};
 
-    for_each_pixel(bmp_data, cx, cy, line_size, BytesPerPixel(1), [&](uint8_t const* p) {
-        color_to_buf(enc(palette[*p]), dest);
-        dest += 3;
-    });
+    auto* end = bmp_data + cy * line_size;
+    for (; bmp_data != end; ++bmp_data, dest += 2) {
+        color_to_buf(enc(palette[*bmp_data]), dest);
+    }
 }
 
-void transform_bitmap15_to_bitmap16(
-    uint8_t* bmp_data, uint16_t cx, uint16_t cy,
-    std::size_t line_size)
+void transform_bitmap15_to_bitmap16(uint8_t* bmp_data, uint16_t cy, std::size_t line_size)
 {
     namespace fns = pixel_conversion_fns;
     using namespace shortcut_decode_with_palette;
@@ -128,9 +103,10 @@ void transform_bitmap15_to_bitmap16(
     auto dec = dec15{};
     auto enc = enc16{};
 
-    for_each_pixel(bmp_data, cx, cy, line_size, BytesPerPixel(2), [&](uint8_t* p) {
-        color_to_buf(enc(dec(buf_to_color(p))), p);
-    });
+    auto* end = bmp_data + cy * line_size;
+    for (; bmp_data != end; bmp_data += 2) {
+        color_to_buf(enc(dec(buf_to_color(bmp_data))), bmp_data);
+    }
 }
 
 }
@@ -148,21 +124,19 @@ EMSCRIPTEN_BINDINGS(image_data_func)
             &BGRPalette::classic_332());
     });
 
-    redjs::function("convertBmp8ToRGB", +[](
+    redjs::function("convertBmp8ToBmp16", +[](
         intptr_t idest, intptr_t idata,
-        uint16_t w, uint16_t h, uint32_t line_size
+        uint16_t h, uint32_t line_size
     ) {
         auto* dest = redjs::from_memory_offset<uint8_t*>(idest);
         auto* data = redjs::from_memory_offset<uint8_t const*>(idata);
-        redjs::convert_bitmap8_to_bgr(
-            dest, data, w, h, line_size,
-            BGRPalette::classic_332());
+        redjs::convert_bitmap8_to_bitmap16(dest, data, h, line_size, BGRPalette::classic_332());
     });
 
-    redjs::function("transformBmp15ToBmp16FromIndex", +[](
-        intptr_t idata, uint16_t w, uint16_t h, uint32_t line_size
+    redjs::function("transformBmp15ToBmp16", +[](
+        intptr_t idata, uint16_t h, uint32_t line_size
     ) {
         auto* data = redjs::from_memory_offset<uint8_t*>(idata);
-        redjs::transform_bitmap15_to_bitmap16(data, w, h, line_size);
+        redjs::transform_bitmap15_to_bitmap16(data, h, line_size);
     });
 }

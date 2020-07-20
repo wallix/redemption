@@ -33,11 +33,10 @@ namespace redjs
         BGRPalette const* palette);
 
     void transform_bitmap15_to_bitmap16(
-        uint8_t* bmp_data, uint16_t cx, uint16_t cy,
-        std::size_t line_size);
+        uint8_t* bmp_data, uint16_t cy, std::size_t line_size);
 
-    void convert_bitmap8_to_bgr(
+    void convert_bitmap8_to_bitmap16(
         uint8_t* dest,
-        uint8_t const* bmp_data, uint16_t cx, uint16_t cy,
+        uint8_t const* bmp_data, uint16_t cy,
         std::size_t line_size, BGRPalette const& palette);
 }

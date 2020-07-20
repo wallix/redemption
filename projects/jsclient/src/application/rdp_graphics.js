@@ -733,7 +733,16 @@ const newRdpGL = function(canvasElement, module, ropError) {
 
             switch (bitsPerPixel) {
                 case 15:
-                    module.transformBmp15ToBmp16FromIndex(byteOffset, w, h, lineSize);
+                    // xratio = w * 2 / lineSize;
+                    // program = imgProgram;
+                    // texWidth = lineSize / 2;
+                    // format = gl.RGBA;
+                    // type = gl.UNSIGNED_SHORT_5_5_5_1;
+                    // pixels = new Uint16Array(_u16buffer, byteOffset, texWidth*h);
+                    // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+                    // break;
+                    module.transformBmp15ToBmp16(byteOffset, h, lineSize);
+
                 case 16:
                     xratio = w * 2 / lineSize;
                     program = imgProgram;
@@ -763,17 +772,16 @@ const newRdpGL = function(canvasElement, module, ropError) {
                     break;
 
                 case 8:
-                    const bufLen = w*h*3;
+                    const bufLen = lineSize*h*2;
                     const pbuf = _imgBuffer.reserve(bufLen);
-                    module.convertBmp8ToRGB(pbuf, byteOffset, w, h, lineSize);
+                    module.convertBmp8ToBmp16(pbuf, byteOffset, h, lineSize);
 
-                    // TODO don't works with proxy GUI ???
-                    xratio = 1;
+                    xratio = w / lineSize;
                     program = imgProgram;
-                    texWidth = w;
+                    texWidth = lineSize;
                     format = gl.RGB;
-                    type = gl.UNSIGNED_BYTE;
-                    pixels = new Uint8Array(_u8buffer, pbuf, bufLen);
+                    type = gl.UNSIGNED_SHORT_5_6_5;
+                    pixels = new Uint16Array(_u16buffer, pbuf, texWidth*h);
                     break;
 
                 default:
