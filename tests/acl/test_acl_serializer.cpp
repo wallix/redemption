@@ -438,8 +438,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
         tu::log_buffered logbuf;
         acl.incoming();
         RED_CHECK_EQ(logbuf.buf(),
-            "WARNING -- Unexpected receiving 'abcd' - 'something'\n"
-            "WARNING -- Unexpected receiving 'efg' - 'other something'\n");
+            "WARNING -- Unexpected receive 'abcd' - 'something'\n"
+            "WARNING -- Unexpected receive 'efg' - 'other something'\n");
     }
 
     RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());

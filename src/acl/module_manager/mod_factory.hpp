@@ -112,7 +112,7 @@ public:
 
     auto create_mod(ModuleIndex target_module) -> ModPack
     {
-        LOG(LOG_INFO, "++++++++++++++++++++ create_mod(%s) +++++++++++++++++++++++", get_module_name(target_module));
+        LOG(LOG_INFO, "New Module: %s", get_module_name(target_module));
 
         switch (target_module)
         {

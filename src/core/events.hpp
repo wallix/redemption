@@ -203,22 +203,22 @@ struct EventContainer {
 
     void execute_events(const timeval tv, const std::function<bool(int fd)> & fn, bool verbose = false)
     {
-        LOG_IF(verbose, LOG_INFO, "~~~~~~~~~~~~~~~~ EXECUTE EVENTS ~~~~~~~~~~~~~~~~~~");
         for (size_t i = 0 ; i < this->queue.size(); i++){
             auto & event = this->queue[i];
 
-            LOG_IF(verbose, LOG_INFO, "=========== Queued Event '%s' timeout=%d now=%d =========",
-                event.name, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             if (event.garbage) {
-                LOG_IF(verbose, LOG_INFO, "------- GARBAGE EVENT --------");
+                LOG_IF(verbose, LOG_INFO, "GARBAGE EVENT '%s' (%d) timeout=%d now=%d =========",
+                    event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             }
             if (event.teardown) {
-                LOG_IF(verbose, LOG_INFO, "------- TEARDOWN EVENT --------");
+                LOG_IF(verbose, LOG_INFO, "TEARDOWN EVENT '%s' (%d) timeout=%d now=%d",
+                    event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             }
 
             if (not (event.garbage or event.teardown)) {
                 if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
-                    LOG_IF(verbose, LOG_INFO, "------- FD TRIGGER --------");
+                    LOG_IF(verbose, LOG_INFO, "FD EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
+                        event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                     event.alarm.set_timeout(tv+event.alarm.grace_delay);
                     event.exec_action();
                     continue;
@@ -226,10 +226,12 @@ struct EventContainer {
             }
             if (not (event.garbage or event.teardown)) {
                 if (!event.alarm.active){
-                    LOG_IF(verbose, LOG_INFO, "------- TIMEOUT EXPIRED --------");
+                    LOG_IF(verbose, LOG_INFO, "EXPIRED TIMEOUT EVENT '%s' (%d) timeout=%d now=%d",
+                        event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                 }
                 if (event.alarm.trigger(tv)){
-                    LOG_IF(verbose, LOG_INFO, "------- TIMEOUT TRIGGER --------");
+                    LOG_IF(verbose, LOG_INFO, "TIMEOUT EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
+                        event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                     event.exec_timeout();
                 }
             }

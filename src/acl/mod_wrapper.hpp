@@ -202,19 +202,6 @@ public:
         return this->rdpapi;
     }
 
-    void last_disconnect()
-    {
-        if (this->modi != &this->no_mod) {
-            try {
-                this->get_mod()->disconnect();
-            }
-            catch (Error const& e) {
-                LOG(LOG_ERR, "MMIni::invoke_close_box exception = %u!", e.id);
-            }
-        }
-        this->remove_mod();
-    }
-
     gdi::GraphicApi & get_graphics() override
     {
         return this->g;

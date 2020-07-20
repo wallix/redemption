@@ -280,31 +280,8 @@ private:
                               Sesman & sesman,
                               ClientExecute & rail_client_execute)
     {
-        mod_wrapper.show_current_mod(bool(ini.get<cfg::debug::session>()&0x01));
         // There are modified fields to send to sesman
         BackEvent_t signal = mod_wrapper.get_mod_signal();
-        if (signal == BACK_EVENT_STOP){
-            LOG(LOG_INFO, "Stop signal sent by close box");
-            return false;
-        }
-
-        if (signal == BACK_EVENT_NEXT){
-            if (mod_wrapper.is_connected()){
-                if (acl.is_connected()){
-                    sesman.set_disconnect_target();
-                    acl.acl_serial->remote_answer = false;
-                    acl.acl_serial->send_acl_data();
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-                    auto next_state = MODULE_INTERNAL_TRANSITION;
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                    throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
-                }
-                // No close box any more, STOP SESSION LOOP
-                // TODO: CLOSE BOX
-                return false;
-            }
-        }
 
         if (acl.is_connected() && ini.changed_field_size()) {
             switch (signal){
@@ -794,7 +771,26 @@ public:
                     
                 }
                 else {
-                   LOG_IF(bool(ini.get<cfg::debug::session>()&0x04), LOG_INFO, "acl not connected()");
+                    if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE){
+                        if ((acl.status == Acl::state_disconnected_by_authentifier)
+                        || (acl.status == Acl::state_disconnected_by_redemption)){
+                            this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
+                            mod_wrapper.disconnect();
+                            run_session = false;
+                            LOG(LOG_INFO, "Session Closed by ACL : %s",
+                                (acl.status == Acl::state_disconnected_by_authentifier)?
+                                    "closed by authentifier":"closed by proxy");
+                            if (ini.get<cfg::globals::enable_close_box>()) {
+                                auto next_state = MODULE_INTERNAL_CLOSE;
+                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                                run_session = true;
+                            }
+                            continue;
+                        }
+                        else {
+                           LOG_IF(bool(ini.get<cfg::debug::session>()&0x04), LOG_ERR, "can't flush acl: not connected yet");
+                        }
+                    }
                 }
 
 
@@ -820,13 +816,10 @@ public:
                         }
                         catch (...) {
                             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                            mod_wrapper.last_disconnect();
+                            mod_wrapper.disconnect();
                             run_session = false;
                             LOG(LOG_INFO, "Start of acl failed : no authentifier available");
                             if (ini.get<cfg::globals::enable_close_box>()) {
-                                rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                                log_proxy::set_user("");
-
                                 auto next_state = MODULE_INTERNAL_CLOSE;
                                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
                                 run_session = true;
@@ -879,6 +872,38 @@ public:
                             acl.keepalive.start(now.tv_sec);
                         }
 
+                        if (mod_wrapper.get_mod_signal() == BACK_EVENT_STOP){
+                            LOG(LOG_INFO, "Module asked Front Disconnection");
+                            run_session = false;
+                            continue;
+                        }
+
+                        // BACK FROM EXTERNAL MODULE (RDP, VNC)
+                        if ((mod_wrapper.get_mod_signal() == BACK_EVENT_NEXT)
+                        && mod_wrapper.is_connected()){
+                            LOG(LOG_INFO, "Exited from target connection");
+                            mod_wrapper.disconnect();
+                            auto next_state = MODULE_INTERNAL_CLOSE_BACK;
+                            if (acl.is_connected()){
+                                acl.keepalive.stop();
+                                sesman.set_disconnect_target();
+                                acl.acl_serial->remote_answer = false;
+                                acl.acl_serial->send_acl_data();
+                            }
+                            else {
+                                next_state = MODULE_INTERNAL_CLOSE;
+                            }
+                            if (ini.get<cfg::globals::enable_close_box>()) {
+                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                                continue;
+                            }
+                            LOG(LOG_INFO, "Close Box disabled : ending session");
+                            run_session = false;
+                            continue;
+                        }
+
+                        mod_wrapper.show_current_mod(bool(ini.get<cfg::debug::session>()&0x08));
                         run_session = this->front_up_and_running(acl, log_file, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
@@ -890,7 +915,7 @@ public:
                         {
                             acl.keepalive.stop();
                             sesman.set_disconnect_target();
-                            mod_wrapper.last_disconnect();
+                            mod_wrapper.disconnect();
 //                            authentifier.set_acl_serial(nullptr);
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
@@ -901,9 +926,8 @@ public:
                                 run_session = true;
                             }
                             else {
-                              LOG(LOG_INFO, "Close Box disabled");
+                              LOG(LOG_INFO, "Close Box disabled : ending session");
                             }
-
                         }
                         break;
                         case 3:

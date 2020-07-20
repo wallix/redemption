@@ -164,8 +164,6 @@ void LoginMod::rdp_input_invalidate(Rect r)
 
 void LoginMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
-
-    LOG(LOG_INFO, "LoginMod::rdp_input_mouse(%04x, %d, %d)", unsigned(device_flags), x, y);
     if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
         x = this->old_mouse_x;
         y = this->old_mouse_y;

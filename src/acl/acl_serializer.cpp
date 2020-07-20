@@ -86,7 +86,7 @@ bool KeepAlive::check(time_t now, Inifile & ini)
         // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
         // Keep alive timeout
         if (now > this->timeout) {
-            LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+            LOG(LOG_INFO, "auth::keep_alive_or_inactivity : connection closed by manager (timeout)");
             return true;
         }
 
@@ -369,7 +369,8 @@ void AclSerializer::in_items()
                     chars_view display_val = get_loggable_value(
                         val, field.loggable_category(), this->ini.get<cfg::debug::password>());
 
-                    LOG(LOG_INFO, "receiving '%.*s'='%.*s'",
+                    LOG_IF(bool(this->verbose & Verbose::variable), LOG_INFO,
+                        "receiving '%.*s'='%.*s'",
                         int(key.size()), key.data(),
                         int(display_val.size()), display_val.data());
                 }
@@ -392,7 +393,7 @@ void AclSerializer::in_items()
             sauthid[min] = 0;
             // this invalidate key value
             auto val = reader.get_val();
-            LOG(LOG_WARNING, "Unexpected receiving '%s' - '%.*s'",
+            LOG(LOG_WARNING, "Unexpected receive '%s' - '%.*s'",
                 sauthid, int(val.size()), val.data());
         }
 
