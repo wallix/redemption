@@ -1733,6 +1733,8 @@ private:
 public:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, size_t length, uint32_t flags) override;
     void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override { LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");}
+    void send_checkout_channel_data(const char * /*data*/) override { LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");}
 
 private:
     void send_clipboard_pdu_to_front(const OutStream & out_stream);

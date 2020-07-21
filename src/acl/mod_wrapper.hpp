@@ -636,7 +636,9 @@ public:
     }
 
     void send_auth_channel_data(const char * data)
-    { this->get_mod()->send_auth_channel_data(data); }
+    {
+        this->get_mod()->send_auth_channel_data(data);
+    }
 
     void send_checkout_channel_data(const char * data)
     {
@@ -645,7 +647,6 @@ public:
 
     void create_shadow_session(const char * userdata, const char * type)
     {
-        LOG(LOG_INFO, "ModWrapper::create_shadow_session()");
         this->get_mod()->create_shadow_session(userdata, type);
     }
 

@@ -382,6 +382,16 @@ public:
     {
         this->mod.create_shadow_session(userdata, type);
     }
+    
+    void send_auth_channel_data(const char * data) override 
+    {
+        this->mod.send_auth_channel_data(data);
+    }
+    
+    void send_checkout_channel_data(const char * data) override
+    {
+        this->mod.send_checkout_channel_data(data);
+    }
 };
 
 inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)

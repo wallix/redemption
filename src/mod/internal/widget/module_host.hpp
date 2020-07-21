@@ -145,10 +145,8 @@ private:
                                  uint32_t flags) override;
 
         void create_shadow_session(const char * userdata, const char * type) override;
-
-        void send_auth_channel_data(const char * string_data) override;
-
-        void send_checkout_channel_data(const char * string_data) override;
+        void send_auth_channel_data(const char * data) override;
+        void send_checkout_channel_data(const char * data) override;
 
         // mod_api
 

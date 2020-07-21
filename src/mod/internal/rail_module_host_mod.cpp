@@ -211,19 +211,16 @@ void RailModuleHostMod::create_shadow_session(const char * userdata, const char 
     mod.create_shadow_session(userdata, type);
 }
 
-
-void RailModuleHostMod::send_auth_channel_data(const char * string_data)
+void RailModuleHostMod::send_auth_channel_data(const char * data)
 {
     mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.send_auth_channel_data(string_data);
+    mod.send_auth_channel_data(data);
 }
 
-void RailModuleHostMod::send_checkout_channel_data(const char * string_data)
+void RailModuleHostMod::send_checkout_channel_data(const char * data)
 {
     mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    mod.send_checkout_channel_data(string_data);
+    mod.send_checkout_channel_data(data);
 }
 
 // mod_api

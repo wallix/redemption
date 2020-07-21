@@ -103,6 +103,14 @@ struct ModVNCWithMetrics : public mod_vnc
     {
         LOG(LOG_ERR, "VNC Doesn't support RDP shadow sessions");
     }
+    void send_auth_channel_data(const char * /*data*/)
+    {
+        LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");
+    }
+    void send_checkout_channel_data(const char * /*data*/)
+    {
+        LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");   
+    }
 
 };
 
@@ -263,6 +271,14 @@ public:
     void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override 
     {
         LOG(LOG_ERR, "VNC Doesn't support RDP shadow sessions");
+    }
+    void send_auth_channel_data(const char * /*data*/)
+    {
+        LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");
+    }
+    void send_checkout_channel_data(const char * /*data*/)
+    {
+        LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");   
     }
 };
 

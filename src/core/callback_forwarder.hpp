@@ -38,19 +38,21 @@ template<class ForwardTo> class CallbackForwarder : public Callback
         this->wrap.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
+    void create_shadow_session(const char * userdata, const char * type) override
+    {
+        this->wrap.create_shadow_session(userdata, type);
+    }
+
     void send_auth_channel_data(const char * data) override
     {
         this->wrap.send_auth_channel_data(data);
     }
+
     void send_checkout_channel_data(const char * data) override
     {
         this->wrap.send_checkout_channel_data(data);
     }
-    void create_shadow_session(const char * userdata, const char * type) override
-    {
-        LOG(LOG_INFO, "CallbackForwarder::create_shadow_session()");
-        this->wrap.create_shadow_session(userdata, type);
-    }
+    
     // RdpInput
     std::string module_name() override
     {
