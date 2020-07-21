@@ -174,6 +174,7 @@ public:
     { return true; }
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {

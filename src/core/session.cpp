@@ -509,6 +509,7 @@ private:
             }
 
             if (!ini.get<cfg::context::rd_shadow_type>().empty()) {
+                LOG(LOG_INFO, "got rd_shadow_type calling create_shadow_session()");
                 mod_wrapper.get_mod()->create_shadow_session(ini.get<cfg::context::rd_shadow_userdata>().c_str(),
                     ini.get<cfg::context::rd_shadow_type>().c_str());
                 ini.set<cfg::context::rd_shadow_type>("");

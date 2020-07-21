@@ -48,6 +48,7 @@ template<class ForwardTo> class CallbackForwarder : public Callback
     }
     void create_shadow_session(const char * userdata, const char * type) override
     {
+        LOG(LOG_INFO, "CallbackForwarder::create_shadow_session()");
         this->wrap.create_shadow_session(userdata, type);
     }
     // RdpInput

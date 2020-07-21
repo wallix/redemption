@@ -185,21 +185,32 @@ void RailModuleHostMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name,
     InStream& chunk, size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute.is_ready()){
-        if (front_channel_name == CHANNELS::channel_names::rail) {
+
+    if (front_channel_name == CHANNELS::channel_names::rail){
+        if (this->rail_enabled 
+        && this->rail_client_execute.is_ready()){
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }
-        else if (front_channel_name == CHANNELS::channel_names::drdynvc) {
-            this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
-        }
+        return;
     }
 
-    if (front_channel_name == channel_names::rail) { return; }
+    if (this->rail_enabled 
+    && this->rail_client_execute.is_ready() 
+    && front_channel_name == CHANNELS::channel_names::drdynvc)
+    {
+        this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
+    }
 
     mod_api& mod = this->rail_module_host.get_managed_mod();
-
     mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
 }
+
+void RailModuleHostMod::create_shadow_session(const char * userdata, const char * type)
+{
+    mod_api& mod = this->rail_module_host.get_managed_mod();
+    mod.create_shadow_session(userdata, type);
+}
+
 
 void RailModuleHostMod::send_auth_channel_data(const char * string_data)
 {

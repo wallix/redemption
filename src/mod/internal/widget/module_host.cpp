@@ -76,6 +76,11 @@ void WidgetModuleHost::ModuleHolder::send_to_mod_channel(
     );
 }
 
+void WidgetModuleHost::ModuleHolder::create_shadow_session(const char * userdata, const char * type)
+{
+    this->managed_mod->create_shadow_session(userdata, type);
+}
+
 void WidgetModuleHost::ModuleHolder::send_auth_channel_data(const char * string_data)
 {
     this->managed_mod->send_auth_channel_data(string_data);

@@ -1732,6 +1732,7 @@ private:
             size_t length, size_t chunk_size, int flags);
 public:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, size_t length, uint32_t flags) override;
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
 
 private:
     void send_clipboard_pdu_to_front(const OutStream & out_stream);

@@ -79,6 +79,8 @@ public:
             this->index_in++;
         }
     }
+    
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
 
     void rdp_gdi_up_and_running() override {}
 

@@ -151,6 +151,7 @@ public:
     void rdp_gdi_down() override {}
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
 
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                             long int param4, Keymap2* keymap) override;

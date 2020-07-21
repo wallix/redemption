@@ -377,6 +377,11 @@ public:
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
+    
+    void create_shadow_session(const char * userdata, const char * type) override
+    {
+        this->mod.create_shadow_session(userdata, type);
+    }
 };
 
 inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)

@@ -1692,6 +1692,8 @@ public:
     }
 
     void create_shadow_session(const char * userdata, const char * type) {
+        LOG(LOG_INFO, "sespro_channel::create_shadow_session()");
+
         bool bTakeControl       = true;
         bool bRequestPermission = true;
 

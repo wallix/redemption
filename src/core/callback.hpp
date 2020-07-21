@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 #include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -152,9 +153,6 @@ struct Callback : RdpInput
     virtual void send_auth_channel_data(const char * data) { (void)data; }
     virtual void send_checkout_channel_data(const char * data) { (void)data; }
 
-    virtual void create_shadow_session(const char * userdata, const char * type) {
-        (void)userdata;
-        (void)type;
-    }
+    virtual void create_shadow_session(const char * userdata, const char * type) = 0;
 };
 

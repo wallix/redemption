@@ -2578,6 +2578,7 @@ public:
 
     void create_shadow_session(const char * userdata, const char * type) override {
 #ifndef __EMSCRIPTEN__
+        LOG(LOG_INFO, "mod_rdp::create_shadow_session()");
         if (this->channels.session_probe_virtual_channel) {
             this->channels.session_probe_virtual_channel->create_shadow_session(userdata, type);
         }

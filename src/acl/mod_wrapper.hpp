@@ -645,6 +645,7 @@ public:
 
     void create_shadow_session(const char * userdata, const char * type)
     {
+        LOG(LOG_INFO, "ModWrapper::create_shadow_session()");
         this->get_mod()->create_shadow_session(userdata, type);
     }
 

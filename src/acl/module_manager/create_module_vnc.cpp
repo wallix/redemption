@@ -98,6 +98,12 @@ struct ModVNCWithMetrics : public mod_vnc
     {
         this->events.end_of_lifespan(this);
     }
+    
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override 
+    {
+        LOG(LOG_ERR, "VNC Doesn't support RDP shadow sessions");
+    }
+
 };
 
 
@@ -250,8 +256,14 @@ public:
         return this->mod.DLP_antivirus_check_channels_files();
     }
 
-    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
-
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override 
+    {
+        this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override 
+    {
+        LOG(LOG_ERR, "VNC Doesn't support RDP shadow sessions");
+    }
 };
 
 ModPack create_mod_vnc(ModWrapper & mod_wrapper,
