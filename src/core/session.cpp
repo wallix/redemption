@@ -63,6 +63,111 @@ namespace
 
 class Session
 {
+    struct Acl
+    {
+        enum {
+            state_not_yet_connected = 0,
+            state_connected,
+            state_connection_failed,
+            state_disconnected_by_redemption,
+            state_disconnected_by_authentifier
+        } status = state_not_yet_connected;
+
+        std::string manager_disconnect_reason;
+
+        std::string show() {
+            switch (this->status) {
+            case state_not_yet_connected:
+                return "Acl::state_not_yet_connected";
+            case state_connected:
+                return "Acl::state_connected";
+            case state_connection_failed:
+                return "Acl::state_connection_failed";
+            case state_disconnected_by_redemption:
+                return "Acl::state_disconnected_by_redemption";
+            case state_disconnected_by_authentifier:
+                return "Acl::state_disconnected_by_authentifier";
+            }
+            return "Acl::unexpected state";
+        }
+
+        Inifile & ini;
+        AclSerializer  * acl_serial = nullptr;
+        KeepAlive keepalive;
+        Inactivity inactivity;
+
+        Acl(Inifile & ini, TimeBase & time_base)
+        : ini(ini)
+        , acl_serial(nullptr)
+        , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
+        , inactivity(ini.get<cfg::globals::session_timeout>(),
+                     time_base.get_current_time().tv_sec,
+                     to_verbose_flags(ini.get<cfg::debug::auth>()))
+        {}
+
+        void set_acl_serial(AclSerializer * acl_serial) {
+            this->acl_serial = acl_serial;
+            if (this->acl_serial != nullptr){
+                this->status = state_connected;
+            }
+        }
+
+        time_t get_inactivity_timeout()
+        {
+            return this->inactivity.get_inactivity_timeout();
+        }
+
+        void update_inactivity_timeout()
+        {
+            time_t conn_opts_inactivity_timeout = this->ini.get<cfg::globals::inactivity_timeout>().count();
+            if (conn_opts_inactivity_timeout > 0) {
+                if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
+                    this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
+                }
+            }
+        }
+
+        bool is_not_yet_connected() { return this->status == state_not_yet_connected; }
+        void connection_failed() { this->status = state_connection_failed; }
+        bool is_connected() { return this->status == state_connected; }
+        void disconnect() {
+            if (this->acl_serial) {
+                this->acl_serial->disconnect();
+                this->acl_serial = nullptr;
+                this->status = state_disconnected_by_redemption;
+            }
+        }
+
+        void receive()
+        {
+            try {
+                this->acl_serial->incoming();
+
+                if (this->ini.get<cfg::context::module>() == "RDP"
+                ||  this->ini.get<cfg::context::module>() == "VNC") {
+                    this->acl_serial->session_type = this->ini.get<cfg::context::module>();
+                }
+                this->acl_serial->remote_answer = true;
+            } catch (...) {
+                LOG(LOG_INFO, "Acl::receive() Session lost");
+                // acl connection lost
+                this-> status = state_disconnected_by_authentifier;
+                this->ini.set_acl<cfg::context::authenticated>(false);
+
+                if (this->manager_disconnect_reason.empty()) {
+                    this->ini.set_acl<cfg::context::rejected>(
+                        TR(trkeys::manager_close_cnx, language(this->ini)));
+                }
+                else {
+                    this->ini.set_acl<cfg::context::rejected>(this->manager_disconnect_reason);
+                    this->manager_disconnect_reason.clear();
+                }
+            }
+        }
+
+        ~Acl() {}
+    };
+
     struct Select
     {
         unsigned max = 0;
@@ -535,6 +640,7 @@ public:
         timeval now = tvtime();
 
         Acl acl(this->ini, time_base);
+
         std::unique_ptr<AclSerializer> acl_serial;
         std::unique_ptr<Transport> auth_trans;
         std::unique_ptr<SessionLogFile> log_file;
