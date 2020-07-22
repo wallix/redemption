@@ -123,31 +123,6 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 private:
-    void connect_acl(Acl & acl,
-                     TimeBase & time_base,
-                     std::unique_ptr<AclSerializer> & acl_serial,
-                     std::unique_ptr<Transport> & auth_trans,
-                     Inifile& ini)
-    {
-        acl_serial = std::make_unique<AclSerializer>(ini, time_base);
-
-        unique_fd client_sck = addr_connect_non_blocking(ini.get<cfg::globals::authfile>().c_str(),
-                                        (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
-        if (!client_sck.is_open()) {
-            LOG(LOG_ERR, "Failed to connect to authentifier (%s)", ini.get<cfg::globals::authfile>().c_str());
-            acl.connection_failed();
-            throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
-        }
-
-        auth_trans = std::make_unique<SocketTransport>("Authentifier", std::move(client_sck),
-            ini.get<cfg::globals::authfile>().c_str(), 0,
-            std::chrono::seconds(1), SocketTransport::Verbose::none);
-
-        acl_serial->set_auth_trans(auth_trans.get());
-        acl.set_acl_serial(acl_serial.get());
-    }
-
-private:
     int end_session_exception(Error const& e, Inifile & ini)
     {
         if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
@@ -769,7 +744,7 @@ public:
                     {
                         log_file->close_session_log();
                     });
-                    
+
                 }
                 else {
                     if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE){
@@ -805,7 +780,24 @@ public:
                 {
                     if (acl.is_not_yet_connected()) {
                         try {
-                            this->connect_acl(acl, time_base, acl_serial, auth_trans, ini);
+                            acl_serial = std::make_unique<AclSerializer>(ini);
+
+                            unique_fd client_sck = addr_connect_non_blocking(
+                                                        ini.get<cfg::globals::authfile>().c_str(),
+                                                        (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
+                            if (!client_sck.is_open()) {
+                                LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
+                                    ini.get<cfg::globals::authfile>().c_str());
+                                acl.connection_failed();
+                                throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
+                            }
+
+                            auth_trans = std::make_unique<SocketTransport>("Authentifier", std::move(client_sck),
+                                ini.get<cfg::globals::authfile>().c_str(), 0,
+                                std::chrono::seconds(1), SocketTransport::Verbose::none);
+
+                            acl_serial->set_auth_trans(auth_trans.get());
+                            acl.set_acl_serial(acl_serial.get());
                             log_file = std::make_unique<SessionLogFile>(ini, time_base, cctx, rnd, fstat,
                                     [&sesman](const Error & error){
                                         if (error.errnum == ENOSPC) {

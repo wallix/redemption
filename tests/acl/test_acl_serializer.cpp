@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     init_keys(cctx);
     TimeBase timebase({0, 0});
 
-    AclSerializer acl(ini, timebase);
+    AclSerializer acl(ini);
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -101,8 +101,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         }
     };
     ThrowTransport transexcpt;
-    AclSerializer aclexcpt(ini, timebase);
-       
+    AclSerializer aclexcpt(ini);
+
     SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error);
     aclexcpt.set_auth_trans(&transexcpt);
 
@@ -131,7 +131,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     TimeBase timebase({0, 0});
 
     GeneratorTransport trans(stream.get_produced_bytes());
-    AclSerializer acl(ini, timebase);
+    AclSerializer acl(ini);
 
     Sesman sesman(ini, timebase);
 
@@ -180,8 +180,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
-    AclSerializer aclexcpt(ini, timebase);
-    
+    AclSerializer aclexcpt(ini);
+
     SessionLogFile log_file_excpt(ini, timebase, cctx, rnd, fstat, notify_error);
     aclexcpt.set_auth_trans(&transexcpt);
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
@@ -205,8 +205,8 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     TimeBase timebase({0, 0});
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini, timebase);
-    
+    AclSerializer acl(ini);
+
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -216,7 +216,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
             sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
-    
+
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
@@ -267,8 +267,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     CryptoContext cctx;
     init_keys(cctx);
 
-    AclSerializer acl(ini, timebase);
-    
+    AclSerializer acl(ini);
+
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -278,7 +278,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
             sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
-    
+
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
@@ -324,8 +324,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     init_keys(cctx);
     TimeBase timebase({0, 0});
 
-    AclSerializer acl(ini, timebase);
-    
+    AclSerializer acl(ini);
+
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -335,7 +335,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
             sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
-    
+
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
@@ -378,8 +378,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     init_keys(cctx);
     TimeBase timebase({0, 0});
 
-    AclSerializer acl(ini, timebase);
-    
+    AclSerializer acl(ini);
+
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -389,7 +389,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
             sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
-    
+
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
@@ -413,8 +413,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     init_keys(cctx);
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini, timebase);
-    
+    AclSerializer acl(ini);
+
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -424,7 +424,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
             sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
-    
+
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl.set_auth_trans(&trans);
 
@@ -474,8 +474,8 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans(""_av);
-    AclSerializer acl_serial(ini, timebase);
-    
+    AclSerializer acl_serial(ini);
+
     Sesman sesman(ini, timebase);
 
     auto notify_error = [&sesman](const Error & error)
@@ -485,7 +485,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
             sesman.report("FILESYSTEM_FULL", "100|unknown");
         }
     };
-    
+
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
     acl_serial.set_auth_trans(&trans);
 
@@ -507,7 +507,7 @@ RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
         }, ini, acl_serial.session_type);
 
         auto now = timebase.get_current_time();
-        log_siem_arcsight(now.tv_sec, 
+        log_siem_arcsight(now.tv_sec,
             LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),

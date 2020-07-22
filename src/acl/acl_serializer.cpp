@@ -165,9 +165,8 @@ namespace
 }
 
 
-AclSerializer::AclSerializer(Inifile & ini, TimeBase & timebase)
+AclSerializer::AclSerializer(Inifile & ini)
 : ini(ini)
-, timebase(timebase)
 , session_id{}
 , remote_answer(false)
 , verbose(to_verbose_flags(ini.get<cfg::debug::auth>()))

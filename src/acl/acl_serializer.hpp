@@ -116,7 +116,6 @@ public:
     Transport * auth_trans;
 
 private:
-    TimeBase & timebase;
     char session_id[256];
 
 private:
@@ -136,7 +135,7 @@ public:
         arcsight  = 0x20,
     };
 
-    AclSerializer(Inifile & ini, TimeBase & timebase);
+    AclSerializer(Inifile & ini);
     ~AclSerializer();
 
     void disconnect() {
