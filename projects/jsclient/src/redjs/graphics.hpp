@@ -34,8 +34,6 @@ Author(s): Jonathan Poelen
 namespace redjs
 {
 
-class ImageData;
-
 class Graphics : public gdi::GraphicApi
 {
 public:
