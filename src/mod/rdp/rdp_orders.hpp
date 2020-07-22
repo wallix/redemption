@@ -139,9 +139,15 @@ public:
 #ifndef __EMSCRIPTEN__
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
-    , notify_error(notify_error)
+    , notify_error(std::move(notify_error))
 #endif
-    {}
+    {
+#ifdef __EMSCRIPTEN__
+        (void)enable_persistent_disk_bitmap_cache;
+        (void)persist_bitmap_cache_on_disk;
+        (void)notify_error;
+#endif
+    }
 
     void set_bpp(const BitsPerPixel & bpp)
     {
