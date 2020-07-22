@@ -45,8 +45,19 @@ class ModWrapper;
 class AclSerializer final
 {
 public:
+
+    enum {
+        acl_state_not_yet_connected = 0,
+        acl_state_connected,
+        acl_state_connection_failed,
+        acl_state_disconnected_by_redemption,
+        acl_state_disconnected_by_authentifier
+    };
+
     Inifile & ini;
     Transport * auth_trans;
+    std::string acl_manager_disconnect_reason;
+    int acl_status = acl_state_not_yet_connected;
 
 private:
     char session_id[256];
@@ -82,5 +93,21 @@ public:
     void in_items();
     void incoming();
     void send_acl_data();
+
+    std::string show() {
+        switch (this->acl_status) {
+        case acl_state_not_yet_connected:
+            return "Acl not yet connected";
+        case acl_state_connected:
+            return "Acl connected";
+        case acl_state_connection_failed:
+            return "Acl connection failed";
+        case acl_state_disconnected_by_redemption:
+            return "Acl disconnected by redemption";
+        case acl_state_disconnected_by_authentifier:
+            return "Acl disconnected by authentifier";
+        }
+        return "Acl unexpected state";
+    }
 };
 

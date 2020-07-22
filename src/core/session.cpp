@@ -64,30 +64,6 @@ namespace
 class Session
 {
 
-    enum {
-        acl_state_not_yet_connected = 0,
-        acl_state_connected,
-        acl_state_connection_failed,
-        acl_state_disconnected_by_redemption,
-        acl_state_disconnected_by_authentifier
-    };
-
-    std::string acl_show(int acl_status) {
-        switch (acl_status) {
-        case acl_state_not_yet_connected:
-            return "Acl not yet connected";
-        case acl_state_connected:
-            return "Acl connected";
-        case acl_state_connection_failed:
-            return "Acl connection failed";
-        case acl_state_disconnected_by_redemption:
-            return "Acl disconnected by redemption";
-        case acl_state_disconnected_by_authentifier:
-            return "Acl disconnected by authentifier";
-        }
-        return "Acl unexpected state";
-    }
-
     class KeepAlive
     {
         // Keep alive Variables
@@ -255,9 +231,9 @@ class Session
     }
 
     void acl_disconnect(AclSerializer & acl_serial, int & acl_status) {
-        if (acl_status == acl_state_connected) {
+        if (acl_status == AclSerializer::acl_state_connected) {
             acl_serial.disconnect();
-            acl_status = acl_state_disconnected_by_redemption;
+            acl_status = AclSerializer::acl_state_disconnected_by_redemption;
         }
     }
 
@@ -448,8 +424,6 @@ private:
     }
 
     bool front_up_and_running(AclSerializer & acl_serial,
-                              std::string & acl_manager_disconnect_reason,
-                              int & acl_status,
                               std::unique_ptr<SessionLogFile> & log_file, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
@@ -459,7 +433,7 @@ private:
         // There are modified fields to send to sesman
         BackEvent_t signal = mod_wrapper.get_mod_signal();
 
-        if ((acl_status == acl_state_connected)
+        if ((acl_serial.acl_status == AclSerializer::acl_state_connected)
         && ini.changed_field_size()) {
             switch (signal){
             case BACK_EVENT_NONE:
@@ -488,7 +462,7 @@ private:
             return true;
         } // acl ini changed_field_size
 
-        if ((acl_status == acl_state_connected)
+        if ((acl_serial.acl_status == AclSerializer::acl_state_connected)
         && acl_serial.remote_answer) {
             BackEvent_t signal = mod_wrapper.get_mod_signal();
             acl_serial.remote_answer = false;
@@ -608,7 +582,7 @@ private:
             } // switch(signal)
 
             if (!ini.get<cfg::context::disconnect_reason>().empty()) {
-                acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
+                acl_serial.acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
                 ini.set<cfg::context::disconnect_reason>("");
                 ini.set_acl<cfg::context::disconnect_reason_ack>(true);
             }
@@ -747,8 +721,6 @@ public:
                               to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         AclSerializer acl_serial(ini);
-        std::string acl_manager_disconnect_reason;
-        int acl_status = acl_state_not_yet_connected;
         std::unique_ptr<Transport> auth_trans;
         std::unique_ptr<SessionLogFile> log_file;
 
@@ -844,7 +816,7 @@ public:
                 // gather fd from events
                 events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
-                if (acl_status == acl_state_connected) {
+                if (acl_serial.acl_status == AclSerializer::acl_state_connected) {
 //                    LOG(LOG_INFO, "acl_sck fd=%d", this->acl_acl_serial->auth_trans->get_sck());
                     ioswitch.set_read_sck(acl_serial.auth_trans->get_sck());
                 }
@@ -919,30 +891,30 @@ public:
                 }
 
                 // exchange data with sesman
-                if (acl_status == acl_state_connected){
+                if (acl_serial.acl_status == AclSerializer::acl_state_connected){
                     if (ioswitch.is_set_for_reading(acl_serial.auth_trans->get_sck())) {
-                    try {
-                        acl_serial.incoming();
+                        try {
+                            acl_serial.incoming();
 
-                        if (ini.get<cfg::context::module>() == "RDP"
-                        ||  ini.get<cfg::context::module>() == "VNC") {
-                            acl_serial.session_type = ini.get<cfg::context::module>();
-                        }
-                        acl_serial.remote_answer = true;
-                    } catch (...) {
-                        LOG(LOG_INFO, "acl_receive() Session lost");
-                        // acl connection lost
-                        acl_status = acl_state_disconnected_by_authentifier;
-                        ini.set_acl<cfg::context::authenticated>(false);
+                            if (ini.get<cfg::context::module>() == "RDP"
+                            ||  ini.get<cfg::context::module>() == "VNC") {
+                                acl_serial.session_type = ini.get<cfg::context::module>();
+                            }
+                            acl_serial.remote_answer = true;
+                        } catch (...) {
+                            LOG(LOG_INFO, "acl_receive() Session lost");
+                            // acl connection lost
+                            acl_serial.acl_status = AclSerializer::acl_state_disconnected_by_authentifier;
+                            ini.set_acl<cfg::context::authenticated>(false);
 
-                        if (acl_manager_disconnect_reason.empty()) {
-                            ini.set_acl<cfg::context::rejected>(TR(trkeys::manager_close_cnx, language(ini)));
+                            if (acl_serial.acl_manager_disconnect_reason.empty()) {
+                                ini.set_acl<cfg::context::rejected>(TR(trkeys::manager_close_cnx, language(ini)));
+                            }
+                            else {
+                                ini.set_acl<cfg::context::rejected>(acl_serial.acl_manager_disconnect_reason);
+                                acl_serial.acl_manager_disconnect_reason.clear();
+                            }
                         }
-                        else {
-                            ini.set_acl<cfg::context::rejected>(acl_manager_disconnect_reason);
-                            acl_manager_disconnect_reason.clear();
-                        }
-                    }
                         if (!ini.changed_field_size()) {
                             mod_wrapper.acl_update();
                         }
@@ -982,13 +954,13 @@ public:
                 }
                 else {
                     if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE){
-                        if ((acl_status == acl_state_disconnected_by_authentifier)
-                        || (acl_status == acl_state_disconnected_by_redemption)){
+                        if ((acl_serial.acl_status == AclSerializer::acl_state_disconnected_by_authentifier)
+                        || (acl_serial.acl_status == AclSerializer::acl_state_disconnected_by_redemption)){
                             this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
                             mod_wrapper.disconnect();
                             run_session = false;
                             LOG(LOG_INFO, "Session Closed by ACL : %s",
-                                (acl_status == acl_state_disconnected_by_authentifier)?
+                                (acl_serial.acl_status == AclSerializer::acl_state_disconnected_by_authentifier)?
                                     "closed by authentifier":"closed by proxy");
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 auto next_state = MODULE_INTERNAL_CLOSE;
@@ -1012,7 +984,7 @@ public:
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
                 {
-                    if (acl_status == acl_state_not_yet_connected) {
+                    if (acl_serial.acl_status == AclSerializer::acl_state_not_yet_connected) {
                         try {
                             unique_fd client_sck = addr_connect_non_blocking(
                                                         ini.get<cfg::globals::authfile>().c_str(),
@@ -1020,7 +992,7 @@ public:
                             if (!client_sck.is_open()) {
                                 LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
                                     ini.get<cfg::globals::authfile>().c_str());
-                                acl_status = acl_state_connection_failed;
+                                acl_serial.acl_status = AclSerializer::acl_state_connection_failed;
                                 throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
                             }
 
@@ -1029,7 +1001,7 @@ public:
                                 std::chrono::seconds(1), SocketTransport::Verbose::none);
 
                             acl_serial.set_auth_trans(auth_trans.get());
-                            acl_status = acl_state_connected;
+                            acl_serial.acl_status = AclSerializer::acl_state_connected;
                             log_file = std::make_unique<SessionLogFile>(ini, time_base, cctx, rnd, fstat,
                                     [&sesman](const Error & error){
                                         if (error.errnum == ENOSPC) {
@@ -1090,7 +1062,7 @@ public:
                             }
                         }
 
-                        if ((acl_status == acl_state_connected)
+                        if ((acl_serial.acl_status == AclSerializer::acl_state_connected)
                         && !keepalive.is_started()
                         && mod_wrapper.is_connected())
                         {
@@ -1109,7 +1081,7 @@ public:
                             LOG(LOG_INFO, "Exited from target connection");
                             mod_wrapper.disconnect();
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-                            if (acl_status == acl_state_connected){
+                            if (acl_serial.acl_status == AclSerializer::acl_state_connected){
                                 keepalive.stop();
                                 sesman.set_disconnect_target();
                                 acl_serial.remote_answer = false;
@@ -1129,7 +1101,7 @@ public:
                         }
 
                         mod_wrapper.show_current_mod(bool(ini.get<cfg::debug::session>()&0x08));
-                        run_session = this->front_up_and_running(acl_serial, acl_manager_disconnect_reason, acl_status, log_file, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
+                        run_session = this->front_up_and_running(acl_serial, log_file, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
                         run_session = false;
