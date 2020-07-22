@@ -63,110 +63,203 @@ namespace
 
 class Session
 {
-    struct Acl
+
+    enum {
+        acl_state_not_yet_connected = 0,
+        acl_state_connected,
+        acl_state_connection_failed,
+        acl_state_disconnected_by_redemption,
+        acl_state_disconnected_by_authentifier
+    };
+
+    std::string acl_show(int acl_status) {
+        switch (acl_status) {
+        case acl_state_not_yet_connected:
+            return "Acl not yet connected";
+        case acl_state_connected:
+            return "Acl connected";
+        case acl_state_connection_failed:
+            return "Acl connection failed";
+        case acl_state_disconnected_by_redemption:
+            return "Acl disconnected by redemption";
+        case acl_state_disconnected_by_authentifier:
+            return "Acl disconnected by authentifier";
+        }
+        return "Acl unexpected state";
+    }
+
+    class KeepAlive
     {
-        enum {
-            state_not_yet_connected = 0,
-            state_connected,
-            state_connection_failed,
-            state_disconnected_by_redemption,
-            state_disconnected_by_authentifier
-        } status = state_not_yet_connected;
+        // Keep alive Variables
+        int  grace_delay;
+        long timeout;
+        long renew_time;
+        bool wait_answer;     // true when we are waiting for a positive response
+                              // false when positive response has been received and
+                              // timers have been set to new timers.
+        bool connected;
 
-        std::string manager_disconnect_reason;
+    public:
+        REDEMPTION_VERBOSE_FLAGS(private, verbose)
+        {
+            none,
+            state    = 0x10,
+            arcsight = 0x20,
 
-        std::string show() {
-            switch (this->status) {
-            case state_not_yet_connected:
-                return "Acl::state_not_yet_connected";
-            case state_connected:
-                return "Acl::state_connected";
-            case state_connection_failed:
-                return "Acl::state_connection_failed";
-            case state_disconnected_by_redemption:
-                return "Acl::state_disconnected_by_redemption";
-            case state_disconnected_by_authentifier:
-                return "Acl::state_disconnected_by_authentifier";
-            }
-            return "Acl::unexpected state";
+            // SocketTransport (see 'socket_transport.hpp')
+            sock_basic = 1u << 29,
+            sock_dump  = 1u << 30,
+            sock_watch = 1u << 31
+        };
+
+        KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
+        : grace_delay(grace_delay_.count())
+        , timeout(0)
+        , renew_time(0)
+        , wait_answer(false)
+        , connected(false)
+        , verbose(verbose)
+        {
+            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEPALIVE CONSTRUCTOR");
         }
 
-        Inifile & ini;
-        AclSerializer  * acl_serial = nullptr;
-        KeepAlive keepalive;
-        Inactivity inactivity;
 
-        Acl(Inifile & ini, TimeBase & time_base)
-        : ini(ini)
-        , acl_serial(nullptr)
-        , keepalive(ini.get<cfg::globals::keepalive_grace_delay>(), to_verbose_flags(ini.get<cfg::debug::auth>()))
-        , inactivity(ini.get<cfg::globals::session_timeout>(),
-                     time_base.get_current_time().tv_sec,
-                     to_verbose_flags(ini.get<cfg::debug::auth>()))
-        {}
+        ~KeepAlive()
+        {
+            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "KEEPALIVE DESTRUCTOR");
+        }
 
-        void set_acl_serial(AclSerializer * acl_serial) {
-            this->acl_serial = acl_serial;
-            if (this->acl_serial != nullptr){
-                this->status = state_connected;
+        bool is_started()
+        {
+            return this->connected;
+        }
+
+        void start(time_t now)
+        {
+            this->connected = true;
+            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "auth::start_keep_alive");
+            this->timeout    = now + 2 * this->grace_delay;
+            this->renew_time = now + this->grace_delay;
+        }
+
+        void stop()
+        {
+            this->connected = false;
+        }
+
+        bool check(time_t now, Inifile & ini)
+        {
+            if (this->connected) {
+                // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
+                // Keep alive timeout
+                if (now > this->timeout) {
+                    LOG(LOG_INFO, "auth::keep_alive_or_inactivity : connection closed by manager (timeout)");
+                    return true;
+                }
+
+                // LOG(LOG_INFO, "keepalive state ask=%s bool=%s",
+                //     ini.is_asked<cfg::context::keepalive>()?"Y":"N",
+                //     ini.get<cfg::context::keepalive>()?"Y":"N");
+
+                // Keepalive received positive response
+                if (this->wait_answer
+                    && !ini.is_asked<cfg::context::keepalive>()
+                    && ini.get<cfg::context::keepalive>()) {
+                    LOG_IF(bool(this->verbose & Verbose::state),
+                        LOG_INFO, "auth::keep_alive ACL incoming event");
+                    this->timeout    = now + 2*this->grace_delay;
+                    this->renew_time = now + this->grace_delay;
+                    this->wait_answer = false;
+                }
+
+                // Keep alive asking for an answer from ACL
+                if (!this->wait_answer
+                    && (now > this->renew_time)) {
+
+                    this->wait_answer = true;
+
+                    ini.ask<cfg::context::keepalive>();
+                }
             }
+            return false;
+        }
+    };
+
+    class Inactivity
+    {
+        // Inactivity management
+        // let t be the timeout of the blocking select in session loop,
+        // the effective inactivity timeout detection will be between
+        // inactivity_timeout and inactivity_timeout + t.
+        // hence we should have t << inactivity_timeout.
+        time_t inactivity_timeout;
+        time_t last_activity_time;
+
+    public:
+        REDEMPTION_VERBOSE_FLAGS(private, verbose)
+        {
+            none,
+            state = 0x10,
+        };
+
+
+        Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbose)
+        : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
+        , last_activity_time(start)
+        , verbose(verbose)
+        {
+            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY CONSTRUCTOR");
+        }
+
+        ~Inactivity()
+        {
+        //    this->disconnect();
+            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY DESTRUCTOR");
+        }
+
+        bool check_user_activity(time_t now, bool & has_user_activity)
+        {
+            if (!has_user_activity) {
+                if (now > this->last_activity_time + this->inactivity_timeout) {
+                    this->last_activity_time = now;
+                    LOG(LOG_INFO, "Session User inactivity : closing");
+                    return true;
+                }
+            }
+            else {
+                has_user_activity = false;
+            }
+            return false;
+        }
+
+        void update_inactivity_timeout(time_t inactivity_timeout)
+        {
+            this->inactivity_timeout = inactivity_timeout;
         }
 
         time_t get_inactivity_timeout()
         {
-            return this->inactivity.get_inactivity_timeout();
+            return this->inactivity_timeout;
         }
-
-        void update_inactivity_timeout()
-        {
-            time_t conn_opts_inactivity_timeout = this->ini.get<cfg::globals::inactivity_timeout>().count();
-            if (conn_opts_inactivity_timeout > 0) {
-                if (this->inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
-                    this->inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
-                }
-            }
-        }
-
-        bool is_not_yet_connected() { return this->status == state_not_yet_connected; }
-        void connection_failed() { this->status = state_connection_failed; }
-        bool is_connected() { return this->status == state_connected; }
-        void disconnect() {
-            if (this->acl_serial) {
-                this->acl_serial->disconnect();
-                this->acl_serial = nullptr;
-                this->status = state_disconnected_by_redemption;
-            }
-        }
-
-        void receive()
-        {
-            try {
-                this->acl_serial->incoming();
-
-                if (this->ini.get<cfg::context::module>() == "RDP"
-                ||  this->ini.get<cfg::context::module>() == "VNC") {
-                    this->acl_serial->session_type = this->ini.get<cfg::context::module>();
-                }
-                this->acl_serial->remote_answer = true;
-            } catch (...) {
-                LOG(LOG_INFO, "Acl::receive() Session lost");
-                // acl connection lost
-                this-> status = state_disconnected_by_authentifier;
-                this->ini.set_acl<cfg::context::authenticated>(false);
-
-                if (this->manager_disconnect_reason.empty()) {
-                    this->ini.set_acl<cfg::context::rejected>(
-                        TR(trkeys::manager_close_cnx, language(this->ini)));
-                }
-                else {
-                    this->ini.set_acl<cfg::context::rejected>(this->manager_disconnect_reason);
-                    this->manager_disconnect_reason.clear();
-                }
-            }
-        }
-
-        ~Acl() {}
     };
+
+
+    void acl_update_inactivity_timeout(Inactivity & inactivity)
+    {
+        time_t conn_opts_inactivity_timeout = ini.get<cfg::globals::inactivity_timeout>().count();
+        if (conn_opts_inactivity_timeout > 0) {
+            if (inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
+                inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
+            }
+        }
+    }
+
+    void acl_disconnect(AclSerializer & acl_serial, int & acl_status) {
+        if (acl_status == acl_state_connected) {
+            acl_serial.disconnect();
+            acl_status = acl_state_disconnected_by_redemption;
+        }
+    }
 
     struct Select
     {
@@ -354,7 +447,10 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool front_up_and_running(Acl & acl, std::unique_ptr<SessionLogFile> & log_file, Inifile& ini,
+    bool front_up_and_running(AclSerializer & acl_serial,
+                              std::string & acl_manager_disconnect_reason,
+                              int & acl_status,
+                              std::unique_ptr<SessionLogFile> & log_file, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Sesman & sesman,
@@ -363,22 +459,23 @@ private:
         // There are modified fields to send to sesman
         BackEvent_t signal = mod_wrapper.get_mod_signal();
 
-        if (acl.is_connected() && ini.changed_field_size()) {
+        if ((acl_status == acl_state_connected)
+        && ini.changed_field_size()) {
             switch (signal){
             case BACK_EVENT_NONE:
                 // send message to acl with changed values when connected to
                 // a module (rdp, vnc ...) and something changed.
                 // used for authchannel and keepalive.
                 if (mod_wrapper.is_connected()) {
-                    acl.acl_serial->remote_answer = false;
-                    acl.acl_serial->send_acl_data();
+                    acl_serial.remote_answer = false;
+                    acl_serial.send_acl_data();
                     return true;
                 }
             break;
             case BACK_EVENT_NEXT:
             {
-                acl.acl_serial->remote_answer = false;
-                acl.acl_serial->send_acl_data();
+                acl_serial.remote_answer = false;
+                acl_serial.send_acl_data();
                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 auto next_state = MODULE_INTERNAL_TRANSITION;
@@ -391,9 +488,10 @@ private:
             return true;
         } // acl ini changed_field_size
 
-        if (acl.is_connected() && acl.acl_serial->remote_answer) {
+        if ((acl_status == acl_state_connected)
+        && acl_serial.remote_answer) {
             BackEvent_t signal = mod_wrapper.get_mod_signal();
-            acl.acl_serial->remote_answer = false;
+            acl_serial.remote_answer = false;
 
             switch (signal){
             default:
@@ -406,7 +504,7 @@ private:
                 switch (next_state){
                 case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
                 {
-                    acl.acl_serial->remote_answer = false;
+                    acl_serial.remote_answer = false;
                     mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
                 } // case next_state == MODULE_TRANSITORY  in switch (next_state)
                 break;
@@ -510,7 +608,7 @@ private:
             } // switch(signal)
 
             if (!ini.get<cfg::context::disconnect_reason>().empty()) {
-                acl.manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
+                acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
                 ini.set<cfg::context::disconnect_reason>("");
                 ini.set_acl<cfg::context::disconnect_reason_ack>(true);
             }
@@ -639,9 +737,18 @@ public:
 
         timeval now = tvtime();
 
-        Acl acl(this->ini, time_base);
 
-        std::unique_ptr<AclSerializer> acl_serial;
+        KeepAlive keepalive(ini.get<cfg::globals::keepalive_grace_delay>(),
+                            to_verbose_flags(ini.get<cfg::debug::auth>()));
+
+
+        Inactivity inactivity(ini.get<cfg::globals::session_timeout>(),
+                              now.tv_sec,
+                              to_verbose_flags(ini.get<cfg::debug::auth>()));
+
+        AclSerializer acl_serial(ini);
+        std::string acl_manager_disconnect_reason;
+        int acl_status = acl_state_not_yet_connected;
         std::unique_ptr<Transport> auth_trans;
         std::unique_ptr<SessionLogFile> log_file;
 
@@ -737,9 +844,9 @@ public:
                 // gather fd from events
                 events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
-                if (acl.is_connected()) {
-//                    LOG(LOG_INFO, "acl_sck fd=%d", acl.acl_serial->auth_trans->get_sck());
-                    ioswitch.set_read_sck(acl.acl_serial->auth_trans->get_sck());
+                if (acl_status == acl_state_connected) {
+//                    LOG(LOG_INFO, "acl_sck fd=%d", this->acl_acl_serial->auth_trans->get_sck());
+                    ioswitch.set_read_sck(acl_serial.auth_trans->get_sck());
                 }
 
                 timeval ultimatum = ioswitch.get_timeout();
@@ -812,9 +919,30 @@ public:
                 }
 
                 // exchange data with sesman
-                if (acl.is_connected()){
-                    if (ioswitch.is_set_for_reading(acl.acl_serial->auth_trans->get_sck())) {
-                        acl.receive();
+                if (acl_status == acl_state_connected){
+                    if (ioswitch.is_set_for_reading(acl_serial.auth_trans->get_sck())) {
+                    try {
+                        acl_serial.incoming();
+
+                        if (ini.get<cfg::context::module>() == "RDP"
+                        ||  ini.get<cfg::context::module>() == "VNC") {
+                            acl_serial.session_type = ini.get<cfg::context::module>();
+                        }
+                        acl_serial.remote_answer = true;
+                    } catch (...) {
+                        LOG(LOG_INFO, "acl_receive() Session lost");
+                        // acl connection lost
+                        acl_status = acl_state_disconnected_by_authentifier;
+                        ini.set_acl<cfg::context::authenticated>(false);
+
+                        if (acl_manager_disconnect_reason.empty()) {
+                            ini.set_acl<cfg::context::rejected>(TR(trkeys::manager_close_cnx, language(ini)));
+                        }
+                        else {
+                            ini.set_acl<cfg::context::rejected>(acl_manager_disconnect_reason);
+                            acl_manager_disconnect_reason.clear();
+                        }
+                    }
                         if (!ini.changed_field_size()) {
                             mod_wrapper.acl_update();
                         }
@@ -822,29 +950,29 @@ public:
 
                     // propagate changes made in sesman structure to actual acl changes
                     sesman.flush_acl_report(
-                        [&ini,&acl](zstring_view reason, zstring_view message)
+                        [&ini,&acl_serial](zstring_view reason, zstring_view message)
                         {
                             ini.ask<cfg::context::keepalive>();
                             char report[1024];
                             snprintf(report, sizeof(report), "%s:%s:%s", reason.c_str(),
                                 ini.get<cfg::globals::target_device>().c_str(), message.c_str());
                             ini.set_acl<cfg::context::reporting>(report);
-                            acl.acl_serial->send_acl_data();
+                            acl_serial.send_acl_data();
                         });
                     sesman.flush_acl_log6(
-                        [&ini,&acl,&log_file,now](LogId id, KVList kv_list)
+                        [&ini,&acl_serial,&log_file,now](LogId id, KVList kv_list)
                         {
     //                        const timeval time = timebase.get_current_time();
                             /* Log to SIEM (redirected syslog) */
-                            log_siem_syslog(id, kv_list, ini, acl.acl_serial->session_type);
-                            log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl.acl_serial->session_type);
+                            log_siem_syslog(id, kv_list, ini, acl_serial.session_type);
+                            log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl_serial.session_type);
                             log_file->log6(id, kv_list);
                         });
                     sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
-                        acl.acl_serial->remote_answer = false;
-                        acl.acl_serial->send_acl_data();
+                        acl_serial.remote_answer = false;
+                        acl_serial.send_acl_data();
                     }
                     sesman.flush_acl_disconnect_target([&log_file]()
                     {
@@ -854,13 +982,13 @@ public:
                 }
                 else {
                     if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE){
-                        if ((acl.status == Acl::state_disconnected_by_authentifier)
-                        || (acl.status == Acl::state_disconnected_by_redemption)){
+                        if ((acl_status == acl_state_disconnected_by_authentifier)
+                        || (acl_status == acl_state_disconnected_by_redemption)){
                             this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
                             mod_wrapper.disconnect();
                             run_session = false;
                             LOG(LOG_INFO, "Session Closed by ACL : %s",
-                                (acl.status == Acl::state_disconnected_by_authentifier)?
+                                (acl_status == acl_state_disconnected_by_authentifier)?
                                     "closed by authentifier":"closed by proxy");
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 auto next_state = MODULE_INTERNAL_CLOSE;
@@ -884,17 +1012,15 @@ public:
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
                 {
-                    if (acl.is_not_yet_connected()) {
+                    if (acl_status == acl_state_not_yet_connected) {
                         try {
-                            acl_serial = std::make_unique<AclSerializer>(ini);
-
                             unique_fd client_sck = addr_connect_non_blocking(
                                                         ini.get<cfg::globals::authfile>().c_str(),
                                                         (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
                             if (!client_sck.is_open()) {
                                 LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
                                     ini.get<cfg::globals::authfile>().c_str());
-                                acl.connection_failed();
+                                acl_status = acl_state_connection_failed;
                                 throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
                             }
 
@@ -902,8 +1028,8 @@ public:
                                 ini.get<cfg::globals::authfile>().c_str(), 0,
                                 std::chrono::seconds(1), SocketTransport::Verbose::none);
 
-                            acl_serial->set_auth_trans(auth_trans.get());
-                            acl.set_acl_serial(acl_serial.get());
+                            acl_serial.set_auth_trans(auth_trans.get());
+                            acl_status = acl_state_connected;
                             log_file = std::make_unique<SessionLogFile>(ini, time_base, cctx, rnd, fstat,
                                     [&sesman](const Error & error){
                                         if (error.errnum == ENOSPC) {
@@ -935,10 +1061,10 @@ public:
                         if (!this->ini.get<cfg::context::rejected>().empty()) {
                             throw Error(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE);
                         }
-                        if (acl.keepalive.check(now.tv_sec, this->ini)) {
+                        if (keepalive.check(now.tv_sec, this->ini)) {
                             throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
                         }
-                        if (acl.inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
+                        if (inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
 
@@ -964,11 +1090,11 @@ public:
                             }
                         }
 
-                        if (acl.is_connected()
-                        && !acl.keepalive.is_started()
+                        if ((acl_status == acl_state_connected)
+                        && !keepalive.is_started()
                         && mod_wrapper.is_connected())
                         {
-                            acl.keepalive.start(now.tv_sec);
+                            keepalive.start(now.tv_sec);
                         }
 
                         if (mod_wrapper.get_mod_signal() == BACK_EVENT_STOP){
@@ -983,11 +1109,11 @@ public:
                             LOG(LOG_INFO, "Exited from target connection");
                             mod_wrapper.disconnect();
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-                            if (acl.is_connected()){
-                                acl.keepalive.stop();
+                            if (acl_status == acl_state_connected){
+                                keepalive.stop();
                                 sesman.set_disconnect_target();
-                                acl.acl_serial->remote_answer = false;
-                                acl.acl_serial->send_acl_data();
+                                acl_serial.remote_answer = false;
+                                acl_serial.send_acl_data();
                             }
                             else {
                                 next_state = MODULE_INTERNAL_CLOSE;
@@ -1003,7 +1129,7 @@ public:
                         }
 
                         mod_wrapper.show_current_mod(bool(ini.get<cfg::debug::session>()&0x08));
-                        run_session = this->front_up_and_running(acl, log_file, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
+                        run_session = this->front_up_and_running(acl_serial, acl_manager_disconnect_reason, acl_status, log_file, ini, mod_factory, mod_wrapper, front, sesman, rail_client_execute);
 
                     } catch (Error const& e) {
                         run_session = false;
@@ -1012,10 +1138,9 @@ public:
                         break;
                         case 1: // Close Box
                         {
-                            acl.keepalive.stop();
+                            keepalive.stop();
                             sesman.set_disconnect_target();
                             mod_wrapper.disconnect();
-//                            authentifier.set_acl_serial(nullptr);
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
 
@@ -1038,7 +1163,7 @@ public:
                         REDEMPTION_CXX_FALLTHROUGH;
                         case 2: // TODO: should we put some counter to avoid retrying indefinitely?
                             LOG(LOG_INFO, "Retry RDP");
-                            acl.acl_serial->remote_answer = false;
+                            acl_serial.remote_answer = false;
 
                             rail_client_execute.enable_remote_program(front.client_info.remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
