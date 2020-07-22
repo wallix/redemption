@@ -416,6 +416,10 @@ struct TestBindingCallback : Callback
         });
     }
 
+    void send_auth_channel_data(const char * /*data*/) override {}
+    void send_checkout_channel_data(const char * /*data*/) override {}
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+
     TestBindingCallback(Datas& datas)
     : datas(datas)
     {}
