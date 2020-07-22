@@ -461,16 +461,6 @@ lib libredrec :
   $(LIB_DEPENDENCIES)
   <define>ZLIB_CONST
 ;
-lib libfiles_validator_api :
-  src/lib/files_validator_api.cpp.lib.o
-:
-  <library>log.o
-  <library>src/core/error.o
-  <library>src/utils/netutils.o
-  <library>src/utils/stacktrace.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  $(LIB_DEPENDENCIES)
-;
 lib libiametrics :
   src/lib/iametrics.cpp.lib.o
 :
@@ -503,11 +493,6 @@ obj src/lib/do_recorder.cpp.lib.o :
 :
   $(LIB_DEPENDENCIES)
   <define>ZLIB_CONST
-;
-obj src/lib/files_validator_api.cpp.lib.o :
-  $(REDEMPTION_SRC_PATH)/lib/files_validator_api.cpp
-:
-  $(LIB_DEPENDENCIES)
 ;
 obj src/lib/iametrics.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp
@@ -2835,19 +2820,6 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>z
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  $(GCOV_NO_BUILD)
-;
-test-run tests/lib/test_files_validator_api :
-  $(REDEMPTION_TEST_PATH)/lib/test_files_validator_api.cpp
-:
-  <library>src/core/error.o
-  <library>src/lib/files_validator_api.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/netutils.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
 ;
@@ -5639,7 +5611,6 @@ obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
-obj src/lib/files_validator_api.o : $(REDEMPTION_SRC_PATH)/lib/files_validator_api.cpp ;
 obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
 obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/main/headlessclient.o : $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp : <define>ZLIB_CONST ;
@@ -5910,7 +5881,6 @@ alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_keymap2 : tests/keyboard/test_keymap2 ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
 alias test_do_recorder : tests/lib/test_do_recorder ;
-alias test_files_validator_api : tests/lib/test_files_validator_api ;
 alias test_iametrics : tests/lib/test_iametrics ;
 alias test_scytale : tests/lib/test_scytale ;
 alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
@@ -6628,7 +6598,6 @@ alias tests/keyboard.norec :
 ;
 alias tests/lib.norec :
   tests/lib/test_do_recorder
-  tests/lib/test_files_validator_api
   tests/lib/test_iametrics
   tests/lib/test_scytale
 ;
