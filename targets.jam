@@ -140,7 +140,6 @@ exe rdpproxy :
   <library>src/core/font.o
   <library>src/core/mainloop.o
   <library>src/core/session.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -330,7 +329,6 @@ exe rdpclient :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -567,7 +565,6 @@ test-run tests/acl/test_acl_serializer :
   <library>snappy
   <library>src/acl/acl_serializer.o
   <library>src/core/error.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
@@ -620,7 +617,6 @@ test-run tests/acl/test_license_api :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -681,9 +677,7 @@ test-run tests/acl/test_session_logfile :
   <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/acl/acl_serializer.o
   <library>src/core/error.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
@@ -2429,7 +2423,6 @@ test-run tests/core/test_mainloop :
   <library>src/core/font.o
   <library>src/core/mainloop.o
   <library>src/core/session.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2571,7 +2564,6 @@ test-run tests/core/test_session :
   <library>src/core/events.o
   <library>src/core/font.o
   <library>src/core/session.o
-  <library>src/core/set_server_redirection_target.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -5631,7 +5623,6 @@ obj src/core/events.o : $(REDEMPTION_SRC_PATH)/core/events.cpp ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
-obj src/core/set_server_redirection_target.o : $(REDEMPTION_SRC_PATH)/core/set_server_redirection_target.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;

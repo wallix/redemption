@@ -35,7 +35,6 @@
 #include "utils/string_c.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
-#include "core/set_server_redirection_target.hpp"
 
 #include <string>
 #include <algorithm>

@@ -30,7 +30,6 @@
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
 #include "utils/timebase.hpp"
-#include "core/set_server_redirection_target.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "transport/socket_transport.hpp"
@@ -1118,7 +1117,24 @@ public:
                         break;
                         case 3:
                         {
-                            auto message = set_server_redirection_target(ini);
+                            // SET new target in ini
+                            RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
+                            const char * host = char_ptr_cast(redir_info.host);
+                            const char * password = char_ptr_cast(redir_info.password);
+                            const char * username = char_ptr_cast(redir_info.username);
+                            const char * change_user = "";
+                            if (redir_info.dont_store_username && username[0] != 0) {
+                                LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                                ini.set_acl<cfg::globals::target_user>(username);
+                                change_user = username;
+                            }
+                            if (password[0] != 0) {
+                                LOG(LOG_INFO, "SrvRedir: Change target password");
+                                ini.set_acl<cfg::context::target_password>(password);
+                            }
+                            LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+                            ini.set_acl<cfg::context::target_host>(host);
+                            auto message = std::string(change_user) + '@' + std::string(host);
                             sesman.report("SERVER_REDIRECTION", message.c_str());
                         }
 
