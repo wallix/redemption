@@ -90,6 +90,8 @@ class RemoteProgramsSessionManager final
 
     bool currently_without_window = false;
 
+    bool has_actively_monitored_desktop = true;
+
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
     TimeBase& time_base;
@@ -440,6 +442,8 @@ public:
     }
 
     void draw(RDP::RAIL::ActivelyMonitoredDesktop const & order) override {
+        this->has_actively_monitored_desktop = true;
+
         bool has_not_window =
             ((RDP::RAIL::WINDOW_ORDER_FIELD_DESKTOP_ZORDER & order.header.FieldsPresentFlags()) &&
              !order.NumWindowIds());
@@ -471,6 +475,7 @@ public:
                     if (this->currently_without_window
                      && (DialogBoxType::NONE == this->dialog_box_type)
                      && this->has_previous_window
+                     && this->has_actively_monitored_desktop
                     ) {
                         LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
                         this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
@@ -486,6 +491,8 @@ public:
     }
 
     void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        this->has_actively_monitored_desktop = false;
+
         if (this->drawable) {
             this->drawable->draw(order);
         }
