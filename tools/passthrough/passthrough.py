@@ -49,7 +49,7 @@ class AuthentifierSharedData():
             u'target_host':     MAGICASK,
             u'login':           "admin",
             u'ip_client':       MAGICASK,
-            u'target_protocol': MAGICASK,
+            u'proto_dest':      MAGICASK,
         }
 
     def send_data(self, data):
@@ -251,7 +251,7 @@ class ACLPassthrough():
 
         kv = {}
         # kv[u'is_rec'] = u'1'
-        # kv[u'rec_path'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
+        # kv[u'record_filebase'] = datetime.now().strftime("%Y-%m-%d/%H:%M-") + str(uuid.uuid4())
         kv[u'login'] = self.shared.get(u'target_login')
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"
