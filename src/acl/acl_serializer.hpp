@@ -64,7 +64,6 @@ private:
 
 private:
 public:
-    std::string session_type;
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false

@@ -25,7 +25,6 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "core/log_id.hpp"
-#include "acl/acl_serializer.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"
 #include "utils/genfstat.hpp"
@@ -36,6 +35,7 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/log_buffered.hpp"
 #include "acl/sesman.hpp"
+#include "acl/session_logfile.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -84,7 +84,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
     ini.set<cfg::video::hash_path>(hashdir.dirname().string());
 
     GeneratorTransport trans(""_av);
-    AclSerializer acl_serial(ini);
+    std::string session_type;
 
     Sesman sesman(ini, timebase);
 
@@ -97,12 +97,10 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
     };
 
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
-    acl_serial.set_auth_trans(&trans);
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
 
     log_file.open_session_log();
-
     {
         tu::log_buffered logbuf;
 
@@ -114,14 +112,14 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
         log_siem_syslog(LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),
-        }, ini, acl_serial.session_type);
+        }, ini, session_type);
 
         auto now = timebase.get_current_time();
         log_siem_arcsight(now.tv_sec,
             LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),
-        }, ini, acl_serial.session_type);
+        }, ini, session_type);
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|24|INPUT_LANGUAGE|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 identifier=ident display_name=name\n");
         RED_CHECK(logbuf.buf() == expected6);
@@ -140,13 +138,13 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
         log_siem_syslog(LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog("msg2"_av, "vnc"_av),
-        }, ini, acl_serial.session_type);
+        }, ini, session_type);
 
         auto now = timebase.get_current_time();
         log_siem_arcsight(now.tv_sec,LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog("msg2"_av, "vnc"_av),
-        }, ini, acl_serial.session_type);
+        }, ini, session_type);
 
         auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"vnc\"\n"
                                          "Jan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 msg=long long\\nmessage\\=|x\\\\y\"z msg2=vnc\n");
@@ -163,14 +161,14 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
             KVLog("app"_av, "rdp"_av),
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
-        }, ini, acl_serial.session_type);
+        }, ini, session_type);
 
         auto now = timebase.get_current_time();
         log_siem_arcsight(now.tv_sec,LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
-        }, ini, acl_serial.session_type);
+        }, ini, session_type);
 
         log_file.log6(LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),

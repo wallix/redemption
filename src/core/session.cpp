@@ -721,6 +721,7 @@ public:
                               to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         AclSerializer acl_serial(ini);
+        std::string session_type;
         SessionLogFile log_file(ini, time_base, cctx, rnd, fstat,
                         [&sesman](const Error & error){
                             if (error.errnum == ENOSPC) {
@@ -905,7 +906,7 @@ public:
 
                             if (ini.get<cfg::context::module>() == "RDP"
                             ||  ini.get<cfg::context::module>() == "VNC") {
-                                acl_serial.session_type = ini.get<cfg::context::module>();
+                                session_type = ini.get<cfg::context::module>();
                             }
                             acl_serial.remote_answer = true;
                         } catch (...) {
@@ -939,12 +940,12 @@ public:
                             acl_serial.send_acl_data();
                         });
                     sesman.flush_acl_log6(
-                        [&ini,&acl_serial,&log_file,now](LogId id, KVList kv_list)
+                        [&ini,&log_file,now,&session_type](LogId id, KVList kv_list)
                         {
     //                        const timeval time = timebase.get_current_time();
                             /* Log to SIEM (redirected syslog) */
-                            log_siem_syslog(id, kv_list, ini, acl_serial.session_type);
-                            log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl_serial.session_type);
+                            log_siem_syslog(id, kv_list, ini, session_type);
+                            log_siem_arcsight(now.tv_sec, id, kv_list, ini, session_type);
                             log_file.log6(id, kv_list);
                         });
                     sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
