@@ -187,6 +187,28 @@ void server_draw_text(
 
     UTF8toUnicodeIterator unicode_iter(text);
 
+    int16_t endx = clip.eright();
+
+    if (*unicode_iter && x <= clip.x) {
+        do {
+            const uint32_t charnum = *unicode_iter;
+
+            FontCharView const* font_item = font.glyph_at(charnum);
+            if (!font_item) {
+                LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
+                font_item = &font.unknown_glyph();
+            }
+
+            auto nextx = x + font_item->offsetx + font_item->incby;
+            if (nextx > clip.x) {
+                break;
+            }
+
+            x = nextx;
+            ++unicode_iter;
+        } while (*unicode_iter);
+    }
+
     while (*unicode_iter) {
         int total_width = 0;
         uint8_t data[256];
@@ -195,13 +217,12 @@ void server_draw_text(
         const auto data_end = std::end(data)-2;
 
         const int cacheId = 7;
-        FontCharView const* font_item = nullptr;
-        while (data_begin != data_end && *unicode_iter) {
+        while (data_begin != data_end && *unicode_iter && x+total_width <= endx) {
             const uint32_t charnum = *unicode_iter;
             ++unicode_iter;
 
             int cacheIndex = 0;
-            font_item = font.glyph_at(charnum);
+            FontCharView const* font_item = font.glyph_at(charnum);
             if (!font_item) {
                 LOG(LOG_WARNING, "server_draw_text() - character not defined >0x%02x<", charnum);
                 font_item = &font.unknown_glyph();
@@ -217,7 +238,7 @@ void server_draw_text(
             total_width += font_item->offsetx + font_item->incby;
         }
 
-        const Rect bk(x, y, total_width + 2, font.max_height());
+        Rect bk(x, y, total_width + 2, font.max_height());
 
         RDPGlyphIndex glyphindex(
             cacheId,            // cache_id
@@ -237,9 +258,12 @@ void server_draw_text(
             data                // data
         );
 
-        x += total_width - 1;
-
         drawable.draw(glyphindex, clip, color_ctx, mod_glyph_cache);
+
+        if (x+total_width <= endx) {
+            break;
+        }
+        x += total_width - 1;
     }
 }
 

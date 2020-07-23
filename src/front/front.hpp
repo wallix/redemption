@@ -4584,28 +4584,34 @@ protected:
 
                     if (fc) {
                         const int16_t x = cmd.bk.x + draw_pos_ref;
-                        const int16_t y = cmd.bk.y;
+                        const int16_t y = cmd.bk.y + fc.offsety;
 
                         contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect){
+                            const int16_t glyphx = rect.x + x;
+                            const int16_t glyphy = rect.y + y;
+                            const Rect dest = clip.intersect(Rect(glyphx, glyphy, rect.cx, rect.cy));
+                            if (dest.isempty()) {
+                                return;
+                            }
+
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rdpbd;
-                            rdpbd.dest_left      = rect.x + x;
-                            rdpbd.dest_top       = rect.y + y + fc.offsety;
-                            rdpbd.dest_right     = rect.cx + rect.x + x - 1;
-                            rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
+                            rdpbd.dest_left      = dest.x;
+                            rdpbd.dest_top       = dest.y;
+                            rdpbd.dest_right     = dest.x + dest.cx - 1;
+                            rdpbd.dest_bottom    = dest.y + dest.cy - 1;
                             rdpbd.bits_per_pixel = 24;
                             rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
-                            rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
 
-                            const Rect tile(0, 0, rect.cx, rect.cy);
+                            const Rect tile(dest.x - glyphx, dest.y - glyphy, align4(dest.cx), dest.cy);
                             Bitmap bmp(glyphBitmap.data(), fc.width, fc.height, BitsPerPixel{24}, tile);
+                            rdpbd.bitmap_length  = bmp.bmp_size();
+                            rdpbd.width          = tile.cx;
+                            rdpbd.height         = tile.cy;
 
                             StaticOutStream<65535> bmp_stream;
                             bmp.compress(this->client_info.screen_info.bpp, bmp_stream);
-
-                            rdpbd.width          = bmp.cx();
-                            rdpbd.height         = bmp.cy();
 
                             this->draw_impl(rdpbd, bmp);
                         });
@@ -4615,10 +4621,7 @@ protected:
                         draw_pos_ref += cmd.ui_charinc;
                     }
                 }
-                else if (data == 0xFE) {
-                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
-                }
-                else if (data == 0xFF)  {
+                else if (data == 0xFE || data == 0xFF) {
                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
             }
