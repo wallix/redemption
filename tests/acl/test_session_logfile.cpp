@@ -57,7 +57,7 @@ inline void init_keys(CryptoContext & cctx)
     ));
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
+RED_AUTO_TEST_CASE(TestSessionLogfileAskNextModule)
 {
     class NullTransport : public Transport
     {
@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     RED_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
+RED_AUTO_TEST_CASE(TestSessionLogfileIncoming)
 {
     Inifile ini;
     StaticOutStream<1024> stream;
@@ -187,7 +187,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
+RED_AUTO_TEST_CASE(TestSessionLogfileIncoming2)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
 }
 
 
-RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
+RED_AUTO_TEST_CASE(TestSessionLogfileSendBigData)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -290,7 +290,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     acl.send_acl_data();
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
+RED_AUTO_TEST_CASE(TestSessionLogfileReceiveBigData)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -347,7 +347,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
+RED_AUTO_TEST_CASE(TestSessionLogfileReceiveKeyMultiPacket)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -398,7 +398,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     trans.disable_remaining_error();
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
+RED_AUTO_TEST_CASE(TestSessionLogfileUnknownKey)
 {
     Inifile ini;
     ini.clear_send_index();
@@ -447,7 +447,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 }
 
 
-RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
+RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
 {
     Inifile ini;
     ini.clear_send_index();

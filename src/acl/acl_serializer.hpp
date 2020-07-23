@@ -89,10 +89,27 @@ public:
         }
     }
 
-    void set_auth_trans(Transport * auth_trans) { this->auth_trans = auth_trans; }
-    void in_items();
-    void incoming();
-    void send_acl_data();
+    // Set an already opened Transport to ACL : after calling this method AclSerializer is connected
+    void set_auth_trans(Transport * auth_trans)
+    {
+        this->auth_trans = auth_trans;
+        this->acl_status = acl_state_connected;
+    }
+
+    void set_failed_auth_trans()
+    {
+        this->acl_status = acl_state_connection_failed;
+    }
+
+    bool is_connexion_failed()
+    {
+        return this->acl_status == acl_state_connection_failed;
+    }
+
+    bool is_before_connexion()
+    {
+        return this->acl_status == acl_state_not_yet_connected;
+    }
 
     std::string show() {
         switch (this->acl_status) {
@@ -109,5 +126,11 @@ public:
         }
         return "Acl unexpected state";
     }
+
+    void in_items();
+    void incoming();
+    void send_acl_data();
+
+
 };
 

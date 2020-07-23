@@ -424,7 +424,7 @@ private:
     }
 
     bool front_up_and_running(AclSerializer & acl_serial,
-                              std::unique_ptr<SessionLogFile> & log_file, Inifile& ini,
+                              SessionLogFile & log_file, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Sesman & sesman,
@@ -495,7 +495,7 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
-                            log_file->start_session_log();
+                            log_file.open_session_log();
                             sesman.set_connect_target();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -531,7 +531,7 @@ private:
 
                     try {
                         if (mod_wrapper.current_mod != next_state) {
-                            log_file->start_session_log();
+                            log_file.open_session_log();
                             sesman.set_connect_target();
                         }
                         this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -721,8 +721,15 @@ public:
                               to_verbose_flags(ini.get<cfg::debug::auth>()));
 
         AclSerializer acl_serial(ini);
+        SessionLogFile log_file(ini, time_base, cctx, rnd, fstat,
+                        [&sesman](const Error & error){
+                            if (error.errnum == ENOSPC) {
+                                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                                sesman.report("FILESYSTEM_FULL", "100|unknown");
+                            }
+                        });
+
         std::unique_ptr<Transport> auth_trans;
-        std::unique_ptr<SessionLogFile> log_file;
 
         try {
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
@@ -938,7 +945,7 @@ public:
                             /* Log to SIEM (redirected syslog) */
                             log_siem_syslog(id, kv_list, ini, acl_serial.session_type);
                             log_siem_arcsight(now.tv_sec, id, kv_list, ini, acl_serial.session_type);
-                            log_file->log6(id, kv_list);
+                            log_file.log6(id, kv_list);
                         });
                     sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
                     // send over wire if any field changed
@@ -948,7 +955,7 @@ public:
                     }
                     sesman.flush_acl_disconnect_target([&log_file]()
                     {
-                        log_file->close_session_log();
+                        log_file.close_session_log();
                     });
 
                 }
@@ -984,15 +991,17 @@ public:
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
                 {
-                    if (acl_serial.acl_status == AclSerializer::acl_state_not_yet_connected) {
+                    if (acl_serial.is_before_connexion()) {
                         try {
                             unique_fd client_sck = addr_connect_non_blocking(
                                                         ini.get<cfg::globals::authfile>().c_str(),
                                                         (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
+
                             if (!client_sck.is_open()) {
                                 LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
                                     ini.get<cfg::globals::authfile>().c_str());
-                                acl_serial.acl_status = AclSerializer::acl_state_connection_failed;
+                                acl_serial.set_failed_auth_trans();
+                                // will go to the catch below
                                 throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
                             }
 
@@ -1001,19 +1010,9 @@ public:
                                 std::chrono::seconds(1), SocketTransport::Verbose::none);
 
                             acl_serial.set_auth_trans(auth_trans.get());
-                            acl_serial.acl_status = AclSerializer::acl_state_connected;
-                            log_file = std::make_unique<SessionLogFile>(ini, time_base, cctx, rnd, fstat,
-                                    [&sesman](const Error & error){
-                                        if (error.errnum == ENOSPC) {
-                                            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                                            sesman.report("FILESYSTEM_FULL", "100|unknown");
-                                        }
-                                    });
-
                         }
                         catch (...) {
                             this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                            mod_wrapper.disconnect();
                             run_session = false;
                             LOG(LOG_INFO, "Start of acl failed : no authentifier available");
                             if (ini.get<cfg::globals::enable_close_box>()) {
@@ -1022,6 +1021,7 @@ public:
                                 run_session = true;
                             }
                         }
+
                         continue;
                     }
 

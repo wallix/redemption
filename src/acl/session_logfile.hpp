@@ -69,6 +69,7 @@ public:
         return this->logfile_is_open;
     }
 
+public:
     void open(std::string const& log_path, std::string const& hash_path, int groupid, bytes_view derivator)
     {
         assert(!this->ct.is_open());
@@ -78,6 +79,7 @@ public:
         this->logfile_is_open = true;
     }
 
+public:
     void log6(LogId id, KVList kv_list)
     {
         const timeval time = this->time_base.get_current_time();
@@ -102,7 +104,7 @@ public:
         this->ct.send("\n", 1);
     }
 
-    void start_session_log()
+    void open_session_log()
     {
         this->cctx.set_master_key(this->ini.get<cfg::crypto::key0>());
         this->cctx.set_hmac_key(this->ini.get<cfg::crypto::key1>());
@@ -259,11 +261,11 @@ namespace
         append("account=\"",    account);
     }
 
-   
+
     inline void log_siem_syslog(LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
     {
         if (ini.get<cfg::session_log::enable_session_log>()) {
-        
+
             auto target_ip = [&ini]{
                 char c = ini.get<cfg::context::target_host>()[0];
                 using av = chars_view;
@@ -354,6 +356,6 @@ namespace
             LOG_SIEM("%s", buffer);
         }
     }
-    
+
 }
 

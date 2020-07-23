@@ -673,6 +673,34 @@ test-run tests/acl/test_sesman :
   <library>src/utils/pattutils.o
   <covfile>src/acl/sesman.hpp
 ;
+test-run tests/acl/test_session_logfile :
+  $(REDEMPTION_TEST_PATH)/acl/test_session_logfile.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>openssl
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/acl/acl_serializer.o
+  <library>src/core/error.o
+  <library>src/core/set_server_redirection_target.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  <library>tests/includes/test_only/transport/test_transport.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/acl/session_logfile.hpp
+;
 test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
   $(REDEMPTION_TEST_PATH)/capture/ocr/locale/test_latin_to_cyrillic.cpp
 :
@@ -5725,6 +5753,7 @@ alias test_auth_api : tests/acl/test_auth_api ;
 alias test_end_session_warning : tests/acl/test_end_session_warning ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_sesman : tests/acl/test_sesman ;
+alias test_session_logfile : tests/acl/test_session_logfile ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
 alias test_capture : tests/capture/test_capture ;
 alias test_cryptofile : tests/capture/test_cryptofile ;
@@ -6066,6 +6095,7 @@ alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
 alias test_sesman.coverage : tests/acl/test_sesman.coverage ;
+alias test_session_logfile.coverage : tests/acl/test_session_logfile.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
 alias test_capture.coverage : tests/capture/test_capture.coverage ;
 alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
@@ -6390,6 +6420,7 @@ alias tests/acl.norec :
   tests/acl/test_end_session_warning
   tests/acl/test_license_api
   tests/acl/test_sesman
+  tests/acl/test_session_logfile
 ;
 alias tests/capture/ocr/locale.norec :
   tests/capture/ocr/locale/test_latin_to_cyrillic
