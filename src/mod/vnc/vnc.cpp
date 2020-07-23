@@ -104,8 +104,8 @@ mod_vnc::mod_vnc( Transport & t
         event.rename("VNC Fd Event");
         event.alarm.set_fd(this->t.get_fd(), std::chrono::seconds{300});
         event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds{300});
-        event.actions.on_timeout = [](Event&){};
-        event.actions.on_action = [this](Event&)
+        event.actions.on_timeout = [](Event&/*event*/){};
+        event.actions.on_action = [this](Event&/*ebent*/)
         {
             this->draw_event(this->gd_provider.get_graphics());
         };
@@ -1022,7 +1022,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             char key[12] = {};
 
             // key is simply password padded with nulls
-            strncpy(key, this->password, 8); /*NOLINT*/
+            strncpy(key, char_ptr_cast(byte_ptr_cast(this->password)), 8);
             rfbDesKey(byte_ptr_cast(key), EN0); // 0, encrypt
             auto const random_buf = this->password_ctx.server_random.data();
             rfbDes(random_buf, random_buf);
