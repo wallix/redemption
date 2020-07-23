@@ -438,7 +438,7 @@ namespace
             return false;
         }
 
-        friend std::ostream& operator<<(std::ostream& out, Msg const& msg)/*NOLINT*/
+        friend std::ostream& operator<<(std::ostream& out, Msg const& msg)
         {
             char const* names[]{
                 "Log6", "ToMod", "ToFront", "ToValidator", "Nothing", "Missing"
@@ -835,7 +835,6 @@ namespace
                 MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
                 TimeBase & time_base,
-                Sesman & sesman,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
             : report_message(msg_comparator)
@@ -854,7 +853,6 @@ namespace
                     d.always_file_storage
                 }
             )
-            , sesman(sesman)
             {}
 
             bool dlp_message_accept(FileValidatorId id)
@@ -881,7 +879,6 @@ namespace
 
         private:
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-            Sesman & sesman;
 
         public:
             void process_server_message(
@@ -997,7 +994,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
         msg_comparator,
         fdx_ctx.get(),
         time_base,
-        sesman,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1202,7 +1198,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
         msg_comparator,
         fdx_ctx.get(),
         time_base,
-        sesman,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1663,7 +1658,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         msg_comparator,
         fdx_ctx.get(),
         time_base,
-        sesman,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -2747,7 +2741,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
         msg_comparator,
         fdx_ctx.get(),
         time_base,
-        sesman,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 

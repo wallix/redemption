@@ -113,10 +113,9 @@ class NLAServer
     writable_u8_array_view front_public_key_av;
 
 public:
-    NLAServer(std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
+    NLAServer(std::string nla_username, std::string nla_password, bool forkable, uint64_t verbosity)
         : nla_username(nla_username)
         , nla_password(nla_password)
-        , enable_kerberos(enable_kerberos)
         , forkable(forkable)
         , verbosity(verbosity)
     {
@@ -335,7 +334,7 @@ public:
 
 private:
     int connection_counter = 0;
-    bool enable_kerberos;
+//    bool enable_kerberos;
     bool forkable;
     uint64_t verbosity;
 };
@@ -413,7 +412,7 @@ int main(int argc, char *argv[])
 
     openlog("NLAServer", LOG_CONS | LOG_PERROR, LOG_USER);
 
-    NLAServer front(std::move(nla_username), std::move(nla_password), enable_kerberos, !no_forkable, verbosity);
+    NLAServer front(std::move(nla_username), std::move(nla_password), !no_forkable, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
         return -2;

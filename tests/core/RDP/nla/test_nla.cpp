@@ -906,8 +906,3 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     RED_TEST_MESSAGE("\n");
 }
 
-
-
-
-
-
