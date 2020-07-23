@@ -230,13 +230,6 @@ class Session
         }
     }
 
-    void acl_disconnect(AclSerializer & acl_serial, int & acl_status) {
-        if (acl_status == AclSerializer::acl_state_connected) {
-            acl_serial.disconnect();
-            acl_status = AclSerializer::acl_state_disconnected_by_redemption;
-        }
-    }
-
     struct Select
     {
         unsigned max = 0;
@@ -433,8 +426,7 @@ private:
         // There are modified fields to send to sesman
         BackEvent_t signal = mod_wrapper.get_mod_signal();
 
-        if ((acl_serial.acl_status == AclSerializer::acl_state_connected)
-        && ini.changed_field_size()) {
+        if (acl_serial.is_connected() && ini.changed_field_size()) {
             switch (signal){
             case BACK_EVENT_NONE:
                 // send message to acl with changed values when connected to
@@ -462,8 +454,7 @@ private:
             return true;
         } // acl ini changed_field_size
 
-        if ((acl_serial.acl_status == AclSerializer::acl_state_connected)
-        && acl_serial.remote_answer) {
+        if (acl_serial.is_connected() && acl_serial.remote_answer) {
             BackEvent_t signal = mod_wrapper.get_mod_signal();
             acl_serial.remote_answer = false;
 
@@ -824,7 +815,7 @@ public:
                 // gather fd from events
                 events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
-                if (acl_serial.acl_status == AclSerializer::acl_state_connected) {
+                if (acl_serial.is_connected()) {
 //                    LOG(LOG_INFO, "acl_sck fd=%d", this->acl_acl_serial->auth_trans->get_sck());
                     ioswitch.set_read_sck(acl_serial.auth_trans->get_sck());
                 }
@@ -899,11 +890,10 @@ public:
                 }
 
                 // exchange data with sesman
-                if (acl_serial.acl_status == AclSerializer::acl_state_connected){
+                if (acl_serial.is_connected()){
                     if (ioswitch.is_set_for_reading(acl_serial.auth_trans->get_sck())) {
                         try {
                             acl_serial.incoming();
-
                             if (ini.get<cfg::context::module>() == "RDP"
                             ||  ini.get<cfg::context::module>() == "VNC") {
                                 session_type = ini.get<cfg::context::module>();
@@ -962,8 +952,7 @@ public:
                 }
                 else {
                     if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE){
-                        if ((acl_serial.acl_status == AclSerializer::acl_state_disconnected_by_authentifier)
-                        || (acl_serial.acl_status == AclSerializer::acl_state_disconnected_by_redemption)){
+                        if (acl_serial.is_after_connexion()){
                             this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
                             mod_wrapper.disconnect();
                             run_session = false;
@@ -1063,7 +1052,7 @@ public:
                             }
                         }
 
-                        if ((acl_serial.acl_status == AclSerializer::acl_state_connected)
+                        if (acl_serial.is_connected()
                         && !keepalive.is_started()
                         && mod_wrapper.is_connected())
                         {
@@ -1082,7 +1071,7 @@ public:
                             LOG(LOG_INFO, "Exited from target connection");
                             mod_wrapper.disconnect();
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-                            if (acl_serial.acl_status == AclSerializer::acl_state_connected){
+                            if (acl_serial.is_connected()){
                                 keepalive.stop();
                                 sesman.set_disconnect_target();
                                 acl_serial.remote_answer = false;

@@ -82,6 +82,15 @@ public:
     ~AclSerializer();
 
     void disconnect() {
+        if (this->acl_status == acl_state_connected) {
+            this->acl_status = acl_state_disconnected_by_redemption;
+            if (this->auth_trans){
+                this->auth_trans->disconnect();
+                this->auth_trans = nullptr;
+            }
+            return;
+        }
+        // If connexion was cut by authentifier, we also want to call disconnect on transport
         if (this->auth_trans){
             this->auth_trans->disconnect();
             this->auth_trans = nullptr;
@@ -108,6 +117,17 @@ public:
     bool is_before_connexion()
     {
         return this->acl_status == acl_state_not_yet_connected;
+    }
+
+    bool is_after_connexion()
+    {
+        return this->acl_status == acl_state_disconnected_by_authentifier
+        || this->acl_status == acl_state_disconnected_by_redemption;
+    }
+
+    bool is_connected()
+    {
+        return acl_status == acl_state_connected;
     }
 
     std::string show() {
