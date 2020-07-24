@@ -3974,13 +3974,9 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/scroll.o
-  <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/drawable.o
