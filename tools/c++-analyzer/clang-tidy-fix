@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# cppcoreguidelines-pro-type-member-init / hicpp-member-init false positive...
+
+${CLANG_TIDY:=clang-tidy} -fix -checks='modernize-use-nodiscard' \
+-config='{CheckOptions: [
+{key: llvm-namespace-comment.ShortNamespaceLines, value: 10},
+{key: readability-uppercase-literal-suffix.NewSuffixes, value: L;LL}
+]}' \
+-header-filter='.*' \
+$(find src/ -name '*.cpp' \
+    -a -not -path 'src/ftests/*' \
+    -a -not -path 'src/keyboard/*' \
+    -a -not -path 'src/system/emscripten/*' \
+    -a -not -path 'src/utils/crypto/*' \
+    -a -not -path 'src/main/*' \
+    -a -not -name app_path.cpp \
+    -a -not -name log_as_logemasm.cpp) \
+$(find tests/core -name 'test_*.cpp' \
+    -a -not -path 'tests/includes/*' \
+    -a -not -path 'tests/keyboard/*' \
+    -a -not -path 'tests/system/emscripten/*' \
+    -a -not -path 'tests/utils/crypto/*') \
+-- \
+-std=c++17 \
+-I'include' \
+-I'modules/includes' \
+-I'modules/ppocr/includes/mln' \
+-I'modules/ppocr/src' \
+-I'projects/ocr1/include' \
+-I'projects/redemption_configs/autogen/include' \
+-I'projects/redemption_configs/redemption_src' \
+-I'src' \
+-I'src/system/linux' \
+-I'tests/includes/' \
+-DZLIB_CONST \
+-DFIXTURES_PATH='"mypath" /*NOLINT*/' \
+-DREDEMPTION_DECL_LOG_TEST \
+-DBOOST_AUTO_TEST_MAIN \
+-DBOOST_TEST_DYN_LINK \
+-DFAST_CHECK=1
+
+# highlighting
+# sed "s#`pwd`/##" | colout '(^[pst][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w
