@@ -373,7 +373,7 @@ namespace std /*NOLINT*/
 
 #if defined(IN_IDE_PARSER) || REDEMPTION_UNIT_TEST_FAST_CHECK
 #define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
-    for (type_value : __VA_ARGS__)                        \
+    for ([[maybe_unused]] type_value : __VA_ARGS__)       \
         RED_TEST_CONTEXT(iocontext) /*NOLINT*/
 #else
 #define RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, ...) \

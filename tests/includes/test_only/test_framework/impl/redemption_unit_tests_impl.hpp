@@ -300,47 +300,106 @@ namespace redemption_unit_test__
     boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
     boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len);
 
-
-    template<class T> struct is_bytes_view : std::false_type {};
-    template<> struct is_bytes_view<bytes_view> : std::true_type {};
-    template<> struct is_bytes_view<writable_bytes_view> : std::true_type {};
-
     template<class T> struct is_array_view : std::false_type {};
     template<class T> struct is_array_view<array_view<T>> : std::true_type {};
     template<class T> struct is_array_view<writable_array_view<T>> : std::true_type {};
     template<> struct is_array_view<::ut::flagged_bytes_view> : std::true_type {};
+    template<> struct is_array_view<bytes_view> : std::true_type {};
+    template<> struct is_array_view<writable_bytes_view> : std::true_type {};
+} // namespace redemption_unit_test__
+
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
+namespace redemption_unit_test__
+{
+    template<class T>
+    auto normalize_view(T const& v)
+    {
+        if constexpr (std::is_convertible_v<T, bytes_view>) {
+            return bytes_view{v};
+        }
+        else if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {
+            return v.bytes;
+        }
+        else {
+            return array_view{v};
+        }
+    }
+
+    template<class Op, class T, class U>
+    bool av_equal(Op op, T const& x, U const& y)
+    {
+        if constexpr (std::is_same_v<T, bytes_view> || std::is_same_v<U, bytes_view>) {
+            bytes_view a {x};
+            bytes_view b {y};
+            return std::equal(a.begin(), a.end(), b.begin(), b.end(), op);
+        }
+        else
+        {
+            return std::equal(x.begin(), x.end(), y.begin(), y.end(), op);
+        }
+    }
 
     template<class T, class U>
-    struct is_array_view_comparable : std::integral_constant<bool,
-        (is_array_view<T>::value || is_array_view<U>::value)
-        && not (is_bytes_view<T>::value || is_bytes_view<U>::value)
-    >
-    {};
+    using enable_comparison_if_view = std::enable_if_t<
+        is_array_view<T>::value || is_array_view<U>::value, bool>;
 
-    template<class T, class U, bool, bool>
-    struct is_bytes_comparable_impl : std::false_type {};
+    namespace ops
+    {
+        template<class T, class U>
+        enable_comparison_if_view<T, U>
+        operator == (T const& x, U const& y)
+        {
+            return av_equal(std::equal_to{}, normalize_view(x), normalize_view(y));
+        }
 
-    template<class T, class U>
-    struct is_bytes_comparable_impl<T, U, true, true>
-    : std::true_type
-    {};
+        template<class T, class U>
+        enable_comparison_if_view<T, U>
+        operator != (T const& x, U const& y)
+        {
+            return !av_equal(std::equal_to{}, normalize_view(x), normalize_view(y));
+        }
 
-    template<class T, class U>
-    struct is_bytes_comparable_impl<T, U, false, true>
-    : std::is_convertible<T, bytes_view>
-    {};
+        template<class T, class U>
+        enable_comparison_if_view<T, U>
+        operator < (T const& x, U const& y)
+        {
+            return av_equal(std::less{}, normalize_view(x), normalize_view(y));
+        }
 
-    template<class T, class U>
-    struct is_bytes_comparable_impl<T, U, true, false>
-    : std::is_convertible<U, bytes_view>
-    {};
+        template<class T, class U>
+        enable_comparison_if_view<T, U>
+        operator >= (T const& x, U const& y)
+        {
+            return !av_equal(std::less{}, normalize_view(x), normalize_view(y));
+        }
 
+        template<class T, class U>
+        enable_comparison_if_view<T, U>
+        operator > (T const& x, U const& y)
+        {
+            return av_equal(std::less{}, normalize_view(y), normalize_view(x));
+        }
 
-    template<class T, class U>
-    struct is_bytes_comparable
-    : is_bytes_comparable_impl<T, U, is_bytes_view<T>::value, is_bytes_view<U>::value>
-    {};
+        template<class T, class U>
+        enable_comparison_if_view<T, U>
+        operator <= (T const& x, U const& y)
+        {
+            return !av_equal(std::less{}, normalize_view(y), normalize_view(x));
+        }
+    }
+} // namespace redemption_unit_test__
 
+using redemption_unit_test__::ops::operator ==;
+using redemption_unit_test__::ops::operator !=;
+using redemption_unit_test__::ops::operator <;
+using redemption_unit_test__::ops::operator <=;
+using redemption_unit_test__::ops::operator >;
+using redemption_unit_test__::ops::operator >=;
+
+#else
+
+namespace redemption_unit_test__
+{
     // boost::unit_test::is_forward_iterable<array_view<T>> -> false (see bellow)
     template<class T>
     struct View : array_view<T>
@@ -349,94 +408,7 @@ namespace redemption_unit_test__
 
         View(array_view<T> v) noexcept : array_view<T>(v) {}
     };
-
-#if REDEMPTION_UNIT_TEST_FAST_CHECK
-    template<class T, class U>
-    struct is_view_comparable
-    : std::integral_constant<bool,
-        is_bytes_comparable<T, U>::value
-     || is_array_view_comparable<T, U>::value>
-    {};
-
-    template<class Op, class T, class U>
-    bool av_equal(Op op, T const& x,  U const& y)
-    {
-        using std::begin;
-        using std::end;
-        if constexpr (is_bytes_view<T>::value || is_bytes_view<U>::value
-         || (std::is_convertible_v<T, bytes_view> && std::is_convertible_v<U, bytes_view>))
-        {
-            bytes_view a = x;
-            bytes_view b = y;
-            return std::equal(a.begin(), a.end(), b.begin(), b.end(), op);
-        }
-        else if constexpr (is_array_view<T>::value)
-        {
-            T v{x};
-            return std::equal(begin(v), end(v), begin(y), end(y), op);
-        }
-        else
-        {
-            U v{y};
-            return std::equal(begin(x), end(x), begin(v), end(v), op);
-        }
-    }
-
-    namespace ops
-    {
-        template<class T, class U>
-        std::enable_if_t<is_view_comparable<T, U>::value, bool>
-        operator == (T const& x,  U const& y)
-        {
-            return av_equal(std::equal_to{}, x, y);
-        }
-
-        template<class T, class U>
-        std::enable_if_t<is_view_comparable<T, U>::value, bool>
-        operator != (T const& x,  U const& y)
-        {
-            return !av_equal(std::equal_to{}, x, y);
-        }
-
-        template<class T, class U>
-        std::enable_if_t<is_view_comparable<T, U>::value, bool>
-        operator < (T const& x,  U const& y)
-        {
-            return av_equal(std::less{}, x, y);
-        }
-
-        template<class T, class U>
-        std::enable_if_t<is_view_comparable<T, U>::value, bool>
-        operator >= (T const& x,  U const& y)
-        {
-            return !av_equal(std::less{}, x, y);
-        }
-
-        template<class T, class U>
-        std::enable_if_t<is_view_comparable<T, U>::value, bool>
-        operator > (T const& x,  U const& y)
-        {
-            return av_equal(std::less{}, y, x);
-        }
-
-        template<class T, class U>
-        std::enable_if_t<is_view_comparable<T, U>::value, bool>
-        operator <= (T const& x,  U const& y)
-        {
-            return !av_equal(std::less{}, y, x);
-        }
-    }
-#endif
 } // namespace redemption_unit_test__
-
-#if REDEMPTION_UNIT_TEST_FAST_CHECK
-using redemption_unit_test__::ops::operator ==;
-using redemption_unit_test__::ops::operator !=;
-using redemption_unit_test__::ops::operator <;
-using redemption_unit_test__::ops::operator <=;
-using redemption_unit_test__::ops::operator >;
-using redemption_unit_test__::ops::operator >=;
-#endif
 
 namespace boost {
 
@@ -458,32 +430,10 @@ namespace op {
 // action( oper, name, rev )
 #define DEFINE_COLLECTION_COMPARISON(oper, name, rev)                     \
 template<class T, class U>                                                \
-struct name<T, U, std::enable_if_t<                                       \
-    ::redemption_unit_test__::is_bytes_comparable<T, U>::value>>          \
-{                                                                         \
-    using result_type = assertion_result;                                 \
-                                                                          \
-    static assertion_result                                               \
-    eval( bytes_view lhs, bytes_view rhs )                                \
-    {                                                                     \
-        return ::redemption_unit_test__::bytes_##name(lhs, rhs,           \
-            ::ut::default_pattern_view, ::ut::default_ascii_min_len);     \
-    }                                                                     \
-                                                                          \
-    template<class PrevExprType>                                          \
-    static void                                                           \
-    report( std::ostream&,                                                \
-            PrevExprType const&,                                          \
-            bytes_view const&)                                            \
-    {}                                                                    \
-                                                                          \
-    static char const* revert()                                           \
-    { return " " #rev " "; }                                              \
-};                                                                        \
-                                                                          \
-template<class T, class U>                                                \
-struct name<T, U, std::enable_if_t<                                       \
-    ::redemption_unit_test__::is_array_view_comparable<T, U>::value>>     \
+struct name<T, U, std::enable_if_t<(                                      \
+    ::redemption_unit_test__::is_array_view<T>::value                     \
+ || ::redemption_unit_test__::is_array_view<U>::value                     \
+)>>                                                                       \
 {                                                                         \
     using result_type = assertion_result;                                 \
     using OP = name<T, U>;                                                \
@@ -504,18 +454,25 @@ struct name<T, U, std::enable_if_t<                                       \
             unsigned min_len = ::ut::default_ascii_min_len;               \
             bytes_view a;                                                 \
             bytes_view b;                                                 \
+                                                                          \
             if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
-               flag = lhs.pattern;                                        \
-               min_len = std::max(min_len, lhs.min_len);                  \
-               a = lhs.bytes;                                             \
+                flag = lhs.pattern;                                       \
+                min_len = std::max(min_len, lhs.min_len);                 \
+                a = lhs.bytes;                                            \
             }                                                             \
-            else a = lhs;                                                 \
+            else {                                                        \
+                a = lhs;                                                  \
+            }                                                             \
+                                                                          \
             if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
-               flag = rhs.pattern;                                        \
-               min_len = std::max(min_len, rhs.min_len);                  \
-               b = rhs.bytes;                                             \
+                flag = rhs.pattern;                                       \
+                min_len = std::max(min_len, rhs.min_len);                 \
+                b = rhs.bytes;                                            \
             }                                                             \
-            else b = rhs;                                                 \
+            else {                                                        \
+                b = rhs;                                                  \
+            }                                                             \
+                                                                          \
             return ::redemption_unit_test__                               \
                 ::bytes_##name(a, b, flag, min_len);                      \
         }                                                                 \
@@ -547,3 +504,5 @@ BOOST_TEST_FOR_EACH_COMP_OP(DEFINE_COLLECTION_COMPARISON)
 } // namespace assertion
 } // namespace test_tools
 } // namespace boost
+
+#endif

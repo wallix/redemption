@@ -444,6 +444,7 @@ namespace
             return false;
         }
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
         friend std::ostream& operator<<(std::ostream& out, Msg const& msg)
         {
             char const* names[]{
@@ -503,6 +504,7 @@ namespace
 
             return out;
         }
+#endif
     };
 
     inline auto ininit_msg_comparator_compare = +[](void*, Msg const&)
@@ -776,6 +778,7 @@ namespace
         bool verify_before_transfer = false;
         ValidationResult validation_result = ValidationResult::Wait;
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
         friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)/*NOLINT*/
         {
             out <<
@@ -794,6 +797,7 @@ namespace
 
             return out;
         }
+#endif
 
         ClipboardVirtualChannelParams default_channel_params() const
         {
