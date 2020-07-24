@@ -5254,7 +5254,6 @@ public:
     [[noreturn]]
     void on_remoteapp_redirect_user_screen(uint32_t ErrorNotificationData) {
         LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
-
         std::string errmsg = "(RemoteApp) ";
 
         errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(ErrorNotificationData);
