@@ -3054,7 +3054,8 @@ public:
                 this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks);
             }
             else {
-                LOG(LOG_INFO, "mod_rdp::process unknown channel: mod_channel.name=%" PRIX64 " %s",uint64_t(mod_channel.name), mod_channel.name);
+                LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
+                    LOG_INFO, "mod_rdp::process unknown channel: mod_channel.name=%" PRIX64 " %s",uint64_t(mod_channel.name), mod_channel.name);
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 this->channels.process_unknown_channel_event(mod_channel, sec.payload, length, flags, chunk_size, this->front);
             }

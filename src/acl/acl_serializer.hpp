@@ -44,6 +44,9 @@ class ModWrapper;
 
 class AclSerializer final
 {
+
+    using authid_t = ::configs::authid_t;
+
 public:
 
     enum {
@@ -53,6 +56,8 @@ public:
         acl_state_disconnected_by_redemption,
         acl_state_disconnected_by_authentifier
     };
+
+    std::function<void()> on_inactivity_timeout = []{};
 
     Inifile & ini;
     Transport * auth_trans;

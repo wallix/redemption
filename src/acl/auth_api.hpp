@@ -87,6 +87,8 @@ struct AuthApi : noncopyable
     
     virtual void set_selector_page(unsigned current, std::string group, std::string device, std::string proto) = 0;
 
+    virtual void set_keyboard_layout(unsigned keyboard_layout) = 0;
+
     virtual ~AuthApi() = default;
 
 };
@@ -116,5 +118,6 @@ struct NullAuthentifier : AuthApi
                            std::string /*group*/, 
                            std::string /*device*/, 
                            std::string /*proto*/) override {}
+    void set_keyboard_layout(unsigned /*keyboard_layout*/) override {}
 };
 

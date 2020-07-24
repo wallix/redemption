@@ -105,14 +105,14 @@ public:
     template<class T, class... Args>
     void set(Args && ... args)
     {
-        static_assert(!T::is_proxy_to_sesman, "T is writable, used set_acl<T>() instead.");
+        static_assert(!T::is_proxy_to_sesman, "T is writable, use set_acl<T>() instead.");
         this->set_value<T>(static_cast<Args&&>(args)...);
     }
 
     template<class T, class... Args>
     void set_acl(Args && ... args)
     {
-        static_assert(T::is_proxy_to_sesman, "T isn't writable, used set<T>() instead.");
+        static_assert(T::is_proxy_to_sesman, "T isn't writable, use set<T>() instead.");
         this->set_value<T>(static_cast<Args&&>(args)...);
     }
 

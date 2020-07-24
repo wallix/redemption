@@ -113,6 +113,9 @@ struct Sesman : public AuthApi
     std::string device_filter;
     std::string proto_filter;
 
+    bool keyboard_layout_sent = true;
+    unsigned keyboard_layout = 0;
+
 
     bool auth_channel_target_sent = true;
     std::string auth_channel_target;
@@ -188,6 +191,11 @@ struct Sesman : public AuthApi
 
     }
 
+    void set_keyboard_layout(unsigned keyboard_layout) override
+    {
+        this->keyboard_layout_sent = false;
+        this->keyboard_layout = keyboard_layout;
+    }
 
     void set_server_cert(std::string const& blob_str) override
     {
@@ -305,6 +313,7 @@ struct Sesman : public AuthApi
         this->flush_acl_auth_error_message(verbose);
         this->flush_acl_auth_channel_target(verbose);
         this->flush_acl_selector_page(verbose);
+        this->flush_acl_keyboard_layout(verbose);
     }
 
     void flush_acl_report(std::function<void(std::string,std::string)> fn)
@@ -369,6 +378,15 @@ private:
             this->ini.ask<cfg::globals::target_device>();
             this->ini.ask<cfg::context::selector>();
             this->selector_page_sent = true;
+        }
+    }
+
+    void flush_acl_keyboard_layout(bool verbose)
+    {
+        if (!this->keyboard_layout_sent){
+            LOG_IF(verbose, LOG_INFO, "flush_acl_keyboard_layout()");
+            this->ini.set_acl<cfg::client::keyboard_layout>(this->keyboard_layout);
+            this->keyboard_layout_sent = true;
         }
     }
 

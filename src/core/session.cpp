@@ -171,25 +171,15 @@ class Session
         time_t last_activity_time;
 
     public:
-        REDEMPTION_VERBOSE_FLAGS(private, verbose)
-        {
-            none,
-            state = 0x10,
-        };
 
-
-        Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbose)
+        Inactivity(std::chrono::seconds timeout, time_t start)
         : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
         , last_activity_time(start)
-        , verbose(verbose)
         {
-            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY CONSTRUCTOR");
         }
 
         ~Inactivity()
         {
-        //    this->disconnect();
-            LOG_IF(bool(this->verbose & Verbose::state), LOG_INFO, "INACTIVITY DESTRUCTOR");
         }
 
         bool check_user_activity(time_t now, bool & has_user_activity)
@@ -207,9 +197,9 @@ class Session
             return false;
         }
 
-        void update_inactivity_timeout(time_t inactivity_timeout)
+        void update_inactivity_timeout(std::chrono::seconds timeout)
         {
-            this->inactivity_timeout = inactivity_timeout;
+            this->inactivity_timeout = std::max<time_t>(timeout.count(), 30);
         }
 
         time_t get_inactivity_timeout()
@@ -218,16 +208,6 @@ class Session
         }
     };
 
-
-    void acl_update_inactivity_timeout(Inactivity & inactivity)
-    {
-        time_t conn_opts_inactivity_timeout = ini.get<cfg::globals::inactivity_timeout>().count();
-        if (conn_opts_inactivity_timeout > 0) {
-            if (inactivity.get_inactivity_timeout()!= conn_opts_inactivity_timeout) {
-                inactivity.update_inactivity_timeout(conn_opts_inactivity_timeout);
-            }
-        }
-    }
 
     struct Select
     {
@@ -706,11 +686,21 @@ public:
                             to_verbose_flags(ini.get<cfg::debug::auth>()));
 
 
-        Inactivity inactivity(ini.get<cfg::globals::session_timeout>(),
-                              now.tv_sec,
-                              to_verbose_flags(ini.get<cfg::debug::auth>()));
+        auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count()!=0)
+            ? ini.get<cfg::globals::inactivity_timeout>()
+            : ini.get<cfg::globals::session_timeout>();
+            
+
+        Inactivity inactivity(timeout, now.tv_sec);
 
         AclSerializer acl_serial(ini);
+        acl_serial.on_inactivity_timeout = [&inactivity,&ini]{
+            auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count()!=0)
+                ? ini.get<cfg::globals::inactivity_timeout>()
+                : ini.get<cfg::globals::session_timeout>();
+            inactivity.update_inactivity_timeout(timeout);
+        };        
+        
         std::string session_type;
         SessionLogFile log_file(ini, time_base, cctx, rnd, fstat,
                         [&sesman](const Error & error){

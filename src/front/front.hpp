@@ -2080,7 +2080,7 @@ public:
 
         this->keymap.init_layout(this->client_info.keylayout);
         LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
-        this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
+        this->sesman.set_keyboard_layout(this->client_info.keylayout);
 
         if (bool(this->verbose & Verbose::channel)) {
             LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");

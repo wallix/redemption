@@ -243,7 +243,6 @@ namespace
 
 } // anonymous namespace
 
-
 void AclSerializer::in_items()
 {
     Reader reader(*this->auth_trans, this->verbose);
@@ -263,12 +262,19 @@ void AclSerializer::in_items()
                         "receiving '%.*s'='%.*s'",
                         int(key.size()), key.data(),
                         int(display_val.size()), display_val.data());
+
+                    // TODO: big hack, generalize this to a set of callbacks to call
+                    if (field.authid() == cfg::globals::inactivity_timeout::index){
+                        this->on_inactivity_timeout();
+                    }
+
                 }
             }
             else if (reader.consume_ask()) {
                 field.ask();
                 LOG_IF(bool(this->verbose & Verbose::variable), LOG_INFO,
                     "receiving ASK '%*s'", int(key.size()), key.data());
+                // callback if the key is listened to for asks
             }
             else {
                 reader.hexdump();
