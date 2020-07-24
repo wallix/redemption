@@ -24,14 +24,17 @@
 #include "utils/image_data_view.hpp"
 #include "utils/png.hpp"
 
-#include <charconv>
-#include <iostream>
-
 #include <cstring>
 
 #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
 # define REDEMPTION_UNIT_TEST_FAST_CHECK 0
 #endif
+
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
+# include <charconv>
+# include <iostream>
+#endif
+
 
 namespace
 {
@@ -65,6 +68,9 @@ namespace
         }();
         return r;
     }
+
+    std::string previous_test_name;
+    int img_counter = 0;
 #endif
 }
 
@@ -94,9 +100,27 @@ namespace ut
     {
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
         if (not do_not_save_images() && count_error != RED_ERROR_COUNT()) {
-            char buf[32];
-            auto r = std::to_chars(buf, buf+20, this->line);
-            std::string path = ut_impl::compute_test_path("line-", array_view{buf, r.ptr}, ".png");
+            std::string const& current_test_name
+                = boost::unit_test::framework::current_test_case().p_name.get();
+            if (previous_test_name != current_test_name) {
+                img_counter = 0;
+                previous_test_name = current_test_name;
+            }
+            ++img_counter;
+
+            using std::begin;
+            using std::end;
+
+            char buf1[32];
+            auto r1 = std::to_chars(begin(buf1), end(buf1), this->line);
+
+            char buf2[32];
+            auto r2 = std::to_chars(begin(buf2), end(buf2), img_counter);
+
+            std::string path = ut_impl::compute_test_path(
+                "line-", array_view{buf1, r1.ptr},
+                "_err-", array_view{buf2, r2.ptr},
+                ".png");
             dump_png24(path.c_str(), img, false);
             std::cerr << "Image path: " << path << '"' << std::endl;
         }
