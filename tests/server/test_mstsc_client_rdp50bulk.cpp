@@ -39,7 +39,6 @@
 #include "test_only/core/font.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
-#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 
 
@@ -105,8 +104,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool fastpath_support = true;
     TimeBase time_base({0,0});
     EventContainer events;
-    Sesman sesman(ini, time_base);
-    FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, fastpath_support);
+    NullAuthentifier auth;
+    FrontWrapper front(time_base, events, auth, front_trans, gen, ini, cctx, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

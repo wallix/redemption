@@ -41,7 +41,7 @@ public:
     FrontWrapper(
         TimeBase& time_base,
         EventContainer& events,
-        Sesman & sesman,
+        AuthApi & auth,
         Transport & trans,
         Random & gen,
         Inifile & ini,

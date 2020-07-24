@@ -23,7 +23,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 #include "acl/gd_provider.hpp"
@@ -42,13 +41,13 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
-#include "transport/socket_transport.hpp"
-#include <chrono>
-#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 
+#include <chrono>
 
 //#define GENERATE_TESTING_DATA
+// include "transport/socket_transport.hpp"
+
 
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
@@ -99,7 +98,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
@@ -281,7 +280,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, auth, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -338,7 +337,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                     LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
                     ini.set_acl<cfg::context::target_host>(host);
                     auto message = std::string(change_user) + '@' + std::string(host);
-                    sesman.report("SERVER_REDIRECTION", message.c_str());
                 }
 
                 do_work = true;
@@ -402,7 +400,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
@@ -537,7 +535,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, time_base, gd_provider, events, sesman, front.gd(), front, info,
+            auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth, front.gd(), front, info,
                 ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -598,7 +596,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                     LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
                     ini.set_acl<cfg::context::target_host>(host);
                     auto message = std::string(change_user) + '@' + std::string(host);
-                    sesman.report("SERVER_REDIRECTION", message.c_str());
                 }
 
                 do_work = true;

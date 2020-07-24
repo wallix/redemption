@@ -38,7 +38,6 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
-#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 
 
@@ -152,7 +151,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     TimeBase time_base({0,0});
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
     GdForwarder gd_provider(front.gd());
@@ -160,7 +159,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, sesman,
+        t, time_base, gd_provider, events, auth,
         front.gd(), front, info, redir_info,
         gen, timeobj, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,

@@ -110,6 +110,6 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
     return true;
 }
 
-#define CHECK_CHANNEL(t, virtual_channel, sesman) RED_CHECK(tu::test_channel(t, virtual_channel));
+#define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(tu::test_channel(t, virtual_channel));
 
 } // namespace tu

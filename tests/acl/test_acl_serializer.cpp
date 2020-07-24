@@ -23,19 +23,12 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
-
-#include "core/log_id.hpp"
-#include "acl/acl_serializer.hpp"
-#include "configs/config.hpp"
-#include "main/version.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "transport/file_transport.hpp"
-#include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/log_buffered.hpp"
-#include "acl/sesman.hpp"
+
+#include "acl/acl_serializer.hpp"
+#include "configs/config.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -69,15 +62,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     Inifile ini;
     NullTransport trans;
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-    TimeBase timebase({0, 0});
 
     AclSerializer acl(ini);
-    Sesman sesman(ini, timebase);
-
     acl.set_auth_trans(&trans);
 
     ini.set<cfg::context::forcemodule>(true);
@@ -113,16 +99,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     stream.out_copy_bytes("session_id\n!6455\n"_av);
     stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-    TimeBase timebase({0, 0});
-
     GeneratorTransport trans(stream.get_produced_bytes());
     AclSerializer acl(ini);
-
-    Sesman sesman(ini, timebase);
 
     acl.set_auth_trans(&trans);
     ini.set<cfg::context::session_id>("");
@@ -171,22 +149,14 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     Inifile ini;
     ini.clear_send_index();
 
-    std::string s = str_concat(
-        "----",
-        "password\nASK\n",
-        "login\n!didier\n");
+    std::string s =
+        "----"
+        "password\nASK\n"
+        "login\n!didier\n";
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
-
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-    TimeBase timebase({0, 0});
 
     GeneratorTransport trans(s);
     AclSerializer acl(ini);
-
-    Sesman sesman(ini, timebase);
 
     acl.set_auth_trans(&trans);
 
@@ -207,7 +177,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 {
     Inifile ini;
     ini.clear_send_index();
-    TimeBase timebase({0, 0});
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
@@ -232,15 +201,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     CheckTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-
     AclSerializer acl(ini);
-
-    Sesman sesman(ini, timebase);
-
     acl.set_auth_trans(&trans);
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
@@ -279,16 +240,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-    TimeBase timebase({0, 0});
-
     AclSerializer acl(ini);
-
-    Sesman sesman(ini, timebase);
-
     acl.set_auth_trans(&trans);
 
     std::string result(sz_string, 'a');
@@ -324,16 +276,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
 
     GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-    TimeBase timebase({0, 0});
-
     AclSerializer acl(ini);
-
-    Sesman sesman(ini, timebase);
-
     acl.set_auth_trans(&trans);
 
     RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
@@ -350,15 +293,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
     TimeBase timebase({0, 0});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-
     GeneratorTransport trans(s);
     AclSerializer acl(ini);
-
-    Sesman sesman(ini, timebase);
 
     acl.set_auth_trans(&trans);
 
@@ -379,4 +315,3 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
     RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }
-

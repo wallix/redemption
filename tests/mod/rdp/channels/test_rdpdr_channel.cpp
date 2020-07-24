@@ -28,9 +28,8 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "./test_channel.hpp"
-#include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
-#include "configs/config.hpp"
+
 
 namespace
 {
@@ -165,9 +164,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
         TimeBase time_base({0,0});
         EventContainer events;
-        Inifile ini;
-        Sesman sesman(ini, time_base);
-        BaseVirtualChannel::Params base_params(sesman, verbose);
+        NullAuthentifier auth;
+        BaseVirtualChannel::Params base_params(auth, verbose);
 
         FileSystemDriveManager file_system_drive_manager;
 
@@ -193,7 +191,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
             time_base, events, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
 
-        RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel, sesman), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 
         RED_CHECK_WORKSPACE(wd);
     }

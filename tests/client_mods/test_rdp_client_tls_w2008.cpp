@@ -39,7 +39,6 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 
-#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 
 
@@ -141,7 +140,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     GdForwarder gd_provider(front.gd());
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
     auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
 
@@ -150,8 +149,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, events,
-        sesman,
+    auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
         front.gd(), front, info, redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, nullptr, nullptr, mod_rdp_factory);
@@ -269,7 +267,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     GdForwarder gd_provider(front.gd());
     EventContainer events;
     Inifile ini;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
     auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -277,9 +275,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events,
-        sesman,
+    auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
         front.gd(), front, info,
         redir_info, gen, timeobj,
         channels_authorizations, mod_rdp_params,

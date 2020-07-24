@@ -32,18 +32,17 @@
 #include "mod/internal/test_card_mod.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
-#include "acl/sesman.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "core/session.hpp"
-//#include "transport/socket_transport.hpp"
+//include "core/listen.hpp"
+//include "core/session.hpp"
+//include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <netinet/tcp.h>
+//include <netinet/tcp.h>
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
@@ -104,8 +103,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool fastpath_support = false;
     TimeBase time_base({0,0});
     EventContainer events;
-    Sesman sesman(ini, time_base);
-    FrontWrapper front(time_base, events, sesman, front_trans, gen, ini, cctx, fastpath_support);
+    NullAuthentifier auth;
+    FrontWrapper front(time_base, events, auth, front_trans, gen, ini, cctx, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 

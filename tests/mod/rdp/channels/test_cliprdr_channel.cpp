@@ -37,8 +37,6 @@
 #include "acl/gd_provider.hpp"
 
 #include "./test_channel.hpp"
-#include "configs/config.hpp"
-#include "acl/sesman.hpp"
 
 namespace
 {
@@ -109,11 +107,10 @@ namespace
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 {
     TimeBase time_base({0,0});
-    Inifile ini;
-    Sesman sesman(ini, time_base);
     FileValidatorService * ipca_service = nullptr;
+    NullAuthentifier auth;
 
-    BaseVirtualChannel::Params base_params(sesman, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+    BaseVirtualChannel::Params base_params(auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     EventContainer events;
 
@@ -148,7 +145,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
             base_params, d.cb_params, ipca_service, {nullptr, false});
 
         RED_CHECK_EXCEPTION_ERROR_ID(
-            CHECK_CHANNEL(t, clipboard_virtual_channel, sesman),
+            CHECK_CHANNEL(t, clipboard_virtual_channel),
             ERR_TRANSPORT_NO_MORE_DATA);
     }
 }
@@ -163,11 +160,10 @@ public:
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
     TimeBase time_base({0,0});
-    Inifile ini;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(sesman, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+    BaseVirtualChannel::Params base_params(auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -201,11 +197,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
     TimeBase time_base({0,0});
     EventContainer events;
-    Inifile ini;
-    Sesman sesman(ini, time_base);
+    NullAuthentifier auth;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(sesman, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+    BaseVirtualChannel::Params base_params(auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
@@ -994,9 +989,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
     ClipDataTest{false, true, true, false}
 })
 {
-    Inifile ini;
     TimeBase time_base({0,0});
-    Sesman sesman(ini, time_base);
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
@@ -1199,8 +1192,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
 })
 {
     TimeBase time_base({0,0});
-    Inifile ini;
-    Sesman sesman(ini, time_base);
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
@@ -1653,9 +1644,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
 {
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
-    Inifile ini;
     TimeBase time_base({0,0});
-    Sesman sesman(ini, time_base);
 
     bytes_view temp_av;
     MsgComparator msg_comparator;
@@ -2741,8 +2730,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     TimeBase time_base({0,0});
-    Inifile ini;
-    Sesman sesman(ini, time_base);
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 10;
