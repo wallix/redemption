@@ -25,7 +25,6 @@
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
-#include "utils/png.hpp"
 #include "test_only/test_framework/img_sig.hpp"
 
 RED_AUTO_TEST_CASE(TestTestCardMod)
@@ -38,5 +37,6 @@ RED_AUTO_TEST_CASE(TestTestCardMod)
     //dump_png24("./test_test_card_mod_0.png", ConstImageDataView(gd), true);
     RED_CHECK_NO_THROW(mod.init());
     //dump_png24("./test_test_card_mod_1.png", ConstImageDataView(gd), true);
-    RED_CHECK_IMG_SIG(gd, "\x6e\x92\x26\x65\xbf\xd5\x18\xb7\x03\xe5\x97\xce\xf9\xa2\x12\xee\x4b\xac\xf1\x71");
+    RED_CHECK_IMG_SIG(gd,
+        "\x6e\x92\x26\x65\xbf\xd5\x18\xb7\x03\xe5\x97\xce\xf9\xa2\x12\xee\x4b\xac\xf1\x71");
 }

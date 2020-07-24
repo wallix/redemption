@@ -35,9 +35,6 @@
 
 #include "test_only/test_framework/sig.hpp"
 
-#include <memory>
-#include <functional>
-
 
 RED_AUTO_TEST_CASE(TestAvPair)
 {

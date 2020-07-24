@@ -29,7 +29,6 @@
 #include "utils/drawable_pointer.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/timestamp_tracer.hpp"
-#include "utils/png.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
 
@@ -59,11 +58,8 @@ RED_AUTO_TEST_CASE(TestLineTo)
 
     gd.draw_line(10, 0, 10, 1024, 479, 0xCC, gd.u32bgr_to_color(PINK), screen_rect.shrink(5));
 
-    RED_CHECK_IMG_SIG(gd, "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a");
-
-    // uncomment to see result in png file
-    //save_to_png("/tmp/test_line_000.png", gd.impl());
-    //dump_png("/tmp/test_line_005_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a");
 }
 
 RED_AUTO_TEST_CASE(TestEllipse)
@@ -188,10 +184,8 @@ RED_AUTO_TEST_CASE(TestEllipse)
 //
 //     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-    RED_CHECK_IMG_SIG(gd, "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e");
-
-    // uncomment to see result in png file
-    //save_to_png("/tmp/test_ellipse_001.png", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e");
 }
 
 RED_AUTO_TEST_CASE(TestPatBlt)
@@ -253,10 +247,8 @@ RED_AUTO_TEST_CASE(TestPatBlt)
     // Should be purple
     gd.patblt(screen_rect.shrink(125), 0xFA, gd.u32bgr_to_color(BLUE));
 
-    RED_CHECK_IMG_SIG(gd, "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad");
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_patblt_000_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad");
 }
 
 RED_AUTO_TEST_CASE(TestDestBlt)
@@ -273,10 +265,8 @@ RED_AUTO_TEST_CASE(TestDestBlt)
     // RED inverted becomes CYAN
     gd.destblt(screen_rect.shrink(15), 0x55);
 
-    RED_CHECK_IMG_SIG(gd, "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb");
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_destblt_000_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb");
 }
 
 RED_AUTO_TEST_CASE(TestAddMouse)
@@ -308,17 +298,11 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     })
     {
         gd.trace_mouse(current_pointer, data.cx, data.cy, save_mouse);
-
-        // uncomment to see result in png file
-        // dump_png24("./test_mouse_000_.png", gd, true);
-
         RED_CHECK_IMG_SIG_A(gd, data.sig);
 
         gd.clear_mouse(current_pointer, data.cx, data.cy, save_mouse);
-        // uncomment to see result in png file
-        // dump_png24("./test_mouse_001_.png", gd, true);
-
-        RED_CHECK_IMG_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+        RED_CHECK_IMG_SIG(gd,
+            "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
     }
 }
 
@@ -347,11 +331,8 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_isdst =  0;
 
     timestamp_tracer.trace(now);
-    RED_CHECK_IMG_SIG(gd, "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d");
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_timestamp_000_", gd.impl());
-
+    RED_CHECK_IMG_SIG(gd,
+        "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d");
 
     now.tm_sec  =  00;
     now.tm_min  =  12;
@@ -365,16 +346,12 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
 
     timestamp_tracer.clear();
     timestamp_tracer.trace(now);
-    RED_CHECK_IMG_SIG(gd, "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0");
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_timestamp_001_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0");
 
     timestamp_tracer.clear();
-    RED_CHECK_IMG_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
-
-    // uncomment to see result in png file
-    //dump_png("/tmp/test_timestamp_002_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
 }
 
 RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
@@ -440,10 +417,8 @@ RED_AUTO_TEST_CASE(TestMemblt)
     gd.black_color(Rect(45, 45, 20, 20));
     gd.white_color(Rect(65, 65, 20, 20));
 
-    RED_CHECK_IMG_SIG(gd, "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d");
-
-    // uncomment to see result in png file
-    //dump_png("./test_memblt_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d");
 }
 
 RED_AUTO_TEST_CASE(TestMemblt2)
@@ -568,10 +543,8 @@ RED_AUTO_TEST_CASE(TestMemblt2)
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
-    RED_CHECK_IMG_SIG(gd, "\xd1\x63\x42\x01\x2f\xec\x9d\x81\x31\xfe\xa6\xdc\x01\xd5\xd1\x17\x99\x65\xe5\xda");
-
-    // uncomment to see result in png file
-    //dump_png("./test_memblt2_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\xd1\x63\x42\x01\x2f\xec\x9d\x81\x31\xfe\xa6\xdc\x01\xd5\xd1\x17\x99\x65\xe5\xda");
 }
 
 RED_AUTO_TEST_CASE(TestMemblt3)
@@ -684,10 +657,8 @@ RED_AUTO_TEST_CASE(TestMemblt3)
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
-    RED_CHECK_IMG_SIG(gd, "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a");
-
-    // uncomment to see result in png file
-    //dump_png("./test_memblt3_", gd.impl());
+    RED_CHECK_IMG_SIG(gd,
+        "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a");
 }
 
 RED_AUTO_TEST_CASE(TestMemblt4)
@@ -743,14 +714,6 @@ RED_AUTO_TEST_CASE(TestMemblt4)
 // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 RED_AUTO_TEST_CASE(TestBitmapUpate)
 {
-    // Create a simple capture image and dump it to file
-    uint16_t width = 320;
-    uint16_t height = 200;
-    Rect screen_rect(0, 0, width, height);
-
-    Drawable gd(width, height);
-    gd.opaquerect(screen_rect, gd.u32bgr_to_color(0x2F2F2F));
-
     uint8_t raw_palette[] = {
 /* 0000 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
 /* 0010 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // ................
@@ -839,13 +802,7 @@ RED_AUTO_TEST_CASE(TestBitmapUpate)
     const BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
     Bitmap bmp(BitsPerPixel{16}, BitsPerPixel{16}, &palette, 16, 16, raw_bitmap, 254, true);
-
-    // red square
-    gd.mem_blt(Rect(5, 5, 16, 16), bmp, 0, 0);
-//    RED_CHECK_IMG_SIG(gd, "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a");
-
-    // uncomment to see result in png file
-    //dump_png24("./test_mouse_000_.png", gd, true);
+    // dump_png24("./test_mouse_001_.png", bmp, true);
 
     Bitmap bmp2(BitsPerPixel{16}, BitsPerPixel{16}, &palette, 16, 16, bmp.data(), bmp.bmp_size(), false);
 

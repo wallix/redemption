@@ -2159,18 +2159,9 @@ test-run tests/core/RDP/test_rdp_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp
 :
   <library>crypto
-  <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/sig.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/rdp_pointer.hpp
@@ -2951,6 +2942,8 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/img_sig.o
   <library>tests/includes/test_only/test_framework/working_directory.o

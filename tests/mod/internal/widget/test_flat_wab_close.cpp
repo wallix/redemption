@@ -29,8 +29,6 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
-// uncomment to use dump_png24()
-//#include "utils/png.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose)
 {
@@ -246,7 +244,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
 
     colors.global.logo = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
-    
+
     FlatWabClose flat_wab_close(drawable,
                                 0,
                                 0,
@@ -265,8 +263,6 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
 
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-    // uncomment to see result in png file
-    //dump_png24("flat_wab_close9.png", drawable, true);
-
-    RED_CHECK_IMG_SIG(drawable, "\x41\xe2\xcb\xac\xe5\x73\x22\x6d\x12\x22\x61\xaf\x22\x0b\x9c\xf3\xd0\x28\x8e\xbd");
+    RED_CHECK_IMG_SIG(drawable,
+        "\x41\xe2\xcb\xac\xe5\x73\x22\x6d\x12\x22\x61\xaf\x22\x0b\x9c\xf3\xd0\x28\x8e\xbd");
 }

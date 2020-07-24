@@ -779,7 +779,7 @@ namespace
         ValidationResult validation_result = ValidationResult::Wait;
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-        friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)/*NOLINT*/
+        friend std::ostream& operator<<(std::ostream& out, ClipDataTest const& d)
         {
             out <<
                 "with validator: " << d.with_validator <<

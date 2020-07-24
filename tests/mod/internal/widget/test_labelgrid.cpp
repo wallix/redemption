@@ -23,14 +23,12 @@
 #include "test_only/test_framework/img_sig.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "utils/png.hpp"
-
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/core/font.hpp"
 
 
 RED_AUTO_TEST_CASE(TraceLabelGrid)
@@ -83,8 +81,6 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-//    dump_png24("labelgrid-0.png", drawable, true);
-
     RED_CHECK_IMG_SIG(drawable,
         "\x86\xc2\x96\xbc\x1e\x22\xf4\x9d\x6f\xa3\xf5\x76\x26\xd9\x00\x95\x0b\xa2\xee\x38");
 
@@ -94,8 +90,6 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     0 + wgrid.y(),
                                     wgrid.cx(),
                                     wgrid.cy()));
-
-//    dump_png24("labelgrid-1.png", drawable, true);
 
     RED_CHECK_IMG_SIG(drawable,
         "\x28\xaa\x98\xee\x94\x66\x3a\x37\xc1\xce\x2d\xe6\xeb\x80\x7f\x04\x17\xac\x95\xd6");
