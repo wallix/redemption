@@ -93,7 +93,7 @@ struct CheckTransport : Transport
 {
     CheckTransport(buffer_view buffer);
 
-    size_t remaining()
+    [[nodiscard]] size_t remaining() const
     {
         return this->len - this->current;
     }

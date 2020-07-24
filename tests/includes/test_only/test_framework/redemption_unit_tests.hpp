@@ -397,13 +397,13 @@ namespace redemption_unit_test__
 {
 
 template<class T>
-auto cont_size(T const& cont, int) -> decltype(std::size_t(cont.size()))
+auto cont_size(T const& cont, int /*one*/) -> decltype(std::size_t(cont.size()))
 {
     return cont.size();
 }
 
 template<class T>
-std::size_t cont_size(T const& cont, char)
+std::size_t cont_size(T const& cont, char /*one*/)
 {
     using std::begin;
     using std::end;
