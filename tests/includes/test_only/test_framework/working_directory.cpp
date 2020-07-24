@@ -18,6 +18,7 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/impl/test_paths.hpp"
 
 #include "working_directory.hpp"
 #include "utils/fileutils.hpp"
@@ -46,78 +47,11 @@ Author(s): Jonathan Poelen
 #include <dirent.h>
 
 
-#include <boost/test/framework.hpp>
-
-
 namespace
 {
-    std::string_view tempbase()
-    {
-        static const std::string base = []{
-            std::string dirname;
-            char const* s = std::getenv("TMPDIR");
-            if (s) {
-                if (*s) {
-                    dirname = s;
-                    if (dirname.back() != '/') {
-                        dirname += '/';
-                    }
-                }
-            }
-            else {
-                dirname = "/tmp/";
-            }
-            char buf[1024*4];
-            auto dsz = dirname.size();
-            dirname += getcwd(buf, sizeof(buf));
-            for (char& c : writable_chars_view(dirname).from_offset(dsz)) {
-                if (c == '/') {
-                    c = ':';
-                }
-            }
-            return dirname;
-        }();
-        return base;
-    }
-
-    std::string_view test_module_name()
-    {
-        static const std::string name = []{
-            std::string modname = boost::unit_test::framework::master_test_suite().p_name.get();
-            auto pos = std::find_if(modname.begin(), modname.end(), [](char c) {
-                return c != '.' && c != '/';
-            });
-            pos = std::transform(pos, modname.end(), modname.begin(), [](char c){
-                return c == '/' ? '-' : c;
-            });
-            modname.erase(pos, modname.end());
-            return modname;
-        }();
-        return name;
-    }
-
     std::string suffix_by_test(std::string_view name)
     {
-        using namespace boost::unit_test::framework;
-        std::string_view suffix_comp =
-            "@" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
-            REDEMPTION_COMP_STRING_VERSION;
-#ifdef RED_COMPILE_TYPE
-        std::string_view comp_type = "@" RED_PP_STRINGIFY(RED_COMPILE_TYPE) "__";
-#else
-        std::string_view comp_type = "__";
-#endif
-        return str_concat(
-            tempbase(),
-            '@',
-            current_test_case().p_name.get(),
-            '@',
-            test_module_name(),
-            suffix_comp,
-            comp_type,
-            name,
-            '/'
-        );
+        return ut_impl::compute_test_path(name, '/');
     }
 
 #define WD_ERROR_S(ostream_expr) RED_ERROR("WorkingDirectory: " ostream_expr)

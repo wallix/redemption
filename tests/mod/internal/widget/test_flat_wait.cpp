@@ -24,7 +24,7 @@
 
 #include "mod/internal/widget/flat_wait.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
 
     // drawable.save_to_png("flat_wait.png");
 
-    RED_CHECK_SIG(drawable, "\x37\x22\xba\x23\x6c\x15\x2f\x46\x0e\x0d\xec\x1e\xf3\xe5\x0b\xa7\x29\xb1\xa7\x40");
+    RED_CHECK_IMG_SIG(drawable, "\x37\x22\xba\x23\x6c\x15\x2f\x46\x0e\x0d\xec\x1e\xf3\xe5\x0b\xa7\x29\xb1\xa7\x40");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
@@ -146,5 +146,5 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 
     // drawable.save_to_png("flat_wait_1.png");
 
-    RED_CHECK_SIG(drawable, "\x83\x4a\x45\xdc\xb6\x7a\x12\x79\x14\x95\xc1\x11\x57\xc7\x05\xa2\x23\x54\xde\x92");
+    RED_CHECK_IMG_SIG(drawable, "\x83\x4a\x45\xdc\xb6\x7a\x12\x79\x14\x95\xc1\x11\x57\xc7\x05\xa2\x23\x54\xde\x92");
 }

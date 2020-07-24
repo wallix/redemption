@@ -35,7 +35,7 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -165,6 +165,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     RED_CHECK_EQ(count, n);
 
-    RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
+    RED_CHECK_IMG_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");
 }

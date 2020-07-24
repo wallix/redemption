@@ -25,7 +25,7 @@
 #include "mod/internal/widget/flat_button.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier4.sender == nullptr);
     RED_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
     // drawable.save_to_png("screen.png");
-    RED_CHECK_SIG(drawable, "\xe1\xf9\x82\xc6\x5b\x9c\xa5\x91\xc9\x36\x5f\x40\x81\x37\xe3\xef\xad\xad\xe4\x41");
+    RED_CHECK_IMG_SIG(drawable, "\xe1\xf9\x82\xc6\x5b\x9c\xa5\x91\xc9\x36\x5f\x40\x81\x37\xe3\xef\xad\xad\xe4\x41");
 
 
     Keymap2 keymap;
@@ -114,7 +114,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier2.event = 0;
     notifier3.event = 0;
     // drawable.save_to_png("screen2.png");
-    RED_CHECK_SIG(drawable, "\x53\xcf\x97\x98\xed\x5d\x77\x87\x76\xf0\xd4\x30\x47\x3a\x77\xbf\xdc\x41\xa9\xd8");
+    RED_CHECK_IMG_SIG(drawable, "\x53\xcf\x97\x98\xed\x5d\x77\x87\x76\xf0\xd4\x30\x47\x3a\x77\xbf\xdc\x41\xa9\xd8");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier3.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png("screen3.png");
-    RED_CHECK_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
+    RED_CHECK_IMG_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -146,7 +146,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier1.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png("screen4.png");
-    RED_CHECK_SIG(drawable, "\xb3\x2b\xb4\xc9\x9d\x0c\xc5\xb8\x01\x05\x96\xf6\x5d\x25\xaa\xbe\xb8\xe0\x05\x4a");
+    RED_CHECK_IMG_SIG(drawable, "\xb3\x2b\xb4\xc9\x9d\x0c\xc5\xb8\x01\x05\x96\xf6\x5d\x25\xaa\xbe\xb8\xe0\x05\x4a");
 
 
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
@@ -162,7 +162,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier1.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png("screen5.png");
-    RED_CHECK_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
+    RED_CHECK_IMG_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
 
 
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
@@ -178,7 +178,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier3.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png("screen6.png");
-    RED_CHECK_SIG(drawable, "\x53\xcf\x97\x98\xed\x5d\x77\x87\x76\xf0\xd4\x30\x47\x3a\x77\xbf\xdc\x41\xa9\xd8");
+    RED_CHECK_IMG_SIG(drawable, "\x53\xcf\x97\x98\xed\x5d\x77\x87\x76\xf0\xd4\x30\x47\x3a\x77\xbf\xdc\x41\xa9\xd8");
 
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
@@ -194,7 +194,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier1.event = 0;
     notifier3.event = 0;
     // drawable.save_to_png("screen7.png");
-    RED_CHECK_SIG(drawable, "\x5b\xf6\x87\x47\x13\xb8\x5d\x26\xa1\xe9\xd5\xaa\x36\x30\xec\xac\x75\x75\xa8\xd7");
+    RED_CHECK_IMG_SIG(drawable, "\x5b\xf6\x87\x47\x13\xb8\x5d\x26\xa1\xe9\xd5\xaa\x36\x30\xec\xac\x75\x75\xa8\xd7");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton2.x(), wbutton2.y(), &keymap);
@@ -204,7 +204,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier4.sender == nullptr);
     RED_CHECK(notifier1.event == 0);
     // drawable.save_to_png("screen8.png");
-    RED_CHECK_SIG(drawable, "\xb3\x2b\xb4\xc9\x9d\x0c\xc5\xb8\x01\x05\x96\xf6\x5d\x25\xaa\xbe\xb8\xe0\x05\x4a");
+    RED_CHECK_IMG_SIG(drawable, "\xb3\x2b\xb4\xc9\x9d\x0c\xc5\xb8\x01\x05\x96\xf6\x5d\x25\xaa\xbe\xb8\xe0\x05\x4a");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier1.event = 0;
     notifier2.event = 0;
     // drawable.save_to_png("screen9.png");
-    RED_CHECK_SIG(drawable, "\xe1\xf9\x82\xc6\x5b\x9c\xa5\x91\xc9\x36\x5f\x40\x81\x37\xe3\xef\xad\xad\xe4\x41");
+    RED_CHECK_IMG_SIG(drawable, "\xe1\xf9\x82\xc6\x5b\x9c\xa5\x91\xc9\x36\x5f\x40\x81\x37\xe3\xef\xad\xad\xe4\x41");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton4.x(), wbutton4.y(), &keymap);
@@ -234,7 +234,7 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     notifier2.event = 0;
     notifier4.event = 0;
     // drawable.save_to_png("screen10.png");
-    RED_CHECK_SIG(drawable, "\xb2\x29\x3f\x10\x1b\xe0\xb6\x0b\x08\xae\xd0\x6b\xbb\x58\x13\x8b\xa7\xd3\xe6\x97");
+    RED_CHECK_IMG_SIG(drawable, "\xb2\x29\x3f\x10\x1b\xe0\xb6\x0b\x08\xae\xd0\x6b\xbb\x58\x13\x8b\xa7\xd3\xe6\x97");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton4.x(), wbutton4.y(), &keymap);
@@ -244,17 +244,17 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
     RED_CHECK(notifier4.sender == &wbutton4);
     RED_CHECK(notifier4.event == NOTIFY_SUBMIT);
     // drawable.save_to_png("screen11.png");
-    RED_CHECK_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
+    RED_CHECK_IMG_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
 
     wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 0, 0));
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     // drawable.save_to_png("screen12.png");
-    RED_CHECK_SIG(drawable, "\xd4\x05\xe4\xa8\x68\x4a\xac\xe6\xab\xb0\x9a\x95\x56\x96\xb5\xc1\x5e\x8c\xc5\x05");
+    RED_CHECK_IMG_SIG(drawable, "\xd4\x05\xe4\xa8\x68\x4a\xac\xe6\xab\xb0\x9a\x95\x56\x96\xb5\xc1\x5e\x8c\xc5\x05");
 
     wscreen.show_tooltip(nullptr, nullptr, 30, 35, Rect(0, 0, 0, 0));
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     // drawable.save_to_png("screen13.png");
-    RED_CHECK_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
+    RED_CHECK_IMG_SIG(drawable, "\x53\x3e\x1c\x66\xf5\x96\xfe\x74\x3d\x7e\x22\xf9\xcf\x4e\xb4\x04\x24\x25\x34\xb4");
     wscreen.clear();
 }

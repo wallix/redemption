@@ -27,7 +27,7 @@
 #include "gdi/graphic_api.hpp"
 #include "utils/bitmap.hpp"
 #include "test_only/gdi/test_graphic.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 
 
 RED_AUTO_TEST_CASE(TestGraphicBitmapUpdate)
@@ -184,7 +184,7 @@ RED_AUTO_TEST_CASE(TestGraphicBitmapUpdate)
 //    gd.draw(bitmap_data, capture_bmp.data(), capture_bmp.bmp_size(), capture_bmp);
     gd->draw(bitmap_data, capture_bmp);
 
-    RED_CHECK_SIG(gd, "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1");
+    RED_CHECK_IMG_SIG(gd, "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1");
 
     // uncomment to see result in png file
     //dump_png("./test_bitmapupdate.png", gd.impl());

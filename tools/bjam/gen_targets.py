@@ -57,12 +57,14 @@ src_requirements = dict((
     ('tests/front/test_front.cpp', Dep(linkflags=['<noopstacktrace>on'])),
 ))
 
+compile_type_test_dep = Dep(cxxflags=[
+    '<variant>debug:<define>RED_COMPILE_TYPE=debug',
+    '<variant>release:<define>RED_COMPILE_TYPE=release',
+    '<variant>san:<define>RED_COMPILE_TYPE=san',
+])
 obj_requirements = dict((
-    ('tests/includes/test_only/test_framework/working_directory.cpp', Dep(cxxflags=[
-        '<variant>debug:<define>RED_COMPILE_TYPE=debug',
-        '<variant>release:<define>RED_COMPILE_TYPE=release',
-        '<variant>san:<define>RED_COMPILE_TYPE=san',
-    ])),
+    ('tests/includes/test_only/test_framework/working_directory.cpp', compile_type_test_dep),
+    ('tests/includes/test_only/test_framework/img_sig.cpp', compile_type_test_dep),
 ))
 
 dir_requirements = dict((

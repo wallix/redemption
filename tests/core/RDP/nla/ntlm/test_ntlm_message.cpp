@@ -33,7 +33,7 @@
 #include "utils/sugar/byte_ptr.hpp"
 #include "utils/difftimeval.hpp"
 
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/sig.hpp"
 
 #include <memory>
 #include <functional>
@@ -168,7 +168,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    RED_CHECK_SIG_FROM(to_send2, packet2);
+    RED_CHECK_SIG_A(to_send2.get_produced_bytes(), ut::sig(make_array_view(packet2)).bytes());
 
     NTLMChallengeMessage ChallengeMsg;
 
@@ -289,7 +289,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    RED_CHECK_SIG_FROM(to_send, packet);
+    RED_CHECK_SIG_A(to_send.get_produced_bytes(), ut::sig(make_array_view(packet)).bytes());
 
     auto NegoMsg = recvNTLMNegotiateMessage(ts_req.negoTokens);
 
@@ -547,7 +547,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    RED_CHECK_SIG_FROM(to_send3, packet3);
+    RED_CHECK_SIG_A(to_send3.get_produced_bytes(), ut::sig(make_array_view(packet3)).bytes());
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 

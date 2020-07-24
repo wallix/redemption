@@ -37,7 +37,6 @@
 #include "utils/png.hpp"
 #include "utils/sugar/cast.hpp"
 
-#include "test_only/check_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp" // for global_font()
 #include "configs/config.hpp"
@@ -71,7 +70,7 @@ public:
     void update_pointer_position(uint16_t /*x*/, uint16_t /*y*/) override {}
     operator ConstImageDataView() const { return this->data.gd; }
     gdi::GraphicApi& gd() noexcept { return this->data.gd; }
-    
+
     void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
     void possible_active_window_change() override {}
 

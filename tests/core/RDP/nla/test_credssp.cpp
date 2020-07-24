@@ -26,7 +26,7 @@
 
 #include "core/RDP/nla/credssp.hpp"
 
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/sig.hpp"
 
 RED_TEST_DELEGATE_PRINT_ENUM(NTLM_AV_ID);
 
@@ -132,7 +132,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_NEGOTIATE)
                            ts_req.clientNonce.initialized,
                            true);
     RED_CHECK_EQUAL(v.size(), 0x37 + 2);
-    RED_CHECK_SIG_FROM(v, packet);
+    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
@@ -178,7 +178,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_CHALLENGE)
                            ts_req.clientNonce.initialized,
                            true);
     RED_CHECK_EQUAL(v.size(), 0x94 + 3);
-    RED_CHECK_SIG_FROM(v, packet);
+    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
 }
 
 
@@ -279,7 +279,7 @@ RED_AUTO_TEST_CASE(TestTSRequestNTLMSSP_AUTH)
                            ts_req.clientNonce.initialized,
                            true);
     RED_CHECK_EQUAL(v.size(), 0x241 + 4);
-    RED_CHECK_SIG_FROM(v, packet);
+    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
@@ -344,7 +344,7 @@ RED_AUTO_TEST_CASE(TestTSRequestPUBKEYAUTH)
                            ts_req.clientNonce.initialized,
                            true);
     RED_CHECK_EQUAL(v.size(), 0x12b + 4);
-    RED_CHECK_SIG_FROM(v, packet);
+    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
 }
 
 RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
@@ -384,7 +384,7 @@ RED_AUTO_TEST_CASE(TestTSRequestAUTHINFO)
                            true);
 
     RED_CHECK_EQUAL(v.size(), 0x5c);
-    RED_CHECK_SIG_FROM(v, packet);
+    RED_CHECK_SIG_A(v, ut::sig(make_array_view(packet)).bytes());
 }
 
 RED_AUTO_TEST_CASE(TestTSCredentialsPassword)

@@ -24,7 +24,7 @@
 
 #include "mod/internal/widget/multiline.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -70,7 +70,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     // drawable.save_to_png("multiline.png");
 
-    RED_CHECK_SIG(drawable, "\x9b\x92\x55\x24\xaa\xb1\x63\xd8\x6b\xb9\xd4\x7d\xd2\x08\xe9\xff\xf0\x95\x73\x47");
+    RED_CHECK_IMG_SIG(drawable, "\x9b\x92\x55\x24\xaa\xb1\x63\xd8\x6b\xb9\xd4\x7d\xd2\x08\xe9\xff\xf0\x95\x73\x47");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     // drawable.save_to_png("multiline2.png");
 
-    RED_CHECK_SIG(drawable, "\x91\xc0\xda\xdb\x61\x7c\x9e\x5d\x76\x1b\x81\x88\x1d\xa8\x3e\xeb\x3a\x71\x5c\xf3");
+    RED_CHECK_IMG_SIG(drawable, "\x91\xc0\xda\xdb\x61\x7c\x9e\x5d\x76\x1b\x81\x88\x1d\xa8\x3e\xeb\x3a\x71\x5c\xf3");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     // drawable.save_to_png("multiline3.png");
 
-    RED_CHECK_SIG(drawable, "\x20\x2b\xdf\xe4\x2d\xfe\x75\x7c\x52\x45\x8b\x41\x01\x41\x70\x20\x90\x0c\x5d\x53");
+    RED_CHECK_IMG_SIG(drawable, "\x20\x2b\xdf\xe4\x2d\xfe\x75\x7c\x52\x45\x8b\x41\x01\x41\x70\x20\x90\x0c\x5d\x53");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
@@ -181,7 +181,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     // drawable.save_to_png("multiline4.png");
 
-    RED_CHECK_SIG(drawable, "\xc0\xb3\xff\x4b\x68\xb8\x8c\xf9\x58\x19\x44\x72\x6a\x7c\xd3\x18\x55\xf6\x40\x82");
+    RED_CHECK_IMG_SIG(drawable, "\xc0\xb3\xff\x4b\x68\xb8\x8c\xf9\x58\x19\x44\x72\x6a\x7c\xd3\x18\x55\xf6\x40\x82");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
@@ -218,7 +218,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     // drawable.save_to_png("multiline5.png");
 
-    RED_CHECK_SIG(drawable, "\x23\x1b\xda\x2a\x8d\x74\x75\x34\x4c\xa2\x4e\xf2\x4c\xa8\x2c\xc2\x27\x8d\x49\xe7");
+    RED_CHECK_IMG_SIG(drawable, "\x23\x1b\xda\x2a\x8d\x74\x75\x34\x4c\xa2\x4e\xf2\x4c\xa8\x2c\xc2\x27\x8d\x49\xe7");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     // drawable.save_to_png("multiline6.png");
 
-    RED_CHECK_SIG(drawable, "\xaf\xef\x9e\xf5\x72\xe1\xb2\x81\x1f\xf7\xb9\x55\xf3\x93\x00\x79\xba\x71\x85\xdc");
+    RED_CHECK_IMG_SIG(drawable, "\xaf\xef\x9e\xf5\x72\xe1\xb2\x81\x1f\xf7\xb9\x55\xf3\x93\x00\x79\xba\x71\x85\xdc");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
@@ -292,7 +292,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     // drawable.save_to_png("multiline7.png");
 
-    RED_CHECK_SIG(drawable, "\x13\xc4\x5b\xc6\x2f\x90\x1c\x29\xa9\x1d\x22\x77\x95\x0a\xfe\xa6\x04\xce\x19\xfb");
+    RED_CHECK_IMG_SIG(drawable, "\x13\xc4\x5b\xc6\x2f\x90\x1c\x29\xa9\x1d\x22\x77\x95\x0a\xfe\xa6\x04\xce\x19\xfb");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
@@ -329,7 +329,7 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     // drawable.save_to_png("multiline8.png");
 
-    RED_CHECK_SIG(drawable, "\x44\x6c\xa2\x38\x99\xa8\xe0\x3d\xd7\xc8\xf7\x1b\xdf\xfe\x3b\xe5\x7e\x28\xc2\xea");
+    RED_CHECK_IMG_SIG(drawable, "\x44\x6c\xa2\x38\x99\xa8\xe0\x3d\xd7\xc8\xf7\x1b\xdf\xfe\x3b\xe5\x7e\x28\xc2\xea");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
@@ -364,5 +364,5 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     // drawable.save_to_png("multiline9.png");
 
-    RED_CHECK_SIG(drawable, "\x3d\x88\xa2\x81\xdd\x9b\xbb\xcc\xee\xa7\xde\x22\x17\x29\x73\xa9\x47\x59\x90\x27");
+    RED_CHECK_IMG_SIG(drawable, "\x3d\x88\xa2\x81\xdd\x9b\xbb\xcc\xee\xa7\xde\x22\x17\x29\x73\xa9\x47\x59\x90\x27");
 }

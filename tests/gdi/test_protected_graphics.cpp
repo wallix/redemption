@@ -30,7 +30,7 @@
 #include "utils/bitmap_from_file.hpp"
 #include "utils/png.hpp"
 #include "utils/timestamp_tracer.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 
 #include <chrono>
@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     now.tv_sec++;
     RED_CHECK_EQUAL(3083, do_snapshot(drawable, now));
 
-    RED_CHECK_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
+    RED_CHECK_IMG_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
 
     Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     now.tv_sec++;
     RED_CHECK_EQUAL(3628, do_snapshot(drawable, now));
 
-    RED_CHECK_SIG(drawable, "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
+    RED_CHECK_IMG_SIG(drawable, "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
 }
 
 RED_AUTO_TEST_CASE(TestModOSD3)
@@ -160,7 +160,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     now.tv_sec++;
     RED_CHECK_EQUAL(3083, do_snapshot(drawable, now));
 
-    RED_CHECK_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
+    RED_CHECK_IMG_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
 
     Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
@@ -182,5 +182,5 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     now.tv_sec++;
     RED_CHECK_EQUAL(3628, do_snapshot(drawable, now));
 
-    RED_CHECK_SIG(drawable, "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
+    RED_CHECK_IMG_SIG(drawable, "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
 }

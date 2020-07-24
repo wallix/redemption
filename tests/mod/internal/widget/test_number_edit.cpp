@@ -25,7 +25,7 @@
 #include "mod/internal/widget/number_edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
@@ -58,7 +58,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     // drawable.save_to_png("number_edit-e1.png");
-    RED_CHECK_SIG(drawable, "\x1f\x0d\x7c\xd8\x43\x5b\x69\xe9\x20\x15\x32\x1c\x15\x2a\xa4\xd4\x90\x0a\x34\x6c");
+    RED_CHECK_IMG_SIG(drawable, "\x1f\x0d\x7c\xd8\x43\x5b\x69\xe9\x20\x15\x32\x1c\x15\x2a\xa4\xd4\x90\x0a\x34\x6c");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -67,7 +67,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     // drawable.save_to_png("number_edit-e2-1.png");
-    RED_CHECK_SIG(drawable, "\x1f\x0d\x7c\xd8\x43\x5b\x69\xe9\x20\x15\x32\x1c\x15\x2a\xa4\xd4\x90\x0a\x34\x6c");
+    RED_CHECK_IMG_SIG(drawable, "\x1f\x0d\x7c\xd8\x43\x5b\x69\xe9\x20\x15\x32\x1c\x15\x2a\xa4\xd4\x90\x0a\x34\x6c");
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
 
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     // drawable.save_to_png("number_edit-e2-2.png");
-    RED_CHECK_SIG(drawable, "\x4b\x5a\xb9\x52\x13\x81\x8f\x35\x09\xa9\xf5\x64\x52\x8f\x24\x2c\x1f\xe0\x90\xb4");
+    RED_CHECK_IMG_SIG(drawable, "\x4b\x5a\xb9\x52\x13\x81\x8f\x35\x09\xa9\xf5\x64\x52\x8f\x24\x2c\x1f\xe0\x90\xb4");
     RED_CHECK(notifier.sender == &wnumber_edit);
     RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
 }

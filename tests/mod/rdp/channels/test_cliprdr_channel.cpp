@@ -331,11 +331,16 @@ namespace
     {
         struct Av : ut::flagged_bytes_view
         {
+            Av(bytes_view bytes)
+            : ut::flagged_bytes_view{bytes, ut::default_pattern_view, ut::default_ascii_min_len}
+            {}
+
             template<class... Ts>
             Av(Ts&&... xs)
             : ut::flagged_bytes_view{xs...}
             {}
         };
+
 
         struct ToMod
         {
@@ -394,11 +399,12 @@ namespace
             other.output_data.show_mismatch_position = true;
 
             auto check_av = [&](Av const& lhs, Av const& rhs){
-                this->output_data.other_av_len = rhs.size();
-                other.output_data.other_av_len = lhs.size();
+                this->output_data.other_av_len = rhs.bytes.size();
+                other.output_data.other_av_len = lhs.bytes.size();
                 this->output_data.pattern_view = rhs.pattern;
                 other.output_data.pattern_view = lhs.pattern;
-                bool r = ut::compare_bytes(this->output_data.mismatch_position, lhs, rhs);
+                bool r = ut::compare_bytes(
+                    this->output_data.mismatch_position, lhs.bytes, rhs.bytes);
                 other.output_data.mismatch_position = this->output_data.mismatch_position;
                 return r;
             };
@@ -449,8 +455,8 @@ namespace
             auto const pos = msg.output_data.mismatch_position;
             std::size_t av_len = 0;
 
-            auto put_av = [&](auto av){
-                av_len = av.size();
+            auto put_av = [&](Av av){
+                av_len = av.bytes.size();
 
                 if (msg.output_data.other_av_len == av_len
                     && msg.output_data.mismatch_position == av_len

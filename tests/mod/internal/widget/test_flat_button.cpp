@@ -25,7 +25,7 @@
 #include "mod/internal/widget/flat_button.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 #include "test_only/core/font.hpp"
@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton)
 
     // drawable.save_to_png("button.png");
 
-    RED_CHECK_SIG(drawable, "\xdd\xc2\xb2\x1e\x8d\x45\x6c\xd9\xef\x05\x26\xd5\x4a\x80\xec\xaf\x9c\x1b\xb1\xaf");
+    RED_CHECK_IMG_SIG(drawable, "\xdd\xc2\xb2\x1e\x8d\x45\x6c\xd9\xef\x05\x26\xd5\x4a\x80\xec\xaf\x9c\x1b\xb1\xaf");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton2)
 
     // drawable.save_to_png("button2.png");
 
-    RED_CHECK_SIG(drawable, "\xca\x1b\x47\xa5\x8f\xf0\x39\xad\xb6\x3c\x75\x13\xe5\x83\x4c\xdf\xe9\x57\x80\x59");
+    RED_CHECK_IMG_SIG(drawable, "\xca\x1b\x47\xa5\x8f\xf0\x39\xad\xb6\x3c\x75\x13\xe5\x83\x4c\xdf\xe9\x57\x80\x59");
 }
 
 
@@ -126,7 +126,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton3)
 
     // drawable.save_to_png("button3.png");
 
-    RED_CHECK_SIG(drawable, "\x3e\x75\x28\xf9\x54\x99\x36\x1e\xb9\x87\x54\xd9\xfa\x07\xcc\x15\x81\xec\xd9\xd3");
+    RED_CHECK_IMG_SIG(drawable, "\x3e\x75\x28\xf9\x54\x99\x36\x1e\xb9\x87\x54\xd9\xfa\x07\xcc\x15\x81\xec\xd9\xd3");
 
 }
 
@@ -160,7 +160,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton4)
 
     // drawable.save_to_png("button4.png");
 
-    RED_CHECK_SIG(drawable, "\x0b\x33\xf4\xd2\xc9\xa7\x79\x0f\xac\xbe\x3c\xa8\xa6\xde\x5d\x64\x4b\xe3\xf0\x2c");
+    RED_CHECK_IMG_SIG(drawable, "\x0b\x33\xf4\xd2\xc9\xa7\x79\x0f\xac\xbe\x3c\xa8\xa6\xde\x5d\x64\x4b\xe3\xf0\x2c");
 
 }
 
@@ -194,7 +194,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton5)
 
     // drawable.save_to_png("button5.png");
 
-    RED_CHECK_SIG(drawable, "\x39\x29\xce\xbf\x2e\xde\xcb\x24\x8d\x0c\xd3\xc3\xd5\xea\x51\x2e\xee\x47\x14\x68");
+    RED_CHECK_IMG_SIG(drawable, "\x39\x29\xce\xbf\x2e\xde\xcb\x24\x8d\x0c\xd3\xc3\xd5\xea\x51\x2e\xee\x47\x14\x68");
 
 }
 
@@ -228,7 +228,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButton6)
 
     // drawable.save_to_png("button6.png");
 
-    RED_CHECK_SIG(drawable, "\x8a\xe6\xed\xdf\x9d\xad\x44\x2a\xef\x53\x79\xf3\x33\x5a\xfe\xdc\x43\xb8\xf7\x22");
+    RED_CHECK_IMG_SIG(drawable, "\x8a\xe6\xed\xdf\x9d\xad\x44\x2a\xef\x53\x79\xf3\x33\x5a\xfe\xdc\x43\xb8\xf7\x22");
 
 }
 
@@ -262,7 +262,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
 
     // drawable.save_to_png("button7.png");
 
-    RED_CHECK_SIG(drawable, "\x15\x28\xe8\x21\x36\x3f\xb1\x94\x39\xa9\xfc\xe7\xc5\x6a\xc7\x90\xef\x77\x3c\x14");
+    RED_CHECK_IMG_SIG(drawable, "\x15\x28\xe8\x21\x36\x3f\xb1\x94\x39\xa9\xfc\xe7\xc5\x6a\xc7\x90\xef\x77\x3c\x14");
 
 }
 
@@ -296,7 +296,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
 
     // drawable.save_to_png("button8.png");
 
-    RED_CHECK_SIG(drawable, "\xf7\x36\xd7\x86\xbb\x33\x70\x0b\x90\x3a\xc0\xfb\x03\x9d\xdf\xf9\xc3\x99\x67\x10");
+    RED_CHECK_IMG_SIG(drawable, "\xf7\x36\xd7\x86\xbb\x33\x70\x0b\x90\x3a\xc0\xfb\x03\x9d\xdf\xf9\xc3\x99\x67\x10");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
@@ -326,7 +326,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png("button9.png");
 
-    RED_CHECK_SIG(drawable, "\x72\xac\x38\xdf\x59\x84\x3b\x80\xf5\x0a\xc8\xcc\xe5\x97\xbd\xc9\x2f\x16\x89\x0c");
+    RED_CHECK_IMG_SIG(drawable, "\x72\xac\x38\xdf\x59\x84\x3b\x80\xf5\x0a\xc8\xcc\xe5\x97\xbd\xc9\x2f\x16\x89\x0c");
 
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
@@ -334,7 +334,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png("button10.png");
 
-    RED_CHECK_SIG(drawable, "\xa6\x46\x23\xf9\x18\xb6\x48\x06\x1c\xdd\x09\x27\x39\xcd\x99\xd0\x28\xe7\xda\xb9");
+    RED_CHECK_IMG_SIG(drawable, "\xa6\x46\x23\xf9\x18\xb6\x48\x06\x1c\xdd\x09\x27\x39\xcd\x99\xd0\x28\xe7\xda\xb9");
 
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, nullptr);
@@ -342,7 +342,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
 
     // drawable.save_to_png("button11.png");
 
-    RED_CHECK_SIG(drawable, "\x72\xac\x38\xdf\x59\x84\x3b\x80\xf5\x0a\xc8\xcc\xe5\x97\xbd\xc9\x2f\x16\x89\x0c");
+    RED_CHECK_IMG_SIG(drawable, "\x72\xac\x38\xdf\x59\x84\x3b\x80\xf5\x0a\xc8\xcc\xe5\x97\xbd\xc9\x2f\x16\x89\x0c");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
@@ -506,7 +506,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
     // drawable.save_to_png("button12.png");
 
-    RED_CHECK_SIG(drawable, "\xe0\xe5\x89\x9a\x4f\xc8\x5c\x95\x4a\x46\x26\x7f\xac\x44\x5b\xc1\x57\x6d\x06\x84");
+    RED_CHECK_IMG_SIG(drawable, "\xe0\xe5\x89\x9a\x4f\xc8\x5c\x95\x4a\x46\x26\x7f\xac\x44\x5b\xc1\x57\x6d\x06\x84");
 
 
     // ask to widget to redraw at it's current position
@@ -514,7 +514,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
 
     // drawable.save_to_png("button13.png");
 
-    RED_CHECK_SIG(drawable, "\xdb\xfd\x24\x61\xa3\xd4\x82\x64\x5a\x61\xed\x1b\xbc\x32\xd8\xdf\x8d\x7f\x5c\x5c");
+    RED_CHECK_IMG_SIG(drawable, "\xdb\xfd\x24\x61\xa3\xd4\x82\x64\x5a\x61\xed\x1b\xbc\x32\xd8\xdf\x8d\x7f\x5c\x5c");
 
 
     wcomposite.clear();
@@ -547,7 +547,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png("button14.png");
 
-    RED_CHECK_SIG(drawable, "\x36\x23\xb8\x1b\x58\x75\x3e\x8c\x38\x1b\x4b\xba\x67\x19\x72\x85\x1d\xce\xe0\xc1");
+    RED_CHECK_IMG_SIG(drawable, "\x36\x23\xb8\x1b\x58\x75\x3e\x8c\x38\x1b\x4b\xba\x67\x19\x72\x85\x1d\xce\xe0\xc1");
 
 
     wbutton.focus(Widget::focus_reason_tabkey);
@@ -556,7 +556,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png("button15.png");
 
-    RED_CHECK_SIG(drawable, "\xfc\x69\x29\x22\xe8\xac\xfb\x2b\x26\x02\x12\x9b\x99\x2d\xec\xde\x56\x03\x02\xaa");
+    RED_CHECK_IMG_SIG(drawable, "\xfc\x69\x29\x22\xe8\xac\xfb\x2b\x26\x02\x12\x9b\x99\x2d\xec\xde\x56\x03\x02\xaa");
 
 
 
@@ -566,7 +566,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     // drawable.save_to_png("button16.png");
 
-    RED_CHECK_SIG(drawable, "\x36\x23\xb8\x1b\x58\x75\x3e\x8c\x38\x1b\x4b\xba\x67\x19\x72\x85\x1d\xce\xe0\xc1");
+    RED_CHECK_IMG_SIG(drawable, "\x36\x23\xb8\x1b\x58\x75\x3e\x8c\x38\x1b\x4b\xba\x67\x19\x72\x85\x1d\xce\xe0\xc1");
 
 
     wbutton.focus(Widget::focus_reason_tabkey);
@@ -576,7 +576,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     // drawable.save_to_png("button17.png");
 
 
-    RED_CHECK_SIG(drawable, "\xfc\x69\x29\x22\xe8\xac\xfb\x2b\x26\x02\x12\x9b\x99\x2d\xec\xde\x56\x03\x02\xaa");
+    RED_CHECK_IMG_SIG(drawable, "\xfc\x69\x29\x22\xe8\xac\xfb\x2b\x26\x02\x12\x9b\x99\x2d\xec\xde\x56\x03\x02\xaa");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
@@ -606,7 +606,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
 
     // drawable.save_to_png("button_lite.png");
 
-    RED_CHECK_SIG(drawable, "\x15\xa0\xce\x65\x61\xe4\x3a\x59\x40\xbb\xee\x09\xf3\x24\xc3\x96\x53\x4c\xab\x87");
+    RED_CHECK_IMG_SIG(drawable, "\x15\xa0\xce\x65\x61\xe4\x3a\x59\x40\xbb\xee\x09\xf3\x24\xc3\x96\x53\x4c\xab\x87");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
 
@@ -614,7 +614,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonLite)
 
     // drawable.save_to_png("button_lite_down.png");
 
-    RED_CHECK_SIG(drawable, "\x45\x12\x72\xb4\xc2\xba\xc7\x79\xf8\xbb\x73\x58\x57\x4a\x5e\xeb\xf4\xce\xfc\x37");
+    RED_CHECK_IMG_SIG(drawable, "\x45\x12\x72\xb4\xc2\xba\xc7\x79\xf8\xbb\x73\x58\x57\x4a\x5e\xeb\xf4\xce\xfc\x37");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
@@ -644,7 +644,7 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
 
     // drawable.save_to_png("button_lite.png");
 
-    RED_CHECK_SIG(drawable, "\x96\xd0\x45\xec\x88\xda\xa5\x78\xc1\x8b\x6a\x81\xa7\x06\xb4\xab\xb9\x2a\x4e\x9d");
+    RED_CHECK_IMG_SIG(drawable, "\x96\xd0\x45\xec\x88\xda\xa5\x78\xc1\x8b\x6a\x81\xa7\x06\xb4\xab\xb9\x2a\x4e\x9d");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, wbutton.x() + 2, wbutton.y() + 2, nullptr);
 
@@ -652,5 +652,5 @@ RED_AUTO_TEST_CASE(TraceWidgetFlatButtonStrong)
 
     // drawable.save_to_png("button_lite_down.png");
 
-    RED_CHECK_SIG(drawable, "\x5f\x79\x1f\x43\xd0\x7c\x0b\x24\x8d\xd7\x7f\xde\xbe\xa1\x7d\xcb\x06\xd8\x37\xcd");
+    RED_CHECK_IMG_SIG(drawable, "\x5f\x79\x1f\x43\xd0\x7c\x0b\x24\x8d\xd7\x7f\xde\xbe\xa1\x7d\xcb\x06\xd8\x37\xcd");
 }

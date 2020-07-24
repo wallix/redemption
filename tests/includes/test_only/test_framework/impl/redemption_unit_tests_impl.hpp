@@ -494,21 +494,30 @@ struct name<T, U, std::enable_if_t<                                       \
     static assertion_result                                               \
     eval( T const& lhs, U const& rhs )                                    \
     {                                                                     \
-        if constexpr (std::is_convertible_v<T, bytes_view>                \
-                   && std::is_convertible_v<U, bytes_view>)               \
-        {                                                                 \
+        if constexpr (                                                    \
+            (std::is_convertible_v<T, bytes_view>                         \
+            || std::is_same_v<T, ::ut::flagged_bytes_view>)               \
+         && (std::is_convertible_v<T, bytes_view>                         \
+            || std::is_same_v<T, ::ut::flagged_bytes_view>)               \
+        ) {                                                               \
             auto flag = ::ut::default_pattern_view;                       \
             unsigned min_len = ::ut::default_ascii_min_len;               \
+            bytes_view a;                                                 \
+            bytes_view b;                                                 \
             if constexpr (std::is_same_v<T, ::ut::flagged_bytes_view>) {  \
                flag = lhs.pattern;                                        \
                min_len = std::max(min_len, lhs.min_len);                  \
+               a = lhs.bytes;                                             \
             }                                                             \
+            else a = lhs;                                                 \
             if constexpr (std::is_same_v<U, ::ut::flagged_bytes_view>) {  \
                flag = rhs.pattern;                                        \
                min_len = std::max(min_len, rhs.min_len);                  \
+               b = rhs.bytes;                                             \
             }                                                             \
+            else b = rhs;                                                 \
             return ::redemption_unit_test__                               \
-                ::bytes_##name(lhs, rhs, flag, min_len);                  \
+                ::bytes_##name(a, b, flag, min_len);                      \
         }                                                                 \
         else                                                              \
         {                                                                 \

@@ -33,7 +33,7 @@
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/ostream_buffered.hpp"

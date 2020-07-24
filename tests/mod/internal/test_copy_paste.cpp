@@ -29,7 +29,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/gdi/test_graphic.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/core/font.hpp"
 
 #include <string>
@@ -177,7 +177,7 @@ RED_AUTO_TEST_CASE(TestPaste)
         /*sprintf(filename, "test_copy_paste_%d.png", __LINE__);*/ \
         /*mod.save_to_png(filename);*/                             \
                                                                    \
-        RED_CHECK_SIG(gd, sig);                                    \
+        RED_CHECK_IMG_SIG(gd, sig);                                    \
     } while (0)
     edit_paste("",
         "\x55\x78\x56\xd2\x65\x6c\x78\x4a\x23\x26\x2b\xf5\xfb\x67\xdd\x0f\xa9\x96\xaf\xa6");

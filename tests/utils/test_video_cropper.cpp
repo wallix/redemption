@@ -26,7 +26,7 @@
 #include "utils/video_cropper.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "test_only/gdi/test_graphic.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 
 
 RED_AUTO_TEST_CASE(TestVideoCropperFull)
@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
 
     drawable->draw(RDPOpaqueRect(Rect(50, 50, 320, 200), encode_color24()(RED)), Rect(50, 50, 320, 200), color_cxt);
 
-    RED_CHECK_SIG(drawable,
+    RED_CHECK_IMG_SIG(drawable,
         "\x85\x0e\x04\xea\xf7\x6c\x08\xbd\x4f\xb1\xd5\xbe\xf5\xe4\x43\x4e\x1d\x93\x8e\x5e");
 
     //::dump_png24("./test_video_cropper_000_a.png", drawable);
@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
     {
         auto const image_view = video_cropper.get_image_view();
 
-        RED_CHECK_SIG(image_view,
+        RED_CHECK_IMG_SIG(image_view,
             "\x85\x0e\x04\xea\xf7\x6c\x08\xbd\x4f\xb1\xd5\xbe\xf5\xe4\x43\x4e\x1d\x93\x8e\x5e");
 
         //::dump_png24("./test_video_cropper_000_b.png", image_view);
@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
     {
         auto const image_view = video_cropper.get_image_view();
 
-        RED_CHECK_SIG(image_view,
+        RED_CHECK_IMG_SIG(image_view,
             "\x14\x38\x44\x99\x4f\x53\xee\x22\xb6\xff\x08\x8e\xd7\x13\xe3\x8a\xcf\xea\x7a\x11");
 
         //::dump_png24("./test_video_cropper_000_c.png", image_view);
@@ -80,7 +80,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
     {
         auto const image_view = video_cropper.get_image_view();
 
-        RED_CHECK_SIG(image_view,
+        RED_CHECK_IMG_SIG(image_view,
             "\x5c\x56\xb8\x03\x16\xd0\x23\x9d\x86\xdd\x1f\xa1\x19\x85\x61\x28\x84\x65\x15\x1b");
 
         //::dump_png24("./test_video_cropper_000_d.png", image_view);
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
 
     drawable->draw(RDPOpaqueRect(Rect(50, 50, 320, 200), encode_color24()(GREEN)), Rect(50, 50, 320, 200), color_cxt);
 
-    RED_CHECK_SIG(drawable,
+    RED_CHECK_IMG_SIG(drawable,
         "\xb6\xce\xad\x9e\x0c\x71\x67\xc5\x81\x59\x35\x97\xb8\xf2\x68\x0a\xf9\x7b\x88\x00");
 
     //::dump_png24("./test_video_cropper_001_a.png", drawable);
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
     {
         auto const image_view = video_cropper.get_image_view();
 
-        RED_CHECK_SIG(image_view,
+        RED_CHECK_IMG_SIG(image_view,
             "\x2a\x32\x7a\x69\x72\x3b\xfa\x48\x49\xad\xe4\x12\x79\x3f\x11\xd1\x17\x55\x53\x07");
 
         //::dump_png24("./test_video_cropper_001_b.png", image_view);
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
     {
         auto const image_view = video_cropper.get_image_view();
 
-        RED_CHECK_SIG(image_view,
+        RED_CHECK_IMG_SIG(image_view,
             "\x2a\x32\x7a\x69\x72\x3b\xfa\x48\x49\xad\xe4\x12\x79\x3f\x11\xd1\x17\x55\x53\x07");
 
         //::dump_png24("./test_video_cropper_001_c.png", image_view);
@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
     {
         auto const image_view = video_cropper.get_image_view();
 
-        RED_CHECK_SIG(image_view,
+        RED_CHECK_IMG_SIG(image_view,
             "\x0e\xde\x21\xee\x3b\x11\xf6\xc8\xe0\x68\x94\x43\x9c\x68\x3a\x7c\x41\x9d\xe0\x61");
 
         //::dump_png24("./test_video_cropper_001_d.png", image_view);

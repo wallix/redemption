@@ -73,6 +73,7 @@ valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
 toolset_clang=toolset=clang-9.0
 
+export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 export UBSAN_OPTIONS=print_stacktrace=1
 

@@ -42,8 +42,11 @@ namespace ut
     extern PatternView default_pattern_view;
     extern unsigned default_ascii_min_len;
 
-    struct flagged_bytes_view : bytes_view
+    struct flagged_bytes_view
     {
+        using value_type = uint8_t;
+
+        bytes_view bytes;
         PatternView pattern = default_pattern_view;
         unsigned min_len = default_ascii_min_len;
     };

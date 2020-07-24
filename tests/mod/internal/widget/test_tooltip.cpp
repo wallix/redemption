@@ -25,7 +25,7 @@
 #include "mod/internal/widget/tooltip.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/label.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -55,7 +55,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     // drawable.save_to_png("tooltip.png");
 
-    RED_CHECK_SIG(drawable, "\xb8\x16\x68\x4c\x37\x49\x4b\xca\xea\x46\xc9\x95\x75\x82\x2b\xd4\xa9\x4a\x92\x7b");
+    RED_CHECK_IMG_SIG(drawable, "\xb8\x16\x68\x4c\x37\x49\x4b\xca\xea\x46\xc9\x95\x75\x82\x2b\xd4\xa9\x4a\x92\x7b");
 }
 
 inline
@@ -99,7 +99,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen1.png");
 
-    RED_CHECK_SIG(drawable, "\xb9\x45\xcd\x0a\xb0\xe2\x0a\x5f\x0b\xc4\xed\x1c\x99\x57\x5c\xbb\xbc\x4b\x2b\xaf");
+    RED_CHECK_IMG_SIG(drawable, "\xb9\x45\xcd\x0a\xb0\xe2\x0a\x5f\x0b\xc4\xed\x1c\x99\x57\x5c\xbb\xbc\x4b\x2b\xaf");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.x() + label.cx() / 2, label.y() + label.cy() / 2,
@@ -108,7 +108,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen2.png");
 
-    RED_CHECK_SIG(drawable, "\x73\x16\xd3\xa6\xa9\x00\xaa\xac\x08\xce\xd1\x9f\xf7\xf1\x48\x91\xcc\x42\xcd\x66");
+    RED_CHECK_IMG_SIG(drawable, "\x73\x16\xd3\xa6\xa9\x00\xaa\xac\x08\xce\xd1\x9f\xf7\xf1\x48\x91\xcc\x42\xcd\x66");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
@@ -121,7 +121,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen3.png");
 
-    RED_CHECK_SIG(drawable, "\x10\x22\xd9\xed\x87\x2a\x02\xbf\x64\x3d\xcf\x89\x3a\x65\xab\x53\xf9\x2c\x25\x43");
+    RED_CHECK_IMG_SIG(drawable, "\x10\x22\xd9\xed\x87\x2a\x02\xbf\x64\x3d\xcf\x89\x3a\x65\xab\x53\xf9\x2c\x25\x43");
 
     parent.tooltip->set_text("Test tooltip<br>"
                              "Text modification<br>"
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen4.png");
 
-    RED_CHECK_SIG(drawable, "\x40\x98\x69\xe9\xd8\xb9\x15\x60\x8f\xc1\xee\x0e\xd4\x2f\xb3\x63\xd9\xf8\xdf\x09");
+    RED_CHECK_IMG_SIG(drawable, "\x40\x98\x69\xe9\xd8\xb9\x15\x60\x8f\xc1\xee\x0e\xd4\x2f\xb3\x63\xd9\xf8\xdf\x09");
 
     parent.clear();
 }

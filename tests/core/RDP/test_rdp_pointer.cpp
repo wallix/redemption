@@ -24,7 +24,7 @@
 
 #include "gdi/graphic_api.hpp"
 #include "test_only/gdi/test_graphic.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/sig.hpp"
 
 #include "utils/bitmap.hpp"
 

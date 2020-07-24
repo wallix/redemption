@@ -692,7 +692,7 @@ namespace ut
         out << sep;
         switch (x.pattern) {
             #define CASE(c, print) case PatternView::c: \
-                print(pos, out, x, x.min_len);          \
+                print(pos, out, x.bytes, x.min_len);    \
                 break
             CASE(ascii, put_ascii_bytes);
             CASE(ascii_nl, put_ascii_bytes2);

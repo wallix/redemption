@@ -26,7 +26,7 @@
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/flat_button.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     //drawable.save_to_png("grid.png");
 
-    RED_CHECK_SIG(drawable, "\x3f\x03\x2d\xa3\x1e\x7a\xfa\x65\x39\x6f\x02\x71\xaa\x00\x9b\xe7\x89\x9e\xe3\x74");
+    RED_CHECK_IMG_SIG(drawable, "\x3f\x03\x2d\xa3\x1e\x7a\xfa\x65\x39\x6f\x02\x71\xaa\x00\x9b\xe7\x89\x9e\xe3\x74");
 
 
     wgrid.set_selection(4);
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     //drawable.save_to_png("grid2.png");
 
-    RED_CHECK_SIG(drawable, "\xa7\x31\x0f\x89\x43\x79\x0f\x0e\xb2\xdd\x8c\x7d\x6e\x64\x12\xb1\x5e\x95\xcd\x47");
+    RED_CHECK_IMG_SIG(drawable, "\xa7\x31\x0f\x89\x43\x79\x0f\x0e\xb2\xdd\x8c\x7d\x6e\x64\x12\xb1\x5e\x95\xcd\x47");
 
 
     uint16_t mouse_x = wgrid.x() + 50;
@@ -135,7 +135,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     //drawable.save_to_png("grid3.png");
 
-    RED_CHECK_SIG(drawable, "\x15\xe9\x1b\xb9\x25\xcc\xa7\x51\xe8\x86\x5e\x19\x48\x36\x89\xf3\xdc\x15\x31\x55");
+    RED_CHECK_IMG_SIG(drawable, "\x15\xe9\x1b\xb9\x25\xcc\xa7\x51\xe8\x86\x5e\x19\x48\x36\x89\xf3\xdc\x15\x31\x55");
 
 
     Keymap2 keymap;
@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
     //drawable.save_to_png("grid4.png");
 
-    RED_CHECK_SIG(drawable, "\xa8\x5f\xbb\xa2\xe5\xc0\xea\x1b\xd1\x18\xd3\x05\x0c\x26\x64\xc0\xce\xfa\x85\x64");
+    RED_CHECK_IMG_SIG(drawable, "\xa8\x5f\xbb\xa2\xe5\xc0\xea\x1b\xd1\x18\xd3\x05\x0c\x26\x64\xc0\xce\xfa\x85\x64");
 
     wgrid.clear();
 }
