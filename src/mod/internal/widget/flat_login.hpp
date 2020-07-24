@@ -40,6 +40,7 @@ class FlatLogin : public WidgetParent
 
     public:
         WidgetScrollBar scroll_bar;
+
         ScrollableMessage(
             gdi::GraphicApi & drawable, Widget & parent,
             Font const & font, Theme const & theme, Widget & message);

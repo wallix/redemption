@@ -3911,6 +3911,7 @@ test-run tests/mod/internal/widget/test_scroll :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_scroll.cpp
 :
   <library>crypto
+  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3927,6 +3928,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
+  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
