@@ -377,17 +377,17 @@ public:
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
-    
+
     void create_shadow_session(const char * userdata, const char * type) override
     {
         this->mod.create_shadow_session(userdata, type);
     }
-    
-    void send_auth_channel_data(const char * data) override 
+
+    void send_auth_channel_data(const char * data) override
     {
         this->mod.send_auth_channel_data(data);
     }
-    
+
     void send_checkout_channel_data(const char * data) override
     {
         this->mod.send_checkout_channel_data(data);
@@ -824,11 +824,11 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
     // ================== Application Driver =========================
     char const * application_driver_exe_or_file            = nullptr;
     char const * application_driver_script                 = nullptr;
-    if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "*APP_DRIVER_IE*")) {
+    if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_IE__")) {
         application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script      = ini.get<cfg::mod_rdp::application_driver_ie_script>();
     }
-    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "*APP_DRIVER_CHROME_UIA*")) {
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_CHROME_UIA__")) {
         application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script      = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
     }
