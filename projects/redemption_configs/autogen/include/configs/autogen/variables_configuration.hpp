@@ -2837,11 +2837,11 @@ namespace cfg
         type value{true};
     };
     /// File greather are automatically rejected. <br/>
-    /// (is in mebibyte) <br/>
+    /// (is in megabyte) <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_verification:max_file_size_rejected <br/>
-    /// default: {1024} <br/>
+    /// default: {50} <br/>
     struct file_verification::max_file_size_rejected {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2851,7 +2851,7 @@ namespace cfg
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
-        type value{1024};
+        type value{50};
     };
 
     /// Enable storage of transferred files (via RDP Clipboard). <br/>

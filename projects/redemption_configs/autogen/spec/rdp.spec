@@ -379,9 +379,9 @@ block_invalid_file_down = boolean(default=False)
 log_if_accepted = boolean(default=True)
 
 # File greather are automatically rejected.
-# (is in mebibyte)
+# (is in megabyte)
 #_advanced
-max_file_size_rejected = integer(min=0, default=1024)
+max_file_size_rejected = integer(min=0, default=50)
 
 [file_storage]
 

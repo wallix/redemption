@@ -994,10 +994,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #log_if_accepted = 1
 
 # File greather are automatically rejected.
-# (is in mebibyte)
+# (is in megabyte)
 # min = 0
 #_hidden
-#max_file_size_rejected = 1024
+#max_file_size_rejected = 50
 
 [file_storage]
 

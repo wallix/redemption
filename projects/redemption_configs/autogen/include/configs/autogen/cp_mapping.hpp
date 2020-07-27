@@ -245,7 +245,7 @@ cp_spec = {
             'log_if_accepted', True
         ),
         u'file_verification:max_file_size_rejected': (
-            'max_file_size_rejected', 1024
+            'max_file_size_rejected', 50
         ),
     },
     'file_storage': {
