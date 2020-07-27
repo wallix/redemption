@@ -51,10 +51,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wmultiline.get_optimal_dim();
@@ -89,10 +89,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     int16_t y = 100;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -126,10 +126,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     int16_t y = 500;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -163,10 +163,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     int16_t y = 500;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -200,10 +200,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     int16_t y = -7;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -237,10 +237,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     int16_t y = -7;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -274,10 +274,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     int16_t y = -7;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -311,10 +311,10 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     int16_t y = 0;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
+                               "line 1\n"
+                               "line 2\n"
+                               "\n"
+                               "line 3, blah blah\n"
                                "line 4",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
@@ -348,11 +348,11 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     int16_t y = 0;
 
     WidgetMultiLine wmultiline(drawable, parent, notifier,
-                               "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
-                               "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
-                               "Nam non magna sit amet dui vestibulum feugiat.<br>"
-                               "Praesent vitae purus et lacus tincidunt lobortis.<br>"
-                               "Nam lacinia purus luctus ante congue facilisis.<br>"
+                               "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n"
+                               "Curabitur sit amet eros rutrum mi ultricies tempor.\n"
+                               "Nam non magna sit amet dui vestibulum feugiat.\n"
+                               "Praesent vitae purus et lacus tincidunt lobortis.\n"
+                               "Nam lacinia purus luctus ante congue facilisis.\n"
                                "Donec sodales mauris luctus ante ultrices blandit.",
                                id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();

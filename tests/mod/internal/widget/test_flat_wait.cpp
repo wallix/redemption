@@ -43,30 +43,30 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
     colors.global.fgcolor = WHITE;
 
     // const char * text =
-    //     "The target trucmuch@machinbidule:serv is invalid<br>"
-    //     "please enter a valid target<br>"
-    //     "You can either return to selector<br>"
-    //     "or exit<br>"
+    //     "The target trucmuch@machinbidule:serv is invalid\n"
+    //     "please enter a valid target\n"
+    //     "You can either return to selector\n"
+    //     "or exit\n"
     //     "Sorry for the inconvenience";
 
     // const char * text_timeframe =
-    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.<br>"
-    //     "It will be available on Oct 4 at 7:00 am.<br>"
+    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.\n"
+    //     "It will be available on Oct 4 at 7:00 am.\n"
     //     "You can either return to selector or exit.";
 
     const char * text_invalid =
-        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either<br>"
-        "has no right to access it or it does not exist.<br>"
+        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either\n"
+        "has no right to access it or it does not exist.\n"
         "you can either return to selector or exit.";
 
     // const char * text_pending =
-    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".<br>"
-    //     "Please wait for approbator confirmation.<br>"
+    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".\n"
+    //     "Please wait for approbator confirmation.\n"
     //     "Otherwise, you can either return to selector or exit.";
 
     // const char * text_approb =
-    //     "An approbation is required for \"trucmuch@machinbidule:serv\".<br>"
-    //     "Please fill following form and enter confirm to ask for an approbation.<br>"
+    //     "An approbation is required for \"trucmuch@machinbidule:serv\".\n"
+    //     "Please fill following form and enter confirm to ask for an approbation.\n"
     //     "Otherwise, you can either return to selector or exit.";
 
 
@@ -102,30 +102,30 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
     colors.global.fgcolor = WHITE;
 
     // const char * text =
-    //     "The target trucmuch@machinbidule:serv is invalid<br>"
-    //     "please enter a valid target<br>"
-    //     "You can either return to selector<br>"
-    //     "or exit<br>"
+    //     "The target trucmuch@machinbidule:serv is invalid\n"
+    //     "please enter a valid target\n"
+    //     "You can either return to selector\n"
+    //     "or exit\n"
     //     "Sorry for the inconvenience";
 
     // const char * text_timeframe =
-    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.<br>"
-    //     "It will be available on Oct 4 at 7:00 am.<br>"
+    //     "Access to \"trucmuch@machinbidule:serv\" is not allowed because of out of timeframe.\n"
+    //     "It will be available on Oct 4 at 7:00 am.\n"
     //     "You can either return to selector or exit.";
 
     const char * text_invalid =
-        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either<br>"
-        "has no right to access it or it does not exist.<br>"
+        "Target \"trucmuch@machinbidule:serv\" is not allowed because you either\n"
+        "has no right to access it or it does not exist.\n"
         "you can either return to selector or exit.";
 
     // const char * text_pending =
-    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".<br>"
-    //     "Please wait for approbator confirmation.<br>"
+    //     "An approbation demand is currently pending for \"trucmuch@machinbidule:serv\".\n"
+    //     "Please wait for approbator confirmation.\n"
     //     "Otherwise, you can either return to selector or exit.";
 
     // const char * text_approb =
-    //     "An approbation is required for \"trucmuch@machinbidule:serv\".<br>"
-    //     "Please fill following form and enter confirm to ask for an approbation.<br>"
+    //     "An approbation is required for \"trucmuch@machinbidule:serv\".\n"
+    //     "Please fill following form and enter confirm to ask for an approbation.\n"
     //     "Otherwise, you can either return to selector or exit.";
 
     WidgetFlatButton * extra_button = nullptr;

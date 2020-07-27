@@ -79,8 +79,8 @@ void WidgetScreen::show_tooltip(
         int w = this->tooltip->cx();
         int h = this->tooltip->cy();
         int sw = display_rect.x + display_rect.cx;
-        int posx = ((x + w) > sw)?(sw - w):x;
-        int posy = (y > h)?(y - h):0;
+        int posx = ((x + w) > sw) ? (sw - w) : x;
+        int posy = (y > h) ? (y - h) : 0;
         this->tooltip->set_xy(posx, posy);
 
         this->add_widget(this->tooltip.get());

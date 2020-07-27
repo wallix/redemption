@@ -54,12 +54,12 @@ void WidgetMultiLine::set_text(const char * text)
     char * pbuf = this->buffer;
     line_t * line = this->lines;
     do {
-        str = strstr(text, "<br>");
+        str = strstr(text, "\n");
         size_t size = std::min<size_t>(str ? (str-text) : strlen(text), &this->buffer[this->buffer_size-1]-pbuf);
         memcpy(pbuf, text, size);
         line->str = pbuf;
         pbuf += size;
-        text += size + 4;
+        text += size + 1;
         *pbuf = '\0';
         ++pbuf;
         gdi::TextMetrics tm(this->font, line->str);

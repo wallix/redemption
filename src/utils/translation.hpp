@@ -94,24 +94,24 @@ namespace trkeys
         "Le gestionnaire de session a coupé la connexion.");
     TR_KV(end_connection, "End of connection", "Fin de connexion");
     TR_KV(help_message,
-        "In login edit box, enter:<br>"
-        "- target device and login with the Bastion login separated<br>"
-        "  by a semi colon as login@target:service:Bastionlogin<br>"
-        "- or a valid Bastion authentication user.<br>"
-        "<br>"
-        "Fields are case sensitive.<br>"
-        "<br>"
-        "Contact your system administrator if you are<br>"
+        "In login edit box, enter:\n"
+        "- target device and login with the Bastion login separated\n"
+        "  by a semi colon as login@target:service:Bastionlogin\n"
+        "- or a valid Bastion authentication user.\n"
+        "\n"
+        "Fields are case sensitive.\n"
+        "\n"
+        "Contact your system administrator if you are\n"
         "experiencing problems.",
 
-        "Dans la zone de saisie login, entrez:<br>"
-        "- le login sur la cible et le nom de la machine cible suivi<br>"
-        "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
-        "- ou un nom de compte Bastion valide.<br>"
-        "<br>"
-        "Les champs sont sensibles à la casse.<br>"
-        "<br>"
-        "Contactez votre administrateur système en<br>"
+        "Dans la zone de saisie login, entrez:\n"
+        "- le login sur la cible et le nom de la machine cible suivi\n"
+        "  du compte Bastion sous la forme login@serveur:service:Bastionlogin\n"
+        "- ou un nom de compte Bastion valide.\n"
+        "\n"
+        "Les champs sont sensibles à la casse.\n"
+        "\n"
+        "Contactez votre administrateur système en\n"
         "cas de problème pour vous connecter.");
     TR_KV(selector, "Selector", "Sélecteur");
     TR_KV(session_out_time,

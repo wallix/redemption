@@ -117,7 +117,7 @@ FlatWabClose::FlatWabClose(
     }
 
     this->fixed_format_diagnostic_text =
-        (this->diagnostic_text.find("<br>") != std::string::npos);
+        (this->diagnostic_text.find("\n") != std::string::npos);
 
     if (!this->fixed_format_diagnostic_text && extra_message && *extra_message) {
         str_append(this->diagnostic_text, ' ', extra_message);

@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
     const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                "abc<br>def", "rec", "rec",
+                                "abc\ndef", "rec", "rec",
                                 false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
@@ -67,19 +67,19 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
     const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-        "Lorem ipsum dolor sit amet, consectetur<br>"
-        "adipiscing elit. Nam purus lacus, luctus sit<br>"
-        "amet suscipit vel, posuere quis turpis. Sed<br>"
-        "venenatis rutrum sem ac posuere. Phasellus<br>"
-        "feugiat dui eu mauris adipiscing sodales.<br>"
-        "Mauris rutrum molestie purus, in tempor lacus<br>"
-        "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
-        "est. Vestibulum in nunc vel massa condimentum<br>"
-        "iaculis nec in arcu. Pellentesque accumsan,<br>"
-        "quam sit amet aliquam mattis, odio purus<br>"
-        "porttitor tortor, sit amet tincidunt odio<br>"
-        "erat ut ligula. Fusce sit amet mauris neque.<br>"
-        "Sed orci augue, luctus in ornare sed,<br>"
+        "Lorem ipsum dolor sit amet, consectetur\n"
+        "adipiscing elit. Nam purus lacus, luctus sit\n"
+        "amet suscipit vel, posuere quis turpis. Sed\n"
+        "venenatis rutrum sem ac posuere. Phasellus\n"
+        "feugiat dui eu mauris adipiscing sodales.\n"
+        "Mauris rutrum molestie purus, in tempor lacus\n"
+        "tincidunt et. Sed eu ligula mauris, a rutrum\n"
+        "est. Vestibulum in nunc vel massa condimentum\n"
+        "iaculis nec in arcu. Pellentesque accumsan,\n"
+        "quam sit amet aliquam mattis, odio purus\n"
+        "porttitor tortor, sit amet tincidunt odio\n"
+        "erat ut ligula. Fusce sit amet mauris neque.\n"
+        "Sed orci augue, luctus in ornare sed,\n"
         "adipiscing et arcu.",
         nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose3)
     const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                    "abc<br>def",
+                                    "abc\ndef",
                                     nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                    "abc<br>def",
+                                    "abc\ndef",
                                     nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -153,7 +153,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
-                                    "abc<br>def",
+                                    "abc\ndef",
                                     nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     const char* extra_message = nullptr;
 
     FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, &notifier,
-                                "abc<br>def", "tartempion", "caufield",
+                                "abc\ndef", "tartempion", "caufield",
                                 true, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     flat_wab_close.refresh_timeleft(183);
@@ -252,7 +252,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
                                 600,
                                 parent,
                                 notifier,
-                                "abc<br>def",
+                                "abc\ndef",
                                 "rec",
                                 "rec",
                                 false,

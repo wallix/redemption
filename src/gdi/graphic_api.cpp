@@ -65,7 +65,8 @@ inline std::string & operator += (std::string & s, range<char const*> r)
     return s;
 }
 
-MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned int line_spacing,
+MultiLineTextMetrics::MultiLineTextMetrics(
+    const Font& font, const char* unicode_text, unsigned int line_spacing,
     int max_width, std::string& out_multiline_string_ref)
 {
     out_multiline_string_ref.clear();
@@ -103,7 +104,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
             auto to_av = [](range<char const*> r) { return make_array_view(r.begin(), r.end()); };
 
             if (cumulative_width + white_space_width + part_width > max_width) {
-                str_append(out_multiline_string_ref, "<br>", to_av(parameter));
+                str_append(out_multiline_string_ref, "\n", to_av(parameter));
 
                 cumulative_width = part_width;
 
@@ -131,12 +132,13 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
     this->height = height_max * number_of_lines + line_spacing * (number_of_lines - 1);
 }
 
-MultiLineTextMetricsEx::MultiLineTextMetricsEx(const Font& font, const char* unicode_text, unsigned int line_spacing,
+MultiLineTextMetricsEx::MultiLineTextMetricsEx(
+    const Font& font, const char* unicode_text, unsigned int line_spacing,
     int max_width, std::string& out_multiline_string_ref)
 {
     out_multiline_string_ref.clear();
 
-    const char   delimiter[]      = "<br>";
+    const char   delimiter[]      = "\n";
     const size_t delimiter_length = sizeof(delimiter) - 1;
 
     std::string s(unicode_text);

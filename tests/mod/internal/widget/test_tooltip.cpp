@@ -113,8 +113,8 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
                     nullptr, &parent, &label2,
-                    "Test tooltip<br>"
-                    "description in<br>"
+                    "Test tooltip\n"
+                    "description in\n"
                     "multilines !");
 
     parent.rdp_input_invalidate(parent.get_rect());
@@ -123,8 +123,8 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     RED_CHECK_IMG_SIG(drawable, "\x10\x22\xd9\xed\x87\x2a\x02\xbf\x64\x3d\xcf\x89\x3a\x65\xab\x53\xf9\x2c\x25\x43");
 
-    parent.tooltip->set_text("Test tooltip<br>"
-                             "Text modification<br>"
+    parent.tooltip->set_text("Test tooltip\n"
+                             "Text modification\n"
                              "text has been changed !");
     parent.rdp_input_invalidate(parent.get_rect());
 

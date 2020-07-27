@@ -53,6 +53,7 @@
 #include "acl/file_system_license_store.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
+#include "acl/module_manager/acl_new_line_converter.hpp"
 
 class ModFactory
 {
@@ -323,7 +324,7 @@ public:
 
     auto create_valid_message_mod() -> ModPack
     {
-        const char * message = this->ini.get<cfg::context::message>().c_str();
+        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         const char * button = TR(trkeys::refused, language(this->ini));
         const char * caption = "Information";
         auto new_mod = new DialogMod(
@@ -335,7 +336,7 @@ public:
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
-            message,
+            message.zstring().c_str(),
             button,
             this->rail_client_execute,
             this->glyphs,
@@ -346,7 +347,7 @@ public:
 
     auto create_display_message_mod() -> ModPack
     {
-        const char * message = this->ini.get<cfg::context::message>().c_str();
+        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         const char * button = nullptr;
         const char * caption = "Information";
         auto new_mod = new DialogMod(
@@ -358,7 +359,7 @@ public:
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
-            message,
+            message.zstring().c_str(),
             button,
             this->rail_client_execute,
             this->glyphs,
@@ -369,7 +370,7 @@ public:
 
     auto create_dialog_challenge_mod() -> ModPack
     {
-        const char * message = this->ini.get<cfg::context::message>().c_str();
+        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         const char * button = nullptr;
         const char * caption = "Challenge";
         ChallengeOpt challenge = CHALLENGE_HIDE;
@@ -387,7 +388,7 @@ public:
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
-            message,
+            message.zstring().c_str(),
             button,
             this->rail_client_execute,
             this->glyphs,
@@ -400,8 +401,8 @@ public:
     auto create_wait_info_mod() -> ModPack
     {
         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
-        const char * message = this->ini.get<cfg::context::message>().c_str();
         const char * caption = TR(trkeys::information, language(this->ini));
+        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         bool showform = this->ini.get<cfg::context::showform>();
         uint flag = this->ini.get<cfg::context::formflag>();
         auto new_mod = new WaitMod(
@@ -413,7 +414,7 @@ public:
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
-            message,
+            message.zstring().c_str(),
             this->rail_client_execute,
             this->glyphs,
             this->theme,

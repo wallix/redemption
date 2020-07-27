@@ -276,7 +276,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
 
     FlatLogin flat_login(drawable, 0, 0, parent.cx(), parent.cy(), parent, notifier, "test1",
                          "rec", "rec", "rec", "Login", "Password", "Target", "",
-                         "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>"
+                         "WARNING: Unauthorized access to this system is forbidden and will be prosecuted by law.\n\n"
                              "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
                          extra_button, false,
                          global_font_deja_vu_14(),
