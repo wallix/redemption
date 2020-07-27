@@ -117,28 +117,26 @@ CloseMod::CloseMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    Event close_event("Close:Close Event", this);
-    close_event.alarm.set_timeout(
-                        time_base.get_current_time()
-                        +std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()});
-    close_event.actions.on_timeout = [this](Event&e)
-    {
-        this->set_mod_signal(BACK_EVENT_STOP);
-        e.garbage = true;
-    };
-    this->events.add(std::move(close_event));
+    this->events.create_event_timeout(
+        "Close Event", this,
+        time_base.get_current_time()+std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()},
+        [this](Event&e)
+        {
+            this->set_mod_signal(BACK_EVENT_STOP);
+            e.garbage = true;
+        });
 
-    Event refresh_event("Close:Refresh Event", this);
-    refresh_event.alarm.set_timeout(time_base.get_current_time());
-    refresh_event.actions.on_timeout = [this](Event& event)
-    {
-        event.alarm.reset_timeout(event.alarm.now+std::chrono::seconds{1});
-        auto elapsed = event.alarm.now.tv_sec-event.alarm.start_time.tv_sec;
-        auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()}
-                        - std::chrono::seconds{elapsed};
-        this->close_widget.refresh_timeleft(remaining.count());
-    };
-    events.add(std::move(refresh_event));
+    this->events.create_event_timeout(
+        "Close Refresh Message Event", this,
+        time_base.get_current_time(),
+        [this](Event& event)
+        {
+            event.alarm.reset_timeout(event.alarm.now+std::chrono::seconds{1});
+            auto elapsed = event.alarm.now.tv_sec-event.alarm.start_time.tv_sec;
+            auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()}
+                            - std::chrono::seconds{elapsed};
+            this->close_widget.refresh_timeleft(remaining.count());
+        });
 }
 
 CloseMod::~CloseMod()

@@ -144,7 +144,8 @@ struct ClipboardVirtualChannel::OSD::D
             self.osd.msg_type = OSD::MsgType::WaitValidator;
             // TODO: this is a common pattern appearing at several places in code, we could define a create_event of reset timeout method in EventContainer
             if (self.osd.id_event) {
-                for (Event& event : self.osd.events.queue) {
+                for (Event* pevent : self.osd.events.queue) {
+                    Event & event = *pevent;
                     if (event.id == self.osd.id_event) {
                         event.alarm.set_timeout(self.time_base.get_current_time() + self.osd.delay);
                         return;
@@ -154,17 +155,15 @@ struct ClipboardVirtualChannel::OSD::D
                 assert(false);
             }
             else {
-                Event event("FileVerifOSD", &self);
-                self.osd.id_event = event.id;
-                event.alarm.set_timeout(self.time_base.get_current_time() + self.osd.delay);
-                event.actions.on_timeout = [&self, &filename](Event& event)
-                {
-                    self.osd.gd_provider.display_osd_message(str_concat(
-                    TR(trkeys::file_verification_wait, self.osd.lang), filename));
-                    self.osd.id_event = 0;
-                    event.garbage = true;
-                };
-                self.osd.events.add(std::move(event));
+                self.osd.id_event = self.osd.events.create_event_timeout(
+                        "FileVerifOSD", &self,
+                        self.time_base.get_current_time() + self.osd.delay,
+                        [&self, &filename](Event& event){
+                            self.osd.gd_provider.display_osd_message(str_concat(
+                            TR(trkeys::file_verification_wait, self.osd.lang), filename));
+                            self.osd.id_event = 0;
+                            event.garbage = true;
+                        });
             }
         }
     }
@@ -2434,6 +2433,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
         LOG(LOG_ERR, "Expected OSD event %d not found", this->osd.id_event);
         assert(false);
     }
+    this->osd.events.end_of_lifespan(this);
 
     try {
         using namespace std::string_view_literals;

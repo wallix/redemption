@@ -174,13 +174,13 @@ public:
 
         if (this->tasks.size() == 1u) {
             auto container_task = this->tasks.front().get();
-            auto event = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
-            event.actions.on_teardown = [this, container_task](Event&event)
+            auto pevent = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            pevent->actions.on_teardown = [this, container_task](Event&event)
             {
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
-            this->events.add(std::move(event));
+            this->events.add(pevent);
         }
     }
 
@@ -189,13 +189,13 @@ private:
     {
         if (!this->tasks.empty()) {
             auto container_task = this->tasks.front().get();
-            auto event  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
-            event.actions.on_teardown = [this, container_task](Event&event)
+            auto pevent  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            pevent->actions.on_teardown = [this, container_task](Event&event)
             {
                 AsynchronousTaskContainer::remover(this, container_task);
                 event.garbage = true;
             };
-            this->events.add(std::move(event));
+            this->events.add(pevent);
         }
     }
 
@@ -2218,49 +2218,37 @@ public:
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-        Event event("RDP Negociation", this);
-        event.alarm.set_timeout(this->time_base.get_current_time()
-            + this->private_rdp_negociation->open_session_timeout);
-        event.alarm.set_fd(this->trans.get_fd(), std::chrono::seconds{3600});
-        event.actions.on_action = [this](Event&event)
-        {
-            try {
-                bool const negotiation_finished = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
+        this->events.create_event_fd_timeout(
+            "RDP Negociation", this,
+            this->trans.get_fd(), std::chrono::seconds{3600},
+            this->time_base.get_current_time()+ this->private_rdp_negociation->open_session_timeout,
+            [this](Event&event)
+            {
+                try {
+                    bool const negotiation_finished = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
 
-                // RdpNego::recv_next_data may reconnect and change fd if tls
-                int const fd = this->trans.get_fd();
-                if (fd >= 0) {
-                    event.alarm.set_fd(fd, event.alarm.grace_delay);
-                }
+                    // RdpNego::recv_next_data may reconnect and change fd if tls
+                    int const fd = this->trans.get_fd();
+                    if (fd >= 0) {
+                        event.alarm.set_fd(fd, event.alarm.grace_delay);
+                    }
 
-                if (negotiation_finished) {
-                    this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
-                    event.alarm.set_timeout(this->time_base.get_current_time()
-                        // trigger timeout after 1 hour inactivity
-                        + std::chrono::seconds{3600});
-                    // Timeout Does nothing anyway
-                    event.actions.on_timeout = [](Event&/*event*/) {};
-                    // Replace event by Normal RDP fd event
-                    event.rename("First Incoming RDP PDU Event");
-                    event.actions.on_action = [this](Event&event)
-                    {
-                        auto & gd = this->gd_provider.get_graphics();
-                        if (this->buf.remaining()){
-                            this->draw_event(this->gd_provider.get_graphics());
-                        }
-                        this->private_rdp_negociation.reset();
-                        #ifndef __EMSCRIPTEN__
-                        if (this->channels.remote_programs_session_manager) {
-                            this->channels.remote_programs_session_manager->set_drawable(&gd);
-                        }
-                        #endif
-                        this->buf.load_data(this->trans);
-                        this->draw_event(gd);
-
-                        event.rename("Incoming RDP PDU Event");
-                        event.actions.on_action = [this](Event&/*event*/)
+                    if (negotiation_finished) {
+                        this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+                        event.alarm.set_timeout(this->time_base.get_current_time()
+                            // trigger timeout after 1 hour inactivity
+                            + std::chrono::seconds{3600});
+                        // Timeout Does nothing anyway
+                        event.actions.on_timeout = [](Event&/*event*/) {};
+                        // Replace event by Normal RDP fd event
+                        event.rename("First Incoming RDP PDU Event");
+                        event.actions.on_action = [this](Event&event)
                         {
                             auto & gd = this->gd_provider.get_graphics();
+                            if (this->buf.remaining()){
+                                this->draw_event(this->gd_provider.get_graphics());
+                            }
+                            this->private_rdp_negociation.reset();
                             #ifndef __EMSCRIPTEN__
                             if (this->channels.remote_programs_session_manager) {
                                 this->channels.remote_programs_session_manager->set_drawable(&gd);
@@ -2268,40 +2256,51 @@ public:
                             #endif
                             this->buf.load_data(this->trans);
                             this->draw_event(gd);
-                        };
-                    };
-                }
-            }
-            catch (Error & error) {
-                event.garbage = true;
-                this->throw_error(error);
-            }
-        };
-        event.actions.on_timeout = [this](Event&event)
-        {
-            try {
-                if (this->error_message) {
-                    *this->error_message = "Logon timer expired!";
-                }
 
-                this->sesman.report("CONNECTION_FAILED", "Logon timer expired.");
-        #ifndef __EMSCRIPTEN__
-                if (this->channels.session_probe.enable_session_probe) {
-                    this->enable_input_event();
-                    this->enable_graphics_update();
+                            event.rename("Incoming RDP PDU Event");
+                            event.actions.on_action = [this](Event&/*event*/)
+                            {
+                                auto & gd = this->gd_provider.get_graphics();
+                                #ifndef __EMSCRIPTEN__
+                                if (this->channels.remote_programs_session_manager) {
+                                    this->channels.remote_programs_session_manager->set_drawable(&gd);
+                                }
+                                #endif
+                                this->buf.load_data(this->trans);
+                                this->draw_event(gd);
+                            };
+                        };
+                    }
                 }
-        #endif
-                LOG(LOG_ERR,
-                    "Logon timer expired on %s. The session will be disconnected.",
-                this->logon_info.hostname());
-                throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
-            }
-            catch (Error & error) {
-                event.garbage = true;
-                this->throw_error(error);
-            }
-        };
-        this->events.add(std::move(event));
+                catch (Error & error) {
+                    event.garbage = true;
+                    this->throw_error(error);
+                }
+            },
+            [this](Event&event)
+            {
+                try {
+                    if (this->error_message) {
+                        *this->error_message = "Logon timer expired!";
+                    }
+
+                    this->sesman.report("CONNECTION_FAILED", "Logon timer expired.");
+            #ifndef __EMSCRIPTEN__
+                    if (this->channels.session_probe.enable_session_probe) {
+                        this->enable_input_event();
+                        this->enable_graphics_update();
+                    }
+            #endif
+                    LOG(LOG_ERR,
+                        "Logon timer expired on %s. The session will be disconnected.",
+                    this->logon_info.hostname());
+                    throw Error(ERR_RDP_OPEN_SESSION_TIMEOUT);
+                }
+                catch (Error & error) {
+                    event.garbage = true;
+                    this->throw_error(error);
+                }
+            });
     }   // mod_rdp
 
 

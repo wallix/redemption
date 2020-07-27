@@ -124,20 +124,20 @@ struct RdpData
         , time_base(time_base)
         , events(events)
         {
-            Event event("File Validator Event", this);
-            event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds(3600));
-            event.alarm.set_fd(this->trans.get_fd(),std::chrono::seconds(3600));
-            event.actions.on_timeout = [](Event&event)
-            {
-                event.alarm.set_timeout(event.alarm.now+std::chrono::seconds(3600));
-            };
-            event.actions.on_action = [this](Event&/*event*/)
-            {
-                if (this->mod){
-                    this->mod->DLP_antivirus_check_channels_files();
-                }
-            };
-            this->events.add(std::move(event));
+            this->events.create_event_fd_timeout(
+                "File Validator Event", this,
+                this->trans.get_fd(),std::chrono::seconds(3600),
+                this->time_base.get_current_time()+std::chrono::seconds(3600),
+                [this](Event&/*event*/)
+                {
+                    if (this->mod){
+                        this->mod->DLP_antivirus_check_channels_files();
+                    }
+                },
+                [](Event&event)
+                {
+                    event.alarm.set_timeout(event.alarm.now+std::chrono::seconds(3600));
+                });
         }
 
         ~FileValidator()

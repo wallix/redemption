@@ -94,23 +94,23 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    Event event("VNC Init Event", this);
-    event.alarm.set_timeout(this->time_base.get_current_time());
-    event.actions.on_timeout = [this](Event&event)
-    {
-        // First Timeout Clear Screen
-        gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
-        // Following fd timeouts
-        event.rename("VNC Fd Event");
-        event.alarm.set_fd(this->t.get_fd(), std::chrono::seconds{300});
-        event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds{300});
-        event.actions.on_timeout = [](Event&/*event*/){};
-        event.actions.on_action = [this](Event&/*ebent*/)
+    this->events.create_event_timeout(
+        "VNC Init Event", this,
+        this->time_base.get_current_time(),
+        [this](Event&event)
         {
-            this->draw_event(this->gd_provider.get_graphics());
-        };
-    };
-    this->events.add(std::move(event));
+            // First Timeout Clear Screen
+            gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
+            // Following fd timeouts
+            event.rename("VNC Fd Event");
+            event.alarm.set_fd(this->t.get_fd(), std::chrono::seconds{300});
+            event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds{300});
+            event.actions.on_timeout = [this](Event&/*event*/){};
+            event.actions.on_action = [this](Event&/*ebent*/)
+            {
+                this->draw_event(this->gd_provider.get_graphics());
+            };
+        });
 }
 
 bool mod_vnc::ms_logon(Buf64k & buf)
@@ -1721,12 +1721,10 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                             RDPECLIP::CB_FORMAT_DATA_REQUEST);
                         this->clipboard_requesting_for_data_is_delayed = true;
                         // arms timeout
-                        Event event("VNC Clipboard Timeout Event", this);
-                        this->clipboard_timeout_timer = event.id;
-                        event.alarm.set_timeout(this->time_base.get_current_time()
-                                +(MINIMUM_TIMEVAL - timeval_diff));
-                        event.actions.on_timeout = [this](Event&){this->check_timeout();};
-                        this->events.add(std::move(event));
+                        this->clipboard_timeout_timer = this->events.create_event_timeout(
+                            "VNC Clipboard Timeout Event", this,
+                            this->time_base.get_current_time()+(MINIMUM_TIMEVAL - timeval_diff),
+                            [this](Event&){this->check_timeout();});
                     }
                     else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated)
                         &&  ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)

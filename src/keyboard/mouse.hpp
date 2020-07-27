@@ -74,16 +74,13 @@ struct MouseState {
                                       this->first_click_down_timer);
                     }
                     else {
-                        Event dc_event("Mouse::DC Event", this);
-                        this->first_click_down_timer = dc_event.id;
-                        dc_event.alarm.set_timeout(
-                                            this->time_base.get_current_time()
-                                            +std::chrono::seconds{1});
-                        dc_event.actions.on_timeout = [this](Event&)
-                        {
-                            this->dc_state = MouseState::DCState::Wait;
-                        };
-                        this->events.add(std::move(dc_event));
+                        this->first_click_down_timer = this->events.create_event_timeout(
+                            "Mouse::DC Event", this,
+                            this->time_base.get_current_time()+std::chrono::seconds{1},
+                            [this](Event&)
+                            {
+                                this->dc_state = MouseState::DCState::Wait;
+                            });
                     }
                 }
             break;

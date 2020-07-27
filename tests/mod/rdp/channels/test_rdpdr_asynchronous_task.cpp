@@ -75,14 +75,15 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     std::deque<AsynchronousTask*> tasks;
 
-    std::function<void(Event&)> remover = [&tasks](Event&) -> void
+    std::function<void(Event&)> remover = [&tasks](Event&event) -> void
     {
         tasks.pop_front();
     };
 
-    auto event = rdpdr_drive_read_task.configure_event(now, nullptr);
+    auto pevent = rdpdr_drive_read_task.configure_event(now, nullptr);
+    Event & event = *pevent;
     event.actions.on_teardown = remover;
-    events.add(std::move(event));
+    events.add(pevent);
     AsynchronousTask* task(&rdpdr_drive_read_task);
     tasks.push_back(task);
 
@@ -90,10 +91,10 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     auto end_tv = time_base.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
         time_base.set_current_time(end_tv);
-        events.execute_events(end_tv, [](int/*fd*/){ return true; });
+        events.execute_events(end_tv, [](int/*fd*/){ return true; }, true);
         end_tv.tv_sec++;
     }
-    events.execute_events(end_tv, [](int/*fd*/){ return true; });
+    events.execute_events(end_tv, [](int/*fd*/){ return true; }, true);
     RED_CHECK(events.queue.empty());
     RED_CHECK(tasks.empty());
 }
@@ -123,14 +124,15 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     std::deque<AsynchronousTask*> tasks;
 
-    std::function<void(Event&)> remover = [&tasks](Event&) -> void
+    std::function<void(Event&)> remover = [&tasks](Event&event) -> void
     {
         tasks.pop_front();
     };
 
-    auto event = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
+    auto pevent = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
+    Event & event = *pevent;
     event.actions.on_teardown = remover;
-    events.add(std::move(event));
+    events.add(pevent);
     AsynchronousTask * task(&rdpdr_send_drive_io_response_task);
     tasks.push_back(task);
 

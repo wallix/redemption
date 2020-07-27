@@ -172,11 +172,12 @@ struct Sequencer {
 };
 
 struct EventContainer {
-    std::vector<Event> queue;
+    std::vector<Event*> queue;
 
     void get_fds(std::function<void(int fd)> fn)
     {
-        for (auto & event: this->queue){
+        for (auto & pevent: this->queue){
+            Event & event = *pevent;
             if ((not (event.garbage or event.teardown)) and event.alarm.fd != INVALID_SOCKET){
                 fn(event.alarm.fd);
             }
@@ -185,7 +186,8 @@ struct EventContainer {
 
     void get_fds_timeouts(std::function<void(timeval tv)> fn)
     {
-        for (auto & event: this->queue){
+        for (auto & pevent: this->queue){
+            Event & event = *pevent;
             if ((not (event.garbage or event.teardown)) and event.alarm.fd != INVALID_SOCKET){
                 fn(event.alarm.trigger_time);
             }
@@ -194,7 +196,8 @@ struct EventContainer {
 
     void get_timeouts(std::function<void(timeval tv)> fn)
     {
-        for (auto & event: this->queue){
+        for (auto & pevent: this->queue){
+            Event & event = *pevent;
             if ((not (event.garbage or event.teardown)) and event.alarm.fd == INVALID_SOCKET){
                 fn(event.alarm.trigger_time);
             }
@@ -204,7 +207,7 @@ struct EventContainer {
     void execute_events(const timeval tv, const std::function<bool(int fd)> & fn, bool verbose = false)
     {
         for (size_t i = 0 ; i < this->queue.size(); i++){
-            auto & event = this->queue[i];
+            auto & event = *this->queue[i];
 
             if (event.garbage) {
                 LOG_IF(verbose, LOG_INFO, "GARBAGE EVENT '%s' (%d) timeout=%d now=%d =========",
@@ -244,11 +247,12 @@ struct EventContainer {
 
     void exec_teardowns() {
         for (size_t i = 0; i < this->queue.size() ; i++){
-            if (not this->queue[i].garbage
-            and this->queue[i].teardown){
-                this->queue[i].exec_teardown();
-                this->queue[i].teardown = false;
-                this->queue[i].garbage = true;
+            Event & event = *this->queue[i];
+            if (not event.garbage
+            and event.teardown){
+                event.exec_teardown();
+                event.teardown = false;
+                event.garbage = true;
             }
         }
     }
@@ -256,9 +260,10 @@ struct EventContainer {
 
     void garbage_collector() {
         for (size_t i = 0; i < this->queue.size() ; i++){
-            while ((i < this->queue.size()) && this->queue[i].garbage){
+            while ((i < this->queue.size()) && this->queue[i]->garbage){
+                delete this->queue[i];
                 if (i < this->queue.size() -1){
-                    this->queue[i] = std::move(this->queue.back());
+                    this->queue[i] = this->queue.back();
                 }
                 this->queue.pop_back();
             }
@@ -267,9 +272,10 @@ struct EventContainer {
 
     void end_of_lifespan(void * lifespan)
     {
-        for (auto & e: this->queue){
-            if (e.lifespan_handle == lifespan){
-                e.garbage = true;
+        for (auto & pevent: this->queue){
+            Event & event = *pevent;
+            if (event.lifespan_handle == lifespan){
+                event.garbage = true;
             }
         }
     }
@@ -278,13 +284,15 @@ struct EventContainer {
     timeval next_timeout()
     {
        timeval ultimatum = {0, 0};
-       for(auto &event: this->queue){
+       for(auto & pevent: this->queue){
+            Event & event = *pevent;
             if (not (event.garbage or event.teardown) and event.alarm.active){
                 ultimatum = event.alarm.trigger_time;
                 break;
             }
        }
-       for(auto &event: this->queue){
+       for(auto & pevent: this->queue){
+            Event & event = *pevent;
             if (not (event.garbage or event.teardown)
             and event.alarm.active){
                 ultimatum = std::min(event.alarm.trigger_time, ultimatum);
@@ -297,7 +305,8 @@ struct EventContainer {
     int erase_event(int & event_id)
     {
         if (event_id) {
-            for(auto & event: this->queue){
+            for(auto & pevent: this->queue){
+                Event & event = *pevent;
                 if (not (event.garbage or event.teardown)
                 and (event.id == event_id)){
                     event.garbage = true;
@@ -311,7 +320,8 @@ struct EventContainer {
 
     void reset_timeout(const timeval trigger_time, const int event_id)
     {
-        for(auto & event: this->queue){
+        for(auto & pevent: this->queue){
+            Event & event = *pevent;
             if (not (event.garbage or event.teardown)
             and (event.id == event_id)){
                 event.alarm.set_timeout(trigger_time);
@@ -319,22 +329,46 @@ struct EventContainer {
         }
     }
 
-    void add(Event && event)
+    void add(Event * pevent)
     {
-        this->queue.push_back(std::move(event));
+        this->queue.push_back(pevent);
     }
 
     int create_event_timeout(std::string name, void * lifespan,
         timeval trigger_time,
         std::function<void(Event&)> timeout)
     {
-        Event event(name, lifespan);
+        Event * pevent = new Event(name, lifespan);
+        Event & event = *pevent;
         event.alarm.set_timeout(trigger_time);
         event.actions.on_timeout = timeout;
         int event_id = event.id;
-        this->queue.push_back(std::move(event));
+        this->queue.push_back(pevent);
         return event_id;
     }
 
-};
+    int create_event_fd_timeout(std::string name, void * lifespan,
+        int fd, std::chrono::microseconds grace_delay,
+        timeval trigger_time,
+        std::function<void(Event&)> on_fd,
+        std::function<void(Event&)> on_timeout)
+    {
+        Event * pevent = new Event(name, lifespan);
+        Event & event = *pevent;
+        event.alarm.set_fd(fd, grace_delay);
+        event.alarm.set_timeout(trigger_time);
+        event.actions.on_action = on_fd;
+        event.actions.on_timeout = on_timeout;
+        int event_id = event.id;
+        this->queue.push_back(pevent);
+        return event_id;
+    }
 
+    ~EventContainer(){
+        // clear every remaining event
+       for(auto & pevent: this->queue){
+            delete pevent;
+        }
+    }
+
+};

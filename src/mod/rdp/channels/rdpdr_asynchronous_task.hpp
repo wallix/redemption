@@ -39,7 +39,7 @@ class AsynchronousTask
 public:
     AsynchronousTask() = default;
     virtual ~AsynchronousTask() = default;
-    virtual Event configure_event(timeval now, void * lifespan) = 0;
+    virtual Event * configure_event(timeval now, void * lifespan) = 0;
 };
 
 inline void rdpdr_in_file_seek(int fd, int64_t offset, int whence)
@@ -106,16 +106,23 @@ public:
 
     ~RdpdrDriveReadTask(){}
 
-    Event configure_event(timeval now, void * lifespan) override
+    Event * configure_event(timeval now, void * lifespan) override
     {
-        Event event("RdpdrDriveReadTask", lifespan);
+        Event * pevent = new Event("RdpdrDriveReadTask", lifespan);
+        Event & event = *pevent;
         event.alarm.set_timeout(now+std::chrono::seconds{1});
         event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
         event.actions.on_action = [this](Event&event)
         {
-            if (this->run()){
-                return;
+            try {
+                if (this->run()){
+                    return;
+                }
             }
+            catch(...){
+                event.teardown = true;
+                throw;
+            };
             event.teardown = true;
         };
         event.actions.on_timeout = [this](Event&event)
@@ -123,7 +130,7 @@ public:
             LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
             event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
         };
-        return event;
+        return pevent;
     }
 
     bool run()
@@ -217,19 +224,26 @@ public:
 
     ~RdpdrSendDriveIOResponseTask(){}
 
-    Event configure_event(timeval now, void * lifespan) override
+    Event * configure_event(timeval now, void * lifespan) override
     {
-        Event event("RdpdrSendDriveIOResponseTask", lifespan);
+        Event * pevent = new Event("RdpdrSendDriveIOResponseTask", lifespan);
+        Event & event = *pevent;
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
         event.actions.on_timeout = [this](Event&event)
         {
-            if (this->run()){
-                event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
-                return;
+            try {
+                if (this->run()){
+                    event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                    return;
+                }
             }
+            catch(...){
+                event.teardown = true;
+                throw;
+            };
             event.teardown = true;
         };
-        return event;
+        return pevent;
     }
 
     bool run()
@@ -297,16 +311,23 @@ public:
 
     ~RdpdrSendClientMessageTask(){}
 
-    Event configure_event(timeval now, void * lifespan) override
+    Event * configure_event(timeval now, void * lifespan) override
     {
-        Event event("RdpdrSendClientMessageTask", lifespan);
+        Event * pevent = new Event("RdpdrSendClientMessageTask", lifespan);
+        Event & event = *pevent;
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
         event.actions.on_timeout = [this](Event&event)
         {
-            this->run();
+            try {
+                this->run();
+            }
+            catch(...){
+                event.teardown = true;
+                throw;
+            };
             event.teardown = true;
         };
-        return event;
+        return pevent;
     }
 
     bool run()

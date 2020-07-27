@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     e.alarm.set_timeout(wakeup);
     e.actions.on_timeout = [&s](Event&event){
         event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
-        s += "Event Triggered"; 
+        s += "Event Triggered";
     };
 
     // before time: nothing happens
@@ -90,21 +90,25 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     timeval wakeup = origin+std::chrono::seconds(2);
     // the second parameter of event is the event context
     // it should be an object whose lifecycle match event functions lifecycle
-    Event e("Event", nullptr);
-    e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
-    e.alarm.set_timeout(wakeup);
-    events.add(std::move(e));
+    Event * pevent = new Event("Event", nullptr);
+    Event & event = * pevent;
+    event.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
+    event.alarm.set_timeout(wakeup);
+    events.add(pevent);
 
     auto t = origin;
-    for (auto & event: events.queue){
+    for (auto & pevent: events.queue){
+        Event & event = *pevent;
         RED_CHECK(!event.alarm.trigger(t));
     }
     t = t + std::chrono::seconds(1);
-    for (auto & event: events.queue){
+    for (auto & pevent: events.queue){
+        Event & event = *pevent;
         RED_CHECK(!event.alarm.trigger(t));
     }
     t = t + std::chrono::seconds(1);
-    for (auto & event: events.queue){
+    for (auto & pevent: events.queue){
+        Event & event = *pevent;
         if (event.alarm.trigger(t)){
             event.exec_timeout();
             RED_CHECK(s == std::string("Event Triggered"));
@@ -115,7 +119,8 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     }
 
     t = t + std::chrono::seconds(1);
-    for (auto & event: events.queue){
+    for (auto & pevent: events.queue){
+        Event & event = *pevent;
         RED_CHECK(!event.alarm.trigger(t));
     }
 }

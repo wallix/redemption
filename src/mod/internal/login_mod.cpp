@@ -121,16 +121,14 @@ LoginMod::LoginMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
-        Event login_timeout_event("Log Box Timeout", this);
-        login_timeout_event.alarm.set_timeout(
-            this->time_base.get_current_time()
-            + std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()));
-        login_timeout_event.actions.on_timeout = [this](Event&e)
-        {
-            e.garbage = true;
-            this->set_mod_signal(BACK_EVENT_STOP);
-        };
-        this->events.add(std::move(login_timeout_event));
+        this->events.create_event_timeout(
+            "Log Box Timeout", this,
+            this->time_base.get_current_time()+std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()),
+            [this](Event&e)
+            {
+                e.garbage = true;
+                this->set_mod_signal(BACK_EVENT_STOP);
+            });
     }
 }
 

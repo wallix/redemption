@@ -147,16 +147,15 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            Event event("SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this);
             this->event_id = this->events.erase_event(this->event_id);
-            this->event_id = event.id;
-            event.alarm.set_timeout(this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms);
-            event.actions.on_timeout = [this](Event&event)
-            {
-                this->on_event();
-                event.garbage=true;
-            };
-            this->events.add(std::move(event));
+            this->event_id = this->events.create_event_timeout(
+                "SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this,
+                this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms,
+                [this](Event&event)
+                {
+                    this->on_event();
+                    event.garbage=true;
+                });
         }
 
         if (this->sesprob_channel) {
@@ -494,12 +493,11 @@ public:
         }
         }};
 
-        Event event("SessionProbeClipboardBasedLauncher Event", this);
         this->event_id = this->events.erase_event(this->event_id);
-        this->event_id = event.id;
-        event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
-        event.actions.on_timeout = std::move(chain);
-        this->events.add(std::move(event));
+        this->event_id = this->events.create_event_timeout(
+            "SessionProbeClipboardBasedLauncher Event", this,
+            this->time_base.get_current_time()+this->params.short_delay_ms,
+            std::move(chain));
     }
 
     void make_run_sequencer()
@@ -604,12 +602,11 @@ public:
             }
         }}};
 
-        Event event("SessionProbeClipboardBasedLauncher Event", this);
         this->event_id = this->events.erase_event(this->event_id);
-        this->event_id = event.id;
-        event.alarm.set_timeout(this->time_base.get_current_time()+this->params.short_delay_ms);
-        event.actions.on_timeout = std::move(chain);
-        this->events.add(std::move(event));
+        this->event_id = this->events.create_event_timeout(
+            "SessionProbeClipboardBasedLauncher Event", this,
+            this->time_base.get_current_time()+this->params.short_delay_ms,
+            std::move(chain));
     }
 
     bool on_server_format_list_response() override
