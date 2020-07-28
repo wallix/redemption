@@ -450,9 +450,9 @@ public:
         this->time_base.set_current_time(time);
 
         assert(this->events.queue.size() == 1);
-        Event& event = this->events.queue[0];
+        Event& event = *this->events.queue[0];
         if (event.alarm.trigger(time)){
-            event.exec_timeout();
+            event.actions.exec_timeout(event);
         }
     }
 
@@ -461,8 +461,8 @@ public:
         this->trans.push_input_buffer(std::move(data));
 
         assert(this->events.queue.size() == 1);
-        Event& event = this->events.queue[0];
-        event.exec_action();
+        Event& event = *this->events.queue[0];
+        event.actions.exec_action(event);
     }
 
     bytes_view get_output_buffer() const
