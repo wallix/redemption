@@ -1671,6 +1671,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
           ? "FILE_VERIFICATION direction=DOWN file_name=abc status=ok"_av
           : "FILE_VERIFICATION direction=DOWN file_name=abc status=fail"_av
     };
+    const auto file_blocked_msg = Msg::Log6{"FILE_BLOCKED direction=DOWN file_name=abc"_av};
 
     using StreamId = RequestedRange::StreamId;
     RequestedRange requested{msg_comparator, *channel_ctx};
@@ -1714,6 +1715,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(1)));
         },
         TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg),
         TEST_BUF(Msg::ToFront{24, last_flags, is_accepted
             ? requested.file_contents
             : zeros.first(requested.file_contents.size())})
@@ -1807,6 +1809,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(2)));
         },
         TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg),
         TEST_BUF(Msg::ToFront{19, last_flags, (is_accepted
             ? requested.file_contents
             : zeros
@@ -1904,6 +1907,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(3)));
         },
         TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg),
         TEST_BUF(Msg::ToFront{16, last_flags, (is_accepted
             ? requested.file_contents
             : zeros
@@ -2056,7 +2060,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(5)));
         },
-        TEST_BUF(file_verification_msg)
+        TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg)
     );
 
     msg_comparator.run(
@@ -2137,7 +2142,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(6)));
         },
-        TEST_BUF(file_verification_msg)
+        TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg)
     );
 
     msg_comparator.run(
@@ -2193,7 +2199,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(7)));
         },
-        TEST_BUF(file_verification_msg)
+        TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg)
     );
 
     msg_comparator.run(
@@ -2280,7 +2287,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(8)));
         },
-        TEST_BUF(file_verification_msg)
+        TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg)
     );
 
     msg_comparator.run(
@@ -2369,7 +2377,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(9)));
         },
-        TEST_BUF(file_verification_msg)
+        TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg)
     );
 
     msg_comparator.run(
@@ -2567,7 +2576,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(12)));
         },
-        TEST_BUF(file_verification_msg)
+        TEST_BUF(file_verification_msg),
+        TEST_BUF_IF(is_rejected, file_blocked_msg)
     );
 
     msg_comparator.run(
