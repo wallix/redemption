@@ -105,11 +105,11 @@ mod_vnc::mod_vnc( Transport & t
             event.rename("VNC Fd Event");
             event.alarm.set_fd(this->t.get_fd(), std::chrono::seconds{300});
             event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds{300});
-            event.actions.on_timeout = [this](Event&/*event*/){};
-            event.actions.on_action = [this](Event&/*ebent*/)
+            event.actions.set_timeout_function([](Event&/*event*/){});
+            event.actions.set_action_function([this](Event&/*ebent*/)
             {
                 this->draw_event(this->gd_provider.get_graphics());
-            };
+            });
         });
 }
 

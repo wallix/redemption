@@ -112,24 +112,26 @@ public:
         Event & event = *pevent;
         event.alarm.set_timeout(now+std::chrono::seconds{1});
         event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
-        event.actions.on_action = [this](Event&event)
-        {
-            try {
-                if (this->run()){
-                    return;
+        event.actions.set_action_function(
+            [this](Event&event)
+            {
+                try {
+                    if (this->run()){
+                        return;
+                    }
                 }
-            }
-            catch(...){
+                catch(...){
+                    event.teardown = true;
+                    throw;
+                };
                 event.teardown = true;
-                throw;
-            };
-            event.teardown = true;
-        };
-        event.actions.on_timeout = [this](Event&event)
-        {
-            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-            event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
-        };
+            });
+        event.actions.set_timeout_function(
+            [this](Event&event)
+            {
+                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
+                event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
+            });
         return pevent;
     }
 
@@ -229,20 +231,21 @@ public:
         Event * pevent = new Event("RdpdrSendDriveIOResponseTask", lifespan);
         Event & event = *pevent;
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
-        event.actions.on_timeout = [this](Event&event)
-        {
-            try {
-                if (this->run()){
-                    event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
-                    return;
+        event.actions.set_timeout_function(
+            [this](Event&event)
+            {
+                try {
+                    if (this->run()){
+                        event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                        return;
+                    }
                 }
-            }
-            catch(...){
+                catch(...){
+                    event.teardown = true;
+                    throw;
+                };
                 event.teardown = true;
-                throw;
-            };
-            event.teardown = true;
-        };
+            });
         return pevent;
     }
 
@@ -316,17 +319,18 @@ public:
         Event * pevent = new Event("RdpdrSendClientMessageTask", lifespan);
         Event & event = *pevent;
         event.alarm.set_timeout(now+std::chrono::milliseconds{1});
-        event.actions.on_timeout = [this](Event&event)
-        {
-            try {
-                this->run();
-            }
-            catch(...){
+        event.actions.set_timeout_function(
+            [this](Event&event)
+            {
+                try {
+                    this->run();
+                }
+                catch(...){
+                    event.teardown = true;
+                    throw;
+                };
                 event.teardown = true;
-                throw;
-            };
-            event.teardown = true;
-        };
+            });
         return pevent;
     }
 

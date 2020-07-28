@@ -24,6 +24,7 @@
 
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
+#include "utils/timebase.hpp"
 
 #include <string>
 
@@ -40,7 +41,7 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     // it should be an object whose lifecycle match event functions lifecycle
     Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
-    e.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
+    e.actions.set_timeout_function([&s](Event&){ s += "Event Triggered"; });
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
@@ -48,7 +49,7 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
     // but only once
     RED_CHECK(!e.alarm.trigger(wakeup+std::chrono::seconds(2)));
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(s == std::string("Event Triggered"));
 
     // If I set an alarm in the past it will be triggered immediately
@@ -67,16 +68,16 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     // it should be an object whose lifecycle match event functions lifecycle
     Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
-    e.actions.on_timeout = [&s](Event&event){
+    e.actions.set_timeout_function([&s](Event&event){
         event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
         s += "Event Triggered";
-    };
+    });
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
     // when it's time of above alarm is triggered
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
-    e.actions.on_timeout(e);
+    e.actions.exec_timeout(e);
     // and again after period, because event reset alarm
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(2)));
 }
@@ -92,7 +93,7 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     // it should be an object whose lifecycle match event functions lifecycle
     Event * pevent = new Event("Event", nullptr);
     Event & event = * pevent;
-    event.actions.on_timeout = [&s](Event&){ s += "Event Triggered"; };
+    event.actions.set_timeout_function([&s](Event&){ s += "Event Triggered"; });
     event.alarm.set_timeout(wakeup);
     events.add(pevent);
 
@@ -110,7 +111,7 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     for (auto & pevent: events.queue){
         Event & event = *pevent;
         if (event.alarm.trigger(t)){
-            event.exec_timeout();
+            event.actions.exec_timeout(event);
             RED_CHECK(s == std::string("Event Triggered"));
         }
         else {
@@ -136,8 +137,8 @@ RED_AUTO_TEST_CASE(TestNewEmptySequencer)
 {
     Sequencer chain = {false, 0, true, {}};
     Event e("Chain", nullptr);
-    e.actions.on_timeout = std::move(chain);
-    e.exec_timeout();
+    e.actions.set_timeout_function(chain);
+    e.actions.exec_timeout(e);
     RED_CHECK(e.garbage == true);
 }
 
@@ -174,15 +175,15 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
         }
     }};
     Event e("Chain", nullptr);
-    e.actions.on_timeout = std::move(chain);
+    e.actions.set_timeout_function(chain);
     RED_CHECK(context.counter == 0);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 1);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 2);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 3);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 4);
     RED_CHECK(e.garbage == true);
 }
@@ -229,18 +230,148 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
         }
     }};
     Event e("Chain", nullptr);
-    e.actions.on_timeout = std::move(chain);
+    e.actions.set_timeout_function(chain);
     RED_CHECK(context.counter == 0);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 1);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 3);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 2);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 10);
-    e.exec_timeout();
+    e.actions.exec_timeout(e);
     RED_CHECK(context.counter == 4);
     RED_CHECK(e.garbage == true);
 }
 
+
+RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
+{
+
+    struct Base {
+        virtual void action() = 0;
+        virtual ~Base() {}
+    };
+
+    struct Context : public Base {
+        EventContainer & events;
+        TimeBase & time_base;
+
+        Context(EventContainer & events, TimeBase & time_base) : events(events), time_base(time_base)
+        {
+            this->events.create_event_timeout(
+                "Init Event", this,
+                this->time_base.get_current_time(),
+                [this](Event&event)
+                {
+                    LOG(LOG_INFO, "Execute Event");
+                    // Following fd timeouts
+                    event.rename("VNC Fd Event");
+                    event.alarm.set_fd(1, std::chrono::seconds{300});
+                    event.alarm.set_timeout(this->time_base.get_current_time());
+                    event.actions.set_timeout_function([this](Event&/*event*/){LOG(LOG_INFO, "Timeout");});
+                    event.actions.set_action_function([this](Event&/*event*/){ this->action();});
+                });
+        }
+
+        ~Context() {
+            this->events.end_of_lifespan(this);
+        }
+
+        void action() override {
+            LOG(LOG_INFO, "Action");
+            return;
+        }
+    };
+
+    TimeBase time_base({0,0});
+    EventContainer events;
+
+    Context context(events, time_base);
+    LOG(LOG_INFO, "Will Execute Event");
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    time_base.set_current_time({3,0});
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, 2);
+}
+
+RED_AUTO_TEST_CASE(TestChangeOfRunningAction2)
+{
+
+    struct Event {
+        struct Data {
+            int val;
+            void set_data(int val) {this->val = val; }
+        } data;
+
+        struct Actions {
+            std::function<void(Event &)> action1 = [](Event &){};
+            std::function<void(Event &)> future_action1 = [](Event &){};
+            std::function<void(Event &)> action2 = [](Event &){};
+        } actions;
+    };
+
+    struct Object {
+        int val;
+    };
+
+    struct Base {
+        virtual void action() = 0;
+        virtual ~Base() {}
+    };
+
+    struct Context : public Base {
+        Event & event;
+        Object & val;
+
+        Context(Event & event, Object & val) : event(event), val(val)
+        {
+            event.data.set_data(this->val.val);
+            event.actions.action1 = [this](Event&event)
+            {
+                event.data.set_data(this->val.val);
+                event.actions.future_action1 = [](Event&/*event*/){puts("action1");};
+                event.actions.action2 = [this](Event&/*event*/){ this->action();};
+            };
+        }
+        void action() override { puts("action2"); return; }
+    };
+
+    Object val;
+    Event event;
+    Context context(event, val);
+    event.actions.action1(event);
+    event.actions.action1 = std::move(event.actions.future_action1);
+    event.actions.action2(event);
+}
+
+RED_AUTO_TEST_CASE(TestDestructionOfThis)
+{
+    class test {
+    public:
+        void Do() {
+            this->test_fun();
+        }
+
+        void Init() {
+            this->number = 1008;
+            this->test_fun = [this] {
+                this->test_fun = nullptr;
+                printf("number %d\n", this->number); //gcc crash here, this == nullptr
+            };
+
+        }
+
+    public:
+        std::function<void()> test_fun;
+        int number = 0;
+    };
+
+
+    test t;
+    t.Init();
+    t.Do();
+
+}

@@ -58,17 +58,17 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{62, 0},[](int){return false;});
+        events.execute_events(timeval{62, 0},[](int){return false;}, 0);
         RED_CHECK_IMG_SIG(ConstImageDataView(front),
             "\x11\xe6\x7f\xdb\x20\x5a\x01\x1e\x74\x58\xf3\xb8\x44\xe9\xeb\x51\x30\xd0\x73\x3d");
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{580, 0},[](int){return false;});
+        events.execute_events(timeval{580, 0},[](int){return false;}, 0);
         RED_CHECK_IMG_SIG(ConstImageDataView(front),
             "\xbf\x55\xa1\x7d\xd7\xbf\xcd\x27\x1f\x1b\x18\xe8\xdc\xea\x15\xb2\x56\x73\x45\x10");
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{600, 0},[](int){return false;});
+        events.execute_events(timeval{600, 0},[](int){return false;}, 0);
         RED_CHECK(events.queue.size() == 1);
 
         RED_CHECK_IMG_SIG(ConstImageDataView(front),
@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     }
     // When Close mod goes out of scope remaining events should be garbaged
     RED_CHECK(events.queue.size() == 1);
-    events.execute_events(timeval{600, 0},[](int){return false;});
+    events.execute_events(timeval{600, 0},[](int){return false;}, 0);
     RED_CHECK(events.queue.size() == 0);
 }
 
@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    events.execute_events(timeval{1,0},[](int){return false;});
+    events.execute_events(timeval{1,0},[](int){return false;}, 0);
 
     RED_CHECK_IMG_SIG(ConstImageDataView(front),
         "\x95\xd0\x6e\x6e\xae\xdf\xa0\x68\xcb\x7b\x3d\x2d\x84\x07\x59\xa1\xb6\xdb\x30\xb8");

@@ -321,9 +321,9 @@ public:
 
         timeval now_after_select = tvtime();
 
-        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; });
+        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
         if (num) {
-            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); });
+            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, 0);
         }
         return 0;
     }
@@ -1000,9 +1000,9 @@ public:
         try {
             if (is_timeout) {
                 auto const end_tv = time_base.get_current_time();
-                this->events.execute_events(end_tv, [](int /*fd*/){ return false; });
+                this->events.execute_events(end_tv, [](int /*fd*/){ return false; }, 0);
             } else {
-                this->events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; });
+                this->events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, 0);
             }
         } catch (const Error & e) {
 

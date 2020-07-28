@@ -151,13 +151,13 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     auto end_tv = time_base.get_current_time();
-    events.execute_events(end_tv, [](int){return false;});
+    events.execute_events(end_tv, [](int){return false;}, 0);
 
     int n = 10;
     int count = 0;
     events.queue[0]->alarm.fd = 0;
     for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;});
+        events.execute_events(timeval{1,0},[](int){return true;}, 0);
     }
 
     RED_CHECK_EQ(count, n);

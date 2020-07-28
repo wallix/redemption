@@ -292,7 +292,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
 #ifdef GENERATE_TESTING_DATA
             auto const end_tv = time_base.get_current_time();
-            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;});
+            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, 0);
 
             // TODO: fix that for actual TESTING DATA GENERATION
             unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
@@ -306,11 +306,11 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 #else
             trans.disable_remaining_error();
             auto end_tv = time_base.get_current_time();
-            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;});
+            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, 0);
 
             int n = 0;
             while (!events.queue.empty() && (++n < 70)) {
-                events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;});
+                events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, 0);
             }
 #endif
         }
@@ -546,7 +546,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 #ifdef GENERATE_TESTING_DATA
             // Uncomment the code block below to generate testing data.
             auto const end_tv = this->get_current_time();
-            events.execute_events(end_tv);
+            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, 0);
 
             // TODO: fix that for actual data generation
             unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
@@ -564,12 +564,12 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             t.disable_remaining_error();
 
             auto end_tv = time_base.get_current_time();
-            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;});
+            events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, 0);
 
 
             int n = 0;
             while (!events.queue.empty() && (++n < 70)) {
-                events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;});
+                events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, 0);
             }
 #endif
         }

@@ -175,11 +175,12 @@ public:
         if (this->tasks.size() == 1u) {
             auto container_task = this->tasks.front().get();
             auto pevent = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
-            pevent->actions.on_teardown = [this, container_task](Event&event)
-            {
-                AsynchronousTaskContainer::remover(this, container_task);
-                event.garbage = true;
-            };
+            pevent->actions.set_teardown_function(
+                [this, container_task](Event&event)
+                {
+                    AsynchronousTaskContainer::remover(this, container_task);
+                    event.garbage = true;
+                });
             this->events.add(pevent);
         }
     }
@@ -190,11 +191,12 @@ private:
         if (!this->tasks.empty()) {
             auto container_task = this->tasks.front().get();
             auto pevent  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
-            pevent->actions.on_teardown = [this, container_task](Event&event)
-            {
-                AsynchronousTaskContainer::remover(this, container_task);
-                event.garbage = true;
-            };
+            pevent->actions.set_teardown_function(
+                [this, container_task](Event&event)
+                {
+                    AsynchronousTaskContainer::remover(this, container_task);
+                    event.garbage = true;
+                });
             this->events.add(pevent);
         }
     }
@@ -1024,6 +1026,8 @@ public:
 
         uint16_t const version = stream.in_uint16_le();
         uint16_t const data_length = stream.in_uint16_le();
+
+//        assert(stream.in_remain() == data_length);
 
         this->checkout_channel_flags  = flags;
         this->checkout_channel_chanid = checkout_channel.chanid;
@@ -2239,28 +2243,18 @@ public:
                             // trigger timeout after 1 hour inactivity
                             + std::chrono::seconds{3600});
                         // Timeout Does nothing anyway
-                        event.actions.on_timeout = [](Event&/*event*/) {};
+                        event.actions.set_timeout_function([](Event&/*event*/) {});
                         // Replace event by Normal RDP fd event
-                        event.rename("First Incoming RDP PDU Event");
-                        event.actions.on_action = [this](Event&event)
-                        {
-                            auto & gd = this->gd_provider.get_graphics();
-                            if (this->buf.remaining()){
-                                this->draw_event(this->gd_provider.get_graphics());
-                            }
-                            this->private_rdp_negociation.reset();
-                            #ifndef __EMSCRIPTEN__
-                            if (this->channels.remote_programs_session_manager) {
-                                this->channels.remote_programs_session_manager->set_drawable(&gd);
-                            }
-                            #endif
-                            this->buf.load_data(this->trans);
-                            this->draw_event(gd);
 
-                            event.rename("Incoming RDP PDU Event");
-                            event.actions.on_action = [this](Event&/*event*/)
+                        event.rename("First Incoming RDP PDU Event");
+                        event.actions.set_action_function(
+                            [this](Event&event)
                             {
                                 auto & gd = this->gd_provider.get_graphics();
+                                if (this->buf.remaining()){
+                                    this->draw_event(this->gd_provider.get_graphics());
+                                }
+                                this->private_rdp_negociation.reset();
                                 #ifndef __EMSCRIPTEN__
                                 if (this->channels.remote_programs_session_manager) {
                                     this->channels.remote_programs_session_manager->set_drawable(&gd);
@@ -2268,8 +2262,21 @@ public:
                                 #endif
                                 this->buf.load_data(this->trans);
                                 this->draw_event(gd);
-                            };
-                        };
+
+                                event.rename("Incoming RDP PDU Event");
+                                event.actions.set_action_function(
+                                    [this](Event&/*event*/)
+                                    {
+                                        auto & gd = this->gd_provider.get_graphics();
+                                        #ifndef __EMSCRIPTEN__
+                                        if (this->channels.remote_programs_session_manager) {
+                                            this->channels.remote_programs_session_manager->set_drawable(&gd);
+                                        }
+                                        #endif
+                                        this->buf.load_data(this->trans);
+                                        this->draw_event(gd);
+                                    });
+                            });
                     }
                 }
                 catch (Error & error) {
@@ -5204,12 +5211,6 @@ public:
                         this->on_remoteapp_redirect_user_screen(lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
-                                                this->remoteapp_one_shot_bypass_window_legalnotice);
-                        Event event("Bypass Legal Notice Timer", this);
-                        this->remoteapp_one_shot_bypass_window_legalnotice = event.id;
-                        event.alarm.set_timeout(this->time_base.get_current_time()
-                                        + this->channels.remote_app.bypass_legal_notice_delay);
                         Sequencer chain = {false, 0, false,
                         {
                             { "one",
@@ -5235,7 +5236,14 @@ public:
                                 }
                             }
                         }};
-                        event.actions.on_timeout = chain;
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
+                                                this->remoteapp_one_shot_bypass_window_legalnotice);
+
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events.create_event_timeout(
+                            "Bypass Legal Notice Timer", this,
+                            this->time_base.get_current_time()
+                                +this->channels.remote_app.bypass_legal_notice_delay,
+                                chain);
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {

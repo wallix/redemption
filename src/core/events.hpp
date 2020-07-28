@@ -88,9 +88,98 @@ struct Event {
     } alarm;
 
     struct Actions {
+    private:
+        bool on_timeout_running = false;
+        bool on_timeout_changed = false;
         std::function<void(Event &)> on_timeout = [](Event &){};
+        std::function<void(Event &)> future_on_timeout = [](Event &){};
+
+    public:
+        void set_timeout_function(std::function<void(Event &)> fn) {
+            if (this->on_timeout_running){
+                this->future_on_timeout = std::move(fn);
+                this->on_timeout_changed = true;
+                return;
+            }
+            this->on_timeout_changed = false;
+            this->on_timeout = std::move(fn);
+        }
+
+        void exec_timeout(Event & event) {
+            this->on_timeout_running = true;
+            this->on_timeout(event);
+        }
+
+        void update_on_timeout()
+        {
+            this->on_timeout_running = false;
+            if (this->on_timeout_changed){
+                this->on_timeout = std::move(this->future_on_timeout);
+                this->on_timeout_changed = false;
+            }
+        }
+
+    private:
+        bool on_action_running = false;
+        bool on_action_changed = false;
         std::function<void(Event &)> on_action = [](Event &){};
+        std::function<void(Event &)> future_on_action = [](Event &){};
+
+    public:
+        void set_action_function(std::function<void(Event &)> fn) {
+            if (this->on_action_running){
+                this->future_on_action = std::move(fn);
+                this->on_action_changed = true;
+                return;
+            }
+            this->on_action_changed = false;
+            this->on_action = std::move(fn);
+        }
+
+        void exec_action(Event & event) {
+            this->on_action_running = true;
+            this->on_action(event);
+        }
+
+        void update_on_action()
+        {
+            this->on_action_running = false;
+            if (this->on_action_changed){
+                this->on_action = std::move(this->future_on_action);
+                this->on_action_changed = false;
+            }
+        }
+
+    private:
+        bool on_teardown_running = false;
+        bool on_teardown_changed = false;
         std::function<void(Event &)> on_teardown = [](Event &){};
+        std::function<void(Event &)> future_on_teardown = [](Event &){};
+
+    public:
+        void set_teardown_function(std::function<void(Event &)> fn) {
+            if (this->on_teardown_running){
+                this->future_on_teardown = std::move(fn);
+                this->on_teardown_changed = true;
+                return;
+            }
+            this->on_teardown_changed = false;
+            this->on_teardown = std::move(fn);
+        }
+
+        void exec_teardown(Event & event) {
+            this->on_teardown_running = true;
+            this->on_teardown(event);
+        }
+
+        void update_on_teardown()
+        {
+            this->on_teardown_running = false;
+            if (this->on_teardown_changed){
+                this->on_teardown = std::move(this->future_on_teardown);
+                this->on_teardown_changed = false;
+            }
+        }
     } actions;
 
     Event(std::string name, void * lifespan)
@@ -104,10 +193,6 @@ struct Event {
     {
         this->name = string;
     }
-
-    void exec_timeout() { this->actions.on_timeout(*this);}
-    void exec_action() { this->actions.on_action(*this);}
-    void exec_teardown() { this->actions.on_teardown(*this);}
 
 };
 
@@ -204,44 +289,56 @@ struct EventContainer {
         }
     }
 
-    void execute_events(const timeval tv, const std::function<bool(int fd)> & fn, bool verbose = false)
+    void execute_events(const timeval tv, const std::function<bool(int fd)> & fn, int verbose)
     {
         for (size_t i = 0 ; i < this->queue.size(); i++){
             auto & event = *this->queue[i];
-
+            // These are needed to change the event method running
+            // from inside an event method. In the large majority
+            // of cases this code will do nothing (and it's good)
+            // This is done at the top of execute event in the
+            // also unlikely case we would exit event code through
+            // some exception, thus not being able to guarantee
+            // that the code following execute of action event
+            // will be called
+            if (not event.garbage){
+                event.actions.update_on_timeout();
+                event.actions.update_on_action();
+                event.actions.update_on_teardown();
+            }
             if (event.garbage) {
-                LOG_IF(verbose, LOG_INFO, "GARBAGE EVENT '%s' (%d) timeout=%d now=%d =========",
+                LOG_IF(verbose & 2, LOG_INFO, "GARBAGE EVENT '%s' (%d) timeout=%d now=%d =========",
                     event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             }
             if (event.teardown) {
-                LOG_IF(verbose, LOG_INFO, "TEARDOWN EVENT '%s' (%d) timeout=%d now=%d",
+                LOG_IF(verbose & 2, LOG_INFO, "TEARDOWN EVENT '%s' (%d) timeout=%d now=%d",
                     event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             }
 
             if (not (event.garbage or event.teardown)) {
                 if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
-                    LOG_IF(verbose, LOG_INFO, "FD EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
+                    LOG_IF(verbose & 2, LOG_INFO, "FD EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
                         event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                     event.alarm.set_timeout(tv+event.alarm.grace_delay);
-                    event.exec_action();
+                    event.actions.exec_action(event);
                     continue;
                 }
             }
             if (not (event.garbage or event.teardown)) {
                 if (!event.alarm.active){
-                    LOG_IF(verbose, LOG_INFO, "EXPIRED TIMEOUT EVENT '%s' (%d) timeout=%d now=%d",
+                    LOG_IF(verbose & 0x20, LOG_INFO, "EXPIRED TIMEOUT EVENT '%s' (%d) timeout=%d now=%d",
                         event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                 }
                 if (event.alarm.trigger(tv)){
-                    LOG_IF(verbose, LOG_INFO, "TIMEOUT EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
+                    LOG_IF(verbose & 2, LOG_INFO, "TIMEOUT EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
                         event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-                    event.exec_timeout();
+                    event.actions.exec_timeout(event);
                 }
             }
         }
         this->exec_teardowns();
         this->garbage_collector();
-        LOG_IF(verbose, LOG_INFO, "~~~~~~~~~~~~~~~~ EXECUTE EVENTS DONE ~~~~~~~~~~~~~");
+        LOG_IF(verbose & 0x10, LOG_INFO, "~~~~~~~~~~~~~~~~ EXECUTE EVENTS DONE ~~~~~~~~~~~~~");
     }
 
 
@@ -250,7 +347,7 @@ struct EventContainer {
             Event & event = *this->queue[i];
             if (not event.garbage
             and event.teardown){
-                event.exec_teardown();
+                event.actions.exec_teardown(event);
                 event.teardown = false;
                 event.garbage = true;
             }
@@ -341,7 +438,7 @@ struct EventContainer {
         Event * pevent = new Event(name, lifespan);
         Event & event = *pevent;
         event.alarm.set_timeout(trigger_time);
-        event.actions.on_timeout = timeout;
+        event.actions.set_timeout_function(timeout);
         int event_id = event.id;
         this->queue.push_back(pevent);
         return event_id;
@@ -357,8 +454,8 @@ struct EventContainer {
         Event & event = *pevent;
         event.alarm.set_fd(fd, grace_delay);
         event.alarm.set_timeout(trigger_time);
-        event.actions.on_action = on_fd;
-        event.actions.on_timeout = on_timeout;
+        event.actions.set_action_function(on_fd);
+        event.actions.set_timeout_function(on_timeout);
         int event_id = event.id;
         this->queue.push_back(pevent);
         return event_id;
