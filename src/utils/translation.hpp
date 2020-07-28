@@ -94,25 +94,25 @@ namespace trkeys
         "Le gestionnaire de session a coupé la connexion.");
     TR_KV(end_connection, "End of connection", "Fin de connexion");
     TR_KV(help_message,
-        "In login edit box, enter:<br>"
-        "- target device and login with the Bastion login separated<br>"
-        "  by a semi colon as login@target:service:Bastionlogin<br>"
-        "- or a valid Bastion authentication user.<br>"
+        "The \"Target\" field can be entered with a string labelled in this format:<br>"
+        "\"Account@Domain@Device:Service:Auth\".<br>"
+        "The \"Domain\", \"Service\" and \"Auth\" parts are optional.<br>"
+        "This field is optional and case-sensitive.<br>"
         "<br>"
-        "Fields are case sensitive.<br>"
+        "The \"Login\" field must refer to a user declared on the Bastion.<br>"
+        "This field is required and not case-sensitive.<br>"
         "<br>"
-        "Contact your system administrator if you are<br>"
-        "experiencing problems.",
+        "Contact your system administrator for assistance.",
 
-        "Dans la zone de saisie login, entrez:<br>"
-        "- le login sur la cible et le nom de la machine cible suivi<br>"
-        "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
-        "- ou un nom de compte Bastion valide.<br>"
+        "Le champ \"Cible\" peut contenir une chaîne de caractères au format:<br>"
+        "\"Account@Domain@Device:Service:Auth\".<br>"
+        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnels.<br>"
+        "Ce champ est optionnel et sensible à la casse.<br>"
         "<br>"
-        "Les champs sont sensibles à la casse.<br>"
+        "Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.<br>"
+        "Ce champ est requis et insensible à la casse.<br>"
         "<br>"
-        "Contactez votre administrateur système en<br>"
-        "cas de problème pour vous connecter.");
+        "Contactez votre administrateur système pour obtenir de l'aide.");
     TR_KV(selector, "Selector", "Sélecteur");
     TR_KV(session_out_time,
         "Session is out of allowed timeframe",
