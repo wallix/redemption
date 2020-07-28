@@ -1,3 +1,9 @@
+redemption (8.0.25b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Change the state of the connection automaton (mod_rdp) only upon receipt of the expected messages.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 28 Jul 2020 10:39:57 +0200
+
 redemption (8.0.25a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Change the state of the connection automaton (mod_rdp) only upon receipt of the expected messages.
