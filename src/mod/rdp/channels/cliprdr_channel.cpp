@@ -2805,6 +2805,17 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                     this->session_reactor.get_current_time(),
                     direction, result_content);
             }
+
+            if (!is_accepted && (direction == Direction::FileFromClient
+                ? this->client_ctx.verify_before_transfer
+                : this->server_ctx.verify_before_transfer
+            )) {
+                this->report_message.log6(LogId::FILE_BLOCKED,
+                    this->session_reactor.get_current_time(),
+                    {KVLog("direction"_av, to_dlpav_str_direction(direction)),
+                     KVLog("file_name"_av, file_name),}
+                );
+            }
         };
 
         if (auto* text_validator_data = this->search_text_validator_by_id(file_validator_id)) {

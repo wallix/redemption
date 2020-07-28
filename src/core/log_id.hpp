@@ -120,7 +120,8 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(TEXT_VERIFICATION, FileVerification)                       \
     f(BESTSAFE_SERVICE_LOG, BestSafe)                            \
     f(DYNAMIC_CHANNEL_CREATION_ALLOWED, DynamicChannel)          \
-    f(DYNAMIC_CHANNEL_CREATION_REJECTED, DynamicChannel)
+    f(DYNAMIC_CHANNEL_CREATION_REJECTED, DynamicChannel)         \
+    f(FILE_BLOCKED, FileVerification)
 
 
 
