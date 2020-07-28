@@ -2830,7 +2830,7 @@ public:
                                     }
 #endif
                                 }
-                                else {
+                                else if (sdata.pdutype2 == PDUTYPE2_SYNCHRONIZE) {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
                                     if (FrontAPI::ResizeResult::fail == this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()})){
@@ -2842,14 +2842,26 @@ public:
                                     this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                 }
+                                else
+                                {
+                                    LOG(LOG_WARNING, "PDUTYPE2 unexpected tag=%u", sdata.pdutype2);
+                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                }
                             }
                             break;
                         case WAITING_CTL_COOPERATE:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
                                 LOG_WARNING, "WAITING_CTL_COOPERATE");
-                            this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                if (sdata.pdutype2 == PDUTYPE2_CONTROL) {
+                                    this->connection_finalization_state = WAITING_GRANT_CONTROL_COOPERATE;
+                                }
+                                else
+                                {
+                                    LOG(LOG_WARNING, "PDUTYPE2 unexpected tag=%u (2)", sdata.pdutype2);
+                                }
+
                                 // sdata.log();
                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                             }
@@ -2857,77 +2869,91 @@ public:
                         case WAITING_GRANT_CONTROL_COOPERATE:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
                                 LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
-                            this->connection_finalization_state = WAITING_FONT_MAP;
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                if (sdata.pdutype2 == PDUTYPE2_CONTROL) {
+                                    this->connection_finalization_state = WAITING_FONT_MAP;
+                                }
+                                else
+                                {
+                                    LOG(LOG_WARNING, "PDUTYPE2 unexpected tag=%u (3)", sdata.pdutype2);
+                                }
+
                                 // sdata.log();
                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                             }
                             break;
                         case WAITING_FONT_MAP:
                             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
-                                LOG_WARNING, "PDUTYPE2_FONTMAP");
-                            this->connection_finalization_state = UP_AND_RUNNING;
-
-                            if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log6(
-                                    LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-                                    this->session_reactor.get_current_time(), {});
-                            }
-
-                            // Synchronize sent to indicate server the state of sticky keys (x-locks)
-                            // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
-                            rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+                                LOG_WARNING, "WAITING_FONT_MAP");
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
+                                if (sdata.pdutype2 == PDUTYPE2_FONTMAP) {
+                                    this->connection_finalization_state = UP_AND_RUNNING;
+
+                                    if (!this->deactivation_reactivation_in_progress) {
+                                        this->report_message.log6(
+                                            LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
+                                            this->session_reactor.get_current_time(), {});
+                                    }
+
+                                    // Synchronize sent to indicate server the state of sticky keys (x-locks)
+                                    // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
+                                    rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+
+                                    this->deactivation_reactivation_in_progress = false;
+
+                                    if (!this->already_upped_and_running) {
+#ifndef __EMSCRIPTEN__
+                                        if (this->channels.session_probe.enable_session_probe) {
+                                            ServerTransportContext stc{
+                                                this->trans, this->encrypt, this->negociation_result};
+                                            this->channels.do_enable_session_probe(
+                                                this->front,
+                                                stc,
+                                                *this,
+                                                *this,
+                                                this->authentifier,
+                                                this->asynchronous_tasks,
+                                                this->client_general_caps,
+                                                this->vars,
+                                                this->client_rail_caps,
+                                                this->client_name,
+                                                this->monitor_count,
+                                                this->bogus_refresh_rect,
+                                                this->lang,
+                                                this->file_validator_service);
+                                        }
+#endif
+                                        this->already_upped_and_running = true;
+                                    }
+
+#ifndef __EMSCRIPTEN__
+                                    if (this->channels.session_probe.enable_launch_mask) {
+                                        this->delayed_start_capture = true;
+
+                                        LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
+                                    }
+                                    else
+#endif
+                                    if (this->front.can_be_start_capture()) {
+                                        if (this->bogus_refresh_rect && this->monitor_count) {
+                                            this->rdp_suppress_display_updates();
+                                            this->rdp_allow_display_updates(
+                                                0, 0,
+                                                this->negociation_result.front_width,
+                                                this->negociation_result.front_height);
+                                        }
+                                        this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
+                                    }
+                                }
+                                else
+                                {
+                                    LOG(LOG_WARNING, "PDUTYPE2 unexpected tag=%u (4)", sdata.pdutype2);
+                                }
+
                                 // sdata.log();
                                 sdata.payload.in_skip_bytes(sdata.payload.in_remain());
-                            }
-
-                            this->deactivation_reactivation_in_progress = false;
-
-                            if (!this->already_upped_and_running) {
-#ifndef __EMSCRIPTEN__
-                                if (this->channels.session_probe.enable_session_probe) {
-                                    ServerTransportContext stc{
-                                        this->trans, this->encrypt, this->negociation_result};
-                                    this->channels.do_enable_session_probe(
-                                        this->front,
-                                        stc,
-                                        *this,
-                                        *this,
-                                        this->authentifier,
-                                        this->asynchronous_tasks,
-                                        this->client_general_caps,
-                                        this->vars,
-                                        this->client_rail_caps,
-                                        this->client_name,
-                                        this->monitor_count,
-                                        this->bogus_refresh_rect,
-                                        this->lang,
-                                        this->file_validator_service);
-                                }
-#endif
-                                this->already_upped_and_running = true;
-                            }
-
-#ifndef __EMSCRIPTEN__
-                            if (this->channels.session_probe.enable_launch_mask) {
-                                this->delayed_start_capture = true;
-
-                                LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
-                            }
-                            else
-#endif
-                            if (this->front.can_be_start_capture()) {
-                                if (this->bogus_refresh_rect && this->monitor_count) {
-                                    this->rdp_suppress_display_updates();
-                                    this->rdp_allow_display_updates(
-                                        0, 0,
-                                        this->negociation_result.front_width,
-                                        this->negociation_result.front_height);
-                                }
-                                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
                             }
                             break;
                         case UP_AND_RUNNING:
