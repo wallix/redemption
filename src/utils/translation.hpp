@@ -94,24 +94,24 @@ namespace trkeys
         "Le gestionnaire de session a coupé la connexion.");
     TR_KV(end_connection, "End of connection", "Fin de connexion");
     TR_KV(help_message,
-        "The \"Target\" field can be entered with a string labelled in this format:<br>"
-        "\"Account@Domain@Device:Service:Auth\".<br>"
-        "The \"Domain\", \"Service\" and \"Auth\" parts are optional.<br>"
-        "This field is optional and case-sensitive.<br>"
-        "<br>"
-        "The \"Login\" field must refer to a user declared on the Bastion.<br>"
-        "This field is required and not case-sensitive.<br>"
-        "<br>"
+        "The \"Target\" field can be entered with a string labelled in this format:\n"
+        "\"Account@Domain@Device:Service:Auth\".\n"
+        "The \"Domain\", \"Service\" and \"Auth\" parts are optional.\n"
+        "This field is optional and case-sensitive.\n"
+        "\n"
+        "The \"Login\" field must refer to a user declared on the Bastion.\n"
+        "This field is required and not case-sensitive.\n"
+        "\n"
         "Contact your system administrator for assistance.",
 
-        "Le champ \"Cible\" peut contenir une chaîne de caractères au format:<br>"
-        "\"Account@Domain@Device:Service:Auth\".<br>"
-        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnels.<br>"
-        "Ce champ est optionnel et sensible à la casse.<br>"
-        "<br>"
-        "Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.<br>"
-        "Ce champ est requis et insensible à la casse.<br>"
-        "<br>"
+        "Le champ \"Cible\" peut contenir une chaîne de caractères au format:\n"
+        "\"Account@Domain@Device:Service:Auth\".\n"
+        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnels.\n"
+        "Ce champ est optionnel et sensible à la casse.\n"
+        "\n"
+        "Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.\n"
+        "Ce champ est requis et insensible à la casse.\n"
+        "\n"
         "Contactez votre administrateur système pour obtenir de l'aide.");
     TR_KV(selector, "Selector", "Sélecteur");
     TR_KV(session_out_time,
