@@ -816,9 +816,9 @@
           "name": "max_file_size_rejected",
           "type": "integer",
           "min": 0,
-          "default": 1024,
+          "default": 50,
           "advanced": true,
-          "description": "File greather are automatically rejected.\n(is in mebibyte)"
+          "description": "File greather are automatically rejected.\n(is in megabyte)"
         }
       ]
     },
