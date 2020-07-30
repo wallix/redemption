@@ -72,4 +72,7 @@ RED_AUTO_TEST_CASE(TestAclMessageConvert)
         .zstring() == "\na\nb\ncd\nef\nghi\njab\ncdef\nghij\n"_av_ascii);
     RED_TEST(AclNewLineConverter("a<br>b<br>cdefghijab<br>cdef<br>ghij"_zv)
         .zstring() == "a\nb\ncdefghijab\ncdef\nghij"_av_ascii);
+
+    RED_TEST(AclNewLineConverter("a<b<br>bcged"_zv)
+        .zstring() == "a<b\nbcged"_av_ascii);
 }

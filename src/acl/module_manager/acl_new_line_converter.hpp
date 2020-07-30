@@ -28,15 +28,19 @@ struct AclNewLineConverter
 {
     AclNewLineConverter(zstring_view brmsg) 
     {
+        const char * substring = "<br>";
+        const char * replacement = "\n";
+        unsigned lsub = 4;
         unsigned ctx = 0;
         for (auto x: brmsg){
             this->msg.push_back(x);
-            if (x == '<' && ctx == 0){ ctx = 1; continue; }
-            if (x == 'b' && ctx == 1){ ctx = 2; continue; }
-            if (x == 'r' && ctx == 2){ ctx = 3; continue; }
-            if (x == '>' && ctx == 3){
-                this->msg.erase(this->msg.end() - 4, this->msg.end());
-                this->msg.push_back('\n');
+            if (x == substring[0]){ ctx = 1; continue; }
+            if (ctx > 0 and (x == substring[ctx])){
+                if (ctx < (lsub - 1)){ ctx++; continue;}
+                else {
+                    this->msg.erase(this->msg.end() - lsub, this->msg.end());
+                    this->msg += replacement;
+                }
             }
             ctx = 0;
         }
