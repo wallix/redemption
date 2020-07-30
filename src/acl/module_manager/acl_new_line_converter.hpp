@@ -35,10 +35,7 @@ struct AclNewLineConverter
             if (x == 'b' && ctx == 1){ ctx = 2; continue; }
             if (x == 'r' && ctx == 2){ ctx = 3; continue; }
             if (x == '>' && ctx == 3){
-                this->msg.pop_back();
-                this->msg.pop_back();
-                this->msg.pop_back();
-                this->msg.pop_back();
+                this->msg.erase(this->msg.end() - 4, this->msg.end());
                 this->msg.push_back('\n');
             }
             ctx = 0;
