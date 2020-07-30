@@ -28,22 +28,20 @@ struct AclNewLineConverter
 {
     AclNewLineConverter(zstring_view brmsg) 
     {
-        const char * substring = "<br>";
-        const char * replacement = "\n";
-        unsigned lsub = 4;
-        unsigned ctx = 0;
-        for (auto x: brmsg){
-            this->msg.push_back(x);
-            if (x == substring[0]){ ctx = 1; continue; }
-            if (ctx > 0 and (x == substring[ctx])){
-                if (ctx < (lsub - 1)){ ctx++; continue;}
-                else {
-                    this->msg.erase(this->msg.end() - lsub, this->msg.end());
-                    this->msg += replacement;
-                }
-            }
-            ctx = 0;
+        constexpr const char * substring = "<br>";
+        constexpr std::string::size_type sublen = strlen(substring);
+        constexpr const char * replacement = "\n";
+        std::string brstr = std::string(brmsg);
+        std::string::size_type n = 0;
+        std::string::size_type last_n = 0;
+        while ((n = brstr.find(substring, n)) != std::string::npos)
+        {
+            this->msg.append(brstr, last_n, n - last_n);
+            n += sublen;
+            this->msg.append(replacement);
+            last_n = n;
         }
+        this->msg.append(brstr, last_n, n - last_n);
     }
 
     zstring_view zstring() const noexcept
