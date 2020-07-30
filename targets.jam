@@ -114,7 +114,6 @@ exe rdpproxy :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
-  <library>src/acl/module_manager/acl_new_line_converter.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
@@ -559,8 +558,6 @@ test-run tests/RAIL/test_client_execute :
 test-run tests/acl/module_manager/test_acl_new_line_converter :
   $(REDEMPTION_TEST_PATH)/acl/module_manager/test_acl_new_line_converter.cpp
 :
-  <library>src/acl/module_manager/acl_new_line_converter.o
-  <covfile>src/acl/module_manager/acl_new_line_converter.cpp
   <covfile>src/acl/module_manager/acl_new_line_converter.hpp
 ;
 test-run tests/acl/test_acl_serializer :
@@ -2405,7 +2402,6 @@ test-run tests/core/test_mainloop :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
-  <library>src/acl/module_manager/acl_new_line_converter.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
@@ -2548,7 +2544,6 @@ test-run tests/core/test_session :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
-  <library>src/acl/module_manager/acl_new_line_converter.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/capture/agent_data_extractor.o
@@ -5666,7 +5661,6 @@ test-run tests/utils/winpr/test_pattern :
 obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp ;
-obj src/acl/module_manager/acl_new_line_converter.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/acl_new_line_converter.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;

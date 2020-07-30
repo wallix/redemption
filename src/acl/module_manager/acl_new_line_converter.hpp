@@ -23,9 +23,27 @@ Copyright (C) Wallix 2010-2020
 #include "utils/sugar/zstring_view.hpp"
 
 // convert <br> to \n
+
 struct AclNewLineConverter
 {
-    AclNewLineConverter(zstring_view msg);
+    AclNewLineConverter(zstring_view brmsg) 
+    {
+        unsigned ctx = 0;
+        for (auto x: brmsg){
+            this->msg.push_back(x);
+            if (x == '<' && ctx == 0){ ctx = 1; continue; }
+            if (x == 'b' && ctx == 1){ ctx = 2; continue; }
+            if (x == 'r' && ctx == 2){ ctx = 3; continue; }
+            if (x == '>' && ctx == 3){
+                this->msg.pop_back();
+                this->msg.pop_back();
+                this->msg.pop_back();
+                this->msg.pop_back();
+                this->msg.push_back('\n');
+            }
+            ctx = 0;
+        }
+    }
 
     zstring_view zstring() const noexcept
     {
@@ -33,6 +51,5 @@ struct AclNewLineConverter
     }
 
 private:
-    std::unique_ptr<char[]> gc;
-    zstring_view msg;
+    std::string msg;
 };
