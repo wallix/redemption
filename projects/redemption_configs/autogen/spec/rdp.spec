@@ -378,8 +378,8 @@ block_invalid_file_down = boolean(default=False)
 #_advanced
 log_if_accepted = boolean(default=True)
 
-# File greather are automatically rejected.
-# (is in megabyte)
+# On blocking invalid file (up or down), automatically reject file with greater filesize (in megabyte).
+# Warning: Sessions will use as much RAM in addition.
 #_advanced
 max_file_size_rejected = integer(min=0, default=50)
 

@@ -993,8 +993,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #log_if_accepted = 1
 
-# File greather are automatically rejected.
-# (is in megabyte)
+# On blocking invalid file (up or down), automatically reject file with greater filesize (in megabyte).
+# Warning: Sessions will use as much RAM in addition.
 # min = 0
 #_hidden
 #max_file_size_rejected = 50

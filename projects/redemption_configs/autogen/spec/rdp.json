@@ -874,7 +874,7 @@
           "min": 0,
           "default": 50,
           "advanced": true,
-          "description": "File greather are automatically rejected.\n(is in megabyte)"
+          "description": "On blocking invalid file (up or down), automatically reject file with greater filesize (in megabyte).\nWarning: Sessions will use as much RAM in addition."
         }
       ]
     },
