@@ -2836,8 +2836,8 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// On blocking invalid file (up or down), automatically reject file with greater filesize (in megabyte). <br/>
-    /// Warning: Sessions will use as much RAM in addition. <br/>
+    /// If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes). <br/>
+    /// Warning: This value affects the RAM used by the session. <br/>
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_verification:max_file_size_rejected <br/>

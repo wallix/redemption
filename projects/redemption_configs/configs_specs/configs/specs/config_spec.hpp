@@ -714,7 +714,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"On blocking invalid file (up or down), automatically reject file with greater filesize (in megabyte).\nWarning: Sessions will use as much RAM in addition."}, set(50));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."}, set(50));
     });
 
     W.section("file_storage", [&]

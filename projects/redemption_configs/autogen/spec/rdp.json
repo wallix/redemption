@@ -874,7 +874,7 @@
           "min": 0,
           "default": 50,
           "advanced": true,
-          "description": "On blocking invalid file (up or down), automatically reject file with greater filesize (in megabyte).\nWarning: Sessions will use as much RAM in addition."
+          "description": "If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."
         }
       ]
     },
