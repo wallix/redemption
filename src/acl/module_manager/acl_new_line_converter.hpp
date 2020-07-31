@@ -26,12 +26,12 @@ Copyright (C) Wallix 2010-2020
 
 struct AclNewLineConverter
 {
-    AclNewLineConverter(zstring_view brmsg) 
+    AclNewLineConverter(zstring_view brmsg)
     {
         constexpr const char * needle = "<br>";
-        constexpr std::string::size_type needlelen = strlen(needle);
+        constexpr std::string::size_type needlelen = 4; // strlen(needle);
         constexpr const char * replacement = "\n";
-        constexpr std::string::size_type replacementlen = strlen(replacement);
+        constexpr std::string::size_type replacementlen = 1; // strlen(replacement);
 
         auto haystack = brmsg.data();
         auto haystack_end = brmsg.data()+brmsg.size();
