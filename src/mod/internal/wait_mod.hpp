@@ -55,7 +55,7 @@ class WaitMod : public mod_api, public NotifyApi
     struct Context {
         bool showform;
         unsigned formflag;
-        bool display_message_asked
+        bool display_message_asked;
         std::string message;
         bool waitinforeturn_asked;
         std::string waitinforeturn;
