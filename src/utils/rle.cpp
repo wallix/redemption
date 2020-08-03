@@ -28,6 +28,7 @@
 */
 
 #include "core/error.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/log.hpp"
 #include "utils/rle.hpp"
 #include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
@@ -601,7 +602,10 @@ void decompress_(
 
         while (count > 0) {
             if(out >= pmax) {
-                LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
+                LOG(LOG_WARNING,
+                    "Decompressed bitmap too large. Dying. SrcCx=%u, Size=%zu ImageWidth=%u ImageHeight=%u ImagePixLen=%zu, ImageLineSize=%zu ImageBytesPerPixel=%d",
+                    src_cx, size, image.width(), image.height(), image.pix_len(), image.line_size(), static_cast<int>(image.bytes_per_pixel()));
+                hexdump_c(RM18446_input_saved, size);
 
                 // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
                 if (RM18446_adjusted_size && !RM18446_processing_in_progress && (out == pmax)) {
