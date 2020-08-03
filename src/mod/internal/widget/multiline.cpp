@@ -50,11 +50,25 @@ void WidgetMultiLine::set_text(const char * text)
         this->set_wh(0, 0);
     }
 
+    auto count_new_line = [text]{
+        int n = 1;
+        while (*text) {
+            if (*text == '\n') {
+                ++n;
+            }
+        }
+        return unsigned(n);
+    };
+
+    unsigned nb_line = this->auto_resize
+        ? count_new_line()
+        : gdi::MultiLineTextMetrics::count_line(this->font, text, this->cx());
+
     const char * str = nullptr;
     char * pbuf = this->buffer;
     line_t * line = this->lines;
     do {
-        str = strstr(text, "\n");
+        str = strchr(text, '\n');
         size_t size = std::min<size_t>(str ? (str-text) : strlen(text), &this->buffer[this->buffer_size-1]-pbuf);
         memcpy(pbuf, text, size);
         line->str = pbuf;

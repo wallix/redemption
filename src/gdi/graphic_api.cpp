@@ -41,6 +41,89 @@ namespace
         height = font.max_height();
     }
 
+    template<class NewLine>
+    void multi_textmetrics_impl(
+        const Font& font, UTF8toUnicodeIterator unicode_iter, int width,
+        NewLine new_line
+    ) {
+        FontCharView const* font_item = &font.glyph_or_unknown(' ');
+        const int space_w = font_item->offsetx + font_item->incby;
+
+        int w = 0;
+
+        for (;;) {
+            while (*unicode_iter == ' ') {
+                auto save_pos = unicode_iter.pos() - 1;
+                ++unicode_iter;
+                w += space_w;
+                if (width < w) {
+                    w = 0;
+                    new_line(save_pos);
+                    break;
+                }
+
+                while (*unicode_iter == ' ' && width >= w + space_w) {
+                    ++unicode_iter;
+                    w += space_w;
+                }
+
+                if (*unicode_iter == ' ') {
+                    w = 0;
+                    new_line(save_pos);
+                    break;
+                }
+
+                auto previous_unicode_iter = unicode_iter;
+                int previous_w = w;
+                while (*unicode_iter && *unicode_iter != ' ' && *unicode_iter != '\n') {
+                    font_item = &font.glyph_or_unknown(*unicode_iter);
+                    int cw = font_item->offsetx + font_item->incby;
+                    w += cw;
+                    if (width < w) {
+                        w = previous_w;
+                        unicode_iter = previous_unicode_iter;
+                        break;
+                    }
+                    ++unicode_iter;
+                }
+            }
+
+            if (*unicode_iter == '\n') {
+                w = 0;
+                new_line(unicode_iter.pos() - 1);
+                ++unicode_iter;
+                continue;
+            }
+
+            if (!*unicode_iter) {
+                break;
+            }
+
+            font_item = &font.glyph_or_unknown(*unicode_iter);
+            int cw = font_item->offsetx + font_item->incby;
+            w += cw;
+            if (width < w) {
+                new_line(unicode_iter.pos());
+                if (width < cw && w != cw) {
+                    new_line(unicode_iter.pos());
+                }
+
+                if (w == cw && width < cw) {
+                    w = 0;
+                }
+                else {
+                    w = cw;
+                }
+            }
+
+            ++unicode_iter;
+        }
+
+        if (w) {
+            new_line(unicode_iter.pos());
+        }
+    }
+
     gdi::NullGraphic gd;
 } // namespace
 
@@ -73,10 +156,9 @@ MultiLineTextMetrics::MultiLineTextMetrics(
 
     int number_of_lines = 1;
 
-    TextMetrics const tt(font, " ");
-
-    int height_max = tt.height;
-    const int white_space_width = tt.width;
+    int height_max = font.max_height();
+    FontCharView const* font_item = &font.glyph_or_unknown(' ');
+    const int white_space_width = font_item->offsetx + font_item->incby;
 
     int cumulative_width = 0;
 
@@ -104,7 +186,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(
             auto to_av = [](range<char const*> r) { return make_array_view(r.begin(), r.end()); };
 
             if (cumulative_width + white_space_width + part_width > max_width) {
-                str_append(out_multiline_string_ref, "\n", to_av(parameter));
+                str_append(out_multiline_string_ref, '\n', to_av(parameter));
 
                 cumulative_width = part_width;
 

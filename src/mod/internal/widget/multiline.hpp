@@ -51,14 +51,19 @@ private:
     static const size_t buffer_size = 1024;
     static const size_t max_line = 50;
 
-    struct line_t
+    struct Lines
     {
-        char * str;
-        int cx;
+        struct Line
+        {
+            char const* text;
+            int cx;
+        };
+        std::unique_ptr<Line[]> lines;
+        int size;
     };
 
-    char buffer[buffer_size];
-    line_t lines[max_line];
+    Lines lines;
+
     int x_text;
     int y_text;
     int cy_text;
