@@ -58,7 +58,6 @@ public:
     };
 
     std::function<void()> on_inactivity_timeout = []{};
-    std::function<void()> on_forcemodule = []{};
 
     Inifile & ini;
     Transport * auth_trans;

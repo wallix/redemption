@@ -250,7 +250,6 @@ void AclSerializer::in_items()
 
     while (!(key = reader.key()).empty()) {
         if (auto field = this->ini.get_acl_field_by_name(key)) {
-            // HACK: to ignore useless forcemodule from sesman
             if (reader.is_set_value()) {
                 if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                     Inifile::ZStringBuffer zstring_buffer;
@@ -263,11 +262,6 @@ void AclSerializer::in_items()
                         "receiving '%.*s'='%.*s'",
                         int(key.size()), key.data(),
                         int(display_val.size()), display_val.data());
-
-                    if (field.authid() == cfg::context::forcemodule::index){
-//                        LOG(LOG_INFO, "Received forcemodule, ignoring");
-                        this->on_forcemodule();
-                    }
 
                     // TODO: big hack, generalize this to a set of callbacks to call
                     if (field.authid() == cfg::globals::inactivity_timeout::index){
