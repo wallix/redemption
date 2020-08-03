@@ -1371,8 +1371,8 @@ class Sesman():
                             or (previous_info_message != info_message)
                             or (status == APPROVAL_NONE))
             Logger().info(u"End check_target ... refresh : %s" % refresh_page)
-            if refresh_page:
-                self.send_data({u'forcemodule': True})
+#            if refresh_page:
+#                self.send_data({u'forcemodule': True})
             if status == APPROVAL_ACCEPTED:
                 return True, ""
             if refresh_page:

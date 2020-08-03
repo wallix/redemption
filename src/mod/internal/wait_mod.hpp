@@ -52,6 +52,19 @@ using WaitModVariables = vcfg::variables<
 
 class WaitMod : public mod_api, public NotifyApi
 {
+    struct Context {
+        bool showform;
+        unsigned formflag;
+        bool display_message_asked
+        std::string message;
+        bool waitinforeturn_asked;
+        std::string waitinforeturn;
+        std::string comment;
+        std::string duration;
+        std::string ticket;
+        std::string duration_max;
+    };
+
     [[nodiscard]] Font const & font() const
     {
         return this->screen.font;

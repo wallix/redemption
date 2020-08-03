@@ -112,7 +112,7 @@ public:
             uint32_t const license_size = in.size();
             if (sizeof(license_size) == ::write(ufd.fd(), &license_size, sizeof(license_size))) {
                 if (license_size == ::write(ufd.fd(), in.data(), in.size())) {
-                    char filename[4096] = {};
+                    char filename[6145] = {};
                     ::snprintf(filename, sizeof(filename) - 1, "%s/%s", license_dir_path, license_index);
                     filename[sizeof(filename) - 1] = '\0';
 

@@ -425,11 +425,6 @@ public:
         this->psocket_transport = psocket_transport;
     }
 
-    void show_current_mod(bool verbose)
-    {
-        LOG_IF(verbose, LOG_INFO, " Current Mod is %s", get_module_name(this->current_mod));
-    }
-
     void set_mod(ModuleIndex next_state, ModPack mod_pack)
     {
         // The end of session is done when existing RDP or VNC connected module
