@@ -2757,16 +2757,6 @@ test-run tests/gdi/test_graphic_cmd_color :
 :
   <covfile>src/gdi/graphic_cmd_color.hpp
 ;
-test-run tests/gdi/test_multiline_text_metrics :
-  $(REDEMPTION_TEST_PATH)/gdi/test_multiline_text_metrics.cpp
-:
-  <library>src/core/font.o
-  <library>src/gdi/multiline_text_metrics.o
-  <library>src/utils/utf.o
-  <library>tests/includes/test_only/core/font.o
-  <covfile>src/gdi/multiline_text_metrics.cpp
-  <covfile>src/gdi/multiline_text_metrics.hpp
-;
 test-run tests/gdi/test_protected_graphics :
   $(REDEMPTION_TEST_PATH)/gdi/test_protected_graphics.cpp
 :
@@ -5710,7 +5700,6 @@ obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
-obj src/gdi/multiline_text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/multiline_text_metrics.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
@@ -5986,7 +5975,6 @@ alias test_session : tests/core/test_session ;
 alias test_front : tests/front/test_front ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
-alias test_multiline_text_metrics : tests/gdi/test_multiline_text_metrics ;
 alias test_protected_graphics : tests/gdi/test_protected_graphics ;
 alias test_keymap2 : tests/keyboard/test_keymap2 ;
 alias test_keymapsym : tests/keyboard/test_keymapsym ;
@@ -6320,7 +6308,6 @@ alias test_session.coverage : tests/core/test_session.coverage ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api.coverage : tests/gdi/test_graphic_api.coverage ;
 alias test_graphic_cmd_color.coverage : tests/gdi/test_graphic_cmd_color.coverage ;
-alias test_multiline_text_metrics.coverage : tests/gdi/test_multiline_text_metrics.coverage ;
 alias test_protected_graphics.coverage : tests/gdi/test_protected_graphics.coverage ;
 alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
 alias test_keymapsym.coverage : tests/keyboard/test_keymapsym.coverage ;
@@ -6707,7 +6694,6 @@ alias tests/front.norec :
 alias tests/gdi.norec :
   tests/gdi/test_graphic_api
   tests/gdi/test_graphic_cmd_color
-  tests/gdi/test_multiline_text_metrics
   tests/gdi/test_protected_graphics
 ;
 alias tests/keyboard.norec :

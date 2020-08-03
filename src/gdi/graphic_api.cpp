@@ -23,7 +23,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/splitter.hpp"
 #include "utils/utf.hpp"
 
 namespace
@@ -41,86 +40,156 @@ namespace
         height = font.max_height();
     }
 
+    struct WordInfo
+    {
+        int w = 0;
+        uint8_t const* p;
+
+        WordInfo(const Font& font, uint8_t const* p)
+        {
+            for (;;) {
+                switch (*p) {
+                    case ' ':
+                    case '\n':
+                    case '\0':
+                        this->p = p;
+                        return;
+                    default:
+                        UTF8toUnicodeIterator iter(p);
+                        FontCharView const* font_item = &font.glyph_or_unknown(*iter);
+                        w += font_item->offsetx + font_item->incby;
+                        p = iter.pos();
+                }
+            }
+        }
+    };
+
     template<class NewLine>
     void multi_textmetrics_impl(
-        const Font& font, UTF8toUnicodeIterator unicode_iter, int width,
+        const Font& font, uint8_t const* unicode_text,
+        const int max_width, const int space_w,
         NewLine new_line
     ) {
-        FontCharView const* font_item = &font.glyph_or_unknown(' ');
-        const int space_w = font_item->offsetx + font_item->incby;
+        _start:
 
         int w = 0;
 
+        // left spaces
+        auto* start = unicode_text;
         for (;;) {
-            while (*unicode_iter == ' ') {
-                auto save_pos = unicode_iter.pos() - 1;
-                ++unicode_iter;
-                w += space_w;
-                if (width < w) {
+            switch (*unicode_text) {
+                case ' ':
+                    ++unicode_text;
+                    continue;
+
+                case '\n':
+                    new_line(start, start, 0);
+                    ++unicode_text;
+                    goto _start; /* NOLINT */
+
+                case '\0':
+                    return;
+
+                default:;
+            }
+            break;
+        }
+
+        w = (unicode_text - start) * space_w;
+
+        // first word
+        {
+            WordInfo winfo{font, unicode_text};
+            if (max_width < w + winfo.w) {
+                if (w) {
+                    new_line(start, start, 0);
+                    start = unicode_text;
                     w = 0;
-                    new_line(save_pos);
-                    break;
                 }
 
-                while (*unicode_iter == ' ' && width >= w + space_w) {
-                    ++unicode_iter;
-                    w += space_w;
-                }
+                // word too long
+                if (max_width < winfo.w) {
+                    for (;;) {
+                        switch (*unicode_text) {
+                            case ' ':
+                                goto _words; /* NOLINT */
 
-                if (*unicode_iter == ' ') {
-                    w = 0;
-                    new_line(save_pos);
-                    break;
-                }
+                            case '\n':
+                                if (w) {
+                                    new_line(start, unicode_text, w);
+                                }
+                                ++unicode_text;
+                                goto _start; /* NOLINT */
 
-                auto previous_unicode_iter = unicode_iter;
-                int previous_w = w;
-                while (*unicode_iter && *unicode_iter != ' ' && *unicode_iter != '\n') {
-                    font_item = &font.glyph_or_unknown(*unicode_iter);
-                    int cw = font_item->offsetx + font_item->incby;
-                    w += cw;
-                    if (width < w) {
-                        w = previous_w;
-                        unicode_iter = previous_unicode_iter;
-                        break;
+                            case '\0':
+                                if (w) {
+                                    new_line(start, unicode_text, w);
+                                }
+                                return ;
+
+                            default:
+                                UTF8toUnicodeIterator iter(unicode_text);
+                                FontCharView const* font_item = &font.glyph_or_unknown(*iter);
+                                int cw = font_item->offsetx + font_item->incby;
+                                if (max_width < w + cw) {
+                                    if (w) {
+                                        new_line(start, unicode_text, w);
+                                        w = 0;
+                                    }
+                                    else {
+                                        new_line(start, iter.pos(), cw);
+                                        unicode_text = iter.pos();
+                                    }
+                                    start = unicode_text;
+                                    continue;
+                                }
+                                w += cw;
+                                unicode_text = iter.pos();
+                        }
                     }
-                    ++unicode_iter;
                 }
             }
 
-            if (*unicode_iter == '\n') {
-                w = 0;
-                new_line(unicode_iter.pos() - 1);
-                ++unicode_iter;
-                continue;
-            }
+            w += winfo.w;
+            unicode_text = winfo.p;
+        }
 
-            if (!*unicode_iter) {
+        _words:
+
+        for (;;) {
+            auto* end_word = unicode_text;
+
+            for (;;) {
+                switch (*unicode_text) {
+                    case ' ':
+                        ++unicode_text;
+                        continue;
+
+                    case '\n':
+                        new_line(start, end_word, w);
+                        ++unicode_text;
+                        goto _start; /* NOLINT */
+
+                    case '\0':
+                        new_line(start, end_word, w);
+                        return;
+
+                    default:;
+                }
                 break;
             }
 
-            font_item = &font.glyph_or_unknown(*unicode_iter);
-            int cw = font_item->offsetx + font_item->incby;
-            w += cw;
-            if (width < w) {
-                new_line(unicode_iter.pos());
-                if (width < cw && w != cw) {
-                    new_line(unicode_iter.pos());
-                }
+            auto ws = (unicode_text - end_word) * space_w;
 
-                if (w == cw && width < cw) {
-                    w = 0;
-                }
-                else {
-                    w = cw;
-                }
+            WordInfo winfo{font, unicode_text};
+            if (max_width >= w + winfo.w + ws) {
+                w += winfo.w + ws;
+                unicode_text = winfo.p;
             }
-
-            ++unicode_iter;
-        }
-
-        if (w) {
-            new_line(unicode_iter.pos());
+            else {
+                new_line(start, end_word, w);
+                goto _start; /* NOLINT */
+            }
         }
     }
 
@@ -142,120 +211,40 @@ TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
         [](UTF8toUnicodeIterator & it){ return *it; });
 }
 
-inline std::string & operator += (std::string & s, range<char const*> r)
-{
-    s.insert(s.end(), r.begin(), r.end());
-    return s;
-}
-
 MultiLineTextMetrics::MultiLineTextMetrics(
-    const Font& font, const char* unicode_text, unsigned int line_spacing,
-    int max_width, std::string& out_multiline_string_ref)
+    const Font& font, const char* unicode_text, unsigned max_width)
 {
-    out_multiline_string_ref.clear();
-
-    int number_of_lines = 1;
-
-    int height_max = font.max_height();
     FontCharView const* font_item = &font.glyph_or_unknown(' ');
-    const int white_space_width = font_item->offsetx + font_item->incby;
+    const int space_w = font_item->offsetx + font_item->incby;
 
-    int cumulative_width = 0;
+    uint8_t const* p = byte_ptr(unicode_text).as_u8p();
 
-    for (auto parameter : get_line(unicode_text, ' ')) {
-        if (parameter.empty()) {
-            continue;
-        }
+    int nb_line = 0;
+    int nb_byte = 0;
+    multi_textmetrics_impl(font, p, int(max_width), space_w,
+        [&](auto* p, auto* e, int /*w*/){
+            ++nb_line;
+            nb_byte += e - p;
+        });
 
-        const int part_width = [&]{
-            int w = 0;
-            int h = 0;
-            textmetrics_impl(
-                font, parameter.begin(), w, h,
-                [&](UTF8toUnicodeIterator & it){
-                    return it.pos() <= byte_ptr_cast(parameter.end())
-                        ? *it : 0u;
-                });
+    this->size_ = nb_line;
+    this->lines_.reset(new Line[nb_line /* NOLINT */
+        // char buffer
+        + (nb_line * 4 + nb_byte) / sizeof(Line) + sizeof(Line)]);
+    Line* pline = this->lines_.get();
+    char* s = reinterpret_cast<char*>(pline + nb_line); /* NOLINT */
 
-            height_max = std::max(height_max, h);
-
-            return w;
-        }();
-
-        if (cumulative_width) {
-            auto to_av = [](range<char const*> r) { return make_array_view(r.begin(), r.end()); };
-
-            if (cumulative_width + white_space_width + part_width > max_width) {
-                str_append(out_multiline_string_ref, '\n', to_av(parameter));
-
-                cumulative_width = part_width;
-
-                this->width = std::max(this->width, cumulative_width);
-
-                number_of_lines++;
-            }
-            else {
-                str_append(out_multiline_string_ref, ' ', to_av(parameter));
-
-                cumulative_width += (white_space_width + part_width);
-
-                this->width = std::max(this->width, cumulative_width);
-            }
-        }
-        else {
-            out_multiline_string_ref += parameter;
-
-            cumulative_width = part_width;
-
-            this->width = std::max(this->width, cumulative_width);
-        }
-    }
-
-    this->height = height_max * number_of_lines + line_spacing * (number_of_lines - 1);
+    multi_textmetrics_impl(font, p, int(max_width), space_w,
+        [&](auto* p, auto* e, int w){
+            pline->text = s;
+            pline->width = w;
+            ++pline;
+            memcpy(s, p, e-p);
+            s += e-p;
+            memset(s, 0, 4);
+            s += 4;
+        });
 }
-
-MultiLineTextMetricsEx::MultiLineTextMetricsEx(
-    const Font& font, const char* unicode_text, unsigned int line_spacing,
-    int max_width, std::string& out_multiline_string_ref)
-{
-    out_multiline_string_ref.clear();
-
-    const char   delimiter[]      = "\n";
-    const size_t delimiter_length = sizeof(delimiter) - 1;
-
-    std::string s(unicode_text);
-    std::string temp_str;
-
-    auto get_mltm = [this, &temp_str, &font, max_width, &out_multiline_string_ref, delimiter, line_spacing]
-            (const char *s) {
-        MultiLineTextMetrics mltm(font, s, line_spacing, max_width, temp_str);
-
-        if (!out_multiline_string_ref.empty()) {
-            out_multiline_string_ref += delimiter;
-        }
-        out_multiline_string_ref += temp_str;
-
-        if (this->height) {
-            this->height += line_spacing;
-        }
-
-        this->width   = std::max(this->width, mltm.width);
-        this->height += mltm.height;
-    };
-
-    auto start = 0;
-    auto end = s.find(delimiter);
-    while (end != std::string::npos)
-    {
-        get_mltm(s.substr(start, end - start).c_str());
-
-        start = end + delimiter_length;
-        end = s.find(delimiter, start);
-    }
-
-    get_mltm(s.substr(start, end).c_str());
-}
-
 
 // TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // TODO: is it still used ? If yes move it somewhere else. Method from internal mods ?
