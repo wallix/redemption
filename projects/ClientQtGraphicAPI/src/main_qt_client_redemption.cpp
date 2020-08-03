@@ -49,15 +49,12 @@ private:
 public:
     ClientRedemptionQt(
         TimeBase & time_base,
-        TopFdContainer& fd_events,
-        TimerContainer & timer_events,
         EventContainer& events,
         ClientRedemptionConfig & config)
-    : ClientRedemption(time_base, fd_events, timer_events, events, config)
+    : ClientRedemption(time_base, events, config)
     , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
-    , qt_socket_listener(time_base, fd_events, timer_events,
-        this, this->qt_graphic.get_static_qwidget())
+    , qt_socket_listener(time_base, events, this, this->qt_graphic.get_static_qwidget())
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
         this->qt_graphic.get_static_qwidget())
     {
@@ -76,6 +73,10 @@ public:
             this->cmd_launch_conn();
         }
     }
+
+    void session_update(timeval now, LogId id, KVList kv_list) override {}
+
+    void possible_active_window_change() override {}
 
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
         if (this->config.mod_state != ClientRedemptionConfig::MOD_VNC) {
@@ -339,8 +340,6 @@ int main(int argc, char** argv)
 
     Inifile ini;
     TimeBase time_base({0,0});
-    TopFdContainer fd_events;
-    TimerContainer timer_events;
     EventContainer events;
 
     QApplication app(argc, argv);
@@ -351,7 +350,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_init;
 
-    ClientRedemptionQt client_qt(time_base, fd_events, timer_events, events, config);
+    ClientRedemptionQt client_qt(time_base, events, config);
 
     app.exec();
 }

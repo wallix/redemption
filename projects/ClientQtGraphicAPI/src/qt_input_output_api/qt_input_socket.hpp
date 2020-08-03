@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption_api.hpp"
+#include "core/events.hpp"
 
 #include "redemption_qt_include_widget.hpp"
 
@@ -41,8 +41,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
     TimeBase& time_base;
-    TopFdContainer& fd_events;
-    TimerContainer& timer_events;
+    EventContainer& events;
 
     QSocketNotifier * _sckListener;
 
@@ -53,14 +52,12 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     QtInputSocket(
         TimeBase& time_base,
-        TopFdContainer& fd_events,
-        TimerContainer& timer_events,
+        EventContainer & events,
         ClientRedemptionAPI * client,
         QWidget * parent)
     : QObject(parent)
     , time_base(time_base)
-    , fd_events(fd_events)
-    , timer_events(timer_events)
+    , events(events)
     , _sckListener(nullptr)
     , timer(this)
     , client(client)
@@ -123,33 +120,6 @@ private:
 
     void prepare_timer_event()
     {
-        timeval now = tvtime();
-        auto previous_time = this->time_base.get_current_time();
-        this->time_base.set_current_time(now);
-
-        std::chrono::milliseconds timeout(5000);
-        timeval tv = previous_time + timeout;
-
-        auto update_tv = [&](timeval const& tv2){
-            if (tv2.tv_sec >= 0) {
-                tv = std::min(tv, tv2);
-            }
-        };
-        auto top_update_tv = [&](int /*fd*/, auto& top){
-            if (top.timer_data.is_enabled) {
-                update_tv(top.timer_data.tv);
-            }
-        };
-        auto timer_update_tv = [&](auto& timer){
-            update_tv(timer.tv);
-        };
-
-        this->timer_events.for_each(timer_update_tv);
-        this->fd_events.for_each(top_update_tv);
-
-        long time_to_wake = 1000 * (tv.tv_sec - now.tv_sec)
-                          + (tv.tv_usec - now.tv_usec) / 1000;
-
-        this->timer.start(std::max(0l, time_to_wake));
+        this->timer.start(1);
     }
 };

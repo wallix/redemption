@@ -1346,7 +1346,6 @@ public:
 
     void draw(const RDP::FrameMarker & order) override {
         (void) order;
-        LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
 
 //     using ClientOutputGraphicAPI::draw;

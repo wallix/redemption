@@ -46,8 +46,6 @@ using InteractiveTargetModVariables = vcfg::variables<
 
 class ClientExecute;
 class TimeBase;
-class TimerContainer;
-
 
 class InteractiveTargetMod : public mod_api, public NotifyApi
 {

@@ -32,8 +32,6 @@ class ClientInfo;
 class FrontAPI;
 class LicenseApi;
 class TimeBase;
-class TopFdContainer;
-class TimerContainer;
 class TimeObj;
 class Transport;
 class RedirectionInfo;
