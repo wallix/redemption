@@ -173,7 +173,6 @@ namespace configs
         "showform"_zv,
         "formflag"_zv,
         "module"_zv,
-        "forcemodule"_zv,
         "proxy_opt"_zv,
         "pattern_kill"_zv,
         "pattern_notify"_zv,

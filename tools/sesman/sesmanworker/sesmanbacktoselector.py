@@ -11,7 +11,6 @@ back_to_selector_default_sent = {
     u'device_id': u'',
     u'duration': u'',
     u'duration_max': 0,
-    u'forcemodule': False,
     u'formflag': 0,
     u'is_rec': False,
     u'message': u'',

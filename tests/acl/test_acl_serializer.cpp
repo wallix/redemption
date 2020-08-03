@@ -66,7 +66,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     AclSerializer acl(ini);
     acl.set_auth_trans(&trans);
 
-    ini.set<cfg::context::forcemodule>(true);
     RED_CHECK_NO_THROW(acl.send_acl_data());
 
     struct ThrowTransport : Transport

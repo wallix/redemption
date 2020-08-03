@@ -120,7 +120,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::duration>(cs);
     ini.set_acl<cfg::context::duration>(s);
     ini.set<cfg::context::end_date_cnx>(1);
-    ini.set<cfg::context::forcemodule>(true);
     ini.set_acl<cfg::context::formflag>(1);
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);

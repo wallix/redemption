@@ -399,7 +399,6 @@ namespace cfg
         struct showform;
         struct formflag;
         struct module;
-        struct forcemodule;
         struct proxy_opt;
         struct pattern_kill;
         struct pattern_notify;
