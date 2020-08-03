@@ -1,3 +1,9 @@
+redemption (8.0.25h%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Log bitmap data when ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE is detected.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 03 Aug 2020 15:35:42 +0200
+
 redemption (8.0.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * remove bestsafe options
