@@ -413,10 +413,9 @@ private:
         }
 
         auto next_state = get_module_id(module_cstr);
-        ini.set_acl<cfg::context::module>("");
 
         if (mod_wrapper.current_mod != MODULE_INTERNAL_TRANSITION
-        && next_state != MODULE_INTERNAL_TRANSITION) {
+        && next_state != MODULE_TRANSITORY) {
             return true;
         }
 
