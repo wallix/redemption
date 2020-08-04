@@ -192,11 +192,6 @@ class Session
         {
             this->inactivity_timeout = std::max<time_t>(timeout.count(), 30);
         }
-
-        time_t get_inactivity_timeout()
-        {
-            return this->inactivity_timeout;
-        }
     };
 
 
@@ -312,6 +307,11 @@ private:
         else if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
             LOG(LOG_INFO, "Close because disconnection time reached");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
+            return 1;
+        }
+        else if (e.id == ERR_MCS_APPID_IS_MCS_DPUM){
+            LOG(LOG_INFO, "Remote Session Closed by User");
+            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
             return 1;
         }
         else if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
@@ -1018,7 +1018,6 @@ public:
                             mod_wrapper.disconnect();
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
                             if (acl_serial.is_connected()){
-                                auto signal = mod_wrapper.get_mod_signal();
                                 for (auto field : this->ini.get_fields_changed()) {
                                         zstring_view key = field.get_acl_name();
 
