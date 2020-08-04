@@ -400,186 +400,193 @@ private:
                               ClientExecute & rail_client_execute)
     {
         // There are modified fields to send to sesman
-        if (acl_serial.is_connected() && acl_serial.remote_answer
-        && mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION) {
+        if (!acl_serial.is_connected() || !acl_serial.remote_answer){
+            return true;
+        }
 
-            acl_serial.remote_answer = false;
+        acl_serial.remote_answer = false;
 
-            auto & module_cstr = ini.get<cfg::context::module>();
+        auto & module_cstr = ini.get<cfg::context::module>();
 
-            if (not module_cstr[0]){
-                return true;
+        if (not module_cstr[0]){
+            return true;
+        }
+
+        auto next_state = get_module_id(module_cstr);
+        ini.set_acl<cfg::context::module>("");
+
+        if (mod_wrapper.current_mod != MODULE_INTERNAL_TRANSITION
+        && next_state != MODULE_INTERNAL_TRANSITION) {
+            return true;
+        }
+
+        switch (next_state){
+        case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
+        {
+            // In case of transitory we are still expecting spontaneous data
+            acl_serial.remote_answer = true;
+            auto next_state = MODULE_INTERNAL_TRANSITION;
+            this->new_mod(next_state, mod_wrapper, mod_factory, front);
+        } // case next_state == MODULE_TRANSITORY  in switch (next_state)
+        break;
+        case MODULE_RDP:
+        {
+            if (mod_wrapper.is_connected()) {
+                if (ini.get<cfg::context::auth_error_message>().empty()) {
+                    ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
+                }
+                throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
+            }
+            rail_client_execute.enable_remote_program(front.client_info.remote_program);
+            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+
+            try {
+                if (mod_wrapper.current_mod != next_state) {
+                    log_file.open_session_log();
+                    sesman.set_connect_target();
+                }
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                if (ini.get<cfg::globals::bogus_refresh_rect>()
+                && ini.get<cfg::globals::allow_using_multiple_monitors>()
+                && (front.client_info.cs_monitor.monitorCount > 1)) {
+                    mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                    mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                        front.client_info.screen_info.width, front.client_info.screen_info.height);
+                }
+                mod_wrapper.get_mod()->rdp_input_invalidate(
+                        Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
+                ini.set<cfg::context::auth_error_message>("");
+            }
+            catch (...) {
+                sesman.log6(LogId::SESSION_CREATION_FAILED, {});
+                front.must_be_stop_capture();
+                throw;
+            }
+        } // case next_state == MODULE_RDP  in switch (next_state)
+        break;
+        case MODULE_VNC:
+        {
+            if (mod_wrapper.is_connected()) {
+                if (ini.get<cfg::context::auth_error_message>().empty()) {
+                    ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
+                }
+                throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
             }
 
-            auto next_state = get_module_id(module_cstr);
-            ini.set_acl<cfg::context::module>("");
+            rail_client_execute.enable_remote_program(front.client_info.remote_program);
+            log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
 
-            switch (next_state){
-            case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
-            {
-                acl_serial.remote_answer = false;
-                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NEXT);
-            } // case next_state == MODULE_TRANSITORY  in switch (next_state)
-            break;
-            case MODULE_RDP:
-            {
-                if (mod_wrapper.is_connected()) {
-                    if (ini.get<cfg::context::auth_error_message>().empty()) {
-                        ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
-                    }
-                    throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
+            try {
+                if (mod_wrapper.current_mod != next_state) {
+                    log_file.open_session_log();
+                    sesman.set_connect_target();
                 }
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+
+                ini.set<cfg::context::auth_error_message>("");
+            }
+            catch (...) {
+                sesman.log6(LogId::SESSION_CREATION_FAILED, {});
+                throw;
+            }
+
+        } // case next_state == MODULE_VNC  in switch (next_state)
+        break;
+        case MODULE_INTERNAL:
+        {
+            next_state = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
+            if (next_state != last_state){
                 rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-
-                try {
-                    if (mod_wrapper.current_mod != next_state) {
-                        log_file.open_session_log();
-                        sesman.set_connect_target();
-                    }
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                    if (ini.get<cfg::globals::bogus_refresh_rect>()
-                    && ini.get<cfg::globals::allow_using_multiple_monitors>()
-                    && (front.client_info.cs_monitor.monitorCount > 1)) {
-                        mod_wrapper.get_mod()->rdp_suppress_display_updates();
-                        mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                            front.client_info.screen_info.width, front.client_info.screen_info.height);
-                    }
-                    mod_wrapper.get_mod()->rdp_input_invalidate(
-                            Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
-                    ini.set<cfg::context::auth_error_message>("");
-                }
-                catch (...) {
-                    sesman.log6(LogId::SESSION_CREATION_FAILED, {});
-                    front.must_be_stop_capture();
-                    throw;
-                }
-            } // case next_state == MODULE_RDP  in switch (next_state)
-            break;
-            case MODULE_VNC:
-            {
-                if (mod_wrapper.is_connected()) {
-                    if (ini.get<cfg::context::auth_error_message>().empty()) {
-                        ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(ini)));
-                    }
-                    throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
-                }
-
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
-
-                try {
-                    if (mod_wrapper.current_mod != next_state) {
-                        log_file.open_session_log();
-                        sesman.set_connect_target();
-                    }
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-
-                    ini.set<cfg::context::auth_error_message>("");
-                }
-                catch (...) {
-                    sesman.log6(LogId::SESSION_CREATION_FAILED, {});
-                    throw;
-                }
-
-            } // case next_state == MODULE_VNC  in switch (next_state)
-            break;
-            case MODULE_INTERNAL:
-            {
-                next_state = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
-                if (next_state != last_state){
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                }
-            } // case next_state == MODULE_INTERNAL  in switch (next_state)
-            break;
-            case MODULE_UNKNOWN:
-                throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
-            case MODULE_INTERNAL_CLOSE:
-                throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
-            case MODULE_INTERNAL_CLOSE_BACK:
-                throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
-
-            case MODULE_INTERNAL_LOGIN:
-                    log_proxy::set_user("");
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                break;
-            case MODULE_INTERNAL_WAIT_INFO:
-                    log_proxy::set_user("");
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                break;
-            case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-                    log_proxy::set_user("");
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                break;
-            case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-                    log_proxy::set_user("");
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                break;
-            case MODULE_INTERNAL_DIALOG_CHALLENGE:
-                    log_proxy::set_user("");
-                    rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                break;
-            default:
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                break;
-            } // switch (next_state)
-
-            if (!ini.get<cfg::context::disconnect_reason>().empty()) {
-                acl_serial.acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
-                ini.set<cfg::context::disconnect_reason>("");
-                ini.set_acl<cfg::context::disconnect_reason_ack>(true);
             }
-            else if (!ini.get<cfg::context::auth_command>().empty()) {
-                if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(), "rail_exec")) {
-                    const uint16_t flags                = ini.get<cfg::context::auth_command_rail_exec_flags>();
-                    const char*    original_exe_or_file = ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
-                    const char*    exe_or_file          = ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
-                    const char*    working_dir          = ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
-                    const char*    arguments            = ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
-                    const uint16_t exec_result          = ini.get<cfg::context::auth_command_rail_exec_exec_result>();
-                    const char*    account              = ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
-                    const char*    password             = ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
+        } // case next_state == MODULE_INTERNAL  in switch (next_state)
+        break;
+        case MODULE_UNKNOWN:
+            throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
+        case MODULE_INTERNAL_CLOSE:
+            throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
+        case MODULE_INTERNAL_CLOSE_BACK:
+            throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
 
-                    rdp_api* rdpapi = mod_wrapper.get_rdp_api();
+        case MODULE_INTERNAL_LOGIN:
+                log_proxy::set_user("");
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+            break;
+        case MODULE_INTERNAL_WAIT_INFO:
+                log_proxy::set_user("");
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+            break;
+        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
+                log_proxy::set_user("");
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+            break;
+        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
+                log_proxy::set_user("");
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+            break;
+        case MODULE_INTERNAL_DIALOG_CHALLENGE:
+                log_proxy::set_user("");
+                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                this->new_mod(next_state, mod_wrapper, mod_factory, front);
+            break;
+        default:
+            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            this->new_mod(next_state, mod_wrapper, mod_factory, front);
+            break;
+        } // switch (next_state)
 
-                    if (!exec_result) {
-                        //LOG(LOG_INFO,
-                        //    "RailExec: "
-                        //        "original_exe_or_file=\"%s\" "
-                        //        "exe_or_file=\"%s\" "
-                        //        "working_dir=\"%s\" "
-                        //        "arguments=\"%s\" "
-                        //        "flags=%u",
-                        //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
+        if (!ini.get<cfg::context::disconnect_reason>().empty()) {
+            acl_serial.acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
+            ini.set<cfg::context::disconnect_reason>("");
+            ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+        }
+        else if (!ini.get<cfg::context::auth_command>().empty()) {
+            if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(), "rail_exec")) {
+                const uint16_t flags                = ini.get<cfg::context::auth_command_rail_exec_flags>();
+                const char*    original_exe_or_file = ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
+                const char*    exe_or_file          = ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
+                const char*    working_dir          = ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
+                const char*    arguments            = ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
+                const uint16_t exec_result          = ini.get<cfg::context::auth_command_rail_exec_exec_result>();
+                const char*    account              = ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
+                const char*    password             = ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
 
-                        if (rdpapi) {
-                            rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
-                        }
-                    }
-                    else {
-                        //LOG(LOG_INFO,
-                        //    "RailExec: "
-                        //        "exec_result=%u "
-                        //        "original_exe_or_file=\"%s\" "
-                        //        "flags=%u",
-                        //    exec_result, original_exe_or_file, flags);
+                rdp_api* rdpapi = mod_wrapper.get_rdp_api();
 
-                        if (rdpapi) {
-                            rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
-                        }
+                if (!exec_result) {
+                    //LOG(LOG_INFO,
+                    //    "RailExec: "
+                    //        "original_exe_or_file=\"%s\" "
+                    //        "exe_or_file=\"%s\" "
+                    //        "working_dir=\"%s\" "
+                    //        "arguments=\"%s\" "
+                    //        "flags=%u",
+                    //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
+
+                    if (rdpapi) {
+                        rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
                     }
                 }
+                else {
+                    //LOG(LOG_INFO,
+                    //    "RailExec: "
+                    //        "exec_result=%u "
+                    //        "original_exe_or_file=\"%s\" "
+                    //        "flags=%u",
+                    //    exec_result, original_exe_or_file, flags);
 
-                ini.set<cfg::context::auth_command>("");
+                    if (rdpapi) {
+                        rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
+                    }
+                }
             }
+
+            ini.set<cfg::context::auth_command>("");
         }
         return true;
     }
