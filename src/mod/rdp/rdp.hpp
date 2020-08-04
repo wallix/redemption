@@ -2830,6 +2830,14 @@ public:
                                     }
 #endif
                                 }
+                                else if (sdata.pdutype2 == PDUTYPE2_SAVE_SESSION_INFO) {
+                                    LOG_IF(bool(this->verbose & RDPVerbose::connection),
+                                        LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");
+                                    // TODO CGR: Data should actually be consumed
+                                    this->process_save_session_info(sdata.payload);
+
+                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                }
                                 else if (sdata.pdutype2 == PDUTYPE2_SYNCHRONIZE) {
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
