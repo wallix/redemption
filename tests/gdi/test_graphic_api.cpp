@@ -122,7 +122,7 @@ struct EQ<::LineForTest, ::LineForTest>
     gdi::MultiLineTextMetrics::Line expected_[] {__VA_ARGS__};                              \
     array_view lines_ = metrics.lines();                                                    \
     array_view<LineForTest> expected{                                                       \
-        static_cast<LineForTest const*>(expected_), std::size(expected_)};                  \
+        static_cast<LineForTest const*>(&expected_[0]), std::size(expected_)};              \
     array_view lines = {                                                                    \
         static_cast<LineForTest const*>(lines_.data()), lines_.size()};                     \
     RED_CHECK_EQUAL_RANGES(lines, expected);                                                \
