@@ -88,8 +88,7 @@ CloseMod::CloseMod(
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool back_selector)
     : close_widget(
-        build_close_widget(gd_provider.get_graphics(), widget_rect, *this, this->screen, auth_error_message,
-                           vars, font, theme, back_selector))
+        build_close_widget(gd_provider.get_graphics(), widget_rect, *this, this->screen, auth_error_message, vars, font, theme, back_selector))
     , vars(vars)
     , front_width(width)
     , front_height(height)
