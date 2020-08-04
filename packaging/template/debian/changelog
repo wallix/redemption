@@ -1,3 +1,9 @@
+redemption (8.0.26d%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Process Server Save Session Info PDU in WAITING_SYNCHRONIZE state of mod_rdp.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 04 Aug 2020 14:27:06 +0200
+
 redemption (8.0.25c%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Change the state of the connection automaton (mod_rdp) only upon receipt of the expected messages.
