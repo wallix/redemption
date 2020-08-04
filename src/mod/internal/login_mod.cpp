@@ -26,6 +26,7 @@
 #include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "acl/module_manager/acl_new_line_converter.hpp"
 
 #include <string>
 #include <utility>
@@ -86,7 +87,7 @@ LoginMod::LoginMod(
         TR(trkeys::password, language(vars)),
         TR(trkeys::target, language(vars)),
         vars.get<cfg::context::opt_message>().c_str(),
-        vars.get<cfg::context::login_message>().c_str(),
+        AclNewLineConverter(vars.get<cfg::context::login_message>()).zstring().c_str(),
         &this->language_button,
         vars.get<cfg::internal_mod::enable_target_field>(),
         font, Translator(language(vars)), theme)
