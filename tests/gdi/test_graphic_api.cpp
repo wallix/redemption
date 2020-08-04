@@ -53,7 +53,7 @@ struct LineForTest : gdi::MultiLineTextMetrics::Line
 
 static std::ostream& boost_test_print_type(std::ostream& ostr, LineForTest const& line)
 {
-    return ostr << "{.width=" << line.width << ", .text=" << std::quoted(line.text) << "}";
+    return ostr << "{.width=" << line.width << ", .str=" << std::quoted(line.str) << "}";
 }
 
 namespace boost {
@@ -75,8 +75,8 @@ struct EQ<::LineForTest, ::LineForTest>
     {
         assertion_result ar(true);
 
-        bytes_view a{lhs.text, strlen(lhs.text)};
-        bytes_view b{rhs.text, strlen(rhs.text)};
+        bytes_view a{lhs.str, strlen(lhs.str)};
+        bytes_view b{rhs.str, strlen(rhs.str)};
 
         size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
         const bool r = pos != a.size() || a.size() != b.size();
@@ -137,8 +137,8 @@ struct EQ<::LineForTest, ::LineForTest>
         }                                                                                   \
     }                                                                                       \
     for (auto&& line : lines) {                                                             \
-        RED_TEST_CONTEXT(std::quoted(line.text)) {                                          \
-            RED_TEST(gdi::TextMetrics(font, line.text).width == line.width);                \
+        RED_TEST_CONTEXT(std::quoted(line.str)) {                                           \
+            RED_TEST(gdi::TextMetrics(font, line.str).width == line.width);                 \
         }                                                                                   \
     }                                                                                       \
 }(gdi::MultiLineTextMetrics(font, s, max_width))
@@ -148,6 +148,13 @@ RED_AUTO_TEST_CASE(MultiLineTextMetrics)
 {
     auto& font14 = global_font_deja_vu_14();
     auto& font16 = global_font_lato_light_16();
+
+    RED_TEST(gdi::MultiLineTextMetrics(font14, "", 0).lines().size() == 0);
+
+    TEST_LINES(font14, "ab", 0,
+        {"a", 8},
+        {"b", 9},
+    );
 
     TEST_LINES(font14, "abc", 100,
         {"abc", 25},

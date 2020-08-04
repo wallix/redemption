@@ -24,6 +24,7 @@
 #include "utils/theme.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "core/app_path.hpp"
+#include "core/font.hpp"
 #include "gdi/graphic_api.hpp"
 
 FlatWabClose::FlatWabClose(
@@ -211,11 +212,15 @@ void FlatWabClose::move_size_widget(int16_t left, int16_t top, uint16_t width, u
     }
     else {
         std::string formatted_diagnostic_text;
-        gdi::MultiLineTextMetrics mltm(this->font, this->diagnostic_text.c_str(), 0,
-            ((this->diagnostic_label.cx() > this->cx() - (x + 10)) ? this->separator.cx() : this->separator.cx() - x),
-            formatted_diagnostic_text);
-        this->diagnostic_value.set_wh(mltm.width, std::max(mltm.height, int(dim.h)));
-        this->diagnostic_value.set_text(formatted_diagnostic_text.c_str());
+        gdi::MultiLineTextMetrics line_metrics(
+            this->font, this->diagnostic_text.c_str(),
+            (this->diagnostic_label.cx() > this->cx() - (x + 10))
+                ? this->separator.cx()
+                : this->separator.cx() - x);
+        this->diagnostic_value.set_wh(
+            line_metrics.max_width(),
+            std::max(int(this->font.max_height() * line_metrics.lines().size()), int(dim.h)));
+        this->diagnostic_value.set_text(std::move(line_metrics));
     }
 
     if (this->diagnostic_label.cx() > this->cx() - (x + 10)) {

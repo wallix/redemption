@@ -401,7 +401,7 @@ struct MultiLineTextMetrics
 {
     struct Line
     {
-        char const* text;
+        char const* str;
         int width;
     };
 
@@ -410,11 +410,14 @@ struct MultiLineTextMetrics
         return {this->lines_.get(), this->size_};
     }
 
+    MultiLineTextMetrics() = default;
     MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned max_width);
+
+    uint16_t max_width() const noexcept;
 
 private:
     std::unique_ptr<Line[]> lines_;
-    std::size_t size_;
+    std::size_t size_ = 0;
 };
 
 

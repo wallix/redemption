@@ -22,6 +22,7 @@
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
+#include "gdi/graphic_api.hpp"
 
 class Font;
 
@@ -29,14 +30,13 @@ class WidgetMultiLine : public Widget
 {
 public:
     WidgetMultiLine(gdi::GraphicApi & drawable, Widget& parent,
-                    NotifyApi* notifier, const char * text,
-                    int group_id,
+                    NotifyApi* notifier, char const* text, int group_id,
                     BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                     int xtext = 0, int ytext = 0); /*NOLINT*/
 
     void set_text(const char * text);
-
-    [[nodiscard]] const char * get_line(size_t num) const;
+    void set_text(const char * text, unsigned max_width);
+    void set_text(gdi::MultiLineTextMetrics&& line_metrics);
 
     void rdp_input_invalidate(Rect clip) override;
 
@@ -48,26 +48,11 @@ public:
     }
 
 private:
-    static const size_t buffer_size = 1024;
-    static const size_t max_line = 50;
-
-    struct Lines
-    {
-        struct Line
-        {
-            char const* text;
-            int cx;
-        };
-        std::unique_ptr<Line[]> lines;
-        int size;
-    };
-
-    Lines lines;
+    gdi::MultiLineTextMetrics line_metrics;
 
     int x_text;
     int y_text;
     int cy_text;
-    bool auto_resize;
     BGRColor bg_color;
     BGRColor fg_color;
     Font const & font;

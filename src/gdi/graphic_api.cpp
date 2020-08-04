@@ -22,6 +22,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/utf.hpp"
 
@@ -228,6 +229,11 @@ MultiLineTextMetrics::MultiLineTextMetrics(
         });
 
     this->size_ = nb_line;
+
+    if (!this->size_) {
+        return;
+    }
+
     this->lines_.reset(new Line[nb_line /* NOLINT */
         // char buffer
         + (nb_line * 4 + nb_byte) / sizeof(Line) + sizeof(Line)]);
@@ -236,7 +242,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(
 
     multi_textmetrics_impl(font, p, int(max_width), space_w,
         [&](auto* p, auto* e, int w){
-            pline->text = s;
+            pline->str = s;
             pline->width = w;
             ++pline;
             memcpy(s, p, e-p);
@@ -245,6 +251,16 @@ MultiLineTextMetrics::MultiLineTextMetrics(
             s += 4;
         });
 }
+
+uint16_t MultiLineTextMetrics::max_width() const noexcept
+{
+    int max_line_width = 0;
+    for (auto const& line : this->lines()) {
+        max_line_width = std::max(max_line_width, line.width);
+    }
+    return saturated_int{max_line_width};
+}
+
 
 // TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
 // TODO: is it still used ? If yes move it somewhere else. Method from internal mods ?
