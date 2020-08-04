@@ -856,7 +856,7 @@ public:
 
                     // propagate changes made in sesman structure to actual acl changes
                     sesman.flush_acl_report(
-                        [&ini,&acl_serial](zstring_view reason, zstring_view message)
+                        [&ini](zstring_view reason, zstring_view message)
                         {
                             ini.ask<cfg::context::keepalive>();
                             char report[1024];

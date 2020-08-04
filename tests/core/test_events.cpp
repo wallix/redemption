@@ -270,7 +270,7 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
                     event.rename("VNC Fd Event");
                     event.alarm.set_fd(1, std::chrono::seconds{300});
                     event.alarm.set_timeout(this->time_base.get_current_time());
-                    event.actions.set_timeout_function([this](Event&/*event*/){LOG(LOG_INFO, "Timeout");});
+                    event.actions.set_timeout_function([](Event&/*event*/){LOG(LOG_INFO, "Timeout");});
                     event.actions.set_action_function([this](Event&/*event*/){ this->action();});
                 });
         }
