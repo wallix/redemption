@@ -1159,9 +1159,13 @@ public:
                     this->mouse_x, this->mouse_y,
                     false  // ignore frame in time interval
                 ).ms();
-                event.alarm.set_timeout(event.alarm.now
-                    +std::chrono::duration_cast<std::chrono::milliseconds>(((capture_ms.max() < capture_ms)?capture_ms.max():capture_ms)));
-            });
+                if (capture_ms == capture_ms.max()){
+                    event.garbage = true;
+                }
+                else {
+                    event.alarm.set_timeout(event.alarm.now+capture_ms);
+                }
+           });
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
