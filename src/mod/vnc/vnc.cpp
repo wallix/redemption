@@ -61,7 +61,7 @@ mod_vnc::mod_vnc( Transport & t
     , dsmEncryption(false)
     , width(front_width)
     , height(front_height)
-    , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
+    , verbose(verbose | VNCVerbose::basic_trace | VNCVerbose::connection | VNCVerbose::cursor_encoder)
     , keymapSym(keylayout, key_flags, server_is_unix, server_is_macos, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
@@ -78,7 +78,7 @@ mod_vnc::mod_vnc( Transport & t
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
     , server_data_buf(*this)
     , tlsSwitch(false)
-    , frame_buffer_update_ctx(this->zd, verbose)
+    , frame_buffer_update_ctx(this->zd, this->verbose)
     , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
@@ -117,9 +117,9 @@ bool mod_vnc::ms_logon(Buf64k & buf)
 
     if (bool(this->verbose & VNCVerbose::basic_trace)) {
         LOG(LOG_INFO, "MS-Logon with following values:");
-        LOG(LOG_INFO, "Gen=%" PRIu64, this->ms_logon_ctx.gen);
-        LOG(LOG_INFO, "Mod=%" PRIu64, this->ms_logon_ctx.mod);
-        LOG(LOG_INFO, "Resp=%" PRIu64, this->ms_logon_ctx.resp);
+        LOG(LOG_INFO, "Gen=0x%" PRIx64, this->ms_logon_ctx.gen);
+        LOG(LOG_INFO, "Mod=0x%" PRIx64, this->ms_logon_ctx.mod);
+        LOG(LOG_INFO, "Resp=0x%" PRIx64, this->ms_logon_ctx.resp);
     }
 
     DiffieHellman dh(this->ms_logon_ctx.gen, this->ms_logon_ctx.mod);
@@ -510,10 +510,12 @@ const char *mod_vnc::securityTypeString(uint32_t t) {
     case VNC_AUTH_VNC: return "VNC";
     case VNC_AUTH_ULTRA: return "Ultra";
     case VNC_AUTH_TIGHT: return "TightVNC";
+    case VNC_AUTH_ULTRA_MsLogonIAuth: return "Ultra MsLogonIAuth";
+    case VNC_AUTH_ULTRA_MsLogonIIAuth: return "Ultra MsLogon2Auth";
     case VNC_AUTH_ULTRA_SecureVNCPluginAuth: return "UtraVNC DSM old";
     case VNC_AUTH_ULTRA_SecureVNCPluginAuth_new: return "UtraVNC DSM new";
     case VNC_AUTH_TLS: return "TLS";
-    case VNC_AUTH_MS_LOGON: return "MS logon";
+    case VNC_AUTH_ULTRA_MS_LOGON: return "Ultra MS-logon";
     case VNC_AUTH_VENCRYPT: return "VeNCrypt";
     case VeNCRYPT_TLSNone: return "TLS none";
     case VeNCRYPT_TLSVnc: return "TLS VNC";
@@ -532,7 +534,8 @@ void mod_vnc::updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, si
         VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
         //VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,     TLS not handled for now
         VNC_AUTH_ULTRA_SecureVNCPluginAuth_new, VNC_AUTH_ULTRA_SecureVNCPluginAuth,
-        VNC_AUTH_VENCRYPT, VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
+        VNC_AUTH_VENCRYPT, VNC_AUTH_ULTRA_MsLogonIIAuth,
+        VNC_AUTH_ULTRA_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
     };
 
     const size_t nauths = sizeof(preferedAuthTypes) / sizeof(preferedAuthTypes[0]);
@@ -882,7 +885,13 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                     case VNC_AUTH_VNC:
                         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
                         break;
-                    case VNC_AUTH_MS_LOGON:
+                    case VNC_AUTH_ULTRA_MS_LOGON:
+                        this->state = WAIT_SECURITY_TYPES_MS_LOGON;
+                        break;
+                    case VNC_AUTH_ULTRA_MsLogonIAuth:
+                        LOG(LOG_ERR, "MsLogonIAuth not supported");
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
+                    case VNC_AUTH_ULTRA_MsLogonIIAuth:
                         this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                         break;
                     case VNC_AUTH_VENCRYPT:
@@ -919,7 +928,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                     case VNC_AUTH_VNC:
                         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
                         break;
-                    case VNC_AUTH_MS_LOGON:
+                    case VNC_AUTH_ULTRA_MS_LOGON:
                         this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                         break;
                     case VNC_AUTH_VENCRYPT:

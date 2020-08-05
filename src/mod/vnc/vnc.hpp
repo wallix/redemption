@@ -339,15 +339,17 @@ private:
         VNC_AUTH_ULTRA        = 17,
         VNC_AUTH_TLS         = 18,
         VNC_AUTH_VENCRYPT    = 19,
+        VNC_AUTH_ULTRA_MsLogonIAuth = 112,
+        VNC_AUTH_ULTRA_MsLogonIIAuth = 113,
         VNC_AUTH_ULTRA_SecureVNCPluginAuth = 114,
         VNC_AUTH_ULTRA_SecureVNCPluginAuth_new = 115,
-        VNC_AUTH_MS_LOGON    = 0x100-6,
         VeNCRYPT_TLSNone     = 257,
         VeNCRYPT_TLSVnc     = 258,
         VeNCRYPT_TLSPlain     = 259,
         VeNCRYPT_X509None    = 260,
         VeNCRYPT_X509Vnc    = 261,
         VeNCRYPT_X509Plain    = 262,
+        VNC_AUTH_ULTRA_MS_LOGON = 0xfffa,
     };
 
     VncAuthType choosenAuth;
