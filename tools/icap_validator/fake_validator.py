@@ -59,6 +59,7 @@ def process_new_data(message, client_socket, data):
     """
     Parse a NewFile message and prepare send a response
     or wait a eof type message. If filename contains
+    - norep: no response
     - virus0: send REJECTED immediately
     - ok0: send ACCEPTED immediately
     - virus1: send REJECTED on eof or abort
@@ -76,7 +77,7 @@ def process_new_data(message, client_socket, data):
         send_response_message(client_socket, file_id, REJECTED, b'virus0')
     elif b'ok0' in msg_data:
         send_response_message(client_socket, file_id, ACCEPTED, b'ok0')
-    else:
+    elif b'norep' not in msg_data:
         data[file_id] = b'virus1' in msg_data
 
 def process_eol(message, client_socket, data):
