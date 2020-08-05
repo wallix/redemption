@@ -49,8 +49,16 @@ RED_AUTO_TEST_CASE(TextMetrics)
 
 
 struct LineForTest : gdi::MultiLineTextMetrics::Line
-{};
+{
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
+    bool operator == (LineForTest const& other) const
+    {
+        return this->width == other.width && 0 == strcmp(this->str, other.str);
+    }
+#endif
+};
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
 static std::ostream& boost_test_print_type(std::ostream& ostr, LineForTest const& line)
 {
     return ostr << "{.width=" << line.width << ", .str=" << std::quoted(line.str) << "}";
@@ -115,6 +123,7 @@ struct EQ<::LineForTest, ::LineForTest>
 }
 }
 }
+#endif
 
 #define TEST_LINES(font, s, max_width, ...) [&](                                            \
     gdi::MultiLineTextMetrics const& metrics                                                \
