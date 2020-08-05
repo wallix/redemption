@@ -75,28 +75,15 @@ class Session
         bool connected;
 
     public:
-        REDEMPTION_VERBOSE_FLAGS(private, verbose)
-        {
-            none,
-            state    = 0x10,
-            arcsight = 0x20,
 
-            // SocketTransport (see 'socket_transport.hpp')
-            sock_basic = 1u << 29,
-            sock_dump  = 1u << 30,
-            sock_watch = 1u << 31
-        };
-
-        KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
+        KeepAlive(std::chrono::seconds grace_delay_)
         : grace_delay(grace_delay_.count())
         , timeout(0)
         , renew_time(0)
         , wait_answer(false)
         , connected(false)
-        , verbose(verbose)
         {
         }
-
 
         ~KeepAlive()
         {
@@ -131,7 +118,7 @@ class Session
                 if (this->wait_answer
                     && !ini.is_asked<cfg::context::keepalive>()
                     && ini.get<cfg::context::keepalive>()) {
-                    LOG_IF(bool(this->verbose & Verbose::state),
+                    LOG_IF(bool(bool(ini.get<cfg::debug::session>()&0x08) & 2),
                         LOG_INFO, "auth::keep_alive ACL incoming event");
                     this->timeout    = now + 2*this->grace_delay;
                     this->renew_time = now + this->grace_delay;
@@ -392,32 +379,15 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool front_up_and_running(AclSerializer & acl_serial,
+    bool next_backend_module(AclSerializer & acl_serial,
                               SessionLogFile & log_file, Inifile& ini,
                               ModFactory & mod_factory, ModWrapper & mod_wrapper,
                               Front & front,
                               Sesman & sesman,
                               ClientExecute & rail_client_execute)
     {
-        // There are modified fields to send to sesman
-        if (!acl_serial.is_connected() || !acl_serial.remote_answer){
-            return true;
-        }
-
-        acl_serial.remote_answer = false;
-
         auto & module_cstr = ini.get<cfg::context::module>();
-
-        if (not module_cstr[0]){
-            return true;
-        }
-
         auto next_state = get_module_id(module_cstr);
-
-        if (mod_wrapper.current_mod != MODULE_INTERNAL_TRANSITION
-        && next_state != MODULE_TRANSITORY) {
-            return true;
-        }
 
         switch (next_state){
         case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
@@ -632,8 +602,7 @@ public:
         timeval now = tvtime();
 
 
-        KeepAlive keepalive(ini.get<cfg::globals::keepalive_grace_delay>(),
-                            to_verbose_flags(ini.get<cfg::debug::auth>()));
+        KeepAlive keepalive(ini.get<cfg::globals::keepalive_grace_delay>());
 
 
         auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count()!=0)
@@ -876,11 +845,6 @@ public:
                     sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
-                        auto signal = mod_wrapper.get_mod_signal();
-                        LOG_IF(bool(ini.get<cfg::debug::session>()&0x08), LOG_INFO,
-                                "signal is %s", (signal==BACK_EVENT_NEXT)?"NEXT":
-                                                (signal==BACK_EVENT_STOP)?"STOP":
-                                                "NONE");
                         for (auto field : this->ini.get_fields_changed()) {
                                zstring_view key = field.get_acl_name();
                                LOG_IF(bool(ini.get<cfg::debug::session>()&0x08), LOG_INFO,
@@ -1049,12 +1013,11 @@ public:
                             ini.get<cfg::context::module>()
                             );
 
-                        BackEvent_t signal = mod_wrapper.get_mod_signal();
-                        if (signal == BACK_EVENT_STOP){
+                        if (mod_wrapper.get_mod_signal() == BACK_EVENT_STOP){
                             throw Error(ERR_UNEXPECTED);
                         }
 
-                        if (signal == BACK_EVENT_NEXT){
+                        if (mod_wrapper.get_mod_signal() == BACK_EVENT_NEXT){
                             rail_client_execute.enable_remote_program(
                                             front.client_info.remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
@@ -1062,12 +1025,20 @@ public:
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                         }
 
+                        // There are modified fields to send to sesman
+                        if (acl_serial.is_connected() && acl_serial.remote_answer){
+                            acl_serial.remote_answer = false;
 
-                        if (mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION) {
-                            run_session = this->front_up_and_running(
-                                                    acl_serial, log_file, ini,
-                                                    mod_factory, mod_wrapper, front,
-                                                    sesman, rail_client_execute);
+                            auto & module_cstr = ini.get<cfg::context::module>();
+                            auto next_state = get_module_id(module_cstr);
+
+                            if (mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION
+                            || next_state == MODULE_TRANSITORY) {
+                                run_session = this->next_backend_module(
+                                                acl_serial, log_file, ini,
+                                                mod_factory, mod_wrapper, front,
+                                                sesman, rail_client_execute);
+                            }
 
                         }
 
