@@ -114,28 +114,28 @@ public:
         this->acl_status = acl_state_connection_failed;
     }
 
-    bool is_connexion_failed()
+    bool is_connexion_failed() const
     {
         return this->acl_status == acl_state_connection_failed;
     }
 
-    bool is_before_connexion()
+    bool is_before_connexion() const
     {
         return this->acl_status == acl_state_not_yet_connected;
     }
 
-    bool is_after_connexion()
+    bool is_after_connexion() const
     {
         return this->acl_status == acl_state_disconnected_by_authentifier
         || this->acl_status == acl_state_disconnected_by_redemption;
     }
 
-    bool is_connected()
+    bool is_connected() const
     {
         return acl_status == acl_state_connected;
     }
 
-    std::string show() {
+    std::string show() const {
         switch (this->acl_status) {
         case acl_state_not_yet_connected:
             return "Acl not yet connected";

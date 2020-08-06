@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     parent.tooltip->set_text("Test tooltip\n"
                              "Text modification\n"
-                             "text has been changed !");
+                             "text has been changed !", parent.cx());
     parent.rdp_input_invalidate(parent.get_rect());
 
     // drawable.save_to_png("tooltipscreen4.png");

@@ -28,7 +28,7 @@
 #include "cxx/cxx.hpp"
 
 #include <cassert>
-#include <string>
+#include <memory>
 
 class Font;
 
@@ -397,24 +397,27 @@ struct TextMetrics
     TextMetrics(const Font & font, const char * unicode_text);
 };
 
-
 struct MultiLineTextMetrics
 {
-    int width = 0;
-    int height = 0;
+    struct Line
+    {
+        char const* str;
+        int width;
+    };
 
-    MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned int line_spacing,
-        int max_width, std::string& out_multiline_string_ref);
-};
+    array_view<Line> lines() const noexcept
+    {
+        return {this->lines_.get(), this->size_};
+    }
 
+    MultiLineTextMetrics() = default;
+    MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned max_width);
 
-struct MultiLineTextMetricsEx
-{
-    int width = 0;
-    int height = 0;
+    uint16_t max_width() const noexcept;
 
-    MultiLineTextMetricsEx(const Font& font, const char* unicode_text, unsigned int line_spacing,
-        int max_width, std::string& out_multiline_string_ref);
+private:
+    std::unique_ptr<Line[]> lines_;
+    std::size_t size_ = 0;
 };
 
 

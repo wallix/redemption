@@ -3543,6 +3543,11 @@ public:
                     throw;
                 }
 
+                if (e.id == ERR_MCS_APPID_IS_MCS_DPUM)
+                {
+                    throw;
+                }
+
                 if (this->mcs_disconnect_provider_ultimatum_pdu_received) {
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
@@ -3582,6 +3587,7 @@ public:
                         statedescr);
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
+                
                 this->set_mod_signal(BACK_EVENT_NEXT);
 //                throw Error(ERR_BACK_EVENT_NEXT);
             }

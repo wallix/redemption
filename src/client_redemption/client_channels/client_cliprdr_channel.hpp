@@ -151,10 +151,10 @@ public:
 
     void empty_buffer();
 
-    void emptyLocalBuffer();
+    void emptyLocalBuffer() const;
     void send_FormatListPDU();
 
-    void send_UnlockPDU(uint32_t streamID);
+    void send_UnlockPDU(uint32_t streamID) const;
 
     void process_monitor_ready();
 
@@ -162,8 +162,8 @@ public:
 
     void process_format_list(InStream & chunk, uint32_t msgFlags);
 
-    void process_format_data_request(InStream & chunk);
+    void process_format_data_request(InStream & chunk) const;
 
-    void process_filecontents_request(InStream & chunk);
+    void process_filecontents_request(InStream & chunk) const;
 };
 

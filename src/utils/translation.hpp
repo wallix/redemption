@@ -106,7 +106,7 @@ namespace trkeys
 
         "Le champ \"Cible\" peut contenir une chaîne de caractères au format:\n"
         "\"Account@Domain@Device:Service:Auth\".\n"
-        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnels.\n"
+        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnelles.\n"
         "Ce champ est optionnel et sensible à la casse.\n"
         "\n"
         "Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.\n"

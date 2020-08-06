@@ -124,7 +124,7 @@ namespace Mwrm3
 
                 safe_int<uint8_t> x;
 
-                void write(OutStream& stream) noexcept
+                void write(OutStream& stream) const noexcept
                 {
                     stream.out_uint8(x);
                 }
@@ -136,7 +136,7 @@ namespace Mwrm3
 
                 safe_int<uint16_t> x;
 
-                void write(OutStream& stream) noexcept
+                void write(OutStream& stream) const noexcept
                 {
                     stream.out_uint16_le(x);
                 }
@@ -148,7 +148,7 @@ namespace Mwrm3
 
                 checked_int<uint8_t> x;
 
-                void write(OutStream& stream) noexcept
+                void write(OutStream& stream) const noexcept
                 {
                     stream.out_uint8(x);
                 }
@@ -160,7 +160,7 @@ namespace Mwrm3
 
                 checked_int<uint16_t> x;
 
-                void write(OutStream& stream) noexcept
+                void write(OutStream& stream) const noexcept
                 {
                     stream.out_uint16_le(x);
                 }
@@ -172,7 +172,7 @@ namespace Mwrm3
 
                 safe_int<uint64_t> x;
 
-                void write(OutStream& stream) noexcept
+                void write(OutStream& stream) const noexcept
                 {
                     stream.out_uint64_le(x);
                 }
@@ -184,7 +184,7 @@ namespace Mwrm3
 
                 std::chrono::seconds x;
 
-                void write(OutStream& stream) noexcept
+                void write(OutStream& stream) const noexcept
                 {
                     stream.out_uint64_le(checked_int{x.count()});
                 }

@@ -48,7 +48,8 @@ void TS_RFX_RECT::recv(InStream & stream) {
     this->height = stream.in_uint16_le();
 }
 
-void TS_RFX_RECT::send(OutStream & stream) {
+void TS_RFX_RECT::send(OutStream & stream) const
+{
     stream.out_uint16_le(this->x);
     stream.out_uint16_le(this->y);
     stream.out_uint16_le(this->width);
@@ -84,7 +85,8 @@ void TS_RFX_SYNC::recv(InStream & stream) {
     }
 }
 
-void TS_RFX_SYNC::send(OutStream & stream) {
+void TS_RFX_SYNC::send(OutStream & stream) const
+{
     stream.out_uint16_le(WBT_SYNC);
     stream.out_uint32_le(12);
     stream.out_uint32_le(WF_MAGIC);
@@ -127,7 +129,8 @@ void TS_RFX_CODEC_VERSIONS::recv(InStream & stream) {
     }
 }
 
-void TS_RFX_CODEC_VERSIONS::send(OutStream & stream) {
+void TS_RFX_CODEC_VERSIONS::send(OutStream & stream) const
+{
     stream.out_uint16_le(WBT_CODEC_VERSION);
     stream.out_uint32_le(10);
 
@@ -155,7 +158,8 @@ void TS_RFX_CODEC_CHANNELT::recv(InStream & stream) {
     this->channelId = stream.in_uint8();
 }
 
-void TS_RFX_CODEC_CHANNELT::send(OutStream & stream) {
+void TS_RFX_CODEC_CHANNELT::send(OutStream & stream) const
+{
     stream.out_uint8(this->codecId);
     stream.out_uint8(this->channelId);
 }
@@ -213,7 +217,8 @@ void TS_RFX_CONTEXT::recv(InStream & stream) {
     this->properties = stream.in_uint16_le();
 }
 
-void TS_RFX_CONTEXT::send(OutStream & stream) {
+void TS_RFX_CONTEXT::send(OutStream & stream) const
+{
     stream.out_uint16_le(WBT_CONTEXT);
     stream.out_uint32_le(13);
 
@@ -248,7 +253,8 @@ void TS_RFX_CHANNELT::recv(InStream & stream) {
     this->height = stream.in_uint16_le();
 }
 
-void TS_RFX_CHANNELT::send(OutStream & stream) {
+void TS_RFX_CHANNELT::send(OutStream & stream) const
+{
     stream.out_uint8(this->channelId);
     stream.out_uint16_le(this->width);
     stream.out_uint16_le(this->height);
@@ -290,7 +296,8 @@ void TS_RFX_CHANNELS::setChannel(uint8_t channelId, uint16_t width, uint16_t hei
     this->channels->height = height;
 }
 
-void TS_RFX_CHANNELS::send(OutStream & stream) {
+void TS_RFX_CHANNELS::send(OutStream & stream) const
+{
     stream.out_uint16_le(WBT_CHANNELS);
     stream.out_uint16_le(6 + this->numChannels * 6);
 
@@ -324,7 +331,8 @@ void TS_RFX_FRAME_BEGIN::recv(InStream & stream) {
     this->numRegions = stream.in_uint16_le();
 }
 
-void TS_RFX_FRAME_BEGIN::send(OutStream & stream) {
+void TS_RFX_FRAME_BEGIN::send(OutStream & stream) const
+{
     TS_RFX_CODEC_CHANNELT::send(stream);
 
     stream.out_uint32_le(this->frameIdx);
@@ -399,7 +407,8 @@ void TS_RFX_REGION::recv(InStream & stream) {
     }
 }
 
-void TS_RFX_REGION::send(OutStream & /*stream*/) {
+void TS_RFX_REGION::send(OutStream & /*stream*/) const
+{
     /* TODO: implement me */
 }
 
@@ -454,13 +463,14 @@ void TS_RFX_CODEC_QUANT::recv(InStream & stream) {
     this->hl2 = val & 0xF;  val >>= 4;
     this->hh2 = val & 0xF;  val >>= 4;
     this->lh1 = val & 0xF;
-    
+
     val = stream.in_uint8();
     this->hl1 = val & 0xF;  val >>= 4;
     this->hh1 = val & 0xF;
 }
 
-void TS_RFX_CODEC_QUANT::send(OutStream & /*stream*/) {
+void TS_RFX_CODEC_QUANT::send(OutStream & /*stream*/) const
+{
     /* TODO: implement me */
 }
 
@@ -531,7 +541,7 @@ void TS_RFX_TILE::recv(InStream & stream) {
 void TS_RFX_TILE::draw(const RDPSetSurfaceCommand &/*cmd*/, const TS_RFX_TILESET &tileset, RDPSurfaceContent & content)
 {
     Primitives::prim_size_t roi_64x64 = { 64, 64 };
-    
+
     int16_t y_r_buffer[4096+16+8];
     int16_t cb_g_buffer[4096+16+8];
     int16_t cr_b_buffer[4096+16+8];

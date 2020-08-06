@@ -511,7 +511,7 @@ struct Emit_CS_BitmapCodec
         }
     }
 
-    size_t computeSize() {
+    size_t computeSize() const {
         return 19u + this->codecPropertiesLength;
     }
 

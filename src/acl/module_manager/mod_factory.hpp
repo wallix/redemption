@@ -145,6 +145,8 @@ public:
             return this->create_dialog_challenge_mod();
         case MODULE_INTERNAL_WAIT_INFO:
             return this->create_wait_info_mod();
+        case MODULE_TRANSITORY:
+            return this->create_transition_mod();
         case MODULE_INTERNAL_TRANSITION:
             return this->create_transition_mod();
         case MODULE_INTERNAL_LOGIN:

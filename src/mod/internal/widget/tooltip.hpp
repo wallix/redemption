@@ -36,6 +36,7 @@ public:
     Dimension get_optimal_dim() override;
 
     void set_text(const char * text);
+    void set_text(const char * text, unsigned max_width);
 
     void rdp_input_invalidate(Rect clip) override;
 

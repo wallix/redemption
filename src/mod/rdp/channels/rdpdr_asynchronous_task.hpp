@@ -123,7 +123,7 @@ public:
                 catch(...){
                     event.teardown = true;
                     throw;
-                };
+                }
                 event.teardown = true;
             });
         event.actions.set_timeout_function(
@@ -243,7 +243,7 @@ public:
                 catch(...){
                     event.teardown = true;
                     throw;
-                };
+                }
                 event.teardown = true;
             });
         return pevent;
@@ -328,7 +328,7 @@ public:
                 catch(...){
                     event.teardown = true;
                     throw;
-                };
+                }
                 event.teardown = true;
             });
         return pevent;

@@ -688,7 +688,8 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
     }
 }
 
-void ClientCLIPRDRChannel::send_UnlockPDU(uint32_t streamID) {
+void ClientCLIPRDRChannel::send_UnlockPDU(uint32_t streamID) const
+{
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
     RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(streamID);
     StaticOutStream<32> out_stream_unlock;
@@ -765,7 +766,8 @@ void ClientCLIPRDRChannel::empty_buffer() {
     this->_waiting_for_data = false;
 }
 
-void ClientCLIPRDRChannel::emptyLocalBuffer() {
+void ClientCLIPRDRChannel::emptyLocalBuffer() const
+{
     this->clientIOClipboardAPI->emptyBuffer();
 }
 
@@ -923,7 +925,8 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     this->paste_data_request_time = tvtime();
 }
 
-void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
+void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) const
+{
     int first_part_data_size(0);
     uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
     StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
@@ -1070,7 +1073,8 @@ void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
     }
 }
 
-void ClientCLIPRDRChannel::process_filecontents_request(InStream & chunk) {
+void ClientCLIPRDRChannel::process_filecontents_request(InStream & chunk) const
+{
     uint32_t streamID(chunk.in_uint32_le());
     int lindex(chunk.in_uint32_le());
 
