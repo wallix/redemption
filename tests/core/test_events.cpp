@@ -302,7 +302,7 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction2)
 
     struct Event {
         struct Data {
-            int val;
+            int val = 0;
             void set_data(int val) {this->val = val; }
         } data;
 
@@ -314,7 +314,7 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction2)
     };
 
     struct Object {
-        int val;
+        int val = 0;
     };
 
     struct Base {
@@ -347,31 +347,3 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction2)
     event.actions.action2(event);
 }
 
-RED_AUTO_TEST_CASE(TestDestructionOfThis)
-{
-    class test {
-    public:
-        void Do() {
-            this->test_fun();
-        }
-
-        void Init() {
-            this->number = 1008;
-            this->test_fun = [this] {
-                this->test_fun = nullptr;
-                printf("number %d\n", this->number); //gcc crash here, this == nullptr
-            };
-
-        }
-
-    public:
-        std::function<void()> test_fun;
-        int number = 0;
-    };
-
-
-    test t;
-    t.Init();
-    t.Do();
-
-}

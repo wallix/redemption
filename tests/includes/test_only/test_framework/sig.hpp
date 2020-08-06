@@ -40,4 +40,4 @@ namespace ut
     };
 
     Sig sig(bytes_view data);
-}
+} // namespace ut

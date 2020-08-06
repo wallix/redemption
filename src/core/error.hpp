@@ -238,7 +238,8 @@ struct Error
 
 public:
     Error() = delete;
-    explicit Error(error_type id, int errnum = 0) noexcept; /*NOLINT*/
+    explicit Error(error_type id/*, int errnum = 0*/) noexcept; /*NOLINT*/
+    explicit Error(error_type id, int errnum) noexcept; /*NOLINT*/
 
     [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept; /*NOLINT*/
 };

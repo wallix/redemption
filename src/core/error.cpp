@@ -86,6 +86,7 @@ namespace
 } // namespace
 # endif
 #endif
+Error::Error(error_type id) noexcept : Error(id, 0) {}
 
 Error::Error(error_type id, int errnum) noexcept
 : id(id)
