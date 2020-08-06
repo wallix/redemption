@@ -29,10 +29,26 @@
 #define RED_CHECK_IMG_SIG(obj, expected_sig) \
     RED_CHECK_IMG_SIG_A(obj, expected_sig ""_av)
 
+#define RED_CHECK_IMG(img, filedata_path) \
+    RED_TEST(::ut::CheckImg(img, filedata_path) == nullptr)
+
 class ConstImageDataView;
 
 namespace ut
 {
+    struct CheckImg
+    {
+        std::string err;
+
+        CheckImg(ConstImageDataView const& img, char const* filedata_path);
+
+        operator char const* () const noexcept;
+    };
+
+    std::ostream& boost_test_print_type(std::ostream& ostr, CheckImg const& x);
+
+    bool check_img(ConstImageDataView const& img, char const* filedata_path);
+
     struct ImgSig
     {
         unsigned char sig[20];
