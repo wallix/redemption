@@ -198,8 +198,8 @@ struct DrawablePointer
     BitsPerPixel bpp {24};
 
     DrawablePointer()
-    : image_data_view_data(create_img(nullptr))
-    , image_data_view_mask24(create_img(nullptr))
+    : image_data_view_data(create_img(nullptr, BytesPerPixel(3)))
+    , image_data_view_mask24(create_img(nullptr, BytesPerPixel(3)))
     , image_data_view_mask32(create_img(nullptr, BytesPerPixel(4)))
     {}
 
@@ -215,33 +215,52 @@ struct DrawablePointer
         this->width = dim.width;
         this->height = dim.height;
         this->bpp = cursor.get_bpp();
-
-        const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
-        const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
-        const uint8_t *dataSrc = cursor.get_24bits_xor_mask().data();
         this->line_bytes = ::even_pad_length(this->width * 3);
 
-        ::memcpy(this->data, dataSrc, this->line_bytes * this->height);
-        this->image_data_view_data = this->create_img(this->data);
+        if (this->bpp == BitsPerPixel{32}){
+            const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
+            const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
+            const uint8_t *dataSrc = cursor.get_24bits_xor_mask().data();
 
-        uint32_t srcSteps = 3;
-        uint32_t srcStride = this->width * 3;
+            ::memcpy(this->data, dataSrc, this->line_bytes * this->height);
+            this->image_data_view_data = this->create_img(this->data);
 
-        if (cursor.haveRdpPointer && cursor.original_bpp == BitsPerPixel(32)) {
-            srcSteps = 4;
-            srcStride = this->width * 4;
-            dataSrc = cursor.get_original_data();
-        }
+            uint32_t srcSteps = 3;
+            uint32_t srcStride = this->width * 3;
 
-        for (unsigned int y = 0; y < this->width; ++y) {
-            for (unsigned int x = 0; x < this->height; ++x) {
-                uint32_t mask = ::get_pixel_1bpp(pointer_mask, mask_line_bytes, x, y) ? 0xFFFFFFFF : 0x00000000;
-                uint32_t value = dataSrc[y * srcStride + x * srcSteps];
-                ::put_pixel_32bpp(this->data32, this->line_bytes, x, y, value & mask);
+            if (cursor.haveRdpPointer && cursor.original_bpp == BitsPerPixel(32)) {
+                srcSteps = 4;
+                srcStride = this->width * 4;
+                dataSrc = cursor.get_original_data();
             }
-        }
 
-        this->image_data_view_mask32 = this->create_img(this->data32, BitsPerPixel(32));
+            for (unsigned int y = 0; y < this->width; ++y) {
+                for (unsigned int x = 0; x < this->height; ++x) {
+                    uint32_t mask = ::get_pixel_1bpp(pointer_mask, mask_line_bytes, x, y) ? 0xFFFFFFFF : 0x00000000;
+                    uint32_t value = dataSrc[y * srcStride + x * srcSteps];
+                    ::put_pixel_32bpp(this->data32, this->line_bytes, x, y, value & mask);
+                }
+            }
+
+            this->image_data_view_mask32 = this->create_img(this->data32, BitsPerPixel(32));
+        }
+        else /*if (this->bpp == BitsPerPixel{24})*/ {
+            const uint8_t* pointer_data = cursor.get_24bits_xor_mask().data();
+            ::memcpy(this->data, pointer_data, this->line_bytes * this->height);
+            this->image_data_view_data = this->create_img(this->data);
+
+            const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
+            const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
+            for (unsigned int y = 0; y < this->width; ++y) {
+                for (unsigned int x = 0; x < this->height; ++x) {
+                    ::put_pixel_24bpp(
+                        this->mask24, this->line_bytes, x, y,
+                        (::get_pixel_1bpp(pointer_mask, mask_line_bytes, x, y) ? 0xFFFFFF : 0)
+                    );
+                }
+            }
+            this->image_data_view_mask24 = this->create_img(this->mask24);
+        }
     }
 
 private:
