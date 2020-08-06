@@ -64,7 +64,7 @@ public:
         }
     }
 
-    bool is_open()
+    bool is_open() const
     {
         return this->logfile_is_open;
     }

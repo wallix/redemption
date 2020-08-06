@@ -54,7 +54,8 @@ public:
     int index_in = 0;
     int index_out = 0;
 
-    size_t get_total_stream_produced() {
+    size_t get_total_stream_produced() const
+    {
         return this->index_in;
     }
 
@@ -79,7 +80,7 @@ public:
             this->index_in++;
         }
     }
-    
+
     void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
     void send_auth_channel_data(const char * /*data*/) override {}
     void send_checkout_channel_data(const char * /*data*/) override {}
@@ -302,7 +303,8 @@ public:
 
     void close() override {}
 
-    size_t get_total_stream_produced() {
+    size_t get_total_stream_produced() const
+    {
         return this->fake_mod.index_in;
     }
 
@@ -320,7 +322,7 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(ScreenInfo /*screen_server*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
-    
+
     void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
     void possible_active_window_change() override {}
 
