@@ -22,8 +22,10 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
-#define RED_CHECK_IMG(img, filedata_path) \
-    RED_TEST(::ut::CheckImg(img, filedata_path) == nullptr)
+#define RED_CHECK_IMG(img, filedata_path) [&]{ \
+    ::ut::CheckImg check_img;                  \
+    RED_TEST(check_img(img, filedata_path));   \
+}()
 
 class ConstImageDataView;
 
@@ -33,12 +35,11 @@ namespace ut
     {
         std::string err;
 
-        CheckImg(ConstImageDataView const& img, char const* filedata_path);
+        #if !REDEMPTION_UNIT_TEST_FAST_CHECK
+        CheckImg() = default;
+        ~CheckImg();
+        #endif
 
-        operator char const* () const noexcept;
+        bool operator()(ConstImageDataView const& img, char const* filedata_path);
     };
-
-#if !REDEMPTION_UNIT_TEST_FAST_CHECK
-    std::ostream& boost_test_print_type(std::ostream& ostr, CheckImg const& x);
-#endif
 }

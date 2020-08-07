@@ -26,7 +26,7 @@ Author(s): Jonathan Poelen
 #include "cxx/cxx.hpp"
 
 #include <boost/test/results_collector.hpp>
-// #include <boost/test/results_reporter.hpp>
+// include <boost/test/results_reporter.hpp>
 #include <boost/test/framework.hpp>
 
 #include <algorithm>

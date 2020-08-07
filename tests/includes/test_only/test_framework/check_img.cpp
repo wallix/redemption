@@ -33,6 +33,7 @@
 #endif
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
+# include <boost/test/results_reporter.hpp>
 # include <charconv>
 #endif
 
@@ -150,7 +151,7 @@ namespace
 
 namespace ut
 {
-    CheckImg::CheckImg(ConstImageDataView const& img, char const* filedata_path)
+    bool CheckImg::operator()(ConstImageDataView const& img, char const* filedata_path)
     {
         std::string_view prefix_error;
 
@@ -198,31 +199,28 @@ namespace ut
                 msgdiff3 = ".diff.png"_av;
             }
             this->err = str_concat(
-                prefix_error, " != \"\"]"
+                "  ", prefix_error,
                 "\n  Image path: ", path,
                 "\n  Image diff: ", msgdiff2, msgdiff3,
                 "\n  Image ref: ", filedata_path,
-                "\n  [Error: ", prefix_error
+                "\n"
             );
 
-            prefix_error = "";
+            return false;
         }
 #endif
 
         if (prefix_error.size()) {
             this->err = prefix_error;
         }
-    }
 
-    CheckImg::operator char const* () const noexcept
-    {
-        return this->err.size() ? this->err.c_str() : nullptr;
+        return this->err.empty();
     }
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-    std::ostream& boost_test_print_type(std::ostream& ostr, CheckImg const& x)
+    CheckImg::~CheckImg()
     {
-        return ostr << x.err;
+        boost::unit_test::results_reporter::get_stream() << this->err;
     }
 #endif
 }
