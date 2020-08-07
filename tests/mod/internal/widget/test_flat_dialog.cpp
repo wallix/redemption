@@ -20,7 +20,7 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/img_sig.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
@@ -29,6 +29,9 @@
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/flat_button.hpp"
 #include "keyboard/keymap2.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/dialog/"
 
 
 RED_AUTO_TEST_CASE(TraceFlatDialog)
@@ -54,8 +57,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x5c\x9e\xa5\x68\x89\x6f\x70\x1d\x6f\x37\x07\x25\xaa\x38\x85\xbb\x1b\xa2\xa5\xa9");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog2)
@@ -85,8 +87,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog2)
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x2b\x31\xcf\x29\xa8\x8e\x64\x50\x94\xd4\xc7\x5c\x69\x3e\x22\x22\x0b\xbb\xe3\x22");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog3)
@@ -116,8 +117,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog3)
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x9a\x7b\xcd\x7a\x44\xb0\xc8\x52\x21\xee\xc1\x40\xc4\x7d\xbe\x47\x47\xda\x4c\x11");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog4)
@@ -147,8 +147,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog4)
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x3b\x73\xf0\x21\x40\x52\x19\x61\x31\x97\xcc\x82\x3d\x7a\xe0\x24\xdf\x5c\xb5\xdd");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog5)
@@ -178,8 +177,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog5)
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\xb4\x13\x9b\xc7\x8a\xc8\x19\xab\x95\xa4\xe8\x80\xa0\x30\xab\x33\x32\x94\x4c\x90");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialog6)
@@ -209,8 +207,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialog6)
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x5c\x88\xa1\x4f\x80\x39\x90\xb2\x75\x0f\x16\x6c\xb2\x02\x28\xcc\xea\x42\x69\x5e");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialogClip)
@@ -240,8 +237,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip)
                                       flat_dialog.cx(),
                                       flat_dialog.cy()));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\xf9\x32\x9f\x92\x53\x55\x0f\x68\x8d\xc9\xff\xdb\xf8\x42\x8d\x73\x55\x7c\xbb\xb1");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_7.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
@@ -271,8 +267,7 @@ RED_AUTO_TEST_CASE(TraceFlatDialogClip2)
                                       30,
                                       10));
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x6a\xbe\x33\x53\x74\x19\x62\x01\x94\x1d\xf8\x8d\xf1\xba\xea\x5b\x4f\xef\x0f\xff");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_8.png");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetOkCancel)
@@ -317,8 +312,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     RED_CHECK(notifier.event == 0);
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
-    RED_CHECK_IMG_SIG(drawable,
-        "\x6b\x5b\x10\x31\xa7\xc4\xda\x68\x66\x0b\x0e\x5f\x61\xd5\xb4\xc6\x6b\x9f\x5d\x87");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_9.png");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -331,8 +325,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x4d\xcb\x66\x8b\x05\x21\xbc\x35\x39\xe2\x59\x0c\xbc\x04\x98\xdc\xff\x9e\x4b\xc5");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_10.png");
 
 
     x = flat_dialog.cancel->x() + flat_dialog.cancel->cx() / 2 ;
@@ -346,8 +339,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x7c\x76\x0f\xfb\xab\x1a\xdf\x97\xdc\xc0\xbd\xf7\x34\xcc\xbf\xca\x97\xa3\x02\x58");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_11.png");
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
@@ -417,8 +409,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     RED_CHECK(notifier.event == 0);
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
-    RED_CHECK_IMG_SIG(drawable,
-        "\xed\xb3\xbc\x4e\xd6\x1c\xe6\x0d\x43\x61\x8b\xe2\x0b\xae\x66\x4c\xd2\x1d\x4b\x06");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_12.png");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -470,6 +461,5 @@ RED_AUTO_TEST_CASE(TraceFlatDialog_transparent_png_with_theme_color)
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\xf3\x3f\x00\xe1\xae\xa3\x8f\xfd\x4c\xf4\xa2\x2f\x29\x12\xe1\x55\x4c\xdc\x07\x93");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_13.png");
 }

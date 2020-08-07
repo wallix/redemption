@@ -17,19 +17,16 @@
  *   Copyright (C) Wallix 2010-2020
  */
 
-#include "test_only/test_framework/img_sig.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/test_framework/impl/test_paths.hpp"
 
-#include "system/ssl_sha1.hpp"
 #include "utils/image_data_view.hpp"
-#include "utils/fileutils.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/png.hpp"
 
 #include <cstring>
-#include <charconv>
-#include <memory>
+#include <ostream>
 
 #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
 # define REDEMPTION_UNIT_TEST_FAST_CHECK 0
@@ -37,33 +34,11 @@
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 # include <charconv>
-# include <iostream>
 #endif
 
 
 namespace
 {
-    template<size_t>
-    struct type_n {};
-
-    void update_img_sig(ut::ImgSig& sig, ConstImageDataView const& img)
-    {
-        // check ImgSig::sig size
-        static_assert(sizeof(type_n<sizeof(ut::ImgSig::sig)>{} = type_n<SslSha1::DIGEST_LENGTH>{}));
-
-        SslSha1 sha1;
-        uint8_t const* p = img.data();
-        size_t height = img.height();
-        size_t rowsize = img.line_size();
-        for (size_t y = 0; y < height; y++){
-            sha1.update({p + y * rowsize, rowsize});
-        }
-        uint8_t buf[SslSha1::DIGEST_LENGTH];
-        sha1.final(buf);
-
-        std::memcpy(sig.sig, buf, SslSha1::DIGEST_LENGTH);
-    }
-
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
     bool do_not_save_images()
     {
@@ -227,7 +202,7 @@ namespace ut
                 "\n  Image path: ", path,
                 "\n  Image diff: ", msgdiff2, msgdiff3,
                 "\n  Image ref: ", filedata_path,
-                "\n  Error:"
+                "\n  [Error: ", prefix_error
             );
 
             prefix_error = "";
@@ -244,59 +219,10 @@ namespace ut
         return this->err.size() ? this->err.c_str() : nullptr;
     }
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
     std::ostream& boost_test_print_type(std::ostream& ostr, CheckImg const& x)
     {
         return ostr << x.err;
     }
-
-    ImgSig img_sig(ConstImageDataView const& img)
-    {
-        // check ImgSig::sig size
-        static_assert(sizeof(type_n<sizeof(ImgSig::sig)>{} = type_n<SslSha1::DIGEST_LENGTH>{}));
-
-        ImgSig sig;
-        update_img_sig(sig, img);
-        return sig;
-    }
-
-    ImgVSig::ImgVSig(ConstImageDataView const& img, int line)
-    : line(line)
-#if !REDEMPTION_UNIT_TEST_FAST_CHECK
-    , count_error(RED_ERROR_COUNT())
 #endif
-    , img(img)
-    {
-        update_img_sig(this->sig, img);
-    }
-
-    ImgVSig::~ImgVSig()
-    {
-#if !REDEMPTION_UNIT_TEST_FAST_CHECK
-        if (not do_not_save_images() && count_error != RED_ERROR_COUNT()) {
-            std::string const& current_test_name
-                = boost::unit_test::framework::current_test_case().p_name.get();
-            if (previous_test_name != current_test_name) {
-                img_counter = 0;
-                previous_test_name = current_test_name;
-            }
-            ++img_counter;
-
-            using std::begin;
-            using std::end;
-
-            char buf1[32];
-            auto r1 = std::to_chars(begin(buf1), end(buf1), this->line);
-
-            char buf2[32];
-            auto r2 = std::to_chars(begin(buf2), end(buf2), img_counter);
-
-            std::string path = ut_impl::compute_test_path(
-                "line-", array_view{buf1, r1.ptr},
-                "_err-", array_view{buf2, r2.ptr},
-                ".png");
-            dump_png24(path.c_str(), img, false);
-            std::cerr << "Image path: " << path << '"' << std::endl;
-        }
-#endif
-    }
 }

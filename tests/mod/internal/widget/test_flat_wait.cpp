@@ -20,14 +20,16 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/flat_wait.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wait/"
 
 RED_AUTO_TEST_CASE(TraceFlatWait)
 {
@@ -83,9 +85,7 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    // drawable.save_to_png("flat_wait.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x37\x22\xba\x23\x6c\x15\x2f\x46\x0e\x0d\xec\x1e\xf3\xe5\x0b\xa7\x29\xb1\xa7\x40");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wait_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
@@ -144,7 +144,5 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
-    // drawable.save_to_png("flat_wait_1.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x83\x4a\x45\xdc\xb6\x7a\x12\x79\x14\x95\xc1\x11\x57\xc7\x05\xa2\x23\x54\xde\x92");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wait_2.png");
 }

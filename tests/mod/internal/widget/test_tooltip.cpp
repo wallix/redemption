@@ -20,15 +20,17 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/tooltip.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/label.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/tooltip/"
 
 RED_AUTO_TEST_CASE(TraceWidgetTooltip)
 {
@@ -53,9 +55,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     // ask to widget to redraw
     wtooltip.rdp_input_invalidate(Rect(0, 0, 100, 100));
 
-    // drawable.save_to_png("tooltip.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xb8\x16\x68\x4c\x37\x49\x4b\xca\xea\x46\xc9\x95\x75\x82\x2b\xd4\xa9\x4a\x92\x7b");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_1.png");
 }
 
 inline
@@ -97,18 +97,14 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
-    // drawable.save_to_png("tooltipscreen1.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xb9\x45\xcd\x0a\xb0\xe2\x0a\x5f\x0b\xc4\xed\x1c\x99\x57\x5c\xbb\xbc\x4b\x2b\xaf");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_2.png");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.x() + label.cx() / 2, label.y() + label.cy() / 2,
                     nullptr, &parent, &label, "Test tooltip description");
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png("tooltipscreen2.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x73\x16\xd3\xa6\xa9\x00\xaa\xac\x08\xce\xd1\x9f\xf7\xf1\x48\x91\xcc\x42\xcd\x66");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_3.png");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
@@ -119,18 +115,14 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png("tooltipscreen3.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x10\x22\xd9\xed\x87\x2a\x02\xbf\x64\x3d\xcf\x89\x3a\x65\xab\x53\xf9\x2c\x25\x43");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_4.png");
 
     parent.tooltip->set_text("Test tooltip\n"
                              "Text modification\n"
                              "text has been changed !", parent.cx());
     parent.rdp_input_invalidate(parent.get_rect());
 
-    // drawable.save_to_png("tooltipscreen4.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x40\x98\x69\xe9\xd8\xb9\x15\x60\x8f\xc1\xee\x0e\xd4\x2f\xb3\x63\xd9\xf8\xdf\x09");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "tooltip_5.png");
 
     parent.clear();
 }

@@ -19,7 +19,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/img_sig.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 

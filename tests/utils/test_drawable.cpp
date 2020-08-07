@@ -22,8 +22,8 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
-#include "test_only/test_framework/img_sig.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/drawable.hpp"
 #include "utils/drawable_pointer.hpp"
@@ -31,6 +31,7 @@
 #include "utils/timestamp_tracer.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/utils/drawable/"
 
 RED_AUTO_TEST_CASE(TestLineTo)
 {
@@ -58,8 +59,7 @@ RED_AUTO_TEST_CASE(TestLineTo)
 
     gd.draw_line(10, 0, 10, 1024, 479, 0xCC, gd.u32bgr_to_color(PINK), screen_rect.shrink(5));
 
-    RED_CHECK_IMG_SIG(gd,
-        "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "line_to.png");
 }
 
 RED_AUTO_TEST_CASE(TestEllipse)
@@ -184,8 +184,7 @@ RED_AUTO_TEST_CASE(TestEllipse)
 //
 //     LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-    RED_CHECK_IMG_SIG(gd,
-        "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "ellipse.png");
 }
 
 RED_AUTO_TEST_CASE(TestPatBlt)
@@ -247,8 +246,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
     // Should be purple
     gd.patblt(screen_rect.shrink(125), 0xFA, gd.u32bgr_to_color(BLUE));
 
-    RED_CHECK_IMG_SIG(gd,
-        "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "pat_blt.png");
 }
 
 RED_AUTO_TEST_CASE(TestDestBlt)
@@ -265,8 +263,7 @@ RED_AUTO_TEST_CASE(TestDestBlt)
     // RED inverted becomes CYAN
     gd.destblt(screen_rect.shrink(15), 0x55);
 
-    RED_CHECK_IMG_SIG(gd,
-        "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "dest_blt.png");
 }
 
 RED_AUTO_TEST_CASE(TestAddMouse)
@@ -284,25 +281,20 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     struct Data
     {
         int cx, cy;
-        chars_view sig;
+        char const* imgref;
     };
 
     RED_TEST_CONTEXT_DATA(Data const& data, "cx: " << data.cx << "  cy: " << data.cy, {
-        Data{100, 100,
-            "\x36\x62\x5c\x6b\x82\xba\xf9\x39\x32\x76\x5a\x73\x34\x82\xd2\x16\xaf\xc6\x69\xf3"_av},
-        Data{638, 470,
-            "\x41\x1d\x25\x87\x04\x28\xdb\x8f\x46\x35\x50\x2d\x19\x10\x3f\xd0\x5d\x7e\x2a\x62"_av},
-        Data{-8, -8,
-            "\x63\xdc\x47\x28\xf6\x76\x26\x5b\xfe\x9f\xa2\x57\xf5\x3a\xb3\x86\xda\xcb\x93\x2b"_av},
-
+        Data{100, 100, IMG_TEST_PATH "add_mouse_100x100.png"},
+        Data{638, 470, IMG_TEST_PATH "add_mouse_638x470.png"},
+        Data{-8, -8, IMG_TEST_PATH "add_mouse_-8x-8.png"},
     })
     {
         gd.trace_mouse(current_pointer, data.cx, data.cy, save_mouse);
-        RED_CHECK_IMG_SIG_A(gd, data.sig);
+        RED_CHECK_IMG(gd, data.imgref);
 
         gd.clear_mouse(current_pointer, data.cx, data.cy, save_mouse);
-        RED_CHECK_IMG_SIG(gd,
-            "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+        RED_CHECK_IMG(gd, IMG_TEST_PATH "add_mouse_clear.png");
     }
 }
 
@@ -314,7 +306,7 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
     TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(gd));
-    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
+    gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED));
 
     time_t rawtime;
     time(&rawtime);
@@ -331,8 +323,7 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     now.tm_isdst =  0;
 
     timestamp_tracer.trace(now);
-    RED_CHECK_IMG_SIG(gd,
-        "\x0d\x64\x40\x8c\xcb\x82\xd6\x29\x9b\x55\x83\x87\x3d\xd9\x69\xb6\xd7\x5b\x0d\x3d");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "timestamp_mouse_1.png");
 
     now.tm_sec  =  00;
     now.tm_min  =  12;
@@ -346,12 +337,10 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
 
     timestamp_tracer.clear();
     timestamp_tracer.trace(now);
-    RED_CHECK_IMG_SIG(gd,
-        "\x9c\x75\xcc\x7e\x0e\xa2\x3b\x61\xef\x53\x9a\x64\x66\x06\x57\x05\xa1\xe6\x4f\xf0");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "timestamp_mouse_2.png");
 
     timestamp_tracer.clear();
-    RED_CHECK_IMG_SIG(gd,
-        "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "add_mouse_clear.png");
 }
 
 RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
@@ -361,30 +350,20 @@ RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
         uint8_t rop;
         int cx, cy;
         char const* name;
-        chars_view sig;
+        char const* imgref;
     };
     Drawable gd(640, 480);
     RED_TEST_CONTEXT_DATA(Data const& data, "name: " << data.name, {
-        Data{0x00,   0,  20, "down00",
-            "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46"_av},
-        Data{0x00,  20,   0, "right00",
-            "\x76\xbb\x56\xf5\x70\xec\x7e\x19\xc7\x68\xe6\x32\xb3\x43\xf1\xc8\xf1\x78\x6e\xf1"_av},
-        Data{0x00, -20,   0, "left00",
-            "\x05\xdf\xba\x3b\x9f\xa9\x5d\x1c\xa9\x12\xa0\x0b\x1d\x10\x26\x68\x41\xc7\x73\xd9"_av},
-        Data{0x00,   0, -20, "up00",
-            "\x55\x73\x7e\xd8\x0a\x36\xde\x1c\x87\xb3\xbb\x78\x6c\xaf\xb2\xcf\x53\xab\xa2\xe6"_av},
-        Data{0x00, -20, -20, "left_up00",
-            "\xb6\x9a\xe7\xd0\x97\xe1\x3b\xce\x8d\xef\x73\x43\xd2\x50\xba\xd0\x06\xe1\x6c\xca"_av},
-        Data{0x11,   0,  20, "down11",
-            "\xd4\x3a\x6e\xea\x67\xe4\x0c\xe2\xc9\xde\xd0\x0f\x3f\xd7\x2d\x26\x93\xcf\x40\x53"_av},
-        Data{0x11,  20,   0, "right11",
-            "\x44\x93\x9e\xf8\x40\x9d\x18\x24\x27\xcf\x53\x76\xde\xd6\x05\x0f\x33\x65\x79\xfc"_av},
-        Data{0x11, -20,   0, "left11",
-            "\x8b\x54\x94\x20\x65\xf3\x91\x64\x9a\x25\xca\x18\x18\x46\x0c\x1f\x00\x22\x18\x7c"_av},
-        Data{0x11,   0, -20, "up11",
-            "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18"_av},
-        Data{0x11, -20, -20, "left_up11",
-            "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb"_av}
+        Data{0x00,   0,  20, "down00",      IMG_TEST_PATH "scr_blt_1.png"},
+        Data{0x00,  20,   0, "right00",     IMG_TEST_PATH "scr_blt_2.png"},
+        Data{0x00, -20,   0, "left00",      IMG_TEST_PATH "scr_blt_3.png"},
+        Data{0x00,   0, -20, "up00",        IMG_TEST_PATH "scr_blt_4.png"},
+        Data{0x00, -20, -20, "left_up00",   IMG_TEST_PATH "scr_blt_5.png"},
+        Data{0x11,   0,  20, "down11",      IMG_TEST_PATH "scr_blt_6.png"},
+        Data{0x11,  20,   0, "right11",     IMG_TEST_PATH "scr_blt_7.png"},
+        Data{0x11, -20,   0, "left11",      IMG_TEST_PATH "scr_blt_8.png"},
+        Data{0x11,   0, -20, "up11",        IMG_TEST_PATH "scr_blt_9.png"},
+        Data{0x11, -20, -20, "left_up11",   IMG_TEST_PATH "scr_blt_10.png"}
     })
     {
         gd.opaquerect(Rect(0, 0, gd.width(), gd.height()), gd.u32bgr_to_color(BLACK));
@@ -393,7 +372,7 @@ RED_AUTO_TEST_CASE(TestGraphicableScrBlt)
         gd.opaquerect(Rect(120, 120, 60, 60).intersect(Rect(100, 100, 100, 100)), gd.u32bgr_to_color(PINK));
         gd.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
         gd.scrblt(90, 90, Rect(90 + data.cx, 90 + data.cy, 120, 120), data.rop);
-        RED_CHECK_IMG_SIG_A(gd, data.sig);
+        RED_CHECK_IMG(gd, data.imgref);
     }
 }
 
@@ -417,8 +396,7 @@ RED_AUTO_TEST_CASE(TestMemblt)
     gd.black_color(Rect(45, 45, 20, 20));
     gd.white_color(Rect(65, 65, 20, 20));
 
-    RED_CHECK_IMG_SIG(gd,
-        "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "mem_blt_1.png");
 }
 
 RED_AUTO_TEST_CASE(TestMemblt2)
@@ -543,8 +521,7 @@ RED_AUTO_TEST_CASE(TestMemblt2)
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
-    RED_CHECK_IMG_SIG(gd,
-        "\xd1\x63\x42\x01\x2f\xec\x9d\x81\x31\xfe\xa6\xdc\x01\xd5\xd1\x17\x99\x65\xe5\xda");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "mem_blt_2.png");
 }
 
 RED_AUTO_TEST_CASE(TestMemblt3)
@@ -657,8 +634,7 @@ RED_AUTO_TEST_CASE(TestMemblt3)
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
-    RED_CHECK_IMG_SIG(gd,
-        "\x5c\xe2\x1b\x2e\xca\x65\xbc\xec\x34\xfd\x28\xe8\x06\x9d\x4d\x10\xbc\x7f\x22\x4a");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "mem_blt_3.png");
 }
 
 RED_AUTO_TEST_CASE(TestMemblt4)

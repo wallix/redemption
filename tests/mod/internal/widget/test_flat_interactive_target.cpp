@@ -21,15 +21,17 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 
 #include "mod/internal/widget/flat_interactive_target.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/interactive_target/"
 
 RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 {
@@ -52,9 +54,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png("interactive_target.png");
-
-        RED_CHECK_IMG_SIG(drawable, "\x27\xac\x46\x35\xd5\x1c\x3e\xbc\x64\xd5\xe7\x22\x35\x71\x51\x93\x04\x4d\x26\x1e");
+        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_1.png");
     }
     {
         // ASK DEVICE
@@ -74,9 +74,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png("interactive_target-1.png");
-
-        RED_CHECK_IMG_SIG(drawable, "\x13\xcc\x44\x3d\xa9\xcb\x5d\xd4\xe6\x4c\x3c\x45\x38\xd6\x45\xbf\x55\x8c\x12\x5f");
+        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_2.png");
     }
     {
         // ASK PASSWORD
@@ -96,9 +94,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png("interactive_target-2.png");
-
-        RED_CHECK_IMG_SIG(drawable, "\x54\x66\x24\xdc\x10\x61\x14\x04\x9a\xc7\x79\xe0\xbb\x1e\xed\x2d\x98\x07\x20\x21");
+        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_3.png");
     }
     {
         // ASK LOGIN + PASSWORD
@@ -118,9 +114,7 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png("interactive_target-3.png");
-
-        RED_CHECK_IMG_SIG(drawable, "\xd2\x35\xde\x65\xfd\xdc\x48\x32\x9e\x28\xf4\x79\x05\x7f\xda\xb1\x1b\x7d\x55\xf7");
+        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_4.png");
     }
     {
         // ASK DEVICE + PASSWORD
@@ -140,8 +134,6 @@ RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
         // ask to widget to redraw at it's current position
         interactive.rdp_input_invalidate(interactive.get_rect());
 
-        // drawable.save_to_png("interactive_target-4.png");
-
-        RED_CHECK_IMG_SIG(drawable, "\x7e\x0d\xb7\xe9\x4d\xb7\xf7\x2b\x9f\x80\x3b\x5f\x8a\x99\x9f\xe5\x26\x94\xfb\x92");
+        RED_CHECK_IMG(drawable, IMG_TEST_PATH "interactive_target_5.png");
     }
 }

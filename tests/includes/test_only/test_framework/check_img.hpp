@@ -21,13 +21,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#define RED_CHECK_IMG_SIG_A(obj, expected_sig)                 \
-    [&](::ut::ImgVSig const& imgvsig){                         \
-        RED_TEST((void(#obj), imgvsig.hex()) == expected_sig); \
-    }(::ut::ImgVSig(obj, __LINE__))
-
-#define RED_CHECK_IMG_SIG(obj, expected_sig) \
-    RED_CHECK_IMG_SIG_A(obj, expected_sig ""_av)
 
 #define RED_CHECK_IMG(img, filedata_path) \
     RED_TEST(::ut::CheckImg(img, filedata_path) == nullptr)
@@ -45,31 +38,7 @@ namespace ut
         operator char const* () const noexcept;
     };
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
     std::ostream& boost_test_print_type(std::ostream& ostr, CheckImg const& x);
-
-    bool check_img(ConstImageDataView const& img, char const* filedata_path);
-
-    struct ImgSig
-    {
-        unsigned char sig[20];
-
-        using value_type = unsigned char;
-
-        operator bytes_view () const noexcept { return bytes_view(sig, sizeof(sig)); }
-    };
-
-    ImgSig img_sig(ConstImageDataView const& img);
-
-    struct ImgVSig
-    {
-        int line;
-        unsigned long count_error;
-        ConstImageDataView const& img;
-        ImgSig sig;
-
-        ImgVSig(ConstImageDataView const& img, int line);
-        ~ImgVSig();
-
-        flagged_bytes_view hex() const noexcept { return ut::hex(sig); }
-    };
+#endif
 }

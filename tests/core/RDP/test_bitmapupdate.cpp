@@ -20,14 +20,16 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/bitmap.hpp"
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/test_framework/img_sig.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/core/RDP/bitmap_update/"
 
 
 RED_AUTO_TEST_CASE(TestGraphicBitmapUpdate)
@@ -184,8 +186,5 @@ RED_AUTO_TEST_CASE(TestGraphicBitmapUpdate)
 //    gd.draw(bitmap_data, capture_bmp.data(), capture_bmp.bmp_size(), capture_bmp);
     gd->draw(bitmap_data, capture_bmp);
 
-    RED_CHECK_IMG_SIG(gd, "\xae\x7b\x8e\xe3\x2f\xbf\xaf\x9b\x6e\x58\xbb\x23\x23\xb9\xdc\x4a\xac\xad\x09\xd1");
-
-    // uncomment to see result in png file
-    //dump_png("./test_bitmapupdate.png", gd.impl());
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "bitmap_update_1.png");
 }

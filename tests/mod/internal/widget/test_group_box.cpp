@@ -19,14 +19,16 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/flat_button.hpp"
 #include "mod/internal/widget/group_box.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/group_box/"
 
 RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
 {
@@ -72,9 +74,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png("group_box_0.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x09\x6c\x32\xc4\x31\xe6\x53\x33\x8b\x19\x56\x34\x5e\xe3\xc5\x63\xbf\x1e\x8a\xf2");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "group_box_1.png");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.x() + 1, wbutton.y() + 1,
@@ -87,9 +87,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBox)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png("group_box_1.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x57\x7c\x4a\xcf\x93\x04\x71\xec\x56\x1c\xed\x4f\x65\x94\x03\x51\x44\x5d\x23\x31");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "group_box_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
@@ -144,9 +142,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png("group_box_2.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xcf\x03\x06\xa1\x36\x78\x17\x19\x41\xa8\x0e\x15\xdb\x68\xdf\x5e\x15\x63\xf5\x56");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "group_box_3.png");
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN,
                             wbutton.x() + 1, wbutton.y() + 1,
@@ -159,7 +155,5 @@ RED_AUTO_TEST_CASE(TraceWidgetGroupBoxMax)
                                        , wgroupbox.cy()
                                        ));
 
-    // drawable.save_to_png("group_box_3.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x12\xc4\x69\xb5\xe0\x87\xed\x94\x44\xbf\x6a\x07\x41\x6a\x45\xc8\x23\x70\xc8\xab");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "group_box_4.png");
 }

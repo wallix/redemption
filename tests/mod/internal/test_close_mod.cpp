@@ -22,7 +22,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
-#include "test_only/test_framework/img_sig.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 
@@ -31,6 +31,8 @@
 #include "mod/internal/close_mod.hpp"
 #include "keyboard/keymap2.hpp"
 
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/close_mod/"
 
 RED_AUTO_TEST_CASE(TestCloseMod)
 {
@@ -59,20 +61,17 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 
         RED_CHECK(events.queue.size() == 2);
         events.execute_events(timeval{62, 0},[](int){return false;}, 0);
-        RED_CHECK_IMG_SIG(ConstImageDataView(front),
-            "\x11\xe6\x7f\xdb\x20\x5a\x01\x1e\x74\x58\xf3\xb8\x44\xe9\xeb\x51\x30\xd0\x73\x3d");
+        RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_1.png");
 
         RED_CHECK(events.queue.size() == 2);
         events.execute_events(timeval{580, 0},[](int){return false;}, 0);
-        RED_CHECK_IMG_SIG(ConstImageDataView(front),
-            "\xbf\x55\xa1\x7d\xd7\xbf\xcd\x27\x1f\x1b\x18\xe8\xdc\xea\x15\xb2\x56\x73\x45\x10");
+        RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_2.png");
 
         RED_CHECK(events.queue.size() == 2);
         events.execute_events(timeval{600, 0},[](int){return false;}, 0);
         RED_CHECK(events.queue.size() == 1);
 
-        RED_CHECK_IMG_SIG(ConstImageDataView(front),
-            "\x3d\x0b\x77\x0b\x35\x44\x43\x3d\x0b\xa8\x20\x97\x2a\x24\xf3\x4d\x20\xe8\xff\xb4");
+        RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_3.png");
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
     }
     // When Close mod goes out of scope remaining events should be garbaged
@@ -106,6 +105,5 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
 
     events.execute_events(timeval{1,0},[](int){return false;}, 0);
 
-    RED_CHECK_IMG_SIG(ConstImageDataView(front),
-        "\x95\xd0\x6e\x6e\xae\xdf\xa0\x68\xcb\x7b\x3d\x2d\x84\x07\x59\xa1\xb6\xdb\x30\xb8");
+    RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_selector_1.png");
 }

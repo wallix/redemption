@@ -20,17 +20,17 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/flat_login.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
-// uncomment to use dump_png24()
-#include "utils/png.cpp"
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/login/"
+
 
 constexpr const char * LOGON_MESSAGE = "Warning! Unauthorized access to this system is forbidden and will be prosecuted by law.";
 
@@ -54,9 +54,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.get_rect());
 
-    // drawable.save_to_png("flat_login.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x61\x60\x78\x34\xa8\x76\xfd\xe8\xdd\xf8\x4e\x7c\xa2\x00\x14\x8e\x14\x1e\xd0\x84");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin2)
@@ -82,9 +80,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
                                          flat_login.cx(),
                                          flat_login.cy()));
 
-    // drawable.save_to_png("flat_login2.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xcd\x3b\x99\x90\x5d\x98\x53\x51\x4e\xdd\xae\x58\x0c\x88\xe3\xbd\x14\xda\xda\x57");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
@@ -131,9 +127,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
                                          flat_login.cx(),
                                          flat_login.cy()));
 
-    // drawable.save_to_png("flat_login3.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xbc\x60\x55\x96\xd9\x27\xdd\xd2\x43\xca\xa5\x75\x3f\x1a\x8f\x03\x4b\xb3\x16\x79");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_3.png");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -166,17 +160,13 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
                                          flat_login.cx(),
                                          flat_login.cy()));
 
-    // drawable.save_to_png("flat_login-help1.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x88\x8c\x57\x64\xc8\x73\x74\xf6\x89\xaf\x53\x28\x2b\xe6\xfa\xc5\x30\x37\x94\xf3");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_help_1.png");
 
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.x() + flat_login.helpicon.cx() / 2,
                                flat_login.helpicon.y() + flat_login.helpicon.cy() / 2, nullptr);
 
-    // dump_png24("flat_login-help2.png", drawable, true);
-
-    RED_CHECK_IMG_SIG(drawable, "\xb4\xe4\xc9\x19\x0f\x44\xed\x86\xf7\x26\xfe\x8a\x7e\xfe\xe5\xa0\x6b\x94\x48\x37");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_help_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -201,9 +191,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
                                          flat_login.cx(),
                                          flat_login.cy()));
 
-    // drawable.save_to_png("flat_login7.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xb3\xa0\x84\x73\x75\xba\xa1\x7d\xc9\xdb\x2f\x72\x2f\x58\x62\xa6\xe2\x53\xf1\xe3");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
@@ -228,9 +216,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
                                          30,
                                          10));
 
-    // drawable.save_to_png("flat_login8.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_5.png");
 }
 
 RED_AUTO_TEST_CASE(EventWidgetOk)
@@ -285,9 +271,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.get_rect());
 
-    // drawable.save_to_png("flat_login4.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x20\x58\xbc\x63\xe4\x07\x75\xea\x32\xec\x7a\x1a\x92\xdd\x2a\xa9\xfa\x53\x89\xb9");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
@@ -330,10 +314,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
 
     flat_login.rdp_input_invalidate(flat_login.get_rect());
 
-    // uncomment to see result in png file
-    //dump_png24("flat_login9.png", drawable, true);
-
-    RED_CHECK_IMG_SIG(drawable, "\x0f\x4a\x10\x33\x9b\xf4\xdd\x96\x67\x7c\xf0\x0e\x21\x14\xb7\x21\x9f\x69\x97\xa4");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_7.png");
 }
 
 
@@ -377,8 +358,5 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_target_field)
 
     flat_login.rdp_input_invalidate(flat_login.get_rect());
 
-    // uncomment to see result in png file
-    // dump_png24("flat_login10.png", drawable, true);
-
-    RED_CHECK_IMG_SIG(drawable, "\x94\x20\xa1\x96\x19\xb9\xc9\xb2\xf6\x9b\x48\x6c\xa2\x4c\xf9\xcf\xc8\x43\xab\x2b");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_8.png");
 }
