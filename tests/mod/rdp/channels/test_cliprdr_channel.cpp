@@ -683,29 +683,56 @@ namespace
         Buffer() {}
 
         template<class F>
-        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len = -1u) &
+        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len) &
         {
-            using namespace RDPECLIP;
-            auto av = out.out_skip_bytes(CliprdrHeader::size());
+            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
             f(this->out);
-            if (data_len == -1u) {
-                data_len = uint32_t(out.get_offset() - av.size());
-            }
             OutStream stream_header(av);
-            CliprdrHeader(msgType, msgFlags, data_len).emit(stream_header);
+            RDPECLIP::CliprdrHeader(msgType, msgFlags, data_len).emit(stream_header);
             return out.get_produced_bytes();
         }
 
         template<class F>
-        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len = -1u) &
+        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
         {
-            return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f, data_len);
+            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
+            f(this->out);
+            uint32_t data_len = uint32_t(out.get_offset() - av.size());
+            OutStream stream_header(av);
+            RDPECLIP::CliprdrHeader(msgType, msgFlags, data_len).emit(stream_header);
+            return out.get_produced_bytes();
+        }
+
+        template<class F>
+        bytes_view build_ok(uint16_t msgType, F f) &
+        {
+            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
+            f(this->out);
+            uint32_t data_len = uint32_t(out.get_offset() - av.size());
+            OutStream stream_header(av);
+            RDPECLIP::CliprdrHeader(msgType, RDPECLIP::CB_RESPONSE_OK, data_len).emit(stream_header);
+            return out.get_produced_bytes();
+        }
+
+        template<class F>
+        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len) &
+        {
+            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
+            f(this->out);
+            OutStream stream_header(av);
+            RDPECLIP::CliprdrHeader(msgType, RDPECLIP::CB_RESPONSE_OK, data_len).emit(stream_header);
+            return out.get_produced_bytes();
         }
 
         template<class F>
         bytes_view build_fail(uint16_t msgType, F f) &
         {
-            return this->build(msgType, RDPECLIP::CB_RESPONSE_FAIL, f);
+            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
+            f(this->out);
+            uint32_t data_len = uint32_t(out.get_offset() - av.size());
+            OutStream stream_header(av);
+            RDPECLIP::CliprdrHeader(msgType, RDPECLIP::CB_RESPONSE_FAIL, data_len).emit(stream_header);
+            return out.get_produced_bytes();
         }
 
         bytes_view build_format_list(Cliprdr::FormatNameRef format_name) &
