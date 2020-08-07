@@ -415,7 +415,6 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        auto const dimensions = cursor.get_dimensions();
         StaticOutStream<32+96*96*4> payload;
 
         payload.out_uint16_le(this->mouse_x);
