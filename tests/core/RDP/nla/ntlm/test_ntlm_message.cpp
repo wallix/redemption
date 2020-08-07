@@ -79,12 +79,12 @@ RED_AUTO_TEST_CASE(TestAvPair)
     for (auto & avp: listAvPair) { packet_length += avp.data.size(); }
     RED_CHECK_EQUAL(packet_length, stream.get_offset());
 
-    LOG(LOG_INFO, "Av Pair List : %zu elements {", listAvPair.size());
-    for (auto & avp: listAvPair) {
-        LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
-        hexdump_c(avp.data);
-    }
-    LOG(LOG_INFO, "}");
+    // LOG(LOG_INFO, "Av Pair List : %zu elements {", listAvPair.size());
+    // for (auto & avp: listAvPair) {
+    //     LOG(LOG_INFO, "\tAvId: 0x%02X, AvLen : %u,", avp.id, unsigned(avp.data.size()));
+    //     hexdump_c(avp.data);
+    // }
+    // LOG(LOG_INFO, "}");
 }
 
 
