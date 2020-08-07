@@ -60,9 +60,8 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     }
 }
 
-void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn, std::string nla_username, std::string nla_password)
+void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn, std::string const& nla_username, std::string nla_password)
 {
-
     if (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "start NegoServer");

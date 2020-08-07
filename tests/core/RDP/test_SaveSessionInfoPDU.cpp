@@ -28,12 +28,12 @@ RED_AUTO_TEST_CASE(TestLogonInfoV1)
 {
 
     StaticOutStream<8192> ostream;
-    std::string domain("domain");
-    std::string userName("username");
+    std::string_view domain("domain");
+    std::string_view userName("username");
     uint32_t sessionId = 0x01234567;
     RDP::LogonInfoVersion1_Send logon_info_v1(ostream, domain, userName, sessionId);
-    
-    uint8_t expected[512+52+4+4+4] = 
+
+    uint8_t expected[512+52+4+4+4] =
     {0x0e, 0x00, 0x00, 0x00, 0x64, 0x00, 0x6f, 0x00, 0x6d, 0x00, 0x61, 0x00, 0x69, 0x00, 0x6e, 0x00,    // ....d.o.m.a.i.n.
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ................
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ................
@@ -70,13 +70,13 @@ RED_AUTO_TEST_CASE(TestLogonInfoV1)
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ................
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // ................
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x67, 0x45, 0x23, 0x01  // ............gE#.
-    };   
+    };
     RED_CHECK_EQUAL(sizeof(expected), 512+52+4+4+4);
     RED_CHECK_EQUAL(ostream.get_produced_bytes(), make_array_view(expected));
 
     InStream istream({ostream.get_data(), ostream.get_offset()});
     RDP::LogonInfoVersion1_Recv recv_logon_info_v1(istream);
-    RED_CHECK(0 == memcmp(recv_logon_info_v1.Domain, domain.c_str(), domain.size()+1)); 
-    RED_CHECK(0 == memcmp(recv_logon_info_v1.UserName, userName.c_str(), userName.size()+1)); 
-    RED_CHECK_EQUAL(recv_logon_info_v1.SessionId, sessionId); 
+    RED_TEST(std::string_view(char_ptr_cast(recv_logon_info_v1.Domain)) == domain);
+    RED_TEST(std::string_view(char_ptr_cast(recv_logon_info_v1.UserName)) == userName);
+    RED_TEST(recv_logon_info_v1.SessionId == sessionId);
 }

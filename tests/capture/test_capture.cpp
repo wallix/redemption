@@ -23,6 +23,8 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/fake_stat.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...

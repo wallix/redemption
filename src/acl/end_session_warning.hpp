@@ -22,10 +22,12 @@
 
 #pragma once
 
-#include <string.h>
-#include <array>
 #include "utils/translation.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/algostring.hpp"
+
+#include <array>
+#include <algorithm>
 
 
 class EndSessionWarning
@@ -38,13 +40,14 @@ class EndSessionWarning
     unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
 
 public:
-    void initialize() {
+    void initialize()
+    {
         this->osd_state = OSD_STATE_NOT_YET_COMPUTED;
     }
 
-    std::string update_osd_state(Translation::language_t lang, time_t start_time, time_t end_time, time_t now) {
+    std::string update_osd_state(Translation::language_t lang, time_t start_time, time_t end_time, time_t now)
+    {
         LOG(LOG_INFO, "Update OSD STATE");
-        std::string out_msg;
 
         if (this->osd_state == OSD_STATE_NOT_YET_COMPUTED) {
             this->osd_state = (
@@ -55,17 +58,18 @@ public:
         }
         else if (this->osd_state < OSD_STATE_INVALID
               && end_time - now <= timers[this->osd_state]) {
-            out_msg.reserve(128);
             const unsigned minutes = (end_time - now + 30) / 60;
-            out_msg += std::to_string(minutes);
-            out_msg += ' ';
-            out_msg += TR(trkeys::minute, lang);
-            out_msg += (minutes > 1) ? "s " : " ";
-            out_msg += TR(trkeys::before_closing, lang);
-
             ++this->osd_state;
+            return str_concat(
+                std::to_string(minutes),
+                ' ',
+                TR(trkeys::minute, lang),
+                (minutes > 1) ? "s " : " ",
+                TR(trkeys::before_closing, lang)
+            );
         }
-        return out_msg;
+
+        return std::string();
     }
 };
 

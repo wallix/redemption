@@ -237,7 +237,6 @@ RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
       << std::ifstream(FIXTURES_PATH "/verifier/recorded/" WRM_FILENAME).rdbuf();
 
     auto str_stat = [](std::string const& filename){
-        std::string s;
         struct stat64 stat;
         ::stat64(filename.c_str(), &stat);
         return str_concat(
@@ -252,11 +251,11 @@ RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
         );
     };
 
-    std::string mwrm_hash_contents_before
-      = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
-    std::string mwrm_recorded_contents
-      = "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
-        WRM_FILENAME " " + str_stat(tmp_recorded_wrm) + " 1455815820 1455816422\n";
+    std::string mwrm_hash_contents_before = str_concat(
+        "v2\n\n\n" MWRM_FILENAME " ", str_stat(tmp_recorded_mwrm), "\n");
+    std::string mwrm_recorded_contents = str_concat(
+        "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
+        WRM_FILENAME " ", str_stat(tmp_recorded_wrm), " 1455815820 1455816422\n");
 
     RED_CHECK_NE(RED_CHECK_GET_FILE_CONTENTS(tmp_hash_mwrm), mwrm_hash_contents_before);
     RED_CHECK_NE(RED_CHECK_GET_FILE_CONTENTS(tmp_recorded_mwrm), mwrm_recorded_contents);
@@ -278,8 +277,8 @@ RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
         "No error detected during the data verification.\n\nverify ok\n"_av, ""_av);
 
-    std::string mwrm_hash_contents_after
-      = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
+    std::string mwrm_hash_contents_after = str_concat(
+        "v2\n\n\n" MWRM_FILENAME " ", str_stat(tmp_recorded_mwrm), "\n");
 
     RED_CHECK_NE(mwrm_hash_contents_before, mwrm_hash_contents_after);
     RED_CHECK_FILE_CONTENTS(tmp_hash_mwrm, mwrm_hash_contents_after);
@@ -325,12 +324,12 @@ namespace
 inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
 {
     struct {
-        std::string base;
+        chars_view base;
         unsigned scheme;
         uint8_t derived_key[32];
     } keys[] = {
         {
-            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm",
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161025-213153,wab-4-2-4.yourdomain,3243.mwrm"_av,
             0,
             {
                 0x63, 0xfc, 0x3a, 0x0a, 0x32, 0x36, 0x41, 0x8a,
@@ -340,7 +339,7 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
             }
         },
         {
-            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm",
+            "cgrosjean@10.10.43.13,proxyuser@local@win2008,20161201-163203,wab-4-2-4.yourdomain,1046.mwrm"_av,
             0,
             {
                 0xdc, 0x55, 0x98, 0xe3, 0x7f, 0x90, 0xa5, 0x94,
@@ -350,7 +349,7 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
             }
         },
         {
-            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm",
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm"_av,
             0,
             {
                 0x8f, 0x17, 0x01, 0xd8, 0x87, 0xd7, 0xa1, 0x1b,
@@ -360,7 +359,7 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
             }
         },
         {
-            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm",
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm"_av,
             1,
             {
                 0xa8, 0x6e, 0x1c, 0x63, 0xe1, 0xa6, 0xfd, 0xed,
@@ -370,7 +369,7 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
             },
         },
         {
-            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560-000000.wrm",
+            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560-000000.wrm"_av,
             1,
             {
                 0xfc, 0x06, 0xf3, 0x0f, 0xc8, 0x3d, 0x16, 0x9f,
@@ -383,8 +382,8 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
 
     for (auto & k: keys){
         if ((k.scheme == oldscheme)
-        && (k.base.length() == static_cast<size_t>(len))
-        && (strncmp(k.base.c_str(), char_ptr_cast(base), static_cast<size_t>(len)) == 0))
+        && (k.base.size() == static_cast<size_t>(len))
+        && (strncmp(k.base.data(), char_ptr_cast(base), static_cast<size_t>(len)) == 0))
         {
             memcpy(buffer, k.derived_key, 32);
             //hexdump_d(buffer, 32);
