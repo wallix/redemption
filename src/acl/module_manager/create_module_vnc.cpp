@@ -39,82 +39,8 @@ void ModuleManager::create_mod_vnc(
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
-<<<<<
     unique_fd client_sck = this->connect_to_target_host(
         report_message, trkeys::authentification_vnc_fail);
-===
-    unique_fd client_sck =
-        connect_to_target_host(ini, sesman, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
-
-    const char * const name = "VNC Target";
-
-    bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
-        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().as_string()));
-
-    std::unique_ptr<ModVNCWithMetrics::ModMetrics> metrics;
-
-    if (enable_metrics) {
-        metrics = std::make_unique<ModVNCWithMetrics::ModMetrics>(
-            ini.get<cfg::metrics::log_dir_path>().as_string(),
-            ini.get<cfg::context::session_id>(),
-            hmac_user(
-                ini.get<cfg::globals::auth_user>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_account(
-                ini.get<cfg::globals::target_user>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_device_service(
-                ini.get<cfg::globals::target_device>(),
-                ini.get<cfg::context::target_service>(),
-                ini.get<cfg::metrics::sign_key>()),
-            hmac_client_info(
-                ini.get<cfg::globals::host>(),
-                client_info.screen_info,
-                ini.get<cfg::metrics::sign_key>()),
-            timeobj.get_time(),
-            ini.get<cfg::metrics::log_file_turnover_interval>(),
-            ini.get<cfg::metrics::log_interval>());
-    }
-
-    auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
-        mod_wrapper,
-        ini,
-        name,
-        std::move(client_sck),
-        ini.get<cfg::debug::mod_vnc>(),
-        nullptr,
-        time_base,
-        events,
-        sesman,
-        ini.get<cfg::globals::target_user>().c_str(),
-        ini.get<cfg::context::target_password>().c_str(),
-        front,
-        client_info.screen_info.width,
-        client_info.screen_info.height,
-        key_flags,
-        ini.get<cfg::mod_vnc::clipboard_up>(),
-        ini.get<cfg::mod_vnc::clipboard_down>(),
-        ini.get<cfg::mod_vnc::encodings>().c_str(),
-        ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
-            != ClipboardEncodingType::latin1
-            ? mod_vnc::ClipboardEncodingType::UTF8
-            : mod_vnc::ClipboardEncodingType::Latin1,
-        ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
-        ini.get<cfg::mod_vnc::server_is_macos>(),
-        ini.get<cfg::mod_vnc::server_unix_alt>(),
-        ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),
-        (client_info.remote_program ? &rail_client_execute : nullptr),
-        to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
-        enable_metrics ? &metrics->protocol_metrics : nullptr
-    );
-
-    if (enable_metrics) {
-        new_mod->mod.metrics = std::move(metrics);
-        new_mod->mod.set_metrics_timer(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()));
-    }
-
-    auto tmp_psocket_transport = &(new_mod->socket_transport);
->>>>>>> 41ea19677... Fix vnc keylayout when keylayout is changed in internal mods
 
     try {
         const char * const name = "VNC Target";

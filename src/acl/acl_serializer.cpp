@@ -219,9 +219,7 @@ AclSerializer::AclSerializer(
     Inifile & ini, time_t acl_start_time, Transport & auth_trans,
     CryptoContext & cctx, Random & rnd, Fstat & fstat, Verbose verbose)
 : ini(ini)
-<<<<
 , auth_trans(auth_trans)
-, timebase(timebase)
 , session_id{}
 , log_file(cctx, rnd, fstat, report_error_from_reporter(*this))
 , remote_answer(false)
