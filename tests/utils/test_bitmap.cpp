@@ -3638,7 +3638,7 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
     RED_TEST(int(bmp.bpp()) == int(ref.bits_per_pixel()));         \
     RED_TEST(bmp.cx() == int(ref.width()));                        \
     RED_TEST(bmp.cy() == int(ref.height()));                       \
-    RED_TEST(bmp.line_size() == int(ref.line_size()));             \
+    RED_TEST(bmp.line_size() == ref.line_size());                  \
     RED_TEST(bytes_view(bmp.data(), bmp.line_size() * bmp.cy()) == \
              ut::hex(bytes_view(ref.data(), ref.end_data())));     \
 }(img_view)

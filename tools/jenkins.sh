@@ -21,6 +21,9 @@ fi
 git clean -fd
 git submodule update --init
 
+mkdir -p bin/tmp
+export TMPDIR_TEST=$PWD/bin/tmp/
+
 if [ $fast -eq 0 ]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi

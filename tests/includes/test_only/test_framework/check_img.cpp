@@ -18,21 +18,20 @@
  */
 
 #include "test_only/test_framework/check_img.hpp"
-#include "test_only/test_framework/impl/test_paths.hpp"
 
 #include "utils/image_data_view.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "utils/bitmap_private_data.hpp"
 #include "utils/png.hpp"
 
 #include <cstring>
-#include <ostream>
 
 #if !defined(REDEMPTION_UNIT_TEST_FAST_CHECK)
 # define REDEMPTION_UNIT_TEST_FAST_CHECK 0
 #endif
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
+# include "test_only/test_framework/impl/test_paths.hpp"
+# include "utils/bitmap_private_data.hpp"
 # include <boost/test/results_reporter.hpp>
 # include <charconv>
 #endif
@@ -92,6 +91,7 @@ namespace
         return true;
     }
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
     Bitmap create_diff_img(ConstImageDataView const& img1, ConstImageDataView const& img2)
     {
         // because unimplemented...
@@ -147,6 +147,7 @@ namespace
 
         return imgr;
     }
+#endif
 }
 
 namespace ut
