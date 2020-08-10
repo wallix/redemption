@@ -345,6 +345,55 @@ enum {
 //   2.2.1.1.1) was sent to the server. If this field is present,
 //   then all of the preceding fields MUST also be present.
 
+// desktopPhysicalWidth (4 bytes): A 32-bit, unsigned integer. The requested
+//   physical width of the desktop, in millimeters (mm). This value MUST be
+//   ignored if it is less than 10 mm or greater than 10,000 mm or
+//   desktopPhysicalHeight is less than 10 mm or greater than 10,000 mm.
+//   If this field is present, then the serverSelectedProtocol and
+//   desktopPhysicalHeight fields MUST also be present. If this field is not
+//   present, all of the subsequent fields MUST NOT be present. If the
+//   desktopPhysicalHeight field is not present, this field MUST be ignored.
+
+// desktopPhysicalHeight (4 bytes): A 32-bit, unsigned integer. The requested
+//   physical height of the desktop, in millimeters. This value MUST be ignored
+//   if it is less than 10 mm or greater than 10,000 mm or desktopPhysicalWidth
+//   is less than 10 mm or greater than 10,000 mm. If this field is present,
+//   then the desktopPhysicalWidth field MUST also be present. If this field is
+//   not present, all of the subsequent fields MUST NOT be present.
+
+// desktopOrientation (2 bytes): A 16-bit, unsigned integer. The requested
+//   orientation of the desktop, in degrees.
+
+// enum {
+//       ORIENTATION_LANDSCAPE         = 0   // The desktop is not rotated
+//     , ORIENTATION_PORTRAIT          = 90  // The desktop is rotated clockwise by 90 degrees.
+//     , ORIENTATION_LANDSCAPE_FLIPPED = 180 // The desktop is rotated clockwise by 180 degrees.
+//     , ORIENTATION_PORTRAIT_FLIPPED  = 270 // The desktop is rotated clockwise by 270 degrees.
+// };
+
+// This value MUST be ignored if it is invalid. If this field is present, then
+// the desktopPhysicalHeight field MUST also be present. If this field is not
+// present, all of the subsequent fields MUST NOT be present.
+
+// desktopScaleFactor (4 bytes): A 32-bit, unsigned integer. The requested
+//   desktop scale factor. This value MUST be ignored if it is less than 100% or
+//   greater than 500% or deviceScaleFactor is not 100%, 140%, or 180%. If this
+//   field is present, then the desktopOrientation and deviceScaleFactor fields
+//   MUST also be present. If this field is not present, all of the subsequent
+//   fields MUST NOT be present. If the deviceScaleFactor field is not present,
+//   this field MUST be ignored.
+//   desktop scale factor: The scale factor (as a percentage) applied to
+//   Windows Desktop Applications.
+
+// deviceScaleFactor (4 bytes): A 32-bit, unsigned integer. The requested device
+//   scale factor. This value MUST be ignored if it is not set to 100%, 140%, or
+//   180% or desktopScaleFactor is less than 100% or greater than 500%. If this
+//   field is present, then the desktopScaleFactor field MUST also be present.<7>
+//   device scale factor: The scale factor (as a percentage) applied to Windows
+//   Store Apps running on Windows 8.1. This value must be calculated such that
+//   the effective maximum height of a Windows Store App is always greater than
+//   768 pixels, otherwise the app will not start.
+//   <7> The deviceScaleFactor field is processed only in Windows 8.1.
 
 struct CSCore {
     // header
@@ -373,6 +422,11 @@ struct CSCore {
     uint8_t  connectionType{0};
     uint8_t  pad1octet{0};
     uint32_t serverSelectedProtocol{0};
+    uint32_t desktopPhysicalWidth{0};
+    uint32_t desktopPhysicalHeight{0};
+    uint16_t desktopOrientation{0};
+    uint32_t desktopScaleFactor{0};
+    uint32_t deviceScaleFactor{0};
 
     // we do not provide parameters in constructor,
     // because setting them one field at a time is more explicit and maintainable
@@ -438,8 +492,14 @@ struct CSCore {
         this->pad1octet = stream.in_uint8();
         if (this->length < 216) { return; }
         this->serverSelectedProtocol = stream.in_uint32_le();
-        // TODO Missing desktopPhysicalWith, desktopPhysicalHeight, desktopOrientation, desktopScaleFactor, deviceScaleFactor, see [MS-RDPBCGR] 2.2.1.3.2
-
+        if (this->length < 224) { return; }
+        this->desktopPhysicalWidth = stream.in_uint32_le();
+        this->desktopPhysicalHeight = stream.in_uint32_le();
+        if (this->length < 226) { return; }
+        this->desktopOrientation = stream.in_uint16_le();
+        if (this->length < 234) { return; }
+        this->desktopScaleFactor = stream.in_uint32_le();
+        this->deviceScaleFactor = stream.in_uint32_le();
     }
 
     void emit(OutStream & stream) const
@@ -472,26 +532,65 @@ struct CSCore {
     private:
     void emit_optional(OutStream & stream) const
     {
-        if (this->length < 134) { return; }
+        if (this->length <= 132) {
+            return ;
+        }
+
+        if (this->length != 134 && this->length != 136 && this->length != 140
+         && this->length != 142 && this->length != 144 && this->length != 146
+         && this->length != 210 && this->length != 211 && this->length != 212
+         && this->length != 216 && this->length != 220 && this->length != 224
+         && this->length != 226 && this->length != 230 && this->length != 234
+        ) {
+            LOG(LOG_ERR, "CSCore::emit inconsistant length=(%u) for optional parameters",
+                this->length);
+            throw Error(ERR_GCC);
+        }
+
         stream.out_uint16_le(this->postBeta2ColorDepth);
-        if (this->length < 136) { return; }
+        if (this->length == 134) { return; }
+
         stream.out_uint16_le(this->clientProductId);
-        if (this->length < 140) { return; }
+        if (this->length == 136) { return; }
+
         stream.out_uint32_le(this->serialNumber);
-        if (this->length < 142) { return; }
+        if (this->length == 140) { return; }
+
         stream.out_uint16_le(this->highColorDepth);
-        if (this->length < 144) { return; }
+        if (this->length == 142) { return; }
+
         stream.out_uint16_le(this->supportedColorDepths);
-        if (this->length < 146) { return; }
+        if (this->length == 144) { return; }
+
         stream.out_uint16_le(this->earlyCapabilityFlags);
-        if (this->length < 210) { return; }
+        if (this->length == 146) { return; }
+
         stream.out_copy_bytes(this->clientDigProductId, sizeof(this->clientDigProductId));
-        if (this->length < 211) { return; }
+        if (this->length == 210) { return; }
+
         stream.out_uint8(this->connectionType);
-        if (this->length < 212) { return; }
+        if (this->length == 211) { return; }
+
         stream.out_uint8(this->pad1octet);
-        if (this->length < 216) { return; }
+        if (this->length == 212) { return; }
+
         stream.out_uint32_le(this->serverSelectedProtocol);
+        if (this->length == 216) { return; }
+
+        stream.out_uint32_le(this->desktopPhysicalWidth);
+        if (this->length == 220) { return; }
+
+        stream.out_uint32_le(this->desktopPhysicalHeight);
+        if (this->length == 224) { return; }
+
+        stream.out_uint16_le(this->desktopOrientation);
+        if (this->length == 226) { return; }
+
+        stream.out_uint32_le(this->desktopScaleFactor);
+        if (this->length == 230) { return; }
+
+        stream.out_uint32_le(this->deviceScaleFactor);
+        if (this->length == 234) { return; }
     }
 
     public:

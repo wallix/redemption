@@ -103,6 +103,12 @@ struct ClientInfo
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
 
+    uint32_t desktop_physical_width = 0;
+    uint32_t desktop_physical_height = 0;
+    uint16_t desktop_orientation = 0;
+    uint32_t desktop_scale_factor = 0;
+    uint32_t device_scale_factor = 0;
+
     GCC::UserData::CSMonitor cs_monitor;
 
     ClientTimeZone client_time_zone;

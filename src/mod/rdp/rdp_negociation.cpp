@@ -344,6 +344,11 @@ RdpNegociation::RdpNegociation(
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
         )
+    , desktop_physical_width(info.desktop_physical_width)
+    , desktop_physical_height(info.desktop_physical_height)
+    , desktop_orientation(info.desktop_orientation)
+    , desktop_scale_factor(info.desktop_scale_factor)
+    , device_scale_factor(info.device_scale_factor)
     , trans(trans)
     , enable_session_probe(mod_rdp_params.enable_session_probe)
     , rdp_compression(mod_rdp_params.rdp_compression)
@@ -852,6 +857,8 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
         this->trans,
         [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
             // ------------------------------------------------------------
+            const bool has_scale_factor = this->device_scale_factor > 0;
+
             GCC::UserData::CSCore cs_core;
 
             Rect primary_monitor_rect =
@@ -890,8 +897,20 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             if (bool(this->verbose & RDPVerbose::security)) {
                 cs_core.log("Sending to Server");
             }
+
+            if (has_scale_factor) {
+                cs_core.desktopPhysicalWidth = this->desktop_physical_width;
+                cs_core.desktopPhysicalHeight = this->desktop_physical_height;
+                cs_core.desktopOrientation = this->desktop_orientation;
+                cs_core.desktopScaleFactor = this->desktop_scale_factor;
+                cs_core.deviceScaleFactor = this->device_scale_factor;
+
+                cs_core.length = 234;
+            }
+
             cs_core.emit(stream);
             // ------------------------------------------------------------
+
 
             GCC::UserData::CSCluster cs_cluster;
             {

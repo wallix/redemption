@@ -142,6 +142,12 @@ private:
     const RdpNego::ServerCert server_cert;
     RdpNego nego;
 
+    const uint32_t desktop_physical_width = 0;
+    const uint32_t desktop_physical_height = 0;
+    const uint16_t desktop_orientation = 0;
+    const uint32_t desktop_scale_factor = 0;
+    const uint32_t device_scale_factor = 0;
+
     Transport& trans;
     const bool enable_session_probe;
     const RdpCompression rdp_compression;

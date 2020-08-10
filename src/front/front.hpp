@@ -1486,11 +1486,19 @@ public:
                             default:
                             break;
                             }
+
                             if (bool(this->ini.get<cfg::client::max_color_depth>())) {
                                 this->client_info.screen_info.bpp = std::min(
                                     this->client_info.screen_info.bpp,
                                     BitsPerPixel{checked_int(this->ini.get<cfg::client::max_color_depth>())});
                             }
+
+                            this->client_info.desktop_physical_width = cs_core.desktopPhysicalWidth;
+                            this->client_info.desktop_physical_height = cs_core.desktopPhysicalHeight;
+                            this->client_info.desktop_orientation = cs_core.desktopOrientation;
+                            this->client_info.desktop_scale_factor = cs_core.desktopScaleFactor;
+                            this->client_info.device_scale_factor = cs_core.deviceScaleFactor;
+
                             this->client_support_monitor_layout_pdu =
                                 (cs_core.earlyCapabilityFlags &
                                  GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
