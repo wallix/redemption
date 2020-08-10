@@ -24,6 +24,8 @@
 #include "mod/vnc/vnc.hpp"
 #include <openssl/tls1.h>
 #include "acl/gd_provider.hpp"
+#include <openssl/tls1.h>
+
 
 
 #ifndef __EMSCRIPTEN__
@@ -63,7 +65,7 @@ mod_vnc::mod_vnc( Transport & t
     , dsmEncryption(false)
     , width(front_width)
     , height(front_height)
-    , verbose(verbose)
+    , verbose(verbose /*| VNCVerbose::basic_trace | VNCVerbose::connection*/)
     , keymapSym(keylayout, key_flags, server_is_unix, server_is_macos, static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
@@ -82,7 +84,7 @@ mod_vnc::mod_vnc( Transport & t
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
     , server_data_buf(*this)
     , tlsSwitch(false)
-    , frame_buffer_update_ctx(this->zd, this->verbose)
+    , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
@@ -2106,4 +2108,3 @@ void mod_vnc::disconnect()
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
         "type=SESSION_DISCONNECTION duration=%s", duration_str);
 }
-
