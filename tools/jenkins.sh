@@ -21,9 +21,6 @@ fi
 git clean -fd
 git submodule update --init
 
-mkdir -p bin/tmp
-export TMPDIR_TEST=$PWD/bin/tmp/
-
 if [ $fast -eq 0 ]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
@@ -84,7 +81,12 @@ export BOOST_TEST_COLOR_OUTPUT=0
 
 if [ $fast -eq 0 ]; then
     rm -rf bin
+else
+    rm -rf bin/tmp/
 fi
+
+mkdir -p bin/tmp
+export TMPDIR_TEST=bin/tmp/
 
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
@@ -98,7 +100,7 @@ build()
     bjam -q "$@" || {
         local e=$?
         export REDEMPTION_LOG_PRINT=1
-        bjam -q "$@"
+        bjam -q "$@" -j1
         exit $e
     }
 }
