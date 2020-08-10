@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    uint8_t  save_mouse[32 * 32 * 4];   // 32 lines * 32 columns * 4 bytes per pixel = 4096 octets
+    uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
     DrawablePointer current_pointer(drawable_default_pointer());
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED

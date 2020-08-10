@@ -844,10 +844,9 @@ RED_AUTO_TEST_CASE(TestPointerIO)
     Pointer cursor = edit_pointer();
 
     StaticOutStream<8192> result;
-    cursor.emit_pointer2(result);
+    cursor.emit_pointer32x32(result);
     RED_CHECK_SIG(result.get_produced_bytes(),
-        "\x58\x61\xf5\x8a\x3a\x73\x03\x46\x06\x9a\x42\x65\x14\xc4\x37\x29\x1b\x8c\x92\x6d"
-        );
+        "\x8e\xcd\x49\x72\x34\xfa\x5a\xa5\xc4\x6a\x24\xff\xe2\x29\x40\x11\x37\x12\x9b\xc4");
 }
 
 RED_AUTO_TEST_CASE(TestPointer1bit)
@@ -969,7 +968,5 @@ Mask For Cursor
 //         if ((i % 128) == 127) { printf("\n"); }
 //     }
 
-    RED_CHECK_SIG(av_alpha_q, 
-    "\x87\x96\xcb\x13\x84\xa1\xef\xee\x6a\x81\xec\xcf\xae\xe7\x64\xd8\x3b\xaa\x11\x73"
-    );
+    RED_CHECK_SIG(av_alpha_q, "\x40\xcc\x56\x2e\x92\xfb\x36\x03\x65\x43\x3f\x40\xb1\x7d\x27\x8e\x20\xef\x09\x8f");
 }
