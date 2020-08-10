@@ -18,7 +18,6 @@
 *   Author(s): Christophe Grosjean, Jonathan Poelen
 */
 
-#include <ostream>
 #include <type_traits>
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"

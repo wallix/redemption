@@ -21,39 +21,25 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#define RED_CHECK_IMG_SIG_A(obj, expected_sig)                 \
-    [&](::ut::ImgVSig const& imgvsig){                         \
-        RED_TEST((void(#obj), imgvsig.hex()) == expected_sig); \
-    }(::ut::ImgVSig(obj, __LINE__))
 
-#define RED_CHECK_IMG_SIG(obj, expected_sig) \
-    RED_CHECK_IMG_SIG_A(obj, expected_sig ""_av)
+#define RED_CHECK_IMG(img, filedata_path) [&]{ \
+    ::ut::CheckImg check_img;                  \
+    RED_TEST(check_img(img, filedata_path));   \
+}()
 
 class ConstImageDataView;
 
 namespace ut
 {
-    struct ImgSig
+    struct CheckImg
     {
-        unsigned char sig[20];
+        std::string err;
 
-        using value_type = unsigned char;
+        #if !REDEMPTION_UNIT_TEST_FAST_CHECK
+        CheckImg() = default;
+        ~CheckImg();
+        #endif
 
-        operator bytes_view () const noexcept { return bytes_view(sig, sizeof(sig)); }
-    };
-
-    ImgSig img_sig(ConstImageDataView const& img);
-
-    struct ImgVSig
-    {
-        int line;
-        unsigned long count_error;
-        ConstImageDataView const& img;
-        ImgSig sig;
-
-        ImgVSig(ConstImageDataView const& img, int line);
-        ~ImgVSig();
-
-        flagged_bytes_view hex() const noexcept { return ut::hex(sig); }
+        bool operator()(ConstImageDataView const& img, char const* filedata_path);
     };
 }

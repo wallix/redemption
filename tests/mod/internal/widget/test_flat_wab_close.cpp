@@ -20,14 +20,17 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 
 #include "mod/internal/widget/flat_wab_close.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wab_close/"
 
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose)
@@ -49,9 +52,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose)
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-    // drawable.save_to_png("flat_wab_close.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xdb\x65\x0f\x79\xfe\xd4\xee\x90\x78\xb7\x04\x01\xed\x5a\x83\x12\xe9\x03\x39\x1e");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose2)
@@ -87,9 +88,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 
     // ask to widget to redraw at it's current position
 
-//    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x46\xca\x13\x7f\x61\x03\x7c\xd1\xe0\x84\x8f\x11\x89\x09\x3c\xf0\xe1\x3b\xa6\xa1");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose3)
@@ -111,9 +110,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose3)
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-    // drawable.save_to_png("flat_wab_close3.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x37\xca\xf1\xf0\x97\x55\x83\xa8\x76\x95\xd3\xd9\x6d\xa8\x18\xd3\x02\x9d\xd9\xd3");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
@@ -135,9 +132,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect().offset(20,0));
 
-    // drawable.save_to_png("flat_wab_close7.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x4b\x63\x5e\x1b\x74\x99\x92\xed\xfd\xa8\xbe\xc9\xf0\x8e\x73\x34\xdc\xf9\x8a\x08");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
@@ -162,9 +157,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
                                                30,
                                                10));
 
-    // drawable.save_to_png("flat_wab_close8.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\x5e\xd7\x4c\xb7\x03\x2f\xe1\x79\xbf\x92\x0b\x30\xd6\x9b\xe3\xe2\x5d\xbf\x7b\x75");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
@@ -197,15 +190,12 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-    // drawable.save_to_png("flat_wab_close-exit1.png");
-
-    RED_CHECK_IMG_SIG(drawable, "\xa8\x5c\xaf\x51\x0d\x59\xfa\x8c\x38\x4e\xe7\x67\x21\x64\xc2\xf0\x8b\xa7\xf7\x1f");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_7.png");
 
     flat_wab_close.refresh_timeleft(49);
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-    // drawable.save_to_png("flat_wab_close-exit2.png");
-    RED_CHECK_IMG_SIG(drawable, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                    flat_wab_close.cancel.x() + 2,
@@ -217,8 +207,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     RED_CHECK(notifier.sender == &flat_wab_close);
     RED_CHECK(notifier.event == NOTIFY_CANCEL);
 
-    // drawable.save_to_png("flat_wab_close-exit3.png");
-    RED_CHECK_IMG_SIG(drawable, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
 
     notifier.sender = nullptr;
     notifier.event = 0;
@@ -263,6 +252,5 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
 
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x41\xe2\xcb\xac\xe5\x73\x22\x6d\x12\x22\x61\xaf\x22\x0b\x9c\xf3\xd0\x28\x8e\xbd");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_10.png");
 }

@@ -20,6 +20,10 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
+#include "test_only/front/fake_front.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
@@ -27,16 +31,14 @@
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
-#include "test_only/front/fake_front.hpp"
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/test_framework/img_sig.hpp"
-#include "test_only/core/font.hpp"
 
 #include <string>
 #include <string_view>
 
 using namespace std::string_view_literals;
 
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/copy_paste/"
 
 
 struct CopyPasteFront : FakeFront
@@ -166,42 +168,29 @@ RED_AUTO_TEST_CASE(TestPaste)
 
     RED_REQUIRE(copy_paste.ready(front));
 
-    #define edit_paste(s, sig) do {                                \
+    #define edit_paste(s, imgref) do {                             \
         keymap.push_kevent(Keymap2::KEVENT_PASTE);                 \
         copy_paste.paste(edit);                                    \
         RED_CHECK_EQUAL(s ""sv, edit.get_text());                  \
                                                                    \
         edit.rdp_input_invalidate(edit.get_rect());                \
                                                                    \
-        /*char filename[256];*/                                    \
-        /*sprintf(filename, "test_copy_paste_%d.png", __LINE__);*/ \
-        /*mod.save_to_png(filename);*/                             \
-                                                                   \
-        RED_CHECK_IMG_SIG(gd, sig);                                    \
+        RED_CHECK_IMG(gd, imgref);                                 \
     } while (0)
-    edit_paste("",
-        "\x55\x78\x56\xd2\x65\x6c\x78\x4a\x23\x26\x2b\xf5\xfb\x67\xdd\x0f\xa9\x96\xaf\xa6");
-    edit_paste("",
-        "\x55\x78\x56\xd2\x65\x6c\x78\x4a\x23\x26\x2b\xf5\xfb\x67\xdd\x0f\xa9\x96\xaf\xa6");
+    edit_paste("", IMG_TEST_PATH "empty.png");
+    edit_paste("", IMG_TEST_PATH "empty.png");
     front.copy("plop");
-    edit_paste("plop",
-        "\xc0\x91\xd3\x21\x52\x48\xdb\x15\xb1\x56\x90\x18\x1d\x8c\x4a\x97\x73\x0d\x3a\x80");
+    edit_paste("plop", IMG_TEST_PATH "plop.png");
     edit.decrement_edit_pos();
-    edit_paste("ploplopp",
-        "\x0d\xf1\x59\xb6\x59\xb1\x21\x17\x9d\x47\xa9\xff\x98\xa8\xd2\x44\x5f\x39\xbe\xb4");
+    edit_paste("ploplopp", IMG_TEST_PATH "plopplop.png");
     front.copy("xxx");
-    edit_paste("ploplopxxxp",
-        "\x54\x3f\x47\xe5\xc7\x84\xa5\x9c\x3c\xcd\x23\xc0\xa8\x41\xb8\x5a\xa8\xf9\xb5\x45");
-    edit_paste("ploplopxxxxxxp",
-        "\x97\xb1\xb1\x03\xa0\xac\x8a\x0b\xad\xc0\xd1\xe8\x48\x0a\x67\xd4\xdc\x5e\xf7\xcb");
+    edit_paste("ploplopxxxp", IMG_TEST_PATH "ploplopxxxp.png");
+    edit_paste("ploplopxxxxxxp", IMG_TEST_PATH "ploplopxxxxxxp.png");
     edit.set_text("");
     front.copy("abc\tde");
-    edit_paste("abc de",
-        "\x57\x6d\xf5\xff\xfd\x5a\x19\xeb\xb1\x54\xc7\x61\xfc\xd4\x44\xd3\x8c\x76\x14\x34");
+    edit_paste("abc de", IMG_TEST_PATH "abcde.png");
     front.copy("fg\nhi");
-    edit_paste("abc defg",
-        "\xe9\x1a\x01\x5d\xe4\x0f\xb5\xfd\x8f\xce\xf7\x8c\x12\x97\xb9\x3f\xc7\xd0\xde\xc6");
+    edit_paste("abc defg", IMG_TEST_PATH "abcdefg.png");
     front.copy("jk\tl\nmn");
-    edit_paste("abc defgjk l",
-        "\x78\xe6\x4a\x5e\x03\x1c\xf8\x4c\x09\xb8\xb3\xba\x2a\x12\x8e\x64\xd9\xf4\x6b\xc5");
+    edit_paste("abc defgjk l", IMG_TEST_PATH "abcdefgjkl.png");
 }

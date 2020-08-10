@@ -21,7 +21,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/img_sig.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/transport/test_transport.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -32,6 +32,8 @@
 #include "test_only/gdi/test_graphic.hpp"
 
 #include <chrono>
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/protected_graphics/"
 
 namespace
 {
@@ -74,13 +76,11 @@ RED_AUTO_TEST_CASE(TestModOSD)
     Rect const rect = bmp_rect.intersect(screen_rect.cx, screen_rect.cy);
     drawable->draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x5b\xc8\x0f\x75\xcd\x3c\x87\x21\x70\xc6\x54\x20\x49\x0d\x97\xcd\x1c\xd3\x16\xf3");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_1.png");
 
     auto osd = make_osd(drawable, rect, []{RED_FAIL("refresh_rects is called");});
     osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), encode_color24()(GREEN)), screen_rect, color_cxt);
-    RED_CHECK_IMG_SIG(drawable,
-        "\xc3\x04\x1e\xd3\x82\xa8\x98\x25\x51\x50\x2b\x7f\xa8\x81\x90\x12\xbb\x11\xd8\x94");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_2.png");
 }
 
 RED_AUTO_TEST_CASE(TestModOSD2)
@@ -96,8 +96,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     Rect const rect = Rect(100, 100, 200, 200);
     drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_3.png");
 
     Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
@@ -106,8 +105,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     auto osd = make_osd(drawable, rect, []{});
     osd.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), bmp_rect.intersect(screen_rect.cx, screen_rect.cy), bmp);
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_4.png");
 }
 
 RED_AUTO_TEST_CASE(TestModOSD3)
@@ -123,8 +121,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     Rect const rect = Rect(100, 100, 200, 200);
     drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_5.png");
 
     Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
@@ -144,6 +141,5 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     auto osd = make_osd(drawable, rect, []{});
     osd.draw(bmp_data, bmp);
 
-    RED_CHECK_IMG_SIG(drawable,
-        "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_6.png");
 }

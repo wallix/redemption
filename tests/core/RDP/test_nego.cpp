@@ -99,8 +99,8 @@ RED_AUTO_TEST_CASE(TestNego)
         ;
     TestTransport logtrans(server, client);
     logtrans.set_public_key("1245789652325415"_av);
-    std::string user("Ulysse");
-    std::string domain("Ithaque");
+    auto user = "Ulysse"_av;
+    auto domain = "Ithaque"_av;
     char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
     LCGRandom rand;

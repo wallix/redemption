@@ -23,6 +23,8 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/fake_stat.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
@@ -33,7 +35,6 @@
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/ostream_buffered.hpp"

@@ -38,7 +38,11 @@ static inline std::string_view tempbase()
 {
     static const std::string base = []{
         std::string dirname;
-        char const* s = std::getenv("TMPDIR");
+        char const* s = std::getenv("TMPDIR_TEST");
+        if (!s) {
+            s = std::getenv("TMPDIR");
+        }
+
         if (s) {
             if (*s) {
                 dirname = s;

@@ -751,7 +751,6 @@ test-run tests/capture/test_capture :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
@@ -1115,7 +1114,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   $(GCOV_NO_BUILD)
@@ -1951,13 +1950,14 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/RDPDrawable.cpp
@@ -2030,6 +2030,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -2037,7 +2038,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/bitmapupdate.hpp
 ;
@@ -2778,7 +2779,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/gdi/protected_graphics.cpp
@@ -2948,7 +2949,7 @@ test-run tests/mod/internal/test_close_mod :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/close_mod.cpp
@@ -2977,6 +2978,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -2988,7 +2990,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/copy_paste.cpp
   <covfile>src/mod/internal/copy_paste.hpp
@@ -3237,7 +3239,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/test_card_mod.cpp
   <covfile>src/mod/internal/test_card_mod.hpp
@@ -3328,6 +3330,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3335,7 +3338,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/composite.cpp
   <covfile>src/mod/internal/widget/composite.hpp
@@ -3358,6 +3361,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3366,7 +3370,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/edit.cpp
   <covfile>src/mod/internal/widget/edit.hpp
@@ -3392,6 +3396,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3400,7 +3405,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/edit_valid.cpp
   <covfile>src/mod/internal/widget/edit_valid.hpp
@@ -3423,6 +3428,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3431,7 +3437,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_button.cpp
   <covfile>src/mod/internal/widget/flat_button.hpp
@@ -3469,7 +3475,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_dialog.cpp
   <covfile>src/mod/internal/widget/flat_dialog.hpp
@@ -3494,6 +3500,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3502,7 +3509,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_form.cpp
   <covfile>src/mod/internal/widget/flat_form.hpp
@@ -3530,6 +3537,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3538,7 +3546,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_interactive_target.cpp
   <covfile>src/mod/internal/widget/flat_interactive_target.hpp
@@ -3571,12 +3579,13 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
+  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_login.cpp
   <covfile>src/mod/internal/widget/flat_login.hpp
@@ -3612,7 +3621,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_wab_close.cpp
   <covfile>src/mod/internal/widget/flat_wab_close.hpp
@@ -3642,6 +3651,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -3652,7 +3662,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/flat_wait.cpp
   <covfile>src/mod/internal/widget/flat_wait.hpp
@@ -3675,6 +3685,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3683,7 +3694,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/grid.hpp
 ;
@@ -3709,6 +3720,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
@@ -3719,7 +3731,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/group_box.cpp
   <covfile>src/mod/internal/widget/group_box.hpp
@@ -3750,7 +3762,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/image.cpp
   <covfile>src/mod/internal/widget/image.hpp
@@ -3772,6 +3784,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3780,7 +3793,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/label.cpp
   <covfile>src/mod/internal/widget/label.hpp
@@ -3803,6 +3816,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -3813,7 +3827,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/labelgrid.cpp
@@ -3856,6 +3870,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3864,7 +3879,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/multiline.cpp
   <covfile>src/mod/internal/widget/multiline.hpp
@@ -3893,6 +3908,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3901,7 +3917,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/number_edit.cpp
   <covfile>src/mod/internal/widget/number_edit.hpp
@@ -3925,6 +3941,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3933,7 +3950,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/password.cpp
   <covfile>src/mod/internal/widget/password.hpp
@@ -3956,6 +3973,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3964,7 +3982,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/screen.cpp
   <covfile>src/mod/internal/widget/screen.hpp
@@ -3984,6 +4002,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/mod/internal/widget/scroll.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3992,7 +4011,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/scroll.cpp
   <covfile>src/mod/internal/widget/scroll.hpp
@@ -4019,6 +4038,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -4027,7 +4047,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/selector.cpp
   <covfile>src/mod/internal/widget/selector.hpp
@@ -4049,6 +4069,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -4057,7 +4078,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/tooltip.cpp
   <covfile>src/mod/internal/widget/tooltip.hpp
@@ -4088,6 +4109,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -4096,7 +4118,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget_rect.cpp
   <covfile>src/mod/internal/widget/widget_rect.hpp
@@ -4532,6 +4554,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -4539,7 +4562,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/vnc/encoder/zrle.cpp
@@ -5309,7 +5332,7 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/bitmap.cpp
   <covfile>src/utils/bitmap.hpp
@@ -5416,13 +5439,14 @@ test-run tests/utils/test_drawable :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/drawable.cpp
   <covfile>src/utils/drawable.hpp
@@ -5634,6 +5658,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -5641,7 +5666,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
-  <library>tests/includes/test_only/test_framework/img_sig.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/video_cropper.hpp
 ;
@@ -5810,7 +5835,7 @@ obj tests/includes/test_only/core/font.o : $(REDEMPTION_TEST_PATH)/includes/test
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/front/front_wrapper.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/front_wrapper.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/gdi/test_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
-obj tests/includes/test_only/test_framework/img_sig.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/img_sig.cpp : <variant>debug:<define>RED_COMPILE_TYPE=debug <variant>release:<define>RED_COMPILE_TYPE=release <variant>san:<define>RED_COMPILE_TYPE=san $(CXXFLAGS_TEST) ;
+obj tests/includes/test_only/test_framework/check_img.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/check_img.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/test_framework/sig.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/sig.cpp : $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/working_directory.cpp : <variant>debug:<define>RED_COMPILE_TYPE=debug <variant>release:<define>RED_COMPILE_TYPE=release <variant>san:<define>RED_COMPILE_TYPE=san $(CXXFLAGS_TEST) ;
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;

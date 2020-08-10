@@ -23,16 +23,13 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/log.hpp"
 #include "utils/timebase.hpp"
-
-#include <string>
-
 #include "core/events.hpp"
+
 
 RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
 {
-    std::string s;
+    int counter = 0;
 
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
@@ -41,25 +38,27 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     // it should be an object whose lifecycle match event functions lifecycle
     Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
-    e.actions.set_timeout_function([&s](Event&){ s += "Event Triggered"; });
+    e.actions.set_timeout_function([&counter](Event&){ ++counter; });
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
     // when it's time of above alarm is triggered
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
+    RED_CHECK(counter == 0);
     // but only once
     RED_CHECK(!e.alarm.trigger(wakeup+std::chrono::seconds(2)));
     e.actions.exec_timeout(e);
-    RED_CHECK(s == std::string("Event Triggered"));
+    RED_CHECK(counter == 1);
 
     // If I set an alarm in the past it will be triggered immediately
     e.alarm.set_timeout(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
+    RED_CHECK(counter == 1);
 }
 
 RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
 {
-    std::string s;
+    int counter = 0;
 
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
@@ -68,24 +67,28 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     // it should be an object whose lifecycle match event functions lifecycle
     Event e("Event", nullptr);
     e.alarm.set_timeout(wakeup);
-    e.actions.set_timeout_function([&s](Event&event){
+    e.actions.set_timeout_function([&counter](Event&event){
         event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
-        s += "Event Triggered";
+        ++counter;
     });
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
+    RED_CHECK(counter == 0);
     // when it's time of above alarm is triggered
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
+    RED_CHECK(counter == 0);
     e.actions.exec_timeout(e);
     // and again after period, because event reset alarm
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(2)));
+    RED_CHECK(counter == 1);
 }
 
 
 RED_AUTO_TEST_CASE(TestEventContainer)
 {
-    std::string s;
+    int counter = 0;
+
     EventContainer events;
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
@@ -93,7 +96,7 @@ RED_AUTO_TEST_CASE(TestEventContainer)
     // it should be an object whose lifecycle match event functions lifecycle
     Event * pevent = new Event("Event", nullptr);
     Event & event = * pevent;
-    event.actions.set_timeout_function([&s](Event&){ s += "Event Triggered"; });
+    event.actions.set_timeout_function([&counter](Event&){ ++counter; });
     event.alarm.set_timeout(wakeup);
     events.add(pevent);
 
@@ -102,24 +105,20 @@ RED_AUTO_TEST_CASE(TestEventContainer)
         Event & event = *pevent;
         RED_CHECK(!event.alarm.trigger(t));
     }
-    t = t + std::chrono::seconds(1);
+    t += std::chrono::seconds(1);
     for (auto & pevent: events.queue){
         Event & event = *pevent;
         RED_CHECK(!event.alarm.trigger(t));
     }
-    t = t + std::chrono::seconds(1);
+    t += std::chrono::seconds(1);
     for (auto & pevent: events.queue){
         Event & event = *pevent;
-        if (event.alarm.trigger(t)){
-            event.actions.exec_timeout(event);
-            RED_CHECK(s == std::string("Event Triggered"));
-        }
-        else {
-            RED_CHECK(false);
-        }
+        RED_CHECK(event.alarm.trigger(t));
+        event.actions.exec_timeout(event);
+        RED_CHECK(counter == 1);
     }
 
-    t = t + std::chrono::seconds(1);
+    t += std::chrono::seconds(1);
     for (auto & pevent: events.queue){
         Event & event = *pevent;
         RED_CHECK(!event.alarm.trigger(t));
@@ -145,118 +144,119 @@ RED_AUTO_TEST_CASE(TestNewEmptySequencer)
 
 RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
 {
-    struct Context {
-        size_t counter = 0;
-    } context;
+    int counter = 0;
+
     Sequencer chain = {false, 0, false, {
         { "first",
-            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            [&counter](Event&/*event*/,Sequencer&/*sequencer*/)
             {
-                context.counter = 1;
+                RED_CHECK(counter == 0);
+                counter = 1;
             }
         },
         { "second",
-            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            [&counter](Event&/*event*/,Sequencer&/*sequencer*/)
             {
-                context.counter = 2;
+                RED_CHECK(counter == 1);
+                counter = 2;
             }
         },
         { "third",
-            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            [&counter](Event&/*event*/,Sequencer&/*sequencer*/)
             {
-                context.counter = 3;
+                RED_CHECK(counter == 2);
+                counter = 3;
             }
         },
         { "fourth",
-            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            [&counter](Event&/*event*/,Sequencer&/*sequencer*/)
             {
-                context.counter = 4;
+                RED_CHECK(counter == 3);
+                counter = 4;
             }
         }
     }};
     Event e("Chain", nullptr);
     e.actions.set_timeout_function(chain);
-    RED_CHECK(context.counter == 0);
+    RED_CHECK(counter == 0);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 1);
+    RED_CHECK(counter == 1);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 2);
+    RED_CHECK(counter == 2);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 3);
+    RED_CHECK(counter == 3);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 4);
+    RED_CHECK(counter == 4);
     RED_CHECK(e.garbage == true);
 }
 
 RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
 {
-    struct Context {
-        size_t counter = 0;
-    } context;
+    int counter = 0;
 
     Sequencer chain = {false, 0, true, {
         { "first",
-            [&context](Event&/*event*/,Sequencer&sequencer)
+            [&counter](Event&/*event*/,Sequencer&sequencer)
             {
-                if (context.counter == 0){
-                    context.counter = 1;
+                if (counter == 0){
+                    counter = 1;
                     sequencer.next_state("third");
                 }
                 else {
-                    context.counter = 10;
+                    RED_CHECK(counter == 2);
+                    counter = 10;
                     sequencer.next_state("fourth");
                 }
             }
         },
         { "second",
-            [&context](Event&/*event*/,Sequencer&sequencer)
+            [&counter](Event&/*event*/,Sequencer&sequencer)
             {
-                context.counter = 2;
+                RED_CHECK(counter == 3);
+                counter = 2;
                 sequencer.next_state("first");
             }
         },
         { "third",
-            [&context](Event&/*event*/,Sequencer&sequencer)
+            [&counter](Event&/*event*/,Sequencer&sequencer)
             {
-                context.counter = 3;
+                RED_CHECK(counter == 1);
+                counter = 3;
                 sequencer.next_state("second");
             }
         },
         { "fourth",
-            [&context](Event&/*event*/,Sequencer&/*sequencer*/)
+            [&counter](Event&/*event*/,Sequencer&/*sequencer*/)
             {
-                context.counter = 4;
+                RED_CHECK(counter == 10);
+                counter = 4;
             }
         }
     }};
     Event e("Chain", nullptr);
     e.actions.set_timeout_function(chain);
-    RED_CHECK(context.counter == 0);
+    RED_CHECK(counter == 0);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 1);
+    RED_CHECK(counter == 1);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 3);
+    RED_CHECK(counter == 3);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 2);
+    RED_CHECK(counter == 2);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 10);
+    RED_CHECK(counter == 10);
     e.actions.exec_timeout(e);
-    RED_CHECK(context.counter == 4);
+    RED_CHECK(counter == 4);
     RED_CHECK(e.garbage == true);
 }
 
 
 RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
 {
-
-    struct Base {
-        virtual void action() = 0;
-        virtual ~Base() {}
-    };
-
-    struct Context : public Base {
+    struct Context {
         EventContainer & events;
         TimeBase & time_base;
+        int counter1 = 0;
+        int counter2 = 0;
 
         Context(EventContainer & events, TimeBase & time_base) : events(events), time_base(time_base)
         {
@@ -265,23 +265,17 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
                 this->time_base.get_current_time(),
                 [this](Event&event)
                 {
-                    LOG(LOG_INFO, "Execute Event");
                     // Following fd timeouts
                     event.rename("VNC Fd Event");
                     event.alarm.set_fd(1, std::chrono::seconds{300});
                     event.alarm.set_timeout(this->time_base.get_current_time());
-                    event.actions.set_timeout_function([](Event&/*event*/){LOG(LOG_INFO, "Timeout");});
-                    event.actions.set_action_function([this](Event&/*event*/){ this->action();});
+                    event.actions.set_timeout_function([this](Event&/*event*/){ ++this->counter2; });
+                    event.actions.set_action_function([this](Event&/*event*/){ ++this->counter1; });
                 });
         }
 
         ~Context() {
             this->events.end_of_lifespan(this);
-        }
-
-        void action() override {
-            LOG(LOG_INFO, "Action");
-            return;
         }
     };
 
@@ -289,61 +283,17 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
     EventContainer events;
 
     Context context(events, time_base);
-    LOG(LOG_INFO, "Will Execute Event");
     events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    RED_CHECK(context.counter1 == 0);
+    RED_CHECK(context.counter2 == 0);
     events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    RED_CHECK(context.counter1 == 0);
+    RED_CHECK(context.counter2 == 1);
     time_base.set_current_time({3,0});
     events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    RED_CHECK(context.counter1 == 0);
+    RED_CHECK(context.counter2 == 1);
     events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, 2);
+    RED_CHECK(context.counter1 == 1);
+    RED_CHECK(context.counter2 == 1);
 }
-
-RED_AUTO_TEST_CASE(TestChangeOfRunningAction2)
-{
-
-    struct Event {
-        struct Data {
-            int val = 0;
-            void set_data(int val) {this->val = val; }
-        } data;
-
-        struct Actions {
-            std::function<void(Event &)> action1 = [](Event &){};
-            std::function<void(Event &)> future_action1 = [](Event &){};
-            std::function<void(Event &)> action2 = [](Event &){};
-        } actions;
-    };
-
-    struct Object {
-        int val = 0;
-    };
-
-    struct Base {
-        virtual void action() = 0;
-        virtual ~Base() {}
-    };
-
-    struct Context : public Base {
-        Event & event;
-        Object & val;
-
-        Context(Event & event, Object & val) : event(event), val(val)
-        {
-            event.data.set_data(this->val.val);
-            event.actions.action1 = [this](Event&event)
-            {
-                event.data.set_data(this->val.val);
-                event.actions.future_action1 = [](Event&/*event*/){puts("action1");};
-                event.actions.action2 = [this](Event&/*event*/){ this->action();};
-            };
-        }
-        void action() override { puts("action2"); return; }
-    };
-
-    Object val;
-    Event event;
-    Context context(event, val);
-    event.actions.action1(event);
-    event.actions.action1 = std::move(event.actions.future_action1);
-    event.actions.action2(event);
-}
-

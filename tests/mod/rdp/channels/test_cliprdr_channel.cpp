@@ -683,16 +683,6 @@ namespace
         Buffer() {}
 
         template<class F>
-        bytes_view build(uint16_t msgType, uint16_t msgFlags, F f, uint32_t data_len) &
-        {
-            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
-            f(this->out);
-            OutStream stream_header(av);
-            RDPECLIP::CliprdrHeader(msgType, msgFlags, data_len).emit(stream_header);
-            return out.get_produced_bytes();
-        }
-
-        template<class F>
         bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
         {
             auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());

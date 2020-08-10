@@ -20,14 +20,16 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/flat_form.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/form/"
 
 RED_AUTO_TEST_CASE(TestFlatForm)
 {
@@ -53,5 +55,5 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
     // drawable.save_to_png("ticket_form.png");
 
-    RED_CHECK_IMG_SIG(drawable, "\x81\x01\x09\x20\x44\x48\x48\xeb\xb4\x83\x0f\xd5\x66\xb9\x34\x49\xcd\xf5\x25\x57");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "form_1.png");
 }

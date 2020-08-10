@@ -309,19 +309,22 @@ int wrmcapture_write_meta_file(
 
 RED_AUTO_TEST_CASE(TestWriteFilename)
 {
-    auto wrmcapture_write_filename = [](char const * filename) {
-        struct stat st;
-        FakeFstat().stat("", st);
+    struct FilenameWriter
+    {
         MwrmWriterBuf mwrm_buf;
         MwrmWriterBuf::HashArray dummy_hash;
-        mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
-        auto buf = mwrm_buf.buffer();
-        return std::string{byte_ptr(buf.data()), buf.size()};
+
+        FilenameWriter(char const* filename)
+        {
+            struct stat st;
+            FakeFstat().stat("", st);
+            this->mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
+        }
     };
 
-#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)    \
-    RED_CHECK_EQUAL(wrmcapture_write_filename(origin_filename), \
-    wrote_filename " 0 0 0 0 0 0 0 0 0 0\n")                    \
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)   \
+    RED_TEST(FilenameWriter(origin_filename).mwrm_buf.buffer() \
+        == wrote_filename " 0 0 0 0 0 0 0 0 0 0\n"_av)
 
     TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
 

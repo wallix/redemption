@@ -361,7 +361,12 @@ namespace std /*NOLINT*/
 #endif
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)
+# define RED_TEST_DELEGATE_PRINT_II(a, b) \
+    [[maybe_unused]] inline int a##b = 0
+# define RED_TEST_DELEGATE_PRINT_I(type, stream_expr) \
+    RED_TEST_DELEGATE_PRINT_II(a, b)
+# define RED_TEST_DELEGATE_PRINT(type, stream_expr) \
+    RED_TEST_DELEGATE_PRINT_II(delegate_print_unused_, __LINE__)
 #else
 #define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
   template<>                                                \

@@ -23,6 +23,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/data_test_case.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
@@ -30,9 +31,10 @@
 #include "utils/drawable.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
-#include "test_only/test_framework/img_sig.hpp"
 
 #include <array>
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/utils/bitmap/"
 
 
 RED_AUTO_TEST_CASE(TestBitmapCompress)
@@ -3488,7 +3490,7 @@ RED_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
     Drawable gd(368, 10);
     gd.mem_blt(Rect(0, 0, 368, 10), bmp2, 0, 0);
 
-    RED_CHECK_IMG_SIG(gd, "\x2c\xcf\xe2\xe1\x02\x36\x69\x2d\x14\x10\x71\x99\xc7\x35\x1a\x2f\x2a\xb2\x53\x27");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "bogus_RLE_decompression_1.png");
 }
 
 
@@ -3605,7 +3607,6 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
     Bitmap bmp24(BitsPerPixel{24}, BitsPerPixel{24}, &palette332, 4, 5, raw24, sizeof(raw24));
 
 
-
     RED_CHECK_EQUAL(bmp24.bpp(), BitsPerPixel{24});
 
     Bitmap bmp_24_to_32(BitsPerPixel{32}, bmp24);
@@ -3632,45 +3633,133 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
     Bitmap bmp_8_to_15(BitsPerPixel{15}, bmp_24_to_8);
     Bitmap bmp_8_to_8(BitsPerPixel{8}, bmp_24_to_8);
 
-    RED_CHECK_IMG_SIG(bmp_24_to_24, "\xaa\x33\x05\x87\x63\x66\xc0\x9d\x89\x78\x00\xe7\x9b\x8f\x09\x2e\xbf\x06\x64\x74");
-    RED_CHECK_IMG_SIG(bmp_24_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
-    RED_CHECK_IMG_SIG(bmp_24_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
-    RED_CHECK_IMG_SIG(bmp_24_to_8,  "\x11\xd8\xea\xb2\x44\x64\xd9\x96\x4d\xac\x2c\xb5\xfa\xdd\xa1\x2b\xa9\x65\x2b\xb7");
+    const auto storage = ConstImageDataView::Storage::BottomToTop;
+#define TEST_BITMAP(bmp, img_view) [&](ConstImageDataView ref) {   \
+    RED_TEST(int(bmp.bpp()) == int(ref.bits_per_pixel()));         \
+    RED_TEST(bmp.cx() == int(ref.width()));                        \
+    RED_TEST(bmp.cy() == int(ref.height()));                       \
+    RED_TEST(bmp.line_size() == ref.line_size());                  \
+    RED_TEST(bytes_view(bmp.data(), bmp.line_size() * bmp.cy()) == \
+             ut::hex(bytes_view(ref.data(), ref.end_data())));     \
+}(img_view)
 
-    RED_CHECK_IMG_SIG(bmp_16_to_24, "\xfc\x0b\xbd\xe2\x01\x89\x05\x96\x88\xc2\x13\xd1\xb6\x14\xe9\x85\xf6\xa3\x5a\xd4");
-    RED_CHECK_IMG_SIG(bmp_16_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
-    RED_CHECK_IMG_SIG(bmp_16_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
-    RED_CHECK_IMG_SIG(bmp_16_to_8,  "\x11\xd8\xea\xb2\x44\x64\xd9\x96\x4d\xac\x2c\xb5\xfa\xdd\xa1\x2b\xa9\x65\x2b\xb7");
+    TEST_BITMAP(bmp_24_to_24, ConstImageDataView(
+        byte_ptr_cast(
+            "\x22\x17\x48\xc7\xcd\xc4\xad\xf8\x61\x6f\x32\xd6\x13\x61\xee"
+            "\xb2\x7b\x81\x0f\x66\x22\x17\x48\xc7\xcd\xc4\xad\xf8\x61\x6f"
+            "\x32\xd6\x13\x61\xee\xb2\x7b\x81\x0f\x66\x22\x17\x48\xc7\xcd"
+            "\xc4\xad\xf8\x61\x6f\x32\xd6\x13\x61\xee\xb2\x7b\x81\x0f\x66"),
+        4, 5, 12, BitsPerPixel(24), storage));
+    TEST_BITMAP(bmp_24_to_16, ConstImageDataView(
+        byte_ptr_cast(
+            "\xa4\x48\x78\xc6\xd5\x67\x8d\xd1\x02\xeb"
+            "\xd6\x83\x21\x23\x42\xc2\x39\xae\x1f\x6b"
+            "\xa6\x16\x6c\xb7\x0f\x0c\x0c\x11\x29\xce"
+            "\x78\xfd\x6c\x33\x9a\x60\x9d\x7d\x70\x60"),
+        4, 5, 8, BitsPerPixel(16), storage));
+    TEST_BITMAP(bmp_24_to_15, ConstImageDataView(
+        byte_ptr_cast(
+            "\x44\x24\x38\x63\xf5\x33\xcd\x68\x82\x75"
+            "\xf6\x41\x81\x11\x22\x61\x19\x57\x9f\x35"
+            "\x46\x0b\xac\x5b\x0f\x06\x8c\x08\x09\x67"
+            "\xb8\x7e\xac\x19\x5a\x30\xdd\x3e\x30\x30"),
+        4, 5, 8, BitsPerPixel(15), storage));
+    TEST_BITMAP(bmp_24_to_8,  ConstImageDataView(
+        byte_ptr_cast(
+            "\x40\xdb\x7e\xc5\xec"
+            "\x8e\x2c\xc8\xbb\x6f"
+            "\x18\xbd\x11\x05\xd9"
+            "\xf7\x2d\x63\x77\x62"),
+        4, 5, 4, BitsPerPixel(8), storage));
 
-    RED_CHECK_IMG_SIG(bmp_15_to_24, "\xe9\x84\xe3\x49\x01\x2c\x2e\xff\xf0\x60\x6b\x18\x14\xce\x54\x8f\x2a\xae\x9a\x22");
-    RED_CHECK_IMG_SIG(bmp_15_to_16, "\x69\xb9\x98\x9d\x6e\xd6\x7d\xc1\xd0\x0e\x8b\x58\xaa\x6a\x6e\x8c\xa6\xc4\xe4\x2b");
-    RED_CHECK_IMG_SIG(bmp_15_to_15, "\x54\x2e\xb3\x9e\xde\x5b\x21\x9f\xb8\xd1\x9a\x58\xc1\xd0\x93\xa3\xa0\x46\x87\x36");
-    RED_CHECK_IMG_SIG(bmp_15_to_8,  "\x11\xd8\xea\xb2\x44\x64\xd9\x96\x4d\xac\x2c\xb5\xfa\xdd\xa1\x2b\xa9\x65\x2b\xb7");
+    TEST_BITMAP(bmp_16_to_24, ConstImageDataView(
+        byte_ptr_cast(
+            "\x21\x14\x4a\xc6\xcf\xc6\xad\xfb\x63\x6b\x30\xd6\x10\x61\xef"
+            "\xb5\x79\x84\x08\x65\x21\x10\x49\xc6\xce\xc7\xad\xff\x61\x6b"
+            "\x31\xd7\x10\x63\xef\xb5\x7b\x82\x08\x63\x20\x10\x4a\xc7\xce"
+            "\xc6\xae\xff\x63\x6d\x31\xd6\x10\x63\xef\xb2\x7b\x84\x0c\x63"),
+        4, 5, 12, BitsPerPixel(24), storage));
+    TEST_BITMAP(bmp_16_to_16, ConstImageDataView(
+        byte_ptr_cast(
+            "\xa4\x48\x78\xc6\xd5\x67\x8d\xd1\x02\xeb"
+            "\xd6\x83\x21\x23\x42\xc2\x39\xae\x1f\x6b"
+            "\xa6\x16\x6c\xb7\x0f\x0c\x0c\x11\x29\xce"
+            "\x78\xfd\x6c\x33\x9a\x60\x9d\x7d\x70\x60"),
+        4, 5, 8, BitsPerPixel(16), storage));
+    TEST_BITMAP(bmp_16_to_15, ConstImageDataView(
+        byte_ptr_cast(
+            "\x44\x24\x38\x63\xf5\x33\xcd\x68\x82\x75"
+            "\xf6\x41\x81\x11\x22\x61\x19\x57\x9f\x35"
+            "\x46\x0b\xac\x5b\x0f\x06\x8c\x08\x09\x67"
+            "\xb8\x7e\xac\x19\x5a\x30\xdd\x3e\x30\x30"),
+        4, 5, 8, BitsPerPixel(15), storage));
+    TEST_BITMAP(bmp_16_to_8,  ConstImageDataView(
+        byte_ptr_cast(
+            "\x40\xdb\x7e\xc5\xec"
+            "\x8e\x2c\xc8\xbb\x6f"
+            "\x18\xbd\x11\x05\xd9"
+            "\xf7\x2d\x63\x77\x62"),
+        4, 5, 4, BitsPerPixel(8), storage));
 
-    RED_CHECK_IMG_SIG(bmp_8_to_24,  "\x1e\xaf\x8c\x71\x43\x3d\xe7\x26\x6f\x4e\xb1\x14\x51\x73\x3f\x38\x0f\x9e\x12\xa1");
-    RED_CHECK_IMG_SIG(bmp_8_to_16,  "\xc0\x3d\x2b\x53\x72\x85\xfb\x9c\x7f\x11\xa9\x3e\x8d\x63\xaa\xc6\xdc\x05\x6b\xa1");
-    RED_CHECK_IMG_SIG(bmp_8_to_15,  "\xda\xd9\xdc\x15\xf7\x39\x50\x4a\x60\xdd\xde\xc6\x92\x12\xcb\x77\xc9\x85\x6c\x42");
-    RED_CHECK_IMG_SIG(bmp_8_to_8,   "\x11\xd8\xea\xb2\x44\x64\xd9\x96\x4d\xac\x2c\xb5\xfa\xdd\xa1\x2b\xa9\x65\x2b\xb7");
+    TEST_BITMAP(bmp_15_to_24, ConstImageDataView(
+        byte_ptr_cast(
+            "\x21\x10\x4a\xc6\xce\xc6\xad\xff\x63\x6b\x31\xd6\x10\x63\xef"
+            "\xb5\x7b\x84\x08\x63\x21\x10\x4a\xc6\xce\xc6\xad\xff\x63\x6b"
+            "\x31\xd6\x10\x63\xef\xb5\x7b\x84\x08\x63\x21\x10\x4a\xc6\xce"
+            "\xc6\xad\xff\x63\x6b\x31\xd6\x10\x63\xef\xb5\x7b\x84\x08\x63"),
+        4, 5, 12, BitsPerPixel(24), storage));
+    TEST_BITMAP(bmp_15_to_16, ConstImageDataView(
+        byte_ptr_cast(
+            "\x84\x48\x78\xc6\xf5\x67\x8d\xd1\x02\xeb"
+            "\xd6\x83\x01\x23\x42\xc2\x39\xae\x1f\x6b"
+            "\xa6\x16\x6c\xb7\x2f\x0c\x0c\x11\x29\xce"
+            "\x78\xfd\x4c\x33\x9a\x60\xbd\x7d\x50\x60"),
+        4, 5, 8, BitsPerPixel(16), storage));
+    TEST_BITMAP(bmp_15_to_15, ConstImageDataView(
+        byte_ptr_cast(
+            "\x44\x24\x38\x63\xf5\x33\xcd\x68\x82\x75"
+            "\xf6\x41\x81\x11\x22\x61\x19\x57\x9f\x35"
+            "\x46\x0b\xac\x5b\x0f\x06\x8c\x08\x09\x67"
+            "\xb8\x7e\xac\x19\x5a\x30\xdd\x3e\x30\x30"),
+        4, 5, 8, BitsPerPixel(15), storage));
+    TEST_BITMAP(bmp_15_to_8,  ConstImageDataView(
+        byte_ptr_cast(
+            "\x40\xdb\x7e\xc5\xec"
+            "\x8e\x2c\xc8\xbb\x6f"
+            "\x18\xbd\x11\x05\xd9"
+            "\xf7\x2d\x63\x77\x62"),
+        4, 5, 4, BitsPerPixel(8), storage));
 
-    //dump_png("/tmp/rawdisk/24_24.png", bmp_24_to_24);
-    //dump_png("/tmp/rawdisk/24_16.png", bmp_24_to_16);
-    //dump_png("/tmp/rawdisk/24_15.png", bmp_24_to_15);
-    //dump_png("/tmp/rawdisk/24_8.png", bmp_24_to_8);
+    TEST_BITMAP(bmp_8_to_24,  ConstImageDataView(
+        byte_ptr_cast(
+            "\x49\x00\x00\xdb\xdb\xff\x6d\xff\xaa\xdb\x24\x55\xff\x6d\x00"
+            "\x92\x6d\xaa\x24\x6d\x00\xdb\x49\x00\xb6\xdb\xff\x6d\x6d\xff"
+            "\x00\xdb\x00\xb6\xff\x55\x00\x92\x55\x00\x24\x55\xdb\xdb\x55"
+            "\xff\xb6\xff\x24\x6d\x55\x6d\x00\xff\x6d\xb6\xff\x6d\x00\xaa"),
+        4, 5, 12, BitsPerPixel(24), storage));
+    TEST_BITMAP(bmp_8_to_16,  ConstImageDataView(
+        byte_ptr_cast(
+            "\x09\x00\xdb\xfe\xed\xaf\x3b\x51\x7f\x03"
+            "\x72\xab\x64\x03\x5b\x02\xd6\xfe\x6d\xfb"
+            "\xc0\x06\xf6\x57\x80\x54\x20\x51\xdb\x56"
+            "\xbf\xfd\x64\x53\x0d\xf8\xad\xfd\x0d\xa8"),
+        4, 5, 8, BitsPerPixel(16), storage));
+    TEST_BITMAP(bmp_8_to_15,  ConstImageDataView(
+        byte_ptr_cast(
+            "\x09\x00\x7b\x7f\xed\x57\x9b\x28\xbf\x01"
+            "\xb2\x55\xa4\x01\x3b\x01\x76\x7f\xad\x7d"
+            "\x60\x03\xf6\x2b\x40\x2a\x80\x28\x7b\x2b"
+            "\xdf\x7e\xa4\x29\x0d\x7c\xcd\x7e\x0d\x54"),
+        4, 5, 8, BitsPerPixel(15), storage));
+    TEST_BITMAP(bmp_8_to_8,   ConstImageDataView(
+        byte_ptr_cast(
+            "\x40\xdb\x7e\xc5\xec"
+            "\x8e\x2c\xc8\xbb\x6f"
+            "\x18\xbd\x11\x05\xd9"
+            "\xf7\x2d\x63\x77\x62"),
+        4, 5, 4, BitsPerPixel(8), storage));
 
-    //dump_png("/tmp/rawdisk/16_24.png", bmp_16_to_24);
-    //dump_png("/tmp/rawdisk/16_16.png", bmp_16_to_16);
-    //dump_png("/tmp/rawdisk/16_15.png", bmp_16_to_15);
-    //dump_png("/tmp/rawdisk/16_8.png", bmp_16_to_8);
-
-    //dump_png("/tmp/rawdisk/15_24.png", bmp_15_to_24);
-    //dump_png("/tmp/rawdisk/15_16.png", bmp_15_to_16);
-    //dump_png("/tmp/rawdisk/15_15.png", bmp_15_to_15);
-    //dump_png("/tmp/rawdisk/15_8.png", bmp_15_to_8);
-
-    //dump_png("/tmp/rawdisk/8_24.png", bmp_8_to_24);
-    //dump_png("/tmp/rawdisk/8_16.png", bmp_8_to_16);
-    //dump_png("/tmp/rawdisk/8_15.png", bmp_8_to_15);
-    //dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
+#undef TEST_BITMAP
 }
 
 static int rle_bin_to_run_order(
@@ -5358,9 +5447,7 @@ RED_AUTO_TEST_CASE(TestBitmapConv)
 
     gd.mem_blt(Rect(10, 10, bitmap_2.cx(), bitmap_2.cx()), bitmap_2, 0, 0);
 
-    RED_CHECK_IMG_SIG(gd, "\x8d\xa7\x35\x7d\x14\x71\xe7\xc9\x8e\xfa\xf5\xaa\xbc\x22\x75\xaf\x40\xcf\x81\x65");
-
-    // dump_png24("testbitmapconv.png", gd);
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "bitmap_conv.png");
 }
 
 RED_AUTO_TEST_CASE(TestRM18446Bitmap)

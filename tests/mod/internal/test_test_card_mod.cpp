@@ -20,12 +20,14 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/test_card_mod.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
-#include "test_only/test_framework/img_sig.hpp"
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/test_card_mod/"
 
 RED_AUTO_TEST_CASE(TestTestCardMod)
 {
@@ -34,9 +36,6 @@ RED_AUTO_TEST_CASE(TestTestCardMod)
     TestGraphic gd(width, height);
     GdForwarder gd_forwarder(gd);
     TestCardMod mod(gd_forwarder, width, height, global_font());
-    //dump_png24("./test_test_card_mod_0.png", ConstImageDataView(gd), true);
     RED_CHECK_NO_THROW(mod.init());
-    //dump_png24("./test_test_card_mod_1.png", ConstImageDataView(gd), true);
-    RED_CHECK_IMG_SIG(gd,
-        "\x6e\x92\x26\x65\xbf\xd5\x18\xb7\x03\xe5\x97\xce\xf9\xa2\x12\xee\x4b\xac\xf1\x71");
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "card_mod_1.png");
 }

@@ -22,6 +22,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
@@ -35,7 +36,6 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 
-#include "test_only/test_framework/img_sig.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -145,7 +145,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
         front.gd(), front, info, redir_info, gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini, nullptr, nullptr, mod_rdp_factory);
+        channels_authorizations, mod_rdp_params, tls_client_params,
+        license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
@@ -162,6 +163,5 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     RED_CHECK_EQ(count, n);
 
-    RED_CHECK_IMG_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
-    //front.dump_png("trace_wab_");
+    RED_CHECK_IMG(front, FIXTURES_PATH "/img_ref/client_mods/client_wab.png");
 }
