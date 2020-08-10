@@ -232,6 +232,7 @@ cfg::mod_rdp::mode_console ⇐ mod_rdp:mode_console   [RdpModeConsole]
       allow: Forward Console mode request from client to the target.
       force: Force Console mode on target regardless of client request.
       forbid: Block Console mode request from client.
+cfg::mod_rdp::auto_reconnection_on_losing_target_link ⇐ mod_rdp:auto_reconnection_on_losing_target_link   [bool]
 
 cfg::mod_vnc::clipboard_up ⇐ clipboard_up   [bool]
     Enable or disable the clipboard from client (client to server).

@@ -102,6 +102,8 @@ public:
     void rdp_input_invalidate(Rect r) override { (void) r; }
 
     void refresh(Rect clip) override { (void) clip; }
+
+    bool server_error_encountered() const { return false; }
 };
 
 

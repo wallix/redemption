@@ -1948,6 +1948,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     bool mcs_disconnect_provider_ultimatum_pdu_received = false;
     bool errinfo_graphics_subsystem_failed_encountered  = false;
+    bool errinfo_encountered                            = false;
 
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
@@ -3111,7 +3112,9 @@ public:
                                 LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                     LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                 uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
+                                this->errinfo_encountered = (0 != error_info);
                                 this->process_error_info(error_info);
+
                                 if (error_info == ERRINFO_SERVER_DENIED_CONNECTION) {
                                     str_append(
                                         this->close_box_extra_message_ref, ' ',
@@ -3356,9 +3359,11 @@ public:
                                         LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                             LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                         uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
+                                        this->errinfo_encountered = (0 != error_info);
                                         this->process_error_info(error_info);
 
-                                        if (ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info)
+                                        if (   (ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info)
+                                            && this->is_server_auto_reconnec_packet_received)
                                         {
                                             this->errinfo_graphics_subsystem_failed_encountered = true;
                                             throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
@@ -6168,13 +6173,19 @@ public:
     [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->negociation_result.front_width, this->negociation_result.front_height); }
 
-    bool is_auto_reconnectable() override {
+    bool is_auto_reconnectable() const override {
         return this->is_server_auto_reconnec_packet_received
             && this->is_up_and_running()
+            && !this->mcs_disconnect_provider_ultimatum_pdu_received
 #ifndef __EMSCRIPTEN__
             && (!this->channels.session_probe.session_probe_launcher || this->channels.session_probe.session_probe_launcher->is_stopped())
 #endif
             ;
+    }
+
+    bool server_error_encountered() const override
+    {
+        return this->errinfo_encountered;
     }
 
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,

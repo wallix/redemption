@@ -51,7 +51,9 @@ public:
     virtual void init() {}
 
     // support auto-reconnection
-    virtual bool is_auto_reconnectable() { return false; }
+    virtual bool is_auto_reconnectable() const { return false; }
+
+    virtual bool server_error_encountered() const = 0;
 
     virtual void disconnect() {}
 

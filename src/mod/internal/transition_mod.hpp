@@ -144,6 +144,8 @@ public:
 
     [[nodiscard]] bool is_up_and_running() const override { return true; }
 
+    bool server_error_encountered() const override { return false; }
+
     void init() override;
 
     void rdp_gdi_up_and_running() override {}

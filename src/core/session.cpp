@@ -241,7 +241,7 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 private:
-    int end_session_exception(Error const& e, Inifile & ini)
+    int end_session_exception(Error const& e, Inifile & ini, const ModWrapper & mod_wrapper)
     {
         if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
             ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
@@ -324,6 +324,23 @@ private:
             LOG(LOG_INFO, "Acl confirmed user close");
             return 1;
         }
+        else if (   (e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
+                 && mod_wrapper.get_mod_transport()
+                 && mod_wrapper.get_mod_transport()->sck == e.data
+                 && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
+                 && mod_wrapper.get_mod()->is_auto_reconnectable()
+                 && !mod_wrapper.get_mod()->server_error_encountered()) {
+            LOG(LOG_INFO, "Session::end_session_exception: target link exception. %s",
+                ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA");
+            return 2;
+        }
+
+LOG(LOG_INFO, "ModTrans=<%p> Sock=%d AutoReconnection=%s AutoReconnectable=%s ErrorEncountered=%s", mod_wrapper.get_mod_transport(),
+    (mod_wrapper.get_mod_transport() ? mod_wrapper.get_mod_transport()->sck : -1),
+    (ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>() ? "Yes" : "No"),
+    (mod_wrapper.get_mod()->is_auto_reconnectable() ? "Yes" : "No"),
+    (mod_wrapper.get_mod()->server_error_encountered() ? "Yes" : "No")
+    );
 
         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
         return 1;
@@ -579,7 +596,6 @@ private:
         }
     }
 
-
     // This function takes care of outgoing data waiting in buffers
     // happening because system write buffer is full and immediate send failed
     // hopefully it should be a rare case
@@ -624,6 +640,39 @@ private:
             // if the select stopped on timeout or EINTR we will give a try to reading
         }
         return false;
+    }
+
+    void retry_rdp(AclSerializer & acl_serial, ClientExecute & rail_client_execute, Front & front, ModWrapper & mod_wrapper, ModFactory & mod_factory, Sesman & sesman)
+    {
+        LOG(LOG_INFO, "Retry RDP");
+        acl_serial.remote_answer = false;
+
+        rail_client_execute.enable_remote_program(front.client_info.remote_program);
+        log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+
+        auto next_state = MODULE_RDP;
+        try {
+            this->new_mod(next_state, mod_wrapper, mod_factory, front);
+
+            if (ini.get<cfg::globals::bogus_refresh_rect>() &&
+                ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                (front.client_info.cs_monitor.monitorCount > 1)) {
+                mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                    front.client_info.screen_info.width, front.client_info.screen_info.height);
+            }
+            mod_wrapper.get_mod()->rdp_input_invalidate(
+                    Rect(0, 0,
+                        front.client_info.screen_info.width,
+                        front.client_info.screen_info.height));
+            ini.set<cfg::context::auth_error_message>("");
+        }
+        catch (...) {
+            sesman.log6(LogId::SESSION_CREATION_FAILED, {});
+            front.must_be_stop_capture();
+
+            throw;
+        }
     }
 
 public:
@@ -790,6 +839,23 @@ public:
                         this->front_incoming_data(front_trans, front, mod_wrapper);
                     }
                 } catch (Error const& e) {
+                    if (ERR_TRANSPORT_WRITE_FAILED == e.id || ERR_TRANSPORT_NO_MORE_DATA == e.id)
+                    {
+                        SocketTransport* socket_transport_ptr = mod_wrapper.get_mod_transport();
+
+                        if (   socket_transport_ptr && (e.data == socket_transport_ptr->sck)
+                            && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
+                            && mod_wrapper.get_mod()->is_auto_reconnectable()
+                            && !mod_wrapper.get_mod()->server_error_encountered())
+                        {
+                            LOG(LOG_INFO, "Session::Session: target link exception. %s",
+                                (ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA"));
+
+                            retry_rdp(acl_serial, rail_client_execute, front, mod_wrapper, mod_factory, sesman);
+                            continue;
+                        }
+                    }
+
                     // RemoteApp disconnection initiated by user
                     // ERR_DISCONNECT_BY_USER == e.id
                     if (
@@ -1102,7 +1168,7 @@ public:
                         continue;
                     }
 
-                    switch (end_session_exception(e, ini)){
+                    switch (end_session_exception(e, ini, mod_wrapper)){
                     case 0: // End of session loop
                     break;
                     case 1: // Close Box
@@ -1147,35 +1213,8 @@ public:
 
                     REDEMPTION_CXX_FALLTHROUGH;
                     case 2: // TODO: should we put some counter to avoid retrying indefinitely?
-                        LOG(LOG_INFO, "Retry RDP");
-                        acl_serial.remote_answer = false;
+                        retry_rdp(acl_serial, rail_client_execute, front, mod_wrapper, mod_factory, sesman);
 
-                        rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                        log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-
-                        auto next_state = MODULE_RDP;
-                        try {
-                            this->new_mod(next_state, mod_wrapper, mod_factory, front);
-
-                            if (ini.get<cfg::globals::bogus_refresh_rect>() &&
-                                ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                                (front.client_info.cs_monitor.monitorCount > 1)) {
-                                mod_wrapper.get_mod()->rdp_suppress_display_updates();
-                                mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                                    front.client_info.screen_info.width, front.client_info.screen_info.height);
-                            }
-                            mod_wrapper.get_mod()->rdp_input_invalidate(
-                                    Rect(0, 0,
-                                        front.client_info.screen_info.width,
-                                        front.client_info.screen_info.height));
-                            ini.set<cfg::context::auth_error_message>("");
-                        }
-                        catch (...) {
-                            sesman.log6(LogId::SESSION_CREATION_FAILED, {});
-                            front.must_be_stop_capture();
-
-                            throw;
-                        }
                         run_session = true;
                     break;
                     }

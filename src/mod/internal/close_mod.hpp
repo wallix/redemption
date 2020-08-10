@@ -70,6 +70,8 @@ public:
 
     [[nodiscard]] bool is_up_and_running() const override { return true; }
 
+    bool server_error_encountered() const override { return false; }
+
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         this->close_widget.move_size_widget(left, top, width, height);

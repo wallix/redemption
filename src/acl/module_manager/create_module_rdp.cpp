@@ -39,6 +39,7 @@
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/genfstat.hpp"
 #include "acl/mod_pack.hpp"
+#include "transport/failure_simulation_socket_transport.hpp"
 
 namespace
 {
@@ -189,7 +190,7 @@ struct RdpData
 class ModRDPWithSocketAndMetrics final : public mod_api
 {
 public:
-    SocketTransport socket_transport;
+    std::unique_ptr<SocketTransport> socket_transport_ptr;
     ModRdpFactory rdp_factory;
     AuthApi & sesman;
     mod_rdp mod;
@@ -249,15 +250,42 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
       , [[maybe_unused]] FileValidatorService * file_validator_service
+      , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
         )
-    : socket_transport( name, std::move(sck)
-                     , ini.get<cfg::context::target_host>().c_str()
-                     , ini.get<cfg::context::target_port>()
-                     , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
-                     , to_verbose_flags(verbose), error_message)
+    : socket_transport_ptr([](  ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
+                              , const char * name, unique_fd sck
+                              , const char *ip_address, int port, std::chrono::milliseconds recv_timeout
+                              , uint32_t verbose, std::string * error_message) -> SocketTransport*
+        {
+            if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport)
+            {
+                return new SocketTransport(  name, std::move(sck)
+                                           , ip_address
+                                           , port
+                                           , recv_timeout
+                                           , to_verbose_flags(verbose)
+                                           , error_message);
+            }
 
+            LOG(LOG_WARNING, "ModRDPWithSocketAndMetrics::ModRDPWithSocketAndMetrics: Mod_rdp use Failure Simulation Socket Transport (mode=%s)",
+                (  ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport
+                 ? "SimulateErrorRead" : "SimulateErrorWrite"));
+
+            return new FailureSimulationSocketTransport(
+                  ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport
+                , name, std::move(sck)
+                , ip_address
+                , port
+                , recv_timeout
+                , to_verbose_flags(verbose)
+                , error_message);
+        }(  use_failure_simulation_socket_transport, name, std::move(sck)
+          , ini.get<cfg::context::target_host>().c_str()
+          , ini.get<cfg::context::target_port>()
+          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
+          , verbose, error_message))
     , sesman(sesman)
-    , mod(this->socket_transport, time_base, mod_wrapper, events
+    , mod(*this->socket_transport_ptr, time_base, mod_wrapper, events
         , sesman,gd, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
@@ -326,8 +354,12 @@ public:
 
     // from mod_api
     // support auto-reconnection
-    bool is_auto_reconnectable() override {
+    bool is_auto_reconnectable() const override {
         return this->mod.is_auto_reconnectable();
+    }
+
+    bool server_error_encountered() const override {
+        return this->mod.server_error_encountered();
     }
 
     // from mod_api
@@ -959,7 +991,8 @@ ModPack create_mod_rdp(
         file_system_license_store,
         ini,
         enable_metrics ? &metrics->protocol_metrics : nullptr,
-        enable_validator ? &file_validator->service : nullptr
+        enable_validator ? &file_validator->service : nullptr,
+        ini.get<cfg::debug::mod_rdp_use_failure_simulation_socket_transport>()
     );
 
     if (enable_validator) {
@@ -989,7 +1022,7 @@ ModPack create_mod_rdp(
         }
     }
 
-    auto tmp_psocket_transport = &(new_mod->socket_transport);
+    auto tmp_psocket_transport = &(*new_mod->socket_transport_ptr);
 
     if (!host_mod_in_widget) {
         auto mod = new_mod.release();

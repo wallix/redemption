@@ -1412,6 +1412,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "auto_reconnection_on_losing_target_link"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::auto_reconnection_on_losing_target_link&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_WARNING, "unknown parameter %s in section [%s]",
@@ -2249,6 +2257,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::debug::config&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "mod_rdp_use_failure_simulation_socket_transport"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::mod_rdp_use_failure_simulation_socket_transport&>(this->variables).value,
+                ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport>{},
                 value
             );
         }

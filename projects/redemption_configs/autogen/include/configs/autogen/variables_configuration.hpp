@@ -15,24 +15,24 @@ namespace configs
         inline constexpr int section1 = 17; /* session_log */
         inline constexpr int section2 = 18; /* client */
         inline constexpr int section3 = 20; /* mod_rdp */
-        inline constexpr int section4 = 91; /* mod_vnc */
-        // inline constexpr int section5 = 99; /* metrics */
-        inline constexpr int section6 = 99; /* file_verification */
-        inline constexpr int section7 = 107; /* file_storage */
-        // inline constexpr int section8 = 108; /* icap_server_down */
-        // inline constexpr int section9 = 108; /* icap_server_up */
-        inline constexpr int section10 = 108; /* mod_replay */
-        // inline constexpr int section11 = 109; /* ocr */
-        inline constexpr int section12 = 109; /* video */
-        inline constexpr int section13 = 114; /* capture */
-        inline constexpr int section14 = 117; /* crypto */
-        // inline constexpr int section15 = 119; /* websocket */
-        // inline constexpr int section16 = 119; /* debug */
-        inline constexpr int section17 = 119; /* remote_program */
-        inline constexpr int section18 = 120; /* translation */
-        // inline constexpr int section19 = 123; /* internal_mod */
-        inline constexpr int section20 = 123; /* context */
-        // inline constexpr int section21 = 204; /* theme */
+        inline constexpr int section4 = 92; /* mod_vnc */
+        // inline constexpr int section5 = 100; /* metrics */
+        inline constexpr int section6 = 100; /* file_verification */
+        inline constexpr int section7 = 108; /* file_storage */
+        // inline constexpr int section8 = 109; /* icap_server_down */
+        // inline constexpr int section9 = 109; /* icap_server_up */
+        inline constexpr int section10 = 109; /* mod_replay */
+        // inline constexpr int section11 = 110; /* ocr */
+        inline constexpr int section12 = 110; /* video */
+        inline constexpr int section13 = 115; /* capture */
+        inline constexpr int section14 = 118; /* crypto */
+        // inline constexpr int section15 = 120; /* websocket */
+        // inline constexpr int section16 = 120; /* debug */
+        inline constexpr int section17 = 120; /* remote_program */
+        inline constexpr int section18 = 121; /* translation */
+        // inline constexpr int section19 = 124; /* internal_mod */
+        inline constexpr int section20 = 124; /* context */
+        // inline constexpr int section21 = 205; /* theme */
     }
 }
 
@@ -2500,6 +2500,21 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
+    /// type: bool <br/>
+    /// connpolicy -> proxy    [name: session_probe::auto_reconnection_on_losing_target_link] <br/>
+    /// sesmanName: mod_rdp:auto_reconnection_on_losing_target_link <br/>
+    /// default: {false} <br/>
+    struct mod_rdp::auto_reconnection_on_losing_target_link {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 71};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
     /// type: bool <br/>
@@ -3661,6 +3676,16 @@ namespace cfg
         using sesman_and_spec_type = unsigned;
         using mapped_type = sesman_and_spec_type;
         type value{2};
+    };
+    /// type: ModRdpUseFailureSimulationSocketTransport <br/>
+    /// default:  = static_cast<type>(0) <br/>
+    struct debug::mod_rdp_use_failure_simulation_socket_transport {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = ModRdpUseFailureSimulationSocketTransport;
+        using sesman_and_spec_type = ModRdpUseFailureSimulationSocketTransport;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(0);
     };
 
     /// type: bool <br/>
@@ -5397,6 +5422,7 @@ struct mod_rdp
 , cfg::mod_rdp::force_smartcard_authentication
 , cfg::mod_rdp::enable_ipv6
 , cfg::mod_rdp::mode_console
+, cfg::mod_rdp::auto_reconnection_on_losing_target_link
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -5532,6 +5558,7 @@ struct debug
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
 , cfg::debug::config
+, cfg::debug::mod_rdp_use_failure_simulation_socket_transport
 { static constexpr bool is_section = true; };
 
 struct remote_program
@@ -5786,6 +5813,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::force_smartcard_authentication
 , cfg::mod_rdp::enable_ipv6
 , cfg::mod_rdp::mode_console
+, cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
@@ -5909,14 +5937,14 @@ struct BitFlags {
 
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111011111111111
-, 0b1111111110011111111111111111111111111111111111111111111111111111
-, 0b1111011111111111111111111111111111111111111111110110111110111111
-, 0b0000000000000000000000000000000000000000000000000000111111111111
+, 0b1111111100111111111111111111111111111111111111111111111111111111
+, 0b1110111111111111111111111111111111111111111111101101111101111111
+, 0b0000000000000000000000000000000000000000000000000001111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000000001000000000000000
+, 0b0000000000000000000000000000000000000000000000010000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs

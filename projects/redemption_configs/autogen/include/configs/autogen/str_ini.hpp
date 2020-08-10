@@ -876,6 +876,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_ipv6 = 0
 
+# value: 0 or 1
+#_hidden
+#auto_reconnection_on_losing_target_link = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -1366,6 +1370,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #config = 1
+
+# min = 0, max = 2
+#   0: Off
+#   1: SimulateErrorRead
+#   2: SimulateErrorWrite
+#_hidden
+#mod_rdp_use_failure_simulation_socket_transport = 0
 
 [remote_program]
 

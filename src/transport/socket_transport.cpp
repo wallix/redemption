@@ -214,7 +214,7 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 
     if (res < 0){
         LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket %s!", this->name);
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
     }
 
     if (res >= 0) {
@@ -246,7 +246,7 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
     if (res < 0 || static_cast<size_t>(res) < len) {
         LOG(LOG_ERR, "SocketTransport::do_atomic_read: %s to read from socket %s!",
             (res < 0) ? "Failed" : "Insufficient data", this->name);
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
     }
 
     if (bool(this->verbose & Verbose::dump)) {
@@ -291,7 +291,7 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
         LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
-        throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
     }
 
     if (res < static_cast<ssize_t>(len)) {
@@ -321,7 +321,7 @@ void SocketTransport::send_waiting_data()
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
                 this->name, this->sck, errno, strerror(errno));
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
         }
 
         this->total_sent += res;

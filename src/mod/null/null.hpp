@@ -39,12 +39,16 @@ struct null_mod : public mod_api
     void rdp_input_invalidate(const Rect) override {}
     void refresh(const Rect) override {}
     bool is_up_and_running() const override { return true; }
+
+    bool is_auto_reconnectable() const override { return false; }
+    bool server_error_encountered() const override { return false; }
+
     void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
     void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
     void send_auth_channel_data(const char * /*data*/) override {}
     void send_checkout_channel_data(const char * /*data*/) override {}
-    
+
 };
 

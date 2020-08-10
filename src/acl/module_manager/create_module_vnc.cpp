@@ -226,8 +226,12 @@ public:
 
     // from mod_api
     // support auto-reconnection
-    bool is_auto_reconnectable() override {
+    bool is_auto_reconnectable() const override {
         return this->mod.is_auto_reconnectable();
+    }
+
+    bool server_error_encountered() const override {
+        return this->mod.server_error_encountered();
     }
 
     // from mod_api

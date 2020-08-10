@@ -101,6 +101,7 @@ namespace configs
         "mod_rdp:force_smartcard_authentication"_zv,
         "mod_rdp:enable_ipv6"_zv,
         "mod_rdp:mode_console"_zv,
+        "mod_rdp:auto_reconnection_on_losing_target_link"_zv,
         "clipboard_up"_zv,
         "clipboard_down"_zv,
         "vnc_server_clipboard_encoding_type"_zv,

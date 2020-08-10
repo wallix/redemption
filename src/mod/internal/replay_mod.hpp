@@ -132,6 +132,8 @@ public:
     [[nodiscard]] bool is_up_and_running() const override
     { return true; }
 
+    bool server_error_encountered() const override { return false; }
+
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
     void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
     void send_auth_channel_data(const char * /*data*/) override {}

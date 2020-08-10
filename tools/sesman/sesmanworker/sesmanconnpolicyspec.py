@@ -185,6 +185,9 @@ cp_spec = {
         u'mod_rdp:session_probe_on_account_manipulation': (
             'on_account_manipulation', 0
         ),
+        u'mod_rdp:auto_reconnection_on_losing_target_link': (
+            'auto_reconnection_on_losing_target_link', False
+        ),
         u'context:session_probe_outbound_connection_monitoring_rules': (
             'outbound_connection_monitoring_rules', u''
         ),

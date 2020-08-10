@@ -152,7 +152,9 @@ private:
 
         [[nodiscard]] bool is_up_and_running() const override;
 
-        bool is_auto_reconnectable() override;
+        bool is_auto_reconnectable() const override;
+
+        bool server_error_encountered() const override;
 
         // RdpInput
 

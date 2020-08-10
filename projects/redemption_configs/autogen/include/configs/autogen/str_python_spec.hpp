@@ -743,6 +743,9 @@ force_smartcard_authentication = boolean(default=False)
 #_hidden
 enable_ipv6 = boolean(default=False)
 
+#_hidden
+auto_reconnection_on_losing_target_link = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -1160,6 +1163,12 @@ ffmpeg = integer(min=0, default=0)
 
 #_advanced
 config = boolean(default=True)
+
+#   0: Off
+#   1: SimulateErrorRead
+#   2: SimulateErrorWrite
+#_hidden
+mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
 
 [remote_program]
 

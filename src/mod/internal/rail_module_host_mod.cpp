@@ -187,15 +187,15 @@ void RailModuleHostMod::send_to_mod_channel(
 {
 
     if (front_channel_name == CHANNELS::channel_names::rail){
-        if (this->rail_enabled 
+        if (this->rail_enabled
         && this->rail_client_execute.is_ready()){
             this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
         }
         return;
     }
 
-    if (this->rail_enabled 
-    && this->rail_client_execute.is_ready() 
+    if (this->rail_enabled
+    && this->rail_client_execute.is_ready()
     && front_channel_name == CHANNELS::channel_names::drdynvc)
     {
         this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
@@ -228,6 +228,11 @@ void RailModuleHostMod::send_checkout_channel_data(const char * data)
 bool RailModuleHostMod::is_up_and_running() const
 {
     return this->rail_module_host.get_managed_mod().is_up_and_running();
+}
+
+bool RailModuleHostMod::server_error_encountered() const
+{
+    return this->rail_module_host.get_managed_mod().server_error_encountered();
 }
 
 void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t width,

@@ -98,9 +98,14 @@ bool WidgetModuleHost::ModuleHolder::is_up_and_running() const
     return this->managed_mod->is_up_and_running();
 }
 
-bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable()
+bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable() const
 {
     return this->managed_mod->is_auto_reconnectable();
+}
+
+bool WidgetModuleHost::ModuleHolder::server_error_encountered() const
+{
+    return this->managed_mod->server_error_encountered();
 }
 
 // RdpInput

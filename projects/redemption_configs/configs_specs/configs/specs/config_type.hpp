@@ -228,6 +228,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("Debug")
       .value("Detail")
     ;
+
+    e.enumeration_list("ModRdpUseFailureSimulationSocketTransport")
+      .value("Off")
+      .value("SimulateErrorRead")
+      .value("SimulateErrorWrite")
+    ;
 }
 
 }
