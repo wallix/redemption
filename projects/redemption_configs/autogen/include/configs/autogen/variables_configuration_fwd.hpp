@@ -47,6 +47,7 @@ namespace cfg {
         struct persistent_path;
         struct enable_wab_integration;
         struct allow_using_multiple_monitors;
+        struct allow_scale_factor;
         struct bogus_refresh_rect;
         struct codec_id;
         struct video_quality;

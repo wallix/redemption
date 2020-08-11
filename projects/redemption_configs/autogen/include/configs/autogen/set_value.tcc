@@ -223,6 +223,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "allow_scale_factor")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::allow_scale_factor&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "bogus_refresh_rect")) {
             ::configs::parse_and_log(
                 context, key,

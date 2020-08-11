@@ -107,6 +107,8 @@
 
 "allow_using_multiple_monitors = boolean(default=True)\n\n"
 
+"allow_scale_factor = boolean(default=True)\n\n"
+
 "# Needed to refresh screen of Windows Server 2012.\n"
 "#_advanced\n"
 "bogus_refresh_rect = boolean(default=True)\n\n"

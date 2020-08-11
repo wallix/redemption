@@ -362,6 +362,7 @@ RdpNegociation::RdpNegociation(
     , password_printing_mode(mod_rdp_params.password_printing_mode)
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
+    , allow_scale_factor(mod_rdp_params.allow_scale_factor)
     , cs_monitor(info.cs_monitor)
     , cs_monitor_ex(info.cs_monitor_ex)
     , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
@@ -1169,7 +1170,9 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 //}
                 this->cs_monitor.emit(stream);
 
-                if (this->cs_monitor.monitorCount == this->cs_monitor_ex.monitorCount) {
+                if (allow_scale_factor
+                 && this->cs_monitor.monitorCount == this->cs_monitor_ex.monitorCount
+                ) {
                     this->cs_monitor_ex.log("Sending to server");
                     this->cs_monitor_ex.emit(stream);
                 }

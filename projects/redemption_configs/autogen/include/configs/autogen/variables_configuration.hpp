@@ -545,6 +545,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct globals::allow_scale_factor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "globals";
+        static constexpr char const * name = "allow_scale_factor";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
     /// Needed to refresh screen of Windows Server 2012. <br/>
     /// type: bool <br/>
     /// value{true} <br/>
@@ -4799,6 +4811,7 @@ struct globals
 , cfg::globals::persistent_path
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
+, cfg::globals::allow_scale_factor
 , cfg::globals::bogus_refresh_rect
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support

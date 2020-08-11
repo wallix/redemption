@@ -7,9 +7,6 @@ cp_spec = {
     u'disable_clipboard_log': 'disable_clipboard_log',
     u'disable_file_system_log': 'disable_file_system_log',
   },
-  'session_log': {
-    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
-  },
   'rdp': {
     u'enable_nla': 'enable_nla',
     u'enable_kerberos': 'enable_kerberos',
@@ -23,6 +20,9 @@ cp_spec = {
     u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
     u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
   },
+  'session_log': {
+    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
+  },
   'server_cert': {
     u'server_cert_store': 'server_cert_store',
     u'server_cert_check': 'server_cert_check',
@@ -30,9 +30,6 @@ cp_spec = {
     u'server_cert_create_message': 'server_cert_create_message',
     u'server_cert_success_message': 'server_cert_success_message',
     u'server_cert_failure_message': 'server_cert_failure_message',
-},
-  'session': {
-    u'inactivity_timeout': 'inactivity_timeout',
 },
   'session_probe': {
     u'session_probe': 'enable_session_probe',
@@ -67,6 +64,9 @@ cp_spec = {
     u'session_probe_process_monitoring_rules': 'process_monitoring_rules',
     u'session_probe_extra_system_processes': 'extra_system_processes',
     u'session_probe_windows_of_these_applications_as_unidentified_input_field': 'windows_of_these_applications_as_unidentified_input_field',
+},
+  'session': {
+    u'inactivity_timeout': 'inactivity_timeout',
 },
   'vnc': {
     u'server_is_apple': 'server_is_apple',

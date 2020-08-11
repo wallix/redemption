@@ -158,6 +158,7 @@ private:
     const bool bogus_sc_net_size;
 
     const bool allow_using_multiple_monitors;
+    const bool allow_scale_factor;
     GCC::UserData::CSMonitor cs_monitor;
     GCC::UserData::CSMonitorEx cs_monitor_ex;
 

@@ -107,6 +107,8 @@
 
 "#allow_using_multiple_monitors = 1\n\n"
 
+"#allow_scale_factor = 1\n\n"
+
 "# Needed to refresh screen of Windows Server 2012.\n"
 "#_advanced\n"
 "#bogus_refresh_rect = 1\n\n"
