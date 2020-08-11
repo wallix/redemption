@@ -328,7 +328,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
         LOG(LOG_ERR, "Invalid challengeLen for serverIdentification");
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
-    bytes_view serverIdentification = s.in_skip_bytes(serverIdentificationLen);
+    /*bytes_view serverIdentification =*/ s.in_skip_bytes(serverIdentificationLen);
 
     if (!s.in_check_rem(4 + 2)) {
         LOG(LOG_ERR, "Invalid challengeLen for challenge and wClientAuthPublicKeyIdentifierLength");
@@ -336,7 +336,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
     }
 
     m_challengeFlags = s.in_uint32_le();
-    bool passPhraseRequired = (m_challengeFlags & svncOverridePassphrase);
+    // bool passPhraseRequired = (m_challengeFlags & svncOverridePassphrase);
 
     uint16_t clientAuthPublicKeyIdentifierLen = s.in_uint16_le();
     if (!s.in_check_rem(clientAuthPublicKeyIdentifierLen)) {
@@ -344,7 +344,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
 
-    const uint8_t *clientAuthPublicKeyIdentifier = s.get_current();
+    /*const uint8_t *clientAuthPublicKeyIdentifier = s.get_current();*/
 
     if (clientAuthPublicKeyIdentifierLen > 0) {
         // handle clientAuthPublicKeyIdentifier
@@ -456,7 +456,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
 
 bool UltraDSM::getResponse(OutStream &out) {
         int nResponseLength;
-        bool bExpectChallenge = false;
+        //bool bExpectChallenge = false;
 
         if (!m_rsa) {
             LOG(LOG_ERR, "Public key unavailable.");
