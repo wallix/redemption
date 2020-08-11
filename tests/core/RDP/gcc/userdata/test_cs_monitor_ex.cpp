@@ -42,7 +42,10 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
         ""_av);
     GCC::UserData::CSMonitorEx cs_monitor_ex;
     cs_monitor_ex.recv(stream);
-    RED_CHECK_EQUAL(36, cs_monitor_ex.length);
+
+    RED_CHECK_EQUAL(0, stream.in_remain());
+
+    RED_CHECK_EQUAL(36, cs_monitor_ex.compute_length());
     RED_CHECK_EQUAL(CS_MONITOR_EX, cs_monitor_ex.userDataType);
     RED_CHECK_EQUAL(20, cs_monitor_ex.monitorAttributeSize);
     RED_CHECK_EQUAL(1, cs_monitor_ex.monitorCount);
@@ -54,5 +57,9 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     RED_CHECK_EQUAL(120, cs_monitor_ex.monitorAttributesArray[0].desktopScaleFactor);
     RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
 
-    // cs_monitor_ex.log("Client Received");
+    StaticOutStream<256> out_stream;
+    cs_monitor_ex.emit(out_stream);
+    RED_TEST(out_stream.get_produced_bytes() == stream.get_consumed_bytes());
+
+    cs_monitor_ex.log("Client Received");
 }
