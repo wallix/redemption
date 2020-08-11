@@ -25,6 +25,7 @@
 #pragma once
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/channel_names.hpp"
@@ -158,6 +159,7 @@ private:
 
     const bool allow_using_multiple_monitors;
     GCC::UserData::CSMonitor cs_monitor;
+    GCC::UserData::CSMonitorEx cs_monitor_ex;
 
     const bool perform_automatic_reconnection;
     const std::array<uint8_t, 28> server_auto_reconnect_packet_ref;

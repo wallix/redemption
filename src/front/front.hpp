@@ -1574,6 +1574,16 @@ public:
                             }
                         }
                         break;
+                        case CS_MONITOR_EX:
+                        {
+                            GCC::UserData::CSMonitorEx & cs_monitor_ex =
+                                this->client_info.cs_monitor_ex;
+                            cs_monitor_ex.recv(f.payload);
+                            if (bool(this->verbose & Verbose::basic_trace)) {
+                                cs_monitor_ex.log("Front::incoming: Receiving from Client");
+                            }
+                        }
+                        break;
                         case CS_MCS_MSGCHANNEL:
                         {
                             GCC::UserData::CSMCSMsgChannel cs_mcs_msgchannel;

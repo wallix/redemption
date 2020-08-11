@@ -110,6 +110,7 @@ struct ClientInfo
     uint32_t device_scale_factor = 0;
 
     GCC::UserData::CSMonitor cs_monitor;
+    GCC::UserData::CSMonitorEx cs_monitor_ex;
 
     ClientTimeZone client_time_zone;
 

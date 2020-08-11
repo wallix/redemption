@@ -104,7 +104,6 @@ namespace GCC { namespace UserData {
 
 struct CSMonitorEx {
     uint16_t userDataType{CS_MONITOR_EX};
-    uint16_t length{0};
 
     uint32_t flags{0};
     uint32_t monitorAttributeSize{20};
@@ -126,18 +125,23 @@ struct CSMonitorEx {
         uint32_t  orientation;
         uint32_t  desktopScaleFactor;
         uint32_t deviceScaleFactor;
-    } monitorAttributesArray[MAX_MONITOR_COUNT];
+    } monitorAttributesArray[MAX_MONITOR_COUNT] {};
 
-    CSMonitorEx()
-    :
-     monitorAttributesArray() {}
+    CSMonitorEx() = default;
 
-    void emit(OutStream & stream) /* TODO const*/ {
+    uint16_t compute_length() const
+    {
+        return 4 + 4 + 4 + 4 + this->monitorCount * 20;
+    }
+
+    void emit(OutStream & stream) const
+    {
         assert((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));
 
         stream.out_uint16_le(this->userDataType);
-        this->length = 4 + 4 + 4 + this->monitorCount * 20; // header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
-        stream.out_uint16_le(this->length);
+
+        // header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
+        stream.out_uint16_le(4 + 4 + 4 + 4 + this->monitorCount * 20);
 
         stream.out_uint32_le(this->flags);
         stream.out_uint32_le(this->monitorAttributeSize);
@@ -153,21 +157,16 @@ struct CSMonitorEx {
         }
     }
 
-    void recv(InStream & stream) {
-        if (!stream.in_check_rem(4)) {
-            LOG(LOG_ERR, "CSMonitorEx::recv short header, need=4 remains=%zu",
+    void recv(InStream & stream)
+    {
+        if (!stream.in_check_rem(16)) {
+            LOG(LOG_ERR, "GCC User Data CS_MONITOR_EX truncated, need=16, remains=%zu",
                 stream.in_remain());
             throw Error(ERR_GCC);
         }
 
         this->userDataType = stream.in_uint16_le();
-        this->length       = stream.in_uint16_le();
-
-        if (!stream.in_check_rem(12)) {
-            LOG(LOG_ERR, "GCC User Data CS_MONITOR_EX truncated, remains=%zu",
-                stream.in_remain());
-            throw Error(ERR_GCC);
-        }
+        uint16_t length    = stream.in_uint16_le();
 
         this->flags        = stream.in_uint32_le();
         this->monitorAttributeSize = stream.in_uint32_le();
@@ -186,12 +185,12 @@ struct CSMonitorEx {
             throw Error(ERR_GCC);
         }
 
-        unsigned expected = 4 + 4 + 4 + 4 + this->monitorCount * 20;
+        unsigned expected = this->compute_length();
         // = header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
 
-        if (this->length != expected) {
+        if (length != expected) {
             LOG(LOG_ERR, "CSMonitorEx::recv bad header length, expecting=%u got=%u",
-                expected, this->length);
+                expected, length);
             throw Error(ERR_GCC);
         }
 
@@ -208,44 +207,7 @@ struct CSMonitorEx {
             this->monitorAttributesArray[i].orientation        = stream.in_uint32_le();
             this->monitorAttributesArray[i].desktopScaleFactor = stream.in_uint32_le();
             this->monitorAttributesArray[i].deviceScaleFactor  = stream.in_uint32_le();
-
-            if ((this->monitorAttributesArray[i].physicalWidth < 10) ||
-                (this->monitorAttributesArray[i].physicalWidth > 10000))
-            {
-               LOG(LOG_INFO, "GCC User Data CS_MONITOR_EX physicalWidth out of range [10,10000], ignored");
-               this->monitorAttributesArray[i].physicalWidth = 0;
-            }
-
-            if ((this->monitorAttributesArray[i].physicalHeight < 10) ||
-                (this->monitorAttributesArray[i].physicalHeight > 10000))
-            {
-               LOG(LOG_INFO, "GCC User Data CS_MONITOR_EX physicalHeight out of range [10,10000], ignored");
-               this->monitorAttributesArray[i].physicalHeight = 0;
-            }
-
-            if((this->monitorAttributesArray[i].orientation != ORIENTATION_LANDSCAPE)         &&
-               (this->monitorAttributesArray[i].orientation != ORIENTATION_PORTRAIT)          &&
-               (this->monitorAttributesArray[i].orientation != ORIENTATION_LANDSCAPE_FLIPPED) &&
-               (this->monitorAttributesArray[i].orientation != ORIENTATION_PORTRAIT_FLIPPED))
-            {
-               LOG(LOG_INFO, "GCC User Data CS_MONITOR_EX orientation out of scope, ignored");
-               this->monitorAttributesArray[i].orientation = ORIENTATION_LANDSCAPE; // ignored
-            }
-
-            if (  ( (this->monitorAttributesArray[i].desktopScaleFactor < 100) ||
-                    (this->monitorAttributesArray[i].desktopScaleFactor > 500) )
-                 ||
-                  (  (this->monitorAttributesArray[i].deviceScaleFactor != 100) &&
-                    (this->monitorAttributesArray[i].deviceScaleFactor != 140) &&
-                    (this->monitorAttributesArray[i].deviceScaleFactor != 180) )
-               )
-            {
-               LOG(LOG_INFO, "GCC User Data CS_MONITOR_EX desktopScaleFactor and deviceScaleFactor out of scope, ignored");
-               this->monitorAttributesArray[i].desktopScaleFactor = 100; // ignored
-               this->monitorAttributesArray[i].deviceScaleFactor = 100;
-            }
         }
-
     }
 
     void log(const char * msg) const
@@ -254,7 +216,7 @@ struct CSMonitorEx {
 
         size_t lg = 0;
         // --------------------- Base Fields ---------------------------------------
-        lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR (%u bytes) ", msg, unsigned(this->length));
+        lg += snprintf(buffer + lg, sizeof(buffer) - lg, "%s GCC User Data CS_MONITOR_EX (%u bytes) ", msg, this->compute_length());
         lg += snprintf(buffer + lg, sizeof(buffer) - lg, "flags=0x%X monitorCount=%u (", this->flags, this->monitorCount);
 
         for (uint32_t i = 0; i < this->monitorCount; i++) {

@@ -52,7 +52,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     GCC::UserData::CSMonitorEx cs_monitor_ex;
     InStream stream(buf);
     cs_monitor_ex.recv(stream);
-    RED_CHECK_EQUAL(36, cs_monitor_ex.length);
+    RED_CHECK_EQUAL(36, cs_monitor_ex.compute_length());
     RED_CHECK_EQUAL(CS_MONITOR_EX, cs_monitor_ex.userDataType);
     RED_CHECK_EQUAL(20, cs_monitor_ex.monitorAttributeSize);
     RED_CHECK_EQUAL(1, cs_monitor_ex.monitorCount);
@@ -62,8 +62,12 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_monitor_ex)
     RED_CHECK_EQUAL(90, cs_monitor_ex.monitorAttributesArray[0].orientation); // ORIENTATION_PORTRAIT = 90
 
     RED_CHECK_EQUAL(120, cs_monitor_ex.monitorAttributesArray[0].desktopScaleFactor);
-	  RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
+    RED_CHECK_EQUAL(100, cs_monitor_ex.monitorAttributesArray[0].deviceScaleFactor);
+
+    StaticOutStream<256> out_stream;
+    cs_monitor_ex.emit(out_stream);
+    CheckTransport ct(indata, sz);
+    ct.send(stream_to_avu8(out_stream));
 
     cs_monitor_ex.log("Client Received");
-
 }

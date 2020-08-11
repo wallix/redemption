@@ -363,6 +363,7 @@ RdpNegociation::RdpNegociation(
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
     , cs_monitor(info.cs_monitor)
+    , cs_monitor_ex(info.cs_monitor_ex)
     , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
     , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
     , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
@@ -1167,6 +1168,11 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     this->cs_monitor.log("Sending to server");
                 //}
                 this->cs_monitor.emit(stream);
+
+                if (this->cs_monitor.monitorCount == this->cs_monitor_ex.monitorCount) {
+                    this->cs_monitor_ex.log("Sending to server");
+                    this->cs_monitor_ex.emit(stream);
+                }
             }
         },
         [](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
