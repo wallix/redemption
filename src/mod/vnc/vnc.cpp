@@ -531,7 +531,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
 
 }
 
-const char *mod_vnc::securityTypeString(uint32_t t) {
+const char *mod_vnc::securityTypeString(int32_t t) {
     static char format[] = "<unknown 0xXXXXXXXX>";
 
     switch(t) {
@@ -559,7 +559,7 @@ const char *mod_vnc::securityTypeString(uint32_t t) {
     }
 }
 
-void mod_vnc::updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
+void mod_vnc::updatePreferedAuth (int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
     static VncAuthType preferedAuthTypes[] = {
         VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
         VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,
