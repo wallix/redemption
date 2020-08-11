@@ -123,6 +123,9 @@ enable_ipv6 = boolean(default=False)
 #   forbid: Block Console mode request from client.
 mode_console = option('allow', 'force', 'forbid', default='allow')
 
+#_advanced
+auto_reconnection_on_losing_target_link = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced
@@ -281,9 +284,6 @@ public_session = boolean(default=False)
 #   1: (Same thing as 'allow') 
 #   2: User action will be rejected
 on_account_manipulation = option(0, 1, 2, default=0)
-
-#_advanced
-auto_reconnection_on_losing_target_link = boolean(default=False)
 
 # Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
 # (Ex. for backwards compatibility only: 10.1.0.0/16:22)

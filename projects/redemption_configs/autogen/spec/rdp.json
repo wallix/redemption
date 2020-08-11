@@ -212,6 +212,13 @@
           "description": "Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"
         },
         {
+          "name": "auto_reconnection_on_losing_target_link",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
           "min": 3000,
@@ -624,13 +631,6 @@
             }
           ],
           "description": "For targets running WALLIX BestSafe only."
-        },
-        {
-          "name": "auto_reconnection_on_losing_target_link",
-          "type": "bool",
-          "default": false,
-          "advanced": true,
-          "description": ""
         },
         {
           "name": "outbound_connection_monitoring_rules",

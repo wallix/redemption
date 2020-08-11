@@ -2501,7 +2501,7 @@ namespace cfg
         type value = static_cast<type>(0);
     };
     /// type: bool <br/>
-    /// connpolicy -> proxy    [name: session_probe::auto_reconnection_on_losing_target_link] <br/>
+    /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:auto_reconnection_on_losing_target_link <br/>
     /// default: {false} <br/>
     struct mod_rdp::auto_reconnection_on_losing_target_link {
