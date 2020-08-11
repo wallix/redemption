@@ -331,7 +331,7 @@ private:
     VNCMetrics * metrics;
 #endif
     /** @brief type of VNC authentication */
-    enum VncAuthType : uint16_t {
+    enum VncAuthType : int32_t {
         VNC_AUTH_INVALID     = 0,
         VNC_AUTH_NONE         = 1,
         VNC_AUTH_VNC         = 2,
@@ -349,7 +349,7 @@ private:
         VeNCRYPT_X509None    = 260,
         VeNCRYPT_X509Vnc    = 261,
         VeNCRYPT_X509Plain    = 262,
-        VNC_AUTH_ULTRA_MS_LOGON = 0xfffa,
+        VNC_AUTH_ULTRA_MS_LOGON = -6,
     };
 
     VncAuthType choosenAuth;
@@ -1089,9 +1089,9 @@ public:
     void draw_event(gdi::GraphicApi & gd);
 
 private:
-    static const char *securityTypeString(uint32_t t);
+    static const char *securityTypeString(int32_t t);
 
-    void updatePreferedAuth(uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
+    void updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
 
     bool readSecurityResult(InStream &s, uint32_t &status, bool &haveReason, std::string &reason, size_t &skipLen) const;
 
