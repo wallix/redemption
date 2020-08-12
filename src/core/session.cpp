@@ -332,6 +332,7 @@ private:
                  && !mod_wrapper.get_mod()->server_error_encountered()) {
             LOG(LOG_INFO, "Session::end_session_exception: target link exception. %s",
                 ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA");
+            ini.set<cfg::context::perform_automatic_reconnection>(true);
             return 2;
         }
 
@@ -850,6 +851,8 @@ public:
                         {
                             LOG(LOG_INFO, "Session::Session: target link exception. %s",
                                 (ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA"));
+
+                            ini.set<cfg::context::perform_automatic_reconnection>(true);
 
                             retry_rdp(acl_serial, rail_client_execute, front, mod_wrapper, mod_factory, sesman);
                             continue;

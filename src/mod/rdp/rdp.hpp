@@ -280,6 +280,8 @@ public:
     {
         const bool enable_remote_program;
 
+        const bool perform_automatic_reconnection;
+
     private:
         const bool remote_program_enhanced;
 
@@ -298,8 +300,9 @@ public:
         WindowsExecuteShellParams real_windows_execute_shell_params;
 
     public:
-        RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params)
+        RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params, bool perform_automatic_reconnection)
         : enable_remote_program(remote_app_params.enable_remote_program)
+        , perform_automatic_reconnection(perform_automatic_reconnection)
         , remote_program_enhanced(remote_app_params.remote_program_enhanced)
         , convert_remoteapp_to_desktop(remote_app_params.convert_remoteapp_to_desktop)
         , should_ignore_first_client_execute(
@@ -469,7 +472,7 @@ public:
     , metrics(metrics)
     , gen(gen)
     , session_probe(mod_rdp_params.session_probe_params)
-    , remote_app(mod_rdp_params.remote_app_params)
+    , remote_app(mod_rdp_params.remote_app_params, mod_rdp_params.perform_automatic_reconnection)
     , clipboard(mod_rdp_params.clipboard_params)
     , dynamic_channels(mod_rdp_params.dynamic_channels_params)
     , file_system(mod_rdp_params.file_system_params)
@@ -894,8 +897,10 @@ private:
         remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
             this->session_probe.used_to_launch_remote_program;
 
-        remote_programs_virtual_channel_params.windows_execute_shell_params = this->remote_app.windows_execute_shell_params;
-        remote_programs_virtual_channel_params.windows_execute_shell_params_2 = this->remote_app.real_windows_execute_shell_params;
+        if (!this->remote_app.perform_automatic_reconnection) {
+            remote_programs_virtual_channel_params.windows_execute_shell_params = this->remote_app.windows_execute_shell_params;
+            remote_programs_virtual_channel_params.windows_execute_shell_params_2 = this->remote_app.real_windows_execute_shell_params;
+        }
 
         remote_programs_virtual_channel_params.rail_session_manager               =
             this->remote_programs_session_manager.get();
@@ -1956,8 +1961,10 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::chrono::seconds session_time_start;
 
-    bool clean_up_32_bpp_cursor;
-    bool large_pointer_support;
+    const bool clean_up_32_bpp_cursor;
+    const bool large_pointer_support;
+
+    const bool perform_automatic_reconnection;
 
     std::unique_ptr<uint8_t[]> multifragment_update_buffer;
     OutStream multifragment_update_data;
@@ -2107,6 +2114,7 @@ public:
         , session_time_start(time_base.get_current_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
+        , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
         , multifragment_update_data({multifragment_update_buffer.get(), 65536})
         , client_large_pointer_caps(info.large_pointer_caps)

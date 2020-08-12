@@ -86,7 +86,7 @@ protected:
 protected:
     const bool simulate_read_failure;
 
-    static constexpr size_t max_successful_read_operations = 600;
+    static constexpr size_t max_successful_read_operations = 800;
 
     static constexpr size_t max_successful_write_operations = 2000;
 
