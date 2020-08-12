@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 

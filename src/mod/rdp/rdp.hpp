@@ -60,6 +60,9 @@
 #include "core/RDP/capabilities/surfacecommands.hpp"
 #include "core/RDP/capabilities/window.hpp"
 
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
+#include "core/RDP/gcc/userdata/cs_net.hpp"
+
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/mcs.hpp"
@@ -3587,7 +3590,7 @@ public:
                         statedescr);
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
-                
+
                 this->set_mod_signal(BACK_EVENT_NEXT);
 //                throw Error(ERR_BACK_EVENT_NEXT);
             }

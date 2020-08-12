@@ -22,6 +22,37 @@
 
 #include "proxy_recorder/proxy_recorder.hpp"
 
+#include "proxy_recorder/nla_tee_transport.hpp"
+#include "proxy_recorder/nego_client.hpp"
+#include "proxy_recorder/nego_server.hpp"
+
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
+#include "core/RDP/gcc/userdata/sc_core.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/server_notifier_api.hpp"
+
+
+ProxyRecorder::ProxyRecorder(
+    NlaTeeTransport & back_nla_tee_trans,
+    RecorderFile & outFile,
+    TimeObj & timeobj,
+    const char * host,
+    bool enable_kerberos,
+    uint64_t verbosity
+)
+: back_nla_tee_trans(back_nla_tee_trans)
+, outFile(outFile)
+, timeobj(timeobj)
+, host(host)
+, enable_kerberos(enable_kerberos)
+, verbosity(verbosity)
+{
+    this->frontBuffer.trace_pdu = (this->verbosity > 512);
+    this->backBuffer.trace_pdu = (this->verbosity > 512);
+}
+
+ProxyRecorder::~ProxyRecorder() = default;
 
 void ProxyRecorder::front_step1(Transport & frontConn)
 {

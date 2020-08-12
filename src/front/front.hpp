@@ -69,6 +69,15 @@
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
+#include "core/RDP/gcc/userdata/cs_net.hpp"
+#include "core/RDP/gcc/userdata/cs_cluster.hpp"
+#include "core/RDP/gcc/userdata/cs_security.hpp"
+#include "core/RDP/gcc/userdata/cs_multitransport.hpp"
+#include "core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp"
+#include "core/RDP/gcc/userdata/sc_core.hpp"
+#include "core/RDP/gcc/userdata/sc_net.hpp"
+#include "core/RDP/gcc/userdata/sc_sec1.hpp"
 #include "core/RDP/lic.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/mppc.hpp"
@@ -798,7 +807,7 @@ public:
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            
+
             this->handshake_timeout = this->events.create_event_timeout(
                 "Front Handshake Timer", this,
                 time_base.get_current_time()+this->ini.get<cfg::globals::handshake_timeout>(),

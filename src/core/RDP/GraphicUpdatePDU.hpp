@@ -25,7 +25,7 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/RDPSerializer.hpp"
-#include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
 #include "core/RDP/sec.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/x224.hpp"

@@ -36,6 +36,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
+#include "core/RDP/gcc/userdata/cs_net.hpp"
 
 #include "gdi/graphic_api.hpp"
 

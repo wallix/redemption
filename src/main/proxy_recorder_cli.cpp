@@ -22,10 +22,20 @@
 
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
-#include "utils/select.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "transport/socket_transport.hpp"
+#include "transport/socket_trace_transport.hpp"
+#include "core/listen.hpp"
+#include "utils/netutils.hpp"
+#include "utils/select.hpp"
+#include "utils/cli.hpp"
+#include "utils/redemption_info_version.hpp"
 
 #include <iostream>
+#include <csignal>
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 
 using PacketType = RecorderFile::PacketType;
