@@ -36,6 +36,7 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/timebase.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <functional>
 
@@ -188,9 +189,9 @@ struct Sesman : public AuthApi
     {
         this->selector_page_sent = false;
         this->current_page = current;
-        this->group_filter = group;
-        this->device_filter = device;
-        this->proto_filter = proto;
+        this->group_filter = std::move(group);
+        this->device_filter = std::move(device);
+        this->proto_filter = std::move(proto);
 
     }
 
@@ -237,7 +238,7 @@ struct Sesman : public AuthApi
             this->smartcard_login = "";
         }
         else {
-            this->smartcard_login = std::string(login);
+            this->smartcard_login = login;
         }
     }
 
@@ -423,7 +424,7 @@ private:
             if (not domain.empty()
              && (username.find('@') == std::string::npos)
              && (username.find('\\') == std::string::npos)) {
-                username = username + std::string("@") + domain;
+                str_append(username, '@', domain);
             }
 
             LOG_IF(verbose, LOG_INFO, "flush_acl_auth_info(auth_user=%s)", username);

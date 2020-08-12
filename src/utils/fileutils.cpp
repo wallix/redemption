@@ -25,6 +25,7 @@
 #include "utils/file.hpp"
 #include "utils/strutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <cstdio>
 #include <cstddef>
@@ -368,23 +369,28 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
 int recursive_delete_directory(const char * directory_path_char_ptr)
 {
     // TODO: use string for recursive_delete_directory() parameter
-    const std::string directory_path(directory_path_char_ptr);
-    DIR * dir = opendir(directory_path.c_str());
+    DIR * dir = opendir(directory_path_char_ptr);
 
     int return_value = 0;
 
     if (dir) {
+        std::string entry_path = str_concat(directory_path_char_ptr, '/');
+        const auto entry_path_len = entry_path.size();
+
         struct dirent * ent;
 
         while (!return_value && (ent = readdir(dir)))
         {
-            std::string ent_name = ent->d_name;
             /* Skip the names "." and ".." as we don't want to recurse on them. */
-            if (ent_name == "." || ent_name == "..") {
+            if ('.' == ent->d_name[0] && (
+                '\0' ==  ent->d_name[1]
+             || ('.' == ent->d_name[1] && '\0' == ent->d_name[2])
+            )) {
                 continue;
             }
 
-            std::string entry_path = directory_path+"/"+ent_name;
+            entry_path.erase(entry_path_len);
+            str_append(entry_path, ent->d_name);
             struct stat statbuf;
 
             if (0 == stat(entry_path.c_str(), &statbuf)) {
@@ -401,7 +407,7 @@ int recursive_delete_directory(const char * directory_path_char_ptr)
     }
 
     if (!return_value) {
-        return_value = rmdir(directory_path.c_str());
+        return_value = rmdir(directory_path_char_ptr);
     }
 
     return return_value;

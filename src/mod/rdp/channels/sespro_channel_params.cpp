@@ -118,8 +118,6 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
 
             const char * rule_separator = strchr(rule, ',');
 
-            std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
-
             std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
 
             const char * rule_c_str = rule_string.c_str();
@@ -128,6 +126,9 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
 
             if (info_separator)
             {
+                std::string description_string(rule_begin,
+                    (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
+
                 std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
 
                 this->rules.push_back({

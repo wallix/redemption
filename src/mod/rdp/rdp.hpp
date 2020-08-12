@@ -1400,16 +1400,11 @@ public:
             return str_concat("/#", this->session_probe.target_informations, ' ');
         }();
 
-        std::string cd_tmp;
-        if (session_probe_params.alternate_directory_environment_variable.empty()) {
-            cd_tmp = "CD %TMP%&";
-        }
-        else {
-            cd_tmp = "CD %";
-            cd_tmp.append(session_probe_params.alternate_directory_environment_variable);
-            cd_tmp.append("%&");
-        }
-            LOG(LOG_INFO, "(SPADEV) Chdir: \"%s\"", cd_tmp.c_str());
+        std::string cd_tmp = session_probe_params.alternate_directory_environment_variable.empty()
+            ? std::string("CD %TMP%&")
+            : str_concat("CD %"_av, session_probe_params.alternate_directory_environment_variable, "%&"_av);
+
+        LOG(LOG_INFO, "(SPADEV) Chdir: \"%s\"", cd_tmp.c_str());
 
         std::string arguments = session_probe_params.arguments;
         mod_rdp_channels::replace_probe_arguments(arguments,
