@@ -247,7 +247,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::proxy_managed_drives>(cslist);
     ini.set<cfg::mod_rdp::proxy_managed_drives>(slist);
     ini.set<cfg::mod_rdp::rdp_compression>(RdpCompression::rdp4);
-    ini.get_mutable_ref<cfg::mod_rdp::redir_info>().dont_store_username = true;
     ini.set<cfg::mod_rdp::server_access_allowed_message>(ServerNotification::admin);
     ini.set<cfg::mod_rdp::server_cert_check>(ServerCertCheck::always_succeed);
     ini.set<cfg::mod_rdp::server_cert_create_message>(ServerNotification::admin);

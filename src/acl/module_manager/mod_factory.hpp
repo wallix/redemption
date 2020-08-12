@@ -64,6 +64,7 @@ class ModFactory
     ClientInfo & client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
+    RedirectionInfo & redir_info;
     Inifile & ini;
     Font & glyphs;
     Theme & theme;
@@ -83,6 +84,7 @@ public:
                ClientInfo & client_info,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
+               RedirectionInfo & redir_info,
                Inifile & ini,
                Font & glyphs,
                Theme & theme,
@@ -99,6 +101,7 @@ public:
         , client_info(client_info)
         , front(front)
         , graphics(graphics)
+        , redir_info(redir_info)
         , ini(ini)
         , glyphs(glyphs)
         , theme(theme)
@@ -489,7 +492,9 @@ public:
 
     auto create_rdp_mod() -> ModPack
     {
-        auto new_mod_pack = create_mod_rdp(this->mod_wrapper,
+        auto new_mod_pack = create_mod_rdp(
+            this->mod_wrapper,
+            this->redir_info,
             this->ini,
             this->mod_wrapper.get_graphics(),
             this->front,
@@ -510,7 +515,6 @@ public:
 
     auto create_vnc_mod() -> ModPack
     {
-
         auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->ini,
             mod_wrapper.get_graphics(), this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,

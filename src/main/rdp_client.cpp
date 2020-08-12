@@ -289,7 +289,6 @@ int main(int argc, char** argv)
 
     {
         // SET new target in ini
-        RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
         const char * host = char_ptr_cast(redir_info.host);
         const char * password = char_ptr_cast(redir_info.password);
         const char * username = char_ptr_cast(redir_info.username);
@@ -305,7 +304,7 @@ int main(int argc, char** argv)
         }
         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
         ini.set_acl<cfg::context::target_host>(host);
-        auto message = std::string(change_user) + '@' + std::string(host);
+        auto message = str_concat(change_user, '@', host);
         sesman.report("SERVER_REDIRECTION", message.c_str());
     }
 

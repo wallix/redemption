@@ -34,11 +34,6 @@
 #include <string>
 
 
-/// ~"forward declaration" for redemption type
-//@{
-CONFIG_DEFINE_TYPE(RedirectionInfo)
-//@}
-
 namespace cfg_specs {
 
 #ifdef IN_IDE_PARSER
@@ -331,7 +326,6 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<ClientAddressSent>(), "client_address_sent", desc { "Client Address to send to target (in InfoPacket)" }, set(ClientAddressSent::no_address));
 
-        W.member(no_ini_no_gui, no_sesman, L, type_<RedirectionInfo>(), "redir_info");
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "load_balance_info", desc{"Load balancing information"});
 
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true));

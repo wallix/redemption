@@ -57,6 +57,7 @@
 
 #include "utils/timebase.hpp"
 #include "utils/select.hpp"
+#include "utils/redirection_info.hpp"
 #include "core/events.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
@@ -108,6 +109,7 @@ public:
     Sesman sesman;
     Theme theme;
     Font font;
+    RedirectionInfo redir_info;
     std::string close_box_extra_message_ref;
 
     //  Remote App
@@ -451,7 +453,7 @@ public:
                   , *this
                   , *this
                   , this->config.info
-                  , ini.get_mutable_ref<cfg::mod_rdp::redir_info>()
+                  , this->redir_info
                   , *this->gen
                   , this->timeSystem
                   , channels_authorizations

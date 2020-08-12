@@ -21,6 +21,10 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "test_only/front/front_wrapper.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/core/font.hpp"
 
 // Comment the code block below to generate testing data.
 // Uncomment the code block below to generate testing data.
@@ -31,10 +35,9 @@
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/front/front_wrapper.hpp"
 #include "core/client_info.hpp"
 #include "utils/theme.hpp"
+#include "utils/redirection_info.hpp"
 
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -46,9 +49,6 @@
 #include "utils/timebase.hpp"
 #include "core/channels_authorizations.hpp"
 #include "acl/gd_provider.hpp"
-
-#include "test_only/lcg_random.hpp"
-#include "test_only/core/font.hpp"
 
 
 namespace dump2008 {
@@ -236,10 +236,11 @@ RED_AUTO_TEST_CASE(TestFront)
     FileValidatorService * file_validator_service = nullptr;
 
     TLSClientParams tls_client_params;
+    RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
         t, time_base, gd_provider, events, auth,
-        front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        front, front, info, redir_info,
         gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, metrics,
         file_validator_service, mod_rdp_factory);

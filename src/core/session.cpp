@@ -42,6 +42,7 @@
 #include "utils/log_siem.hpp"
 #include "utils/load_theme.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/redirection_info.hpp"
 
 #include <cassert>
 #include <cerrno>
@@ -637,11 +638,20 @@ public:
             Theme theme;
             ::load_theme(theme, ini);
 
-            ClientExecute rail_client_execute(time_base, events, front, front, front.client_info.window_list_caps, ini.get<cfg::debug::mod_internal>() & 1);
+            RedirectionInfo redir_info;
+
+            ClientExecute rail_client_execute(
+                time_base, events, front, front, front.client_info.window_list_caps,
+                ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
-            ModWrapper mod_wrapper(front, front.get_palette(), front, front.keymap, front.client_info, glyphs, rail_client_execute, winapi, this->ini, sesman);
-            ModFactory mod_factory(mod_wrapper, time_base, sesman, events, front.client_info, front, front, ini, glyphs, theme, rail_client_execute, front.keymap, rnd, timeobj, cctx);
+            ModWrapper mod_wrapper(
+                front, front.get_palette(), front, front.keymap, front.client_info, glyphs,
+                rail_client_execute, winapi, this->ini, sesman);
+            ModFactory mod_factory(
+                mod_wrapper, time_base, sesman, events, front.client_info, front, front,
+                redir_info, ini, glyphs, theme, rail_client_execute, front.keymap, rnd,
+                timeobj, cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
@@ -1107,7 +1117,6 @@ public:
                         case 3:
                         {
                             // SET new target in ini
-                            RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
                             const char * host = char_ptr_cast(redir_info.host);
                             const char * password = char_ptr_cast(redir_info.password);
                             const char * username = char_ptr_cast(redir_info.username);
@@ -1123,7 +1132,7 @@ public:
                             }
                             LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
                             ini.set_acl<cfg::context::target_host>(host);
-                            auto message = std::string(change_user) + '@' + std::string(host);
+                            auto message = str_concat(change_user, '@', host);
                             sesman.report("SERVER_REDIRECTION", message.c_str());
                         }
 

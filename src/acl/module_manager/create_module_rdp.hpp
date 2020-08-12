@@ -33,10 +33,17 @@
 class AuthApi;
 class Random;
 class CryptoContext;
+class RedirectionInfo;
 
-extern ModPack create_mod_rdp(ModWrapper & mod_wrapper,
-    Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
-    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
+extern ModPack create_mod_rdp(
+    ModWrapper & mod_wrapper,
+    RedirectionInfo & redir_info,
+    Inifile & ini,
+    gdi::GraphicApi & drawable,
+    FrontAPI & front,
+    ClientInfo client_info /* /!\ modified */,
+    ClientExecute & rail_client_execute,
+    Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
     TimeBase & time_base,

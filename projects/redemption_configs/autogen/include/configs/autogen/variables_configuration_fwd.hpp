@@ -120,7 +120,6 @@ namespace cfg
         struct fast_path;
         struct server_redirection_support;
         struct client_address_sent;
-        struct redir_info;
         struct load_balance_info;
         struct bogus_sc_net_size;
         struct proxy_managed_drives;

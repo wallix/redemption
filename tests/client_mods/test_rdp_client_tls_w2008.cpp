@@ -22,6 +22,10 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/front/fake_front.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "test_only/core/font.hpp"
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
@@ -34,10 +38,7 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
-#include "test_only/front/fake_front.hpp"
-#include "test_only/lcg_random.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/core/font.hpp"
+#include "utils/redirection_info.hpp"
 
 #include "configs/config.hpp"
 
@@ -141,7 +142,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     EventContainer events;
     Inifile ini;
     NullAuthentifier auth;
-    auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
+    RedirectionInfo redir_info;
 
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -268,7 +269,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     EventContainer events;
     Inifile ini;
     NullAuthentifier auth;
-    auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
+    RedirectionInfo redir_info;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;

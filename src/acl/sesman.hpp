@@ -27,6 +27,7 @@
 
 #include <string>
 
+#include "utils/log.hpp"
 #include "utils/pattutils.hpp"
 #include "configs/config.hpp"
 #include "gdi/screen_info.hpp"
@@ -35,7 +36,9 @@
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/timebase.hpp"
+
 #include <functional>
+
 
 struct Sesman : public AuthApi
 {

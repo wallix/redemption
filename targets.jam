@@ -256,7 +256,6 @@ exe rdpinichecker :
   <library>app_path_exe.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
   $(EXE_DEPENDENCIES_NO_SYSLOG)
 ;
 exe nla_server :
@@ -668,7 +667,6 @@ test-run tests/acl/test_sesman :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <covfile>src/acl/sesman.hpp
 ;
@@ -2367,7 +2365,6 @@ test-run tests/core/test_front_api :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
   <library>src/utils/pattutils.o
   <covfile>src/core/front_api.hpp
 ;
@@ -5501,7 +5498,6 @@ test-run tests/utils/test_load_theme :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
   <library>src/utils/load_theme.o
   <covfile>src/utils/load_theme.cpp
   <covfile>src/utils/load_theme.hpp
@@ -5632,7 +5628,6 @@ test-run tests/utils/test_translation :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/hexdump.o
   <covfile>src/utils/translation.hpp
 ;
 test-run tests/utils/test_utf :

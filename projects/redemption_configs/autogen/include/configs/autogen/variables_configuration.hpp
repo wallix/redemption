@@ -1314,15 +1314,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// type: RedirectionInfo <br/>
-    /// default: {} <br/>
-    struct mod_rdp::redir_info {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = RedirectionInfo;
-        using mapped_type = type;
-        type value{};
-    };
     /// Load balancing information <br/>
     /// type: std::string <br/>
     /// connpolicy -> proxy <br/>
@@ -5334,7 +5325,6 @@ struct mod_rdp
 , cfg::mod_rdp::fast_path
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::client_address_sent
-, cfg::mod_rdp::redir_info
 , cfg::mod_rdp::bogus_sc_net_size
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel

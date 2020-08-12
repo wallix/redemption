@@ -32,6 +32,7 @@
 #include "utils/theme.hpp"
 #include "acl/gd_provider.hpp"
 #include "utils/timebase.hpp"
+#include "utils/redirection_info.hpp"
 #include "core/channels_authorizations.hpp"
 
 #include "test_only/front/fake_front.hpp"
@@ -156,7 +157,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     ModRdpFactory mod_rdp_factory;
     GdForwarder gd_provider(front.gd());
 
-    auto redir_info = ini.get_mutable_ref<cfg::mod_rdp::redir_info>();
+    RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
         t, time_base, gd_provider, events, auth,

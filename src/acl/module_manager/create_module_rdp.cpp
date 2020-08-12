@@ -486,9 +486,15 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 }
 
 
-ModPack create_mod_rdp(ModWrapper & mod_wrapper,
-    Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
-    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
+ModPack create_mod_rdp(
+    ModWrapper & mod_wrapper,
+    RedirectionInfo & redir_info,
+    Inifile & ini,
+    gdi::GraphicApi & drawable,
+    FrontAPI& front,
+    ClientInfo client_info /* /!\ modified */,
+    ClientExecute& rail_client_execute,
+    Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
     TimeBase & time_base,
@@ -947,7 +953,7 @@ ModPack create_mod_rdp(ModWrapper & mod_wrapper,
         drawable,
         front,
         client_info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
+        redir_info,
         gen,
         timeobj,
         channels_authorizations,

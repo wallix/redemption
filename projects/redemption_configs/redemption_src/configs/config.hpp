@@ -62,7 +62,6 @@ namespace configs
 
 // config members
 //@{
-#include "utils/redirection_info.hpp"
 #include "core/app_path.hpp"
 #include <string>
 #include <chrono>

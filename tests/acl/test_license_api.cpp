@@ -22,6 +22,10 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/front/fake_front.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "test_only/core/font.hpp"
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
@@ -36,11 +40,8 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "utils/netutils.hpp"
+#include "utils/redirection_info.hpp"
 #include "system/linux/system/tls_context.hpp"
-#include "test_only/front/fake_front.hpp"
-#include "test_only/lcg_random.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/core/font.hpp"
 #include "configs/config.hpp"
 
 #include <chrono>
@@ -82,6 +83,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
     FakeFront front(info.screen_info);
 
     Inifile ini;
+    RedirectionInfo redir_info;
 
     ini.set_acl<cfg::context::target_host>("10.10.44.230");
     ini.set_acl<cfg::globals::target_user>("Tester@RED");
@@ -281,7 +283,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(trans, time_base, gd_provider, events, auth, front.gd(), front, info,
-                ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+                redir_info, gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
@@ -320,7 +322,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
                 {
                     // SET new target in ini
-                    RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
                     const char * host = char_ptr_cast(redir_info.host);
                     const char * password = char_ptr_cast(redir_info.password);
                     const char * username = char_ptr_cast(redir_info.username);
@@ -383,6 +384,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
     FakeFront front(info.screen_info);
 
+    RedirectionInfo redir_info;
     Inifile ini;
 
     ini.set_acl<cfg::context::target_host>("10.10.44.230");
@@ -536,7 +538,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth, front.gd(), front, info,
-                ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+                redir_info, gen, timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
@@ -579,7 +581,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
                 {
                     // SET new target in ini
-                    RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
                     const char * host = char_ptr_cast(redir_info.host);
                     const char * password = char_ptr_cast(redir_info.password);
                     const char * username = char_ptr_cast(redir_info.username);
