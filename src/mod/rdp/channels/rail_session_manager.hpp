@@ -377,9 +377,8 @@ public:
                         RDP::RAIL::DeletedWindow order;
 
                         order.header.FieldsPresentFlags(
-                                  RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                                | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            );
+                            uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+                          | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
                         order.header.WindowId(window_id);
 
                         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -600,9 +599,8 @@ private:
             RDP::RAIL::DeletedWindow order;
 
             order.header.FieldsPresentFlags(
-                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                );
+                uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
             order.header.WindowId(this->dialog_box_window_id);
 
             if (bool(this->verbose & RDPVerbose::rail)) {
@@ -808,9 +806,8 @@ public:
             RDP::RAIL::DeletedWindow order;
 
             order.header.FieldsPresentFlags(
-                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                );
+                uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
             order.header.WindowId(this->auxiliary_window_id);
 
             if (bool(this->verbose & RDPVerbose::rail)) {

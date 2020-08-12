@@ -258,7 +258,8 @@ struct WrmPlayer
                     if (RM18446_adjusted_size) {
                         RDPBitmapData RM18446_test_bitmap_data = bitmap_data;
 
-                        RM18446_test_bitmap_data.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                        RM18446_test_bitmap_data.flags         = uint16_t(BITMAP_COMPRESSION)
+                                                               | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                         RM18446_test_bitmap_data.bitmap_length = RM18446_adjusted_size;
 
                         this->in_stream.in_skip_bytes(RM18446_adjusted_size);

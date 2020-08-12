@@ -172,7 +172,7 @@ public:
     }
 
     void CtrlAltDelReleased() {
-        const int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP; /*NOLINT*/
+        const int flag = int(Keymap2::KBDFLAGS_EXTENDED) | int(KBD_FLAG_UP);
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
         this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);

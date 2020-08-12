@@ -307,9 +307,9 @@ private:
             return stream2.in_uint32_le();
         }();
 
-        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                      | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY     /*NOLINT*/
-                                      | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP))  /*NOLINT*/
+        switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP)))
         {
             case RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW:
                 this->process_window_information(stream, header, FieldsPresentFlags, gd);
@@ -337,10 +337,10 @@ private:
                                     /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "rdp_orders::process_window_information");
 
-        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                      | RDP::RAIL::WINDOW_ORDER_ICON            /*NOLINT*/
-                                      | RDP::RAIL::WINDOW_ORDER_CACHEDICON      /*NOLINT*/
-                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED)) /*NOLINT*/
+        switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_ICON)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_CACHEDICON)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)))
         {
             case RDP::RAIL::WINDOW_ORDER_ICON: {
                     RDP::RAIL::WindowIcon order;
@@ -405,8 +405,8 @@ private:
                                                /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "rdp_orders::process_notification_icon_information");
 
-        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)))
         {
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                     RDP::RAIL::DeletedNotificationIcons order;

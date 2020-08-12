@@ -278,7 +278,8 @@ private:
                             sub_image_data.height = subrect.cy;
 
                             sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                            sub_image_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                                 | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                             sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                             GraphicsUpdatePDU::draw(sub_image_data, sub_image);
@@ -292,7 +293,8 @@ private:
                     RDPBitmapData target_bitmap_data = bitmap_data;
 
                     target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
-                    target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    target_bitmap_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                             | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                     target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
                     GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
@@ -4613,9 +4615,11 @@ protected:
                             rdpbd.dest_left      = dest.x;
                             rdpbd.dest_top       = dest.y;
                             rdpbd.dest_right     = dest.x + dest.cx - 1;
+
                             rdpbd.dest_bottom    = dest.y + dest.cy - 1;
                             rdpbd.bits_per_pixel = 24;
-                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
+                            rdpbd.flags          = uint16_t(BITMAP_COMPRESSION)
+                                                 | uint16_t(NO_BITMAP_COMPRESSION_HDR);
 
                             const Rect tile(dest.x - glyphx, dest.y - glyphy, align4(dest.cx), dest.cy);
                             Bitmap bmp(glyphBitmap.data(), fc.width, fc.height, BitsPerPixel{24}, tile);
@@ -4693,7 +4697,8 @@ protected:
                         sub_image_data.height = subrect.cy;
 
                         sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                        sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                        sub_image_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                             | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                         sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                         this->graphics_update->draw(sub_image_data, sub_image);
@@ -4707,7 +4712,8 @@ protected:
                 RDPBitmapData target_bitmap_data = bitmap_data;
 
                 target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
-                target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                target_bitmap_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                         | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                 target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
                 this->graphics_update->draw(target_bitmap_data, new_bmp);
@@ -4820,7 +4826,8 @@ protected:
                     sub_image_data.height = sub_image_height;
 
                     sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    sub_image_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                         | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                     sub_image_data.bitmap_length = sub_image.data_compressed().size();
 
                     this->draw_impl(sub_image_data, sub_image);

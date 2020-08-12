@@ -800,9 +800,8 @@ void ClientExecute::reset(bool soft)
         RDP::RAIL::DeletedWindow order;
 
         order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-            );
+            uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
         order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
         if (this->verbose) {
@@ -935,19 +934,19 @@ void ClientExecute::create_auxiliary_window(Rect const window_rect)
         RDP::RAIL::NewOrExistingWindow order;
 
         order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA
-                | RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET
-                | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET
-                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET
-                | RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE
-                | RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY
-                | RDP::RAIL::WINDOW_ORDER_FIELD_SHOW
-                | RDP::RAIL::WINDOW_ORDER_FIELD_STYLE
-                | RDP::RAIL::WINDOW_ORDER_FIELD_TITLE
-                | RDP::RAIL::WINDOW_ORDER_FIELD_OWNER
-            );
+            uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTDELTA)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_SHOW)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_STYLE)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_TITLE)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_OWNER)
+        );
         order.header.WindowId(this->auxiliary_window_id);
 
         order.OwnerWindowId(0x0);
@@ -2411,10 +2410,10 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
             RDP::RAIL::WindowIcon order;
 
             order.header.FieldsPresentFlags(
-                        RDP::RAIL::WINDOW_ORDER_ICON
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW    /*NOLINT*/
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_ICON_BIG /*NOLINT*/
-                );
+                uint32_t(RDP::RAIL::WINDOW_ORDER_ICON)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_FIELD_ICON_BIG)
+            );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
             order.icon_info.CacheEntry(65535);
@@ -2572,9 +2571,9 @@ void ClientExecute::process_client_system_parameters_update_pdu(InStream& chunk)
             this->drawable_.draw(order);
 
             order.header.FieldsPresentFlags(
-                        RDP::RAIL::WINDOW_ORDER_ICON
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW /*NOLINT*/
-                );
+                uint32_t(RDP::RAIL::WINDOW_ORDER_ICON)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+            );
 
             if (this->verbose) { order.log(LOG_INFO); }
 

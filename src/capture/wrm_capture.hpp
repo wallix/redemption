@@ -557,7 +557,8 @@ class WrmCaptureImpl :
                     target_bitmap_data.dest_bottom = target_bitmap_data.dest_top + currentHeight - 1;
                     target_bitmap_data.height = currentHeight;
                     target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
-                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
+                    target_bitmap_data.flags          = uint16_t(BITMAP_COMPRESSION)
+                                                      | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                     target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
 
                     GraphicToFile::draw(target_bitmap_data, subBmp);
