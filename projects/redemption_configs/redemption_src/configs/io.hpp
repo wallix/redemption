@@ -298,11 +298,8 @@ parse_error parse_from_cfg(
     using namespace jln::literals;
     using Int = ::configs::spec_types::underlying_type_for_range_t<T>;
     Int y;
-    if (auto err = parse_from_cfg(y, ::configs::spec_type<Int>{}, value)) {
+    if (auto err = parse_integral(y, value, std::integral_constant<Int, min>(), std::integral_constant<Int, max>())) {
         return err;
-    }
-    if (y < min || max < y) {
-        return make_invalid_range_error<Int, min, max>();
     }
     x = T{y};
     return no_parse_error;

@@ -31,6 +31,7 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 REDEMPTION_DIAGNOSTIC_POP
 
 RED_TEST_DELEGATE_PRINT(parse_error, (x ? x.c_str() : "no error"));
+RED_TEST_DELEGATE_PRINT(std::chrono::seconds, x.count());
 
 
 #include <ostream>
@@ -124,7 +125,6 @@ RED_AUTO_TEST_CASE(TestEnumParser)
     }
 }
 
-
 RED_AUTO_TEST_CASE(TestOtherParser)
 {
     // unsigned
@@ -182,6 +182,63 @@ RED_AUTO_TEST_CASE(TestOtherParser)
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "999999999999999999999999999999"_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ""_zv));
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-0xA3600"_zv));
+    }
+
+    // int [-2, 10]
+    {
+        int i;
+        configs::spec_type<configs::spec_types::range<int, -2, 10>> stype;
+
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-3"_zv));
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-2"_zv));
+        RED_CHECK(-2 == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-1"_zv));
+        RED_CHECK(-1 == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0"_zv));
+        RED_CHECK(0 == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "5"_zv));
+        RED_CHECK(5 == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "10"_zv));
+        RED_CHECK(10 == i);
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "11"_zv));
+    }
+
+    // unsigned [2, 10]
+    {
+        unsigned i;
+        configs::spec_type<configs::spec_types::range<unsigned, 2, 10>> stype;
+
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-1"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "0"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "1"_zv));
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "2"_zv));
+        RED_CHECK(2 == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "5"_zv));
+        RED_CHECK(5 == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "10"_zv));
+        RED_CHECK(10 == i);
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "11"_zv));
+    }
+
+    // std:chrono [0, 10]
+    {
+        using namespace std::chrono_literals;
+
+        std::chrono::seconds i;
+        configs::spec_type<configs::spec_types::range<std::chrono::seconds, 0, 10>> stype;
+
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-1"_zv));
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0"_zv));
+        RED_CHECK(0s == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "1"_zv));
+        RED_CHECK(1s == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "2"_zv));
+        RED_CHECK(2s == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "5"_zv));
+        RED_CHECK(5s == i);
+        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "10"_zv));
+        RED_CHECK(10s == i);
+        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "11"_zv));
     }
 
     // file_permission
