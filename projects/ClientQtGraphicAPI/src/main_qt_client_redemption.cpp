@@ -54,7 +54,7 @@ public:
     : ClientRedemption(time_base, events, config)
     , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
-    , qt_socket_listener(time_base, events, this, this->qt_graphic.get_static_qwidget())
+    , qt_socket_listener(this, this->qt_graphic.get_static_qwidget())
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
         this->qt_graphic.get_static_qwidget())
     {
@@ -74,7 +74,7 @@ public:
         }
     }
 
-    void session_update(timeval now, LogId id, KVList kv_list) override {}
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
 
     void possible_active_window_change() override {}
 

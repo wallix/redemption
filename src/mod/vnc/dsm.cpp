@@ -455,7 +455,6 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
 
 
 bool UltraDSM::getResponse(OutStream &out) {
-        int nResponseLength;
         //bool bExpectChallenge = false;
 
         if (!m_rsa) {
@@ -624,7 +623,7 @@ bool UltraDSM::getResponse(OutStream &out) {
         uint16_t wEncryptedSize = nEncryptedSize;
         uint16_t wClientAuthSigLength = nClientAuthSigLength;
 
-        nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
+        int nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
 
         out.out_uint32_le(m_responseFlags);
         out.out_uint16_le(wEncryptedSize);

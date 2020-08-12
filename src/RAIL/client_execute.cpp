@@ -989,9 +989,9 @@ void ClientExecute::destroy_auxiliary_window()
         RDP::RAIL::DeletedWindow order;
 
         order.header.FieldsPresentFlags(
-                    RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-            );
+            uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+          | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+        );
         order.header.WindowId(this->auxiliary_window_id);
 
         if (this->verbose) {

@@ -40,9 +40,6 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-    TimeBase& time_base;
-    EventContainer& events;
-
     QSocketNotifier * _sckListener;
 
     QTimer timer;
@@ -51,13 +48,9 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     QtInputSocket(
-        TimeBase& time_base,
-        EventContainer & events,
         ClientRedemptionAPI * client,
         QWidget * parent)
     : QObject(parent)
-    , time_base(time_base)
-    , events(events)
     , _sckListener(nullptr)
     , timer(this)
     , client(client)
