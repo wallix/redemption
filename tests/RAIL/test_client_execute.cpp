@@ -43,7 +43,6 @@
 #include "core/events.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "mod/internal/login_mod.hpp"
-#include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/client_info.hpp"
 
@@ -91,10 +90,8 @@ RED_AUTO_TEST_CASE(TestClientExecute)
 
     ClientInfo client_info;
     GCC::UserData::CSMonitor cs_monitor;
-    GCC::UserData::CSCore cs_core;
     client_info.screen_info = screen_info;
     client_info.cs_monitor = cs_monitor;
-    client_info.cs_core = cs_core;
 
     GdForwarder gd_forwarder(front.gd());
     WindowListCaps window_list_caps;

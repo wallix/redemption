@@ -29,7 +29,6 @@
 #include <cstring>
 
 #include "core/misc.hpp"
-#include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
@@ -108,7 +107,6 @@ struct ClientInfo
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
 
-    GCC::UserData::CSCore cs_core;
     GCC::UserData::CSMonitor cs_monitor;
 
     ClientTimeZone client_time_zone;
@@ -136,9 +134,7 @@ struct ClientInfo
     RailCaps                rail_caps;
     WindowListCaps          window_list_caps;
 
-    uint8_t dummy1[32768];
     Recv_CS_BitmapCodecCaps bitmap_codec_caps;
-    uint8_t dummy2[32768];
 
     ClientInfo() = default;
 
