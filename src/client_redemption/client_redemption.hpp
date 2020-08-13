@@ -983,35 +983,6 @@ public:
         cmd.log(LOG_INFO);
     }
 
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //--------------------------------
-    //    SOCKET EVENTS FUNCTIONS
-    //--------------------------------
-
-    void callback(bool is_timeout) override
-    {
-        this->time_base.set_current_time(tvtime());
-        try {
-            if (is_timeout) {
-                auto const end_tv = this->time_base.get_current_time();
-                this->events.execute_events(end_tv, [](int /*fd*/){ return false; }, 0);
-            } else {
-                this->events.execute_events(this->time_base.get_current_time(),
-                                                [](int /*fd*/){ return true; }, 0);
-            }
-        } catch (const Error & e) {
-
-            const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
-            LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
-            std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
-            this->disconnect(labelErrorMsg, true);
-        }
-    }
-
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
     //       DRAW FUNCTIONS

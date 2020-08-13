@@ -54,7 +54,7 @@ public:
     : ClientRedemption(time_base, events, config)
     , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
-    , qt_socket_listener(this, this->qt_graphic.get_static_qwidget())
+    , qt_socket_listener(this->qt_graphic.get_static_qwidget(), time_base, events)
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
         this->qt_graphic.get_static_qwidget())
     {
@@ -117,8 +117,25 @@ public:
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
+            if (auto* mod = this->_callback.get_mod()) {
+                auto action = [this](bool is_timeout){
+                    this->time_base.set_current_time(tvtime());
+                    try {
+                        auto const end_tv = this->time_base.get_current_time();
+                        auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
+                        this->events.execute_events(end_tv, fn, 0);
+                    } catch (const Error & e) {
+                        const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
+                        LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
+                        std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
+                        this->disconnect(labelErrorMsg, true);
+                    }
+                };
 
-            if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
+                this->qt_socket_listener.start_to_listen(
+                    this->client_sck,
+                    [action]{ action(false); },
+                    [action]{ action(true); });
 
                 this->start_wab_session_time = tvtime();
 

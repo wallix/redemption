@@ -28,18 +28,6 @@
 
 class mod_api;
 
-class ClientInputSocketAPI
-{
-public:
-    // TODO private
-    mod_api * _callback = nullptr;
-
-    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
-    virtual void disconnect() = 0;
-
-    virtual ~ClientInputSocketAPI() = default;
-};
-
 class ClientRedemptionAPI : public FrontAPI
 {
 public:
@@ -51,7 +39,6 @@ public:
                         , std::size_t /*total_length*/, int  /*flags*/) override {}
 
     virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
-    virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
     virtual void close() = 0;
