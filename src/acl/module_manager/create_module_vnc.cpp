@@ -294,8 +294,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    AuthApi & sesman,
-    TimeObj & timeobj
+    AuthApi & sesman
     )
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
@@ -328,7 +327,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
                 ini.get<cfg::globals::host>(),
                 client_info.screen_info,
                 ini.get<cfg::metrics::sign_key>()),
-            timeobj.get_time(),
+            time_base.get_current_time(),
             ini.get<cfg::metrics::log_file_turnover_interval>(),
             ini.get<cfg::metrics::log_interval>());
     }

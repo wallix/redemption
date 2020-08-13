@@ -47,7 +47,7 @@ struct RdpNegoProtocols
 
 RdpNego::RdpNego(
     const bool tls, const std::string & username, bool nla, bool admin_mode,
-    const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
+    const char * target_host, const bool krb, Random & rand, TimeBase & time_base,
     std::string& extra_message, Translation::language_t lang,
     const TLSClientParams & tls_client_params,
     const Verbose verbose)
@@ -64,7 +64,7 @@ RdpNego::RdpNego(
 , target_host(target_host)
 , current_password(nullptr)
 , rand(rand)
-, timeobj(timeobj)
+, time_base(time_base)
 , lb_info(nullptr)
 , extra_message(extra_message)
 , lang(lang)
@@ -421,7 +421,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 this->hostname.c_str(),
                 trans.get_transport().get_public_key(),
                 this->restricted_admin_mode,
-                this->rand, this->timeobj,
+                this->rand, this->time_base,
                 bool(this->verbose & Verbose::credssp),
                 bool(this->verbose & Verbose::negotiation)
             );

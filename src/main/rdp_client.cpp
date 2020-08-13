@@ -86,7 +86,7 @@ int main(int argc, char** argv)
         {'s', "screen-output", &screen_output, "png screenshot path"},
         {'r', "record-path", &record_output, "dump socket path"},
         {'V', "vnc", "dump socket path"},
-        {'l', "lcg", "use LCGRandom and LCGTime"},
+        {'l', "lcg", "use LCGRandom"},
         {'b', "load-balance-info", &load_balance_info, ""},
         {'n', "ini", &ini_file, "load ini filename"},
         {'c', "cert-check", &cert_check,
@@ -149,7 +149,6 @@ int main(int argc, char** argv)
     ScopedSslInit scoped_ssl;
 
     ClientFront front(client_info.screen_info, verbose);
-    TimeSystem system_timeobj;
     TimeBase time_base(tvtime());
     EventContainer events;
 
@@ -158,7 +157,7 @@ int main(int argc, char** argv)
         Transport* trans = &mod_trans;
         if (!record_output.empty()) {
             RecorderTransport& recorder = recorder_trans.emplace(
-                mod_trans, system_timeobj, record_output.c_str());
+                mod_trans, time_base, record_output.c_str());
             if (ini_file.empty()) {
                 recorder.add_info({});
             }
@@ -192,7 +191,6 @@ int main(int argc, char** argv)
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;
-    LCGTime lcg_timeobj;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
     GdForwarder gd_forwarder(gdi::null_gd());
@@ -265,7 +263,6 @@ int main(int argc, char** argv)
     auto run_rdp = [&]{
         ModRdpFactory mod_rdp_factory;
         return run([&](Transport& trans){
-            using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
                 trans,
@@ -275,7 +272,6 @@ int main(int argc, char** argv)
                 sesman,
                 gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
-                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
                 channels_authorizations, mod_rdp_params, tls_client_params, licensestore,
                 ini, nullptr, nullptr, mod_rdp_factory);
         });

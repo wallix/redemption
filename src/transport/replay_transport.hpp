@@ -42,7 +42,7 @@ public:
 
     ReplayTransport(
         const char* fname, const char *ip_address, int port,
-        TimeObj& timeobj, FdType fd_type = FdType::Timer,
+        TimeBase& time_base, FdType fd_type = FdType::Timer,
         FirstPacket first_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
@@ -96,7 +96,7 @@ private:
 private:
     long long count_packet = 0;
 
-    TimeObj& timeobj;
+    TimeBase& time_base;
     std::chrono::milliseconds start_time;
 
     InFileTransport in_file;

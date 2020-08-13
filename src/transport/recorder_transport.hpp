@@ -26,7 +26,7 @@
 
 #include <chrono>
 
-class TimeObj;
+class TimeBase;
 
 
 /**
@@ -51,14 +51,14 @@ public:
         NlaServerOut,
     };
 
-    explicit RecorderFile(TimeObj& timeobj, char const* filename);
+    explicit RecorderFile(TimeBase& time_base, char const* filename);
 
     ~RecorderFile();
 
     void write_packet(PacketType type, bytes_view buffer);
 
 protected:
-    TimeObj& timeobj;
+    TimeBase& time_base;
     std::chrono::milliseconds start_time;
     OutFileTransport file;
 };
@@ -71,7 +71,7 @@ class RecorderTransport : public Transport
 {
 public:
 
-    explicit RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename);
+    explicit RecorderTransport(Transport& trans, TimeBase& time_base, char const* filename);
 
     void add_info(bytes_view info);
 

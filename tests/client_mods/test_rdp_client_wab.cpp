@@ -130,7 +130,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen;
-    LCGTime timeobj;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
@@ -145,7 +144,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
-        front.gd(), front, info, redir_info, gen, timeobj,
+        front.gd(), front, info, redir_info, gen,
         channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, nullptr, nullptr, mod_rdp_factory);
 

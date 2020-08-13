@@ -35,7 +35,7 @@ class rdpCredsspClientKerberos;
 #endif
 class ServerNotifier;
 class Random;
-class TimeObj;
+class TimeBase;
 class InStream;
 class TpduBuffer;
 
@@ -72,7 +72,7 @@ private:
 
     uint8_t * current_password;
     Random & rand;
-    TimeObj & timeobj;
+    TimeBase & time_base;
     char * lb_info;
 
     std::unique_ptr<rdpClientNTLM> NTLM;
@@ -109,7 +109,7 @@ public:
 
     RdpNego(
         const bool tls, const std::string & username, bool nla, bool admin_mode,
-        const char * target_host, const bool krb, Random & rand, TimeObj & timeobj,
+        const char * target_host, const bool krb, Random & rand, TimeBase & time_base,
         std::string& extra_message, Translation::language_t lang,
         const TLSClientParams & tls_client_params,
         const Verbose verbose = {});

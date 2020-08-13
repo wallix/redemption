@@ -23,9 +23,10 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "test_only/transport/test_transport.hpp"
-#include "test_only/frozen_time.hpp"
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
+#include "utils/timebase.hpp"
+#include "utils/difftimeval.hpp"
 
 // TODO copy of test_transport::hexdump
 // struct xxhexdump
@@ -256,15 +257,21 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     bool enable_kerberos = false;
     uint64_t verbosity = 4096;
 
-    FrozenTime timeobj;
-    RecorderFile outFile(timeobj, wf.c_str());
+    std::chrono::microseconds ustime = 1533211681s;
+    timeval tv;
+    tv.tv_sec = ustime.count()/1000000;
+    tv.tv_usec = ustime.count()%1000000;
+    TimeBase time_base(tv);
+
+
+    RecorderFile outFile(time_base, wf.c_str());
 
     ReplayBackTransport backConn;
     ReplayFrontTransport frontConn;
     NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
     NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-    ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, "0.0.0.0", enable_kerberos, verbosity);
+    ProxyRecorder conn(back_nla_tee_trans, outFile, time_base, "0.0.0.0", enable_kerberos, verbosity);
 
     uint8_t front_public_key[1024] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
     writable_u8_array_view front_public_key_av {front_public_key, 16};
@@ -280,10 +287,8 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
 
     RED_TEST_PASSPOINT();
     // Receiving data from Client: CredSSP
-    conn.frontBuffer.load_data(frontConn);
-    RED_TEST_PASSPOINT();
-    conn.front_nla(frontConn);
-    RED_TEST_PASSPOINT();
+//    conn.frontBuffer.load_data(frontConn);
+//    conn.front_nla(frontConn);
 
     // // Receiving data from Client: CredSSP
     // conn.frontBuffer.load_data(frontConn);

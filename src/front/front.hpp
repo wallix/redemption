@@ -1475,7 +1475,7 @@ public:
                 this->ini.get<cfg::client::show_common_cipher_list>());
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
-                this->nego_server = std::make_unique<NegoServer>(this->trans.get_public_key(), true);
+                this->nego_server = std::make_unique<NegoServer>(this->trans.get_public_key(), this->time_base, true);
             }
         }
 

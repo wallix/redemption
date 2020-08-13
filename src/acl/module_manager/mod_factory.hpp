@@ -72,7 +72,6 @@ class ModFactory
     Keymap2 & keymap;
     FileSystemLicenseStore file_system_license_store{ app_path(AppPath::License).to_string() };
     Random & gen;
-    TimeObj & timeobj;
     CryptoContext & cctx;
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
@@ -91,7 +90,6 @@ public:
                ClientExecute & rail_client_execute,
                Keymap2 & keymap,
                Random & gen,
-               TimeObj & timeobj,
                CryptoContext & cctx
         )
         : mod_wrapper(mod_wrapper)
@@ -108,7 +106,6 @@ public:
         , rail_client_execute(rail_client_execute)
         , keymap(keymap)
         , gen(gen)
-        , timeobj(timeobj)
         , cctx(cctx)
     {
     }
@@ -507,7 +504,6 @@ public:
             this->sesman,
             this->file_system_license_store,
             this->gen,
-            this->timeobj,
             this->cctx,
             this->server_auto_reconnect_packet);
         return new_mod_pack;
@@ -521,9 +517,8 @@ public:
             this->glyphs, this->theme,
             this->time_base,
             this->events,
-            this->sesman,
-            this->timeobj
-        );
+            this->sesman
+            );
         return new_mod_pack;
     }
 };

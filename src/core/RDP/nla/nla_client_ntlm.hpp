@@ -26,6 +26,7 @@
 #include "system/ssl_sha256.hpp"
 #include "system/ssl_md4.hpp"
 #include "utils/genrandom.hpp"
+#include "utils/timebase.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
 
@@ -51,7 +52,7 @@ private:
     std::vector<uint8_t> utf16_domain;
     std::vector<uint8_t> identity_Password;
 
-    TimeObj & timeobj;
+    TimeBase & time_base;
     Random & rand;
 
     // NTLMContextClient
@@ -96,7 +97,7 @@ private:
         array_md5 digest = ::HmacMd5(ClientSigningKey, seqno, payload);
         auto ciphertext = Rc4Crypt<8>(rc4, {digest.data(), 8});
         /* Concatenate version, ciphertext and sequence number to build signature */
-        return std::vector<uint8_t>{} << out_uint32_le(1) 
+        return std::vector<uint8_t>{} << out_uint32_le(1)
                                       << ciphertext
                                       << out_uint32_le(mseqno)
                                       << encrypted_pubkey;
@@ -110,14 +111,14 @@ public:
                u8_array_view public_key,
                const bool restricted_admin_mode,
                Random & rand,
-               TimeObj & timeobj,
+               TimeBase & time_base,
                const bool credssp_verbose,
                const bool verbose)
         : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , utf16_user(::UTF8toUTF16(user))
         , utf16_domain(::UTF8toUTF16(domain))
         , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
-        , timeobj(timeobj)
+        , time_base(time_base)
         , rand(rand)
         , Workstation(::UTF8toUTF16({hostname, strlen(hostname)}))
         , restricted_admin_mode(restricted_admin_mode)
@@ -169,7 +170,7 @@ public:
                 array_md5 ResponseKeyNT = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->utf16_user), this->utf16_domain);
                 array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->utf16_user), this->utf16_domain);
 
-                const timeval tv = this->timeobj.get_time(); // Timestamp
+                const timeval tv = this->time_base.get_current_time(); // Timestamp
                 array_challenge ClientChallenge; // Nonce(8)
                 this->rand.random(ClientChallenge.data(), 8);
                 if (this->verbose){

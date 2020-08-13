@@ -114,10 +114,11 @@ class NLAServer
     writable_u8_array_view front_public_key_av;
 
 public:
-    NLAServer(std::string nla_username, std::string nla_password, bool forkable, uint64_t verbosity)
+    NLAServer(std::string nla_username, std::string nla_password, bool forkable, TimeBase & time_base, uint64_t verbosity)
         : nla_username(nla_username)
         , nla_password(nla_password)
         , forkable(forkable)
+        , time_base(time_base)
         , verbosity(verbosity)
     {
         // just ignore this signal because there is no child termination management yet.
@@ -168,7 +169,7 @@ public:
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, true);
+            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, time_base, true);
             this->pstate = PState::NEGOTIATING_FRONT_NLA;
         }
         return cr_tpdu;
@@ -255,7 +256,7 @@ public:
 //                _exit(1);
 //            }
 
-            TimeSystem timeobj;
+            TimeBase time_base(tvtime());
 
             TpduBuffer buffer;
             buffer.trace_pdu = true;
@@ -269,6 +270,7 @@ public:
                     FD_ZERO(&rset);
                     FD_SET(front_fd, &rset);
                     int status = select(front_fd + 1, &rset, nullptr, nullptr, nullptr);
+                    time_base.set_current_time(tvtime());
                     if (status < 0) {
                         std::cerr << "Selected returned an error\n";
                         break;
@@ -337,6 +339,7 @@ private:
     int connection_counter = 0;
 //    bool enable_kerberos;
     bool forkable;
+    TimeBase & time_base;
     uint64_t verbosity;
 };
 
@@ -368,6 +371,7 @@ int main(int argc, char *argv[])
     int listen_port = 8001;
     std::string nla_username;
     std::string nla_password;
+    TimeBase time_base(tvtime());
     bool no_forkable = false;
     bool enable_kerberos = false;
     uint64_t verbosity = 0;
@@ -413,12 +417,13 @@ int main(int argc, char *argv[])
 
     openlog("NLAServer", LOG_CONS | LOG_PERROR, LOG_USER);
 
-    NLAServer front(std::move(nla_username), std::move(nla_password), !no_forkable, verbosity);
+    NLAServer front(std::move(nla_username), std::move(nla_password), !no_forkable, time_base, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
         return -2;
     }
     return unique_server_loop(std::move(sck), [&](int sck){
+        time_base.set_current_time(tvtime());
         return front.start(sck);
     });
 }

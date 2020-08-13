@@ -589,8 +589,6 @@ public:
         TimeBase time_base(tvtime());
         EventContainer events;
 
-        TimeSystem timeobj;
-
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
         Sesman sesman(ini, time_base);
@@ -651,7 +649,7 @@ public:
             ModFactory mod_factory(
                 mod_wrapper, time_base, sesman, events, front.client_info, front, front,
                 redir_info, ini, glyphs, theme, rail_client_execute, front.keymap, rnd,
-                timeobj, cctx);
+                cctx);
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);

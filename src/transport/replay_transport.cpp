@@ -24,6 +24,7 @@
 #include "utils/difftimeval.hpp"
 #include "replay_transport.hpp"
 #include "recorder_transport.hpp"
+#include "utils/timebase.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -84,10 +85,10 @@ namespace
 } // namespace
 
 ReplayTransport::ReplayTransport(
-    const char* fname, const char *ip_address, int port, TimeObj& timeobj,
+    const char* fname, const char *ip_address, int port, TimeBase& time_base,
     FdType fd_type, FirstPacket first_packet, UncheckedPacket unchecked_packet)
-: timeobj(timeobj)
-, start_time(to_ms(timeobj.get_time()))
+: time_base(time_base)
+, start_time(to_ms(time_base.get_current_time()))
 , in_file(open_file(fname))
 , fd(FdType::Timer == fd_type
 ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)
@@ -138,7 +139,7 @@ void ReplayTransport::reschedule_timer()
     }
 
     auto const targetTime = prefetchForTimer();
-    auto const now = to_ms(this->timeobj.get_time());
+    auto const now = to_ms(this->time_base.get_current_time());
 
     // zero disarms the timer, force to 1 nanoseconds
     auto const delate_time = std::max(
@@ -317,7 +318,7 @@ std::chrono::milliseconds ReplayTransport::prefetchForTimer()
         /* if we've not found anything just return now so that select() will trigger right now*/
     }
 
-    return to_ms(this->timeobj.get_time());
+    return to_ms(this->time_base.get_current_time());
 }
 
 size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)

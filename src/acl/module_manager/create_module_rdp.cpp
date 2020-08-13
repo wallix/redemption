@@ -242,7 +242,6 @@ public:
       , const ClientInfo & info
       , RedirectionInfo & redir_info
       , Random & gen
-      , TimeObj & timeobj
       , const ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
@@ -259,7 +258,7 @@ public:
 
     , sesman(sesman)
     , mod(this->socket_transport, time_base, mod_wrapper, events
-        , sesman,gd, front, info, redir_info, gen, timeobj
+        , sesman,gd, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -502,7 +501,6 @@ ModPack create_mod_rdp(
     AuthApi & sesman,
     LicenseApi & file_system_license_store,
     Random & gen,
-    TimeObj & timeobj,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
@@ -820,7 +818,7 @@ ModPack create_mod_rdp(
                 ini.get<cfg::globals::host>(),
                 client_info.screen_info,
                 ini.get<cfg::metrics::sign_key>()),
-            timeobj.get_time(),
+            time_base.get_current_time(),
             ini.get<cfg::metrics::log_file_turnover_interval>(),
             ini.get<cfg::metrics::log_interval>());
     }
@@ -955,7 +953,6 @@ ModPack create_mod_rdp(
         client_info,
         redir_info,
         gen,
-        timeobj,
         channels_authorizations,
         mod_rdp_params,
         tls_client_params,

@@ -33,7 +33,7 @@
 class NlaTeeTransport;
 class NegoClient;
 class NegoServer;
-class TimeObj;
+class TimeBase;
 
 
 /** @brief a front connection with a RDP client */
@@ -47,7 +47,7 @@ public:
     ProxyRecorder(
         NlaTeeTransport & back_nla_tee_trans,
         RecorderFile & outFile,
-        TimeObj & timeobj,
+        TimeBase & time_base,
         const char * host,
         bool enable_kerberos,
         uint64_t verbosity
@@ -75,7 +75,7 @@ public:
 
     NlaTeeTransport & back_nla_tee_trans;
     RecorderFile & outFile;
-    TimeObj & timeobj;
+    TimeBase & time_base;
     const char * host;
 
     TpduBuffer frontBuffer;

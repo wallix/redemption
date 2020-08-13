@@ -26,17 +26,9 @@
 #include "transport/replay_transport.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/timebase.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/select.hpp"
-
-
-class ZeroTime : public TimeObj
-{
-    timeval get_time() override
-    {
-        return {};
-    }
-};
 
 
 RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
@@ -65,11 +57,11 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     };
 
     {
-        ZeroTime timeobj;
+        TimeBase time_base({0,0});
         TestTransport socket(
             cstr_array_view("123456789"),
             cstr_array_view("abcdefghijklmnopqrstuvwxyz"));
-        RecorderTransport trans(socket, timeobj, wf);
+        RecorderTransport trans(socket, time_base, wf);
         char buf[10];
 
         for (auto m : a) {
@@ -130,17 +122,17 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     }
 
     {
-        ZeroTime timeobj;
+        TimeBase time_base({0,0});
         ReplayTransport trans(
-            wf, "ip", 0/*port*/, timeobj, ReplayTransport::FdType::AlwaysReady,
+            wf, "ip", 0/*port*/, time_base, ReplayTransport::FdType::AlwaysReady,
             ReplayTransport::FirstPacket::DisableTimer, ReplayTransport::UncheckedPacket::Send);
         RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
     }
 
     // Replay
     {
-        ZeroTime timeobj;
-        ReplayTransport trans(wf, "", 0, timeobj, ReplayTransport::FdType::AlwaysReady);
+        TimeBase time_base({0,0});
+        ReplayTransport trans(wf, "", 0, time_base, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
         auto av = make_writable_array_view(buf);
         auto in = cstr_array_view("123456789");
@@ -178,8 +170,8 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
 
     // Replay real time
     {
-        ZeroTime timeobj;
-        ReplayTransport trans(wf, "", 0, timeobj, ReplayTransport::FdType::Timer);
+        TimeBase time_base({0,0});
+        ReplayTransport trans(wf, "", 0, time_base, ReplayTransport::FdType::Timer);
         char buf[10];
         auto av = make_writable_array_view(buf);
         auto in = cstr_array_view("123456789");

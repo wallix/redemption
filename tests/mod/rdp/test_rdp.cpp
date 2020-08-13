@@ -147,7 +147,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     // To always get the same client random, in tests
     LCGRandom gen;
-    LCGTime timeobj;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     EventContainer events;
@@ -162,7 +161,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     auto mod = new_mod_rdp(
         t, time_base, gd_provider, events, auth,
         front.gd(), front, info, redir_info,
-        gen, timeobj, channels_authorizations,
+        gen, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);
 

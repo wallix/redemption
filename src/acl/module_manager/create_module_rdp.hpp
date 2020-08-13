@@ -51,7 +51,6 @@ extern ModPack create_mod_rdp(
     AuthApi & sesman,
     LicenseApi & file_system_license_store,
     Random & gen,
-    TimeObj & timeobj,
     CryptoContext & cctx,
     std::array<uint8_t, 28>& server_auto_reconnect_packet
 );

@@ -36,14 +36,14 @@
 ProxyRecorder::ProxyRecorder(
     NlaTeeTransport & back_nla_tee_trans,
     RecorderFile & outFile,
-    TimeObj & timeobj,
+    TimeBase & time_base,
     const char * host,
     bool enable_kerberos,
     uint64_t verbosity
 )
 : back_nla_tee_trans(back_nla_tee_trans)
 , outFile(outFile)
-, timeobj(timeobj)
+, time_base(time_base)
 , host(host)
 , enable_kerberos(enable_kerberos)
 , verbosity(verbosity)
@@ -97,7 +97,7 @@ void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn,
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "start NegoServer");
         }
-        this->nego_server = std::make_unique<NegoServer>(key, this->verbosity > 8);
+        this->nego_server = std::make_unique<NegoServer>(key, this->time_base, this->verbosity > 8);
         this->pstate = PState::NEGOCIATING_FRONT_NLA;
     }
     else {
@@ -113,7 +113,7 @@ void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn,
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-        this->back_nla_tee_trans, this->timeobj,
+        this->back_nla_tee_trans, this->time_base,
         this->host, nla_username.c_str(),
         nla_password.c_str(),
         enable_kerberos, tls_client_params, this->verbosity > 8);
@@ -253,7 +253,4 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn, bool is_
         this->pstate = PState::FORWARD;
     }
 }
-
-
-
 

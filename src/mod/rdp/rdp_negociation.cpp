@@ -161,7 +161,7 @@ RdpNegociation::RdpNegociation(
     const ClientInfo& info,
     RedirectionInfo& redir_info,
     Random& gen,
-    TimeObj& timeobj,
+    TimeBase& time_base,
     const ModRDPParams& mod_rdp_params,
     AuthApi& sesman,
     LicenseApi& license_store,
@@ -218,7 +218,7 @@ RdpNegociation::RdpNegociation(
     , nego(
         mod_rdp_params.enable_tls, mod_rdp_params.target_user,
         mod_rdp_params.enable_nla, mod_rdp_params.enable_restricted_admin_mode,
-        mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, timeobj,
+        mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, time_base,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         tls_client_params,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)

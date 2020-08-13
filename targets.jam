@@ -4565,6 +4565,50 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <covfile>src/mod/vnc/encoder/zrle.hpp
   <define>ZLIB_CONST
 ;
+test-run tests/mod/vnc/test_dsm :
+  $(REDEMPTION_TEST_PATH)/mod/vnc/test_dsm.cpp
+:
+  <library>app_path_test.o
+  <library>crypto
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/events.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapsym.o
+  <library>src/mod/metrics.o
+  <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/mod/vnc/dsm.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
+  <library>src/mod/vnc/vnc.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <library>z
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/vnc/dsm.cpp
+  <covfile>src/mod/vnc/dsm.hpp
+  <define>ZLIB_CONST
+;
 test-run tests/mod/vnc/test_newline_convert :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_newline_convert.cpp
 :
@@ -6056,6 +6100,7 @@ alias test_metrics_hmac : tests/mod/test_metrics_hmac ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
 alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
+alias test_dsm : tests/mod/vnc/test_dsm ;
 alias test_newline_convert : tests/mod/vnc/test_newline_convert ;
 alias test_vnc : tests/mod/vnc/test_vnc ;
 alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
@@ -6386,6 +6431,7 @@ alias test_metrics_hmac.coverage : tests/mod/test_metrics_hmac.coverage ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
 alias test_zrle.coverage : tests/mod/vnc/encoder/test_zrle.coverage ;
+alias test_dsm.coverage : tests/mod/vnc/test_dsm.coverage ;
 alias test_newline_convert.coverage : tests/mod/vnc/test_newline_convert.coverage ;
 alias test_vnc.coverage : tests/mod/vnc/test_vnc.coverage ;
 alias test_vnc_metrics.coverage : tests/mod/vnc/test_vnc_metrics.coverage ;
@@ -6795,6 +6841,7 @@ alias tests/mod/vnc/encoder.norec :
   tests/mod/vnc/encoder/test_zrle
 ;
 alias tests/mod/vnc.norec :
+  tests/mod/vnc/test_dsm
   tests/mod/vnc/test_newline_convert
   tests/mod/vnc/test_vnc
   tests/mod/vnc/test_vnc_metrics

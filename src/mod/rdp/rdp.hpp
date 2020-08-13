@@ -2025,7 +2025,6 @@ public:
       , const ClientInfo & info
       , RedirectionInfo & redir_info
       , Random & gen
-      , TimeObj & timeobj
       , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
@@ -2104,7 +2103,7 @@ public:
         , asynchronous_tasks(time_base, gd_provider, events)
         #endif
         , lang(mod_rdp_params.lang)
-        , session_time_start(timeobj.get_time().tv_sec)
+        , session_time_start(time_base.get_current_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
@@ -2178,7 +2177,7 @@ public:
             this->decrypt, this->encrypt, this->logon_info,
             this->channels.enable_auth_channel,
             this->trans, this->front, info, this->redir_info,
-            gen, timeobj, mod_rdp_params, this->sesman, this->license_store,
+            gen, time_base, mod_rdp_params, this->sesman, this->license_store,
     #ifndef __EMSCRIPTEN__
             this->channels.drive.file_system_drive_manager.has_managed_drive()
          || this->channels.session_probe.enable_session_probe,

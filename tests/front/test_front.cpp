@@ -225,7 +225,6 @@ RED_AUTO_TEST_CASE(TestFront)
 
     // To always get the same client random, in tests
     LCGRandom gen2;
-    LCGTime timeobj;
 
     front.clear_channels();
     NullLicenseStore license_store;
@@ -241,7 +240,7 @@ RED_AUTO_TEST_CASE(TestFront)
     auto mod = new_mod_rdp(
         t, time_base, gd_provider, events, auth,
         front, front, info, redir_info,
-        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params,
+        gen2, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, metrics,
         file_validator_service, mod_rdp_factory);
 
@@ -393,11 +392,10 @@ RED_AUTO_TEST_CASE(TestFront2)
     //
     // // To always get the same client random, in tests
     // LCGRandom gen2;
-    // LCGTime timeobj;
     //
     // front.clear_channels();
     //
-    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, report_message, ini, nullptr);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, report_message, ini, nullptr);
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -563,11 +561,10 @@ RED_AUTO_TEST_CASE(TestFront3)
 
     // To always get the same client random, in tests
     LCGRandom gen2;
-    LCGTime timeobj;
 
     front.clear_channels();
 
-    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, report_message, ini);
+    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, report_message, ini);
 
 
     if (verbose > 2){

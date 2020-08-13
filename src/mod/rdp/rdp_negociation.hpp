@@ -49,7 +49,7 @@ class FrontAPI;
 class ModRDPParams;
 class Random;
 class RedirectionInfo;
-class TimeObj;
+class TimeBase;
 class Transport;
 namespace CHANNELS
 {
@@ -192,7 +192,7 @@ public:
         const ClientInfo& info,
         RedirectionInfo& redir_info,
         Random& gen,
-        TimeObj& timeobj,
+        TimeBase& time_base,
         const ModRDPParams& mod_rdp_params,
         AuthApi& sesman,
         LicenseApi& license_store,

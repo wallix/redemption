@@ -32,7 +32,7 @@
 #include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
 #include "utils/stream.hpp"
-
+#include "utils/timebase.hpp"
 #include "core/RDP/nla/ntlm_message.hpp"
 
 
@@ -90,7 +90,7 @@ private:
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
-    TimeObj & timeobj;
+    TimeBase & time_base;
     Random & rand;
     const std::vector<uint8_t> public_key;
 
@@ -178,7 +178,7 @@ public:
                bytes_view key,
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
-               TimeObj & timeobj,
+               TimeBase & time_base,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
                const bool credssp_verbose,
@@ -195,7 +195,7 @@ public:
         , credssp_version(credssp_version)
         , ntlm_version(ntlm_version)
         , ignore_bogus_nego_flags(ignore_bogus_nego_flags)
-        , timeobj(timeobj)
+        , time_base(time_base)
         , rand(rand)
         , public_key(key.data(),key.data()+key.size())
         , credssp_verbose(credssp_verbose)
@@ -604,7 +604,7 @@ public:
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         }
         else {
-            const timeval tv = timeobj.get_time();
+            const timeval tv = time_base.get_current_time();
             OutStream out_stream(this->Timestamp);
             out_stream.out_uint32_le(tv.tv_usec);
             out_stream.out_uint32_le(tv.tv_sec);
@@ -722,5 +722,4 @@ public:
     }
 
 };
-
 

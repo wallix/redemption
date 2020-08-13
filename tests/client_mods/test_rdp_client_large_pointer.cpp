@@ -146,7 +146,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 
     // To always get the same client random, in tests
     LCGRandom gen;
-    LCGTime timeobj;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
@@ -162,7 +161,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, auth, front.gd(), front, info, redir_info, gen, timeobj,
+        events, auth, front.gd(), front, info, redir_info, gen,
         channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
@@ -274,7 +273,6 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
 
     // To always get the same client random, in tests
     LCGRandom gen;
-    LCGTime timeobj;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
@@ -289,7 +287,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(t, time_base, gd_provider,
-        events, auth, front.gd(), front, info, redir_info, gen, timeobj,
+        events, auth, front.gd(), front, info, redir_info, gen,
         channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);

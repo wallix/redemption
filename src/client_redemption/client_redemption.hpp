@@ -87,7 +87,6 @@ public:
     int               client_sck;
 
 private:
-    TimeSystem        timeSystem;
     NullLicenseStore  licensestore;
 
 public:
@@ -455,7 +454,6 @@ public:
                   , this->config.info
                   , this->redir_info
                   , *this->gen
-                  , this->timeSystem
                   , channels_authorizations
                   , mod_rdp_params
                   , tls_client_params
@@ -521,7 +519,7 @@ public:
             LOG(LOG_INFO, "Replay %s", this->config.full_capture_file_name);
             auto transport = std::make_unique<ReplayTransport>(
                 this->config.full_capture_file_name.c_str(), this->config.target_IP.c_str(), this->config.port,
-                this->timeSystem, ReplayTransport::FdType::Timer,
+                this->time_base, ReplayTransport::FdType::Timer,
                 ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
             this->client_sck = transport->get_fd();
@@ -552,7 +550,8 @@ public:
                 if (this->config.is_full_capturing) {
                     this->_socket_in_recorder = std::move(this->socket);
                     this->socket = std::make_unique<RecorderTransport>(
-                        *this->_socket_in_recorder, this->timeSystem, this->config.full_capture_file_name.c_str());
+                        *this->_socket_in_recorder, this->time_base,
+                                this->config.full_capture_file_name.c_str());
                 }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->config.target_IP);
@@ -998,14 +997,16 @@ public:
     //    SOCKET EVENTS FUNCTIONS
     //--------------------------------
 
-    void callback(bool is_timeout) override {
-
+    void callback(bool is_timeout) override
+    {
+        this->time_base.set_current_time(tvtime());
         try {
             if (is_timeout) {
-                auto const end_tv = time_base.get_current_time();
+                auto const end_tv = this->time_base.get_current_time();
                 this->events.execute_events(end_tv, [](int /*fd*/){ return false; }, 0);
             } else {
-                this->events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, 0);
+                this->events.execute_events(this->time_base.get_current_time(),
+                                                [](int /*fd*/){ return true; }, 0);
             }
         } catch (const Error & e) {
 

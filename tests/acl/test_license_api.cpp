@@ -170,7 +170,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             // To always get the same client random, in tests
             LCGRandom gen;
-            LCGTime timeobj;
 
 
 #ifdef GENERATE_TESTING_DATA
@@ -283,7 +282,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(trans, time_base, gd_provider, events, auth, front.gd(), front, info,
-                redir_info, gen, timeobj,
+                redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
@@ -472,7 +471,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             // To always get the same client random, in tests
             LCGRandom gen;
-            LCGTime timeobj;
 
             class ReplayLicenseStore : public LicenseApi
             {
@@ -538,7 +536,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth, front.gd(), front, info,
-                redir_info, gen, timeobj,
+                redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 

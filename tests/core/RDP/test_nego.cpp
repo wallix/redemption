@@ -21,6 +21,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "utils/timebase.hpp"
 #include "utils/difftimeval.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
@@ -104,12 +105,16 @@ RED_AUTO_TEST_CASE(TestNego)
     char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
     LCGRandom rand;
-    LCGTime timeobj;
+    uint32_t seed = 7984813;
+    uint32_t seed1 = 6843513UL * seed + 451209UL;
+    uint32_t seed2 = 6843513UL * seed1 + 451209UL;
+    TimeBase time_base({seed1, seed2});
+
     NullServerNotifier null_server_notifier;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
     TLSClientParams tls_client_params;
-    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, timeobj, extra_message, lang, tls_client_params);
+    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, time_base, extra_message, lang, tls_client_params);
     nego.set_identity(user, domain, pass, host);
 
     TpduBuffer buf;

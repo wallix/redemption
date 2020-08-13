@@ -37,13 +37,13 @@ class NegoClient
 
 public:
     NegoClient(
-        bool is_nla, bool is_admin_mode, Transport& trans, TimeObj & timeobj,
+        bool is_nla, bool is_admin_mode, Transport& trans, TimeBase & time_base,
         char const* host, char const* target_user, char const* password,
         bool enable_kerberos, const TLSClientParams & tls_client_params, uint64_t verbosity
     )
     : trans(trans)
     , nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
-        this->random, timeobj, this->extra_message, Translation::EN,
+        this->random, time_base, this->extra_message, Translation::EN,
         tls_client_params,
         to_verbose_flags(verbosity))
     {

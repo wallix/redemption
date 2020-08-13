@@ -45,9 +45,10 @@ using PacketType = RecorderFile::PacketType;
 class FrontServer
 {
 public:
-    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
+    FrontServer(std::string host, int port, TimeBase & time_base, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
         : targetPort(port)
         , targetHost(std::move(host))
+        , time_base(time_base)
         , captureTemplate(std::move(captureFile))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
@@ -88,8 +89,7 @@ public:
             char const* finalPath = captureTemplate.format(
                 make_writable_array_view(finalPathBuffer), connection_counter);
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
-            TimeSystem timeobj;
-            RecorderFile outFile(timeobj, finalPath);
+            RecorderFile outFile(this->time_base, finalPath);
 
             SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
             SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort),
@@ -99,7 +99,7 @@ public:
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
             NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-            ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, this->targetHost.c_str(), enable_kerberos, verbosity);
+            ProxyRecorder conn(back_nla_tee_trans, outFile, this->time_base, this->targetHost.c_str(), enable_kerberos, verbosity);
 
             try {
                 // TODO: key becomes ready quite late (just before calling nego server) inside front_step1(), henceforth doing it here won't work
@@ -271,6 +271,7 @@ private:
     int connection_counter = 0;
     int targetPort;
     std::string targetHost;
+    TimeBase & time_base;
     CaptureTemplate captureTemplate;
     std::string nla_username;
     std::string nla_password;
@@ -314,6 +315,7 @@ int main(int argc, char *argv[])
     char const* target_host = nullptr;
     int target_port = 3389;
     int listen_port = 8001;
+    TimeBase time_base(tvtime());
     std::string nla_username;
     std::string nla_password;
     char const* capture_file = nullptr;
@@ -374,7 +376,7 @@ int main(int argc, char *argv[])
     openlog("ProxyRecorder", LOG_CONS | LOG_PERROR, LOG_USER);
 
     FrontServer front(
-        target_host, target_port, capture_file,
+        target_host, target_port, time_base, capture_file,
         std::move(nla_username), std::move(nla_password),
         enable_kerberos, !no_forkable, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
