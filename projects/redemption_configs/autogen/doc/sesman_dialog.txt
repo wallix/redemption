@@ -15,8 +15,8 @@ cfg::globals::target_application ⇐ target_application   [std::string]
 cfg::globals::target_application_account ⇐ target_application_account   [std::string]
 cfg::globals::target_application_password ⇐ target_application_password   [std::string]
 cfg::globals::inactivity_timeout ⇐ globals:inactivity_timeout   [std::chrono::seconds]
-    No traffic auto disconnection.
-    If value is 0, global value (session_timeout) is used.
+    No traffic auto disconnection, timer is set on secondary session.
+    If value is smaller than 30, 30 is used by default (except 0 which global value "session_timeout" is used instead).
 cfg::globals::trace_type ⇐ trace_type   [TraceType]
     Session record options.
       0: No encryption (faster).

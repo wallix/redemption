@@ -21,8 +21,8 @@ vault_transformation_rule = string(default='')
 
 [session]
 
-# No traffic auto disconnection.
-# If value is 0, global value (session_timeout) is used.
+# No traffic auto disconnection, timer is set on secondary session.
+# If value is smaller than 30, 30 is used by default (except 0 which global value "session_timeout" is used instead).
 # (is in second)
 inactivity_timeout = integer(min=0, default=0)
 
