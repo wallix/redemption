@@ -578,6 +578,53 @@ private:
         }
     }
 
+
+    // This function takes care of outgoing data waiting in buffers 
+    // happening because system write buffer is full and immediate send failed
+    // hopefully it should be a rare case
+
+    bool perform_delayed_writes(TimeBase & time_base, SocketTransport & front_trans, SocketTransport * pmod_trans, bool & run_session)
+    {
+        bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
+        bool mod_has_waiting_data_to_write   = pmod_trans && pmod_trans->has_data_to_write();
+
+        if (front_has_waiting_data_to_write || mod_has_waiting_data_to_write){
+            timeval now = time_base.get_current_time();
+            Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
+            if (front_has_waiting_data_to_write){
+                ioswitch.set_write_sck(front_trans.sck);
+            }
+            if (mod_has_waiting_data_to_write){
+                ioswitch.set_write_sck(pmod_trans->sck);
+            }
+
+            int num = ioswitch.select(now);
+            if (num < 0) {
+                if (errno != EINTR) {
+                    // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
+                    // EBADF: means fd has been closed (by me) or as already returned an error on another call
+                    // EINVAL: invalid value in timeout (my fault again)
+                    // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
+                    LOG(LOG_ERR, "Proxy send wait raised error %d : %s", errno, strerror(errno));
+                    run_session = false;
+                    return true;
+                }
+            }
+
+            if (pmod_trans && ioswitch.is_set_for_writing(pmod_trans->sck)) {
+                pmod_trans->send_waiting_data();
+            }
+
+            if (front_trans.sck != INVALID_SOCKET
+            && ioswitch.is_set_for_writing(front_trans.sck)) {
+                front_trans.send_waiting_data();
+            }
+            if (num > 0) { return true; }
+            // if the select stopped on timeout or EINTR we will give a try to reading
+        }
+        return false;
+    }
+
 public:
     Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
@@ -665,46 +712,9 @@ public:
 
                 time_base.set_current_time(now);
 
-                bool front_has_waiting_data_to_write = front_trans.has_data_to_write();
-                bool mod_has_waiting_data_to_write   = mod_wrapper.get_mod_transport()
-                                                    && mod_wrapper.get_mod_transport()->has_data_to_write();
-
-                // =============================================================
-                // This block takes care of outgoing data waiting in buffers because system write buffer is full
-                if (front_has_waiting_data_to_write || mod_has_waiting_data_to_write){
-                    Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
-                    if (front_has_waiting_data_to_write){
-                        ioswitch.set_write_sck(front_trans.sck);
-                    }
-                    if (mod_has_waiting_data_to_write){
-                        ioswitch.set_write_sck(mod_wrapper.get_mod_transport()->sck);
-                    }
-
-                    int num = ioswitch.select(now);
-                    if (num < 0) {
-
-                        if (errno != EINTR) {
-                            // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                            // EBADF: means fd has been closed (by me) or as already returned an error on another call
-                            // EINVAL: invalid value in timeout (my fault again)
-                            // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
-                            LOG(LOG_ERR, "Proxy send wait raised error %d : %s", errno, strerror(errno));
-                            run_session = false;
-                            continue;
-                        }
-                    }
-
-                    if (mod_wrapper.get_mod_transport()
-                    && ioswitch.is_set_for_writing(mod_wrapper.get_mod_transport()->sck)) {
-                        mod_wrapper.get_mod_transport()->send_waiting_data();
-                    }
-
-                    if (front_trans.sck != INVALID_SOCKET
-                    && ioswitch.is_set_for_writing(front_trans.sck)) {
-                        front_trans.send_waiting_data();
-                    }
-                    if (num > 0) { continue; }
-                    // if the select stopped on timeout or EINTR we will give a try to reading
+                SocketTransport * pmod_trans = mod_wrapper.get_mod_transport();
+                if (this->perform_delayed_writes(time_base, front_trans, pmod_trans, run_session)){
+                    continue;
                 }
 
                 // =============================================================
