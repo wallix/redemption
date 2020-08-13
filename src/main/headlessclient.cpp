@@ -38,49 +38,15 @@
 #include <chrono>
 #include <iostream>
 
-
-class ClientHeadlessSocket : public ClientInputSocketAPI
-{
-
-public:
-
-    TimeBase& time_base;
-    ClientRedemptionAPI * client;
-
-    ClientHeadlessSocket(TimeBase& time_base, ClientRedemptionAPI * client)
-      : time_base(time_base)
-      , client(client)
-    {}
-
-    bool start_to_listen(int /*client_sck*/, mod_api * mod) override
-    {
-        using namespace std::chrono_literals;
-
-        while (!mod->is_up_and_running()) {
-            if (int err = this->client->wait_and_draw_event(3s)) {
-                std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
-            }
-        }
-        return true;
-    }
-
-    void disconnect() override {}
-};
-
-
+using namespace std::chrono_literals;
 
 class ClientRedemptionHeadless : public ClientRedemption
 {
-
-private:
-    ClientHeadlessSocket headless_socket;
-
 public:
     ClientRedemptionHeadless(TimeBase & time_base,
                              EventContainer& events,
                              ClientRedemptionConfig & config)
         : ClientRedemption(time_base, events, config)
-        , headless_socket(time_base, this)
     {
         this->cmd_launch_conn();
     }
@@ -92,27 +58,24 @@ public:
 
     void close() override {}
 
-    void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
+    void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override
+    {
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
+            mod_api* mod = this->_callback.get_mod();
 
-            if (this->headless_socket.start_to_listen(this->client_sck, this->_callback.get_mod())) {
-
-                this->start_wab_session_time = tvtime();
+            while (!mod->is_up_and_running()) {
+                if (int err = this->wait_and_draw_event(3s)) {
+                    std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
+                }
             }
-        }
-    }
 
-    void disconnect(std::string const & error, bool pipe_broken) override {
-        this->headless_socket.disconnect();
-        ClientRedemption::disconnect(error, pipe_broken);
+            this->start_wab_session_time = tvtime();
+        }
     }
 };
 
-
-
-using namespace std::chrono_literals;
 
 int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, ClientCallback & callback, timeval start_win_session_time);
 
@@ -121,8 +84,6 @@ int main(int argc, char const** argv)
 {
     set_exception_handler_pretty_message();
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    RDPVerbose verbose = to_verbose_flags(0x0);      //to_verbose_flags(0x0);
 
     {
         struct sigaction sa;
@@ -141,15 +102,13 @@ int main(int argc, char const** argv)
         REDEMPTION_DIAGNOSTIC_POP
     }
 
-    ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
     TimeBase time_base(tvtime());
     EventContainer events;
     ScopedSslInit scoped_ssl;
 
-    ClientRedemptionHeadless client(time_base,
-                                    events,
-                                    config);
+    ClientRedemptionHeadless client(time_base, events, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }
@@ -157,7 +116,7 @@ int main(int argc, char const** argv)
 
 int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, ClientCallback & callback, timeval start_win_session_time) {
     const timeval time_stop = addusectimeval(config.time_out_disconnection, tvtime());
-    const std::chrono::milliseconds time_mark = 50ms;
+    const auto time_mark = 50ms;
 
     if (callback.get_mod()) {
         auto & mod = *(callback.get_mod());

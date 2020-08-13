@@ -285,13 +285,6 @@ public:
         }
     }
 
-
-
-
-    bool is_connected() override {
-        return this->config.connected;
-    }
-
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         timeval now = tvtime();

@@ -240,26 +240,8 @@ public:
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 };
 
-// class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
-//
-// public:
-//     FakeClientInputMouseKeyboard() = default;
-//
-//     // TODO string_view
-//     void virtual keyPressEvent(const int key, std::string const& text) override { (void)key; (void)text; }
-//
-//     // TODO string_view
-//     void virtual keyReleaseEvent(const int key, std::string const& text) override { (void)key; (void)text; }
-//
-//     virtual void init_form() override {}
-//     virtual void update_keylayout() override {}
-// };
 
 class FakeClientKeyLayout : public ClientKeyLayoutAPI {
-
-// private:
-//     ClientCallback * callback = nullptr;
-//     ClientRedemptionConfig * config = nullptr;
 
 public:
 

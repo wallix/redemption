@@ -50,7 +50,6 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, int  /*flags*/) override {}
 
-    virtual bool is_connected() {return false;}
     virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
     virtual void callback(bool /*is_timeout*/) {}
 
