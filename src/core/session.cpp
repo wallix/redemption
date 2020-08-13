@@ -23,6 +23,7 @@
 #include "acl/module_manager/mod_factory.hpp"
 #include "core/session.hpp"
 
+#include "acl/session_inactivity.hpp"
 #include "acl/acl_serializer.hpp"
 #include "acl/sesman.hpp"
 #include "acl/mod_pack.hpp"
@@ -139,50 +140,6 @@ class Session
             return false;
         }
     };
-
-    class Inactivity
-    {
-        // Inactivity management
-        // let t be the timeout of the blocking select in session loop,
-        // the effective inactivity timeout detection will be between
-        // inactivity_timeout and inactivity_timeout + t.
-        // hence we should have t << inactivity_timeout.
-        time_t inactivity_timeout;
-        time_t last_activity_time;
-
-    public:
-
-        Inactivity(std::chrono::seconds timeout, time_t start)
-        : inactivity_timeout(std::max<time_t>(timeout.count(), 30))
-        , last_activity_time(start)
-        {
-        }
-
-        ~Inactivity()
-        {
-        }
-
-        bool check_user_activity(time_t now, bool & has_user_activity)
-        {
-            if (!has_user_activity) {
-                if (now > this->last_activity_time + this->inactivity_timeout) {
-                    this->last_activity_time = now;
-                    LOG(LOG_INFO, "Session User inactivity : closing");
-                    return true;
-                }
-            }
-            else {
-                has_user_activity = false;
-            }
-            return false;
-        }
-
-        void update_inactivity_timeout(std::chrono::seconds timeout)
-        {
-            this->inactivity_timeout = std::max<time_t>(timeout.count(), 30);
-        }
-    };
-
 
     struct Select
     {
@@ -400,11 +357,11 @@ private:
     }
 
     bool next_backend_module(AclSerializer & acl_serial,
-                              SessionLogFile & log_file, Inifile& ini,
-                              ModFactory & mod_factory, ModWrapper & mod_wrapper,
-                              Front & front,
-                              Sesman & sesman,
-                              ClientExecute & rail_client_execute)
+                             SessionLogFile & log_file, Inifile& ini,
+                             ModFactory & mod_factory, ModWrapper & mod_wrapper,
+                             Front & front,
+                             Sesman & sesman,
+                             ClientExecute & rail_client_execute)
     {
         auto next_state = get_module_id(ini.get<cfg::context::module>());
 
@@ -703,17 +660,16 @@ public:
 
         KeepAlive keepalive(ini.get<cfg::globals::keepalive_grace_delay>());
 
-        auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count()!=0)
-            ? ini.get<cfg::globals::inactivity_timeout>()
-            : ini.get<cfg::globals::session_timeout>();
-
-        Inactivity inactivity(timeout, time_base.get_current_time().tv_sec);
+        SessionInactivity inactivity;
 
         AclSerializer acl_serial(ini);
-        acl_serial.on_inactivity_timeout = [&inactivity,&ini]{
-            auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count()!=0)
-                ? ini.get<cfg::globals::inactivity_timeout>()
-                : ini.get<cfg::globals::session_timeout>();
+
+        acl_serial.on_inactivity_timeout = [&inactivity, &ini]
+        {
+            auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count() != 0) ?
+                ini.get<cfg::globals::inactivity_timeout>() :
+                ini.get<cfg::globals::session_timeout>();
+
             inactivity.update_inactivity_timeout(timeout);
         };
 
@@ -1020,8 +976,9 @@ public:
                         if (keepalive.check(time_base.get_current_time().tv_sec, this->ini)) {
                             throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
                         }
-                        if (inactivity.check_user_activity(
-                            time_base.get_current_time().tv_sec, front.has_user_activity)) {
+                        if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE_BACK
+                            && !inactivity.activity(time_base.get_current_time().tv_sec,
+                                                     front.has_user_activity)) {
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
 
@@ -1046,6 +1003,11 @@ public:
                         && !keepalive.is_started()
                         && mod_wrapper.is_connected())
                         {
+                            if (ini.get<cfg::globals::inactivity_timeout>().count() != 0)
+                            {
+                                inactivity.update_inactivity_timeout
+                                    (ini.get<cfg::globals::inactivity_timeout>());
+                            }
                             keepalive.start(time_base.get_current_time().tv_sec);
                         }
 
@@ -1119,7 +1081,6 @@ public:
                                                 mod_factory, mod_wrapper, front,
                                                 sesman, rail_client_execute);
                             }
-
                         }
 
                         if (mod_wrapper.is_connected()
@@ -1161,6 +1122,16 @@ public:
                                 ini.set<cfg::context::rd_shadow_type>("");
                             }
                         }
+
+                        if (mod_wrapper.current_mod == MODULE_INTERNAL_SELECTOR)
+                        {
+                            inactivity.start_timer(ini.get<cfg::globals::session_timeout>(),
+                                                   time_base.get_current_time().tv_sec);
+                        }
+                        else if (mod_wrapper.current_mod == MODULE_INTERNAL_LOGIN)
+                        {
+                            inactivity.stop_timer();
+                        }
                     }
                 } catch (Error const& e) {
                     run_session = false;
@@ -1188,6 +1159,7 @@ public:
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                             mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                             run_session = true;
+                            inactivity.stop_timer();
                         }
                         else {
                           LOG(LOG_INFO, "Close Box disabled : ending session");
