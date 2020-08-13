@@ -645,18 +645,13 @@ public:
         );
         sesman.set_front(&front);
 
-        timeval now = tvtime();
-
-
         KeepAlive keepalive(ini.get<cfg::globals::keepalive_grace_delay>());
-
 
         auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count()!=0)
             ? ini.get<cfg::globals::inactivity_timeout>()
             : ini.get<cfg::globals::session_timeout>();
 
-
-        Inactivity inactivity(timeout, now.tv_sec);
+        Inactivity inactivity(timeout, time_base.get_current_time().tv_sec);
 
         AclSerializer acl_serial(ini);
         acl_serial.on_inactivity_timeout = [&inactivity,&ini]{
@@ -710,7 +705,7 @@ public:
 
             while (run_session) {
 
-                time_base.set_current_time(now);
+                time_base.set_current_time(tvtime());
 
                 SocketTransport * pmod_trans = mod_wrapper.get_mod_transport();
                 if (this->perform_delayed_writes(time_base, front_trans, pmod_trans, run_session)){
@@ -718,13 +713,14 @@ public:
                 }
 
                 // =============================================================
-                // Now prepare select for listening on all read sockets
+                // prepare select for listening on all read sockets
                 // timeout or immediate wakeups are managed using timeout
                 // =============================================================
 
-                Select ioswitch(timeval{now.tv_sec + this->select_timeout_tv_sec, now.tv_usec});
+                Select ioswitch(timeval{
+                        time_base.get_current_time().tv_sec + this->select_timeout_tv_sec, 
+                        time_base.get_current_time().tv_usec});
 
-                // sockets for mod or front aren't managed using fd events
                 if (mod_wrapper.get_mod_transport()) {
                     int fd = mod_wrapper.get_mod_transport()->sck;
                     if (fd != INVALID_SOCKET) {
@@ -751,19 +747,19 @@ public:
                 }
 
                 if (front.front_must_notify_resize) {
-                    ultimatum = now;
+                    ultimatum = time_base.get_current_time();
                 }
 
                 if ((mod_wrapper.get_mod_transport() && mod_wrapper.get_mod_transport()->has_tls_pending_data())) {
-                    ultimatum = now;
+                    ultimatum = time_base.get_current_time();
                 }
 
                 if (front_trans.has_tls_pending_data()) {
-                    ultimatum = now;
+                    ultimatum = time_base.get_current_time();
                 }
                 ioswitch.set_timeout(ultimatum);
 
-                int num = ioswitch.select(now);
+                int num = ioswitch.select(time_base.get_current_time());
 
                 if (num < 0) {
                     if (errno != EINTR) {
@@ -777,11 +773,10 @@ public:
                     continue;
                 }
 
-                now = tvtime();
-                time_base.set_current_time(now);
+                time_base.set_current_time(tvtime());
 
                 if (ini.get<cfg::debug::performance>() & 0x8000) {
-                    this->write_performance_log(now.tv_sec);
+                    this->write_performance_log(time_base.get_current_time().tv_sec);
                 }
 
                 try {
@@ -852,12 +847,12 @@ public:
                             ini.set_acl<cfg::context::reporting>(report);
                         });
                     sesman.flush_acl_log6(
-                        [&ini,&log_file,now,&session_type](LogId id, KVList kv_list)
+                        [&ini,&log_file,&time_base,&session_type](LogId id, KVList kv_list)
                         {
     //                        const timeval time = timebase.get_current_time();
                             /* Log to SIEM (redirected syslog) */
                             log_siem_syslog(id, kv_list, ini, session_type);
-                            log_siem_arcsight(now.tv_sec, id, kv_list, ini, session_type);
+                            log_siem_arcsight(time_base.get_current_time().tv_sec, id, kv_list, ini, session_type);
                             log_file.log6(id, kv_list);
                         });
                     sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
@@ -904,7 +899,8 @@ public:
                 switch (front.state) {
                 default:
                 {
-                    events.execute_events(now, [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);}, bool(ini.get<cfg::debug::session>()&0x02));
+                    events.execute_events(time_base.get_current_time(),
+                        [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);}, bool(ini.get<cfg::debug::session>()&0x02));
                 }
                 break;
                 case Front::FRONT_UP_AND_RUNNING:
@@ -945,20 +941,22 @@ public:
 
                     try {
                         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-                        if (enddate != 0 && (static_cast<uint32_t>(now.tv_sec) > enddate)) {
+                        if (enddate != 0 
+                        && (static_cast<uint32_t>(time_base.get_current_time().tv_sec) > enddate)) {
                             throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
                         }
                         if (!this->ini.get<cfg::context::rejected>().empty()) {
                             throw Error(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE);
                         }
-                        if (keepalive.check(now.tv_sec, this->ini)) {
+                        if (keepalive.check(time_base.get_current_time().tv_sec, this->ini)) {
                             throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
                         }
-                        if (inactivity.check_user_activity(now.tv_sec, front.has_user_activity)) {
+                        if (inactivity.check_user_activity(
+                            time_base.get_current_time().tv_sec, front.has_user_activity)) {
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
 
-                        events.execute_events(now,
+                        events.execute_events(time_base.get_current_time(),
                             [&ioswitch](int fd)
                             {
                                 return ioswitch.is_set_for_reading(fd);
@@ -975,7 +973,9 @@ public:
                             const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
                             if (enddate && mod_wrapper.is_up_and_running()) {
                                 std::string message = end_session_warning.update_osd_state(
-                                    language(ini), start_time, static_cast<time_t>(enddate), now.tv_sec);
+                                    language(ini), start_time,
+                                    static_cast<time_t>(enddate),
+                                    time_base.get_current_time().tv_sec);
                                 mod_wrapper.display_osd_message(message);
                             }
                         }
@@ -984,7 +984,7 @@ public:
                         && !keepalive.is_started()
                         && mod_wrapper.is_connected())
                         {
-                            keepalive.start(now.tv_sec);
+                            keepalive.start(time_base.get_current_time().tv_sec);
                         }
 
                         if (mod_wrapper.get_mod_signal() == BACK_EVENT_STOP){
