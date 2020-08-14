@@ -40,9 +40,9 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     QProgressBar load_bar;
 
+public:
     ProgressBarWindow(int maxVal/*, ClientRedemptionIOAPI * front*/)
         : QWidget()
         , load_bar(this)

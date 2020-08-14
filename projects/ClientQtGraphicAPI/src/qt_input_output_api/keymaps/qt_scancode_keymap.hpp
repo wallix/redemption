@@ -105,11 +105,8 @@
 
 class Qt_ScanCode_KeyMap
 {
-
-
-public:
     int                                 _verbose;
-private:
+
     uint8_t                             _keyboardMods;
     const Keylayout_r                 * _keylayout_WORK;
     const Keylayout_r::KeyLayoutMap_t * _layoutMods[9];
@@ -123,8 +120,15 @@ private:
     bool                                _deadKeys;
     bool                                _unvalidScanCode;
 
+public:
+    int scanCode;
+    uint16_t flag;
+    std::string ascii;
+    int qKeyCode;
 
+    std::string qKeyName;
 
+private:
     enum : int {
           ALT_MOD      = 0x10
         , CTRL_MOD     = 0x08
@@ -556,21 +560,9 @@ private:
             this->scanCode = 0;
             return false;
         }
-    }//============================================================================================================
-
+    }
 
 public:
-    int scanCode;
-    uint16_t flag;
-    std::string ascii;
-    int qKeyCode;
-
-    std::string qKeyName;
-
-
-    //=================//
-    //   CONSTRUCTOR   //
-    //===================================================================================
     Qt_ScanCode_KeyMap(int LCID = KEYBOARDS::EN_US_INTERNATIONAL, int verbose = 0):
       _verbose(verbose)
     , _keyboardMods(0)

@@ -75,7 +75,6 @@
 
 class ClientRedemption : public ClientRedemptionAPI, public gdi::GraphicApi
 {
-
 public:
     ClientRedemptionConfig & config;
 
@@ -91,13 +90,18 @@ private:
 
 public:
     ClientCallback _callback;
+private:
     ClientChannelMod channel_mod;
+public:
     TimeBase& time_base;
     EventContainer& events;
 
+private:
     std::unique_ptr<Transport> _socket_in_recorder;
+public:
     std::unique_ptr<ReplayMod> replay_mod;
 
+private:
     // RDP
     CHANNELS::ChannelDefArray   cl;
     std::string          _error;
@@ -124,21 +128,24 @@ public:
         CHANID_RDPSND  = 1604,
         CHANID_RAIL    = 1605
     };
+public:
         //  RDP Channel managers
     ClientRDPSNDChannel    clientRDPSNDChannel;
     ClientCLIPRDRChannel   clientCLIPRDRChannel;
     ClientRDPDRChannel     clientRDPDRChannel;
     ClientRemoteAppChannel clientRemoteAppChannel;
 
+private:
     // Recorder
     Fstat fstat;
 
+public:
     timeval start_connection_time;                          // when socket is connected
     timeval start_wab_session_time;                         // when the first resize is received
     timeval start_win_session_time;                         // when the first memblt is received
 
+private:
     bool secondary_connection_finished;
-    bool primary_connection_finished;
 
     struct Capture
     {
@@ -251,7 +258,6 @@ public:
         , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod))
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
-        , primary_connection_finished(false)
         , local_IP("unknown_local_IP")
         , gd_forwarder(*this)
     {

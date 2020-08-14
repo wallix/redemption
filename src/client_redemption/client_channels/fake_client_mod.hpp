@@ -33,14 +33,12 @@
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_redemption_api.hpp"
 
 #include <chrono>
 
 class FakeRDPChannelsMod : public mod_api
 {
 public:
-
     struct PDUData {
         uint8_t data[1600] = {0};
         size_t size = 0;
@@ -112,6 +110,7 @@ class FakeClientIOClipboard : public ClientIOClipboardAPI
 {
 public:
     std::string data_text;
+
     std::unique_ptr<uint8_t[]>  _chunk;
     size_t offset = 0;
     size_t size = 42;
@@ -124,13 +123,13 @@ public:
     };
 
     uint16_t    _bufferTypeID = 0;
-    int         _bufferTypeNameIndex = 0;
-    bool        _local_clipboard_stream = true;
     size_t      _cliboard_data_length = 0;
     int         _cItems = 0;
 
+private:
     std::string tmp_path;
 
+public:
     FakeClientIOClipboard() = default;
 
     void emptyBuffer() override {}
@@ -268,47 +267,6 @@ public:
         return KeyCustomDefinition{};
     }
 };
-
-
-
-class FakeClient : public ClientRedemptionAPI
-{
-    CHANNELS::ChannelDefArray channels;
-
-public:
-    int read_stream_index = -1;
-    int read_stream_sub_index = -1;
-
-    FakeRDPChannelsMod fake_mod;
-
-    FakeClient() = default;
-
-    void close() override {}
-
-    size_t get_total_stream_produced() const
-    {
-        return this->fake_mod.index_in;
-    }
-
-    // TODO ??????
-    FakeRDPChannelsMod::PDUData * stream() {
-        if (this->fake_mod.index_out < 10) {
-            this->fake_mod.index_out++;
-            return &(this->fake_mod.last_pdu[this->fake_mod.index_out-1]);
-        }
-
-        return nullptr;
-    }
-
-    bool must_be_stop_capture() override { return true;}
-    const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(ScreenInfo /*screen_server*/) override { return ResizeResult::instant_done;}
-
-    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
-    void possible_active_window_change() override {}
-
-};
-
 
 
 class FakeIODisk : public ClientIODiskAPI

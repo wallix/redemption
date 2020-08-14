@@ -26,7 +26,6 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_channels/fake_client_mod.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
@@ -51,8 +50,6 @@ inline void write_file(std::string const& filename, chars_view data)
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 {
-
-    FakeClient client;
 //     char const ** argv = nullptr;
 //     int argc = 0;
 
@@ -193,8 +190,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 {
     {
-
-    FakeClient client;
     char const * argv[] = {"cmd",
                            "-u", "user",
                            "-p", "password",
@@ -367,8 +362,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     }
 
     {
-
-    FakeClient client;
     char const * argv[] = {"cmd",
                            //"--vnc",
                            "--remote-app",
@@ -415,8 +408,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     }
 
     {
-
-    FakeClient client;
     char const * argv[] = {"cmd",
                            "--vnc",
     };
@@ -459,8 +450,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
 {
     WorkingDirectory wd("TestClientRedemptionConfigCreateDir");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -481,8 +470,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
 
     auto const test_file = wd.add_file("test_file.txt");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -516,8 +503,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 
     auto const userConfig = wd.create_subdirectory("DATA/config/")
       .add_file("userConfig.config");
-
-    FakeClient client;
 
     write_file(userConfig,
         "current_user_profil_id 1\n"
@@ -615,8 +600,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
     auto const movie1 = subwd.add_file("movie1.mwrm");
     auto const movie2 = subwd.add_file("movie2.mwrm");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -686,8 +669,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
     auto const windows_config = wd.create_subdirectory("DATA/config")
       .add_file("windows_config.config");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -719,8 +700,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
     auto const keySetting = wd.create_subdirectory("DATA/config")
       .add_file("keySetting.config");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -759,8 +738,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
     auto const login = wd.create_subdirectory("DATA/config")
       .add_file("login.config");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -819,8 +796,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteClientInfo");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -874,8 +849,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteCustomKey");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -904,8 +877,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteAccountData");
 
-
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 
@@ -948,7 +919,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteWindowsData");
 
-    FakeClient client;
     char const * argv[] = {"cmd"};
     int argc = 1;
 

@@ -30,7 +30,6 @@
 #include "utils/sugar/unique_fd.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_callback.hpp"
 
 #include "qt_options_window.hpp"
 
@@ -71,7 +70,6 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     ClientCallback * controllers;
 
     int _width;
@@ -88,6 +86,7 @@ public:
 
     const long int movie_len;
 
+public:
     IconMovie(ClientCallback * controllers, const IconMovieData & iconData,
         QWidget * parent)
       : QWidget(parent)
@@ -224,14 +223,11 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
-    ClientCallback * controllers;
     QFormLayout lay;
 
-
+public:
     QtMoviesPanel(const std::vector<IconMovieData> & iconData, ClientCallback * controllers, QWidget * parent)
       : QWidget(parent)
-      , controllers(controllers)
       , lay(this)
     {
 
@@ -268,7 +264,6 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     ClientCallback * controllers;
 
     QFormLayout lay;
@@ -279,7 +274,7 @@ public:
 
     const std::string replay_default_dir;
 
-
+public:
     QtFormReplay(const std::vector<IconMovieData> & iconData, ClientCallback * controllers, QWidget * parent, const std::string & replay_default_dir)
     : QWidget(parent)
     , controllers(controllers)
@@ -326,7 +321,7 @@ private Q_SLOTS:
 class FormTabAPI : public QWidget
 {
 public:
-     int account_index_to_drop;
+    int account_index_to_drop;
 
     FormTabAPI(QWidget * parent)
       : QWidget(parent)
@@ -350,13 +345,13 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     uint8_t protocol_type;
 
     QFormLayout line_edit_layout;
 
     FormTabAPI * main_panel;
 
+public:
     QComboBox  _IPCombobox;
 
     QLineEdit _IPField;
@@ -364,12 +359,14 @@ public:
     QLineEdit _PWDField;
     QLineEdit _portField;
 
+private:
     QLabel    _IPLabel;
     QLabel    _userNameLabel;
     QLabel    _PWDLabel;
     QLabel    _portLabel;
 
 
+public:
     ConnectionFormQt(FormTabAPI * main_panel, uint8_t protocol_type, QWidget * parent)
       : QWidget(parent)
       , protocol_type(protocol_type)

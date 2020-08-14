@@ -30,9 +30,9 @@
 
 class QtClientRDPKeyLayout : public ClientKeyLayoutAPI {
 
-public:
     Qt_ScanCode_KeyMap qtRDPKeymap;
 
+public:
     QtClientRDPKeyLayout()
     : ClientKeyLayoutAPI()
     , qtRDPKeymap()

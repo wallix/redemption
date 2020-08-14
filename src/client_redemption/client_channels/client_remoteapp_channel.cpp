@@ -26,7 +26,6 @@
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
-#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/remote_programs.hpp"
 
@@ -157,109 +156,90 @@ void ClientRemoteAppChannel::set_configuration(int width, int height, RDPRemoteA
 
 void ClientRemoteAppChannel::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
 {
-
     uint32_t win_id = cmd.header.WindowId();
 
-    switch (win_id) {
+    if (bool(this->verbose & RDPVerbose::rail)) {
+        cmd.log(LOG_INFO);
+    }
+    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_OWNER) {
 
-        case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_0:
-        case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_1:
-        case RemoteProgramsWindowIdManager::RESERVED_WINDOW_ID_2:
-        case RemoteProgramsWindowIdManager::INVALID_WINDOW_ID:
-            break;
+        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {}
 
-//             case 0x800000:
-//                 this->z_order.clear();
-//                 this->impl_graphic->clear_remote_app_screen();
-//                 //LOG(LOG_INFO, "RAIL::DeletedWindow  Last App has been close - mod rdp disconnection.");
-//                 this->callback->disconnect("", false);
-//                 break;
+        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
+            if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 
-        default:
-            if (bool(this->verbose & RDPVerbose::rail)) {
-                cmd.log(LOG_INFO);
+                this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
+                this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
             }
-            if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_OWNER) {
+        }
 
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {}
+        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
+            if (cmd.ShowState()) {
+                this->impl_graphic->show_screen(win_id);
+            }
+        }
+    } else {
+        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
-                    if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
+            int x_offset = cmd.WindowOffsetX();
+            int y_offset = cmd.WindowOffsetY();
 
-                        this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
-                        this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
-                    }
-                }
-
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
-                    if (cmd.ShowState()) {
-                        this->impl_graphic->show_screen(win_id);
-                    }
-                }
+            if (cmd.WindowOffsetY() < 0) {
+                this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_visible_width(win_id), this->impl_graphic->get_mem_height(win_id) + cmd.WindowOffsetY());
+                y_offset = 0;
             } else {
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
-
-                    int x_offset = cmd.WindowOffsetX();
-                    int y_offset = cmd.WindowOffsetY();
-
-                    if (cmd.WindowOffsetY() < 0) {
-                        this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_visible_width(win_id), this->impl_graphic->get_mem_height(win_id) + cmd.WindowOffsetY());
-                        y_offset = 0;
-                    } else {
-                        if (this->impl_graphic->get_visible_height(win_id) != this->impl_graphic->get_mem_height(win_id)) {
-                            this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_visible_width(win_id), this->impl_graphic->get_mem_height(win_id));
-                        }
-
-                        if ((cmd.WindowOffsetY() + this->impl_graphic->get_visible_height(win_id)) > this->impl_graphic->screen_max_height && !(cmd.WindowOffsetY() == 0)) {
-                            this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_visible_width(win_id), 1+this->impl_graphic->screen_max_height - y_offset);
-                            y_offset = this->impl_graphic->screen_max_height - this->impl_graphic->get_visible_height(win_id);
-                        } else {
-                            if (this->impl_graphic->get_visible_height(win_id) != this->impl_graphic->get_mem_height(win_id)) {
-                                int current_height = this->impl_graphic->screen_max_height - y_offset;
-                                if (current_height > this->impl_graphic->get_mem_height(win_id)) {
-                                    current_height = this->impl_graphic->get_mem_height(win_id);
-                                }
-                                this->impl_graphic->set_screen_size(win_id,  this->impl_graphic->get_visible_width(win_id), current_height);
-                            }
-                        }
-                    }
-
-                    if (cmd.WindowOffsetX() < 0) {
-                        this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_mem_width(win_id) + cmd.WindowOffsetX(), this->impl_graphic->get_visible_height(win_id));
-                        x_offset = 0;
-
-                    } else {
-                        if (this->impl_graphic->get_visible_width(win_id) != this->impl_graphic->get_mem_width(win_id)) {
-                            this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_mem_width(win_id), this->impl_graphic->get_visible_height(win_id));
-                        }
-
-                        if ((cmd.WindowOffsetX() + this->impl_graphic->get_visible_width(win_id)) > this->impl_graphic->screen_max_width) {
-                            this->impl_graphic->set_screen_size(win_id, 1+this->impl_graphic->screen_max_width - x_offset, this->impl_graphic->get_visible_height(win_id));
-                            x_offset = this->impl_graphic->screen_max_width - this->impl_graphic->get_visible_width(win_id);
-                        } else {
-                            if (this->impl_graphic->get_visible_width(win_id) != this->impl_graphic->get_mem_width(win_id)) {
-                                int current_width= this->impl_graphic->screen_max_width - y_offset;
-                                if (current_width > this->impl_graphic->get_mem_width(win_id)) {
-                                    current_width = this->impl_graphic->get_mem_width(win_id);
-                                }
-                                this->impl_graphic->set_screen_size(win_id, current_width, this->impl_graphic->get_visible_height(win_id));
-                            }
-                        }
-                    }
-
-                    this->impl_graphic->set_pixmap_shift(win_id, x_offset, y_offset);
-                    this->impl_graphic->move_screen(win_id, x_offset, y_offset);
+                if (this->impl_graphic->get_visible_height(win_id) != this->impl_graphic->get_mem_height(win_id)) {
+                    this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_visible_width(win_id), this->impl_graphic->get_mem_height(win_id));
                 }
 
-                if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
-
-                    this->impl_graphic->set_screen_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
-                    this->impl_graphic->set_mem_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
-
-                    this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
+                if ((cmd.WindowOffsetY() + this->impl_graphic->get_visible_height(win_id)) > this->impl_graphic->screen_max_height && !(cmd.WindowOffsetY() == 0)) {
+                    this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_visible_width(win_id), 1+this->impl_graphic->screen_max_height - y_offset);
+                    y_offset = this->impl_graphic->screen_max_height - this->impl_graphic->get_visible_height(win_id);
+                } else {
+                    if (this->impl_graphic->get_visible_height(win_id) != this->impl_graphic->get_mem_height(win_id)) {
+                        int current_height = this->impl_graphic->screen_max_height - y_offset;
+                        if (current_height > this->impl_graphic->get_mem_height(win_id)) {
+                            current_height = this->impl_graphic->get_mem_height(win_id);
+                        }
+                        this->impl_graphic->set_screen_size(win_id,  this->impl_graphic->get_visible_width(win_id), current_height);
+                    }
                 }
             }
-            break;
+
+            if (cmd.WindowOffsetX() < 0) {
+                this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_mem_width(win_id) + cmd.WindowOffsetX(), this->impl_graphic->get_visible_height(win_id));
+                x_offset = 0;
+
+            } else {
+                if (this->impl_graphic->get_visible_width(win_id) != this->impl_graphic->get_mem_width(win_id)) {
+                    this->impl_graphic->set_screen_size(win_id, this->impl_graphic->get_mem_width(win_id), this->impl_graphic->get_visible_height(win_id));
+                }
+
+                if ((cmd.WindowOffsetX() + this->impl_graphic->get_visible_width(win_id)) > this->impl_graphic->screen_max_width) {
+                    this->impl_graphic->set_screen_size(win_id, 1+this->impl_graphic->screen_max_width - x_offset, this->impl_graphic->get_visible_height(win_id));
+                    x_offset = this->impl_graphic->screen_max_width - this->impl_graphic->get_visible_width(win_id);
+                } else {
+                    if (this->impl_graphic->get_visible_width(win_id) != this->impl_graphic->get_mem_width(win_id)) {
+                        int current_width= this->impl_graphic->screen_max_width - y_offset;
+                        if (current_width > this->impl_graphic->get_mem_width(win_id)) {
+                            current_width = this->impl_graphic->get_mem_width(win_id);
+                        }
+                        this->impl_graphic->set_screen_size(win_id, current_width, this->impl_graphic->get_visible_height(win_id));
+                    }
+                }
+            }
+
+            this->impl_graphic->set_pixmap_shift(win_id, x_offset, y_offset);
+            this->impl_graphic->move_screen(win_id, x_offset, y_offset);
+        }
+
+        if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
+
+            this->impl_graphic->set_screen_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
+            this->impl_graphic->set_mem_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
+
+            this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
+        }
     }
 }
 

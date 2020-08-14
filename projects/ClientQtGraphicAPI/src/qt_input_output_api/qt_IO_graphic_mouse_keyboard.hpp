@@ -41,33 +41,27 @@
 
 class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
 {
-
-public:
-    int                  mod_bpp;
     QtForm             * form;
     QtScreen           * screen;
     QPixmap              cache;
     ProgressBarWindow  * bar;
+
+public:
     QPainter             painter;
+
+private:
     QImage cursor_image;
     std::map<uint32_t, RemoteAppQtScreen *> remote_app_screen_map;
-    //     QPixmap            * trans_cache;;
     std::vector<QPixmap> balises;
 
-    bool is_pre_loading;
+    size_t update_counter = 0;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //------------------------
-    //      CONSTRUCTOR
-    //------------------------
-
+public:
     QtIOGraphicMouseKeyboard(ClientCallback * controller, ClientRedemptionConfig * config)
       : ClientRemoteAppGraphicAPI(controller, config, QApplication::desktop()->width(), QApplication::desktop()->height())
-      , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
       , bar(nullptr)
-      , is_pre_loading(false)
     {
         this->form = new QtForm(this->config, this->controller);
     }
@@ -273,8 +267,6 @@ public:
     }
 
 public:
-    size_t update_counter = 0;
-
     void end_update() override {
         assert(this->update_counter);
         this->update_counter--;

@@ -55,24 +55,24 @@ public:
         READING_BAR_H = 12,
     };
 
+private:
     WindowsData * win_data;
 
+public:
     ClientCallback * callback;
 //     ClientOutputGraphicAPI * client_graphic_api;
 
     int            _width;
     int            _height;
+
     QColor         _penColor;
     QPixmap      * _cache;
 
+private:
     bool           _connexionLasted;
 
-    uchar cursor_data[Pointer::DATA_SIZE*4];
-    int cursorHotx;
-    int cursorHoty;
 
-
-
+public:
     QtScreen(WindowsData * win_data, ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
@@ -83,8 +83,6 @@ public:
     , _penColor(Qt::black)
     , _cache(cache)
     , _connexionLasted(false)
-    , cursorHotx(0)
-    , cursorHoty(0)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);

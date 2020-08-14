@@ -67,32 +67,36 @@ public:
 
 class ClientCLIPRDRChannel
 {
-
-public:
     RDPVerbose verbose;
     ClientIOClipboardAPI * clientIOClipboardAPI;
     ClientChannelMod * callback;
-
-    bool format_list_nego_done = false;
 
     enum class CustomFormatName;
 
     uint32_t             _requestedFormatId = 0;
     CustomFormatName     _requestedFormatName {};
+
+public:
     bool                 _waiting_for_data;
 
+private:
     timeval paste_data_request_time;
+public:
     long paste_data_len = 0;
 
+private:
     const uint32_t channel_flags;
     std::unordered_map<uint32_t, std::string> formats_map;
     const double arbitrary_scale;
 
+public:
     uint32_t file_content_flag;
 
+private:
     const std::string path;
 
 
+public:
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;
         uint64_t size = 0;
@@ -107,6 +111,7 @@ public:
         }
     } _cb_buffers;
 
+private:
     struct CB_FilesList {
         struct CB_in_Files {
             uint64_t         size;
@@ -121,15 +126,17 @@ public:
     }  _cb_filesList;
 
     // Config negociation
+public:
     bool server_use_long_format_names = true;
+
+private:
     const uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags;
 
     Cliprdr::FormatNameInventory format_name_list;
 
-    size_t last_header_data_len = 0;
 
-
+public:
     ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPClipboardConfig const& config);
 
     ~ClientCLIPRDRChannel();

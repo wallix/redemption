@@ -130,7 +130,6 @@ public:
     const int            _tableKeySettingMaxHeight;
 //     bool                 key_editting;
 
-
     QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
         : QWidget(parent)
         , config(config)
@@ -463,7 +462,6 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     QCheckBox            _tlsBox;
     QCheckBox            _nlaBox;
 
@@ -520,8 +518,7 @@ public:
     QLineEdit            _captureFileEntry;
     QLabel               _labelCaptureFile;
 
-
-
+public:
     QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers,  QWidget * parent)
         : QtOptions(config, controllers, parent)
         , _tlsBox(this)
@@ -849,11 +846,10 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     QCheckBox            keyboard_apple_compatibility_CB;
     QLabel               keyboard_apple_compatibility_label;
 
-
+public:
     QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, QWidget * parent)
       : QtOptions(config, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
