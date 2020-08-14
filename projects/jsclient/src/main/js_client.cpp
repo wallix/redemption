@@ -262,7 +262,6 @@ class RdpClient
     Inifile ini;
 
     JsRandom js_rand;
-    LCGTime lcg_timeobj;
     JsAuthentitifier authentifier;
     NullLicenseStore license_store;
     RedirectionInfo redir_info;
@@ -435,7 +434,7 @@ public:
 
         this->mod = new_mod_rdp(
             trans, time_base, gd_forwarder, events, authentifier, gd, front, client_info,
-            redir_info, js_rand, lcg_timeobj, ChannelsAuthorizations("*", ""),
+            redir_info, js_rand, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
