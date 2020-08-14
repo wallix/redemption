@@ -285,44 +285,6 @@ public:
         }
     }
 
-    int wait_and_draw_event(std::chrono::milliseconds timeout) override
-    {
-        timeval now = tvtime();
-        unsigned max = 0;
-        fd_set   rfds;
-        io_fd_zero(rfds);
-
-        timeval ultimatum =  now + timeout;
-
-        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
-        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
-        if (ultimatum < now){
-            ultimatum = now;
-        }
-        std::chrono::microseconds difftime = ultimatum - now;
-        timeval timeoutastv = {difftime.count()/1000000u,difftime.count()%1000000u};
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
-
-        if (num < 0) {
-            if (errno == EINTR) {
-                // ExecuteEventsResult::Continue;
-                return 0;
-            }
-            // ExecuteEventsResult::Error
-            LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
-            return 9;
-        }
-
-        timeval now_after_select = tvtime();
-
-        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
-        if (num) {
-            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, 0);
-        }
-        return 0;
-    }
-
     void update_keylayout() override {
 
         switch (this->config.mod_state) {

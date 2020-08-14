@@ -74,47 +74,52 @@ public:
             this->start_wab_session_time = tvtime();
         }
     }
+
+    int wait_and_draw_event(std::chrono::milliseconds timeout)
+    {
+        timeval now = tvtime();
+        unsigned max = 0;
+        fd_set   rfds;
+        io_fd_zero(rfds);
+
+        timeval ultimatum =  now + timeout;
+
+        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
+        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
+        if (ultimatum < now){
+            ultimatum = now;
+        }
+        std::chrono::microseconds difftime = ultimatum - now;
+        timeval timeoutastv = {difftime.count()/1000000u,difftime.count()%1000000u};
+
+        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
+
+        if (num < 0) {
+            if (errno == EINTR) {
+                // ExecuteEventsResult::Continue;
+                return 0;
+            }
+            // ExecuteEventsResult::Error
+            LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
+            return 9;
+        }
+
+        timeval now_after_select = tvtime();
+
+        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
+        if (num) {
+            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, 0);
+        }
+        return 0;
+    }
 };
 
-
-int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, ClientCallback & callback, timeval start_win_session_time);
-
-
-int main(int argc, char const** argv)
+static int run_mod(
+    ClientRedemptionHeadless& front,
+    ClientRedemptionConfig & config,
+    ClientCallback & callback,
+    timeval start_win_session_time)
 {
-    set_exception_handler_pretty_message();
-    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    {
-        struct sigaction sa;
-        sa.sa_flags = 0;
-        sigaddset(&sa.sa_mask, SIGPIPE);
-        sa.sa_handler = [](int sig){
-            std::cout << "got SIGPIPE(" << sig << ") : ignoring\n";
-        };
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
-        #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
-            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
-        #endif
-        sigaction(SIGPIPE, &sa, nullptr);
-        REDEMPTION_DIAGNOSTIC_POP
-    }
-
-    ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
-    ClientConfig::set_config(argc, argv, config);
-    TimeBase time_base(tvtime());
-    EventContainer events;
-    ScopedSslInit scoped_ssl;
-
-    ClientRedemptionHeadless client(time_base, events, config);
-
-    return run_mod(client, client.config, client._callback, client.start_win_session_time);
-}
-
-
-int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, ClientCallback & callback, timeval start_win_session_time) {
     const timeval time_stop = addusectimeval(config.time_out_disconnection, tvtime());
     const auto time_mark = 50ms;
 
@@ -161,4 +166,37 @@ int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, Client
     }
 
     return 0;
+}
+
+int main(int argc, char const** argv)
+{
+    set_exception_handler_pretty_message();
+    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
+
+    {
+        struct sigaction sa;
+        sa.sa_flags = 0;
+        sigaddset(&sa.sa_mask, SIGPIPE);
+        sa.sa_handler = [](int sig){
+            std::cout << "got SIGPIPE(" << sig << ") : ignoring\n";
+        };
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+        #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
+        #endif
+        sigaction(SIGPIPE, &sa, nullptr);
+        REDEMPTION_DIAGNOSTIC_POP
+    }
+
+    ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
+    ClientConfig::set_config(argc, argv, config);
+    TimeBase time_base(tvtime());
+    EventContainer events;
+    ScopedSslInit scoped_ssl;
+
+    ClientRedemptionHeadless client(time_base, events, config);
+
+    return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

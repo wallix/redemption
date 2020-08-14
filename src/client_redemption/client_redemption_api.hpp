@@ -38,8 +38,6 @@ public:
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, int  /*flags*/) override {}
 
-    virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
-
     // CONTROLLER
     virtual void close() = 0;
     virtual void connect(const std::string& /*ip*/, const std::string& /*name*/, const std::string& /*pwd*/, const int /*port*/) {}
