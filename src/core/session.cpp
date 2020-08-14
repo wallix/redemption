@@ -579,7 +579,7 @@ private:
     }
 
 
-    // This function takes care of outgoing data waiting in buffers 
+    // This function takes care of outgoing data waiting in buffers
     // happening because system write buffer is full and immediate send failed
     // hopefully it should be a rare case
 
@@ -718,7 +718,7 @@ public:
                 // =============================================================
 
                 Select ioswitch(timeval{
-                        time_base.get_current_time().tv_sec + this->select_timeout_tv_sec, 
+                        time_base.get_current_time().tv_sec + this->select_timeout_tv_sec,
                         time_base.get_current_time().tv_usec});
 
                 if (mod_wrapper.get_mod_transport()) {
@@ -889,59 +889,53 @@ public:
                             }
                             continue;
                         }
+                        else if (acl_serial.is_before_connexion()) {
+                            try {
+                                unique_fd client_sck = addr_connect_non_blocking(
+                                                            ini.get<cfg::globals::authfile>().c_str(),
+                                                            (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
+
+                                if (!client_sck.is_open()) {
+                                    LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
+                                        ini.get<cfg::globals::authfile>().c_str());
+                                    acl_serial.set_failed_auth_trans();
+                                    // will go to the catch below
+                                    throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
+                                }
+
+                                auth_trans = std::make_unique<SocketTransport>("Authentifier", std::move(client_sck),
+                                    ini.get<cfg::globals::authfile>().c_str(), 0,
+                                    std::chrono::seconds(1), SocketTransport::Verbose::none);
+
+                                acl_serial.set_auth_trans(auth_trans.get());
+                            }
+                            catch (...) {
+                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
+                                run_session = false;
+                                LOG(LOG_INFO, "Start of acl failed : no authentifier available");
+                                if (ini.get<cfg::globals::enable_close_box>()) {
+                                    auto next_state = MODULE_INTERNAL_CLOSE;
+                                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                                    run_session = true;
+                                }
+                            }
+                            continue;
+                        }
                         else {
-                           LOG_IF(bool(ini.get<cfg::debug::session>()&0x04), LOG_ERR, "can't flush acl: not connected yet");
+                           LOG_IF(bool(ini.get<cfg::debug::session>()&0x04),
+                            LOG_ERR, "can't flush acl: not connected yet");
                         }
                     }
                 }
 
-
-                switch (front.state) {
-                default:
-                {
+                try {
                     events.execute_events(time_base.get_current_time(),
-                        [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);}, bool(ini.get<cfg::debug::session>()&0x02));
-                }
-                break;
-                case Front::FRONT_UP_AND_RUNNING:
-                {
-                    if (acl_serial.is_before_connexion()) {
-                        try {
-                            unique_fd client_sck = addr_connect_non_blocking(
-                                                        ini.get<cfg::globals::authfile>().c_str(),
-                                                        (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
+                        [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);},
+                            bool(ini.get<cfg::debug::session>()&0x02));
 
-                            if (!client_sck.is_open()) {
-                                LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
-                                    ini.get<cfg::globals::authfile>().c_str());
-                                acl_serial.set_failed_auth_trans();
-                                // will go to the catch below
-                                throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
-                            }
-
-                            auth_trans = std::make_unique<SocketTransport>("Authentifier", std::move(client_sck),
-                                ini.get<cfg::globals::authfile>().c_str(), 0,
-                                std::chrono::seconds(1), SocketTransport::Verbose::none);
-
-                            acl_serial.set_auth_trans(auth_trans.get());
-                        }
-                        catch (...) {
-                            this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                            run_session = false;
-                            LOG(LOG_INFO, "Start of acl failed : no authentifier available");
-                            if (ini.get<cfg::globals::enable_close_box>()) {
-                                auto next_state = MODULE_INTERNAL_CLOSE;
-                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                                run_session = true;
-                            }
-                        }
-
-                        continue;
-                    }
-
-                    try {
+                    if (front.state == Front::FRONT_UP_AND_RUNNING) {
                         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
-                        if (enddate != 0 
+                        if (enddate != 0
                         && (static_cast<uint32_t>(time_base.get_current_time().tv_sec) > enddate)) {
                             throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
                         }
@@ -955,13 +949,6 @@ public:
                             time_base.get_current_time().tv_sec, front.has_user_activity)) {
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
-
-                        events.execute_events(time_base.get_current_time(),
-                            [&ioswitch](int fd)
-                            {
-                                return ioswitch.is_set_for_reading(fd);
-                            },
-                            bool(ini.get<cfg::debug::session>()&0x02));
 
                         // new value incoming from authentifier
                         if (ini.check_from_acl()) {
@@ -1099,90 +1086,96 @@ public:
                                 ini.set<cfg::context::rd_shadow_type>("");
                             }
                         }
-                    } catch (Error const& e) {
-                        run_session = false;
-                        switch (end_session_exception(e, ini)){
-                        case 0: // End of session loop
-                        break;
-                        case 1: // Close Box
+                    }
+                } catch (Error const& e) {
+                    run_session = false;
+
+                    if (front.state != Front::FRONT_UP_AND_RUNNING) {
+                        sesman.flush_acl_disconnect_target([&log_file]()
                         {
-                            keepalive.stop();
-                            sesman.set_disconnect_target();
-                            mod_wrapper.disconnect();
-                            if (ini.get<cfg::globals::enable_close_box>()) {
-                                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                            log_file.close_session_log();
+                        });
+                        continue;
+                    }
 
-                                auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                                mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
-                                run_session = true;
-                            }
-                            else {
-                              LOG(LOG_INFO, "Close Box disabled : ending session");
-                            }
-                        }
-                        break;
-                        case 3:
-                        {
-                            // SET new target in ini
-                            const char * host = char_ptr_cast(redir_info.host);
-                            const char * password = char_ptr_cast(redir_info.password);
-                            const char * username = char_ptr_cast(redir_info.username);
-                            const char * change_user = "";
-                            if (redir_info.dont_store_username && username[0] != 0) {
-                                LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
-                                ini.set_acl<cfg::globals::target_user>(username);
-                                change_user = username;
-                            }
-                            if (password[0] != 0) {
-                                LOG(LOG_INFO, "SrvRedir: Change target password");
-                                ini.set_acl<cfg::context::target_password>(password);
-                            }
-                            LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
-                            ini.set_acl<cfg::context::target_host>(host);
-                            auto message = str_concat(change_user, '@', host);
-                            sesman.report("SERVER_REDIRECTION", message.c_str());
-                        }
-
-                        REDEMPTION_CXX_FALLTHROUGH;
-                        case 2: // TODO: should we put some counter to avoid retrying indefinitely?
-                            LOG(LOG_INFO, "Retry RDP");
-                            acl_serial.remote_answer = false;
-
+                    switch (end_session_exception(e, ini)){
+                    case 0: // End of session loop
+                    break;
+                    case 1: // Close Box
+                    {
+                        keepalive.stop();
+                        sesman.set_disconnect_target();
+                        mod_wrapper.disconnect();
+                        if (ini.get<cfg::globals::enable_close_box>()) {
                             rail_client_execute.enable_remote_program(front.client_info.remote_program);
-                            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-                            auto next_state = MODULE_RDP;
-                            try {
-                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
-
-                                if (ini.get<cfg::globals::bogus_refresh_rect>() &&
-                                    ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                                    (front.client_info.cs_monitor.monitorCount > 1)) {
-                                    mod_wrapper.get_mod()->rdp_suppress_display_updates();
-                                    mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                                        front.client_info.screen_info.width, front.client_info.screen_info.height);
-                                }
-                                mod_wrapper.get_mod()->rdp_input_invalidate(
-                                        Rect(0, 0,
-                                            front.client_info.screen_info.width,
-                                            front.client_info.screen_info.height));
-                                ini.set<cfg::context::auth_error_message>("");
-                            }
-                            catch (...) {
-                                sesman.log6(LogId::SESSION_CREATION_FAILED, {});
-                                front.must_be_stop_capture();
-
-                                throw;
-                            }
-
+                            auto next_state = MODULE_INTERNAL_CLOSE_BACK;
+                            this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                             run_session = true;
-                        break;
+                        }
+                        else {
+                          LOG(LOG_INFO, "Close Box disabled : ending session");
                         }
                     }
+                    break;
+                    case 3:
+                    {
+                        // SET new target in ini
+                        const char * host = char_ptr_cast(redir_info.host);
+                        const char * password = char_ptr_cast(redir_info.password);
+                        const char * username = char_ptr_cast(redir_info.username);
+                        const char * change_user = "";
+                        if (redir_info.dont_store_username && username[0] != 0) {
+                            LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+                            ini.set_acl<cfg::globals::target_user>(username);
+                            change_user = username;
+                        }
+                        if (password[0] != 0) {
+                            LOG(LOG_INFO, "SrvRedir: Change target password");
+                            ini.set_acl<cfg::context::target_password>(password);
+                        }
+                        LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+                        ini.set_acl<cfg::context::target_host>(host);
+                        auto message = str_concat(change_user, '@', host);
+                        sesman.report("SERVER_REDIRECTION", message.c_str());
+                    }
+
+                    REDEMPTION_CXX_FALLTHROUGH;
+                    case 2: // TODO: should we put some counter to avoid retrying indefinitely?
+                        LOG(LOG_INFO, "Retry RDP");
+                        acl_serial.remote_answer = false;
+
+                        rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                        log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+
+                        auto next_state = MODULE_RDP;
+                        try {
+                            this->new_mod(next_state, mod_wrapper, mod_factory, front);
+
+                            if (ini.get<cfg::globals::bogus_refresh_rect>() &&
+                                ini.get<cfg::globals::allow_using_multiple_monitors>() &&
+                                (front.client_info.cs_monitor.monitorCount > 1)) {
+                                mod_wrapper.get_mod()->rdp_suppress_display_updates();
+                                mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
+                                    front.client_info.screen_info.width, front.client_info.screen_info.height);
+                            }
+                            mod_wrapper.get_mod()->rdp_input_invalidate(
+                                    Rect(0, 0,
+                                        front.client_info.screen_info.width,
+                                        front.client_info.screen_info.height));
+                            ini.set<cfg::context::auth_error_message>("");
+                        }
+                        catch (...) {
+                            sesman.log6(LogId::SESSION_CREATION_FAILED, {});
+                            front.must_be_stop_capture();
+
+                            throw;
+                        }
+                        run_session = true;
+                    break;
+                    }
                 }
-                break;
-                } // switch front_state
             } // loop
 
             mod_wrapper.disconnect();
