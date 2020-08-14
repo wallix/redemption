@@ -57,6 +57,7 @@
 #include <unistd.h>
 
 #include "acl/mod_wrapper.hpp"
+#include "utils/genrandom.hpp"
 
 namespace
 {
@@ -626,9 +627,12 @@ private:
     }
 
 public:
-    Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+    Session(SocketTransport&& front_trans, Inifile& ini)
     : ini(ini)
     {
+        CryptoContext cctx;
+        UdevRandom rnd;
+        Fstat fstat;
 
         TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
@@ -1298,7 +1302,7 @@ private:
 template<class SocketType, class... Args>
 void session_start_sck(
     char const* name, unique_fd&& sck,
-    Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    Inifile& ini,
     Args&&... args)
 {
     Session session(SocketType(
@@ -1309,25 +1313,25 @@ void session_start_sck(
             ? uint64_t(SocketTransport::Verbose::watchdog)
             : 0u
         ))
-    ), ini, cctx, rnd, fstat);
+    ), ini);
 }
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_tls(unique_fd sck, Inifile& ini)
 {
-    session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini, cctx, rnd, fstat);
+    session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini);
 }
 
-void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_ws(unique_fd sck, Inifile& ini)
 {
-    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
+    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini,
         WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_wss(unique_fd sck, Inifile& ini)
 {
-    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
+    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini,
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),

@@ -40,7 +40,6 @@
 
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/log.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -360,10 +359,6 @@ int main(int argc, char** argv)
     }
 
 
-    CryptoContext cctx;
-    UdevRandom rnd;
-    Fstat fstat;
-
     // if -f (force option) is set
     // force kill running rdpproxy
     // force remove pid file
@@ -445,7 +440,7 @@ int main(int argc, char** argv)
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop(
-        ini, cctx, rnd, fstat, euid, egid,
+        ini, euid, egid,
         std::move(config_filename),
         !options.count("nofork"));
 

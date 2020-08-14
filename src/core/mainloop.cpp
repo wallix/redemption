@@ -184,9 +184,8 @@ namespace
         Wss,
         Tls,
     };
-   
-    void session_server_start(
-        int incoming_sck, CryptoContext& cctx, Random& rnd, Fstat& fstat, bool forkable,
+
+    void session_server_start(int incoming_sck, bool forkable,
         unsigned uid, unsigned gid, std::string const& config_filename, bool debug_config,
         SocketType socket_type)
     {
@@ -216,7 +215,7 @@ namespace
         // this would also likely have some effect on network ressources management
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
-            
+
             char source_ip[256] { };
             char source_port_buf[8] { };
 
@@ -283,7 +282,7 @@ namespace
             }
 
             int target_port = atoi(target_port_buf);
-            
+
             if (!ini.get<cfg::debug::fake_target_ip>().empty()){
                 utils::strlcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
                 LOG(LOG_INFO, "fake_target_ip='%s'", target_ip);
@@ -296,7 +295,7 @@ namespace
             }
 
             char real_target_ip[256];
-            
+
             if (ini.get<cfg::globals::enable_transparent_mode>() && !source_is_localhost) {
                 int use_conntrack = 0;
                 FILE* fs = nullptr;
@@ -388,16 +387,16 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_ws(unique_fd{sck}, ini);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_wss(unique_fd{sck}, ini);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_tls(unique_fd{sck}, ini);
                         break;
                 }
 
@@ -434,7 +433,7 @@ namespace
             const unsigned pos = (ws_addr[0] == ':' ? 1 : 0);
             char* end = nullptr;
             long port = std::strtol(ws_addr + pos, &end, 10);
-            
+
             if (*end == '\0')
             {
                 return interface_create_server(enable_ipv6,
@@ -456,7 +455,7 @@ namespace
             REDEMPTION_DIAGNOSTIC_POP
             char* end = nullptr;
             long port = std::strtol(ws_port + 1, &end, 10);
-            
+
             if (*end == '\0')
             {
                 return interface_create_server(enable_ipv6,
@@ -474,9 +473,7 @@ namespace
     }
 } // anonymous namespace
 
-void redemption_main_loop(
-    Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat,
-    unsigned uid, unsigned gid, std::string config_filename, bool forkable)
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string config_filename, bool forkable)
 {
     init_signals();
 
@@ -513,7 +510,7 @@ void redemption_main_loop(
                     ? SocketType::Wss
                     : SocketType::Ws
                 : SocketType::Tls;
-            session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, socket_type);
+            session_server_start(sck, forkable, uid, gid, config_filename, debug_config, socket_type);
             return true;
         });
     }
@@ -521,7 +518,7 @@ void redemption_main_loop(
     {
         unique_server_loop(std::move(sck1), [&](int sck)
         {
-            session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, SocketType::Tls);
+            session_server_start(sck, forkable, uid, gid, config_filename, debug_config, SocketType::Tls);
             return true;
         });
     }
