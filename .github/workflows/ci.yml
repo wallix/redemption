@@ -89,6 +89,6 @@ jobs:
     - name: compile
       run: |
         ~/boost-build/bin/bjam -q --toolset=${{ matrix.cxx }} san \
-          cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING' test_video_capture test_capture test_do_recorder
+          cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING'
 
 # kate: space-indent on; indent-width 2; replace-tabs on;
