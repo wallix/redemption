@@ -114,10 +114,10 @@ class Qt_ScanCode_KeyMap
 public:
     int scanCode;
     uint16_t flag;
-    std::string ascii;
-    int qKeyCode;
 
 private:
+    int qKeyCode;
+
     enum : int {
           ALT_MOD      = 0x10
         , CTRL_MOD     = 0x08
@@ -501,13 +501,9 @@ public:
 
     void keyEvent(const uint16_t keyStatusFlag, const int key, const std::string_view text) {
         this->flag = keyStatusFlag;
-        //this->scanCode = key;
         int keyCode(key);
         this->_deadKeys = false;
         this->_unvalidScanCode = false;
-
-        //this->qKeyName.clear();
-        this->ascii = text;
 
         this->qKeyCode = key;
 
