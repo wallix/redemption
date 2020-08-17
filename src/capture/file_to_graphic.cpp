@@ -729,8 +729,7 @@ void FileToGraphic::interpret_order()
             this->statistics.CachePointer.count++;
         }
         else {
-            Pointer cursor(this->ptr_cache.Pointers[cache_idx]);
-            this->ptr_cache.Pointers[cache_idx] = cursor;
+            Pointer const& cursor = this->ptr_cache.Pointers[cache_idx];
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
             }
