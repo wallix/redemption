@@ -56,8 +56,4 @@ public:
     int get_flag() override {
         return this->qtRDPKeymap.flag;
     }
-
-    void clearCustomKeyCode() override {
-        this->qtRDPKeymap.clearCustomKeyCode();
-    }
 };

@@ -260,8 +260,6 @@ public:
     int get_flag() override {
         return 0;
     }
-
-    void clearCustomKeyCode() override {}
 };
 
 

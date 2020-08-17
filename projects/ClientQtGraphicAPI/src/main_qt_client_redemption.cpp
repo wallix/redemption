@@ -161,7 +161,6 @@ public:
     void update_keylayout() override {
         this->qt_rdp_keylayout.update_keylayout(this->config.info.keylayout);
 
-        this->qt_rdp_keylayout.clearCustomKeyCode();
         ClientRedemption::update_keylayout();
     }
 
