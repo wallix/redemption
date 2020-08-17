@@ -103,7 +103,7 @@ public:
 
     void refresh(Rect clip) override { (void) clip; }
 
-    bool server_error_encountered() const { return false; }
+    bool server_error_encountered() const override { return false; }
 };
 
 
