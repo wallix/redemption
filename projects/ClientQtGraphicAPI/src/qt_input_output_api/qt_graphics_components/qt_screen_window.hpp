@@ -29,6 +29,7 @@
 #include <QtGui/QPainter>
 
 #include "redemption_qt_include_widget.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)

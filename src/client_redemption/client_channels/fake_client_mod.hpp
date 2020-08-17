@@ -251,7 +251,7 @@ public:
 
     void update_keylayout(const int /*LCID*/) override {}
 
-    void init(const int /*flag*/, const int /*key*/, std::string const& /*text*/) override {}
+    void key_event(const int /*flag*/, const int /*key*/, std::string_view /*text*/) override {}
 
     int get_scancode() override {
         return 0;

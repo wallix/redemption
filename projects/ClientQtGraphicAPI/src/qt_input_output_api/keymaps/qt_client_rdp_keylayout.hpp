@@ -40,12 +40,11 @@ public:
 
     ~QtClientRDPKeyLayout() = default;
 
-
-    virtual void update_keylayout(const int LCID) override {
+    void update_keylayout(int LCID) override {
         this->qtRDPKeymap.setKeyboardLayout(LCID);
     }
 
-    void init(const int flag, const int key, std::string const& text) override {
+    void key_event(int flag, int key, std::string_view text) override {
         this->qtRDPKeymap.keyEvent(flag, key, text);
     }
 

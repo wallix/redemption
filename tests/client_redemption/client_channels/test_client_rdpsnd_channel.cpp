@@ -27,6 +27,7 @@
 #include "client_redemption/client_channels/fake_client_mod.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)

@@ -116,18 +116,17 @@ public:
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
     }
-    // TODO string_view
-    void keyPressEvent(const int key, std::string const& text) {
-        this->rdp_keyLayout_api->init(0, key, text);
+
+    void keyPressEvent(const int key, std::string_view text) {
+        this->rdp_keyLayout_api->key_event(0, key, text);
         int keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode != 0) {
             this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
         }
     }
 
-    // TODO string_view
-    void keyReleaseEvent(const int key, std::string const& text) {
-        this->rdp_keyLayout_api->init(KBD_FLAG_UP, key, text);
+    void keyReleaseEvent(const int key, std::string_view text) {
+        this->rdp_keyLayout_api->key_event(KBD_FLAG_UP, key, text);
         int keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode != 0) {
             this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());

@@ -27,8 +27,11 @@
 #include "client_redemption/client_channels/fake_client_mod.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
+
+#include <type_traits>
 
 
 namespace rdpdr

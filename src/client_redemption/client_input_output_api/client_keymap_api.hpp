@@ -20,8 +20,7 @@
 
 #pragma once
 
-#include "client_redemption/client_config/client_redemption_config.hpp"
-
+#include <string_view>
 
 
 class ClientKeyLayoutAPI {
@@ -30,18 +29,11 @@ public:
 
     virtual ~ClientKeyLayoutAPI() = default;
 
-    virtual void update_keylayout(const int /*LCID*/) = 0;
+    virtual void update_keylayout(int LCID) = 0;
 
-    // TODO std::string -> string_view
-    virtual void init(const int /*flag*/, const int /*key*/, std::string const& /*text*/) {}
+    virtual void key_event(int flag, int key, std::string_view text) = 0;
 
-    virtual int get_scancode() {
-        return 0;
-    }
+    virtual int get_scancode() = 0;
 
-    virtual int get_flag() {
-        return 0;
-    }
-
-    virtual void clearCustomKeyCode() {}
+    virtual int get_flag() = 0;
 };
