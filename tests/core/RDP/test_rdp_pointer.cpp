@@ -955,18 +955,14 @@ Mask For Cursor
     RED_CHECK_EQ(cursor.get_hotspot().y, 9);
     RED_CHECK_EQ(cursor.get_dimensions().width, 32);
     RED_CHECK_EQ(cursor.get_dimensions().height, 32);
-//     cursor.is_black_and_white = true;
+    auto d = cursor.get_24bits_xor_mask();
+    auto m = cursor.get_monochrome_and_mask();
 
-    ARGB32Pointer vnccursor(cursor);
-    const auto av_alpha_q = vnccursor.get_alpha_q();
+    RED_CHECK_EQUAL(m.size(), 32*4);
+    RED_CHECK_SIG(m,
+        "\x38\xbe\x3e\x23\x8d\xf6\x99\x45\xdb\xdd\x3e\x0b\x17\xd6\x8e\xfb\x47\x94\x2a\xe8");
 
-//     size_t i=0;
-//     for (auto x: av_alpha_q){
-//         if (x) {printf("%02X", x);} else {printf("  ");}
-//         i++;
-// //         if ((i % 24) == 23) { printf("\n"); }
-//         if ((i % 128) == 127) { printf("\n"); }
-//     }
-
-    RED_CHECK_SIG(av_alpha_q, "\x40\xcc\x56\x2e\x92\xfb\x36\x03\x65\x43\x3f\x40\xb1\x7d\x27\x8e\x20\xef\x09\x8f");
+    RED_CHECK_EQUAL(d.size(), 32*32*3);
+    RED_CHECK_SIG(d,
+        "\x02\xec\x1f\x60\xb2\xe7\x67\x41\xdd\x98\x48\xac\x43\x20\x57\xff\x9d\x58\xd7\x50");
 }

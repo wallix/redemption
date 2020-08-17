@@ -23,10 +23,10 @@ exe-js js_client :
   src/redjs/front.bc
   src/redjs/graphics.bc
   src/redjs/image_conversions.bc
-  src/redjs/image_data_from_pointer.bc
   src/redjs/transport.bc
   src/system/ssl_mod_exp.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/client_redemption/pointer_to_rgba8888.bc
   src/core/RDP/dwt.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -61,7 +61,7 @@ exe-js js_player :
 :
   src/redjs/graphics.bc
   src/redjs/image_conversions.bc
-  src/redjs/image_data_from_pointer.bc
+  src/client_redemption/pointer_to_rgba8888.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
@@ -110,9 +110,9 @@ test-run-js tests/redjs/test_front :
   src/redjs/front.bc
   src/redjs/graphics.bc
   src/redjs/image_conversions.bc
-  src/redjs/image_data_from_pointer.bc
   src/system/ssl_mod_exp.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/client_redemption/pointer_to_rgba8888.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -132,7 +132,7 @@ test-run-js tests/redjs/test_graphics :
 :
   src/redjs/graphics.bc
   src/redjs/image_conversions.bc
-  src/redjs/image_data_from_pointer.bc
+  src/client_redemption/pointer_to_rgba8888.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
@@ -152,15 +152,6 @@ test-run-js tests/redjs/test_image_conversions :
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
   src/utils/rle.bc
-  src/utils/stacktrace.bc
-  $(BOOST_STACKTRACE_LINKFLAGS)
-;
-test-run-js tests/redjs/test_image_data_from_pointer :
-  tests/redjs/test_image_data_from_pointer.cpp
-:
-  src/redjs/image_data_from_pointer.bc
-  src/core/error.bc
-  src/utils/hexdump.bc
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -186,10 +177,10 @@ objjs src/red_channels/js_channel.bc : src/red_channels/js_channel.cpp ;
 objjs src/redjs/front.bc : src/redjs/front.cpp ;
 objjs src/redjs/graphics.bc : src/redjs/graphics.cpp ;
 objjs src/redjs/image_conversions.bc : src/redjs/image_conversions.cpp ;
-objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs src/redjs/transport.bc : src/redjs/transport.cpp ;
 objjs src/system/ssl_mod_exp.bc : src/system/ssl_mod_exp.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
+objjs src/client_redemption/pointer_to_rgba8888.bc : $(REDEMPTION_SRC_PATH)/client_redemption/pointer_to_rgba8888.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 objjs src/core/RDP/nego.bc : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
@@ -222,7 +213,6 @@ alias test_js_channel : tests/red_channels/test_js_channel ;
 alias test_front : tests/redjs/test_front ;
 alias test_graphics : tests/redjs/test_graphics ;
 alias test_image_conversions : tests/redjs/test_image_conversions ;
-alias test_image_data_from_pointer : tests/redjs/test_image_data_from_pointer ;
 alias test_transport : tests/redjs/test_transport ;
 alias test_ssl_mod_exp : tests/system/test_ssl_mod_exp ;
 alias tests/red_channels.norec :
@@ -233,7 +223,6 @@ alias tests/redjs.norec :
   tests/redjs/test_front
   tests/redjs/test_graphics
   tests/redjs/test_image_conversions
-  tests/redjs/test_image_data_from_pointer
   tests/redjs/test_transport
 ;
 alias tests/system.norec :

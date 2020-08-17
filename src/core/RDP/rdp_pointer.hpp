@@ -570,56 +570,6 @@ public:
     }
 };
 
-struct ARGB32Pointer {
-    CursorSize dimensions;
-    Hotspot hotspot;
-
-    alignas(16)
-    uint8_t data[Pointer::DATA_SIZE];
-
-    explicit ARGB32Pointer(Pointer const & cursor)
-        : dimensions(cursor.get_dimensions())
-        , hotspot(cursor.get_hotspot())
-    {
-        assert(this->dimensions.width * this->dimensions.height * 4 <= sizeof(data));
-
-        const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
-        const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
-
-        for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
-            const uint8_t * src_mask = &cursormask[y * ::nbbytes(this->dimensions.width)];
-            const uint8_t * src_data = &cursordata[y * 3 * this->dimensions.width];
-            uint8_t * target_data    = &this->data[4*(this->dimensions.height-1-y)*this->dimensions.width];
-            uint8_t mask_count = 7;
-            for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                uint8_t maskbit =  *src_mask & (1 << mask_count);
-                uint32_t posdata = 3*x;
-                uint32_t postarget = 4*x;
-                uint32_t pixel = src_data[posdata]+(src_data[posdata+1]<<8)+(src_data[posdata+2]<<16);
-                ::out_bytes_le(&target_data[postarget], 4, (pixel|(maskbit==0))?(0xF0000000+pixel):0);
-                src_mask += (mask_count==0)?1:0;
-                mask_count = (mask_count-1) & 7;
-            }
-        }
-    }
-
-    [[nodiscard]] CursorSize get_dimensions() const
-    {
-        return this->dimensions;
-    }
-
-    [[nodiscard]] Hotspot get_hotspot() const
-    {
-        return this->hotspot;
-    }
-
-    [[nodiscard]] u8_array_view get_alpha_q() const
-    {
-        return {this->data, this->dimensions.width * this->dimensions.height * 4};
-    }
-};
-
-
 inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
                            uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
                            uint16_t dlen, const uint8_t * data,

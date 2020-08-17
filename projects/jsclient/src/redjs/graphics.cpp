@@ -20,8 +20,6 @@ Author(s): Jonathan Poelen
 
 #include "redjs/graphics.hpp"
 
-#include "redjs/image_data_from_pointer.hpp"
-
 #include "red_emscripten/val.hpp"
 #include "red_emscripten/constants.hpp"
 
@@ -48,6 +46,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+
+#include "client_redemption/pointer_to_rgba8888.hpp"
 
 // include "utils/log.hpp"
 
@@ -693,13 +693,13 @@ void Graphics::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointer
         emval_call(this->callbacks, jsnames::cached_pointer, cache_idx);
         break;
     case SetPointerMode::New: {
-        const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
+        const redclient::RGBA8888Image image = redclient::pointer_to_rgba8888(cursor);
         const auto hotspot = cursor.get_hotspot();
 
         emval_call(this->callbacks, jsnames::new_pointer,
             image.data(),
-            image.width(),
-            image.height(),
+            image.width,
+            image.height,
             cache_idx,
             hotspot.x,
             hotspot.y
@@ -707,13 +707,13 @@ void Graphics::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointer
         break;
     }
     case SetPointerMode::Insert: {
-        const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
+        const redclient::RGBA8888Image image = redclient::pointer_to_rgba8888(cursor);
         const auto hotspot = cursor.get_hotspot();
 
         emval_call(this->callbacks, jsnames::set_pointer,
             image.data(),
-            image.width(),
-            image.height(),
+            image.width,
+            image.height,
             hotspot.x,
             hotspot.y
         );

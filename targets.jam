@@ -1327,6 +1327,15 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <covfile>src/client_redemption/client_config/client_redemption_config.cpp
   <covfile>src/client_redemption/client_config/client_redemption_config.hpp
 ;
+test-run tests/client_redemption/test_pointer_to_rgba888 :
+  $(REDEMPTION_TEST_PATH)/client_redemption/test_pointer_to_rgba888.cpp
+:
+  <library>src/client_redemption/pointer_to_rgba8888.o
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/stacktrace.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
 :
@@ -5682,6 +5691,7 @@ obj src/client_redemption/client_channels/client_remoteapp_channel.o : $(REDEMPT
 obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_clipboard_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_clipboard_config.cpp ;
 obj src/client_redemption/client_input_output_api/rdp_disk_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_input_output_api/rdp_disk_config.cpp ;
+obj src/client_redemption/pointer_to_rgba8888.o : $(REDEMPTION_SRC_PATH)/client_redemption/pointer_to_rgba8888.cpp ;
 obj src/core/HTTP/http_parser.o : $(REDEMPTION_SRC_PATH)/core/HTTP/http_parser.cpp ;
 obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
@@ -5841,6 +5851,7 @@ alias test_client_rdpdr_channel : tests/client_redemption/client_channels/test_c
 alias test_client_rdpsnd_channel : tests/client_redemption/client_channels/test_client_rdpsnd_channel ;
 alias test_client_remoteapp_channel : tests/client_redemption/client_channels/test_client_remoteapp_channel ;
 alias test_client_redemption_config : tests/client_redemption/client_config/test_client_redemption_config ;
+alias test_pointer_to_rgba888 : tests/client_redemption/test_pointer_to_rgba888 ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
 alias test_http_parser : tests/core/HTTP/test_http_parser ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
@@ -6527,6 +6538,9 @@ alias tests/client_redemption/client_channels.norec :
 alias tests/client_redemption/client_config.norec :
   tests/client_redemption/client_config/test_client_redemption_config
 ;
+alias tests/client_redemption.norec :
+  tests/client_redemption/test_pointer_to_rgba888
+;
 alias tests/core/FSCC.norec :
   tests/core/FSCC/test_FileInformation
 ;
@@ -6930,6 +6944,7 @@ alias tests :
   tests/acl
   tests/capture
   tests/client_mods
+  tests/client_redemption
   tests/core
   tests/front
   tests/gdi
@@ -6971,6 +6986,7 @@ alias tests/client_redemption/client_channels :
 alias tests/client_redemption :
   tests/client_redemption/client_channels
   tests/client_redemption/client_config
+  tests/client_redemption.norec
 ;
 alias tests/client_redemption/client_config :
   tests/client_redemption/client_config.norec
@@ -7138,6 +7154,7 @@ explicit
   tests/client_mods.norec
   tests/client_redemption/client_channels.norec
   tests/client_redemption/client_config.norec
+  tests/client_redemption.norec
   tests/core/FSCC.norec
   tests/core/HTTP.norec
   tests/core/RDP/caches.norec

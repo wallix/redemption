@@ -546,7 +546,7 @@ public:
             this->showkey(keyStatusFlag, key, text[0]);
         }
         if (this->_unvalidScanCode) {
-         this->scanCode = 0;
+            this->scanCode = 0;
         }
     }
 };

@@ -20,7 +20,7 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "redjs/image_data_from_pointer.hpp"
+#include "client_redemption/pointer_to_rgba8888.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
 struct ReadableCursor
@@ -29,13 +29,13 @@ struct ReadableCursor
 
     char str[N*N+N+1];
 
-    ReadableCursor(redjs::ImageData const& img) noexcept
+    ReadableCursor(redclient::RGBA8888Image const& img) noexcept
     {
-        RED_CHECK(N*N >= img.width() * img.height());
+        RED_CHECK(N*N >= img.width * img.height);
         auto* it = img.data();
         auto* p = str;
-        for (unsigned y = 0; y < img.height(); ++y) {
-            for (unsigned x = 0; x < img.width(); ++x) {
+        for (unsigned y = 0; y < img.height; ++y) {
+            for (unsigned x = 0; x < img.width; ++x) {
                 *p++ = !it[3] ? '.' : (it[0] == 0xff && it[1] == 0xff && it[2] == 0xff) ? 'X' : '+';
                 it += 4;
             }
@@ -48,10 +48,10 @@ struct ReadableCursor
 
 RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
 {
-    redjs::ImageData img = redjs::image_data_from_pointer(normal_pointer());
+    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(normal_pointer());
 
-    RED_REQUIRE(32u == img.width());
-    RED_REQUIRE(32u == img.height());
+    RED_REQUIRE(32u == img.width);
+    RED_REQUIRE(32u == img.height);
 
     ReadableCursor readable_cursor(img);
 
@@ -313,15 +313,15 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    redjs::ImageData img = redjs::image_data_from_pointer(decode_pointer(
+    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(decode_pointer(
         BitsPerPixel(24), BGRPalette::classic_332(),
         32, 32, 0, 0,
         sizeof(xor_mask), xor_mask,
         sizeof(and_mask), and_mask, false
     ));
 
-    RED_REQUIRE(34u == img.width());
-    RED_REQUIRE(34u == img.height());
+    RED_REQUIRE(34u == img.width);
+    RED_REQUIRE(34u == img.height);
 
     ReadableCursor readable_cursor(img);
 

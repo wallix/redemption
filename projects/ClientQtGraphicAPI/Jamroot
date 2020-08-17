@@ -139,6 +139,7 @@ add_obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 ;
 add_obj keylayouts_r.o : src/reversed_keymaps/keylayouts_r.cpp ;
 
+add_src client_redemption/pointer_to_rgba8888.cpp ;
 add_src utils/log_as_logprint.cpp ;
 
 local requirement_list = ;

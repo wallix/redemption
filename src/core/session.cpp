@@ -637,7 +637,10 @@ private:
             && ioswitch.is_set_for_writing(front_trans.sck)) {
                 front_trans.send_waiting_data();
             }
-            if (num > 0) { return true; }
+
+            if (num > 0) {
+                return true;
+            }
             // if the select stopped on timeout or EINTR we will give a try to reading
         }
         return false;

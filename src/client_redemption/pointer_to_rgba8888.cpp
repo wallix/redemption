@@ -14,17 +14,14 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2010-2018
+Copyright (C) Wallix 2010-2020
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/image_data_from_pointer.hpp"
+#include "client_redemption/pointer_to_rgba8888.hpp"
 
 #include "core/RDP/rdp_pointer.hpp"
 
-
-namespace redjs
-{
 
 namespace
 {
@@ -66,12 +63,13 @@ namespace
     }
 }
 
-ImageData image_data_from_pointer(Pointer const& pointer)
+
+redclient::RGBA8888Image redclient::pointer_to_rgba8888(Pointer const& pointer)
 {
     auto const dimensions = pointer.get_dimensions();
     auto const av_and_1byte = pointer.get_monochrome_and_mask();
     auto const av_xor_mask = pointer.get_24bits_xor_mask();
-    bool const is_empty_mask = redjs::is_empty_mask(av_and_1byte);
+    bool const is_empty_mask = ::is_empty_mask(av_and_1byte);
     auto const width = dimensions.width + is_empty_mask * 2;
     auto const height = dimensions.height + is_empty_mask * 2;
     auto const d3 = dimensions.width * 3;
@@ -80,10 +78,10 @@ ImageData image_data_from_pointer(Pointer const& pointer)
 
     uint8_t* pdata = is_empty_mask
         // zero initialization
-        ? new uint8_t[width * height * 4]{}
+        ? new uint8_t[width * height * 4]{} /*NOLINT*/
         // default initialization (apply_transparency is used)
-        : new uint8_t[width * height * 4];
-    ImageData img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
+        : new uint8_t[width * height * 4]; /*NOLINT*/
+    RGBA8888Image img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
     pdata += width * height * 4 - w4 + is_empty_mask * (4 - w4);
 
     auto for_each_pixel = [&](auto f)
@@ -145,6 +143,4 @@ ImageData image_data_from_pointer(Pointer const& pointer)
     }
 
     return img;
-}
-
 }
