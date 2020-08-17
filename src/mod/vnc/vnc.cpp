@@ -554,7 +554,7 @@ const char *mod_vnc::securityTypeString(int32_t t) {
     case VeNCRYPT_X509Vnc: return "X509 VNC";
     case VeNCRYPT_X509Plain: return "X509 plain";
     default:
-        snprintf(format, sizeof(format), "<unknown 0x%x>", t);
+        snprintf(format, sizeof(format), "<unknown 0x%x>", uint32_t(t));
         return format;
     }
 }
