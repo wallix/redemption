@@ -1964,8 +1964,6 @@ class mod_rdp : public mod_api, public rdp_api
     const bool clean_up_32_bpp_cursor;
     const bool large_pointer_support;
 
-    const bool perform_automatic_reconnection;
-
     std::unique_ptr<uint8_t[]> multifragment_update_buffer;
     OutStream multifragment_update_data;
 
@@ -2114,7 +2112,6 @@ public:
         , session_time_start(time_base.get_current_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
-        , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
         , multifragment_update_data({multifragment_update_buffer.get(), 65536})
         , client_large_pointer_caps(info.large_pointer_caps)
