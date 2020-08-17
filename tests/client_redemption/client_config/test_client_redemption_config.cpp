@@ -90,9 +90,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.windowsData.screen_x, 0);
     RED_CHECK_EQUAL(config.windowsData.screen_y, 0);
 
-    // KEYS
-    RED_CHECK_EQUAL(config.keyCustomDefinitions.size(), 0);
-
     // USER
     RED_CHECK_EQUAL(config.userProfils.size(), 1);
 
@@ -263,9 +260,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.windowsData.form_y, 0);
     RED_CHECK_EQUAL(config.windowsData.screen_x, 0);
     RED_CHECK_EQUAL(config.windowsData.screen_y, 0);
-
-    // KEYS
-    RED_CHECK_EQUAL(config.keyCustomDefinitions.size(), 0);
 
     // USER
     RED_CHECK_EQUAL(config.userProfils.size(), 1);
@@ -693,44 +687,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
         "DATA/sound_temp/"}));
 }
 
-RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
-{
-    WorkingDirectory wd("TestClientRedemptionConfigReadCustomKeyConfig");
-
-    auto const keySetting = wd.create_subdirectory("DATA/config")
-      .add_file("keySetting.config");
-
-    char const * argv[] = {"cmd"};
-    int argc = 1;
-
-    write_file(keySetting,
-        "Key Setting\n"
-        "- 1 2 x 1 key1\n"
-        "- 5 6 y 0 key2\n"_av);
-
-    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
-    ClientConfig::set_config(argc, argv, config);
-
-    RED_REQUIRE_EQUAL(config.keyCustomDefinitions.size(), 2);
-
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].qtKeyID, 1);
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].scanCode, 2);
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].ASCII8, "x");
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].extended, 0x0100);
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].name, "key1");
-
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].qtKeyID, 5);
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].scanCode, 6);
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].ASCII8, "y");
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].extended, 0);
-    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].name, "key2");
-
-    RED_CHECK_WORKSPACE(wd.add_files({
-        "DATA/replay/",
-        "DATA/clipboard_temp/",
-        "DATA/sound_temp/"}));
-}
-
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadAccountData");
@@ -836,34 +792,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
         "\nvnc-applekeyboard 0"
         "\nmod 1"
         "\n"_av);
-
-    RED_CHECK_WORKSPACE(wd.add_files({
-        "DATA/",
-        "DATA/config/",
-        "DATA/clipboard_temp/",
-        "DATA/replay/",
-        "DATA/sound_temp/"}));
-}
-
-RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
-{
-    WorkingDirectory wd("TestClientRedemptionConfigWriteCustomKey");
-
-    char const * argv[] = {"cmd"};
-    int argc = 1;
-
-    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
-    ClientConfig::set_config(argc, argv, config);
-
-    config.keyCustomDefinitions.emplace_back(1, 2, "x", 0x100, "key_x");
-    config.keyCustomDefinitions.emplace_back(3, 4, "y", 0, "key_y");
-
-    ClientConfig::writeCustomKeyConfig(config);
-
-    RED_CHECK_FILE_CONTENTS(wd.add_file("DATA/config/keySetting.config"),
-        "Key Setting\n\n"
-        "- 1 2 x 256 key_x\n"
-        "- 3 4 y 0 key_y\n"_av);
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/",

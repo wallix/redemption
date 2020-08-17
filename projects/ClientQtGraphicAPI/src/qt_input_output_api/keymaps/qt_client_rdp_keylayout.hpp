@@ -60,22 +60,4 @@ public:
     void clearCustomKeyCode() override {
         this->qtRDPKeymap.clearCustomKeyCode();
     }
-
-    void setCustomKeyCode(const int qtKeyID, const int scanCode, const std::string & ASCII8, const int extended) override {
-        this->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-    }
-
-    KeyCustomDefinition get_key_info(int keycode, std::string const& text) override {
-        this->qtRDPKeymap.keyEvent(0, keycode, text);
-        KeyCustomDefinition key_info(
-            this->qtRDPKeymap.qKeyCode,
-            this->qtRDPKeymap.scanCode,
-            this->qtRDPKeymap.ascii,
-            this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
-            this->qtRDPKeymap.qKeyName
-          );
-
-        return key_info;
-    }
-
 };

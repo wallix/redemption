@@ -19,7 +19,7 @@
 */
 
 
-/*********************************************************************************************************************************************************************************************************************
+/******************************************************************************
  *
  *  =================
  *    DOCUMENTATION
@@ -62,7 +62,6 @@
  *
  *      Qt_ScanCode_KeyMap qsckm();
  *
- *      qsckm.setCustomKeyCode(qt_key, scan_Code, ASCII8_Code, extended);       // Call setCustomKeyCode(int qt_key, int ASCII8_Code, int scan_Code, bool extended) to add new match between a Qt key
  *                                                                              // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
  *                                                                              // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
  *
@@ -92,7 +91,7 @@
  *      # Unknown keyboard layout (0x1). Reverting to default (English - United States - International) // If you call the constructor setting an unknown layout ID, default layout is set instead
  *
  *
- ***********************************************************************************************************************************************************************************************************************/
+ *****************************************************************************/
 
 
 #pragma once
@@ -153,8 +152,6 @@ private:
          , KBD_FLAGS_RELEASE  = 0x8000
     };
 
-
-
     void applyCharTable()
     {
         Keylayout_r::KeyLayoutMap_t const& layout = this->_deadKeys
@@ -196,12 +193,8 @@ private:
         }
     }
 
-
-    //===================
-    //    Characters
-    //===================
-    void getKeyChar(const char text) {
-
+    void getKeyChar(const char text)
+    {
         switch (this->qKeyCode) {
             case Qt::Key_Eacute      : this->scanCode = 0xE9; this->qKeyName = std::string("Eacute"); break; /*é*/
             case Qt::Key_Ccedilla    : this->scanCode = 0xE7; this->qKeyName = std::string("Ccedilla"); break; /*ç*/
@@ -232,12 +225,8 @@ private:
         //    Keyboard Layout apply
         //-----------------------------
         this->applyCharTable();
-    }//=============================================================================
+    }
 
-
-    //=====================
-    //      ShortCuts
-    //=====================
     void getCharShortCut() {
 
         switch (this->qKeyCode) {
@@ -296,13 +285,8 @@ private:
         if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
             this->_layout = _layoutMods[CTRL_MOD];  // ctrl mod
         }
-    }//======================================================================================================================================
+    }
 
-
-    //===================
-    //   NON CHAR KEYS
-    //===================
-    //=======================================================================================================================
     void getNonCharKeys() {
         switch (this->qKeyCode) {
 
@@ -447,12 +431,8 @@ private:
 
             default: break;
         }
-    }//====================================================================================================
+    }
 
-
-    //===================
-    //     DEAD KEYS
-    //===================
     void getDeadKeys() {
 
         switch (this->qKeyCode) {
@@ -483,12 +463,8 @@ private:
         //    Keyboard Layout apply
         //----------------------------
         this->applyCharTable();
-    }//===================================================================================================
+    }
 
-
-    //===========================
-    //  Custom Key NOT EXTENDED
-    //===========================
     bool getCustomKeysNoExtendedKeylayoutApplied() {
 
         if (this->qKeyCode == 0) {
@@ -503,7 +479,7 @@ private:
         else {
             return false;
         }
-    }//------------------------------------------------------------------------
+    }
 
     bool getCustomKeysNoExtended() {
         if (this->qKeyCode == 0) {
@@ -518,12 +494,8 @@ private:
         else {
             return false;
         }
-    }//========================================================================
+    }
 
-
-    //==========================
-    //   Custom Key EXTENDED
-    //==========================
      bool getCustomKeysExtendedKeylayoutApplied() {
         if (this->qKeyCode == 0) {
             return false;
@@ -543,7 +515,7 @@ private:
             this->scanCode = 0;
             return false;
         }
-    }//------------------------------------------------------------------------------------------------------------
+    }
 
     bool getCustomKeysExtended() {
         if (this->qKeyCode == 0) {
@@ -577,11 +549,7 @@ public:
     , _unvalidScanCode(false)
     {
         this->setKeyboardLayout(LCID);
-    }//==================================================================================
-
-
-    ~Qt_ScanCode_KeyMap() {}
-
+    }
 
     void setKeyboardLayout(int LCID) {
         Keylayout_r const* layout = find_keylayout_r(LCID);
@@ -603,33 +571,6 @@ public:
 
         this->_layout = this->_layoutMods[0]; // noMod
     }
-
-
-    void setCustomKeyCode(int qt_key, int scan_Code, std::string ASCII8, bool extended) {
-        int ASCII8_Code = ASCII8[0];
-        if (qt_key != 0) {
-            if (ASCII8_Code != 0) {
-                if (extended) {
-                    this->_customExtendedKeylayoutApplied.erase(qt_key);
-                    this->_customExtendedKeylayoutApplied.emplace(qt_key, ASCII8_Code);
-                } else {
-                    this->_customNoExtendedKeylayoutApplied.erase(qt_key);
-                    this->_customNoExtendedKeylayoutApplied.emplace(qt_key, ASCII8_Code);
-                }
-            }
-
-            if (scan_Code != 0) {
-                if (extended) {
-                    this->_customExtended.erase(qt_key);
-                    this->_customExtended.emplace(qt_key, scan_Code);
-                } else {
-                    this->_customNoExtended.erase(qt_key);
-                    this->_customNoExtended.emplace(qt_key, scan_Code);
-                }
-            }
-        }
-    }
-
 
     void clearCustomKeyCode() {
         this->_customNoExtendedKeylayoutApplied.clear();
@@ -713,7 +654,4 @@ public:
          this->scanCode = 0;
         }
     }
-
 };
-
-

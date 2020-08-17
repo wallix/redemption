@@ -545,7 +545,6 @@ public:
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
 
         ClientConfig::writeWindowsData(this->config.windowsData);
-        ClientConfig::writeCustomKeyConfig(this->config);
         ClientConfig::writeClientInfo(this->config);
 
         this->config.port          = port;

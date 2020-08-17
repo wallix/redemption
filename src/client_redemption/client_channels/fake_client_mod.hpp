@@ -251,8 +251,6 @@ public:
 
     void update_keylayout(const int /*LCID*/) override {}
 
-    void setCustomKeyCode(const int /*qtKeyID*/, const int /*scanCode*/, const std::string & /*ASCII8*/, const int /*extended*/) override {}
-
     void init(const int /*flag*/, const int /*key*/, std::string const& /*text*/) override {}
 
     int get_scancode() override {
@@ -264,10 +262,6 @@ public:
     }
 
     void clearCustomKeyCode() override {}
-
-    KeyCustomDefinition get_key_info(int /*keycode*/, std::string const& /*text*/) override {
-        return KeyCustomDefinition{};
-    }
 };
 
 

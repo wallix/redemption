@@ -240,9 +240,4 @@ public:
     void send_rdp_unicode(uint16_t unicode, uint16_t flag) {
         this->mod->rdp_input_unicode(unicode, flag);
     }
-
-    KeyCustomDefinition get_key_info(int keyCode, std::string const& text) {
-        return this->rdp_keyLayout_api->get_key_info(keyCode, text);
-    }
-
 };

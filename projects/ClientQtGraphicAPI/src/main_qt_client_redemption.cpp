@@ -162,9 +162,6 @@ public:
         this->qt_rdp_keylayout.update_keylayout(this->config.info.keylayout);
 
         this->qt_rdp_keylayout.clearCustomKeyCode();
-        for (KeyCustomDefinition& key : this->config.keyCustomDefinitions) {
-            this->qt_rdp_keylayout.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
-        }
         ClientRedemption::update_keylayout();
     }
 
