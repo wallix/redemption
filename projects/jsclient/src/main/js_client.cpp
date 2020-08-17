@@ -452,6 +452,7 @@ public:
         Event& event = *this->events.queue[0];
         if (event.alarm.trigger(time)){
             event.actions.exec_timeout(event);
+            event.actions.update_on_action();
         }
     }
 
@@ -463,6 +464,7 @@ public:
         assert(this->events.queue.size() == 1);
         Event& event = *this->events.queue[0];
         event.actions.exec_action(event);
+        event.actions.update_on_action();
     }
 
     bytes_view get_output_buffer() const
