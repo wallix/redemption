@@ -858,6 +858,7 @@ public:
         sp_vc_params.lang = lang;
         sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && monitor_count);
         sp_vc_params.show_maximized = !this->remote_app.enable_remote_program;
+        sp_vc_params.disconnect_session_instead_of_logoff_session = this->remote_app.enable_remote_program;
 
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
             this->time_base,
@@ -1033,7 +1034,9 @@ public:
         ::check_throw(stream, 4, "mod_rdp::process_checkout_event", ERR_RDP_DATA_TRUNCATED);
 
         uint16_t const version = stream.in_uint16_le();
+        (void)version;
         uint16_t const data_length = stream.in_uint16_le();
+        (void)data_length;
 
 //        assert(stream.in_remain() == data_length);
 

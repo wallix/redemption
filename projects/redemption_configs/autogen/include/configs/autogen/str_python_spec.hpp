@@ -594,9 +594,6 @@ session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=Tru
 #_advanced
 session_probe_enable_cleaner = boolean(default=True)
 
-#_advanced
-application_driver_enable_cleaner = boolean(default=True)
-
 #_hidden
 application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(')
 

@@ -944,7 +944,6 @@ ModPack create_mod_rdp(
         mod_rdp_params.session_probe_params.enable_session_probe                               = true;
         mod_rdp_params.session_probe_params.vc_params.launch_application_driver                = true;
         mod_rdp_params.session_probe_params.vc_params.launch_application_driver_then_terminate = !(ini.get<cfg::mod_rdp::enable_session_probe>());
-        mod_rdp_params.session_probe_params.vc_params.enable_application_driver_cleaner        = ini.get<cfg::mod_rdp::application_driver_enable_cleaner>();
     }
     // ================== End Application Driver ======================
 

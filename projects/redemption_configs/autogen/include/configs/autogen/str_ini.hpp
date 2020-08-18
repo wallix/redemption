@@ -699,10 +699,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #session_probe_enable_cleaner = 1
 
-# value: 0 or 1
-#_advanced
-#application_driver_enable_cleaner = 1
-
 # maxlen = 256
 #_hidden
 #application_driver_exe_or_file = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(

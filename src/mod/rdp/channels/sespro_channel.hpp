@@ -61,7 +61,7 @@ enum {
     OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
     OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
     OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
-    OPTION_ENABLE_APPLICATION_DRIVER_CLEANER                    = 0x00000010
+    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010
 };
 
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
@@ -99,6 +99,8 @@ private:
     bool param_bogus_refresh_rect_ex = false;
 
     const bool param_show_maximized;
+
+    const bool param_disconnect_session_instead_of_logoff_session;
 
     FrontAPI& front;
 
@@ -169,6 +171,8 @@ public:
 
         uninit_checked<bool> show_maximized;
 
+        uninit_checked<bool> disconnect_session_instead_of_logoff_session;
+
         explicit Params() = default;
     };
 
@@ -194,6 +198,7 @@ public:
     , tr(params.lang)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
+    , param_disconnect_session_instead_of_logoff_session(params.disconnect_session_instead_of_logoff_session)
     , front(front)
     , rdp(rdp)
     , file_system_virtual_channel(file_system_virtual_channel)
@@ -257,7 +262,7 @@ public:
         this->launch_aborted = true;
 
         this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
-        // TODO: could be a replace/create 
+        // TODO: could be a replace/create
         this->session_probe_timer = this->events.create_event_timeout("Session Probe Timer", this,
             this->time_base.get_current_time()+this->sespro_params.launcher_abort_delay,
             [this](Event&event){
@@ -609,8 +614,8 @@ public:
                         options |= OPTION_ENABLE_SELF_CLEANER;
                     }
 
-                    if (this->sespro_params.enable_application_driver_cleaner) {
-                        options |= OPTION_ENABLE_APPLICATION_DRIVER_CLEANER;
+                    if (this->param_disconnect_session_instead_of_logoff_session) {
+                        options |= OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION;
                     }
 
                     if (options)
@@ -1561,7 +1566,7 @@ public:
 
                 else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_SUPPORTED")) {
                     if (parameters_.size() == 1) {
-                        if ((!::strcasecmp(parameters_[0].c_str(), "yes")) 
+                        if ((!::strcasecmp(parameters_[0].c_str(), "yes"))
                         && this->sespro_params.session_shadowing_support) {
                             this->sesman.set_rd_shadow_available();
                         }
