@@ -24,7 +24,7 @@
 #pragma once
 
 #include "utils/sugar/array_view.hpp"
-#include <algorithm>
+#include "cxx/cxx.hpp"
 
 //====================================
 // SCANCODES PHYSICAL LAYOUT REFERENCE
@@ -46,9 +46,7 @@
 // +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
 
 
-//##############################################################################
 struct Keylayout_r
-//##############################################################################
 {
     enum {
           MAX_DEADKEYS = 35
@@ -58,18 +56,22 @@ struct Keylayout_r
 
     struct KeyLayoutMap_t
     {
-        using uchar_type = uint32_t;
         using scancode_type = uint8_t;
 
-        uchar_type const* uchar_list;
-        scancode_type const* scancode_list;
-        uint16_t len;
-
-        scancode_type find(uchar_type uchar) const
+        struct data_type
         {
-            auto it = std::lower_bound(this->uchar_list, this->uchar_list + this->len, uchar);
-            if (it != this->uchar_list + this->len) {
-                return this->scancode_list[it - this->uchar_list];
+            uint8_t high;
+            const scancode_type* scancodes;
+        };
+
+        array_view<data_type> scancodes_list;
+
+        scancode_type find(uint16_t uchar) const
+        {
+            for (data_type const& d : scancodes_list) {
+                if (REDEMPTION_LIKELY(d.high == uint8_t(uchar >> 8u))) {
+                    return d.scancodes[uchar & 0xff];
+                }
             }
             return 0;
         }
@@ -99,16 +101,16 @@ struct Keylayout_r
 
     Keylayout_r ( int LCID
                 , char const * LCID_locale_name
-                , const KeyLayoutMap_t & LCID_noMod
-                , const KeyLayoutMap_t & LCID_shift
-                , const KeyLayoutMap_t & LCID_altGr
-                , const KeyLayoutMap_t & LCID_shiftAltGr
-                , const KeyLayoutMap_t & LCID_ctrl
-                , const KeyLayoutMap_t & LCID_capslock_noMod
-                , const KeyLayoutMap_t & LCID_capslock_shift
-                , const KeyLayoutMap_t & LCID_capslock_altGr
-                , const KeyLayoutMap_t & LCID_capslock_shiftAltGr
-                , const KeyLayoutMap_t & LCID_deadkeys
+                , KeyLayoutMap_t LCID_noMod
+                , KeyLayoutMap_t LCID_shift
+                , KeyLayoutMap_t LCID_altGr
+                , KeyLayoutMap_t LCID_shiftAltGr
+                , KeyLayoutMap_t LCID_ctrl
+                , KeyLayoutMap_t LCID_capslock_noMod
+                , KeyLayoutMap_t LCID_capslock_shift
+                , KeyLayoutMap_t LCID_capslock_altGr
+                , KeyLayoutMap_t LCID_capslock_shiftAltGr
+                , KeyLayoutMap_t LCID_deadkeys
                 , uint8_t nbDeadkeys
                 , uint32_t verbose = 0
              )
@@ -131,6 +133,4 @@ struct Keylayout_r
 
     Keylayout_r (Keylayout_r const &) = delete;
     Keylayout_r & operator=(Keylayout_r const &) = delete;
-}; // END STRUCT - Keylayout_r
-
-
+};

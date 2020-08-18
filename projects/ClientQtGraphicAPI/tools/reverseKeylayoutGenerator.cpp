@@ -1,19 +1,24 @@
-// g++ -std=c++17 -I ../../../src reverseKeylayoutGenerator.cpp
+// g++ -O3 -std=c++17 -I ../../../src reverseKeylayoutGenerator.cpp
 
 #include <iostream>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <functional>
 #include <string_view>
+#include <map>
 #include <iomanip>
 #include <cerrno>
 #include <cctype>
 #include <cstring>
 #include "../src/keyboard/keylayouts.hpp"
 
-void tabToReversedMap(const Keylayout::KeyLayout_t & read, std::ofstream & fichier, std::string_view name);
+
+void tabToReversedMap(
+    const Keylayout::KeyLayout_t & read,
+    std::ostream & fichier,
+    std::string_view lcid_str,
+    std::string_view name);
 
 static std::reference_wrapper<const Keylayout> keylayouts[] = {
     keylayout_x00000405, keylayout_x00000406, keylayout_x00000407, keylayout_x00000408,
@@ -80,23 +85,26 @@ int main(int ac, char** av)
             return 2;
         }
 
-        fichier << "#pragma once\n\n";
-        fichier << "#include \"keylayout_r.hpp\"\n\n";
-        fichier << "namespace x" << LCIDreverse_str << "\n{\n\n";
-        fichier << "const static int LCID = 0x" << std::hex << layout.LCID << ";\n\n";
-        fichier << "const static char * const locale_name = \"" << layout.locale_name << "\";\n\n";
+        fichier <<
+            "#pragma once\n\n"
+            "#include \"keylayout_r.hpp\"\n\n"
+            "namespace\n{\n\n"
+            "constexpr static int x" << LCIDreverse_str << "_LCID = 0x"
+                << std::hex << layout.LCID << ";\n\n"
+            "constexpr static char const * x" << LCIDreverse_str << "_locale_name = \""
+                << layout.locale_name << "\";\n\n";
 
-        tabToReversedMap(layout.noMod,               fichier,  "noMod");
-        tabToReversedMap(layout.shift,               fichier,  "shift");
-        tabToReversedMap(layout.altGr,               fichier,  "altGr");
-        tabToReversedMap(layout.shiftAltGr,          fichier,  "shiftAltGr");
-        tabToReversedMap(layout.capslock_noMod,      fichier,  "capslock_noMod");
-        tabToReversedMap(layout.capslock_shift,      fichier,  "capslock_shift");
-        tabToReversedMap(layout.capslock_altGr,      fichier,  "capslock_altGr");
-        tabToReversedMap(layout.capslock_shiftAltGr, fichier,  "capslock_shiftAltGr");
-        tabToReversedMap(layout.ctrl,                fichier,  "ctrl");
+        tabToReversedMap(layout.noMod,               fichier, LCIDreverse_str, "noMod");
+        tabToReversedMap(layout.shift,               fichier, LCIDreverse_str, "shift");
+        tabToReversedMap(layout.altGr,               fichier, LCIDreverse_str, "altGr");
+        tabToReversedMap(layout.shiftAltGr,          fichier, LCIDreverse_str, "shiftAltGr");
+        tabToReversedMap(layout.capslock_noMod,      fichier, LCIDreverse_str, "capslock_noMod");
+        tabToReversedMap(layout.capslock_shift,      fichier, LCIDreverse_str, "capslock_shift");
+        tabToReversedMap(layout.capslock_altGr,      fichier, LCIDreverse_str, "capslock_altGr");
+        tabToReversedMap(layout.capslock_shiftAltGr, fichier, LCIDreverse_str, "capslock_shiftAltGr");
+        tabToReversedMap(layout.ctrl,                fichier, LCIDreverse_str, "ctrl");
 
-        fichier << "const Keylayout_r::KeyLayoutMap_t deadkeys {\n";
+        fichier << "constexpr Keylayout_r::KeyLayoutMap_t x" << LCIDreverse_str << "_deadkeys {\n";
         // TODO this is wrong
         // for (int i = 0; i < layout.nbDeadkeys; i++) {
         //     unsigned deadCode = layout.deadkeys[i].extendedKeyCode;
@@ -106,72 +114,102 @@ int main(int ac, char** av)
         //         fichier << "    { 0x" << std::setw(4) << layout.deadkeys[i].secondKeys[j].secondKey << ", 0x" << std::setw(4) << layout.deadkeys[i].secondKeys[j].modifiedKey << " },\n";
         //     }
         // }
-        fichier << std::dec;
-        fichier << "};\n";
-        fichier << "\n\n";
-        fichier << "const static uint8_t nbDeadkeys = " << unsigned(layout.nbDeadkeys) << ";\n\n";
-        fichier << "}\n\n";
-
-        fichier << "static const Keylayout_r keylayout_x"<< LCIDreverse_str <<"(\n"
-            "    x" << LCIDreverse_str <<"::LCID,\n"
-            "    x" << LCIDreverse_str <<"::locale_name,\n"
-            "    x" << LCIDreverse_str <<"::noMod,\n"
-            "    x" << LCIDreverse_str <<"::shift,\n"
-            "    x" << LCIDreverse_str <<"::altGr,\n"
-            "    x" << LCIDreverse_str <<"::shiftAltGr,\n"
-            "    x" << LCIDreverse_str <<"::ctrl,\n"
-            "    x" << LCIDreverse_str <<"::capslock_noMod,\n"
-            "    x" << LCIDreverse_str <<"::capslock_shift,\n"
-            "    x" << LCIDreverse_str <<"::capslock_altGr,\n"
-            "    x" << LCIDreverse_str <<"::capslock_shiftAltGr,\n"
-            "    x" << LCIDreverse_str <<"::deadkeys,\n"
-            "    x" << LCIDreverse_str <<"::nbDeadkeys\n"
-            ");\n\n";
+        fichier << std::dec <<
+            "};\n\n"
+            "constexpr static uint8_t x" << LCIDreverse_str << "_nbDeadkeys = "
+                << unsigned(layout.nbDeadkeys) << ";\n\n"
+            "static const Keylayout_r keylayout_x"<< LCIDreverse_str <<"(\n"
+            "    x" << LCIDreverse_str <<"_LCID,\n"
+            "    x" << LCIDreverse_str <<"_locale_name,\n"
+            "    x" << LCIDreverse_str <<"_noMod,\n"
+            "    x" << LCIDreverse_str <<"_shift,\n"
+            "    x" << LCIDreverse_str <<"_altGr,\n"
+            "    x" << LCIDreverse_str <<"_shiftAltGr,\n"
+            "    x" << LCIDreverse_str <<"_ctrl,\n"
+            "    x" << LCIDreverse_str <<"_capslock_noMod,\n"
+            "    x" << LCIDreverse_str <<"_capslock_shift,\n"
+            "    x" << LCIDreverse_str <<"_capslock_altGr,\n"
+            "    x" << LCIDreverse_str <<"_capslock_shiftAltGr,\n"
+            "    x" << LCIDreverse_str <<"_deadkeys,\n"
+            "    x" << LCIDreverse_str <<"_nbDeadkeys\n"
+            ");\n\n"
+            "}\n\n";
     }
 
     return 0;
 }
 
-void tabToReversedMap(const Keylayout::KeyLayout_t & read, std::ofstream & fichier, std::string_view name)
+struct Hex8
 {
-    struct P {
-        size_t idx;
-        uint32_t uchar;
-    };
-    std::array<P, std::size(decltype(read){})> layout_r;
+    uint8_t x;
 
-    auto last = begin(layout_r);
+    friend std::ostream& operator<<(std::ostream& out, Hex8 const& h)
+    {
+        char const* hex = "0123456789abcdef";
+        return out << hex[h.x >> 4] << hex[h.x & 0xf];
+    }
+};
 
-    for(size_t i = 0; i < std::size(read); ++i) {
-        if (read[i]) {
-            *last = {i, read[i]};
-            ++last;
+struct Hex16
+{
+    uint16_t x;
+
+    friend std::ostream& operator<<(std::ostream& out, Hex16 const& h)
+    {
+        return out << Hex8{uint8_t(h.x >> 8)} << Hex8{uint8_t(h.x & 0xff)};
+    }
+};
+
+void tabToReversedMap(
+    const Keylayout::KeyLayout_t & read,
+    std::ostream & fichier,
+    std::string_view lcid_str,
+    std::string_view name)
+{
+    static_assert(std::is_same_v<uint16_t const&, decltype(read[0])>);
+
+    using Scancodes = std::array<uint8_t, 256>;
+    using Prefix = uint8_t;
+
+    std::map<Prefix, Scancodes> map;
+    map[0]; /* create empty table */
+
+    {
+        uint8_t i = 0;
+        for (uint16_t uchar : read) {
+            if (uchar) {
+                map[uchar >> 8][(uchar & 0xff)] = i;
+            }
+            ++i;
         }
     }
 
-    std::sort(begin(layout_r), last, [](auto& p1, auto& p2) {
-        return p1.uchar < p2.uchar;
-    });
+    for (auto&& p : map) {
+        fichier
+            << std::hex
+            << "constexpr Keylayout_r::KeyLayoutMap_t::scancode_type x"
+            << lcid_str << "_scancode_0x" << Hex8{p.first} << "_" << name << "[] {\n"
+            << std::dec
+        ;
+        int i = 0;
+        for (uint8_t idx : p.second) {
+            fichier << "   " << std::setw(5) << uint16_t(idx) << ((++i % 8) ? "," : ",\n");
+        }
+        fichier << "};\n\n";
+    }
 
-    fichier << std::hex << std::setfill('0');
-    fichier << "constexpr Keylayout_r::KeyLayoutMap_t::uchar_type uchar_"<< name << "[] {\n";
-    int i = 0;
-    std::for_each(begin(layout_r), last, [&](P& p){
-        if (!(i % 8)) {
-            fichier << "    ";
-        };
-        fichier << "0x" << std::setw(4) << p.uchar << ((++i % 8) ? ", " : ",\n");
-    });
-    fichier << "\n};\nconstexpr Keylayout_r::KeyLayoutMap_t::scancode_type scancode_"<< name << "[] {\n";
-    i = 0;
-    fichier << std::dec << std::setfill(' ');
-    std::for_each(begin(layout_r), last, [&](P& p){
-        if (!(i % 8)) {
-            fichier << "    ";
-        };
-        fichier << std::setw(6) << p.idx << ((++i % 8) ? ", " : ",\n");
-    });
-    auto layout_r_size = (last - begin(layout_r));
-    fichier << "\n};\nconstexpr Keylayout_r::KeyLayoutMap_t "<< name
-        << "{uchar_"<< name << ", scancode_" << name << ", " << layout_r_size << "};\n\n";
+    fichier
+        << "constexpr Keylayout_r::KeyLayoutMap_t::data_type x"
+        << lcid_str << "_data_" << name << "[] {\n";
+    for (auto&& p : map) {
+        fichier
+            << "    { 0x" << Hex8{p.first} << ", x"
+            << lcid_str << "_scancode_0x" << Hex8{p.first} << "_" << name << " },\n"
+        ;
+    }
+    fichier << "};\n\n";
+
+    fichier
+        << "constexpr Keylayout_r::KeyLayoutMap_t x" << lcid_str
+        << "_" << name << "{ array_view{x" << lcid_str << "_data_" << name << "} };\n\n";
 }
