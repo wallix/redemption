@@ -26,20 +26,15 @@
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
 
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
-#include "qt_graphics_components/qt_options_window.hpp"
 #include "qt_graphics_components/qt_screen_window.hpp"
 #include "qt_graphics_components/qt_form_window.hpp"
 
-#include <QtGui/QBitmap>
 #include <QtGui/QColor>
 #include <QtGui/QImage>
-#include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
-#include <QtGui/QRgb>
-#include <QtGui/QWheelEvent>
-// #include <QtGui/QWindowsCEStyle>
 
 #include "redemption_qt_include_widget.hpp"
+#include "client_redemption/pointer_to_rgba8888.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
@@ -47,33 +42,26 @@
 
 class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
 {
-
-public:
-    int                  mod_bpp;
     QtForm             * form;
     QtScreen           * screen;
     QPixmap              cache;
     ProgressBarWindow  * bar;
+
+public:
     QPainter             painter;
-    QImage cursor_image;
+
+private:
     std::map<uint32_t, RemoteAppQtScreen *> remote_app_screen_map;
-    //     QPixmap            * trans_cache;;
     std::vector<QPixmap> balises;
 
-    bool is_pre_loading;
+    size_t update_counter = 0;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //------------------------
-    //      CONSTRUCTOR
-    //------------------------
-
+public:
     QtIOGraphicMouseKeyboard(ClientCallback * controller, ClientRedemptionConfig * config)
       : ClientRemoteAppGraphicAPI(controller, config, QApplication::desktop()->width(), QApplication::desktop()->height())
-      , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
       , bar(nullptr)
-      , is_pre_loading(false)
     {
         this->form = new QtForm(this->config, this->controller);
     }
@@ -279,8 +267,6 @@ public:
     }
 
 public:
-    size_t update_counter = 0;
-
     void end_update() override {
         assert(this->update_counter);
         this->update_counter--;
@@ -366,27 +352,28 @@ public:
         return FrontAPI::ResizeResult::instant_done;
     }
 
-    void set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode /*mode*/) override
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& pointer, SetPointerMode /*mode*/) override
     {
-        auto dimensions = cursor.get_dimensions();
-        auto hotspot = cursor.get_hotspot();
-
-        ARGB32Pointer vnccursor(cursor);
-        const auto av_alpha_q = vnccursor.get_alpha_q();
-
-        //::hexdump(av_alpha_q.data(), dimensions.width * dimensions.height, dimensions.width);
-
-        // this->cursor_image is used when client is replaying
-        this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
+        // TODO use cache_idx and mode
+        auto hotspot = pointer.get_hotspot();
+        auto rgba_cursor = redclient::pointer_to_rgba8888(pointer);
+        QImage cursor_image(
+            rgba_cursor.data(),
+            int(rgba_cursor.width),
+            int(rgba_cursor.height),
+            int(rgba_cursor.bytes_per_line()),
+            QImage::Format_RGBA8888);
+        QCursor cursor(QPixmap::fromImage(cursor_image), hotspot.x, hotspot.x);
 
         if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-            for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
-                if (it->second) {
-                    it->second->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
+            for (auto && p : this->remote_app_screen_map) {
+                if (p.second) {
+                    p.second->setCursor(cursor);
                 }
             }
-        } else if (this->screen) {
-            this->screen->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
+        }
+        else if (this->screen) {
+            this->screen->setCursor(cursor);
         }
     }
 
@@ -1352,11 +1339,6 @@ public:
 
     void draw(const RDP::FrameMarker & order) override {
         (void) order;
-        LOG(LOG_INFO, "DEFAULT: FrameMarker");
-    }
-
-    void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
-        LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 
 //     using ClientOutputGraphicAPI::draw;
@@ -1364,13 +1346,13 @@ public:
     }
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-    	LOG(LOG_INFO, "RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
-    			cmd.width, cmd.height);
-    	QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBX8888);
-    	this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+        LOG(LOG_INFO, "RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
+                cmd.width, cmd.height);
+        QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBX8888);
+        this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
     }
 
-	using ClientRemoteAppGraphicAPI::draw;
+    using ClientRemoteAppGraphicAPI::draw;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------

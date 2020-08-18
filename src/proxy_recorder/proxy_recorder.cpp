@@ -22,13 +22,44 @@
 
 #include "proxy_recorder/proxy_recorder.hpp"
 
+#include "proxy_recorder/nla_tee_transport.hpp"
+#include "proxy_recorder/nego_client.hpp"
+#include "proxy_recorder/nego_server.hpp"
+
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
+#include "core/RDP/gcc/userdata/sc_core.hpp"
+#include "core/RDP/gcc.hpp"
+#include "core/server_notifier_api.hpp"
+
+
+ProxyRecorder::ProxyRecorder(
+    NlaTeeTransport & back_nla_tee_trans,
+    RecorderFile & outFile,
+    TimeBase & time_base,
+    const char * host,
+    bool enable_kerberos,
+    uint64_t verbosity
+)
+: back_nla_tee_trans(back_nla_tee_trans)
+, outFile(outFile)
+, time_base(time_base)
+, host(host)
+, enable_kerberos(enable_kerberos)
+, verbosity(verbosity)
+{
+    this->frontBuffer.trace_pdu = (this->verbosity > 512);
+    this->backBuffer.trace_pdu = (this->verbosity > 512);
+}
+
+ProxyRecorder::~ProxyRecorder() = default;
 
 void ProxyRecorder::front_step1(Transport & frontConn)
 {
     LOG(LOG_INFO, "front step 1");
 
     LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_FRONT_STEP1 frontbuffer content ======");
-    array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
+    writable_u8_array_view currentPacket = this->frontBuffer.current_pdu_buffer();
     LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_FRONT_STEP1 frontbuffer content >>>>>>");
 
     InStream x224_stream(currentPacket);
@@ -51,8 +82,8 @@ void ProxyRecorder::front_step1(Transport & frontConn)
         (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)?X224::PROTOCOL_HYBRID:
         (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)?X224::PROTOCOL_TLS:
         X224::PROTOCOL_RDP);
-    outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
-    frontConn.send(front_x224_stream.get_bytes());
+    outFile.write_packet(PacketType::DataIn, front_x224_stream.get_produced_bytes());
+    frontConn.send(front_x224_stream.get_produced_bytes());
 
     if ((this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
     || (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
@@ -60,14 +91,13 @@ void ProxyRecorder::front_step1(Transport & frontConn)
     }
 }
 
-void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::string nla_username, std::string nla_password)
+void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn, std::string const& nla_username, std::string nla_password)
 {
-
     if (this->front_CR_TPDU.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
         if (this->verbosity > 4) {
             LOG(LOG_INFO, "start NegoServer");
         }
-        this->nego_server = std::make_unique<NegoServer>(key, this->verbosity > 8);
+        this->nego_server = std::make_unique<NegoServer>(key, this->time_base, this->verbosity > 8);
         this->pstate = PState::NEGOCIATING_FRONT_NLA;
     }
     else {
@@ -83,7 +113,7 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::str
     this->nego_client = std::make_unique<NegoClient>(
         !nla_username.empty(),
         this->front_CR_TPDU.cinfo.flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
-        this->back_nla_tee_trans, this->timeobj,
+        this->back_nla_tee_trans, this->time_base,
         this->host, nla_username.c_str(),
         nla_password.c_str(),
         enable_kerberos, tls_client_params, this->verbosity > 8);
@@ -97,8 +127,8 @@ void ProxyRecorder::back_step1(array_view_u8 key, Transport & backConn, std::str
         this->front_CR_TPDU.rdp_neg_flags,
         !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
 
-    outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
-    backConn.send(back_x224_stream.get_bytes());
+    outFile.write_packet(PacketType::DataOut, back_x224_stream.get_produced_bytes());
+    backConn.send(back_x224_stream.get_produced_bytes());
 }
 
 void ProxyRecorder::front_nla(Transport & frontConn)
@@ -141,7 +171,7 @@ void ProxyRecorder::front_initial_pdu_negociation(Transport & backConn, bool is_
 {
     if (this->frontBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== NEGOCIATING_INITIAL_PDU : front receive : frontbuffer content ======");
-        array_view_u8 currentPacket = this->frontBuffer.current_pdu_buffer();
+        writable_u8_array_view currentPacket = this->frontBuffer.current_pdu_buffer();
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> NEGOCIATING_INITIAL_PDU frontbuffer content >>>>>>");
 
         if (is_nla) {
@@ -190,7 +220,7 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn, bool is_
 {
     if (backBuffer.next(TpduBuffer::PDU)) {
         LOG_IF(this->verbosity > 8, LOG_INFO, "======== BACK_INITIAL_PDU_NEGOCIATION  : back receive : backbuffer content ======");
-        array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+        writable_u8_array_view currentPacket = backBuffer.current_pdu_buffer();
         LOG_IF(this->verbosity > 512, LOG_INFO, ">>>>>>>> BACK_INITIAL_PDU_NEGOCIATION backbuffer content >>>>>>");
 
         if (is_nla) {
@@ -223,7 +253,4 @@ void ProxyRecorder::back_initial_pdu_negociation(Transport & frontConn, bool is_
         this->pstate = PState::FORWARD;
     }
 }
-
-
-
 

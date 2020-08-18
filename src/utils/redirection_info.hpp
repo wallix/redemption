@@ -24,8 +24,6 @@
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 
-#include <cstring>
-
 
 struct RedirectionInfo {
     bool valid = false;

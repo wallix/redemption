@@ -2,8 +2,20 @@
 
 set -e
 
-cd "$(dirname "$0")/../../.."
+cd "$(dirname "$0")/.."
 d=projects/jsclient
+
+typeset -A jsdeps
+while IFS=':' read cpp js ; do
+    jsdeps[$cpp]+=" ${js:1}.js"
+done < <(grep -R '"src/application/[^"]\+' -o tests/)
+
+addjs_deps=''
+for cpp in "${!jsdeps[@]}" ; do
+  addjs_deps+="s#^  $d/$cpp#  $cpp${jsdeps[$cpp]}#;t"
+done
+
+cd "../.."
 
 disable_sources=''
 for f in \
@@ -25,9 +37,11 @@ done
 ./tools/bjam/gen_targets.py \
     --main $d/src/main \
     --src $d/src/red_emscripten \
-    --src $d/src/redjs \
     --src $d/src/red_channels \
+    --src $d/src/redjs \
+    --src $d/src/system \
     --deps-src src/mod/rdp/new_mod_rdp.hpp,$d/src/red_channels/\*.cpp \
+    --deps-src $d/src/redjs/graphics.hpp,$d/src/redjs/image_conversions.cpp \
     --include $d/src/ \
     --src-system emscripten \
     --lib '' \
@@ -42,6 +56,7 @@ done
     s/^  (.*)\.o/  \1.bc/;ta
     s/^  <library>(.*)/  \1.bc/;ta
     s/^  \$\(EXE_DEPENDENCIES\)/:\n&/;t
+    '"$addjs_deps"'
     :a
     s@ : src/@ : $(REDEMPTION_SRC_PATH)/@g
     s@ : tests/@ : $(REDEMPTION_TEST_PATH)/@g

@@ -59,24 +59,6 @@ struct UserProfil {
         , name(std::move(name)) {}
 };
 
-struct KeyCustomDefinition {
-    int qtKeyID = 0;
-    int scanCode = 0;
-    std::string ASCII8;
-    int extended = 0;
-    std::string name;
-
-    KeyCustomDefinition() = default;
-
-    KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
-        : qtKeyID(qtKeyID)
-        , scanCode(scanCode)
-        , ASCII8(std::move(ASCII8))
-        , extended(extended ? 0x0100 : 0)
-        , name(std::move(name))
-    {}
-};
-
 struct IconMovieData {
     std::string file_name;
     std::string file_path;
@@ -229,7 +211,6 @@ struct ClientRedemptionConfig
 
     WindowsData windowsData;
 
-    std::vector<KeyCustomDefinition> keyCustomDefinitions;
     std::vector<UserProfil> userProfils;
 
     ModRDPParamsData modRDPParamsData;
@@ -289,7 +270,6 @@ namespace ClientConfig {
 void setDefaultConfig(ClientRedemptionConfig & config);
 void setUserProfil(ClientRedemptionConfig & config);
 void setClientInfo(ClientRedemptionConfig & config);
-void setCustomKeyConfig(ClientRedemptionConfig & config);
 void setAccountData(ClientRedemptionConfig & config);
 void openWindowsData(ClientRedemptionConfig & config);
 
@@ -297,7 +277,6 @@ void parse_options(int argc, char const* const argv[], ClientRedemptionConfig & 
 void set_config(int argc, char const* const argv[], ClientRedemptionConfig & config);
 
 void writeWindowsData(WindowsData & config);
-void writeCustomKeyConfig(ClientRedemptionConfig & config);
 void writeClientInfo(ClientRedemptionConfig & config);
 void deleteCurrentProtile(ClientRedemptionConfig & config);
 void writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port, ClientRedemptionConfig & config);

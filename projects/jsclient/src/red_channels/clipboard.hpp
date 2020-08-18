@@ -21,41 +21,25 @@ Author(s): Jonathan Poelen
 #pragma once
 
 
-#include "utils/stream.hpp"
-#include "mod/rdp/rdp_verbose.hpp"
+#include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "redjs/channel_receiver.hpp"
 
 #include <emscripten/val.h>
 
-#include <memory>
+#include <array>
 
 
 class Callback;
+class InStream;
 
 namespace redjs::channels::clipboard
 {
 
-enum class ClipboardFormat : uint32_t
-{
-    Text = 1,
-    UnicodeText = 13,
-};
-
-struct FormatListEmptyName
-{
-    std::size_t size() const noexcept;
-
-    void emit(ClipboardFormat cf, OutStream& out_stream) noexcept;
-
-    bool use_long_format_names = true;
-};
-
 enum class CustomFormat : uint32_t
 {
-    None = 0,
-
-    FileGroupDescriptorW,
-    FileContentsSize,
-    FileContentsRange,
+    None,
+    FileGroupDescriptorW = 33333,
 };
 
 enum class Charset : bool
@@ -64,24 +48,28 @@ enum class Charset : bool
     Utf16,
 };
 
-struct ClipboardChannel
+struct ClipboardChannel : noncopyable
 {
-    ClipboardChannel(Callback& cb, emscripten::val&& callbacks, RDPVerbose verbose);
+    ClipboardChannel(Callback& cb, emscripten::val&& callbacks, bool verbose);
     ~ClipboardChannel();
 
-    void receive(bytes_view data, int flags);
+    void receive(bytes_view data, uint32_t total_data_len, uint32_t flags);
 
     void send_file_contents_request(
         uint32_t request_type,
         uint32_t stream_id, uint32_t lindex,
-        uint32_t pos_low, uint32_t pos_high);
+        uint32_t pos_low, uint32_t pos_high,
+        uint32_t max_bytes_to_read,
+        bool has_lock_id, uint32_t lock_id);
 
-    void send_request_format(uint32_t format_id, CustomFormat custom_cf);
+    void send_request_format(uint32_t format_id, CustomFormat custom_format_id);
     void send_format(uint32_t format_id, Charset charset, bytes_view name);
     unsigned add_format(writable_bytes_view data, uint32_t format_id, Charset charset, bytes_view name);
     void send_header(uint16_t type, uint16_t flags, uint32_t total_data_len, uint32_t channel_flags);
     void send_data(bytes_view data, uint32_t total_data_len, uint32_t channel_flags);
     void send_data(bytes_view av);
+
+    ChannelReceiver& get_channel_receiver() { return this->channel_receiver; }
 
 private:
     void process_filecontents_request(InStream& chunk);
@@ -89,17 +77,15 @@ private:
     void process_capabilities(InStream& chunk);
     void process_monitor_ready();
     void process_format_data_response(bytes_view data, uint32_t channel_flags, uint32_t data_len);
-    void process_format_list(InStream& chunk, uint32_t channel_flags);
-    void send_format_list_response_ok();
+    void process_filecontents_response(bytes_view data, uint32_t channel_flags, uint32_t data_len);
+    void process_format_list(InStream& chunk, uint32_t channel_flags, uint16_t msg_flags);
 
     struct ResponseBuffer
     {
-        std::array<uint8_t, 592> data;
+        std::array<uint8_t, 592 /*RDPECLIP::FileDescriptor::size()*/> data;
         std::size_t size = 0;
 
-        void set(bytes_view av);
-
-        void add(bytes_view av);
+        void push(bytes_view av);
 
         bytes_view as_bytes() const;
 
@@ -111,13 +97,25 @@ private:
 
     Callback& cb;
     emscripten::val callbacks;
-    FormatListEmptyName format_list;
+    uint32_t general_flags = 0;
+    uint32_t remaining_data_len;
+    uint32_t stream_id;
+
+    CustomFormat requested_custom_format_id = CustomFormat::None;
     uint32_t requested_format_id = 0;
-    uint32_t data_len = 0;
-    CustomFormat custom_cf {};
-    bool wating_format_data_response = false;
+
+    enum ResponseState : uint8_t
+    {
+        None,
+        Data,
+        FileContents,
+    };
+
+    ResponseState response_state = ResponseState::None;
     bool verbose;
     ResponseBuffer response_buffer;
+
+    ChannelReceiver channel_receiver;
 };
 
 } // namespace redjs::channel::clipboard

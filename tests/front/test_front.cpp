@@ -21,6 +21,10 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "test_only/front/front_wrapper.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/core/font.hpp"
 
 // Comment the code block below to generate testing data.
 // Uncomment the code block below to generate testing data.
@@ -31,21 +35,20 @@
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/session_reactor_executor.hpp"
-#include "test_only/front/front_wrapper.hpp"
 #include "core/client_info.hpp"
 #include "utils/theme.hpp"
+#include "utils/redirection_info.hpp"
 
 #include "mod/null/null.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "core/channel_list.hpp"
-
-#include "test_only/lcg_random.hpp"
-#include "test_only/core/font.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
+#include "core/channels_authorizations.hpp"
+#include "acl/gd_provider.hpp"
 
 
 namespace dump2008 {
@@ -53,14 +56,14 @@ namespace dump2008 {
 } // namespace dump2008
 
 // namespace dump2008_PatBlt {
-//     #include "fixtures/dump_w2008_PatBlt.hpp"
+//     include "fixtures/dump_w2008_PatBlt.hpp"
 // } // namespace dump2008_PatBlt
 
 
 class MyFront : public FrontWrapper
 {
 public:
-    bool can_be_start_capture() override { return false; }
+    bool can_be_start_capture(bool /*force_capture*/) override { return false; }
     bool must_be_stop_capture() override { return false; }
 
     using FrontWrapper::FrontWrapper;
@@ -144,7 +147,6 @@ RED_AUTO_TEST_CASE(TestFront)
     CryptoContext cctx;
 
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -155,21 +157,23 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
-    SessionReactor session_reactor;
-    NullReportMessage report_message;
+    TimeBase time_base({0,0});
+    EventContainer events;
+    NullAuthentifier auth;
 
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        session_reactor, front_trans, gen1, ini , cctx,
-        report_message, fastpath_support, mem3blt_support);
+        time_base, events, auth, front_trans, gen1, ini , cctx,
+        fastpath_support);
     null_mod no_mod;
+
+    GdForwarder gd_provider(front.gd());
 
     while (!front.is_up_and_running()) {
         front.incoming(no_mod);
-        RED_CHECK(session_reactor.timer_events_.is_empty());
+        RED_CHECK(events.queue.empty());
     }
-    RED_CHECK(session_reactor.front_events_.is_empty());
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
@@ -205,22 +209,24 @@ RED_AUTO_TEST_CASE(TestFront)
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
-    mod_rdp_params.primary_drawing_orders_support  -= TS_NEG_MEM3BLT_INDEX;
+    mod_rdp_params.disabled_orders                 = TS_NEG_MEM3BLT_INDEX | TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
+                                                     TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
+                                                     TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
+                                                     TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
+                                                     TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
+    mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.verbose = to_verbose_flags(verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen2;
-    LCGTime timeobj;
 
     front.clear_channels();
-    NullAuthentifier authentifier;
     NullLicenseStore license_store;
     class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
@@ -229,10 +235,14 @@ RED_AUTO_TEST_CASE(TestFront)
     FileValidatorService * file_validator_service = nullptr;
 
     TLSClientParams tls_client_params;
+    RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, session_reactor, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store, ini, metrics, file_validator_service, mod_rdp_factory);
+        t, time_base, gd_provider, events, auth,
+        front, front, info, redir_info,
+        gen2, channels_authorizations, mod_rdp_params, tls_client_params,
+        license_store, ini, metrics,
+        file_validator_service, mod_rdp_factory);
 
     // incoming connexion data
     RED_CHECK_EQUAL(front.screen_info().width, 1024);
@@ -244,8 +254,14 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_TEST_PASSPOINT();
 
-    execute_mod(session_reactor, *mod, front, 38);
+    int count = 0;
+    int n = 38;
+    events.queue[0]->alarm.fd = 0;
+    for (; count < n && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;}, 0);
+    }
 
+    RED_CHECK_EQ(count, n);
 //    front.dump_png("trace_w2008_");
 }
 
@@ -304,7 +320,6 @@ RED_AUTO_TEST_CASE(TestFront2)
     LCGRandom gen1;
     CryptoContext cctx;
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -314,24 +329,21 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    SessionReactor session_reactor;
-    NullReportMessage report_message;
+    TimeBase time_base({0,0});
+    EventContainer events;
 
     RED_TEST_PASSPOINT();
-
-    MyFront front( session_reactor, front_trans, gen1, ini
-                 , cctx, report_message, fastpath_support, mem3blt_support);
+    NullAuthentifier auth;
+    MyFront front(time_base, events, auth, front_trans, gen1, ini
+                 , cctx, fastpath_support);
     null_mod no_mod;
 
-    RED_TEST_PASSPOINT();
+//    RED_TEST_PASSPOINT();
 
-    RED_REQUIRE(!session_reactor.timer_events_.is_empty());
-    session_reactor.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
-    RED_CHECK_EXCEPTION_ERROR_ID(
-        session_reactor.execute_timers(
-            SessionReactor::EnableGraphics{false},
-            [&]{ return std::ref(front.gd()); }),
-        ERR_RDP_HANDSHAKE_TIMEOUT);
+//    RED_REQUIRE(!events_.is_empty());
+//    time_base.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
+
+//    RED_CHECK_EXCEPTION_ERROR_ID(fn(), ERR_RDP_HANDSHAKE_TIMEOUT);
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
     //
@@ -373,19 +385,17 @@ RED_AUTO_TEST_CASE(TestFront2)
     // //mod_rdp_params.rdp_compression                 = 0;
     // //mod_rdp_params.error_message                   = nullptr;
     // //mod_rdp_params.disconnect_on_logon_user_change = false;
-    // //mod_rdp_params.open_session_timeout            = 0;
+    // //mod_rdp_params.open_session_timeout            = 5s;
     // //mod_rdp_params.certificate_change_action       = 0;
     // //mod_rdp_params.extra_orders                    = "";
     // mod_rdp_params.verbose = to_verbose_flags(verbose);
     //
     // // To always get the same client random, in tests
     // LCGRandom gen2;
-    // LCGTime timeobj;
     //
     // front.clear_channels();
     //
-    // NullAuthentifier authentifier;
-    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, report_message, ini, nullptr);
     //
     // if (verbose > 2){
     //     LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -402,7 +412,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     //
     // LOG(LOG_INFO, "Before Start Capture");
     //
-    // front.can_be_start_capture();
+    // front.can_be_start_capture(false);
     //
     // uint32_t count = 0;
     // BackEvent_t res = BACK_EVENT_NONE;
@@ -433,6 +443,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
     uint32_t verbose = 3;
+    Sesman & sesman;
 
     Inifile ini;
     ini.set<cfg::debug::front>(verbose);
@@ -478,7 +489,6 @@ RED_AUTO_TEST_CASE(TestFront3)
     LCGRandom gen1;
     CryptoContext cctx;
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
 
     ini.set<cfg::client::tls_support>(false);
     ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -488,9 +498,9 @@ RED_AUTO_TEST_CASE(TestFront3)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    NullReportMessage report_message;
+    NullAuthentifier report_message;
     MyFront front( front_trans, gen1, ini
-                 , cctx, report_message, fastpath_support, mem3blt_support
+                 , cctx, report_message, fastpath_support
                  , now - ini.get<cfg::globals::handshake_timeout>().count());
     null_mod no_mod;
 
@@ -498,7 +508,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     bool is_set = front.get_event().is_set();
 
     while (front.up_and_running == 0) {
-        front.incoming(no_mod, now);
+        front.incoming(no_mod, sesman);
 
         front.get_event().reset_trigger_time();
         RED_CHECK(!front.get_event().is_waked_up_by_time());
@@ -544,19 +554,17 @@ RED_AUTO_TEST_CASE(TestFront3)
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.verbose = to_verbose_flags(verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen2;
-    LCGTime timeobj;
 
     front.clear_channels();
 
-    NullAuthentifier authentifier;
-    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    mod_rdp mod(t, front, front, info, ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen2, mod_rdp_params, report_message, ini);
 
 
     if (verbose > 2){
@@ -571,7 +579,7 @@ RED_AUTO_TEST_CASE(TestFront3)
 
     LOG(LOG_INFO, "Before Start Capture");
 
-    front.can_be_start_capture();
+    front.can_be_start_capture(false);
 
     uint32_t count = 0;
     BackEvent_t res = BACK_EVENT_NONE;

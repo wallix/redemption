@@ -18,7 +18,8 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
+#include "core/events.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
@@ -31,8 +32,10 @@ int main()
     FakeFront front(screen_info);
 
 
-    SessionReactor session_reactor;
-    WidgetTestMod d(session_reactor, front, screen_info.width, screen_info.height, global_font());
+    TimeBase time_base({0,0});
+    GdForwarder gd_provider(front.gd());
+    EventContainer events;
+    WidgetTestMod d(time_base, gd_provider, events, front, screen_info.width, screen_info.height, global_font());
 
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

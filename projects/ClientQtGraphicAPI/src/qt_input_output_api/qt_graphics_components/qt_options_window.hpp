@@ -21,13 +21,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-#include <vector>
-
-
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/channel_list.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
@@ -36,11 +29,8 @@
 
 #include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDialog)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
@@ -49,9 +39,7 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QHeaderView)
 
 
 class QtKeyLabel :  public QWidget
@@ -132,16 +120,10 @@ public:
 
     QWidget            * _keyboardTab;
     QPushButton        * _buttonDeleteKey;
-    QPushButton        * _buttonAddKey;
     QFormLayout        * _layoutKeyboard;
-
-    QTableWidget       * _tableKeySetting;
-//     QScrollArea          key_setting_scroller;
 
     const int            _columnNumber;
     const int            _tableKeySettingMaxHeight;
-//     bool                 key_editting;
-
 
     QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
         : QWidget(parent)
@@ -178,14 +160,10 @@ public:
 
         , _keyboardTab(nullptr)
         , _buttonDeleteKey(nullptr)
-        , _buttonAddKey(nullptr)
 
         , _layoutKeyboard(nullptr)
-        , _tableKeySetting(nullptr)
-//         , key_setting_scroller(this)
         , _columnNumber(4)
         , _tableKeySettingMaxHeight((20*6)+11)
-//         , key_editting(true)/**/
     {
         this->setFixedSize(this->_width, this->_height);
         ClientConfig::setClientInfo(*this->config);
@@ -250,29 +228,9 @@ public:
         this->_layoutKeyboard->addRow(new QLabel("", this));
         this->_layoutKeyboard->addRow(&(this->_labelLanguage), &(this->_languageComboBox));
 
-        this->_tableKeySetting = new QTableWidget(0, this->_columnNumber, this);
-        QList<QString> columnTitles;
-        columnTitles << "Qt key" << "Scan Code" << "ASCII8" << "Extended";
-        this->_tableKeySetting->setHorizontalHeaderLabels({columnTitles});
-        this->_tableKeySetting->setColumnWidth(0 ,85);
-        this->_tableKeySetting->setColumnWidth(1 ,84);
-        this->_tableKeySetting->setColumnWidth(2 ,84);
-        this->_tableKeySetting->setColumnWidth(3 ,74);
-        //this->_tableKeySetting->verticalHeader()->hideSection(0);
-        this->_tableKeySetting->setSelectionBehavior(QAbstractItemView::SelectItems);
-        this->_tableKeySetting->setSelectionMode(QAbstractItemView::SingleSelection);
-
-        this->_layoutKeyboard->addRow(this->_tableKeySetting);
         this->_keyboardTab->setLayout(this->_layoutKeyboard);
 
         this->_tabs->addTab(this->_keyboardTab, strKeyboard);
-
-        this->_buttonAddKey = new QPushButton("Add Key", this->_keyboardTab);
-        QRect rectAddKey(QPoint(110, 226),QSize(70, 24));
-        this->_buttonAddKey->setToolTip(this->_buttonAddKey->text());
-        this->_buttonAddKey->setGeometry(rectAddKey);
-        this->_buttonAddKey->setCursor(Qt::PointingHandCursor);
-        this->QObject::connect(this->_buttonAddKey    , SIGNAL (pressed()) , this, SLOT (pushEdit()));
 
         this->_buttonDeleteKey = new QPushButton("Delete selected row", this->_keyboardTab);
         QRect rectDeleteKey(QPoint(190, 226),QSize(180, 24));
@@ -297,41 +255,7 @@ public:
         if ( indexLanguage != -1 ) {
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
-        for (size_t i = 0; i < this->config->keyCustomDefinitions.size(); i++) {
-            KeyCustomDefinition & key = this->config->keyCustomDefinitions[i];
-            this->addRow();
-            this->setRowValues(key.qtKeyID, key.scanCode, key.ASCII8, key.extended, i, key.name);
-        }
     }
-
-
-    void setRowValues(int qtKeyID, int scanCode, const std::string ASCII8, int extended, int row, const std::string & name) {
-        if (static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->key_not_assigned) {
-            static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->key_not_assigned = false;
-            static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(row, 0))->set_key(qtKeyID, name);
-            this->_tableKeySetting->item(row, 1)->setText(std::to_string(scanCode).c_str());
-            this->_tableKeySetting->item(row, 2)->setText(ASCII8.c_str());
-            int extended_val = extended >> 8;
-            static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setCurrentIndex(extended_val);
-            static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(row, 3))->setEnabled(true);
-        }
-    }
-
-
-    void updateKeySetting() {
-        int tableKeySettingHeight((20*(this->_tableKeySetting->rowCount()+1))+11);
-        if (tableKeySettingHeight > this->_tableKeySettingMaxHeight) {
-            tableKeySettingHeight = this->_tableKeySettingMaxHeight;
-        }
-        this->_tableKeySetting->setFixedSize((80*this->_columnNumber)+40, tableKeySettingHeight);
-        if (this->_tableKeySetting->rowCount() > 5) {
-            this->_tableKeySetting->setColumnWidth(3 ,74);
-        } else {
-            this->_tableKeySetting->setColumnWidth(3 ,87);
-        }
-        this->update();
-    }
-
 
     virtual void getConfigValues() {
 
@@ -340,94 +264,9 @@ public:
 
         // Keyboard tab
         this->config->modVNCParamsData.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-
-        this->config->keyCustomDefinitions.clear();
-
-        const int row_count = this->_tableKeySetting->rowCount();
-
-        for (int i = 0; i < row_count; i++) {
-            int qtKeyID(0);
-            int scanCode(0);
-            std::string ASCII8;
-            std::string name;
-            int extended(0);
-//             static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->print();
-            qtKeyID = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->q_key_code;
-            if (qtKeyID != 0) {
-                scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
-                ASCII8 = this->_tableKeySetting->item(i, 2)->text().toStdString();
-                extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
-                name = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->label.text().toStdString();
-            }
-            this->config->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
-        }
-
-        ClientConfig::writeCustomKeyConfig(*(this->config));
     }
-
-    void keyPressEvent(QKeyEvent *e) override {
-
-        const KeyCustomDefinition & keyCustomDefinition =
-        this->controllers->get_key_info(e->key(), e->text().toStdString());
-
-        int count = this->_tableKeySetting->selectedItems().count();
-        int row = 0;
-        if (count >= 1) {
-            QTableWidgetItem * focused = this->_tableKeySetting->selectedItems().at(0);
-            if (focused) {
-                row = focused->row();
-            }
-        }
-        if (row >= 0) {
-            this->setRowValues(keyCustomDefinition.qtKeyID,
-                                keyCustomDefinition.scanCode,
-                                keyCustomDefinition.ASCII8,
-                                keyCustomDefinition.extended & 0x0100,
-                                row, keyCustomDefinition.name);
-        }
-    }
-
-    void addRow() {
-        int rowNumber(this->_tableKeySetting->rowCount());
-
-        this->_tableKeySetting->insertRow(rowNumber);
-        this->_tableKeySetting->setRowHeight(rowNumber ,20);
-
-        QComboBox * combo = new QComboBox(this->_tableKeySetting);
-        combo->addItem("No" , 0);
-        combo->addItem("Yes", 1);
-        combo->setEnabled(false);
-        this->_tableKeySetting->setCellWidget(rowNumber, 3, combo);
-
-        QtKeyLabel * key_label = new QtKeyLabel(this);
-        this->_tableKeySetting->setCellWidget(rowNumber, 0, key_label);
-
-        QTableWidgetItem * item1 = new QTableWidgetItem;
-        item1->setText("");
-        this->_tableKeySetting->setItem(rowNumber, 0, item1);
-
-        QTableWidgetItem * item2 = new QTableWidgetItem;
-        item2->setText("");
-        this->_tableKeySetting->setItem(rowNumber, 1, item2);
-
-        QTableWidgetItem * item3 = new QTableWidgetItem;
-        item3->setText("");
-        this->_tableKeySetting->setItem(rowNumber, 2, item3);
-
-        this->_tableKeySetting->setEditTriggers(QAbstractItemView::AnyKeyPressed);
-
-        this->updateKeySetting();
-
-//         QTableWidgetSelectionRange range(rowNumber+1, 1, rowNumber+2, 2);
-//         this->_tableKeySetting->setRangeSelected(range, true);
-    }
-
 
 public Q_SLOTS:
-    void pushEdit() {
-        this->addRow();
-    }
-
     void deleteCurrentProtile() {
         if (this->profilComboBox.currentIndex() != 0) {
             ClientConfig::deleteCurrentProtile(*(this->config));
@@ -446,23 +285,6 @@ public Q_SLOTS:
         ClientConfig::setClientInfo(*this->config);
         this->setConfigValues();
     }
-
-
-
-    void deletePressed() {
-       QModelIndexList indexes = this->_tableKeySetting->selectionModel()->selection().indexes();
-       for (int i = 0; i < indexes.count(); ++i) {
-           QModelIndex index = indexes.at(i);
-           this->_tableKeySetting->removeRow(index.row());
-       }
-
-       if (this->_tableKeySetting->rowCount() < 1) {
-           this->addRow();
-       }
-
-       this->updateKeySetting();
-    }
-
 };
 
 
@@ -475,7 +297,6 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     QCheckBox            _tlsBox;
     QCheckBox            _nlaBox;
 
@@ -532,8 +353,7 @@ public:
     QLineEdit            _captureFileEntry;
     QLabel               _labelCaptureFile;
 
-
-
+public:
     QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers,  QWidget * parent)
         : QtOptions(config, controllers, parent)
         , _tlsBox(this)
@@ -676,7 +496,6 @@ public:
         this->_viewTab->setLayout(this->_layoutView);
         this->_tabs->addTab(this->_viewTab, strView);
 
-        this->addRow();
         this->setConfigValues();
     }
 
@@ -861,11 +680,10 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
     QCheckBox            keyboard_apple_compatibility_CB;
     QLabel               keyboard_apple_compatibility_label;
 
-
+public:
     QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, QWidget * parent)
       : QtOptions(config, controllers, parent)
         , keyboard_apple_compatibility_CB(this)

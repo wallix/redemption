@@ -36,20 +36,6 @@
 
 #include <cinttypes>
 
-#include "core/RDP/gcc/data_block_type.hpp"
-#include "core/RDP/gcc/userdata/cs_cluster.hpp"
-#include "core/RDP/gcc/userdata/cs_net.hpp"
-#include "core/RDP/gcc/userdata/cs_core.hpp"
-#include "core/RDP/gcc/userdata/cs_security.hpp"
-#include "core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp"
-#include "core/RDP/gcc/userdata/sc_core.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
-#include "core/RDP/gcc/userdata/sc_net.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "core/RDP/gcc/userdata/sc_sec1.hpp"
-#include "core/RDP/gcc/userdata/cs_multitransport.hpp"
-#include "core/RDP/gcc/userdata/mcs_channels.hpp"
-
 namespace GCC
 {
 // ConferenceName ::= SEQUENCE

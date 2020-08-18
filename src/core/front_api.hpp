@@ -24,22 +24,23 @@
 
 #pragma once
 
-#include "core/report_message_api.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
+#include "acl/sesman.hpp"
 
-#include "core/RDP/MonitorLayoutPDU.hpp"
 
 namespace CHANNELS {
     class ChannelDefArray;
     class ChannelDef;
 }
 
-class FrontAPI : noncopyable
+class MonitorLayoutPDU;
+
+class FrontAPI : public gdi::CaptureProbeApi /*, private noncopyable*/
 {
 public:
-    virtual bool can_be_start_capture() = 0;
+    virtual bool can_be_start_capture(bool force_capture) = 0;
     virtual bool must_be_stop_capture() = 0;
     [[nodiscard]] virtual bool is_capture_in_progress() const = 0;
 
@@ -70,7 +71,6 @@ public:
     virtual void set_focus_on_password_textbox(bool /*unused*/) {}
     virtual void set_focus_on_unidentified_input_field(bool /*unused*/) {}
     virtual void set_consent_ui_visible(bool /*unused*/) {}
-    virtual void session_update(LogId id, KVList kv_list) { (void)id; (void)kv_list; }
 
     ////////////////////////////////
     // RemoteApp.

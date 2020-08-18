@@ -28,6 +28,8 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "./test_channel.hpp"
+#include "acl/auth_api.hpp"
+
 
 namespace
 {
@@ -136,8 +138,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     struct D
     {
         char const* name;
-        array_view_const_char indata;
-        array_view_const_char outdata;
+        chars_view indata;
+        chars_view outdata;
         FileSystemVirtualChannelParams const& file_system_virtual_channel_params;
         bool enable_drive;
     };
@@ -160,8 +162,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
         RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-        NullReportMessage report_message;
-        BaseVirtualChannel::Params base_params(report_message, verbose);
+        TimeBase time_base({0,0});
+        EventContainer events;
+        NullAuthentifier auth;
+        BaseVirtualChannel::Params base_params(auth, verbose);
 
         FileSystemDriveManager file_system_drive_manager;
 
@@ -183,9 +187,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         uint32_t     random_number                = 5245;
         const char * proxy_managed_drive_prefix   = "";
 
-        SessionReactor session_reactor;
         FileSystemVirtualChannel file_system_virtual_channel(
-            session_reactor, &to_client_sender, &to_server_sender,
+            time_base, events, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
 
         RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);

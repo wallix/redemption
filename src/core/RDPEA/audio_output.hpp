@@ -145,7 +145,7 @@ struct RDPSNDPDUHeader {
       , bPad(0)
       , BodySize(BodySize) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint8(this->msgType);
         stream.out_uint8(this->bPad);
         stream.out_uint16_le(this->BodySize);
@@ -161,7 +161,7 @@ struct RDPSNDPDUHeader {
         this->BodySize = stream.in_uint16_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     RDPSND PDU Header:");
         LOG(LOG_INFO, "          * msgType  = 0x%02x (1 byte): %s", this->msgType, get_messageType_name(this->msgType));
         LOG(LOG_INFO, "          * bPad - (1 byte) NOT USED");
@@ -250,7 +250,7 @@ struct ServerAudioFormatsandVersionHeader{
         , cLastBlockConfirmed(cLastBlockConfirmed)
         , wVersion(wVersion) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_clear_bytes(14);
         stream.out_uint16_le(this->wNumberOfFormats);
         stream.out_uint8(this->cLastBlockConfirmed);
@@ -272,7 +272,7 @@ struct ServerAudioFormatsandVersionHeader{
         stream.in_skip_bytes(1);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Server Audio Formats and Version Header:");
         LOG(LOG_INFO, "          * dwFlags    - (4 bytes) NOT USED");
         LOG(LOG_INFO, "          * dwVolume   - (4 bytes) NOT USED");
@@ -472,7 +472,7 @@ struct AudioFormat {
         , wBitsPerSample(wBitsPerSample)
         , cbSize(cbSize) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wFormatTag);
         stream.out_uint16_le(this->nChannels);
         stream.out_uint32_le(this->nSamplesPerSec);
@@ -500,7 +500,7 @@ struct AudioFormat {
         stream.in_skip_bytes(this->cbSize);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Audio Format:");
         LOG(LOG_INFO, "          * wFormatTag      = 0x%04x (2 bytes): %s", this->wFormatTag, get_wFormatTag_name(this->wFormatTag));
         LOG(LOG_INFO, "          * nChannels       = 0x%04x (2 bytes)", this->nChannels);
@@ -635,7 +635,7 @@ struct ClientAudioFormatsandVersionHeader{
         , wVersion(wVersion) {}
 
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint32_le(this->dwFlags);
         stream.out_uint32_le(this->dwVolume);
         stream.out_uint32_le(this->dwPitch);
@@ -663,7 +663,7 @@ struct ClientAudioFormatsandVersionHeader{
         stream.in_skip_bytes(1);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Client Audio Formats and Version Header:");
         LOG(LOG_INFO, "          * dwFlags             = 0x%08x (4 bytes)", this->dwFlags);
         LOG(LOG_INFO, "          * dwVolume            = 0x%08x (4 bytes)", this->dwVolume);
@@ -746,7 +746,7 @@ struct QualityModePDU {
     explicit QualityModePDU(int16_t wQualityMode)
       : wQualityMode(wQualityMode) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wQualityMode);
         stream.out_clear_bytes(2);
     }
@@ -760,7 +760,7 @@ struct QualityModePDU {
         stream.in_skip_bytes(2);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Quality Mode PDU:");
         LOG(LOG_INFO, "          * wQualityMode = 0x%04x (2 bytes): %s", this->wQualityMode, get_wQualityMode_name(this->wQualityMode));
         LOG(LOG_INFO, "          * Reserved - (2 bytes)  NOT USED");
@@ -813,7 +813,7 @@ struct TrainingPDU {
         : wTimeStamp(wTimeStamp)
         , wPackSize(wPackSize) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wTimeStamp);
         stream.out_uint16_le(this->wPackSize);
     }
@@ -828,7 +828,7 @@ struct TrainingPDU {
        // stream.in_skip_bytes(this->wPackSize);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Training PDU:");
         LOG(LOG_INFO, "          * wTimeStamp = 0x%04x (2 bytes)", this->wTimeStamp);
         LOG(LOG_INFO, "          * wPackSize  = %zu (2 bytes)", std::size_t(this->wPackSize));
@@ -879,7 +879,7 @@ struct TrainingConfirmPDU {
         : wTimeStamp(wTimeStamp)
         , wPackSize(wPackSize) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wTimeStamp);
         stream.out_uint16_le(this->wPackSize);
     }
@@ -894,7 +894,7 @@ struct TrainingConfirmPDU {
        // stream.in_skip_bytes(this->wPackSize);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Training Confirm PDU:");
         LOG(LOG_INFO, "          * wTimeStamp = 0x%04x (2 bytes)", this->wTimeStamp);
         LOG(LOG_INFO, "          * wPackSize  = %zu (2 bytes)", std::size_t(this->wPackSize));
@@ -966,7 +966,7 @@ struct WaveInfoPDU {
         , wFormatNo(wFormatNo)
         , cBlockNo(cBlockNo) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wTimeStamp);
         stream.out_uint16_le(this->wFormatNo);
         stream.out_uint8(this->cBlockNo);
@@ -986,7 +986,7 @@ struct WaveInfoPDU {
         stream.in_copy_bytes(this->Data, 4);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Wave Info PDU:");
         LOG(LOG_INFO, "          * wTimeStamp = 0x%04x (2 bytes)", this->wTimeStamp);
         LOG(LOG_INFO, "          * wFormatNo  = 0x%04x (2 bytes)", this->wFormatNo);
@@ -1047,7 +1047,7 @@ struct WaveConfirmPDU {
         : wTimeStamp(wTimeStamp)
         , cConfBlockNo(cConfBlockNo) {}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wTimeStamp);
         stream.out_uint8(this->cConfBlockNo);
         stream.out_clear_bytes(1);
@@ -1063,7 +1063,7 @@ struct WaveConfirmPDU {
         stream.in_skip_bytes(1);
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Wave Confirm PDU:");
         LOG(LOG_INFO, "          * wTimeStamp   = 0x%04x (2 bytes)", this->wTimeStamp);
         LOG(LOG_INFO, "          * cConfBlockNo = 0x%02x (1 byte)", this->cConfBlockNo);
@@ -1147,7 +1147,7 @@ struct Wave2PDU {
         , cBlockNo(cBlockNo)
         , dwAudioTimeStamp(dwAudioTimeStamp){}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->wTimeStamp);
         stream.out_uint16_le(this->wFormatNo);
         stream.out_uint8(this->cBlockNo);
@@ -1167,7 +1167,7 @@ struct Wave2PDU {
         this->dwAudioTimeStamp = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "     Wave 2 PDU:");
         LOG(LOG_INFO, "          * wTimeStamp       = 0x%04x (2 bytes)", this->wTimeStamp);
         LOG(LOG_INFO, "          * wFormatNo        = 0x%04x (2 bytes)", this->wFormatNo);
@@ -1213,7 +1213,7 @@ struct VolumePDU {
     explicit VolumePDU(uint32_t Volume)
         : Volume(Volume){}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Volume);
     }
 
@@ -1225,7 +1225,7 @@ struct VolumePDU {
         this->Volume = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "    Volume PDU:");
         LOG(LOG_INFO, "          * Volume = 0x%08x (4 bytes)", this->Volume);
     }
@@ -1265,7 +1265,7 @@ struct PitchPDU {
     explicit PitchPDU(uint32_t Pitch)
         : Pitch(Pitch){}
 
-    void emit(OutStream & stream) {
+    void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Pitch);
     }
 
@@ -1277,7 +1277,7 @@ struct PitchPDU {
         this->Pitch = stream.in_uint32_le();
     }
 
-    void log() {
+    void log() const {
         LOG(LOG_INFO, "    Pitch PDU:");
         LOG(LOG_INFO, "          * Pitch = 0x%08x (4 bytes)", this->Pitch);
     }

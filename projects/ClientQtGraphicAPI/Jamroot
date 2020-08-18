@@ -54,8 +54,10 @@ if $(qtversion) = 5
     # Need packages qttools5-dev libphonon4qt5-dev
     # TODO search include qt5 directory
     constant QT5_INCLUDE : [ setvar QT5_INCLUDE : /usr/include/x86_64-linux-gnu/qt$(qtversion) ] ;
+    constant QT5_TOOL_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
+    constant QT5_LIB_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
     # TODO search include phonon directory
-    constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/phonon ] ;
+    constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/KDE ] ;
 
     constant QT_INCLUDES : $(QT5_INCLUDE) $(QT5_PHONON_INCLUDE) ;
 }
@@ -137,6 +139,7 @@ add_obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 ;
 add_obj keylayouts_r.o : src/reversed_keymaps/keylayouts_r.cpp ;
 
+add_src client_redemption/pointer_to_rgba8888.cpp ;
 add_src utils/log_as_logprint.cpp ;
 
 local requirement_list = ;
@@ -165,14 +168,14 @@ if $(qtversion) = 4
 else
 {
     using qt5
-        : /usr/lib/x86_64-linux-gnu/qt5
+        : $(QT5_TOOL_PATH)
         : 5.3
         :
         :
         :
         :
         : $(QT5_INCLUDE)
-        : /usr/lib/x86_64-linux-gnu
+        : $(QT5_LIBS)
         ;
 
     alias libqtclient :

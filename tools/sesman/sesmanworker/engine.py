@@ -29,16 +29,18 @@ try:
     CRED_INDEX = "credentials"
     APPREQ_REQUIRED = 1
     APPREQ_OPTIONAL = 0
-except Exception as e:
+    from .wallixauth import Authenticator
+except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
         from .fake.proxyengine import *
         LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
+        from .legacyauth import LegacyAuthenticator as Authenticator
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
-    except Exception as e:
+    except Exception:
         # Logger().info("FAKE LOADING FAILED>>>>>> %s" %
         #               traceback.format_exc())
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
@@ -62,16 +64,6 @@ FINGERPRINT_SHA1 = 0
 FINGERPRINT_MD5 = 1
 FINGERPRINT_MD5_LEN = 16
 FINGERPRINT_SHA1_LEN = 20
-
-
-def tounicode(item):
-    if not item:
-        return u""
-    try:
-        return item.decode('utf8')
-    except:
-        pass
-    return item
 
 
 def _binary_ip(network, bits):
@@ -108,17 +100,37 @@ def read_config_file(modulename="sesman",
     return Config(modulename=modulename, confdir=confdir, specdir=specdir)
 
 
+def decode_rawtext_data(data):
+    encoding_try = ['utf-8', 'iso-8859-1']
+    for encoding in encoding_try:
+        try:
+            data = data.decode(encoding)
+        except Exception:
+            continue
+        break
+    return data
+
+
 class Engine(object):
-    def __init__(self):
+    def __init__(self, legacy_auth=False):
         self.wabengine = None
         self.checkout = None
         self.wabuser = None
         self.wabengine_conf = Config('wabengine')
-        self.client = SynClient('localhost',
-                                self.wabengine_conf.get(
-                                    'port',
-                                    'unix:/run/wabengine/wabengine.sock'
-                                ))
+        self.authenticator = Authenticator(
+            self.wabengine_conf.get(
+                'port',
+                'unix:/run/wabengine/wabengine.sock'
+            )
+        )
+        if legacy_auth:
+            from .legacyauth import LegacyAuthenticator
+            self.authenticator = LegacyAuthenticator(
+                self.wabengine_conf.get(
+                    'port',
+                    'unix:/run/wabengine/wabengine.sock'
+                )
+            )
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
@@ -166,7 +178,7 @@ class Engine(object):
             if self.wabuser:
                 return self.wabuser.preferredLanguage
             return self.wabengine.who_am_i().preferredLanguage
-        except Exception as e:
+        except Exception:
             return 'en'
 
     def get_username(self):
@@ -174,13 +186,13 @@ class Engine(object):
             if not self.wabuser:
                 self.wabuser = self.wabengine.who_am_i()
             return self.wabuser.cn
-        except Exception as e:
+        except Exception:
             return self.wabuser.cn if self.wabuser else ""
 
     def get_otp_client(self):
         try:
             return self.wabengine.get_otp_client()
-        except Exception as e:
+        except Exception:
             return ''
 
     def check_license(self):
@@ -193,36 +205,45 @@ class Engine(object):
     def get_force_change_password(self):
         try:
             return self.wabuser.forceChangePwd
-        except Exception as e:
+        except Exception:
             return False
 
-    def get_ssh_banner(self, lang=None):
+    @staticmethod
+    def format_terminal(message):
+        message += '\n'
+        message = message.replace('\n', '\r\n')
+        return message
+
+    def get_banner(self, lang=None, format_terminal=False):
         if not lang:
             lang = self.get_language()
-        banner = ("Warning! Your remote session may be recorded and "
-                  "kept in electronic format.\n")
+        banner = (u"Warning! Your remotée session may be recorded and "
+                  u"kept in electronic format.")
         try:
-            with open('/var/wab/etc/proxys/messages/motd.%s' % lang) as f:
+            motdfile = '/var/wab/etc/proxys/messages/motd.%s' % lang
+            with open(motdfile, "rb") as f:
                 banner = f.read()
-            banner += '\n'
+            banner = decode_rawtext_data(banner)
         except IOError:
             pass
-
-        banner = banner.replace('\n', '\r\n')
+        if format_terminal:
+            banner = self.format_terminal(banner)
         return banner
 
-    def get_warning_message(self, lang=None):
+    def get_warning_message(self, lang=None, format_terminal=False):
         if not lang:
             lang = self.get_language()
-        msg = (u"Warning! Unauthorized access to this system is"
-               u" forbidden and will be prosecuted by law.\n")
+        msg = (u"Warning! Unauthorizedé access to this system is"
+               u" forbidden and will be prosecuted by law.")
         try:
-            with open('/var/wab/etc/proxys/messages/login.%s' % lang) as f:
+            loginfile = '/var/wab/etc/proxys/messages/login.%s' % lang
+            with open(loginfile, "rb") as f:
                 msg = f.read()
-                msg += '\n'
+            msg = decode_rawtext_data(msg)
         except IOError:
             pass
-        msg = msg.replace('\n', '\r\n')
+        if format_terminal:
+            msg = self.format_terminal(msg)
         return msg
 
     def get_deconnection_time_msg(self, lang):
@@ -247,7 +268,7 @@ class Engine(object):
         for i, char in enumerate(finger_raw):
             try:
                 finger_host += '%02x' % ord(char)
-            except:
+            except Exception:
                 finger_host += '%02x' % char
             if i < fingerprint_len - 1:
                 finger_host += ':'
@@ -317,187 +338,51 @@ class Engine(object):
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type, target,
                           ip_server):
-        """
-        Ask if we are authentifying using x509
-        (and ask user by opening confirmation popup if we are,
-        session ticket will be asked later in x509_authenticate)
-        """
-        try:
-            self.auth_x509 = AuthX509(username=wab_login,
-                                      ip=ip_client,
-                                      requestor=proxy_type,
-                                      target=target,
-                                      server_ip=ip_server)
-            result = self.auth_x509.is_connected()
-            return result
-        except Exception:
-            import traceback
-            Logger().info("Engine is_x509_connected failed: "
-                          "(((%s)))" % traceback.format_exc())
-        return False
+        return self.authenticator.is_x509_connected(
+            wab_login, ip_client, proxy_type, target, ip_server
+        )
 
     def is_x509_validated(self):
-        try:
-            result = False
-            if self.auth_x509 is not None:
-                result = self.auth_x509.is_validated()
-        except Exception:
-            import traceback
-            Logger().info("Engine is_x509_validated failed: (((%s)))" %
-                          traceback.format_exc())
-        return result
+        return self.authenticator.is_x509_validated()
 
     def x509_authenticate(self, ip_client=None, ip_server=None):
-        try:
-            self.wabengine = self.auth_x509.get_proxy()
-            if self.wabengine is not None:
-                self._post_authentication()
-                return True
-        except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(e.challenge)
-        except MultiFactorAuthentication as mfa:
-            self.challenge = mfa_to_challenge(mfa)
-            if self.challenge and self.challenge.recall:
-                return self.password_authenticate(
-                    self.challenge.username, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
-            self.challenge = None
-        except LicenseException as e:
-            self.challenge = None
-        except Exception:
-            import traceback
-            Logger().info("Engine x509_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
-        return False
+        return self.authenticator.x509_authenticate(
+            self, ip_client, ip_server
+        )
+
+    def check_pingid(self, wab_login, ip_client, ip_server):
+        return self.authenticator.check_pingid(
+            wab_login, ip_client, ip_server
+        )
+
+    def pingid_authenticate(self):
+        return self.authenticator.pingid_authenticate(self)
 
     def password_authenticate(self, wab_login, ip_client, password, ip_server):
-        try:
-            challenge = self.challenge.challenge if self.challenge else None
-            token = self.challenge.token if self.challenge else None
-            if self.challenge:
-                wab_login = self.challenge.username or wab_login
-            self.wabengine = self.client.authenticate(
-                username=wab_login,
-                password=password,
-                ip_source=ip_client,
-                challenge=challenge,
-                server_ip=ip_server,
-                mfa_token=token
-            )
-            self.challenge = None
-            if self.wabengine is not None:
-                self._post_authentication()
-                return True
-        except AuthenticationUpdatePwd as aup:
-            self.challenge = aup_to_challenge(aup, wab_login)
-        except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(e.challenge)
-        except MultiFactorAuthentication as mfa:
-            self.challenge = mfa_to_challenge(mfa)
-            if self.challenge and self.challenge.recall:
-                return self.password_authenticate(
-                    wab_login, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
-            self.challenge = None
-        except LicenseException as e:
-            self.challenge = None
-        except Exception:
-            self.challenge = None
-            import traceback
-            Logger().info("Engine password_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
-            raise
-        return False
+        return self.authenticator.password_authenticate(
+            self, wab_login, ip_client, password, ip_server
+        )
 
     def passthrough_authenticate(self, wab_login, ip_client, ip_server):
-        try:
-            self.wabengine = self.client.authenticate_gssapi(
-                username=wab_login,
-                realm="realm",
-                ip_source=ip_client,
-                server_ip=ip_server
-            )
-            if self.wabengine is not None:
-                self._post_authentication()
-                return True
-        except AuthenticationFailed as e:
-            self.challenge = None
-        except LicenseException as e:
-            self.challenge = None
-        except Exception:
-            import traceback
-            Logger().info("Engine passthrough_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
-            raise
-        return False
+        return self.authenticator.passthrough_authenticate(
+            self, wab_login, ip_client, ip_server
+        )
 
     def gssapi_authenticate(self, wab_login, ip_client, ip_server):
-        try:
-            self.wabengine = self.client.authenticate_gssapi(
-                username=wab_login,
-                realm="realm",
-                ip_source=ip_client,
-                server_ip=ip_server
-            )
-            if self.wabengine is not None:
-                self._post_authentication()
-                return True
-        except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(e.challenge)
-        except MultiFactorAuthentication as mfa:
-            self.challenge = mfa_to_challenge(mfa)
-            if self.challenge and self.challenge.recall:
-                return self.password_authenticate(
-                    wab_login, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
-            self.challenge = None
-        except LicenseException as e:
-            self.challenge = None
-        except Exception:
-            import traceback
-            Logger().info("Engine passthrough_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
-            raise
-        return False
+        return self.authenticator.gssapi_authenticate(
+            self, wab_login, ip_client, ip_server
+        )
 
     def pubkey_authenticate(self, wab_login, ip_client, pubkey, ip_server):
-        try:
-            self.wabengine = self.client.authenticate(
-                username=wab_login,
-                password=pubkey,
-                ip_source=ip_client,
-                challenge=self.challenge,
-                publicKey=True,
-                server_ip=ip_server
-            )
-            self.challenge = None
-            if self.wabengine is not None:
-                self._post_authentication()
-                return True
-        except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(e.challenge)
-        except MultiFactorAuthentication as mfa:
-            self.challenge = mfa_to_challenge(mfa)
-            if self.challenge and self.challenge.recall:
-                return self.password_authenticate(
-                    wab_login, ip_client, "", ip_server)
-        except AuthenticationFailed as e:
-            self.challenge = None
-        except LicenseException as e:
-            self.challenge = None
-        except Exception:
-            self.challenge = None
-            import traceback
-            Logger().info("Engine pubkey_authenticate failed: "
-                          "(((%s)))" % traceback.format_exc())
-            raise
-        return False
+        return self.authenticator.pubkey_authenticate(
+            self, wab_login, ip_client, pubkey, ip_server
+        )
 
     def get_challenge(self):
-        return self.challenge
+        return self.authenticator.get_challenge()
 
     def reset_challenge(self):
-        self.challenge = None
+        self.authenticator.reset_challenge()
 
     def resolve_target_host(self, target_device, target_login, target_service,
                             target_group, real_target_device, target_context,
@@ -714,11 +599,11 @@ class Engine(object):
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
             if not target_info.protocol == u"APP":
-                if (target_info.target_name == u'autotest' or
-                    target_info.target_name == u'bouncer2' or
-                    target_info.target_name == u'widget2_message' or
-                    target_info.target_name == u'widgettest' or
-                    target_info.target_name == u'test_card'):
+                if (target_info.target_name == u'autotest'
+                    or target_info.target_name == u'bouncer2'
+                    or target_info.target_name == u'widget2_message'
+                    or target_info.target_name == u'widgettest'
+                    or target_info.target_name == u'test_card'):
                     temp_service_login = target_info.service_login.replace(
                         u':RDP',
                         u':INTERNAL', 1)
@@ -727,9 +612,9 @@ class Engine(object):
             def fc(string):
                 return string if case_sensitive else string.lower()
 
-            if (not fc(group_filter) in fc(target_info.group) or
-                not fc(device_filter) in fc(temp_service_login) or
-                not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
+            if (not fc(group_filter) in fc(target_info.group)
+                or not fc(device_filter) in fc(temp_service_login)
+                or not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
 
@@ -764,6 +649,7 @@ class Engine(object):
 
         self.checktarget_cache = None
         self.checktarget_infos_cache = None
+        self.authenticator.reset()
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
         Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s"
@@ -814,7 +700,7 @@ class Engine(object):
                 account_namedom = "%s@%s" % (account_name, account_domain)
             try:
                 group_name = right['auth_cn']
-            except:
+            except Exception:
                 group_name = right['target_group']
             if right['application_cn']:
                 target_name = right['application_cn']
@@ -833,23 +719,23 @@ class Engine(object):
             if target_context is not None:
                 if target_context.host and host is None:
                     continue
-                if (target_context.host and
-                    not is_device_in_subnet(target_context.host, host) and
-                    host != target_context.dnsname):
+                if (target_context.host
+                    and not is_device_in_subnet(target_context.host, host)
+                    and host != target_context.dnsname):
                     continue
-                if (target_context.login and
-                    account_login and
-                    target_context.login not in [
+                if (target_context.login
+                    and account_login
+                    and target_context.login not in [
                         account_login, account_logindom,
                         account_name, account_namedom]):
                     # match context login with login or name
                     # (with or without domain)
                     continue
-                if (target_context.service and
-                    service_name != target_context.service):
+                if (target_context.service
+                    and service_name != target_context.service):
                     continue
-                if (target_context.group and
-                    target_context.group != group_name):
+                if (target_context.group
+                    and target_context.group != group_name):
                     continue
 
             target_value = (service_name, group_name, right)
@@ -942,7 +828,7 @@ class Engine(object):
                 else:
                     # ambiguity on domain
                     results = []
-        except Exception as e:
+        except Exception:
             results = []
         return results
 
@@ -957,13 +843,16 @@ class Engine(object):
             if not results:
                 results = self._get_target_right_htable(
                     target_account, target_device, self.targets_alias)
-        except Exception as e:
+        except Exception:
             results = []
         right = None
-        filtered = [(r_service, r)
-                    for (r_service, r_groups, r) in results if (
-            ((not target_service) or (r_service == target_service)) and
-            ((not target_group) or (r_groups == target_group)))]
+        filtered = [
+            (r_service, r)
+            for (r_service, r_groups, r) in results if (
+                ((not target_service) or (r_service == target_service))
+                and ((not target_group) or (r_groups == target_group))
+            )
+        ]
         if filtered:
             filtered_service, right = filtered[0]
             # if ambiguity in group but not in service,
@@ -1049,7 +938,7 @@ class Engine(object):
             return
         self.failed_secondary_set = True
         if reason:
-            self.session_diag = tounicode(reason)
+            self.session_diag = reason
         self.session_result = False
         Notify(self.wabengine, SECONDARY_CX_FAILED, {
             'user': wabuser,
@@ -1231,20 +1120,20 @@ class Engine(object):
                 target,
                 pid=pid,
                 subprotocol=subproto,
-                effective_login=tounicode(effective_login),
-                target_host=tounicode(self.host)
+                effective_login=effective_login,
+                target_host=self.host
             )
         except LicenseException:
             Logger().info("Engine start_session failed: License exception")
-            self.session_id = None
+            self.session_id, self.start_time = None, None
         except Exception:
             import traceback
-            self.session_id = None
+            self.session_id, self.start_time = None, None
             Logger().info("Engine start_session failed: (((%s)))" %
                           (traceback.format_exc()))
         Logger().debug("**** END wabengine START SESSION ")
         if self.session_id is None:
-            return None
+            return None, None
         self.service = target['service_cn']
         is_critical = target['auth_is_critical']
         device_host = target['device_host']
@@ -1314,7 +1203,7 @@ class Engine(object):
             self.wabengine.make_session_shadowing_response(
                 status=status, errmsg=errmsg, token=token, userdata=userdata
             )
-        except:
+        except Exception:
             import traceback
             Logger().info("Engine shadow_response failed: (((%s)))" %
                           (traceback.format_exc()))
@@ -1439,8 +1328,8 @@ class Engine(object):
 
     # RESTRICTIONS: NOTIFIER METHODS
     def pattern_found_notify(self, action, regex_found, current_line):
-        regex_found = tounicode(regex_found)
-        current_line = tounicode(current_line)
+        regex_found = regex_found
+        current_line = current_line
         self.session_diag = u'Restriction pattern detected (%s)' % current_line
         data = {
             "regexp": regex_found,
@@ -1667,7 +1556,7 @@ class Engine(object):
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
             authmethods = target['connection_policy_methods']
-        except:
+        except Exception:
             Logger().error("Error: Connection policy has no methods field")
             authmethods = []
         return authmethods
@@ -1680,7 +1569,7 @@ class Engine(object):
             # Logger().info("connectionpolicy")
             # Logger().info("%s" % target.resource.service.connectionpolicy)
             conn_opts = target['connection_policy_data']
-        except:
+        except Exception:
             Logger().error("Error: Connection policy has no data field")
             conn_opts = {}
         return conn_opts
@@ -1739,7 +1628,7 @@ class Engine(object):
         login = right['account_login']
         try:
             domain = right['domain_name']
-        except:
+        except Exception:
             domain = ""
         if check_in_creds:
             login = (self.checkout.get_target_login(right)
@@ -1781,110 +1670,6 @@ class Engine(object):
         return target.get('is_shadow') is True
 
 
-# Information Structs
-class Challenge(object):
-    def __init__(self, challenge_type, title, message, fields, echos,
-                 username=None, challenge=None, token=None, recall=False):
-        self.challenge_type = challenge_type
-        self.title = title
-        self.message = message
-        self.token = token
-        self.fields = fields
-        self.echos = echos
-        self.challenge = challenge
-        self.username = username
-        self.recall = recall
-
-
-def wchallenge_to_challenge(challenge):
-    """ Convert Challenge from bastion to internal Challenge
-
-    param challenge: Challenge from bastion
-    param previous_token: token from previous MFA if needed
-    :rtype: Challenge
-    :return: a converted Challenge
-    """
-    return Challenge(
-        challenge_type="CHALLENGE",
-        title="= Challenge =",
-        message="",
-        fields=[challenge.message],
-        echos=[challenge.promptEcho],
-        username=challenge.username,
-        challenge=challenge,
-        token=getattr(challenge, "mfa_token", None)
-    )
-
-
-def mfa_to_challenge(mfa):
-    """ Convert MFA from bastion to internal Challenge
-
-    param mfa: MFA from bastion
-    :rtype: Challenge
-    :return: a converted Challenge
-    """
-    if not mfa.fields:
-        return None
-    message_list = []
-    echos = [False for x in mfa.fields]
-    fields = mfa.fields
-    if hasattr(mfa, "auth_type"):
-        message_list.append("Authentication type: %s" % mfa.auth_type)
-    if mfa.fields[0] == "username":
-        fields = fields[1:]
-        echos = echos[1:]
-        message_list.append("Username: %s" % mfa.username)
-    message = "\n".join(message_list)
-    recall = (len(fields) == 0)
-    return Challenge(
-        challenge_type="MFA",
-        title="= MultiFactor Authentication =",
-        message=message,
-        fields=fields,
-        echos=echos,
-        username=mfa.username,
-        token=mfa.token,
-        recall=recall
-    )
-
-
-def aup_to_challenge(aup, username):
-    """ Convert AuthenticationUpdatePassword from bastion
-    to internal Challenge
-
-    param aup: AuthenticationUpdatePassword from bastion
-    param username: Provided username to set in challenge
-    :rtype: Challenge
-    :return: a converted Challenge
-    """
-    aup.challenge.username = username
-    if aup.challenge.message_id == 1:
-        message = (u"Your password has expired, "
-                   u"You must change your password")
-    elif aup.challenge.message_id == 2:
-        message = (u"Please confirm password")
-    elif aup.challenge.message_id == 3:
-        message = (u"Passwords do not match")
-    elif aup.challenge.message_id == 4:
-        message = (u"The password does not meet the password policy "
-                   u"requirements")
-    elif aup.challenge.message_id == 5:
-        message = (u"Your password has been reset, "
-                   u"You must change your password")
-    else:
-        message = aup.challenge.message
-    return Challenge(
-        challenge_type="AUP",
-        title="= Update Password =",
-        message="",
-        fields=[message],
-        echos=[aup.challenge.promptEcho],
-        username=aup.challenge.username,
-        challenge=aup.challenge,
-        token=getattr(aup.challenge, "mfa_token", None)
-    )
-
-
 class TargetContext(object):
     def __init__(self, host=None, dnsname=None, login=None, service=None,
                  group=None, show=None):
@@ -1921,10 +1706,10 @@ class DisplayInfo(object):
         self.host = host
 
     def get_target_tuple(self):
-        return (self.target_login.encode('utf-8'),
-                self.target_name.encode('utf-8'),
-                self.service_name.encode('utf-8'),
-                self.group.encode('utf-8'))
+        return (self.target_login,
+                self.target_name,
+                self.service_name,
+                self.group)
 
 
 class ProtocolInfo(object):

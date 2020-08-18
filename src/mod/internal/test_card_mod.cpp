@@ -34,20 +34,19 @@
 #include "utils/sugar/algostring.hpp"
 
 
-TestCardMod::TestCardMod(
-    SessionReactor& session_reactor,
-    uint16_t width, uint16_t height,
-    Font const & font, bool unit_test)
+TestCardMod::TestCardMod(GdProvider & gd_provider, uint16_t width, uint16_t height, Font const & font, bool unit_test)
 : front_width(width)
 , front_height(height)
 , font(font)
 , unit_test(unit_test)
-, session_reactor(session_reactor)
-, gd_event(session_reactor.create_graphic_event(std::ref(*this))
-    .on_action(jln::one_shot([](gdi::GraphicApi& gd, TestCardMod& mod){
-        mod.draw_event(gd);
-    })))
-{}
+, gd_provider(gd_provider)
+{
+}
+
+void TestCardMod::init()
+{
+    this->draw_event(this->gd_provider.get_graphics());
+}
 
 Rect TestCardMod::get_screen_rect() const
 {
@@ -65,7 +64,7 @@ void TestCardMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->set_mod_signal(BACK_EVENT_STOP);
     }
 }
 
@@ -87,7 +86,7 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
     gd.draw(RDPOpaqueRect(winrect, encode_color24()(WINBLUE)), clip, color_ctx);
 
 
-    Bitmap bitmap = bitmap_from_file(str_concat(app_path(AppPath::Share), "/" "Philips_PM5544_640.png").c_str());
+    Bitmap bitmap = bitmap_from_file(str_concat(app_path(AppPath::Share), "/" "Philips_PM5544_640.png").c_str(), BLACK);
 
     gd.draw(RDPMemBlt(0,
         Rect(winrect.x + (winrect.cx - bitmap.cx())/2,
@@ -135,7 +134,7 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
     gdi::server_draw_text(gd, this->font, 30, 90, "Blue ", encode_color24()(BLUE), encode_color24()(BLACK), color_ctx, clip);
     gdi::server_draw_text(gd, this->font, 30, 110, "Black", encode_color24()(BLACK), encode_color24()(WHITE), color_ctx, clip);
 
-    Bitmap card = bitmap_from_file(app_path(AppPath::RedemptionLogo24));
+    Bitmap card = bitmap_from_file(app_path(AppPath::RedemptionLogo24), BLACK);
     gd.draw(RDPMemBlt(0,
         Rect(this->get_screen_rect().cx - card.cx() - 30,
                 this->get_screen_rect().cy - card.cy() - 30, card.cx(), card.cy()),
@@ -153,7 +152,7 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
         Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx(), bloc64x64.cy()), 0xCC,
             32, 32, 0), clip, bloc64x64);
 
-    Bitmap logo = bitmap_from_file(str_concat(app_path(AppPath::Share), "/ad8b.png").c_str());
+    Bitmap logo = bitmap_from_file(str_concat(app_path(AppPath::Share), "/ad8b.png").c_str(), BLACK);
     gd.draw(RDPMemBlt(0,
         Rect(100, 100, 26, 32),
         0xCC,
@@ -163,7 +162,7 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
         //gd.draw(RDPOpaqueRect(this->get_screen_rect(), RED), clip, depth);
         gd.sync();
 
-        Bitmap wab_logo_blue = bitmap_from_file(app_path(AppPath::LoginWabBlue));
+        Bitmap wab_logo_blue = bitmap_from_file(app_path(AppPath::LoginWabBlue), BLACK);
 
 
         const uint16_t startx = 5;

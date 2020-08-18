@@ -330,20 +330,20 @@ REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
 class Capture::PatternKbd final : public gdi::KbdInputApi
 {
-    ReportMessageApi * report_message;
+    AuthApi * sesman;
     PatternSearcher pattern_kill;
     PatternSearcher pattern_notify;
 
 public:
     explicit PatternKbd(
-        ReportMessageApi * report_message,
+        AuthApi * sesman,
         char const * str_pattern_kill, char const * str_pattern_notify,
         bool verbose)
-    : report_message(report_message)
+    : sesman(sesman)
     , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                   str_pattern_kill && report_message ? str_pattern_kill : nullptr, verbose)
+                   str_pattern_kill && sesman ? str_pattern_kill : nullptr, verbose)
     , pattern_notify(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                     str_pattern_notify && report_message ? str_pattern_notify : nullptr, verbose)
+                     str_pattern_notify && sesman ? str_pattern_notify : nullptr, verbose)
     {}
 
     [[nodiscard]] bool contains_pattern() const {
@@ -367,7 +367,7 @@ public:
                     }
                 }
             },
-            [this](array_view_const_char const & /*noprintable_char*/) {
+            [this](chars_view const & /*noprintable_char*/) {
                 this->pattern_kill.rewind_search();
                 this->pattern_notify.rewind_search();
             },
@@ -388,9 +388,9 @@ private:
         return searcher.test_uchar(
             utf8_char,
             [&, this](std::string const & pattern, char const * str) {
-                assert(this->report_message);
+                assert(this->sesman);
                 utils::MatchFinder::report(
-                    *this->report_message,
+                    *this->sesman,
                     is_pattern_kill,
                     utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                     pattern.c_str(),
@@ -427,7 +427,7 @@ private:
                     this->copy_bytes({buf_char, char_len});
                 }
             },
-            [this](array_view_const_char no_printable_str) {
+            [this](chars_view no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
             filter_slash{}
@@ -503,8 +503,8 @@ private:
 
 
 namespace {
-    constexpr array_view_const_char session_log_prefix() { return cstr_array_view("data='"); }
-    constexpr array_view_const_char session_log_suffix() { return cstr_array_view("'"); }
+    constexpr chars_view session_log_prefix() { return cstr_array_view("data='"); }
+    constexpr chars_view session_log_suffix() { return cstr_array_view("'"); }
 }
 
 
@@ -515,7 +515,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
     static const std::size_t buffer_size = 64;
     uint8_t buffer[buffer_size + session_log_prefix().size() + session_log_suffix().size() + 1];
     bool is_probe_enabled_session = false;
-    ReportMessageApi & report_message;
+    AuthApi & sesman;
 
     int hidden_masked_char_count = 0;
 
@@ -542,7 +542,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
                     this->copy_bytes({buf_char, char_len});
                 }
             },
-            [this](array_view_const_char no_printable_str) {
+            [this](chars_view no_printable_str) {
                 this->copy_bytes(no_printable_str);
             },
             filter_slash{}
@@ -550,9 +550,9 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
     }
 
 public:
-    explicit SessionLogKbd(ReportMessageApi & report_message)
+    explicit SessionLogKbd(AuthApi & sesman)
     : kbd_stream{{this->buffer + session_log_prefix().size(), buffer_size}}
-    , report_message(report_message)
+    , sesman(sesman)
     {
         memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
     }
@@ -587,8 +587,8 @@ public:
             }
             this->hidden_masked_char_count = 0;
 
-            this->report_message.log6(LogId::KBD_INPUT, tvtime(), {
-                KVLog("data"_av, this->kbd_stream.get_bytes().as_chars()),
+            this->sesman.log6(LogId::KBD_INPUT, {
+                KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
 
             this->kbd_stream.rewind();
@@ -609,11 +609,11 @@ class Capture::PatternsChecker : ::noncopyable
 {
     utils::MatchFinder::NamedRegexArray regexes_filter_kill;
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
-    ReportMessageApi & report_message;
+    AuthApi & sesman;
 
 public:
-    explicit PatternsChecker(ReportMessageApi & report_message, PatternParams const & params)
-    : report_message(report_message)
+    explicit PatternsChecker(AuthApi & sesman, PatternParams const & params)
+    : sesman(sesman)
     {
         auto without_capture = utils::MatchFinder::WithCapture(false);
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
@@ -627,7 +627,7 @@ public:
         return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
     }
 
-    void operator()(array_view_const_char str) {
+    void operator()(chars_view str) {
         assert(str.data() && not str.empty());
         this->check_filter(this->regexes_filter_kill, str.data());
         this->check_filter(this->regexes_filter_notify, str.data());
@@ -640,7 +640,7 @@ private:
             utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
             for (; first != last; ++first) {
                 if (first->search(str)) {
-                    utils::MatchFinder::report(this->report_message,
+                    utils::MatchFinder::report(this->sesman,
                         &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
                         utils::MatchFinder::ConfigureRegexes::OCR,
                         first->name.c_str(), str);
@@ -679,7 +679,15 @@ protected:
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
-        capture_params.groupid, report_error_from_reporter(capture_params.report_message))
+        capture_params.groupid,
+        [&capture_params](const Error & error){
+            if (capture_params.sesman){
+                if (error.errnum == ENOSPC) {
+                    // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
+                }
+            }
+        })
     , drawable(drawable)
     , start_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
@@ -902,7 +910,7 @@ bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
             }
 
             if (bool(meta_params.log_only_relevant_clipboard_activities)) {
-                auto is = [&](array_view_const_char format){
+                auto is = [&](chars_view format){
                     return format.size() > kv_list[0].value.size()
                         && 0 == strncasecmp(format.data(), kv_list[0].value.data(), format.size());
                 };
@@ -934,8 +942,8 @@ bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
 } // anonymous namespace
 
 namespace {
-    constexpr array_view_const_char session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
-    constexpr array_view_const_char session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
+    constexpr chars_view session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
+    constexpr chars_view session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
 }
 
 /*
@@ -1008,7 +1016,7 @@ public:
         return true;
     }
 
-    void send_line(time_t rawtime, array_view_const_char data) {
+    void send_line(time_t rawtime, chars_view data) {
         this->send_data(rawtime, data, '-');
     }
 
@@ -1020,7 +1028,7 @@ private:
     std::string formatted_message;
 
 public:
-    void title_changed(time_t rawtime, array_view_const_char title) {
+    void title_changed(time_t rawtime, chars_view title) {
         log_format_set_info(this->formatted_message, LogId::TITLE_BAR, {
             KVLog("data"_av, title),
         });
@@ -1067,7 +1075,7 @@ private:
                     ++this->kbd_char_pos;
                 }
             },
-            [this, uchar](array_view_const_char no_printable_str) {
+            [this, uchar](chars_view no_printable_str) {
                 if (uchar == 0x08 && this->kbd_char_pos) {
                     --this->kbd_char_pos;
                     this->kbd_stream.rewind(
@@ -1107,7 +1115,7 @@ private:
         this->kbd_stream.out_copy_bytes(bytes);
     }
 
-    void send_data(time_t rawtime, array_view_const_char data, char sep) {
+    void send_data(time_t rawtime, chars_view data, char sep) {
         this->send_date(rawtime, sep);
         this->trans.send(data);
         this->trans.send("\n"_av);
@@ -1147,7 +1155,7 @@ private:
             }
             this->hidden_masked_char_count = 0;
             log_format_set_info(this->formatted_message, LogId::KBD_INPUT, {
-                KVLog("data"_av, this->kbd_stream.get_bytes().as_chars()),
+                KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
             this->send_data(this->last_time, this->formatted_message, '-');
             this->kbd_stream.rewind();
@@ -1210,14 +1218,23 @@ public:
                 LOG(LOG_ERR, "can't change mod of meta file %s: %s [%d]", filename, strerror(errnum), errnum);
             }
             Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-            if (capture_params.report_message) {
-                report_and_transform_error(
-                    error, ReportMessageReporter{*capture_params.report_message});
+            if (capture_params.sesman) {
+               if (error.errnum == ENOSPC) {
+                   error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                   // ReportMessageReporter
+                   capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
+                }
             }
             throw error; /* NOLINT */
         }
         return fd;
-    }()}, report_error_from_reporter(capture_params.report_message))
+        }()},
+        [&capture_params](const Error & error){
+            if (error.errnum == ENOSPC) {
+                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
+            }
+        })
     , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
     , session_log_agent(this->meta, meta_params)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
@@ -1243,14 +1260,14 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
 
     NotifyTitleChanged & notify_title_changed;
 
-    ReportMessageApi * report_message;
+    AuthApi * sesman;
 public:
     explicit TitleCaptureImpl(
         const timeval & now,
         RDPDrawable & drawable,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed,
-        ReportMessageApi * report_message)
+        AuthApi * sesman)
     : ocr_title_extractor_builder(
         drawable.impl(),
         ocr_params.verbosity,
@@ -1262,7 +1279,7 @@ public:
     , last_ocr(now)
     , usec_ocr_interval(ocr_params.interval)
     , notify_title_changed(notify_title_changed)
-    , report_message(report_message)
+    , sesman(sesman)
     {
     }
 
@@ -1275,14 +1292,14 @@ public:
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
 
-            array_view_const_char title = this->title_extractor.get().extract_title();
+            chars_view title = this->title_extractor.get().extract_title();
 
             if (title.data()/* && title.size()*/) {
                 notify_title_changed.notify_title_changed(now, title);
                 if (&this->title_extractor.get() != &this->agent_title_extractor
-                 && this->report_message)
+                 && this->sesman)
                 {
-                    this->report_message->log6(LogId::TITLE_BAR, tvtime(), {
+                    this->sesman->log6(LogId::TITLE_BAR, {
                         KVLog("source"_av, "OCR"_av),
                         KVLog("window"_av, title),
                     });
@@ -1393,7 +1410,7 @@ public:
 
 
 void Capture::NotifyTitleChanged::notify_title_changed(
-    timeval const & now, array_view_const_char title
+    timeval const & now, chars_view title
 ) {
     if (this->capture.patterns_checker) {
         this->capture.patterns_checker->operator()(title);
@@ -1435,14 +1452,14 @@ Capture::Capture(
     const VideoParams& video_params,
     UpdateProgressData * update_progress_data,
     Rect const & crop_rect)
-: is_replay_mod(!capture_params.report_message)
+: is_replay_mod(!capture_params.sesman)
 , update_progress_data(update_progress_data)
 , mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 , smart_video_cropping(capture_params.smart_video_cropping)
 , verbose(capture_params.verbose)
 {
-   //assert(report_message ? order_bpp == capture_bpp : true);
+   //assert(sesman ? order_bpp == capture_bpp : true);
 
     LOG(LOG_INFO,
         "Enable capture:  wrm=%s  png=%s  kbd=%s  video=%s  video_full=%s  pattern=%s  ocr=%s  meta=%s",
@@ -1456,7 +1473,7 @@ Capture::Capture(
         capture_meta ? "yes" : "no"
     );
 
-    if (capture_png || (capture_params.report_message && (capture_video || capture_ocr))) {
+    if (capture_png || (capture_params.sesman && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
                 S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
             LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
@@ -1512,16 +1529,17 @@ Capture::Capture(
 
                     image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
                 }
-
-                this->png_capture_real_time_obj = std::make_unique<PngCaptureRT>(
-                    capture_params, png_params, *this->gd_drawable, *image_frame_api_real_time_ptr);
+                this->png_capture_real_time_obj =
+                    std::make_unique<PngCaptureRT>(capture_params,
+                                                   png_params,
+                                                   *this->gd_drawable,
+                                                   *image_frame_api_real_time_ptr);
             }
             else {
                 this->png_capture_obj = std::make_unique<PngCapture>(
                     capture_params, png_params, *this->gd_drawable, *image_frame_api_ptr);
             }
         }
-
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
                 capture_params, wrm_params, *this->gd_drawable);
@@ -1554,7 +1572,7 @@ Capture::Capture(
 
         if (capture_pattern_checker) {
             this->patterns_checker = std::make_unique<PatternsChecker>(
-                *capture_params.report_message, pattern_params);
+                *capture_params.sesman, pattern_params);
             if (!this->patterns_checker->contains_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
@@ -1565,7 +1583,7 @@ Capture::Capture(
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                 this->title_capture_obj = std::make_unique<TitleCaptureImpl>(
                     capture_params.now, *this->gd_drawable, ocr_params,
-                    this->notifier_title_changed, capture_params.report_message
+                    this->notifier_title_changed, capture_params.sesman
                 );
             }
             else {
@@ -1611,13 +1629,13 @@ Capture::Capture(
 
         if (kbd_log_params.session_log_enabled) {
             this->session_log_kbd_capture_obj = std::make_unique<SessionLogKbd>(
-                *capture_params.report_message);
+                *capture_params.sesman);
             this->kbds.emplace_back(*this->session_log_kbd_capture_obj);
             this->probes.emplace_back(*this->session_log_kbd_capture_obj);
         }
 
         this->pattern_kbd_capture_obj = std::make_unique<PatternKbd>(
-            capture_params.report_message,
+            capture_params.sesman,
             pattern_params.pattern_kill,
             pattern_params.pattern_notify,
             pattern_params.verbose);

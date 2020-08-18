@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(TestServerRedirectionPDU)
     srv_redir_init.emit(out_buffer);
 
     ServerRedirectionPDU srv_redir_target;
-    InStream in_stream(out_buffer.get_bytes());
+    InStream in_stream(out_buffer.get_produced_bytes());
     srv_redir_target.receive(in_stream);
 
     // srv_redir_target.log(LOG_INFO, "test 2 server_redirection_pdu");

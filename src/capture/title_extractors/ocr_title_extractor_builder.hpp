@@ -51,7 +51,7 @@ public:
     {}
 
     /// \return unchanged title = {nullptr, 0} ; no title = {x, 0}
-    array_view_const_char extract_title() override
+    chars_view extract_title() override
     {
         this->titles.clear();
 

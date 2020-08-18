@@ -34,7 +34,7 @@
 class RDPSurfaceContent {
 public:
     RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride, const Rect &rect,
-            const SubRegion &region, array_view_const_u8 content)
+            const SubRegion &region, u8_array_view content)
     : stride(stride)
     , width(width)
     , data(new uint8_t[stride * height * 4]())
@@ -54,7 +54,7 @@ public:
     uint8_t *data;
     Rect rect;
     const SubRegion &region;
-    array_view_const_u8 encodedContent;
+    u8_array_view encodedContent;
 };
 
 /** @brief a SetSurface command */

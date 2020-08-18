@@ -29,6 +29,7 @@
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
+#include "transport/transport.hpp"
 #include "core/front_api.hpp"
 #include "core/server_notifier_api.hpp"
 #include "core/RDP/clipboard.hpp"
@@ -38,8 +39,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/rdp_pointer.hpp"
-#include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
 
 #include "gdi/screen_functions.hpp"
 #include "gdi/graphic_api.hpp"
@@ -59,6 +58,9 @@
 #include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
 
+#include "utils/timebase.hpp"
+#include "core/events.hpp"
+
 #ifndef __EMSCRIPTEN__
 # include "mod/vnc/vnc_metrics.hpp"
 #else
@@ -75,9 +77,11 @@ class VNCMetrics;
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/newline_convert.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "acl/auth_api.hpp"
 
 class UltraDSM;
 class mod_vnc;
+class GdProvider;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -312,26 +316,27 @@ private:
     VeNCryptState vencryptState = WAIT_VENCRYPT_VERSION;
 
     bool     clipboard_requesting_for_data_is_delayed = false;
-    int      clipboard_requested_format_id            = 0;
+    uint32_t clipboard_requested_format_id            = 0;
     std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
     ClipboardEncodingType clipboard_server_encoding_type;
     bool clipboard_owned_by_client = true;
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
     uint32_t clipboard_general_capability_flags = 0;
-    ReportMessageApi & report_message;
     time_t beginning;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 
-    SessionReactor& session_reactor;
-    SessionReactor::GraphicFdPtr fd_event;
-    SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
+    TimeBase& time_base;
+    GdProvider & gd_provider;
+    EventContainer & events;
+    int clipboard_timeout_timer = 0;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
+    AuthApi & sesman;
 #endif
     /** @brief type of VNC authentication */
-    enum VncAuthType : uint16_t {
+    enum VncAuthType : int32_t {
         VNC_AUTH_INVALID     = 0,
         VNC_AUTH_NONE         = 1,
         VNC_AUTH_VNC         = 2,
@@ -339,15 +344,17 @@ private:
         VNC_AUTH_ULTRA        = 17,
         VNC_AUTH_TLS         = 18,
         VNC_AUTH_VENCRYPT    = 19,
+        VNC_AUTH_ULTRA_MsLogonIAuth = 112,
+        VNC_AUTH_ULTRA_MsLogonIIAuth = 113,
         VNC_AUTH_ULTRA_SecureVNCPluginAuth = 114,
         VNC_AUTH_ULTRA_SecureVNCPluginAuth_new = 115,
-        VNC_AUTH_MS_LOGON    = 0x100-6,
         VeNCRYPT_TLSNone     = 257,
         VeNCRYPT_TLSVnc     = 258,
         VeNCRYPT_TLSPlain     = 259,
         VeNCRYPT_X509None    = 260,
         VeNCRYPT_X509Vnc    = 261,
         VeNCRYPT_X509Plain    = 262,
+        VNC_AUTH_ULTRA_MS_LOGON = -6,
     };
 
     VncAuthType choosenAuth;
@@ -356,7 +363,9 @@ private:
 
 public:
     mod_vnc( Transport & t
-           , SessionReactor& session_reactor
+           , TimeBase& time_base
+           , GdProvider & gd_provider
+           , EventContainer & events
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -370,14 +379,21 @@ public:
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , ReportMessageApi & report_message
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
-           );
+           , AuthApi & sesman);
+
+    std::string module_name() override {return "VNC Mod";}
+
+    ~mod_vnc(){
+        this->events.end_of_lifespan(this);
+    }
+
+    void init() override;
 
     template<std::size_t MaxLen>
     class MessageCtx
@@ -453,7 +469,7 @@ public:
                 return State::Data;
             }
 
-            f(array_view_u8{buf.av().data(), sz});
+            f(u8_array_view{buf.av().data(), sz});
             buf.advance(sz);
 
             if (sz == this->len) {
@@ -531,7 +547,7 @@ public:
             this->state = State::Header;
         }
 
-        template<class F> // f(bool status, array_view_u8 raison_fail)
+        template<class F> // f(bool status, u8_array_view raison_fail)
         bool run(Buf64k & buf, F && f)
         {
             switch (this->state)
@@ -539,7 +555,7 @@ public:
                 case State::Header:
                     if (auto r = this->read_header(buf)) {
                         if (r == State::Finish) {
-                            f(true, array_view_u8{});
+                            f(true, nullptr);
                             return true;
                         }
                         this->reason.restart();
@@ -550,7 +566,7 @@ public:
                     }
                     REDEMPTION_CXX_FALLTHROUGH;
                 case State::ReasonFail:
-                    return this->reason.run(buf, [&f](array_view_u8 av){ f(false, av); });
+                    return this->reason.run(buf, [&f](u8_array_view av){ f(false, av); });
                 case State::Finish:
                     return true;
             }
@@ -852,6 +868,7 @@ public:
     void rdp_input_invalidate(Rect r) override;
 
     void refresh(Rect r) override {
+        LOG(LOG_INFO, "Front::refresh");
         this->rdp_input_invalidate(r);
     }
 
@@ -976,7 +993,7 @@ protected:
         };
 
     public:
-        array_view_u8 server_random;
+        writable_u8_array_view server_random;
 
         void restart() noexcept
         {
@@ -1087,9 +1104,9 @@ public:
     void draw_event(gdi::GraphicApi & gd);
 
 private:
-    static const char *securityTypeString(uint32_t t);
+    static const char *securityTypeString(int32_t t);
 
-    void updatePreferedAuth(uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
+    void updatePreferedAuth(int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex);
 
     bool readSecurityResult(InStream &s, uint32_t &status, bool &haveReason, std::string &reason, size_t &skipLen) const;
 
@@ -1591,12 +1608,9 @@ private:
             return this->clipboard_down_is_really_enabled;
         }
 
-        [[nodiscard]] array_view_const_u8 clipboard_data() const noexcept
+        [[nodiscard]] bytes_view clipboard_data() const noexcept
         {
-            return {
-                this->to_rdp_clipboard_data.get_data(),
-                this->to_rdp_clipboard_data.get_offset()
-            };
+            return this->to_rdp_clipboard_data.get_consumed_bytes();
         }
 
         [[nodiscard]] bool clipboard_data_is_utf8_encoded() const noexcept
@@ -1720,6 +1734,9 @@ private:
             size_t length, size_t chunk_size, int flags);
 public:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, size_t length, uint32_t flags) override;
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override { LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");}
+    void send_checkout_channel_data(const char * /*data*/) override { LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");}
 
 private:
     void send_clipboard_pdu_to_front(const OutStream & out_stream);
@@ -1728,7 +1745,8 @@ private:
 
 public:
     // Front calls this member function when it became up and running.
-    void rdp_input_up_and_running() override;
+    void rdp_gdi_up_and_running() override;
+    void rdp_gdi_down() override {}
 
 private:
     [[nodiscard]] bool is_up_and_running() const override {
@@ -1738,10 +1756,12 @@ private:
     void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable);
 
 public:
+
+    bool server_error_encountered() const override { return false; }
+
     void disconnect() override;
 
     [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
 };
-
 

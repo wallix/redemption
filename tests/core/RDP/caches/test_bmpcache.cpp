@@ -8669,7 +8669,7 @@ RED_AUTO_TEST_CASE(BmpcachePutAndGet)
         BmpCache::CacheOption(),
         BmpCache::Verbose::none);
     {
-        Bitmap bmp = bitmap_from_file("no_image");
+        Bitmap bmp = bitmap_from_file("no_image", BLACK);
         RED_CHECK(bmp.is_valid());
         bmpcache.put(0, RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX, bmp, ~0, ~0);
     }

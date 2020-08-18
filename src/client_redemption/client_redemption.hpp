@@ -27,13 +27,16 @@
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
 
+#include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
+#include "acl/gd_provider.hpp"
 
-#include "core/RDP/channels/rdpdr.hpp"
+#include "core/channels_authorizations.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
+#include "core/RDP/gcc/userdata/cs_net.hpp"
 
 #include "gdi/graphic_api.hpp"
 
@@ -43,7 +46,6 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 
-#include "transport/crypto_transport.hpp"
 #include "transport/replay_transport.hpp"
 #include "transport/socket_transport.hpp"
 
@@ -53,7 +55,10 @@
 #include "capture/capture_params.hpp"
 #include "capture/wrm_capture.hpp"
 
-#include "front/execute_events.hpp"
+#include "utils/timebase.hpp"
+#include "utils/select.hpp"
+#include "utils/redirection_info.hpp"
+#include "core/events.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
@@ -61,20 +66,15 @@
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
-//
 #include "client_redemption/client_config/client_redemption_config.hpp"
-//
-// #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include <iostream>
 
-#include <openssl/ssl.h>
 
 
 class ClientRedemption : public ClientRedemptionAPI, public gdi::GraphicApi
 {
-
 public:
     ClientRedemptionConfig & config;
 
@@ -86,19 +86,22 @@ public:
     int               client_sck;
 
 private:
-    TimeSystem        timeSystem;
-    NullAuthentifier  authentifier;
-    NullReportMessage reportMessage;
     NullLicenseStore  licensestore;
 
 public:
     ClientCallback _callback;
+private:
     ClientChannelMod channel_mod;
-    SessionReactor& session_reactor;
+public:
+    TimeBase& time_base;
+    EventContainer& events;
 
+private:
     std::unique_ptr<Transport> _socket_in_recorder;
+public:
     std::unique_ptr<ReplayMod> replay_mod;
 
+private:
     // RDP
     CHANNELS::ChannelDefArray   cl;
     std::string          _error;
@@ -106,8 +109,10 @@ public:
     std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
+    Sesman sesman;
     Theme theme;
     Font font;
+    RedirectionInfo redir_info;
     std::string close_box_extra_message_ref;
 
     //  Remote App
@@ -123,21 +128,24 @@ public:
         CHANID_RDPSND  = 1604,
         CHANID_RAIL    = 1605
     };
+public:
         //  RDP Channel managers
     ClientRDPSNDChannel    clientRDPSNDChannel;
     ClientCLIPRDRChannel   clientCLIPRDRChannel;
     ClientRDPDRChannel     clientRDPDRChannel;
     ClientRemoteAppChannel clientRemoteAppChannel;
 
+private:
     // Recorder
     Fstat fstat;
 
+public:
     timeval start_connection_time;                          // when socket is connected
     timeval start_wab_session_time;                         // when the first resize is received
     timeval start_win_session_time;                         // when the first memblt is received
 
+private:
     bool secondary_connection_finished;
-    bool primary_connection_finished;
 
     struct Capture
     {
@@ -230,26 +238,28 @@ public:
 
     std::string       local_IP;
     bool wab_diag_channel_on = false;
-
-
+    GdForwarder gd_forwarder;
 
 public:
-    ClientRedemption(SessionReactor & session_reactor,
+    ClientRedemption(TimeBase& time_base,
+                     EventContainer& events,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
-        , session_reactor(session_reactor)
+        , time_base(time_base)
+        , events(events)
+        , sesman(ini, time_base)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(session_reactor, *this, *this, this->config.info.window_list_caps, false)
+        , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
         , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod))
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
-        , primary_connection_finished(false)
         , local_IP("unknown_local_IP")
+        , gd_forwarder(*this)
     {
         this->rail_client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
@@ -281,32 +291,12 @@ public:
         }
     }
 
-
-
-
-    bool is_connected() override {
-        return this->config.connected;
-    }
-
-    int wait_and_draw_event(std::chrono::milliseconds timeout) override
-    {
-        if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
-            *this->_callback.get_mod(), *this
-        )) {
-            LOG(LOG_ERR, "RDP CLIENT :: errno = %s", strerror(errno));
-            return 9;
-        }
-        return 0;
-    }
-
     void update_keylayout() override {
 
         switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_VNC:
                 this->_callback.init_layout(this->config.modVNCParamsData.keylayout);
                 break;
-
             default: this->_callback.init_layout(this->config.info.keylayout);
                 break;
         }
@@ -381,14 +371,13 @@ public:
                   , this->config.verbose
                 );
 
-                mod_rdp_params.device_id                       = "device_id";
-                mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
-                mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
-                mod_rdp_params.enable_fastpath                 = true;
-                mod_rdp_params.enable_new_pointer              = true;
-                mod_rdp_params.enable_glyph_cache              = true;
-//                 mod_rdp_params.enable_ninegrid_bitmap          = true;
-                mod_rdp_params.enable_remotefx                    = this->config.enable_remotefx;
+                mod_rdp_params.device_id          = "device_id";
+                mod_rdp_params.enable_tls         = this->config.modRDPParamsData.enable_tls;
+                mod_rdp_params.enable_nla         = this->config.modRDPParamsData.enable_nla;
+                mod_rdp_params.enable_fastpath    = true;
+                mod_rdp_params.enable_new_pointer = true;
+                mod_rdp_params.enable_glyph_cache = true;
+                mod_rdp_params.enable_remotefx    = this->config.enable_remotefx;
                 mod_rdp_params.file_system_params.enable_rdpdr_data_analysis = false;
 
                 const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
@@ -417,18 +406,18 @@ public:
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket
-                  , session_reactor
+                  , this->time_base
+                  , this->gd_forwarder
+                  , this->events
+                  , this->sesman
                   , *this
                   , *this
                   , this->config.info
-                  , ini.get_mutable_ref<cfg::mod_rdp::redir_info>()
+                  , this->redir_info
                   , *this->gen
-                  , this->timeSystem
                   , channels_authorizations
                   , mod_rdp_params
                   , tls_client_params
-                  , this->authentifier
-                  , this->reportMessage
                   , this->licensestore
                   , this->ini
                   , nullptr
@@ -450,7 +439,10 @@ public:
             case ClientRedemptionConfig::MOD_VNC:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
-                  , this->session_reactor
+                  , this->time_base
+                  , this->gd_forwarder
+                  , this->events
+                  , this->sesman
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
                   , *this
@@ -461,7 +453,6 @@ public:
                   , true
                   , true
                   , this->config.modVNCParamsData.vnc_encodings.c_str()
-                  , this->reportMessage
                   , this->config.modVNCParamsData.is_apple
                   , true                                    // alt server unix
                   , true                                    // support Cursor Pseudo-encoding
@@ -489,7 +480,7 @@ public:
             LOG(LOG_INFO, "Replay %s", this->config.full_capture_file_name);
             auto transport = std::make_unique<ReplayTransport>(
                 this->config.full_capture_file_name.c_str(), this->config.target_IP.c_str(), this->config.port,
-                this->timeSystem, ReplayTransport::FdType::Timer,
+                this->time_base, ReplayTransport::FdType::Timer,
                 ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
             this->client_sck = transport->get_fd();
@@ -520,7 +511,8 @@ public:
                 if (this->config.is_full_capturing) {
                     this->_socket_in_recorder = std::move(this->socket);
                     this->socket = std::make_unique<RecorderTransport>(
-                        *this->_socket_in_recorder, this->timeSystem, this->config.full_capture_file_name.c_str());
+                        *this->_socket_in_recorder, this->time_base,
+                                this->config.full_capture_file_name.c_str());
                 }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->config.target_IP);
@@ -553,7 +545,6 @@ public:
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
 
         ClientConfig::writeWindowsData(this->config.windowsData);
-        ClientConfig::writeCustomKeyConfig(this->config);
         ClientConfig::writeClientInfo(this->config);
 
         this->config.port          = port;
@@ -703,6 +694,7 @@ public:
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
             , 0
+            , -1
         );
 
         CaptureParams captureParams;
@@ -711,7 +703,7 @@ public:
         captureParams.record_tmp_path = record_path.c_str();
         captureParams.record_path = record_path.c_str();
         captureParams.groupid = 0;
-        captureParams.report_message = nullptr;
+        captureParams.sesman = nullptr;
 
         this->capture = std::make_unique<Capture>(
             this->config.info.screen_info.width, this->config.info.screen_info.height,
@@ -719,11 +711,11 @@ public:
     }
 
 
-    bool load_replay_mod(timeval begin_read, timeval end_read) override {
+    bool load_replay_mod(timeval begin_read, timeval end_read) override
+    {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
-                this->session_reactor
-              , *this
+                *this
               , *this
               , this->config._movie_full_path.c_str()
               , 0             //this->config.info.width
@@ -757,8 +749,8 @@ public:
         return false;
     }
 
-    void replay( const std::string & movie_path) override {
-
+    void replay( const std::string & movie_path) override
+    {
         auto const last_delimiter_it = std::find(movie_path.rbegin(), movie_path.rend(), '/');
 //         int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
 
@@ -788,10 +780,8 @@ public:
         this->config.is_loading_replay_mod = false;
     }
 
-
-
-    virtual void print_wrm_graphic_stat(const std::string & /*movie_path*/) {
-
+    virtual void print_wrm_graphic_stat(const std::string & /*movie_path*/)
+    {
         for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
             unsigned int to_count = this->wrmGraphicStat.get_count(i);
             std::string spacer("       ");
@@ -805,42 +795,38 @@ public:
         }
     }
 
-
-
- timeval reload_replay_mod(int begin, timeval now_stop) override {
-
+    timeval reload_replay_mod(int begin, timeval now_stop) override
+    {
         timeval movie_time_start;
 
         switch (this->replay_mod->get_wrm_version()) {
-
-                case WrmVersion::v1:
-                    if (this->load_replay_mod({0, 0}, {0, 0})) {
-                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
-                        movie_time_start = tvtime();
-                        return movie_time_start;
-                    }
-                    break;
-
-                case WrmVersion::v2:
-                {
-                    int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
-                    this->config.is_loading_replay_mod = true;
-                    if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
-
-                        this->config.is_loading_replay_mod = false;
-
-                        this->instant_replay_client(begin, last_balised);
-
-                        movie_time_start = tvtime();
-                        timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
-                        timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
-                        this->replay_mod->set_wait_after_load_client(wait_duration);
-                    }
-                    this->config.is_loading_replay_mod = false;
-
+            case WrmVersion::v1:
+                if (this->load_replay_mod({0, 0}, {0, 0})) {
+                    this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+                    movie_time_start = tvtime();
                     return movie_time_start;
                 }
-                    break;
+                break;
+
+            case WrmVersion::v2:
+            {
+                int last_balised = (begin / ClientRedemptionConfig::BALISED_FRAME);
+                this->config.is_loading_replay_mod = true;
+                if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+
+                    this->config.is_loading_replay_mod = false;
+
+                    this->instant_replay_client(begin, last_balised);
+
+                    movie_time_start = tvtime();
+                    timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
+                    timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
+                    this->replay_mod->set_wait_after_load_client(wait_duration);
+                }
+                this->config.is_loading_replay_mod = false;
+
+                return movie_time_start;
+            }
         }
 
         return movie_time_start;
@@ -963,37 +949,6 @@ public:
             "RDP::RAIL::NonMonitoredDesktop");
         cmd.log(LOG_INFO);
     }
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //--------------------------------
-    //    SOCKET EVENTS FUNCTIONS
-    //--------------------------------
-
-    void callback(bool is_timeout) override {
-
-        try {
-            auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
-            if (is_timeout) {
-                this->session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
-            } else {
-                auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
-                    return true /*this->socket->get_fd() == fd*/;
-                };
-                this->session_reactor.execute_events(is_mod_fd);
-                this->session_reactor.execute_graphics(is_mod_fd, get_gd());
-            }
-        } catch (const Error & e) {
-
-            const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
-            LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
-            std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
-            this->disconnect(labelErrorMsg, true);
-        }
-    }
-
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
@@ -1162,13 +1117,6 @@ public:
 
     void draw(const RDP::FrameMarker& order) override {
         this->draw_impl(no_log{}, order);
-    }
-
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
-        (void) bmp;
     }
 
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override

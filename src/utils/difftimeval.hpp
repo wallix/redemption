@@ -26,49 +26,6 @@
 
 #include <chrono>
 
-class TimeObj {
-public:
-    virtual ~TimeObj() = default;
-    virtual timeval get_time() = 0;
-};
-
-class TimeSystem : public TimeObj {
-public:
-    TimeSystem() = default;
-
-    timeval get_time() override {
-        timeval tv;
-        gettimeofday(&tv, nullptr);
-        return tv;
-    }
-};
-
-// TODO should be to test_only/
-class LCGTime : public TimeObj
-{
-    uint32_t seed = 7984813;
-
-public:
-    explicit LCGTime() = default;
-
-    explicit LCGTime(uint32_t seed)
-    : seed(seed)
-    {}
-
-    timeval get_time() override
-    {
-        timeval tv;
-        tv.tv_sec = this->rand32();
-        tv.tv_usec = this->rand32();
-        return tv;
-    }
-
-    uint32_t rand32()
-    {
-        return this->seed = 6843513UL * this->seed + 451209UL;
-    }
-};
-
 static inline std::chrono::milliseconds to_ms(timeval const& tv)
 {
     return std::chrono::milliseconds(

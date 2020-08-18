@@ -22,19 +22,25 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 #include <memory>
 
 class ClientExecute;
 class FrontAPI;
-class ReportMessageApi;
-class SessionReactor;
+class TimeBase;
 class Transport;
 class VNCMetrics;
+class AuthApi;
+class GdProvider;
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
+    GdProvider & gd_provider,
+    EventContainer & events,
+    AuthApi & sesman,
     const char* username,
     const char* password,
     FrontAPI& front,
@@ -45,7 +51,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     bool clipboard_up,
     bool clipboard_down,
     const char * encodings,
-    ReportMessageApi& report_message,
     bool server_is_macos,
     bool send_alt_ksym,
     bool cursor_pseudo_encoding_supported,

@@ -39,6 +39,7 @@
     fv(ERR_MEMORY_ALLOCATION_FAILED, 200)                    \
                                                              \
     fv(ERR_SOCKET_CONNECT_FAILED, 1000)                      \
+    f(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED)                \
                                                              \
     fv(ERR_TRANSPORT, 1500)                                  \
     f(ERR_TRANSPORT_NO_MORE_DATA)                            \
@@ -184,6 +185,12 @@
     f(ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) \
     f(ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)           \
                                                              \
+    fv(ERR_SESSION_CLOSE_USER_INACTIVITY, 24500)             \
+    f(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE)             \
+    f(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED)                \
+    f(ERR_SESSION_CLOSE_ENDDATE_REACHED)                     \
+    f(ERR_SESSION_CLOSE_MODULE_NEXT)                         \
+                                                             \
     fv(ERR_SSL_CALL_FAILED, 25000)                           \
     f(ERR_SSL_CALL_HMAC_INIT_FAILED)                         \
     f(ERR_SSL_CALL_HMAC_UPDATE_FAILED)                       \
@@ -197,7 +204,9 @@
                                                              \
     fv(ERR_CRYPTO_BUFFER_TOO_SMALL, 25500)                   \
     f(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL)                    \
-    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)
+    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)           \
+                                                             \
+    fv(ERR_BACK_EVENT_NEXT, 30000)
 
 
 #define MAKE_ENUM(e) e,
@@ -209,15 +218,31 @@ enum error_type
 #undef MAKE_ENUM
 #undef MAKE_ENUM_V
 
+inline const char * error_name(error_type id)
+{
+#define MAKE_NAME(e) case e: return "" #e "";
+#define MAKE_NAME_V(e, x) case e: return "" #e "";
+    switch (id){
+        EACH_ERROR(MAKE_NAME, MAKE_NAME_V)
+    }
+#undef MAKE_NAME
+#undef MAKE_NAME_V
+    return "COMPILER_ERROR";
+}
+
 
 struct Error
 {
     error_type id;
     int errnum;
 
+    uintptr_t data;
+
 public:
     Error() = delete;
-    explicit Error(error_type id, int errnum = 0) noexcept; /*NOLINT*/
+    explicit Error(error_type id) noexcept;
+    explicit Error(error_type id, int errnum) noexcept;
+    explicit Error(error_type id, int errnum, uintptr_t data) noexcept;
 
     [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept; /*NOLINT*/
 };

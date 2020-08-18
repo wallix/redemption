@@ -29,7 +29,6 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/image_data_view.hpp"
 #include "utils/difftimeval.hpp"
 
 #include <chrono>
@@ -41,7 +40,7 @@ namespace
 {
     enum : int {
         PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - 8
-      , PASTE_PIC_CONTENT_SIZE  = CHANNELS::CHANNEL_CHUNK_LENGTH - RDPECLIP::METAFILE_HEADERS_SIZE - 8
+      , PASTE_PIC_CONTENT_SIZE  = PASTE_TEXT_CONTENT_SIZE - int(RDPECLIP::METAFILE_HEADERS_SIZE)
     };
 
     namespace custom_formats
@@ -689,13 +688,14 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
     }
 }
 
-void ClientCLIPRDRChannel::send_UnlockPDU(uint32_t streamID) {
+void ClientCLIPRDRChannel::send_UnlockPDU(uint32_t streamID) const
+{
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
     RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(streamID);
     StaticOutStream<32> out_stream_unlock;
     header.emit(out_stream_unlock);
     unlockClipboardDataPDU.emit(out_stream_unlock);
-    InStream chunk_unlock(out_stream_unlock.get_bytes());
+    InStream chunk_unlock(out_stream_unlock.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk_unlock
@@ -766,7 +766,8 @@ void ClientCLIPRDRChannel::empty_buffer() {
     this->_waiting_for_data = false;
 }
 
-void ClientCLIPRDRChannel::emptyLocalBuffer() {
+void ClientCLIPRDRChannel::emptyLocalBuffer() const
+{
     this->clientIOClipboardAPI->emptyBuffer();
 }
 
@@ -780,7 +781,7 @@ void ClientCLIPRDRChannel::send_FormatListPDU() {
     Cliprdr::format_list_serialize_with_header(
         out_stream, Cliprdr::IsLongFormat(true), &format, &format+1);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                 , chunk
@@ -807,7 +808,7 @@ void ClientCLIPRDRChannel::process_monitor_ready()
         general_cap_set.emit(out_stream);
 
         const uint32_t total_length = out_stream.get_offset();
-        InStream chunk(out_stream.get_bytes());
+        InStream chunk(out_stream.get_produced_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk
@@ -825,7 +826,7 @@ void ClientCLIPRDRChannel::process_monitor_ready()
             out_stream, Cliprdr::IsLongFormat(this->server_use_long_format_names),
             this->format_name_list);
 
-        InStream chunk(out_stream.get_bytes());
+        InStream chunk(out_stream.get_produced_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                     , chunk
@@ -855,7 +856,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     Cliprdr::format_list_extract(
         chunk,
         Cliprdr::IsLongFormat(this->server_use_long_format_names),
-        Cliprdr::IsAscii(msgFlags & RDPECLIP::CB_ASCII_NAMES),
+        Cliprdr::IsAscii(bool(msgFlags & RDPECLIP::CB_ASCII_NAMES)),
         [&](uint32_t format_id, auto format_name) {
             if (auto* format_name_ = this->format_name_list.find(format_id)) {
                 if (Cliprdr::formats::file_group_descriptor_w.same_as(format_name)) {
@@ -881,7 +882,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     StaticOutStream<256> out_stream;
     RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
     formatListResponsePDUHeader.emit(out_stream);
-    InStream chunk_format_list(out_stream.get_bytes());
+    InStream chunk_format_list(out_stream.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk_format_list
@@ -896,7 +897,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     StaticOutStream<32> out_stream_lock;
     lockClipboardDataHeader.emit(out_stream_lock);
     lockClipboardDataPDU.emit(out_stream_lock);
-    InStream chunk_lock(out_stream_lock.get_bytes());
+    InStream chunk_lock(out_stream_lock.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk_lock
@@ -911,7 +912,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     StaticOutStream<256> out_streamRequest;
     formatListRequestPDUHeader.emit(out_streamRequest);
     formatDataRequestPDU.emit(out_streamRequest);
-    InStream chunkRequest(out_streamRequest.get_bytes());
+    InStream chunkRequest(out_streamRequest.get_produced_bytes());
 
     this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunkRequest
@@ -924,7 +925,8 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     this->paste_data_request_time = tvtime();
 }
 
-void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
+void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) const
+{
     int first_part_data_size(0);
     uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
     StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
@@ -1019,7 +1021,7 @@ void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
                     out_stream_first_part.out_uint32_le(0);
                     data_sent += 4;
                 }
-                InStream chunk_first_part( out_stream_first_part.get_bytes());
+                InStream chunk_first_part( out_stream_first_part.get_produced_bytes());
 
                 this->callback->send_to_mod_channel( channel_names::cliprdr
                                                     , chunk_first_part
@@ -1050,7 +1052,7 @@ void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
                         data_sent += 4;
                     }
 
-                    InStream chunk_next_part(out_stream_next_part.get_bytes());
+                    InStream chunk_next_part(out_stream_next_part.get_produced_bytes());
 
                     this->callback->send_to_mod_channel( channel_names::cliprdr
                                                     , chunk_next_part
@@ -1071,7 +1073,8 @@ void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) {
     }
 }
 
-void ClientCLIPRDRChannel::process_filecontents_request(InStream & chunk) {
+void ClientCLIPRDRChannel::process_filecontents_request(InStream & chunk) const
+{
     uint32_t streamID(chunk.in_uint32_le());
     int lindex(chunk.in_uint32_le());
 
@@ -1088,7 +1091,7 @@ void ClientCLIPRDRChannel::process_filecontents_request(InStream & chunk) {
             fileSizeHeader.emit(out_stream);
             fileSize.emit(out_stream);
 
-            InStream chunk_to_send(out_stream.get_bytes());
+            InStream chunk_to_send(out_stream.get_produced_bytes());
             this->callback->send_to_mod_channel( channel_names::cliprdr
                                             , chunk_to_send
                                             , out_stream.get_offset()

@@ -60,7 +60,7 @@ struct WsHttpHeader
         Completed,
     };
 
-    State extract(array_view_const_char in) noexcept
+    State extract(chars_view in) noexcept
     {
         if (in.size() < 5
          || in[in.size()-4] != '\r'
@@ -71,9 +71,8 @@ struct WsHttpHeader
             return State::Partial;
         }
 
-        auto extract_http_header_value = [&](array_view_const_char needle, auto cb){
-            auto it = std::search(in.begin(), in.end(),
-                std::boyer_moore_searcher(needle.begin(), needle.end()));
+        auto extract_http_header_value = [&](chars_view needle, auto cb){
+            auto it = std::search(in.begin(), in.end(), needle.begin(), needle.end());
             if (it != in.end()) {
                 it += needle.size();
                 auto e = it;
@@ -83,7 +82,7 @@ struct WsHttpHeader
             }
         };
 
-        extract_http_header_value("\r\nSec-WebSocket-Key: "_av, [&](array_view_const_char value){
+        extract_http_header_value("\r\nSec-WebSocket-Key: "_av, [&](chars_view value){
             constexpr auto WS_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"_av;
             SslSha1 sha1;
             uint8_t digest[SslSha1::DIGEST_LENGTH];
@@ -91,7 +90,7 @@ struct WsHttpHeader
             sha1.update(WS_GUID);
             sha1.final(digest);
             static_assert(base64_encode_size(sizeof(digest)) == sizeof(this->base64_key_rep));
-            base64_encode(make_array_view(digest), this->base64_key_rep);
+            base64_encode(make_array_view(digest), writable_bytes_view(this->base64_key_rep));
         });
 
         return State::Completed;

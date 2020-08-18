@@ -488,8 +488,11 @@ operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
 
 enum class RdpModeConsole : unsigned char
 {
+    // Forward Console mode request from client to the target.
     allow = 0,
+    // Force Console mode on target regardless of client request.
     force = 1,
+    // Block Console mode request from client.
     forbid = 2,
 };
 
@@ -523,13 +526,11 @@ enum class SessionProbeDisabledFeature : unsigned short
     ie_monitoring = 128,
     // Inspect group membership of user
     group_membership = 256,
-    // BestSafe integration
-    bestsafe_integration = 512,
 };
 
 inline bool is_valid_enum_value(SessionProbeDisabledFeature e)
 {
-    return static_cast<unsigned long>(e) <= 1023;
+    return static_cast<unsigned long>(e) <= 511;
 }
 
 inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
@@ -537,7 +538,7 @@ inline SessionProbeDisabledFeature operator | (SessionProbeDisabledFeature x, Se
 inline SessionProbeDisabledFeature operator & (SessionProbeDisabledFeature x, SessionProbeDisabledFeature y)
 { return static_cast<SessionProbeDisabledFeature>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline SessionProbeDisabledFeature operator ~ (SessionProbeDisabledFeature x)
-{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(1023)); }
+{ return static_cast<SessionProbeDisabledFeature>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(511)); }
 inline SessionProbeDisabledFeature operator + (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x | y; }
 inline SessionProbeDisabledFeature operator - (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x & ~y; }
 inline SessionProbeDisabledFeature & operator |= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x | y; }
@@ -587,6 +588,62 @@ inline bool is_valid_enum_value(SessionProbeOnAccountManipulation e)
 template<class Ch, class Tr>
 std::basic_ostream<Ch, Tr> &
 operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnAccountManipulation e)
+{ return os << static_cast<unsigned long>(e); }
+
+
+// Client Address to send to target(in InfoPacket)
+enum class ClientAddressSent : unsigned char
+{
+    // Send 0.0.0.0
+    no_address = 0,
+    // Send proxy client address or target connexion
+    proxy = 1,
+    // Send user client address of front connexion
+    front = 2,
+};
+
+inline bool is_valid_enum_value(ClientAddressSent e)
+{ return static_cast<unsigned long>(e) <= 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, ClientAddressSent e)
+{ return os << static_cast<unsigned long>(e); }
+
+
+enum class SessionProbeLogLevel : unsigned char
+{
+    Off = 0,
+    Fatal = 1,
+    Error = 2,
+    Info = 3,
+    Warning = 4,
+    Debug = 5,
+    Detail = 6,
+};
+
+inline bool is_valid_enum_value(SessionProbeLogLevel e)
+{ return static_cast<unsigned long>(e) <= 6; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeLogLevel e)
+{ return os << static_cast<unsigned long>(e); }
+
+
+enum class ModRdpUseFailureSimulationSocketTransport : unsigned char
+{
+    Off = 0,
+    SimulateErrorRead = 1,
+    SimulateErrorWrite = 2,
+};
+
+inline bool is_valid_enum_value(ModRdpUseFailureSimulationSocketTransport e)
+{ return static_cast<unsigned long>(e) <= 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, ModRdpUseFailureSimulationSocketTransport e)
 { return os << static_cast<unsigned long>(e); }
 
 

@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestCapabilityCompDeskEmit)
 
     StaticOutStream<1024> out_stream;
     compdesk_caps.emit(out_stream);
-    InStream stream(out_stream.get_bytes());
+    InStream stream(out_stream.get_produced_bytes());
 
     CompDeskCaps compdesk_caps2;
 

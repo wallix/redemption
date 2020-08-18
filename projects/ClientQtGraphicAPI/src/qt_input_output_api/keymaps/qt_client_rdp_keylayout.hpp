@@ -30,9 +30,9 @@
 
 class QtClientRDPKeyLayout : public ClientKeyLayoutAPI {
 
-public:
     Qt_ScanCode_KeyMap qtRDPKeymap;
 
+public:
     QtClientRDPKeyLayout()
     : ClientKeyLayoutAPI()
     , qtRDPKeymap()
@@ -40,12 +40,11 @@ public:
 
     ~QtClientRDPKeyLayout() = default;
 
-
-    virtual void update_keylayout(const int LCID) override {
+    void update_keylayout(int LCID) override {
         this->qtRDPKeymap.setKeyboardLayout(LCID);
     }
 
-    void init(const int flag, const int key, std::string const& text) override {
+    void key_event(int flag, int key, std::string_view text) override {
         this->qtRDPKeymap.keyEvent(flag, key, text);
     }
 
@@ -56,26 +55,4 @@ public:
     int get_flag() override {
         return this->qtRDPKeymap.flag;
     }
-
-    void clearCustomKeyCode() override {
-        this->qtRDPKeymap.clearCustomKeyCode();
-    }
-
-    void setCustomKeyCode(const int qtKeyID, const int scanCode, const std::string & ASCII8, const int extended) override {
-        this->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-    }
-
-    KeyCustomDefinition get_key_info(int keycode, std::string const& text) override {
-        this->qtRDPKeymap.keyEvent(0, keycode, text);
-        KeyCustomDefinition key_info(
-            this->qtRDPKeymap.qKeyCode,
-            this->qtRDPKeymap.scanCode,
-            this->qtRDPKeymap.ascii,
-            this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
-            this->qtRDPKeymap.qKeyName
-          );
-
-        return key_info;
-    }
-
 };

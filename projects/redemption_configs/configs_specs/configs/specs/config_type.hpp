@@ -181,9 +181,9 @@ inline void config_type_definition(type_enumerations & e)
     ;
 
     e.enumeration_list("RdpModeConsole")
-      .value("allow")
-      .value("force")
-      .value("forbid")
+      .value("allow", "Forward Console mode request from client to the target.")
+      .value("force", "Force Console mode on target regardless of client request.")
+      .value("forbid", "Block Console mode request from client.")
       .set_string_parser()
     ;
 
@@ -198,7 +198,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("firefox_inspection", "Inspect Firefox Address/Search bar")
       .value("ie_monitoring", "Monitor Internet Explorer event")
       .value("group_membership", "Inspect group membership of user")
-      .value("bestsafe_integration", "BestSafe integration")
     ;
 
     e.enumeration_list("RdpStoreFile")
@@ -212,6 +211,28 @@ inline void config_type_definition(type_enumerations & e)
       .value("allow",  "User action will be accepted")
       .value("notify", "(Same thing as 'allow') ")
       .value("deny",   "User action will be rejected")
+    ;
+
+    e.enumeration_list("ClientAddressSent", "Client Address to send to target(in InfoPacket)")
+      .value("no_address", "Send 0.0.0.0")
+      .value("proxy", "Send proxy client address or target connexion")
+      .value("front", "Send user client address of front connexion")
+    ;
+
+    e.enumeration_list("SessionProbeLogLevel")
+      .value("Off").exclude()
+      .value("Fatal")
+      .value("Error")
+      .value("Info")
+      .value("Warning")
+      .value("Debug")
+      .value("Detail")
+    ;
+
+    e.enumeration_list("ModRdpUseFailureSimulationSocketTransport")
+      .value("Off")
+      .value("SimulateErrorRead")
+      .value("SimulateErrorWrite")
     ;
 }
 

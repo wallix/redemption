@@ -42,7 +42,6 @@
 # define SHARE_PATH "/usr/local/share/rdpproxy"
 // still used in main and sockettransport
 # define CFG_PATH "/etc/rdpproxy"
-// # define CFG_THEMES_PATH "/etc/rdpproxy/themes"
 #endif
 
 zstring_view app_path(AppPath k) noexcept

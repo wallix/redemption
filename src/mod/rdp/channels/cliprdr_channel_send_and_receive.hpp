@@ -67,8 +67,8 @@ struct FilecontentsRequestSendBack
 
         sender->operator()(
             out_stream.get_offset(),
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_bytes());
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            out_stream.get_produced_bytes());
     }
 };
 
@@ -87,7 +87,7 @@ struct FormatDataRequestSendBack
         sender->operator()(
             out_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_stream.get_bytes());
+            out_stream.get_produced_bytes());
     }
 };
 
@@ -95,11 +95,21 @@ struct CliprdFileInfo
 {
     uint64_t file_size;
     std::string file_name;
+
+    static const uint64_t invalid_size = ~uint64_t{};
 };
 
 struct FormatDataResponseReceiveFileList
 {
-    FormatDataResponseReceiveFileList(std::vector<CliprdFileInfo>& files, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose, char const* direction)
+    FormatDataResponseReceiveFileList(
+      std::vector<CliprdFileInfo>& files,
+      InStream & chunk, const RDPECLIP::CliprdrHeader & in_header,
+      bool param_dont_log_data_into_syslog,
+      const uint32_t file_list_format_id,
+      const uint32_t flags,
+      OutStream & file_descriptor_stream,
+      const RDPVerbose verbose,
+      char const* direction)
     {
         auto receive_file = [&](InStream& in_stream){
             RDPECLIP::FileDescriptor fd;
@@ -110,7 +120,10 @@ struct FormatDataResponseReceiveFileList
                 fd.log(LOG_INFO);
             }
 
-            files.push_back(CliprdFileInfo{fd.file_size(), std::move(fd.file_name)});
+            auto file_size = (fd.flags & RDPECLIP::FD_FILESIZE)
+                ? fd.file_size()
+                : CliprdFileInfo::invalid_size;
+            files.push_back(CliprdFileInfo{file_size, std::move(fd.file_name)});
         };
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -127,9 +140,8 @@ struct FormatDataResponseReceiveFileList
             }
         }
         else if (file_descriptor_stream.get_offset()) {
-            const uint32_t complementary_data_length =
-                RDPECLIP::FileDescriptor::size() -
-                    file_descriptor_stream.get_offset();
+            const uint32_t complementary_data_length
+                = RDPECLIP::FileDescriptor::size() - file_descriptor_stream.get_offset();
 
             assert(chunk.in_remain() >= complementary_data_length);
 
@@ -138,7 +150,7 @@ struct FormatDataResponseReceiveFileList
 
             chunk.in_skip_bytes(complementary_data_length);
 
-            InStream in_stream(file_descriptor_stream.get_bytes());
+            InStream in_stream(file_descriptor_stream.get_produced_bytes());
 
             receive_file(in_stream);
 
@@ -158,24 +170,28 @@ struct FormatDataResponseReceiveFileList
 
 struct ServerMonitorReadySendBack
 {
-    ServerMonitorReadySendBack(const RDPVerbose verbose, const bool use_long_format_names, VirtualChannelDataSender* sender)
+    static void send_capabilities(
+        char const* name,
+        RDPVerbose verbose,
+        uint32_t capabilities,
+        VirtualChannelDataSender* sender)
     {
         if (!sender) {
             return ;
         }
 
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
-            "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
-                "Send Clipboard Capabilities PDU.");
+            "ClipboardVirtualChannel::process_%s_monitor_ready_pdu: "
+                "Send Clipboard Capabilities PDU.", name);
 
         RDPECLIP::GeneralCapabilitySet general_cap_set(
-            RDPECLIP::CB_CAPS_VERSION_1,
-            RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+            RDPECLIP::CB_CAPS_VERSION_1, capabilities);
         RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
-        RDPECLIP::CliprdrHeader caps_clipboard_header(RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
+        RDPECLIP::CliprdrHeader caps_clipboard_header(
+            RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
             clipboard_caps_pdu.size() + general_cap_set.size());
 
-        StaticOutStream<1024> caps_stream;
+        StaticOutStream<128> caps_stream;
 
         caps_clipboard_header.emit(caps_stream);
         clipboard_caps_pdu.emit(caps_stream);
@@ -183,8 +199,19 @@ struct ServerMonitorReadySendBack
 
         sender->operator()(
             caps_stream.get_offset(),
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            caps_stream.get_bytes());
+            CHANNELS::CHANNEL_FLAG_FIRST |
+            CHANNELS::CHANNEL_FLAG_LAST |
+            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            caps_stream.get_produced_bytes());
+    }
+
+    ServerMonitorReadySendBack(const RDPVerbose verbose, const bool use_long_format_names, VirtualChannelDataSender* sender)
+    {
+        if (!sender) {
+            return ;
+        }
+
+        send_capabilities("server", verbose, RDPECLIP::CB_USE_LONG_FORMAT_NAMES, sender);
 
         LOG_IF(bool(verbose & RDPVerbose::cliprdr), LOG_INFO,
             "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
@@ -198,7 +225,7 @@ struct ServerMonitorReadySendBack
         sender->operator()(
             list_stream.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-            list_stream.get_bytes());
+            list_stream.get_produced_bytes());
     }
 };
 
@@ -229,7 +256,7 @@ struct FormatListReceive
         Cliprdr::format_list_extract(
             in_stream,
             Cliprdr::IsLongFormat(use_long_format),
-            Cliprdr::IsAscii(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+            Cliprdr::IsAscii(bool(in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)),
             [&](uint32_t format_id, auto name) {
                 auto&& format_name = format_name_inventory.push(format_id, name);
                 auto&& utf8_name = format_name.utf8_name();
@@ -271,5 +298,5 @@ inline void format_list_send_back(VirtualChannelDataSender* sender)
     sender->operator()(
         out_stream.get_offset(),
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-        out_stream.get_bytes());
+        out_stream.get_produced_bytes());
 }

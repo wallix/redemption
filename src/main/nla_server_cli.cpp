@@ -26,6 +26,7 @@
 #include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_client_kerberos.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
@@ -110,14 +111,14 @@ class NLAServer
     X224::CR_TPDU_Data front_CR_TPDU;
 
     uint8_t front_public_key[1024] = {};
-    array_view_u8 front_public_key_av;
+    writable_u8_array_view front_public_key_av;
 
 public:
-    NLAServer(std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
+    NLAServer(std::string nla_username, std::string nla_password, bool forkable, TimeBase & time_base, uint64_t verbosity)
         : nla_username(nla_username)
         , nla_password(nla_password)
-        , enable_kerberos(enable_kerberos)
         , forkable(forkable)
+        , time_base(time_base)
         , verbosity(verbosity)
     {
         // just ignore this signal because there is no child termination management yet.
@@ -154,21 +155,21 @@ public:
             (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)?X224::PROTOCOL_HYBRID:
             (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)?X224::PROTOCOL_TLS:
             X224::PROTOCOL_RDP);
-        trans.send(front_x224_stream.get_bytes());
+        trans.send(front_x224_stream.get_produced_bytes());
 
         if ((cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS)
         || (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID)) {
             trans.enable_server_tls("inquisition", nullptr, 0 /* tls_min_level */, 0  /* tls_max_level */, true);
             bytes_view key = trans.get_public_key();
             memcpy(this->front_public_key, key.data(), key.size());
-            this->front_public_key_av = array_view{this->front_public_key, key.size()};
+            this->front_public_key_av = writable_array_view{this->front_public_key, key.size()};
         }
 
         if (cr_tpdu.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID) {
             if (this->verbosity > 4) {
                 LOG(LOG_INFO, "start NegoServer");
             }
-            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, true);
+            this->nego_server = std::make_unique<NegoServer>(this->front_public_key_av, time_base, true);
             this->pstate = PState::NEGOTIATING_FRONT_NLA;
         }
         return cr_tpdu;
@@ -210,7 +211,7 @@ public:
     void front_initial_pdu_negociation(TpduBuffer & buffer)
     {
         LOG(LOG_INFO, "RDP Init");
-        array_view_u8 currentPacket = buffer.current_pdu_buffer();
+        writable_u8_array_view currentPacket = buffer.current_pdu_buffer();
 
         if (!this->nla_username.empty()) {
             if (this->verbosity > 4) {
@@ -255,15 +256,13 @@ public:
 //                _exit(1);
 //            }
 
-            TimeSystem timeobj;
+            TimeBase time_base(tvtime());
 
             TpduBuffer buffer;
             buffer.trace_pdu = true;
             SocketTransport trans("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
 
             try {
-                array_view_u8 front_public_key_av;
-
                 fd_set rset;
                 int const front_fd = trans.get_fd();
 
@@ -271,6 +270,7 @@ public:
                     FD_ZERO(&rset);
                     FD_SET(front_fd, &rset);
                     int status = select(front_fd + 1, &rset, nullptr, nullptr, nullptr);
+                    time_base.set_current_time(tvtime());
                     if (status < 0) {
                         std::cerr << "Selected returned an error\n";
                         break;
@@ -336,10 +336,10 @@ public:
     }
 
 private:
-
     int connection_counter = 0;
-    bool enable_kerberos;
+//    bool enable_kerberos;
     bool forkable;
+    TimeBase & time_base;
     uint64_t verbosity;
 };
 
@@ -371,6 +371,7 @@ int main(int argc, char *argv[])
     int listen_port = 8001;
     std::string nla_username;
     std::string nla_password;
+    TimeBase time_base(tvtime());
     bool no_forkable = false;
     bool enable_kerberos = false;
     uint64_t verbosity = 0;
@@ -416,12 +417,13 @@ int main(int argc, char *argv[])
 
     openlog("NLAServer", LOG_CONS | LOG_PERROR, LOG_USER);
 
-    NLAServer front(std::move(nla_username), std::move(nla_password), enable_kerberos, !no_forkable, verbosity);
+    NLAServer front(std::move(nla_username), std::move(nla_password), !no_forkable, time_base, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
         return -2;
     }
     return unique_server_loop(std::move(sck), [&](int sck){
+        time_base.set_current_time(tvtime());
         return front.start(sck);
     });
 }

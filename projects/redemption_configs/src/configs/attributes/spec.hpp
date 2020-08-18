@@ -47,8 +47,18 @@ namespace cfg_attributes
 
 struct name_ { std::string name; };
 
+#define TYPE_REQUIEREMENT(T)                                                   \
+    static_assert(!std::is_integral<T>::value || std::is_same<T, bool>::value, \
+        "T cannot be a integral type, "                                        \
+        "use types::u8, types::u16, types::s16, etc instead, "                 \
+        "eventually types::int_ or types::unsigned_")
+
 template<class T>
-struct type_ { using type = T; };
+struct type_
+{
+    TYPE_REQUIEREMENT(T);
+    using type = T;
+};
 
 template<class T>
 struct default_
@@ -85,23 +95,52 @@ namespace types
     struct signed_base : integer_base {};
     struct unsigned_base : integer_base {};
 
+    struct u8 : unsigned_base { u8(long long = 0) {} };
     struct u16 : unsigned_base { u16(long long = 0) {} };
     struct u32 : unsigned_base { u32(long long = 0) {} };
     struct u64 : unsigned_base { u64(long long = 0) {} };
+
+    struct s8 : signed_base { s8(long long = 0) {} };
+    struct s16 : signed_base { s16(long long = 0) {} };
+    struct s32 : signed_base { s32(long long = 0) {} };
+    struct s64 : signed_base { s64(long long = 0) {} };
+
+    struct unsigned_ : unsigned_base { unsigned_(unsigned = 0) {} };
+    struct int_ : signed_base { int_(int = 0) {} };
 
     template<unsigned Len> struct fixed_string {};
     template<unsigned Len> struct fixed_binary {};
 
     template<class T>
-    struct list {};
+    struct list
+    {
+        TYPE_REQUIEREMENT(T);
+    };
 
     struct ip_string {};
 
-    struct dirpath { using fixed_type = fixed_string<globals::path_max>; };
+    struct dirpath {};
 
-    template<class T, long min, long max> struct range {};
+    template<class T, long min, long max>
+    struct range
+    {
+        TYPE_REQUIEREMENT(T);
+    };
+
+    struct file_permission {};
 }
 
+namespace traits
+{
+    template<class T>
+    constexpr bool is_integer_v = std::is_base_of_v<types::integer_base, T>;
+
+    template<class T>
+    constexpr bool is_signed_v = std::is_base_of_v<types::signed_base, T>;
+
+    template<class T>
+    constexpr bool is_unsigned_v = std::is_base_of_v<types::unsigned_base, T>;
+}
 
 namespace cpp
 {
@@ -110,6 +149,8 @@ namespace cpp
     template<class T>
     struct type_
     {
+        TYPE_REQUIEREMENT(T);
+
         ::cfg_attributes::type_<T> to_type() const
         {
             return {};
@@ -128,6 +169,8 @@ namespace spec
     template<class T>
     struct type_
     {
+        TYPE_REQUIEREMENT(T);
+
         ::cfg_attributes::type_<T> to_type() const
         {
             return {};
@@ -207,6 +250,8 @@ namespace connpolicy
     template<class T>
     struct type_
     {
+        TYPE_REQUIEREMENT(T);
+
         ::cfg_attributes::type_<T> to_type() const
         {
             return {};
@@ -267,6 +312,8 @@ namespace sesman
     template<class T>
     struct type_
     {
+        TYPE_REQUIEREMENT(T);
+
         ::cfg_attributes::type_<T> to_type() const
         {
             return {};
@@ -362,3 +409,5 @@ using names = detail::names<
 >;
 
 }
+
+#undef TYPE_REQUIEREMENT

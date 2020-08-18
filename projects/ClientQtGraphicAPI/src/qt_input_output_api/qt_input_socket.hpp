@@ -21,114 +21,87 @@
 
 #pragma once
 
-#include <fstream>
-
-#include "utils/log.hpp"
-#include "core/session_reactor.hpp"
-#include "client_redemption/client_redemption_api.hpp"
+#include "mod/mod_api.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
+#include "utils/difftimeval.hpp"
 
 #include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+
 #include <QtCore/QSocketNotifier>
 #include <QtCore/QTimer>
 
 
 
-class QtInputSocket : public QObject, public ClientInputSocketAPI
+class QtInputSocket : public QObject
 {
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
-    SessionReactor& session_reactor;
+    TimeBase const& time_base;
+    EventContainer& events;
 
-    QSocketNotifier           * _sckListener;
-
+    QSocketNotifier * _sckListener;
     QTimer timer;
 
-    ClientRedemptionAPI * client;
+public:
+    QtInputSocket(QWidget * parent, TimeBase const& time_base, EventContainer& events)
+    : QObject(parent)
+    , time_base(time_base)
+    , events(events)
+    , _sckListener(nullptr)
+    , timer(this)
+    {
+        this->timer.setSingleShot(true);
+    }
 
-
-    QtInputSocket(SessionReactor& session_reactor, ClientRedemptionAPI * client, QWidget * parent)
-        : QObject(parent)
-        , session_reactor(session_reactor)
-        , _sckListener(nullptr)
-        , timer(this)
-        , client(client)
-    {}
-
-    ~QtInputSocket() {
+    ~QtInputSocket()
+    {
         this->disconnect();
     }
 
-    void disconnect() override {
+    void disconnect()
+    {
         if (this->_sckListener != nullptr) {
             delete (this->_sckListener);
             this->_sckListener = nullptr;
         }
     }
 
+    template<class SocketEventFunction, class TimerEventFunction>
+    void start_to_listen(
+        int client_sck,
+        SocketEventFunction sck_event_fn,
+        TimerEventFunction timer_event_fn)
+    {
+        this->_sckListener = new QSocketNotifier(client_sck, QSocketNotifier::Read, this);
+        this->QObject::connect(
+            this->_sckListener, &QSocketNotifier::activated,
+            [this, fn = std::move(sck_event_fn)] {
+                fn();
+                this->prepare_timer_event();
+            });
+        this->QObject::connect(
+            &this->timer, &QTimer::timeout,
+            [this, fn = std::move(timer_event_fn)] {
+                fn();
+                this->prepare_timer_event();
+            });
 
-    bool start_to_listen(int client_sck, mod_api * mod) override {
-
-        this->_callback = mod;
-
-        if (this->_callback) {
-            this->_sckListener = new QSocketNotifier(client_sck, QSocketNotifier::Read, this);
-            this->QObject::connect(this->_sckListener, SIGNAL(activated(int)), this, SLOT(call_draw_event_data()));
-            this->QObject::connect(&(this->timer), SIGNAL(timeout()), this, SLOT(call_draw_event_timer()));
-
-            //LOG(LOG_INFO, "start to listen : we have a callback");
-
-            this->prepare_timer_event();
-
-            return true;
-        }
-        return false;
-    }
-
-
-
-public Q_SLOTS:
-    void call_draw_event_data() {
-        // LOG(LOG_DEBUG, "draw_event_data");
-        if (this->_callback && this->client) {
-            this->client->callback(false);
-            this->prepare_timer_event();
-        }
-    }
-
-    void call_draw_event_timer() {
-        // LOG(LOG_DEBUG, "draw_event_timer");
-        if (this->_callback && this->client) {
-            this->client->callback(true);
-            this->prepare_timer_event();
-        }
+        this->prepare_timer_event();
     }
 
 private:
-    void prepare_timer_event() {
-
-        timeval now = tvtime();
-        this->session_reactor.set_current_time(now);
-        timeval const tv = this->session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, std::chrono::milliseconds(1000));
-        // LOG(LOG_DEBUG, "start timer: %ld %ld", tv.tv_sec, tv.tv_usec);
-
-        if (tv.tv_sec > -1) {
-
-            long time_to_wake = (1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
-
-            if (time_to_wake < 0) {
-                time_to_wake = 0;
-            }
-            this->timer.start(time_to_wake);
-        }
-        else {
-            this->timer.stop();
+    void prepare_timer_event()
+    {
+        auto tv = this->events.next_timeout();
+        if (tv.tv_sec != 0 || tv.tv_usec != 0) {
+            auto delay = tv - this->time_base.get_current_time();
+            this->timer.start(std::chrono::duration_cast<std::chrono::milliseconds>(delay));
         }
     }
 };
-

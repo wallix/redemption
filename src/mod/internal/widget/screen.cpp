@@ -27,7 +27,7 @@
 
 
 WidgetScreen::WidgetScreen(
-    gdi::GraphicApi & drawable, Font const & font,
+    gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
     NotifyApi * notifier, Theme theme
 )
     : WidgetParent(drawable, *this, notifier)
@@ -38,6 +38,7 @@ WidgetScreen::WidgetScreen(
     , edit_pointer(::edit_pointer())
     , font(font)
 {
+    this->set_wh(width, height);
     this->impl = &composite_array;
 
     this->tab_flag = IGNORE_TAB;
@@ -67,19 +68,20 @@ void WidgetScreen::show_tooltip(
         this->tooltip = std::make_unique<WidgetTooltip>(
             this->drawable,
             *this, widget,
-            text,
+            "",
             this->theme.tooltip.fgcolor,
             this->theme.tooltip.bgcolor,
             this->theme.tooltip.border_color,
             this->font);
+        this->tooltip->set_text(text, this->cx());
         Dimension dim = this->tooltip->get_optimal_dim();
         this->tooltip->set_wh(dim);
 
         int w = this->tooltip->cx();
         int h = this->tooltip->cy();
         int sw = display_rect.x + display_rect.cx;
-        int posx = ((x + w) > sw)?(sw - w):x;
-        int posy = (y > h)?(y - h):0;
+        int posx = ((x + w) > sw) ? (sw - w) : x;
+        int posy = (y > h) ? (y - h) : 0;
         this->tooltip->set_xy(posx, posy);
 
         this->add_widget(this->tooltip.get());

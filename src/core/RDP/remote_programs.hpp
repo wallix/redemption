@@ -346,6 +346,19 @@ public:
 //  |                                                     | (section           |
 //  |                                                     |  2.2.1.3.1).       |
 //  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_HIGH_DPI_ICONS_SUPPORTED       | Indicates that the |
+//  | 0x00000020                                          | client supports    |
+//  |                                                     | icons up to 96×96  |
+//  |                                                     | pixels in size in  |
+//  |                                                     | the Window Icon PDU|
+//  |                                                     | (section           |
+//  |                                                     | 2.2.1.3.1.2.2).    |
+//  |                                                     | If this flag is not|
+//  |                                                     | present, icon      |
+//  |                                                     | dimensions are     |
+//  |                                                     | limited to 32×32   |
+//  |                                                     | pixels.            |
+//  +-----------------------------------------------------+--------------------+
 //  | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED      | Indicates that the |
 //  | 0x00000040                                          | client supports    |
 //  |                                                     | application        |
@@ -355,13 +368,34 @@ public:
 //  |                                                     | PDU (section       |
 //  |                                                     | 2.2.1.3.1).        |
 //  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED| Indicates that the |
+//  | 0x00000080                                          | client supports    |
+//  |                                                     | display-required   |
+//  |                                                     | power requests sent|
+//  |                                                     | using the Power    |
+//  |                                                     | Display Request PDU|
+//  |                                                     | (section           |
+//  |                                                     | 2.2.2.13.1).       |
+//  +-----------------------------------------------------+--------------------+
+//  | TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED  | Indicates that the |
+//  | 0x00000200                                          | client is capable  |
+//  |                                                     | of processing      |
+//  |                                                     | Window Cloak State |
+//  |                                                     | Change PDUs        |
+//  |                                                     | (section           |
+//  |                                                     | 2.2.2.12.1) sent by|
+//  |                                                     | the server.        |
+//  +-----------------------------------------------------+--------------------+
 
 enum {
       TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE             = 0x00000001
     , TS_RAIL_CLIENTSTATUS_AUTORECONNECT                  = 0x00000002
     , TS_RAIL_CLIENTSTATUS_ZORDER_SYNC                    = 0x00000004
     , TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED = 0x00000010
+    , TS_RAIL_CLIENTSTATUS_HIGH_DPI_ICONS_SUPPORTED       = 0x00000020
     , TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED      = 0x00000040
+    , TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED= 0x00000080
+    , TS_RAIL_CLIENTSTATUS_BIDIRECTIONAL_CLOAK_SUPPORTED  = 0x00000200
 };
 
 class ClientInformationPDU {
@@ -381,8 +415,12 @@ public:
 
     [[nodiscard]] uint32_t Flags() const { return this->Flags_; }
 
-    void Flags(uint32_t Flags_) {
+    void set_flags(uint32_t Flags_) {
         this->Flags_ = Flags_;
+    }
+
+    auto get_flags() {
+        return this->Flags_;
     }
 
     static size_t size() {
@@ -650,11 +688,22 @@ enum {
 
 class ClientExecutePDU {
 
-    WindowsExecuteShellParams client_execute;
+    WindowsExecuteShellParams windows_execute_shell_params;
+
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) {
+        uint8_t const * const utf16_data = in.get_current();
+        in.in_skip_bytes(utf16len);
+        const size_t size_of_utf8_string = utf16len / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        auto const original_sz = 0; //out.size();
+        out.resize(original_sz + size_of_utf8_string);
+        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
+        const size_t length_of_utf8_string = ::UTF16toUTF8(utf16_data, utf16len / 2, utf8_string, size_of_utf8_string);
+        out.resize(original_sz + length_of_utf8_string);
+    }
 
 public:
     void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->client_execute.flags);
+        stream.out_uint16_le(this->windows_execute_shell_params.flags);
 
         const uint32_t offset_of_ExeOrFile  = stream.get_offset();
         stream.out_clear_bytes(2);
@@ -665,70 +714,48 @@ public:
 
         const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->client_execute.exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
+            stream, this->windows_execute_shell_params.exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
             offset_of_ExeOrFile);
 
         const size_t maximum_length_of_WorkingDir_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->client_execute.working_dir, maximum_length_of_WorkingDir_in_bytes,
+            stream, this->windows_execute_shell_params.working_dir, maximum_length_of_WorkingDir_in_bytes,
             offset_of_WorkingDir);
 
         const size_t maximum_length_of_Arguments_in_bytes = 16000;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->client_execute.arguments, maximum_length_of_Arguments_in_bytes,
+            stream, this->windows_execute_shell_params.arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
     }
 
-
-    // TODO: the name of the function is misleading it converts from utf16 to utf8
-
-    static inline void get_non_null_terminated_utf16_from_utf8(
-        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-        char const * context_error
-    ) {
-        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
-
-        uint8_t const * const utf16_data = in.get_current();
-        in.in_skip_bytes(length_of_utf16_data_in_bytes);
-
-        const size_t size_of_utf8_string = length_of_utf16_data_in_bytes / 2 * maximum_length_of_utf8_character_in_bytes + 1;
-        auto const original_sz = 0; //out.size();
-        out.resize(original_sz + size_of_utf8_string);
-        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
-        const size_t length_of_utf8_string = ::UTF16toUTF8(utf16_data, length_of_utf16_data_in_bytes / 2, utf8_string, size_of_utf8_string);
-        out.resize(original_sz + length_of_utf8_string);
-    }
-
+public:
     void receive(InStream & stream) {
         // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
         ::check_throw(stream, 8, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
 
-        this->client_execute.flags = stream.in_uint16_le();
+        this->windows_execute_shell_params.flags = stream.in_uint16_le();
 
         uint16_t ExeOrFileLength  = stream.in_uint16_le();
         uint16_t WorkingDirLength = stream.in_uint16_le();
         uint16_t ArgumentsLen     = stream.in_uint16_le();
 
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->client_execute.exe_or_file, stream, ExeOrFileLength, "Client Execute PDU");
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->client_execute.working_dir, stream, WorkingDirLength, "Client Execute PDU");
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->client_execute.arguments, stream, ArgumentsLen, "Client Execute PDU");
+        ::check_throw(stream, ExeOrFileLength, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->windows_execute_shell_params.exe_or_file, stream, ExeOrFileLength);
+        ::check_throw(stream, WorkingDirLength, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->windows_execute_shell_params.working_dir, stream, WorkingDirLength);
+        ::check_throw(stream, ArgumentsLen, "Client Execute PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->windows_execute_shell_params.arguments, stream, ArgumentsLen);
     }
 
-    [[nodiscard]] const WindowsExecuteShellParams& get_client_execute() const
+    [[nodiscard]] const WindowsExecuteShellParams& get_windows_execute_shell_params() const
     {
-        return this->client_execute;
+        return this->windows_execute_shell_params;
     }
 
-    void Flags(uint16_t flags) { this->client_execute.flags = flags; }
-
-    void ExeOrFile(const char * ExeOrFile_) { this->client_execute.exe_or_file = ExeOrFile_; }
-
-    void WorkingDir(const char * WorkingDir_) { this->client_execute.working_dir = WorkingDir_; }
-
-    void Arguments(const char * Arguments_) { this->client_execute.arguments = Arguments_; }
+    void Flags(uint16_t flags) { this->windows_execute_shell_params.flags = flags; }
+    void ExeOrFile(const char * ExeOrFile_) { this->windows_execute_shell_params.exe_or_file = ExeOrFile_; }
+    void WorkingDir(const char * WorkingDir_) { this->windows_execute_shell_params.working_dir = WorkingDir_; }
+    void Arguments(const char * Arguments_) { this->windows_execute_shell_params.arguments = Arguments_; }
 
     [[nodiscard]] size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -737,7 +764,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->client_execute.exe_or_file, this->client_execute.exe_or_file.length() * 2);
+                out_stream, this->windows_execute_shell_params.exe_or_file, this->windows_execute_shell_params.exe_or_file.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -746,7 +773,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->client_execute.working_dir, this->client_execute.working_dir.length() * 2);
+                out_stream, this->windows_execute_shell_params.working_dir, this->windows_execute_shell_params.working_dir.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -755,7 +782,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->client_execute.arguments, this->client_execute.arguments.length() * 2);
+                out_stream, this->windows_execute_shell_params.arguments, this->windows_execute_shell_params.arguments.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -772,8 +799,8 @@ private:
 
         result = ::snprintf(buffer + length, size - length,
             "Flags=0x%X ExeOrFile=\"%s\" WorkingDir=\"%s\" Arguments=\"%s\"",
-            this->client_execute.flags, this->client_execute.exe_or_file.c_str(), this->client_execute.working_dir.c_str(),
-            this->client_execute.arguments.c_str());
+            this->windows_execute_shell_params.flags, this->windows_execute_shell_params.exe_or_file.c_str(), this->windows_execute_shell_params.working_dir.c_str(),
+            this->windows_execute_shell_params.arguments.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -903,29 +930,21 @@ class ServerExecuteResultPDU {
 
     std::string exe_or_file;
 
-
-    // TODO: the name of the function is misleading it converts from utf16 to utf8
-    static inline void get_non_null_terminated_utf16_from_utf8(
-        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-        char const * context_error
-    ) {
-        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
-
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) {
         uint8_t const * const utf16_data = in.get_current();
-        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+        in.in_skip_bytes(utf16len);
 
         const size_t size_of_utf8_string =
-            length_of_utf16_data_in_bytes / 2 *
+            utf16len / 2 *
             maximum_length_of_utf8_character_in_bytes + 1;
         auto const original_sz = 0; //out.size();
         out.resize(original_sz + size_of_utf8_string);
         uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
         const size_t length_of_utf8_string = ::UTF16toUTF8(
-            utf16_data, length_of_utf16_data_in_bytes / 2,
+            utf16_data, utf16len / 2,
             utf8_string, size_of_utf8_string);
         out.resize(original_sz + length_of_utf8_string);
     }
-
 
 public:
     void emit(OutStream & stream) const {
@@ -956,8 +975,8 @@ public:
 
         this->ExeOrFileLength   = stream.in_uint16_le();
 
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->exe_or_file, stream, this->ExeOrFileLength, "Server Execute Result PDU");
+        ::check_throw(stream, this->ExeOrFileLength, "Server Execute Result PDU", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->exe_or_file, stream, this->ExeOrFileLength);
     }
 
     [[nodiscard]] uint16_t Flags() const { return this->Flags_; }
@@ -1057,24 +1076,19 @@ public:
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
-    // TODO: the name of the function is misleading it converts from utf16 to utf8
-    static inline void get_non_null_terminated_utf16_from_utf8(
-        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-        char const * context_error
-    ) {
-        ::check_throw(in, length_of_utf16_data_in_bytes, context_error, ERR_RAIL_PDU_TRUNCATED);
-
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) 
+    {
         uint8_t const * const utf16_data = in.get_current();
-        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+        in.in_skip_bytes(utf16len);
 
         const size_t size_of_utf8_string =
-            length_of_utf16_data_in_bytes / 2 *
+            utf16len / 2 *
             maximum_length_of_utf8_character_in_bytes + 1;
         auto const original_sz = 0; //out.size();
         out.resize(original_sz + size_of_utf8_string);
         uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
         const size_t length_of_utf8_string = ::UTF16toUTF8(
-            utf16_data, length_of_utf16_data_in_bytes / 2,
+            utf16_data, utf16len / 2,
             utf8_string, size_of_utf8_string);
         out.resize(original_sz + length_of_utf8_string);
     }
@@ -1107,9 +1121,8 @@ public:
 
 //        assert(ColorSchemeLength >= 2);
 
-        this->get_non_null_terminated_utf16_from_utf8(
-            this->color_scheme, stream, ColorSchemeLength/*stream.in_uint16_le()*/,
-            "High Contrast System Information Structure");
+        ::check_throw(stream, ColorSchemeLength, "High Contrast System Information Structure", ERR_RAIL_PDU_TRUNCATED);
+        this->utf16_to_utf8sz(this->color_scheme, stream, ColorSchemeLength);
     }
 
     [[nodiscard]] uint32_t Flags() const { return this->Flags_; }

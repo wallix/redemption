@@ -28,6 +28,7 @@
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "core/RDP/remote_programs.hpp"
 
@@ -56,7 +57,7 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     HandshakePDU handshake;
     handshake.buildNumber(1);
     handshake.emit(out_handshake);
-    InStream chunk_handshake(out_handshake.get_bytes());
+    InStream chunk_handshake(out_handshake.get_produced_bytes());
     channel.receive(chunk_handshake);
 
     StaticOutStream<32> out_sspu;
@@ -65,7 +66,7 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     ServerSystemParametersUpdatePDU sspu;
     sspu.SystemParam(SPI_SETSCREENSAVEACTIVE);
     sspu.emit(out_sspu);
-    InStream chunk_sspu(out_sspu.get_bytes());
+    InStream chunk_sspu(out_sspu.get_produced_bytes());
     channel.receive(chunk_sspu);
 
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 10);
@@ -92,13 +93,13 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 //     header.emit(out_WaveInfoPDU);
 //     rdpsnd::WaveInfoPDU waveInfo(0, 0, 0);
 //     waveInfo.emit(out_WaveInfoPDU);
-//     InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_bytes());
+//     InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_produced_bytes());
 //
 //     channel.receive(chunk_WaveInfoPDU);
 //
 //     StaticOutStream<512> out_WavePDU;
 //     out_WavePDU.out_uint32_be(0);
-//     InStream chunk_WavePDU(out_WavePDU.get_bytes());
+//     InStream chunk_WavePDU(out_WavePDU.get_produced_bytes());
 //     channel.receive(chunk_WavePDU);
 //
 //     RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);

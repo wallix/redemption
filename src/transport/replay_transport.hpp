@@ -42,13 +42,13 @@ public:
 
     ReplayTransport(
         const char* fname, const char *ip_address, int port,
-        TimeObj& timeobj, FdType fd_type = FdType::Timer,
+        TimeBase& time_base, FdType fd_type = FdType::Timer,
         FirstPacket first_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
     ~ReplayTransport();
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] u8_array_view get_public_key() const override;
 
     TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override;
 
@@ -87,7 +87,7 @@ private:
         PacketType type;
         std::chrono::milliseconds time;
 
-        [[nodiscard]] array_view_const_u8 av() const noexcept;
+        [[nodiscard]] u8_array_view av() const noexcept;
     };
 
     Data *read_single_chunk();
@@ -96,7 +96,7 @@ private:
 private:
     long long count_packet = 0;
 
-    TimeObj& timeobj;
+    TimeBase& time_base;
     std::chrono::milliseconds start_time;
 
     InFileTransport in_file;

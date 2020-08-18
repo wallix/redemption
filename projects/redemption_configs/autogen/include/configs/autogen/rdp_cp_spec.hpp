@@ -41,6 +41,25 @@ keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [rdp]
 
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
+#   15: MultiDstBlt
+#   16: MultiPatBlt
+#   17: MultiScrBlt
+#   18: MultiOpaqueRect
+#   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
+# 
+# (values are comma-separated)
+#_advanced
+disabled_orders = string(default='')
+
 # NLA authentication in secondary target.
 enable_nla = boolean(default=True)
 
@@ -59,6 +78,14 @@ cipher_string = string(default='ALL')
 
 # Show common cipher list supported by client and server
 show_common_cipher_list = boolean(default=False)
+
+# List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all.
+#_advanced
+allowed_dynamic_channels = string(default='*')
+
+# List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all.
+#_advanced
+denied_dynamic_channels = string(default='')
 
 # Enables Server Redirection Support.
 server_redirection = boolean(default=False)
@@ -90,6 +117,18 @@ enable_restricted_admin_mode = boolean(default=False)
 # Smartcard device must be available on client desktop.
 # Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 force_smartcard_authentication = boolean(default=False)
+
+# Enable target connection on ipv6
+enable_ipv6 = boolean(default=False)
+
+# Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)
+#   allow: Forward Console mode request from client to the target.
+#   force: Force Console mode on target regardless of client request.
+#   forbid: Block Console mode request from client.
+mode_console = option('allow', 'force', 'forbid', default='allow')
+
+#_advanced
+auto_reconnection_on_losing_target_link = boolean(default=False)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
@@ -150,6 +189,16 @@ enable_log = boolean(default=False)
 #_advanced
 enable_log_rotation = boolean(default=True)
 
+#   0: Off
+#   1: Fatal
+#   2: Error
+#   3: Info
+#   4: Warning
+#   5: Debug
+#   6: Detail
+#_advanced
+log_level = option(0, 1, 2, 3, 4, 5, 6, default=5)
+
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # (is in millisecond)
@@ -205,6 +254,9 @@ end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_advanced
+update_disabled_features = boolean(default=True)
+
+#_advanced
 childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none
@@ -216,11 +268,17 @@ childless_window_as_unidentified_input_field = boolean(default=True)
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-#   0x200: BestSafe integration
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_advanced
 #_hex
-disabled_features = integer(min=0, max=1023, default=864)
+disabled_features = integer(min=0, max=511, default=352)
+
+enable_bestsafe_interaction = boolean(default=False)
+
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
+# If empty, the environment variable TMP will be used.
+#_advanced
+alternate_directory_environment_variable = string(max=3, default='')
 
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
@@ -316,8 +374,21 @@ clipboard_text_up = boolean(default=False)
 # File verification on download must be enabled via option Enable down.
 clipboard_text_down = boolean(default=False)
 
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
+block_invalid_file_up = boolean(default=False)
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+block_invalid_file_down = boolean(default=False)
+
 #_advanced
 log_if_accepted = boolean(default=True)
+
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
+# Warning: This value affects the RAM used by the session.
+#_advanced
+max_file_size_rejected = integer(min=0, default=50)
 
 [file_storage]
 

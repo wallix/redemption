@@ -22,15 +22,12 @@
 #pragma once
 
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
-#include "utils/asynchronous_task_manager.hpp"
+#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "utils/uninit_checked.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
-#include "core/report_message_api.hpp"
 
 #include <memory>
-
-
-using data_size_type = int_fast32_t;
 
 class BaseVirtualChannel
 {
@@ -49,18 +46,18 @@ protected:
         return this->to_server_sender;
     }
 
-    ReportMessageApi & report_message;
+    AuthApi & sesman;
     const RDPVerbose verbose;
 
 public:
     // TODO: move that to BaseVirtualChannelConstructor
     struct Params
     {
-        ReportMessageApi & report_message;
+        AuthApi & sesman;
         RDPVerbose verbose;
 
-        explicit Params(ReportMessageApi & report_message, RDPVerbose verbose)
-          : report_message(report_message)
+        explicit Params(AuthApi & sesman, RDPVerbose verbose)
+          : sesman(sesman)
           , verbose(verbose)
         {}
     };
@@ -72,7 +69,7 @@ protected:
         const Params & params)
     : to_client_sender(to_client_sender_)
     , to_server_sender(to_server_sender_)
-    , report_message(params.report_message)
+    , sesman(params.sesman)
     , verbose(params.verbose)
     {}
 

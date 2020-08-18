@@ -27,7 +27,6 @@
 
 #include <cassert>
 #include <ctime>
-#include <iostream>
 #include <cerrno>
 #include <cstring>
 

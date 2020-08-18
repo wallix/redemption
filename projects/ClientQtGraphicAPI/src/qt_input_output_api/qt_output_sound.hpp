@@ -25,9 +25,7 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-// #include "client_redemption/client_input_output_api/client_sound_api.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
-#include "client_redemption/client_redemption_api.hpp"
 #include "redemption_qt_include_widget.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
@@ -39,6 +37,7 @@
 #include <Phonon/AudioOutput>
 #include <Phonon/MediaObject>
 #endif
+
 
 
 

@@ -23,9 +23,8 @@
 #include <new>
 #include <memory>
 #include <stdexcept>
-#include <sstream>
+#include <charconv>
 
-#include <sstream>
 #include <string>
 
 #include <algorithm>
@@ -33,6 +32,7 @@
 
 #include "transport/transport.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -284,17 +284,10 @@ void CheckTransport::do_send(const uint8_t * const data, size_t len)
         while (differs < available_len && data[differs] == this->data.get()[this->current+differs]) {
             ++differs;
         }
+        RED_TEST_INFO("current position: " << this->current);
         RED_CHECK(
             make_array_view(this->data.get() + this->current, available_len) ==
             make_array_view(data, len));
-        // RED_CHECK_MESSAGE(false, "\n"
-        //     "=============== Common Part =======\n" <<
-        //     (test_transport::hexdump{{data, differs}}) <<
-        //     "=============== Expected =======\n" <<
-        //     (test_transport::hexdump{{this->data.get() + this->current + differs, available_len - differs}}) <<
-        //     "=============== Got =======\n" <<
-        //     (test_transport::hexdump{{data + differs, available_len - differs}})
-        // );
         this->data.reset();
         this->remaining_is_error = false;
         throw Error(ERR_TRANSPORT_DIFFERS);
@@ -334,7 +327,7 @@ void TestTransport::set_public_key(bytes_view key)
     memcpy(this->public_key.get(), key.data(), key.size());
 }
 
-array_view_const_u8 TestTransport::get_public_key() const
+u8_array_view TestTransport::get_public_key() const
 {
     return {this->public_key.get(), this->public_key_length};
 }
@@ -363,9 +356,16 @@ MemoryTransport::~MemoryTransport()
 bool MemoryTransport::disconnect()
 {
     if (this->remaining_is_error && this->in_stream.get_offset() != this->out_stream.get_offset()) {
-        std::ostringstream out;
-        out << "~MemoryTransport() remaining=" << this->in_stream.get_offset() << " len=" << this->out_stream.get_offset();
-        throw test_transport::RemainingError{out.str()};
+        char buf1[64];
+        char buf2[64];
+        using std::begin;
+        using std::end;
+        auto r1 = std::to_chars(begin(buf1), end(buf1), this->in_stream.get_offset());
+        auto r2 = std::to_chars(begin(buf1), end(buf1), this->out_stream.get_offset());
+        throw test_transport::RemainingError{str_concat(
+            "~MemoryTransport() remaining=", chars_view{buf1, r1.ptr},
+            " len=", chars_view{buf2, r2.ptr}
+        )};
     }
     return true;
 }

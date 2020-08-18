@@ -27,8 +27,11 @@
 #include "client_redemption/client_channels/fake_client_mod.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "core/RDP/channels/rdpdr.hpp"
+
+#include <type_traits>
 
 
 namespace rdpdr
@@ -62,7 +65,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     out_serverAnnounce.out_uint16_le(0x0001);
     out_serverAnnounce.out_uint16_le(0x000c);
     out_serverAnnounce.out_uint32_le(0x00000002);
-    InStream chunk_serverAnnounce(out_serverAnnounce.get_bytes());
+    InStream chunk_serverAnnounce(out_serverAnnounce.get_produced_bytes());
 
     RED_CHECK_EQUAL(channel.protocol_minor_version, 0);
 
@@ -124,7 +127,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     out_serverCapabilityRequest.out_uint16_le(8);
     out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
-    InStream chunk_serverCapabilityRequest(out_serverCapabilityRequest.get_bytes());
+    InStream chunk_serverCapabilityRequest(out_serverCapabilityRequest.get_produced_bytes());
 
     channel.receive(chunk_serverCapabilityRequest);
 
@@ -143,7 +146,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     out_serverAnnounce.out_uint16_le(0x000c);
     out_serverAnnounce.out_uint32_le(0x00000002);
 
-    InStream chunk_serverClientIDConfirm(out_serverClientIDConfirm.get_bytes());
+    InStream chunk_serverClientIDConfirm(out_serverClientIDConfirm.get_produced_bytes());
 
     channel.receive(chunk_serverClientIDConfirm);
 
@@ -234,7 +237,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
                                 path);
     dcr.emit(out_stream);
 
-    InStream chunk_create(out_stream.get_bytes());
+    InStream chunk_create(out_stream.get_produced_bytes());
 
     channel.receive(chunk_create);
 
@@ -280,7 +283,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
                                 0x00000000);
     dior.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
@@ -328,7 +331,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
     rdpdr::ServerDriveQueryInformationRequest sdqir(rdpdr::FileBasicInformation);
     sdqir.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
@@ -384,7 +387,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
     rdpdr::ServerDriveQueryInformationRequest sdqir(rdpdr::FileStandardInformation);
     sdqir.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
@@ -440,7 +443,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
     rdpdr::ServerDriveQueryInformationRequest sdqir(rdpdr::FileAttributeTagInformation);
     sdqir.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
@@ -490,7 +493,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
                                 0x00000000);
     dior.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
@@ -537,7 +540,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     rdpdr::DeviceReadRequest drr(4, 0);
     drr.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
@@ -582,7 +585,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     rdpdr::ServerDriveQueryDirectoryRequest sdqdr(rdpdr::FileDirectoryInformation, 0);
     sdqdr.emit(out_stream);
 
-    InStream chunk(out_stream.get_bytes());
+    InStream chunk(out_stream.get_produced_bytes());
 
     channel.receive(chunk);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);

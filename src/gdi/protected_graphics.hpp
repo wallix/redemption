@@ -57,7 +57,6 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override { }
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override { }
 
@@ -117,7 +116,7 @@ public:
     { this->protected_rect = rect; }
 
 protected:
-    virtual void refresh_rects(array_view<Rect const>) = 0;
+    virtual void refresh_rects(array_view<Rect>) = 0;
 
 private:
     [[nodiscard]] gdi::GraphicApi & get_graphic_proxy() const

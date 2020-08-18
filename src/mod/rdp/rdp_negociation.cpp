@@ -28,10 +28,19 @@
 #include "core/RDP/autoreconnect.hpp"
 #include "core/RDP/lic.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
+#include "core/RDP/gcc/userdata/sc_core.hpp"
+#include "core/RDP/gcc/userdata/sc_net.hpp"
+#include "core/RDP/gcc/userdata/sc_sec1.hpp"
+#include "core/RDP/gcc/userdata/cs_security.hpp"
+#include "core/RDP/gcc/userdata/cs_net.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
+#include "core/RDP/gcc/userdata/cs_cluster.hpp"
+#include "core/RDP/gcc.hpp"
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
@@ -48,12 +57,10 @@
 #include "system/tls_check_certificate.hpp"
 
 #include <cstring>
-#include <iomanip>
-#include <sstream>
 
 
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
-    ReportMessageApi& report_message,
+    AuthApi& sesman,
     bool server_cert_store,
     ServerCertCheck server_cert_check,
     std::unique_ptr<char[]>&& certif_path,
@@ -77,7 +84,7 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
     return a;
 }())
 , verbose(verbose)
-, report_message(report_message)
+, sesman(sesman)
 {}
 
 void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::string_view error_msg)
@@ -85,33 +92,27 @@ void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::s
     auto notification_type = this->server_status_messages[underlying_cast(status)];
     if (bool(notification_type & ServerNotification::syslog)) {
         auto log6 = [&](LogId id, zstring_view message){
-            this->report_message.log6(id, tvtime(), {
-                KVLog("description"_av, message),
-            });
+            this->sesman.log6(id, {KVLog("description"_av, message),});
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
         };
 
         switch (status)
         {
             case Status::AccessAllowed:
-                log6(LogId::CERTIFICATE_CHECK_SUCCESS,
-                    "Connexion to server allowed"_zv);
+                log6(LogId::CERTIFICATE_CHECK_SUCCESS, "Connexion to server allowed"_zv);
                 break;
             case Status::CertCreate:
-                log6(LogId::SERVER_CERTIFICATE_NEW,
-                    "New X.509 certificate created"_zv);
+                log6(LogId::SERVER_CERTIFICATE_NEW, "New X.509 certificate created"_zv);
                 break;
             case Status::CertSuccess:
-                log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS,
-                    "X.509 server certificate match"_zv);
+                log6(LogId::SERVER_CERTIFICATE_MATCH_SUCCESS, "X.509 server certificate match"_zv);
                 break;
             case Status::CertFailure:
-                log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE,
-                    "X.509 server certificate match failure"_zv);
+                log6(LogId::SERVER_CERTIFICATE_MATCH_FAILURE, "X.509 server certificate match failure"_zv);
                 break;
             case Status::CertError:
                 log6(LogId::SERVER_CERTIFICATE_ERROR,
-                    str_concat("X.509 server certificate internal error: "_zv, error_msg));
+                        str_concat("X.509 server certificate internal error: "_zv, error_msg));
                 break;
         }
     }
@@ -147,7 +148,7 @@ CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(
 }
 
 RdpNegociation::RdpNegociation(
-    std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
+    const ChannelsAuthorizations channels_authorizations,
     CHANNELS::ChannelDefArray& mod_channel_list,
     const CHANNELS::ChannelNameId auth_channel,
     const CHANNELS::ChannelNameId checkout_channel,
@@ -160,9 +161,9 @@ RdpNegociation::RdpNegociation(
     const ClientInfo& info,
     RedirectionInfo& redir_info,
     Random& gen,
-    TimeObj& timeobj,
+    TimeBase& time_base,
     const ModRDPParams& mod_rdp_params,
-    ReportMessageApi& report_message,
+    AuthApi& sesman,
     LicenseApi& license_store,
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop,
@@ -193,14 +194,16 @@ RdpNegociation::RdpNegociation(
     , gen(gen)
     , verbose(mod_rdp_params.verbose /*| (RDPVerbose::security|RDPVerbose::basic_trace)*/)
     , server_notifier(
-        report_message,
+        sesman,
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,
         [](const char* device_id){
-            size_t lg_certif_path = strlen(app_path(AppPath::Certif));
+            // TODO return str_concat(certif_path, '/', device_id)
+            auto certif_path = app_path(AppPath::Certif);
+            size_t lg_certif_path = certif_path.size();
             size_t lg_dev_id = strlen(device_id);
             auto buffer = std::make_unique<char[]>(lg_certif_path + lg_dev_id + 2);
-            memcpy(buffer.get(), app_path(AppPath::Certif), lg_certif_path);
+            memcpy(buffer.get(), certif_path.data(), lg_certif_path);
             buffer[lg_certif_path] = '/';
             memcpy(buffer.get()+lg_certif_path+1, device_id, lg_dev_id+1);
             return buffer;
@@ -215,7 +218,7 @@ RdpNegociation::RdpNegociation(
     , nego(
         mod_rdp_params.enable_tls, mod_rdp_params.target_user,
         mod_rdp_params.enable_nla, mod_rdp_params.enable_restricted_admin_mode,
-        mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, timeobj,
+        mod_rdp_params.target_host, mod_rdp_params.enable_krb, gen, time_base,
         mod_rdp_params.close_box_extra_message_ref, mod_rdp_params.lang,
         tls_client_params,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
@@ -272,7 +275,7 @@ RdpNegociation::RdpNegociation(
     //  characters are both null terminators.
     SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
 
-    LOG(LOG_INFO, "Server key layout is %x", unsigned(this->keylayout));
+    LOG(LOG_INFO, "Server key layout is 0x%x", unsigned(this->keylayout));
 
     this->nego.set_identity(this->logon_info.username(),
                             this->logon_info.domain(),
@@ -887,8 +890,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
             size_t num_channels = channel_list.size();
-            if ((num_channels > 0) || this->enable_auth_channel || this->has_managed_drive ||
-                this->checkout_channel.c_str()[0]) {
+            if ((num_channels > 0)
+            || this->enable_auth_channel
+            || this->has_managed_drive
+            || this->checkout_channel.c_str()[0]) {
                 /* Here we need to put channel information in order
                 to redirect channel data
                 from client to server passing through the "proxy" */
@@ -897,8 +902,13 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 bool has_cliprdr_channel = false;
                 bool has_rdpdr_channel   = false;
                 bool has_rdpsnd_channel  = false;
+
+
+
                 for (size_t index = 0, adjusted_index = 0; index < num_channels; index++) {
                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
+
+                    channel_item.log(index);
 
                     if (!this->remote_program && channel_item.name == channel_names::rail) {
                         continue;
@@ -933,6 +943,8 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for file system virtual channel (rdpdr)
                 if (!has_rdpdr_channel && this->has_managed_drive) {
+                    LOG(LOG_INFO, "Inject rdpdr");
+
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::rdpdr.c_str());
@@ -951,6 +963,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for clipboard channel (cliprdr)
                 if (!has_cliprdr_channel && this->enable_session_probe && this->session_probe_use_clipboard_based_launcher) {
+                    LOG(LOG_INFO, "Inject cliprdr");
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::cliprdr.c_str());
@@ -971,6 +984,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 // The RDPDR channel advertised by the client is ONLY accepted by the RDP
                 //  server 2012 if the RDPSND channel is also advertised.
                 if (!has_rdpsnd_channel && this->has_managed_drive) {
+                    LOG(LOG_INFO, "Inject rdpsnd");
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::rdpsnd.c_str());
@@ -989,6 +1003,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for auth_channel virtual channel (wablauncher)
                 if (this->enable_auth_channel) {
+                    LOG(LOG_INFO, "Inject auth_channel");
                     assert(this->auth_channel.c_str()[0]);
                     memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->auth_channel.c_str(), 8);
                     cs_net.channelDefArray[cs_net.channelCount].options =
@@ -1005,6 +1020,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
 
                 // Inject a new channel for checkout_channel virtual channel
                 if (this->checkout_channel.c_str()[0]) {
+                    LOG(LOG_INFO, "Inject checkout channel");
                     memcpy(cs_net.channelDefArray[cs_net.channelCount].name, this->checkout_channel.c_str(), 8);
                     cs_net.channelDefArray[cs_net.channelCount].options =
                         GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -1019,6 +1035,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 }
 
                 if (this->enable_session_probe) {
+                    LOG(LOG_INFO, "Enable session probe");
                     memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::sespro.c_str(), 8);
                     cs_net.channelDefArray[cs_net.channelCount].options =
                         GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED;
@@ -1033,6 +1050,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 }
 
                 if (this->convert_remoteapp_to_desktop) {
+                    LOG(LOG_INFO, "Convert remote app to desktop");
                     {
                         memcpy(cs_net.channelDefArray[cs_net.channelCount].name, channel_names::rail.c_str(), 8);
                         cs_net.channelDefArray[cs_net.channelCount].options =
@@ -1625,7 +1643,7 @@ void RdpNegociation::send_client_info_pdu()
 
     this->send_data_request(
         GCC::MCS_GLOBAL_CHANNEL,
-        [&infoPacket](StreamSize<1024> /*maxlen*/, OutStream & stream) {
+        [&infoPacket](StreamSize<2048> /*maxlen*/, OutStream & stream) {
             infoPacket.emit(stream);
         },
         SEC::write_sec_send_fn{SEC::SEC_INFO_PKT, this->encrypt, this->negociation_result.encryptionLevel}

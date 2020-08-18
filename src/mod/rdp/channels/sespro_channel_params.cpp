@@ -118,16 +118,17 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
 
             const char * rule_separator = strchr(rule, ',');
 
-            std::string description_string(rule_begin, (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
-
             std::string rule_string(rule, (rule_separator ? rule_separator - rule : ::strlen(rule)));
 
             const char * rule_c_str = rule_string.c_str();
 
-            const char * info_separator = strchr(rule_c_str, ':');
+            const char * info_separator = strrchr(rule_c_str, ':');
 
             if (info_separator)
             {
+                std::string description_string(rule_begin,
+                    (rule_separator ? rule_separator - rule_begin : ::strlen(rule_begin)));
+
                 std::string host_address_or_subnet(rule_c_str, info_separator - rule_c_str);
 
                 this->rules.push_back({
@@ -175,7 +176,7 @@ bool OutboundConnectionMonitorRules::get(
 std::string OutboundConnectionMonitorRules::to_string() const
 {
     std::string r;
-    constexpr array_view_const_char type_s[]{
+    constexpr chars_view type_s[]{
         "Notify"_av,
         "Deny"_av,
         "Allow"_av,
@@ -265,7 +266,7 @@ bool ProcessMonitorRules::get(
 std::string ProcessMonitorRules::to_string() const
 {
     std::string r;
-    constexpr array_view_const_char type_s[]{
+    constexpr chars_view type_s[]{
         "Notify"_av,
         "Deny"_av,
     };

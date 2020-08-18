@@ -367,7 +367,7 @@ public:
         stream.out_copy_bytes("PDBC"_av);  // Magic(4)
         stream.out_uint8(CURRENT_VERSION);
 
-        t.send(stream.get_bytes());
+        t.send(stream.get_produced_bytes());
 
         for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
             save_to_disk(bmp_cache, cache_id, t, verbose);
@@ -389,7 +389,7 @@ private:
 
         StaticOutStream<65535> stream;
         stream.out_uint16_le(bitmap_count);
-        t.send(stream.get_bytes());
+        t.send(stream.get_produced_bytes());
         if (!bitmap_count) {
             return;
         }
@@ -437,7 +437,7 @@ private:
                     stream.out_copy_bytes(bmp.palette().data(), sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
-                t.send(stream.get_bytes());
+                t.send(stream.get_produced_bytes());
 
                 t.send(bmp_data, bmp_size);
             }
@@ -450,7 +450,7 @@ inline void save_persistent_disk_bitmap_cache(
     const char * persistent_path,
     const char * target_host,
     BitsPerPixel bpp,
-    ReportError report_error,
+    std::function<void(const Error & error)> notify_error,
     BmpCachePersister::Verbose verbose
 )
 {
@@ -479,7 +479,7 @@ inline void save_persistent_disk_bitmap_cache(
     try
     {
         {
-            OutFileTransport oft(unique_fd{fd}, std::move(report_error));
+            OutFileTransport oft(unique_fd{fd}, notify_error);
             BmpCachePersister::save_all_to_disk(bmp_cache, oft, verbose);
         }
 

@@ -210,8 +210,10 @@ public:
     }
 
     void force_using_cache_bitmap_r2() {
-        LOG(LOG_INFO, "RDPSerializer::force_using_cache_bitmap_r2");
-        this->bitmap_cache_version = 2;
+        if (this->bitmap_cache_version != 2) {
+            LOG(LOG_INFO, "RDPSerializer::force_using_cache_bitmap_r2");
+            this->bitmap_cache_version = 2;
+        }
     }
 
 protected:
@@ -288,8 +290,6 @@ private:
     }
 
 public:
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
-
     void draw(RDPOpaqueRect const & cmd_, Rect clip, gdi::ColorCtx color_ctx) override {
         //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
         this->reencode_cmd_color(cmd_, color_ctx, [&](RDPOpaqueRect const & cmd){
@@ -391,8 +391,8 @@ public:
 
     // These should not be part of draw interface, they have their own pdu
     // same thing for bitmap update
-    void draw(RDPSetSurfaceCommand const & cmd) override {}
-    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
 
 protected:
@@ -787,7 +787,8 @@ public:
             if (bitmap_data.flags & BITMAP_COMPRESSION) {
                 RDPBitmapData bitmap_data_new = bitmap_data;
 
-                bitmap_data_new.flags         &= ~(BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR); /*NOLINT*/
+                bitmap_data_new.flags         &= ~( uint16_t(BITMAP_COMPRESSION)
+                                                  | uint16_t(NO_BITMAP_COMPRESSION_HDR));
                 bitmap_data_new.bitmap_length  = bmp.bmp_size();
 
                 this->reserve_bitmap(bitmap_data_new.struct_size() + bmp.bmp_size());

@@ -25,10 +25,17 @@ if [ $fast -eq 0 ]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
 
+timestamp=$(date +%s)
+show_duration()
+{
+    local timestamp2=$(date +%s)
+    echo duration"[$@]": $((($timestamp2-$timestamp)/60))m $((($timestamp2-$timestamp)%60))s
+    timestamp=$timestamp2
+}
 
 # jsclient (emscripten)
 pushd projects/jsclient
-source ~/emsdk-master/emsdk_set_env.sh
+source ~/emsdk/emsdk_env.sh
 if [ $fast -eq 0 ]; then
     rm -rf bin
 fi
@@ -38,10 +45,15 @@ if [ ! -d system_include/boost ]; then
     mkdir -p system_include
     ln -s /usr/include/boost/ system_include
 fi
+if [ ! -d node_modules ]; then
+    ln -s ~/node_jsclient/future/node_modules .
+fi
 set -o pipefail
-bjam -qj2 toolset=clang-$version debug |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
+bjam -qj2 toolset=clang-$version debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
 popd
+
+show_duration jsclient
 
 
 #These following packages MUST be installed. See README of redemption project
@@ -61,6 +73,7 @@ valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
 toolset_clang=toolset=clang-9.0
 
+export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 export UBSAN_OPTIONS=print_stacktrace=1
 
@@ -68,7 +81,12 @@ export BOOST_TEST_COLOR_OUTPUT=0
 
 if [ $fast -eq 0 ]; then
     rm -rf bin
+else
+    rm -rf bin/tmp/
 fi
+
+mkdir -p bin/tmp
+export TMPDIR_TEST=bin/tmp/
 
 # export REDEMPTION_LOG_PRINT=1
 export REDEMPTION_LOG_PRINT=0
@@ -82,7 +100,7 @@ build()
     bjam -q "$@" || {
         local e=$?
         export REDEMPTION_LOG_PRINT=1
-        bjam -q "$@"
+        bjam -q "$@" -j1
         exit $e
     }
 }
@@ -111,6 +129,8 @@ build $toolset_gcc cxxflags=-g -j2 ocr_tools
 build $toolset_gcc cxxflags=-g $big_mem
 build $toolset_gcc cxxflags=-g -j2
 
+show_duration $toolset_gcc
+
 
 # Warn new files created by tests.
 set -o pipefail
@@ -130,11 +150,14 @@ build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 
+show_duration $toolset_clang
+
 
 if [ $fast -eq 0 ]; then
     # debug with coverage
     build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
 
+    show_duration $toolset_gcc coverage
 
     # cppcheck
     # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
@@ -149,17 +172,22 @@ if [ $fast -eq 0 ]; then
       \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' \) \
       -exec ./tools/c++-analyzer/todo_extractor '{}' +
 
+    show_duration todo_extractor
 
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy-9 ./tools/c++-analyzer/clang-tidy \
-      | sed -E '/^(.+\/|)modules\//,/\^/d'
+    CLANG_TIDY=clang-tidy-10 /usr/bin/time --format="%Es - %MK" \
+      ./tools/c++-analyzer/clang-tidy | sed -E '/^(.+\/|)modules\//,/\^/d'
 
+    show_duration clang-tidy
 
     # valgrind
     #find ./bin/$gcc/release/tests/ -type d -exec \
     #  ./tools/c++-analyzer/valgrind -qd '{}' \;
-    find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
+    /usr/bin/time --format="%Es - %MK" \
+      find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+
+    show_duration valgrind
 fi

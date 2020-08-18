@@ -313,7 +313,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
 
     uint8_t pluginId = s.in_uint8();
     if (pluginId != 1) {
-        LOG(LOG_ERR, "Invalid pluginId 0x%0.2x", pluginId);
+        LOG(LOG_ERR, "Invalid pluginId 0x%.2x", pluginId);
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
 
@@ -328,10 +328,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
         LOG(LOG_ERR, "Invalid challengeLen for serverIdentification");
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
-    const uint8_t *serverIdentification = s.get_current();
-    if (serverIdentificationLen > 0) {
-        s.in_skip_bytes(serverIdentificationLen);
-    }
+    /*bytes_view serverIdentification =*/ s.in_skip_bytes(serverIdentificationLen);
 
     if (!s.in_check_rem(4 + 2)) {
         LOG(LOG_ERR, "Invalid challengeLen for challenge and wClientAuthPublicKeyIdentifierLength");
@@ -339,7 +336,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
     }
 
     m_challengeFlags = s.in_uint32_le();
-    bool passPhraseRequired = (m_challengeFlags & svncOverridePassphrase);
+    // bool passPhraseRequired = (m_challengeFlags & svncOverridePassphrase);
 
     uint16_t clientAuthPublicKeyIdentifierLen = s.in_uint16_le();
     if (!s.in_check_rem(clientAuthPublicKeyIdentifierLen)) {
@@ -347,7 +344,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
         throw Error(ERR_VNC_CONNECTION_ERROR);
     }
 
-    const uint8_t *clientAuthPublicKeyIdentifier = s.get_current();
+    /*const uint8_t *clientAuthPublicKeyIdentifier = s.get_current();*/
 
     if (clientAuthPublicKeyIdentifierLen > 0) {
         // handle clientAuthPublicKeyIdentifier
@@ -458,8 +455,7 @@ bool UltraDSM::handleChallenge(InStream &instream, uint16_t &challengeLen, uint8
 
 
 bool UltraDSM::getResponse(OutStream &out) {
-        int nResponseLength;
-        bool bExpectChallenge = false;
+        //bool bExpectChallenge = false;
 
         if (!m_rsa) {
             LOG(LOG_ERR, "Public key unavailable.");
@@ -505,7 +501,7 @@ bool UltraDSM::getResponse(OutStream &out) {
         }
 
         BufMaker<0x1000> blobKeysBuffer;
-        array_view_u8 blobKeys = blobKeysBuffer.dyn_array(nKeyDataLength);
+        writable_u8_array_view blobKeys = blobKeysBuffer.dyn_array(nKeyDataLength);
 
         m_bTriple = false;
 
@@ -627,7 +623,7 @@ bool UltraDSM::getResponse(OutStream &out) {
         uint16_t wEncryptedSize = nEncryptedSize;
         uint16_t wClientAuthSigLength = nClientAuthSigLength;
 
-        nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
+        int nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
 
         out.out_uint32_le(m_responseFlags);
         out.out_uint16_le(wEncryptedSize);

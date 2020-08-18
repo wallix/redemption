@@ -26,20 +26,36 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "utils/sugar/update_lock.hpp"
+#include "core/front_api.hpp"
 
 Bouncer2Mod::Bouncer2Mod(
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
+    GdProvider & gd_provider,
+    EventContainer & events,
+    FrontAPI & front,
     uint16_t width, uint16_t height)
 : front_width(width)
 , front_height(height)
+, front(front)
 , dancing_rect(0,0,100,100)
-, session_reactor(session_reactor)
-, timer(session_reactor.create_graphic_timer()
-    .set_delay(std::chrono::milliseconds(33))
-    .on_action(jln::always_ready([this](gdi::GraphicApi& gd){
-        this->draw_event(gd);
-    })))
-{}
+, events(events)
+, gd_provider(gd_provider)
+{
+    this->events.create_event_timeout(
+        "Bouncer Periodic Timer", this,
+        time_base.get_current_time() + std::chrono::milliseconds(33),
+        [this](Event&event)
+        {
+            auto delay = std::chrono::milliseconds(33);
+            event.alarm.reset_timeout(event.alarm.now+delay);
+            this->draw_event(this->gd_provider.get_graphics());
+        });
+}
+
+Bouncer2Mod::~Bouncer2Mod()
+{
+    this->events.end_of_lifespan(this);
+}
 
 Rect Bouncer2Mod::get_screen_rect() const
 {
@@ -55,7 +71,7 @@ void Bouncer2Mod::rdp_input_scancode(
     long /*param1*/, long /*param2*/, long /*param3*/, long /*param4*/, Keymap2 * keymap)
 {
     if (keymap->nb_kevent_available() > 0 && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->set_mod_signal(BACK_EVENT_STOP);
         return ;
     }
 
@@ -99,6 +115,11 @@ int Bouncer2Mod::interaction()
 // This should come from BACK!
 void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
+    if (!this->capture_started && this->front.can_be_start_capture(true)){
+        this->capture_started = true;
+        LOG(LOG_INFO, "Bouncer Mod : capture started (forced)");
+    }
+
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     auto const green = encode_color24()(GREEN);

@@ -52,12 +52,17 @@ Dimension WidgetTooltip::get_optimal_dim()
 
 void WidgetTooltip::set_text(const char * text)
 {
-    this->desc.set_text(text);
+    this->desc.set_text(text, this->cx());
+}
+
+void WidgetTooltip::set_text(const char * text, unsigned max_width)
+{
+    this->desc.set_text(text, max_width);
     Dimension dim = this->desc.get_optimal_dim();
     this->desc.set_wh(dim);
 
     this->set_wh(this->desc.cx() + 2 * w_border,
-                    this->desc.cy() + 2 * h_border);
+                 this->desc.cy() + 2 * h_border);
 }
 
 void WidgetTooltip::rdp_input_invalidate(Rect clip)

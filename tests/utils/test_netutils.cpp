@@ -33,7 +33,7 @@ using namespace std::string_view_literals;
 
 RED_AUTO_TEST_CASE(ParseIpConntrack)
 {
-    array_view_const_char conntrack1
+    chars_view conntrack1
       = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n"
         "udp      17 28 src=10.10.43.30 dst=255.255.255.255 sport=17500 dport=17500 packets=1102 bytes=154280 [UNREPLIED] src=255.255.255.255 dst=10.10.43.30 sport=17500 dport=17500 packets=0 bytes=0 mark=0 secmark=0 use=2\n"
         "unknown  2 205 src=10.10.47.124 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.47.124 packets=0 bytes=0 mark=0 secmark=0 use=2\n"
@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 packets=90 bytes=10061 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 packets=89 bytes=38707 [ASSURED] mark=0 secmark=0 use=2\n"
         "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 packets=1139 bytes=82008 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 packets=0 bytes=0 mark=0 secmark=0 use=2\n"_av;
 
-    array_view_const_char conntrack2
+    chars_view conntrack2
       =  "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 mark=0 secmark=0 use=2\n"
         "udp      17 28 src=10.10.43.30 dst=255.255.255.255 sport=17500 dport=17500 [UNREPLIED] src=255.255.255.255 dst=10.10.43.30 sport=17500 dport=17500 mark=0 secmark=0 use=2\n"
         "unknown  2 205 src=10.10.47.124 dst=224.0.0.251 [UNREPLIED] src=224.0.0.251 dst=10.10.47.124 mark=0 secmark=0 use=2\n"
@@ -94,7 +94,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
 
     struct D {
         char const* name;
-        array_view_const_char data;
+        chars_view data;
     };
     RED_TEST_CONTEXT_DATA(D const& d, d.name, {
         // "tcp      6 431979 ESTABLISHED src=10.10.43.13 dst=10.10.46.78 sport=41971 dport=3389 packets=96 bytes=10739 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=41971 packets=96 bytes=39071 [ASSURED] mark=0 secmark=0 use=2\n"
@@ -111,12 +111,14 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
         RED_CHECK(0 == lseek(fd, 0, SEEK_SET));
         char transparent_target[256] = {};
 
-        RED_CHECK(0 == parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, make_array_view(transparent_target), 0));
+        RED_CHECK(0 == parse_ip_conntrack(
+            fd, "10.10.47.93", "10.10.43.13", 3389, 41971, make_writable_array_view(transparent_target), 0));
         RED_CHECK(transparent_target == "10.10.46.78"sv);
 
         RED_CHECK(0 == lseek(fd, 0, SEEK_SET));
         transparent_target[0] = 0;
-        RED_CHECK(-1 == parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, make_array_view(transparent_target), 0));
+        RED_CHECK(-1 == parse_ip_conntrack(
+            fd, "10.10.47.21", "10.10.43.13", 3389, 46392, make_writable_array_view(transparent_target), 0));
         RED_CHECK(transparent_target == ""sv);
 
         close(fd);

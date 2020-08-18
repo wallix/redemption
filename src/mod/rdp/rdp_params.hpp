@@ -34,6 +34,8 @@
 # include "mod/rdp/params/rdp_session_probe_params.hpp"
 #endif
 
+# include "mod/rdp/params/rdp_application_params.hpp"
+
 #include <chrono>
 #include <string>
 #include <cstdint>
@@ -95,22 +97,6 @@ struct ModRDPParams
 
     CHANNELS::ChannelNameId checkout_channel;
 
-    struct ApplicationParams
-    {
-        const char * primary_user_id = "";
-        const char * target_application = "";
-
-        // Application Bastion
-        const char * alternate_shell = "";
-        const char * shell_arguments = "";
-        const char * shell_working_dir = "";
-
-        bool         use_client_provided_alternate_shell = false;
-
-        const char * target_application_account = "";
-        const char * target_application_password = "";
-    };
-
     ApplicationParams application_params;
 
     RdpCompression rdp_compression = RdpCompression::none;
@@ -133,15 +119,7 @@ struct ModRDPParams
 
     const char * device_id = "";
 
-    PrimaryDrawingOrdersSupport primary_drawing_orders_support{
-        TS_NEG_MEM3BLT_INDEX,
-        TS_NEG_GLYPH_INDEX,
-        TS_NEG_DSTBLT_INDEX,
-        TS_NEG_PATBLT_INDEX,
-        TS_NEG_SCRBLT_INDEX,
-        TS_NEG_MEMBLT_INDEX,
-        TS_NEG_LINETO_INDEX,
-    };
+    PrimaryDrawingOrdersSupport disabled_orders {};
 
     bool enable_persistent_disk_bitmap_cache = false;
     bool enable_cache_waiting_list = false;
@@ -177,7 +155,7 @@ struct ModRDPParams
 
         bool should_ignore_first_client_execute = false;
 
-        WindowsExecuteShellParams client_execute;
+        WindowsExecuteShellParams windows_execute_shell_params;
 
         ClientExecute * rail_client_execute = nullptr;
         std::chrono::milliseconds rail_disconnect_message_delay {};
@@ -212,6 +190,22 @@ struct ModRDPParams
 
     bool accept_monitor_layout_change_if_capture_is_not_started = true;
 
+    struct DynamicChannelsParams
+    {
+        const char * allowed_channels = "*";
+        const char * denied_channels  = "";
+    };
+
+    DynamicChannelsParams dynamic_channels_params;
+
+    struct ServerInfo
+    {
+        uint16_t input_flags = 0;
+        uint32_t keyboard_layout = 0;
+    };
+
+    ServerInfo* server_info_ref = nullptr;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -236,7 +230,7 @@ struct ModRDPParams
         , server_auto_reconnect_packet_ref(server_auto_reconnect_packet_ref)
         , close_box_extra_message_ref(close_box_extra_message_ref)
         , verbose(verbose)
-    {}
+    { }
 
     void log() const
     {
@@ -258,7 +252,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.primary_user_id);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application);
 
-        RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  primary_drawing_orders_support.as_uint());
+        RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  disabled_orders.as_uint());
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_nla);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);
@@ -285,6 +279,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.customize_executable_name);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.enable_log);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.enable_log_rotation);
+        RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.log_level);
 
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.clipboard_initialization_delay_ms);
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.clipboard_based_launcher.start_delay_ms);
@@ -303,6 +298,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_params.vc_params.end_of_session_check_delay_time);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.ignore_ui_less_processes_during_end_of_session_check);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.update_disabled_features);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.childless_window_as_unidentified_input_field);
 
@@ -325,6 +321,8 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_params.vc_params.session_shadowing_support);
 
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.on_account_manipulation);
+
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_params.alternate_directory_environment_variable.c_str());
 #endif
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
@@ -390,11 +388,11 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    remote_app_params.rail_client_execute);
 
-        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    remote_app_params.client_execute.flags);
+        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    remote_app_params.windows_execute_shell_params.flags);
 
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.exe_or_file.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.working_dir.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.client_execute.arguments.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.exe_or_file.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.working_dir.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.arguments.c_str());
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.use_client_provided_remoteapp);
 
@@ -431,6 +429,9 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_license_store);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             accept_monitor_layout_change_if_capture_is_not_started);
+
+        RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.allowed_channels);
+        RDP_PARAMS_LOG("%s",     s_or_none,             dynamic_channels_params.denied_channels);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

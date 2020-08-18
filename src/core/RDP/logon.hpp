@@ -946,7 +946,7 @@ public:
         auto in_uni_to_ascii_str = [&](auto& text, uint16_t& sz) {
             auto utf8 = UTF16toUTF8_buf(
                 stream.remaining_bytes().first(sz),
-                make_array_view(text).drop_back(1));
+                make_writable_array_view(text).drop_back(1));
             stream.in_skip_bytes(sz);
             sz = utf8.size();
             text[sz] = 0;
@@ -1083,7 +1083,7 @@ public:
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
         {
-            array_view_const_char const av = ::get_printable_password({
+            chars_view const av = ::get_printable_password({
                 char_ptr_cast(this->Password),
                 this->cbPassword
             }, password_printing_mode);

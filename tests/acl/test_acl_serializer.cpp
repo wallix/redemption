@@ -23,17 +23,12 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
-
-#include "core/log_id.hpp"
-#include "acl/acl_serializer.hpp"
-#include "configs/config.hpp"
-#include "main/version.hpp"
-#include "utils/genfstat.hpp"
-#include "transport/file_transport.hpp"
-#include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/log_buffered.hpp"
+
+#include "acl/acl_serializer.hpp"
+#include "configs/config.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
@@ -67,13 +62,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     Inifile ini;
     NullTransport trans;
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
 
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
-    ini.set<cfg::context::forcemodule>(true);
+    AclSerializer acl(ini);
+    acl.set_auth_trans(&trans);
+
     RED_CHECK_NO_THROW(acl.send_acl_data());
 
     struct ThrowTransport : Transport
@@ -84,7 +76,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         }
     };
     ThrowTransport transexcpt;
-    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini);
+
+    aclexcpt.set_auth_trans(&transexcpt);
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
@@ -98,22 +92,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
-    stream.out_copy_bytes("\nASK\n"_av);
-    stream.out_copy_bytes(string_from_authid(cfg::context::password::index));
-    stream.out_copy_bytes("\nASK\n"_av);
+    stream.out_copy_bytes("login\nASK\n"_av);
+    stream.out_copy_bytes("password\nASK\n"_av);
 
-    stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index));
-    stream.out_copy_bytes("\n!6455\n"_av);
+    stream.out_copy_bytes("session_id\n!6455\n"_av);
     stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
+    GeneratorTransport trans(stream.get_produced_bytes());
+    AclSerializer acl(ini);
 
-    GeneratorTransport trans(stream.get_bytes());
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    acl.set_auth_trans(&trans);
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -131,8 +119,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     OutStream big_stream({u.get(), sz});
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xFFFF);
-    big_stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
-    big_stream.out_copy_bytes("\n!"_av);
+    big_stream.out_copy_bytes("login\n!"_av);
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     big_stream.out_skip_bytes(k64 - big_stream.get_offset());
 
@@ -150,7 +137,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
     transexcpt.disable_remaining_error();
-    AclSerializer aclexcpt(ini, 10010, transexcpt, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer aclexcpt(ini);
+
+    aclexcpt.set_auth_trans(&transexcpt);
     RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
 
@@ -159,21 +148,16 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     Inifile ini;
     ini.clear_send_index();
 
-    std::string s = str_concat(
-        "----",
-        string_from_authid(cfg::context::password::index),
-        "\nASK\n",
-        string_from_authid(cfg::globals::auth_user::index),
-        "\n!didier\n");
+    std::string s =
+        "----"
+        "password\nASK\n"
+        "login\n!didier\n";
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-
     GeneratorTransport trans(s);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+
+    acl.set_auth_trans(&trans);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -195,7 +179,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = string_from_authid(cfg::context::rejected::index);
+    auto const key = "rejected"_av;
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream({u.get(), total_sz});
@@ -216,12 +200,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     CheckTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    acl.set_auth_trans(&trans);
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
@@ -238,7 +218,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = string_from_authid(cfg::context::rejected::index);
+    auto const key = "rejected"_av;
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream({u.get(), total_sz});
@@ -259,12 +239,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    acl.set_auth_trans(&trans);
 
     std::string result(sz_string, 'a');
     RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
@@ -279,8 +255,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
     Inifile ini;
     ini.clear_send_index();
 
-    auto const key1 = string_from_authid(cfg::context::rejected::index);
-    auto const key2 = string_from_authid(cfg::context::message::index);
+    auto const key1 = "rejected"_av;
+    auto const key2 = "message"_av;
     size_t const key2_splitted_len = key2.size() / 2;
     auto const total_sz = 4 * 2 + key1.size() + key2.size() + 5 * 2;
     std::unique_ptr<char[]> u(new char[total_sz]);
@@ -299,12 +275,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
 
     GeneratorTransport trans({u.get(), big_stream.get_offset()});
 
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+    acl.set_auth_trans(&trans);
 
     RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
 
@@ -318,14 +290,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 
     std::string s("----abcd\n!something\nefg\n!other something\n");
     OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
-
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
+    TimeBase timebase({0, 0});
 
     GeneratorTransport trans(s);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+    AclSerializer acl(ini);
+
+    acl.set_auth_trans(&trans);
 
     RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
@@ -337,133 +307,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
         tu::log_buffered logbuf;
         acl.incoming();
         RED_CHECK_EQ(logbuf.buf(),
-            "WARNING -- Unexpected receiving 'abcd' - 'something'\n"
-            "WARNING -- Unexpected receiving 'efg' - 'other something'\n");
+            "WARNING -- Unexpected receive 'abcd' - 'something'\n"
+            "WARNING -- Unexpected receive 'efg' - 'other something'\n");
     }
 
     RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
-}
-
-
-RED_AUTO_TEST_CASE_WD(TestAclSerializeLog, wd)
-{
-    Inifile ini;
-    ini.clear_send_index();
-
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    timeval time = {0, 0};
-
-    ini.set_acl<cfg::globals::auth_user>("admin");
-    ini.set_acl<cfg::globals::target_user>("user1");
-    ini.set_acl<cfg::globals::host>("10.10.13.12");
-    ini.set<cfg::session_log::enable_arcsight_log>(true);
-    // ini.set_acl<cfg::globals::target_host>("13.12.10.10");
-    // ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
-    // ini.set_acl<cfg::globals::session_id>("0x520");
-
-    auto logfile = wd.add_file("log5_6.log");
-    auto hashdir = wd.create_subdirectory("hash");
-    auto hashlog = hashdir.add_file("log5_6.log");
-
-    ini.set<cfg::capture::record_filebase>("log5_6");
-    ini.set<cfg::video::record_path>(wd.dirname().string());
-    ini.set<cfg::video::hash_path>(hashdir.dirname().string());
-
-    GeneratorTransport trans(""_av);
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
-
-    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
-
-    acl.start_session_log();
-
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::INPUT_LANGUAGE, time, {
-            KVLog("identifier"_av,   "ident"_av),
-            KVLog("display_name"_av, "name"_av),
-        });
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\nJan 01 1970 00:00:00 host message CEF:1|Wallix|Bastion|" VERSION "|24|INPUT_LANGUAGE|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 identifier=ident display_name=name\n");
-        RED_CHECK(logbuf.buf() == expected6);
-    }
-
-    time.tv_sec += 10;
-
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::CONNECTION_FAILED, time, {
-            KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
-            KVLog("msg2"_av, "xup"_av),
-        });
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"xup\"\nJan 01 1970 00:00:10 host message CEF:1|Wallix|Bastion|" VERSION "|11|CONNECTION_FAILED|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 msg=long long\\nmessage\\=|x\\\\y\"z msg2=xup\n");
-
-        RED_CHECK(logbuf.buf() == expected6);
-    }
-
-    time.tv_sec += 3023;
-
-    {
-        tu::log_buffered logbuf;
-
-        acl.log6(LogId::DRIVE_REDIRECTION_RENAME, time, {
-            KVLog("app"_av, "rdp"_av),
-            KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
-            KVLog("filePath"_av, "/dir/new_file.ext"_av),
-        });
-
-        auto expected6 = cstr_array_view("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\nJan 01 1970 00:50:33 host message CEF:1|Wallix|Bastion|" VERSION "|15|DRIVE_REDIRECTION_RENAME|5|WallixBastionSessionType=Neutral WallixBastionSessionId= WallixBastionHost=10.10.13.12 WallixBastionTargetIP= WallixBastionUser=admin WallixBastionDevice= WallixBastionService= WallixBastionAccount=user1 app=rdp oldFilePath=/dir/old_file.ext filePath=/dir/new_file.ext\n");
-
-        RED_CHECK(logbuf.buf() == expected6);
-    }
-
-    acl.close_session_log();
-
-    RED_CHECK_FILE_CONTENTS(logfile,
-        "1970-01-01 01:00:00 type=\"INPUT_LANGUAGE\" identifier=\"ident\" display_name=\"name\"\n"
-        "1970-01-01 01:00:10 type=\"CONNECTION_FAILED\" msg=\"long long\\nmessage=|x\\\\y\\\"z\" msg2=\"xup\"\n"
-        "1970-01-01 01:50:33 type=\"DRIVE_REDIRECTION_RENAME\" app=\"rdp\" oldFilePath=\"/dir/old_file.ext\" filePath=\"/dir/new_file.ext\"\n"_av);
-}
-
-
-RED_AUTO_TEST_CASE_WD(TestSessionLogFile, wd)
-{
-    std::string const logname = "acl_log.txt";
-    auto filename = wd.add_file(logname);
-    auto hashdir = wd.create_subdirectory("hash");
-    auto hashname = hashdir.add_file(logname);
-
-    LCGRandom rnd;
-    Fstat fstat;
-    CryptoContext cctx;
-    init_keys(cctx);
-    SessionLogFile log_file(cctx, rnd, fstat, ReportError([](Error e){
-        RED_FAIL(e.errmsg());
-        return e;
-    }));
-
-    setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
-
-    log_file.open(filename, hashname, 0, logname);
-    log_file.write_line(1512484183, cstr_array_view("test first"));
-    log_file.write_line(1512484185, cstr_array_view("test second"));
-    log_file.close();
-
-    RED_CHECK_FILE_CONTENTS(filename,
-        "2017-12-05 15:29:43 test first\n"
-        "2017-12-05 15:29:45 test second\n"_av);
-
-    InFileTransport t(unique_fd{open(hashname.c_str(), O_RDONLY)});
-    MwrmReader mwrm_reader(t);
-    MetaLine meta_line;
-    mwrm_reader.set_header({WrmVersion::v2, false});
-    mwrm_reader.read_meta_hash_line(meta_line);
-    RED_CHECK_EQ(meta_line.filename, logname);
-    RED_CHECK(not meta_line.with_hash);
-    RED_CHECK_EQ(meta_line.size, 63);
 }

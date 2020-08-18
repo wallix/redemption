@@ -35,6 +35,7 @@
 #include <chrono>
 #include <memory>
 #include <bitset>
+#include <charconv>
 
 #include <cerrno>
 #include <cstring>
@@ -90,6 +91,18 @@ namespace impl
         }
         out << "{{" << io_hexkey{d.value.c_str(), N, "0x", ", "} << "}}";
     }
+
+    template<class U>
+    void write_assignable_default(std::ostream& out, type_<types::file_permission>, default_<U> const& d)
+    {
+        char octal[32]{};
+        auto r = std::to_chars(std::begin(octal), std::end(octal), d.value, 8);
+        if (r.ec != std::errc()) {
+            throw std::runtime_error(str_concat(
+                "invalide file_permission value: ", std::make_error_code(r.ec).message()));
+        }
+        out << "{0" << octal << "}";
+    }
 }
 
 template<class Pack>
@@ -130,6 +143,8 @@ void write_type(std::ostream& out, type_<types::list<T>>) { out << "std::string"
 template<class T>
 void write_type(std::ostream& out, type_<T>) { out << type_name<T>(); }
 
+inline void write_type(std::ostream& out, type_<types::file_permission>)
+{ out << "uint32_t"; }
 
 template<unsigned N>
 void write_type_spec(std::ostream& out, type_<types::fixed_string<N>>)
@@ -153,13 +168,16 @@ void write_type_spec(std::ostream& out, type_<types::list<T>>)
 template<class T>
 void write_type_spec(std::ostream& out, type_<T> t) { write_type(out, t); }
 
+inline void write_type_spec(std::ostream& out, type_<types::file_permission>)
+{ out << "::configs::spec_types::file_permission"; }
+
 struct CppConfigWriterBase;
 
-void write_extern_template_field(std::ostream & out_set_value, CppConfigWriterBase& writer);
 void write_config_set_value(std::ostream & out_set_value, CppConfigWriterBase& writer);
 void write_variables_configuration(std::ostream & out_varconf, CppConfigWriterBase& writer);
 void write_variables_configuration_fwd(std::ostream & out_varconf, CppConfigWriterBase& writer);
 void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer);
+void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer);
 
 struct FullNameMemberChecker
 {
@@ -176,7 +194,7 @@ struct FullNameMemberChecker
             std::sort(this->full_names.begin(), this->full_names.end());
 
             auto* previous_name = &this->full_names.front();
-            for (auto& name : array_view{this->full_names}.from_offset(1)) {
+            for (auto& name : writable_array_view{this->full_names}.from_offset(1)) {
                 if (name == *previous_name) {
                     str_append(error, (error.empty() ? "duplicates member: " : ", "), name);
                 }
@@ -223,14 +241,16 @@ struct CppConfigWriterBase
     std::vector<Member> members;
     std::vector<std::string> variables_acl;
     std::vector<log_policy_t> authid_policy;
+    std::size_t start_section_index = 0;
+    std::vector<std::size_t> start_indexes;
 
     struct Filenames
     {
         std::string authid_hpp;
+        std::string str_authid_hpp;
         std::string variable_configuration_fwd;
         std::string variable_configuration_hpp;
         std::string config_set_value;
-        std::string extern_template_field;
     };
     Filenames filenames;
 
@@ -280,10 +300,10 @@ struct CppConfigWriterBase
 
         MultiFilenameWriter<CppConfigWriterBase> sw(*this);
         sw.then(filenames.authid_hpp, &write_authid_hpp)
+          .then(filenames.str_authid_hpp, &write_str_authid_hpp)
           .then(filenames.variable_configuration_fwd, &write_variables_configuration_fwd)
           .then(filenames.variable_configuration_hpp, &write_variables_configuration)
           .then(filenames.config_set_value, &write_config_set_value)
-          .then(filenames.extern_template_field, &write_extern_template_field)
         ;
         if (sw.err) {
             std::cerr << "CppConfigWriterBase: " << sw.filename << ": " << strerror(errno) << "\n";
@@ -297,6 +317,7 @@ struct CppConfigWriterBase
         if (!section_name.empty()) {
             ++this->depth;
         }
+        this->start_section_index = this->authid_policy.size();
     }
 
     void do_stop_section(Names const& /*names*/, std::string const & section_name)
@@ -311,6 +332,7 @@ struct CppConfigWriterBase
             this->sections_parser.emplace_back(section_name, str);
             this->out_body_parser_.str("");
         }
+        this->start_indexes.emplace_back(this->authid_policy.size());
     }
 
     void tab() { this->out() << /*std::setw(this->depth*4+4) << */"    "; }
@@ -383,20 +405,20 @@ struct CppConfigWriterBase
             }
             this->out() << " <br/>\n";
 
-            this->tab(); this->out() << "/// sesman::name: " << sesman_name << " <br/>\n";
+            this->tab(); this->out() << "/// sesmanName: " << sesman_name << " <br/>\n";
         }
 
-        this->tab(); this->out() << "/// value"; write_assignable_default(this->out(), infos); this->out() << " <br/>\n";
+        this->tab(); this->out() << "/// default: "; write_assignable_default(this->out(), infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";
         this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman_io::proxy_to_sesman) ? "true" : "false") << ";\n";
-        this->tab(); this->out() << "    static constexpr char const * section = \"" << section_name << "\";\n";
-        this->tab(); this->out() << "    static constexpr char const * name = \"" << varname << "\";\n";
 
         if (bool(properties)) {
             this->tab(); this->out() << "    // for old cppcheck\n";
             this->tab(); this->out() << "    // cppcheck-suppress obsoleteFunctionsindex\n";
-            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->authid_policy.size() << ");\n";
+            this->tab(); this->out() << "    static constexpr ::configs::authid_t index {"
+                " ::configs::cfg_indexes::section" << this->sections.size() << " + "
+                << (this->authid_policy.size() - this->start_section_index) << "};\n";
             this->authid_policy.emplace_back(infos);
         }
 
@@ -435,14 +457,14 @@ struct CppConfigWriterBase
             auto spec_name = get_name<spec::name>(infos);
             this->full_names.spec.emplace_back(str_concat(section_name, ':', spec_name));
             auto type_spec = get_type<spec::type_>(infos);
-            this->out() << "        else if (0 == strcmp(key, \"" << spec_name << "\")) {\n"
-            "            ::configs::parse_and_log(\n"
-            "                context, key,\n"
+            this->out() << "        else if (key == \"" << spec_name << "\"_zv) {\n"
+            "            ::config_parse_and_log(\n"
+            "                this->section_name, key.c_str(),\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
             "                ::configs::spec_type<";
             write_type_spec(this->out(), type_spec);
             this->out() << ">{},\n"
-            "                av\n"
+            "                value\n"
             "            );\n"
             "        }\n";
         }
@@ -458,16 +480,36 @@ inline void write_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& wri
       "//\n\n"
       "#pragma once\n"
       "\n"
-      "#include \"utils/sugar/array_view.hpp\"\n"
+      "namespace configs\n"
+      "{\n"
+      "    enum class authid_t : unsigned;\n"
+      "    constexpr authid_t max_authid = authid_t(" << writer.authstrs.size() << ");\n"
+      "}\n"
+    ;
+}
+
+inline void write_str_authid_hpp(std::ostream & out_authid, CppConfigWriterBase& writer)
+{
+    out_authid <<
+      "//\n"
+      "// DO NOT EDIT THIS FILE BY HAND -- YOUR CHANGES WILL BE OVERWRITTEN\n"
+      "//\n\n"
+      "#pragma once\n"
       "\n"
-      "enum authid_t : unsigned;\n\n"
-      "constexpr authid_t MAX_AUTHID = authid_t(" << writer.authstrs.size() << ");\n\n"
-      "constexpr array_view_const_char const authstr[] = {\n"
+      "#include \"utils/sugar/zstring_view.hpp\"\n"
+      "#include \"configs/autogen/authid.hpp\"\n"
+      "\n"
+      "namespace configs\n"
+      "{\n"
+      "    constexpr zstring_view const authstr[] = {\n"
     ;
     for (auto & authstr : writer.authstrs) {
-        out_authid << "    \"" << authstr << "\"_av,\n";
+        out_authid << "        \"" << authstr << "\"_zv,\n";
     }
-    out_authid << "};\n";
+    out_authid <<
+      "    };\n\n"
+      "}\n"
+    ;
 }
 
 inline void write_variables_configuration_fwd(std::ostream & out_varconf, CppConfigWriterBase& writer)
@@ -478,9 +520,10 @@ inline void write_variables_configuration_fwd(std::ostream & out_varconf, CppCon
         "//\n\n"
         "#pragma once\n"
         "\n"
-        "enum authid_t : unsigned;\n\n"
-        "namespace cfg {\n"
+        "namespace cfg\n"
+        "{\n"
     ;
+
     for (auto & section : writer.sections) {
         if (section.section_name.empty()) {
             for (auto & var : section.members) {
@@ -505,8 +548,43 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
         "//\n"
         "// DO NOT EDIT THIS FILE BY HAND -- YOUR CHANGES WILL BE OVERWRITTEN\n"
         "//\n\n"
-        "namespace cfg {\n"
+        "#pragma once\n"
+        "\n"
+        "#include \"configs/autogen/authid.hpp\"\n"
+        "#include <cstdint>\n"
+        "\n"
+        "namespace configs\n"
+        "{\n"
+        "    namespace cfg_indexes\n"
+        "    {\n"
     ;
+
+    {
+        std::size_t i = 0;
+        std::size_t previous_index = 0;
+        for (auto n : writer.start_indexes) {
+            out_varconf << "        ";
+            if (previous_index == n) {
+                out_varconf << "// ";
+            }
+            out_varconf
+                << "inline constexpr int section" << i
+                << " = " << previous_index << "; "
+                   "/* " << writer.sections[i].section_name << " */\n"
+            ;
+            previous_index = n;
+            ++i;
+        }
+    }
+
+    out_varconf <<
+        "    }\n"
+        "}\n"
+        "\n"
+        "namespace cfg\n"
+        "{\n"
+    ;
+
     for (auto & section : writer.sections) {
         out_varconf << section.member_struct << "\n";
     }
@@ -615,33 +693,52 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
         "//\n"
         "// DO NOT EDIT THIS FILE BY HAND -- YOUR CHANGES WILL BE OVERWRITTEN\n"
         "//\n\n"
-        "void Inifile::ConfigurationHolder::set_value(const char * context, const char * key, const char * value) {\n"
-        "    array_view_const_char av {value, strlen(value)};\n"
+        "void Inifile::ConfigurationHolder::set_section(zstring_view section) {\n"
         "    if (0) {}\n"
     ;
+    int id = 1;
     for (auto & body : writer.sections_parser) {
         out_set_value <<
-            "    else if (0 == strcmp(context, \"" << body.first << "\")) {\n"
-            "        if (0) {}\n" << body.second << "\n"
-            "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
-            "            LOG(LOG_ERR, \"unknown parameter %s in section [%s]\", key, context);\n"
-            "        }\n"
+            "    else if (section == \"" << body.first << "\"_zv) {\n"
+            "        this->section_id = " << id << ";\n"
             "    }\n"
         ;
+        ++id;
     }
     out_set_value <<
         "    else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
-        "        LOG(LOG_ERR, \"unknown section [%s]\", context);\n"
+        "        LOG(LOG_WARNING, \"unknown section [%s]\", section);\n"
+        "        this->section_id = 0;\n"
+        "    }\n"
+        "\n"
+        "    this->section_name = section.c_str();\n"
+        "}\n"
+    ;
+
+    out_set_value <<
+        "\n"
+        "void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view value) {\n"
+        "    if (0) {}\n"
+    ;
+    id = 1;
+    for (auto & body : writer.sections_parser) {
+        out_set_value <<
+            "    else if (this->section_id == " << id << ") {\n"
+            "        if (0) {}\n" << body.second << "\n"
+            "        else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
+            "            LOG(LOG_WARNING, \"unknown parameter %s in section [%s]\",\n"
+            "                key, this->section_name);\n"
+            "        }\n"
+            "    }\n"
+        ;
+        ++id;
+    }
+    out_set_value <<
+        "    else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
+        "        LOG(LOG_WARNING, \"unknown section [%s]\", this->section_name);\n"
         "    }\n"
         "}\n"
     ;
-}
-
-inline void write_extern_template_field(std::ostream & out_set_value, CppConfigWriterBase& writer)
-{
-    for (auto const& name : writer.variables_acl) {
-        out_set_value << "template class Inifile::Field<cfg::" << name << ">;\n";
-    }
 }
 
 }

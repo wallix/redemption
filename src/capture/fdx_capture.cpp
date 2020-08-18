@@ -19,7 +19,6 @@
 */
 
 #include "capture/fdx_capture.hpp"
-#include "std17/charconv.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/genfstat.hpp"
@@ -28,6 +27,7 @@
 #include <array>
 #include <limits>
 #include <iterator>
+#include <charconv>
 
 
 std::string TflSuffixGenerator::name_at(uint64_t i)
@@ -116,7 +116,7 @@ namespace
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
     std::string fdx_filebase, std::string_view sid,
-    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, ReportError report_error)
+    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, std::function<void(const Error & error)> notify_error)
 : name_generator(
     record_path = remove_end_slash(record_path),
     hash_path = remove_end_slash(hash_path),
@@ -124,9 +124,9 @@ FdxCapture::FdxCapture(
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
-, report_error(std::move(report_error))
+, notify_error(notify_error)
 , groupid(groupid)
-, out_crypto_transport(this->cctx, this->rnd, this->fstat, this->report_error)
+, out_crypto_transport(this->cctx, this->rnd, this->fstat, this->notify_error)
 {
     // create directory
     std::string directory;
@@ -146,6 +146,7 @@ FdxCapture::FdxCapture(
         str_concat(record_path, '/', fdx_filebase).c_str(),
         str_concat(hash_path, '/', fdx_filebase).c_str(),
         this->groupid,
+        -1,
         /*derivator=*/fdx_filebase);
 
     this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
@@ -153,14 +154,16 @@ FdxCapture::FdxCapture(
 
 FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 : file_id(fdx.name_generator.get_current_id())
-, trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.report_error)
+, trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.notify_error)
 , direction(direction)
 {
     auto derivator = fdx.name_generator.get_current_basename();
     this->trans.open(
         fdx.name_generator.get_current_record_path().c_str(),
         fdx.name_generator.get_current_hash_path().c_str(),
-        fdx.groupid, derivator);
+        fdx.groupid,
+        -1,
+        derivator);
 }
 
 FdxCapture::TflFile FdxCapture::new_tfl(Mwrm3::Direction direction)
@@ -212,7 +215,7 @@ void FdxCapture::close_tfl(
         sig,
         write_in_buf);
 
-    this->out_crypto_transport.send(out.get_bytes());
+    this->out_crypto_transport.send(out.get_produced_bytes());
 }
 
 void FdxCapture::close(OutCryptoTransport::HashArray& qhash, OutCryptoTransport::HashArray& fhash)

@@ -22,6 +22,11 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include <openssl/tls1.h>
+#include "acl/gd_provider.hpp"
+#include <openssl/tls1.h>
+
+
 
 #ifndef __EMSCRIPTEN__
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
@@ -30,7 +35,9 @@
 #endif
 
 mod_vnc::mod_vnc( Transport & t
-           , SessionReactor& session_reactor
+           , TimeBase& time_base
+           , GdProvider & gd_provider
+           , EventContainer & events
            , const char * username
            , const char * password
            , FrontAPI & front
@@ -44,13 +51,13 @@ mod_vnc::mod_vnc( Transport & t
            , const char * encodings
            , ClipboardEncodingType clipboard_server_encoding_type
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
-           , ReportMessageApi & report_message
            , bool server_is_macos
            , bool server_is_unix
            , bool cursor_pseudo_encoding_supported
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
+           , AuthApi & sesman
            )
     : front(front)
     , t(VncTransport(*this, t))
@@ -65,11 +72,13 @@ mod_vnc::mod_vnc( Transport & t
     , encodings(encodings)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
-    , report_message(report_message)
     , rail_client_execute(rail_client_execute)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
+    , gd_provider(gd_provider)
+    , events(events)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
+    , sesman(sesman)
 #endif
     , choosenAuth(VNC_AUTH_INVALID)
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
@@ -87,23 +96,23 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    this->fd_event = session_reactor
-    .create_graphic_fd_event(this->t.get_fd())
-    .set_timeout(std::chrono::milliseconds(0))
-    .on_exit(jln::propagate_exit())
-    .on_action([this](JLN_TOP_CTX ctx, gdi::GraphicApi& gd){
-        this->draw_event(gd);
-        return ctx.need_more_data();
-    })
-    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd){
-        gdi_clear_screen(gd, this->get_dim());
-        // rearmed by clipboard
-        return ctx.disable_timeout()
-        .replace_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& /*gd*/){
-            this->check_timeout();
-            return ctx.disable_timeout().ready();
+    this->events.create_event_timeout(
+        "VNC Init Event", this,
+        this->time_base.get_current_time(),
+        [this](Event&event)
+        {
+            // First Timeout Clear Screen
+            gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
+            // Following fd timeouts
+            event.rename("VNC Fd Event");
+            event.alarm.set_fd(this->t.get_fd(), std::chrono::seconds{300});
+            event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds{300});
+            event.actions.set_timeout_function([](Event&/*event*/){});
+            event.actions.set_action_function([this](Event&/*ebent*/)
+            {
+                this->draw_event(this->gd_provider.get_graphics());
+            });
         });
-    });
 }
 
 bool mod_vnc::ms_logon(Buf64k & buf)
@@ -114,9 +123,9 @@ bool mod_vnc::ms_logon(Buf64k & buf)
 
     if (bool(this->verbose & VNCVerbose::basic_trace)) {
         LOG(LOG_INFO, "MS-Logon with following values:");
-        LOG(LOG_INFO, "Gen=%" PRIu64, this->ms_logon_ctx.gen);
-        LOG(LOG_INFO, "Mod=%" PRIu64, this->ms_logon_ctx.mod);
-        LOG(LOG_INFO, "Resp=%" PRIu64, this->ms_logon_ctx.resp);
+        LOG(LOG_INFO, "Gen=0x%" PRIx64, this->ms_logon_ctx.gen);
+        LOG(LOG_INFO, "Mod=0x%" PRIx64, this->ms_logon_ctx.mod);
+        LOG(LOG_INFO, "Resp=0x%" PRIx64, this->ms_logon_ctx.resp);
     }
 
     DiffieHellman dh(this->ms_logon_ctx.gen, this->ms_logon_ctx.mod);
@@ -143,7 +152,7 @@ bool mod_vnc::ms_logon(Buf64k & buf)
     out_stream.out_copy_bytes(cp_username, 256);
     out_stream.out_copy_bytes(cp_password, 64);
 
-    this->t.send(out_stream.get_bytes());
+    this->t.send(out_stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(out_stream.get_offset()));
     // sec result
 
@@ -157,11 +166,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
     // set almost null cursor, this is the little dot cursor
     drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-    this->report_message.log6(
-        LogId::SESSION_ESTABLISHED_SUCCESSFULLY,
-        this->session_reactor.get_current_time(),
-        {}
-    );
+    this->sesman.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
 
     Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -171,7 +176,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
     drawable.end_update();
 
     this->state = UP_AND_RUNNING;
-    this->front.can_be_start_capture();
+    this->front.can_be_start_capture(false);
 
     this->update_screen(screen_rect, 1);
     this->lib_open_clip_channel();
@@ -270,7 +275,7 @@ void mod_vnc::rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keyma
         return ;
     }
 
-    this->t.send(out_stream.get_bytes());
+    this->t.send(out_stream.get_produced_bytes());
 }
 
 void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/,
@@ -311,7 +316,7 @@ void mod_vnc::send_keyevent(uint8_t down_flag, uint32_t key) {
     stream.out_uint8(down_flag); /* down/up flag */
     stream.out_clear_bytes(2);
     stream.out_uint32_be(key);
-    this->t.send(stream.get_bytes());
+    this->t.send(stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 
 }
@@ -329,7 +334,7 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
             stream.out_uint32_be(str.size());   // length
             stream.out_skip_bytes(str.size());  // text
 
-            this->t.send(stream.get_bytes());
+            this->t.send(stream.get_produced_bytes());
             IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
             IF_ENABLE_METRICS(clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset()));
         };
@@ -407,12 +412,14 @@ void mod_vnc::update_screen(Rect r, uint8_t incr) {
     stream.out_uint16_be(r.y);
     stream.out_uint16_be(r.cx);
     stream.out_uint16_be(r.cy);
-    this->t.send(stream.get_bytes());
+    this->t.send(stream.get_produced_bytes());
     IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 }
 
 void mod_vnc::rdp_input_invalidate(Rect r) {
+    LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate");
     if (this->state != UP_AND_RUNNING) {
+        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate not up and running");
         return;
     }
 
@@ -421,12 +428,29 @@ void mod_vnc::rdp_input_invalidate(Rect r) {
     if (!r_.isempty()) {
         this->update_screen(r_, 0);
     }
+    else {
+        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate empty rect");
+    }
 }
 
 
 bool mod_vnc::doTlsSwitch()
 {
-    TLSClientParams tlsParams = {0, 3, true, "DH:DHE"};
+    TLSClientParams tlsParams;
+
+    switch(this->choosenAuth) {
+    case VeNCRYPT_TLSNone:
+    case VeNCRYPT_TLSPlain:
+    case VeNCRYPT_TLSVnc:
+        /* needed params for anonymous TLS */
+        tlsParams.security_level = 0;
+        tlsParams.tls_max_level = TLS1_2_VERSION;
+        tlsParams.cipher_string = "ADH";
+        tlsParams.anonymous_tls = true;
+        break;
+    default:
+        break;
+    }
     NullServerNotifier notifier;
 
     switch (this->t.enable_client_tls(notifier, tlsParams)) {
@@ -447,11 +471,14 @@ bool mod_vnc::doTlsSwitch()
 
 void mod_vnc::draw_event(gdi::GraphicApi & gd)
 {
+    bool can_read = true;
+
     LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "vnc::draw_event");
 
     if (this->tlsSwitch) {
         if (this->doTlsSwitch()) {
             this->tlsSwitch = false;
+            can_read = true;
 
             switch(this->choosenAuth) {
             case VeNCRYPT_TLSNone:
@@ -479,10 +506,15 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
                 LOG(LOG_ERR, "auth %d not handled yet", this->choosenAuth);
                 break;
             }
+        } else {
+            can_read = false;
         }
 
     }
-    size_t readBytes = this->server_data_buf.read_from(this->t);
+
+    if (can_read) {
+        this->server_data_buf.read_from(this->t);
+    }
 
     [[maybe_unused]]
     uint64_t const data_server_before = this->server_data_buf.remaining();
@@ -496,9 +528,10 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
     LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "Remaining in buffer : %" PRIu64, data_server_after);
 
     this->check_timeout();
+
 }
 
-const char *mod_vnc::securityTypeString(uint32_t t) {
+const char *mod_vnc::securityTypeString(int32_t t) {
     static char format[] = "<unknown 0xXXXXXXXX>";
 
     switch(t) {
@@ -507,10 +540,12 @@ const char *mod_vnc::securityTypeString(uint32_t t) {
     case VNC_AUTH_VNC: return "VNC";
     case VNC_AUTH_ULTRA: return "Ultra";
     case VNC_AUTH_TIGHT: return "TightVNC";
+    case VNC_AUTH_ULTRA_MsLogonIAuth: return "Ultra MsLogonIAuth";
+    case VNC_AUTH_ULTRA_MsLogonIIAuth: return "Ultra MsLogon2Auth";
     case VNC_AUTH_ULTRA_SecureVNCPluginAuth: return "UtraVNC DSM old";
     case VNC_AUTH_ULTRA_SecureVNCPluginAuth_new: return "UtraVNC DSM new";
     case VNC_AUTH_TLS: return "TLS";
-    case VNC_AUTH_MS_LOGON: return "MS logon";
+    case VNC_AUTH_ULTRA_MS_LOGON: return "Ultra MS-logon";
     case VNC_AUTH_VENCRYPT: return "VeNCrypt";
     case VeNCRYPT_TLSNone: return "TLS none";
     case VeNCRYPT_TLSVnc: return "TLS VNC";
@@ -519,17 +554,18 @@ const char *mod_vnc::securityTypeString(uint32_t t) {
     case VeNCRYPT_X509Vnc: return "X509 VNC";
     case VeNCRYPT_X509Plain: return "X509 plain";
     default:
-        snprintf(format, sizeof(format), "<unknown 0x%x>", t);
+        snprintf(format, sizeof(format), "<unknown 0x%x>", uint32_t(t));
         return format;
     }
 }
 
-void mod_vnc::updatePreferedAuth (uint32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
+void mod_vnc::updatePreferedAuth (int32_t authId, VncAuthType &preferedAuth, size_t &preferedAuthIndex) {
     static VncAuthType preferedAuthTypes[] = {
         VeNCRYPT_X509Plain, VeNCRYPT_X509Vnc, VeNCRYPT_X509None,
-        //VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,     TLS not handled for now
+        VeNCRYPT_TLSPlain, VeNCRYPT_TLSVnc, VeNCRYPT_TLSNone,
         VNC_AUTH_ULTRA_SecureVNCPluginAuth_new, VNC_AUTH_ULTRA_SecureVNCPluginAuth,
-        VNC_AUTH_VENCRYPT, VNC_AUTH_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
+        VNC_AUTH_VENCRYPT, VNC_AUTH_ULTRA_MsLogonIIAuth,
+        VNC_AUTH_ULTRA_MS_LOGON, VNC_AUTH_VNC, VNC_AUTH_NONE
     };
 
     const size_t nauths = sizeof(preferedAuthTypes) / sizeof(preferedAuthTypes[0]);
@@ -668,7 +704,7 @@ bool mod_vnc::treatVeNCrypt() {
 
         StaticOutStream<4> outStream;
         outStream.out_uint32_be(static_cast<uint32_t>(preferedAuth));
-        this->t.send(outStream.get_bytes());
+        this->t.send(outStream.get_produced_bytes());
 
         this->choosenAuth = preferedAuth;
         this->vencryptState = WAIT_VENCRYPT_AUTH_ANSWER;
@@ -736,13 +772,15 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         }
         catch (const Error & e) {
             LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
-            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+            this->set_mod_signal(BACK_EVENT_NEXT);
             this->front.must_be_stop_capture();
+//            throw Error(ERR_BACK_EVENT_NEXT);
         }
         catch (...) {
             LOG(LOG_ERR, "unexpected exception raised in VNC");
-            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+            this->set_mod_signal(BACK_EVENT_NEXT);
             this->front.must_be_stop_capture();
+//            throw Error(ERR_BACK_EVENT_NEXT);
         }
 
         return false;
@@ -879,7 +917,13 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                     case VNC_AUTH_VNC:
                         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
                         break;
-                    case VNC_AUTH_MS_LOGON:
+                    case VNC_AUTH_ULTRA_MS_LOGON:
+                        this->state = WAIT_SECURITY_TYPES_MS_LOGON;
+                        break;
+                    case VNC_AUTH_ULTRA_MsLogonIAuth:
+                        LOG(LOG_ERR, "MsLogonIAuth not supported");
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
+                    case VNC_AUTH_ULTRA_MsLogonIIAuth:
                         this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                         break;
                     case VNC_AUTH_VENCRYPT:
@@ -916,7 +960,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                     case VNC_AUTH_VNC:
                         this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM;
                         break;
-                    case VNC_AUTH_MS_LOGON:
+                    case VNC_AUTH_ULTRA_MS_LOGON:
                         this->state = WAIT_SECURITY_TYPES_MS_LOGON;
                         break;
                     case VNC_AUTH_VENCRYPT:
@@ -989,7 +1033,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             char key[12] = {};
 
             // key is simply password padded with nulls
-            strncpy(key, this->password, 8); /*NOLINT*/
+            strncpy(key, char_ptr_cast(byte_ptr_cast(this->password)), 8);
             rfbDesKey(byte_ptr_cast(key), EN0); // 0, encrypt
             auto const random_buf = this->password_ctx.server_random.data();
             rfbDes(random_buf, random_buf);
@@ -1007,7 +1051,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             // sec result
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
+            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                 if (status) {
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "vnc password ok");
                 }
@@ -1041,7 +1085,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         {
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Waiting for password ack");
 
-            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, writable_bytes_view bytes){
+            if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                 if (status) {
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "MS LOGON password ok");
                 }
@@ -1061,7 +1105,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         {
             LOG(LOG_ERR, "VNC INVALID Auth");
 
-            if (!this->invalid_auth_ctx.run(this->server_data_buf, [](array_view_u8 av){
+            if (!this->invalid_auth_ctx.run(this->server_data_buf, [](bytes_view av){
                 hexdump_c(av);
             })) {
                 return false;
@@ -1092,7 +1136,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         dsm->getResponse(outPacket);
 
         lenStream.out_uint16_le(outPacket.get_offset());
-        out.copy_to_head(lenStream.get_bytes());
+        out.copy_to_head(lenStream.get_produced_bytes());
         writable_bytes_view packet = out.get_packet();
         this->t.send(packet.begin(), packet.size());
 
@@ -1214,7 +1258,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                 "\0\0\0"; // padding      : 3 bytes
 
             stream.out_copy_bytes(pixel_format, 16);
-            this->t.send(stream.get_bytes());
+            this->t.send(stream.get_produced_bytes());
             IF_ENABLE_METRICS(data_from_client(stream.get_offset()));
 
             this->bpp = BitsPerPixel{16};
@@ -1347,7 +1391,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         }
 
 
-        switch (this->front.server_resize({this->width, this->height, this->bpp})){
+        switch (this->front.server_resize({align4(this->width), this->height, this->bpp})){
         case FrontAPI::ResizeResult::instant_done:
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "no resizing needed");
             // no resizing needed
@@ -1373,13 +1417,13 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         case FrontAPI::ResizeResult::fail:
             // resizing failed
             // thow an Error ?
-            LOG(LOG_WARNING, "Older RDP client can't resize resolution from server, disconnecting");
+            LOG(LOG_ERR, "Older RDP client can't resize resolution from server, disconnecting");
             throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
         }
         return true;
 
     case WAIT_CLIENT_UP_AND_RUNNING:
-        LOG(LOG_WARNING, "Waiting for client become up and running");
+        LOG(LOG_INFO, "Waiting for client become up and running");
         break;
 
     default:
@@ -1416,7 +1460,7 @@ void mod_vnc::check_timeout()
         size_t chunk_size = length;
 
         this->clipboard_requesting_for_data_is_delayed = false;
-        this->fd_event->disable_timeout();
+        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , length
@@ -1442,12 +1486,7 @@ bool mod_vnc::lib_clip_data(Buf64k & buf)
         StaticOutStream<256> out_s;
         Cliprdr::format_list_serialize_with_header(
             out_s, Cliprdr::IsLongFormat(false),
-            // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
-            std::array{Cliprdr::FormatNameRef{
-                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
-                    ? RDPECLIP::CF_UNICODETEXT
-                    : RDPECLIP::CF_TEXT,
-                {}}});
+            std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}}});
 
         const size_t totalLength = out_s.get_offset();
         this->send_to_front_channel(channel_names::cliprdr,
@@ -1461,7 +1500,7 @@ bool mod_vnc::lib_clip_data(Buf64k & buf)
 
         // Can stop RDP to VNC clipboard infinite loop.
         this->clipboard_requesting_for_data_is_delayed = false;
-        this->fd_event->disable_timeout();
+        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
     }
     else {
         LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -1495,7 +1534,6 @@ void mod_vnc::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, In
     if (front_channel_name == channel_names::cliprdr) {
         this->clipboard_send_to_vnc_server(chunk, length, flags);
     }
-    LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::send_to_mod_channel done");
 }
 
 void mod_vnc::send_clipboard_pdu_to_front(const OutStream & out_stream)
@@ -1613,7 +1651,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
             Cliprdr::format_list_extract(
                 chunk,
                 Cliprdr::IsLongFormat(this->client_use_long_format_names),
-                Cliprdr::IsAscii(incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES),
+                Cliprdr::IsAscii(bool(incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES)),
                 [&](uint32_t format_id, auto const& name) {
                     contains_data_in_text_format |= (format_id == RDPECLIP::CF_TEXT);
                     contains_data_in_unicodetext_format |= (format_id == RDPECLIP::CF_UNICODETEXT);
@@ -1650,22 +1688,15 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
             using std::chrono::microseconds;
             constexpr microseconds MINIMUM_TIMEVAL(250000LL);
 
-            if (this->enable_clipboard_up &&
-                    (contains_data_in_text_format || contains_data_in_unicodetext_format)) {
-                if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
-                    this->clipboard_requested_format_id =
-                        (contains_data_in_unicodetext_format ? RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
-                }
-                else {
-                    this->clipboard_requested_format_id =
-                        (contains_data_in_text_format ? RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
-                }
+            if (this->enable_clipboard_up
+             && (contains_data_in_text_format || contains_data_in_unicodetext_format)
+            ) {
+                this->clipboard_requested_format_id = contains_data_in_unicodetext_format
+                    ? RDPECLIP::CF_UNICODETEXT
+                    : RDPECLIP::CF_TEXT;
 
-                const microseconds usnow        = ustime();
+                const microseconds usnow        = ustime(this->time_base.get_current_time());
                 const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
-                //LOG(LOG_INFO,
-                //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
-                //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
                 if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO,
                         "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u)",
@@ -1685,8 +1716,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     chunk_size = out_s.get_offset();
 
                     this->clipboard_requesting_for_data_is_delayed = false;
-                    this->fd_event->disable_timeout();
-
+                    this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
                     this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , chunk_size // total length is chunk_size
@@ -1702,10 +1732,10 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                             RDPECLIP::CB_FORMAT_DATA_REQUEST);
                         this->clipboard_requesting_for_data_is_delayed = true;
                         // arms timeout
-                        this->fd_event->enable_timeout();
-                        this->fd_event->set_timeout(
-                            std::chrono::duration_cast<std::chrono::milliseconds>(
-                                MINIMUM_TIMEVAL - timeval_diff));
+                        this->clipboard_timeout_timer = this->events.create_event_timeout(
+                            "VNC Clipboard Timeout Event", this,
+                            this->time_base.get_current_time()+(MINIMUM_TIMEVAL - timeval_diff),
+                            [this](Event&){this->check_timeout();});
                     }
                     else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated)
                         &&  ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)
@@ -1725,10 +1755,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                         Cliprdr::format_list_serialize_with_header(
                             out_s, Cliprdr::IsLongFormat(false),
                             std::array{Cliprdr::FormatNameRef{
-                                this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT
-                                    ? RDPECLIP::CF_UNICODETEXT
-                                    : RDPECLIP::CF_TEXT,
-                            {}}});
+                                this->clipboard_requested_format_id, {}}});
 
                         const size_t totalLength = out_s.get_offset();
                         this->send_to_front_channel(channel_names::cliprdr,
@@ -1792,15 +1819,15 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
             && !this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                 StreamBufMaker<65536> buf_maker;
                 OutStream out_stream = buf_maker.reserve_out_stream(
-                        8 +                                         // clipHeader(8)
-                        this->clipboard_data_ctx.clipboard_data().size() * 2 +    // data
-                        1                                           // Null character
-                    );
+                    RDPECLIP::CliprdrHeader::size() +
+                    this->clipboard_data_ctx.clipboard_data().size() * 2 +    // data
+                    1                                           // Null character
+                );
 
                 auto to_rdp_clipboard_data =
                     ::linux_to_windows_newline_convert(
-                        bytes_view(this->clipboard_data_ctx.clipboard_data()).as_chars(),
-                        out_stream.get_bytes().as_chars()
+                        this->clipboard_data_ctx.clipboard_data().as_chars(),
+                        out_stream.get_tail().as_chars()
                             .drop_front(RDPECLIP::CliprdrHeader::size())
                             // Null character
                             .drop_back(1)
@@ -1904,9 +1931,9 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     this->to_vnc_clipboard_data.rewind();
 
                     this->to_vnc_clipboard_data.out_copy_bytes(
-                                chunk.get_current(), header.dataLen());
+                        chunk.get_current(), header.dataLen());
 
-                    this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_bytes());
+                    this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_produced_bytes());
                 } // CHANNELS::CHANNEL_FLAG_LAST
                 else {
                     // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -1927,16 +1954,15 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 
                     if (this->to_vnc_clipboard_data.get_capacity() >= this->to_vnc_clipboard_data_size) {
                         uint32_t number_of_bytes_to_read = std::min<uint32_t>(
-                                this->to_vnc_clipboard_data_remaining,
-                                chunk.in_remain()
-                            );
-                        this->to_vnc_clipboard_data.out_copy_bytes(chunk.get_current(), number_of_bytes_to_read);
+                            this->to_vnc_clipboard_data_remaining, chunk.in_remain());
+                        this->to_vnc_clipboard_data.out_copy_bytes(
+                            chunk.view_bytes(number_of_bytes_to_read));
 
                         this->to_vnc_clipboard_data_remaining -= number_of_bytes_to_read;
                     }
                     else {
-                              char   * latin1_overflow_message_buffer        = ::char_ptr_cast(this->to_vnc_clipboard_data.get_data());
-                        const size_t   latin1_overflow_message_buffer_length = this->to_vnc_clipboard_data.get_capacity();
+                        char * latin1_overflow_message_buffer = ::char_ptr_cast(this->to_vnc_clipboard_data.get_data());
+                        const size_t latin1_overflow_message_buffer_length = this->to_vnc_clipboard_data.get_capacity();
 
                         const size_t latin1_overflow_message_length =
                             ::snprintf(latin1_overflow_message_buffer,
@@ -1949,8 +1975,6 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 
                         this->to_vnc_clipboard_data.out_skip_bytes(latin1_overflow_message_length);
                         this->to_vnc_clipboard_data.out_clear_bytes(1); /* null-terminator */
-
-                        this->clipboard_requested_format_id = RDPECLIP::CF_TEXT;
                     }
                 } // else CHANNELS::CHANNEL_FLAG_LAST
             } // RDPECLIP::CB_RESPONSE_OK
@@ -1989,7 +2013,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                 assert((this->to_vnc_clipboard_data.get_capacity() < this->to_vnc_clipboard_data_size) ||
                     !this->to_vnc_clipboard_data_remaining);
 
-                this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_bytes());
+                this->rdp_input_clip_data(this->to_vnc_clipboard_data.get_produced_bytes());
             }
         break;
 
@@ -2028,16 +2052,22 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 }
 
 
-void mod_vnc::rdp_input_up_and_running()
+void mod_vnc::init()
 {
-    if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Client up and running");
+    if (this->gd_provider.is_ready_to_draw()
+    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->wait_client_up_and_running_event = this->session_reactor.create_graphic_event()
-        .on_action([this](auto ctx, gdi::GraphicApi & drawable){
-            this->initial_clear_screen(drawable);
-            return ctx.terminate();
-        });
+        this->initial_clear_screen(this->gd_provider.get_graphics());
+    }
+}
+
+
+void mod_vnc::rdp_gdi_up_and_running()
+{
+    if (this->gd_provider.is_ready_to_draw()
+    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
+        this->state = DO_INITIAL_CLEAR_SCREEN;
+        this->initial_clear_screen(this->gd_provider.get_graphics());
     }
 }
 
@@ -2064,7 +2094,7 @@ void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawab
 
 void mod_vnc::disconnect()
 {
-    uint64_t seconds = this->session_reactor.get_current_time().tv_sec - this->beginning;
+    uint64_t seconds = this->time_base.get_current_time().tv_sec - this->beginning;
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];
@@ -2073,13 +2103,8 @@ void mod_vnc::disconnect()
         int((seconds % 3600) / 60),
         int(seconds % 60));
 
-    this->report_message.log6(
-        LogId::SESSION_DISCONNECTION,
-        this->session_reactor.get_current_time(), {
-        KVLog("duration"_av, {duration_str, len}),
-    });
+    this->sesman.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
 
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
         "type=SESSION_DISCONNECTION duration=%s", duration_str);
 }
-

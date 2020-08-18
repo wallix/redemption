@@ -396,7 +396,7 @@ namespace CHANNELS {
 
                     if (enable_verbose && this->verbose) {
                         LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
-                        hexdump_d(stream.get_bytes());
+                        hexdump_d(stream.get_produced_bytes());
                     }
                 },
                 SEC::write_sec_send_fn{0, crypt_context, encryptionLevel},

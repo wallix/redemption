@@ -23,9 +23,11 @@
 #include "test_only/test_framework/file.hpp"
 
 
+#include "utils/sugar/unique_fd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "core/events.hpp"
 
 
 class TestToServerSender : public VirtualChannelDataSender {
@@ -39,7 +41,7 @@ public:
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
 
-        this->transport.send(stream.get_bytes());
+        this->transport.send(stream.get_produced_bytes());
         this->transport.send(chunk_data);
     }
 };
@@ -62,26 +64,39 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
+    TimeBase time_base({0,0});
+    auto now = time_base.get_current_time();
+    EventContainer events;
+
     RdpdrDriveReadTask rdpdr_drive_read_task(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
-        test_to_server_sender, to_verbose_flags(0));
+        test_to_server_sender,
+        to_verbose_flags(0));
 
-    bool run_task = true;
-    SessionReactor session_reactor;
-    rdpdr_drive_read_task.configure_event(
-        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
-            *b = false;
-        }});
+    std::deque<AsynchronousTask*> tasks;
 
-    RED_CHECK(!session_reactor.fd_events_.is_empty());
-    RED_CHECK(run_task);
-    auto fd_is_set = [](int /*fd*/, auto& /*e*/){ return true; };
-    for (int i = 0; i < 100 && !session_reactor.fd_events_.is_empty(); ++i) {
-        session_reactor.execute_events(fd_is_set);
+    std::function<void(Event&)> remover = [&tasks](Event&/*event*/) -> void
+    {
+        tasks.pop_front();
+    };
+
+    auto pevent = rdpdr_drive_read_task.configure_event(now, nullptr);
+    Event & event = *pevent;
+    event.actions.set_teardown_function(remover);
+    events.add(pevent);
+    AsynchronousTask* task(&rdpdr_drive_read_task);
+    tasks.push_back(task);
+
+    RED_CHECK(!events.queue.empty());
+    auto end_tv = time_base.get_current_time();
+    for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
+        time_base.set_current_time(end_tv);
+        events.execute_events(end_tv, [](int/*fd*/){ return true; }, 0);
+        end_tv.tv_sec++;
     }
-    session_reactor.execute_timers(SessionReactor::EnableGraphics{false}, &gdi::null_gd);
-    RED_CHECK(session_reactor.fd_events_.is_empty());
-    RED_CHECK(!run_task);
+    events.execute_events(end_tv, [](int/*fd*/){ return true; }, 0);
+    RED_CHECK(events.queue.empty());
+    RED_CHECK(tasks.empty());
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -97,29 +112,40 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     TestToServerSender test_to_server_sender(check_transport);
 
+    TimeBase time_base({0,0});
+    auto now = time_base.get_current_time();
+    EventContainer events;
+
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
-        contents.size(), test_to_server_sender, to_verbose_flags(0));
+        contents.size(), test_to_server_sender,
+        to_verbose_flags(0));
 
-    bool run_task = true;
-    SessionReactor session_reactor;
-    rdpdr_send_drive_io_response_task.configure_event(
-        session_reactor, {&run_task, [](bool* b, AsynchronousTask&) noexcept {
-            *b = false;
-        }});
-    RED_CHECK(session_reactor.fd_events_.is_empty());
+    std::deque<AsynchronousTask*> tasks;
 
-    RED_CHECK(!session_reactor.timer_events_.is_empty());
+    std::function<void(Event&)> remover = [&tasks](Event&/*event*/) -> void
+    {
+        tasks.pop_front();
+    };
 
-    timeval timeout = session_reactor.get_current_time();
-    for (int i = 0; i < 100 && !session_reactor.timer_events_.is_empty(); ++i) {
-        session_reactor.execute_timers(
-            SessionReactor::EnableGraphics{false},
-            []()->gdi::GraphicApi&{return gdi::null_gd(); });
-        session_reactor.set_current_time(timeout);
+    auto pevent = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
+    Event & event = *pevent;
+    event.actions.set_teardown_function(remover);
+    events.add(pevent);
+    AsynchronousTask * task(&rdpdr_send_drive_io_response_task);
+    tasks.push_back(task);
+
+
+    RED_CHECK(!events.queue.empty());
+
+    timeval timeout = time_base.get_current_time();
+    for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
+        auto const end_tv = time_base.get_current_time();
+        events.execute_events(end_tv, [](int/*fd*/){return false;}, 0);
+        time_base.set_current_time(timeout);
         ++timeout.tv_sec;
     }
-    RED_CHECK(session_reactor.timer_events_.is_empty());
-    RED_CHECK(!run_task);
+    RED_CHECK(events.queue.empty());
+    RED_CHECK(tasks.empty());
 }

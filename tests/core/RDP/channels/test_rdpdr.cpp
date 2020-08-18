@@ -55,9 +55,9 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
@@ -92,9 +92,9 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateResponse1)
@@ -117,9 +117,9 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse1)
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateResponse2)
@@ -142,9 +142,9 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse2)
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == "\0\0\0\0\0"_av);
+    RED_CHECK(out_stream.get_produced_bytes() == "\0\0\0\0\0"_av);
 }
 
 RED_AUTO_TEST_CASE(TestDeviceCreateResponse3)
@@ -167,9 +167,9 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 
@@ -184,7 +184,7 @@ RED_AUTO_TEST_CASE(ClientAnnounceReply) {
     rdpdr::ClientAnnounceReply clientAnnounceReply(0x0001, 0x0002, 0x00000001);
     clientAnnounceReply.emit(out_stream);
 
-    RED_CHECK("\x72\x44\x43\x43\x01\x00\x02\x00\x01\x00\x00\x00"_av == out_stream.get_bytes());
+    RED_CHECK("\x72\x44\x43\x43\x01\x00\x02\x00\x01\x00\x00\x00"_av == out_stream.get_produced_bytes());
 }
 
 
@@ -207,9 +207,9 @@ RED_AUTO_TEST_CASE(ClientNameRequest1)
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(ClientNameRequest2)
@@ -231,9 +231,9 @@ RED_AUTO_TEST_CASE(ClientNameRequest2)
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(FileRenameInformation1)
@@ -256,9 +256,9 @@ RED_AUTO_TEST_CASE(FileRenameInformation1)
 
     file_rename_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
@@ -281,9 +281,9 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
@@ -308,9 +308,9 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_bytes())
+    //hexdump(out_stream.get_produced_bytes())
 
-    RED_CHECK(out_stream.get_bytes() == in_data);
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);
 }
 
 RED_AUTO_TEST_CASE(CapabilityHeader)
@@ -323,7 +323,7 @@ RED_AUTO_TEST_CASE(CapabilityHeader)
 
         ch.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -350,7 +350,7 @@ RED_AUTO_TEST_CASE(ClientDriveDeviceListRemove)
 
         cddlr.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -379,7 +379,7 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeader_Send)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 }
 
@@ -416,7 +416,7 @@ RED_AUTO_TEST_CASE(DeviceIORequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -464,7 +464,7 @@ RED_AUTO_TEST_CASE(ClientDriveNotifyChangeDirectoryResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -486,7 +486,7 @@ RED_AUTO_TEST_CASE(ServerDriveNotifyChangeDirectoryRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -510,7 +510,7 @@ RED_AUTO_TEST_CASE(RDP_Lock_Info)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -558,7 +558,7 @@ RED_AUTO_TEST_CASE(ServerDriveLockControlRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -583,7 +583,7 @@ RED_AUTO_TEST_CASE(ClientDriveSetInformationResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -607,7 +607,7 @@ RED_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -631,7 +631,7 @@ RED_AUTO_TEST_CASE(ClientDriveQueryDirectoryResponseRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -654,7 +654,7 @@ RED_AUTO_TEST_CASE(ServerDriveSetInformationRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -678,7 +678,7 @@ RED_AUTO_TEST_CASE(ClientDriveQueryVolumeInformationResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -700,7 +700,7 @@ RED_AUTO_TEST_CASE(ClientDeviceListAnnounceRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -737,7 +737,7 @@ RED_AUTO_TEST_CASE(GeneralCapabilitySet)
         pdu.extraFlags2 = 9;
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -769,7 +769,7 @@ RED_AUTO_TEST_CASE(ServerAnnounceRequest)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -794,7 +794,7 @@ RED_AUTO_TEST_CASE(ServerDeviceAnnounceResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -818,7 +818,7 @@ RED_AUTO_TEST_CASE(DeviceWriteResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {
@@ -842,7 +842,7 @@ RED_AUTO_TEST_CASE(DeviceReadResponse)
 
         pdu.emit(stream);
 
-        RED_CHECK(stream.get_bytes() == data);
+        RED_CHECK(stream.get_produced_bytes() == data);
     }
 
     {

@@ -30,12 +30,12 @@
 #include "utils/c_interface.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/string_c.hpp"
-#include "std17/charconv.hpp"
 
 #include "main/version.hpp"
 
 #include <type_traits>
 #include <memory>
+
 
 #define CHECK_NOTHROW(expr, errid) CHECK_NOTHROW_R(expr, -1, handle->error_ctx, errid)
 
@@ -179,7 +179,7 @@ struct ScytaleWriterHandle
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum,
             old_encryption_scheme, one_shot_encryption_scheme,
             master_derivator)
-    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat, ReportError())
+    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat, [](const Error & /*error*/){})
     {}
 
 private:
@@ -327,7 +327,7 @@ int scytale_writer_open(
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    CHECK_NOTHROW(handle->out_crypto_transport.open(record_path, hash_path, groupid/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(handle->out_crypto_transport.open(record_path, hash_path, groupid, -1/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -648,7 +648,7 @@ struct ScytaleFdxWriterHandle
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
     , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid,
-        this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat, ReportError())
+        this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat, [](const Error &/*error*/){})
     {
         this->qhashhex[0] = 0;
         this->fhashhex[0] = 0;
@@ -1073,7 +1073,9 @@ namespace
     template<class T, class = void>
     struct scytale_raw_value_impl
     {
-        static_assert(!std::is_same<T, T>::value, "missing specialization or not a regular type (struct with bytes or str, enum, integral or std::chrono::duration)");
+        static_assert(!std::is_same<T, T>::value,
+            "missing specialization or not a regular type"
+            " (should be a struct with bytes or str member, enum, integral or std::chrono::duration)");
     };
 
     template<class T>

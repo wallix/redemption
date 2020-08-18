@@ -17,23 +17,31 @@ rule setvar ( env : default )
 
 INSTALLDIR_DEFAULT ?= "" ;
 PREFIX_DEFAULT ?= /usr/local ;
+ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
+VAR_PREFIX_DEFAULT ?= /var/rdpproxy ;
 
 constant INSTALLDIR : [ setvar DESTDIR : $(INSTALLDIR_DEFAULT) ] ;
 constant PREFIX : [ setvar PREFIX : $(PREFIX_DEFAULT) ] ;
+constant ETC_PREFIX : [ setvar ETC_PREFIX : $(ETC_PREFIX_DEFAULT) ] ;
+constant VAR_PREFIX : [ setvar VAR_PREFIX : $(VAR_PREFIX_DEFAULT) ] ;
+
+
+RECORD_PREFIX_DEFAULT ?= $(VAR_PREFIX)/recorded ;
+
+constant RECORD_PREFIX : [ setvar RECORD_PREFIX : $(RECORD_PREFIX_DEFAULT) ] ;
+
 
 BIN_PREFIX_DEFAULT ?= $(PREFIX)/bin ;
 LIB_PREFIX_DEFAULT ?= $(PREFIX)/lib ;
 SHARE_PREFIX_DEFAULT ?= $(PREFIX)/share/rdpproxy ;
-METRICS_PATH_DEFAULT ?= /var/rdpproxy/recorded/metrics ;
-RECORD_PATH_DEFAULT ?= /var/rdpproxy/recorded/rdp ;
-RECORD_TMP_PATH_DEFAULT ?= /var/rdpproxy/tmp ;
-ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
-CERT_PREFIX_DEFAULT ?= /etc/rdpproxy/cert ;
-HASH_PATH_DEFAULT ?= /var/rdpproxy/hash ;
+METRICS_PATH_DEFAULT ?= $(RECORD_PREFIX)/metrics ;
+RECORD_PATH_DEFAULT ?= $(RECORD_PREFIX)/rdp ;
+RECORD_TMP_PATH_DEFAULT ?= $(VAR_PREFIX)/tmp ;
+CERT_PREFIX_DEFAULT ?= $(ETC_PREFIX)/cert ;
+HASH_PATH_DEFAULT ?= $(VAR_PREFIX)/hash ;
 PERSISTENT_PATH_DEFAULT ?= /var/lib/redemption/cache ;
-DRIVE_REDIRECTION_PATH_DEFAULT ?= /var/rdpproxy/drive_redirection ;
+DRIVE_REDIRECTION_PATH_DEFAULT ?= $(VAR_PREFIX)/drive_redirection ;
 PID_PATH_DEFAULT ?= /var/run ;
-
 
 constant BIN_PREFIX : [ setvar BIN_PREFIX : $(BIN_PREFIX_DEFAULT) ] ;
 constant LIB_PREFIX : [ setvar LIB_PREFIX : $(LIB_PREFIX_DEFAULT) ] ;
@@ -41,14 +49,15 @@ constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(SHARE_PREFIX_DEFAULT) ] ;
 constant METRICS_PATH : [ setvar METRICS_PATH : $(METRICS_PATH_DEFAULT) ] ;
 constant RECORD_PATH : [ setvar RECORD_PATH : $(RECORD_PATH_DEFAULT) ] ;
 constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : $(RECORD_TMP_PATH_DEFAULT) ] ;
-constant ETC_PREFIX : [ setvar ETC_PREFIX : $(ETC_PREFIX_DEFAULT) ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : $(CERT_PREFIX_DEFAULT) ] ;
 constant HASH_PATH : [ setvar HASH_PATH : $(HASH_PATH_DEFAULT) ] ;
 constant PERSISTENT_PATH : [ setvar PERSISTENT_PATH : $(PERSISTENT_PATH_DEFAULT) ] ;
 constant DRIVE_REDIRECTION_PATH : [ setvar DRIVE_REDIRECTION_PATH : $(DRIVE_REDIRECTION_PATH_DEFAULT) ] ;
 constant PID_PATH : [ setvar PID_PATH : $(PID_PATH_DEFAULT) ] ;
 
+
 constant COVERAGE_PREFIX : [ setvar COVERAGE_PREFIX : "" ] ;
+constant TMP_TEST_PATH : [ setvar TMP_TEST_PATH : "/tmp" ] ;
 
 rule defines ( properties * )
 {
@@ -72,19 +81,19 @@ rule defines ( properties * )
 rule defines-for-test ( properties * )
 {
     local defs ;
-    defs += <define>METRICS_PATH='\"/tmp/redemption_metrics\"' ;
-    defs += <define>RECORD_PATH='\"/tmp/redemption_recorded\"' ;
-    defs += <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"' ;
-    defs += <define>VIDEO_PATH='\"/tmp\"' ;
-    defs += <define>OCR_PATH='\"/tmp\"' ;
-    defs += <define>PNG_PATH='\"/tmp\"' ;
-    defs += <define>WRM_PATH='\"/tmp\"' ;
-    defs += <define>HASH_PATH='\"/tmp/redemption_hash\"' ;
-    defs += <define>LICENSE_PATH='\"/tmp/redemption_cert/rdplicense\"' ;
-    defs += <define>CERTIF_PATH='\"/tmp/redemption_cert\"' ;
-    defs += <define>PERSISTENT_PATH='\"/tmp/redemption_cache\"' ;
-    defs += <define>DRIVE_REDIRECTION_PATH='\"/tmp/redemption_drive_redirection\"' ;
-    defs += <define>PID_PATH='\"/tmp/redemption_pid\"' ;
+    defs += <define>METRICS_PATH='\"$(TMP_TEST_PATH)/redemption_metrics\"' ;
+    defs += <define>RECORD_PATH='\"$(TMP_TEST_PATH)/redemption_recorded\"' ;
+    defs += <define>RECORD_TMP_PATH='\"$(TMP_TEST_PATH)/redemption_tmp\"' ;
+    defs += <define>VIDEO_PATH='\"$(TMP_TEST_PATH)\"' ;
+    defs += <define>OCR_PATH='\"$(TMP_TEST_PATH)\"' ;
+    defs += <define>PNG_PATH='\"$(TMP_TEST_PATH)\"' ;
+    defs += <define>WRM_PATH='\"$(TMP_TEST_PATH)\"' ;
+    defs += <define>HASH_PATH='\"$(TMP_TEST_PATH)/redemption_hash\"' ;
+    defs += <define>LICENSE_PATH='\"$(TMP_TEST_PATH)/redemption_cert/rdplicense\"' ;
+    defs += <define>CERTIF_PATH='\"$(TMP_TEST_PATH)/redemption_cert\"' ;
+    defs += <define>PERSISTENT_PATH='\"$(TMP_TEST_PATH)/redemption_cache\"' ;
+    defs += <define>DRIVE_REDIRECTION_PATH='\"$(TMP_TEST_PATH)/redemption_drive_redirection\"' ;
+    defs += <define>PID_PATH='\"$(TMP_TEST_PATH)/redemption_pid\"' ;
     return $(defs) ;
 }
 
@@ -101,8 +110,10 @@ constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ; # 
 constant FFMPEG_LINK_MODE : [ setvar FFMPEG_LINK_MODE : $(_FFMPEG_LINK_MODE) ] ; # static or shared
 constant NO_FFMPEG : [ setvar NO_FFMPEG : 0 ] ;
 
-constant BOOST_STACKTRACE : [ setvar BOOST_STACKTRACE : 0 ] ; # `-sBOOST_STACKTRACE=1` (for debug and san mode) require libboost_stacktrace_backtrace (apt install libboost-stacktrace-dev). Use REDEMPTION_FILTER_ERROR shell variable for disable backtrace of specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA;ERR_SEC`.
+constant BOOST_STACKTRACE : [ setvar BOOST_STACKTRACE : 0 ] ; # `-sBOOST_STACKTRACE=1` (for debug and san mode) require libboost_stacktrace_backtrace (apt install libboost-stacktrace-dev). Other values are addr2line (libboost_stacktrace_addr2line), basic (libboost_stacktrace_basic) and static_backtrace (libbacktrace). Use REDEMPTION_FILTER_ERROR shell variable for disable backtrace of specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
 
 constant FAST_CHECK : [ setvar FAST_CHECK : 0 ] ; # fast RED_CHECK(...) and co
 
 constant ENABLE_COVERAGE : [ setvar coverage : off ] ; # bjam -s coverage=on debug test_rect.coverage
+
+constant FORCE_LOGPRINT : [ setvar FORCE_LOGPRINT : 0 ] ;

@@ -20,24 +20,24 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/flat_button.hpp"
-#include "test_only/check_sig.hpp"
 
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/core/font.hpp"
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/grid/"
 
 RED_AUTO_TEST_CASE(TraceWidgetGrid)
 {
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     BGRColor fg_color = RED;
@@ -105,10 +105,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    //drawable.save_to_png("grid.png");
-
-    RED_CHECK_SIG(drawable, "\x3f\x03\x2d\xa3\x1e\x7a\xfa\x65\x39\x6f\x02\x71\xaa\x00\x9b\xe7\x89\x9e\xe3\x74");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_1.png");
 
     wgrid.set_selection(4);
 
@@ -118,10 +115,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    //drawable.save_to_png("grid2.png");
-
-    RED_CHECK_SIG(drawable, "\xa7\x31\x0f\x89\x43\x79\x0f\x0e\xb2\xdd\x8c\x7d\x6e\x64\x12\xb1\x5e\x95\xcd\x47");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_2.png");
 
     uint16_t mouse_x = wgrid.x() + 50;
     uint16_t mouse_y = wgrid.get_widget(1, 0)->y();
@@ -134,10 +128,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    //drawable.save_to_png("grid3.png");
-
-    RED_CHECK_SIG(drawable, "\x15\xe9\x1b\xb9\x25\xcc\xa7\x51\xe8\x86\x5e\x19\x48\x36\x89\xf3\xdc\x15\x31\x55");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_3.png");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -157,9 +148,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-    //drawable.save_to_png("grid4.png");
-
-    RED_CHECK_SIG(drawable, "\xa8\x5f\xbb\xa2\xe5\xc0\xea\x1b\xd1\x18\xd3\x05\x0c\x26\x64\xc0\xce\xfa\x85\x64");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "grid_4.png");
 
     wgrid.clear();
 }

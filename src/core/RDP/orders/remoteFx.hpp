@@ -64,14 +64,14 @@ struct TS_RFX_RECT {
     uint16_t height;
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 
 /** @brief a TS_RFX_SYNC packet */
 struct TS_RFX_SYNC {
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 /** @brief a TS_RFX_CODEC_VERSIONS packet */
@@ -81,7 +81,7 @@ struct TS_RFX_CODEC_VERSIONS {
     uint16_t version{WF_VERSION_1_0};
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 /** @brief a TS_RFX_CODEC_CHANNELT packet */
@@ -90,7 +90,7 @@ struct TS_RFX_CODEC_CHANNELT {
     uint8_t channelId{0};
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 
@@ -101,7 +101,7 @@ struct TS_RFX_CONTEXT : TS_RFX_CODEC_CHANNELT {
     uint16_t properties{(COL_CONV_ICT << 3) | (CLW_XFORM_DWT_53_A << 5) | (CLW_ENTROPY_RLGR3 << 9) | (SCALAR_QUANTIZATION << 13)};
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 /** @brief a TS_RFX_CHANNELT packet */
@@ -110,7 +110,7 @@ struct TS_RFX_CHANNELT {
     uint16_t width, height;
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 /** @brief a TS_RFX_CHANNELS packet */
@@ -122,7 +122,7 @@ struct TS_RFX_CHANNELS {
 
     void setChannel(uint8_t channelId, uint16_t width, uint16_t height);
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 
@@ -132,7 +132,7 @@ struct TS_RFX_FRAME_BEGIN : public TS_RFX_CODEC_CHANNELT {
     uint16_t numRegions;
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 /** @brief TS_RFX_FRAME_END */
@@ -149,7 +149,7 @@ struct TS_RFX_REGION : public TS_RFX_CODEC_CHANNELT {
 
     virtual ~TS_RFX_REGION();
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 /** @brief a TS_RFX_CODEC_QUANT */
@@ -166,7 +166,7 @@ struct TS_RFX_CODEC_QUANT {
     uint8_t hh1;
 
     void recv(InStream & stream);
-    void send(OutStream & stream);
+    void send(OutStream & stream) const;
 };
 
 struct TS_RFX_TILESET;

@@ -29,9 +29,9 @@
 
 namespace {
 
-int test_ambiguous(array_view_const_char /*unused*/) { return 1; }
-int test_ambiguous(array_view_const_s8 /*unused*/) { return 2; }
-int test_ambiguous(array_view_const_u8 /*unused*/) { return 3; }
+int test_ambiguous(chars_view /*unused*/) { return 1; }
+int test_ambiguous(s8_array_view /*unused*/) { return 2; }
+int test_ambiguous(u8_array_view /*unused*/) { return 3; }
 
 using voidp = void const*;
 
@@ -43,26 +43,29 @@ RED_AUTO_TEST_CASE(TestArrayView)
     int8_t as8[3] = {-1, 0, 3};
     uint8_t au8[3] = {0, 1, 2};
 
-    array_view<const char>{} = array_view<char>{};
-    array_view<const char>{} = array_view<char>(a8, short(2));
+    array_view<char>{} = array_view<char>{};
+    array_view<char>{} = array_view<char>(a8, short(2));
+    array_view<char>{} = writable_array_view<char>{};
+    array_view<char>{} = writable_array_view<char>(a8, short(2));
+    writable_array_view<char>{} = writable_array_view<char>{};
 
-    RED_CHECK_EQUAL(test_ambiguous(make_array_view(a8)), 1);
-    RED_CHECK_EQUAL(test_ambiguous(make_array_view(as8)), 2);
-    RED_CHECK_EQUAL(test_ambiguous(make_array_view(au8)), 3);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_array_view(a8)), 1);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_array_view(as8)), 2);
+    RED_CHECK_EQUAL(test_ambiguous(make_writable_array_view(au8)), 3);
 
-    RED_CHECK_EQUAL(make_array_view(a8).size(), 3u);
+    RED_CHECK_EQUAL(make_writable_array_view(a8).size(), 3u);
 
     std::string s;
     RED_CHECK_EQUAL(test_ambiguous(s), 1);
 
     s = "abc";
-    array_view<const char> avc(s);
+    array_view<char> avc(s);
     // same size (as std::string)
     RED_CHECK_EQUAL(avc.size(), s.size());
     // same data (same memory address)
     RED_CHECK_EQUAL(avc.data(), s.data());
 
-    auto av = make_array_view(s);
+    auto av = make_writable_array_view(s);
     // same type as s
     RED_CHECK_EQUAL(test_ambiguous(av), 1);
     // same size (as std::string)
@@ -84,7 +87,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     ++it;
     RED_CHECK_EQUAL(*it, 'b');
 
-    auto const av_p = make_array_view(&s[0], &s[3]);
+    auto const av_p = make_writable_array_view(&s[0], &s[3]);
     RED_CHECK_EQUAL(static_cast<void const *>(av_p.data()), static_cast<void const *>(av.data()));
     RED_CHECK_EQUAL(av_p.size(), av.size());
     RED_CHECK_EQUAL(av_p[0], av[0]);
@@ -99,11 +102,11 @@ RED_AUTO_TEST_CASE(TestArrayView)
     it2++;
     RED_CHECK_EQUAL(*it2, 'b');
 
-    RED_CHECK_EQUAL(make_array_view("abc").size(), 4u);
+    RED_CHECK_EQUAL(make_writable_array_view("abc").size(), 4u);
     RED_CHECK_EQUAL(cstr_array_view("abc").size(), 3u);
-    RED_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1u);
+    RED_CHECK_EQUAL(make_writable_array_view(av.data(), 1).size(), 1u);
 
-    RED_CHECK(array_view_char{nullptr}.empty());
+    RED_CHECK(chars_view{nullptr}.empty());
 
     {
     char ca8[3] = {'x', 'y', 'z'};
@@ -116,19 +119,9 @@ RED_AUTO_TEST_CASE(TestArrayView)
     }
 
     {
-    char ca8[3] = {'x', 'y', 'z'};
-    char * left = &ca8[1];
-    const char * right = &ca8[2];
-    auto const avi = make_array_view(left, right);
-
-    RED_CHECK_EQUAL(avi.size(), 1u);
-    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
-    }
-
-    {
     char ca8[] = {'x', 'y', 'z', 't'};
     const char * left = &ca8[1];
-    auto const avi = make_const_array_view(left, 2);
+    auto const avi = make_array_view(left, 2);
 
     RED_CHECK_EQUAL(avi.size(), 2u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
@@ -138,7 +131,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     char ca8[] = {'x', 'y', 'z', 't'};
     const char * left = &ca8[1];
     const char * right = &ca8[1];
-    auto const avi = make_const_array_view(left, right);
+    auto const avi = make_array_view(left, right);
 
     RED_CHECK_EQUAL(avi.size(), 0u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
@@ -146,7 +139,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
 
     {
     const char ca8[] = {'x', 'y', 'z', 't'};
-    auto const avi = make_const_array_view(ca8);
+    auto const avi = make_array_view(ca8);
 
     RED_CHECK_EQUAL(avi.size(), 4u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
@@ -192,10 +185,23 @@ constexpr auto check_array_view_call(T && a, int /*unused*/)
 {
     return true;
 }
+
+template<class T>
+constexpr auto check_array_view_guide(T && a, int /*unused*/)
+  -> decltype(void(array_view{std::forward<T>(a)}), true)
+{
+    return true;
+}
 REDEMPTION_DIAGNOSTIC_POP
 
 template<class V, class T>
 constexpr bool check_array_view_call(T && /*unused*/, char /*unused*/)
+{
+    return false;
+}
+
+template<class T>
+constexpr bool check_array_view_guide(T && /*unused*/, char /*unused*/)
 {
     return false;
 }
@@ -227,7 +233,7 @@ static_assert(not check_array_view_call<char>(cstr, 1));
 static_assert(not check_array_view_call<char>("abc", 1));
 static_assert(not check_array_view_call<char>(p, 1));
 static_assert(check_array_view_call<char>(str, 1));
-static_assert(not check_array_view_call<char>(strv, 1));
+static_assert(check_array_view_call<char>(strv, 1));
 static_assert(check_array_view_call<char>(rng, 1));
 
 static_assert(not check_array_view_call<const char>(cstr, 1));
@@ -245,4 +251,9 @@ static_assert(check_array_view_call<int>(ints, 1));
 static_assert(not check_array_view_call<int>(rng, 1));
 
 // deduction guide
-static_assert(decltype(check_cstr_array_view_call(array_view{str}, 1)){true});
+static_assert(not check_array_view_guide(cstr, 1));
+static_assert(not check_array_view_guide("abc", 1));
+static_assert(not check_array_view_guide(p, 1));
+static_assert(check_array_view_guide(str, 1));
+static_assert(check_array_view_guide(strv, 1));
+static_assert(check_array_view_guide(rng, 1));

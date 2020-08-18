@@ -460,7 +460,7 @@ struct ConfirmActivePDU_Send {
         this->numberCapabilities++;
     }
 
-    void emit_end() {
+    void emit_end() const {
         uint16_t lengthCombinedCapabilities;
 
         // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer.

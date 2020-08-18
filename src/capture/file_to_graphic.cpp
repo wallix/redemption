@@ -642,7 +642,8 @@ void FileToGraphic::interpret_order()
             if (RM18446_adjusted_size) {
                 RDPBitmapData RM18446_test_bitmap_data = bitmap_data;
 
-                RM18446_test_bitmap_data.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                RM18446_test_bitmap_data.flags         = uint16_t(BITMAP_COMPRESSION)
+                                                       | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                 RM18446_test_bitmap_data.bitmap_length = RM18446_adjusted_size;
 
                 this->stream.in_skip_bytes(RM18446_adjusted_size);
@@ -728,8 +729,7 @@ void FileToGraphic::interpret_order()
             this->statistics.CachePointer.count++;
         }
         else {
-            Pointer cursor(this->ptr_cache.Pointers[cache_idx]);
-            this->ptr_cache.Pointers[cache_idx] = cursor;
+            Pointer const& cursor = this->ptr_cache.Pointers[cache_idx];
             for (gdi::GraphicApi * gd : this->graphic_consumers){
                 gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
             }
@@ -793,7 +793,7 @@ void FileToGraphic::interpret_order()
                     "Invalid LogId %" PRIu32, log_id);
             }
             else if (AgentDataExtractor::relevant_log_id(LogId(log_id))) {
-                KVLog kvlogs[12];
+                KVLog kvlogs[128];
                 auto* pkv = kvlogs;
 
                 auto nbkv = in.in_uint8();
@@ -890,9 +890,10 @@ void FileToGraphic::process_windowing( InStream & stream, const RDP::AltsecDrawi
         return stream2.in_uint32_le();
     }();
 
-    switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                 | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY /*NOLINT*/
-                                 | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP  /*NOLINT*/)) {
+    switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+                                 | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY)
+                                 | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP)))
+    {
         case RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW:
             this->process_window_information(stream, header, FieldsPresentFlags);
             break;
@@ -921,10 +922,10 @@ void FileToGraphic::process_window_information(
     LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO,
         "rdp_orders::process_window_information");
 
-    switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                 | RDP::RAIL::WINDOW_ORDER_ICON /*NOLINT*/
-                                 | RDP::RAIL::WINDOW_ORDER_CACHEDICON /*NOLINT*/
-                                 | RDP::RAIL::WINDOW_ORDER_STATE_DELETED /*NOLINT*/))
+    switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+                                 | uint32_t(RDP::RAIL::WINDOW_ORDER_ICON)
+                                 | uint32_t(RDP::RAIL::WINDOW_ORDER_CACHEDICON)
+                                 | uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)))
     {
         case RDP::RAIL::WINDOW_ORDER_ICON: {
                 RDP::RAIL::WindowIcon order;
@@ -981,8 +982,8 @@ void FileToGraphic::process_notification_icon_information(
     LOG_IF(bool(this->verbose & Verbose::probe), LOG_INFO,
         "rdp_orders::process_notification_icon_information");
 
-    switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                 | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+    switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+                                 | uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)))
     {
         case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                 RDP::RAIL::DeletedNotificationIcons order;

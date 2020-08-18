@@ -28,7 +28,7 @@
 #include "cxx/cxx.hpp"
 
 #include <cassert>
-#include <string>
+#include <memory>
 
 class Font;
 
@@ -59,7 +59,6 @@ class GlyphCache;
 
 class RDPColCache;
 class RDPBrushCache;
-class RDPNineGrid;
 class RDPSetSurfaceCommand;
 class RDPSurfaceContent;
 
@@ -271,7 +270,13 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
 
 #ifdef __EMSCRIPTEN__
-    virtual void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) = 0;
+    struct CacheEntry
+    {
+        uint16_t nb_entries;
+        uint16_t bmp_size;
+        bool is_persistent;
+    };
+    virtual void set_bmp_cache_entries(std::array<CacheEntry, 3> const & /*cache_entries*/) = 0;
     virtual void draw(RDPBmpCache         const & /*cmd*/) = 0;
     virtual void draw(RDPMemBlt           const & cmd, Rect clip) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx) = 0;
@@ -292,7 +297,6 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPPolyline         const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseSC        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
-    virtual void draw(RDPNineGrid         const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
     virtual void draw(RDPSetSurfaceCommand const & cmd) = 0;
     virtual void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) = 0;
@@ -352,7 +356,7 @@ public:
     void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
     void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
 #ifdef __EMSCRIPTEN__
-    void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) override {}
+    void set_bmp_cache_entries(std::array<CacheEntry, 3> const & /*cache_entries*/) override {}
     void draw(RDPBmpCache         const & /*cmd*/) override {}
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
@@ -360,7 +364,6 @@ public:
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 #endif
-    void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
@@ -394,24 +397,27 @@ struct TextMetrics
     TextMetrics(const Font & font, const char * unicode_text);
 };
 
-
 struct MultiLineTextMetrics
 {
-    int width = 0;
-    int height = 0;
+    struct Line
+    {
+        char const* str;
+        int width;
+    };
 
-    MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned int line_spacing,
-        int max_width, std::string& out_multiline_string_ref);
-};
+    array_view<Line> lines() const noexcept
+    {
+        return {this->lines_.get(), this->size_};
+    }
 
+    MultiLineTextMetrics() = default;
+    MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned max_width);
 
-struct MultiLineTextMetricsEx
-{
-    int width = 0;
-    int height = 0;
+    uint16_t max_width() const noexcept;
 
-    MultiLineTextMetricsEx(const Font& font, const char* unicode_text, unsigned int line_spacing,
-        int max_width, std::string& out_multiline_string_ref);
+private:
+    std::unique_ptr<Line[]> lines_;
+    std::size_t size_ = 0;
 };
 
 

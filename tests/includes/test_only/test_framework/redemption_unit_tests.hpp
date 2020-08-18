@@ -28,16 +28,55 @@ Author(s): Jonathan Poelen
 
 namespace ut
 {
-    struct flagged_bytes_view : bytes_view
+    enum class PatternView : char
     {
-        char flag;
-        size_t min_len;
+        deduced = 'a',
+        ascii = 'c',
+        ascii_nl = 'C',
+        utf8 = 's',
+        utf8_nl = 'S',
+        hex = 'b',
+        dump = 'd',
     };
 
-    inline flagged_bytes_view ascii(bytes_view v, size_t min_len = 0) { return {v, 'c', min_len}; }
-    inline flagged_bytes_view utf8(bytes_view v) { return {v, 's', 0}; }
-    inline flagged_bytes_view hex(bytes_view v) { return {v, 'b', 0}; }
-    inline flagged_bytes_view dump(bytes_view v) { return {v, 'd', 0}; }
+    extern PatternView default_pattern_view;
+    extern unsigned default_ascii_min_len;
+
+    struct flagged_bytes_view
+    {
+        using value_type = uint8_t;
+
+        bytes_view bytes;
+        PatternView pattern = default_pattern_view;
+        unsigned min_len = default_ascii_min_len;
+    };
+
+    inline flagged_bytes_view dump(bytes_view v) { return {v, PatternView::dump, 0}; }
+    inline flagged_bytes_view hex(bytes_view v) { return {v, PatternView::hex, 0}; }
+    inline flagged_bytes_view utf8(bytes_view v) { return {v, PatternView::utf8, 0}; }
+    inline flagged_bytes_view ascii(bytes_view v, unsigned min_len = default_ascii_min_len)
+    { return {v, PatternView::ascii, min_len}; }
+
+    bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
+    void put_view(size_t pos, std::ostream& out, flagged_bytes_view x);
+
+    struct PatternViewSaver
+    {
+        PatternViewSaver(PatternView pattern) noexcept;
+        ~PatternViewSaver();
+
+    private:
+        PatternView pattern;
+    };
+
+    struct AsciiMinLenSaver
+    {
+        AsciiMinLenSaver(unsigned min_len) noexcept;
+        ~AsciiMinLenSaver();
+
+    private:
+        unsigned min_len;
+    };
 } // namespace ut
 
 namespace redemption_unit_test__
@@ -110,17 +149,26 @@ template<class T, class U>  bool operator==(array_view<T>, array_view<U>);
 template<class T> bool operator==(array_view<T>, bytes_view);
 template<class U> bool operator==(bytes_view, array_view<U>);
 bool operator==(bytes_view, bytes_view);
+template<class T> bool operator==(array_view<T>, ut::flagged_bytes_view);
+template<class U> bool operator==(ut::flagged_bytes_view, array_view<U>);
+bool operator==(ut::flagged_bytes_view, bytes_view);
+bool operator==(bytes_view, ut::flagged_bytes_view);
 
 template<class T, class U>  bool operator!=(array_view<T>, array_view<U>);
 template<class T> bool operator!=(array_view<T>, bytes_view);
 template<class U> bool operator!=(bytes_view, array_view<U>);
 bool operator!=(bytes_view, bytes_view);
+template<class T> bool operator!=(array_view<T>, ut::flagged_bytes_view);
+template<class U> bool operator!=(ut::flagged_bytes_view, array_view<U>);
+bool operator!=(ut::flagged_bytes_view, bytes_view);
+bool operator!=(bytes_view, ut::flagged_bytes_view);
 
 # define FIXTURES_PATH "./tests/fixtures"
 # define CFG_PATH "./sys/etc/rdpproxy"
 
 # define RED_FAIL(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_ERROR(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
+# define RED_TEST_INFO(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_CHECKPOINT(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_MESSAGE(ostream_expr) ::redemption_unit_test__::Stream{} << ostream_expr
 # define RED_TEST_PASSPOINT() do { } while(0)
@@ -290,9 +338,9 @@ namespace redemption_unit_test__
     {
         BytesView(bytes_view bytes) noexcept : bytes(bytes) {}
         BytesView(writable_bytes_view bytes) noexcept : bytes(bytes) {}
-        BytesView(array_view_const_char bytes) noexcept : bytes(bytes) {}
+        BytesView(chars_view bytes) noexcept : bytes(bytes) {}
+        BytesView(u8_array_view bytes) noexcept : bytes(bytes) {}
         // BytesView(array_view_const_s8 bytes) noexcept : bytes(bytes) {}
-        BytesView(array_view_const_u8 bytes) noexcept : bytes(bytes) {}
 
         bytes_view bytes;
     };
@@ -313,7 +361,12 @@ namespace std /*NOLINT*/
 #endif
 
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)
+# define RED_TEST_DELEGATE_PRINT_II(a, b) \
+    [[maybe_unused]] inline int a##b = 0
+# define RED_TEST_DELEGATE_PRINT_I(type, stream_expr) \
+    RED_TEST_DELEGATE_PRINT_II(a, b)
+# define RED_TEST_DELEGATE_PRINT(type, stream_expr) \
+    RED_TEST_DELEGATE_PRINT_II(delegate_print_unused_, __LINE__)
 #else
 #define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
   template<>                                                \
@@ -333,7 +386,7 @@ namespace std /*NOLINT*/
 
 #if defined(IN_IDE_PARSER) || REDEMPTION_UNIT_TEST_FAST_CHECK
 #define RED_TEST_CONTEXT_DATA(type_value, iocontext, ...) \
-    for (type_value : __VA_ARGS__)                        \
+    for ([[maybe_unused]] type_value : __VA_ARGS__)       \
         RED_TEST_CONTEXT(iocontext) /*NOLINT*/
 #else
 #define RED_TEST_CONTEXT_DATA_II(cont, i, n, type_value, iocontext, ...) \
@@ -360,13 +413,13 @@ namespace redemption_unit_test__
 {
 
 template<class T>
-auto cont_size(T const& cont, int) -> decltype(std::size_t(cont.size()))
+auto cont_size(T const& cont, int /*one*/) -> decltype(std::size_t(cont.size()))
 {
     return cont.size();
 }
 
 template<class T>
-std::size_t cont_size(T const& cont, char)
+std::size_t cont_size(T const& cont, char /*one*/)
 {
     using std::begin;
     using std::end;

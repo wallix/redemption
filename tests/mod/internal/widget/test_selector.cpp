@@ -20,13 +20,16 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/check_sig.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/selector/"
 
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector)
@@ -35,8 +38,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -50,23 +52,23 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "rdp"_av, "administrateur@qa@10.10.14.111"_av, "RDP"_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "rdp"_av, "administrateur@qa@10.10.14.27"_av, "RDP"_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "rdp"_av, "administrateur@qa@10.10.14.103"_av, "RDP"_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "rdp"_av, "administrateur@qa@10.10.14.33"_av, "RDP"_av};
     selector.add_device(add5);
 
@@ -77,19 +79,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector1.png");
-
-    RED_CHECK_SIG(drawable, "\x87\x7a\x17\x85\x48\x78\x04\xd1\xb9\xf5\x1a\x50\x0d\xc0\x7c\xa5\x47\x56\x55\x74");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_1.png");
 
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector2.png");
-
-    RED_CHECK_SIG(drawable, "\xa9\xf3\x4a\x66\x45\xf8\xaf\x92\x0b\x75\xc9\x51\x8c\x39\x63\xb2\x20\x12\x3d\xe4");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
@@ -98,8 +95,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(640, 480);
+    WidgetScreen parent(drawable, 648, 480, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -117,27 +113,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
                                 "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "rdp"_av, "administrateur@qa@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "rdp"_av, "administrateur@qa@10.10.14.27"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "rdp"_av, "administrateur@qa@10.10.14.103"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "rdp"_av, "administrateur@qa@10.10.14.33"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
@@ -149,19 +145,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector-resize1.png");
-
-    RED_CHECK_SIG(drawable, "\x60\x3a\xbd\x08\x4f\x11\x2d\x54\x10\xd6\x77\xae\x36\x99\x25\x1a\x9a\xfc\xa7\x39");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_resize_1.png");
 
     selector.selector_lines.set_selection(1);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector-resize2.png");
-
-    RED_CHECK_SIG(drawable, "\x3f\x01\x69\x46\xc9\xd0\x04\x8d\x28\x65\x76\x55\xc0\x8b\x66\xb7\xd6\x8f\x0b\x4a");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_resize_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector2)
@@ -170,8 +161,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -191,9 +181,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector3.png");
-
-    RED_CHECK_SIG(drawable, "\x80\xd3\xcb\xcd\x40\x82\x6f\xb4\x3b\x7d\x6b\x2e\xae\x10\xef\x80\x69\x4f\x01\x6f");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
@@ -202,8 +190,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -226,9 +213,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
                                       selector.cx(),
                                       selector.cy()));
 
-    //drawable.save_to_png("selector4.png");
-
-    RED_CHECK_SIG(drawable, "\xc4\x1f\xe7\x63\xe0\x8f\xbd\x60\x6a\x85\x69\x45\x1a\x0f\x66\x82\xfd\xcf\x9b\x03");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
@@ -238,8 +223,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
 
 
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -262,9 +246,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("selector5.png");
-
-    RED_CHECK_SIG(drawable, "\x9d\xbe\x64\x88\x34\x4b\x79\x83\x6a\xa1\x36\xad\xf4\x9e\xe6\x89\xb8\xf3\x86\x87");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
@@ -273,8 +255,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -291,27 +272,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "rdp"_av, "administrateur@qa@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "rdp"_av, "administrateur@qa@10.10.14.27"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "rdp"_av, "administrateur@qa@10.10.14.103"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "rdp"_av, "administrateur@qa@10.10.14.33"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
@@ -328,10 +309,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector6-1.png");
-
-    RED_CHECK_SIG(drawable, "\x59\x8d\x46\x0d\xe2\x74\x7e\x4a\x17\xbc\xfd\x12\x3c\xc2\xe2\x2a\xc6\x47\x8b\x81");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_6.png");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -341,49 +319,35 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector6-2.png");
-
-    RED_CHECK_SIG(drawable, "\x16\xdf\x52\xec\x39\xc3\x0f\xfe\x24\x9a\xa6\xfa\x47\x2f\x14\xe4\xf6\xb1\x75\xda");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector6-3.png");
-
-    RED_CHECK_SIG(drawable, "\xd0\xb0\xcc\x0d\x0c\x37\x79\xcc\xde\x7f\x4e\x5b\x98\x3e\x11\x5d\x73\x0e\x2f\x89");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_8.png");
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector6-4.png");
-
-    RED_CHECK_SIG(drawable, "\x16\xdf\x52\xec\x39\xc3\x0f\xfe\x24\x9a\xa6\xfa\x47\x2f\x14\xe4\xf6\xb1\x75\xda");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector6-5.png");
-
-    RED_CHECK_SIG(drawable, "\x59\x8d\x46\x0d\xe2\x74\x7e\x4a\x17\xbc\xfd\x12\x3c\xc2\xe2\x2a\xc6\x47\x8b\x81");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_6.png");
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector6-6.png");
-
-    RED_CHECK_SIG(drawable, "\x16\xdf\x52\xec\x39\xc3\x0f\xfe\x24\x9a\xa6\xfa\x47\x2f\x14\xe4\xf6\xb1\x75\xda");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_7.png");
 
     // int x = selector.selector_lines.rect.x + 5;
     // int y = selector.selector_lines.rect.y + 3;
@@ -402,8 +366,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int16_t w = drawable.width();
@@ -421,27 +384,27 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
-    array_view_const_char const add1[] = {
+    chars_view const add1[] = {
         "reptile"_av, "snake@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    array_view_const_char const add2[] = {
+    chars_view const add2[] = {
         "bird"_av, "raven@10.10.14.111"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    array_view_const_char const add3[] = {
+    chars_view const add3[] = {
         "reptile"_av, "lezard@10.10.14.27"_av,
         "VNC"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    array_view_const_char const add4[] = {
+    chars_view const add4[] = {
         "fish"_av, "shark@10.10.14.103"_av,
         "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    array_view_const_char const add5[] = {
+    chars_view const add5[] = {
         "bird"_av, "eagle@10.10.14.33"_av,
         "VNC"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
@@ -464,10 +427,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-1.png");
-
-    RED_CHECK_SIG(drawable, "\xe0\x47\xea\x42\xe6\x9c\x41\xf4\x1f\x96\xe3\x95\x3d\x7b\x31\x3a\xdb\x23\x8f\x03");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_12.png");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -478,20 +438,14 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-2.png");
-
-    RED_CHECK_SIG(drawable, "\x45\xad\xdb\x14\xc4\x13\xdf\xf0\x73\x90\x48\x2c\xf9\x73\xb5\x5f\x16\x6a\x50\xa9");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_13.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-3.png");
-
-    RED_CHECK_SIG(drawable, "\x05\xf2\xa1\x89\xa4\x85\xd9\xd8\xa1\xee\x78\xed\x01\xe5\x8f\x9a\x71\x2b\x42\x9c");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_14.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -501,40 +455,28 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-4.png");
-
-    RED_CHECK_SIG(drawable, "\x73\xf9\x3f\x58\x4c\x22\xe5\x9f\x65\x66\x9c\xba\x79\xb4\x41\x7a\xa8\xf3\x0d\xbd");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_15.png");
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-5.png");
-
-    RED_CHECK_SIG(drawable, "\x77\xdf\xb0\x68\x9e\x14\xc2\xc9\x64\x2f\xf7\x6d\xc5\xf4\xe3\x69\x33\x6c\x58\x00");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_16.png");
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-6.png");
-
-    RED_CHECK_SIG(drawable, "\x34\x69\xda\x57\x87\x9e\x41\x9e\x61\xe0\x1a\x29\x5b\xef\xa2\x93\x7e\xbe\x46\x97");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_17.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-7.png");
-
-    RED_CHECK_SIG(drawable, "\x7a\xe4\x21\xd6\xf7\xdb\xcb\x8a\x19\x40\x6d\xbe\xda\xd1\xf4\xae\xcc\xdb\xc5\xdb");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_18.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -543,10 +485,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-8.png");
-
-    RED_CHECK_SIG(drawable, "\x48\x5d\x5e\x29\x99\xa6\x3b\x29\x88\xd7\x84\xea\x21\x15\xf5\x5f\xc5\x63\xb8\xb6");
-
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_19.png");
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -566,7 +505,5 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.rdp_input_invalidate(selector.get_rect());
 
-    //drawable.save_to_png("selector7-9.png");
-
-    RED_CHECK_SIG(drawable, "\x4b\xb1\x5d\xa1\xb1\xcd\x93\x05\x8a\x6e\x31\x66\x74\x04\x4f\xba\x45\xc4\xe4\x4e");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_20.png");
 }

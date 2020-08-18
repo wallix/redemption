@@ -20,14 +20,14 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 
 #include <array>
 
 
 struct AgentDataExtractor
 {
-    bool extract_list(array_view_const_char data);
+    bool extract_list(chars_view data);
 
     [[nodiscard]] KVList kvlist() const noexcept
     {

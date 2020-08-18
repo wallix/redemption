@@ -24,6 +24,7 @@
 #pragma once
 
 #include <string>
+#include <limits>
 #include <sys/types.h> // mode_t
 
 #ifdef __EMSCRIPTEN__
@@ -77,5 +78,5 @@ enum class [[nodiscard]] FileContentsError
     Read,
 };
 
-FileContentsError append_file_contents(const char * filename, std::string& buffer);
+FileContentsError append_file_contents(const char * filename, std::string& buffer, off_t max_size = std::numeric_limits<off_t>::max());
 FileContentsError append_file_contents(std::string const& filename, std::string& buffer);

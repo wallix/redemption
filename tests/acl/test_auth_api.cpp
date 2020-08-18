@@ -20,7 +20,12 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
+#include "test_only/test_framework/redemption_unit_tests.hpp"
+
 #include "acl/auth_api.hpp"
 
-int main()
-{}
+RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
+{
+    NullAuthentifier null;
+//    RED_CHECK(&null != nullptr);
+}

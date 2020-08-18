@@ -22,8 +22,20 @@
 
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
-#include "utils/select.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "transport/socket_transport.hpp"
+#include "transport/socket_trace_transport.hpp"
+#include "core/listen.hpp"
+#include "utils/netutils.hpp"
+#include "utils/select.hpp"
+#include "utils/cli.hpp"
+#include "utils/redemption_info_version.hpp"
+
+#include <iostream>
+#include <csignal>
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 
 using PacketType = RecorderFile::PacketType;
@@ -33,9 +45,10 @@ using PacketType = RecorderFile::PacketType;
 class FrontServer
 {
 public:
-    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
+    FrontServer(std::string host, int port, TimeBase & time_base, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, bool forkable, uint64_t verbosity)
         : targetPort(port)
         , targetHost(std::move(host))
+        , time_base(time_base)
         , captureTemplate(std::move(captureFile))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
@@ -74,10 +87,9 @@ public:
 
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(
-                make_array_view(finalPathBuffer), connection_counter);
+                make_writable_array_view(finalPathBuffer), connection_counter);
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
-            TimeSystem timeobj;
-            RecorderFile outFile(timeobj, finalPath);
+            RecorderFile outFile(this->time_base, finalPath);
 
             SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
             SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort),
@@ -87,14 +99,14 @@ public:
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
             NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-            ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, this->targetHost.c_str(), enable_kerberos, verbosity);
+            ProxyRecorder conn(back_nla_tee_trans, outFile, this->time_base, this->targetHost.c_str(), enable_kerberos, verbosity);
 
             try {
                 // TODO: key becomes ready quite late (just before calling nego server) inside front_step1(), henceforth doing it here won't work
                 // but as it is an array view the adress of the array that will contain the key is already ok
                 // henceforth it should work anyway... put the call in the right place after inlining conn.run() and splitting front_step1()
                 uint8_t front_public_key[1024] = {};
-                array_view_u8 front_public_key_av;
+                writable_u8_array_view front_public_key_av;
                 // TODO: move run() code here (as it is not testable putting it in ProxyRecorder instance is troublesome)
 
                 fd_set rset;
@@ -136,9 +148,9 @@ public:
                             conn.frontBuffer.load_data(frontConn);
                             if (conn.frontBuffer.next(TpduBuffer::PDU)) {
                                 conn.front_step1(frontConn);
-                                array_view_const_u8 key = front_nla_tee_trans.get_public_key();
+                                u8_array_view key = front_nla_tee_trans.get_public_key();
                                 memcpy(front_public_key, key.data(), key.size());
-                                front_public_key_av = array_view(front_public_key, key.size());
+                                front_public_key_av = writable_array_view(front_public_key, key.size());
                                 conn.back_step1(front_public_key_av, backConn, this->nla_username, this->nla_password);
                             }
                         }
@@ -179,7 +191,7 @@ public:
                             backConn.set_trace_send(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (FRONT TO BACK)");
                             uint8_t tmpBuffer[0xffff];
-                            size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
+                            size_t ret = frontConn.partial_read(make_writable_array_view(tmpBuffer));
                             if (ret > 0) {
                                 outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
                                 backConn.send(tmpBuffer, ret);
@@ -190,7 +202,7 @@ public:
                             backConn.set_trace_receive(conn.verbosity > 1024);
                             LOG_IF(conn.verbosity > 1024, LOG_INFO, "FORWARD (BACK to FRONT)");
                             uint8_t tmpBuffer[0xffff];
-                            size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
+                            size_t ret = backConn.partial_read(make_writable_array_view(tmpBuffer));
                             if (ret > 0) {
                                 frontConn.send(tmpBuffer, ret);
                                 outFile.write_packet(PacketType::DataIn, {tmpBuffer, ret});
@@ -240,7 +252,7 @@ private:
             }
         }
 
-        char const* format(array_view_char path, int counter) const
+        char const* format(writable_chars_view path, int counter) const
         {
             if (endDigit) {
                 std::snprintf(path.data(), path.size(), "%.*s%04d%s",
@@ -259,6 +271,7 @@ private:
     int connection_counter = 0;
     int targetPort;
     std::string targetHost;
+    TimeBase & time_base;
     CaptureTemplate captureTemplate;
     std::string nla_username;
     std::string nla_password;
@@ -302,6 +315,7 @@ int main(int argc, char *argv[])
     char const* target_host = nullptr;
     int target_port = 3389;
     int listen_port = 8001;
+    TimeBase time_base(tvtime());
     std::string nla_username;
     std::string nla_password;
     char const* capture_file = nullptr;
@@ -362,7 +376,7 @@ int main(int argc, char *argv[])
     openlog("ProxyRecorder", LOG_CONS | LOG_PERROR, LOG_USER);
 
     FrontServer front(
-        target_host, target_port, capture_file,
+        target_host, target_port, time_base, capture_file,
         std::move(nla_username), std::move(nla_password),
         enable_kerberos, !no_forkable, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);

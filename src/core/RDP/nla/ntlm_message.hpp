@@ -37,7 +37,7 @@
 
 #include <numeric>
 
-static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
+static inline std::vector<uint8_t> UTF16_to_upper(u8_array_view name)
 {
     std::vector<uint8_t> result(name.data(), name.data()+name.size());
     ::UTF16Upper(result.data(), result.size());
@@ -47,7 +47,7 @@ static inline std::vector<uint8_t> UTF16_to_upper(array_view_const_u8 name)
 using array_challenge = std::array<uint8_t, 8>;
 
 using array_md4 = std::array<uint8_t, SslMd4::DIGEST_LENGTH>;
-static inline array_md4 Md4(array_view_const_u8 data)
+static inline array_md4 Md4(u8_array_view data)
 {
     array_md4 result;
     SslMd4 md4;
@@ -57,7 +57,7 @@ static inline array_md4 Md4(array_view_const_u8 data)
 }
 
 using array_md5 = std::array<uint8_t, SslMd5::DIGEST_LENGTH>;
-static inline array_md5 Rc4Key(array_view_const_u8 key, array_view_const_u8 plaintext)
+static inline array_md5 Rc4Key(u8_array_view key, u8_array_view plaintext)
 {
     array_md5 cyphertext;
     SslRC4 rc4;
@@ -66,7 +66,7 @@ static inline array_md5 Rc4Key(array_view_const_u8 key, array_view_const_u8 plai
     return cyphertext;
 }
 
-static inline std::vector<uint8_t> Rc4CryptVector(SslRC4 &rc4, array_view_const_u8 plaintext)
+static inline std::vector<uint8_t> Rc4CryptVector(SslRC4 &rc4, u8_array_view plaintext)
 {
     std::vector<uint8_t> cyphertext(plaintext.size());
     rc4.crypt(plaintext.size(), plaintext.data(), cyphertext.data());
@@ -74,14 +74,14 @@ static inline std::vector<uint8_t> Rc4CryptVector(SslRC4 &rc4, array_view_const_
 }
 
 template<std::size_t N>
-static inline std::array<uint8_t, N> Rc4Crypt(SslRC4 &rc4, array_view_const_u8 plaintext)
+static inline std::array<uint8_t, N> Rc4Crypt(SslRC4 &rc4, u8_array_view plaintext)
 {
     std::array<uint8_t, N> cyphertext;
     rc4.crypt(N, plaintext.data(), cyphertext.data());
     return cyphertext;
 }
 
-static inline array_md5 Md5(array_view_const_u8 data)
+static inline array_md5 Md5(u8_array_view data)
 {
     array_md5 result;
     SslMd5 md5;
@@ -90,7 +90,7 @@ static inline array_md5 Md5(array_view_const_u8 data)
     return result;
 }
 
-static inline array_md5 Md5(array_view_const_u8 data1, bytes_view data2)
+static inline array_md5 Md5(u8_array_view data1, bytes_view data2)
 {
     array_md5 result;
     SslMd5 md5;
@@ -101,7 +101,7 @@ static inline array_md5 Md5(array_view_const_u8 data1, bytes_view data2)
 }
 
 
-static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data)
+static inline array_md5 HmacMd5(u8_array_view key, u8_array_view data)
 {
     array_md5 result;
     SslHMAC_Md5 hmac_md5(key);
@@ -110,7 +110,7 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     return result;
 }
 
-static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2)
+static inline array_md5 HmacMd5(u8_array_view key, u8_array_view data1, u8_array_view data2)
 {
     array_md5 result;
     SslHMAC_Md5 hmac_md5(key);
@@ -120,7 +120,7 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
     return result;
 }
 
-static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 data1, array_view_const_u8 data2, array_view_const_u8 data3)
+static inline array_md5 HmacMd5(u8_array_view key, u8_array_view data1, u8_array_view data2, u8_array_view data3)
 {
     array_md5 result;
     SslHMAC_Md5 hmac_md5(key);
@@ -132,7 +132,7 @@ static inline array_md5 HmacMd5(array_view_const_u8 key, array_view_const_u8 dat
 }
 
 using array_sha256 = std::array<uint8_t, SslSha256::DIGEST_LENGTH>;
-static inline array_sha256 Sha256(bytes_view data1, array_view_const_u8 data2, array_view_const_u8 data3)
+static inline array_sha256 Sha256(bytes_view data1, u8_array_view data2, u8_array_view data3)
 {
     array_sha256 result;
     SslSha256 sha256;
@@ -475,8 +475,8 @@ enum {
 
     NTLMSSP_NEGOTIATE_56 = 0x80000000, /* W   (0) */
 
-// NTLMSSP_NEGOTIATE_KEY_EXCH: V (1 bit):  If set, requests an explicit key exchange. 
-// This capability SHOULD be used because it improves security for message integrity 
+// NTLMSSP_NEGOTIATE_KEY_EXCH: V (1 bit):  If set, requests an explicit key exchange.
+// This capability SHOULD be used because it improves security for message integrity
 // or confidentiality. See sections 3.2.5.1.2, 3.2.5.2.1, and 3.2.5.2.2 for details.
 
     NTLMSSP_NEGOTIATE_KEY_EXCH = 0x40000000, /* V   (1) */
@@ -501,7 +501,7 @@ enum {
 // r3 (1 bit):  This bit is unused and MUST be zero.
     NTLMSSP_RESERVED3 = 0x04000000, /* r3  (5) */
 
-// NTLMSSP_NEGOTIATE_VERSION: T (1 bit):  If set, requests the protocol version 
+// NTLMSSP_NEGOTIATE_VERSION: T (1 bit):  If set, requests the protocol version
 // number. The data corresponding to this flag is provided in the Version field
 // of the NEGOTIATE_MESSAGE, the CHALLENGE_MESSAGE, and the AUTHENTICATE_MESSAGE.<22>
 
@@ -827,17 +827,17 @@ struct NTLMSSPMessageSignatureESS {
 //  ChallengeFromClient (8 bytes):  An 8-byte array of unsigned char that contains the client's
 //   ClientChallenge, as defined in section 3.1.5.1.2.
 
-inline array_view_const_u8 lmv2_response(std::vector<uint8_t> & buffer)
+inline u8_array_view lmv2_response(std::vector<uint8_t> & buffer)
 {
     return {buffer.data(), 16};
 }
 
-inline array_view_const_u8 lmv2_client_challenge(std::vector<uint8_t> & buffer)
+inline u8_array_view lmv2_client_challenge(u8_array_view buffer)
 {
     return {buffer.data() + 16, 8};
 }
 
-inline array_md5 compute_LMv2_Response(array_view_const_u8 responseKeyLM, array_view_const_u8 serverChallenge, array_view_const_u8 clientChallenge)
+inline array_md5 compute_LMv2_Response(u8_array_view responseKeyLM, u8_array_view serverChallenge, u8_array_view clientChallenge)
 {
     return ::HmacMd5(responseKeyLM, serverChallenge, clientChallenge);
 }
@@ -1145,34 +1145,34 @@ struct NTLMAuthenticateMessage {
     {
         memset(this->MIC, 0x00, 16);
     }
-    
-    std::vector<uint8_t> get_bytes() 
+
+    std::vector<uint8_t> get_bytes()
     {
         return this->message_bytes_dump;
     }
-    
-    array_md5 NTOWFv2(array_view_const_u8 hash) {
+
+    array_md5 NTOWFv2(u8_array_view hash) {
         auto userup = UTF16_to_upper(this->UserName.buffer);
         return HmacMd5(hash, userup, this->DomainName.buffer);
     }
-    
-    array_md5 compute_session_base_key(array_view_const_u8 hash) {
-        array_view_u8 NtProofStr{this->NtChallengeResponse.buffer.data(), 16};
+
+    array_md5 compute_session_base_key(u8_array_view hash) {
+        writable_u8_array_view NtProofStr{this->NtChallengeResponse.buffer.data(), 16};
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain), NtProofStr)
         return HmacMd5(this->NTOWFv2(hash), NtProofStr);
     }
 
-    bool check_nt_response_from_authenticate(array_view_const_u8 hash, array_view_const_u8 server_challenge) {
+    bool check_nt_response_from_authenticate(u8_array_view hash, u8_array_view server_challenge) {
         auto & AuthNtResponse = this->NtChallengeResponse.buffer;
         array_md5 NtProofStr = HmacMd5(this->NTOWFv2(hash), server_challenge, {AuthNtResponse.data()+16, AuthNtResponse.size()-16});
 
         array_md5 NtProofStr_from_msg;
-        memcpy(NtProofStr_from_msg.data(), AuthNtResponse.data(), NtProofStr_from_msg.size()); 
+        memcpy(NtProofStr_from_msg.data(), AuthNtResponse.data(), NtProofStr_from_msg.size());
 
         return NtProofStr_from_msg == NtProofStr;
     }
 
-    bool check_lm_response_from_authenticate(array_view_const_u8 hash, array_view_const_u8 server_challenge) 
+    bool check_lm_response_from_authenticate(u8_array_view hash, u8_array_view server_challenge)
     {
         if (this->LmChallengeResponse.buffer.size() != 24) {
             return false;
@@ -1183,10 +1183,10 @@ struct NTLMAuthenticateMessage {
         auto b = lmv2_response(this->LmChallengeResponse.buffer);
         return are_buffer_equal(a, b);
     }
-    
-    array_md5 get_exported_session_key(array_view_const_u8 sessionBaseKey)
+
+    array_md5 get_exported_session_key(u8_array_view sessionBaseKey)
     {
-        return Rc4Key(sessionBaseKey, this->EncryptedRandomSessionKey.buffer); 
+        return Rc4Key(sessionBaseKey, this->EncryptedRandomSessionKey.buffer);
     }
 };
 
@@ -1203,7 +1203,7 @@ inline void logNtlmFlags(uint32_t flags)
     LOG(LOG_INFO, "}");
 }
 
-inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self) 
+inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
 {
     logNtlmField("LmChallengeResponse", self.LmChallengeResponse);
     logNtlmField("NtChallengeResponse", self.NtChallengeResponse);
@@ -1211,16 +1211,16 @@ inline void logNTLMAuthenticateMessage(NTLMAuthenticateMessage & self)
     logNtlmField("UserName", self.UserName);
     logNtlmField("Workstation", self.Workstation);
     logNtlmField("EncryptedRandomSessionKey", self.EncryptedRandomSessionKey);
-    
+
     logNtlmFlags(self.negoFlags.flags);
-    
+
     LogNtlmVersion(self.version);
     LOG(LOG_INFO, "MIC");
     hexdump_d(self.MIC, 16);
 }
 
 
-inline void logNTLMAuthenticateMessage(uint32_t negoFlags, 
+inline void logNTLMAuthenticateMessage(uint32_t negoFlags,
                                 const NtlmVersion & version,
                                 bytes_view LmChallengeResponse,
                                 bytes_view NtChallengeResponse,
@@ -1229,7 +1229,7 @@ inline void logNTLMAuthenticateMessage(uint32_t negoFlags,
                                 bytes_view Workstation,
                                 bytes_view EncryptedRandomSessionKey,
                                 bytes_view mic,
-                                bytes_view full) 
+                                bytes_view full)
 {
     LOG(LOG_INFO, "Field LmChallengeResponse, len: %lu", LmChallengeResponse.size());
     hexdump_d(LmChallengeResponse);
@@ -1253,7 +1253,7 @@ inline void logNTLMAuthenticateMessage(uint32_t negoFlags,
 
 
 inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
-                                        NtlmVersion ntlm_version, 
+                                        NtlmVersion ntlm_version,
                                         bytes_view LmChallengeResponse,
                                         bytes_view NtChallengeResponse,
                                         bytes_view DomainName,
@@ -1262,11 +1262,11 @@ inline std::vector<uint8_t> emitNTLMAuthenticateMessage(uint32_t negoFlags,
                                         bytes_view EncryptedRandomSessionKey,
                                         bool has_mic, size_t & mic_offset)
 {
-    bytes_view tmpWorkStation = {Workstation.data(), 
+    bytes_view tmpWorkStation = {Workstation.data(),
                 (negoFlags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED)?Workstation.size():0};
     bytes_view tmpEncryptedRandomSessionKey = {EncryptedRandomSessionKey.data(),
                 (negoFlags & NTLMSSP_NEGOTIATE_KEY_EXCH)?EncryptedRandomSessionKey.size():0};
-    
+
     bool negotiate_flag = negoFlags & NTLMSSP_NEGOTIATE_VERSION;
     uint32_t payloadOffset = 12+8+8+8+8+8+8+4
                             +8*negotiate_flag
@@ -1337,7 +1337,7 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
     InStream stream(raw_message);
     NTLMAuthenticateMessage self;
     uint8_t const * pBegin = stream.get_current();
-    
+
     // Read Message Header
     constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
     uint8_t received_sig[sig_len];
@@ -1394,7 +1394,7 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
 
     // PAYLOAD
     // Ensure payload is available
-    size_t maxp = std::accumulate(l.begin(), l.end(), 0, 
+    size_t maxp = std::accumulate(l.begin(), l.end(), 0,
         [](size_t a, const TmpNtlmField tmp) {
              return std::max(a, size_t(tmp.f->bufferOffset + tmp.len));
     });
@@ -1408,7 +1408,7 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
 
     // Actually read payload data
     for(auto & tmp: l){
-        tmp.f->buffer.assign(pBegin + tmp.f->bufferOffset, 
+        tmp.f->buffer.assign(pBegin + tmp.f->bufferOffset,
                              pBegin + tmp.f->bufferOffset + tmp.len);
         LOG_IF(verbose, LOG_INFO, "%s: offset=%u len=%u buffer_len=%lu",
             tmp.fieldname.c_str(), tmp.f->bufferOffset, tmp.len, tmp.f->buffer.size());
@@ -1812,7 +1812,7 @@ inline std::vector<uint8_t> emitTargetInfo(const NtlmAvPairList & avPairList)
 {
     std::vector<uint8_t> target_info;
     for (auto & avp: avPairList) {
-        target_info << ::out_uint16_le(avp.id) 
+        target_info << ::out_uint16_le(avp.id)
                     << ::out_uint16_le(avp.data.size())
                     << avp.data;
     }
@@ -1841,7 +1841,7 @@ inline std::vector<uint8_t> emitNTLMChallengeMessage(bytes_view target_name, byt
 
     result << bytes_view{NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE)}
            << ::out_uint32_le(NtlmChallenge);
-           
+
     result << ::out_uint16_le(target_name.size())
            << ::out_uint16_le(target_name.size())
            << ::out_uint32_le(payloadOffset);
@@ -1888,7 +1888,7 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
 //    if (0 != memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)){
 //        LOG(LOG_ERR, "INVALID MSG RECEIVED bad signature");
 //    }
-    
+
     uint16_t TargetName_len = stream.in_uint16_le();
     uint16_t TargetName_maxlen = stream.in_uint16_le();
     (void)TargetName_maxlen; // we should check it's the same as len
@@ -1915,25 +1915,25 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
     // PAYLOAD
     auto maxp = std::max(size_t(self.TargetName.bufferOffset + TargetName_len),
                          size_t(self.TargetInfo.bufferOffset + TargetInfo_len));
-    
+
     if (pBegin + maxp > stream.get_current()) {
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }
 
-    self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset, 
+    self.TargetName.buffer.assign(pBegin + self.TargetName.bufferOffset,
                          pBegin + self.TargetName.bufferOffset + TargetName_len);
 
     LOG(LOG_INFO, "Target Name (%u %u)", self.TargetName.bufferOffset, unsigned(self.TargetName.buffer.size()));
     hexdump_d(self.TargetName.buffer);
 
-    self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset, 
+    self.TargetInfo.buffer.assign(pBegin + self.TargetInfo.bufferOffset,
                          pBegin + self.TargetInfo.bufferOffset + TargetInfo_len);
 
     LOG(LOG_INFO, "Target Info (%u %u)", self.TargetInfo.bufferOffset, unsigned(self.TargetInfo.buffer.size()));
     hexdump_d(self.TargetInfo.buffer);
-    
+
     InStream in_stream(self.TargetInfo.buffer);
-    
+
     for (std::size_t i = 0; i < AV_ID_MAX; ++i) {
         auto id = in_stream.in_uint16_le();
         auto length = in_stream.in_uint16_le();
@@ -2081,7 +2081,6 @@ struct NTLMNegotiateMessage
     NtlmField DomainName;         /* 8 Bytes */
     NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
-    
 //    std::vector<uint8_t> raw_bytes;
 };
 
@@ -2092,9 +2091,9 @@ inline void logNTLMNegotiateMessage(const NTLMNegotiateMessage & message)
 
     logNtlmField("DomainName", message.DomainName);
     logNtlmField("Workstation", message.Workstation);
-    
+
     logNtlmFlags(message.negoFlags.flags);
-    
+
     LogNtlmVersion(message.version);
 }
 
@@ -2103,7 +2102,7 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     std::vector<uint8_t> DomainName;
     std::vector<uint8_t> Workstation;
 
-    const uint32_t payloadOffset = 8+  // message signature 
+    const uint32_t payloadOffset = 8+  // message signature
                              4+  // MessageType = NtlmNegotiate
                              4+  // negoFlags
                              8+  // DomainName field header
@@ -2111,7 +2110,7 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
                              8   // Negotiate Version
                              ;
     std::vector<uint8_t> message(payloadOffset+DomainName.size()+Workstation.size());
-    
+
     OutStream stream(message);
 
     stream.out_copy_bytes("NTLMSSP\0"_av);
@@ -2139,7 +2138,7 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     stream.out_uint16_le(Workstation.size());
     stream.out_uint32_le(payloadOffset + DomainName.size());
 
-    // Negotiate Version    
+    // Negotiate Version
     stream.out_uint8(WINDOWS_MAJOR_VERSION_6);
     stream.out_uint8(WINDOWS_MINOR_VERSION_1);
     stream.out_uint16_le(7601);
@@ -2153,10 +2152,10 @@ inline std::vector<uint8_t> emitNTLMNegotiateMessage()
     if (Workstation.size()){
         stream.out_copy_bytes(Workstation);
     }
-    
+
 //    LOG(LOG_INFO, "NTLM Message Negotiate Dump (Sent)");
-//    hexdump_d(stream.get_bytes());
-    
+//    hexdump_d(stream.get_produced_bytes());
+
     return message;
 }
 
@@ -2184,7 +2183,7 @@ inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
     //    LOG(LOG_ERR, "INVALID MSG RECEIVED NtlmNegotiate (0001) expected, got type: %u", type);
 
     self.negoFlags.flags = stream.in_uint32_le();
-    
+
     uint16_t DomainName_len = 0;
     uint16_t DomainName_maxlen = 0;
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED) {
@@ -2219,18 +2218,18 @@ inline NTLMNegotiateMessage recvNTLMNegotiateMessage(bytes_view av)
 
     // PAYLOAD
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_DOMAIN_SUPPLIED) {
-        self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset, 
+        self.DomainName.buffer.assign(pBegin + self.DomainName.bufferOffset,
                          pBegin + self.DomainName.bufferOffset + DomainName_len);
     }
 
     if (self.negoFlags.flags & NTLMSSP_NEGOTIATE_OEM_WORKSTATION_SUPPLIED) {
-        self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset, 
+        self.Workstation.buffer.assign(pBegin + self.Workstation.bufferOffset,
                              pBegin + self.Workstation.bufferOffset + Workstation_len);
     }
     // Consume Payload
     auto maxp = std::max(size_t(self.DomainName.bufferOffset + DomainName_len),
                          size_t(self.Workstation.bufferOffset + Workstation_len));
-    
+
     if (pBegin + maxp > stream.get_current()) {
         stream.in_skip_bytes(pBegin + maxp - stream.get_current());
     }

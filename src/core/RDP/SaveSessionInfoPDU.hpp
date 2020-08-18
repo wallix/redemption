@@ -231,7 +231,7 @@ struct LogonInfoVersion1_Recv {
         // Domain(52) + cbUserName(4)
         ::check_throw(stream, 56, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
         auto domain_data = stream.in_skip_bytes(52); // Domain(52)
-        auto domain_utf8 = UTF16toUTF8_buf(domain_data, make_array_view(this->Domain));
+        auto domain_utf8 = UTF16toUTF8_buf(domain_data, make_writable_array_view(this->Domain));
         (void)domain_utf8; // TODO: we could check computed length match transmitted length
 
         uint32_t cbUserName = stream.in_uint32_le();
@@ -244,7 +244,7 @@ struct LogonInfoVersion1_Recv {
         ::check_throw(stream, 516, "Logon Info Version 1", ERR_RDP_DATA_TRUNCATED);
 
         auto user_data = stream.in_skip_bytes(512); // UserName(512)
-        auto user_utf8 = UTF16toUTF8_buf(user_data, make_array_view(this->UserName));
+        auto user_utf8 = UTF16toUTF8_buf(user_data, make_writable_array_view(this->UserName));
         (void)user_utf8;  // TODO: we could check computed length match transmitted length
 
         this->SessionId = stream.in_uint32_le();
@@ -378,7 +378,7 @@ struct LogonInfoVersion2_Recv {
         auto in_uni_to_ascii_str = [&](auto& text, uint32_t& sz) {
             auto utf8 = UTF16toUTF8_buf(
                 stream.remaining_bytes().first(sz),
-                make_array_view(text).drop_back(1));
+                make_writable_array_view(text).drop_back(1));
             stream.in_skip_bytes(sz);
             sz = utf8.size();
             text[sz] = 0;

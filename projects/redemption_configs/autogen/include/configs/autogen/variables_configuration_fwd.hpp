@@ -4,9 +4,8 @@
 
 #pragma once
 
-enum authid_t : unsigned;
-
-namespace cfg {
+namespace cfg
+{
     struct globals {
         struct capture_chunk;
         struct nla_auth_user;
@@ -36,7 +35,6 @@ namespace cfg {
         struct enable_transparent_mode;
         struct certificate_password;
         struct is_rec;
-        struct movie_path;
         struct enable_bitmap_update;
         struct enable_close_box;
         struct enable_osd;
@@ -52,6 +50,7 @@ namespace cfg {
         struct experimental_support_resize_session_during_recording;
         struct support_connection_redirection_during_recording;
         struct rdp_keepalive_connection_interval;
+        struct enable_ipv6;
     };
 
     struct session_log {
@@ -104,7 +103,7 @@ namespace cfg {
         struct rdp_compression;
         struct disconnect_on_logon_user_change;
         struct open_session_timeout;
-        struct extra_orders;
+        struct disabled_orders;
         struct enable_nla;
         struct enable_kerberos;
         struct tls_min_level;
@@ -116,9 +115,11 @@ namespace cfg {
         struct persist_bitmap_cache_on_disk;
         struct allow_channels;
         struct deny_channels;
+        struct allowed_dynamic_channels;
+        struct denied_dynamic_channels;
         struct fast_path;
         struct server_redirection_support;
-        struct redir_info;
+        struct client_address_sent;
         struct load_balance_info;
         struct bogus_sc_net_size;
         struct proxy_managed_drives;
@@ -144,6 +145,7 @@ namespace cfg {
         struct session_probe_customize_executable_name;
         struct session_probe_enable_log;
         struct session_probe_enable_log_rotation;
+        struct session_probe_log_level;
         struct session_probe_disconnected_application_limit;
         struct session_probe_disconnected_session_limit;
         struct session_probe_idle_session_limit;
@@ -160,10 +162,20 @@ namespace cfg {
         struct session_probe_memory_usage_limit;
         struct session_probe_end_of_session_check_delay_time;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
+        struct session_probe_update_disabled_features;
         struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_disabled_features;
+        struct session_probe_bestsafe_integration;
+        struct session_probe_alternate_directory_environment_variable;
         struct session_probe_public_session;
         struct session_probe_on_account_manipulation;
+        struct session_probe_at_end_of_session_freeze_connection_and_wait;
+        struct session_probe_enable_cleaner;
+        struct application_driver_enable_cleaner;
+        struct application_driver_exe_or_file;
+        struct application_driver_script_argument;
+        struct application_driver_chrome_uia_script;
+        struct application_driver_ie_script;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;
@@ -191,6 +203,9 @@ namespace cfg {
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
+        struct enable_ipv6;
+        struct mode_console;
+        struct auto_reconnection_on_losing_target_link;
     };
 
     struct mod_vnc {
@@ -202,6 +217,7 @@ namespace cfg {
         struct server_is_macos;
         struct server_unix_alt;
         struct support_cursor_pseudo_encoding;
+        struct enable_ipv6;
     };
 
     struct metrics {
@@ -219,7 +235,10 @@ namespace cfg {
         struct enable_down;
         struct clipboard_text_up;
         struct clipboard_text_down;
+        struct block_invalid_file_up;
+        struct block_invalid_file_down;
         struct log_if_accepted;
+        struct max_file_size_rejected;
     };
 
     struct file_storage {
@@ -281,6 +300,8 @@ namespace cfg {
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
+        struct allow_rt_without_recording;
+        struct file_permissions;
     };
 
     struct capture {
@@ -312,7 +333,6 @@ namespace cfg {
         struct mod_rdp;
         struct mod_vnc;
         struct mod_internal;
-        struct mod_xup;
         struct password;
         struct compression;
         struct cache;
@@ -321,6 +341,7 @@ namespace cfg {
         struct ocr;
         struct ffmpeg;
         struct config;
+        struct mod_rdp_use_failure_simulation_socket_transport;
     };
 
     struct remote_program {
@@ -334,7 +355,7 @@ namespace cfg {
     };
 
     struct internal_mod {
-        struct theme;
+        struct enable_target_field;
     };
 
     struct context {
@@ -369,7 +390,6 @@ namespace cfg {
         struct keepalive;
         struct session_id;
         struct end_date_cnx;
-        struct mode_console;
         struct real_target_device;
         struct authentication_challenge;
         struct ticket;
@@ -380,7 +400,6 @@ namespace cfg {
         struct showform;
         struct formflag;
         struct module;
-        struct forcemodule;
         struct proxy_opt;
         struct pattern_kill;
         struct pattern_notify;
@@ -426,6 +445,35 @@ namespace cfg {
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
+        struct application_driver_alternate_shell;
+        struct application_driver_shell_arguments;
+    };
+
+    struct theme {
+        struct enable_theme;
+        struct bgcolor;
+        struct fgcolor;
+        struct separator_color;
+        struct focus_color;
+        struct error_color;
+        struct logo;
+        struct logo_path;
+        struct edit_bgcolor;
+        struct edit_fgcolor;
+        struct edit_focus_color;
+        struct tooltip_bgcolor;
+        struct tooltip_fgcolor;
+        struct tooltip_border_color;
+        struct selector_line1_bgcolor;
+        struct selector_line1_fgcolor;
+        struct selector_line2_bgcolor;
+        struct selector_line2_fgcolor;
+        struct selector_selected_bgcolor;
+        struct selector_selected_fgcolor;
+        struct selector_focus_bgcolor;
+        struct selector_focus_fgcolor;
+        struct selector_label_bgcolor;
+        struct selector_label_fgcolor;
     };
 
 } // namespace cfg

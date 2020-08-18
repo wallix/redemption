@@ -21,7 +21,7 @@
 
 #include "capture/utils/match_finder.hpp"
 #include "core/log_id.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -110,7 +110,7 @@ void MatchFinder::configure_regexes(
     unsigned filter_number = 0;
 
     for (auto rng : get_line(tmp_filters, string_pattern_separator)) {
-        array_view_char av{rng.begin(), rng.end()};
+        writable_chars_view av{rng.begin(), rng.end()};
         av.data()[av.size()] = '\0';
 
         LOG_IF(verbose, LOG_INFO, "filter=\"%s\"", av.data());
@@ -192,7 +192,7 @@ void MatchFinder::configure_regexes(
 }
 
 void MatchFinder::report(
-    ReportMessageApi & report_message, bool is_pattern_kill,
+    AuthApi & sesman, bool is_pattern_kill,
     ConfigureRegexes conf_regex, const char * pattern, const char * data)
 {
     char message[4096];
@@ -201,14 +201,10 @@ void MatchFinder::report(
         ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
     utils::back(message) = '\0';
 
-    report_message.log6(is_pattern_kill
-        ? LogId::KILL_PATTERN_DETECTED
-        : LogId::NOTIFY_PATTERN_DETECTED
-    , tvtime(), {
-        KVLog("pattern"_av, std::string_view{message}),
-    });
+    sesman.log6(is_pattern_kill ? LogId::KILL_PATTERN_DETECTED : LogId::NOTIFY_PATTERN_DETECTED
+                        ,{ KVLog("pattern"_av, std::string_view{message}),});
 
-    report_message.report(
+    sesman.report(
         (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
         message);
 }

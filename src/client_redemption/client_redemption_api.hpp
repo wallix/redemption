@@ -21,38 +21,22 @@
 #pragma once
 
 #include "core/front_api.hpp"
-#include "mod/mod_api.hpp"
 
 #include <chrono>
 #include <string>
 #include <ctime>
 
-class ClientInputSocketAPI
-{
-    // TODO private
-public:
-    mod_api * _callback = nullptr;
-
-    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
-    virtual void disconnect() = 0;
-
-    virtual ~ClientInputSocketAPI() = default;
-};
+class mod_api;
 
 class ClientRedemptionAPI : public FrontAPI
 {
-
 public:
     virtual ~ClientRedemptionAPI() = default;
 
-    bool can_be_start_capture() override { return true; }
+    bool can_be_start_capture(bool /*force_capture*/) override { return true; }
     bool is_capture_in_progress() const override { return true; }
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, int  /*flags*/) override {}
-
-    virtual bool is_connected() {return false;}
-    virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
-    virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
     virtual void close() = 0;
@@ -66,8 +50,4 @@ public:
     virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual void delete_replay_mod() {}
     virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
-
 };
-
-
-

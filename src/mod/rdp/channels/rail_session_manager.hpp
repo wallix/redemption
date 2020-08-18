@@ -26,7 +26,6 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/protected_graphics.hpp"
@@ -95,9 +94,8 @@ class RemoteProgramsSessionManager final
 
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
-    SessionReactor& session_reactor;
-
-    SessionReactor::TimerPtr waiting_screen_event;
+    TimeBase& time_base;
+    EventContainer & events;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -119,16 +117,11 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override { this->draw_impl(cmd, clip, bmp);}
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
-    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
-        // TODO
-    }
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {
-        // TODO
-    }
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {}
 
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override
     {
@@ -138,7 +131,8 @@ public:
     }
 
     explicit RemoteProgramsSessionManager(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
+        EventContainer & events,
         gdi::GraphicApi& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
@@ -155,8 +149,14 @@ public:
     , session_probe_window_title(session_probe_window_title)
     , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
+    , events(events)
     {}
+
+    ~RemoteProgramsSessionManager()
+    {
+        this->events.end_of_lifespan(this);
+    }
 
     void begin_update() override
     {
@@ -220,7 +220,7 @@ public:
             if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
                 (this->disconnect_now_button_rect.contains_pt(x, y))) {
                 LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-                this->authentifier.disconnect_target();
+                this->authentifier.set_disconnect_target();
                 throw Error(ERR_DISCONNECT_BY_USER);
             }
         }
@@ -235,7 +235,7 @@ public:
         // 28 for escape key
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-            this->authentifier.disconnect_target();
+            this->authentifier.set_disconnect_target();
             throw Error(ERR_DISCONNECT_BY_USER);
         }
     }
@@ -250,7 +250,7 @@ private:
         , manager_(self)
         {}
 
-        void refresh_rects(array_view<Rect const> av) override
+        void refresh_rects(array_view<Rect> av) override
         { this->manager_.mod.rdp_input_invalidate2(av); }
     };
 
@@ -360,7 +360,7 @@ public:
 
                         rpduh.emit_end();
 
-                        InStream in_s(out_s.get_bytes());
+                        InStream in_s(out_s.get_produced_bytes());
 
                         this->mod.send_to_mod_channel(channel_names::rail,
                                                       in_s,
@@ -377,9 +377,8 @@ public:
                         RDP::RAIL::DeletedWindow order;
 
                         order.header.FieldsPresentFlags(
-                                  RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                                | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                            );
+                            uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+                          | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
                         order.header.WindowId(window_id);
 
                         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -463,25 +462,26 @@ public:
             }
         }
 
-        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type) &&
-            this->has_previous_window) {
-
+        if (has_not_window && (DialogBoxType::NONE == this->dialog_box_type)
+        && this->has_previous_window)
+        {
             this->currently_without_window = true;
-
-            this->waiting_screen_event = this->session_reactor.create_timer()
-            .set_delay(this->rail_disconnect_message_delay)
-            // this->process_event()
-            .on_action(jln::one_shot([this]{
-                if (this->currently_without_window
-                 && (DialogBoxType::NONE == this->dialog_box_type)
-                 && this->has_previous_window
-                 && this->has_actively_monitored_desktop
-                ) {
-                    LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
-                    this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
-                    this->waiting_screen_draw(0);
-                }
-            }));
+            this->events.create_event_timeout(
+                "Rail Waiting Screen Event", this,
+                this->time_base.get_current_time()+this->rail_disconnect_message_delay,
+                [this](Event&event)
+                {
+                    if (this->currently_without_window
+                     && (DialogBoxType::NONE == this->dialog_box_type)
+                     && this->has_previous_window
+                     && this->has_actively_monitored_desktop
+                    ) {
+                        LOG(LOG_INFO, "RemoteProgramsSessionManager::draw(ActivelyMonitoredDesktop): Create waiting screen.");
+                        this->dialog_box_create(DialogBoxType::WAITING_SCREEN);
+                        this->waiting_screen_draw(0);
+                    }
+                    event.garbage = true;
+                });
         }
 
         if (has_window) {
@@ -599,9 +599,8 @@ private:
             RDP::RAIL::DeletedWindow order;
 
             order.header.FieldsPresentFlags(
-                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                );
+                uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
             order.header.WindowId(this->dialog_box_window_id);
 
             if (bool(this->verbose & RDPVerbose::rail)) {
@@ -807,9 +806,8 @@ public:
             RDP::RAIL::DeletedWindow order;
 
             order.header.FieldsPresentFlags(
-                      RDP::RAIL::WINDOW_ORDER_STATE_DELETED
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                );
+                uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)
+              | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW));
             order.header.WindowId(this->auxiliary_window_id);
 
             if (bool(this->verbose & RDPVerbose::rail)) {

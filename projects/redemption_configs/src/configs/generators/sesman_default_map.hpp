@@ -48,27 +48,41 @@ namespace python
         out << "u'" << io_quoted2{x} << "'";
     }
 
+    template<class T, unsigned n>
+    void write_type(std::ostream& out, type_<types::fixed_string<n>>, T const& x)
+    {
+        if constexpr (std::is_same_v<types::fixed_string<n>, T>) {
+            out << "u''";
+        }
+        else {
+            out << "u'" << io_quoted2{x} << "'";
+        }
+    }
+
+    template<class Int, class T>
+    std::enable_if_t<traits::is_integer_v<Int>>
+    write_type(std::ostream& out, type_<types::list<Int>>, T const& x)
+    {
+        out << "u'" << io_quoted2{x} << "'";
+    }
+
     inline void write_type(std::ostream& out, type_<bool>, bool x)
     {
         out << (x ? "True" : "False");
     }
 
-    template<class Int, class T>
-    std::enable_if_t<
-        std::is_base_of<types::integer_base, Int>::value
-        or
-        std::is_integral<Int>::value
-    >
-    write_type(std::ostream& out, type_<Int>, T const& i)
+    template<class T, class X>
+    void write_type(std::ostream& out, type_<T>, X const& x)
     {
-        out << +python_spec_writer::impl::stringize_integral(i);
-    }
-
-    template<class E, class T>
-    std::enable_if_t<std::is_enum<E>::value>
-    write_type(std::ostream& out, type_<E>, T const& e)
-    {
-        out << +std::underlying_type_t<E>(e);
+        if constexpr (std::is_enum_v<T>) {
+            out << +std::underlying_type_t<T>(x);
+        }
+        else if constexpr (traits::is_integer_v<T>) {
+            out << +python_spec_writer::impl::stringize_integral(x);
+        }
+        else {
+            static_assert(!sizeof(T), "missing implementation");
+        }
     }
 
     template<class T1, class Ratio1, class T2, class Ratio2>
@@ -86,7 +100,7 @@ namespace python
     template<class T1, long min, long max, class T>
     void write_type(std::ostream& out, type_<types::range<T1, min, max>>, T const& x)
     {
-        write_type(out, type_<T>{}, x);
+        write_type(out, type_<T1>{}, x);
     }
 }
 

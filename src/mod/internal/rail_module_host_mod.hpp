@@ -20,14 +20,19 @@
 
 #pragma once
 
-#include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/rail_module_host.hpp"
 
+#include "configs/config.hpp"
 #include "configs/config_access.hpp"
+#include "mod/mod_api.hpp"
+#include "mod/internal/dvc_manager.hpp"
+#include "mod/internal/widget/screen.hpp"
+#include "RAIL/client_execute.hpp"
 
 #include <memory>
 
-class SessionReactor;
+class ClientExecute;
+class TimeBase;
 
 using RailModuleHostModVariables = vcfg::variables<
     vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
@@ -36,11 +41,85 @@ using RailModuleHostModVariables = vcfg::variables<
 >;
 
 
-class RailModuleHostMod : public LocallyIntegrableMod, public NotifyApi
+class RailModuleHostMod : public mod_api, public NotifyApi
 {
 public:
+    [[nodiscard]] Font const & font() const
+    {
+        return this->screen.font;
+    }
+
+    [[nodiscard]] Theme const & theme() const
+    {
+        return this->screen.theme;
+    }
+
+    [[nodiscard]] Rect get_screen_rect() const
+    {
+        return this->screen.get_rect();
+    }
+
+    void rdp_input_invalidate(Rect r) override;
+
+    void rdp_input_scancode(long param1, long param2, long param3, long param4,
+            Keymap2 * keymap) override;
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
+    {
+        this->screen.rdp_input_unicode(unicode, flag);
+    }
+
+    void refresh(Rect r) override;
+
+    void allow_mouse_pointer_change(bool allow)
+    {
+        this->screen.allow_mouse_pointer_change(allow);
+    }
+
+    void redo_mouse_pointer_change(int x, int y)
+    {
+        this->screen.redo_mouse_pointer_change(x, y);
+    }
+
+protected:
+    uint16_t front_width;
+    uint16_t front_height;
+
+    FrontAPI & front;
+
+    WidgetScreen screen;
+    ClientExecute& rail_client_execute;
+
+private:
+    DVCManager dvc_manager;
+
+    bool alt_key_pressed = false;
+
+    MouseState mouse_state;
+    int disconnection_reconnection_timer = 0;
+
+    const bool rail_enabled;
+
+    enum class MouseOwner
+    {
+        ClientExecute,
+        WidgetModule,
+    };
+
+    MouseOwner current_mouse_owner;
+
+    int old_mouse_x = 0;
+    int old_mouse_y = 0;
+
+protected:
+    TimeBase& time_base;
+    EventContainer& events;
+
+public:
     RailModuleHostMod(
-        RailModuleHostModVariables vars, SessionReactor& session_reactor,
+        RailModuleHostModVariables vars,
+        TimeBase& time_base,
+        EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
         ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
@@ -48,10 +127,15 @@ public:
 
     ~RailModuleHostMod() override
     {
+        this->events.end_of_lifespan(this);
+        this->rail_client_execute.reset(true);
         this->screen.clear();
-
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
     }
+
+    void init() override;
+
+    std::string module_name() override {return "Rail Module Host Mod";}
 
     void notify(Widget* /*sender*/, notify_event_t /*event*/) override
     {}
@@ -62,6 +146,10 @@ public:
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;
 
+    void rdp_gdi_down() override {}
+
+    void rdp_gdi_up_and_running() override;
+
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
     {
         (void)time;
@@ -70,28 +158,28 @@ public:
         (void)param2;
     }
 
-    void rdp_input_up_and_running() override;
-
     // Callback
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
                              InStream& chunk, size_t length,
                              uint32_t flags) override;
 
+    void create_shadow_session(const char * userdata, const char * type) override;
     void send_auth_channel_data(const char * string_data) override;
-
     void send_checkout_channel_data(const char * string_data) override;
 
     // mod_api
 
     [[nodiscard]] bool is_up_and_running() const override;
 
+    bool server_error_encountered() const override;
+
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override;
 
     [[nodiscard]] Dimension get_dim() const override;
 
-    [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const override;
+    [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const;
 
     gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
 
@@ -101,8 +189,4 @@ private:
     RailModuleHostModVariables vars;
 
     bool can_resize_hosted_desktop = false;
-
-    SessionReactor::TimerPtr disconnection_reconnection_timer; // Window resize
-
-    ClientExecute& rail_client_execute;
 };

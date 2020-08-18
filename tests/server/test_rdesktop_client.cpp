@@ -26,21 +26,23 @@
 
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/front_wrapper.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "core/session.hpp"
-//#include "transport/socket_transport.hpp"
+//include "core/listen.hpp"
+//include "core/session.hpp"
+//include "transport/socket_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
 #include "test_only/core/font.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <netinet/tcp.h>
+//include <netinet/tcp.h>
 
 RED_AUTO_TEST_CASE(TestIncomingConnection)
 {
@@ -94,14 +96,15 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::rdp_compression>(RdpCompression::none);
     ini.set<cfg::globals::large_pointer_support>(false);
     ini.set<cfg::globals::unicode_keyboard_event_support>(false);
+    ini.set<cfg::client::disabled_orders>("4,15,16,17,18");
 
     LCGRandom gen;
     CryptoContext cctx;
     const bool fastpath_support = false;
-    const bool mem3blt_support  = false;
-    NullReportMessage report_message;
-    SessionReactor session_reactor;
-    FrontWrapper front(session_reactor, front_trans, gen, ini, cctx, report_message, fastpath_support, mem3blt_support);
+    TimeBase time_base({0,0});
+    EventContainer events;
+    NullAuthentifier auth;
+    FrontWrapper front(time_base, events, auth, front_trans, gen, ini, cctx, fastpath_support);
     front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 
@@ -112,8 +115,9 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     RED_CHECK_EQUAL(1, front.is_up_and_running());
-    TestCardMod mod(session_reactor, front.screen_info().width, front.screen_info().height, global_font());
-    mod.draw_event(front);
+    GdForwarder gd_forwarder(front);
+    TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
+    mod.init();
 
     // Uncomment the code block below to generate testing data.
     //sleep(5);

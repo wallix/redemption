@@ -26,7 +26,7 @@
 
 #include <chrono>
 
-class TimeObj;
+class TimeBase;
 
 
 /**
@@ -51,14 +51,14 @@ public:
         NlaServerOut,
     };
 
-    explicit RecorderFile(TimeObj& timeobj, char const* filename);
+    explicit RecorderFile(TimeBase& time_base, char const* filename);
 
     ~RecorderFile();
 
     void write_packet(PacketType type, bytes_view buffer);
 
 protected:
-    TimeObj& timeobj;
+    TimeBase& time_base;
     std::chrono::milliseconds start_time;
     OutFileTransport file;
 };
@@ -71,15 +71,15 @@ class RecorderTransport : public Transport
 {
 public:
 
-    explicit RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename);
+    explicit RecorderTransport(Transport& trans, TimeBase& time_base, char const* filename);
 
-    void add_info(writable_bytes_view info);
+    void add_info(bytes_view info);
 
     TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params) override;
 
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list) override;
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] u8_array_view get_public_key() const override;
 
     void flush() override;
 

@@ -23,12 +23,11 @@
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
-#include <iostream>
 
 #include "test_only/transport/test_transport.hpp"
 
 #include "test_only/lcg_random.hpp"
-#include "test_only/replay_time.hpp"
+#include "utils/timebase.hpp"
 
 RED_TEST_DELEGATE_PRINT_ENUM(credssp::State);
 
@@ -54,10 +53,9 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 //    RED_CHECK(bytes_view(tmp) == bytes_view(std::array<uint8_t,8>{0xb8, 0x6c, 0xda, 0xa6, 0xf0, 0xf6, 0x30, 0x8d}));
 
 
-    ReplayTime timeobj(std::vector<timeval>{{3598079566, 1510905191}});
-//    LCGTime timeobj;
+    TimeBase time_base({3598079566, 1510905191});
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, timeobj, true, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, time_base, true, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -162,9 +160,11 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
         0xad, 0x88, 0xfa, 0xfb, 0x73, 0x7a, 0x14, 0xbd, 0x20, 0xef, 0xb4, 0x7b, 0x75, 0x9d, 0x4f, 0xac,  // ....sz.. ..{u.O.
         0x0d, 0x13, 0x98, 0x72, 0x06, 0x6b, 0xa7, 0xf1, 0x3a, 0xcd, 0x16, 0xdd, 0x43, 0xee, 0x90, 0xfb,  // ...r.k..:...C...
     }));
-    ReplayTime timeobj({{0x5d91e371,0xdaa63}});
+
+    TimeBase time_base({0x5d91e371,0xdaa63});
+
     std::string extra_message;
-    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, timeobj, true, true);
+    rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, time_base, true, true);
 
     std::vector<uint8_t> expected_negotiate{
 /* 0000 */ 0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x06, 0xa1, 0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,  // 07......00.0,.*.
@@ -423,7 +423,8 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     std::string user("Christophe");
     std::string domain("");
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xad, 0x62, 0xb1, 0xe4, 0x68, 0x0d, 0x3c}));
-    ReplayTime timeobj({{0x01d5754E,0x9df41160}});
+
+    TimeBase time_base({0x01d5754E,0x9df41160});
 
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av){
             auto user_str = ::UTF16toUTF8(user_av);
@@ -447,7 +448,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     NtlmServer ntlm_server(false, true, "RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"RDP-WINDOWS-DEV"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,"rdp-windows-dev"_av,
                            public_key,
                            {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
-                           rand, timeobj, 5,
+                           rand, time_base, 5,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_1, 7601, NTLMSSP_REVISION_W2K3},
                            false, true, true);
 
@@ -573,7 +574,9 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
 ///* 0010 */ 0x9f, 0x31, 0xbb, 0xc8, 0xea, 0x3c, 0x9c, 0x92, 0x9a, 0xe2, 0x6b, 0x70, 0xaa, 0xb8, 0x0d, 0x3e,  // .1...<....kp...>
 
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xb8, 0x4d, 0x26, 0xe0, 0x87, 0x11, 0x87}));
-    ReplayTime timeobj({{0x01D57877,0xC25FE69E}});
+    TimeBase time_base({0x01D57877,0xC25FE69E});
+
+
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4>{
             auto user_str = ::UTF16toUTF8(user_av);
             auto domain_str = ::UTF16toUTF8(domain_av);
@@ -606,7 +609,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
                            public_key,
 //                           {MsvAvNbDomainName, MsvAvDnsDomainName, MsvAvNbComputerName,MsvAvDnsComputerName,MsvAvTimestamp},
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
-                           rand, timeobj, 6,
+                           rand, time_base, 6,
                            NtlmVersion{WINDOWS_MAJOR_VERSION_6, WINDOWS_MINOR_VERSION_3, 9600, NTLMSSP_REVISION_W2K3},
                            false, true, true);
 
@@ -739,7 +742,8 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 ///* 0000 */ 0x8d, 0x78, 0x8c, 0x8c, 0xfe, 0x94, 0x74, 0x5c, 0xb2, 0xc2, 0xd6, 0xed, 0x8b, 0x6d, 0x21, 0x83,  // .x....t......m!.
 ///* 0010 */ 0x79, 0x43, 0x0f, 0x1c, 0x87, 0xcf, 0xd2, 0xf5, 0xbc, 0x9e, 0xef, 0x9f, 0xd9, 0x11, 0xf1, 0xf0,  // yC..............
     ReplayRandom rand(std::vector<uint8_t>({0x72, 0xE9, 0x0E, 0x66, 0x83, 0x2E, 0x12, 0xC7}));
-    ReplayTime timeobj({{0x01D57878,0x5A749CC1}});
+    TimeBase time_base({0x01D57878,0x5A749CC1});
+
     std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)>
         get_password_hash =
         [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4> {
@@ -774,7 +778,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     NtlmServer ntlm_server(true, false, "PROXYKDC"_av, "WIN10CGR"_av, "PROXYKDC"_av, "WIN10CGR.proxykdc.lab"_av, "proxykdc.lab"_av, "proxykdc.lab"_av,
                            public_key,
                            {MsvAvNbDomainName, MsvAvNbComputerName, MsvAvDnsDomainName, MsvAvDnsComputerName, MsvAvDnsTreeName, MsvAvTimestamp},
-                           rand, timeobj, 6,
+                           rand, time_base, 6,
                            NtlmVersion{10, 0, 0x4563, NTLMSSP_REVISION_W2K3},
                            false, true, true);
 
@@ -906,9 +910,4 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
     RED_CHECK_EQUAL(ntlm_server.state, credssp::State::Finish);
     RED_TEST_MESSAGE("\n");
 }
-
-
-
-
-
 

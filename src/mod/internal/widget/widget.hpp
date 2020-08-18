@@ -47,7 +47,7 @@ enum NotifyEventType
     NOTIFY_VSCROLL,
 };
 
-class Widget : public RdpInput, public NotifyApi
+class Widget : public WidgetApi, public NotifyApi
 {
 public:
     // TODO using several booleans may be easier to read than flags

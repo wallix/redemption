@@ -79,9 +79,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_password
 #certificate_password = inquisition
 
-#_advanced
-#movie_path = 
-
 # Support of Bitmap Update.
 # value: 0 or 1
 #_advanced
@@ -144,6 +141,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Set to 0 to disable this feature.
 # (is in millisecond)
 #rdp_keepalive_connection_interval = 0
+
+# Enable primary connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
 
 [session_log]
 
@@ -294,7 +296,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #show_target_user_in_f12_message = 0
 
 # value: 0 or 1
-#enable_new_pointer_update = 0
+#enable_new_pointer_update = 1
 
 # value: 0 or 1
 #bogus_ios_glyph_support_level = 1
@@ -338,9 +340,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
-# This option takes precedence over the option Extra orders of section mod_rdp.
+#   25: EllipseSC
+#   27: GlyphIndex
+# 
 #_advanced
-#disabled_orders = 
+#disabled_orders = 25
 
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 # value: 0 or 1
@@ -367,14 +371,23 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #open_session_timeout = 0
 
-# Enables support of additional drawing orders:
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
 #   15: MultiDstBlt
 #   16: MultiPatBlt
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
-#   22: PolylinePlease see also "Disabled orders" in "client" section.
-#_advanced
-#extra_orders = 15,16,17,18,22
+#   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
+# 
+#_hidden
+#disabled_orders = 
 
 # NLA authentication in secondary target.
 # value: 0 or 1
@@ -402,11 +415,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #persist_bitmap_cache_on_disk = 0
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
 #_hidden
 #allow_channels = *
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
 #_hidden
 #deny_channels = 
 
@@ -420,6 +433,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #server_redirection_support = 0
+
+# Client Address to send to target (in InfoPacket)
+# min = 0, max = 2
+#   0: Send 0.0.0.0
+#   1: Send proxy client address or target connexion
+#   2: Send user client address of front connexion
+#_advanced
+#client_address_sent = 0
 
 # Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 # value: 0 or 1
@@ -536,6 +557,17 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_enable_log_rotation = 1
 
+# min = 0, max = 6
+#   0: Off
+#   1: Fatal
+#   2: Error
+#   3: Info
+#   4: Warning
+#   5: Debug
+#   6: Detail
+#_hidden
+#session_probe_log_level = 5
+
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000
@@ -615,9 +647,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
+#session_probe_update_disabled_features = 1
+
+# value: 0 or 1
+#_hidden
 #session_probe_childless_window_as_unidentified_input_field = 1
 
-# min = 0, max = 1023
+# min = 0, max = 511
 #   0x000: none
 #   0x001: Java Access Bridge
 #   0x002: MS Active Accessbility
@@ -627,11 +663,20 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-#   0x200: BestSafe integration
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
-#session_probe_disabled_features = 864
+#session_probe_disabled_features = 352
+
+# value: 0 or 1
+#_hidden
+#session_probe_bestsafe_integration = 0
+
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
+# If empty, the environment variable TMP will be used.
+# maxlen = 3
+#_hidden
+#session_probe_alternate_directory_environment_variable = 
 
 # If enabled, disconnected session can be recovered by a different primary user.
 # value: 0 or 1
@@ -645,6 +690,34 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: User action will be rejected
 #_hidden
 #session_probe_on_account_manipulation = 0
+
+# value: 0 or 1
+#_advanced
+#session_probe_at_end_of_session_freeze_connection_and_wait = 1
+
+# value: 0 or 1
+#_advanced
+#session_probe_enable_cleaner = 1
+
+# value: 0 or 1
+#_advanced
+#application_driver_enable_cleaner = 1
+
+# maxlen = 256
+#_hidden
+#application_driver_exe_or_file = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_script_argument = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_chrome_uia_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
+#application_driver_ie_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(
 
 # Keep known server certificates on WAB
 # value: 0 or 1
@@ -798,6 +871,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #force_smartcard_authentication = 0
 
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
+# value: 0 or 1
+#_hidden
+#auto_reconnection_on_losing_target_link = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -841,6 +923,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #support_cursor_pseudo_encoding = 1
 
+# Enable target connection on ipv6
+# value: 0 or 1
+#_hidden
+#enable_ipv6 = 0
+
 [metrics]
 
 # value: 0 or 1
@@ -853,7 +940,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(
+#log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
 
 # (is in second)
 #_advanced
@@ -894,9 +981,27 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #clipboard_text_down = 0
 
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
+# value: 0 or 1
+#_hidden
+#block_invalid_file_up = 0
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+# value: 0 or 1
+#_hidden
+#block_invalid_file_down = 0
+
 # value: 0 or 1
 #_hidden
 #log_if_accepted = 1
+
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
+# Warning: This value affects the RAM used by the session.
+# min = 0
+#_hidden
+#max_file_size_rejected = 50
 
 [file_storage]
 
@@ -1041,15 +1146,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 4096
 #_hidden
-#hash_path = )gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(
+#hash_path = )gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(
+#record_tmp_path = )gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(
 
 # maxlen = 4096
 #_hidden
-#record_path = )gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(
+#record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
@@ -1137,11 +1242,23 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #play_video_with_corrupted_bitmap = 0
 
+# Allow Realtime display (4eyes) without recording of session
+# value: 0 or 1
+#allow_rt_without_recording = 0
+
+# Allow to control permissions on recorded files.
+# (is in octal or symbolic mode format (as chmod Linux command))
+# max = 777, min = 0
+#_hidden
+#file_permissions = 440
+
 [crypto]
 
+# (hexadecimal string of length 64)
 #_hidden
 #encryption_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
 
+# (hexadecimal string of length 64)
 #_hidden
 #sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F
 
@@ -1217,11 +1334,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #mod_internal = 0
 
 # min = 0
-#_advanced
-#_hex
-#mod_xup = 0
-
-# min = 0
 #_hidden
 #password = 0
 
@@ -1259,6 +1371,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #config = 1
 
+# min = 0, max = 2
+#   0: Off
+#   1: SimulateErrorRead
+#   2: SimulateErrorWrite
+#_hidden
+#mod_rdp_use_failure_simulation_socket_transport = 0
+
 [remote_program]
 
 # value: 0 or 1
@@ -1278,7 +1397,86 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [internal_mod]
 
+# Enable target edit field in login page.
+# value: 0 or 1
 #_advanced
-#load_theme = 
+#enable_target_field = 1
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+# value: 0 or 1
+#_advanced
+#enable_theme = 0
+
+#_advanced
+#bgcolor = dark_blue_bis
+
+#_advanced
+#fgcolor = white
+
+#_advanced
+#separator_color = light_blue
+
+#_advanced
+#focus_color = winblue
+
+#_advanced
+#error_color = yellow
+
+# value: 0 or 1
+#_hidden
+#logo = 0
+
+#_hidden
+#logo_path = 
+
+#_advanced
+#edit_bgcolor = white
+
+#_advanced
+#edit_fgcolor = black
+
+#_advanced
+#edit_focus_color = winblue
+
+#_advanced
+#tooltip_bgcolor = black
+
+#_advanced
+#tooltip_fgcolor = light_yellow
+
+#_advanced
+#tooltip_border_color = black
+
+#_advanced
+#selector_line1_bgcolor = pale_blue
+
+#_advanced
+#selector_line1_fgcolor = black
+
+#_advanced
+#selector_line2_bgcolor = light_blue
+
+#_advanced
+#selector_line2_fgcolor = black
+
+#_advanced
+#selector_selected_bgcolor = medium_blue
+
+#_advanced
+#selector_selected_fgcolor = white
+
+#_advanced
+#selector_focus_bgcolor = winblue
+
+#_advanced
+#selector_focus_fgcolor = white
+
+#_advanced
+#selector_label_bgcolor = medium_blue
+
+#_advanced
+#selector_label_fgcolor = white
 
 )gen_config_ini"

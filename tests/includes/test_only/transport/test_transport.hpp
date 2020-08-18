@@ -93,7 +93,7 @@ struct CheckTransport : Transport
 {
     CheckTransport(buffer_view buffer);
 
-    size_t remaining()
+    [[nodiscard]] size_t remaining() const
     {
         return this->len - this->current;
     }
@@ -134,7 +134,7 @@ struct TestTransport : public Transport
 
     void set_public_key(bytes_view key);
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const override;
+    [[nodiscard]] u8_array_view get_public_key() const override;
 
 protected:
     size_t do_partial_read(uint8_t* buffer, size_t len) override;

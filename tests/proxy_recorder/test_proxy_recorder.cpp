@@ -23,9 +23,10 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "test_only/transport/test_transport.hpp"
-#include "test_only/frozen_time.hpp"
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
+#include "utils/timebase.hpp"
+#include "utils/difftimeval.hpp"
 
 // TODO copy of test_transport::hexdump
 // struct xxhexdump
@@ -82,26 +83,24 @@
 //     return out;
 // }
 
-
-struct ReplayBackTransport : public Transport
+struct TestReplayTransport : Transport
 {
-
-uint8_t data0[0x2E] = {
-/* 0000 */ 0x03, 0x00, 0x00, 0x2e, 0x29, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69,  // ....)......Cooki
-/* 0010 */ 0x65, 0x3a, 0x20, 0x6d, 0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x71, 0x61, 0x61, 0x31,  // e: mstshash=qaa1
-/* 0020 */ 0x36, 0x33, 0x38, 0x39, 0x0d, 0x0a, 0x01, 0x00, 0x08, 0x00, 0x02, 0x00, 0x00, 0x00,              // 6389..........
-};
-
-    size_t index = 0;
     struct Data {
         int type;
         size_t len;
         uint8_t * data;
-    } datas[1] = {{1, sizeof(data0), data0}};
+    };
+
+    TestReplayTransport(array_view<Data> datas)
+    : datas(datas)
+    {}
 
 private:
+    size_t index = 0;
+    array_view<Data> datas;
+
     Read do_atomic_read(uint8_t * buffer, size_t len) override {
-        LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer", len);
+        // LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer", len);
         if (datas[index].type ==0 && len == datas[index].len) {
             memcpy(buffer, datas[index].data, datas[index].len);
             return Read::Ok;
@@ -110,9 +109,9 @@ private:
     }
 
     size_t do_partial_read(uint8_t* buffer, size_t len) override {
-        LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer", len);
+        // LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer", len);
         if (datas[index].type == 0 && len >= datas[index].len) {
-        LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer, got %zu", len, datas[index].len);
+        // LOG(LOG_INFO, "asked to back for reading %zu bytes into buffer, got %zu", len, datas[index].len);
             memcpy(buffer, datas[index].data, datas[index].len);
             return datas[index++].len;
         }
@@ -121,7 +120,7 @@ private:
 
     void do_send(const uint8_t * const data, size_t len) override
     {
-        LOG(LOG_INFO, "sending to back %zu bytes", len);
+        // LOG(LOG_INFO, "sending to back %zu bytes", len);
         if (this->datas[this->index].type == 1 && len == this->datas[this->index].len) {
             if (0 != memcmp(data, this->datas[this->index].data, this->datas[this->index].len)){
                 // std::cout << xxhexdump{{data, len}};
@@ -133,14 +132,30 @@ private:
                 return;
             }
         }
-        else {
-            LOG(LOG_INFO, "sending to back %zu bytes, length mismatch %zu bytes", len, datas[index].len);
-        }
+        // else {
+        //     LOG(LOG_INFO, "sending to back %zu bytes, length mismatch %zu bytes", len, datas[index].len);
+        // }
         throw Error(ERR_TRANSPORT_READ_FAILED);
     }
 };
 
-struct ReplayFrontTransport : public Transport
+struct ReplayBackTransport : public TestReplayTransport
+{
+
+uint8_t data0[0x2E] = {
+/* 0000 */ 0x03, 0x00, 0x00, 0x2e, 0x29, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x43, 0x6f, 0x6f, 0x6b, 0x69,  // ....)......Cooki
+/* 0010 */ 0x65, 0x3a, 0x20, 0x6d, 0x73, 0x74, 0x73, 0x68, 0x61, 0x73, 0x68, 0x3d, 0x71, 0x61, 0x61, 0x31,  // e: mstshash=qaa1
+/* 0020 */ 0x36, 0x33, 0x38, 0x39, 0x0d, 0x0a, 0x01, 0x00, 0x08, 0x00, 0x02, 0x00, 0x00, 0x00,              // 6389..........
+};
+
+    Data datas[1] = {{1, sizeof(data0), data0}};
+
+    ReplayBackTransport()
+    : TestReplayTransport(datas)
+    {}
+};
+
+struct ReplayFrontTransport : public TestReplayTransport
 {
 
 // Sent by RDP client
@@ -220,13 +235,8 @@ uint8_t data2[0x144] = {
 };
 
 uint8_t data2_reply[1] = {0};
-
     size_t index = 0;
-    struct Data {
-        int type;
-        size_t len;
-        uint8_t * data;
-    } datas[6] = {
+    Data datas[6] = {
         {0, sizeof(data0), data0},
         {1, sizeof(data0_reply), data0_reply},
         {0, sizeof(data1), data1},
@@ -235,45 +245,9 @@ uint8_t data2_reply[1] = {0};
         {1, sizeof(data2_reply), data2_reply}
     };
 
-private:
-    Read do_atomic_read(uint8_t * buffer, size_t len) override {
-        LOG(LOG_INFO, "reading %zu bytes into buffer", len);
-        if (datas[index].type ==0 && len == datas[index].len) {
-            memcpy(buffer, datas[index].data, datas[index].len);
-            return Read::Ok;
-        }
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
-
-    size_t do_partial_read(uint8_t* buffer, size_t len) override {
-        LOG(LOG_INFO, "asked to front for reading %zu bytes into buffer", len);
-        if (datas[index].type == 0 && len >= datas[index].len) {
-        LOG(LOG_INFO, "asked to front for reading %zu bytes into buffer, got %zu", len, datas[index].len);
-            memcpy(buffer, datas[index].data, datas[index].len);
-            return datas[index++].len;
-        }
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
-
-    void do_send(const uint8_t * const data, size_t len) override
-    {
-        LOG(LOG_INFO, "sending to front %zu bytes", len);
-        if (this->datas[this->index].type == 1 && len == this->datas[this->index].len) {
-            if (0 != memcmp(data, this->datas[this->index].data, this->datas[this->index].len)){
-                // std::cout << xxhexdump{{data, len}};
-                // std::cout << xxhexdump{{datas[index].data, len}};
-            }
-            else {
-                // std::cout << xxhexdump{{data, len}};
-                this->index++;
-                return;
-            }
-        }
-        else {
-            LOG(LOG_INFO, "sending to front %zu bytes, length mismatch %zu bytes", len, datas[index].len);
-        }
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
+    ReplayFrontTransport()
+    : TestReplayTransport(datas)
+    {}
 };
 
 RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
@@ -283,18 +257,24 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     bool enable_kerberos = false;
     uint64_t verbosity = 4096;
 
-    FrozenTime timeobj;
-    RecorderFile outFile(timeobj, wf.c_str());
+    std::chrono::microseconds ustime = 1533211681s;
+    timeval tv;
+    tv.tv_sec = ustime.count()/1000000;
+    tv.tv_usec = ustime.count()%1000000;
+    TimeBase time_base(tv);
+
+
+    RecorderFile outFile(time_base, wf.c_str());
 
     ReplayBackTransport backConn;
     ReplayFrontTransport frontConn;
     NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);
     NlaTeeTransport back_nla_tee_trans(backConn, outFile, NlaTeeTransport::Type::Client);
 
-    ProxyRecorder conn(back_nla_tee_trans, outFile, timeobj, "0.0.0.0", enable_kerberos, verbosity);
+    ProxyRecorder conn(back_nla_tee_trans, outFile, time_base, "0.0.0.0", enable_kerberos, verbosity);
 
     uint8_t front_public_key[1024] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
-    array_view_u8 front_public_key_av = {front_public_key, 16};
+    writable_u8_array_view front_public_key_av {front_public_key, 16};
 
     // Receiving data from Client : x224
     conn.frontBuffer.load_data(frontConn);
@@ -307,20 +287,10 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
 
     RED_TEST_PASSPOINT();
     // Receiving data from Client: CredSSP
-    conn.frontBuffer.load_data(frontConn);
-    RED_TEST_PASSPOINT();
-    conn.front_nla(frontConn);
-    RED_TEST_PASSPOINT();
+//    conn.frontBuffer.load_data(frontConn);
+//    conn.front_nla(frontConn);
 
     // // Receiving data from Client: CredSSP
     // conn.frontBuffer.load_data(frontConn);
     // conn.front_nla(frontConn);
 }
-
-// RED_AUTO_TEST_CASE(TestNLARedemptionToWindows2012DC)
-// {
-// }
-//
-// RED_AUTO_TEST_CASE(TestNLAWindows7ClientToRedemption)
-// {
-// }

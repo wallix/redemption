@@ -20,30 +20,31 @@
 
 #pragma once
 
-#include "core/RDP/channels/rdpdr.hpp"
 #include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
-#include "utils/sugar/movable_noncopyable.hpp"
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <array>
 
+namespace rdpdr
+{
+    enum RDPDR_DTYP : uint32_t;
+}
 
 class ChannelsAuthorizations
 {
 public:
     ChannelsAuthorizations() = default;
 
-    ChannelsAuthorizations(std::string const & allow, std::string const & deny);
+    ChannelsAuthorizations(std::string_view allow, std::string_view deny);
 
     [[nodiscard]] bool is_authorized(CHANNELS::ChannelNameId id) const noexcept;
 
     [[nodiscard]] bool rdpdr_type_all_is_authorized() const noexcept;
-
     [[nodiscard]] bool rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept;
-
     [[nodiscard]] bool rdpdr_drive_read_is_authorized() const noexcept;
     [[nodiscard]] bool rdpdr_drive_write_is_authorized() const noexcept;
 
@@ -51,16 +52,12 @@ public:
 
     REDEMPTION_FRIEND_OSTREAM(out, ChannelsAuthorizations const & auth);
 
-    static void update_authorized_channels(
-        std::string & allow, std::string & deny, const std::string & proxy_opt
-    );
-
     [[nodiscard]] bool cliprdr_up_is_authorized() const noexcept;
     [[nodiscard]] bool cliprdr_down_is_authorized() const noexcept;
     [[nodiscard]] bool cliprdr_file_is_authorized() const noexcept;
 
-private:
-    static constexpr std::array<array_view_const_char, 3> cliprde_list()
+public:
+    static constexpr std::array<chars_view, 3> cliprde_list()
     {
         return {{
             cstr_array_view("cliprdr_up,"),
@@ -68,7 +65,7 @@ private:
             cstr_array_view("cliprdr_file,"),
         }};
     }
-    static constexpr std::array<array_view_const_char, 5> rdpdr_list()
+    static constexpr std::array<chars_view, 5> rdpdr_list()
     {
         return {{
             cstr_array_view("rdpdr_printer,"),
@@ -78,20 +75,18 @@ private:
             cstr_array_view("rdpdr_smartcard,"),
         }};
     }
-    static constexpr std::array<array_view_const_char, 1> rdpsnd_list()
+    static constexpr std::array<chars_view, 1> rdpsnd_list()
     {
         return {{
             cstr_array_view("rdpsnd_audio_output,"),
         }};
     }
 
-    [[nodiscard]] array_view<CHANNELS::ChannelNameId const> rng_allow() const;
-    [[nodiscard]] array_view<CHANNELS::ChannelNameId const> rng_deny() const;
-
     // Boolean structures moved around in other parts of the code
     // could merely be restricted to what we have below
     // See equivalent fields in : core/file_system_virtual_channel_params.hpp
     // and core/clipboard_virtual_channels_params.hpp
+
 //    struct {
 //        bool up;    // client to server
 //        bool down;  // server to client
@@ -112,6 +107,7 @@ private:
 //        bool smartcard;
 //    } rdpdr_acl;
 
+private:
     std::vector<CHANNELS::ChannelNameId> allow_and_deny_;
     size_t allow_and_deny_pivot_;
     bool all_allow_ = false;
@@ -121,3 +117,6 @@ private:
     std::array<bool, decltype(cliprde_list())().size()> cliprdr_restriction_ {{}};
     std::array<bool, decltype(rdpsnd_list())().size()> rdpsnd_restriction_ {{}};
 };
+
+std::pair<std::string,std::string>
+update_authorized_channels(std::string allow, std::string deny, std::string proxy_opt);

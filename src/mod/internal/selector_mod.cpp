@@ -21,6 +21,12 @@
 #include "mod/internal/selector_mod.hpp"
 #include "core/front_api.hpp"
 #include "configs/config.hpp"
+#include "core/RDP/slowpath.hpp"
+#include "RAIL/client_execute.hpp"
+
+#include <charconv>
+#include <cassert>
+
 
 namespace
 {
@@ -49,17 +55,119 @@ namespace
     }
 
     constexpr int nb_max_row = 1024;
+
+    struct lexical_string
+    {
+        char buf[32];
+
+        template<class T>
+        lexical_string(T x)
+        {
+            std::to_chars_result result = std::to_chars(std::begin(buf), std::end(buf),
+ x);
+            assert(result.ec == std::errc());
+            assert(result.ptr != std::end(buf));
+            *result.ptr = '\0';
+        }
+
+        char const* c_str() const
+        {
+            return this->buf;
+        }
+    };
 } // namespace
 
+
+
+void SelectorMod::rdp_input_invalidate(Rect r)
+{
+    this->screen.rdp_input_invalidate(r);
+
+    if (this->rail_enabled) {
+        this->rail_client_execute.input_invalidate(r);
+    }
+}
+
+void SelectorMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+{
+    if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
+        x = this->old_mouse_x;
+        y = this->old_mouse_y;
+    }
+    else {
+        this->old_mouse_x = x;
+        this->old_mouse_y = y;
+    }
+
+    if (!this->rail_enabled) {
+        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+        return;
+    }
+    bool out_mouse_captured = false;
+    if (!this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured)) {
+        this->mouse_state.chained_input_mouse = [this] (int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured){
+            return this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
+        };
+        this->mouse_state.input_mouse(device_flags, x, y, keymap);
+
+        if (out_mouse_captured) {
+            this->allow_mouse_pointer_change(false);
+            this->current_mouse_owner = MouseOwner::ClientExecute;
+        }
+        else {
+            if (MouseOwner::WidgetModule != this->current_mouse_owner) {
+                this->redo_mouse_pointer_change(x, y);
+            }
+
+            this->current_mouse_owner = MouseOwner::WidgetModule;
+        }
+    }
+
+    this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+
+    if (out_mouse_captured) {
+        this->allow_mouse_pointer_change(true);
+    }
+}
+
+void SelectorMod::refresh(Rect r)
+{
+    this->screen.refresh(r);
+
+    if (this->rail_enabled) {
+        this->rail_client_execute.input_invalidate(r);
+    }
+}
+
+bool SelectorMod::is_resizing_hosted_desktop_allowed() const
+{
+    assert(this->rail_enabled);
+
+    return false;
+}
+
 SelectorMod::SelectorMod(
-    SelectorModVariables vars, SessionReactor& session_reactor,
+    Inifile & ini,
+    SelectorModVariables vars,
+    TimeBase& time_base,
+    EventContainer& events,
+    AuthApi & sesman,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, drawable, front, width, height, font,
-        rail_client_execute, theme)
-
+    : front_width(width)
+    , front_height(height)
+    , front(front)
+    , screen(drawable, width, height, font, nullptr, theme)
+    , rail_client_execute(rail_client_execute)
+    , dvc_manager(false)
+    , mouse_state(time_base, events)
+    , rail_enabled(rail_client_execute.is_rail_enabled())
+    , current_mouse_owner(MouseOwner::WidgetModule)
+    , time_base(time_base)
+    , events(events)
+    , sesman(sesman)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
@@ -79,24 +187,25 @@ SelectorMod::SelectorMod(
 
         return params;
     }())
-
     , selector(
         drawable, temporary_login(vars).buffer,
         widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this,
         vars.is_asked<cfg::context::selector_current_page>()
             ? ""
-            : configs::make_zstr_buffer(vars.get<cfg::context::selector_current_page>()).get(),
+            : lexical_string(vars.get<cfg::context::selector_current_page>()).c_str(),
         vars.is_asked<cfg::context::selector_number_of_pages>()
             ? ""
-            : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
+            : lexical_string(vars.get<cfg::context::selector_number_of_pages>()).c_str(),
         &this->language_button, this->selector_params, font, theme, language(vars))
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
     , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
+    , ini(ini)
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
+    this->screen.set_wh(front_width, front_height);
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
     this->screen.set_widget_focus(&this->selector, Widget::focus_reason_tabkey);
@@ -109,51 +218,52 @@ SelectorMod::SelectorMod(
 
     this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, nb_max_row);
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
+    this->selector.rdp_input_invalidate(this->selector.get_rect());
     this->ask_page();
+}
+
+
+void SelectorMod::init()
+{
+    if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
+        this->rail_client_execute.ready(
+            *this, this->front_width, this->front_height, this->font(),
+            this->is_resizing_hosted_desktop_allowed());
+
+        this->dvc_manager.ready(this->front);
+    }
+    this->copy_paste.ready(this->front);
+}
+
+
+void SelectorMod::acl_update()
+{
+    char buffer[16];
+
+    this->current_page = this->ini.get<cfg::context::selector_current_page>();
+    snprintf(buffer, sizeof(buffer), "%d", this->current_page);
+    this->selector.current_page.set_text(buffer);
+
+    this->number_page = this->ini.get<cfg::context::selector_number_of_pages>();
+    snprintf(buffer, sizeof(buffer), "%d", this->number_page);
+    this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+
+    this->selector.selector_lines.clear();
+
+    this->refresh_device();
+
     this->selector.rdp_input_invalidate(this->selector.get_rect());
 
-    this->started_copy_past_event = session_reactor.create_graphic_event()
-    .on_action(jln::one_shot([this](gdi::GraphicApi& /*gd*/){
-        this->copy_paste.ready(this->front);
-    }));
-
-    this->sesman_event = session_reactor.create_sesman_event()
-    .on_action(jln::always_ready([this](Inifile& /*ini*/){
-        char buffer[16];
-
-        this->current_page = this->vars.get<cfg::context::selector_current_page>();
-        snprintf(buffer, sizeof(buffer), "%d", this->current_page);
-        this->selector.current_page.set_text(buffer);
-
-        this->number_page = this->vars.get<cfg::context::selector_number_of_pages>();
-        snprintf(buffer, sizeof(buffer), "%d", this->number_page);
-        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
-
-        this->selector.selector_lines.clear();
-
-        this->refresh_device();
-
-        this->selector.rdp_input_invalidate(this->selector.get_rect());
-
-        this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
-        this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
-    }));
+    this->selector.current_page.rdp_input_invalidate(this->selector.current_page.get_rect());
+    this->selector.number_page.rdp_input_invalidate(this->selector.number_page.get_rect());
 }
 
 void SelectorMod::ask_page()
 {
-    this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
-
-    this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filters[0].get_text());
-    this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filters[1].get_text());
-    this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filters[2].get_text());
-
-    this->vars.ask<cfg::globals::target_user>();
-    this->vars.ask<cfg::globals::target_device>();
-    this->vars.ask<cfg::context::selector>();
-
-    // TODO replace BACK_EVENT_REFRESH by session_reactor.create_graphic_event ?
-    this->session_reactor.set_next_event(BACK_EVENT_REFRESH);
+    this->sesman.set_selector_page(this->current_page,
+        this->selector.edit_filters[0].get_text(),
+        this->selector.edit_filters[1].get_text(),
+        this->selector.edit_filters[2].get_text());
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
@@ -163,10 +273,8 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         this->vars.ask<cfg::globals::auth_user>();
         this->vars.ask<cfg::context::password>();
         this->vars.set<cfg::context::selector>(false);
-        this->session_reactor.set_next_event(BACK_EVENT_NEXT);
-
-        this->sesman_event.reset();
-
+        this->set_mod_signal(BACK_EVENT_NEXT);
+        // throw Error(ERR_BACK_EVENT_NEXT);
         break;
     }
     case NOTIFY_SUBMIT: {
@@ -186,9 +294,8 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->vars.ask<cfg::globals::target_device>();
                 this->vars.ask<cfg::context::target_protocol>();
 
-                this->session_reactor.set_next_event(BACK_EVENT_NEXT);
-
-                this->sesman_event.reset();
+                this->set_mod_signal(BACK_EVENT_NEXT);
+                // throw Error(ERR_BACK_EVENT_NEXT);
             }
         }
         else if (widget->group_id == this->selector.apply.group_id) {
@@ -248,7 +355,7 @@ void SelectorMod::refresh_device()
         size_t size_targets = proceed_item(targets);
         size_t size_protocols = proceed_item(protocols);
 
-        array_view_const_char const texts[] {
+        chars_view const texts[] {
             {groups, size_groups},
             {targets, size_targets},
             {protocols, size_protocols},
@@ -272,7 +379,7 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
         auto no_result = TR(trkeys::no_results, language(this->vars));
-        array_view_const_char const texts[] {{}, no_result, {}};
+        chars_view const texts[] {{}, no_result, {}};
         this->selector.add_device(texts);
     }
     else {
@@ -326,15 +433,40 @@ void SelectorMod::rdp_input_scancode(
     else {
         this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
+    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-    LocallyIntegrableMod::rdp_input_scancode(param1, param2, param3, param4, keymap);
+    if (this->rail_enabled) {
+        if (!this->alt_key_pressed) {
+            if ((param1 == 56) && !(param3 & SlowPath::KBDFLAGS_RELEASE)) {
+                this->alt_key_pressed = true;
+            }
+        }
+        else {
+//            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
+            if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
+                this->alt_key_pressed = false;
+            }
+            else if ((param1 == 62) && !param3) {
+                LOG(LOG_INFO, "SelectorMod::rdp_input_scancode: Close by user (Alt+F4)");
+                throw Error(ERR_WIDGET);    // F4 key pressed
+            }
+        }
+    }
+
 }
 
 void SelectorMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
     size_t length, uint32_t flags)
 {
-    LocallyIntegrableMod::send_to_mod_channel(front_channel_name, chunk, length, flags);
+    if (this->rail_enabled && this->rail_client_execute.is_ready()){
+        if (front_channel_name == CHANNELS::channel_names::rail) {
+            this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        }
+        else if (front_channel_name == CHANNELS::channel_names::drdynvc) {
+            this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
+        }
+    }
 
     if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
         this->copy_paste.send_to_mod_channel(chunk, flags);
@@ -352,10 +484,12 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
                             +  this->selector.selector_lines.y_padding_label);
 
     int const selector_lines_per_page = std::min<int>(available_height / line_height, nb_max_row);
+
+    LOG(LOG_INFO, "selector lines per page = %d (%d)", selector_lines_per_page, this->selector_lines_per_page_saved);
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
         this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
-        this->ask_page();
         this->selector.rdp_input_invalidate(this->selector.get_rect());
+        this->ask_page();
     }
 }

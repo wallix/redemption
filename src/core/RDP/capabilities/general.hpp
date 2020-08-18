@@ -66,7 +66,7 @@
 // +--------------------------------+----------------------+
 
 enum {
-       OSMAJORTYPE_UNSPECIFIED
+       OSMAJORTYPE_UNSPECIFIED = 0x0000
      , OSMAJORTYPE_WINDOWS
      , OSMAJORTYPE_OS2
      , OSMAJORTYPE_MACINTOSH
@@ -120,7 +120,7 @@ const char * get_osMajorType_name(uint16_t osMajorType) {
 // +--------------------------------------+----------------------+
 
 enum {
-       OSMINORTYPE_UNSPECIFIED
+       OSMINORTYPE_UNSPECIFIED = 0x0000
      , OSMINORTYPE_WINDOWS_31X
      , OSMINORTYPE_WINDOWS_95
      , OSMINORTYPE_WINDOWS_NT
@@ -216,7 +216,8 @@ enum {
 };
 
 
-struct GeneralCaps : public Capability {
+struct GeneralCaps : public Capability
+{
     uint16_t os_major{OSMAJORTYPE_WINDOWS};
     uint16_t os_minor{OSMINORTYPE_WINDOWS_NT};
     uint16_t protocolVersion{0x200};
@@ -229,9 +230,9 @@ struct GeneralCaps : public Capability {
     // default caplen stops here
     uint8_t refreshRectSupport{0};
     uint8_t suppressOutputSupport{0};
+
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
-
     {
     }
 
@@ -299,32 +300,5 @@ struct GeneralCaps : public Capability {
         LOG(LOG_INFO, "     General caps::compressionLevel %x", this->compressionLevel);
         LOG(LOG_INFO, "     General caps::refreshRectSupport %x", this->refreshRectSupport);
         LOG(LOG_INFO, "     General caps::suppressOutputSupport %x", this->suppressOutputSupport);
-    }
-
-    void dump(FILE * f) const
-    {
-       fprintf(f,
-           "[General Capability Set]\n"
-           "osMajorType=%u\n"
-           "osMinorType=%u\n"
-           "protocolVersion=%u\n"
-           "generalCompressionTypes=%u\n"
-           "extraFlags=%u\n"
-           "updateCapabilityFlag=%u\n"
-           "remoteUnshareFlag=%u\n"
-           "generalCompressionLevel=%u\n"
-           "refreshRectSupport=%u\n"
-           "suppressOutputSupport=%u\n\n",
-           unsigned(this->os_major),
-           unsigned(this->os_minor),
-           unsigned(this->protocolVersion),
-           unsigned(this->compressionType),
-           unsigned(this->extraflags),
-           unsigned(this->updateCapability),
-           unsigned(this->remoteUnshare),
-           unsigned(this->compressionLevel),
-           unsigned(this->refreshRectSupport),
-           unsigned(this->suppressOutputSupport)
-       );
     }
 };

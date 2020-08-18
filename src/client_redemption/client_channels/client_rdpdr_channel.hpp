@@ -62,8 +62,8 @@ public:
 
     public:
         uint64_t VolumeCreationTime             = 0;
-        array_view_const_char VolumeLabel       = ""_av;
-        array_view_const_char FileSystemName    = "ext4"_av;
+        chars_view VolumeLabel       = ""_av;
+        chars_view FileSystemName    = "ext4"_av;
 
         uint32_t FileSystemAttributes           = _default_FileSystemAttributes();
         uint32_t SectorsPerAllocationUnit       = 8;
@@ -135,10 +135,10 @@ class ClientRDPDRChannel
 
     ClientChannelMod * callback;
 
-public:
-
     bool drives_created = false;
+public:
     uint16_t protocol_minor_version = 0;
+private:
     uint32_t next_file_id = 0;
 
     std::unique_ptr<uint8_t[]> ReadData;
@@ -149,8 +149,10 @@ public:
         return this->next_file_id;
     }
 
+public:
     std::unordered_map<int, std::string> paths;
 
+private:
     std::string share_dir;
 
 
@@ -171,16 +173,18 @@ public:
 
     std::vector<DeviceData> device_list;
 
+public:
     bool fileSystemCapacity[6] = { true, true, false, false, false, false };
 
-
+private:
     int writeData_to_wait = 0;
     int file_to_write_id = 0;
 
-    uint32_t current_dir_id = 0;
     std::vector<std::string> elem_in_path;
+public:
     uint16_t server_capability_number = 0;
 
+private:
     uint32_t ioCode1 = 0;
     uint32_t extendedPDU = 0;
     uint32_t extraFlags1 = 0;
@@ -190,7 +194,7 @@ public:
     const uint32_t channel_flags;
 
 
-
+public:
     ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPDiskConfig & config);
 
     ~ClientRDPDRChannel();

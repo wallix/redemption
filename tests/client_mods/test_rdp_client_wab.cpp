@@ -22,22 +22,27 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
+
+#include "test_only/front/fake_front.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "test_only/core/font.hpp"
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "configs/config.hpp"
+#include "acl/gd_provider.hpp"
 #include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
+#include "utils/timebase.hpp"
+#include "acl/auth_api.hpp"
+#include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
-#include "test_only/check_sig.hpp"
-#include "test_only/front/fake_front.hpp"
-#include "test_only/lcg_random.hpp"
-#include "test_only/session_reactor_executor.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/core/font.hpp"
+#include "utils/redirection_info.hpp"
+#include "configs/config.hpp"
+
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
@@ -52,7 +57,16 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS;
 
-    memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
+    info.order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]    = 1;
+    info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]     = 1;
+    info.order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]   = 1;
+    info.order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX] = 1;
+    info.order_caps.orderSupport[TS_NEG_GLYPH_INDEX]      = 1;
+
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
     // Uncomment the code block below to generate testing data.
@@ -78,7 +92,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
-    Inifile ini;
+    std::string close_box_extra_message;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     Theme theme;
@@ -90,7 +104,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , global_font()
                                , theme
                                , server_auto_reconnect_packet
-                               , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
+                               , close_box_extra_message
                                , to_verbose_flags(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
@@ -99,12 +113,16 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.enable_krb                      = false;
     //mod_rdp_params.enable_clipboard                = true;
     mod_rdp_params.enable_fastpath                 = false;
-    mod_rdp_params.primary_drawing_orders_support  -= TS_NEG_MEM3BLT_INDEX;
+    mod_rdp_params.disabled_orders                 = TS_NEG_MEM3BLT_INDEX | TS_NEG_DRAWNINEGRID_INDEX | TS_NEG_MULTI_DRAWNINEGRID_INDEX |
+                                                     TS_NEG_SAVEBITMAP_INDEX | TS_NEG_MULTIDSTBLT_INDEX | TS_NEG_MULTIPATBLT_INDEX |
+                                                     TS_NEG_MULTISCRBLT_INDEX | TS_NEG_MULTIOPAQUERECT_INDEX | TS_NEG_FAST_INDEX_INDEX |
+                                                     TS_NEG_POLYGON_SC_INDEX | TS_NEG_POLYGON_CB_INDEX | TS_NEG_POLYLINE_INDEX |
+                                                     TS_NEG_FAST_GLYPH_INDEX | TS_NEG_ELLIPSE_SC_INDEX | TS_NEG_ELLIPSE_CB_INDEX;
     mod_rdp_params.enable_new_pointer              = false;
     //mod_rdp_params.rdp_compression                 = 0;
     //mod_rdp_params.error_message                   = nullptr;
     //mod_rdp_params.disconnect_on_logon_user_change = false;
-    //mod_rdp_params.open_session_timeout            = 0;
+    mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
@@ -112,27 +130,38 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     // To always get the same client random, in tests
     LCGRandom gen;
-    LCGTime timeobj;
-    NullAuthentifier authentifier;
-    NullReportMessage report_message;
     NullLicenseStore license_store;
-    SessionReactor session_reactor;
+    TimeBase time_base({0,0});
+    GdForwarder gd_provider(front.gd());
+    EventContainer events;
+    Inifile ini;
+    NullAuthentifier auth;
+    RedirectionInfo redir_info;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, session_reactor, front.gd(), front, info,
-        ini.get_mutable_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, license_store,
-        ini, nullptr, nullptr, mod_rdp_factory);
+    auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
+        front.gd(), front, info, redir_info, gen,
+        channels_authorizations, mod_rdp_params, tls_client_params,
+        license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
     RED_CHECK_EQUAL(info.screen_info.width, 1024);
     RED_CHECK_EQUAL(info.screen_info.height, 768);
 
-    execute_mod(session_reactor, *mod, front.gd(), 8);
+    auto end_tv = time_base.get_current_time();
+    events.execute_events(end_tv, [](int){return false;}, 0);
 
-    RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
-    //front.dump_png("trace_wab_");
+    int n = 10;
+    int count = 0;
+    events.queue[0]->alarm.fd = 0;
+    for (; count < n && !events.queue.empty(); ++count) {
+        events.execute_events(timeval{1,0},[](int){return true;}, 0);
+    }
+
+    RED_CHECK_EQ(count, n);
+
+    RED_CHECK_IMG(front, FIXTURES_PATH "/img_ref/client_mods/client_wab.png");
 }

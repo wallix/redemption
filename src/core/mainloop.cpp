@@ -29,6 +29,7 @@
 #include "utils/log_siem.hpp"
 #include "utils/netutils.hpp"
 #include "utils/strutils.hpp"
+#include "utils/ip.hpp"
 
 #include "configs/config.hpp"
 
@@ -184,8 +185,7 @@ namespace
         Tls,
     };
 
-    void session_server_start(
-        int incoming_sck, CryptoContext& cctx, Random& rnd, Fstat& fstat, bool forkable,
+    void session_server_start(int incoming_sck, bool forkable,
         unsigned uid, unsigned gid, std::string const& config_filename, bool debug_config,
         SocketType socket_type)
     {
@@ -216,17 +216,27 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
-            char source_ip[256];
-            utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
-            const bool source_is_localhost = (0 == strcmp(source_ip, "127.0.0.1"));
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
-            const int source_port = ntohs(u.s4.sin_port);
-            REDEMPTION_DIAGNOSTIC_POP
+            char source_ip[256] { };
+            char source_port_buf[8] { };
 
+            if (auto error = get_underlying_ip_port(u.s,
+                                                    sizeof(u.ss),
+                                                    source_ip,
+                                                    sizeof(source_ip),
+                                                    source_port_buf,
+                                                    sizeof(source_port_buf)))
+            {
+                LOG(LOG_ERR, "Cannot get ip and port of source : %s", error);
+                _exit(1);
+            }
+
+            int source_port = atoi(source_port_buf);
+            const bool source_is_localhost =
+                (strcmp(source_ip, "127.0.0.1") == 0
+                 || strcmp(source_ip, "::1") == 0);
             Inifile ini;
 
-            configuration_load(ini.configuration_holder(), config_filename);
+            configuration_load(ini.configuration_holder(), config_filename.c_str());
             ini.set<cfg::debug::config>(debug_config);
 
             if (ini.get<cfg::debug::session>()){
@@ -252,18 +262,27 @@ namespace
             } localAddress;
             socklen_t addressLength = sizeof(localAddress);
 
-
             if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
                 LOG(LOG_ERR, "getsockname failed error=%s", strerror(errno));
                 _exit(1);
             }
 
-            REDEMPTION_DIAGNOSTIC_PUSH
-            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
-            const int target_port = ntohs(localAddress.s4.sin_port);
-            REDEMPTION_DIAGNOSTIC_POP
-            char target_ip[256];
-            utils::strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+            char target_ip[256] { };
+            char target_port_buf[8] { };
+
+            if (auto error = get_underlying_ip_port(localAddress.s,
+                                                    sizeof(localAddress.ss),
+                                                    target_ip,
+                                                    sizeof(target_ip),
+                                                    target_port_buf,
+                                                    sizeof(target_port_buf)))
+            {
+                LOG(LOG_ERR, "Cannot get ip and port of target : %s", error);
+                _exit(1);
+            }
+
+            int target_port = atoi(target_port_buf);
+
             if (!ini.get<cfg::debug::fake_target_ip>().empty()){
                 utils::strlcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
                 LOG(LOG_INFO, "fake_target_ip='%s'", target_ip);
@@ -276,6 +295,7 @@ namespace
             }
 
             char real_target_ip[256];
+
             if (ini.get<cfg::globals::enable_transparent_mode>() && !source_is_localhost) {
                 int use_conntrack = 0;
                 FILE* fs = nullptr;
@@ -306,7 +326,7 @@ namespace
                 uint32_t verbose = ini.get<cfg::debug::auth>();
                 // source and dest are inverted because we get the information we want from reply path rule
                 LOG(LOG_INFO, "transparent proxy: looking for real target for src=%s:%d dst=%s:%d", source_ip, source_port, target_ip, target_port);
-                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, make_array_view(real_target_ip), verbose);
+                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, make_writable_array_view(real_target_ip), verbose);
                 if (res){
                     LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
                 }
@@ -367,13 +387,16 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_ws(unique_fd{sck}, ini);
                         break;
                     case SocketType::Wss:
-                        session_start_wss(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        // disable rdp tls
+                        ini.set<cfg::client::tls_support>(false);
+                        ini.set<cfg::client::tls_fallback_legacy>(true);
+                        session_start_wss(unique_fd{sck}, ini);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, ini, cctx, rnd, fstat);
+                        session_start_tls(unique_fd{sck}, ini);
                         break;
                 }
 
@@ -402,15 +425,21 @@ namespace
 
     unique_fd create_ws_server(
         uint32_t s_addr, char const* ws_addr,
-        EnableTransparentMode enable_transparent_mode)
+        EnableTransparentMode enable_transparent_mode,
+        bool enable_ipv6)
     {
         // "[:]port"
         {
             const unsigned pos = (ws_addr[0] == ':' ? 1 : 0);
             char* end = nullptr;
             long port = std::strtol(ws_addr + pos, &end, 10);
-            if (*end == '\0') {
-                return create_server(s_addr, port, enable_transparent_mode);
+
+            if (*end == '\0')
+            {
+                return interface_create_server(enable_ipv6,
+                                               s_addr,
+                                               port,
+                                               enable_transparent_mode);
             }
         }
 
@@ -426,8 +455,13 @@ namespace
             REDEMPTION_DIAGNOSTIC_POP
             char* end = nullptr;
             long port = std::strtol(ws_port + 1, &end, 10);
-            if (*end == '\0') {
-                return create_server(ws_iaddr, port, enable_transparent_mode);
+
+            if (*end == '\0')
+            {
+                return interface_create_server(enable_ipv6,
+                                               ws_iaddr,
+                                               port,
+                                               enable_transparent_mode);
             }
         }
 
@@ -439,9 +473,7 @@ namespace
     }
 } // anonymous namespace
 
-void redemption_main_loop(
-    Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat,
-    unsigned uid, unsigned gid, std::string config_filename, bool forkable)
+void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string config_filename, bool forkable)
 {
     init_signals();
 
@@ -456,13 +488,19 @@ void redemption_main_loop(
     const bool debug_config = (ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     const EnableTransparentMode enable_transparent_mode
       = EnableTransparentMode(ini.get<cfg::globals::enable_transparent_mode>());
-
-    unique_fd sck1 = create_server(s_addr, ini.get<cfg::globals::port>(), enable_transparent_mode);
+    bool enable_ipv6 = ini.get<cfg::globals::enable_ipv6>();
+    unique_fd sck1 = interface_create_server(enable_ipv6,
+                                             s_addr,
+                                             ini.get<cfg::globals::port>(),
+                                             enable_transparent_mode);
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {
-        unique_fd sck2 = create_ws_server(
-            s_addr, ini.get<cfg::websocket::listen_address>().c_str(), enable_transparent_mode);
+        unique_fd sck2 = create_ws_server
+            (s_addr,
+             ini.get<cfg::websocket::listen_address>().c_str(),
+             enable_transparent_mode,
+             enable_ipv6);
         const auto ws_sck = sck2.fd();
         const bool use_tls = ini.get<cfg::websocket::use_tls>();
         two_server_loop(std::move(sck1), std::move(sck2), [&](int sck)
@@ -472,7 +510,7 @@ void redemption_main_loop(
                     ? SocketType::Wss
                     : SocketType::Ws
                 : SocketType::Tls;
-            session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, socket_type);
+            session_server_start(sck, forkable, uid, gid, config_filename, debug_config, socket_type);
             return true;
         });
     }
@@ -480,7 +518,7 @@ void redemption_main_loop(
     {
         unique_server_loop(std::move(sck1), [&](int sck)
         {
-            session_server_start(sck, cctx, rnd, fstat, forkable, uid, gid, config_filename, debug_config, SocketType::Tls);
+            session_server_start(sck, forkable, uid, gid, config_filename, debug_config, SocketType::Tls);
             return true;
         });
     }

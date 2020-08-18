@@ -26,9 +26,7 @@ from struct import unpack
 from struct import pack
 from select import select
 from time import time
-from time import strftime
 from time import ctime
-from time import sleep
 from time import mktime
 from datetime import datetime
 import socket
@@ -58,21 +56,20 @@ if sys.version_info[0] < 3:
         return data.encode(encoding)
     text_type = unicode
     binary_type = str
-    def iterable_bytes(data):
-        return data
+
     def to_syslog(data):
         return to_utf8(data)
+
     def bin2hex(bstr):
         return bstr.encode('hex')
 else:
-    from struct import unpack
     text_type = str
     binary_type = (bytes, bytearray)
     unicode = None
-    def iterable_bytes(data):
-        return unpack('%sc' % len(data), data)
+
     def to_syslog(data):
         return to_unicode(data)
+
     def bin2hex(bstr):
         return bstr.hex()
 
@@ -93,7 +90,7 @@ def print_exception_caught(func):
     def method_wrapper(self, *args, **kwargs):
         try:
             return func(self, *args, **kwargs)
-        except Exception as e:
+        except Exception:
             import traceback
             Logger().info(traceback.format_exc())
             raise
@@ -279,6 +276,11 @@ class AuthentifierSocketClosed(Exception):
     pass
 
 
+class BastionSignal(Exception):
+    def __init__(self, message="BastionSignal"):
+        super(BastionSignal, self).__init__(message)
+
+
 class RTManager(object):
     __slots__ = ("sesman", "time_limit", "last_start")
 
@@ -330,7 +332,7 @@ class Sesman():
             seswabconfig = confwab.get(u'sesman', {})
             SESMANCONF.conf[u'sesman'].update(seswabconfig)
             # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
-        except Exception as e:
+        except Exception:
             Logger().info("Failed to load Sesman WabConfig")
         # Logger().info(" SESMANCONF = '%s'" % SESMANCONF[u'sesman'])
         if SESMANCONF[u'sesman'].get(u'debug', False):
@@ -347,7 +349,10 @@ class Sesman():
         self.record_filebase = None
         self.full_log_path = None
 
-        self.engine = engine.Engine()
+        legacy_auth = SESMANCONF[u'sesman'].get(
+            u'legacy_wabengine_auth', False
+        )
+        self.engine = engine.Engine(legacy_auth)
 
         self.effective_login = None
 
@@ -443,10 +448,8 @@ class Sesman():
 
     def load_login_message(self):
         try:
-            msg_path = '/var/wab/etc/proxys/messages/login.%s' % self.language
-            with open(msg_path) as f:
-                self.login_message = f.read().decode('utf-8')
-        except Exception as e:
+            self.login_message = self.engine.get_warning_message(self.language)
+        except Exception:
             pass
 
     def set_language_from_keylayout(self):
@@ -461,7 +464,7 @@ class Sesman():
         if self.shared.get(u'keyboard_layout') != MAGICASK:
             try:
                 keylayout = int(self.shared.get(u'keyboard_layout'))
-            except:
+            except Exception:
                 pass
         if keylayout in french_layouts:
             self.language = 'fr'
@@ -540,7 +543,7 @@ class Sesman():
                 if not _is_multi_packet:
                     break
             _data = _data.decode('utf-8')
-        except Exception as e:
+        except Exception:
             # Logger().info("%s <<<%s>>>" % (
             #     u"Failed to read data from rdpproxy authentifier socket",
             #     traceback.format_exc(e))
@@ -559,11 +562,11 @@ class Sesman():
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
-            except Exception as e:
+            except Exception:
                 if DEBUG:
                     Logger().info(
                         u"Error while parsing received data %s" %
-                        traceback.format_exc(e)
+                        traceback.format_exc()
                     )
                 _status = False
 
@@ -586,8 +589,8 @@ class Sesman():
             if not (expected_list and isinstance(expected_list, list)):
                 expected_list = []
             for key in expected_list:
-                if (key in _data and
-                    _data[key] != self.shared.get(key)):
+                if (key in _data
+                    and _data[key] != self.shared.get(key)):
                     self._changed_keys.append(key)
             self.shared.update(_data)
 
@@ -673,6 +676,33 @@ class Sesman():
 
         return _status, _error
 
+    def check_deconnection_time(self, selected_target):
+        Logger().info(u"Checking timeframe")
+        _status, _error = True, ""
+        timeclose = None
+        infinite_connection = False
+        deconnection_time = self.engine.get_deconnection_time(selected_target)
+        if not deconnection_time:
+            Logger().error("No timeframe available, "
+                           "Timeframe has not been checked !")
+            _status = False
+        if (deconnection_time == u"-"
+            or deconnection_time[0:4] >= u"2034"):
+            deconnection_time = u"2034-12-31 23:59:59"
+            infinite_connection = True
+
+        now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+        if _status and not infinite_connection and now < deconnection_time:
+            # deconnection time to epoch
+            tt = datetime.strptime(
+                deconnection_time, "%Y-%m-%d %H:%M:%S"
+            ).timetuple()
+            timeclose = int(mktime(tt))
+            _status, _error = self.interactive_display_message(
+                {u'message': TR(u'session_closed_at %s') % deconnection_time}
+            )
+        return timeclose, _status, _error
+
     def interactive_target(self, data_to_send):
         data_to_send.update({u'module': u'interactive_target'})
         self.send_data(data_to_send)
@@ -698,8 +728,8 @@ class Sesman():
         while (tries > 0) and (_status is None):
             tries -= 1
             interactive_data = {}
-            if (not extkv[u'target_password'] and
-                allow_interactive_password):
+            if (not extkv[u'target_password']
+                and allow_interactive_password):
                 interactive_data[u'target_password'] = MAGICASK
             if not extkv.get(u'target_login') and allow_interactive_login:
                 interactive_data[u'target_login'] = MAGICASK
@@ -809,18 +839,19 @@ class Sesman():
 
         try:
             target_info = None
-            if (target_login and target_device and
-                not target_login == MAGICASK and
-                not target_device == MAGICASK):
-                if (self.target_service_name and
-                    not self.target_service_name == MAGICASK):
+            if (target_login
+                and target_device
+                and not target_login == MAGICASK
+                and not target_device == MAGICASK):
+                if (self.target_service_name
+                    and not self.target_service_name == MAGICASK):
                     target_info = u"%s@%s:%s" % (target_login, target_device,
                                                  self.target_service_name)
                 else:
                     target_info = u"%s@%s" % (target_login, target_device)
             try:
                 target_info = target_info.encode('utf8')
-            except Exception as e:
+            except Exception:
                 target_info = None
 
             # Check if X509 Authentication is active
@@ -858,9 +889,9 @@ class Sesman():
                 # PASSWORD based Authentication
                 is_magic_password = self.shared.get(u'password') == MAGICASK
                 is_otp = wab_login.startswith('_OTP_')
-                method = ((is_otp and "OTP") or
-                          (self.engine.get_challenge() and "Challenge") or
-                          "Password")
+                method = ((is_otp and "OTP")
+                          or (self.engine.get_challenge() and "Challenge")
+                          or "Password")
                 self.rdplog.log("AUTHENTICATION_TRY", method=method)
                 if ((is_magic_password and not is_otp)  # one-time pwd
                     or not self.engine.password_authenticate(
@@ -881,7 +912,10 @@ class Sesman():
                                            real_wab_login)
                 if re.search('WALLIX Access Manager',
                              self.engine.get_otp_client(), re.IGNORECASE):
-                    self.send_data({u'is_wabam': u'True'})
+                    self.send_data({
+                        u'module': u'transitory',
+                        u'is_wabam': u'True'
+                    })
                 self.shared[u'login'] = self.shared.get(u'login').replace(
                     wab_login, real_wab_login
                 )
@@ -896,10 +930,10 @@ class Sesman():
             self.rdplog.log("AUTHENTICATION_SUCCESS", method=method)
             Logger().info(u'lang=%s' % self.language)
 
-        except Exception as e:
+        except Exception:
             if DEBUG:
                 import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
+                Logger().info("<<<%s>>>" % traceback.format_exc())
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
             self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
 
@@ -1003,7 +1037,7 @@ class Sesman():
 
                         else:
                             _number_of_pages = (
-                                1 + (len(services) - 1) / _lines_per_page
+                                1 + (len(services) - 1) // _lines_per_page
                             )
                             if _current_page >= _number_of_pages:
                                 _current_page = _number_of_pages - 1
@@ -1079,7 +1113,7 @@ class Sesman():
                             return None, TR(u"Invalid user, try again")
 
                         _status = None  # One more loop
-                    except Exception as e:
+                    except Exception:
                         _emsg = u"Unexpected error in selector pagination"
                         if DEBUG:
                             import traceback
@@ -1156,10 +1190,10 @@ class Sesman():
                 _status, _error = self.interactive_display_message({
                     u'message': message
                 })
-        except Exception as e:
+        except Exception:
             if DEBUG:
                 import traceback
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                Logger().info("<<<<%s>>>>" % traceback.format_exc())
         return _status, _error
 
     def create_record_path_directory(self, rec_path):
@@ -1210,13 +1244,35 @@ class Sesman():
         formated_sign_key = bin2hex(sign_key)
         return formated_encryption_key, formated_sign_key
 
+    def interactive_ask_recording(self, user):
+        message = (u"Warning! Your remote session may be recorded and"
+                   u"kept in electronic format.")
+        try:
+            message = self.engine.get_banner(self.language)
+            _status, _error = self.interactive_accept_message(
+                {u'message': cut_message(message, 8192)}
+            )
+        except Exception:
+            if DEBUG:
+                import traceback
+                Logger().debug("%s" % traceback.format_exc())
+            _status, _error = False, TR(u"Connection closed by client")
+        Logger().info(u"Recording agreement of %s to %s@%s : %s" %
+                      (user,
+                       self.shared.get(u'target_login'),
+                       self.shared.get(u'target_device'),
+                       ["NO", "YES"][_status]))
+        if _status is False:
+            reason = u"Session recording rejected by user"
+            self.engine.set_session_status(result=False, diag=reason)
+        return _status, _error
+
     def load_video_recording(self, rec_path, user):
         Logger().info(u"Checking video")
 
         _status, _error = True, u''
         data_to_send = {
             u'is_rec': u'False',
-            u'rec_path': u"",
             u'trace_type': u"0",
             u'module': u'transitory',
         }
@@ -1231,30 +1287,7 @@ class Sesman():
 
         self.full_path = os.path.join(rec_path, self.record_filebase)
 
-        # TODO remove .flv extension and adapt ReDemPtion proxy code
-        #      (/!\ break the compatibility)
-        data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
-
-        record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
-        if record_warning:
-            message = (u"Warning! Your remote session may be recorded "
-                       u"and kept in electronic format.")
-            try:
-                motd_p = '/var/wab/etc/proxys/messages/motd.%s' % self.language
-                with open(motd_p) as f:
-                    message = f.read().decode('utf-8')
-            except Exception as e:
-                pass
-            data_to_send[u'message'] = cut_message(message, 8192)
-
-            _status, _error = self.interactive_accept_message(data_to_send)
-            Logger().info(u"Recording agreement of %s to %s@%s : %s" %
-                          (user,
-                           self.shared.get(u'target_login'),
-                           self.shared.get(u'target_device'),
-                           ["NO", "YES"][_status]))
-        else:
-            self.send_data(data_to_send)
+        self.send_data(data_to_send)
 
         return _status, _error
 
@@ -1338,8 +1371,11 @@ class Sesman():
                             or (previous_info_message != info_message)
                             or (status == APPROVAL_NONE))
             Logger().info(u"End check_target ... refresh : %s" % refresh_page)
+#            if refresh_page:
+#                self.send_data({u'forcemodule': True})
             if refresh_page:
-                self.send_data({u'forcemodule': True})
+                self.send_data({u'module': u'transitory'})
+
             if status == APPROVAL_ACCEPTED:
                 return True, ""
             if refresh_page:
@@ -1350,15 +1386,15 @@ class Sesman():
                 Logger().info(u"Start Select ...")
                 timeout = None if status != APPROVAL_PENDING else 5
                 r, w, x = select([self.proxy_conx], [], [], timeout)
+            except BastionSignal as e:
+                Logger().info("Got Signal %s" % e)
+                got_signal = True
             except Exception as e:
                 if DEBUG:
                     Logger().info("exception: '%s'" % e)
                     import traceback
-                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-                    if e[0] != 4:
-                        raise
-                Logger().info("Got Signal %s" % e)
-                got_signal = True
+                    Logger().info("<<<<%s>>>>" % traceback.format_exc())
+                raise
             if self.proxy_conx in r:
                 _status, _error = self.receive_data()
                 if self.shared.get(u'waitinforeturn') == "backselector":
@@ -1387,8 +1423,8 @@ class Sesman():
     def parse_duration(self, duration):
         if duration:
             try:
-                mpat = re.compile("(\d+)m")
-                hpat = re.compile("(\d+)h")
+                mpat = re.compile(r"(\d+)m")
+                hpat = re.compile(r"(\d+)h")
                 hres = hpat.search(duration)
                 mres = mpat.search(duration)
                 duration = 0
@@ -1398,7 +1434,7 @@ class Sesman():
                     duration += 60 * 60 * int(hres.group(1))
                 if duration == 0:
                     duration = 3600
-            except Exception as e:
+            except Exception:
                 duration = 3600
         else:
             duration = 3600
@@ -1477,7 +1513,7 @@ class Sesman():
         if request_fields:
             flag = self._get_rf_flags(request_fields)
             # duration_max is in minutes
-            duration_max = self._get_rf_duration_max(request_fields) / 60
+            duration_max = self._get_rf_duration_max(request_fields) // 60
         if self.hide_approval_back_selector:
             flag |= 0x10000
         if status == APPROVAL_NONE:
@@ -1670,46 +1706,59 @@ class Sesman():
             )
             if session_id is None:
                 _status, _error = False, TR(u"start_session_failed")
-                self.send_data({u'rejected': TR(u'start_session_failed')})
 
-            if _status:
-                # add "Year-Month-Day" subdirectory to record path
-                date_path = start_time.strftime("%Y-%m-%d")
-                rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
-                self.record_filebase = self.generate_record_filebase(
-                    session_id,
-                    user,
-                    uname,
-                    start_time
+        if _status:
+            record_warning = SESMANCONF[u'sesman'].get('record_warning', True)
+            if record_warning and extra_info.is_recorded:
+                _status, _error = self.interactive_ask_recording(
+                    user
                 )
-                kv['record_filebase'] = self.record_filebase
-                kv['record_subdirectory'] = date_path
-                # TODO kv[u'record_path'] = LOCAL_TRACE_PATH_RDP
-                Logger().info(u"Session will be recorded in %s" %
-                              self.record_filebase)
-                try:
-                    _status, _error = self.create_record_path_directory(
+
+        if _status:
+            timeclose, _status, _error = self.check_deconnection_time(
+                selected_target
+            )
+            if timeclose is not None:
+                kv['timeclose'] = timeclose
+
+        if _status:
+            # add "Year-Month-Day" subdirectory to record path
+            date_path = start_time.strftime("%Y-%m-%d")
+            rec_path = os.path.join(LOCAL_TRACE_PATH_RDP, date_path)
+            self.record_filebase = self.generate_record_filebase(
+                session_id,
+                user,
+                uname,
+                start_time
+            )
+            kv['record_filebase'] = self.record_filebase
+            kv['record_subdirectory'] = date_path
+            # TODO kv[u'record_path'] = LOCAL_TRACE_PATH_RDP
+            Logger().info(u"Session will be recorded in %s" %
+                          self.record_filebase)
+            try:
+                _status, _error = self.create_record_path_directory(
+                    rec_path
+                )
+                if _status and extra_info.is_recorded:
+                    _status, _error = self.load_video_recording(
+                        rec_path, user
+                    )
+                if _status:
+                    _status, _error = self.load_session_log_redirection(
                         rec_path
                     )
-                    if _status and extra_info.is_recorded:
-                        _status, _error = self.load_video_recording(
-                            rec_path, user
-                        )
-                    if _status:
-                        _status, _error = self.load_session_log_redirection(
-                            rec_path
-                        )
-                    if _status:
-                        encryption_key, sign_key = self.get_trace_keys()
-                        kv['encryption_key'] = encryption_key
-                        kv['sign_key'] = sign_key
-                except Exception as e:
-                    import traceback
-                    Logger().debug("%s" % traceback.format_exc(e))
-                    _status, _error = False, TR(u"Connection closed by client")
+                if _status:
+                    encryption_key, sign_key = self.get_trace_keys()
+                    kv['encryption_key'] = encryption_key
+                    kv['sign_key'] = sign_key
+            except Exception:
+                import traceback
+                Logger().debug("%s" % traceback.format_exc())
+                _status, _error = False, TR(u"Connection closed by client")
 
-            if not _status:
-                self.send_data({u'rejected': _error})
+        if not _status:
+            self.send_data({u'rejected': _error})
 
         if _status:
             kv[u'session_id'] = session_id
@@ -1725,41 +1774,13 @@ class Sesman():
                                 u'pattern_notify': pattern_notify})
 
         if _status:
-            Logger().info(u"Checking timeframe")
-            self.infinite_connection = False
-            deconnection_time = self.engine.get_deconnection_time(
-                selected_target
-            )
-            if not deconnection_time:
-                Logger().error("No timeframe available, "
-                               "Timeframe has not been checked !")
-                _status = False
-            if (deconnection_time == u"-"
-                or deconnection_time[0:4] >= u"2034"):
-                deconnection_time = u"2034-12-31 23:59:59"
-                self.infinite_connection = True
-
-            now = datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
-            if (_status
-                and not self.infinite_connection
-                and now < deconnection_time):
-                # deconnection time to epoch
-                tt = datetime.strptime(
-                    deconnection_time, "%Y-%m-%d %H:%M:%S"
-                ).timetuple()
-                kv[u'timeclose'] = int(mktime(tt))
-                _status, _error = self.interactive_display_message({
-                    u'message': TR(u'session_closed_at %s') % deconnection_time
-                })
-
-        module = kv.get(u'proto_dest')
-        if module not in [u'RDP', u'VNC', u'INTERNAL']:
-            module = u'RDP'
-        if self.internal_target:
-            module = u'INTERNAL'
-        kv[u'module'] = module
-        # proto = u'RDP' if kv.get(u'proto_dest') != u'VNC' else u'VNC'
-        kv[u'mode_console'] = u"allow"
+            module = kv.get(u'proto_dest')
+            if module not in [u'RDP', u'VNC', u'INTERNAL']:
+                module = u'RDP'
+            if self.internal_target:
+                module = u'INTERNAL'
+            kv[u'module'] = module
+            # proto = u'RDP' if  kv.get(u'proto_dest') != u'VNC' else u'VNC'
 
         self.shared[u'recording_started'] = 'False'
 
@@ -1856,9 +1877,9 @@ class Sesman():
                     kv[u'target_host'] = physical_info.device_host
 
                 kv[u'target_login'] = physical_info.account_login
-                if (not kv.get(u'target_login') and
-                    self.target_context.login and
-                    not application):
+                if (not kv.get(u'target_login')
+                    and self.target_context.login
+                    and not application):
                     # on application,
                     # login in target_context is the login of application
                     kv[u'target_login'] = self.target_context.login
@@ -1890,8 +1911,8 @@ class Sesman():
                         )
                         target_password = u'\x01'.join(target_passwords)
 
-                    if (not target_password and
-                        PASSWORD_MAPPING in auth_policy_methods):
+                    if (not target_password
+                        and PASSWORD_MAPPING in auth_policy_methods):
                         target_password = (
                             self.engine.get_primary_password(physical_target)
                             or ''
@@ -1923,8 +1944,8 @@ class Sesman():
 
                     if self.target_context.host:
                         self._physical_target_host = self.target_context.host
-                    elif ('/' in physical_info.device_host and
-                          extra_kv.get(u'target_host') != MAGICASK):
+                    elif ('/' in physical_info.device_host
+                          and extra_kv.get(u'target_host') != MAGICASK):
                         self._physical_target_host = \
                             extra_kv.get(u'target_host')
                     else:
@@ -2003,16 +2024,16 @@ class Sesman():
                             got_signal = False
                             try:
                                 r, w, x = select([self.proxy_conx], [], [], 60)
+                            except BastionSignal as e:
+                                Logger().info("Got Signal %s" % e)
+                                got_signal = True
                             except Exception as e:
                                 if DEBUG:
                                     Logger().info("exception: '%s'" % e)
                                     import traceback
                                     Logger().info("<<<<%s>>>>" %
-                                                  traceback.format_exc(e))
-                                if e[0] != 4:
-                                    raise
-                                Logger().info("Got Signal %s" % e)
-                                got_signal = True
+                                                  traceback.format_exc())
+                                raise
                             current_time = time()
                             if self.check_session_parameters:
                                 self.update_session_parameters(current_time)
@@ -2072,7 +2093,7 @@ class Sesman():
                             close_box = True
                         Logger().debug(u"End Of Keep Alive")
 
-                    except AuthentifierSocketClosed as e:
+                    except AuthentifierSocketClosed:
                         if DEBUG:
                             import traceback
                             Logger().info(
@@ -2217,8 +2238,8 @@ class Sesman():
             self.send_data({
                 u'disconnect_reason': TR(u"session_probe_keepalive_missed")
             })
-        elif (_reporting_reason ==
-              u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
+        elif (_reporting_reason
+              == u'SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED'):
             Logger().info(
                 u'RDP connection terminated. Reason: Session Probe failed '
                 u'to block outbound connection'
@@ -2247,8 +2268,8 @@ class Sesman():
                 u'disconnect_reason':
                 TR(u"session_probe_process_blocking_failed")
             })
-        elif (_reporting_reason ==
-              u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
+        elif (_reporting_reason
+              == u'SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED'):
             Logger().info(
                 u'RDP connection terminated. Reason: Session Probe failed '
                 u'to run startup application'
@@ -2485,11 +2506,11 @@ class Sesman():
         'smartcard_login': ('effective_login', 'str'),
         'native_session_id': ('native_session_id', 'str'),
     }
-    EXPECTING_KEYS = KEYMAPPING.keys()
+    EXPECTING_KEYS = list(KEYMAPPING.keys())
 
     @staticmethod
     def convert_value(value, cotype):
-        if not isinstance(value, basestring):
+        if not isinstance(value, (str, text_type)):
             return value
         if cotype == 'int':
             return int(value)
@@ -2529,11 +2550,13 @@ class Sesman():
         # Logger().info("KILL_HANDLER = %s" % signum)
         if signum == signal.SIGUSR1:
             self.kill()
+            raise BastionSignal()
 
     def check_handler(self, signum, frame):
         # Logger().info("CHECK_HANDLER = %s" % signum)
         if signum == signal.SIGUSR2:
             self.check_session_parameters = True
+            raise BastionSignal()
 
     def kill(self):
         try:
@@ -2547,7 +2570,7 @@ class Sesman():
             host_ip = socket.getaddrinfo(host, None)[0][4][0]
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
                                                              host_ip))
-        except Exception as e:
+        except Exception:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
 

@@ -27,17 +27,14 @@
 #include <ctime>
 
 
-class TimestampTracer {
+class TimestampTracer
+{
     enum {
         char_width  = 7,
-        char_height = 12
-    };
+        char_height = 12,
 
-    enum {
-        ts_max_length = 32
-    };
+        ts_max_length = 32,
 
-    enum {
         ts_width = ts_max_length * char_width,
         ts_height = char_height,
         size_str_timestamp = ts_max_length + 1

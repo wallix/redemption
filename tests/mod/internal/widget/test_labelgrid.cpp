@@ -20,27 +20,25 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/check_sig.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "test_only/test_framework/working_directory.hpp"
-#include <iostream>
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "utils/png.hpp"
 
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/core/font.hpp"
 
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/labelgrid/"
 
 RED_AUTO_TEST_CASE(TraceLabelGrid)
 {
     TestGraphic drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
     int id = 0;
@@ -59,9 +57,9 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
     wgrid.set_wh(640, 480);
     wgrid.set_xy(x, y);
 
-    array_view_const_char const texts0[] = { "target_group"_av, "target"_av, "protocol"_av, "timeframe"_av };
+    chars_view const texts0[] = { "target_group"_av, "target"_av, "protocol"_av, "timeframe"_av };
     wgrid.add_line(texts0);
-    array_view_const_char const texts1[] = { "win"_av, "admin@device"_av, "RDP"_av, "never"_av };
+    chars_view const texts1[] = { "win"_av, "admin@device"_av, "RDP"_av, "never"_av };
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
@@ -85,10 +83,7 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-//    dump_png24("labelgrid-0.png", drawable, true);
-    
-    RED_CHECK_SIG(drawable,
-        "\x86\xc2\x96\xbc\x1e\x22\xf4\x9d\x6f\xa3\xf5\x76\x26\xd9\x00\x95\x0b\xa2\xee\x38");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_grid_1.png");
 
     wgrid.has_focus = true;
     // ask to widget to redraw at it's current position
@@ -97,8 +92,5 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
                                     wgrid.cx(),
                                     wgrid.cy()));
 
-//    dump_png24("labelgrid-1.png", drawable, true);
-
-    RED_CHECK_SIG(drawable,
-        "\x28\xaa\x98\xee\x94\x66\x3a\x37\xc1\xce\x2d\xe6\xeb\x80\x7f\x04\x17\xac\x95\xd6");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "label_grid_2.png");
 }

@@ -85,10 +85,16 @@ void FrontWrapper::set_consent_ui_visible(bool set)
     d->front.set_consent_ui_visible(set);
 }
 
-void FrontWrapper::session_update(LogId id, KVList kv_list)
+void FrontWrapper::session_update(timeval now, LogId id, KVList kv_list)
 {
-    d->front.session_update(id, kv_list);
+    d->front.session_update(now, id, kv_list);
 }
+
+void FrontWrapper::possible_active_window_change()
+{
+    d->front.possible_active_window_change();
+}
+
 
 void FrontWrapper::send_savesessioninfo()
 {
@@ -102,12 +108,12 @@ int FrontWrapper::get_keylayout() const
 
 bool FrontWrapper::is_up_and_running() const
 {
-    return d->front.state == Front::UP_AND_RUNNING;
+    return d->front.state == Front::FRONT_UP_AND_RUNNING;
 }
 
 void FrontWrapper::set_up_and_running()
 {
-    d->front.state = Front::UP_AND_RUNNING;
+    d->front.state = Front::FRONT_UP_AND_RUNNING;
 }
 
 void FrontWrapper::incoming(Callback & cb)
@@ -143,20 +149,25 @@ CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
 }
 
 FrontWrapper::FrontWrapper(
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
+    EventContainer& events,
+    AuthApi & auth,
     Transport & trans,
     Random & gen,
     Inifile & ini,
     CryptoContext & cctx,
-    ReportMessageApi & report_message,
-    bool fp_support, // If true, fast-path must be supported
-    bool mem3blt_support,
-    std::string server_capabilities_filename)
+    bool fp_support // If true, fast-path must be supported
+)
 : d(new D{FrontWrapper::D::MyFront{
-    session_reactor,
-    trans, gen, ini, cctx, report_message,
-    fp_support, mem3blt_support, std::move(server_capabilities_filename)
+    time_base,
+    events,
+    auth,
+    trans, gen, ini, cctx,
+    fp_support
 }})
 {}
 
-FrontWrapper::~FrontWrapper() = default;
+FrontWrapper::~FrontWrapper()
+{
+    delete this->d;
+}

@@ -22,68 +22,41 @@
 
 #pragma once
 
-#include "proxy_recorder/nla_tee_transport.hpp"
-#include "proxy_recorder/nego_client.hpp"
-#include "proxy_recorder/nego_server.hpp"
-
-#include "core/RDP/x224.hpp"
-#include "core/RDP/nla/nla_server_ntlm.hpp"
-#include "core/RDP/nla/nla_client_ntlm.hpp"
-#include "core/RDP/nla/nla_client_kerberos.hpp"
-#include "core/RDP/gcc.hpp"
-#include "core/RDP/mcs.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
-#include "core/listen.hpp"
-#include "core/server_notifier_api.hpp"
 #include "transport/recorder_transport.hpp"
-#include "transport/socket_transport.hpp"
-#include "transport/socket_trace_transport.hpp"
-#include "utils/cli.hpp"
-#include "utils/fixed_random.hpp"
-#include "utils/netutils.hpp"
-#include "utils/redemption_info_version.hpp"
-#include "utils/utf.hpp"
+#include "core/RDP/x224.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 
-#include <vector>
-#include <chrono>
-#include <iostream>
+#include <string>
+#include <memory>
 
-#include <cerrno>
-#include <cstring>
-#include <csignal>
 
-#include <netinet/tcp.h>
-#include <sys/select.h>
-#include <openssl/ssl.h>
+class NlaTeeTransport;
+class NegoClient;
+class NegoServer;
+class TimeBase;
+
 
 /** @brief a front connection with a RDP client */
 class ProxyRecorder
 {
-
     X224::CR_TPDU_Data front_CR_TPDU;
 
     using PacketType = RecorderFile::PacketType;
+
 public:
-    ProxyRecorder(NlaTeeTransport & back_nla_tee_trans,
-            RecorderFile & outFile,
-            TimeObj & timeobj,
-            const char * host,
-            bool enable_kerberos,
-            uint64_t verbosity
-    )
-        : back_nla_tee_trans(back_nla_tee_trans)
-        , outFile(outFile)
-        , timeobj(timeobj)
-        , host(host)
-        , enable_kerberos(enable_kerberos)
-        , verbosity(verbosity)
-    {
-        this->frontBuffer.trace_pdu = (this->verbosity > 512);
-        this->backBuffer.trace_pdu = (this->verbosity > 512);
-    }
+    ProxyRecorder(
+        NlaTeeTransport & back_nla_tee_trans,
+        RecorderFile & outFile,
+        TimeBase & time_base,
+        const char * host,
+        bool enable_kerberos,
+        uint64_t verbosity
+    );
+
+    ~ProxyRecorder();
 
     void front_step1(Transport & frontConn);
-    void back_step1(array_view_u8 key, Transport & backConn, std::string nla_username, std::string nla_password);
+    void back_step1(writable_u8_array_view key, Transport & backConn, std::string const& nla_username, std::string nla_password);
     void front_nla(Transport & frontConn);
     void front_initial_pdu_negociation(Transport & backConn, bool is_nla);
     void back_nla_negociation(Transport & backConn);
@@ -102,7 +75,7 @@ public:
 
     NlaTeeTransport & back_nla_tee_trans;
     RecorderFile & outFile;
-    TimeObj & timeobj;
+    TimeBase & time_base;
     const char * host;
 
     TpduBuffer frontBuffer;

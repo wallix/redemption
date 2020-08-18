@@ -25,7 +25,6 @@
 #include "capture/cryptofile.hpp"
 #include "core/app_path.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
@@ -102,9 +101,6 @@ public:
     }
     void draw(RDPEllipseCB        const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->drawable.draw(cmd, clip, color_ctx);
-    }
-    void draw(RDPNineGrid         const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        this->drawable.draw(cmd, clip, color_ctx, bmp);
     }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override {
         this->drawable.draw(cmd, clip, color_ctx, gly_cache);
@@ -253,14 +249,14 @@ struct ReplayMod::Reader
         }
 
         this->reader.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-        front.can_be_start_capture();
+        // TODO: see why we may want to start capture while replaying code
+        front.can_be_start_capture(false);
         return is_resized;
     }
 };
 
 ReplayMod::ReplayMod(
-    SessionReactor& session_reactor
-  , gdi::GraphicApi & drawable_
+    gdi::GraphicApi & drawable_
   , FrontAPI & front
   , const char * replay_path
   , uint16_t width
@@ -286,19 +282,11 @@ ReplayMod::ReplayMod(
 , sync_setted(false)
 , replay_on_loop(replay_on_loop)
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
-, session_reactor(session_reactor)
 {
     if (this->internal_reader->server_resize(drawable, front)) {
         this->front_width  = this->internal_reader->reader.info.width;
         this->front_height = this->internal_reader->reader.info.height;
     }
-
-    this->timer = session_reactor.create_graphic_timer()
-    .set_delay(std::chrono::seconds(0))
-    .on_action([this](auto ctx, gdi::GraphicApi& gd){
-        this->draw_event(gd);
-        return ctx.ready();
-    });
 }
 
 
@@ -360,7 +348,7 @@ void ReplayMod::rdp_input_scancode(
 {
     if (keymap->nb_kevent_available() > 0
         && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+        this->set_mod_signal(BACK_EVENT_STOP);
     }
 }
 
@@ -443,13 +431,13 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
                 }
                 else {
                     this->end_of_data = true;
-                    this->timer->set_delay(std::chrono::seconds(1));
 
                     this->disconnect();
                     gd.sync();
 
                     if (!this->wait_for_escape) {
-                        this->session_reactor.set_next_event(BACK_EVENT_STOP);
+                        this->set_mod_signal(BACK_EVENT_STOP);
+                        // throw Error(ERR_BACK_EVENT_NEXT);
                     }
 
                     break;
@@ -460,7 +448,8 @@ void ReplayMod::draw_event(gdi::GraphicApi & gd)
     catch (Error const & e) {
         if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
             this->auth_error_message = "The recorded file is inaccessible or corrupted!";
-            this->session_reactor.set_next_event(BACK_EVENT_NEXT);
+            this->set_mod_signal(BACK_EVENT_NEXT);
+            // throw Error(ERR_BACK_EVENT_NEXT);
         }
         else {
             throw;

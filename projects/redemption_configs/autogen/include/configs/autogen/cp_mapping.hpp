@@ -19,6 +19,9 @@ cp_spec = {
         ),
     },
     'rdp': {
+        u'mod_rdp:disabled_orders': (
+            'disabled_orders', u''
+        ),
         u'mod_rdp:enable_nla': (
             'enable_nla', True
         ),
@@ -36,6 +39,12 @@ cp_spec = {
         ),
         u'mod_rdp:show_common_cipher_list': (
             'show_common_cipher_list', False
+        ),
+        u'mod_rdp:allowed_dynamic_channels': (
+            'allowed_dynamic_channels', u'*'
+        ),
+        u'mod_rdp:denied_dynamic_channels': (
+            'denied_dynamic_channels', u''
         ),
         u'mod_rdp:server_redirection_support': (
             'server_redirection', False
@@ -63,6 +72,15 @@ cp_spec = {
         ),
         u'mod_rdp:force_smartcard_authentication': (
             'force_smartcard_authentication', False
+        ),
+        u'mod_rdp:enable_ipv6': (
+            'enable_ipv6', False
+        ),
+        u'mod_rdp:mode_console': (
+            'mode_console', 0
+        ),
+        u'mod_rdp:auto_reconnection_on_losing_target_link': (
+            'auto_reconnection_on_losing_target_link', False
         ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
@@ -111,6 +129,9 @@ cp_spec = {
         u'mod_rdp:session_probe_enable_log_rotation': (
             'enable_log_rotation', True
         ),
+        u'mod_rdp:session_probe_log_level': (
+            'log_level', 5
+        ),
         u'mod_rdp:session_probe_disconnected_application_limit': (
             'disconnected_application_limit', 0
         ),
@@ -150,11 +171,20 @@ cp_spec = {
         u'mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check': (
             'ignore_ui_less_processes_during_end_of_session_check', True
         ),
+        u'mod_rdp:session_probe_update_disabled_features': (
+            'update_disabled_features', True
+        ),
         u'mod_rdp:session_probe_childless_window_as_unidentified_input_field': (
             'childless_window_as_unidentified_input_field', True
         ),
         u'mod_rdp:session_probe_disabled_features': (
-            'disabled_features', 864
+            'disabled_features', 352
+        ),
+        u'mod_rdp:session_probe_bestsafe_integration': (
+            'enable_bestsafe_interaction', False
+        ),
+        u'mod_rdp:session_probe_alternate_directory_environment_variable': (
+            'alternate_directory_environment_variable', u''
         ),
         u'mod_rdp:session_probe_public_session': (
             'public_session', False
@@ -208,8 +238,17 @@ cp_spec = {
         u'file_verification:clipboard_text_down': (
             'clipboard_text_down', False
         ),
+        u'file_verification:block_invalid_file_up': (
+            'block_invalid_file_up', False
+        ),
+        u'file_verification:block_invalid_file_down': (
+            'block_invalid_file_down', False
+        ),
         u'file_verification:log_if_accepted': (
             'log_if_accepted', True
+        ),
+        u'file_verification:max_file_size_rejected': (
+            'max_file_size_rejected', 50
         ),
     },
     'file_storage': {
@@ -231,6 +270,9 @@ cp_spec = {
         ),
         u'mod_vnc:support_cursor_pseudo_encoding': (
             'support_cursor_pseudo_encoding', True
+        ),
+        u'mod_vnc:enable_ipv6': (
+            'enable_ipv6', False
         ),
     },
 }

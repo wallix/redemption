@@ -677,8 +677,8 @@ public:
             InStream & in_stream,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose
-      ) {
+            RDPVerbose verbose)
+    {
         (void)path;
         (void)in_stream;
         (void)drive_access_mode;
@@ -709,7 +709,8 @@ protected:
             rdpdr::DeviceIORequest const & device_io_request,
             const char * message,
             erref::NTSTATUS IoStatus,
-            RDPVerbose verbose) {
+            RDPVerbose verbose)
+    {
         const rdpdr::SharedHeader shared_header(
                 rdpdr::Component::RDPDR_CTYP_CORE,
                 rdpdr::PacketId::PAKID_CORE_DEVICE_IOCOMPLETION
@@ -734,7 +735,8 @@ protected:
             erref::NTSTATUS IoStatus,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose)
+    {
         StaticOutStream<65536> out_stream;
 
         MakeClientDriveIoResponse(out_stream,
@@ -744,8 +746,8 @@ protected:
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.get_offset(),
-            to_server_sender, verbose);
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            verbose);
     }
 
     static void SendClientDriveSetInformationResponse(
@@ -755,7 +757,8 @@ protected:
             uint32_t Length,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose)
+    {
         StaticOutStream<65536> out_stream;
 
         MakeClientDriveIoResponse(out_stream,
@@ -769,8 +772,8 @@ protected:
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.get_offset(),
-            to_server_sender, verbose);
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            verbose);
     }
 
 public:
@@ -780,7 +783,8 @@ public:
             erref::NTSTATUS IoStatus,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose)
+    {
         StaticOutStream<65536> out_stream;
 
         MakeClientDriveIoResponse(out_stream,
@@ -792,8 +796,8 @@ public:
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
         out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-            out_flags, out_stream.get_data(), out_stream.get_offset(),
-            to_server_sender, verbose);
+            out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+            verbose);
     }
 
     static inline void SendClientDriveIoUnsuccessfulResponse(
@@ -801,7 +805,8 @@ public:
             const char * message,
             VirtualChannelDataSender & to_server_sender,
             std::unique_ptr<AsynchronousTask> & out_asynchronous_task,
-            RDPVerbose verbose) {
+            RDPVerbose verbose)
+    {
         SendClientDriveIoResponse(
             device_io_request,
             message,
@@ -1429,8 +1434,8 @@ public:
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
             out_asynchronous_task = std::make_unique<RdpdrSendDriveIOResponseTask>(
-                out_flags, out_stream.get_data(), out_stream.get_offset(),
-                to_server_sender, verbose);
+                out_flags, out_stream.get_data(), out_stream.get_offset(), to_server_sender,
+                verbose);
 
             return;
         }
@@ -1442,7 +1447,8 @@ public:
             this->fd, device_io_request.DeviceId(),
             device_io_request.CompletionId(),
             static_cast<uint32_t>(remaining_number_of_bytes_to_read),
-            Offset, to_server_sender, verbose);
+            Offset, to_server_sender,
+            verbose);
     }
 
     void process_server_drive_control_request(
@@ -1650,7 +1656,7 @@ public:
 
             to_server_sender(virtual_channel_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                virtual_channel_stream.get_bytes());
+                virtual_channel_stream.get_produced_bytes());
 
             virtual_channel_stream.rewind();
         }
@@ -1664,7 +1670,7 @@ public:
             this->upper_name_[0] = 0;
         }
 
-        DriveName(array_view_const_char name, bool reserved = false) noexcept
+        DriveName(chars_view name, bool reserved = false) noexcept
         : read_only_(false)
         {
             if (!name.empty() && name[0] == '*') {
@@ -1703,7 +1709,7 @@ public:
         }
 
         DriveName(std::string_view name, bool reserved = false) noexcept
-        : DriveName(array_view_const_char{name}, reserved)
+        : DriveName(chars_view{name}, reserved)
         {}
 
         [[nodiscard]] char const* upper_name() const noexcept
@@ -2070,7 +2076,8 @@ public:
                     file_iter->object->ProcessServerDriveQueryInformationRequest(
                         device_io_request,
                         server_drive_query_information_request, path.c_str(),
-                        in_stream, to_server_sender, out_asynchronous_task,
+                        in_stream, to_server_sender,
+                        out_asynchronous_task,
                         verbose);
                 }
             break;
@@ -2230,7 +2237,7 @@ public:
         to_server_sender(
                 out_stream.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes()
+                out_stream.get_produced_bytes()
             );
 
         LOG_IF(bool(verbose & RDPVerbose::fsdrvmgr), LOG_INFO,

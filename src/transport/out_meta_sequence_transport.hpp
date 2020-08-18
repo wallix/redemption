@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "transport/crypto_transport.hpp"
 
 
@@ -36,7 +37,8 @@ struct OutMetaSequenceTransport : Transport
         uint16_t width,
         uint16_t height,
         const int groupid,
-        ReportMessageApi * report_message);
+        AuthApi * sesman,
+        uint32_t file_permissions);
 
     ~OutMetaSequenceTransport();
 
@@ -97,4 +99,6 @@ private:
     time_t stop_sec_;
 
     CryptoContext & cctx;
+
+    uint32_t file_permissions_;
 };

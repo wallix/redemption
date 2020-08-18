@@ -33,7 +33,7 @@ using std::end;
 
 namespace
 {
-    using Av = array_view_const_char;
+    using Av = chars_view;
 
     using Pair = std::pair<std::string_view, LogId>;
 
@@ -373,6 +373,7 @@ bool AgentDataExtractor::extract_list(Av data)
                     }
                 }
                 break;
+
             case LogId::WEB_ATTEMPT_TO_PRINT:
             case LogId::WEB_DOCUMENT_COMPLETE:
                 return line_with_2_var("url"_av, "title"_av);
@@ -414,6 +415,14 @@ bool AgentDataExtractor::extract_list(Av data)
             case LogId::ACCOUNT_MANIPULATION_BLOCKED:
             case LogId::ACCOUNT_MANIPULATION_DETECTED:
                 return line_with_6_var("operation"_av, "server_name"_av, "group_name"_av, "account_name"_av, "app_name"_av, "app_cmd_line"_av);
+
+            case LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED:
+            case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
+                return line_with_1_var("channel_name"_av);
+
+            case LogId::FILE_BLOCKED:
+                return line_with_2_var("direction"_av, "file_name"_av);
+
             default:
                 LOG(LOG_WARNING,
                     "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
@@ -495,6 +504,10 @@ bool AgentDataExtractor::relevant_log_id(LogId id) noexcept
         case LogId::TEXT_VERIFICATION:
         case LogId::ACCOUNT_MANIPULATION_BLOCKED:
         case LogId::ACCOUNT_MANIPULATION_DETECTED:
+        case LogId::BESTSAFE_SERVICE_LOG:
+        case LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED:
+        case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
+        case LogId::FILE_BLOCKED:
             ;
     }
     return true;

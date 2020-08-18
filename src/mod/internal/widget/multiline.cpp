@@ -22,18 +22,18 @@
 #include "mod/internal/widget/multiline.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/font.hpp"
+
 
 WidgetMultiLine::WidgetMultiLine(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, const char * text,
-    int group_id,
+    NotifyApi* notifier, char const* text, int group_id,
     BGRColor fgcolor, BGRColor bgcolor, Font const & font,
     int xtext, int ytext)
 : Widget(drawable, parent, notifier, group_id)
 , x_text(xtext)
 , y_text(ytext)
 , cy_text(0)
-, auto_resize(false)
 , bg_color(bgcolor)
 , fg_color(fgcolor)
 , font(font)
@@ -41,59 +41,23 @@ WidgetMultiLine::WidgetMultiLine(
     this->tab_flag   = IGNORE_TAB;
     this->focus_flag = IGNORE_FOCUS;
 
-    this->set_text(text);
+    this->set_text(text, 4048 /* long line*/);
 }
 
 void WidgetMultiLine::set_text(const char * text)
 {
-    if (this->auto_resize) {
-        this->set_wh(0, 0);
-    }
-
-    const char * str = nullptr;
-    char * pbuf = this->buffer;
-    line_t * line = this->lines;
-    do {
-        str = strstr(text, "<br>");
-        size_t size = std::min<size_t>(str ? (str-text) : strlen(text), &this->buffer[this->buffer_size-1]-pbuf);
-        memcpy(pbuf, text, size);
-        line->str = pbuf;
-        pbuf += size;
-        text += size + 4;
-        *pbuf = '\0';
-        ++pbuf;
-        gdi::TextMetrics tm(this->font, line->str);
-        line->cx = tm.width;
-        if (tm.height > this->cy_text){
-            this->cy_text = tm.height;
-        }
-        if (this->auto_resize) {
-            uint16_t w = this->cx();
-            if (line->cx > w){
-                w = line->cx;
-            }
-            uint16_t h = this->cy();
-            if (tm.height > h){
-                h = tm.height;
-            }
-            this->set_wh(w, h);
-        }
-        ++line;
-    } while (str && pbuf < &this->buffer[this->buffer_size] && line != &this->lines[this->max_line-1]);
-
-    line->str = nullptr;
-
-    if (this->auto_resize) {
-        uint16_t w = this->cx();
-        uint16_t h = this->cy();
-        this->set_wh(w + this->x_text * 2,
-                        (h + this->y_text * 2) * (line - &this->lines[0]));
-    }
+    this->set_text(text, this->cx());
 }
 
-const char * WidgetMultiLine::get_line(size_t num) const
+void WidgetMultiLine::set_text(const char * text, unsigned max_width)
 {
-    return (num >= this->max_line) ? nullptr : this->lines[num].str;
+    this->set_text(gdi::MultiLineTextMetrics(this->font, text, max_width));
+}
+
+void WidgetMultiLine::set_text(gdi::MultiLineTextMetrics&& line_metrics)
+{
+    this->line_metrics = std::move(line_metrics);
+    this->cy_text = this->font.max_height();
 }
 
 void WidgetMultiLine::rdp_input_invalidate(Rect clip)
@@ -104,23 +68,21 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
         this->drawable.begin_update();
 
         int dy = this->y();
-        this->drawable.draw(RDPOpaqueRect(rect_intersect, encode_color24()(this->bg_color)), this->get_rect(), gdi::ColorCtx::depth24());
-        for (line_t * line = this->lines; line->str; ++line) {
+        this->drawable.draw(
+            RDPOpaqueRect(rect_intersect, encode_color24()(this->bg_color)),
+            this->get_rect(), gdi::ColorCtx::depth24());
+        for (auto const& line : this->line_metrics.lines()) {
             dy += this->y_text;
             gdi::server_draw_text(this->drawable
-                                    , this->font
-                                    , this->x_text + this->x()
-                                    , dy
-                                    , line->str
-                                    , encode_color24()(this->fg_color)
-                                    , encode_color24()(this->bg_color)
-                                    , gdi::ColorCtx::depth24()
-                                    , rect_intersect.intersect(
-                                            Rect(this->x(),
-                                                    dy,
-                                                    this->cx(),
-                                                    this->cy_text
-                                        ))
+                                , this->font
+                                , this->x_text + this->x()
+                                , dy
+                                , line.str
+                                , encode_color24()(this->fg_color)
+                                , encode_color24()(this->bg_color)
+                                , gdi::ColorCtx::depth24()
+                                , rect_intersect.intersect(
+                                    Rect(this->x(), dy, this->cx(), this->cy_text))
                 );
             dy += this->cy_text;
         }
@@ -131,18 +93,8 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
 
 Dimension WidgetMultiLine::get_optimal_dim()
 {
-    uint16_t max_line_width  = 0;
-    uint16_t max_line_height = 0;
-    line_t * line = this->lines;
-    for (; line->str; ++line) {
-        gdi::TextMetrics tm(this->font, line->str);
-        if (max_line_width < tm.width){
-            max_line_width = tm.width;
-        }
-        if (max_line_height < tm.height){
-            max_line_height = tm.height;
-        }
-    }
-    return Dimension(max_line_width + this->x_text * 2,
-        (max_line_height + this->y_text) * (line - &this->lines[0]));
+    return Dimension(
+        this->line_metrics.max_width() + this->x_text * 2,
+        (this->cy_text + this->y_text) * this->line_metrics.lines().size()
+    );
 }

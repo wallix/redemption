@@ -28,9 +28,10 @@
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
+#include "acl/auth_api.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 public:
@@ -61,7 +62,7 @@ public:
 
     bool format_data_requested = false;
 
-    SessionReactor::TimerPtr event;
+    int event_id = 0;
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
@@ -75,7 +76,8 @@ public:
     bool    delay_format_list_received = false;
     bool    delay_wainting_clipboard_response = false;
 
-    SessionReactor& session_reactor;
+    TimeBase& time_base;
+    EventContainer& events;
 
     const RDPVerbose verbose;
 
@@ -90,7 +92,8 @@ public:
 
 public:
     SessionProbeClipboardBasedLauncher(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
+        EventContainer& events,
         mod_api& mod,
         const char* alternate_shell,
         Params params,
@@ -98,7 +101,8 @@ public:
     : params(params)
     , mod(mod)
     , alternate_shell(alternate_shell)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
+    , events(events)
     , verbose(verbose)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
@@ -113,6 +117,11 @@ public:
                 "short_delay_ms=%lld",
             ms2ll(this->params.clipboard_initialization_delay_ms), ms2ll(this->params.start_delay_ms),
             ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
+    }
+
+    ~SessionProbeClipboardBasedLauncher()
+    {
+        this->events.end_of_lifespan(this);
     }
 
     bool on_clipboard_initialize() override {
@@ -138,9 +147,15 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event = this->session_reactor.create_timer()
-            .set_delay(this->params.clipboard_initialization_delay_ms)
-            .on_action(jln::one_shot([&]{ this->on_event(); }));
+            this->event_id = this->events.erase_event(this->event_id);
+            this->event_id = this->events.create_event_timeout(
+                "SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this,
+                this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms,
+                [this](Event&event)
+                {
+                    this->on_event();
+                    event.garbage=true;
+                });
         }
 
         if (this->sesprob_channel) {
@@ -238,7 +253,7 @@ public:
                         clipboard_caps_pdu.emit(out_s);
                         general_cap_set.emit(out_s);
 
-                        InStream in_s(out_s.get_bytes());
+                        InStream in_s(out_s.get_produced_bytes());
                         const size_t totalLength = out_s.get_offset();
                         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                                       in_s,
@@ -258,7 +273,7 @@ public:
                                 : false),
                             std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                        InStream in_s(out_s.get_bytes());
+                        InStream in_s(out_s.get_produced_bytes());
                         const size_t totalLength = out_s.get_offset();
                         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                                       in_s,
@@ -273,7 +288,7 @@ public:
             case State::WAIT:
             case State::STOP:
             default:
-                LOG(LOG_WARNING, "SessionProbeClipboardBasedLauncher::on_event: State=%d", this->state);
+                LOG(LOG_WARNING, "SessionProbeClipboardBasedLauncher::on_event: Unexpected State=%d", this->state);
                 assert(false);
             break;
         }   // switch (this->state)
@@ -312,7 +327,7 @@ public:
         header.emit(out_s);
         format_data_response_pdu.emit(out_s, byte_ptr_cast(this->alternate_shell.c_str()), alternate_shell_length);
 
-        InStream in_s(out_s.get_bytes());
+        InStream in_s(out_s.get_produced_bytes());
         const size_t totalLength = out_s.get_offset();
         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                       in_s,
@@ -344,154 +359,254 @@ public:
         return std::chrono::milliseconds(static_cast<uint64_t>(delay.count() * coefficient));
     }
 
+    timeval get_short_delay_timeout()
+    {
+        std::chrono::milliseconds delay_ms = this->params.short_delay_ms;
+        return this->time_base.get_current_time()+this->to_microseconds(delay_ms, this->delay_coefficient);
+    }
+
+    timeval get_long_delay_timeout()
+    {
+        std::chrono::milliseconds delay_ms = this->params.long_delay_ms;
+        return this->time_base.get_current_time()+this->to_microseconds(delay_ms, this->delay_coefficient);
+    }
+
     void make_delay_sequencer()
     {
-        using jln::value;
-        using namespace jln::literals;
 
-        auto send_scancode = [](auto param1, auto device_flags, auto check_format_list_received, auto wait_for_short_delay){
-            return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
-                if (bool(self.verbose & RDPVerbose::sesprobe_launcher)) {
-                    LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %s",
-                        ctx.sequence_name());
+        LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher make_delay_sequencer()");
+
+        Sequencer chain = {false, 0, bool(this->verbose & RDPVerbose::sesprobe_launcher), {
+        { "Windows (down)",
+            [this](Event&event,Sequencer&sequencer)
+            {
+                if (this->delay_format_list_received) {
+                    event.alarm.set_timeout(event.alarm.now);
+                    return sequencer.next_state("Send format list");
                 }
-
-                if (decltype(check_format_list_received)::value && self.delay_format_list_received) {
-                    return ctx.exec_at("Send format list"_c);
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                        SlowPath::KBDFLAGS_EXTENDED, 91, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "r (down)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 19, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "r (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_RELEASE, 19, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "Windows (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_EXTENDED | SlowPath::KBDFLAGS_RELEASE, 91, 0/*param2*/);
+                event.alarm.set_timeout(this->get_long_delay_timeout());
+            }
+        },
+        { "Ctrl (down)",
+            [this](Event&event,Sequencer&sequencer)
+            {
+                if (this->delay_format_list_received) {
+                    event.alarm.set_timeout(event.alarm.now);
+                    return sequencer.next_state("Send format list");
                 }
-
-                self.mod.send_input(
-                    0/*time*/,
-                    RDP_INPUT_SCANCODE,
-                    decltype(device_flags)::value,
-                    decltype(param1)::value,
-                    0/*param2*/
-                );
-
-                return ctx.set_delay(
-                        self.to_microseconds(
-                                (decltype(wait_for_short_delay)::value ? self.params.short_delay_ms : self.params.long_delay_ms),
-                                self.delay_coefficient
-                            )
-                    ).next();
-            };
-        };
-
-        this->event = this->session_reactor.create_timer(std::ref(*this))
-        .set_delay(this->params.short_delay_ms)
-        .on_action(jln::sequencer(
-            "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
-            "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
-            "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
-                                                                SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-            "Ctrl (down)"_f     (send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
-            "c (down)"_f        (send_scancode(value<46>, value<0>,                           value<false>, value<true> )),
-            "c (up)"_f          (send_scancode(value<46>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-
-            "Wait"_f            ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                if (time(nullptr) < self.delay_end_time) {
-                    self.delay_coefficient += 0.5f;
-
-                    return ctx.exec_at("Windows (down)"_c);
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 29, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "c (down)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 46, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "c (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_RELEASE, 46, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "Ctrl (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_RELEASE, 29, 0/*param2*/);
+                event.alarm.set_timeout(this->get_long_delay_timeout());
+            }
+        },
+        { "Wait",
+            [this](Event&event,Sequencer&sequencer)
+            {
+                if (time(nullptr) < this->delay_end_time){
+                    this->delay_coefficient += 0.5f;
+                    event.alarm.set_timeout(event.alarm.now);
+                    return sequencer.next_state("Windows (down)");
                 }
-                return ctx.exec_at("Send format list"_c);
-            }),
-
-            "Send format list"_f
-                                ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                self.delay_wainting_clipboard_response = true;
-
+                event.alarm.set_timeout(event.alarm.now);
+                return sequencer.next_state("Send format list");
+            }
+        },
+        { "Send format list",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->delay_wainting_clipboard_response = true;
                 {
                     StaticOutStream<256> out_s;
                     Cliprdr::format_list_serialize_with_header(
                         out_s,
-                        Cliprdr::IsLongFormat(self.cliprdr_channel
-                            ? self.cliprdr_channel->use_long_format_names()
+                        Cliprdr::IsLongFormat(this->cliprdr_channel
+                            ? this->cliprdr_channel->use_long_format_names()
                             : false),
                         std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-                    InStream in_s(out_s.get_bytes());
+                    InStream in_s(out_s.get_produced_bytes());
                     const size_t totalLength = out_s.get_offset();
-                    self.mod.send_to_mod_channel(channel_names::cliprdr,
-                                                 in_s,
-                                                 totalLength,
-                                                   CHANNELS::CHANNEL_FLAG_FIRST
-                                                 | CHANNELS::CHANNEL_FLAG_LAST
-                                                 | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                    this->mod.send_to_mod_channel(
+                                        channel_names::cliprdr,
+                                         in_s,
+                                         totalLength,
+                                           CHANNELS::CHANNEL_FLAG_FIRST
+                                         | CHANNELS::CHANNEL_FLAG_LAST
+                                         | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                 }
+                event.alarm.set_timeout(this->get_long_delay_timeout());
+            }
+        },
+        { "Wait format list response",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                event.alarm.set_timeout(this->get_long_delay_timeout());
+                event.garbage = true;
+            }
+        }
+        }};
 
-                return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).next();
-            }),
-            "Wait format list response"_f
-                                ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).ready();
-            })
-
-        ));
+        this->event_id = this->events.erase_event(this->event_id);
+        this->event_id = this->events.create_event_timeout(
+            "SessionProbeClipboardBasedLauncher Event", this,
+            this->time_base.get_current_time()+this->params.short_delay_ms,
+            std::move(chain));
     }
 
     void make_run_sequencer()
     {
-        using jln::value;
-        using namespace jln::literals;
-
-        auto send_scancode = [](auto param1, auto device_flags, auto check_image_readed, auto wait_for_short_delay){
-            return [](auto ctx, SessionProbeClipboardBasedLauncher& self){
-                if (bool(self.verbose & RDPVerbose::sesprobe_launcher)) {
-                    LOG(LOG_INFO, "SessionProbeClipboardBasedLauncher :=> on_event - %s",
-                        ctx.sequence_name());
+        Sequencer chain = {false, 0, bool(this->verbose & RDPVerbose::sesprobe_launcher),
+        {{ "Windows (down)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                if (this->image_readed) {
+                    event.garbage = true;
+                    return;
                 }
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_EXTENDED, 91, 0/*param2*/);
 
-                if (decltype(check_image_readed)::value && self.image_readed) {
-                    return ctx.terminate();
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "r (down)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    0, 19, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "r (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_RELEASE, 19, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "Windows (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_EXTENDED |SlowPath::KBDFLAGS_RELEASE, 91, 0/*param2*/);
+                event.alarm.set_timeout(this->get_long_delay_timeout());
+            }
+        },
+        { "Ctrl (down)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                if (this->image_readed) {
+                    event.garbage = true;
+                    return;
                 }
-
-                self.mod.send_input(
-                    0/*time*/,
-                    RDP_INPUT_SCANCODE,
-                    decltype(device_flags)::value,
-                    decltype(param1)::value,
-                    0/*param2*/
-                );
-
-                if (ctx.is_final_sequence()) {
-                    self.state = State::WAIT;
-                    return ctx.set_delay(self.to_microseconds(self.params.short_delay_ms, self.delay_coefficient)).at(0).ready();
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 29, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "v (down)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 47, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "v (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_RELEASE, 47, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "Ctrl (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+               this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE,
+                    SlowPath::KBDFLAGS_RELEASE, 29, 0/*param2*/);
+               event.alarm.set_timeout(this->get_long_delay_timeout());
+            }
+        },
+        { "Enter (down)",
+            [this](Event&event,Sequencer&sequencer)
+            {
+                ++this->copy_paste_loop_counter;
+                if (!this->format_data_requested) {
+                    // Back to the beginning of the sequence
+                    sequencer.next_state("Windows (down)");
+                    event.alarm.set_timeout(event.alarm.now);
+                    return;
                 }
-
-                return ctx.set_delay(
-                    self.to_microseconds(
-                        (decltype(wait_for_short_delay)::value ? self.params.short_delay_ms : self.params.long_delay_ms),
-                        self.delay_coefficient
-                    )
-                ).next();
-            };
-        };
-
-        this->event = this->session_reactor.create_timer(std::ref(*this))
-        .set_delay(this->params.short_delay_ms)
-        .on_action(jln::sequencer(
-            "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
-            "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
-            "r (up)"_f          (send_scancode(value<19>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Windows (up)"_f    (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED |
-                                                                SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-            "Ctrl (down)"_f     (send_scancode(value<29>, value<0>,                           value<true>,  value<true> )),
-            "v (down)"_f        (send_scancode(value<47>, value<0>,                           value<false>, value<true> )),
-            "v (up)"_f          (send_scancode(value<47>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true> )),
-            "Ctrl (up)"_f       (send_scancode(value<29>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<false>)),
-
-            "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                ++self.copy_paste_loop_counter;
-                if (!self.format_data_requested) {
-                    return ctx.set_delay(self.to_microseconds(self.params.short_delay_ms, self.delay_coefficient)).exec_at(0);
+                if (this->image_readed) {
+                    event.garbage = true;
+                    return;
                 }
-                return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
-            }),
-            "Enter (up)"_f      (send_scancode(value<28>, value<SlowPath::KBDFLAGS_RELEASE>,  value<false>, value<true>))
-        ));
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, 0, 28, 0/*param2*/);
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+            }
+        },
+        { "Enter (up)",
+            [this](Event&event,Sequencer&/*sequencer*/)
+            {
+                this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, SlowPath::KBDFLAGS_RELEASE, 28, 0/*param2*/);
+                this->state = State::WAIT;
+                event.alarm.set_timeout(this->get_short_delay_timeout());
+                event.garbage = true;
+            }
+        }}};
+
+        this->event_id = this->events.erase_event(this->event_id);
+        this->event_id = this->events.create_event_timeout(
+            "SessionProbeClipboardBasedLauncher Event", this,
+            this->time_base.get_current_time()+this->params.short_delay_ms,
+            std::move(chain));
     }
 
     bool on_server_format_list_response() override
@@ -582,7 +697,7 @@ public:
                           CHANNELS::CHANNEL_FLAG_FIRST
                         | CHANNELS::CHANNEL_FLAG_LAST
                         | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                        out_s.get_bytes());
+                        out_s.get_produced_bytes());
 
                 ret = false;
             }
@@ -611,7 +726,7 @@ public:
             "SessionProbeClipboardBasedLauncher :=> stop");
 
         this->state = State::STOP;
-        this->event.reset();
+        this->event_id = this->events.erase_event(this->event_id);
 
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {
@@ -692,7 +807,7 @@ private:
                 : false),
             std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_TEXT, {}}});
 
-        InStream in_s(out_s.get_bytes());
+        InStream in_s(out_s.get_produced_bytes());
         const size_t totalLength = out_s.get_offset();
         this->mod.send_to_mod_channel(channel_names::cliprdr,
                                       in_s,

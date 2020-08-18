@@ -26,20 +26,20 @@
 namespace utils
 {
 
-bool ends_with(array_view_const_char str, array_view_const_char suffix) noexcept
+bool ends_with(chars_view str, chars_view suffix) noexcept
 {
     return str.size() >= suffix.size()
         && strncmp(str.data() + str.size() - suffix.size(), suffix.data(), suffix.size()) == 0;
 }
 
-bool ends_case_with(array_view_const_char str, array_view_const_char suffix) noexcept
+bool ends_case_with(chars_view str, chars_view suffix) noexcept
 {
     return str.size() >= suffix.size()
         && strncasecmp(str.data() + str.size() - suffix.size(), suffix.data(), suffix.size()) == 0;
 }
 
 
-std::size_t strlcpy(char* dest, array_view_const_char src, std::size_t n) noexcept
+std::size_t strlcpy(char* dest, chars_view src, std::size_t n) noexcept
 {
     auto const nsrc = src.size();
     if (n) {
@@ -52,18 +52,7 @@ std::size_t strlcpy(char* dest, array_view_const_char src, std::size_t n) noexce
 
 std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept
 {
-    return strlcpy(dest, array_view_const_char{src, strlen(src)}, n);
-}
-
-
-bool strbcpy(char* dest, array_view_const_char src, std::size_t n) noexcept
-{
-    return strlcpy(dest, src, n) < n;
-}
-
-bool strbcpy(char* dest, char const* src, std::size_t n) noexcept
-{
-    return strlcpy(dest, src, n) < n;
+    return strlcpy(dest, chars_view{src, strlen(src)}, n);
 }
 
 } // namespace utils

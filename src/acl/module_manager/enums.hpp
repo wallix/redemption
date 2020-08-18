@@ -32,11 +32,10 @@ enum ModuleIndex : int
     MODULE_EXIT,
     MODULE_VNC,
     MODULE_RDP,
-    MODULE_XUP,
     MODULE_INTERNAL,
     MODULE_INTERNAL_CLOSE,
     MODULE_INTERNAL_CLOSE_BACK,
-    MODULE_INTERNAL_WIDGET_LOGIN,
+    MODULE_INTERNAL_LOGIN,
     MODULE_INTERNAL_CARD,
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
@@ -44,7 +43,7 @@ enum ModuleIndex : int
     MODULE_INTERNAL_TARGET,
     MODULE_INTERNAL_BOUNCER2,
     MODULE_INTERNAL_TEST,
-    MODULE_INTERNAL_WIDGET_SELECTOR,
+    MODULE_INTERNAL_SELECTOR,
     MODULE_INTERNAL_WIDGETTEST,
     MODULE_INTERNAL_WAIT_INFO,
     MODULE_INTERNAL_TRANSITION,
@@ -62,7 +61,7 @@ inline ModuleIndex get_internal_module_id_from_target(std::string_view target_na
     } names_id[5] = {
             {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
             {"autotest",           MODULE_INTERNAL_TEST},
-            {"widget_message",     MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"widget_message",     MODULE_INTERNAL_SELECTOR},
             {"widgettest",         MODULE_INTERNAL_WIDGETTEST},
             {"card",               MODULE_INTERNAL_CARD},
     };
@@ -83,9 +82,9 @@ inline ModuleIndex get_module_id(std::string_view module_name)
         std::string_view name;
         ModuleIndex id;
     } names_id[20] = {
-            {"login",              MODULE_INTERNAL_WIDGET_LOGIN},
-            {"selector",           MODULE_INTERNAL_WIDGET_SELECTOR},
-            {"selector_legacy",    MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"login",              MODULE_INTERNAL_LOGIN},
+            {"selector",           MODULE_INTERNAL_SELECTOR},
+            {"selector_legacy",    MODULE_INTERNAL_SELECTOR},
             {"confirm",            MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE},
             {"challenge",          MODULE_INTERNAL_DIALOG_CHALLENGE},
             {"valid",              MODULE_INTERNAL_DIALOG_VALID_MESSAGE},
@@ -99,7 +98,7 @@ inline ModuleIndex get_module_id(std::string_view module_name)
             {"waitinfo",           MODULE_INTERNAL_WAIT_INFO},
             {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
             {"autotest",           MODULE_INTERNAL_TEST},
-            {"widget_message",     MODULE_INTERNAL_WIDGET_SELECTOR},
+            {"widget_message",     MODULE_INTERNAL_SELECTOR},
             {"widget_test",        MODULE_INTERNAL_WIDGETTEST},
             {"card",               MODULE_INTERNAL_CARD},
             {"exit",               MODULE_INTERNAL_CARD}
@@ -107,7 +106,6 @@ inline ModuleIndex get_module_id(std::string_view module_name)
 
     ModuleIndex mi = MODULE_UNKNOWN;
     for (auto f: names_id){
-        LOG(LOG_INFO, "%s %.*s ", f.name.data(), int(module_name.size()), module_name.data());
         if (f.name == module_name){
             mi = f.id;
             break;
@@ -122,11 +120,10 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
         case MODULE_EXIT:                            return "MODULE_EXIT";
         case MODULE_VNC:                             return "MODULE_VNC";
         case MODULE_RDP:                             return "MODULE_RDP";
-        case MODULE_XUP:                             return "MODULE_XUP";
         case MODULE_INTERNAL:                        return "MODULE_INTERNAL";
         case MODULE_INTERNAL_CLOSE:                  return "MODULE_INTERNAL_CLOSE";
         case MODULE_INTERNAL_CLOSE_BACK:             return "MODULE_INTERNAL_CLOSE_BACK";
-        case MODULE_INTERNAL_WIDGET_LOGIN:           return "MODULE_INTERNAL_WIDGET_LOGIN";
+        case MODULE_INTERNAL_LOGIN:                  return "MODULE_INTERNAL_LOGIN";
         case MODULE_INTERNAL_CARD:                   return "MODULE_INTERNAL_CARD";
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE: return "MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE";
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:   return "MODULE_INTERNAL_DIALOG_VALID_MESSAGE";
@@ -134,7 +131,7 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
         case MODULE_INTERNAL_TARGET:                 return "MODULE_INTERNAL_TARGET";
         case MODULE_INTERNAL_BOUNCER2:               return "MODULE_INTERNAL_BOUNCER2";
         case MODULE_INTERNAL_TEST:                   return "MODULE_INTERNAL_TEST";
-        case MODULE_INTERNAL_WIDGET_SELECTOR:        return "MODULE_INTERNAL_WIDGET_SELECTOR";
+        case MODULE_INTERNAL_SELECTOR:               return "MODULE_INTERNAL_SELECTOR";
         case MODULE_INTERNAL_WIDGETTEST:             return "MODULE_INTERNAL_WIDGETTEST";
         case MODULE_INTERNAL_WAIT_INFO:              return "MODULE_INTERNAL_WAIT_INFO";
         case MODULE_INTERNAL_TRANSITION:             return "MODULE_INTERNAL_TRANSITION";
@@ -145,3 +142,4 @@ inline const char * get_module_name(ModuleIndex module_id) noexcept
 
     return "<unknown>";
 }
+

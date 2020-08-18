@@ -29,12 +29,13 @@ int main()
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
 
-
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    SessionReactor session_reactor;
-    Bouncer2Mod d(session_reactor, screen_info.width, screen_info.height);
+    TimeBase time_base({0,0});
+    GdForwarder gd_provider(front.gd());
+    EventContainer events;
+    Bouncer2Mod d(time_base, gd_provider, events, front, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

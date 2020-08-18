@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "core/callback.hpp"
 #include "keyboard/keymap2.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
@@ -32,7 +31,6 @@ class ClientCallback
 private:
     Keymap2           keymap;
     StaticOutStream<256> decoded_data;    // currently not initialized
-    int                  _timer;
 
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
@@ -47,8 +45,7 @@ public:
     } mouse_data;
 
     ClientCallback(ClientRedemptionAPI * client)
-    :  _timer(0)
-    , client(client)
+    : client(client)
     , rdp_keyLayout_api(nullptr)
     {}
 
@@ -85,8 +82,6 @@ public:
         return this->client->load_replay_mod(time_1, time_2);
     }
 
-
-
     void set_replay(ReplayMod * replay_mod) {
         this->replay_mod = replay_mod;
     }
@@ -121,18 +116,17 @@ public:
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
     }
-    // TODO string_view
-    void keyPressEvent(const int key, std::string const& text) {
-        this->rdp_keyLayout_api->init(0, key, text);
+
+    void keyPressEvent(const int key, std::string_view text) {
+        this->rdp_keyLayout_api->key_event(0, key, text);
         int keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode != 0) {
             this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
         }
     }
 
-    // TODO string_view
-    void keyReleaseEvent(const int key, std::string const& text) {
-        this->rdp_keyLayout_api->init(KBD_FLAG_UP, key, text);
+    void keyReleaseEvent(const int key, std::string_view text) {
+        this->rdp_keyLayout_api->key_event(KBD_FLAG_UP, key, text);
         int keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode != 0) {
             this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
@@ -177,7 +171,7 @@ public:
     }
 
     void CtrlAltDelReleased() {
-        const int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP; /*NOLINT*/
+        const int flag = int(Keymap2::KBDFLAGS_EXTENDED) | int(KBD_FLAG_UP);
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
         this->send_rdp_scanCode(KBD_SCANCODE_CTRL  , flag);
@@ -238,18 +232,11 @@ public:
             break;
         }
         if (this->mod != nullptr) {
-            this->mod->rdp_input_scancode(keyCode, 0, flag, this->_timer, &(this->keymap));
+            this->mod->rdp_input_scancode(keyCode, 0, flag, /*timer=*/0, &(this->keymap));
         }
     }
 
     void send_rdp_unicode(uint16_t unicode, uint16_t flag) {
         this->mod->rdp_input_unicode(unicode, flag);
     }
-
-    KeyCustomDefinition get_key_info(int keyCode, std::string const& text) {
-        return this->rdp_keyLayout_api->get_key_info(keyCode, text);
-    }
-
 };
-
-

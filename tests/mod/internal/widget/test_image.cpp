@@ -20,26 +20,28 @@
  */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
+#include "test_only/test_framework/check_img.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 #include "mod/internal/widget/image.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/check_sig.hpp"
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/core/font.hpp"
+
+#include "utils/sugar/array_view.hpp"
+
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/image/"
 
 RED_AUTO_TEST_CASE(TraceWidgetImage)
 {
     TestGraphic drawable(800, 600);
 
-
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(0, 0);
@@ -50,9 +52,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage)
                                      wimage.cx(),
                                      wimage.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image.png");
-
-    RED_CHECK_SIG(drawable, "\xe2\x5c\x4a\x10\xe0\xbc\x8f\x3c\xb5\x0b\x10\x98\xd1\xdc\x3b\xb8\x33\x28\x76\xbb");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage2)
@@ -61,12 +61,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImage2)
 
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(10, 100);
@@ -77,9 +76,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage2)
                                      wimage.cx(),
                                      wimage.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image2.png");
-
-    RED_CHECK_SIG(drawable, "\xfe\x5c\x1a\x41\xb3\x22\xa4\xc8\xe3\x39\x31\xd3\xd2\xe8\xe6\x55\x56\xce\x9a\xc7");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_2.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage3)
@@ -88,12 +85,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImage3)
 
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(-100, 500);
@@ -104,9 +100,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage3)
                                      wimage.cx(),
                                      wimage.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image3.png");
-
-    RED_CHECK_SIG(drawable, "\x15\xf3\xaf\x95\xac\x8e\x9b\xbc\x94\x91\x33\x79\x17\xf9\xee\x43\x74\x9c\x34\xc2");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_3.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage4)
@@ -115,12 +109,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImage4)
 
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(700, 500);
@@ -131,9 +124,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage4)
                                      wimage.cx(),
                                      wimage.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image4.png");
-
-    RED_CHECK_SIG(drawable, "\xff\x70\xc7\xd1\x91\x5d\x2a\x6b\x1d\x70\xf8\xcb\x96\x8d\x04\xef\x03\xcf\x73\x0e");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_4.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage5)
@@ -142,12 +133,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImage5)
 
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(-100, -100);
@@ -158,9 +148,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage5)
                                      wimage.cx(),
                                      wimage.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image5.png");
-
-    RED_CHECK_SIG(drawable, "\x1a\x71\xe8\x5b\x2b\x93\x0c\x4b\x68\x9f\xf8\x65\xc8\x53\xdd\xb5\x59\x9f\x29\x28");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_5.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImage6)
@@ -169,12 +157,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImage6)
 
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(700, -100);
@@ -185,9 +172,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImage6)
                                      wimage.cx(),
                                      wimage.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image6.png");
-
-    RED_CHECK_SIG(drawable, "\x34\x31\x5a\xd6\x44\x12\x6b\xb0\xb6\x61\x54\x70\x57\x63\xf3\x8f\x27\x76\xa3\x2e");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_6.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImageClip)
@@ -196,12 +181,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip)
 
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(700, -100);
@@ -212,9 +196,7 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip)
                                      50,
                                      100));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image7.png");
-
-    RED_CHECK_SIG(drawable, "\xa9\x9b\x0f\x65\x5b\xd3\xd0\x70\xee\xd2\xad\xa8\x61\x38\x5e\x9e\x95\x7a\x24\xa2");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_clip_1.png");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
@@ -223,12 +205,11 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
 
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    WidgetScreen parent(drawable, global_font(), nullptr, Theme{});
-    parent.set_wh(800, 600);
+    WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, Theme{});
 
     NotifyApi * notifier = nullptr;
 
-    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
+    WidgetImage wimage(drawable, FIXTURES_PATH"/logo-redemption.png", parent, notifier, BLACK);
     Dimension dim = wimage.get_optimal_dim();
     wimage.set_wh(dim);
     wimage.set_xy(0, 0);
@@ -239,7 +220,112 @@ RED_AUTO_TEST_CASE(TraceWidgetImageClip2)
                                      100,
                                      100));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "image8.png");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "image_clip_2.png");
+}
 
-    RED_CHECK_SIG(drawable, "\x30\xd6\xba\x4a\xd4\x54\x54\xc8\xa6\x55\xe1\xe7\xd1\x95\x83\xca\x36\xd0\x96\x47");
+RED_AUTO_TEST_CASE(TraceWidgetImage_transparent_png)
+{
+    struct Png
+    {
+        const char *filename;
+        BGRColor applied_bg_color;
+        char const* imgref;
+    };
+
+    RED_TEST_CONTEXT_DATA(const Png& png, "filename: " << png.filename,
+    {
+        Png
+        {
+            FIXTURES_PATH"/logo-redemption-transparent.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_1.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/logo-redemption-transparent2.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_2.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-transparent.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_1.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-transparent2.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_2.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-transparent3.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_3.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-transparent4.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_4.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-without-background-transparent.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_1.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-without-background-transparent2.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_2.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-without-background-transparent.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_1.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/alpha-channel-without-background-transparent4.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_alpha_channel_4.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/logo-redemption-half-transparent.png",
+            WHITE,
+            IMG_TEST_PATH "image_transparent_half_transparent_1.png",
+        },
+        Png
+        {
+            FIXTURES_PATH"/checkers-half-transparent.png",
+            DARK_BLUE_BIS,
+            IMG_TEST_PATH "image_transparent_half_transparent_2.png",
+        },
+    })
+    {
+        TestGraphic drawable(800, 600);
+        WidgetScreen parent(drawable, 800, 600, global_font(), nullptr, { });
+        NotifyApi *notifier = nullptr;
+        WidgetImage wimage(drawable,
+                           png.filename,
+                           parent,
+                           notifier,
+                           png.applied_bg_color);
+        Dimension dim = wimage.get_optimal_dim();
+
+        wimage.set_wh(dim);
+        wimage.set_xy(0, 0);
+
+        wimage.rdp_input_invalidate(Rect(0 + wimage.x(),
+                                         0 + wimage.y(),
+                                         wimage.cx(),
+                                         wimage.cy()));
+
+        RED_CHECK_IMG(drawable, png.imgref);
+    }
 }

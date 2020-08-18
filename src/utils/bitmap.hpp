@@ -51,8 +51,6 @@ public:
 
     struct PrivateData;
 
-    friend class PrivateData;
-
     Bitmap() noexcept = default;
 
     Bitmap(Bitmap && bmp) noexcept;
@@ -100,7 +98,7 @@ public:
 
     [[nodiscard]] bool has_data_compressed() const noexcept;
 
-    [[nodiscard]] array_view<uint8_t const> data_compressed() const noexcept;
+    [[nodiscard]] array_view<uint8_t> data_compressed() const noexcept;
 
     void compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const;
 

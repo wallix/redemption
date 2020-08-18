@@ -20,16 +20,16 @@
 
 #pragma once
 
-#include "core/report_error.hpp"
+#include <functional>
 #include "transport/transport.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 
 struct FileTransport : Transport
 {
-    explicit FileTransport(unique_fd fd, ReportError report_error = ReportError()) noexcept /*NOLINT*/
+    explicit FileTransport(unique_fd fd, std::function<void(const Error & error)> notify_error = [](const Error&){}) noexcept /*NOLINT*/
     : file(std::move(fd))
-    , report_error(std::move(report_error))
+    , notify_error(notify_error)
     {}
 
     bool disconnect() override
@@ -42,11 +42,6 @@ struct FileTransport : Transport
     [[nodiscard]] int get_fd() const override
     {
         return this->file.fd();
-    }
-
-    ReportError & get_report_error()
-    {
-        return this->report_error;
     }
 
     void open(unique_fd fd)
@@ -73,7 +68,8 @@ protected:
 
 private:
     unique_fd file;
-    ReportError report_error;
+public:
+    std::function<void(const Error & error)> notify_error;
 };
 
 

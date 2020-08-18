@@ -38,7 +38,7 @@ public:
     FakeFront(ScreenInfo& screen_info);
     ~FakeFront();
 
-    bool can_be_start_capture() override { return false; }
+    bool can_be_start_capture(bool /*force_capture*/) override { return false; }
     bool must_be_stop_capture() override { return false; }
     bool is_capture_in_progress() const override { return false; }
 
@@ -54,6 +54,9 @@ public:
     operator ConstImageDataView () const;
 
     gdi::GraphicApi& gd() noexcept;
+
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void possible_active_window_change() override {}
 
 private:
     class D;

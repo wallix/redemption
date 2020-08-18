@@ -66,6 +66,8 @@ RED_AUTO_TEST_CASE(TestIniAssign)
             ini.set<type>(c_s); RED_CHECK_EQUAL(ini.get<type>(), c_s);
         }
         {
+            using std::begin;
+            using std::end;
             using type = cfg::mod_rdp::auth_channel;
             auto & val = ini.get<type>();
             auto first1 = begin(val) + 3;
@@ -118,12 +120,11 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::duration>(cs);
     ini.set_acl<cfg::context::duration>(s);
     ini.set<cfg::context::end_date_cnx>(1);
-    ini.set<cfg::context::forcemodule>(true);
     ini.set_acl<cfg::context::formflag>(1);
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);
     ini.set<cfg::context::message>(s);
-    ini.set<cfg::context::mode_console>(RdpModeConsole::allow);
+    ini.set<cfg::mod_rdp::mode_console>(RdpModeConsole::allow);
     ini.set_acl<cfg::context::module>(1);
     ini.set_acl<cfg::context::opt_bpp>(ColorDepth::depth15);
     ini.set_acl<cfg::context::opt_height>(1);
@@ -205,8 +206,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::listen_address>(cip);
     ini.set<cfg::globals::listen_address>(sip);
     ini.set<cfg::globals::is_rec>(true);
-    ini.set<cfg::globals::movie_path>(cpath);
-    ini.set<cfg::globals::movie_path>(spath);
     ini.set<cfg::globals::nomouse>(true);
     ini.set<cfg::video::notimestamp>(true);
     ini.set<cfg::globals::port>(1);
@@ -225,9 +224,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::target_user>(s);
     ini.set<cfg::globals::trace_type>(TraceType::localfile);
 
-    ini.set<cfg::internal_mod::theme>(cpath);
-    ini.set<cfg::internal_mod::theme>(spath);
-
     ini.set<cfg::mod_rdp::allow_channels>(cslist);
     ini.set<cfg::mod_rdp::allow_channels>(slist);
     ini.set<cfg::mod_rdp::alternate_shell>(cs);
@@ -243,8 +239,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::enable_nla>(true);
     ini.set<cfg::mod_rdp::enable_session_probe>(true);
     ini.set<cfg::mod_rdp::session_probe_enable_launch_mask>(true);
-    ini.set<cfg::mod_rdp::extra_orders>(cslist);
-    ini.set<cfg::mod_rdp::extra_orders>(slist);
     ini.set<cfg::mod_rdp::fast_path>(true);
     ini.set<cfg::mod_rdp::ignore_auth_channel>(true);
     ini.set<cfg::mod_rdp::open_session_timeout>(std::chrono::seconds{1});
@@ -253,7 +247,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::mod_rdp::proxy_managed_drives>(cslist);
     ini.set<cfg::mod_rdp::proxy_managed_drives>(slist);
     ini.set<cfg::mod_rdp::rdp_compression>(RdpCompression::rdp4);
-    ini.get_mutable_ref<cfg::mod_rdp::redir_info>().dont_store_username = true;
     ini.set<cfg::mod_rdp::server_access_allowed_message>(ServerNotification::admin);
     ini.set<cfg::mod_rdp::server_cert_check>(ServerCertCheck::always_succeed);
     ini.set<cfg::mod_rdp::server_cert_create_message>(ServerNotification::admin);

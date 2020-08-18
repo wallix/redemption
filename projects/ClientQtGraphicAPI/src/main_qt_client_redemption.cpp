@@ -40,24 +40,26 @@ class ClientRedemptionQt : public ClientRedemption
 
 private:
     QtIOGraphicMouseKeyboard qt_graphic;
-    QtOutputSound * qt_sound;
-    QtInputSocket * qt_socket_listener;
-    QtInputOutputClipboard * qt_clipboard;
+    QtOutputSound qt_sound;
+    QtInputSocket qt_socket_listener;
+    QtInputOutputClipboard qt_clipboard;
     QtClientRDPKeyLayout qt_rdp_keylayout;
     IODisk ioDisk;
 
 public:
-    ClientRedemptionQt(SessionReactor & session_reactor,
-                       ClientRedemptionConfig & config)
-            : ClientRedemption(session_reactor, config)
-            , qt_graphic(&(this->_callback), &(this->config))
+    ClientRedemptionQt(
+        TimeBase & time_base,
+        EventContainer& events,
+        ClientRedemptionConfig & config)
+    : ClientRedemption(time_base, events, config)
+    , qt_graphic(&this->_callback, &this->config)
+    , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
+    , qt_socket_listener(this->qt_graphic.get_static_qwidget(), time_base, events)
+    , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
+        this->qt_graphic.get_static_qwidget())
     {
-        this->qt_sound = new QtOutputSound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
-        this->qt_socket_listener = new QtInputSocket(session_reactor, this, this->qt_graphic.get_static_qwidget());
-        this->qt_clipboard = new QtInputOutputClipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR, this->qt_graphic.get_static_qwidget());
-
-        this->clientRDPSNDChannel.set_api(this->qt_sound);
-        this->clientCLIPRDRChannel.set_api(this->qt_clipboard);
+        this->clientRDPSNDChannel.set_api(&this->qt_sound);
+        this->clientCLIPRDRChannel.set_api(&this->qt_clipboard);
         this->clientRDPDRChannel.set_api(&this->ioDisk);
         this->clientRemoteAppChannel.set_api(&this->qt_graphic);
 
@@ -71,6 +73,10 @@ public:
             this->cmd_launch_conn();
         }
     }
+
+    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+
+    void possible_active_window_change() override {}
 
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
         if (this->config.mod_state != ClientRedemptionConfig::MOD_VNC) {
@@ -106,11 +112,30 @@ public:
             }
         }
 
+        this->time_base.set_current_time(tvtime());
+
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
+            if (auto* mod = this->_callback.get_mod()) {
+                auto action = [this](bool is_timeout){
+                    this->time_base.set_current_time(tvtime());
+                    try {
+                        auto const end_tv = this->time_base.get_current_time();
+                        auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
+                        this->events.execute_events(end_tv, fn, 0);
+                    } catch (const Error & e) {
+                        const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
+                        LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
+                        std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
+                        this->disconnect(labelErrorMsg, true);
+                    }
+                };
 
-            if (this->qt_socket_listener->start_to_listen(this->client_sck, this->_callback.get_mod())) {
+                this->qt_socket_listener.start_to_listen(
+                    this->client_sck,
+                    [action]{ action(false); },
+                    [action]{ action(true); });
 
                 this->start_wab_session_time = tvtime();
 
@@ -123,7 +148,7 @@ public:
 
     void disconnect(std::string const & error, bool pipe_broken) override {
         this->qt_graphic.dropScreen();
-        this->qt_socket_listener->disconnect();
+        this->qt_socket_listener.disconnect();
         ClientRedemption::disconnect(error, pipe_broken);
         this->qt_graphic.init_form();
     }
@@ -136,10 +161,6 @@ public:
     void update_keylayout() override {
         this->qt_rdp_keylayout.update_keylayout(this->config.info.keylayout);
 
-        this->qt_rdp_keylayout.clearCustomKeyCode();
-        for (KeyCustomDefinition& key : this->config.keyCustomDefinitions) {
-            this->qt_rdp_keylayout.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
-        }
         ClientRedemption::update_keylayout();
     }
 
@@ -303,13 +324,6 @@ public:
         ClientRedemption::draw(order);
     }
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
-        (void) bmp;
-    }
-
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
     }
 
@@ -319,17 +333,17 @@ public:
 
         ClientRedemption::draw(cmd, content);
 
-		QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
-		img = img.copy(QRect(0, 0, cmd.width, cmd.height));
+        QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
+        img = img.copy(QRect(0, 0, cmd.width, cmd.height));
 
 #if 0
-		static int frameNo = 0;
-		frameNo++;
-		img.save(QString("/tmp/img%1.png").arg(frameNo), "PNG", 100);
+        static int frameNo = 0;
+        frameNo++;
+        img.save(QString("/tmp/img%1.png").arg(frameNo), "PNG", 100);
 #endif
 
-		this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
-	}
+        this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+    }
 };
 
 
@@ -337,7 +351,9 @@ int main(int argc, char** argv)
 {
     set_exception_handler_pretty_message();
 
-    SessionReactor session_reactor;
+    Inifile ini;
+    TimeBase time_base({0,0});
+    EventContainer events;
 
     QApplication app(argc, argv);
 
@@ -347,7 +363,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_init;
 
-    ClientRedemptionQt client_qt(session_reactor, config);
+    ClientRedemptionQt client_qt(time_base, events, config);
 
     app.exec();
 }

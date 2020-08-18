@@ -26,9 +26,8 @@
 #include "core/error.hpp"
 #include "core/log_id.hpp"
 #include "core/front_api.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "core/window_constants.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel_params.hpp"
 #include "mod/rdp/rdp_api.hpp"
@@ -36,6 +35,8 @@
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
+#include <functional>
+
 
 #include <chrono>
 #include <memory>
@@ -56,12 +57,26 @@ enum {
 
 // Session Probe Options
 enum {
-    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
+    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001,
+    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
+    OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
+    OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
+    OPTION_ENABLE_APPLICATION_DRIVER_CLEANER                    = 0x00000010
 };
-
 
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
+public:
+    struct Callbacks {
+        virtual void freeze_screen() = 0;
+        virtual void disable_graphics_update() = 0;
+        virtual void enable_graphics_update() = 0;
+        virtual void disable_input_event() = 0;
+        virtual void enable_input_event() = 0;
+        virtual void display_osd_message(std::string const & message) = 0;
+        virtual ~Callbacks() {}
+    };
+
 private:
     bool session_probe_ending_in_progress  = false;
     bool session_probe_keep_alive_received = true;
@@ -87,9 +102,7 @@ private:
 
     FrontAPI& front;
 
-    mod_api& mod;
     rdp_api& rdp;
-    AuthApi& authentifier;
 
     FileSystemVirtualChannel& file_system_virtual_channel;
 
@@ -108,9 +121,11 @@ private:
 
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
-    SessionReactor& session_reactor;
-    SessionReactor::TimerPtr session_probe_timer;
-    SessionReactor::GraphicEventPtr freeze_mod_screen;
+    TimeBase& time_base;
+    EventContainer& events;
+    int session_probe_timer = 0;
+    Callbacks & callbacks;
+    AuthApi & sesman;
 
     bool launch_aborted = false;
 
@@ -123,7 +138,7 @@ private:
 
     void log6(LogId id, KVList kv_list)
     {
-        this->report_message.log6(id, this->session_reactor.get_current_time(), kv_list);
+        this->sesman.log6(id, kv_list);
 
         if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
             std::string msg;
@@ -158,16 +173,17 @@ public:
     };
 
     explicit SessionProbeVirtualChannel(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
+        EventContainer& events,
+        AuthApi & sesman,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
-        mod_api& mod,
         rdp_api& rdp,
-        AuthApi& authentifier,
         FileSystemVirtualChannel& file_system_virtual_channel,
         Random & gen,
         const BaseVirtualChannel::Params & base_params,
-        const Params& params)
+        const Params& params,
+        Callbacks & callbacks)
     : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
     , sespro_params(params.sespro_params)
     , param_target_informations(params.target_informations)
@@ -179,12 +195,13 @@ public:
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
     , front(front)
-    , mod(mod)
     , rdp(rdp)
-    , authentifier(authentifier)
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
+    , events(events)
+    , callbacks(callbacks)
+    , sesman(sesman)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"
@@ -196,6 +213,11 @@ public:
         this->front.set_focus_on_password_textbox(false);
         this->front.set_focus_on_unidentified_input_field(false);
         this->front.set_consent_ui_visible(false);
+    }
+
+    ~SessionProbeVirtualChannel()
+    {
+        this->events.end_of_lifespan(this);
     }
 
     void enable_bogus_refresh_rect_ex_support(bool enable) {
@@ -214,12 +236,17 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO, "SessionProbeVirtualChannel::start_launch_timeout_timer");
 
             if (!this->session_probe_launch_timeout_timer_started) {
-                this->session_probe_timer = this->session_reactor.create_timer()
-                .set_delay(this->sespro_params.effective_launch_timeout)
-                .on_action([this](JLN_TIMER_CTX ctx){
-                    this->process_event_launch();
-                    return ctx.ready_to(this->sespro_params.effective_launch_timeout);
-                });
+                this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
+                // TODO: could be replace event timeout
+                this->session_probe_timer = this->events.create_event_timeout(
+                    "Session Probe Timer", this,
+                    this->time_base.get_current_time()+this->sespro_params.effective_launch_timeout,
+                    [this](Event&event)
+                    {
+                        this->process_event_launch();
+                        event.alarm.reset_timeout(this->time_base.get_current_time()
+                            +this->sespro_params.effective_launch_timeout);
+                    });
                 this->session_probe_launch_timeout_timer_started = true;
             }
         }
@@ -229,17 +256,22 @@ public:
     {
         this->launch_aborted = true;
 
-        this->session_probe_timer = this->session_reactor.create_timer()
-        .set_delay(this->sespro_params.launcher_abort_delay)
-        .on_action(jln::one_shot([this](){
-            this->process_event_launch();
-        }));
+        this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
+        // TODO: could be a replace/create 
+        this->session_probe_timer = this->events.create_event_timeout("Session Probe Timer", this,
+            this->time_base.get_current_time()+this->sespro_params.launcher_abort_delay,
+            [this](Event&event){
+                this->process_event_launch();
+                event.garbage = true;
+            });
     }
 
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
-            this->session_probe_timer->set_delay(this->sespro_params.effective_launch_timeout);
-
+            if (this->session_probe_timer) {
+                this->events.reset_timeout(this->time_base.get_current_time()+this->sespro_params.effective_launch_timeout,
+                              this->session_probe_timer);
+            }
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                 "SessionProbeVirtualChannel::give_additional_launch_time");
         }
@@ -266,14 +298,18 @@ private:
 
             this->send_message_to_server(out_s.get_offset(),
                 CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-                out_s.get_bytes());
+                out_s.get_produced_bytes());
         }
 
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
             "SessionProbeVirtualChannel::request_keep_alive: "
                 "Session Probe keep alive requested");
 
-        this->session_probe_timer->set_delay(this->sespro_params.keepalive_timeout);
+        if (this->session_probe_timer) {
+            this->events.reset_timeout(this->time_base.get_current_time()+this->sespro_params.keepalive_timeout,
+                        this->session_probe_timer);
+        }
+
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
@@ -293,26 +329,13 @@ private:
             this->session_probe_stop_launch_sequence_notifier = nullptr;
         }
 
-        this->session_probe_timer.reset();
+        this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
 
-        const bool disable_input_event     = false;
-        const bool disable_graphics_update = false;
-        const bool need_full_screen_update =
-            this->mod.disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
+        this->callbacks.enable_graphics_update();
+        this->callbacks.enable_input_event();
 
-        if (this->sespro_params.on_launch_failure
-         != SessionProbeOnLaunchFailure::ignore_and_continue) {
+        if (this->sespro_params.on_launch_failure != SessionProbeOnLaunchFailure::ignore_and_continue) {
             throw Error(err_id);
-        }
-
-        if (need_full_screen_update) {
-            LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                "SessionProbeVirtualChannel::process_event: "
-                    "Force full screen update. Rect=(0, 0, %u, %u)",
-                this->param_front_width, this->param_front_height);
-            this->mod.rdp_input_invalidate(Rect(0, 0,
-                this->param_front_width, this->param_front_height));
         }
 
         this->rdp.sespro_launch_process_ended();
@@ -321,46 +344,61 @@ private:
     void process_event_ready()
     {
         if (!this->session_probe_keep_alive_received) {
-            if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
-                this->mod.disable_input_event_and_graphics_update(
-                    disable_input_event, disable_graphics_update);
+            LOG(LOG_ERR,
+                "SessionProbeVirtualChannel::process_event: "
+                    "No keep alive received from Session Probe!");
 
-                LOG(LOG_ERR,
-                    "SessionProbeVirtualChannel::process_event: "
-                        "No keep alive received from Session Probe!");
+            if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                this->callbacks.enable_graphics_update();
+                this->callbacks.enable_input_event();
             }
 
             if (!this->disconnection_reconnection_required) {
                 if (this->session_probe_ending_in_progress) {
-                    this->rdp.sespro_ending_in_progress();
+                    LOG(LOG_INFO,
+                        "SessionProbeVirtualChannel::process_event: "
+                            "Session ending is in progress.");
+
+                    if (this->sespro_params.at_end_of_session_freeze_connection_and_wait) {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_event: "
+                                "Freezes connection and wait end of session.");
+
+                        if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
+                            this->callbacks.disable_graphics_update();
+                            this->callbacks.disable_input_event();
+                            this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
+                        }
+                        this->request_keep_alive();
+                        this->callbacks.display_osd_message("No keep alive received from Session Probe! (End of session in progress.)");
+                    }
+                    else {
+                        LOG(LOG_INFO,
+                            "SessionProbeVirtualChannel::process_event: "
+                                "Precipitates the end of the session.");
+
+                        this->rdp.sespro_ending_in_progress();
+                    }
+
                     return ;
                 }
 
                 if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
                     this->sespro_params.on_keepalive_timeout) {
-                    this->report_message.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                    this->sesman.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                 }
                 else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
                             this->sespro_params.on_keepalive_timeout) {
 
                     if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                        const bool disable_input_event     = true;
-                        const bool disable_graphics_update = true;
-                            this->mod.disable_input_event_and_graphics_update(
-                                disable_input_event, disable_graphics_update);
+                        this->callbacks.disable_graphics_update();
+                        this->callbacks.disable_input_event();
 
                         this->client_input_disabled_because_session_probe_keepalive_is_missing = true;
-
-                        this->freeze_mod_screen = this->session_reactor
-                        .create_graphic_event(mod.get_dim())
-                        .on_action(jln::one_shot([](gdi::GraphicApi& drawable, Dimension const& dim){
-                            gdi_freeze_screen(drawable, dim);
-                        }));
+                        this->callbacks.freeze_screen();
                     }
                     this->request_keep_alive();
-                    this->mod.display_osd_message("No keep alive received from Session Probe!");
+                    this->callbacks.display_osd_message("No keep alive received from Session Probe!");
                 }
                 else {
                     this->front.session_probe_started(false);
@@ -368,6 +406,8 @@ private:
             }
         }
         else {
+//            LOG(LOG_INFO, "================== SESSION PROBE KEEPALIVE =====================");
+//            this->callbacks.display_osd_message("Session Probe Keepalive");
             this->request_keep_alive();
         }
     }
@@ -388,7 +428,7 @@ private:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
 public:
@@ -472,8 +512,7 @@ public:
                         this->options);
                 }
 
-                bool const delay_disabled_launch_mask = (options & OPTION_DELAY_DISABLED_LAUNCH_MASK);
-
+                bool const delay_disabled_launch_mask = (this->options & OPTION_DELAY_DISABLED_LAUNCH_MASK);
 
                 error_type err_id = NO_ERROR;
 
@@ -484,7 +523,7 @@ public:
 
                     if (!this->sespro_params.allow_multiple_handshake &&
                         (this->reconnection_cookie != remote_reconnection_cookie)) {
-                        this->report_message.report("SESSION_PROBE_RECONNECTION", "");
+                        this->sesman.report("SESSION_PROBE_RECONNECTION", "");
                     }
                 }
                 else {
@@ -499,29 +538,18 @@ public:
                 this->front.session_probe_started(true);
 
                 if (!delay_disabled_launch_mask) {
-                    const bool disable_input_event     = false;
-                    const bool disable_graphics_update = false;
-                    if (this->mod.disable_input_event_and_graphics_update(
-                            disable_input_event, disable_graphics_update)) {
-                        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                            "SessionProbeVirtualChannel::process_server_message: "
-                                "Force full screen update. Rect=(0, 0, %u, %u)",
-                            this->param_front_width, this->param_front_height);
-                        if (this->param_bogus_refresh_rect_ex) {
-                            this->mod.rdp_suppress_display_updates();
-                            this->mod.rdp_allow_display_updates(0, 0,
-                                this->param_front_width, this->param_front_height);
-                        }
-                        this->mod.rdp_input_invalidate(Rect(0, 0,
-                            this->param_front_width, this->param_front_height));
-                    }
+                    this->callbacks.enable_input_event();
+                    this->callbacks.enable_graphics_update();
                 }
 
-                this->file_system_virtual_channel.disable_session_probe_drive();
+                if (!this->sespro_params.launch_application_driver) {
+                    this->file_system_virtual_channel.disable_session_probe_drive();
+                }
 
-                this->session_probe_timer.reset();
-
+                this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
                 this->rdp.sespro_launch_process_ended();
+
+                // The order of the messages sent is very important!
 
                 if (this->sespro_params.keepalive_timeout.count() > 0) {
                     send_client_message([](OutStream & out_s) {
@@ -532,12 +560,15 @@ public:
                         "SessionProbeVirtualChannel::process_event: "
                             "Session Probe keep alive requested");
 
-                    this->session_probe_timer = this->session_reactor.create_timer()
-                    .set_delay(this->sespro_params.keepalive_timeout)
-                    .on_action([this](auto ctx){
-                        this->process_event_ready();
-                        return ctx.ready_to(this->sespro_params.keepalive_timeout);
-                    });
+                    this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
+                    this->session_probe_timer = this->events.create_event_timeout(
+                        "Session Probe Keepalive Timer", this,
+                        this->time_base.get_current_time()+this->sespro_params.keepalive_timeout,
+                        [this](Event&event)
+                        {
+                            this->process_event_ready();
+                            event.alarm.reset_timeout(event.alarm.now+this->sespro_params.keepalive_timeout);
+                        });
                 }
 
                 send_client_message([](OutStream & out_s) {
@@ -564,6 +595,22 @@ public:
 
                     if (this->sespro_params.ignore_ui_less_processes_during_end_of_session_check) {
                         options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
+                    }
+
+                    if (this->sespro_params.update_disabled_features) {
+                        options |= OPTION_UPDATE_DISABLED_FEATURES;
+                    }
+
+                    if (this->sespro_params.launch_application_driver_then_terminate) {
+                        options |= OPTION_LAUNCH_APPLICATION_THEN_TERMINATE;
+                    }
+
+                    if (this->sespro_params.enable_self_cleaner) {
+                        options |= OPTION_ENABLE_SELF_CLEANER;
+                    }
+
+                    if (this->sespro_params.enable_application_driver_cleaner) {
+                        options |= OPTION_ENABLE_APPLICATION_DRIVER_CLEANER;
                     }
 
                     if (options)
@@ -702,6 +749,17 @@ public:
                 });
 
                 send_client_message([this](OutStream & out_s) {
+                    out_s.out_copy_bytes("BestSafeIntegration="_av);
+
+                    if (this->sespro_params.bestsafe_integration) {
+                        out_s.out_copy_bytes("Yes"_av);
+                    }
+                    else {
+                        out_s.out_copy_bytes("No"_av);
+                    }
+                });
+
+                send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("DisabledFeatures="_av);
 
                     {
@@ -713,22 +771,13 @@ public:
                 });
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "DisableLaunchMask")) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
-                if (this->mod.disable_input_event_and_graphics_update(
-                        disable_input_event, disable_graphics_update)) {
-                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                        "SessionProbeVirtualChannel::process_server_message: "
-                            "Force full screen update. Rect=(0, 0, %u, %u)",
-                        this->param_front_width, this->param_front_height);
-                    if (this->param_bogus_refresh_rect_ex) {
-                        this->mod.rdp_suppress_display_updates();
-                        this->mod.rdp_allow_display_updates(0, 0,
-                            this->param_front_width, this->param_front_height);
-                    }
-                    this->mod.rdp_input_invalidate(Rect(0, 0,
-                        this->param_front_width, this->param_front_height));
-                }
+                this->callbacks.enable_input_event();
+                this->callbacks.enable_graphics_update();
+            }
+            else if (!::strcasecmp(parameters_[0].c_str(), "DisableRedirectedDrive")) {
+                assert(this->sespro_params.launch_application_driver);
+
+                this->file_system_virtual_channel.disable_session_probe_drive();
             }
             else if (!::strcasecmp(parameters_[0].c_str(), "Get target informations")) {
                 send_client_message([this](OutStream & out_s) {
@@ -954,13 +1003,35 @@ public:
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("EnableLog=Yes"_av);
 
-                    if (this->sespro_params.enable_log_rotation) {
-                        if (0x0103 <= this->other_version) {
-                            out_s.out_uint8('\x01');
+                    if (0x0103 <= this->other_version) {
+                        out_s.out_uint8('\x01');
+                        if (this->sespro_params.enable_log_rotation) {
                             out_s.out_copy_bytes("Yes"_av);
                         }
                         else {
-                            LOG(LOG_INFO,
+                            out_s.out_copy_bytes("No"_av);
+                        }
+
+                        if (0x0104 <= this->other_version) {
+                            out_s.out_uint8('\x01');
+
+                            char cstr[128];
+                            int len = std::snprintf(cstr, sizeof(cstr), "%d",
+                                static_cast<int>(this->sespro_params.log_level));
+                            out_s.out_copy_bytes(cstr, size_t(len));
+                        }
+                        else {
+                            if (this->sespro_params.log_level >= SessionProbeLogLevel::Off) {
+                                LOG(LOG_WARNING,
+                                    "SessionProbeVirtualChannel::process_event: "
+                                        "Log levels are not supported by Session Probe! OtherVersion=0x%X",
+                                    this->other_version);
+                            }
+                        }
+                    }
+                    else {
+                        if (this->sespro_params.enable_log_rotation) {
+                            LOG(LOG_WARNING,
                                 "SessionProbeVirtualChannel::process_event: "
                                     "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
                                 this->other_version);
@@ -976,23 +1047,16 @@ public:
                  !::strcasecmp(parameters_[0].c_str(), "OK")) {
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
                 "SessionProbeVirtualChannel::process_server_message: "
-                    "Recevied Keep-Alive from Session Probe.");
+                    "Received Keep-Alive from Session Probe.");
             this->session_probe_keep_alive_received = true;
 
             if (this->client_input_disabled_because_session_probe_keepalive_is_missing) {
-                const bool disable_input_event     = false;
-                const bool disable_graphics_update = false;
-                 this->mod.disable_input_event_and_graphics_update(
-                     disable_input_event, disable_graphics_update);
+                this->callbacks.enable_input_event();
+                this->callbacks.enable_graphics_update();
 
                 std::string string_message;
-                this->mod.display_osd_message(string_message);
-
-                this->mod.rdp_input_invalidate(Rect(0, 0,
-                    this->param_front_width, this->param_front_height));
-
+                this->callbacks.display_osd_message(string_message);
                 this->request_keep_alive();
-
                 this->client_input_disabled_because_session_probe_keepalive_is_missing = false;
             }
         }
@@ -1025,6 +1089,13 @@ public:
                     else {
                         message_format_invalid = true;
                     }
+                }
+                else if (!::strcasecmp(order_.c_str(), "BESTSAFE_SERVICE_LOG")) {
+                    std::vector<KVLog> vecLog;
+                    for (size_t i = 0, c = parameters_.size() / 2; i < c; ++i) {
+                        vecLog.emplace_back(KVLog{parameters_[i * 2], parameters_[i * 2 + 1]});
+                    }
+                    this->log6(LogId::BESTSAFE_SERVICE_LOG, {vecLog});
                 }
                 else if (!::strcasecmp(order_.c_str(), "PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     this->log6(
@@ -1108,7 +1179,7 @@ public:
                             "app_name=%s  raw_result=%s",
                             parameters_[0], parameters_[1]);
 
-                        this->report_message.report(
+                        this->sesman.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
                     else {
@@ -1129,7 +1200,7 @@ public:
                             "app_name=%s  raw_result=%s  raw_result_message=%s",
                             parameters_[0], parameters_[1], parameters_[2]);
 
-                        this->report_message.report(
+                        this->sesman.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
                     else {
@@ -1161,7 +1232,7 @@ public:
                             trkeys::process_interrupted_security_policies,
                             parameters_[1].c_str());
 
-                        this->mod.display_osd_message(message);
+                        this->callbacks.display_osd_message(message);
                     }
                     else {
                         message_format_invalid = true;
@@ -1204,7 +1275,7 @@ public:
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
                                     parameters_[3].c_str(), parameters_[4].c_str());
 
-                                this->report_message.report(
+                                this->sesman.report(
                                     (deny ? "FINDCONNECTION_DENY" : "FINDCONNECTION_NOTIFY"),
                                     message);
                             }
@@ -1213,7 +1284,7 @@ public:
                                 if (::strtoul(parameters_[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
-                                    this->report_message.report(
+                                    this->sesman.report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1224,7 +1295,7 @@ public:
                                         parameters_[1].c_str());
 
                                     std::string string_message = message;
-                                    this->mod.display_osd_message(string_message);
+                                    this->callbacks.display_osd_message(string_message);
                                 }
                             }
                         }
@@ -1262,7 +1333,7 @@ public:
                                 snprintf(message, sizeof(message), "%s|%s|%s",
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str());
 
-                                this->report_message.report(
+                                this->sesman.report(
                                     (deny ? "FINDPROCESS_DENY" : "FINDPROCESS_NOTIFY"),
                                     message);
                             }
@@ -1271,7 +1342,7 @@ public:
                                 if (::strtoul(parameters_[3].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block process!");
-                                    this->report_message.report(
+                                    this->sesman.report(
                                         "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1281,7 +1352,7 @@ public:
                                         trkeys::process_interrupted_security_policies,
                                         parameters_[1].c_str());
 
-                                    this->mod.display_osd_message(message);
+                                    this->callbacks.display_osd_message(message);
                                 }
                             }
                         }
@@ -1313,7 +1384,7 @@ public:
                                 parameters_[0].c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
                                 parameters_[3].c_str(), parameters_[4].c_str(), parameters_[5].c_str());
 
-                            this->report_message.report(
+                            this->sesman.report(
                                 (deny ? "ACCOUNTMANIPULATION_DENY" : "ACCOUNTMANIPULATION_NOTIFY"),
                                 message);
                         }
@@ -1325,7 +1396,7 @@ public:
                                 trkeys::account_manipulation_blocked_security_policies,
                                 parameters_[3].c_str());
 
-                            this->mod.display_osd_message(message);
+                            this->callbacks.display_osd_message(message);
                         }
                     }
                     else {
@@ -1344,7 +1415,7 @@ public:
                             KVLog("text"_av,         parameters_[0]),
                             KVLog("class_name"_av,   parameters_[1]),
                             KVLog("command_line"_av, (parameters_.size() == 2)
-                                ? array_view_const_char{} : parameters_[2]),
+                                ? chars_view{} : parameters_[2]),
                         });
                     }
                     else {
@@ -1490,9 +1561,9 @@ public:
 
                 else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_SUPPORTED")) {
                     if (parameters_.size() == 1) {
-                        if ((!::strcasecmp(parameters_[0].c_str(), "yes")) &&
-                            this->sespro_params.session_shadowing_support) {
-                            this->authentifier.rd_shadow_available();
+                        if ((!::strcasecmp(parameters_[0].c_str(), "yes")) 
+                        && this->sespro_params.session_shadowing_support) {
+                            this->sesman.set_rd_shadow_available();
                         }
                     }
                     else {
@@ -1511,10 +1582,10 @@ public:
                             const char *   shadow_addr = parameters_[4].c_str();
                             const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
 
-                            this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
+                            this->sesman.set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }
                         else {
-                            this->authentifier.rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
+                            this->sesman.set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
                         }
                     }
                     else {
@@ -1570,7 +1641,7 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
     void rail_exec(const char* application_name, const char* command_line,
@@ -1617,10 +1688,12 @@ public:
 
         this->send_message_to_server(out_s.get_offset(),
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
-            out_s.get_bytes());
+            out_s.get_produced_bytes());
     }
 
     void create_shadow_session(const char * userdata, const char * type) {
+        LOG(LOG_INFO, "sespro_channel::create_shadow_session()");
+
         bool bTakeControl       = true;
         bool bRequestPermission = true;
 
@@ -1646,7 +1719,7 @@ public:
                     "Invalid shadow session type! Operation canceled. Type=%s",
                 type);
 
-            this->authentifier.rd_shadow_invitation(
+            this->sesman.set_rd_shadow_invitation(
                     0x80004005, // E_FAIL
                     "The shadow session type specified is invalid!",
                     userdata,

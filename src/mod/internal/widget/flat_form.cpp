@@ -24,12 +24,13 @@
 #include "utils/theme.hpp"
 #include "keyboard/keymap2.hpp"
 
+using namespace std::chrono_literals;
 
 FlatForm::FlatForm(
     gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    unsigned flags, int duration_max
+    unsigned flags, std::chrono::minutes duration_max
 )
     : FlatForm(drawable, parent, notifier, group_id, font, theme, lang, flags, duration_max)
 {
@@ -40,7 +41,7 @@ FlatForm::FlatForm(
     gdi::GraphicApi& drawable,
     Widget & parent, NotifyApi* notifier, int group_id,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    unsigned flags, int duration_max
+    unsigned flags, std::chrono::minutes duration_max
 )
     : WidgetParent(drawable, parent, notifier, group_id)
     , warning_msg(drawable, *this, nullptr, "", group_id,
@@ -69,7 +70,7 @@ FlatForm::FlatForm(
                 6, 2)
     , tr(lang)
     , flags(flags)
-    , duration_max(duration_max)
+    , duration_max(duration_max == 0min ? 60000min : duration_max)
     , warning_buffer()
 {
     this->set_bg_color(theme.global.bgcolor);
@@ -106,9 +107,6 @@ FlatForm::FlatForm(
     }
 
     this->add_widget(&this->confirm);
-    if (this->duration_max == 0) {
-        this->duration_max = 600000;
-    }
 }
 
 FlatForm::~FlatForm()
@@ -246,7 +244,7 @@ void FlatForm::set_warning_buffer(trkeys::TrKeyFmt<T> k, Ts const&... xs)
 
 namespace
 {
-    unsigned long check_duration(const char * duration)
+    std::chrono::minutes check_duration(const char * duration)
     {
         unsigned long res = 0;
         unsigned long hours = 0;
@@ -283,7 +281,7 @@ namespace
         if (res > 0) {
             res = hours * 60 + minutes;
         }
-        return res;
+        return std::chrono::minutes(res);
     }
 } // anonymous namespace
 
@@ -301,15 +299,16 @@ void FlatForm::check_confirmation()
 
     if (((this->flags & DURATION_DISPLAY) == DURATION_DISPLAY) &&
         (this->duration_edit.num_chars != 0)) {
-        unsigned long res = check_duration(this->duration_edit.get_text());
-        // res is duration in hours.
-        if (res <= 0 || res > this->duration_max) {
-            if (res <= 0) {
+        std::chrono::minutes res = check_duration(this->duration_edit.get_text());
+        // res is duration in minutes.
+        if (res <= 0min || res > this->duration_max) {
+            if (res <= 0min) {
                 this->duration_edit.set_text("");
                 this->set_warning_buffer(trkeys::fmt_invalid_format, tr(trkeys::duration));
             }
             else {
-                this->set_warning_buffer(trkeys::fmt_toohigh_duration, tr(trkeys::duration), this->duration_max);
+                this->set_warning_buffer(trkeys::fmt_toohigh_duration, tr(trkeys::duration),
+                    int(this->duration_max.count()));
             }
             this->set_widget_focus(&this->duration_edit, focus_reason_mousebutton1);
             this->rdp_input_invalidate(this->get_rect());

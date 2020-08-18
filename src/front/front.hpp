@@ -69,6 +69,15 @@
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/cs_core.hpp"
+#include "core/RDP/gcc/userdata/cs_net.hpp"
+#include "core/RDP/gcc/userdata/cs_cluster.hpp"
+#include "core/RDP/gcc/userdata/cs_security.hpp"
+#include "core/RDP/gcc/userdata/cs_multitransport.hpp"
+#include "core/RDP/gcc/userdata/cs_mcs_msgchannel.hpp"
+#include "core/RDP/gcc/userdata/sc_core.hpp"
+#include "core/RDP/gcc/userdata/sc_net.hpp"
+#include "core/RDP/gcc/userdata/sc_sec1.hpp"
 #include "core/RDP/lic.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/mppc.hpp"
@@ -87,8 +96,9 @@
 #include "core/font.hpp"
 #include "core/front_api.hpp"
 #include "core/glyph_to_24_bitmap.hpp"
-#include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
+#include "acl/auth_api.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
@@ -96,7 +106,6 @@
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
-#include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/genfstat.hpp"
@@ -107,13 +116,14 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include "proxy_recorder/nego_server.hpp"
-
-
+#include "acl/sesman.hpp"
+#include "configs/config.hpp"
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
@@ -244,7 +254,7 @@ private:
                     const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(new_bmp.bpp()));
 
                     /*LOG(LOG_DEBUG, "draw(RDPBitmapData,Bitmap): x=%d y=%d max_w=%d max_h=%d", new_bmp.cx(), new_bmp.cy(),
-                    		max_image_width, max_image_height);*/
+                            max_image_width, max_image_height);*/
 
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
@@ -268,7 +278,8 @@ private:
                             sub_image_data.height = subrect.cy;
 
                             sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                            sub_image_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                                 | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                             sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                             GraphicsUpdatePDU::draw(sub_image_data, sub_image);
@@ -282,7 +293,8 @@ private:
                     RDPBitmapData target_bitmap_data = bitmap_data;
 
                     target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
-                    target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    target_bitmap_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                             | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                     target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
                     GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
@@ -575,8 +587,39 @@ public:
         WAITING_FOR_LOGON_INFO,
         WAITING_FOR_ANSWER_TO_LICENSE,
         ACTIVATE_AND_PROCESS_DATA,
-        UP_AND_RUNNING
+        FRONT_UP_AND_RUNNING
     } state = CONNECTION_INITIATION;
+
+
+    std::string state_name(){
+        switch (this->state){
+        case CONNECTION_INITIATION:
+            return "Front::CONNECTION_INITIATION";
+        case PRIMARY_AUTH_NLA:
+            return "Front::PRIMARY_AUTH_NLA";
+        case BASIC_SETTINGS_EXCHANGE:
+            return "Front::BASIC_SETTINGS_EXCHANGE";
+        case CHANNEL_ATTACH_USER:
+            return "Front::CHANNEL_ATTACH_USER";
+        case CHANNEL_JOIN_REQUEST:
+            return "Front::CHANNEL_JOIN_REQUEST";
+        case CHANNEL_JOIN_CONFIRM_USER_ID:
+            return "Front::CHANNEL_JOIN_CONFIRM_USER_ID";
+        case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
+            return "Front::CHANNEL_JOIN_CONFIRM_CHECK_USER_ID";
+        case CHANNEL_JOIN_CONFIRM_LOOP:
+            return "Front::CHANNEL_JOIN_CONFIRM_LOOP";
+        case WAITING_FOR_LOGON_INFO:
+            return "Front::WAITING_FOR_LOGON_INFO";
+        case WAITING_FOR_ANSWER_TO_LICENSE:
+            return "Front::WAITING_FOR_ANSWER_TO_LICENSE";
+        case ACTIVATE_AND_PROCESS_DATA:
+            return "Front::ACTIVATE_AND_PROCESS_DATA";
+        case FRONT_UP_AND_RUNNING:
+            return "Front::FRONT_UP_AND_RUNNING";
+        }
+        return "Front::UNKNOWN_STATE";
+    }
 
 private:
     Random & gen;
@@ -586,17 +629,13 @@ private:
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
-    bool mem3blt_support;
     int clientRequestedProtocols;
 
     std::unique_ptr<NegoServer> nego_server;
 
-    std::string server_capabilities_filename;
-
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
-    ReportMessageApi & report_message;
-    bool       auth_info_sent;
+    AuthApi & sesman;
 
     uint16_t rail_channel_id = 0;
 
@@ -614,13 +653,36 @@ private:
 
     bool is_first_memblt = true;
 
-    SessionReactor& session_reactor;
-    SessionReactor::TimerPtr handshake_timeout;
-    SessionReactor::CallbackEventPtr incoming_event;
-    SessionReactor::TimerPtr capture_timer;
-    SessionReactor::TimerPtr flow_control_timer;
+    TimeBase& time_base;
+    EventContainer& events;
+    int handshake_timeout = 0;
+    int capture_timer = 0;
+    int flow_control_timer = 0;
+
+    const std::chrono::milliseconds rdp_keepalive_connection_interval;
+    const PrimaryDrawingOrdersSupport supported_orders;
 
 public:
+
+    bool front_must_notify_resize = false;
+
+    void notify_resize(Callback & cb)
+    {
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize()");
+
+        if (this->state != FRONT_UP_AND_RUNNING) {
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize() callback to rdp_gdi_down()");
+            cb.rdp_gdi_down();
+        }
+        else {
+            LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::notify_resize() callback to refresh()");
+            // TODO: see if we could use UP_AND_RUNNING notification instead
+            cb.refresh(Rect(0, 0, this->client_info.screen_info.width, this->client_info.screen_info.height));
+        }
+        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Clear Must Notify resize");
+        this->front_must_notify_resize = false;
+    }
+
     bool ignore_rdesktop_bogus_clip = false;
 
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
@@ -651,7 +713,6 @@ public:
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override { this->draw_impl(cmd, clip, color_ctx, bmp); }
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPSetSurfaceCommand const & cmd) override {
 
         if (!this->client_info.bitmap_codec_caps.haveRemoteFxCodec
@@ -668,6 +729,7 @@ public:
 
         this->orders.graphics_update_pdu().send_set_surface_command(cmd);
     }
+
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
         if (this->client_info.bitmap_codec_caps.haveRemoteFxCodec
         && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
@@ -713,18 +775,15 @@ public:
 
     [[nodiscard]] BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
-    const std::chrono::milliseconds rdp_keepalive_connection_interval;
-
 public:
-    Front( SessionReactor& session_reactor
+    Front( TimeBase& time_base
+         , EventContainer& events_
+         , AuthApi & sesman
          , Transport & trans
          , Random & gen
          , Inifile & ini
          , CryptoContext & cctx
-         , ReportMessageApi & report_message
          , bool fp_support // If true, fast-path must be supported
-         , bool mem3blt_support
-         , std::string server_capabilities_filename = {}
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
@@ -738,25 +797,27 @@ public:
     , client_fastpath_input_event_support(fp_support)
     , server_fastpath_update_support(false)
     , tls_client_active(true)
-    , mem3blt_support(mem3blt_support)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , server_capabilities_filename(std::move(server_capabilities_filename))
-    , report_message(report_message)
-    , auth_info_sent(false)
-    , session_reactor(session_reactor)
+    , sesman(sesman)
+    , time_base(time_base)
+    , events(events_)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
           )
+    , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
+        this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
-            this->handshake_timeout = session_reactor.create_timer()
-            .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
-            .on_action([](JLN_TIMER_CTX ctx){
-                LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
-                throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
-                return ctx.ready();
-            });
+
+            this->handshake_timeout = this->events.create_event_timeout(
+                "Front Handshake Timer", this,
+                time_base.get_current_time()+this->ini.get<cfg::globals::handshake_timeout>(),
+                [](Event&)
+                {
+                    LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
+                    throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
+                });
         }
 
         // --------------------------------------------------------
@@ -789,29 +850,32 @@ public:
         }
 
         if (this->rdp_keepalive_connection_interval.count()) {
-            this->flow_control_timer = this->session_reactor.create_timer()
-            .set_delay(std::chrono::milliseconds(0))
-            .on_action([this](auto ctx){
-                if (this->state == UP_AND_RUNNING) {
-                    this->send_data_indication_ex_impl(
-                        GCC::MCS_GLOBAL_CHANNEL,
-                        [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
-                            ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
-                            if (bool(this->verbose & Verbose::global_channel)) {
-                                LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
-                                hexdump_d(stream.get_data(), stream.get_offset());
-                            }
-                        }
-                    );
-                }
 
-                return ctx.ready_to(this->rdp_keepalive_connection_interval);
-            });
+            this->flow_control_timer = this->events.create_event_timeout(
+                "Front Flow Control Timer", this,
+                this->time_base.get_current_time(),
+                [this](Event& event)
+                {
+                    event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
+                    if (this->state == FRONT_UP_AND_RUNNING) {
+                        this->send_data_indication_ex_impl(
+                            GCC::MCS_GLOBAL_CHANNEL,
+                            [&](StreamSize<256> /*maxlen*/, OutStream & stream) {
+                                ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
+                                if (bool(this->verbose & Verbose::global_channel)) {
+                                    LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
+                                    hexdump_d(stream.get_data(), stream.get_offset());
+                                }
+                            }
+                        );
+                    }
+                });
         }
     }
 
     ~Front() override
     {
+        this->events.end_of_lifespan(this);
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
@@ -819,6 +883,7 @@ public:
 
     ResizeResult server_resize(ScreenInfo screen_server) override
     {
+        LOG(LOG_INFO, "Server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
         ResizeResult res = ResizeResult::no_need;
 
         this->mod_bpp = screen_server.bpp;
@@ -840,13 +905,8 @@ public:
                     res = ResizeResult::fail;
                 }
                 else {
-                    LOG(LOG_INFO, "Front::server_resize: Resizing client to : %d x %d x %d", screen_server.width, screen_server.height, this->client_info.screen_info.bpp);
-
                     this->client_info.screen_info.width = screen_server.width;
                     this->client_info.screen_info.height = screen_server.height;
-
-                    this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
-                    this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
 
                     // TODO Why are we not calling this->flush() instead ? Looks dubious.
                     // send buffered orders
@@ -858,7 +918,7 @@ public:
                         }
                         else {
                             this->must_be_stop_capture();
-                            this->can_be_start_capture();
+                            this->can_be_start_capture(false);
                         }
                     }
 
@@ -866,24 +926,21 @@ public:
                     // start a send_deactive, send_demand_active process with
                     // the new resolution setting
                     /* shut down the rdp client */
+                    this->front_must_notify_resize = true;
                     this->state = ACTIVATE_AND_PROCESS_DATA;
+
+                    LOG(LOG_INFO, "Server_resize: starting client deactivation/reactivation sequence");
                     this->send_deactive();
                     /* this should do the actual resizing */
                     this->send_demand_active();
                     this->send_monitor_layout();
-
-                    LOG(LOG_INFO, "Front::server_resize: ACTIVATED (resize)");
                     this->is_first_memblt = true;
                     res = ResizeResult::done;
                 }
             }
 
             if (this->client_info.remote_program) {
-                this->incoming_event = this->session_reactor
-                .create_callback_event(std::ref(*this))
-                .on_action(jln::one_shot([](Callback& cb, Front& front){
-                    cb.refresh(Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
-                }));
+                this->front_must_notify_resize = true;
                 res = ResizeResult::remoteapp;
             }
         }
@@ -921,22 +978,62 @@ public:
         this->orders.graphics_update_pdu().update_pointer_position(xPos, yPos);
     }
 
+
+    bool has_ocr_pattern_check()
+    {
+        return ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str());
+    }
+
+    bool has_kbd_pattern_check()
+    {
+        return ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_pattern(this->ini.get<cfg::context::pattern_notify>().c_str());
+    }
+
+    bool is_capture_necessary()
+    {
+        return (this->ini.get<cfg::video::allow_rt_without_recording>()
+            || this->ini.get<cfg::globals::is_rec>()
+            || !bool(this->ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_kill>().c_str())
+            || ::contains_kbd_or_ocr_pattern(this->ini.get<cfg::context::pattern_notify>().c_str()));
+    }
+
+    void show_session_config()
+    {
+        LOG(LOG_INFO, "record_filebase    = %s", this->ini.get<cfg::capture::record_filebase>());
+        LOG(LOG_INFO, "auth_user     = %s", this->ini.get<cfg::globals::auth_user>());
+        LOG(LOG_INFO, "host          = %s", this->ini.get<cfg::globals::host>());
+        LOG(LOG_INFO, "target_device = %s", this->ini.get<cfg::globals::target_device>());
+        LOG(LOG_INFO, "target_user   = %s", this->ini.get<cfg::globals::target_user>());
+    }
+
+    BitsPerPixel wrm_color_depth()
+    {
+        return (this->ini.get<cfg::video::wrm_color_depth_selection_strategy>()
+                == ColorDepthSelectionStrategy::depth16)
+               ? BitsPerPixel{16}
+               : BitsPerPixel{24};
+    }
+
     // ===========================================================================
-    bool can_be_start_capture() override
+    bool can_be_start_capture(bool force_capture) override
     {
         // Recording is enabled.
-        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types
+        // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types for set_auth_info set_screen_info
+        // I also should imagine something else for capture needs. Maybe to see after splitting front between
+        // capture related code and network-related code.
 
         if (this->capture) {
             LOG(LOG_INFO, "Front::can_be_start_capture: session capture is already started");
             return false;
         }
 
-        if (!ini.get<cfg::globals::is_rec>() &&
-            bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog) &&
-            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str()) &&
-            !::contains_kbd_or_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-        ) {
+        // force capture allow to capture video from test modules
+        // even if sanity check is_capture_necessary() disagree with it
+        if (!this->is_capture_necessary() && !force_capture)
+        {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
         }
@@ -944,20 +1041,18 @@ public:
         LOG(LOG_INFO, "---<>  Front::can_be_start_capture  <>---");
 
         if (bool(this->verbose & Verbose::basic_trace)) {
-            LOG(LOG_INFO, "Front::can_be_start_capture: movie_path    = %s", ini.get<cfg::globals::movie_path>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: auth_user     = %s", ini.get<cfg::globals::auth_user>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: host          = %s", ini.get<cfg::globals::host>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: target_device = %s", ini.get<cfg::globals::target_device>());
-            LOG(LOG_INFO, "Front::can_be_start_capture: target_user   = %s", ini.get<cfg::globals::target_user>());
+            LOG(LOG_INFO, "Front::can_be_start_capture");
+            this->show_session_config();
         }
 
-        this->capture_bpp = ((ini.get<cfg::video::wrm_color_depth_selection_strategy>() == ColorDepthSelectionStrategy::depth16) ? BitsPerPixel{16} : BitsPerPixel{24});
+        this->capture_bpp = this->wrm_color_depth();
+
         // TODO remove this after unifying capture interface
         VideoParams video_params = video_params_from_ini(std::chrono::seconds::zero(), ini);
 
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+        const char *record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
 
         auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
         auto const& record_dir = ini.get<cfg::video::record_path>();
@@ -971,12 +1066,12 @@ public:
             }
         }
 
-        bool const capture_pattern_checker
-          = (::contains_ocr_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_ocr_pattern(ini.get<cfg::context::pattern_notify>().c_str()));
+        bool const capture_pattern_checker = this->has_ocr_pattern_check();
 
-        const CaptureFlags capture_flags = (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::capture_flags>() :
-            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none));
+        const CaptureFlags capture_flags =
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
+            ini.get<cfg::video::capture_flags>() :
+            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
@@ -988,36 +1083,16 @@ public:
         const bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
-          || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
-        ;
+          || this->has_kbd_pattern_check();
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-        char path[1024];
-        char basename[1024];
-        char extension[128];
-
-        // default value, actual one should come from movie_path
-        auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm).to_sv());
-        if (wrm_path_len + 2 < std::size(path)) {
-            path[wrm_path_len] = '/';
-            path[wrm_path_len+1] = 0;
-        }
-        utils::strlcpy(basename, movie_path);
-        extension[0] = 0; // extension is currently ignored
-
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Front::can_be_start_capture: Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
 
         PngParams png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
             100u,
-            (ini.get<cfg::globals::is_rec>() ? ini.get<cfg::video::png_limit>() : 0),
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
+            ini.get<cfg::video::png_limit>() : 0,
             true,
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>()
@@ -1050,12 +1125,12 @@ public:
         );
 
         CaptureParams capture_params{
-            this->session_reactor.get_current_time(),
-            basename,
+            this->time_base.get_current_time(),
+            record_filebase,
             record_tmp_path,
             record_path.c_str(),
             groupid,
-            &this->report_message,
+            &this->sesman,
             ini.get<cfg::video::smart_video_cropping>(),
             ini.get<cfg::debug::capture>()
         };
@@ -1085,19 +1160,23 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        this->capture_timer = this->session_reactor.create_timer()
-        .set_delay(std::chrono::milliseconds(0))
-        .on_action([this](auto ctx){
-            auto const capture_ms = this->capture->periodic_snapshot(
-                ctx.get_current_time(),
-                this->mouse_x, this->mouse_y,
-                false  // ignore frame in time interval
-            ).ms();
-            return (decltype(capture_ms)::max() == capture_ms)
-                ? ctx.terminate()
-                : ctx.ready_to(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(capture_ms));
-        });
+        this->capture_timer = this->events.create_event_timeout(
+            "Front Capture Timer", this,
+            this->time_base.get_current_time(),
+            [this](Event& event)
+            {
+                auto const capture_ms = this->capture->periodic_snapshot(
+                    event.alarm.now,
+                    this->mouse_x, this->mouse_y,
+                    false  // ignore frame in time interval
+                ).ms();
+                if (capture_ms == capture_ms.max()){
+                    event.garbage = true;
+                }
+                else {
+                    event.alarm.set_timeout(event.alarm.now+capture_ms);
+                }
+           });
 
         if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
             this->capture->visibility_rects_event(this->rail_window_rect);
@@ -1106,11 +1185,11 @@ public:
         this->update_keyboard_input_mask_state();
 
         if (capture_wrm) {
-            this->ini.set_acl<cfg::context::recording_started>(true);
+            this->sesman.set_recording_started();
         }
 
-        if (capture_png && !this->ini.get<cfg::context::rt_ready>()) {
-            this->ini.set_acl<cfg::context::rt_ready>(true);
+        if (capture_png){
+            this->sesman.set_rt_ready();
         }
 
         return true;
@@ -1121,8 +1200,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            this->capture_timer.reset();
-
+            this->capture_timer = this->events.erase_event(this->capture_timer);
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -1170,7 +1248,12 @@ public:
             str_concat(app_path(AppPath::Persistent), "/client").c_str(),
             this->ini.get<cfg::globals::host>().c_str(),
             this->orders.bpp(),
-            report_error_from_reporter(this->report_message),
+            [this](const Error & error){
+                if (error.errnum == ENOSPC) {
+                    // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                    this->sesman.report("FILESYSTEM_FULL", "100|unknown");
+                }
+            },
             convert_verbose_flags(this->verbose)
         );
     }
@@ -1238,7 +1321,7 @@ public:
         else {
             LOG(LOG_WARNING, "Front::end_update: Unbalanced calls to BeginUpdate/EndUpdate methods");
         }
-        if (!(this->state == UP_AND_RUNNING)) {
+        if (!(this->state == FRONT_UP_AND_RUNNING)) {
             LOG(LOG_ERR, "Front::end_update: Front is not up and running.");
             throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
         }
@@ -1380,7 +1463,7 @@ public:
 
             StaticOutStream<256> stream;
             X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-            this->trans.send(stream.get_bytes());
+            this->trans.send(stream.get_produced_bytes());
         }
 
         if (this->tls_client_active) {
@@ -1392,7 +1475,7 @@ public:
                 this->ini.get<cfg::client::show_common_cipher_list>());
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
-                this->nego_server = std::make_unique<NegoServer>(this->trans.get_public_key(), true);
+                this->nego_server = std::make_unique<NegoServer>(this->trans.get_public_key(), this->time_base, true);
             }
         }
 
@@ -2011,8 +2094,8 @@ public:
         }
 
         this->keymap.init_layout(this->client_info.keylayout);
-        LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", unsigned(this->client_info.keylayout));
-        this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
+        LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
+        this->sesman.set_keyboard_layout(this->client_info.keylayout);
 
         if (bool(this->verbose & Verbose::channel)) {
             LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");
@@ -2079,17 +2162,17 @@ public:
 
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::incoming: Sec clear payload to send:");
-                    hexdump_d(stream.get_bytes());
+                    hexdump_d(stream.get_produced_bytes());
                 }
 
                 StaticOutStream<8> tmp_sec_header;
                 SEC::Sec_Send sec(
-                    tmp_sec_header, stream.get_bytes(),
+                    tmp_sec_header, stream.get_produced_bytes(),
                     SEC::SEC_LICENSE_PKT, this->encrypt, 0
                 );
                 (void)sec;
 
-                auto packet = hstream.copy_to_head(tmp_sec_header.get_bytes());
+                auto packet = hstream.copy_to_head(tmp_sec_header.get_produced_bytes());
                 sec_header = OutStream(packet);
                 sec_header.out_skip_bytes(packet.size());
             }
@@ -2286,7 +2369,7 @@ public:
 
                     this->mouse_x = me.xPos;
                     this->mouse_y = me.yPos;
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                         this->has_user_activity = true;
                     }
@@ -2295,9 +2378,7 @@ public:
                                             SlowPath::PTRFLAGS_BUTTON2 |
                                             SlowPath::PTRFLAGS_BUTTON3)) &&
                         !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                        if (this->capture) {
-                            this->capture->possible_active_window_change();
-                        }
+                        this->possible_active_window_change();
                     }
                 }
                 break;
@@ -2311,16 +2392,14 @@ public:
                         "Front::Received unexpected fast-path PDU, extended mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
                         me.pointerFlags, me.xPos, me.yPos);
 
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         this->has_user_activity = true;
                     }
 
                     if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
                                             SlowPath::PTRXFLAGS_BUTTON2)) &&
                         !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                        if (this->capture) {
-                            this->capture->possible_active_window_change();
-                        }
+                        this->possible_active_window_change();
                     }
                 }
                 break;
@@ -2332,11 +2411,9 @@ public:
                     LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::incoming: Received Fast-Path PDU, sync eventFlags=0x%X",
                         se.eventFlags);
-                    LOG(LOG_INFO, "Front::incoming: (Fast-Path) Synchronize Event toggleFlags=0x%X",
-                        static_cast<unsigned int>(se.eventFlags));
 
                     this->keymap.synchronize(se.eventFlags);
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
                         this->has_user_activity = true;
                     }
@@ -2351,7 +2428,7 @@ public:
                         "Front::incoming: Received Fast-Path PDU, unicode unicode=0x%04X",
                         uke.unicodeCode);
 
-                    if (this->state == UP_AND_RUNNING) {
+                    if (this->state == FRONT_UP_AND_RUNNING) {
                         cb.rdp_input_unicode(uke.unicodeCode, uke.spKeyboardFlags);
                         this->has_user_activity = true;
                     }
@@ -2708,11 +2785,6 @@ public:
     // TODO: this should be extracted
     TpduBuffer rbuf;
 
-    bool is_in_nla()
-    {
-        return (this->state == PRIMARY_AUTH_NLA);
-    }
-
     void front_nla(Transport & trans, bytes_view data)
     {
         LOG(LOG_INFO, "starting NLA NegoServer");
@@ -2873,9 +2945,9 @@ public:
                 "Front::incoming: ACTIVATE_AND_PROCESS_DATA");
             this->activate_and_process_data(tpdu, current_pdu_type, cb);
         break;
-        case UP_AND_RUNNING:
+        case FRONT_UP_AND_RUNNING:
             LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
-                "Front::incoming: UP_AND_RUNNING");
+                "Front::incoming: FRONT_UP_AND_RUNNING");
             this->up_and_running(tpdu, current_pdu_type, cb);
         break;
         }
@@ -2900,7 +2972,7 @@ public:
                     0x00, 0x00              // wBlobLen  : 0
                 };
                 SEC::Sec_Send sec(
-                    sec_header, make_array_view(lic2),
+                    sec_header, make_writable_array_view(lic2),
                     SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0
                 );
                 (void)sec;
@@ -2959,9 +3031,10 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        this->session_update(LogId::PROBE_STATUS, {
-            KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
-        });
+        this->session_update(this->time_base.get_current_time(),
+            LogId::PROBE_STATUS, {
+                KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
+            });
     }
 
     void set_keylayout(int LCID) override {
@@ -2990,11 +3063,20 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(LogId id, KVList kv_list) override {
+    void session_update(timeval now, LogId id, KVList kv_list) override
+    {
         if (this->capture) {
-            this->capture->session_update(this->session_reactor.get_current_time(), id, kv_list);
+            this->capture->session_update(now, id, kv_list);
         }
     }
+
+    void possible_active_window_change() override
+    {
+        if (this->capture) {
+            this->capture->possible_active_window_change();
+        }
+    }
+
 
 private:
     /*****************************************************************************/
@@ -3023,8 +3105,6 @@ private:
     /*****************************************************************************/
     void send_demand_active()
     {
-        LOG(LOG_INFO, "Front::send_demand_active()");
-
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::send_demand_active");
 
@@ -3052,10 +3132,7 @@ private:
                 if (this->fastpath_support) {
                     general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
                 }
-                if (!this->server_capabilities_filename.empty()) {
-                    general_caps_load(general_caps, this->server_capabilities_filename);
-                }
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     general_caps.log("Front::send_demand_active: Sending to client");
                 }
                 general_caps.emit(stream);
@@ -3066,17 +3143,14 @@ private:
                 bitmap_caps.desktopWidth = this->client_info.screen_info.width;
                 bitmap_caps.desktopHeight = this->client_info.screen_info.height;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-                if (!this->server_capabilities_filename.empty()) {
-                    bitmap_caps_load(bitmap_caps, this->server_capabilities_filename);
-                }
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     bitmap_caps.log("Front::send_demand_active: Sending to client");
                 }
                 bitmap_caps.emit(stream);
                 caps_count++;
 
                 FontCaps font_caps;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     font_caps.log("Front::send_demand_active: Sending to client");
                 }
                 font_caps.emit(stream);
@@ -3086,25 +3160,16 @@ private:
                 order_caps.pad4octetsA = 0x40420f00;
                 order_caps.numberFonts = 0x2f;
                 order_caps.orderFlags = NEGOTIATEORDERSUPPORT | COLORINDEXSUPPORT;
-                order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
-                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_GLYPH_INDEX]              = 1;
-                order_caps.orderSupport[TS_NEG_OPAQUERECT_INDEX] = 1;
+
+                for (size_t i = 0; i < std::size(order_caps.orderSupport); ++i) {
+                     order_caps.orderSupport[i] = this->supported_orders.test(OrdersIndexes(i)) ? 1 : 0;
+                }
+
                 order_caps.textFlags = 0x06a1;
                 order_caps.pad4octetsB = 0x0f4240;
                 order_caps.desktopSaveSize = 0x0f4240;
                 order_caps.pad2octetsC = 1;
-                if (!this->server_capabilities_filename.empty()) {
-                    order_caps_load(order_caps, this->server_capabilities_filename);
-                }
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     order_caps.log("Front::send_demand_active: Sending to client");
                 }
                 order_caps.emit(stream);
@@ -3113,7 +3178,7 @@ private:
                 PointerCaps pointer_caps;
                 pointer_caps.colorPointerCacheSize = 0x19;
                 pointer_caps.pointerCacheSize = 0x19;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     pointer_caps.log("Front::send_demand_active: Sending to client");
                 }
                 pointer_caps.emit(stream);
@@ -3131,14 +3196,14 @@ private:
                 input_caps.keyboardType        = 0;
                 input_caps.keyboardSubType     = 0;
                 input_caps.keyboardFunctionKey = 0;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     input_caps.log("Front::send_demand_active: Sending to client");
                 }
                 input_caps.emit(stream);
                 caps_count++;
 
                 VirtualChannelCaps virtual_channel_caps;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     virtual_channel_caps.log("Front::send_demand_active: Sending to client");
                 }
                 virtual_channel_caps.emit(stream);
@@ -3146,7 +3211,7 @@ private:
 
                 if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
                     BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         bitmap_cache_host_support_caps.log("Front::send_demand_active: Sending to client");
                     }
                     bitmap_cache_host_support_caps.emit(stream);
@@ -3156,14 +3221,14 @@ private:
                 ShareCaps share_caps;
                 share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
                 share_caps.pad2octets = 0xb5e2; /* 0x73e1 */
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     share_caps.log("Front::send_demand_active: Sending to client");
                 }
                 share_caps.emit(stream);
                 caps_count++;
 
                 ColorCacheCaps colorcache_caps;
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     colorcache_caps.log("Front::send_demand_active: Sending to client");
                 }
                 colorcache_caps.emit(stream);
@@ -3173,7 +3238,7 @@ private:
                 if (this->client_info.remote_program) {
                     RailCaps rail_caps;
                     rail_caps.RailSupportLevel = TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         rail_caps.log("Front::send_demand_active: Sending to client");
                     }
                     rail_caps.emit(stream);
@@ -3183,7 +3248,7 @@ private:
                     window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED_EX;
                     window_list_caps.NumIconCaches = 3;
                     window_list_caps.NumIconCacheEntries = 12;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         window_list_caps.log("Front::send_demand_active: Sending to client");
                     }
                     window_list_caps.emit(stream);
@@ -3198,7 +3263,7 @@ private:
                     LargePointerCaps large_pointer_caps;
 
                     large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         large_pointer_caps.log("Front::send_demand_active: Sending to client");
                     }
                     large_pointer_caps.emit(stream);
@@ -3209,15 +3274,16 @@ private:
                 }
 
                 if (this->ini.get<cfg::client::enable_remotefx>()
-                    && this->client_info.screen_info.bpp == BitsPerPixel{32})  {
+                 && this->client_info.screen_info.bpp == BitsPerPixel{32}
+                ) {
                     Emit_SC_BitmapCodecCaps bitmap_codec_caps;
                     ScreenInfo &screen_info = this->client_info.screen_info;
                     maxRequestSize = std::max(maxRequestSize, static_cast<uint32_t>(screen_info.width * screen_info.height * 4));
 
-                    std::vector<uint8_t> supported_codecs = {CODEC_GUID_REMOTEFX};
+                    std::array<uint8_t, 1> supported_codecs{CODEC_GUID_REMOTEFX};
                     bitmap_codec_caps.emit(stream, supported_codecs);
 
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         bitmap_codec_caps.log("Front::send_demand_active: Sending to client");
                     }
 
@@ -3228,7 +3294,7 @@ private:
                 if (send_multifrag_caps) {
                     multifrag_caps.MaxRequestSize = maxRequestSize;
 
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         multifrag_caps.log("Front::send_demand_active: Sending to client");
                     }
 
@@ -3260,7 +3326,6 @@ private:
 
     void process_confirm_active(InStream & stream)
     {
-        LOG(LOG_INFO, "Front::process_confirm_active()");
         LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO,
             "Front::process_confirm_active");
         // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
@@ -3276,7 +3341,7 @@ private:
         ::check_throw(stream, lengthSourceDescriptor, "Front::process_confirm_active", ERR_MCS_PDU_TRUNCATED);
         stream.in_skip_bytes(lengthSourceDescriptor);
 
-        if (bool(this->verbose & Verbose::basic_trace)) {
+        if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::process_confirm_active: lengthSourceDescriptor = %u", lengthSourceDescriptor);
             LOG(LOG_INFO, "Front::process_confirm_active: lengthCombinedCapabilities = %u", lengthCombinedCapabilities);
         }
@@ -3316,7 +3381,7 @@ private:
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
                     this->client_info.general_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.general_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.use_compact_packets =
@@ -3330,7 +3395,7 @@ private:
                 break;
             case CAPSTYPE_BITMAP: {
                     this->client_info.bitmap_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.bitmap_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 /*
@@ -3350,17 +3415,12 @@ private:
             case CAPSTYPE_ORDER: { /* 3 */
                     this->client_info.order_caps.recv(stream, capset_length);
 
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.order_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
-                    PrimaryDrawingOrdersSupport const disabled_orders = parse_primary_drawing_orders(
-                            this->ini.get<cfg::client::disabled_orders>().c_str(),
-                            bool(this->verbose),
-                            OnlyThoseSupportedByModRdp::No
-                        );
                     for (auto idx : order_indexes_supported()) {
-                        if (disabled_orders.test(idx)) {
+                        if (not this->supported_orders.test(idx)) {
                             this->client_info.order_caps.orderSupport[idx] = 0;
                         }
                     }
@@ -3374,7 +3434,7 @@ private:
                 break;
             case CAPSTYPE_BITMAPCACHE: {
                     this->client_info.bmp_cache_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.bmp_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.number_of_cache      = 3;
@@ -3394,17 +3454,17 @@ private:
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_CONTROL");
                 break;
             case CAPSTYPE_ACTIVATION: /* 7 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_ACTIVATION");
                 break;
             case CAPSTYPE_POINTER: {  /* 8 */
                     PointerCaps pointer_caps;
                     pointer_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         pointer_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
@@ -3415,39 +3475,41 @@ private:
                 }
                 break;
             case CAPSTYPE_SHARE: /* 9 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_SHARE");
                 break;
             case CAPSTYPE_COLORCACHE: /* 10 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_COLORCACHE");
                 break;
             case CAPSTYPE_SOUND:
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_SOUND");
                 break;
             case CAPSTYPE_INPUT: /* 13 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_INPUT");
                 break;
             case CAPSTYPE_FONT: /* 14 */
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
+                    "Front::process_confirm_active: Receiving from client CAPSTYPE_FONT");
                 break;
             case CAPSTYPE_BRUSH: { /* 15 */
-                    LOG_IF(bool(this->verbose), LOG_INFO,
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::process_confirm_active: Receiving from client CAPSTYPE_BRUSH");
                     BrushCacheCaps brushcache_caps;
                     brushcache_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         brushcache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     this->client_info.brush_cache_code = brushcache_caps.brushSupportLevel;
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: { /* 16 */
-                    LOG_IF(bool(this->verbose), LOG_INFO,
+                    LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                         "Front::process_confirm_active: Receiving from client CAPSTYPE_GLYPHCACHE");
                     this->client_info.glyph_cache_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.glyph_cache_caps.log("Front::process_confirm_active: Receiving from client");
                     }
                     if (ini.get<cfg::client::bogus_ios_glyph_support_level>() &&
@@ -3468,7 +3530,7 @@ private:
                 }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_OFFSCREENCACHE");
                 this->client_info.off_screen_cache_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
@@ -3476,12 +3538,12 @@ private:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
                     this->client_info.bmp_cache_2_caps.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         this->client_info.bmp_cache_2_caps.log("Front::process_confirm_active: Receiving from client");
                     }
 
@@ -3539,40 +3601,40 @@ private:
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_VIRTUALCHANNEL");
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSTYPE_DRAWGDIPLUS");
                 break;
             case CAPSTYPE_RAIL: /* 23 */
                 this->client_info.rail_caps.recv(stream, capset_length);
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     this->client_info.rail_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
                 this->client_info.window_list_caps.recv(stream, capset_length);
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     this->client_info.window_list_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps cap;
                     cap.recv(stream, capset_length);
-                    if (bool(this->verbose)) {
+                    if (bool(this->verbose & Verbose::basic_trace3)) {
                         cap.log("Front::process_confirm_active: Receiving from client");
                     }
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
                 this->client_info.multi_fragment_update_caps.recv(stream, capset_length);
-                if (bool(this->verbose)) {
+                if (bool(this->verbose & Verbose::basic_trace3)) {
                     this->client_info.multi_fragment_update_caps.log("Front::process_confirm_active: Receiving from client");
                 }
                 break;
@@ -3583,20 +3645,20 @@ private:
                 }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
                 this->client_info.bitmap_codec_caps.recv(stream, capset_length);
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_BITMAP_CODECS");
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
                 break;
             default:
-                LOG_IF(bool(this->verbose), LOG_INFO,
+                LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
                     "Front::process_confirm_active: Receiving from client unknown caps %u", capset_type);
                 break;
             }
@@ -3680,7 +3742,7 @@ private:
         stream.get_data_stream().out_uint16_le(1);    // messageType = SYNCMSGTYPE_SYNC(1)
         stream.get_data_stream().out_uint16_le(1002); // targetUser (MCS channel ID of the target user.)
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SYNCHRONIZE
                             , false
@@ -3731,7 +3793,7 @@ private:
         stream.get_data_stream().out_uint16_le(0); // userid
         stream.get_data_stream().out_uint32_le(1002); // control id
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_CONTROL
                             , false
@@ -3752,7 +3814,7 @@ private:
     /*****************************************************************************/
     void send_fontmap()
     {
-        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_fontmap");
+        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO, "Front::send_fontmap");
 
         static uint8_t g_fontmap[172] = { 0xff, 0x02, 0xb6, 0x00, 0x28, 0x00, 0x00, 0x00,
                                           0x27, 0x00, 0x27, 0x00, 0x03, 0x00, 0x04, 0x00,
@@ -3783,7 +3845,7 @@ private:
         // Payload
         stream.get_data_stream().out_copy_bytes(g_fontmap, 172);
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_FONTMAP
                             , false
@@ -3797,7 +3859,7 @@ private:
                             , underlying_cast(this->verbose)
                             );
 
-        LOG_IF(bool(this->verbose & Verbose::basic_trace), LOG_INFO, "Front::send_fontmap: done");
+        LOG_IF(bool(this->verbose & Verbose::basic_trace2), LOG_INFO, "Front::send_fontmap: done");
     }
 
 public:
@@ -3813,7 +3875,7 @@ public:
         RDP::LogonInfoVersion1_Send sender(
             stream.get_data_stream(), "", ini.get<cfg::globals::auth_user>(), getpid());
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_SAVE_SESSION_INFO
                             , false
@@ -3858,7 +3920,7 @@ private:
         // Payload
         monitor_layout_pdu.emit(stream.get_data_stream());
 
-        const uint32_t log_condition = (128 | 1);
+        const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::basic_trace);
         ::send_share_data_ex( this->trans
                             , PDUTYPE2_MONITOR_LAYOUT_PDU
                             , false
@@ -3952,7 +4014,7 @@ private:
 
                             // happens when client gets focus and sends key modifier info
                             this->keymap.synchronize(se.toggleFlags & 0xFFFF);
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 cb.rdp_input_synchronize(ie.eventTime, 0, se.toggleFlags & 0xFFFF, (se.toggleFlags & 0xFFFF0000) >> 16);
                                 this->has_user_activity = true;
                             }
@@ -3968,7 +4030,7 @@ private:
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
                             this->mouse_x = me.xPos;
                             this->mouse_y = me.yPos;
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
                                 this->has_user_activity = true;
                             }
@@ -3977,9 +4039,7 @@ private:
                                                     SlowPath::PTRFLAGS_BUTTON2 |
                                                     SlowPath::PTRFLAGS_BUTTON3)) &&
                                 !(me.pointerFlags & SlowPath::PTRFLAGS_DOWN)) {
-                                if (this->capture) {
-                                    this->capture->possible_active_window_change();
-                                }
+                                this->possible_active_window_change();
                             }
                         }
                         break;
@@ -3992,16 +4052,14 @@ private:
                             LOG(LOG_WARNING, "Front::process_data: Unexpected Slow-Path INPUT_EVENT_MOUSEX eventTime=%u pointerFlags=0x%04X, xPos=%u, yPos=%u)",
                                 ie.eventTime, me.pointerFlags, me.xPos, me.yPos);
 
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 this->has_user_activity = true;
                             }
 
                             if ((me.pointerFlags & (SlowPath::PTRXFLAGS_BUTTON1 |
                                                     SlowPath::PTRXFLAGS_BUTTON2)) &&
                                 !(me.pointerFlags & SlowPath::PTRXFLAGS_DOWN)) {
-                                if (this->capture) {
-                                    this->capture->possible_active_window_change();
-                                }
+                                this->possible_active_window_change();
                             }
                         }
                         break;
@@ -4026,7 +4084,7 @@ private:
                                 "Front::process_data: Slow-Path INPUT_EVENT_UNICODE eventTime=%u unicodeCode=0x%04X",
                                 ie.eventTime, uke.unicodeCode);
                             // happens when client gets focus and sends key modifier info
-                            if (this->state == UP_AND_RUNNING) {
+                            if (this->state == FRONT_UP_AND_RUNNING) {
                                 cb.rdp_input_unicode(uke.unicodeCode, uke.keyboardFlags);
                                 this->has_user_activity = true;
                             }
@@ -4092,7 +4150,7 @@ private:
                                                    "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
 
                 auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
-                array_view<Rect> rects(rects_raw.get(), numberOfAreas);
+                writable_array_view<Rect> rects(rects_raw.get(), numberOfAreas);
                 for (Rect & rect : rects) {
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
@@ -4104,7 +4162,7 @@ private:
                         " left=%d top=%d right=%d bottom=%d cx=%u cy=%u",
                         left, top, right, bottom, rect.cx, rect.cy);
                     // // TODO we should consider adding to API some function to refresh several rects at once
-                    // if (this->state == UP_AND_RUNNING) {
+                    // if (this->state == FRONT_UP_AND_RUNNING) {
                     //     cb.rdp_input_invalidate(rect);
                     // }
                 }
@@ -4153,7 +4211,7 @@ private:
 
                 StaticOutReservedStreamHelper<1024, 65536-1024> stream;
 
-                const uint32_t log_condition = (128 | 8);
+                const uint32_t log_condition = uint32_t(Verbose::sec_decrypted | Verbose::channel);
                 ::send_share_data_ex( this->trans
                                     , PDUTYPE2_SHUTDOWN_DENIED
                                     , (bool(this->ini.get<cfg::client::rdp_compression>()) ? this->client_info.rdp_compression : 0)
@@ -4242,39 +4300,19 @@ private:
                     this->set_gd(this->orders.graphics_update_pdu());
                 }
 
-                this->state = UP_AND_RUNNING;
-                this->handshake_timeout.reset();
-                cb.rdp_input_up_and_running();
-                // TODO we should use accessors to set that, also not sure it's the right place to set it
-                this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
-                this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
-                this->ini.set_acl<cfg::context::opt_bpp>(safe_int(this->client_info.screen_info.bpp));
+                this->state = FRONT_UP_AND_RUNNING;
+                this->handshake_timeout = this->events.erase_event(this->handshake_timeout);
 
-                if (!this->auth_info_sent) {
-                    char         username_a_domain[516];
-                    const char * username;
-                    if (this->client_info.domain[0] &&
-                        !strchr(this->client_info.username, '@') &&
-                        !strchr(this->client_info.username, '\\')) {
-                        snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
-                        username = username_a_domain;
-                    }
-                    else {
-                        username = this->client_info.username;
-                    }
-
-                    LOG(LOG_INFO, "Front::process_data: asking for selector");
-                    this->ini.set_acl<cfg::globals::auth_user>(username);
-                    this->ini.ask<cfg::context::selector>();
-                    this->ini.ask<cfg::globals::target_user>();
-                    this->ini.ask<cfg::globals::target_device>();
-                    this->ini.ask<cfg::context::target_protocol>();
-                    if (this->client_info.password[0]) {
-                        this->ini.set_acl<cfg::context::password>(this->client_info.password);
-                    }
-
-                    this->auth_info_sent = true;
+                // TODO: see if we should not rather use a specific callback API for ACL
+                // this is mixed up with RDP input API
+                LOG(LOG_INFO, "RDP INPUT UP AND RUNNING ==================");
+                if (this->ini.get<cfg::client::force_bitmap_cache_v2_with_am>() &&
+                    this->ini.get<cfg::context::is_wabam>()) {
+                    this->force_using_cache_bitmap_r2();
                 }
+                cb.rdp_gdi_up_and_running();
+                this->sesman.set_screen_info(this->client_info.screen_info);
+                this->sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
 
                 if (BitsPerPixel{8} != this->mod_bpp) {
                     this->send_palette();
@@ -4393,7 +4431,7 @@ private:
                 ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
                 if (bool(this->verbose & Verbose::global_channel)) {
                     LOG(LOG_INFO, "Front::send_deactive: Sec clear payload to send:");
-                    hexdump_d(stream.get_bytes());
+                    hexdump_d(stream.get_produced_bytes());
                 }
             }
         );
@@ -4561,28 +4599,36 @@ protected:
 
                     if (fc) {
                         const int16_t x = cmd.bk.x + draw_pos_ref;
-                        const int16_t y = cmd.bk.y;
+                        const int16_t y = cmd.bk.y + fc.offsety;
 
                         contiguous_sub_rect_f(CxCy{fc.width, fc.height}, SubCxCy{64, 64}, [&](Rect rect){
+                            const int16_t glyphx = rect.x + x;
+                            const int16_t glyphy = rect.y + y;
+                            const Rect dest = clip.intersect(Rect(glyphx, glyphy, rect.cx, rect.cy));
+                            if (dest.isempty()) {
+                                return;
+                            }
+
                             GlyphTo24Bitmap glyphBitmap(fc, color_fore, color_back);
 
                             RDPBitmapData rdpbd;
-                            rdpbd.dest_left      = rect.x + x;
-                            rdpbd.dest_top       = rect.y + y + fc.offsety;
-                            rdpbd.dest_right     = rect.cx + rect.x + x - 1;
-                            rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
-                            rdpbd.bits_per_pixel = 24;
-                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
-                            rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
+                            rdpbd.dest_left      = dest.x;
+                            rdpbd.dest_top       = dest.y;
+                            rdpbd.dest_right     = dest.x + dest.cx - 1;
 
-                            const Rect tile(0, 0, rect.cx, rect.cy);
+                            rdpbd.dest_bottom    = dest.y + dest.cy - 1;
+                            rdpbd.bits_per_pixel = 24;
+                            rdpbd.flags          = uint16_t(BITMAP_COMPRESSION)
+                                                 | uint16_t(NO_BITMAP_COMPRESSION_HDR);
+
+                            const Rect tile(dest.x - glyphx, dest.y - glyphy, align4(dest.cx), dest.cy);
                             Bitmap bmp(glyphBitmap.data(), fc.width, fc.height, BitsPerPixel{24}, tile);
+                            rdpbd.bitmap_length  = bmp.bmp_size();
+                            rdpbd.width          = tile.cx;
+                            rdpbd.height         = tile.cy;
 
                             StaticOutStream<65535> bmp_stream;
                             bmp.compress(this->client_info.screen_info.bpp, bmp_stream);
-
-                            rdpbd.width          = bmp.cx();
-                            rdpbd.height         = bmp.cy();
 
                             this->draw_impl(rdpbd, bmp);
                         });
@@ -4592,10 +4638,7 @@ protected:
                         draw_pos_ref += cmd.ui_charinc;
                     }
                 }
-                else if (data == 0xFE) {
-                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
-                }
-                else if (data == 0xFF)  {
+                else if (data == 0xFE || data == 0xFF) {
                     LOG(LOG_WARNING, "Front::draw_impl(RDPGlyphIndex): Glyph fragment not implemented yet");
                 }
             }
@@ -4654,7 +4697,8 @@ protected:
                         sub_image_data.height = subrect.cy;
 
                         sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                        sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                        sub_image_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                             | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                         sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                         this->graphics_update->draw(sub_image_data, sub_image);
@@ -4668,7 +4712,8 @@ protected:
                 RDPBitmapData target_bitmap_data = bitmap_data;
 
                 target_bitmap_data.bits_per_pixel = safe_int(new_bmp.bpp());
-                target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                target_bitmap_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                         | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                 target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
                 this->graphics_update->draw(target_bitmap_data, new_bmp);
@@ -4781,7 +4826,8 @@ protected:
                     sub_image_data.height = sub_image_height;
 
                     sub_image_data.bits_per_pixel = safe_int(sub_image.bpp());
-                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    sub_image_data.flags = uint16_t(BITMAP_COMPRESSION)
+                                         | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                     sub_image_data.bitmap_length = sub_image.data_compressed().size();
 
                     this->draw_impl(sub_image_data, sub_image);
@@ -5040,23 +5086,19 @@ private:
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
-        bool const send_to_mod = [&]{
-            if (!this->capture || 0 == decoded_keys.count) {
-                return true;
-            }
-            auto const timeval = this->session_reactor.get_current_time();
-            return (1 == decoded_keys.count
-                    && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
-                || (2 == decoded_keys.count
-                    && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
-                    && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
-        }();
-
-        if (this->state == UP_AND_RUNNING) {
+        if (this->state == FRONT_UP_AND_RUNNING) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
+                auto const timeval = this->time_base.get_current_time();
+                bool const send_to_mod = !this->capture
+                    || (0 == decoded_keys.count)
+                    || (1 == decoded_keys.count
+                        && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
+                    || (2 == decoded_keys.count
+                        && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
+                        && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
                 if (send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }
@@ -5065,9 +5107,7 @@ private:
         }
 
         if (this->keymap.is_application_switching_shortcut_pressed) {
-            if (this->capture) {
-                this->capture->possible_active_window_change();
-            }
+            this->possible_active_window_change();
         }
     }
 

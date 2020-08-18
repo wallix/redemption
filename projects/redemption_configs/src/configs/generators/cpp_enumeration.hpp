@@ -44,6 +44,26 @@ namespace cpp_enumeration_writer
         );
     }
 
+    struct upper_streamer
+    {
+        char const* cstr;
+    };
+
+    inline std::ostream& operator<<(std::ostream& out, upper_streamer const& d)
+    {
+        for (char const * s = d.cstr; *s; ++s) {
+            char c = *s;
+            out << char(('a' <= c && c <= 'z') ? c - 'a' + 'A' : c);
+        }
+        return out;
+    }
+
+    template<class T>
+    char const* get_value_name(T const& x)
+    {
+        return x.alias ? x.alias : x.name;
+    }
+
     inline void write_utility_ini(std::ostream & out, type_enumerations const & enums, bool is_hpp)
     {
         auto write = [&](auto & e, char const * fmt) {
@@ -55,7 +75,8 @@ namespace cpp_enumeration_writer
                 write_template(
                     out, map(
                         bind('s', v.name),
-                        bind('a', v.alias ? v.alias : v.name),
+                        bind('a', get_value_name(v)),
+                        bind('A', upper_streamer{get_value_name(v)}),
                         bind('d', cpp_comment(v.desc, 4))
                     ).merge(e_map(e)),
                     fmt
@@ -63,65 +84,82 @@ namespace cpp_enumeration_writer
             }
         };
 
-        auto cfg_to_s_fmt = [&](auto & e) {
+        auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             if (is_hpp) {
-                write(e, "template<> struct zstr_buffer_traits<%e> : ");
-                out << "zstr_buffer_traits<" << (e.is_string_parser ? "void" : "unsigned long") << "> {};\n\n";
+                if (e.is_string_parser) {
+                    write(e,
+                        "template<>\n"
+                        "struct str_buffer_size<%e>\n"
+                        "{\n"
+                        "    static const std::size_t value = 0;\n"
+                        "};\n\n"
+                    );
+                }
+
+                return;
             }
+
+            if (e.is_string_parser) {
+                out <<
+                    "namespace\n"
+                    "{\n"
+                    "    inline constexpr zstring_view enum_zstr_" << e.name << "[] {\n";
+                loop(e, "        \"%s\"_zv,\n");
+                out <<
+                    "    };\n"
+                    "\n"
+                    "    inline constexpr std::pair<chars_view, " << e.name << "> enum_str_value_" << e.name << "[] {\n";
+                loop(e, "        {\"%A\"_av, %e::%s},\n");
+                out <<
+                    "    };\n"
+                    "}\n\n";
+            }
+
             write(e,
-                "array_view_const_char assign_zbuf_from_cfg(\n"
-                "    zstr_buffer_from<%e> & buf,\n"
+                "zstring_view assign_zbuf_from_cfg(\n"
+                "    writable_chars_view zbuf,\n"
                 "    cfg_s_type<%e> /*type*/,\n"
                 "    %e x\n"
                 ")"
+                "{\n"
             );
 
-            if (is_hpp) {
-                out << ";\n\n";
+            if (e.is_string_parser) {
+                out <<
+                    "    (void)zbuf;\n"
+                    "    assert(is_valid_enum_value(x));\n"
+                    "    return enum_zstr_" << e.name << "[static_cast<unsigned long>(x)];\n";
             }
             else {
-                out << "{\n";
-                if (e.is_string_parser) {
-                    out <<
-                        "    (void)buf;"
-                        "    static constexpr array_view_const_char arr[]{\n";
-                    loop(e, "        cstr_array_view(\"%s\"),\n");
-                    write(e,
-                        "    };\n"
-                        "    assert(is_valid_enum_value(x));\n"
-                        "    return arr[static_cast<unsigned long>(x)];\n"
-                    );
-                }
-                else {
-                    write(e,
-                        "    int sz = snprintf(buf.get(), buf.size(), \"%%lu\", static_cast<unsigned long>(x));\n"
-                        "    return array_view_const_char(buf.get(), sz);\n"
-                    );
-                }
-                out << "}\n\n";
+                out <<
+                    "    static_assert(sizeof(" << e.name << ") <= sizeof(unsigned long));\n"
+                    "    int sz = snprintf(zbuf.data(), zbuf.size(), \"%lu\", static_cast<unsigned long>(x));\n"
+                    "    return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);\n";
             }
-        };
+            out << "}\n\n";
 
-        auto parse_fmt = [&](auto & e, auto lazy_integral_parse_fmt){
             write(e,
-                "parse_error parse(%e & x, spec_type<%e> /*type*/, array_view_const_char value)\n"
+                "parse_error parse_from_cfg(%e & x, ::configs::spec_type<%e> /*type*/, zstring_view value)\n"
+                "{\n"
             );
 
-            if (is_hpp) {
-                out << ";\n\n";
+            if (e.is_string_parser) {
+                out <<
+                    "    return parse_str_value_pairs<enum_str_value_" << e.name << ">(\n"
+                    "        x, value, \"bad value, expected: ";
+                auto beg = e.values.begin();
+                auto end = e.values.end();
+                out << get_value_name(*beg);
+                while (++beg != end) {
+                    out << ", " << get_value_name(*beg);
+                }
+                out << "\");\n";
             }
             else {
-                out << "{\n";
-                if (e.is_string_parser) {
-                    out << "    return parse_enum_str(x, value, {\n";
-                    loop(e,"        {cstr_array_view(\"%a\"), %e::%s},\n");
-                    out << "    });\n";
-                }
-                else {
-                    lazy_integral_parse_fmt();
-                }
-                out << "}\n\n";
+                lazy_integral_parse_fmt();
             }
+
+            out << "}\n\n";
         };
 
         out <<
@@ -134,39 +172,86 @@ namespace cpp_enumeration_writer
             out <<
                 "#pragma once\n"
                 "\n"
-                "#include \"configs/io.hpp\"\n"
+                "#include \"configs/zbuffer.hpp\"\n"
                 "#include \"configs/autogen/enums.hpp\"\n"
                 "\n"
-                "#include <cerrno>\n"
-                "#include <cstdio>\n"
-                "#include <cstdlib>\n"
-                "#include <cassert>\n"
-                "#include <cstring>\n"
                 "\n"
+                "namespace configs\n"
+                "{\n"
+                "\n"
+            ;
+        }
+        else {
+            out <<
+                "namespace\n"
+                "{\n"
                 "\n"
             ;
         }
 
-        out <<
-            "namespace configs {\n"
-            "\n"
-        ;
+        auto write_header = [&](auto& e){
+            out <<
+                "    using ul = unsigned long;\n"
+                "    using enum_int = std::underlying_type_t<" << e.name << ">;\n"
+                "    static_assert(min_integral<ul>::value <= min_integral<enum_int>::value);\n"
+                "    static_assert(max_integral<ul>::value >= max_integral<enum_int>::value);\n"
+                "\n"
+                "    ul xi = 0;\n"
+            ;
+        };
+        auto write_footer = [&](auto& e) {
+            out <<
+                "\n"
+                "    x = static_cast<" << e.name << ">(xi);\n"
+                "    return no_parse_error;\n"
+            ;
+        };
 
         for (auto & e : enums.enumerations_) {
-            cfg_to_s_fmt(e);
-            parse_fmt(e, [&]{ write(e,
-                "    return parse_enum_u(x, value, std::integral_constant<unsigned long, %u>());\n"
-            ); });
-        }
-        for (auto & e : enums.enumerations_set_) {
-            cfg_to_s_fmt(e);
             parse_fmt(e, [&]{
-                out << "    return parse_enum_list(x, value, {\n";
-                loop(e,"        %e::%s,\n");
-                out << "    });\n";
+                write_header(e);
+                out <<
+                    "    if (parse_error err = parse_integral(\n"
+                    "        xi, value,\n"
+                    "        zero_integral<ul>(),\n"
+                    "        std::integral_constant<ul, " << e.max() << ">()\n"
+                    "    )) {\n"
+                    "        return err;\n"
+                    "    }\n"
+                ;
+                write_footer(e);
             });
         }
-        out << "} // namespace configs\n";
+        for (auto & e : enums.enumerations_set_) {
+            parse_fmt(e, [&]{
+                write_header(e);
+                out <<
+                    "    if (parse_error err = parse_integral(\n"
+                    "        xi, value,\n"
+                    "        min_integral<ul>(),\n"
+                    "        max_integral<ul>()\n"
+                    "    )) {\n"
+                    "        return err;\n"
+                    "    }\n"
+                    "\n"
+                    "    switch (xi) {\n";
+                loop(e,
+                    "        case ul(%e::%s): break;\n"
+                );
+                out <<
+                    "        default: return parse_error{\"unknown value\"};\n"
+                    "    }\n"
+                ;
+                write_footer(e);
+            });
+        }
+
+        if (is_hpp) {
+            out << "} // namespace config\n";
+        }
+        else {
+            out << "} // anonymous namespace\n";
+        }
     }
 
     inline void write_utility_ini_hpp(std::ostream & out, type_enumerations const & enums)

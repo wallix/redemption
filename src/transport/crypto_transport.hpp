@@ -165,12 +165,10 @@ public:
 
     explicit OutCryptoTransport(
         CryptoContext & cctx, Random & rnd, Fstat & fstat,
-        ReportError report_error
+        std::function<void(const Error & error)> notify_error
     ) noexcept;
 
     [[nodiscard]] const char * get_finalname() const noexcept { return this->finalname; }
-
-    ReportError & get_report_error();
 
     ~OutCryptoTransport();
 
@@ -179,10 +177,10 @@ public:
 
     [[nodiscard]] bool is_open() const;
 
-    void open(const char * const finalname, const char * const hash_filename, int groupid, bytes_view derivator);
+    void open(const char * const finalname, const char * const hash_filename, int groupid, uint32_t file_permissions, bytes_view derivator);
 
     // derivator implicitly basename(finalname)
-    void open(const char * finalname, const char * const hash_filename, int groupid);
+    void open(const char * finalname, const char * const hash_filename, int groupid, uint32_t file_permissions);
 
     void close(HashArray & qhash, HashArray & fhash);
 

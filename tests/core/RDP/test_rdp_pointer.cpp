@@ -21,15 +21,17 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-
-#include "gdi/graphic_api.hpp"
-#include "test_only/gdi/test_graphic.hpp"
-#include "test_only/check_sig.hpp"
-
-#include "utils/bitmap.hpp"
+#include "test_only/test_framework/sig.hpp"
 
 #include "core/RDP/rdp_pointer.hpp"
 
+// static ConstImageDataView xor_mask_to_img(u8_array_view av, uint16_t w, uint16_t h)
+// {
+//     RED_REQUIRE(av.size() == w*h*3);
+//     return ConstImageDataView(
+//         av.data(), w, h, w, BitsPerPixel(24),
+//         ConstImageDataView::Storage::TopToBottom);
+// }
 
 RED_AUTO_TEST_CASE(TestDataSize)
 {
@@ -80,8 +82,8 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
 
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_EQUAL(av.size(), 32*32*3);
-    RED_CHECK_SIG(av, "\x48\x58\x41\x28\xb0\xb4\x03\x27\x69\x31\x47\xc8\x2b\x43\x3e\xf3\x33\x80\x1c\xb2");
+    RED_CHECK_SIG(av,
+        "\x48\x58\x41\x28\xb0\xb4\x03\x27\x69\x31\x47\xc8\x2b\x43\x3e\xf3\x33\x80\x1c\xb2");
 }
 
 RED_AUTO_TEST_CASE(TestPointerEdit)
@@ -126,7 +128,8 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\x09\xb3\xc6\x81\x07\xef\x2e\xd4\xcb\x1a\xa9\xeb\x2c\xb8\xe9\x13\xfb\xaf\xe2\xe3");
+    RED_CHECK_SIG(av,
+        "\x09\xb3\xc6\x81\x07\xef\x2e\xd4\xcb\x1a\xa9\xeb\x2c\xb8\xe9\x13\xfb\xaf\xe2\xe3");
 }
 
 RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
@@ -171,7 +174,8 @@ RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\x46\x59\xfc\xbc\x13\x24\x18\xd6\x83\xa3\x6a\xc2\xea\xf8\x93\x2b\x30\x4f\x80\x0e");
+    RED_CHECK_SIG(av,
+        "\x46\x59\xfc\xbc\x13\x24\x18\xd6\x83\xa3\x6a\xc2\xea\xf8\x93\x2b\x30\x4f\x80\x0e");
 }
 
 RED_AUTO_TEST_CASE(TestPointerSystemDefault)
@@ -216,7 +220,8 @@ RED_AUTO_TEST_CASE(TestPointerSystemDefault)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\xc5\xc1\x0e\x3a\x17\x39\x56\x0c\xf9\xd7\x66\xac\x3b\x23\x23\xad\xec\xb5\xd9\x46");
+    RED_CHECK_SIG(av,
+        "\xc5\xc1\x0e\x3a\x17\x39\x56\x0c\xf9\xd7\x66\xac\x3b\x23\x23\xad\xec\xb5\xd9\x46");
 }
 
 RED_AUTO_TEST_CASE(TestPointerSizeNS)
@@ -261,7 +266,8 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\x3a\x74\xfe\x82\xcf\xa9\x15\x9e\xa0\x8a\xf9\x43\x77\x40\xf8\xe6\xdf\x13\xd0\xe1");
+    RED_CHECK_SIG(av,
+        "\x3a\x74\xfe\x82\xcf\xa9\x15\x9e\xa0\x8a\xf9\x43\x77\x40\xf8\xe6\xdf\x13\xd0\xe1");
 }
 
 RED_AUTO_TEST_CASE(TestPointerSizeNESW)
@@ -307,7 +313,8 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\x57\xed\x01\xb4\xe3\x9c\xe7\xc1\x0c\x9f\x01\xa1\xdc\x66\x4c\x92\x83\x05\x0e\x91");
+    RED_CHECK_SIG(av,
+        "\x57\xed\x01\xb4\xe3\x9c\xe7\xc1\x0c\x9f\x01\xa1\xdc\x66\x4c\x92\x83\x05\x0e\x91");
 }
 
 RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
@@ -353,7 +360,8 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\x6b\x3a\xec\xa9\x22\x1f\x23\x5d\x2c\xe6\x91\xcc\x70\x56\xf9\x02\x30\x05\xaa\x3f");
+    RED_CHECK_SIG(av,
+        "\x6b\x3a\xec\xa9\x22\x1f\x23\x5d\x2c\xe6\x91\xcc\x70\x56\xf9\x02\x30\x05\xaa\x3f");
 }
 
 RED_AUTO_TEST_CASE(TestPointerSizeWE)
@@ -398,7 +406,8 @@ RED_AUTO_TEST_CASE(TestPointerSizeWE)
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
     auto av = p.get_24bits_xor_mask();
-    RED_CHECK_SIG(av, "\xae\x83\x2a\x8e\xd0\x73\x0b\x77\xe3\xb5\xf0\x4e\xbd\x0f\x4e\xa9\xd0\x65\xeb\x59");
+    RED_CHECK_SIG(av,
+        "\xae\x83\x2a\x8e\xd0\x73\x0b\x77\xe3\xb5\xf0\x4e\xbd\x0f\x4e\xa9\xd0\x65\xeb\x59");
 }
 
 RED_AUTO_TEST_CASE(TestPointerVNC_BW)
@@ -668,17 +677,6 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
     };
     RED_CHECK_EQUAL(d.size(), 19*32*3);
     RED_CHECK(d == make_array_view(expected_data, sizeof(expected_data)));
-
-    // Create a simple capture image and dump it to file
-//    uint16_t width = 100;
-//    uint16_t height = 100;
-//    uint16_t bmp_bpp = 24;
-//    uint16_t source_bpp = 24;
-//    Rect screen_rect(0, 0, width, height);
-//    Drawable gd(width, height);
-//    Bitmap bmp(bmp_bpp, source_bpp, nullptr, 32, 19, expected_data, sizeof(expected_data), false);
-//    gd.mem_blt(screen_rect, bmp, 0, 0);
-//    dump_png24("./test_pointer_arrow.png", gd, true);
 }
 
 
@@ -832,61 +830,27 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
     auto m = vnccursor.get_monochrome_and_mask();
 
     RED_CHECK_EQUAL(m.size(), 27*4);
-//    RED_CHECK(vnccursor.get_monochrome_and_mask() == make_array_view(expected_mask, sizeof(expected_mask)));
+    RED_CHECK_SIG(m,
+        "\x3f\x6d\x9a\xdb\x5b\xa6\xe4\xa0\x68\x31\x1c\x75\x9f\xd4\xba\xc5\x87\xb1\x33\x0f");
 
     RED_CHECK_EQUAL(d.size(), 32*3*27);
-//    RED_CHECK(d == make_array_view(expected_data, sizeof(expected_data)));
-
-    // Create a simple capture image and dump it to file
-//    uint16_t width = 100;
-//    uint16_t height = 100;
-//    uint16_t bmp_bpp = 24;
-//    uint16_t source_bpp = 24;
-//    Rect screen_rect(0, 0, width, height);
-//    Drawable gd(width, height);
-//    Bitmap bmp(bmp_bpp, source_bpp, nullptr, width, height, d.data(), d.size(), false);
-//    gd.mem_blt(screen_rect, bmp, 0, 0);
-//    dump_png24("./test_pointer_arrow_wait.png", gd, true);
-
-//VNC Cursor(0, 8, 23, 27) 2 16 1242
-
+    RED_CHECK_SIG(d,
+        "\xa3\xbc\x60\xad\x73\x23\xac\xe9\x20\x33\x2a\x5e\xc2\x42\x5b\xe7\xcb\x4b\x11\x47");
 }
 
-// TEST re-enable
-// RED_AUTO_TEST_CASE(TestPointerIO)
-// {
-//         StaticOutStream<32+108*96> stream;
-//         Pointer cursor = edit_pointer();
-//
-//         uint16_t width = cursor.get_dimensions().width;
-//         uint16_t height = cursor.get_dimensions().height;
-//
-//         // TestGraphic drawable(width, height);
-//         auto const color_context = gdi::ColorCtx::depth24();
-//         auto pixel_color = RDPColor::from(PINK);
-//         Rect rect(0,0,width,height);
-//         // drawable->draw(RDPOpaqueRect(rect, pixel_color), rect, color_context);
-//
-//         auto av_xor = cursor.get_24bits_xor_mask();
-//         // Bitmap bmp(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, width, height, av_xor.data(), av_xor.size(), false);
-// //        drawable.mem_blt(rect, bmp, 0, 0);
-// //
-// //        drawable.save_to_png("./cursor.png");
-//
-// //        cursor.emit_pointer32x32(payload);
-// //
-// //        array_view_const_u8 av = {payload.get_data(), payload.get_offset()};
-//
-// //    StaticOutStream<8192> result;
-// //
-// //    cursor.emit(result);
-//
-// //    RED_CHECK(stream_to_avu8(result) == make_array_view(data, sizeof(data)));
-// }
+RED_AUTO_TEST_CASE(TestPointerIO)
+{
+    StaticOutStream<32+108*96> stream;
+    Pointer cursor = edit_pointer();
+
+    StaticOutStream<8192> result;
+    cursor.emit_pointer32x32(result);
+    RED_CHECK_SIG(result.get_produced_bytes(),
+        "\x8e\xcd\x49\x72\x34\xfa\x5a\xa5\xc4\x6a\x24\xff\xe2\x29\x40\x11\x37\x12\x9b\xc4");
+}
 
 RED_AUTO_TEST_CASE(TestPointer1bit)
 {
-
 /*
     width=32 height=32 mlen=128 dlen=128Data For Cursor
 
@@ -991,20 +955,14 @@ Mask For Cursor
     RED_CHECK_EQ(cursor.get_hotspot().y, 9);
     RED_CHECK_EQ(cursor.get_dimensions().width, 32);
     RED_CHECK_EQ(cursor.get_dimensions().height, 32);
-//     cursor.is_black_and_white = true;
+    auto d = cursor.get_24bits_xor_mask();
+    auto m = cursor.get_monochrome_and_mask();
 
-    ARGB32Pointer vnccursor(cursor);
-    const auto av_alpha_q = vnccursor.get_alpha_q();
+    RED_CHECK_EQUAL(m.size(), 32*4);
+    RED_CHECK_SIG(m,
+        "\x38\xbe\x3e\x23\x8d\xf6\x99\x45\xdb\xdd\x3e\x0b\x17\xd6\x8e\xfb\x47\x94\x2a\xe8");
 
-//     size_t i=0;
-//     for (auto x: av_alpha_q){
-//         if (x) {printf("%02X", x);} else {printf("  ");}
-//         i++;
-// //         if ((i % 24) == 23) { printf("\n"); }
-//         if ((i % 128) == 127) { printf("\n"); }
-//     }
-
-    RED_CHECK_SIG(av_alpha_q, "\x40\xcc\x56\x2e\x92\xfb\x36\x03\x65\x43\x3f\x40\xb1\x7d\x27\x8e\x20\xef\x09\x8f");
+    RED_CHECK_EQUAL(d.size(), 32*32*3);
+    RED_CHECK_SIG(d,
+        "\x02\xec\x1f\x60\xb2\xe7\x67\x41\xdd\x98\x48\xac\x43\x20\x57\xff\x9d\x58\xd7\x50");
 }
-
-

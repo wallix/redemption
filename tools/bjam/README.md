@@ -1,3 +1,7 @@
+Note: the following commands assume that `REDEMPTION_PATH` exists. Please replace with a real path or declare the variable.
+
+`bf` and `pbf` commands for pretty bjam output :)
+
 # Bash
 
 In your `~/.bashrc`:
@@ -12,7 +16,7 @@ bf () {
   return ${PIPESTATUS[0]}
 }
 
-pbf='REDEMPTION_LOG_PRINT=1 bf'
+alias pbf='REDEMPTION_LOG_PRINT=1 bf'
 
 source $REDEMPTION_PATH/tools/bjam/bjam_completion.bash
 
@@ -26,7 +30,7 @@ In your `~/.zshrc`:
 
 ```bash
 bf () {
-  bjam "$@" 2>&1 \
+  BOOST_TEST_COLOR_OUTPUT=0 bjam "$@" 2>&1 \
   | stdbuf -o0 $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
     -v columns=$COLUMNS \
     -v "replacements=$PWD;;$HOME;" \
@@ -34,7 +38,7 @@ bf () {
   return ${pipestatus[1]}
 }
 
-pbf='REDEMPTION_LOG_PRINT=1 bf'
+alias pbf='REDEMPTION_LOG_PRINT=1 bf'
 
 source $REDEMPTION_PATH/tools/bjam/bjam_completion.zsh
 

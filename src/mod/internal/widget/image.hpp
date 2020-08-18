@@ -24,14 +24,21 @@
 #include "mod/internal/widget/widget.hpp"
 #include "utils/bitmap.hpp"
 
+struct BGRColor;
+
 class WidgetImage : public Widget
 {
     Bitmap bmp;
 
 public:
-    WidgetImage(gdi::GraphicApi & drawable, const char * filename, Widget & parent, NotifyApi* notifier, int group_id = 0); /*NOLINT*/
+    WidgetImage(gdi::GraphicApi& drawable,
+                const char *filename,
+                Widget& parent,
+                NotifyApi *notifier,
+                BGRColor bg_color,
+                int group_id = 0); /*NOLINT*/
 
-    ~WidgetImage() override;
+    ~WidgetImage();
 
     void rdp_input_invalidate(Rect clip) override;
 

@@ -24,14 +24,20 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "core/session_reactor.hpp"
 #include "utils/colors.hpp"
+#include "acl/gd_provider.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
+class FrontAPI;
 
 class Bouncer2Mod : public mod_api
 {
+    bool capture_started = false;
+
     uint16_t front_width;
     uint16_t front_height;
+    FrontAPI & front;
 
     int speedx = 2;
     int speedy = 2;
@@ -43,15 +49,26 @@ class Bouncer2Mod : public mod_api
     int mouse_x = 0;
     int mouse_y = 0;
 
-    SessionReactor& session_reactor;
-    SessionReactor::GraphicTimerPtr timer;
+    EventContainer & events;
+    GdProvider & gd_provider;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     Bouncer2Mod(
-         SessionReactor& session_reactor,
+         TimeBase& time_base,
+         GdProvider & gd_provider,
+         EventContainer & events,
+         FrontAPI & front,
          uint16_t width, uint16_t height);
+
+    ~Bouncer2Mod();
+
+    std::string module_name() override {return "Bouncer2 Mod";}
+
+    void rdp_gdi_up_and_running() override {}
+
+    void rdp_gdi_down() override {}
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {
@@ -86,6 +103,13 @@ public:
     {
         return true;
     }
+
+    bool server_error_encountered() const override { return false; }
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override {}
+    void send_checkout_channel_data(const char * /*data*/) override {}
 
 private:
     int interaction();

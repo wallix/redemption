@@ -23,6 +23,8 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/fake_stat.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
@@ -33,7 +35,6 @@
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "test_only/check_sig.hpp"
 #include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/ostream_buffered.hpp"
@@ -73,7 +74,7 @@ namespace
             false, 0, std::chrono::seconds::zero(), 0};
 
         PngParams const png_params = {
-            0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true};
+                                      0, 0, std::chrono::milliseconds{60}, 100, 0, false, false, true };
 
         const char * record_tmp_path;
         const char * record_path;
@@ -107,7 +108,8 @@ namespace
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0
+            0,
+            S_IRUSR | S_IRGRP
         }
         , capture_params{
             now,
@@ -395,7 +397,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 RED_AUTO_TEST_CASE(TestPattern)
 {
     for (int i = 0; i < 2; ++i) {
-        struct : NullReportMessage {
+        struct : NullAuthentifier {
             std::string reason;
             std::string message;
 
@@ -1884,7 +1886,7 @@ RED_AUTO_TEST_CASE(TestReload)
     struct Test
     {
         char const* name;
-        array_view_const_char data;
+        chars_view data;
         unsigned file_len;
         time_t time;
     };
@@ -1921,11 +1923,11 @@ RED_AUTO_TEST_CASE(TestReload)
     }
 }
 
-struct ReportMessage : NullReportMessage
+struct ReportMessage : NullAuthentifier
 {
     std::string s;
 
-    void log6(LogId id, const timeval /*time*/, KVList kv_list) override
+    void log6(LogId id, KVList kv_list) override
     {
         s += detail::log_id_string_map[int(id)].data();
         for (auto& kv : kv_list) {
@@ -2011,7 +2013,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
-    struct : NullReportMessage {
+    struct : NullAuthentifier {
         std::string s;
 
         void report(const char* reason, const char* message) override
@@ -2043,7 +2045,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
-    struct : NullReportMessage {
+    struct : NullAuthentifier {
         bool is_killed = false;
 
         void report(const char*  /*reason*/, const char*  /*message*/) override {
@@ -2215,7 +2217,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 
         auto draw_img = [&](char const* filename){
             Bitmap img;
-            RED_CHECK((img = bitmap_from_file(filename)).is_valid());
+            RED_CHECK((img = bitmap_from_file(filename, BLACK)).is_valid());
             capture.draw(
                 RDPMemBlt(0, Rect(0, 0, img.cx(), img.cy()), 0xCC, 0, 0, 0),
                 scr, img);

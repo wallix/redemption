@@ -27,8 +27,6 @@
 #include "configs/generators/sesman_default_map.hpp"
 #include "configs/enumeration.hpp"
 
-
-
 #include "configs/generators/python_spec.hpp"
 #include "utils/sugar/algostring.hpp"
 
@@ -49,292 +47,6 @@ namespace connection_policy_writer {
 
 using namespace cfg_attributes;
 
-namespace json
-{
-    namespace impl
-    {
-        using python_spec_writer::impl::exprio;
-
-
-        using python_spec_writer::impl::stringize_integral;
-
-        inline std::string stringize_bool(bool x)
-        {
-            return x ? "true" : "false";
-        }
-
-        inline exprio stringize_bool(cpp::expr e)
-        {
-            return {e.value};
-        }
-
-        struct io_quoted
-        {
-            char const * s;
-
-            io_quoted(char const * s) : s(s) {}
-            io_quoted(std::string const & str) : s(str.c_str()) {}
-
-            friend std::ostream & operator<<(std::ostream & out, io_quoted const & q)
-            {
-                if (auto s = q.s) {
-                    for (; *s; ++s) {
-                        switch (*s) {
-                            case '\n':
-                                if (s[1]) {
-                                    out << "\\n";
-                                }
-                                break;
-                            case '\t':
-                                out << "\\t";
-                                break;
-                            case '"':
-                            case '\\':
-                                out << '\\' << *s;
-                                break;
-                            default:
-                                out << *s;
-                        }
-                    }
-                }
-                return out;
-            }
-        };
-
-        inline exprio quoted(cfg_attributes::cpp::expr e) { return {e.value}; }
-        template<class T> static io_quoted quoted(T const & s) { return s; }
-        // template<class T> static char const * quoted(types::list<T> const &) { return ""; }
-    }
-
-    template<class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<bool>, T const& x)
-    {
-        out <<
-            "          \"type\": \"bool\",\n"
-            "          \"default\": " << impl::stringize_bool(x) << ",\n"
-        ;
-    }
-
-    template<class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<std::string>, T const& s)
-    {
-        out <<
-            "          \"type\": \"string\",\n"
-            "          \"default\": \"" << impl::quoted(s) << "\",\n"
-        ;
-    }
-
-    template<class Int, class T>
-    std::enable_if_t<
-        std::is_base_of<types::integer_base, Int>::value
-        or
-        std::is_integral<Int>::value
-    >
-    write_type(std::ostream& out, type_enumerations& /*enums*/, type_<Int>, T const& i)
-    {
-        out << "          \"type\": \"integer\",\n";
-        if (std::is_unsigned<Int>::value || std::is_base_of<types::unsigned_base, Int>::value) {
-            out << "          \"min\": 0,\n";
-        }
-        out << "          \"default\": " << impl::stringize_integral(i) << ",\n";
-    }
-
-    template<class Int, long min, long max, class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::range<Int, min, max>>, T const& i)
-    {
-        out <<
-            "          \"type\": \"integer\",\n"
-            "          \"min\": " << min << ",\n"
-            "          \"max\": " << max << ",\n"
-            "          \"default\": " << impl::stringize_integral(i) << ",\n"
-        ;
-    }
-
-    template<class Ratio>
-    struct ratio_to_unit;
-
-#define RATIO_TO_MULTIPLICATOR(type, unit) \
-    template<> struct ratio_to_unit<type>  \
-    { static constexpr char const* value = #unit ; }
-
-    RATIO_TO_MULTIPLICATOR(std::milli, ms);
-    RATIO_TO_MULTIPLICATOR(std::centi, cs);
-    RATIO_TO_MULTIPLICATOR(std::deci, ds);
-    RATIO_TO_MULTIPLICATOR(std::chrono::seconds::period, s);
-    RATIO_TO_MULTIPLICATOR(std::chrono::minutes::period, min);
-    RATIO_TO_MULTIPLICATOR(std::chrono::hours::period, h);
-
-#undef RATIO_TO_MULTIPLICATOR
-
-    template<class T, class Ratio, class U>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<std::chrono::duration<T, Ratio>>, U const& i)
-    {
-        out <<
-            "          \"type\": \"integer\",\n"
-            "          \"min\": 0,\n"
-            "          \"default\": " << impl::stringize_integral(i) << ",\n"
-            "          \"subtype\": \"duration\",\n"
-            "          \"unit\": \"" << ratio_to_unit<Ratio>::value << "\",\n"
-        ;
-    }
-
-    template<unsigned N, class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::fixed_binary<N>>, T const& x)
-    {
-        out <<
-            "          \"type\": \"binary\",\n"
-            "          \"min\": " << N*2 << ",\n"
-            "          \"max\": " << N*2 << ",\n"
-            "          \"default\": \"" << io_hexkey{x.c_str(), N} << "\",\n"
-        ;
-    }
-
-    template<unsigned N, class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::fixed_string<N>>, T const& x)
-    {
-        out <<
-            "          \"type\": \"string\",\n"
-            "          \"maxlen\": " << N << ",\n"
-            "          \"default\": \"" << impl::quoted(x) << "\",\n"
-        ;
-    }
-
-    template<class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::dirpath>, T const& x)
-    {
-        out <<
-            "          \"type\": \"dirpath\",\n"
-            "          \"default\": \"" << impl::quoted(x) << "\",\n"
-        ;
-    }
-
-    template<class T>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::ip_string>, T const& x)
-    {
-        write_type(out, type_<std::string>{}, x);
-    }
-
-    template<class T, class L>
-    void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<types::list<T>>, L const& x)
-    {
-        write_type(out, type_<T>{}, x);
-        out << "          \"multivalue\"=true,\n";
-    }
-
-    namespace impl
-    {
-        // uppercase for first letter and replace '_' by ' '
-        struct io_label
-        {
-            char const* label;
-
-            friend std::ostream & operator<<(std::ostream & out, io_label const & q)
-            {
-                auto toupper = [](char c){
-                    return ('a' <= c && c <= 'z') ? char(c + ('A' - 'a')) : c;
-                };
-
-                auto label = q.label;
-
-                out << toupper(label[0]);
-
-                while (*++label) {
-                    out << (*label == '_' ? ' ' : *label);
-                }
-
-                return out;
-            }
-        };
-
-        template<class T>
-        void write_enum_value(std::ostream& out, type_enumeration const & e, T default_value)
-        {
-            if (e.flag == type_enumeration::flags) {
-                out <<
-                    "          \"type\": \"integer\",\n"
-                    "          \"min\": 0,\n"
-                    "          \"max\": " << e.max() << ",\n"
-                    "          \"default\": " << default_value << ",\n"
-                    "          \"subtype\": \"bitset\",\n"
-                ;
-            }
-            else {
-                out << "          \"type\": \"option\",\n";
-                if (e.is_string_parser) {
-                    auto& v = e.values[default_value];
-                    out << "          \"default\": \"" << (v.alias ? v.alias : v.name) << "\",\n";
-                }
-                else {
-                    out << "          \"default\": " << default_value << ",\n";
-                }
-            }
-
-            out << "          \"values\": [";
-            bool const is_autoinc = (e.flag == type_enumeration::autoincrement);
-            char const* prefix = "\n";
-            int d = 0;
-            for (type_enumeration::Value const & v : e.values) {
-                auto f = (1ull << d >> 1);
-                if (!(f & e.exclude_flag)) {
-                    out << prefix <<
-                        "            {\n"
-                        "               \"value\": "
-                    ;
-                    if (e.is_string_parser) {
-                        out << '"' << (v.alias ? v.alias : v.name) << '"';
-                    }
-                    else if (is_autoinc) {
-                        out << d;
-                    }
-                    else {
-                        out << f;
-                    }
-                    out << ",\n"
-                        "               \"label\": \"" << io_label{v.name} << "\",\n"
-                        "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\"\n"
-                        "            }"
-                    ;
-                    prefix = ",\n";
-                }
-                ++d;
-            }
-            out << "\n          ],\n";
-        }
-
-        template<class T>
-        void write_enum_value(std::ostream& out, type_enumeration_set const & e, T default_value)
-        {
-            out <<
-                "          \"type\": \"option\",\n"
-                "          \"default\": \"" << default_value << "\",\n"
-                "          \"values\": ["
-            ;
-            char const* prefix = "\n";
-            for (type_enumeration_set::Value const & v : e.values) {
-                    out << prefix <<
-                        "            {    "
-                        "               \"value\": \"" << (v.alias ? v.alias : v.name) << "\",\n"
-                        "               \"label\": " << v.val << ",\n"
-                        "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\",\n"
-                        "            }"
-                    ;
-                    prefix = ",\n";
-            }
-            out << "          ],\n";
-        }
-    }
-
-    template<class T, class E>
-    std::enable_if_t<std::is_enum_v<E>>
-    write_type(std::ostream& out, type_enumerations& enums, type_<T>, E const& x)
-    {
-        static_assert(std::is_same<T, E>::value, "incompatible enum type, used connpolicy::set(...)");
-        using ll = long long;
-        apply_enumeration_for<T>(enums, [&](auto const & e) {
-            impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<E>>(x)});
-        });
-    }
-}
 
 struct ConnectionPolicyWriterBase
 {
@@ -353,12 +65,6 @@ struct ConnectionPolicyWriterBase
     };
     PythonSpec python_spec;
 
-    struct JsonSpec
-    {
-        std::ostringstream out;
-    };
-    JsonSpec json_spec;
-
     ConnectionPolicyWriterBase(std::string directory_spec, categories_t categories, std::string sesman_map_filename)
     : python_spec{std::move(sesman_map_filename)}
     , categories(std::move(categories))
@@ -373,9 +79,6 @@ struct ConnectionPolicyWriterBase
             auto& default_value = get_default<connpolicy::default_>(type, infos);
 
             std::string const& member_name = get_name<connpolicy::name>(infos);
-
-            this->json_spec.out << "        {\n          \"name\": \"" << member_name << "\",\n";
-            json::write_type(this->json_spec.out, enums, type, default_value);
 
             std::stringstream comments;
 
@@ -394,15 +97,15 @@ struct ConnectionPolicyWriterBase
             auto attr2 = connpolicy.spec;
 
             if (bool(attr1 & attr1_t::advanced_in_gui)
-             || bool(attr2 & attr2_t::advanced_in_connpolicy)) {
+             || bool(attr2 & attr2_t::advanced_in_connpolicy)
+            ) {
                 comments << "_advanced\n";
-                 this->json_spec.out << "          \"advanced\": true,\n";
             }
             if (bool(attr1 & attr1_t::hex_in_gui)
              || bool(attr2 & attr2_t::hex_in_connpolicy)
-             || bool(python_spec_writer::attr_hex_if_enum_flag(type, enums))) {
+             || bool(python_spec_writer::attr_hex_if_enum_flag(type, enums))
+            ) {
                 comments << "_hex\n";
-                this->json_spec.out << "          \"prefered_representation\": \"hex\",\n";
             }
 
             this->python_spec.out << io_prefix_lines{comments.str().c_str(), "#", "", 0};
@@ -410,14 +113,6 @@ struct ConnectionPolicyWriterBase
             this->python_spec.out << member_name << " = ";
             python_spec_writer::write_type(python_spec.out, enums, type, default_value);
             this->python_spec.out << "\n\n";
-
-            {
-                std::ostringstream json_description;
-                python_spec_writer::write_description(json_description, enums, type, infos);
-                this->json_spec.out << "          \"description\": \"" << json::impl::io_quoted(json_description.str()) << "\"";
-            }
-
-            this->json_spec.out << "\n        }";
 
             auto&& sections = this->file_map[connpolicy.file];
             auto const& section = value_or<connpolicy::section>(
@@ -432,15 +127,10 @@ struct ConnectionPolicyWriterBase
             auto sesman_name = sesman_network_name(infos, names);
 
             sec.python_contains += this->python_spec.out.str();
-            if (!sec.json_contains.empty()) {
-                sec.json_contains += ",\n";
-            }
-            sec.json_contains += this->json_spec.out.str();
 
             this->python_spec.out.str("");
-            this->json_spec.out.str("");
 
-            auto& buf = this->json_spec.out;
+            auto& buf = this->python_spec.out;
             auto sesman_type = get_type<sesman::type_>(infos);
             sesman_default_map::python::write_type(buf, sesman_type, get_default(sesman_type, infos));
             update_sesman_contains(sec.sesman_contains, sesman_name, member_name, buf.str());
@@ -497,10 +187,8 @@ struct ConnectionPolicyWriterBase
             }
 
             auto const spec_filename = str_concat(this->directory_spec, '/', cat, ".spec");
-            auto const json_filename = str_concat(this->directory_spec, '/', cat, ".json");
 
             std::ofstream out_spec(spec_filename);
-            std::ofstream out_json(json_filename);
 
             out_spec << R"g([general]
 
@@ -525,25 +213,6 @@ vault_transformation_rule = string(default='')
 
 )g";
 
-            out_json << R"g({
-  "sections": [
-    {
-      "name": "general",
-      "members": [
-        {
-          "name": "transformation_rule",
-          "type": "string",
-          "default": "",
-          "description": "Secondary login Transformation rule\n${LOGIN} will be replaced by login\n${DOMAIN} (optional) will be replaced by domain if it exists.\nEmpty value means no transformation rule."
-        },
-        {
-          "name": "vault_transformation_rule",
-          "type": "string",
-          "default": "",
-          "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule."
-        }
-      ]
-    })g";
             auto& section_map = file_it->second;
             for (auto& section_name : this->ordered_section) {
                 auto section_it = section_map.find(section_name);
@@ -552,14 +221,6 @@ vault_transformation_rule = string(default='')
                         << "[" << section_name << "]\n\n"
                         << section_it->second.python_contains
                     ;
-                    out_json
-                        << ",\n    {\n"
-                        "      \"name\": \"" << section_name << "\",\n"
-                        "      \"members\": [\n"
-                        << section_it->second.json_contains << "\n"
-                        "      ]\n"
-                        "    }"
-                    ;
                     out_sesman
                         << "    '" << section_name << "': {\n"
                         << section_it->second.sesman_contains << "    },\n"
@@ -567,18 +228,9 @@ vault_transformation_rule = string(default='')
                 }
             }
 
-            out_json << "\n  ]\n}\n";
-
-            struct P {
-                std::ostream& out;
-                std::string const& filename;
-            };
-
-            for (P p : {P{out_spec, spec_filename}, P{out_json, json_filename}}) {
-                if (!p.out.flush()) {
-                    std::cerr << "ConnectionPolicyWriterBase: " << p.filename << ": " << strerror(errno) << "\n";
-                    return 1;
-                }
+            if (!out_spec.flush()) {
+                std::cerr << "ConnectionPolicyWriterBase: " << spec_filename << ": " << strerror(errno) << "\n";
+                return 1;
             }
         }
 
@@ -595,7 +247,6 @@ private:
     struct Section
     {
         std::string python_contains;
-        std::string json_contains;
         std::string sesman_contains;
     };
     using data_by_section_t = std::unordered_map<std::string, Section>;

@@ -27,30 +27,28 @@
 
 struct null_mod : public mod_api
 {
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * /*keymap*/) override {
-        (void)device_flags;
-        (void)x;
-        (void)y;
+    null_mod()
+    {
+        this->set_mod_signal(BACK_EVENT_NEXT);
+        // throw Error(ERR_BACK_EVENT_NEXT);
     }
+    std::string module_name() override {return "Null Mod";}
+    void rdp_input_mouse(int,int,int,Keymap2 *) override {}
+    void rdp_input_scancode(long,long,long,long,Keymap2 *) override {}
+    void rdp_input_synchronize(uint32_t, uint16_t, int16_t, int16_t) override {}
+    void rdp_input_invalidate(const Rect) override {}
+    void refresh(const Rect) override {}
+    bool is_up_and_running() const override { return true; }
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * /*keymap*/) override {
-        (void)param1;
-        (void)param2;
-        (void)param3;
-        (void)param4;
-    }
+    bool is_auto_reconnectable() const override { return false; }
+    bool server_error_encountered() const override { return false; }
 
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
-        (void)time;
-        (void)device_flags;
-        (void)param1;
-        (void)param2;
-    }
+    void rdp_gdi_up_and_running() override {}
+    void rdp_gdi_down() override {}
+    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override {}
+    void send_checkout_channel_data(const char * /*data*/) override {}
 
-    void rdp_input_invalidate(const Rect /*r*/) override {}
-
-    void refresh(const Rect /*clip*/) override {}
-
-    [[nodiscard]] bool is_up_and_running() const override { return true; }
 };
 

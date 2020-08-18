@@ -150,7 +150,7 @@ public:
     }
 
     /* Peek a byte from stream without move <p>. */
-    uint8_t peek_uint8() noexcept {
+    uint8_t peek_uint8() const noexcept {
         assert(this->in_check_rem(1));
         return *this->p.p;
     }
@@ -237,7 +237,7 @@ public:
         return this->p.in_bytes_be(nb);
     }
 
-    void in_copy_bytes(writable_bytes_view v) noexcept {
+    void in_copy_bytes(writable_buffer_view v) noexcept {
         assert(this->in_check_rem(v.size()));
         return this->p.in_copy_bytes(v);
     }
@@ -258,9 +258,9 @@ public:
         return this->p.in_uint8p(n);
     }
 
-    bytes_view view_bytes(unsigned int n) noexcept {
+    [[nodiscard]] bytes_view view_bytes(unsigned int n) const noexcept {
         assert(this->in_check_rem(n));
-        return array_view_const_u8{this->get_current(), n};
+        return u8_array_view{this->get_current(), n};
     }
 
     bytes_view in_skip_bytes(unsigned int n) noexcept {
@@ -354,7 +354,7 @@ public:
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
     // ===================================================================
 
-    // ..., the delta value it  represents is encoded in a packet signed
+    // ..., the delta value it  represents is encoded in a packed signed
     //  format:
 
     //  * If the high bit (0x80) is not set in the first encoding byte, the
@@ -421,7 +421,7 @@ public:
         return  n <= this->tailroom();
     }
 
-    [[nodiscard]] writable_bytes_view get_bytes() const noexcept {
+    [[nodiscard]] writable_bytes_view get_produced_bytes() const noexcept {
         return {this->get_data(), this->get_offset()};
     }
 
@@ -498,10 +498,10 @@ public:
         this->p+=8;
     }
 
-    array_view_u8 out_skip_bytes(unsigned int n) noexcept {
+    writable_bytes_view out_skip_bytes(unsigned int n) noexcept {
         assert(this->has_room(n));
-        array_view_u8 ret(this->get_current(), n);
-        this->p+=n;
+        writable_bytes_view ret(this->get_current(), n);
+        this->p += n;
         return ret;
     }
 
@@ -630,38 +630,11 @@ public:
     //    signed delta value.
 
     void out_DEP(int16_t point) noexcept {
-        if (abs(point) > 0x3F) {
-            uint16_t data;
-
-            memcpy(&data, &point, sizeof(data));
-            data |= 0x8000;
-
-            if (point > 0) {
-                data &= ~0x4000;
-            }
-            else {
-                data |= 0x4000;
-            }
-
-            this->out_uint16_be(data);
+        if ((point > 0x3F)||(point < -127)){
+            this->out_uint16_be(point|0x8000);
         }
         else {
-            int8_t  _yDelta;
-            uint8_t data;
-
-            _yDelta = point;
-
-            memcpy(&data, &_yDelta, sizeof(data));
-            data &= ~0x80;
-
-            if (point > 0) {
-                data &= ~0x40;
-            }
-            else {
-                data |= 0x40;
-            }
-
-            this->out_uint8(data);
+            this->out_uint8(point&0x7F);
         }
     }
 

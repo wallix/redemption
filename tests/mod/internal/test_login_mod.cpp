@@ -29,15 +29,16 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
+#include "core/events.hpp"
 
-
-RED_AUTO_TEST_CASE(TestDialogMod)
+RED_AUTO_TEST_CASE(TestLoginMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
+    TimeBase time_base({0,0});
+    EventContainer events;
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -49,8 +50,9 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     RED_CHECK_NE(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
 
-    LoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
+    d.init();
 
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -58,13 +60,14 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     RED_CHECK_EQUAL(ini.get<cfg::context::password>(), "pass");
 }
 
-RED_AUTO_TEST_CASE(TestDialogMod2)
+RED_AUTO_TEST_CASE(TestLoginMod2)
 {
     ScreenInfo screen_info{2048, 1536, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    SessionReactor session_reactor;
-    ClientExecute client_execute(session_reactor, front.gd(), front, window_list_caps, false);
+    TimeBase time_base({0,0});
+    EventContainer events;
+    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -75,16 +78,13 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
 
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 
-    LoginMod d(ini, session_reactor, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
+    d.init();
 
-    session_reactor.execute_timers(SessionReactor::EnableGraphics(false), &gdi::null_gd);
-    RED_CHECK_EQUAL(BACK_EVENT_NONE, session_reactor.signal);
+    events.execute_events(timeval{0,0},[](int){return false;}, 0);
+    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_mod_signal());
 
-    timeval tv = session_reactor.get_current_time();
-    tv.tv_sec += 2;
-    session_reactor.set_current_time(tv);
-
-    session_reactor.execute_timers(SessionReactor::EnableGraphics(false), &gdi::null_gd);
-    RED_CHECK_EQUAL(BACK_EVENT_STOP, session_reactor.signal);
+    events.execute_events(timeval{2,1},[](int){return false;}, 0);
+    RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_mod_signal());
 }

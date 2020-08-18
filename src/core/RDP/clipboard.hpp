@@ -29,8 +29,11 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
-#include <sstream>
+#include <charconv>
+#include <tuple> // std::apply
 
 
 namespace RDPECLIP {
@@ -66,7 +69,7 @@ enum CF : uint16_t
     , CF_GDIOBJLAST      = 1023
 };
 
-inline array_view_const_char get_FormatId_name_av(uint32_t FormatId) noexcept
+inline chars_view get_FormatId_name_av(uint32_t FormatId) noexcept
 {
     switch (FormatId) {
         case CF_TEXT:            return "CF_TEXT"_av;
@@ -120,7 +123,7 @@ namespace Cliprdr
     inline void log_format_name(char const* prefix, uint32_t format_id, UnicodeName unicode_name)
     {
         char buf[256];
-        auto utf8_name = UTF16toUTF8_buf(unicode_name.bytes, make_array_view(buf));
+        auto utf8_name = UTF16toUTF8_buf(unicode_name.bytes, make_writable_array_view(buf));
         log_format_name(prefix, format_id, AsciiName{utf8_name});
     }
 } // namespace Cliprdr
@@ -240,39 +243,68 @@ enum {
     , CB_ASCII_NAMES     = 0x0004
 };
 
-inline static const char * get_msgFlag_name(uint16_t msgFlag) {
+inline static zstring_view get_msgFlag_name(uint16_t msgFlag)
+{
     switch (msgFlag) {
-        case CB_RESPONSE__NONE_: return "CB_RESPONSE__NONE_";
+        case CB_RESPONSE__NONE_: return "CB_RESPONSE__NONE_"_zv;
 
-        case CB_RESPONSE_OK:     return "CB_RESPONSE_OK";
-        case CB_RESPONSE_FAIL:   return "CB_RESPONSE_FAIL";
-        case CB_ASCII_NAMES:     return "CB_ASCII_NAMES";
+        case CB_RESPONSE_OK:     return "CB_RESPONSE_OK"_zv;
+        case CB_RESPONSE_FAIL:   return "CB_RESPONSE_FAIL"_zv;
+        case CB_ASCII_NAMES:     return "CB_ASCII_NAMES"_zv;
     }
 
-    return "<unknown>";
+    return "<unknown>"_zv;
 }
 
-static inline std::string msgFlags_to_string(uint16_t msgFlags) {
-    std::ostringstream stream;
 
-    if (!msgFlags) {
-        stream << "0x" << std::hex << 0;
+template<class FlagType, class ToName, class... Flag>
+static std::string generic_flags_to_string(FlagType flags, ToName to_name, Flag... flag)
+{
+    if (!flags) {
+        return std::string("0x0");
     }
     else {
-        auto out_flag = [&stream, msgFlags](uint16_t msgFlag) {
-                if (msgFlags & msgFlag) {
-                    if (stream.tellp()) { stream << " | "; }
-                    stream << get_msgFlag_name(msgFlag) << "(0x" <<
-                        std::hex << msgFlag << ")";
-                }
-            };
+        constexpr std::size_t frag_num = 5*sizeof...(flag);
+        std::array<chars_view, frag_num> views;
+        std::array<std::array<char, 32>, frag_num> buffers;
 
-        out_flag(CB_RESPONSE_OK);
-        out_flag(CB_RESPONSE_FAIL);
-        out_flag(CB_ASCII_NAMES);
+        auto views_it = std::begin(views);
+        auto buffer_it = std::begin(buffers);
+
+        bool has_value = false;
+        auto init_fragment = [&](auto flag)
+        {
+            if (flags & flag) {
+                auto r = std::to_chars(
+                    buffer_it->begin(), buffer_it->end(),
+                    FlagType(flag), 16);
+                *views_it++ = has_value ? " | "_av : ""_av;
+                *views_it++ = to_name(flag);
+                *views_it++ = {buffer_it->data(), r.ptr};
+                *views_it++ = "(0x"_av;
+                *views_it++ = ")"_av;
+                has_value = true;
+            }
+            else {
+                views_it += 5;
+            }
+            ++buffer_it;
+        };
+
+        (..., void(init_fragment(flag)));
+
+        return std::apply([](auto... av){ return str_concat(av...); }, views);
     }
+}
 
-    return stream.str();
+static inline std::string msgFlags_to_string(uint16_t msgFlags)
+{
+    return generic_flags_to_string(
+        msgFlags, get_msgFlag_name,
+        CB_RESPONSE_OK,
+        CB_RESPONSE_FAIL,
+        CB_ASCII_NAMES
+    );
 }
 
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in
@@ -351,7 +383,7 @@ public:
         this->dataLen_  = stream.in_uint32_le();
     }
 
-    static size_t size() {
+    constexpr static size_t size() {
         return 8;       // 2(msgType) + 2(msgFlags) + 4(dataLen)
     }
 
@@ -607,40 +639,28 @@ enum {
          CB_FILECLIP_NO_FILE_PATHS | CB_CAN_LOCK_CLIPDATA)
 };
 
-inline static const char * get_generalFlag_name(uint16_t msgFlag) {
+inline static zstring_view get_generalFlag_name(uint16_t msgFlag)
+{
     switch (msgFlag) {
-        case CB_USE_LONG_FORMAT_NAMES:   return "CB_USE_LONG_FORMAT_NAMES";
-        case CB_STREAM_FILECLIP_ENABLED: return "CB_STREAM_FILECLIP_ENABLED";
-        case CB_FILECLIP_NO_FILE_PATHS:  return "CB_FILECLIP_NO_FILE_PATHS";
-        case CB_CAN_LOCK_CLIPDATA:       return "CB_CAN_LOCK_CLIPDATA";
+        case CB_USE_LONG_FORMAT_NAMES:   return "CB_USE_LONG_FORMAT_NAMES"_zv;
+        case CB_STREAM_FILECLIP_ENABLED: return "CB_STREAM_FILECLIP_ENABLED"_zv;
+        case CB_FILECLIP_NO_FILE_PATHS:  return "CB_FILECLIP_NO_FILE_PATHS"_zv;
+        case CB_CAN_LOCK_CLIPDATA:       return "CB_CAN_LOCK_CLIPDATA"_zv;
     }
 
-    return "<unknown>";
+    return "<unknown>"_zv;
 }
 
-static inline std::string generalFlags_to_string(uint32_t generalFlags) {
-    std::ostringstream stream;
-
-    if (!generalFlags) {
-        stream << "0x" << std::hex << 0;
-    }
-    else {
-        auto out_flag = [&stream, generalFlags](uint16_t generalFlag) {
-                if (generalFlags & generalFlag) {
-                    if (stream.tellp()) { stream << " | "; }
-                    stream << get_generalFlag_name(generalFlag) << "(0x" <<
-                        std::hex << generalFlag << ")";
-                }
-            };
-
-        out_flag(CB_USE_LONG_FORMAT_NAMES);
-        out_flag(CB_STREAM_FILECLIP_ENABLED);
-        out_flag(CB_FILECLIP_NO_FILE_PATHS);
-        out_flag(CB_CAN_LOCK_CLIPDATA);
-        out_flag(CB_HUGE_FILE_SUPPORT_ENABLED);
-    }
-
-    return stream.str();
+static inline std::string generalFlags_to_string(uint32_t generalFlags)
+{
+    return generic_flags_to_string(
+        generalFlags, get_generalFlag_name,
+        CB_USE_LONG_FORMAT_NAMES,
+        CB_STREAM_FILECLIP_ENABLED,
+        CB_FILECLIP_NO_FILE_PATHS,
+        CB_CAN_LOCK_CLIPDATA,
+        CB_HUGE_FILE_SUPPORT_ENABLED
+    );
 }
 
 // If the General Capability Set is not present in the Clipboard Capabilities
@@ -2177,7 +2197,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
                 Cliprdr::format_list_extract(
                     chunk,
                     Cliprdr::IsLongFormat(state.use_long_format_names),
-                    Cliprdr::IsAscii(header.msgFlags() & CB_ASCII_NAMES),
+                    Cliprdr::IsAscii(bool(header.msgFlags() & CB_ASCII_NAMES)),
                     [&](uint32_t format_id, auto const& name) {
                         Cliprdr::log_format_name("", format_id, name);
                     }

@@ -25,129 +25,53 @@
 #pragma once
 
 #include "core/back_event_t.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/timebase.hpp"
+#include "acl/session_logfile.hpp"
 
 #include <string>
 #include <chrono>
 
 #include <ctime>
 
-
 class Inifile;
 class ModuleManager;
 class AuthApi;
+class ModWrapper;
 
-
-class KeepAlive
+class AclSerializer final
 {
-    // Keep alive Variables
-    int  grace_delay;
-    long timeout;
-    long renew_time;
-    bool wait_answer;     // true when we are waiting for a positive response
-                          // false when positive response has been received and
-                          // timers have been set to new timers.
-    bool connected;
+
+    using authid_t = ::configs::authid_t;
 
 public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        state    = 0x10,
-        arcsight = 0x20,
 
-        // SocketTransport (see 'socket_transport.hpp')
-        sock_basic = 1u << 29,
-        sock_dump  = 1u << 30,
-        sock_watch = 1u << 31
+    enum {
+        acl_state_not_yet_connected = 0,
+        acl_state_connected,
+        acl_state_connection_failed,
+        acl_state_disconnected_by_redemption,
+        acl_state_disconnected_by_authentifier
     };
 
-    KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose);
+    std::function<void()> on_inactivity_timeout = []{};
 
-    ~KeepAlive();
-
-    bool is_started();
-
-    void start(time_t now);
-
-    void stop();
-
-    bool check(time_t now, Inifile & ini);
-};
-
-
-class Inactivity
-{
-    // Inactivity management
-    // let t be the timeout of the blocking select in session loop,
-    // the effective inactivity timeout detection will be between
-    // inactivity_timeout and inactivity_timeout + t.
-    // hence we should have t << inactivity_timeout.
-    time_t inactivity_timeout;
-    time_t last_activity_time;
-
-public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        state = 0x10,
-    };
-
-    Inactivity(std::chrono::seconds timeout, time_t start, Verbose verbose);
-
-    ~Inactivity();
-
-    bool check_user_activity(time_t now, bool & has_user_activity);
-
-    void update_inactivity_timeout(time_t inactivity_timeout);
-
-    time_t get_inactivity_timeout();
-};
-
-
-class SessionLogFile
-{
-    OutCryptoTransport ct;
-
-public:
-    SessionLogFile(CryptoContext & cctx, Random & rnd, Fstat & fstat, ReportError report_error);
-
-    ~SessionLogFile();
-
-    void open(
-        std::string const& log_path, std::string const& hash_path,
-        int groupid, bytes_view derivator);
-
-    void close();
-
-    void write_line(std::time_t time, array_view_const_char av);
-};
-
-
-class AclSerializer final : ReportMessageApi
-{
-public:
     Inifile & ini;
+    Transport * auth_trans;
+    std::string acl_manager_disconnect_reason;
+    int acl_status = acl_state_not_yet_connected;
 
 private:
-    Transport & auth_trans;
     char session_id[256];
-    SessionLogFile log_file;
 
-    std::string manager_disconnect_reason;
-
-    std::string session_type;
-
+private:
+public:
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
-
-    KeepAlive keepalive;
-
-    Inactivity inactivity;
 
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -159,44 +83,78 @@ public:
         arcsight  = 0x20,
     };
 
-    AclSerializer(
-        Inifile & ini, time_t acl_start_time, Transport & auth_trans,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat, Verbose verbose);
-
+    AclSerializer(Inifile & ini);
     ~AclSerializer();
 
-    void report(const char * reason, const char * message) override;
+    void disconnect() {
+        if (this->acl_status == acl_state_connected) {
+            this->acl_status = acl_state_disconnected_by_redemption;
+            if (this->auth_trans){
+                this->auth_trans->disconnect();
+                this->auth_trans = nullptr;
+            }
+            return;
+        }
+        // If connexion was cut by authentifier, we also want to call disconnect on transport
+        if (this->auth_trans){
+            this->auth_trans->disconnect();
+            this->auth_trans = nullptr;
+        }
+    }
 
-    void receive();
+    // Set an already opened Transport to ACL : after calling this method AclSerializer is connected
+    void set_auth_trans(Transport * auth_trans)
+    {
+        this->auth_trans = auth_trans;
+        this->acl_status = acl_state_connected;
+    }
 
-    time_t get_inactivity_timeout() override;
+    void set_failed_auth_trans()
+    {
+        this->acl_status = acl_state_connection_failed;
+    }
 
-    void update_inactivity_timeout() override;
+    bool is_connexion_failed() const
+    {
+        return this->acl_status == acl_state_connection_failed;
+    }
 
-    void log6(LogId id, const timeval time, KVList kv_list) override;
+    bool is_before_connexion() const
+    {
+        return this->acl_status == acl_state_not_yet_connected;
+    }
 
-    void start_session_log();
+    bool is_after_connexion() const
+    {
+        return this->acl_status == acl_state_disconnected_by_authentifier
+        || this->acl_status == acl_state_disconnected_by_redemption;
+    }
 
-    void close_session_log();
+    bool is_connected() const
+    {
+        return acl_status == acl_state_connected;
+    }
 
-    bool check(
-        AuthApi & authentifier, ReportMessageApi & report_message, ModuleManager & mm,
-        time_t now, BackEvent_t & signal, BackEvent_t & front_signal, bool & has_user_activity
-    );
+    std::string show() const {
+        switch (this->acl_status) {
+        case acl_state_not_yet_connected:
+            return "Acl not yet connected";
+        case acl_state_connected:
+            return "Acl connected";
+        case acl_state_connection_failed:
+            return "Acl connection failed";
+        case acl_state_disconnected_by_redemption:
+            return "Acl disconnected by redemption";
+        case acl_state_disconnected_by_authentifier:
+            return "Acl disconnected by authentifier";
+        }
+        return "Acl unexpected state";
+    }
 
     void in_items();
-
     void incoming();
-
     void send_acl_data();
+
+
 };
 
-
-struct Acl
-{
-    SocketTransport auth_trans;
-    AclSerializer   acl_serial;
-
-    Acl(Inifile & ini, unique_fd client_sck, time_t now,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat);
-};

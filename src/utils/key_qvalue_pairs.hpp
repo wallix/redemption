@@ -21,7 +21,7 @@
 #pragma once
 
 #include "core/log_id.hpp"
-#include "core/report_message_api.hpp"
+#include "acl/auth_api.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <string>
@@ -45,7 +45,7 @@ namespace qvalue_table_formats
 
 inline void escaped_qvalue(
     std::string& escaped_subject,
-    array_view_const_char subject,
+    chars_view subject,
     std::array<char, 256> const& escaped_table)
 {
     auto escaped = [&](char c){
@@ -85,13 +85,13 @@ inline std::string& kv_list_to_string(
     return buffer;
 }
 
-constexpr inline array_view_const_char log_id_string_type_map[]{
+constexpr inline chars_view log_id_string_type_map[]{
     #define f(x, cat) "type=\"" #x "\""_av,
     X_LOG_ID(f)
     #undef f
 };
 
-inline array_view_const_char log_format_set_info(std::string& buffer, LogId id, KVList kv_list)
+inline chars_view log_format_set_info(std::string& buffer, LogId id, KVList kv_list)
 {
     auto type = log_id_string_type_map[int(id)];
     buffer.assign(type.begin(), type.end());

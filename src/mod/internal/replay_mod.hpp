@@ -27,8 +27,8 @@
 
 #include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
 #include "transport/mwrm_reader.hpp" // WrmVersion
-#include "core/session_reactor.hpp"
 #include "mod/mod_api.hpp"
+#include "utils/timebase.hpp"
 
 class FrontAPI;
 
@@ -54,46 +54,28 @@ class ReplayMod : public mod_api
 
     bool replay_on_loop;
     bool play_video_with_corrupted_bitmap;
-    SessionReactor& session_reactor;
-    SessionReactor::GraphicTimerPtr timer;
 
 public:
     using Verbose = FileToGraphic::Verbose;
 
-    ReplayMod( SessionReactor& session_reactor
-             , gdi::GraphicApi & drawable
+    ReplayMod(gdi::GraphicApi & drawable
              , FrontAPI & front
              , const char * replay_path
              , uint16_t width
              , uint16_t height
              , std::string & auth_error_message
              , bool wait_for_escape
-             , bool replay_on_loop
-             , bool play_video_with_corrupted_bitmap
-             , Verbose debug_capture)
-    : ReplayMod(
-        session_reactor, drawable, front, replay_path, width, height, auth_error_message,
-        wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop,
-        play_video_with_corrupted_bitmap, debug_capture)
-    {
-    }
-
-    ReplayMod( SessionReactor& session_reactor
-             , gdi::GraphicApi & drawable
-             , FrontAPI & front
-             , const char * replay_path
-             , uint16_t width
-             , uint16_t height
-             , std::string & auth_error_message
-             , bool wait_for_escape
-             , timeval const & begin_read
-             , timeval const & end_read
-             , time_t balise_time_frame
+             , timeval const & begin_read // timeval{0, 0}
+             , timeval const & end_read   // timeval{0, 0}
+             , time_t balise_time_frame   // 0
              , bool replay_on_loop
              , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture);
 
     ~ReplayMod() override;
+
+    std::string module_name() override {return "Replay Mod";}
+
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
@@ -129,6 +111,10 @@ public:
                                int16_t /*param1*/, int16_t /*param2*/) override
     {}
 
+    void rdp_gdi_up_and_running() override {}
+
+    void rdp_gdi_down() override {}
+
     void set_pause(timeval & time);
 
     void set_wait_after_load_client(timeval & time);
@@ -145,4 +131,12 @@ public:
 
     [[nodiscard]] bool is_up_and_running() const override
     { return true; }
+
+    bool server_error_encountered() const override { return false; }
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override {}
+    void send_checkout_channel_data(const char * /*data*/) override {}
+
 };

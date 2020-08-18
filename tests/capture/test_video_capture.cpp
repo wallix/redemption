@@ -243,7 +243,7 @@ RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264, wd)
 {
     simple_full_video(wd.dirname(), mp4, 0s, 250, false, true);
 
-    RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 106930 +- 6000_v);
+    RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 106930 +- 10000_v);
 }
 #else
 int main() {}

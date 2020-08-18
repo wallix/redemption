@@ -50,10 +50,10 @@ int main()
         Ini("autogen/include/configs/autogen/str_ini.hpp"),
         Cpp({
             "autogen/include/configs/autogen/authid.hpp",
+            "autogen/include/configs/autogen/str_authid.hpp",
             "autogen/include/configs/autogen/variables_configuration_fwd.hpp",
             "autogen/include/configs/autogen/variables_configuration.hpp",
             "autogen/include/configs/autogen/set_value.tcc",
-            "autogen/include/configs/autogen/extern_template_field.tcc"
         }),
         ConnPolicy(
             "autogen/spec/", {"rdp", "vnc"},

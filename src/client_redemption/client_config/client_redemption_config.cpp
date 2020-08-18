@@ -375,32 +375,6 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
 }
 
 
-void ClientConfig::writeCustomKeyConfig(ClientRedemptionConfig & config)  {
-    const std::string KEY_SETTING_PATH(config.MAIN_DIR + CLIENT_REDEMPTION_KEY_SETTING_PATH);
-    unique_fd fd = unique_fd(KEY_SETTING_PATH.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-
-    if(fd.is_open()) {
-        std::string to_write = "Key Setting\n\n";
-
-        for (KeyCustomDefinition & key : config.keyCustomDefinitions) {
-            if (key.qtKeyID != 0) {
-                str_append(
-                    to_write,
-                    "- ",
-                    std::to_string(key.qtKeyID), ' ',
-                    std::to_string(key.scanCode), ' ',
-                    key.ASCII8, ' ',
-                    std::to_string(key.extended), ' ',
-                    key.name, '\n'
-                );
-            }
-        }
-
-        ::write(fd.fd(), to_write.c_str(), to_write.length());
-    }
-}
-
-
 // TODO PERF very inneficient. replace to append_file_contents()
 bool ClientConfig::read_line(const int fd, std::string & line) {
     line.clear();
@@ -429,7 +403,6 @@ void ClientConfig::set_config(int argc, char const* const argv[], ClientRedempti
     if (!config.MAIN_DIR.empty()) {
         ClientConfig::setUserProfil(config);
         ClientConfig::setClientInfo(config);
-        ClientConfig::setCustomKeyConfig(config);
         ClientConfig::setAccountData(config);
         ClientConfig::openWindowsData(config);
     }
@@ -877,56 +850,3 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
         }
     }
 }
-
-void ClientConfig::setCustomKeyConfig(ClientRedemptionConfig & config)  {
-    const std::string KEY_SETTING_PATH(config.MAIN_DIR + CLIENT_REDEMPTION_KEY_SETTING_PATH);
-    unique_fd fd = unique_fd(KEY_SETTING_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-
-    if (fd.is_open()) {
-        config.keyCustomDefinitions.clear();
-
-        std::string ligne;
-
-        while(read_line(fd.fd(), ligne)) {
-
-            std::string::size_type pos(ligne.find(' '));
-
-            if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
-
-                ligne = ligne.substr(pos + 1, ligne.length());
-                pos = ligne.find(' ');
-
-                int qtKeyID  = std::stoi(ligne.substr(0, pos));
-
-                if (qtKeyID !=  0) {
-                    ligne = ligne.substr(pos + 1, ligne.length());
-                    pos = ligne.find(' ');
-
-                    int scanCode = 0;
-                    scanCode = std::stoi(ligne.substr(0, pos));
-                    ligne = ligne.substr(pos + 1, ligne.length());
-
-                    std::string ASCII8 = ligne.substr(0, 1);
-                    int next_pos = 2;
-                    if (ASCII8 == " ") {
-                        ASCII8 = "";
-                        next_pos = 1;
-                    }
-
-                    ligne = ligne.substr(next_pos, ligne.length());
-                    int extended = std::stoi(ligne.substr(0, 1));
-
-                    if (extended) {
-                        extended = 1;
-                    }
-                    pos = ligne.find(' ');
-
-                    std::string name = ligne.substr(pos + 1, ligne.length());
-
-                    config.keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
-                }
-            }
-        }
-    }
-}
-

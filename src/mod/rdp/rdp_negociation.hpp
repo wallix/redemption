@@ -31,10 +31,12 @@
 #include "core/RDP/nego.hpp"
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
+#include "core/channels_authorizations.hpp"
 #include "gdi/screen_info.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/crypto/ssl_lib.hpp"
+#include "acl/auth_api.hpp"
 
 #include <functional> // std::reference_wrapper
 #include <memory>
@@ -47,8 +49,7 @@ class FrontAPI;
 class ModRDPParams;
 class Random;
 class RedirectionInfo;
-class ReportMessageApi;
-class TimeObj;
+class TimeBase;
 class Transport;
 namespace CHANNELS
 {
@@ -73,7 +74,7 @@ private:
     {
     public:
         explicit RDPServerNotifier(
-            ReportMessageApi& report_message,
+            AuthApi& sesman,
             bool server_cert_store,
             ServerCertCheck server_cert_check,
             std::unique_ptr<char[]>&& certif_path,
@@ -99,14 +100,14 @@ private:
         const std::array<ServerNotification, 5> server_status_messages;
 
         const RDPVerbose verbose;
-        ReportMessageApi& report_message;
+        AuthApi& sesman;
     };
 
 private:
     State state = State::NEGO_INITIATE;
 
     CHANNELS::ChannelDefArray& mod_channel_list;
-    const ChannelsAuthorizations& channels_authorizations;
+    const ChannelsAuthorizations channels_authorizations;
     const CHANNELS::ChannelNameId auth_channel;
     const CHANNELS::ChannelNameId checkout_channel;
 
@@ -124,7 +125,7 @@ private:
     uint16_t cbAutoReconnectCookie = 0;
     uint8_t autoReconnectCookie[28] = { 0 };
 
-    const int keylayout;
+    const uint32_t keylayout;
 
     uint32_t server_public_key_len = 0;
     uint8_t client_crypt_random[512] {};
@@ -178,7 +179,7 @@ private:
 
 public:
     RdpNegociation(
-        std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
+        const ChannelsAuthorizations channels_authorizations,
         CHANNELS::ChannelDefArray& mod_channel_list,
         const CHANNELS::ChannelNameId auth_channel,
         const CHANNELS::ChannelNameId checkout_channel,
@@ -191,9 +192,9 @@ public:
         const ClientInfo& info,
         RedirectionInfo& redir_info,
         Random& gen,
-        TimeObj& timeobj,
+        TimeBase& time_base,
         const ModRDPParams& mod_rdp_params,
-        ReportMessageApi& report_message,
+        AuthApi& sesman,
         LicenseApi& license_store,
         bool has_managed_drive,
         bool convert_remoteapp_to_desktop,

@@ -22,17 +22,14 @@
 
 
 #include "utils/log.hpp"
-#include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "client_redemption/client_channels/client_remoteapp_channel.hpp"
-// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtCore/QTimer>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
-#include <QtGui/QImage>
 
 #include "redemption_qt_include_widget.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
@@ -59,24 +56,24 @@ public:
         READING_BAR_H = 12,
     };
 
+private:
     WindowsData * win_data;
 
+public:
     ClientCallback * callback;
 //     ClientOutputGraphicAPI * client_graphic_api;
 
     int            _width;
     int            _height;
+
     QColor         _penColor;
     QPixmap      * _cache;
 
+private:
     bool           _connexionLasted;
 
-    uchar cursor_data[Pointer::DATA_SIZE*4];
-    int cursorHotx;
-    int cursorHoty;
 
-
-
+public:
     QtScreen(WindowsData * win_data, ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
@@ -87,8 +84,6 @@ public:
     , _penColor(Qt::black)
     , _cache(cache)
     , _connexionLasted(false)
-    , cursorHotx(0)
-    , cursorHoty(0)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);
@@ -483,8 +478,6 @@ public:
     QPixmap readding_bar;
     time_t current_time_movie;
     time_t real_time_record;
-
-
 
 public:
     ReplayQtScreen (ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)

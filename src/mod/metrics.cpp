@@ -75,7 +75,7 @@ namespace
     }
 
     // yyyy-MM-dd
-    array_view_const_char strftime_date(const timeval tv, char (&buf)[35])
+    chars_view strftime_date(const timeval tv, char (&buf)[35])
     {
         const auto tm = to_tm(tv);
         return {buf, buf + snprintf(buf, std::size(buf), "%04d-%02d-%02d",
@@ -84,7 +84,7 @@ namespace
     }
 
     // yyyy-MM-dd_hh-mm-ss
-    array_view_const_char strftime_filename(const timeval tv, char (&buf)[35])
+    chars_view strftime_filename(const timeval tv, char (&buf)[35])
     {
         const auto tm = to_tm(tv);
         return {buf, buf + snprintf(buf, std::size(buf),
@@ -94,7 +94,7 @@ namespace
     }
 
     // yyyy-MM-dd hh:mm:ss
-    array_view_const_char strftime_event(timeval tv, char (&buf)[35])
+    chars_view strftime_event(timeval tv, char (&buf)[35])
     {
         const auto tm = to_tm(tv);
         return {buf, buf + snprintf(buf, std::size(buf),
@@ -103,7 +103,7 @@ namespace
         };
     }
 
-    iovec to_iov(array_view_const_char av) noexcept
+    iovec to_iov(chars_view av) noexcept
     {
         return {const_cast<char*>(av.data()), av.size()}; /*NOLINT*/
     }
@@ -164,7 +164,7 @@ struct Metrics::Impl
         }
     }
 
-    static void write_event_to_logindex(Metrics& m, timeval event_time, array_view_const_char event_name)
+    static void write_event_to_logindex(Metrics& m, timeval event_time, chars_view event_name)
     {
         unique_fd fd_header(m.complete_index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!fd_header.is_open()) {
@@ -206,10 +206,10 @@ void Metrics::set_protocol(std::string fields_version, std::string protocol_name
 Metrics::Metrics(
     std::string const& path,
     std::string session_id,
-    array_view_const_char primary_user_sig,   // hashed primary user account
-    array_view_const_char account_sig,        // hashed secondary account
-    array_view_const_char target_service_sig, // hashed (target service name + device name)
-    array_view_const_char session_info_sig,   // hashed (source_host + client info)
+    chars_view primary_user_sig,   // hashed primary user account
+    chars_view account_sig,        // hashed secondary account
+    chars_view target_service_sig, // hashed (target service name + device name)
+    chars_view session_info_sig,   // hashed (source_host + client info)
     timeval now,                              // time at beginning of metrics
     std::chrono::hours file_interval,         // daily rotation of filename
     std::chrono::seconds log_delay            // delay between 2 logs flush

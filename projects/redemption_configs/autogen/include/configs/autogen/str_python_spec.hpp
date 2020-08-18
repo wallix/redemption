@@ -72,9 +72,6 @@ enable_transparent_mode = boolean(default=False)
 #_password
 certificate_password = string(max=254, default='inquisition')
 
-#_advanced
-movie_path = string(default='')
-
 # Support of Bitmap Update.
 #_advanced
 enable_bitmap_update = boolean(default=True)
@@ -124,6 +121,10 @@ support_connection_redirection_during_recording = boolean(default=True)
 # (is in millisecond)
 rdp_keepalive_connection_interval = integer(min=0, default=0)
 
+# Enable primary connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [session_log]
 
 enable_session_log = boolean(default=True)
@@ -144,8 +145,9 @@ hide_non_printable_kbd_input = boolean(default=False)
 [client]
 
 # cs-CZ, da-DK, de-DE, el-GR, en-US, es-ES, fi-FI.finnish, fr-FR, is-IS, it-IT, nl-NL, nb-NO, pl-PL.programmers, pt-BR.abnt, ro-RO, ru-RU, hr-HR, sk-SK, sv-SE, tr-TR.q, uk-UA, sl-SI, et-EE, lv-LV, lt-LT.ibm, mk-MK, fo-FO, mt-MT.47, se-NO, kk-KZ, ky-KG, tt-RU, mn-MN, cy-GB, lb-LU, mi-NZ, de-CH, en-GB, es-MX, fr-BE.fr, nl-BE, pt-PT, sr-La, se-SE, uz-Cy, iu-La, fr-CA, sr-Cy, en-CA.fr, fr-CH, bs-Cy, bg-BG.latin, cs-CZ.qwerty, en-IE.irish, de-DE.ibm, el-GR.220, es-ES.variation, hu-HU, en-US.dvorak, it-IT.142, pl-PL, pt-BR.abnt2, ru-RU.typewriter, sk-SK.qwerty, tr-TR.f, lv-LV.qwerty, lt-LT, mt-MT.48, se-NO.ext_norway, fr-BE, se-SE, en-CA.multilingual, en-IE, cs-CZ.programmers, el-GR.319, en-US.international, se-SE.ext_finland_sweden, bg-BG, el-GR.220_latin, en-US.dvorak_left, el-GR.319_latin, en-US.dvorak_right, el-GR.latin, el-GR.polytonic
+# (values are comma-separated)
 #_advanced
-keyboard_layout_proposals = string_list(default=list('en-US, fr-FR, de-DE, ru-RU'))
+keyboard_layout_proposals = string(default='en-US, fr-FR, de-DE, ru-RU')
 
 # If true, ignore password provided by RDP client, user need do login manually.
 #_advanced
@@ -246,7 +248,7 @@ ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')
 
 show_target_user_in_f12_message = boolean(default=False)
 
-enable_new_pointer_update = boolean(default=False)
+enable_new_pointer_update = boolean(default=True)
 
 bogus_ios_glyph_support_level = boolean(default=True)
 
@@ -283,9 +285,12 @@ bogus_pointer_xormask_padding = boolean(default=False)
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
 #   22: Polyline
-# This option takes precedence over the option Extra orders of section mod_rdp.
+#   25: EllipseSC
+#   27: GlyphIndex
+# 
+# (values are comma-separated)
 #_advanced
-disabled_orders = string_list(default=list())
+disabled_orders = string(default='25')
 
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
@@ -309,14 +314,24 @@ disconnect_on_logon_user_change = boolean(default=False)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
-# Enables support of additional drawing orders:
+# Disables supported drawing orders:
+#    0: DstBlt
+#    1: PatBlt
+#    2: ScrBlt
+#    3: MemBlt
+#    4: Mem3Blt
+#    8: LineTo
 #   15: MultiDstBlt
 #   16: MultiPatBlt
 #   17: MultiScrBlt
 #   18: MultiOpaqueRect
-#   22: PolylinePlease see also "Disabled orders" in "client" section.
-#_advanced
-extra_orders = string_list(default=list('15,16,17,18,22'))
+#   22: Polyline
+#   25: EllipseSC
+#   27: GlyphIndex
+# 
+# (values are comma-separated)
+#_hidden
+disabled_orders = string(default='')
 
 # NLA authentication in secondary target.
 #_hidden
@@ -339,13 +354,15 @@ cache_waiting_list = boolean(default=True)
 #_advanced
 persist_bitmap_cache_on_disk = boolean(default=False)
 
-# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority.
+# (values are comma-separated)
 #_hidden
-allow_channels = string_list(default=list('*'))
+allow_channels = string(default='*')
 
-# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority.
+# (values are comma-separated)
 #_hidden
-deny_channels = string_list(default=list())
+deny_channels = string(default='')
 
 # Enables support of Client/Server Fast-Path Input/Update PDUs.
 # Fast-Path is required for Windows Server 2012 (or more recent)!
@@ -356,12 +373,20 @@ fast_path = boolean(default=True)
 #_hidden
 server_redirection_support = boolean(default=False)
 
+# Client Address to send to target (in InfoPacket)
+#   0: Send 0.0.0.0
+#   1: Send proxy client address or target connexion
+#   2: Send user client address of front connexion
+#_advanced
+client_address_sent = option(0, 1, 2, default=0)
+
 # Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.
 #_advanced
 bogus_sc_net_size = boolean(default=True)
 
+# (values are comma-separated)
 #_advanced
-proxy_managed_drives = string_list(default=list())
+proxy_managed_drives = string(default='')
 
 #_hidden
 ignore_auth_channel = boolean(default=False)
@@ -451,6 +476,16 @@ session_probe_enable_log = boolean(default=False)
 #_hidden
 session_probe_enable_log_rotation = boolean(default=True)
 
+#   0: Off
+#   1: Fatal
+#   2: Error
+#   3: Info
+#   4: Warning
+#   5: Debug
+#   6: Detail
+#_hidden
+session_probe_log_level = option(0, 1, 2, 3, 4, 5, 6, default=5)
+
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # (is in millisecond)
@@ -515,6 +550,9 @@ session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, defaul
 session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_hidden
+session_probe_update_disabled_features = boolean(default=True)
+
+#_hidden
 session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
 
 #   0x000: none
@@ -526,11 +564,18 @@ session_probe_childless_window_as_unidentified_input_field = boolean(default=Tru
 #   0x040: Inspect Firefox Address/Search bar
 #   0x080: Monitor Internet Explorer event
 #   0x100: Inspect group membership of user
-#   0x200: BestSafe integration
-# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 + 0x200 = 0x3f7)
+# Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 #_hidden
 #_hex
-session_probe_disabled_features = integer(min=0, max=1023, default=864)
+session_probe_disabled_features = integer(min=0, max=511, default=352)
+
+#_hidden
+session_probe_bestsafe_integration = boolean(default=False)
+
+# The name of the environment variable pointing to the alternative directory to launch Session Probe.
+# If empty, the environment variable TMP will be used.
+#_hidden
+session_probe_alternate_directory_environment_variable = string(max=3, default='')
 
 # If enabled, disconnected session can be recovered by a different primary user.
 #_hidden
@@ -542,6 +587,27 @@ session_probe_public_session = boolean(default=False)
 #   2: User action will be rejected
 #_hidden
 session_probe_on_account_manipulation = option(0, 1, 2, default=0)
+
+#_advanced
+session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=True)
+
+#_advanced
+session_probe_enable_cleaner = boolean(default=True)
+
+#_advanced
+application_driver_enable_cleaner = boolean(default=True)
+
+#_hidden
+application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE) << R"gen_config_ini(')
+
+#_hidden
+application_driver_script_argument = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(')
+
+#_hidden
+application_driver_chrome_uia_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(')
+
+#_hidden
+application_driver_ie_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT) << R"gen_config_ini(')
 
 # Keep known server certificates on WAB
 #_hidden
@@ -673,6 +739,13 @@ enable_restricted_admin_mode = boolean(default=False)
 #_hidden
 force_smartcard_authentication = boolean(default=False)
 
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
+#_hidden
+auto_reconnection_on_losing_target_link = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
@@ -687,8 +760,9 @@ clipboard_down = boolean(default=False)
 #   2: RRE
 #   16: ZRLE
 #   -239 (0xFFFFFF11): Cursor pseudo-encoding
+# (values are comma-separated)
 #_advanced
-encodings = string_list(default=list())
+encodings = string(default='')
 
 # VNC server clipboard data encoding type.
 #_advanced
@@ -709,6 +783,10 @@ server_unix_alt = boolean(default=False)
 #_hidden
 support_cursor_pseudo_encoding = boolean(default=True)
 
+# Enable target connection on ipv6
+#_hidden
+enable_ipv6 = boolean(default=False)
+
 [metrics]
 
 #_advanced
@@ -718,7 +796,7 @@ enable_rdp_metrics = boolean(default=False)
 enable_vnc_metrics = boolean(default=False)
 
 #_hidden
-log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics).to_string()) << R"gen_config_ini(')
+log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
 
 # (is in second)
 #_advanced
@@ -755,8 +833,23 @@ clipboard_text_up = boolean(default=False)
 #_hidden
 clipboard_text_down = boolean(default=False)
 
+# Block file transfer from client to server on invalid file verification.
+# File verification on upload must be enabled via option Enable up.
+#_hidden
+block_invalid_file_up = boolean(default=False)
+
+# Block file transfer from server to client on invalid file verification.
+# File verification on download must be enabled via option Enable down.
+#_hidden
+block_invalid_file_down = boolean(default=False)
+
 #_hidden
 log_if_accepted = boolean(default=True)
+
+# If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
+# Warning: This value affects the RAM used by the session.
+#_hidden
+max_file_size_rejected = integer(min=0, default=50)
 
 [file_storage]
 
@@ -881,13 +974,13 @@ png_limit = integer(min=0, default=5)
 replay_path = string(max=4096, default='/tmp/')
 
 #_hidden
-hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash).to_string()) << R"gen_config_ini(')
+hash_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Hash)) << R"gen_config_ini(')
 
 #_hidden
-record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp).to_string()) << R"gen_config_ini(')
+record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::RecordTmp)) << R"gen_config_ini(')
 
 #_hidden
-record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record).to_string()) << R"gen_config_ini(')
+record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(')
 
 # Disable keyboard log:
 # (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
@@ -964,11 +1057,21 @@ smart_video_cropping = option(0, 1, 2, default=0)
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
+# Allow Realtime display (4eyes) without recording of session
+allow_rt_without_recording = boolean(default=False)
+
+# Allow to control permissions on recorded files.
+# (is in octal or symbolic mode format (as chmod Linux command))
+#_hidden
+file_permissions = string(default='440')
+
 [crypto]
 
+# (is in hexadecimal format)
 #_hidden
 encryption_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
 
+# (is in hexadecimal format)
 #_hidden
 sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
 
@@ -1031,10 +1134,6 @@ mod_vnc = integer(min=0, default=0)
 #_hex
 mod_internal = integer(min=0, default=0)
 
-#_advanced
-#_hex
-mod_xup = integer(min=0, default=0)
-
 #_hidden
 password = integer(min=0, default=0)
 
@@ -1065,6 +1164,12 @@ ffmpeg = integer(min=0, default=0)
 #_advanced
 config = boolean(default=True)
 
+#   0: Off
+#   1: SimulateErrorRead
+#   2: SimulateErrorWrite
+#_hidden
+mod_rdp_use_failure_simulation_socket_transport = option(0, 1, 2, default=0)
+
 [remote_program]
 
 allow_resize_hosted_desktop = boolean(default=True)
@@ -1082,7 +1187,83 @@ password_fr = string(default='')
 
 [internal_mod]
 
+# Enable target edit field in login page.
 #_advanced
-load_theme = string(default='')
+enable_target_field = boolean(default=True)
+
+[theme]
+
+# Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
+#_advanced
+enable_theme = boolean(default=False)
+
+#_advanced
+bgcolor = string(default='dark_blue_bis')
+
+#_advanced
+fgcolor = string(default='white')
+
+#_advanced
+separator_color = string(default='light_blue')
+
+#_advanced
+focus_color = string(default='winblue')
+
+#_advanced
+error_color = string(default='yellow')
+
+#_hidden
+logo = boolean(default=False)
+
+#_hidden
+logo_path = string(default='')
+
+#_advanced
+edit_bgcolor = string(default='white')
+
+#_advanced
+edit_fgcolor = string(default='black')
+
+#_advanced
+edit_focus_color = string(default='winblue')
+
+#_advanced
+tooltip_bgcolor = string(default='black')
+
+#_advanced
+tooltip_fgcolor = string(default='light_yellow')
+
+#_advanced
+tooltip_border_color = string(default='black')
+
+#_advanced
+selector_line1_bgcolor = string(default='pale_blue')
+
+#_advanced
+selector_line1_fgcolor = string(default='black')
+
+#_advanced
+selector_line2_bgcolor = string(default='light_blue')
+
+#_advanced
+selector_line2_fgcolor = string(default='black')
+
+#_advanced
+selector_selected_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_selected_fgcolor = string(default='white')
+
+#_advanced
+selector_focus_bgcolor = string(default='winblue')
+
+#_advanced
+selector_focus_fgcolor = string(default='white')
+
+#_advanced
+selector_label_bgcolor = string(default='medium_blue')
+
+#_advanced
+selector_label_fgcolor = string(default='white')
 
 )gen_config_ini"

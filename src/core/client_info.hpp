@@ -29,7 +29,6 @@
 #include <cstring>
 
 #include "core/misc.hpp"
-#include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
@@ -82,7 +81,7 @@ struct ClientInfo
     bool use_compact_packets = false; /* rdp5 smaller packets */
     char hostname[16] = {0};
     int build = 0;
-    int keylayout = 0;
+    uint32_t keylayout = 0;
     char username[257] = {0};
     char password[257] = {0};
     char domain[257] = {0};
@@ -108,7 +107,6 @@ struct ClientInfo
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
 
-    GCC::UserData::CSCore cs_core;
     GCC::UserData::CSMonitor cs_monitor;
 
     ClientTimeZone client_time_zone;
@@ -135,10 +133,8 @@ struct ClientInfo
     GlyphCacheCaps          glyph_cache_caps;
     RailCaps                rail_caps;
     WindowListCaps          window_list_caps;
-    
-    uint8_t dummy1[32768];
+
     Recv_CS_BitmapCodecCaps bitmap_codec_caps;
-    uint8_t dummy2[32768];
 
     ClientInfo() = default;
 
@@ -178,7 +174,7 @@ struct ClientInfo
         }
         else{
             if (verbose){
-                array_view_const_char const av = ::get_printable_password(
+                chars_view const av = ::get_printable_password(
                     {this->password, strlen(this->password)}, password_printing_mode);
                 LOG(LOG_INFO, "client info: logon password %.*s ignored",
                     int(av.size()), av.data());
@@ -237,6 +233,11 @@ struct ClientInfo
 
             ::memcpy(this->autoReconnectCookie, infoPacket.extendedInfoPacket.autoReconnectCookie, sizeof(this->autoReconnectCookie));
         }
+    }
+
+    [[nodiscard]] Rect get_widget_rect() const
+    {
+        return this->cs_monitor.get_widget_rect(this->screen_info.width, this->screen_info.height);
     }
 };
 

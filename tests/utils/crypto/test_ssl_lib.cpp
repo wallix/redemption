@@ -21,7 +21,8 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/stream.hpp"
-#include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/cs_security.hpp"
+#include "core/RDP/gcc/userdata/sc_sec1.hpp"
 
 
 RED_AUTO_TEST_CASE(TestSCSecurity)

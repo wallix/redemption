@@ -54,8 +54,6 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-public:
-
     enum : int {
         FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
         IMAGE_BUFFER_TYPE                = 1,
@@ -103,6 +101,7 @@ public:
 
     ClientCLIPRDRChannel * channel;
 
+public:
     QtInputOutputClipboard(ClientCLIPRDRChannel * channel, const std::string & path, QWidget * parent);
 
     void write_clipboard_temp_file(std::string const& fileName, bytes_view data) override;
@@ -151,7 +150,7 @@ public Q_SLOTS:
         );
     }
 
-    array_view_const_u8 get_cliboard_text() override {
+    u8_array_view get_cliboard_text() override {
         return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
@@ -159,7 +158,7 @@ public Q_SLOTS:
         return this->_items_list[index]->nameUTF8;
     }
 
-    array_view_const_char get_file_item(int index) override {
+    chars_view get_file_item(int index) override {
         return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 

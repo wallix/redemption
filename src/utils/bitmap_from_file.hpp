@@ -30,11 +30,12 @@
 #pragma once
 
 #include "utils/bitmap.hpp"
+#include "utils/colors.hpp"
 
 Bitmap load_error_bitmap();
 
 /// \return an invalid bitmap if error
-Bitmap bitmap_from_file_impl(const char * filename);
+Bitmap bitmap_from_file_impl(const char *filename, BGRColor bg_color);
 
 /// \return always a valid bitmap
-Bitmap bitmap_from_file(const char * filename);
+Bitmap bitmap_from_file(const char *filename, BGRColor bg_color);

@@ -24,8 +24,8 @@
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/set_server_redirection_target.hpp"
-#include "front/client_front.hpp"
+#include "core/channels_authorizations.hpp"
+#include "client_redemption/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
@@ -41,7 +41,10 @@
 #include "utils/redemption_info_version.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
+#include "acl/sesman.hpp"
+#include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "core/events.hpp"
 
 #include <iostream>
 #include <string>
@@ -83,7 +86,7 @@ int main(int argc, char** argv)
         {'s', "screen-output", &screen_output, "png screenshot path"},
         {'r', "record-path", &record_output, "dump socket path"},
         {'V', "vnc", "dump socket path"},
-        {'l', "lcg", "use LCGRandom and LCGTime"},
+        {'l', "lcg", "use LCGRandom"},
         {'b', "load-balance-info", &load_balance_info, ""},
         {'n', "ini", &ini_file, "load ini filename"},
         {'c', "cert-check", &cert_check,
@@ -146,16 +149,15 @@ int main(int argc, char** argv)
     ScopedSslInit scoped_ssl;
 
     ClientFront front(client_info.screen_info, verbose);
-    NullReportMessage report_message;
-    SessionReactor session_reactor;
-    TimeSystem system_timeobj;
+    TimeBase time_base(tvtime());
+    EventContainer events;
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
         Transport* trans = &mod_trans;
         if (!record_output.empty()) {
             RecorderTransport& recorder = recorder_trans.emplace(
-                mod_trans, system_timeobj, record_output.c_str());
+                mod_trans, time_base, record_output.c_str());
             if (ini_file.empty()) {
                 recorder.add_info({});
             }
@@ -176,28 +178,31 @@ int main(int argc, char** argv)
         }
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
-        return run_test_client(
-            is_vnc ? "VNC" : "RDP", session_reactor, *mod, gdi::null_gd(),
+        return run_test_client(is_vnc ? "VNC" : "RDP", events, *mod,
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
     Inifile ini;
     if (!ini_file.empty()) {
-        configuration_load(ini.configuration_holder(), ini_file);
+        configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
+
+    Sesman sesman(ini, time_base);
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;
-    LCGTime lcg_timeobj;
-    NullAuthentifier authentifier;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
+    GdForwarder gd_forwarder(gdi::null_gd());
 
     if (is_vnc) {
         return run([&](Transport& trans){
             return new_mod_vnc(
                 trans
-              , session_reactor
+              , time_base
+              , gd_forwarder
+              , events
+              , sesman
               , username.c_str()
               , password.c_str()
               , front
@@ -208,7 +213,6 @@ int main(int argc, char** argv)
               , true          /* clipboard */
               , true          /* clipboard */
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-              , report_message
               , false
               , false          /*remove_server_alt_state_for_char*/
               , true           /* support Cursor Pseudo-Encoding */
@@ -259,13 +263,17 @@ int main(int argc, char** argv)
     auto run_rdp = [&]{
         ModRdpFactory mod_rdp_factory;
         return run([&](Transport& trans){
-            using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
             return new_mod_rdp(
-                trans, session_reactor, gdi::null_gd(), front, client_info, redir_info,
+                trans,
+                time_base,
+                gd_forwarder,
+                events,
+                sesman,
+                gdi::null_gd(), front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
-                use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                channels_authorizations, mod_rdp_params, tls_client_params, authentifier, report_message, licensestore, ini, nullptr, nullptr, mod_rdp_factory);
+                channels_authorizations, mod_rdp_params, tls_client_params, licensestore,
+                ini, nullptr, nullptr, mod_rdp_factory);
         });
     };
 
@@ -275,7 +283,26 @@ int main(int argc, char** argv)
         return eid  ? 1 : 0;
     }
 
-    set_server_redirection_target(ini, report_message);
+    {
+        // SET new target in ini
+        const char * host = char_ptr_cast(redir_info.host);
+        const char * password = char_ptr_cast(redir_info.password);
+        const char * username = char_ptr_cast(redir_info.username);
+        const char * change_user = "";
+        if (redir_info.dont_store_username && username[0] != 0) {
+            LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
+            ini.set_acl<cfg::globals::target_user>(username);
+            change_user = username;
+        }
+        if (password[0] != 0) {
+            LOG(LOG_INFO, "SrvRedir: Change target password");
+            ini.set_acl<cfg::context::target_password>(password);
+        }
+        LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
+        ini.set_acl<cfg::context::target_host>(host);
+        auto message = str_concat(change_user, '@', host);
+        sesman.report("SERVER_REDIRECTION", message.c_str());
+    }
 
     return run_rdp() ? 2 : 0;
 }

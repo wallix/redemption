@@ -30,6 +30,7 @@
 #include "core/RDP/capabilities/common.hpp"
 #include "core/stream_throw_helpers.hpp"
 
+#include <array>
 #include <vector>
 #include <variant>
 #include <memory>
@@ -482,8 +483,7 @@ struct Emit_CS_BitmapCodec
             uint32_t captureFlags{CARDP_CAPS_CAPTURE_NON_CAC};
             uint32_t capsLength{37};
 
-            std::vector<RFXICap> icapsData{RFXICap{}};
-            icapsData.resize(2);
+            std::array<RFXICap, 2> icapsData{};
             icapsData[0].entropyBits = CLW_ENTROPY_RLGR1;
             icapsData[1].entropyBits = CLW_ENTROPY_RLGR3;
 
@@ -511,13 +511,13 @@ struct Emit_CS_BitmapCodec
         }
     }
 
-    size_t computeSize() {
+    size_t computeSize() const {
         return 19u + this->codecPropertiesLength;
     }
 
     void log() const {
         unsigned long sz = this->codecPropertiesLength;
-        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", 
+        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu",
                 bitmapCodecTypeStr(this->codecType),
                 this->codecID, 19 + sz, sz);
     }
@@ -663,7 +663,7 @@ struct Recv_CS_BitmapCodec
             /* TS_RFX_CAPSET */
             {
                 uint16_t blockType = stream.in_uint16_le();
-                uint32_t blockLen = stream.in_uint32_le();
+                /*uint32_t blockLen = */stream.in_uint32_le();
                 uint8_t codecId = stream.in_uint8();
                 uint16_t capsetType = stream.in_uint16_le();
                 uint16_t numIcaps = stream.in_uint16_le();
@@ -781,7 +781,7 @@ struct Recv_CS_BitmapCodec
 
     void log() const {
         long unsigned cs = this->computeSize();
-        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", 
+        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu",
                 bitmapCodecTypeStr(this->codecType), this->codecID, cs, cs-19u);
     }
 };
@@ -846,7 +846,7 @@ struct Emit_SC_BitmapCodec
     {
         uint16_t len{0};
 
-        Emit_RFXSrvrCaps() 
+        Emit_RFXSrvrCaps()
         {
         }
 
@@ -960,7 +960,7 @@ struct Emit_SC_BitmapCodec
     }
 
     void log() const {
-        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", 
+        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu",
                 bitmapCodecTypeStr(this->codecType),
                 this->codecID, this->computeSize(), this->codecProperties.computeSize());
     }
@@ -1019,11 +1019,12 @@ struct Emit_SC_BitmapCodecCaps : public Capability {
         return codecsLen;
     }
 
-    void emit(OutStream & out, std::vector<uint8_t> supported_codecs) {
+    void emit(OutStream & out, array_view<uint8_t> supported_codecs)
+    {
         for (auto codec: supported_codecs){
             this->addCodec(codec);
         }
-    
+
         size_t codecsLen = 0;
         for (int i = 0; i < this->bitmapCodecCount; i++) {
             codecsLen += this->bitmapCodecArray[i].computeSize();
@@ -1065,7 +1066,7 @@ struct Recv_SC_BitmapCodec
     {
         uint16_t len{0};
 
-        Recv_RFXSrvrCaps() 
+        Recv_RFXSrvrCaps()
         {
         }
 
@@ -1146,29 +1147,29 @@ struct Recv_SC_BitmapCodec
         ::check_throw(stream, this->codecPropertiesLength, "codec properties in Recv_SC_BitmapCodec", ERR_MCS_PDU_TRUNCATED);
 
         /* CODEC_GUID_NSCODEC */
-        if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) 
+        if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0)
         {
             this->codecType = CODEC_NS;
             Recv_NSCodecCaps().recv(stream, this->codecPropertiesLength);
-        } else 
+        } else
         /* CODEC_GUID_REMOTEFX */
         if (memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0)
         {
             this->codecType = CODEC_REMOTEFX;
             Recv_RFXSrvrCaps().recv(stream, this->codecPropertiesLength);
-        } else 
+        } else
         /* CODEC_GUID_IMAGE_REMOTEFX */
-        if (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0) 
+        if (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)
         {
             this->codecType = CODEC_REMOTEFX;
             Recv_RFXSrvrCaps().recv(stream, this->codecPropertiesLength);
-        } else 
+        } else
         /* CODEC_GUID_IGNORE */
-        if (memcmp(codecGUID, "\xA6\x51\x43\x9C\x35\x35\xAE\x42\x91\x0C\xCD\xFC\xE5\x76\x0B\x58", 16) == 0) 
+        if (memcmp(codecGUID, "\xA6\x51\x43\x9C\x35\x35\xAE\x42\x91\x0C\xCD\xFC\xE5\x76\x0B\x58", 16) == 0)
         {
             this->codecType = CODEC_IGNORE;
             stream.in_skip_bytes(this->codecPropertiesLength);
-        } else 
+        } else
         {
             this->codecType = CODEC_UNKNOWN;
             stream.in_skip_bytes(this->codecPropertiesLength);
@@ -1178,7 +1179,7 @@ struct Recv_SC_BitmapCodec
 
     void log() const {
         unsigned long sz = this->computeSize();
-        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", 
+        LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu",
                 bitmapCodecTypeStr(this->codecType),
                 this->codecID, sz, sz-19u);
     }

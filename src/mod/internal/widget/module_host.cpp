@@ -76,14 +76,19 @@ void WidgetModuleHost::ModuleHolder::send_to_mod_channel(
     );
 }
 
-void WidgetModuleHost::ModuleHolder::send_auth_channel_data(const char * string_data)
+void WidgetModuleHost::ModuleHolder::create_shadow_session(const char * userdata, const char * type)
 {
-    this->managed_mod->send_auth_channel_data(string_data);
+    this->managed_mod->create_shadow_session(userdata, type);
 }
 
-void WidgetModuleHost::ModuleHolder::send_checkout_channel_data(const char * string_data)
+void WidgetModuleHost::ModuleHolder::send_auth_channel_data(const char * data)
 {
-    this->managed_mod->send_checkout_channel_data(string_data);
+    this->managed_mod->send_auth_channel_data(data);
+}
+
+void WidgetModuleHost::ModuleHolder::send_checkout_channel_data(const char * data)
+{
+    this->managed_mod->send_checkout_channel_data(data);
 }
 
 // mod_api
@@ -93,9 +98,14 @@ bool WidgetModuleHost::ModuleHolder::is_up_and_running() const
     return this->managed_mod->is_up_and_running();
 }
 
-bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable()
+bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable() const
 {
     return this->managed_mod->is_auto_reconnectable();
+}
+
+bool WidgetModuleHost::ModuleHolder::server_error_encountered() const
+{
+    return this->managed_mod->server_error_encountered();
 }
 
 // RdpInput
@@ -124,9 +134,14 @@ void WidgetModuleHost::ModuleHolder::rdp_input_synchronize(
         param1, param2);
 }
 
-void WidgetModuleHost::ModuleHolder::rdp_input_up_and_running()
+void WidgetModuleHost::ModuleHolder::rdp_gdi_up_and_running()
 {
-    this->managed_mod->rdp_input_up_and_running();
+    this->managed_mod->rdp_gdi_up_and_running();
+}
+
+void WidgetModuleHost::ModuleHolder::rdp_gdi_down()
+{
+    this->managed_mod->rdp_gdi_down();
 }
 
 void WidgetModuleHost::ModuleHolder::refresh(Rect r)

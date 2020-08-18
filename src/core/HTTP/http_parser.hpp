@@ -52,7 +52,7 @@ public:
     /** called when we have some body content
      * @return if the processing was successful
      */
-    virtual bool onBodyContent(array_view_const_char input);
+    virtual bool onBodyContent(chars_view input);
 
     /** called when the parsing is finished
      * @return if the processing was successful
@@ -65,7 +65,7 @@ public:
      * @param input data for the parser
      * @return if the processing was successful
      */
-    bool parse(array_view_const_char input);
+    bool parse(chars_view input);
 
     /** returns if the corresponding header was parsed in the headers
      * @param header the name of the header

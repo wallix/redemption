@@ -21,17 +21,26 @@
 
 #pragma once
 
-#include "utils/asynchronous_task_manager.hpp"
 #include "core/channel_list.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
-#include "core/session_reactor.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <cerrno>
+
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
+
+class AsynchronousTask
+{
+public:
+    AsynchronousTask() = default;
+    virtual ~AsynchronousTask() = default;
+    virtual Event * configure_event(timeval now, void * lifespan) = 0;
+};
 
 inline void rdpdr_in_file_seek(int fd, int64_t offset, int whence)
 {
@@ -59,22 +68,6 @@ inline size_t rdpdr_in_file_read(int fd, uint8_t * buffer, size_t len)
     return len - remaining_len;
 }
 
-namespace detail
-{
-    inline auto create_notify_delete_task() noexcept
-    {
-        return [](
-            jln::NotifyDeleteType d,
-            AsynchronousTask& task,
-            AsynchronousTask::TerminateEventNotifier& terminate_notifier
-        ){
-            if (d == jln::NotifyDeleteType::DeleteByAction) {
-                terminate_notifier(task);
-            }
-        };
-    }
-}  // namespace detail
-
 class RdpdrDriveReadTask final : public AsynchronousTask
 {
     const int file_descriptor;
@@ -90,8 +83,6 @@ class RdpdrDriveReadTask final : public AsynchronousTask
     off64_t Offset;
 
     VirtualChannelDataSender & to_server_sender;
-
-    SessionReactor::TopFdPtr fdobject;
 
     const RDPVerbose verbose;
 
@@ -113,27 +104,35 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
+    ~RdpdrDriveReadTask(){}
+
+    Event * configure_event(timeval now, void * lifespan) override
     {
-        assert(!this->fdobject);
-        this->fdobject = session_reactor.create_fd_event(
-            this->file_descriptor, std::ref(*this), terminate_notifier)
-        .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
-            if (self.run()) {
-                return ctx.need_more_data();
-            }
-            auto const r = ctx.terminate();
-            self.fdobject.detach();
-            terminate_notifier(self); // destroy this
-            return r;
-        })
-        .on_exit(jln::propagate_exit())
-        .set_timeout(std::chrono::seconds(1))
-        .on_timeout([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier&){
-            LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!",
-                self.file_descriptor);
-            return ctx.ready();
-        });
+        Event * pevent = new Event("RdpdrDriveReadTask", lifespan);
+        Event & event = *pevent;
+        event.alarm.set_timeout(now+std::chrono::seconds{1});
+        event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
+        event.actions.set_action_function(
+            [this](Event&event)
+            {
+                try {
+                    if (this->run()){
+                        return;
+                    }
+                }
+                catch(...){
+                    event.teardown = true;
+                    throw;
+                }
+                event.teardown = true;
+            });
+        event.actions.set_timeout_function(
+            [this](Event&event)
+            {
+                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
+                event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
+            });
+        return pevent;
     }
 
     bool run()
@@ -190,10 +189,10 @@ public:
 
             assert(this->length);
 
-            this->to_server_sender(this->length, out_flags, out_stream.get_bytes());
+            this->to_server_sender(this->length, out_flags, out_stream.get_produced_bytes());
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
+            LOG_IF(bool(this->verbose & RDPVerbose::asynchronous_task), LOG_INFO, "RdpdrDriveReadTask::run: Exception=%u", e.id);
             throw;
         }
         return (this->remaining_number_of_bytes_to_read != 0);
@@ -210,8 +209,6 @@ class RdpdrSendDriveIOResponseTask final : public AsynchronousTask
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::TimerPtr timer_ptr;
-
 public:
     RdpdrSendDriveIOResponseTask(uint32_t flags,
                                  const uint8_t * data,
@@ -227,17 +224,29 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
+    ~RdpdrSendDriveIOResponseTask(){}
+
+    Event * configure_event(timeval now, void * lifespan) override
     {
-        assert(!this->timer_ptr);
-        // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(
-            std::ref(*this), terminate_notifier)
-        .set_notify_delete(detail::create_notify_delete_task())
-        .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, TerminateEventNotifier&){
-            return self.run() ? ctx.ready() : ctx.terminate();
-        });
+        Event * pevent = new Event("RdpdrSendDriveIOResponseTask", lifespan);
+        Event & event = *pevent;
+        event.alarm.set_timeout(now+std::chrono::milliseconds{1});
+        event.actions.set_timeout_function(
+            [this](Event&event)
+            {
+                try {
+                    if (this->run()){
+                        event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                        return;
+                    }
+                }
+                catch(...){
+                    event.teardown = true;
+                    throw;
+                }
+                event.teardown = true;
+            });
+        return pevent;
     }
 
     bool run()
@@ -284,8 +293,6 @@ class RdpdrSendClientMessageTask final : public AsynchronousTask {
 
     VirtualChannelDataSender & to_server_sender;
 
-    SessionReactor::TimerPtr timer_ptr;
-
 public:
     RdpdrSendClientMessageTask(
         size_t total_length,
@@ -305,18 +312,26 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(SessionReactor& session_reactor, TerminateEventNotifier terminate_notifier) override
+    ~RdpdrSendClientMessageTask(){}
+
+    Event * configure_event(timeval now, void * lifespan) override
     {
-        assert(!this->timer_ptr);
-        // TODO create_yield_event
-        this->timer_ptr = session_reactor.create_timer(
-            std::ref(*this), terminate_notifier)
-        .set_notify_delete(detail::create_notify_delete_task())
-        .set_delay(std::chrono::milliseconds(1))
-        .on_action([](auto ctx, RdpdrSendClientMessageTask& self, TerminateEventNotifier&){
-            self.run();
-            return ctx.terminate();
-        });
+        Event * pevent = new Event("RdpdrSendClientMessageTask", lifespan);
+        Event & event = *pevent;
+        event.alarm.set_timeout(now+std::chrono::milliseconds{1});
+        event.actions.set_timeout_function(
+            [this](Event&event)
+            {
+                try {
+                    this->run();
+                }
+                catch(...){
+                    event.teardown = true;
+                    throw;
+                }
+                event.teardown = true;
+            });
+        return pevent;
     }
 
     bool run()

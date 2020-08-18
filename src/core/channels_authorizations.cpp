@@ -20,14 +20,12 @@
 
 #include "core/channels_authorizations.hpp"
 
+#include "core/RDP/channels/rdpdr.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 
 #include <algorithm>
-#include <vector>
-#include <string>
-#include <array>
 
 #include <cassert>
 
@@ -54,11 +52,11 @@ namespace
     template<std::size_t N>
     void normalize(
         std::vector<CHANNELS::ChannelNameId> & ids,
-        std::vector<array_view_const_char> & large_ids,
+        std::vector<chars_view> & large_ids,
         CHANNELS::ChannelNameId channel_name,
         bool set,
         std::array<bool, N> & values,
-        std::array<array_view_const_char, N> restriction_names)
+        std::array<chars_view, N> restriction_names)
     {
         auto p = std::remove(ids.begin(), ids.end(), channel_name);
         if (p != ids.end()) {
@@ -86,7 +84,7 @@ namespace
     }
 
     bool contains(
-        array_view<CHANNELS::ChannelNameId const> ids,
+        array_view<CHANNELS::ChannelNameId> ids,
         CHANNELS::ChannelNameId id
     ) noexcept
     {
@@ -95,17 +93,17 @@ namespace
 } // namespace
 
 
-ChannelsAuthorizations::ChannelsAuthorizations(std::string const & allow, std::string const & deny)
+ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::string_view deny)
 {
     std::vector<CHANNELS::ChannelNameId> allow_ids;
     std::vector<CHANNELS::ChannelNameId> deny_ids;
-    std::vector<array_view_const_char> allow_large_ids;
-    std::vector<array_view_const_char> deny_large_ids;
+    std::vector<chars_view> allow_large_ids;
+    std::vector<chars_view> deny_large_ids;
 
     auto extract = [](
-        array_view_const_char list,
+        chars_view list,
         std::vector<CHANNELS::ChannelNameId> & ids,
-        std::vector<array_view_const_char> & large_ids
+        std::vector<chars_view> & large_ids
     ) {
         bool all = false;
         for (auto && r : get_split(list.begin(), list.end(), ',')) {
@@ -145,7 +143,7 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string const & allow, std::s
     auto normalize = [this](
         bool set,
         std::vector<CHANNELS::ChannelNameId> & ids,
-        std::vector<array_view_const_char> & large_ids
+        std::vector<chars_view> & large_ids
     ) {
         ::normalize(ids, large_ids, channel_names::cliprdr, set, this->cliprdr_restriction_, cliprde_list());
         ::normalize(ids, large_ids, channel_names::rdpdr, set, this->rdpdr_restriction_, rdpdr_list());
@@ -192,14 +190,15 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string const & allow, std::s
 
 bool ChannelsAuthorizations::is_authorized(CHANNELS::ChannelNameId id) const noexcept
 {
+    auto rng_allow = array_view<CHANNELS::ChannelNameId>{this->allow_and_deny_.data(), this->allow_and_deny_.data() + this->allow_and_deny_pivot_};
+    auto rng_deny = array_view<CHANNELS::ChannelNameId>{this->allow_and_deny_.data() + this->allow_and_deny_pivot_, this->allow_and_deny_.data() + this->allow_and_deny_.size()};
     if (this->all_deny_) {
-        return contains(this->rng_allow(), id);
+        return contains(rng_allow, id);
     }
     if (this->all_allow_) {
-        return !contains(this->rng_deny(), id);
+        return !contains(rng_deny, id);
     }
-    return !contains(this->rng_deny(), id)
-        &&  contains(this->rng_allow(), id);
+    return !contains(rng_deny, id) && contains(rng_allow, id);
 }
 
 bool ChannelsAuthorizations::rdpdr_type_all_is_authorized() const noexcept
@@ -296,16 +295,17 @@ REDEMPTION_OSTREAM(out, ChannelsAuthorizations const & auth)
             out << '\n';
         }
     };
-    p(auth.rng_allow(), auth.all_allow_, true, "allow");
-    p(auth.rng_deny(), auth.all_deny_, false, "deny");
+    auto rng_allow = array_view<CHANNELS::ChannelNameId>{auth.allow_and_deny_.data(), auth.allow_and_deny_.data() + auth.allow_and_deny_pivot_};
+    auto rng_deny = array_view<CHANNELS::ChannelNameId>{auth.allow_and_deny_.data() + auth.allow_and_deny_pivot_, auth.allow_and_deny_.data() + auth.allow_and_deny_.size()};
+
+    p(rng_allow, auth.all_allow_, true, "allow");
+    p(rng_deny, auth.all_deny_, false, "deny");
     return out;
 }
 
-// TODO review
-void ChannelsAuthorizations::update_authorized_channels(
-    std::string & allow, std::string & deny, const std::string & proxy_opt)
+std::pair<std::string,std::string>
+update_authorized_channels(std::string allow, std::string deny, std::string proxy_opt)
 {
-    // TODO free function
     auto remove = [](std::string & str, std::string_view pattern) -> bool {
         bool removed = false;
         size_t pos = 0;
@@ -391,14 +391,5 @@ void ChannelsAuthorizations::update_authorized_channels(
             s.erase(0,1);
         }
     }
-}
-
-inline array_view<CHANNELS::ChannelNameId const> ChannelsAuthorizations::rng_allow() const
-{
-    return {this->allow_and_deny_.data(), this->allow_and_deny_.data() + this->allow_and_deny_pivot_};
-}
-
-inline array_view<CHANNELS::ChannelNameId const> ChannelsAuthorizations::rng_deny() const
-{
-    return {this->allow_and_deny_.data() + this->allow_and_deny_pivot_, this->allow_and_deny_.data() + this->allow_and_deny_.size()};
+    return {allow, deny};
 }

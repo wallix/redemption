@@ -25,7 +25,7 @@
 
 struct TitleExtractorApi : noncopyable {
     /// \return unchanged title = {nullptr, 0} ; no title = {x, 0}
-    virtual array_view_const_char extract_title() = 0;
+    virtual chars_view extract_title() = 0;
 
     virtual ~TitleExtractorApi() = default;
 };

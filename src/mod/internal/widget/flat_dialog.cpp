@@ -19,6 +19,7 @@
  *              Meng Tan, Jennifer Inthavong
  */
 
+#include "core/font.hpp"
 #include "core/app_path.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/password.hpp"
@@ -60,7 +61,11 @@ FlatDialog::FlatDialog(
         : std::unique_ptr<WidgetFlatButton>())
     , img(drawable,
           theme.global.logo ? theme.global.logo_path.c_str() :
-          app_path(AppPath::LoginWabBlue), *this, nullptr, -8)
+          app_path(AppPath::LoginWabBlue),
+          *this,
+          nullptr,
+          theme.global.bgcolor,
+          -8)
     , extra_button(extra_button)
     , font(font)
     , dialog_string(text)
@@ -133,11 +138,16 @@ void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     y            += this->title.cy();
     total_height += this->title.cy();
 
-    std::string formatted_dialog_string;
-    gdi::MultiLineTextMetricsEx mltm_ex(this->font, this->dialog_string.c_str(), WIDGET_MULTILINE_BORDER_Y,
-        width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, formatted_dialog_string);
-    this->dialog.set_wh(mltm_ex.width + WIDGET_MULTILINE_BORDER_X * 2, mltm_ex.height + WIDGET_MULTILINE_BORDER_Y * 2);
-    this->dialog.set_text(formatted_dialog_string.c_str());
+    gdi::MultiLineTextMetrics line_metrics(
+        this->font,
+        this->dialog_string.c_str(),
+        width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2);
+    this->dialog.set_wh(
+        line_metrics.max_width() + WIDGET_MULTILINE_BORDER_X * 2,
+        (this->font.max_height() + WIDGET_MULTILINE_BORDER_Y)
+        * line_metrics.lines().size() + WIDGET_MULTILINE_BORDER_Y * 2
+        - (line_metrics.lines().size() ? WIDGET_MULTILINE_BORDER_Y : 0));
+    this->dialog.set_text(std::move(line_metrics));
 
     const int total_width = std::max(this->dialog.cx(), this->title.cx());
 

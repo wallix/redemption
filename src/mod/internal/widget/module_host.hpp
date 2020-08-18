@@ -61,7 +61,6 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override;
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override;
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override;
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {}
 
@@ -138,20 +137,24 @@ private:
     public:
         ModuleHolder(/*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
 
+        std::string module_name() override {return "Module Holder []";}
+
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
                                  InStream& chunk, size_t length,
                                  uint32_t flags) override;
 
-        void send_auth_channel_data(const char * string_data) override;
-
-        void send_checkout_channel_data(const char * string_data) override;
+        void create_shadow_session(const char * userdata, const char * type) override;
+        void send_auth_channel_data(const char * data) override;
+        void send_checkout_channel_data(const char * data) override;
 
         // mod_api
 
         [[nodiscard]] bool is_up_and_running() const override;
 
-        bool is_auto_reconnectable() override;
+        bool is_auto_reconnectable() const override;
+
+        bool server_error_encountered() const override;
 
         // RdpInput
 
@@ -166,7 +169,9 @@ private:
         void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
                                    int16_t param1, int16_t param2) override;
 
-        void rdp_input_up_and_running() override;
+        void rdp_gdi_up_and_running() override;
+
+        void rdp_gdi_down() override;
 
         void refresh(Rect r) override;
 

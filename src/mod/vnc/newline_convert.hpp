@@ -29,8 +29,8 @@
 #include <cassert>
 
 
-inline array_view_char windows_to_linux_newline_convert(
-    array_view_const_char source, array_view_char destination) noexcept
+inline writable_chars_view windows_to_linux_newline_convert(
+    chars_view source, writable_chars_view destination) noexcept
 {
     auto p = destination.begin();
     auto first = source.begin();
@@ -72,11 +72,11 @@ inline array_view_char windows_to_linux_newline_convert(
         }
     }
 
-    return {destination.data(), p};
+    return writable_chars_view{destination.data(), p};
 }
 
-inline static array_view_char linux_to_windows_newline_convert(
-    array_view_const_char source, array_view_char destination)
+inline static writable_chars_view linux_to_windows_newline_convert(
+    chars_view source, writable_chars_view destination)
 {
     char const * s = source.data();
     size_t s_length = source.size();

@@ -149,7 +149,6 @@ public:
     void draw(RDPEllipseCB const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(const RDPScrBlt & cmd, Rect clip) override;
     void draw(const RDPDestBlt & cmd, Rect clip) override;
-    void draw(RDPNineGrid const &  /*cmd*/, Rect  /*rect*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/) override;
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
     void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
@@ -185,7 +184,7 @@ public:
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override;
     void draw(const RDP::FrameMarker & order) override;
 
-    bool logical_frame_ended()
+    bool logical_frame_ended() const
     {
         return this->drawable.logical_frame_ended;
     }

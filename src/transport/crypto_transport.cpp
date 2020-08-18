@@ -659,21 +659,16 @@ ocrypto::Result ocrypto::write(bytes_view data)
 
 OutCryptoTransport::OutCryptoTransport(
     CryptoContext & cctx, Random & rnd, Fstat & fstat,
-    ReportError report_error
+    std::function<void(const Error & error)> notify_error
 ) noexcept
 : encrypter(cctx, rnd)
-, out_file(invalid_fd(), std::move(report_error))
+, out_file(invalid_fd(), notify_error)
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
 {
     this->tmpname[0] = 0;
     this->finalname[0] = 0;
-}
-
-ReportError & OutCryptoTransport::get_report_error()
-{
-    return this->out_file.get_report_error();
 }
 
 OutCryptoTransport::~OutCryptoTransport()
@@ -718,7 +713,7 @@ bool OutCryptoTransport::is_open() const
     return this->out_file.is_open();
 }
 
-void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, bytes_view derivator)
+void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, uint32_t file_permissions, bytes_view derivator)
 {
     // This should avoid double open, we do not want that
     if (this->is_open()){
@@ -742,13 +737,14 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
         LOG(LOG_ERR, "OutCryptoTransport::open : open failed (%s -> %s): %s", this->tmpname, finalname, strerror(errno));
         throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
     }
-
-    if (chmod(this->tmpname, groupid ? (S_IRUSR | S_IRGRP) : S_IRUSR) == -1) {
+    if (chmod(this->tmpname, file_permissions) == -1) {
         int const err = errno;
-        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
+        
+        LOG( LOG_ERR, "can't set file %s mod to %o : %s [%d]"
             , this->tmpname
-            , groupid ? "u+r, g+r" : "u+r"
-            , strerror(err), err);
+            , file_permissions
+            , strerror(err)
+            , err);
         LOG(LOG_INFO, "OutCryptoTransport::open : chmod failed (%s -> %s)", this->tmpname, finalname);
         throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
     }
@@ -766,11 +762,11 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
 }
 
 // derivator implicitly basename(finalname)
-void OutCryptoTransport::open(const char * finalname, const char * const hash_filename, int groupid)
+void OutCryptoTransport::open(const char * finalname, const char * const hash_filename, int groupid, uint32_t file_permissions)
 {
     size_t base_len = 0;
     const char * base = basename_len(finalname, base_len);
-    this->open(finalname, hash_filename, groupid, {base, base_len});
+    this->open(finalname, hash_filename, groupid, file_permissions, {base, base_len});
 }
 
 void OutCryptoTransport::close(HashArray & qhash, HashArray & fhash)

@@ -15,7 +15,7 @@ exception=$esc'1;37m'
 exec=$esc'34m'
 msg=$esc'1m'
 
-sed -E "$@" -e '
+sed -uE "$@" -e '
 s/^\x1b\[0;39;49m//;tx
 /^\x1b/n
 :x
@@ -26,7 +26,7 @@ s/^\x1b\[0;39;49m//;tx
   s/(fatal )?error:? in "([^"]+)": (critical )?check/'$err'\1error'$reset' in "'$name'\2'$reset'": '$cat'\3check'$reset'/;tm
   :m
 
-  s/(check\x1b\[0m )(.*)( !=|==|<=|>=|>|< )(.*) has failed \[(.*)( !=|==|<=|>=|>|< )(.*)\](\]\. )?/\1'$code'\2'$op'\3'$code'\4'$reset' has failed ['$value'\5'$op'\6'$value'\7'$reset']/;t
+  s/(check\x1b\[0m )(.*)( !=|==|<=|>=|>|< )(.*) has failed \[(.*)( != | == | <= | >= | > | < )(.*)\](\]\. )?/\1'$code'\2'$op'\3'$code'\4'$reset' has failed ['$value'\5'$op'\6'$value'\7'$reset']/;t
 
   s/(check\x1b\[0m )(.*) (has )?failed$/\1'$code'\2'$reset' \3failed/;t
 

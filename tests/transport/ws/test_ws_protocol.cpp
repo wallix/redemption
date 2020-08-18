@@ -18,7 +18,6 @@
 *   Author(s): Christophe Grosjean, Jonathan Poelen
 */
 
-#include <ostream>
 #include <type_traits>
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
@@ -96,14 +95,14 @@ RED_AUTO_TEST_CASE(TestWsParseClient)
         0x2b, 0x2b, 0x2b, 0x2b, 0x85, 0x85,
         0xff
     };
-    auto av = [&s](unsigned i) { return array_view_u8{s, i}; };
+    auto av = [&s](unsigned i) { return writable_u8_array_view{s, i}; };
 
     RED_CHECK(R::UnsupportedPartialHeader == ws_protocol_parse_client(av(0)).state);
     RED_CHECK(R::UnsupportedPartialHeader == ws_protocol_parse_client(av(1)).state);
     RED_CHECK(R::UnsupportedPartialHeader == ws_protocol_parse_client(av(7)).state);
     RED_CHECK(R::UnsupportedPartialData == ws_protocol_parse_client(av(9)).state);
     uint8_t data_close[] = "\x88\x80\x40\xe9\x27\x4a";
-    RED_CHECK(R::Close == ws_protocol_parse_client(make_array_view(data_close)).state);
+    RED_CHECK(R::Close == ws_protocol_parse_client(make_writable_array_view(data_close)).state);
     ProtocolParseClientResult r;
     RED_CHECK(R::Ok == (r = ws_protocol_parse_client(av(12))).state);
     RED_CHECK(s[12] == 0xff);
@@ -115,7 +114,7 @@ RED_AUTO_TEST_CASE(TestWsParseClient)
         1, 0, 0, 0, 0, 0, 0, 0,
         1, 2, 3, 4,
     };
-    RED_CHECK(R::Unsupported64BitsPayloadLen == ws_protocol_parse_client(make_array_view(s2)).state);
+    RED_CHECK(R::Unsupported64BitsPayloadLen == ws_protocol_parse_client(make_writable_array_view(s2)).state);
 }
 
 RED_AUTO_TEST_CASE(TestWsSend)

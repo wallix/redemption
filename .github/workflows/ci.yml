@@ -1,0 +1,94 @@
+name: CI
+
+on: [pull_request]
+# on:
+#   push:
+#     branches: [ master, gh-action ]
+#   pull_request:
+#     branches: [ master ]
+
+jobs:
+  linux:
+    name: ${{ matrix.cxx }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: ['clang-9']
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    # install dependencies
+    - name: Cache apt
+      uses: actions/cache@v2
+      id: cache-apt
+      with:
+        path: ~/dpkg_cache
+        key: apt_deps
+    - name: Install packages
+      env:
+        CACHE_HIT: ${{steps.cache-apt.outputs.cache-hit}}
+      run: |
+        DPKG_CACHE=~/dpkg_cache
+        if [[ "$CACHE_HIT" == 'true' ]]; then
+          sudo cp --force --recursive "$DPKG_CACHE"/* /
+        else
+          deps=(
+            libboost-test-dev
+            libboost-tools-dev
+            libssl-dev
+            libkrb5-dev
+            libsnappy-dev
+            libpng-dev
+            libbz2-dev
+            libavcodec-dev
+            libavformat-dev
+            libavutil-dev
+            libswscale-dev
+            libx264-dev
+          )
+          sudo apt-get update && sudo apt-get install -yq ${deps[@]}
+          mkdir -p "$DPKG_CACHE"
+          for dep in ${deps[@]}; do
+            dpkg -L $dep | while IFS= read -r f; do
+              if [[ -f $f ]]; then echo $f; fi;
+            done | xargs cp --parents --target-directory "$DPKG_CACHE"
+          done
+        fi
+
+    # install bjam
+    - name: Cache bjam
+      uses: actions/cache@v2
+      id: cache-bjam
+      with:
+        path: ~/boost-build
+        key: bjam
+    - name: Install bjam
+      env:
+        CACHE_HIT: ${{steps.cache-bjam.outputs.cache-hit}}
+      run: |
+        if [[ "$CACHE_HIT" != 'true' ]]; then
+          wget https://github.com/boostorg/build/archive/boost-1.67.0.tar.gz
+          tar xzf boost-1.67.0.tar.gz
+          cd build-boost-1.67.0
+          ./bootstrap.sh
+          ./b2 install --prefix=$HOME/boost-build/
+        fi
+
+    - name: fix snappy version
+      run: |
+        sudo sed -i 's/^#define SNAPPY_MAJOR/& 1/;s/^#define SNAPPY_MINOR/& 1/;s/^#define SNAPPY_PATCHLEVEL/& 8/' /usr/include/snappy-stubs-public.h
+
+    - name: set timezone
+      run: |
+        sudo timedatectl set-timezone Europe/Paris
+
+    - name: compile
+      run: |
+        ~/boost-build/bin/bjam -q --toolset=${{ matrix.cxx }} san \
+          cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING'
+
+# kate: space-indent on; indent-width 2; replace-tabs on;

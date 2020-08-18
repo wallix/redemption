@@ -48,7 +48,7 @@ private:
         , column_and_row_height(nb_columns + nb_rows)
         {}
 
-        array_view<std::unique_ptr<Widget>> add_line()
+        writable_array_view<std::unique_ptr<Widget>> add_line()
         {
             for (uint16_t i = 0; i < this->nb_columns; ++i) {
                 this->widgets.emplace_back();
@@ -58,36 +58,36 @@ private:
             return this->line(this->nb_rows-1);
         }
 
-        [[nodiscard]] array_view<const std::unique_ptr<Widget>> line(uint16_t i) const
+        [[nodiscard]] array_view<std::unique_ptr<Widget>> line(uint16_t i) const
         {
             auto* p = &this->widgets[i * this->nb_columns];
             return {p, p + this->nb_columns};
         }
 
-        array_view<std::unique_ptr<Widget>> line(uint16_t i)
+        writable_array_view<std::unique_ptr<Widget>> line(uint16_t i)
         {
             auto* p = &this->widgets[i * this->nb_columns];
-            return {p, p + this->nb_columns};
+            return make_writable_array_view(p, p + this->nb_columns);
         }
 
-        [[nodiscard]] array_view<const uint16_t> row_heights() const
+        [[nodiscard]] array_view<uint16_t> row_heights() const
         {
             return make_array_view(this->column_and_row_height).from_offset(nb_columns);
         }
 
-        [[nodiscard]] array_view<const uint16_t> column_widths() const
+        [[nodiscard]] array_view<uint16_t> column_widths() const
         {
             return make_array_view(this->column_and_row_height).subarray(0, nb_columns);
         }
 
-        array_view<uint16_t> row_heights()
+        writable_array_view<uint16_t> row_heights()
         {
-            return make_array_view(this->column_and_row_height).from_offset(nb_columns);
+            return make_writable_array_view(this->column_and_row_height).from_offset(nb_columns);
         }
 
-        array_view<uint16_t> column_widths()
+        writable_array_view<uint16_t> column_widths()
         {
-            return make_array_view(this->column_and_row_height).subarray(0, nb_columns);
+            return make_writable_array_view(this->column_and_row_height).subarray(0, nb_columns);
         }
 
         void clear()
@@ -244,7 +244,7 @@ public:
         return this->widgets.nb_columns;
     }
 
-    array_view<std::unique_ptr<Widget>> add_line()
+    writable_array_view<std::unique_ptr<Widget>> add_line()
     {
         return this->widgets.add_line();
     }
@@ -586,7 +586,7 @@ void compute_format(WidgetGrid const& grid, ColumnWidthStrategy* column_width_st
 
                     uint32_t const partial_weight = [](
                         WidgetGrid const& grid,
-                        array_view<uint16_t const> column_width_optimal,
+                        array_view<uint16_t> column_width_optimal,
                         uint16_t const* column_width
                     ) -> uint32_t {
                         uint32_t partial_weight = 0;

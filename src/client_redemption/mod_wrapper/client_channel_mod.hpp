@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
 #ifndef Q_MOC_RUN
 #include "core/channel_names.hpp"
 #include "core/channel_list.hpp"
@@ -104,7 +102,7 @@ public:
                 out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
 
                 data_sent += first_part_data_size;
-                InStream chunk_first(out_stream_first_part.get_bytes());
+                InStream chunk_first(out_stream_first_part.get_produced_bytes());
 
                 this->send_to_mod_channel( front_channel_name
                                          , chunk_first
@@ -112,7 +110,7 @@ public:
                                          , CHANNELS::CHANNEL_FLAG_FIRST | flags
                                          );
 
-//             ::hexdump(out_stream_first_part.get_bytes());
+//             ::hexdump(out_stream_first_part.get_produced_bytes());
 
 
             for (int i = 0; i < cmpt_PDU_part; i++) {
@@ -122,7 +120,7 @@ public:
                 out_stream_next_part.out_copy_bytes(data.data() + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
                 data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
-                InStream chunk_next(out_stream_next_part.get_bytes());
+                InStream chunk_next(out_stream_next_part.get_produced_bytes());
 
                 this->send_to_mod_channel( front_channel_name
                                          , chunk_next
@@ -130,14 +128,14 @@ public:
                                          , flags
                                          );
 
-//             ::hexdump(out_stream_next_part.get_bytes());
+//             ::hexdump(out_stream_next_part.get_produced_bytes());
             }
 
             // Last part
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
                 out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
 
-                InStream chunk_last(out_stream_last_part.get_bytes());
+                InStream chunk_last(out_stream_last_part.get_produced_bytes());
 
                 this->send_to_mod_channel( front_channel_name
                                          , chunk_last
@@ -145,12 +143,12 @@ public:
                                          , CHANNELS::CHANNEL_FLAG_LAST | flags
                                          );
 
-//         ::hexdump(out_stream_last_part.get_bytes());
+//         ::hexdump(out_stream_last_part.get_produced_bytes());
 
         } else {
 
             out_stream_first_part.out_copy_bytes(data);
-            InStream chunk(out_stream_first_part.get_bytes());
+            InStream chunk(out_stream_first_part.get_produced_bytes());
 
             this->send_to_mod_channel( front_channel_name
                                      , chunk

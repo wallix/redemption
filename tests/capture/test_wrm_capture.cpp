@@ -101,7 +101,8 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose)
+            int(wrm_verbose),
+            -1
         );
 
         TestGraphic gd_drawable(scr.cx, scr.cy);
@@ -211,7 +212,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0 //0xFFFF VERBOSE
+            0, //0xFFFF VERBOSE
+            -1
         );
 
         TestGraphic gd_drawable(scr.cx, scr.cy);
@@ -307,19 +309,22 @@ int wrmcapture_write_meta_file(
 
 RED_AUTO_TEST_CASE(TestWriteFilename)
 {
-    auto wrmcapture_write_filename = [](char const * filename) {
-        struct stat st;
-        FakeFstat().stat("", st);
+    struct FilenameWriter
+    {
         MwrmWriterBuf mwrm_buf;
         MwrmWriterBuf::HashArray dummy_hash;
-        mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
-        auto buf = mwrm_buf.buffer();
-        return std::string{byte_ptr(buf.data()), buf.size()};
+
+        FilenameWriter(char const* filename)
+        {
+            struct stat st;
+            FakeFstat().stat("", st);
+            this->mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
+        }
     };
 
-#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)    \
-    RED_CHECK_EQUAL(wrmcapture_write_filename(origin_filename), \
-    wrote_filename " 0 0 0 0 0 0 0 0 0 0\n")                    \
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)   \
+    RED_TEST(FilenameWriter(origin_filename).mwrm_buf.buffer() \
+        == wrote_filename " 0 0 0 0 0 0 0 0 0 0\n"_av)
 
     TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
 
@@ -362,7 +367,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
             record_wd.dirname(), hash_wd.dirname(), "xxx",
-            now, 800, 600, groupid, nullptr);
+                                           now, 800, 600, groupid, nullptr, -1);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -378,7 +383,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransport)
 
     struct {
         size_t len = 0;
-        ssize_t write(array_view_const_char d) {
+        ssize_t write(chars_view d) {
             this->len += d.size();
             return len;
         }
@@ -432,7 +437,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
         OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
             record_wd.dirname(), hash_wd.dirname(), "xxx",
-            now, 800, 600, groupid, nullptr);
+                                           now, 800, 600, groupid, nullptr, -1);
         wrm_trans.send("AAAAX", 5);
         wrm_trans.send("BBBBX", 5);
         wrm_trans.next();
@@ -441,7 +446,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
 
     struct {
         size_t len = 0;
-        ssize_t write(array_view_const_char d) {
+        ssize_t write(chars_view d) {
             this->len += d.size();
             return len;
         }
@@ -511,7 +516,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose)
+            int(wrm_verbose),
+            -1
         );
 
         TestGraphic gd_drawable(4, 1);
@@ -648,7 +654,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose)
+            int(wrm_verbose),
+            -1
         );
 
         auto const color_cxt = gdi::ColorCtx::depth24();

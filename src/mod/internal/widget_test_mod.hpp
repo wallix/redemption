@@ -21,19 +21,30 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
+#include "acl/gd_provider.hpp"
+#include "core/events.hpp"
+#include <memory>
 
-class SessionReactor;
+class TimeBase;
 class FrontAPI;
 class Font;
 
 class WidgetTestMod : public mod_api
 {
 public:
-    WidgetTestMod(SessionReactor& session_reactor,
+    WidgetTestMod(TimeBase& time_base,
+        GdProvider & gd_provider,
+        EventContainer & events,
         FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);
 
     ~WidgetTestMod() override;
+
+    std::string module_name() override {return "Widget Test Mod";}
+
+    void rdp_gdi_up_and_running() override {}
+
+    void rdp_gdi_down() override {}
 
     void rdp_input_invalidate(Rect /*rect*/) override;
 
@@ -53,7 +64,13 @@ public:
         return true;
     }
 
-private:
+    bool server_error_encountered() const override { return false; }
+
+    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override {}
+    void send_checkout_channel_data(const char * /*data*/) override {}
+
     class WidgetTestModPrivate;
     friend WidgetTestModPrivate;
     std::unique_ptr<WidgetTestModPrivate> d;

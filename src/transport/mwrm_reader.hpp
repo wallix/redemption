@@ -24,6 +24,8 @@
 #include "transport/transport.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 
+#include <limits>
+
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h> // PATH_MAX
 #else
@@ -121,8 +123,8 @@ public:
     /// \exception Error : ERR_TRANSPORT_READ_FAILED
     Transport::Read next_line();
 
-    [[nodiscard]] array_view_char get_buf() const
-    { return {this->cur, this->eol}; }
+    [[nodiscard]] writable_chars_view get_buf() const
+    { return writable_chars_view{this->cur, this->eol}; }
 };
 
 
@@ -176,7 +178,7 @@ struct MwrmWriterBuf
         time_t start_time, time_t stop_time,
         bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
 
-    [[nodiscard]] array_view_const_char buffer() const noexcept;
+    [[nodiscard]] chars_view buffer() const noexcept;
     [[nodiscard]] char const * c_str() const noexcept;
     [[nodiscard]] bool is_full() const noexcept;
 

@@ -22,10 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "core/RDP/capabilities/order.hpp"
 
-enum class OnlyThoseSupportedByModRdp : bool { No, Yes };
-
-PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog,
-    OnlyThoseSupportedByModRdp only_those_supported_by_mod_rdp) noexcept;
+PrimaryDrawingOrdersSupport parse_primary_drawing_orders(char const* orders, bool bEnableLog) noexcept;
 
 inline static constexpr auto order_indexes_supported() noexcept
 {
@@ -48,6 +45,7 @@ inline static constexpr auto order_indexes_supported() noexcept
         TS_NEG_MEM3BLT_INDEX,
         // TS_NEG_DRAWNINEGRID_INDEX,
         TS_NEG_LINETO_INDEX,
+        TS_NEG_OPAQUERECT_INDEX,
         // TS_NEG_MULTI_DRAWNINEGRID_INDEX,
         // TS_NEG_SAVEBITMAP_INDEX,
         TS_NEG_MULTIDSTBLT_INDEX,
@@ -55,12 +53,21 @@ inline static constexpr auto order_indexes_supported() noexcept
         TS_NEG_MULTISCRBLT_INDEX,
         TS_NEG_MULTIOPAQUERECT_INDEX,
         // TS_NEG_FAST_GLYPH_INDEX,
-        TS_NEG_POLYGON_SC_INDEX,
-        TS_NEG_POLYGON_CB_INDEX,
+        // TS_NEG_POLYGON_SC_INDEX,
+        // TS_NEG_POLYGON_CB_INDEX,
         TS_NEG_POLYLINE_INDEX,
         // TS_NEG_FAST_GLYPH_INDEX,
         TS_NEG_ELLIPSE_SC_INDEX,
-        TS_NEG_ELLIPSE_CB_INDEX,
+        // TS_NEG_ELLIPSE_CB_INDEX,
         TS_NEG_GLYPH_INDEX
     );
+}
+
+inline static constexpr PrimaryDrawingOrdersSupport primary_drawing_orders_supported() noexcept
+{
+  PrimaryDrawingOrdersSupport support;
+  for (auto idx : order_indexes_supported()) {
+    support.set(idx);
+  }
+  return support;
 }

@@ -21,13 +21,14 @@
 */
 
 #include "transport/recorder_transport.hpp"
+#include "utils/timebase.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/stream.hpp"
 
 
-RecorderFile::RecorderFile(TimeObj& timeobj, const char *filename)
-    : timeobj(timeobj)
-    , start_time(to_ms(timeobj.get_time()))
+RecorderFile::RecorderFile(TimeBase& time_base, const char *filename)
+    : time_base(time_base)
+    , start_time(to_ms(time_base.get_current_time()))
     , file(unique_fd(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))
 {
     if (!this->file.is_open()) {
@@ -44,7 +45,7 @@ RecorderFile::~RecorderFile()
 
 void RecorderFile::write_packet(PacketType type, bytes_view buffer)
 {
-    auto delta = to_ms(this->timeobj.get_time()) - this->start_time;
+    auto delta = to_ms(this->time_base.get_current_time()) - this->start_time;
 
     StaticOutStream<13> headers_stream;
     headers_stream.out_uint8(uint8_t(type));
@@ -52,19 +53,19 @@ void RecorderFile::write_packet(PacketType type, bytes_view buffer)
     headers_stream.out_uint32_le(buffer.size());
     // LOG(LOG_DEBUG, "write_packet len=%lu", len);
 
-    this->file.send(headers_stream.get_bytes());
+    this->file.send(headers_stream.get_produced_bytes());
     this->file.send(buffer);
 }
 
 
-RecorderTransport::RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename)
+RecorderTransport::RecorderTransport(Transport& trans, TimeBase& time_base, char const* filename)
     : trans(trans)
-    , out(timeobj, filename)
+    , out(time_base, filename)
 {
 }
 
 
-void RecorderTransport::add_info(writable_bytes_view info)
+void RecorderTransport::add_info(bytes_view info)
 {
     this->out.write_packet(RecorderFile::PacketType::Info, info);
 }
@@ -84,7 +85,7 @@ void RecorderTransport::enable_server_tls(const char * certificate_password, con
     this->out.write_packet(RecorderFile::PacketType::ServerCert, this->trans.get_public_key());
 }
 
-array_view_const_u8 RecorderTransport::get_public_key() const
+u8_array_view RecorderTransport::get_public_key() const
 {
     return this->trans.get_public_key();
 }
@@ -150,7 +151,7 @@ RecorderTransportHeader read_recorder_transport_header(Transport& trans)
     char data[13];
     InStream headers_stream(data);
 
-    trans.recv_boom(make_array_view(data));
+    trans.recv_boom(make_writable_array_view(data));
 
     return {
         RecorderFile::PacketType(headers_stream.in_uint8()),

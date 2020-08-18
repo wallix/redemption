@@ -23,7 +23,7 @@
 
 #include "core/log_id.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
-#include "core/session_reactor.hpp"
+#include "utils/timebase.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
@@ -509,7 +509,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         chunk.in_skip_bytes(needed_data_length);
 
                         remaining_device_announce_request_header_stream_in = InStream(
-                            this->remaining_device_announce_request_header_stream.get_bytes());
+                            this->remaining_device_announce_request_header_stream.get_produced_bytes());
                         device_announce_request_header_stream =
                             &remaining_device_announce_request_header_stream_in;
 
@@ -648,10 +648,10 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                             const bool from_or_to_client = true;
                             ::msgdump_c(send,
                                 from_or_to_client, total_length_, flags_,
-                                out_stream.get_bytes());
+                                out_stream.get_produced_bytes());
                         }
 
-                        (*this->to_client_sender)(total_length_, flags_, out_stream.get_bytes());
+                        (*this->to_client_sender)(total_length_, flags_, out_stream.get_produced_bytes());
                     }
                 }   // if (!this->length_of_remaining_device_data_to_be_processed &&
 
@@ -780,13 +780,13 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     const bool send              = true;
                     const bool from_or_to_client = false;
                     ::msgdump_c(send, from_or_to_client, total_length_, flags_,
-                        client_drive_device_list_remove_stream.get_bytes());
+                        client_drive_device_list_remove_stream.get_produced_bytes());
                 }
 
                 (*this->to_server_sender)(
                     total_length_,
                     flags_,
-                    client_drive_device_list_remove_stream.get_bytes());
+                    client_drive_device_list_remove_stream.get_produced_bytes());
             }
         }
 
@@ -799,8 +799,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         }
 
         void process_server_device_announce_response(uint32_t total_length,
-            uint32_t flags, InStream& chunk
-        ) {
+            uint32_t flags, InStream& chunk)
+        {
             (void)total_length;
             (void)flags;
             this->waiting_for_server_device_announce_response = false;
@@ -826,7 +826,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 this->file_system_drive_manager.get_session_probe_drive_id()) {
                 if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
                     if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded(
-                            server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS)) {
+                            (server_device_announce_response.ResultCode() == erref::NTSTATUS::STATUS_SUCCESS))) {
                         this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
                     }
                 }
@@ -854,9 +854,9 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         cont.pop_back();
     }
 
-    SessionReactor& session_reactor;
-
-    SessionReactor::TimerPtr initialization_timeout_event;
+    TimeBase& time_base;
+    EventContainer & events;
+    int initialization_timeout_event = 0;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
     {
@@ -872,7 +872,8 @@ public:
     const std::string channel_files_directory;
 
     FileSystemVirtualChannel(
-        SessionReactor& session_reactor,
+        TimeBase& time_base,
+        EventContainer & events,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
@@ -909,7 +910,8 @@ public:
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.smartcard_passthrough,
           base_params.verbose)
-    , session_reactor(session_reactor)
+    , time_base(time_base)
+    , events(events)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
     {}
@@ -954,6 +956,7 @@ public:
             );
         }
 #endif  // #ifndef NDEBUG
+        this->events.end_of_lifespan(this);
     }
 
     void disable_session_probe_drive() {
@@ -1478,9 +1481,8 @@ public:
                             auto device_name = (p_device_name) ? *p_device_name : ""_av;
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
 
-                            this->report_message.log6(
-                                LogId::DRIVE_REDIRECTION_USE,
-                                this->session_reactor.get_current_time(), {
+                            this->sesman.log6(
+                                LogId::DRIVE_REDIRECTION_USE, {
                                 KVLog("device_name"_av, device_name),
                                 KVLog("device_type"_av, device_type_name),
                             });
@@ -1562,9 +1564,8 @@ public:
                                         target_iter->end_of_file, digest_s);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_READ_EX,
-                                        this->session_reactor.get_current_time(), {
+                                    this->sesman.log6(
+                                        LogId::DRIVE_REDIRECTION_READ_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
                                         KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -1576,9 +1577,8 @@ public:
                                         file_path, file_size_str, digest_s);
                                 }
                                 else {
-                                    this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_READ,
-                                        this->session_reactor.get_current_time(), {
+                                    this->sesman.log6(
+                                        LogId::DRIVE_REDIRECTION_READ, {
                                         KVLog("file_name"_av, file_path),
                                     });
 
@@ -1603,9 +1603,8 @@ public:
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
 
-                                    this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_WRITE_EX,
-                                        this->session_reactor.get_current_time(), {
+                                    this->sesman.log6(
+                                        LogId::DRIVE_REDIRECTION_WRITE_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
                                         KVLog("sha256"_av, {digest_s, digest_s_len}),
@@ -1617,9 +1616,8 @@ public:
                                         file_path, file_size_str, digest_s);
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    this->report_message.log6(
-                                        LogId::DRIVE_REDIRECTION_WRITE,
-                                        this->session_reactor.get_current_time(), {
+                                    this->sesman.log6(
+                                        LogId::DRIVE_REDIRECTION_WRITE, {
                                         KVLog("file_name"_av, file_path),
                                     });
 
@@ -1730,9 +1728,8 @@ public:
                         case rdpdr::FileDispositionInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                this->report_message.log6(
-                                    LogId::DRIVE_REDIRECTION_DELETE,
-                                    this->session_reactor.get_current_time(), {
+                                this->sesman.log6(
+                                    LogId::DRIVE_REDIRECTION_DELETE, {
                                     KVLog("file_name"_av, file_path),
                                 });
 
@@ -1751,9 +1748,8 @@ public:
                         case rdpdr::FileRenameInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                this->report_message.log6(
-                                    LogId::DRIVE_REDIRECTION_RENAME,
-                                    this->session_reactor.get_current_time(), {
+                                this->sesman.log6(
+                                    LogId::DRIVE_REDIRECTION_RENAME, {
                                     KVLog("old_file_name"_av, target_iter->file_path),
                                     KVLog("new_file_name"_av, file_path),
                                 });
@@ -1800,11 +1796,11 @@ public:
             StaticOutStream<65536> out_chunk;
             out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
 
-            OutStream out_stream(out_chunk.get_bytes());
+            OutStream out_stream(out_chunk.get_produced_bytes());
             out_stream.rewind(chunk_offset);
             this->client_device_io_response.emit(out_stream);
 
-            this->send_message_to_server(total_length, flags, out_chunk.get_bytes());
+            this->send_message_to_server(total_length, flags, out_chunk.get_produced_bytes());
 
             send_message_to_server = false;
         }
@@ -1850,8 +1846,7 @@ public:
                     client_announce_reply.receive(chunk);
                     client_announce_reply.log(LOG_INFO);
                 }
-
-                this->initialization_timeout_event.reset();
+                this->initialization_timeout_event = this->events.erase_event(this->initialization_timeout_event);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -1993,9 +1988,13 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event = this->session_reactor.create_timer(this)
-            .set_delay(this->initialization_timeout)
-            .on_action(jln::one_shot<&FileSystemVirtualChannel::process_event>());
+            this->initialization_timeout_event = this->events.create_event_timeout(
+                "Initialisation timeout Event", this,
+                this->time_base.get_current_time()+this->initialization_timeout,
+                [this](Event&)
+                {
+                    this->process_event();
+                });
             return true;
         }
 
@@ -2028,7 +2027,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         {
@@ -2052,7 +2051,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         return false;
@@ -2159,7 +2158,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         return false;
@@ -2241,7 +2240,7 @@ public:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
 
             return false;
         }
@@ -2392,7 +2391,7 @@ public:
                 }
                 server_drive_query_information_request.emit(out_stream);
 
-                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_bytes());
+                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_produced_bytes());
 
                 this->device_io_request_info_inventory.push_back({
                     this->server_device_io_request.DeviceId(),
@@ -2656,11 +2655,11 @@ public:
             StaticOutStream<65536> out_chunk;
             out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
 
-            OutStream out_stream(out_chunk.get_bytes());
+            OutStream out_stream(out_chunk.get_produced_bytes());
             out_stream.rewind(chunk_offset);
             this->server_device_io_request.emit(out_stream);
 
-            this->send_message_to_client(total_length, flags, out_chunk.get_bytes());
+            this->send_message_to_client(total_length, flags, out_chunk.get_produced_bytes());
 
             send_message_to_client          = false;
             send_replaced_message_to_client = true;
@@ -2832,8 +2831,7 @@ public:
 
 private:
     void process_event() {
-        this->initialization_timeout_event.reset();
-
+        this->initialization_timeout_event = this->events.erase_event(this->initialization_timeout_event);
         uint8_t message_buffer[1024];
 
         {
@@ -2863,7 +2861,7 @@ private:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         {
@@ -2887,7 +2885,7 @@ private:
                 out_stream.get_offset(),
                   CHANNELS::CHANNEL_FLAG_FIRST
                 | CHANNELS::CHANNEL_FLAG_LAST,
-                out_stream.get_bytes());
+                out_stream.get_produced_bytes());
         }
 
         LOG(LOG_INFO,

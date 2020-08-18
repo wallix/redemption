@@ -882,7 +882,7 @@ class RDPOrderCommon {
     }
 
 private:
-    void _emit(OutStream & stream, RDPPrimaryOrderHeader & header)
+    void _emit(OutStream & stream, RDPPrimaryOrderHeader & header) const
     {
         using namespace RDP;
 

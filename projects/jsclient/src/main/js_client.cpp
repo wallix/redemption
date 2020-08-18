@@ -18,86 +18,251 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
+#ifdef IN_IDE_PARSER
+# define __EMSCRIPTEN__
+#endif
+
 #include "acl/auth_api.hpp"
+#include "acl/gd_provider.hpp"
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/report_message_api.hpp"
-#include "core/session_reactor.hpp"
+#include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "utils/theme.hpp"
+#include "utils/timebase.hpp"
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
 
 #include "redjs/image_data.hpp"
-#include "redjs/browser_transport.hpp"
-#include "redjs/browser_front.hpp"
+#include "redjs/transport.hpp"
+#include "redjs/front.hpp"
 #include "redjs/channel_receiver.hpp"
 
 #include <chrono>
 
-
-using Ms = std::chrono::milliseconds;
-
-struct RdpClient
+namespace
 {
-    struct JsReportMessage : NullReportMessage
+    template<class T>
+    struct val_as_impl
     {
-        void report(const char * reason, const char * message) override
+        T operator()(emscripten::val const& prop) const
         {
-            RED_EM_ASM({
-                console.log("RdpClient: " + UTF8ToString($0, $1) + ": " + UTF8ToString($2, $3));
-            }, reason, strlen(reason), message, strlen(message));
+            if constexpr (std::is_enum_v<T>) {
+                static_assert(sizeof(T) <= 4);
+                using U = std::underlying_type_t<T>;
+                return T(prop.as<U>());
+            }
+            else if constexpr (std::is_integral_v<T>) {
+                static_assert(sizeof(T) <= 4);
+                return prop.as<T>();
+            }
+            else {
+                return prop.as<T>();
+            }
         }
     };
 
+    template<class Rep, class Period>
+    struct val_as_impl<std::chrono::duration<Rep, Period>>
+    {
+        using result_type = std::chrono::duration<Rep, Period>;
+
+        result_type operator()(emscripten::val const& prop) const
+        {
+            using Int = std::conditional_t<(sizeof(Rep) > 4), uint32_t, std::make_unsigned_t<Rep>>;
+            return result_type(prop.as<Int>());
+        }
+    };
+
+    template<class T>
+    struct val_as_impl<::utils::flags_t<T>>
+    {
+        using result_type = ::utils::flags_t<T>;
+
+        result_type operator()(emscripten::val const& prop) const
+        {
+            using Int = typename result_type::bitfield;
+            static_assert(sizeof(Int) <= 4);
+            return result_type(prop.as<Int>());
+        }
+    };
+
+    template<class T>
+    constexpr inline val_as_impl<T> val_as {};
+
+
+    template<class T>
+    std::string get_or_default(emscripten::val const& v, char const* name)
+    {
+        auto prop = v[name];
+        return not prop ? T() : prop.as<T>();
+    };
+
+
+    template<class T>
+    T get_or(emscripten::val const& v, char const* name, T default_value)
+    {
+        auto prop = v[name];
+        return not prop ? default_value : val_as<T>(prop);
+    };
+
+    std::string get_or(emscripten::val const& v, char const* name, char const* default_value)
+    {
+        auto prop = v[name];
+        return not prop ? default_value : prop.as<std::string>();
+    }
+
+
+    template<class T>
+    void set_if(emscripten::val const& v, char const* name, T& value)
+    {
+        auto prop = v[name];
+        if (not not prop) {
+            value = val_as<T>(prop);
+        }
+    }
+
+
+    template<class F>
+    void extract_if(emscripten::val const& v, char const* name, F f)
+    {
+        auto prop = v[name];
+        if (!!prop) {
+            f(prop);
+        }
+    };
+
+    writable_bytes_view extract_bytes(
+        emscripten::val const& v, char const* name, writable_bytes_view view)
+    {
+        auto prop = v[name];
+        if (not prop) {
+            return view.first(0);
+        }
+
+        auto str = prop.as<std::string>();
+        auto len = str.size();
+        if (view.size() >= len) {
+            LOG(LOG_NOTICE, "RdpClient: %s.length = %zu too large (max = %zu)",
+                name, len, view.size());
+            len = view.size();
+        }
+
+        memcpy(view.as_u8p(), str.data(), len);
+        return view.first(len);
+    }
+
+    writable_bytes_view extract_str(
+        emscripten::val const& v, char const* name, writable_bytes_view view)
+    {
+        auto av = extract_bytes(v, name, view.drop_back(1));
+        av.data()[av.size()] = '\0';
+        return av;
+    }
+
+    void extract_datetime(
+        emscripten::val const& v,
+        uint8_t (&name)[64],
+        SystemTime& system_time,
+        uint32_t& bias)
+    {
+        auto writable_name = make_writable_array_view(name);
+        auto av_name = extract_bytes(v, "name", writable_name);
+        memset(av_name.end(), 0, writable_name.size() - av_name.size());
+
+        set_if(v, "year", system_time.wYear);
+        set_if(v, "month", system_time.wMonth);
+        set_if(v, "dayOfWeek", system_time.wDayOfWeek);
+        set_if(v, "day", system_time.wDay);
+        set_if(v, "hour", system_time.wHour);
+        set_if(v, "minute", system_time.wMinute);
+        set_if(v, "second", system_time.wSecond);
+        set_if(v, "millisecond", system_time.wMilliseconds);
+
+        set_if(v, "bias", bias);
+    }
+
+
+    ScreenInfo extract_screen_info(emscripten::val const& config)
+    {
+        return ScreenInfo{
+            get_or(config, "width", uint16_t(800)),
+            get_or(config, "height", uint16_t(600)),
+            get_or(config, "bpp", BitsPerPixel(16))
+        };
+    }
+
+    RDPVerbose extract_rdp_verbose(emscripten::val const& config)
+    {
+        static_assert(sizeof(RDPVerbose) == 4, "verbose is truncated");
+        return get_or(config, "verbose", RDPVerbose(0));
+        // | (get_or(config, "verbose2", uint32_t(0)) << 32);
+    }
+}
+
+class RdpClient
+{
     struct JsRandom : Random
     {
-        JsRandom(emscripten::val callbacks) noexcept
-        : callbacks(std::move(callbacks))
+        static constexpr char const* get_random_values = "getRandomValues";
+
+        JsRandom(emscripten::val const& random)
+        : crypto(not random[get_random_values]
+            ? emscripten::val::global("crypto")
+            : random)
         {}
 
         void random(void* dest, std::size_t size) override
         {
-            redjs::emval_call(this->callbacks, "random", dest, size);
+            redjs::emval_call(this->crypto, get_random_values,
+                array_view{static_cast<uint8_t*>(dest), size});
         }
 
-        emscripten::val callbacks;
+        emscripten::val crypto;
     };
 
-    struct JsAuth : NullAuthentifier
+    struct JsAuthentitifier : NullAuthentifier
     {
         void set_auth_error_message(const char * error_message) override
         {
-            RED_EM_ASM({
-                console.log("RdpClient: " + UTF8ToString($0, $1));
-            }, error_message, strlen(error_message));
+            LOG(LOG_ERR, "RdpClient: %s", error_message);
         }
+
+        void report(const char * reason, const char * message) override
+        {
+            LOG(LOG_NOTICE, "RdpClient: %s: %s", reason, message);
+        }
+
+        // void log6(LogId /*id*/, KVList /*kv_list*/) override
+        // {}
     };
+
+    TimeBase time_base;
+    EventContainer events;
 
     ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> mod;
 
-    redjs::BrowserTransport browser_trans;
+    redjs::Transport trans;
 
     ClientInfo client_info;
 
-    redjs::BrowserFront front;
+    redjs::Front front;
     gdi::GraphicApi& gd;
-    JsReportMessage report_message;
-    SessionReactor session_reactor;
+    GdForwarder gd_forwarder{gd};
 
     Inifile ini;
 
     JsRandom js_rand;
-    LCGTime lcg_timeobj;
-    JsAuth authentifier;
+    JsAuthentitifier authentifier;
     NullLicenseStore license_store;
     RedirectionInfo redir_info;
 
@@ -106,141 +271,277 @@ struct RdpClient
     Theme theme;
     Font font;
 
-    RdpClient(
-        emscripten::val callbacks, uint16_t width, uint16_t height,
-        std::string const& username, std::string const& password,
-        uint32_t disabled_orders, unsigned long verbose)
-    : front(callbacks, width, height, RDPVerbose(verbose))
-    , gd(front.graphic_api())
-    , js_rand(callbacks)
-    {
-        client_info.screen_info.width = width;
-        client_info.screen_info.height = height;
-        client_info.screen_info.bpp = BitsPerPixel{24};
+    ModRDPParams::ServerInfo server_info {};
 
-        const auto supported_orders = front.get_supported_orders()
-            & ~PrimaryDrawingOrdersSupport(disabled_orders);
+public:
+    RdpClient(emscripten::val&& graphics, emscripten::val const& config)
+    : RdpClient(
+        std::move(graphics), config,
+        extract_screen_info(config),
+        extract_rdp_verbose(config))
+    {}
+
+    RdpClient(
+        emscripten::val&& graphics,
+        emscripten::val const& config,
+        ScreenInfo screen_info,
+        RDPVerbose verbose)
+    : time_base([&]{
+        uint32_t seconds = 0;
+        uint32_t milliseconds = 0;
+        extract_if(config, "time", [&](emscripten::val const& time){
+            set_if(time, "second", seconds);
+            set_if(time, "millisecond", milliseconds);
+        });
+        return timeval{checked_int{seconds}, checked_int{milliseconds}};
+    }())
+    , front(std::move(graphics), screen_info.width, screen_info.height, verbose)
+    , gd(front.graphic_api())
+    , js_rand(config)
+    {
+        using namespace std::chrono_literals;
+
+        client_info.screen_info = screen_info;
+
+        const auto disabled_orders
+            = get_or(config, "disabledGraphicOrders", PrimaryDrawingOrdersSupport());
+
+        const bool enable_remotefx = get_or(config, "enableRemoteFx", false);
+        const bool enable_large_pointer = get_or(config, "enableLargePointer", true);
+
+
+        // init client_info
+        //@{
+        const PrimaryDrawingOrdersSupport supported_orders
+            = front.get_supported_orders() - disabled_orders;
         for (unsigned i = 0; i < NB_ORDER_SUPPORT; ++i) {
             client_info.order_caps.orderSupport[i] = supported_orders.test(OrdersIndexes(i));
         }
 
+        auto cookie = extract_bytes(config, "cookie",
+            make_writable_array_view(client_info.autoReconnectCookie));
+        client_info.cbAutoReconnectCookie = cookie.size();
 
-        ini.set<cfg::mod_rdp::server_redirection_support>(false);
-        ini.set<cfg::mod_rdp::enable_nla>(false);
-        ini.set<cfg::client::tls_fallback_legacy>(true);
+        set_if(config, "keylayout", client_info.keylayout);
+        set_if(config, "consoleSession", client_info.console_session);
+        set_if(config, "performanceFlags", client_info.rdp5_performanceflags);
+
+        extract_if(config, "timezone", [&](emscripten::val const& timezone){
+            extract_if(timezone, "standard", [&](emscripten::val const& datetime){
+                extract_datetime(datetime,
+                    client_info.client_time_zone.DaylightName,
+                    client_info.client_time_zone.DaylightDate,
+                    client_info.client_time_zone.DaylightBias
+                );
+            });
+            extract_if(timezone, "daylight", [&](emscripten::val const& datetime){
+                extract_datetime(datetime,
+                    client_info.client_time_zone.StandardName,
+                    client_info.client_time_zone.StandardDate,
+                    client_info.client_time_zone.StandardBias
+                );
+            });
+        });
+
+        client_info.bitmap_codec_caps.haveRemoteFxCodec = enable_remotefx;
+        client_info.has_sound_code = get_or(config, "enableSound", false);
+
+        uint32_t maxRequestSize = client_info.multi_fragment_update_caps.MaxRequestSize;
+        set_if(config, "fragmentUpdateMaxRequestSize", maxRequestSize);
+
+        extract_str(config, "alternateShell",
+            make_writable_array_view(client_info.alternate_shell));
+        extract_str(config, "workingDirectory",
+            make_writable_array_view(client_info.working_dir));
+
+        if (enable_large_pointer) {
+            client_info.large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
+            maxRequestSize = std::max(maxRequestSize, uint32_t(38'055));
+        }
+
+        client_info.multi_fragment_update_caps.MaxRequestSize = maxRequestSize;
+        //@}
 
 
-        ModRDPParams mod_rdp_params(
+        // init rdp_params
+        //@{
+        const auto username = get_or_default<std::string>(config, "username");
+        const auto password = get_or_default<std::string>(config, "password");
+        const auto client_addr = get_or(config, "clientAddress", "0.0.0.0");
+
+        ModRDPParams rdp_params(
             username.c_str(),
             password.c_str(),
             "0.0.0.0",
-            "0.0.0.0", // client ip is silenced
-            /*front.keymap.key_flags*/ 0,
+            client_addr.c_str(),
+            get_or(config, "keyFlags", 0),
             font,
             theme,
             server_auto_reconnect_packet,
             close_box_extra_message,
-            RDPVerbose(verbose)
-        );
+            verbose);
 
-        mod_rdp_params.device_id                  = "device_id";
-        mod_rdp_params.enable_tls                 = false;
-        mod_rdp_params.enable_nla                 = false;
-        mod_rdp_params.enable_fastpath            = true;
-        mod_rdp_params.enable_new_pointer         = true;
-        mod_rdp_params.enable_glyph_cache         = true;
-        mod_rdp_params.server_cert_check          = ServerCertCheck::always_succeed;
-        mod_rdp_params.primary_drawing_orders_support = supported_orders;
-        mod_rdp_params.ignore_auth_channel = true;
+        rdp_params.server_info_ref = &server_info;
+
+        rdp_params.cache_verbose = get_or(config, "cacheVerbose", BmpCache::Verbose(0));
+
+        rdp_params.device_id           = "device_id"; // for certificate path only
+        rdp_params.enable_tls          = false;
+        rdp_params.enable_nla          = false;
+        rdp_params.server_cert_check   = ServerCertCheck::always_succeed;
+        rdp_params.ignore_auth_channel = true;
+
+        set_if(config, "enableFastPath", rdp_params.enable_fastpath);
+        set_if(config, "enableNewPointer", rdp_params.enable_new_pointer);
+
+        rdp_params.enable_remotefx = enable_remotefx;
+        set_if(config, "restrictedAdminMode", rdp_params.enable_restricted_admin_mode);
+
+        rdp_params.rdp_compression = RdpCompression::rdp6_1;
+
+        rdp_params.open_session_timeout = get_or(config, "openSessionTimeout", 20s);
+
+        set_if(config, "disconnectOnLogonUserChange", rdp_params.disconnect_on_logon_user_change);
+
+        set_if(config, "hideClientName", rdp_params.hide_client_name);
+        rdp_params.disabled_orders = disabled_orders;
+        rdp_params.enable_glyph_cache = supported_orders.test(TS_NEG_GLYPH_INDEX);
+
+        rdp_params.enable_persistent_disk_bitmap_cache
+            = get_or(config, "enablePersistentDiskBitmapCache", false);
+        rdp_params.enable_cache_waiting_list
+            = get_or(config, "enableCacheWaitingList", false);
+        rdp_params.persist_bitmap_cache_on_disk
+            = get_or(
+                config, "persistBitmapCacheOnDisk",
+                rdp_params.enable_persistent_disk_bitmap_cache);
+
+        set_if(config, "lang", rdp_params.lang);
+
+        rdp_params.adjust_performance_flags_for_recording = false;
+        rdp_params.large_pointer_support = enable_large_pointer;
+        set_if(config, "performAutomaticReconnection", rdp_params.perform_automatic_reconnection);
+
+        set_if(config, "splitDomain", rdp_params.split_domain);
+
+        rdp_params.error_message = &ini.get_mutable_ref<cfg::context::auth_error_message>();
+        //@}
 
 
-        if (bool(RDPVerbose(verbose) & RDPVerbose::basic_trace)) {
-            mod_rdp_params.log();
+        if (bool(verbose & RDPVerbose::basic_trace)) {
+            rdp_params.log();
         }
 
-        const ChannelsAuthorizations channels_authorizations("*", std::string{});
-
         this->mod = new_mod_rdp(
-            browser_trans, session_reactor, gd, front, client_info,
-            redir_info, js_rand, lcg_timeobj, channels_authorizations,
-            mod_rdp_params, TLSClientParams{}, authentifier, report_message,
+            trans, time_base, gd_forwarder, events, authentifier, gd, front, client_info,
+            redir_info, js_rand, ChannelsAuthorizations("*", ""),
+            rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
     }
 
-    void send_first_packet()
+    void write_first_packet()
     {
-        session_reactor.execute_timers(
-            SessionReactor::EnableGraphics{true},
-            [&]() -> gdi::GraphicApi& { return gd; });
+        this->set_time(this->time_base.get_current_time());
     }
 
-    bytes_view get_sending_data_view() const
+    void set_time(timeval time)
     {
-        return browser_trans.get_out_buffer();
+        this->time_base.set_current_time(time);
+
+        assert(this->events.queue.size() == 1);
+        Event& event = *this->events.queue[0];
+        if (event.alarm.trigger(time)){
+            event.actions.exec_timeout(event);
+            event.actions.update_on_action();
+        }
     }
 
-    void clear_sending_data()
+    // TODO u8 view
+    void process_input_data(std::string data)
     {
-        browser_trans.clear_out_buffer();
+        this->trans.push_input_buffer(std::move(data));
+
+        assert(this->events.queue.size() == 1);
+        Event& event = *this->events.queue[0];
+        event.actions.exec_action(event);
+        event.actions.update_on_action();
     }
 
-    void add_receiving_data(std::string data)
+    bytes_view get_output_buffer() const
     {
-        browser_trans.add_in_buffer(std::move(data));
-        // browser_trans.out_buffers.insert(browser_trans.out_buffers.end(), data.begin(), data.end());
-        session_reactor.execute_callbacks(*mod);
-        auto fd_isset = [fd_trans = browser_trans.get_fd()](int fd, auto& /*e*/){
-            return fd == fd_trans;
-        };
-        session_reactor.execute_graphics(fd_isset, gd);
+        return this->trans.get_output_buffer();
     }
 
-    void rdp_input_scancode(uint16_t key, uint16_t flag)
+    void reset_output_data()
     {
+        this->trans.clear_output_buffer();
+    }
+
+    void write_scancode_event(uint16_t scancode)
+    {
+        uint16_t key = scancode & 0xFF;
+        uint16_t flag = scancode & 0xFF00;
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            session_reactor.get_current_time().tv_sec,
+            this->time_base.get_current_time().tv_sec,
             nullptr);
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag)
+    void write_unicode_event(uint16_t unicode, uint16_t flag)
     {
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y)
+    void write_mouse_event(int x, int y, int device_flags)
     {
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
 
-    void add_channel_receiver(redjs::ChannelReceiver&& receiver)
+    void add_channel_receiver(redjs::ChannelReceiver receiver)
     {
-        this->front.add_channel_receiver(std::move(receiver));
+        this->front.add_channel_receiver(receiver);
     }
 
     Callback& get_callback()
     {
         return *this->mod;
     }
+
+    uint16_t get_input_flags() const
+    {
+        return this->server_info.input_flags;
+    }
+
+    uint32_t get_keyboard_layout() const
+    {
+        return this->server_info.keyboard_layout;
+    }
 };
 
-// Binding code
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<emscripten::val, uint16_t, uint16_t, std::string, std::string, uint32_t, unsigned long>()
-        .function_ptr("getSendingData", [](RdpClient& client) {
-            return redjs::emval_from_view(client.get_sending_data_view());
+        .constructor<emscripten::val /*gd*/, emscripten::val /*config*/>()
+        .function_ptr("setTime", [](RdpClient& client, uint32_t seconds, uint32_t milliseconds) {
+            client.set_time({checked_int(seconds), checked_int(milliseconds*1000u)});
+        })
+        .function_ptr("getOutputData", [](RdpClient& client) {
+            return redjs::emval_from_view(client.get_output_buffer());
         })
         .function_ptr("getCallbackAsVoidPtr", [](RdpClient& client) {
-            return reinterpret_cast<uintptr_t>(&client.get_callback());
+            return redjs::to_memory_offset(client.get_callback());
         })
-        .function("sendFirstPacket", &RdpClient::send_first_packet)
-        .function("addChannelReceiver", &RdpClient::add_channel_receiver)
-        .function("clearSendingData", &RdpClient::clear_sending_data)
-        .function("addReceivingData", &RdpClient::add_receiving_data)
-        .function("sendUnicode", &RdpClient::rdp_input_unicode)
-        .function("sendScancode", &RdpClient::rdp_input_scancode)
-        .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
+        .function_ptr("addChannelReceiver", [](RdpClient& client, uintptr_t ichannel_receiver) {
+            client.add_channel_receiver(
+                redjs::from_memory_offset<redjs::ChannelReceiver const&>(ichannel_receiver));
+        })
+        .function("writeFirstPacket", &RdpClient::write_first_packet)
+        .function("resetOutputData", &RdpClient::reset_output_data)
+        .function("processInputData", &RdpClient::process_input_data)
+        .function("writeUnicodeEvent", &RdpClient::write_unicode_event)
+        .function("writeScancodeEvent", &RdpClient::write_scancode_event)
+        .function("writeMouseEvent", &RdpClient::write_mouse_event)
+        .function("getInputFlags", &RdpClient::get_input_flags)
+        .function("getKeyboardLayout", &RdpClient::get_keyboard_layout)
     ;
 }

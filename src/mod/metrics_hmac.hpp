@@ -56,12 +56,12 @@ public:
         *p = 0;
     }
 
-    operator array_view_const_char() const noexcept
+    operator chars_view() const noexcept
     {
         return this->av();
     }
 
-    [[nodiscard]] array_view_const_char av() const noexcept
+    [[nodiscard]] chars_view av() const noexcept
     {
         return {dest.data(), dest.size()-1u};
     }
@@ -69,19 +69,19 @@ public:
 
 
 inline MetricsHmacSha256Encrypt hmac_user(
-    array_view_const_char user, array_view_const_char key)
+    chars_view user, chars_view key)
 {
     return MetricsHmacSha256Encrypt(user, key);
 }
 
 inline MetricsHmacSha256Encrypt hmac_account(
-    array_view_const_char account, array_view_const_char key)
+    chars_view account, chars_view key)
 {
     return MetricsHmacSha256Encrypt(account, key);
 }
 
 inline MetricsHmacSha256Encrypt hmac_device_service(
-    array_view_const_char device, std::string service, array_view_const_char key)
+    chars_view device, std::string service, chars_view key)
 {
     str_append(service, ' ', device);
     return MetricsHmacSha256Encrypt(service, key);
@@ -89,7 +89,7 @@ inline MetricsHmacSha256Encrypt hmac_device_service(
 
 inline MetricsHmacSha256Encrypt hmac_client_info(
     std::string client_host, ScreenInfo const& info,
-    array_view_const_char key)
+    chars_view key)
 {
     char session_info[128];
     int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",

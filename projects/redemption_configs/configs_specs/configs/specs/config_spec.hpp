@@ -34,11 +34,6 @@
 #include <string>
 
 
-/// ~"forward declaration" for redemption type
-//@{
-CONFIG_DEFINE_TYPE(RedirectionInfo)
-//@}
-
 namespace cfg_specs {
 
 #ifdef IN_IDE_PARSER
@@ -112,6 +107,23 @@ void config_spec_definition(Writer && W)
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
     auto allow_connpolicy_and_gui = connpolicy::allow_connpolicy_and_gui;
 
+    char const* disabled_orders_desc =
+        "Disables supported drawing orders:\n"
+        "   0: DstBlt\n"
+        "   1: PatBlt\n"
+        "   2: ScrBlt\n"
+        "   3: MemBlt\n"
+        "   4: Mem3Blt\n"
+        "   8: LineTo\n"
+        "  15: MultiDstBlt\n"
+        "  16: MultiPatBlt\n"
+        "  17: MultiScrBlt\n"
+        "  18: MultiOpaqueRect\n"
+        "  22: Polyline\n"
+        "  25: EllipseSC\n"
+        "  27: GlyphIndex\n"
+    ;
+
     W.section("globals", [&]
     {
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "capture_chunk");
@@ -129,7 +141,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, NL, type_<std::string>(), "target_application_password");
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
-        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Warning: Service will be automatically restarted and active sessions will be disconnected\nThe port set in this field must not be already used, otherwise the service will not run."}, set(3389));
+        W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<types::unsigned_>(), "port", desc{"Warning: Service will be automatically restarted and active sessions will be disconnected\nThe port set in this field must not be already used, otherwise the service will not run."}, set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), "encryptionLevel", set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
@@ -148,7 +160,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | password_in_gui, no_sesman, L, type_<types::fixed_string<254>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "is_rec", set(false));
-        W.member(advanced_in_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "movie_path", sesman::name{"rec_path"});
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
@@ -180,6 +191,8 @@ void config_spec_definition(Writer && W)
             "!!!May cause FreeRDP-based client to CRASH!!!\n"
             "Set to 0 to disable this feature."
         }, set(0));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_ipv6", desc { "Enable primary connection on ipv6" }, set(false));
     });
 
     W.section("session_log", [&]
@@ -194,7 +207,7 @@ void config_spec_definition(Writer && W)
 
     W.section("client", [&]
     {
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<unsigned>(), "keyboard_layout", set(0));
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::unsigned_>(), "keyboard_layout", set(0));
         std::string keyboard_layout_proposals_desc;
         for (auto k : Keymap2::keylayouts()) {
             keyboard_layout_proposals_desc += k->locale_name;
@@ -216,8 +229,8 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls_support", set(true));
-        W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
-        W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
+        W.member(ini_and_gui, no_sesman, L, type_<types::u32>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(2));
+        W.member(ini_and_gui, no_sesman, L, type_<types::u32>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_nla",
                     desc{"Needed for primary NTLM or Kerberos connections over NLA."}, set(false));
@@ -249,7 +262,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_target_user_in_f12_message", set(false));
 
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_new_pointer_update", set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_new_pointer_update", set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_ios_glyph_support_level", set(true));
 
@@ -265,21 +278,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "bogus_pointer_xormask_padding", set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "disabled_orders", desc{
-            "Disables supported drawing orders:\n"
-            "   0: DstBlt\n"
-            "   1: PatBlt\n"
-            "   2: ScrBlt\n"
-            "   3: MemBlt\n"
-            "   4: Mem3Blt\n"
-            "   8: LineTo\n"
-            "  15: MultiDstBlt\n"
-            "  16: MultiPatBlt\n"
-            "  17: MultiScrBlt\n"
-            "  18: MultiOpaqueRect\n"
-            "  22: Polyline\n"
-            "This option takes precedence over the option Extra orders of section mod_rdp."
-        }, set(""));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::list<types::unsigned_>>(), "disabled_orders", desc{disabled_orders_desc}, set("25"));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
                  "force_bitmap_cache_v2_with_am",
@@ -299,23 +298,15 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "open_session_timeout", set(0));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<unsigned>>(), "extra_orders", desc{
-            "Enables support of additional drawing orders:\n"
-            "  15: MultiDstBlt\n"
-            "  16: MultiPatBlt\n"
-            "  17: MultiScrBlt\n"
-            "  18: MultiOpaqueRect\n"
-            "  22: Polyline"
-            "Please see also \"Disabled orders\" in \"client\" section."
-        }, set("15,16,17,18,22"));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::list<types::unsigned_>>(), "disabled_orders", desc{disabled_orders_desc}, set(""));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_kerberos", desc{
             "If enabled, NLA authentication will try Kerberos before NTLM.\n"
             "(if enable_nla is disabled, this value is ignored)."
         }, set(false));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
-        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<uint32_t>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<types::u32>(), "tls_min_level", desc{"Minimal incoming TLS level 0=TLSv1, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<types::u32>(), "tls_max_level", desc{"Maximal incoming TLS level 0=no restriction, 1=TLSv1.1, 2=TLSv1.2, 3=TLSv1.3"}, set(0));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "cipher_string", desc{"TLSv1.2 additional ciphers supported by client, default is empty to apply system-wide configuration (SSL security level 2), ALL for support of all ciphers to ensure highest compatibility with target servers."}, set("ALL"));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<bool>(), "show_common_cipher_list", desc{"Show common cipher list supported by client and server"}, set(false));
 
@@ -323,14 +314,18 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "allow_channels", desc{"List of enabled (static) virtual channel (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::list<std::string>>(), "deny_channels", desc{"List of disabled (static) virtual channel (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), "allowed_dynamic_channels", desc{"List of enabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, activate all."}, set("*"));
+        W.member(no_ini_no_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<std::string>(), "denied_dynamic_channels", desc{"List of disabled dynamic virtual channel (example: channel1,channel2,etc). Character * only, deactivate all."});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, connpolicy::name{"server_redirection"}, set(false));
 
-        W.member(no_ini_no_gui, no_sesman, L, type_<RedirectionInfo>(), "redir_info");
+        W.member(advanced_in_gui, no_sesman, L, type_<ClientAddressSent>(), "client_address_sent", desc { "Client Address to send to target (in InfoPacket)" }, set(ClientAddressSent::no_address));
+
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<std::string>(), "load_balance_info", desc{"Load balancing information"});
 
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true));
@@ -377,6 +372,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_enable_log", connpolicy::name{"enable_log"}, set(false));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_enable_log_rotation", connpolicy::name{"enable_log_rotation"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeLogLevel>(), "session_probe_log_level", connpolicy::name{"log_level"}, set(SessionProbeLogLevel::Debug));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), "session_probe_disconnected_application_limit", connpolicy::name{"disconnected_application_limit"}, desc{
             "This policy setting allows you to configure a time limit for disconnected application sessions.\n"
@@ -411,16 +407,40 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), "session_probe_end_of_session_check_delay_time", connpolicy::name{"end_of_session_check_delay_time"}, set(0));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_update_disabled_features", connpolicy::name{"update_disabled_features"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), "session_probe_disabled_features", connpolicy::name{"disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership | SessionProbeDisabledFeature::bestsafe_integration));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_bestsafe_integration", connpolicy::name{"enable_bestsafe_interaction"}, set(false));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L,
+                 type_<types::fixed_string<3>>(),
+                 "session_probe_alternate_directory_environment_variable",
+                 connpolicy::name{"alternate_directory_environment_variable"},
+                 desc{
+            "The name of the environment variable pointing to the alternative directory to launch Session Probe.\n"
+            "If empty, the environment variable TMP will be used."
+                });
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), "session_probe_on_account_manipulation", connpolicy::name{"on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
+
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_at_end_of_session_freeze_connection_and_wait", set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_enable_cleaner", set(true));
+
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "application_driver_enable_cleaner", set(true));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_exe_or_file", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_script_argument", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_chrome_uia_script", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_ie_script", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
+
 
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
@@ -493,13 +513,18 @@ void config_spec_definition(Writer && W)
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
+
+        W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "auto_reconnection_on_losing_target_link", set(false));
     });
 
     W.section("metrics", [&]
     {
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_rdp_metrics", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_vnc_metrics", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics).to_string())));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics))));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "log_interval", set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
@@ -510,7 +535,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."});
         W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "clipboard_down", desc{"Enable or disable the clipboard from server (server to client)."});
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<int>>(), "encodings", desc{
+        W.member(advanced_in_gui, no_sesman, L, type_<types::list<types::int_>>(), "encodings", desc{
             "Sets the encoding types in which pixel data can be sent by the VNC server:\n"
             "  0: Raw\n"
             "  1: CopyRect\n"
@@ -529,6 +554,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "server_unix_alt", set(false));
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "support_cursor_pseudo_encoding", set(true));
+
+        W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
     });
 
     W.section("mod_replay", [&]
@@ -543,7 +570,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<OcrLocale>(), "locale", set(OcrLocale::latin));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::centi>>(), "interval", set(100));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "on_title_bar_only", set(true));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::range<unsigned, 0, 100>>{}, "max_unrecog_char_rate", desc{
+        W.member(advanced_in_gui, no_sesman, L, type_<types::range<types::unsigned_, 0, 100>>{}, "max_unrecog_char_rate", desc{
             "Expressed in percentage,\n"
           "  0   - all of characters need be recognized\n"
           "  100 - accept all results"
@@ -552,20 +579,20 @@ void config_spec_definition(Writer && W)
 
     W.section("video", [&]
     {
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "capture_groupid", set(33));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), "capture_groupid", set(33));
 
         W.member(advanced_in_gui, no_sesman, L, type_<CaptureFlags>{}, "capture_flags", set(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::deci>>(), "png_interval", desc{"Frame interval."}, set(10));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::centi>>(), "frame_interval", desc{"Frame interval."}, set(40));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "break_interval", desc{"Time between 2 wrm movies."}, set(600));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "png_limit", desc{"Number of png captures to keep."}, set(5));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), "png_limit", desc{"Number of png captures to keep."}, set(5));
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "replay_path", set("/tmp/"));
 
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash).to_string())));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp).to_string())));
-        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record).to_string())));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "hash_path", set(CPP_EXPR(app_path(AppPath::Hash))));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
 
         W.member(advanced_in_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{
             "Disable keyboard log:\n"
@@ -584,7 +611,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_vlc_frame_rate", desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("mp4"));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "framerate", set(5));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), "framerate", set(5));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg options for video codec."}, set("profile=baseline preset=ultrafast flags=+qscale b=80000"));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
 
@@ -592,6 +619,10 @@ void config_spec_definition(Writer && W)
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_rt_without_recording", desc { "Allow Realtime display (4eyes) without recording of session" }, set(false));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<types::file_permission>(), "file_permissions", desc{"Allow to control permissions on recorded files."}, set(0440));
     });
 
     W.section("capture", [&]
@@ -638,7 +669,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_rdp");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_vnc");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_internal");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_xup");
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), "password");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression");
@@ -648,7 +678,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ocr");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ffmpeg");
 
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
+        W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), spec::type_<bool>(), "config", set(2));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<ModRdpUseFailureSimulationSocketTransport>(), "mod_rdp_use_failure_simulation_socket_transport", set(ModRdpUseFailureSimulationSocketTransport::Off));
     });
 
     W.section("translation", [&]
@@ -661,7 +693,8 @@ void config_spec_definition(Writer && W)
 
     W.section("internal_mod", [&]
     {
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "theme", spec::name{"load_theme"});
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_target_field",
+                 desc{"Enable target edit field in login page."}, set(true));
     });
 
     W.section("file_verification", [&]
@@ -673,7 +706,12 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
 
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_up", desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_down", desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."}, set(false));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."}, set(50));
     });
 
     W.section("file_storage", [&]
@@ -689,7 +727,7 @@ void config_spec_definition(Writer && W)
             // for validator only
             W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
             // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<unsigned>(), "port", desc{"Port of ICAP server"}, set(1344));
+            W.member(ini_and_gui, no_sesman, L, type_<types::unsigned_>(), "port", desc{"Port of ICAP server"}, set(1344));
             // for validator only
             W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
 
@@ -720,18 +758,18 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "auth_error_message");
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "selector", set(false));
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<unsigned>(), "selector_current_page", set(1));
+        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), "selector_current_page", set(1));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "selector_device_filter");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "selector_group_filter");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "selector_proto_filter");
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<unsigned>(), "selector_lines_per_page", set(0));
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<unsigned>(), "selector_number_of_pages", set(1));
+        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), "selector_lines_per_page", set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::unsigned_>(), "selector_number_of_pages", set(1));
 
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, NL, type_<std::string>(), "target_password");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "target_host");
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "target_str");
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "target_service");
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<unsigned>(), "target_port", set(3389));
+        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), "target_port", set(3389));
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "target_protocol", sesman::name{"proto_dest"}, set("RDP"));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, NL, type_<std::string>(), "password");
@@ -755,9 +793,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "session_id");
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<unsigned>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
-
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow));
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::u32>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "real_target_device");
 
@@ -766,13 +802,12 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "ticket");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "comment");
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "duration");
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<unsigned>(), "duration_max", set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::chrono::minutes>(), "duration_max", set(0));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "waitinforeturn");
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "showform", set(false));
-        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<unsigned>(), "formflag", set(0));
+        W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<types::unsigned_>(), "formflag", set(0));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "module", set("login"));
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<bool>(), "forcemodule", set(false));
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "proxy_opt");
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "pattern_kill");
@@ -809,10 +844,10 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "auth_command");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "auth_notify");
 
-        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<unsigned>(), "auth_notify_rail_exec_flags");
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::unsigned_>(), "auth_notify_rail_exec_flags");
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::string>(), "auth_notify_rail_exec_exe_or_file");
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "auth_command_rail_exec_exec_result");
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<unsigned>(), "auth_command_rail_exec_flags");
+        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<types::u16>(), "auth_command_rail_exec_exec_result");
+        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<types::u16>(), "auth_command_rail_exec_flags");
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "auth_command_rail_exec_original_exe_or_file");
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "auth_command_rail_exec_exe_or_file");
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "auth_command_rail_exec_working_dir");
@@ -833,22 +868,61 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "pm_response");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "pm_request");
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "native_session_id");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<types::u32>(), "native_session_id");
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<bool>(), "rd_shadow_available", set(false));
 
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<std::string>(), "rd_shadow_userdata");
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), "rd_shadow_type");
 
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_error_code");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<types::u32>(), "rd_shadow_invitation_error_code");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_error_message");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_id");
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "rd_shadow_invitation_addr");
-        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<unsigned>(), "rd_shadow_invitation_port");
+        W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<types::u16>(), "rd_shadow_invitation_port");
 
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), "rail_module_host_mod_is_active", set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), "smartcard_login");
+
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "application_driver_alternate_shell");
+        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "application_driver_shell_arguments");
+    });
+
+    W.section("theme", [&]
+    {
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_theme", desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"}, set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "bgcolor", set("dark_blue_bis"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "fgcolor", set("white"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "separator_color", set("light_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "focus_color", set("winblue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "error_color", set("yellow"));
+        W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "logo", set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "logo_path", set(""));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_bgcolor", set("white"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_fgcolor", set("black"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "edit_focus_color", set("winblue"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_bgcolor", set("black"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_fgcolor", set("light_yellow"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "tooltip_border_color", set("black"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_bgcolor", set("pale_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line1_fgcolor", set("black"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_bgcolor", set("light_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_line2_fgcolor", set("black"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_bgcolor", set("medium_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_selected_fgcolor", set("white"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_bgcolor", set("winblue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_focus_fgcolor", set("white"));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_bgcolor", set("medium_blue"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "selector_label_fgcolor", set("white"));
     });
 }
 

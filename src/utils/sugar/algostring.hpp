@@ -62,12 +62,12 @@ auto trim(R & r, Pred pred = Pred()) /*NOLINT*/ -> range<decltype(r.begin())> {
 
 namespace detail
 {
-    inline array_view_const_char to_string_view_or_char(array_view_const_char av, int /*dummy*/) noexcept
+    inline chars_view to_string_view_or_char(chars_view av, int /*dummy*/) noexcept
     {
         return av;
     }
 
-    inline array_view_const_char to_string_view_or_char(char const* s, char /*dummy*/) noexcept
+    inline chars_view to_string_view_or_char(char const* s, char /*dummy*/) noexcept
     {
         return {s, ::strlen(s)};
     }
@@ -78,7 +78,7 @@ namespace detail
     }
 
 
-    inline std::size_t len_from_av_or_char(array_view_const_char av) noexcept
+    inline std::size_t len_from_av_or_char(chars_view av) noexcept
     {
         return av.size();
     }
@@ -90,7 +90,7 @@ namespace detail
     }
 
 
-    inline void append_from_av_or_char(std::string& s, array_view_const_char av)
+    inline void append_from_av_or_char(std::string& s, chars_view av)
     {
         s.append(av.data(), av.size());
     }
@@ -104,7 +104,7 @@ namespace detail
     template<class... StringsOrChars>
     void str_concat_view(std::string& str, StringsOrChars&&... strs)
     {
-        str.reserve(str.size() + (len_from_av_or_char(strs) + ...));
+        str.reserve(str.size() + (... + len_from_av_or_char(strs)));
         (append_from_av_or_char(str, strs), ...);
     }
 } // namespace detail

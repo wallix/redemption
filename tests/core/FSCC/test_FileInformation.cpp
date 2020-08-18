@@ -24,14 +24,14 @@
 
 
 #define FSCC_TEST(type, suffix, raw_data) RED_AUTO_TEST_CASE(Test##type##suffix) { \
-    array_view_const_char in_data = raw_data;                                      \
+    chars_view in_data = raw_data;                                      \
     InStream in_stream(in_data);                                                   \
     StaticOutStream<1200> out_stream;                                              \
     fscc::type type;                                                               \
     type.receive(in_stream);                                                       \
     RED_CHECK_EQUAL(in_data.size(), type.size());                                  \
     type.emit(out_stream);                                                         \
-    RED_CHECK(out_stream.get_bytes() == in_data);                                  \
+    RED_CHECK(out_stream.get_produced_bytes() == in_data);                                  \
 }
 
 FSCC_TEST(FileBothDirectoryInformation, 1,

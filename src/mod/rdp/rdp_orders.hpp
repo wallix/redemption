@@ -27,11 +27,10 @@
 #include <string>
 
 #include <cinttypes>
+#include <functional>
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-
-#include "core/report_error.hpp"
 
 #include "core/RDP/protocol.hpp"
 
@@ -47,11 +46,9 @@
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryNineGrid.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryCreateNinegridBitmap.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
@@ -91,7 +88,6 @@ class rdp_orders
     RDPGlyphIndex      glyph_index;
     RDPPolyline        polyline;
     RDPEllipseSC       ellipseSC;
-    RDPNineGrid        ninegrid;
 
 private:
     BitsPerPixel bpp {};
@@ -102,7 +98,6 @@ public:
 #ifndef __EMSCRIPTEN__
     std::unique_ptr<BmpCache> bmp_cache;
 #endif
-    // std::unique_ptr<BmpCache> ninegrid_bmp_cache;
 
 private:
     GlyphCache gly_cache;
@@ -113,25 +108,20 @@ public:
     size_t recv_bmp_cache_count = 0;
     size_t recv_order_count = 0;
 
-    // size_t recv_ninegrid_bmp_cache_count = 0;
-    // size_t recv_ninegrid_order_count = 0;
-
 private:
     std::string target_host;
-#ifndef __EMSCRIPTEN__
-    bool        enable_persistent_disk_bitmap_cache;
-    bool        persist_bitmap_cache_on_disk;
-#endif
-
     bool silent_reject_windowing_orders;
 
 #ifndef __EMSCRIPTEN__
-    ReportError report_error;
+    bool        enable_persistent_disk_bitmap_cache;
+    bool        persist_bitmap_cache_on_disk;
+    std::function<void(const Error & error)> notify_error;
 #endif
 
 public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
-              , bool persist_bitmap_cache_on_disk, bool silent_reject_windowing_orders, RDPVerbose verbose, ReportError report_error)
+        , bool persist_bitmap_cache_on_disk, bool silent_reject_windowing_orders
+        , RDPVerbose verbose, std::function<void(const Error & error)> notify_error)
     : common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , memblt(0, Rect(), 0, 0, 0, 0)
     , mem3blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0)
@@ -145,23 +135,19 @@ public:
     , global_palette(BGRPalette::classic_332())
     , verbose(verbose)
     , target_host(target_host)
+    , silent_reject_windowing_orders(silent_reject_windowing_orders)
 #ifndef __EMSCRIPTEN__
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
+    , notify_error(std::move(notify_error))
 #endif
-    , silent_reject_windowing_orders(silent_reject_windowing_orders)
-#ifndef __EMSCRIPTEN__
-    , report_error(std::move(report_error))
-    {}
-#else
     {
-        (void)report_error;
+#ifdef __EMSCRIPTEN__
         (void)enable_persistent_disk_bitmap_cache;
         (void)persist_bitmap_cache_on_disk;
-        assert(!enable_persistent_disk_bitmap_cache);
-        assert(!persist_bitmap_cache_on_disk);
-    }
+        (void)notify_error;
 #endif
+    }
 
     void set_bpp(const BitsPerPixel & bpp)
     {
@@ -190,7 +176,6 @@ public:
         this->glyph_index     = RDPGlyphIndex( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
                                              , RDPBrush(), 0, 0, 0, byte_ptr_cast(""));
         this->polyline        = RDPPolyline();
-        this->ninegrid        = RDPNineGrid();
     }
 
 #ifndef __EMSCRIPTEN__
@@ -213,7 +198,7 @@ private:
           app_path(AppPath::PersistentRdp),
           this->target_host.c_str(),
           this->bmp_cache->bpp,
-          this->report_error,
+          this->notify_error,
           convert_verbose_flags(this->verbose)
       );
     }
@@ -236,9 +221,21 @@ public:
         (void)big_persistent;
         (void)verbose;
         gd.set_bmp_cache_entries({
-            uint16_t(small_entries + (enable_waiting_list ? 1 : 0)),
-            uint16_t(medium_entries + (enable_waiting_list ? 1 : 0)),
-            uint16_t(big_entries + (enable_waiting_list ? 1 : 0))
+            gdi::GraphicApi::CacheEntry{
+                uint16_t(small_entries + (enable_waiting_list ? 1 : 0)),
+                small_size,
+                small_persistent
+            },
+            gdi::GraphicApi::CacheEntry{
+                uint16_t(medium_entries + (enable_waiting_list ? 1 : 0)),
+                medium_size,
+                medium_persistent
+            },
+            gdi::GraphicApi::CacheEntry{
+                uint16_t(big_entries + (enable_waiting_list ? 1 : 0)),
+                big_size,
+                big_persistent
+            },
         });
 #else
         (void)gd;
@@ -310,9 +307,9 @@ private:
             return stream2.in_uint32_le();
         }();
 
-        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                      | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY     /*NOLINT*/
-                                      | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP))  /*NOLINT*/
+        switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP)))
         {
             case RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW:
                 this->process_window_information(stream, header, FieldsPresentFlags, gd);
@@ -340,10 +337,10 @@ private:
                                     /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "rdp_orders::process_window_information");
 
-        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                      | RDP::RAIL::WINDOW_ORDER_ICON            /*NOLINT*/
-                                      | RDP::RAIL::WINDOW_ORDER_CACHEDICON      /*NOLINT*/
-                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED)) /*NOLINT*/
+        switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_ICON)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_CACHEDICON)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)))
         {
             case RDP::RAIL::WINDOW_ORDER_ICON: {
                     RDP::RAIL::WindowIcon order;
@@ -408,8 +405,8 @@ private:
                                                /*unused*/, uint32_t FieldsPresentFlags, gdi::GraphicApi & gd) {
         LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "rdp_orders::process_notification_icon_information");
 
-        switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+        switch (FieldsPresentFlags & ( uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_NEW)
+                                     | uint32_t(RDP::RAIL::WINDOW_ORDER_STATE_DELETED)))
         {
             case RDP::RAIL::WINDOW_ORDER_STATE_DELETED: {
                     RDP::RAIL::DeletedNotificationIcons order;
@@ -494,35 +491,6 @@ private:
 #endif
     }
 
-    void process_ninegrid_bmpcache(InStream & stream, const RDP::AltsecDrawingOrderHeader & /*header*/)
-    {
-        //if (bool(this->verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "rdp_orders_process_ninegrid_bmpcache bpp=%u", this->bpp);
-        //}
-
-        CreateNineGridBitmap cngb;
-        cngb.receive(stream);
-        //cngb.log();
-
-//         Bitmap bmp(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
-//            uint16_t cx, uint16_t cy, const uint8_t * data, size_t size,
-//            bool compressed = false);
-//
-//         RDPBmpCache bmp_cache(bmp, id, idx, true, false, bool(this->verbose));
-//
-//         this->recv_ninegrid_bmp_cache_count++;
-//
-//         assert(bmp_cache.bmp.is_valid());
-//
-//         this->ninegrid_bmp_cache->put(bmp_cache.id, bmp_cache.idx, bmp_cache.bmp, bmp_cache.key1, bmp_cache.key2);
-//         if (bool(this->verbose & RDPVerbose::graphics)) {
-//             LOG( LOG_INFO
-//                , "rdp_orders_process_bmpcache bitmap id=%d idx=%d cx=%" PRIu16 " cy=%" PRIu16
-//                  " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
-//                , bmp_cache.id, bmp_cache.idx, bmp_cache.bmp.cx(), bmp_cache.bmp.cy(), bmp_cache.bmp.bmp_size(), bmp_cache.bmp.bpp(), this->bpp);
-//         }
-    }
-
     void server_add_char( uint8_t cacheId, uint16_t cacheIndex
                         , int16_t offset, int16_t baseline
                         , uint16_t width, uint16_t height, const uint8_t * data)
@@ -597,10 +565,6 @@ public:
                     break;
                     case RDP::AltsecDrawingOrderType::Window:
                         this->process_windowing(stream, header, gd);
-                    break;
-                    case RDP::AltsecDrawingOrderType::CreateNinegridBitmap:
-                        this->process_ninegrid_bmpcache(stream, header);
-                        LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "AltsecDrawingOrderType::CreateNinegridBitmap");
                     break;
                     default:
                         LOG(LOG_ERR, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
@@ -767,17 +731,6 @@ public:
                     this->ellipseSC.receive(stream, header);
                     gd.draw(this->ellipseSC, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
                     if (bool(this->verbose & RDPVerbose::graphics)){ this->ellipseSC.log(LOG_INFO, cmd_clip); }
-                    break;
-                case NINEGRID:
-                {
-                    this->ninegrid.receive(stream, header);
-
-                    LOG(LOG_INFO, "NINEGRID !!!!!!!!!!!!!!!!!");
-//                     const Bitmap & bitmap = this->ninegrid_bmp_cache->get(this->ninegrid.bitmapId);
-                    Bitmap bitmap;
-                    gd.draw(this->ninegrid, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette), bitmap);
-//                     if (bool(this->verbose & RDPVerbose::graphics)){ this->ninegrid.log(LOG_INFO, cmd_clip); }
-                }
                     break;
                 default:
                     /* error unknown order */

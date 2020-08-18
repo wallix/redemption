@@ -34,9 +34,9 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/buffer_view.hpp"
 
 #include "configs/autogen/enums.hpp"
-
 
 using std::size_t; /*NOLINT*/
 
@@ -48,6 +48,8 @@ struct TLSClientParams
     uint32_t tls_max_level = 0;
     bool show_common_cipher_list = false;
     std::string cipher_string;
+    int security_level = 1;
+    bool anonymous_tls = false;
 };
 
 
@@ -63,6 +65,8 @@ public:
     Transport& operator=(const Transport &) = delete;
 
     virtual ~Transport() = default;
+
+    virtual int get_sck() { return INVALID_SOCKET; }
 
     [[nodiscard]] uint32_t get_seqno() const
     { return this->seqno; }
@@ -87,7 +91,7 @@ public:
         (void)show_common_cipher_list;
     }
 
-    [[nodiscard]] virtual array_view_const_u8 get_public_key() const
+    [[nodiscard]] virtual u8_array_view get_public_key() const
     {
         return {};
     }
@@ -106,7 +110,7 @@ public:
         return {buffer, len};
     }
 
-    writable_bytes_view recv_boom(writable_bytes_view buffer)
+    writable_bytes_view recv_boom(writable_buffer_view buffer)
     {
         if (Read::Eof == this->atomic_read(buffer.as_u8p(), buffer.size())) {
             LOG(LOG_ERR, "Transport::recv_boom (2): Failed to read transport!");
@@ -126,7 +130,7 @@ public:
     }
 
     REDEMPTION_CXX_NODISCARD
-    Read atomic_read(writable_bytes_view buffer)
+    Read atomic_read(writable_buffer_view buffer)
     {
         return this->do_atomic_read(buffer.as_u8p(), buffer.size());
     }
@@ -140,7 +144,7 @@ public:
 
     // TODO returns writable_bytes_view
     REDEMPTION_CXX_NODISCARD
-    size_t partial_read(writable_bytes_view buffer)
+    size_t partial_read(writable_buffer_view buffer)
     {
         return this->do_partial_read(buffer.as_u8p(), buffer.size());
     }
@@ -236,7 +240,7 @@ struct InTransport
     {}
 
     void recv_boom(writable_byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
-    void recv_boom(writable_bytes_view buffer) { this->t.recv_boom(buffer); }
+    void recv_boom(writable_buffer_view buffer) { this->t.recv_boom(buffer); }
 
     REDEMPTION_CXX_NODISCARD
     Transport::Read atomic_read(writable_byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
@@ -254,7 +258,7 @@ struct InTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
+    [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
@@ -289,7 +293,7 @@ struct OutTransport
     void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level, uint32_t tls_max_level, bool show_common_cipher_list)
     { this->t.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level, tls_max_level, show_common_cipher_list); }
 
-    [[nodiscard]] array_view_const_u8 get_public_key() const { return this->t.get_public_key(); }
+    [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
 
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }

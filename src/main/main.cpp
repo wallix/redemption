@@ -40,9 +40,9 @@
 
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/log.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <iostream>
 
@@ -194,12 +194,11 @@ inline int shutdown()
     // remove all other pid files
     DIR * d = opendir(pid_dir);
     if (d){
-        const std::string path = pid_dir;
         for (dirent * entryp = readdir(d) ; entryp ; entryp = readdir(d)) {
             if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
                 continue;
             }
-            const std::string pidpath = path + "/" + entryp->d_name;
+            const std::string pidpath = str_concat(pid_dir, '/', entryp->d_name);
             LOG(LOG_INFO, "removing old pid file %s", pidpath);
             if (unlink(pidpath.c_str()) < 0){
                 LOG(LOG_ERR, "Failed to remove old session pid file %s [%d: %s]",
@@ -360,10 +359,6 @@ int main(int argc, char** argv)
     }
 
 
-    CryptoContext cctx;
-    UdevRandom rnd;
-    Fstat fstat;
-
     // if -f (force option) is set
     // force kill running rdpproxy
     // force remove pid file
@@ -417,7 +412,7 @@ int main(int argc, char** argv)
     }
 
     Inifile ini;
-    configuration_load(ini.configuration_holder(), config_filename);
+    configuration_load(ini.configuration_holder(), config_filename.c_str());
 
     ScopedCryptoInit scoped_crypto;
     ScopedSslInit scoped_ssl;
@@ -445,7 +440,7 @@ int main(int argc, char** argv)
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
     redemption_main_loop(
-        ini, cctx, rnd, fstat, euid, egid,
+        ini, euid, egid,
         std::move(config_filename),
         !options.count("nofork"));
 

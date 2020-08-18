@@ -21,6 +21,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/transport/test_transport.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
@@ -28,29 +29,14 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "utils/png.hpp"
-#include "utils/timestamp_tracer.hpp"
-#include "test_only/check_sig.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 
 #include <chrono>
 
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/protected_graphics/"
+
 namespace
 {
-    std::size_t do_snapshot(TestGraphic& drawable, timeval const& now)
-    {
-        drawable.trace_mouse();
-        tm ptm;
-        localtime_r(&now.tv_sec, &ptm);
-        TimestampTracer timestamp_tracer(drawable.get_mutable_image_view());
-        timestamp_tracer.trace(ptm);
-        BufTransport trans;
-        ::dump_png24(trans, drawable, true);
-        timestamp_tracer.clear();
-        drawable.clear_mouse();
-        return trans.buf.size();
-    }
-
     template<class F>
     auto make_osd(gdi::GraphicApi & drawable, Rect const rect, F f)
     {
@@ -61,7 +47,7 @@ namespace
             , f(f)
             {}
 
-            void refresh_rects(array_view<Rect const> /*unused*/) override
+            void refresh_rects(array_view<Rect> /*unused*/) override
             {
                 f();
             }
@@ -83,25 +69,18 @@ RED_AUTO_TEST_CASE(TestModOSD)
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
-    timeval now;
-    now.tv_sec = 1350998222;
-    now.tv_usec = 0;
-    now.tv_sec++;
-
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
     Rect const rect = bmp_rect.intersect(screen_rect.cx, screen_rect.cy);
     drawable->draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
 
-    now.tv_sec++;
-    RED_CHECK_EQUAL(5021, do_snapshot(drawable, now));
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_1.png");
 
     auto osd = make_osd(drawable, rect, []{RED_FAIL("refresh_rects is called");});
     osd.draw(RDPOpaqueRect(Rect(100, 100, 200, 200), encode_color24()(GREEN)), screen_rect, color_cxt);
-    now.tv_sec++;
-    RED_CHECK_EQUAL(5047, do_snapshot(drawable, now));
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_2.png");
 }
 
 RED_AUTO_TEST_CASE(TestModOSD2)
@@ -114,29 +93,19 @@ RED_AUTO_TEST_CASE(TestModOSD2)
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
-    timeval now;
-    now.tv_sec = 1350998222;
-    now.tv_usec = 0;
-    now.tv_sec++;
-
     Rect const rect = Rect(100, 100, 200, 200);
     drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
 
-    now.tv_sec++;
-    RED_CHECK_EQUAL(3083, do_snapshot(drawable, now));
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_3.png");
 
-    RED_CHECK_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
-
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
     auto osd = make_osd(drawable, rect, []{});
     osd.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), bmp_rect.intersect(screen_rect.cx, screen_rect.cy), bmp);
-    now.tv_sec++;
-    RED_CHECK_EQUAL(3628, do_snapshot(drawable, now));
 
-    RED_CHECK_SIG(drawable, "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_4.png");
 }
 
 RED_AUTO_TEST_CASE(TestModOSD3)
@@ -149,20 +118,12 @@ RED_AUTO_TEST_CASE(TestModOSD3)
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
-    timeval now;
-    now.tv_sec = 1350998222;
-    now.tv_usec = 0;
-    now.tv_sec++;
-
     Rect const rect = Rect(100, 100, 200, 200);
     drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
 
-    now.tv_sec++;
-    RED_CHECK_EQUAL(3083, do_snapshot(drawable, now));
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_5.png");
 
-    RED_CHECK_SIG(drawable, "\x67\x3a\xb4\xb9\x9f\x7f\xe9\x47\xbb\x49\xd3\xf7\x03\xf1\x5c\x07\x80\xeb\x1f\x62");
-
-    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp");
+    Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
     int const bmp_x = 200;
     int const bmp_y = 200;
     Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
@@ -179,8 +140,6 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     bmp_data.bitmap_length = bmp.bmp_size();
     auto osd = make_osd(drawable, rect, []{});
     osd.draw(bmp_data, bmp);
-    now.tv_sec++;
-    RED_CHECK_EQUAL(3628, do_snapshot(drawable, now));
 
-    RED_CHECK_SIG(drawable, "\x04\xb7\xd8\x57\xf0\xde\x62\x8c\x42\x6f\x4d\x2a\x26\xc4\x68\xfc\xa1\xf5\x29\x9f");
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "protected_graphics_6.png");
 }

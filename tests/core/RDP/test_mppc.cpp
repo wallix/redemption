@@ -38,8 +38,8 @@ RED_AUTO_TEST_CASE(TestMPPC)
         rdp_mppc_dec & rmppc = rmppc_d;
 
         /* uncompress data */
-        RED_CHECK(make_array_view(decompressed_rd5) ==
-            rmppc.decompress(make_array_view(compressed_rd5), PACKET_COMPRESSED | PACKET_COMPR_TYPE_64K));
+        RED_CHECK(make_array_view(decompressed_rd5) == rmppc.decompress(
+            make_array_view(compressed_rd5), int(PACKET_COMPRESSED) | int(PACKET_COMPR_TYPE_64K)));
     }
 }
 

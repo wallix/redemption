@@ -72,7 +72,7 @@ public:
     void flush() override {
         if (this->stream.get_offset() > 0) {
             send_wrm_chunk(this->trans, WrmChunkType::LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
-            this->trans.send(this->stream.get_bytes());
+            this->trans.send(this->stream.get_produced_bytes());
             this->stream = OutStream(buf);
         }
     }
@@ -82,7 +82,7 @@ private:
         size_t to_buffer_len = len;
         while (this->stream.get_offset() + to_buffer_len > this->max) {
             send_wrm_chunk(this->trans, WrmChunkType::PARTIAL_IMAGE_CHUNK, this->max, 1);
-            this->trans.send(stream.get_bytes());
+            this->trans.send(stream.get_produced_bytes());
             size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
             to_buffer_len -= to_send;
@@ -274,12 +274,12 @@ public:
 
             payload.out_uint8(/*ignore_time_interval*/ 0);
 
-            payload.out_copy_bytes(keyboard_buffer_32.get_bytes());
+            payload.out_copy_bytes(keyboard_buffer_32.get_produced_bytes());
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
 
         send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
 
         this->last_sent_timer = this->timer;
     }
@@ -293,7 +293,7 @@ public:
         //------------------------------ missing variable length ---------------
 
         send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), 1);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
     void save_bmp_caches()
@@ -369,7 +369,7 @@ public:
     void send_orders_chunk()
     {
         send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
-        this->trans.send(this->stream_orders.get_bytes());
+        this->trans.send(this->stream_orders.get_produced_bytes());
         this->order_count = 0;
         this->stream_orders.rewind();
     }
@@ -393,7 +393,7 @@ public:
     void send_bitmaps_chunk()
     {
         send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP2, this->stream_bitmaps.get_offset(), this->bitmap_count);
-        this->trans.send(this->stream_bitmaps.get_bytes());
+        this->trans.send(this->stream_bitmaps.get_produced_bytes());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
     }
@@ -410,7 +410,7 @@ public:
         payload.out_uint16_le(min_image_frame_dim.h);
 
         send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
 protected:
@@ -428,7 +428,7 @@ protected:
             cursor.emit_pointer2(payload);
         }
         send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
     void cached_pointer_update(int cache_idx) override {
@@ -442,7 +442,7 @@ protected:
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 
 public:
@@ -477,7 +477,7 @@ public:
         kvheader.out_uint8(kv_len);
 
         send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, out_stream.get_offset(), 1);
-        this->trans.send(out_stream.get_bytes());
+        this->trans.send(out_stream.get_produced_bytes());
     }
 
     void possible_active_window_change() override {
@@ -494,7 +494,7 @@ public:
         StaticOutStream<1024> payload;
         monitor_layout_pdu.emit(payload);
 
-        this->trans.send(payload.get_bytes());
+        this->trans.send(payload.get_produced_bytes());
     }
 };  // struct GraphicToFile
 
@@ -535,8 +535,6 @@ class WrmCaptureImpl :
         using GraphicToFile::draw;
         using GraphicToFile::capture_bpp;
 
-        void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const &  /*bmp*/) override {}
-
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
                 size_t linesPerPacket = (16384 / bmp.line_size());
@@ -559,7 +557,8 @@ class WrmCaptureImpl :
                     target_bitmap_data.dest_bottom = target_bitmap_data.dest_top + currentHeight - 1;
                     target_bitmap_data.height = currentHeight;
                     target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
-                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
+                    target_bitmap_data.flags          = uint16_t(BITMAP_COMPRESSION)
+                                                      | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                     target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
 
                     GraphicToFile::draw(target_bitmap_data, subBmp);
@@ -682,10 +681,7 @@ public:
         this->graphic_to_file.draw(cmd);
     }
 
-    void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
-
-    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {
-    }
+    void draw(RDPSetSurfaceCommand const & /*cmd*/) override {}
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override {
         /* no remoteFx support in recording, transcode to bitmapUpdates */
@@ -698,7 +694,7 @@ public:
             bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
             bitmap_data.dest_top = cmd.destRect.y + rect.itop();
             bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
-            
+
             bitmap_data.width = bitmap.cx();
             bitmap_data.height = bitmap.cy();
             bitmap_data.bits_per_pixel = 32;
@@ -806,7 +802,8 @@ public:
         image_view.width(),
         image_view.height(),
         capture_params.groupid,
-        capture_params.report_message)
+        capture_params.sesman,
+        wrm_params.file_permissions)
     , graphic_to_file(
         capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,

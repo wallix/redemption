@@ -94,31 +94,25 @@ namespace trkeys
         "Le gestionnaire de session a coupé la connexion.");
     TR_KV(end_connection, "End of connection", "Fin de connexion");
     TR_KV(help_message,
-        "In login edit box, enter:<br>"
-        "- target device and login with the Bastion login separated<br>"
-        "  by a semi colon as login@target:service:Bastionlogin<br>"
-        "- or a valid Bastion authentication user.<br>"
-        "<br>"
-        "In password edit box enter your password<br>"
-        "for user.<br>"
-        "<br>"
-        "Both fields are case sensitive.<br>"
-        "<br>"
-        "Contact your system administrator if you are<br>"
-        "experiencing problems.",
+        "The \"Target\" field can be entered with a string labelled in this format:\n"
+        "\"Account@Domain@Device:Service:Auth\".\n"
+        "The \"Domain\", \"Service\" and \"Auth\" parts are optional.\n"
+        "This field is optional and case-sensitive.\n"
+        "\n"
+        "The \"Login\" field must refer to a user declared on the Bastion.\n"
+        "This field is required and not case-sensitive.\n"
+        "\n"
+        "Contact your system administrator for assistance.",
 
-        "Dans la zone de saisie login, entrez:<br>"
-        "- le login sur la cible et le nom de la machine cible suivi<br>"
-        "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
-        "- ou un nom de compte Bastion valide.<br>"
-        "<br>"
-        "Dans la zone de saisie mot de passe,<br>"
-        "entrez le mot de passe du compte.<br>"
-        "<br>"
-        "Les deux champs sont sensibles à la casse.<br>"
-        "<br>"
-        "Contactez votre administrateur système en<br>"
-        "cas de problème pour vous connecter.");
+        "Le champ \"Cible\" peut contenir une chaîne de caractères au format:\n"
+        "\"Account@Domain@Device:Service:Auth\".\n"
+        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnelles.\n"
+        "Ce champ est optionnel et sensible à la casse.\n"
+        "\n"
+        "Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.\n"
+        "Ce champ est requis et insensible à la casse.\n"
+        "\n"
+        "Contactez votre administrateur système pour obtenir de l'aide.");
     TR_KV(selector, "Selector", "Sélecteur");
     TR_KV(session_out_time,
         "Session is out of allowed timeframe",
@@ -349,6 +343,19 @@ namespace trkeys
     TR_KV(err_mod_rdp_connected,
         "Fail while connecting session on the target.",
         "Échec lors de la connexion de la session sur la cible."
+    );
+
+    TR_KV(file_verification_wait,
+        "File being analyzed: ",
+        "Fichier en cours d'analyse: "
+    );
+    TR_KV(file_verification_accepted,
+        "Valid file: ",
+        "Fichier valide: "
+    );
+    TR_KV(file_verification_rejected,
+        "Invalid file: ",
+        "Fichier invalide: "
     );
 #undef TR_KV
 #undef TR_KV_FMT

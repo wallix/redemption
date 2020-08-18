@@ -25,8 +25,7 @@
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/share.hpp"
 #include "core/RDP/sec.hpp"
-#include "core/RDP/gcc.hpp"
-#include "core/RDP/out_per_bstream.hpp"
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
 
 namespace RDP {
 

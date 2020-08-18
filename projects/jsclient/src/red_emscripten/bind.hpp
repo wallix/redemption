@@ -41,8 +41,19 @@ namespace redjs
         template<typename... ConstructorArgs, class F/*, typename... Policies*/>
         EMSCRIPTEN_ALWAYS_INLINE const class_& constructor(F f/*, Policies... policies*/) const
         {
-            em_class::constructor(static_cast<T*(*)(ConstructorArgs&&... args)>(f)/*, policies...*/);
-            return *this;
+            if constexpr (sizeof...(ConstructorArgs) == 0) {
+                return _constructor_ptr(+f);
+            }
+            else {
+                em_class::constructor(static_cast<T*(*)(ConstructorArgs&&... args)>(f)/*, policies...*/);
+                return *this;
+            }
+        }
+
+        template<class F>
+        EMSCRIPTEN_ALWAYS_INLINE const class_& constructor_ptr(F f/*, Policies... policies*/) const
+        {
+            return _constructor_ptr(+f);
         }
 
         template<class F>
@@ -51,12 +62,20 @@ namespace redjs
             this->function(name, +f, emscripten::allow_raw_pointers());
             return *this;
         }
+
+    private:
+        template<class... ConstructorArgs>
+        EMSCRIPTEN_ALWAYS_INLINE const class_& _constructor_ptr(
+            T* (*f)(ConstructorArgs...)/*, Policies... policies*/) const
+        {
+            em_class::constructor(f/*, policies...*/);
+            return *this;
+        }
     };
 
     template<class F, class... Policies>
     void function(const char* name, F f, Policies... policies)
     {
         emscripten::function(name, +f, policies...);
-
     }
 }

@@ -25,6 +25,7 @@ Author(s): Jonathan Poelen
 #include <emscripten/val.h>
 
 #include <type_traits>
+#include <cassert>
 
 
 namespace redjs
@@ -34,6 +35,73 @@ namespace redjs
         return emscripten::val(emscripten::typed_memory_view(av.size(), av.data()));
     }
 
+    inline emscripten::val emval_from_view(u16_array_view av)
+    {
+        return emscripten::val(emscripten::typed_memory_view(av.size(), av.data()));
+    }
+
+
+    template<class T>
+    struct from_memory_offset_t
+    {
+        static_assert(!sizeof(T), "only pointer or reference");
+    };
+
+    template<class T>
+    struct from_memory_offset_t<T*>
+    {
+        T* operator()(intptr_t iptr) const noexcept
+        {
+            return reinterpret_cast<T*>(iptr); /* NOLINT */
+        }
+
+        T* operator()(uintptr_t iptr) const noexcept
+        {
+            return reinterpret_cast<T*>(iptr); /* NOLINT */
+        }
+
+        template<class U>
+        T* operator()(U iptr) = delete;
+    };
+
+    template<class T>
+    struct from_memory_offset_t<T&>
+    {
+        T& operator()(intptr_t iptr) const noexcept
+        {
+            assert(iptr);
+            return *reinterpret_cast<T*>(iptr); /* NOLINT */
+        }
+
+        T& operator()(uintptr_t iptr) const noexcept
+        {
+            assert(iptr);
+            return *reinterpret_cast<T*>(iptr); /* NOLINT */
+        }
+
+        template<class U>
+        T& operator()(U iptr) = delete;
+    };
+
+    template<class T>
+    constexpr inline from_memory_offset_t<T> from_memory_offset {};
+
+    template<class T>
+    uintptr_t to_memory_offset(T* p)
+    {
+      return reinterpret_cast<uintptr_t>(p); /* NOLINT */
+    }
+
+    template<class T>
+    uintptr_t to_memory_offset(T& ref)
+    {
+      return reinterpret_cast<uintptr_t>(&ref); /* NOLINT */
+    }
+
+    template<class T>
+    uintptr_t to_memory_offset(T&& ref) = delete;
+
+
     template<class T>
     struct EmValPtr;
 
@@ -42,7 +110,7 @@ namespace redjs
     {
         static uintptr_t i(void const* p) noexcept
         {
-            return reinterpret_cast<uintptr_t>(p);
+            return reinterpret_cast<uintptr_t>(p); /* NOLINT */
         }
     };
 
@@ -58,12 +126,26 @@ namespace redjs
         return EmValPtr<T>::i(p);
     }
 
-    template<class T>
-    inline T const& emval_call_arg(T const& x) noexcept
+    inline emscripten::val const& emval_call_arg(emscripten::val const& val) noexcept
     {
-        static_assert(std::is_integral_v<T>);
-        static_assert(sizeof(T) != 8, "uint64_t and int64_t are not supported");
-        return x;
+        return val;
+    }
+
+    template<class T>
+    inline auto emval_call_arg(T const& x) noexcept
+    {
+        if constexpr (std::is_integral_v<T>) {
+            static_assert(sizeof(T) <= 4, "uint64_t and int64_t are not supported");
+            return x;
+        }
+        else if constexpr (std::is_enum_v<T>) {
+            auto i = std::underlying_type_t<T>(x);
+            static_assert(sizeof(i) <= 4, "enum on uint64_t or int64_t are not supported");
+            return i;
+        }
+        else {
+            return emval_from_view(array_view{x});
+        }
     }
 
     template<class ReturnType = void, class... Args>

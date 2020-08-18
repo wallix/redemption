@@ -47,6 +47,7 @@
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/iter.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -193,7 +194,7 @@ public:
                 ssc.send(payload, sc);
 
                 send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), chunk_count);
-                this->trans.send(payload.get_bytes());
+                this->trans.send(payload.get_produced_bytes());
             }
             break;
 
@@ -381,7 +382,8 @@ static int do_recompress(
             player.info.width,
             player.info.height,
             ini.get<cfg::video::capture_groupid>(),
-            nullptr
+            nullptr,
+            -1
         );
         {
             ChunkToFile recorder(
@@ -520,7 +522,7 @@ public:
         }
     }
 
-    void write(array_view_const_char data)
+    void write(chars_view data)
     {
         this->file.send(data);
     }
@@ -1779,7 +1781,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         return ClRes::Exit;
     }
 
-    configuration_load(ini.configuration_holder(), recorder.config_filename);
+    configuration_load(ini.configuration_holder(), recorder.config_filename.c_str());
 
     if (options.count("quick") > 0) {
         recorder.quick_check = true;

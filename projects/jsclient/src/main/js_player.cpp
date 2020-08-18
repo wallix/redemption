@@ -38,7 +38,7 @@ Author(s): Jonathan Poelen
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
 #include "red_emscripten/val.hpp"
-#include "redjs/browser_graphic.hpp"
+#include "redjs/graphics.hpp"
 
 #include <chrono>
 
@@ -63,7 +63,7 @@ struct WrmPlayer
     , gd(this->callbacks, 0, 0)
     {}
 
-    std::size_t remaining_data_size() const noexcept
+    std::size_t remaining_data_size() const // noexcept
     {
         return this->offset;
     }
@@ -101,7 +101,7 @@ struct WrmPlayer
         return false;
     }
 
-    bool next_order() noexcept
+    bool next_order() //noexcept
     {
         if (!this->chunk.count)
         {
@@ -181,12 +181,26 @@ struct WrmPlayer
             {
                 this->wrm_info.receive(this->in_stream);
                 this->_skip_chunk();
-                this->gd.resize_canvas(this->wrm_info.width, this->wrm_info.height);
-                const uint16_t reserved_by_watning_list = this->wrm_info.use_waiting_list;
+                this->gd.resize_canvas({
+                  this->wrm_info.width, this->wrm_info.height, this->wrm_info.bpp
+                });
+                const uint16_t reserved_by_waiting_list = this->wrm_info.use_waiting_list;
                 this->gd.set_bmp_cache_entries({
-                    uint16_t(this->wrm_info.cache_0_size + reserved_by_watning_list),
-                    uint16_t(this->wrm_info.cache_1_size + reserved_by_watning_list),
-                    uint16_t(this->wrm_info.cache_2_size + reserved_by_watning_list)
+                    gdi::GraphicApi::CacheEntry{
+                        checked_int{this->wrm_info.cache_0_entries + reserved_by_waiting_list},
+                        this->wrm_info.cache_0_size,
+                        this->wrm_info.cache_0_persistent
+                    },
+                    gdi::GraphicApi::CacheEntry{
+                        checked_int{this->wrm_info.cache_1_entries + reserved_by_waiting_list},
+                        this->wrm_info.cache_1_size,
+                        this->wrm_info.cache_1_persistent
+                    },
+                    gdi::GraphicApi::CacheEntry{
+                        checked_int{this->wrm_info.cache_2_entries + reserved_by_waiting_list},
+                        this->wrm_info.cache_2_size,
+                        this->wrm_info.cache_2_persistent
+                    },
                 });
                 // TODO this->wrm_info.compression_algorithm
                 break;
@@ -244,7 +258,8 @@ struct WrmPlayer
                     if (RM18446_adjusted_size) {
                         RDPBitmapData RM18446_test_bitmap_data = bitmap_data;
 
-                        RM18446_test_bitmap_data.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                        RM18446_test_bitmap_data.flags         = uint16_t(BITMAP_COMPRESSION)
+                                                               | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                         RM18446_test_bitmap_data.bitmap_length = RM18446_adjusted_size;
 
                         this->in_stream.in_skip_bytes(RM18446_adjusted_size);
@@ -392,9 +407,8 @@ private:
     StateChunk ssc;
     WrmMetaChunk wrm_info;
     GlyphCache gly_cache;
-    redjs::BrowserGraphic gd;
+    redjs::Graphics gd;
 };
-
 
 EMSCRIPTEN_BINDINGS(player)
 {
@@ -407,7 +421,6 @@ EMSCRIPTEN_BINDINGS(player)
         .function("nextTimestampOrder", &WrmPlayer::next_timestamp_order)
     ;
 }
-
 
 void WrmPlayer::_interpret_secondary_order(uint8_t control)
 {
@@ -513,3 +526,5 @@ void WrmPlayer::_interpret_standard_order(uint8_t control)
             throw Error(ERR_WRM);
     }
 }
+
+

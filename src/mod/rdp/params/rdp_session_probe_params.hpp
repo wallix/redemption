@@ -48,4 +48,6 @@ struct ModRdpSessionProbeParams
     bool fix_too_long_cookie = true;
 
     SessionProbeVirtualChannelParams vc_params {};
+
+    std::string alternate_directory_environment_variable {};
 };

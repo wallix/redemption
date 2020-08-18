@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestCapabilityFontEmit)
     StaticOutStream<1024> out_stream;
     font_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_bytes());
+    InStream stream(out_stream.get_produced_bytes());
 
     FontCaps font_caps2;
 

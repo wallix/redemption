@@ -260,7 +260,7 @@ struct print_value_impl<T, decltype(void(std::declval<T&>().bytes))>
 };
 
 
-void print_chars_view(array_view_const_char chars)
+void print_chars_view(chars_view chars)
 {
     std::cout.write(chars.data(), chars.size());
 }
@@ -631,7 +631,7 @@ int main(int ac, char** av)
     {
         std::cerr << "Usage: mwrm3_editor [file.mwrm3]\n";
         std::cerr << "Example:\n";
-        std::cerr << R"(echo -e "1\n1\n1\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | mwrm3_editor | mwrm3_editor /dev/stdin))";
+        std::cerr << R"(echo -e "1\n1\n1\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | mwrm3_editor | mwrm3_editor /dev/stdin)";
         std::cerr << "\n";
         return 1;
     }

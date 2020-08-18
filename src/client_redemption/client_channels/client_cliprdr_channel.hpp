@@ -33,7 +33,6 @@
 #include <string>
 
 
-class ConstImageDataView;
 class ClientChannelMod;
 class RDPClipboardConfig;
 class InStream;
@@ -58,42 +57,46 @@ public:
     virtual uint16_t get_buffer_type_id() = 0;
     virtual int get_citems_number() = 0;
 
-    virtual array_view_const_u8 get_cliboard_text() = 0;
+    virtual u8_array_view get_cliboard_text() = 0;
     virtual ConstImageDataView get_image() = 0;
     virtual std::string get_file_item_name(int index) = 0;
-    virtual array_view_const_char get_file_item(int index) = 0;
+    virtual chars_view get_file_item(int index) = 0;
 
     virtual size_t get_cliboard_data_length() = 0;
 };
 
 class ClientCLIPRDRChannel
 {
-
-public:
     RDPVerbose verbose;
     ClientIOClipboardAPI * clientIOClipboardAPI;
     ClientChannelMod * callback;
-
-    bool format_list_nego_done = false;
 
     enum class CustomFormatName;
 
     uint32_t             _requestedFormatId = 0;
     CustomFormatName     _requestedFormatName {};
+
+public:
     bool                 _waiting_for_data;
 
+private:
     timeval paste_data_request_time;
+public:
     long paste_data_len = 0;
 
+private:
     const uint32_t channel_flags;
     std::unordered_map<uint32_t, std::string> formats_map;
     const double arbitrary_scale;
 
+public:
     uint32_t file_content_flag;
 
+private:
     const std::string path;
 
 
+public:
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;
         uint64_t size = 0;
@@ -102,12 +105,13 @@ public:
         int    pic_height = 0;
         int    pic_bpp = 0;
 
-        [[nodiscard]] array_view_const_u8 av() const noexcept
+        [[nodiscard]] u8_array_view av() const noexcept
         {
             return {this->data.get(), size_t(this->size)};
         }
     } _cb_buffers;
 
+private:
     struct CB_FilesList {
         struct CB_in_Files {
             uint64_t         size;
@@ -122,15 +126,17 @@ public:
     }  _cb_filesList;
 
     // Config negociation
+public:
     bool server_use_long_format_names = true;
+
+private:
     const uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags;
 
     Cliprdr::FormatNameInventory format_name_list;
 
-    size_t last_header_data_len = 0;
 
-
+public:
     ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPClipboardConfig const& config);
 
     ~ClientCLIPRDRChannel();
@@ -152,10 +158,10 @@ public:
 
     void empty_buffer();
 
-    void emptyLocalBuffer();
+    void emptyLocalBuffer() const;
     void send_FormatListPDU();
 
-    void send_UnlockPDU(uint32_t streamID);
+    void send_UnlockPDU(uint32_t streamID) const;
 
     void process_monitor_ready();
 
@@ -163,8 +169,8 @@ public:
 
     void process_format_list(InStream & chunk, uint32_t msgFlags);
 
-    void process_format_data_request(InStream & chunk);
+    void process_format_data_request(InStream & chunk) const;
 
-    void process_filecontents_request(InStream & chunk);
+    void process_filecontents_request(InStream & chunk) const;
 };
 

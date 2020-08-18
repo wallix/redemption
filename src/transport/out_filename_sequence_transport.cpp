@@ -88,9 +88,9 @@ OutFilenameSequenceTransport::OutFilenameSequenceTransport(
     const char * const filename,
     const char * const extension,
     const int groupid,
-    ReportError report_error)
+    std::function<void(const Error & error)> notify_error)
 : filegen_(format, prefix, filename, extension)
-, buf_(invalid_fd(), std::move(report_error))
+, buf_(invalid_fd(), notify_error)
 , groupid_(groupid)
 {
     this->current_filename_[0] = 0;

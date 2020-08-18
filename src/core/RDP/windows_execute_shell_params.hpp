@@ -23,11 +23,22 @@
 #pragma once
 
 #include <string>
+#include "utils/log.hpp"
 
 struct WindowsExecuteShellParams {
     uint16_t    flags = 0;
     std::string exe_or_file;
     std::string working_dir;
     std::string arguments;
+
+    void log(int level) const
+    {
+        LOG(level,
+            "WindowsExecuteShellParams: Flags: %u exe_or_file: %s working_dir: %s arguments: %s",
+            flags,
+            this->exe_or_file,
+            this->working_dir,
+            this->arguments);
+    }
 };
 

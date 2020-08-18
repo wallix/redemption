@@ -78,18 +78,18 @@ SocketTransport::~SocketTransport()
       , this->name, this->sck, this->total_received, this->total_sent);
 }
 
-bool SocketTransport::has_pending_data() const
+bool SocketTransport::has_tls_pending_data() const
 {
     return this->tls && this->tls->pending_data();
 }
 
 
-bool SocketTransport::has_waiting_data() const
+bool SocketTransport::has_data_to_write() const
 {
     return !this->async_buffers.empty();
 }
 
-array_view_const_u8 SocketTransport::get_public_key() const
+u8_array_view SocketTransport::get_public_key() const
 {
     return this->tls ? this->tls->get_public_key() : nullptr;
 }
@@ -136,7 +136,7 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
                 case Transport::TlsResult::Ok: {
                     try {
                         ret = this->tls->check_certificate(
-                            server_notifier, this->error_message, this->ip_address, this->port);
+                            server_notifier, this->error_message, this->ip_address, this->port, tls_client_params.anonymous_tls);
 
                         if (ret == Transport::TlsResult::WaitExternalEvent) {
                             this->tls_state = TLSState::WaitCertCb;
@@ -214,7 +214,7 @@ size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
 
     if (res < 0){
         LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_ERR, "SocketTransport::do_partial_read: Failed to read from socket %s!", this->name);
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
     }
 
     if (res >= 0) {
@@ -246,7 +246,7 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
     if (res < 0 || static_cast<size_t>(res) < len) {
         LOG(LOG_ERR, "SocketTransport::do_atomic_read: %s to read from socket %s!",
             (res < 0) ? "Failed" : "Insufficient data", this->name);
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
+        throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
     }
 
     if (bool(this->verbose & Verbose::dump)) {
@@ -288,10 +288,10 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
     ssize_t res = socket_send_partial(this->tls.get(), this->sck, buffer, len);
 
     if (res < 0) {
-        LOG(LOG_WARNING,
+        LOG_IF(!bool(this->verbose & Verbose::watchdog), LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
-        throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
     }
 
     if (res < static_cast<ssize_t>(len)) {
@@ -321,7 +321,7 @@ void SocketTransport::send_waiting_data()
             LOG(LOG_WARNING,
                 "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
                 this->name, this->sck, errno, strerror(errno));
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+            throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
         }
 
         this->total_sent += res;

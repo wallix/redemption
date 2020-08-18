@@ -44,7 +44,7 @@ public:
 
     bool allow_mouse_pointer_change_ = true;
 
-    WidgetScreen(gdi::GraphicApi & drawable, Font const & font,
+    WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
                  NotifyApi * notifier, Theme theme);
 
     ~WidgetScreen() override;

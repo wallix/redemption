@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestStream_out_Stream)
     RED_CHECK_EQUAL((s.get_data())[11], 7);
     RED_CHECK_EQUAL((s.get_data())[12], 8);
 
-    RED_CHECK("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av == s.get_bytes());
+    RED_CHECK("\xA\1\2\4\3\4\3\2\1\5\6\7\x8"_av == s.get_produced_bytes());
 
     // underflow because end is not yet moved at p
     RED_CHECK(s.tailroom());
@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(TestStream_2BUE)
 
     stream.out_2BUE(0x1A1B);
 
-    InStream in_stream(stream.get_bytes());
+    InStream in_stream(stream.get_produced_bytes());
 
     RED_CHECK_EQUAL(0x1A1Bu, in_stream.in_2BUE());
 }
@@ -269,10 +269,99 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
 
     stream.out_4BUE(0x001A1B1C);
 
-    InStream in_stream(stream.get_bytes());
+    InStream in_stream(stream.get_produced_bytes());
 
     RED_CHECK_EQUAL(0x001A1B1Cu, in_stream.in_4BUE());
 }
+
+
+RED_AUTO_TEST_CASE(TestParse_in_DEP)
+{
+    uint8_t buffer[] = {
+        0x10,  // 16
+        0x20,  // 32
+        0x3F,  // 63
+        0x7F,  // -1
+        0x40,  // -64
+        0x80, 0x00, // 0
+        0x00, // 0
+        0xC0, 0x00,
+        0xDF, 0xFF,
+        0xE0, 0x00,
+        0xBF, 0xFF,
+        0x00, // 0
+        0xFF, 0xFF};
+    Parse data(buffer);
+    RED_CHECK_EQUAL(16, data.in_DEP());
+    RED_CHECK_EQUAL(32, data.in_DEP());
+    RED_CHECK_EQUAL(63, data.in_DEP());
+    RED_CHECK_EQUAL(-1, data.in_DEP());
+    RED_CHECK_EQUAL(-64, data.in_DEP());
+    RED_CHECK_EQUAL(0, data.in_DEP());
+    RED_CHECK_EQUAL(0, data.in_DEP());
+    RED_CHECK_EQUAL(-16384, data.in_DEP());
+    RED_CHECK_EQUAL(-8193, data.in_DEP());
+    RED_CHECK_EQUAL(-8192, data.in_DEP());
+    RED_CHECK_EQUAL(16383, data.in_DEP());
+    RED_CHECK_EQUAL(0, data.in_DEP());
+    RED_CHECK_EQUAL(-1, data.in_DEP());
+}
+
+RED_AUTO_TEST_CASE(TestStream_out_DEP)
+{
+    StaticOutStream<256> stream;
+
+    uint8_t expected[] = {
+        0x10,  // 16
+        0x20,  // 32
+        0x3F,  // 63
+        0x7F,  // -1
+        0x40,  // -64
+        0x41,  // -63
+        0x61,  // -31
+        0x00, // 0
+        0xC0, 0x00,
+        0xDF, 0xFF,
+        0xE0, 0x00,
+        0xBF, 0xFF,
+        0xBF, 0xFF,
+    };
+
+    stream.out_DEP(16); // 0x10
+    stream.out_DEP(32); // 0x20
+    stream.out_DEP(63); // 0x3F
+    stream.out_DEP(-1); // 0x7F
+    stream.out_DEP(-64); // 0x40
+    stream.out_DEP(-63); // 0x41
+    stream.out_DEP(-31); // 0x61
+    stream.out_DEP(0); // 0
+    stream.out_DEP(-16384); // 0xC0, 0x00
+    stream.out_DEP(-8193); // 0xDF, 0xFF
+    stream.out_DEP(-8192); // 0xE0, 0x00
+    stream.out_DEP(16383); // 0xBF, 0xFF 0x1011 0x1111
+    // Actually the example below is invalid, the function only apply
+    // in range -16384 .. 16383 (15 bits)
+    // -16385 gave the same output as +16383
+    stream.out_DEP(-16385); // 0xBF, 0xFF
+
+    RED_CHECK(stream.get_produced_bytes() == make_array_view(expected));
+    InStream in_stream(stream.get_produced_bytes());
+
+    RED_CHECK(16 == in_stream.in_DEP()); // 0x10
+    RED_CHECK(32 == in_stream.in_DEP()); // 0x20
+    RED_CHECK(63 == in_stream.in_DEP()); // 0x3F
+    RED_CHECK(-1 == in_stream.in_DEP()); // 0x7F
+    RED_CHECK(-64 == in_stream.in_DEP()); // 0x40
+    RED_CHECK(-63 == in_stream.in_DEP()); // 0x41
+    RED_CHECK(-31 == in_stream.in_DEP()); // 0x61
+    RED_CHECK(0 == in_stream.in_DEP()); // 0
+    RED_CHECK(-16384 == in_stream.in_DEP()); // 0xC0, 0x00
+    RED_CHECK(-8193 == in_stream.in_DEP()); // 0xDF, 0xFF
+    RED_CHECK(-8192 == in_stream.in_DEP()); // 0xE0, 0x00
+    RED_CHECK(16383 == in_stream.in_DEP()); // 0xBF, 0xFF 0x1011 0x1111
+    RED_CHECK(16383 == in_stream.in_DEP()); // 0xBF, 0xFF 0x1011 0x1111
+}
+
 
 RED_AUTO_TEST_CASE(TestStream_sint32)
 {
@@ -282,7 +371,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
         RED_CHECK_EQUAL(int32_t(0xFFFCFDFE), ss_min_val.in_sint32_le());
         StaticOutStream<4> fs_min_val;
         fs_min_val.out_sint32_le(0xFFFCFDFE);
-        RED_CHECK(fs_min_val.get_bytes() == tmp);
+        RED_CHECK(fs_min_val.get_produced_bytes() == tmp);
     }
 
     {
@@ -291,7 +380,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
         RED_CHECK_EQUAL(0x7FFEFDFC, ss_max_val.in_sint32_le());
         StaticOutStream<4> fs_max_val;
         fs_max_val.out_sint32_le(0x7FFEFDFC);
-        RED_CHECK(fs_max_val.get_bytes() == tmp);
+        RED_CHECK(fs_max_val.get_produced_bytes() == tmp);
     }
 
 }
@@ -304,14 +393,14 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(stream.get_bytes() == "\x00\x0e\xfa\xd5\xfe\xff\xff\xff"_av);
+        RED_CHECK(stream.get_produced_bytes() == "\x00\x0e\xfa\xd5\xfe\xff\xff\xff"_av);
     }
 
     {
         StaticOutStream<8> stream;
         stream.out_sint64_le(0);
 
-        RED_CHECK(stream.get_bytes() == "\0\0\0\0\0\0\0\0"_av);
+        RED_CHECK(stream.get_produced_bytes() == "\0\0\0\0\0\0\0\0"_av);
     }
 
     {
@@ -320,7 +409,7 @@ RED_AUTO_TEST_CASE(TestOutSInt64Le)
         StaticOutStream<8> stream;
         stream.out_sint64_le(int64_test);
 
-        RED_CHECK(stream.get_bytes() == "\x00\xe4\x0b\x54\x02\x00\x00\x00"_av);
+        RED_CHECK(stream.get_produced_bytes() == "\x00\xe4\x0b\x54\x02\x00\x00\x00"_av);
     }
 }
 
@@ -347,9 +436,9 @@ RED_AUTO_TEST_CASE(TestStreamAt)
     StaticOutStream<12> stream;
     stream.out_copy_bytes("abcde"_av);
 
-    RED_CHECK(stream.get_bytes() == "abcde"_av);
+    RED_CHECK(stream.get_produced_bytes() == "abcde"_av);
     stream.stream_at(1).out_uint8('x');
-    RED_CHECK(stream.get_bytes() == "axcde"_av);
+    RED_CHECK(stream.get_produced_bytes() == "axcde"_av);
 }
 
 RED_AUTO_TEST_CASE(TestDynamicReservedStream)
@@ -360,7 +449,7 @@ RED_AUTO_TEST_CASE(TestDynamicReservedStream)
 	DynamicOutReservedStreamHelper dstream(2, 8+2);
 	dstream.get_data_stream().out_uint64_be(0x0203040506070809);
 
-	dstream.copy_to_head(ostream.get_bytes());
+	dstream.copy_to_head(ostream.get_produced_bytes());
 	RED_CHECK(dstream.get_packet() == "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"_av);
 
 	// dstream is supposed to be
@@ -373,7 +462,7 @@ RED_AUTO_TEST_CASE(TestDynamicReservedStream)
 	StaticOutStream<1> ostream2;
 	ostream2.out_uint8(0x00);
 
-	sub.copy_to_head(ostream2.get_bytes());
+	sub.copy_to_head(ostream2.get_produced_bytes());
 	RED_CHECK(sub.get_packet() == "\x00\x01\x02\x03"_av);
 }
 

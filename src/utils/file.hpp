@@ -70,7 +70,7 @@ struct File
 
     writable_bytes_view read(writable_bytes_view buffer) noexcept
     {
-        return {buffer.data(), std::fread(buffer.data(), 1, buffer.size(), f)};
+        return buffer.first(std::fread(buffer.data(), 1, buffer.size(), f));
     }
 
     size_t write(bytes_view buffer) noexcept

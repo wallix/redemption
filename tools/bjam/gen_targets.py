@@ -33,7 +33,6 @@ disable_srcs = set((
 
 src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
-    ('src/proxy_recorder/proxy_recorder.hpp', ['src/proxy_recorder/proxy_recorder.cpp']),
     ('src/utils/primitives/primitives_internal.hpp', ['src/utils/primitives/primitives_sse2.cpp']),
 
 ))
@@ -58,12 +57,14 @@ src_requirements = dict((
     ('tests/front/test_front.cpp', Dep(linkflags=['<noopstacktrace>on'])),
 ))
 
+compile_type_test_dep = Dep(cxxflags=[
+    '<variant>debug:<define>RED_COMPILE_TYPE=debug',
+    '<variant>release:<define>RED_COMPILE_TYPE=release',
+    '<variant>san:<define>RED_COMPILE_TYPE=san',
+])
 obj_requirements = dict((
-    ('tests/includes/test_only/test_framework/working_directory.cpp', Dep(cxxflags=[
-        '<variant>debug:<define>RED_COMPILE_TYPE=debug',
-        '<variant>release:<define>RED_COMPILE_TYPE=release',
-        '<variant>san:<define>RED_COMPILE_TYPE=san',
-    ])),
+    ('tests/includes/test_only/test_framework/working_directory.cpp', compile_type_test_dep),
+    ('tests/includes/test_only/test_framework/img_sig.cpp', compile_type_test_dep),
 ))
 
 dir_requirements = dict((
@@ -255,12 +256,17 @@ try:
     set_arg = lambda name: lambda arg: default_options.setdefault(name, arg)
     def add_deps_src(arg):
         a = arg.split(',')
-        src_deps[a[0]] = glob.glob(a[1])
+        if a[0] not in src_deps:
+            src_deps[a[0]] = []
+        for pattern in a[1:]:
+            src_deps[a[0]] += glob.glob(pattern)
+
     def add_disable_src(arg):
         disable_srcs.add(arg)
         base = arg[-4:]
         if base == '.hpp':
             disable_srcs.add(arg[:-3] + 'cpp')
+
     options = {
         '--src': lambda arg: get_files(sources, arg),
         '--main': set_arg('main'),

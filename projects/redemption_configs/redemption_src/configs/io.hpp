@@ -20,295 +20,123 @@
 
 #pragma once
 
-#include <limits>
-#include <string>
-#include <array>
-#include <chrono>
-#include <algorithm>
-
-#include <cstdlib>
-#include <cerrno>
+#include "configs/zbuffer.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
+#include "utils/sugar/zstring_view.hpp"
+#include "utils/string_c.hpp"
+#include "utils/chex_to_int.hpp"
 
-#include "utils/log.hpp"
-#include "cxx/diagnostic.hpp"
+#include <algorithm>
+#include <cstdlib>
+#include <cerrno>
+#include <cstring>
+#include <charconv>
 
-namespace configs {
-
-template<std::size_t N>
-struct zstr_buffer
+namespace
 {
-    zstr_buffer() : buf() {}
-
-    static constexpr std::size_t size() { return N; }
-    char * get() { return this->buf; }
-
-private:
-    char buf[N+1];
-};
-
-template<>
-struct zstr_buffer<0>
-{
-    static constexpr std::size_t size() { return 0; }
-    static char * get() { return nullptr; }
-};
-
-namespace detail
-{
-    template<class T, bool = std::is_integral<T>::value, bool = std::is_enum<T>::value>
-    struct zstr_buffer_traits
-    { using type = zstr_buffer<0>; };
-
-    template<class TInt>
-    constexpr std::size_t integral_buffer_size()
-    { return std::numeric_limits<TInt>::digits10 + 1 + std::numeric_limits<TInt>::is_signed; }
-
-    template<class T>
-    struct zstr_buffer_traits<T, true, false>
-    { using type = zstr_buffer<integral_buffer_size<T>() + 1>; };
-
-    template<class T>
-    struct zstr_buffer_traits<T, false, true>
-    : zstr_buffer_traits<typename std::underlying_type<T>::type, true, false>
-    {};
-} // namespace detail
-
-template<class T>
-struct zstr_buffer_traits
-{ using type = typename detail::zstr_buffer_traits<T>::type; };
-
-template<class T, class Ratio>
-struct zstr_buffer_traits<std::chrono::duration<T, Ratio>>
-: zstr_buffer_traits<T>
-{};
-
-template<> struct zstr_buffer_traits<void> { using type = zstr_buffer<0>; };
-template<> struct zstr_buffer_traits<std::string> { using type = zstr_buffer<0>; };
-template<std::size_t N> struct zstr_buffer_traits<char[N]> { using type = zstr_buffer<0>; };
-
-template<std::size_t N>
-struct zstr_buffer_traits<std::array<unsigned char, N>>
-{ using type = zstr_buffer<N*2>; };
-
-namespace spec_types
-{
-    struct directory_path;
-}
-
-template<> struct zstr_buffer_traits<spec_types::directory_path> { using type = zstr_buffer<0>; };
-
-template<class T>
-using zstr_buffer_from = typename zstr_buffer_traits<T>::type;
-
-
-template<class> struct spec_type {};
-
-namespace spec_types
-{
-    class fixed_binary;
-    class fixed_string;
-    template<class T> class list;
-    using ip = std::string;
-
-    template<class T>
-    struct underlying_type_for_range
-    {
-        using type = T;
-    };
-
-    template<class Rep, class Period>
-    struct underlying_type_for_range<std::chrono::duration<Rep, Period>>
-    {
-        using type = Rep;
-    };
-
-    template<class T>
-    using underlying_type_for_range_t = typename underlying_type_for_range<T>::type;
-
-    template<class T, underlying_type_for_range_t<T> min, underlying_type_for_range_t<T> max>
-    struct range {};
-
-    struct directory_path
-    {
-        directory_path()
-        : path("./")
-        {}
-
-        directory_path(std::string path)
-        : path(std::move(path))
-        { this->normalize(); }
-
-        directory_path(char const * path)
-        : path(path)
-        { this->normalize(); }
-
-        directory_path(directory_path &&) = default;
-        directory_path(directory_path const &) = default;
-
-        directory_path & operator = (std::string new_path)
-        {
-            this->path = std::move(new_path);
-            this->normalize();
-            return *this;
-        }
-
-        directory_path & operator = (char const * new_path)
-        {
-            this->path = new_path;
-            this->normalize();
-            return *this;
-        }
-
-        directory_path & operator = (directory_path &&) = default;
-        directory_path & operator = (directory_path const &) = default;
-
-        [[nodiscard]] char const * c_str() const noexcept { return this->path.c_str(); }
-
-        [[nodiscard]] std::string const & as_string() const noexcept { return this->path; }
-
-    private:
-        void normalize()
-        {
-            if (this->path.empty()) {
-                this->path = "./";
-            }
-            else {
-                if (this->path.front() != '/') {
-                    if (not(this->path.size() >= 2 && this->path[0] == '.' && this->path[1] == '/')) {
-                        this->path.insert(0, "./");
-                    }
-                }
-                if (this->path.back() != '/') {
-                    this->path += '/';
-                }
-            }
-        }
-
-        std::string path;
-    };
-
-    inline bool operator == (directory_path const & x, directory_path const & y) { return x.as_string() == y.as_string(); }
-    inline bool operator == (std::string const & x, directory_path const & y) { return x == y.as_string(); }
-    inline bool operator == (char const * x, directory_path const & y) { return x == y.as_string(); }
-    inline bool operator == (directory_path const & x, std::string const & y) { return x.as_string() == y; }
-    inline bool operator == (directory_path const & x, char const * y) { return x.as_string() == y; }
-
-    inline bool operator != (directory_path const & x, directory_path const & y) { return !(x == y); }
-    inline bool operator != (std::string const & x, directory_path const & y) { return !(x == y); }
-    inline bool operator != (char const * x, directory_path const & y) { return !(x == y); }
-    inline bool operator != (directory_path const & x, std::string const & y) { return !(x == y); }
-    inline bool operator != (directory_path const & x, char const * y) { return !(x == y); }
-
-    template<class Ch, class Tr>
-    std::basic_ostream<Ch, Tr> & operator << (std::basic_ostream<Ch, Tr> & out, directory_path const & path)
-    { return out << path.as_string(); }
-} // namespace spec_types
-
-
 
 template<class> struct cfg_s_type {};
 
 // assign_zbuf_from_cfg (guarantee with null terminal)
 //@{
 
-inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<spec_types::directory_path> & /*buf*/,
-    cfg_s_type<spec_types::directory_path> /*type*/,
-    spec_types::directory_path const & dir
-) { return {dir.as_string().c_str(), dir.as_string().size()}; }
+inline zstring_view assign_zbuf_from_cfg(
+    writable_chars_view /*zbuf*/,
+    cfg_s_type<::configs::spec_types::directory_path> /*type*/,
+    ::configs::spec_types::directory_path const & dir
+) {
+    return dir.as_string();
+}
 
-inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<std::string> & /*buf*/,
+inline zstring_view assign_zbuf_from_cfg(
+    writable_chars_view /*zbuf*/,
     cfg_s_type<std::string> /*type*/,
     std::string const & str
-) { return {str.c_str(), str.size()}; }
+) {
+    return str;
+}
 
-inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<std::string> & /*buf*/,
-    cfg_s_type<spec_types::list<std::string>> /*type*/,
+template<class T>
+inline zstring_view assign_zbuf_from_cfg(
+    writable_chars_view /*zbuf*/,
+    cfg_s_type<::configs::spec_types::list<T>> /*type*/,
     std::string const & str
-) { return {str.c_str(), str.size()}; }
+) {
+    return str;
+}
 
-template<std::size_t N>
-array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<char[N]> & /*buf*/,
-    cfg_s_type<char[N]> /*type*/,
-    char const (&s)[N])
-{ return {s, strlen(s)}; }
+template<unsigned n>
+inline zstring_view assign_zbuf_from_cfg(
+    writable_chars_view /*zbuf*/,
+    cfg_s_type<::configs::spec_types::fixed_string> /*type*/,
+    char const (&str)[n]
+) {
+    return zstring_view(zstring_view::is_zero_terminated(), str, strlen(str));
+}
 
-inline array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<bool> & /*type*/,
+inline zstring_view assign_zbuf_from_cfg(
+    writable_chars_view /*zbuf*/,
     cfg_s_type<bool> /*type*/,
-    bool x)
-{ return x ? cstr_array_view("True") : cstr_array_view("False"); }
+    bool x
+) {
+    return x ? "True"_zv : "False"_zv;
+}
 
 template<std::size_t N>
-array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<std::array<unsigned char, N>> & buf,
-    cfg_s_type<spec_types::fixed_binary> /*type*/,
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<::configs::spec_types::fixed_binary> /*type*/,
     std::array<unsigned char, N> const & arr
 ) {
-    char * p = buf.get();
+    char * p = zbuf.data();
     const char * hex = "0123456789ABCDEF";
     for (int c : arr) {
         *p++ = hex[(c & 0xf0) >> 4];
         *p++ = hex[c & 0xf];
     }
-    return array_view_const_char(buf.get(), p-buf.get());
+    *p = '\0';
+    return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), p-zbuf.data());
 }
 
 template<class T,
-    spec_types::underlying_type_for_range_t<T> min,
-    spec_types::underlying_type_for_range_t<T> max>
-array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<T> & zbuf,
-    cfg_s_type<spec_types::range<T, min, max>> /*type*/,
+    ::configs::spec_types::underlying_type_for_range_t<T> min,
+    ::configs::spec_types::underlying_type_for_range_t<T> max>
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<::configs::spec_types::range<T, min, max>> /*type*/,
     T const & rng
-) { return assign_zbuf_from_cfg(zbuf, cfg_s_type<T>{}, rng); }
+) {
+    return assign_zbuf_from_cfg(zbuf, cfg_s_type<T>{}, rng);
+}
 
 template<class TInt>
-typename std::enable_if<std::is_integral<TInt>::value, array_view_const_char>::type
-assign_zbuf_from_cfg(zstr_buffer_from<TInt> & buf, cfg_s_type<TInt> /*type*/, TInt const & x)
+typename std::enable_if<std::is_integral<TInt>::value, zstring_view>::type
+assign_zbuf_from_cfg(writable_chars_view zbuf, cfg_s_type<TInt> /*type*/, TInt const & x)
 {
-    int sz = (std::is_signed<TInt>::value)
-        ? snprintf(buf.get(), buf.size(), "%lld", static_cast<long long>(x))
-        : snprintf(buf.get(), buf.size(), "%llu", static_cast<unsigned long long>(x));
-    return array_view_const_char(buf.get(), sz);
-}
+    assert(zbuf.data());
 
-template<class E>
-typename std::enable_if<std::is_enum<E>::value, array_view_const_char>::type
-assign_zbuf_from_cfg(zstr_buffer_from<E> & buf, cfg_s_type<E> /*type*/, E const & x)
-{
-    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
-    return array_view_const_char(buf.get(), sz);
+    int sz;
+    if constexpr (std::is_signed<TInt>::value) {
+        sz = snprintf(zbuf.data(), zbuf.size(), "%lld", static_cast<long long>(x));
+    }
+    else {
+        sz = snprintf(zbuf.data(), zbuf.size(), "%llu", static_cast<unsigned long long>(x));
+    }
+    return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
-
 
 template<class T, class Ratio>
-array_view_const_char assign_zbuf_from_cfg(
-    zstr_buffer_from<std::chrono::duration<T, Ratio>> & buf,
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
     cfg_s_type<std::chrono::duration<T, Ratio>> /*type*/,
     std::chrono::duration<T, Ratio> const & x
 ) {
-    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x.count()));
-    return array_view_const_char(buf.get(), sz);
+    return assign_zbuf_from_cfg(zbuf, cfg_s_type<T>{}, x.count());
 }
 //@}
-
-
-template<class T>
-zstr_buffer_from<T> make_zstr_buffer(T const & x)
-{
-    zstr_buffer_from<T> buf;
-    assign_zbuf_from_cfg(buf, cfg_s_type<T>{}, x);
-    return buf;
-}
-
 
 //
 // parse
@@ -325,87 +153,21 @@ private:
     char const * s_err;
 };
 
-namespace detail
-{
-    template<char... c>
-    struct string_literal
-    {
-        template<char... c2>
-        string_literal<c..., c2...>
-        operator+(string_literal<c2...> const& /*unused*/) const
-        { return {}; }
-
-        operator char const * () const
-        {
-            return c_str;
-        }
-
-        static constexpr char c_str[sizeof...(c)+1] = {c..., '\0'};
-    };
-
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
-    template<class T, T... c>
-    string_literal<c...> operator "" _mp_str()
-    { return {}; }
-    REDEMPTION_DIAGNOSTIC_POP
-
-
-    template<long long val, char... c>
-    struct int_to_meta_string_impl
-      : int_to_meta_string_impl<val/10, (val % 10) + '0', c...>
-    {};
-
-    template<char... c>
-    struct int_to_meta_string_impl<0, c...>
-    {
-        using type = string_literal<c...>;
-    };
-
-    template<class T, T val, bool negate = (val < 0)>
-    struct int_to_meta_string
-    {
-        using type = decltype("-"_mp_str +
-            typename int_to_meta_string_impl<-(val / 10), -(val % 10) + '0'>::type());
-    };
-
-    template<class T, T val>
-    struct int_to_meta_string<T, val, false>
-      : int_to_meta_string_impl<val / 10, val % 10 + '0'>
-    {};
-
-    template<class T, T val>
-    using mp_to_string = typename int_to_meta_string<T, val>::type;
-} // namespace detail
-
 
 constexpr parse_error no_parse_error {nullptr};
 
-inline parse_error parse(std::string & x, spec_type<std::string> /*type*/, array_view_const_char value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<std::string> /*type*/, zstring_view value)
 {
     x.assign(value.data(), value.size());
     return no_parse_error;
 }
 
 template<std::size_t N>
-parse_error parse(char (&x)[N], spec_type<char[N]> /*type*/, array_view_const_char value)
+parse_error parse_from_cfg(char (&x)[N], ::configs::spec_type<::configs::spec_types::fixed_string> /*type*/, zstring_view value)
 {
-    using namespace detail;
-    if (value.size() >= N-1) {
-        return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N-1>()};
-    }
-    memcpy(x, value.data(), value.size());
-    x[value.size()] = 0;
-    return no_parse_error;
-}
-
-template<std::size_t N>
-parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string> /*type*/, array_view_const_char value)
-{
-    using namespace detail;
+    using namespace jln::literals;
     if (value.size() >= N) {
-        return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N>()};
+        return parse_error{("out of bounds, limits is "_c + jln::ull_to_string_c_t<N>()).c_str()};
     }
     memcpy(x, value.data(), value.size());
     memset(x + value.size(), 0, N - value.size());
@@ -413,389 +175,334 @@ parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string> /*type*/, ar
 }
 
 template<std::size_t N>
-parse_error parse(
+parse_error parse_from_cfg(
     std::array<unsigned char, N> & key,
-    spec_type<spec_types::fixed_binary> /*type*/,
-    array_view_const_char value
+    ::configs::spec_type<::configs::spec_types::fixed_binary> /*type*/,
+    zstring_view value
 ) {
-    using namespace detail;
+    using namespace jln::literals;
     if (value.size() != N*2) {
-        return parse_error{"bad length, should be "_mp_str + mp_to_string<long, N*2>()};
+        return parse_error{(
+            "bad length, should be "_c + jln::ull_to_string_c_t<N*2>()
+        ).c_str()};
     }
 
-    char   hexval[3] = { 0 };
-    char * end{};
-    for (std::size_t i = 0; i < N; i++) {
-        hexval[0] = value[i*2];
-        hexval[1] = value[i*2+1];
-        key[i] = strtol(hexval, &end, 16);
-        if (end != hexval+2) {
-            return parse_error{"bad format, expected hexadecimal value"};
-        }
+    std::array<unsigned char, N> tmp;
+    char const* data = value.begin();
+    int err = 0;
+    for (std::size_t i = 0; i < N; ++i, data += 2) {
+        tmp[i] = (chex_to_int(data[0], err) << 4) | chex_to_int(data[1], err);
     }
+
+    if (err) {
+        return parse_error{"bad format, expected hexadecimal value"};
+    }
+
+    key = tmp;
 
     return no_parse_error;
 }
 
-inline parse_error parse(std::string & x, spec_type<spec_types::list<std::string>> /*type*/, array_view_const_char value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<std::string>> /*type*/, zstring_view value)
 {
     x.assign(value.data(), value.size());
     return no_parse_error;
 }
 
-inline parse_error parse(
-    spec_types::directory_path & x,
-    spec_type<spec_types::directory_path> /*type*/,
-    array_view_const_char value
+inline parse_error parse_from_cfg(
+    ::configs::spec_types::directory_path & x,
+    ::configs::spec_type<::configs::spec_types::directory_path> /*type*/,
+    zstring_view value
 ) {
     x = std::string(value.data(), value.size());
     return no_parse_error;
 }
 
-template<class T,
-    spec_types::underlying_type_for_range_t<T> min,
-    spec_types::underlying_type_for_range_t<T> max>
-parse_error parse(
-    T & x,
-    spec_type<spec_types::range<T, min, max>> /*type*/,
-    array_view_const_char value
-) {
-    using namespace detail;
-    using Int = spec_types::underlying_type_for_range_t<T>;
-    Int y;
-    if (auto err = parse(y, spec_type<Int>{}, value)) {
-        return err;
+template<class TInt, TInt min, TInt max>
+parse_error make_invalid_range_error()
+{
+    using namespace jln::literals;
+
+    return parse_error{(
+        "invalid range in ["_c
+        + jln::integer_to_string_c_t<TInt, min>()
+        + ", "_c
+        + jln::integer_to_string_c_t<TInt, max>()
+        + "]"_c
+    ).c_str()};
+}
+
+template<bool InList = false, class TInt, TInt min, TInt max>
+parse_error parse_integral(
+    TInt & x, chars_view value,
+    std::integral_constant<TInt, min> /*unused*/,
+    std::integral_constant<TInt, max> /*unused*/)
+{
+    if (REDEMPTION_UNLIKELY(value.empty())) {
+        return parse_error{"empty value"};
     }
-    if (y < min || max < y) {
-        return parse_error{
-            "invalid range in ["_mp_str +
-            mp_to_string<Int, min>() + ", "_mp_str + mp_to_string<Int, max>() +
-            "]"_mp_str};
+
+    TInt tmp;
+    int base = 10;
+    if (value.size() >= 2 && value[0] == '0' && value[1] == 'x') {
+        value = value.drop_front(2);
+        base = 16;
+    }
+
+    auto r = std::from_chars(value.begin(), value.end(), tmp, base);
+
+    if (r.ec == std::errc() && r.ptr == value.end()) {
+        if (tmp < min || max < tmp) {
+            return make_invalid_range_error<TInt, min, max>();
+        }
+
+        x = tmp;
+        return no_parse_error;
+    }
+
+    switch (r.ec) {
+        case std::errc::value_too_large:
+            return make_invalid_range_error<TInt, min, max>();
+        default:
+            return InList
+                ? parse_error{"bad format, expected list of decimal, hexadecimal"
+                    " (ex: \"integral[, integral ...]*\")"}
+                : parse_error{"bad format, expected decimal, hexadecimal"};
+    }
+}
+
+template<class T>
+using max_integral = std::integral_constant<T, std::numeric_limits<T>::max()>;
+template<class T>
+using min_integral = std::integral_constant<T, std::numeric_limits<T>::min()>;
+template<class T>
+using zero_integral = std::integral_constant<T, 0>;
+
+template<class TInt>
+std::enable_if_t<
+    std::is_integral_v<TInt> && !std::is_same_v<TInt, bool>,
+    parse_error>
+parse_from_cfg(TInt & x, ::configs::spec_type<TInt> /*type*/, zstring_view value)
+{
+    return parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>());
+}
+
+template<class T,
+    ::configs::spec_types::underlying_type_for_range_t<T> min,
+    ::configs::spec_types::underlying_type_for_range_t<T> max>
+parse_error parse_from_cfg(
+    T & x,
+    ::configs::spec_type<::configs::spec_types::range<T, min, max>> /*type*/,
+    zstring_view value
+) {
+    using namespace jln::literals;
+    using Int = ::configs::spec_types::underlying_type_for_range_t<T>;
+    Int y;
+    if (auto err = parse_integral(y, value, std::integral_constant<Int, min>(), std::integral_constant<Int, max>())) {
+        return err;
     }
     x = T{y};
     return no_parse_error;
 }
 
-namespace detail
-{
-    inline char const * ignore_0(char const * buf, char const * end)
-    { return std::find_if_not(buf, end, [](char c){ return c == '0'; }); }
-
-    template<bool InList = false, class TInt, TInt min, TInt max>
-    parse_error parse_integral(
-        TInt & x, array_view_const_char value,
-        std::integral_constant<TInt, min> /*unused*/, std::integral_constant<TInt, max> /*unused*/)
-    {
-        range<char const *> rng = trim(value);
-
-        TInt val{};
-        {
-            std::size_t idx = 0;
-            int base = 10;
-            if (rng.size() >= 2 && rng[0] == '0' && rng[1] == 'x') {
-                idx = 2;
-                base = 16;
-            }
-            std::size_t ignored = ignore_0(rng.begin()+idx, rng.end()) - rng.begin();
-            std::size_t sz = rng.size() - ignored;
-
-            constexpr std::size_t buf_sz = detail::integral_buffer_size<TInt>();
-            if (sz > buf_sz) {
-                return parse_error{"too large, limited to"_mp_str +
-                    mp_to_string<std::size_t, buf_sz>()};
-            }
-            if (sz == 0) {
-                x = 0;
-                return no_parse_error;
-            }
-
-            char buf[buf_sz+1];
-            memcpy(buf, rng.begin() + ignored, sz);
-            buf[sz] = 0;
-            char * end{};
-            if (std::is_signed<TInt>::value) {
-                val = strtoll(buf, &end, base);
-            }
-            else {
-                val = strtoull(buf, &end, base);
-            }
-            if (errno == ERANGE || std::size_t(end - buf) != sz) {
-                return InList
-                    ? parse_error{"bad format, expected list of decimal, hexadecimal or octal (ex: \"integral[, integral ...]*\")"}
-                    : parse_error{"bad format, expected decimal, hexadecimal or octal"};
-            }
-        }
-
-        if (val < min || max < val) {
-            return parse_error{
-                "invalid range in ["_mp_str +
-                mp_to_string<TInt, min>() + ", "_mp_str + mp_to_string<TInt, max>() +
-                "]"_mp_str};
-        }
-
-        x = val;
-        return no_parse_error;
-    }
-} // namespace detail
-
-namespace detail
-{
-    template<class T>
-    using max_integral = std::integral_constant<T, std::numeric_limits<T>::max()>;
-    template<class T>
-    using min_integral = std::integral_constant<T, std::numeric_limits<T>::min()>;
-    template<class T>
-    using zero_integral = std::integral_constant<T, 0>;
-} // namespace detail
-
-template<class TInt>
-typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
-parse(TInt & x, spec_type<TInt> /*type*/, array_view_const_char value)
-{ return detail::parse_integral(x, value, detail::min_integral<TInt>(), detail::max_integral<TInt>()); }
-
 template<class T, class Ratio>
-parse_error parse(
+parse_error parse_from_cfg(
     std::chrono::duration<T, Ratio> & x,
-    spec_type<std::chrono::duration<T, Ratio>> /*type*/,
-    array_view_const_char value
+    ::configs::spec_type<std::chrono::duration<T, Ratio>> /*type*/,
+    zstring_view value
 ) {
     T y{}; // create with default value
-    if (parse_error err = detail::parse_integral(y, value, detail::zero_integral<T>(), detail::max_integral<T>())) {
+    if (parse_error err = parse_integral(y, value, zero_integral<T>(), max_integral<T>())) {
         return err;
     }
     x = std::chrono::duration<T, Ratio>{y};
     return no_parse_error;
 }
 
-namespace detail
-{
-    template<class IntOrigin>
-    parse_error parse_integral_list(std::string & x, array_view_const_char value) {
-        for (auto r : get_split(value, ',')) {
-            IntOrigin i;
-            if (auto err = parse_integral<true>(i, {r.begin(), r.size()}, detail::min_integral<IntOrigin>(), detail::max_integral<IntOrigin>())) {
-                return err;
-            }
+template<class IntOrigin>
+parse_error parse_integral_list(std::string & x, zstring_view value) {
+    for (auto r : get_split(value, ',')) {
+        IntOrigin i;
+        auto rng = trim(r);
+        if (auto err = parse_integral<true>(
+          i, {rng.begin(), rng.size()},
+          min_integral<IntOrigin>(),
+          max_integral<IntOrigin>())
+        ) {
+            return err;
         }
-        x.assign(value.data(), value.size());
-        return no_parse_error;
     }
-} // namespace detail
+    x.assign(value.data(), value.size());
+    return no_parse_error;
+}
 
-inline parse_error parse(std::string & x, spec_type<spec_types::list<int>> /*type*/, array_view_const_char value)
-{ return detail::parse_integral_list<int>(x, value); }
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<int>> /*type*/, zstring_view value)
+{ return parse_integral_list<int>(x, value); }
 
-inline parse_error parse(std::string & x, spec_type<spec_types::list<unsigned>> /*type*/, array_view_const_char value)
-{ return detail::parse_integral_list<unsigned>(x, value); }
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<unsigned>> /*type*/, zstring_view value)
+{ return parse_integral_list<unsigned>(x, value); }
 
-namespace detail
+inline bool str_compare(chars_view x, chars_view y)
 {
-    inline bool icase_equal_view(array_view_const_char x, array_view_const_char y)
+    return x.size() == y.size() && 0 == std::memcmp(x.data(), y.data(), y.size());
+}
+
+template<std::size_t N>
+struct UpperArray
+{
+    UpperArray(chars_view s)
     {
-        return x.size() == y.size()
-            && std::equal(x.begin(), x.end(), y.begin(), [](char c1, char c2) {
-                auto to_upper = [](char c) { return ('a' <= c && c <= 'z')  ? c - 'a' + 'A' : c; };
-                return to_upper(c1) == to_upper(c2);
-            });
+        if (s.size() > N) {
+            return;
+        }
+
+        auto p = arr.data();
+        for (char c : s) {
+            *p++ = ('a' <= c && c <= 'z')  ? c - 'a' + 'A' : c;
+        }
+        str = {arr.data(), p};
     }
-} // namespace detail
+
+    chars_view str;
+
+private:
+    std::array<char, N> arr;
+};
+
+inline constexpr std::pair<chars_view, bool> boolean_strings[]{
+    {"1"_av, true},
+    {"ON"_av, true},
+    {"YES"_av, true},
+    {"TRUE"_av, true},
+    {"0"_av, false},
+    {"OFF"_av, false},
+    {"NO"_av, false},
+    {"FALSE"_av, false},
+};
+
+template<auto& Pairs>
+constexpr std::size_t str_value_pairs_max_len()
+{
+    std::size_t n = 0;
+    for (auto& pair : Pairs) {
+        n = std::max(n, pair.first.size());
+    }
+    return n;
+}
+
+template<auto& Pairs, class T>
+parse_error parse_str_value_pairs(T & x, zstring_view value, char const* error_msg)
+{
+    UpperArray<str_value_pairs_max_len<Pairs>()> av_value{value};
+
+    for (auto const& pair : Pairs) {
+        if (str_compare(pair.first, av_value.str)) {
+            x = pair.second;
+            return no_parse_error;
+        }
+    }
+
+    return parse_error{error_msg};
+}
 
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, parse_error>::type
-parse(T & x, spec_type<bool> /*type*/, array_view_const_char value)
+parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, zstring_view value)
 {
-    range<char const *> rng = trim(value);
-
-    struct SV {
-        array_view_const_char s;
-        bool val;
-    };
-    SV cmp_list[]{
-        {cstr_array_view("1"), true},
-        {cstr_array_view("on"), true},
-        {cstr_array_view("yes"), true},
-        {cstr_array_view("true"), true},
-        {cstr_array_view("0"), false},
-        {cstr_array_view("off"), false},
-        {cstr_array_view("no"), false},
-        {cstr_array_view("false"), false},
-    };
-    for (SV sv : cmp_list) {
-        if (detail::icase_equal_view(sv.s, {rng.begin(), rng.size()})) {
-            x = sv.val;
-            return no_parse_error;
-        }
-    }
-    return parse_error{"bad format, expected 1, on, yes, true, 0, off, no, false"};
+    return parse_str_value_pairs<boolean_strings>(
+        x, value, "bad value, expected: 1, on, yes, true, 0, off, no, false");
 }
 
-
-template<class T, class U>
-parse_error parse_adapter(T & x, U & y)
+inline parse_error parse_from_cfg(
+    uint32_t& x, ::configs::spec_type<::configs::spec_types::file_permission> /*type*/,
+    zstring_view value)
 {
-    x = std::move(y);
-    return no_parse_error;
-}
+    uint32_t tmp = 0;
 
-template<class T, class U>
-typename std::enable_if<!std::is_same<T, U>::value>::type
-parse(T & x, spec_type<U> ty, array_view_const_char value)
-{
-    U tmp;
-    if (parse_error err = parse(tmp, ty, value)) {
-        return err;
-    }
-    return parse_adapter(x, tmp);
-}
-
-
-template<class E, class Max>
-parse_error parse_enum_u(E & x, array_view_const_char value, Max max)
-{
-    using ul = unsigned long;
-    ul xi = 0;
-    if (parse_error err = detail::parse_integral(xi, value, detail::zero_integral<ul>(), max)) {
-        return err;
-    }
-    //if (~~static_cast<E>(xi) != static_cast<E>(xi)) {
-    //    return parse_error{"bad value"};
-    //}
-    //x = ~~static_cast<E>(xi);
-    x = static_cast<E>(xi);
-    return no_parse_error;
-}
-
-template<class E>
-parse_error parse_enum_str(
-    E & x, array_view_const_char value,
-    std::initializer_list<std::pair<array_view_const_char, E>> l
-) {
-    for (auto & p : l) {
-        if (detail::icase_equal_view(value, p.first)) {
-            x = p.second;
-            return no_parse_error;
+    if ('0' <= value.c_str()[0] && value.c_str()[0] <= '9') {
+        if (auto [p, ec] = std::from_chars(value.begin(), value.end(), tmp, 8);
+            p != value.end() || ec != std::errc()
+        ){
+            return parse_error{"Cannot parse file permission because it's not an octal number"};
         }
-    }
-    return parse_error{"unknown value"};
-}
 
-template<class E>
-parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer_list<E> l)
-{
-    using ul = unsigned long;
-    ul xi = 0;
-    if (parse_error err = detail::parse_integral(xi, value, detail::min_integral<ul>(), detail::max_integral<ul>())) {
-        return err;
-    }
-    for (auto val : l) {
-        if (val == static_cast<E>(xi)) {
-            x = static_cast<E>(xi);
-            return no_parse_error;
+        if (tmp > 0777) {
+            return parse_error{"Cannot have file permission higher than 0777 number"};
         }
+
+        x = tmp;
+
+        return no_parse_error;
     }
-    return parse_error{"unknown value"};
-}
 
+    char const* p = value.c_str();
 
-namespace detail
-{
-    template<class T, class Spec>
-    struct set_value_impl
-    {
-        template<class U>
-        static void impl(T & x, U && new_value)
-        { x = std::forward<U>(new_value); }
-
-        template<class U, class... Ts>
-        static void impl(T & x, U && param1, Ts && ... other_params)
-        { x = {std::forward<U>(param1), std::forward<Ts>(other_params)...}; }
+    auto consume_right = [&p]{
+        int r = 0;
+        for (;; ++p) {
+            switch (*p) {
+                case 'r': r |= 4; break;
+                case 'w': r |= 2; break;
+                case 'x': r |= 1; break;
+                default: return r;
+            }
+        }
     };
 
-    template<>
-    struct set_value_impl<std::array<unsigned char, 32>, spec_types::fixed_binary>
-    {
-        static constexpr std::size_t N = 32;
-        using T = std::array<unsigned char, N>;
-
-        static void impl(T & x, T const & arr)
-        { x = arr; }
-
-        static void impl(T & x, unsigned char const (&arr)[N])
-        { std::copy(begin(arr), end(arr), begin(x)); }
-
-        static void impl(T & x, char const (&arr)[N+1])
-        {
-            assert(arr[N] == '\0');
-            std::copy(begin(arr), end(arr)-1, begin(x));
-        }
-
-        // template<class U>
-        // static void impl(T & x, U const * arr, std::size_t n)
-        // {
-        //     assert(N >= n);
-        //     std::copy(arr, arr + n, begin(x));
-        // }
+    parse_error parsing_error{
+        "Cannot parse file permission because it's not an octal number or a symbolic mode format"
     };
 
-    template<std::size_t N>
-    struct set_value_impl<char[N], char[N]>
-    {
-        using T = char[N];
+    for (;;) {
+        int mask;
 
-        static void impl(T & x, char const * s, std::size_t n)
-        {
-            assert(N > n);
-            n = std::min(n, N-1);
-            memcpy(x, s, n);
-            x[n] = 0;
+        switch (*p) {
+            case 'u': mask = 0700; ++p; break;
+            case 'g': mask = 0070; ++p; break;
+            case 'o': mask = 0007; ++p; break;
+            case 'a': mask = 0777; ++p; break;
+            case '+':
+            case '-':
+            case '=': mask = 0775; break;
+            default: return parsing_error;
         }
 
-        static void impl(T & x, char const * s)
-        { impl(x, s, strnlen(s, N-1)); }
-
-        static void impl(T & x, std::string const & str)
-        { impl(x, str.data(), str.size()); }
-    };
-
-    template<std::size_t N>
-    struct set_value_impl<char[N], spec_types::fixed_string>
-    {
-        using T = char[N];
-
-        static void impl(T & x, char const * s, std::size_t n)
-        {
-            assert(N >= n);
-            n = std::min(n, N-1);
-            memcpy(x, s, n);
-            memset(x + n, 0, N - n);
+        int r;
+        switch (*p) {
+            case '=':
+                ++p;
+                r = consume_right();
+                tmp = ((r << 6) | (r << 3) | r) & mask;
+                break;
+            case '+':
+                ++p;
+                r = consume_right();
+                tmp |= ((r << 6) | (r << 3) | r) & mask;
+                break;
+            case '-':
+                ++p;
+                r = consume_right();
+                tmp &= ~(((r << 6) | (r << 3) | r) & mask);
+                break;
+            default:
+                continue;
         }
 
-        static void impl(T & x, char const * s)
-        { impl(x, s, strnlen(s, N-1)); }
+        switch (*p) {
+            case ',':
+                while (*++p == ' ') {
+                }
+                if (*p != '\0') {
+                    break;
+                }
+                [[fallthrough]];
+            case '\0':
+                x = tmp;
+                return no_parse_error;
 
-        static void impl(T & x, std::string const & str)
-        { impl(x, str.data(), str.size()); }
-    };
-
-    template<class T,
-        spec_types::underlying_type_for_range_t<T> min,
-        spec_types::underlying_type_for_range_t<T> max>
-    struct set_value_impl<T, spec_types::range<T, min, max>>
-    {
-        static void impl(T & x, T new_value)
-        {
-            assert(T{min} <= new_value || new_value <= T{max});
-            x = new_value;
+            default: return parsing_error;
         }
-    };
-} // namespace detail
+    }
+}
 
-template<class T, class Spec, class U>
-void set_value(T & x, spec_type<Spec> /*type*/, U && new_value)
-{ detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(new_value)); }
-
-template<class T, class Spec, class U, class... Ts>
-void set_value(T & x, spec_type<Spec> /*type*/, U && param1, Ts && ... other_params)
-{ detail::set_value_impl<T, Spec>::impl(x, std::forward<U>(param1), std::forward<Ts>(other_params)...); }
-
-} // namespace configs
+} // anonymous namespace

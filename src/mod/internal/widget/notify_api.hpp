@@ -23,6 +23,12 @@
 
 class Widget;
 
+// Object supporting NotifyApi can be warned by widgets that some event occured
+// ie: clic, keydown, keyup, etc.
+
+// Notify Api is typically implemented by internal modules
+
+
 class NotifyApi : noncopyable
 {
 public:

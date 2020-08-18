@@ -25,7 +25,7 @@
 
 #include "utils/log.hpp"
 #include "core/RDP/RDPSerializer.hpp"
-#include "core/RDP/gcc.hpp"
+#include "core/RDP/gcc/userdata/mcs_channels.hpp"
 #include "core/RDP/sec.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/x224.hpp"
@@ -37,7 +37,7 @@ static inline void send_data_indication_ex( Transport & trans
 {
     StaticOutStream<256> security_header;
     SEC::Sec_Send sec(security_header, stream.get_packet(), 0, encrypt, encryptionLevel);
-    stream.copy_to_head(security_header.get_bytes());
+    stream.copy_to_head(security_header.get_produced_bytes());
 
     StaticOutStream<256> mcs_header;
     MCS::SendDataIndication_Send mcs( mcs_header
@@ -51,7 +51,7 @@ static inline void send_data_indication_ex( Transport & trans
     StaticOutStream<256> x224_header;
     X224::DT_TPDU_Send(x224_header, stream.get_packet().size() + mcs_header.get_offset());
 
-    auto packet = stream.copy_to_head(x224_header.get_bytes(), mcs_header.get_bytes());
+    auto packet = stream.copy_to_head(x224_header.get_produced_bytes(), mcs_header.get_produced_bytes());
     trans.send(packet);
 }
 
@@ -120,12 +120,12 @@ void send_share_data_ex( Transport & trans, uint8_t pduType2, bool compression_s
                          , (compressionFlags ? data_->get_packet().size() + 18 /* TS_SHAREDATAHEADER(18) */ : 0)
                          );
     share_data.emit_end();
-    data_->copy_to_head(share_data_header.get_bytes());
+    data_->copy_to_head(share_data_header.get_produced_bytes());
 
     StaticOutStream<256> share_ctrl_header;
     ShareControl_Send( share_ctrl_header, PDUTYPE_DATAPDU, initiator + GCC::MCS_USERCHANNEL_BASE
                      , data_->get_packet().size());
-    data_->copy_to_head(share_ctrl_header.get_bytes());
+    data_->copy_to_head(share_ctrl_header.get_produced_bytes());
 
     if (verbose & log_condition) {
         LOG(LOG_INFO, "Sec clear payload to send:");
@@ -185,7 +185,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     updateCode = FastPath::UpdateType::ORDERS;
                     StaticOutStream<2> data;
                     data.out_uint16_le(data_extra);
-                    data_common.copy_to_head(data.get_bytes());
+                    data_common.copy_to_head(data.get_produced_bytes());
 			}
 			break;
 
@@ -276,7 +276,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                                      , compression
                                      , compressionFlags
                                      );
-            fragmentPayload->copy_to_head(update_header.get_bytes());
+            fragmentPayload->copy_to_head(update_header.get_produced_bytes());
 
             StaticOutStream<256> server_update_header;
              // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
@@ -286,7 +286,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                                                     , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                                                     , encrypt
                                                     );
-            fragmentPayload->copy_to_head(server_update_header.get_bytes());
+            fragmentPayload->copy_to_head(server_update_header.get_produced_bytes());
 
             auto packet = fragmentPayload->get_packet();
 
@@ -311,7 +311,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     data.out_uint16_le(data_extra);
                     data.out_clear_bytes(2);
 
-                    data_common.copy_to_head(data.get_bytes());
+                    data_common.copy_to_head(data.get_produced_bytes());
                 }
                 break;
 
@@ -329,7 +329,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     data.out_uint16_le(RDP_UPDATE_SYNCHRONIZE);
                     data.out_clear_bytes(2);
 
-                    data_common.copy_to_head(data.get_bytes());
+                    data_common.copy_to_head(data.get_produced_bytes());
                 }
                 break;
 
@@ -358,7 +358,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                     data.out_uint16_le(updateType);
                     data.out_clear_bytes(2);
 
-                    data_common.copy_to_head(data.get_bytes());
+                    data_common.copy_to_head(data.get_produced_bytes());
                 }
                 break;
 

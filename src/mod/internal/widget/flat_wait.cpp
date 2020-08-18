@@ -39,7 +39,7 @@ FlatWait::FlatWait(
     const char* caption, const char * text, int group_id,
     WidgetFlatButton * extra_button,
     Font const & font, Theme const & theme, Translation::language_t lang,
-    bool showform, unsigned flags, int duration_max
+    bool showform, unsigned flags, std::chrono::minutes duration_max
 )
     : WidgetParent(drawable, parent, notifier, group_id)
     , groupbox(drawable, *this, nullptr, caption,

@@ -21,10 +21,10 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#include "gdi/graphic_api.hpp"
+#pragma once
+
 #include "core/channel_names.hpp"
 #include "mod/mod_api.hpp"
-#include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/image_data_view.hpp"
 #include "utils/stream.hpp"
@@ -33,19 +33,17 @@
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_redemption_api.hpp"
 
 #include <chrono>
 
 class FakeRDPChannelsMod : public mod_api
 {
 public:
-
     struct PDUData {
         uint8_t data[1600] = {0};
         size_t size = 0;
 
-        array_view_const_u8 av() noexcept
+        u8_array_view av() noexcept
         {
             return {data, size};
         }
@@ -54,7 +52,8 @@ public:
     int index_in = 0;
     int index_out = 0;
 
-    size_t get_total_stream_produced() {
+    size_t get_total_stream_produced() const
+    {
         return this->index_in;
     }
 
@@ -80,6 +79,14 @@ public:
         }
     }
 
+    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
+    void send_auth_channel_data(const char * /*data*/) override {}
+    void send_checkout_channel_data(const char * /*data*/) override {}
+
+    void rdp_gdi_up_and_running() override {}
+
+    void rdp_gdi_down() override {}
+
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override {
         (void) param1;
         (void) param2;
@@ -95,6 +102,8 @@ public:
     void rdp_input_invalidate(Rect r) override { (void) r; }
 
     void refresh(Rect clip) override { (void) clip; }
+
+    bool server_error_encountered() const override { return false; }
 };
 
 
@@ -103,6 +112,7 @@ class FakeClientIOClipboard : public ClientIOClipboardAPI
 {
 public:
     std::string data_text;
+
     std::unique_ptr<uint8_t[]>  _chunk;
     size_t offset = 0;
     size_t size = 42;
@@ -115,13 +125,13 @@ public:
     };
 
     uint16_t    _bufferTypeID = 0;
-    int         _bufferTypeNameIndex = 0;
-    bool        _local_clipboard_stream = true;
     size_t      _cliboard_data_length = 0;
     int         _cItems = 0;
 
+private:
     std::string tmp_path;
 
+public:
     FakeClientIOClipboard() = default;
 
     void emptyBuffer() override {}
@@ -136,7 +146,7 @@ public:
         this->data_text = str;
     }
 
-    array_view_const_u8 get_cliboard_text() override {
+    u8_array_view get_cliboard_text() override {
         return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
@@ -155,7 +165,7 @@ public:
         this->offset += data.size();
     }
 
-    array_view_const_char get_file_item(int /*index*/) override {
+    chars_view get_file_item(int /*index*/) override {
         return {char_ptr_cast(this->_chunk.get()), this->size};
     }
 
@@ -194,7 +204,6 @@ public:
     FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
 
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPScrBlt           const & /*cmd*/, Rect /*clip*/) override {}
@@ -232,26 +241,8 @@ public:
     void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 };
 
-// class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
-//
-// public:
-//     FakeClientInputMouseKeyboard() = default;
-//
-//     // TODO string_view
-//     void virtual keyPressEvent(const int key, std::string const& text) override { (void)key; (void)text; }
-//
-//     // TODO string_view
-//     void virtual keyReleaseEvent(const int key, std::string const& text) override { (void)key; (void)text; }
-//
-//     virtual void init_form() override {}
-//     virtual void update_keylayout() override {}
-// };
 
 class FakeClientKeyLayout : public ClientKeyLayoutAPI {
-
-// private:
-//     ClientCallback * callback = nullptr;
-//     ClientRedemptionConfig * config = nullptr;
 
 public:
 
@@ -260,9 +251,7 @@ public:
 
     void update_keylayout(const int /*LCID*/) override {}
 
-    void setCustomKeyCode(const int /*qtKeyID*/, const int /*scanCode*/, const std::string & /*ASCII8*/, const int /*extended*/) override {}
-
-    void init(const int /*flag*/, const int /*key*/, std::string const& /*text*/) override {}
+    void key_event(const int /*flag*/, const int /*key*/, std::string_view /*text*/) override {}
 
     int get_scancode() override {
         return 0;
@@ -271,50 +260,7 @@ public:
     int get_flag() override {
         return 0;
     }
-
-    void clearCustomKeyCode() override {}
-
-    KeyCustomDefinition get_key_info(int /*keycode*/, std::string const& /*text*/) override {
-        return KeyCustomDefinition{};
-    }
 };
-
-
-
-class FakeClient : public ClientRedemptionAPI
-{
-    CHANNELS::ChannelDefArray channels;
-
-public:
-    int read_stream_index = -1;
-    int read_stream_sub_index = -1;
-
-    FakeRDPChannelsMod fake_mod;
-
-    FakeClient() = default;
-
-    void close() override {}
-
-    size_t get_total_stream_produced() {
-        return this->fake_mod.index_in;
-    }
-
-    // TODO ??????
-    FakeRDPChannelsMod::PDUData * stream() {
-        if (this->fake_mod.index_out < 10) {
-            this->fake_mod.index_out++;
-            return &(this->fake_mod.last_pdu[this->fake_mod.index_out-1]);
-        }
-
-        return nullptr;
-    }
-
-    bool must_be_stop_capture() override { return true;}
-    const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(ScreenInfo /*screen_server*/) override { return ResizeResult::instant_done;}
-    int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
-};
-
 
 
 class FakeIODisk : public ClientIODiskAPI

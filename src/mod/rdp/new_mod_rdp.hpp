@@ -21,18 +21,17 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "mod/mod_api.hpp"
+#include "acl/auth_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
-#include "core/channels_authorizations.hpp"
+#include "core/events.hpp"
+#include "utils/timebase.hpp"
 
 #include <memory>
 
-class AuthApi;
 class ClientInfo;
 class FrontAPI;
 class LicenseApi;
-class ReportMessageApi;
-class SessionReactor;
-class TimeObj;
+class TimeBase;
 class Transport;
 class RedirectionInfo;
 class Random;
@@ -41,23 +40,25 @@ class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
 class ModRdpFactory;
+class GdProvider;
+class ChannelsAuthorizations;
 
 namespace gdi { class GraphicApi; }
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
-    SessionReactor& session_reactor,
+    TimeBase& time_base,
+    GdProvider & gd_provider,
+    EventContainer & events,
+    AuthApi & sesman,
     gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,
     RedirectionInfo& redir_info,
     Random& gen,
-    TimeObj& timeobj,
-    ChannelsAuthorizations channels_authorizations,
+    const ChannelsAuthorizations& channels_authorizations,
     const ModRDPParams& mod_rdp_params,
     const TLSClientParams& tls_client_params,
-    AuthApi& authentifier,
-    ReportMessageApi& report_message,
     LicenseApi& license_store,
     ModRdpVariables vars,
     RDPMetrics * metrics,

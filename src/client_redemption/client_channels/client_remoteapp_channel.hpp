@@ -46,16 +46,18 @@ namespace RDP
 
 class ClientRemoteAppGraphicAPI : public gdi::GraphicApi
 {
-public:
+protected:
     ClientCallback * controller;
     ClientRedemptionConfig * config;
 
+public:
     const int screen_max_width;
     const int screen_max_height;
 
+protected:
     ClientRedemptionAPI * client_replay;
 
-
+public:
     ClientRemoteAppGraphicAPI(ClientCallback * controller, ClientRedemptionConfig * config, int max_width, int max_height)
       : controller(controller)
       , config(config)
@@ -93,17 +95,18 @@ class ClientRemoteAppChannel {
     std::string source_of_WorkingDir;
     std::string source_of_Arguments;
 
-
-public:
     uint32_t ServerWindowID;
-    uint32_t WindowIDToShow = 0;
     bool ExecuteResult = false;
     std::vector<uint32_t> z_order;
+
+public:
     int build_number = 0;
+
+private:
     int width = 0;
     int height = 0;
 
-
+public:
     ClientRemoteAppChannel(RDPVerbose verbose,
                            ClientCallback * callback,
                            ClientChannelMod * channel_mod)

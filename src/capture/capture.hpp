@@ -149,7 +149,6 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override;
     void draw(RDPMem3Blt          const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override;
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override;
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
     void draw(RDPSetSurfaceCommand const & cmd) override;
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override;
 
@@ -197,7 +196,7 @@ private:
 
         explicit NotifyTitleChanged(Capture & capture) : capture(capture) {}
 
-        void notify_title_changed(timeval const & now, array_view_const_char title);
+        void notify_title_changed(timeval const & now, chars_view title);
     } notifier_title_changed{*this};
     //@}
 
