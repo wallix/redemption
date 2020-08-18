@@ -1356,7 +1356,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     }
 
                     {
-                        ini.set<cfg::video::hash_path>(outfile.directory);
                         ini.set<cfg::video::record_tmp_path>(outfile.directory);
                         ini.set<cfg::video::record_path>(outfile.directory);
 
