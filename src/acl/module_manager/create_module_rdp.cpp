@@ -747,7 +747,9 @@ ModPack create_mod_rdp(
         }
 
         mod_rdp_params.session_probe_params.customize_executable_name = true;
+    }
 
+    if (mod_rdp_params.session_probe_params.customize_executable_name) {
         mod_rdp_params.session_probe_params.vc_params.enable_self_cleaner = ini.get<cfg::mod_rdp::session_probe_enable_cleaner>();
     }
 
