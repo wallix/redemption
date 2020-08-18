@@ -670,6 +670,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_on_account_manipulation = 0
 
+# value: 0 or 1
+#_advanced
+#session_probe_enable_cleaner = 1
+
 # Keep known server certificates on WAB
 # value: 0 or 1
 #_hidden

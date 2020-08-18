@@ -581,6 +581,10 @@ public:
                         options |= OPTION_UPDATE_DISABLED_FEATURES;
                     }
 
+                    if (this->sespro_params.enable_self_cleaner) {
+                        options |= OPTION_ENABLE_SELF_CLEANER;
+                    }
+
                     if (this->param_disconnect_session_instead_of_logoff_session) {
                         options |= OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION;
                     }

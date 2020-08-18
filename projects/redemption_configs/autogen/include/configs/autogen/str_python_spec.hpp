@@ -570,6 +570,9 @@ session_probe_public_session = boolean(default=False)
 #_hidden
 session_probe_on_account_manipulation = option(0, 1, 2, default=0)
 
+#_advanced
+session_probe_enable_cleaner = boolean(default=True)
+
 # Keep known server certificates on WAB
 #_hidden
 server_cert_store = boolean(default=True)

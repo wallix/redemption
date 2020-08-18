@@ -432,6 +432,8 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), "session_probe_on_account_manipulation", connpolicy::name{"on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
 
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_enable_cleaner", set(true));
+
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_cert, L, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 

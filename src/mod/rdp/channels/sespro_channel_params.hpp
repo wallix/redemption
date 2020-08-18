@@ -169,6 +169,8 @@ struct SessionProbeVirtualChannelParams
     explicit SessionProbeVirtualChannelParams() = default;
 
     SessionProbeOnAccountManipulation on_account_manipulation = SessionProbeOnAccountManipulation::allow;
+
+    bool enable_self_cleaner = false;
 };
 
 
