@@ -65,12 +65,6 @@ struct Keylayout_r
         scancode_type const* scancode_list;
         uint16_t len;
 
-        struct Cursor
-        {
-            KeyLayoutMap_t* map;
-            uint16_t len;
-        };
-
         scancode_type find(uchar_type uchar) const
         {
             auto it = std::lower_bound(this->uchar_list, this->uchar_list + this->len, uchar);
@@ -98,30 +92,11 @@ struct Keylayout_r
     KeyLayoutMap_t capslock_shiftAltGr;
     KeyLayoutMap_t deadkeys;
 
-
-
-    /*typedef struct dkk {
-        uint16_t secondKey;
-        uint16_t modifiedKey;
-    } dkey_key_t;
-
-    typedef struct dk { // Struture holding a deadkey and the rules to apply to available second keys:
-         uint32_t   uchar;                       // unicode code point
-         uint8_t    extendedKeyCode;             // scancode + extended bit
-         uint8_t    nbSecondKeys;                // number of second keys available for that deadkey
-         dkey_key_t secondKeys[MAX_SECOND_KEYS]; // the couples second key/modified key
-    } dkey_t;
-
-    //dkey_t deadkeys[MAX_DEADKEYS];
-    dkey_t const * deadkeys;*/
     uint8_t nbDeadkeys;  // Effective number of deadkeys for the locale
 
     uint32_t verbose;
 
 
-
-    // Constructor
-    //==============================================================================
     Keylayout_r ( int LCID
                 , char const * LCID_locale_name
                 , const KeyLayoutMap_t & LCID_noMod
@@ -151,75 +126,11 @@ struct Keylayout_r
         , deadkeys(LCID_deadkeys)
         , nbDeadkeys(nbDeadkeys)
         , verbose(verbose)
-    //==============================================================================
-    {} // END Constructor
+    {}
 
 
     Keylayout_r (Keylayout_r const &) = delete;
     Keylayout_r & operator=(Keylayout_r const &) = delete;
-
-
-    /*//==============================================================================
-    bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode) const
-    //==============================================================================
-    {
-        bool resu = false;
-        for (int i=0; i < this->nbDeadkeys; i++) {
-            // Search if a make is a deadkey by its scancode AND by its unicode translation.
-            // NB : unicode alone is not enough. (e.g. french CARET from scancode 'Ox1A' is a deadkey but
-            //      from scancode '0x0A' it isn't).
-            if (   (this->deadkeys[i].extendedKeyCode == extendedKeyCode)
-               and (this->deadkeys[i].uchar == uchar)
-               )
-            {
-                resu = true;
-            }
-        }
-        return resu;
-
-    } // END METHOD - isDeadkey*/
-
-
-    const KeyLayoutMap_t *  getnoMod() const {
-        return &(this->noMod);
-    }
-
-    const KeyLayoutMap_t *  getshift() const {
-        return &(this->shift);
-    }
-
-    const KeyLayoutMap_t *  getaltGr() const {
-        return &(this->altGr);
-    }
-
-    const KeyLayoutMap_t *  getshiftAltGr() const {
-        return &(this->shiftAltGr);
-    }
-
-    const KeyLayoutMap_t *  getctrl() const {
-        return &(this->ctrl);
-    }
-
-    const KeyLayoutMap_t *  getcapslock_noMod() const {
-        return &(this->capslock_noMod);
-    }
-
-    const KeyLayoutMap_t *  getcapslock_shift() const {
-        return &(this->capslock_shift);
-    }
-
-    const KeyLayoutMap_t *  getcapslock_altGr() const {
-        return &(this->capslock_altGr);
-    }
-
-    const KeyLayoutMap_t *  getcapslock_shiftAltGr() const {
-        return &(this->capslock_shiftAltGr);
-    }
-
-    const KeyLayoutMap_t * getDeadKeys() const {
-        return &(this->deadkeys);
-    }
-
 }; // END STRUCT - Keylayout_r
 
 

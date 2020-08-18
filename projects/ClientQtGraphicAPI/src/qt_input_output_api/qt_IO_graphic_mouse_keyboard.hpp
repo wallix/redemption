@@ -237,16 +237,6 @@ public:
         this->remote_app_screen_map[id]->_height = h;
     }
 
-//     void dropScreen(uint32_t id) override {
-//         if (this->remote_app_screen_map[id] != nullptr) {
-//             this->remote_app_screen_map[id]->disconnection();
-//             this->remote_app_screen_map[id] = nullptr;
-//         }
-//
-//         std::map<uint32_t, RemoteAppQtScreen *>::iterator it = this->remote_app_screen_map.find(id);
-//         this->remote_app_screen_map.erase (it);
-//     }
-
     void clear_remote_app_screen() override {
         for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
             if (it->second) {

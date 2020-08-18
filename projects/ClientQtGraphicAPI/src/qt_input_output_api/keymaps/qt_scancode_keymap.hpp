@@ -177,7 +177,7 @@ private:
         //                                        |_______|_______|________|_______|_______|________|________|________|
         //
         if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
-            this->_layout = this->_layoutMods[8];  // CTRL
+            this->_layout = this->_layoutMods[CTRL_MOD];
         } else {
             this->_layout = this->_layoutMods[this->_keyboardMods & MASK_ALT];   // set appropriate mod (ALT has no mod)
         }
@@ -209,9 +209,6 @@ private:
                 break;
         }
 
-        //-----------------------------
-        //    Keyboard Layout apply
-        //-----------------------------
         this->applyCharTable();
     }
 
@@ -282,9 +279,6 @@ private:
             this->_layout = _layoutMods[NO_MOD]; // noMod
         }
 
-        //-----------------------------
-        //    Keyboard Layout apply
-        //----------------------------
         this->applyCharTable();
 
         if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
@@ -433,8 +427,8 @@ private:
         }
     }
 
-    void getDeadKeys() {
-
+    void getDeadKeys()
+    {
         switch (this->qKeyCode) {
             case Qt::Key_Dead_Circumflex       : this->scanCode = 0x5E; this->_deadKeys = true; break; //  ^
             case Qt::Key_Dead_Grave            : this->scanCode = 0x60; this->_deadKeys = true; break; //  ` grave
@@ -459,9 +453,6 @@ private:
             default: break;
         }
 
-        //-----------------------------
-        //    Keyboard Layout apply
-        //----------------------------
         this->applyCharTable();
     }
 
@@ -486,15 +477,15 @@ public:
         }
         this->_keylayout_WORK = layout;
 
-        this->_layoutMods[NO_MOD                              ] = this->_keylayout_WORK->getnoMod();
-        this->_layoutMods[SHIFT_MOD                           ] = this->_keylayout_WORK->getshift();
-        this->_layoutMods[ALTGR_MOD                           ] = this->_keylayout_WORK->getaltGr();
-        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = this->_keylayout_WORK->getshiftAltGr();
-        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = this->_keylayout_WORK->getcapslock_noMod();
-        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = this->_keylayout_WORK->getcapslock_shift();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = this->_keylayout_WORK->getcapslock_altGr();
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = this->_keylayout_WORK->getcapslock_shiftAltGr();
-        this->_layoutMods[CTRL_MOD                            ] = this->_keylayout_WORK->getctrl();
+        this->_layoutMods[NO_MOD                              ] = &this->_keylayout_WORK->noMod;
+        this->_layoutMods[SHIFT_MOD                           ] = &this->_keylayout_WORK->shift;
+        this->_layoutMods[ALTGR_MOD                           ] = &this->_keylayout_WORK->altGr;
+        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = &this->_keylayout_WORK->shiftAltGr;
+        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = &this->_keylayout_WORK->capslock_noMod;
+        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = &this->_keylayout_WORK->capslock_shift;
+        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = &this->_keylayout_WORK->capslock_altGr;
+        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = &this->_keylayout_WORK->capslock_shiftAltGr;
+        this->_layoutMods[CTRL_MOD                            ] = &this->_keylayout_WORK->ctrl;
 
         this->_layout = this->_layoutMods[0]; // noMod
     }
