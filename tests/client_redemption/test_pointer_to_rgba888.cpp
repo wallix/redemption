@@ -27,13 +27,13 @@ struct ReadableCursor
 {
     static constexpr std::size_t N = 34;
 
-    char str[N*N+N+1];
+    std::vector<char> str;
 
     ReadableCursor(redclient::RGBA8888Image const& img) noexcept
     {
-        RED_CHECK(N*N >= img.width * img.height);
+        this->str.resize((img.width + 1u) * img.height);
         auto* it = img.data();
-        auto* p = str;
+        auto* p = this->str.data();
         for (unsigned y = 0; y < img.height; ++y) {
             for (unsigned x = 0; x < img.width; ++x) {
                 *p++ = !it[3] ? '.' : (it[0] == 0xff && it[1] == 0xff && it[2] == 0xff) ? 'X' : '+';
@@ -41,7 +41,6 @@ struct ReadableCursor
             }
             *p++ = '\n';
         }
-        *p = 0;
     }
 };
 
@@ -55,7 +54,7 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
 
     ReadableCursor readable_cursor(img);
 
-    RED_CHECK_EQ(readable_cursor.str,
+    RED_CHECK(readable_cursor.str ==
         "X...............................\n"
         "XX..............................\n"
         "X+X.............................\n"
@@ -88,6 +87,7 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
         "................................\n"
         "................................\n"
         "................................\n"
+        ""_av
     );
 }
 
@@ -325,7 +325,7 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
 
     ReadableCursor readable_cursor(img);
 
-    RED_CHECK_EQ(readable_cursor.str,
+    RED_CHECK(readable_cursor.str ==
         "..................................\n"
         "..................................\n"
         ".......+++++++++..................\n"
@@ -360,5 +360,6 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
         "..................................\n"
         "..................................\n"
         "..................................\n"
+        ""_av
     );
 }
