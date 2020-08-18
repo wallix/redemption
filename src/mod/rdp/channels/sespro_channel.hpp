@@ -57,7 +57,10 @@ enum {
 // Session Probe Options
 enum {
     OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001,
-    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002
+    OPTION_UPDATE_DISABLED_FEATURES                             = 0x00000002,
+    OPTION_LAUNCH_APPLICATION_THEN_TERMINATE                    = 0x00000004,
+    OPTION_ENABLE_SELF_CLEANER                                  = 0x00000008,
+    OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010
 };
 
 
@@ -85,6 +88,8 @@ private:
     bool param_bogus_refresh_rect_ex = false;
 
     const bool param_show_maximized;
+
+    const bool param_disconnect_session_instead_of_logoff_session;
 
     FrontAPI& front;
 
@@ -155,6 +160,8 @@ public:
 
         uninit_checked<bool> show_maximized;
 
+        uninit_checked<bool> disconnect_session_instead_of_logoff_session;
+
         explicit Params() = default;
     };
 
@@ -179,6 +186,7 @@ public:
     , tr(params.lang)
     , param_bogus_refresh_rect_ex(params.bogus_refresh_rect_ex)
     , param_show_maximized(params.show_maximized)
+    , param_disconnect_session_instead_of_logoff_session(params.disconnect_session_instead_of_logoff_session)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -571,6 +579,10 @@ public:
 
                     if (this->sespro_params.update_disabled_features) {
                         options |= OPTION_UPDATE_DISABLED_FEATURES;
+                    }
+
+                    if (this->param_disconnect_session_instead_of_logoff_session) {
+                        options |= OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION;
                     }
 
                     if (options)
