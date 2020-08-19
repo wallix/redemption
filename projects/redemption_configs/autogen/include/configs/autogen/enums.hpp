@@ -647,6 +647,22 @@ operator << (std::basic_ostream<Ch, Tr> & os, ModRdpUseFailureSimulationSocketTr
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class LoginLanguage : unsigned char
+{
+    Auto = 0,
+    EN = 1,
+    FR = 2,
+};
+
+inline bool is_valid_enum_value(LoginLanguage e)
+{ return static_cast<unsigned long>(e) <= 2; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, LoginLanguage e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {

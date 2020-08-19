@@ -2292,19 +2292,11 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "password_en"_zv) {
+        else if (key == "login_language"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
-                static_cast<cfg::translation::password_en&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
-                value
-            );
-        }
-        else if (key == "password_fr"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::translation::password_fr&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                static_cast<cfg::translation::login_language&>(this->variables).value,
+                ::configs::spec_type<LoginLanguage>{},
                 value
             );
         }

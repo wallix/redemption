@@ -120,9 +120,11 @@ struct Sesman : public AuthApi
     bool keyboard_layout_sent = true;
     unsigned keyboard_layout = 0;
 
-
     bool auth_channel_target_sent = true;
     std::string auth_channel_target;
+
+    bool login_language_sent = true;
+    LoginLanguage login_language;
 
     bool report_sent = true;
     struct Report {
@@ -293,6 +295,12 @@ struct Sesman : public AuthApi
         this->auth_channel_target = target;
     }
 
+    void set_login_language(LoginLanguage login_language) override
+    {
+        this->login_language_sent = false;
+        this->login_language = login_language;
+    }
+
     void report(const char * reason, const char * message) override
     {
         this->report_sent = false;
@@ -318,6 +326,7 @@ struct Sesman : public AuthApi
         this->flush_acl_auth_channel_target(verbose);
         this->flush_acl_selector_page(verbose);
         this->flush_acl_keyboard_layout(verbose);
+        this->flush_acl_login_language(verbose);
     }
 
     void flush_acl_report(std::function<void(std::string const&, std::string const&)> const& fn)
@@ -527,6 +536,16 @@ private:
             LOG_IF(verbose, LOG_INFO, "flush_acl_auth_channel_target()");
             this->ini.set_acl<cfg::context::auth_channel_target>(this->auth_channel_target);
             this->auth_channel_target_sent = true;
+        }
+    }
+
+    void flush_acl_login_language(bool verbose)
+    {
+        if (!this->login_language_sent)
+        {
+            LOG_IF(verbose, LOG_INFO, "flush_acl_login_language()");
+            this->ini.set_acl<cfg::translation::login_language>(this->login_language);
+            this->login_language_sent = true;
         }
     }
 };

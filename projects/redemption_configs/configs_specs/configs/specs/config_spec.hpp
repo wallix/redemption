@@ -690,10 +690,9 @@ void config_spec_definition(Writer && W)
 
     W.section("translation", [&]
     {
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<Language>{}, "language", set(Language::en));
+        W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<Language>{}, "language", set(Language::en));
 
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "password_en");
-        W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "password_fr");
+        W.member(advanced_in_gui, proxy_to_sesman, not_target_ctx, L, type_<LoginLanguage>(), "login_language", set(LoginLanguage::Auto));
     });
 
     W.section("internal_mod", [&]

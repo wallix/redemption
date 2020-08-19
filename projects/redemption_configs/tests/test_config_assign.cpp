@@ -278,10 +278,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::session_log::keyboard_input_masking_level>(KeyboardInputMaskingLevel::unmasked);
 
     ini.set<cfg::translation::language>(Language::en);
-    ini.set<cfg::translation::password_en>(cs);
-    ini.set<cfg::translation::password_en>(s);
-    ini.set<cfg::translation::password_fr>(cs);
-    ini.set<cfg::translation::password_fr>(s);
+    ini.set_acl<cfg::translation::login_language>(LoginLanguage::Auto);
 
     ini.set<cfg::video::break_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);

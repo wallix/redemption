@@ -351,8 +351,7 @@ namespace cfg
 
     struct translation {
         struct language;
-        struct password_en;
-        struct password_fr;
+        struct login_language;
     };
 
     struct internal_mod {

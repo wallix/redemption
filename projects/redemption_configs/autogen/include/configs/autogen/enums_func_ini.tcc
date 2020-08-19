@@ -845,6 +845,37 @@ parse_error parse_from_cfg(ModRdpUseFailureSimulationSocketTransport & x, ::conf
     return no_parse_error;
 }
 
+namespace
+{
+    inline constexpr zstring_view enum_zstr_LoginLanguage[] {
+        "Auto"_zv,
+        "EN"_zv,
+        "FR"_zv,
+    };
+
+    inline constexpr std::pair<chars_view, LoginLanguage> enum_str_value_LoginLanguage[] {
+        {"AUTO"_av, LoginLanguage::Auto},
+        {"EN"_av, LoginLanguage::EN},
+        {"FR"_av, LoginLanguage::FR},
+    };
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<LoginLanguage> /*type*/,
+    LoginLanguage x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value(x));
+    return enum_zstr_LoginLanguage[static_cast<unsigned long>(x)];
+}
+
+parse_error parse_from_cfg(LoginLanguage & x, ::configs::spec_type<LoginLanguage> /*type*/, zstring_view value)
+{
+    return parse_str_value_pairs<enum_str_value_LoginLanguage>(
+        x, value, "bad value, expected: Auto, EN, FR");
+}
+
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
     cfg_s_type<ColorDepth> /*type*/,
