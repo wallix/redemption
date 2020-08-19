@@ -45,14 +45,11 @@
 // +------+------+----+------------------------+-------+------+------+-------+  +----+----+----+  +---------+----+-----+
 
 
-//##############################################################################
 struct Keylayout
-//##############################################################################
 {
     enum {
-          MAX_DEADKEYS = 35
-        , MAX_SECOND_KEYS = 35
-        , MAX_LAYOUT_CHARS = 128
+        MAX_SECOND_KEYS = 33,
+        MAX_LAYOUT_CHARS = 128,
     };
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
@@ -89,11 +86,7 @@ struct Keylayout
     dkey_t const * deadkeys;
     uint8_t nbDeadkeys;  // Effective number of deadkeys for the locale
 
-    uint32_t verbose;
 
-
-    // Constructor
-    //==============================================================================
     Keylayout( int LCID
              , char const * LCID_locale_name
              , const KeyLayout_t & LCID_noMod
@@ -105,9 +98,8 @@ struct Keylayout
              , const KeyLayout_t & LCID_capslock_shift
              , const KeyLayout_t & LCID_capslock_altGr
              , const KeyLayout_t & LCID_capslock_shiftAltGr
-             , const dkey_t LCID_deadkeys[MAX_DEADKEYS]
+             , const dkey_t * LCID_deadkeys
              , uint8_t nbDeadkeys
-             , uint32_t verbose = 0
              )
         : LCID(LCID)
         , noMod(LCID_noMod)
@@ -122,19 +114,14 @@ struct Keylayout
         , locale_name(LCID_locale_name)
         , deadkeys(LCID_deadkeys)
         , nbDeadkeys(nbDeadkeys)
-        , verbose(verbose)
-    //==============================================================================
-    {} // END Constructor
+    {}
 
     Keylayout(Keylayout const &) = delete;
     Keylayout& operator=(Keylayout const &) = delete;
 
 
-    //==============================================================================
     [[nodiscard]] bool isDeadkey(uint32_t uchar, uint8_t extendedKeyCode) const
-    //==============================================================================
     {
-        bool resu = false;
         for (int i=0; i < this->nbDeadkeys; i++) {
             // Search if a make is a deadkey by its scancode AND by its unicode translation.
             // NB : unicode alone is not enough. (e.g. french CARET from scancode 'Ox1A' is a deadkey but
@@ -143,12 +130,9 @@ struct Keylayout
                and (this->deadkeys[i].uchar == uchar)
                )
             {
-                resu = true;
+                return true;
             }
         }
-        return resu;
-
-    } // END METHOD - isDeadkey
-
-
-}; // END STRUCT - Keylayout
+        return false;
+    }
+};

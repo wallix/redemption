@@ -32,7 +32,7 @@ const static int LCID = 0x0001041b;
 
 const static char * const locale_name = "sk-SK.qwerty";
 
-const Keylayout::KeyLayout_t noMod = {
+static const Keylayout::KeyLayout_t noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x002B, 0x013E, 0x0161, 0x010D, 0x0165, 0x017E,
     /* x08 - x0F */    0x00FD, 0x00E1, 0x00ED, 0x00E9, 0x003D, 0x00B4, 0x0008, 0x0009,
     /* x10 - x17 */       'q',    'w',    'e',    'r',    't',    'y',    'u',    'i',
@@ -51,7 +51,7 @@ const Keylayout::KeyLayout_t noMod = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x002E, 0x0000,
 };
 
-const Keylayout::KeyLayout_t shift = {
+static const Keylayout::KeyLayout_t shift = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
     /* x08 - x0F */       '7',    '8',    '9',    '0', 0x0025, 0x02C7, 0x0008, 0x0000,
     /* x10 - x17 */       'Q',    'W',    'E',    'R',    'T',    'Y',    'U',    'I',
@@ -70,7 +70,7 @@ const Keylayout::KeyLayout_t shift = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x002E, 0x0000,
 };
 
-const Keylayout::KeyLayout_t altGr = {
+static const Keylayout::KeyLayout_t altGr = {
     /* x00 - x07 */    0x0000, 0x001B, 0x007E, 0x02C7, 0x005E, 0x02D8, 0x00B0, 0x02DB,
     /* x08 - x0F */    0x0060, 0x02D9, 0x00B4, 0x02DD, 0x00A8, 0x00B8, 0x0008, 0x0009,
     /* x10 - x17 */    0x005C, 0x007C, 0x20AC, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -89,7 +89,7 @@ const Keylayout::KeyLayout_t altGr = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-const Keylayout::KeyLayout_t shiftAltGr = {
+static const Keylayout::KeyLayout_t shiftAltGr = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x08 - x0F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0008, 0x0009,
     /* x10 - x17 */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -108,7 +108,7 @@ const Keylayout::KeyLayout_t shiftAltGr = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-const Keylayout::KeyLayout_t ctrl = {
+static const Keylayout::KeyLayout_t ctrl = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x08 - x0F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0008, 0x0009,
     /* x10 - x17 */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -127,7 +127,7 @@ const Keylayout::KeyLayout_t ctrl = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-const Keylayout::KeyLayout_t capslock_noMod = {
+static const Keylayout::KeyLayout_t capslock_noMod = {
     /* x00 - x07 */    0x0000, 0x001B, 0x002B, 0x013E, 0x0161, 0x010D, 0x0165, 0x017E,
     /* x08 - x0F */    0x00FD, 0x00E1, 0x00ED, 0x00E9, 0x003D, 0x00B4, 0x0008, 0x0009,
     /* x10 - x17 */       'Q',    'W',    'E',    'R',    'T',    'Y',    'U',    'I',
@@ -146,7 +146,7 @@ const Keylayout::KeyLayout_t capslock_noMod = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x002E, 0x0000,
 };
 
-const Keylayout::KeyLayout_t capslock_shift = {
+static const Keylayout::KeyLayout_t capslock_shift = {
     /* x00 - x07 */    0x0000, 0x001B,    '1',    '2',    '3',    '4',    '5',    '6',
     /* x08 - x0F */       '7',    '8',    '9',    '0', 0x0025, 0x02C7, 0x0008, 0x0009,
     /* x10 - x17 */       'q',    'w',    'e',    'r',    't',    'y',    'u',    'i',
@@ -165,7 +165,7 @@ const Keylayout::KeyLayout_t capslock_shift = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x002E, 0x0000,
 };
 
-const Keylayout::KeyLayout_t capslock_altGr = {
+static const Keylayout::KeyLayout_t capslock_altGr = {
     /* x00 - x07 */    0x0000, 0x001B, 0x007E, 0x02C7, 0x005E, 0x02D8, 0x00B0, 0x02DB,
     /* x08 - x0F */    0x0060, 0x02D9, 0x00B4, 0x02DD, 0x00A8, 0x00B8, 0x0008, 0x0009,
     /* x10 - x17 */    0x005C, 0x007C, 0x20AC, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -184,7 +184,7 @@ const Keylayout::KeyLayout_t capslock_altGr = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-const Keylayout::KeyLayout_t capslock_shiftAltGr = {
+static const Keylayout::KeyLayout_t capslock_shiftAltGr = {
     /* x00 - x07 */    0x0000, 0x001B, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
     /* x08 - x0F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0008, 0x0009,
     /* x10 - x17 */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -203,7 +203,7 @@ const Keylayout::KeyLayout_t capslock_shiftAltGr = {
     /* x78 - x7F */    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
-const Keylayout::dkey_t deadkeys[] = {
+static const Keylayout::dkey_t deadkeys[] = {
     { 0x02c7, 0x03, 19, { {0x007a, 0x017e}  // 'z' = 'ž'
                         , {0x0043, 0x010c}  // 'C' = 'Č'
                         , {0x006e, 0x0148}  // 'n' = 'ň'
