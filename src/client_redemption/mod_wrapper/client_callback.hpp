@@ -29,7 +29,6 @@ class ClientCallback
 {
 private:
     Keymap2           keymap;
-    StaticOutStream<256> decoded_data;    // currently not initialized
 
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
@@ -187,27 +186,6 @@ public:
     }
 
     void send_rdp_scanCode(uint16_t keyCode, uint16_t flag) {
-        bool tsk_switch_shortcuts = false;
-        Keymap2::DecodedKeys decoded_keys = this->keymap.event(flag, keyCode, tsk_switch_shortcuts);
-        switch (decoded_keys.count)
-        {
-        case 2:
-            if (this->decoded_data.has_room(sizeof(uint32_t))) {
-                this->decoded_data.out_uint32_le(decoded_keys.uchars[0]);
-            }
-            if (this->decoded_data.has_room(sizeof(uint32_t))) {
-                this->decoded_data.out_uint32_le(decoded_keys.uchars[1]);
-            }
-            break;
-        case 1:
-            if (this->decoded_data.has_room(sizeof(uint32_t))) {
-                this->decoded_data.out_uint32_le(decoded_keys.uchars[0]);
-            }
-            break;
-        default:
-        case 0:
-            break;
-        }
         if (this->mod != nullptr) {
             this->mod->rdp_input_scancode(keyCode, 0, flag, /*timer=*/0, &(this->keymap));
         }

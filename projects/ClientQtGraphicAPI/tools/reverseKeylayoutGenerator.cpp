@@ -14,11 +14,6 @@
 #include "../src/keyboard/keylayouts.hpp"
 
 
-void tabToReversedMap(
-    const Keylayout::KeyLayout_t & read,
-    std::ostream & fichier,
-    std::string_view lcid_str,
-    std::string_view name);
 
 static std::reference_wrapper<const Keylayout> keylayouts[] = {
     keylayout_x00000405, keylayout_x00000406, keylayout_x00000407, keylayout_x00000408,
@@ -43,6 +38,33 @@ static std::reference_wrapper<const Keylayout> keylayouts[] = {
     keylayout_x0002083b, keylayout_x00030402, keylayout_x00030408, keylayout_x00030409,
     keylayout_x00040408, keylayout_x00040409, keylayout_x00050408, keylayout_x00060408
 };
+
+template<class T>
+struct ArrayView
+{
+    T const* ptr;
+    ptrdiff_t n;
+
+    T const* begin() const { return ptr; }
+    T const* end() const { return ptr + n; }
+};
+
+template<class T>
+ArrayView<T> view(T const* p, ptrdiff_t n)
+{
+    return {p, n};
+}
+
+void tabToReversedMap(
+    const Keylayout::KeyLayout_t & read,
+    std::ostream & fichier,
+    std::string_view lcid_str,
+    std::string_view name);
+
+void tabToReversedDeadMap(
+    ArrayView<Keylayout::dkey_t> dkeys,
+    std::ostream & fichier,
+    std::string_view lcid_str);
 
 int main(int ac, char** av)
 {
@@ -90,7 +112,7 @@ int main(int ac, char** av)
             "#include \"keylayout_r.hpp\"\n\n"
             "namespace\n{\n\n"
             "constexpr static int x" << LCIDreverse_str << "_LCID = 0x"
-                << std::hex << layout.LCID << ";\n\n"
+                << std::hex << layout.LCID << std::dec << ";\n\n"
             "constexpr static char const * x" << LCIDreverse_str << "_locale_name = \""
                 << layout.locale_name << "\";\n\n";
 
@@ -104,20 +126,9 @@ int main(int ac, char** av)
         tabToReversedMap(layout.capslock_shiftAltGr, fichier, LCIDreverse_str, "capslock_shiftAltGr");
         tabToReversedMap(layout.ctrl,                fichier, LCIDreverse_str, "ctrl");
 
-        fichier << "constexpr Keylayout_r::KeyLayoutMap_t x" << LCIDreverse_str << "_deadkeys {\n";
-        // TODO this is wrong
-        // for (int i = 0; i < layout.nbDeadkeys; i++) {
-        //     unsigned deadCode = layout.deadkeys[i].extendedKeyCode;
-        //     fichier << "    { 0x" << std::setw(4) << layout.deadkeys[i].uchar << ", 0x" << std::setw(4) << deadCode << " },\n";
-        //     int nbSecondDK(layout.deadkeys[i].nbSecondKeys);
-        //     for (int j = 0; j < nbSecondDK; j++) {
-        //         fichier << "    { 0x" << std::setw(4) << layout.deadkeys[i].secondKeys[j].secondKey << ", 0x" << std::setw(4) << layout.deadkeys[i].secondKeys[j].modifiedKey << " },\n";
-        //     }
-        // }
-        fichier << std::dec <<
-            "};\n\n"
-            "constexpr static uint8_t x" << LCIDreverse_str << "_nbDeadkeys = "
-                << unsigned(layout.nbDeadkeys) << ";\n\n"
+        tabToReversedDeadMap(view(layout.deadkeys, layout.nbDeadkeys), fichier, LCIDreverse_str);
+
+        fichier <<
             "static const Keylayout_r keylayout_x"<< LCIDreverse_str <<"(\n"
             "    x" << LCIDreverse_str <<"_LCID,\n"
             "    x" << LCIDreverse_str <<"_locale_name,\n"
@@ -143,10 +154,16 @@ struct Hex8
 {
     uint8_t x;
 
+    void push(std::ostream& out)
+    {
+        char const* hex = "0123456789abcdef";
+        out << hex[x >> 4] << hex[x & 0xf];
+    }
+
     friend std::ostream& operator<<(std::ostream& out, Hex8 const& h)
     {
         char const* hex = "0123456789abcdef";
-        return out << hex[h.x >> 4] << hex[h.x & 0xf];
+        return out << "0x" << hex[h.x >> 4] << hex[h.x & 0xfu];
     }
 };
 
@@ -156,7 +173,10 @@ struct Hex16
 
     friend std::ostream& operator<<(std::ostream& out, Hex16 const& h)
     {
-        return out << Hex8{uint8_t(h.x >> 8)} << Hex8{uint8_t(h.x & 0xff)};
+        out << "0x";
+        Hex8{uint8_t(h.x >> 8)}.push(out);
+        Hex8{uint8_t(h.x & 0xffu)}.push(out);
+        return out;
     }
 };
 
@@ -178,7 +198,7 @@ void tabToReversedMap(
         uint8_t i = 0;
         for (uint16_t uchar : read) {
             if (uchar) {
-                map[uchar >> 8][(uchar & 0xff)] = i;
+                map[uchar >> 8][uchar & 0xffu] = i;
             }
             ++i;
         }
@@ -186,14 +206,13 @@ void tabToReversedMap(
 
     for (auto&& p : map) {
         fichier
-            << std::hex
             << "constexpr Keylayout_r::KeyLayoutMap_t::scancode_type x"
-            << lcid_str << "_scancode_0x" << Hex8{p.first} << "_" << name << "[] {\n"
-            << std::dec
+            << lcid_str << "_scancode_" << Hex8{p.first} << "_" << name << "[] {\n"
         ;
         int i = 0;
         for (uint8_t idx : p.second) {
-            fichier << "   " << std::setw(5) << uint16_t(idx) << ((++i % 8) ? "," : ",\n");
+            fichier << ((i % 8) ? " " : "    ") << Hex8{idx} << (((i+1) % 8) ? "," : ",\n");
+            ++i;
         }
         fichier << "};\n\n";
     }
@@ -203,8 +222,8 @@ void tabToReversedMap(
         << lcid_str << "_data_" << name << "[] {\n";
     for (auto&& p : map) {
         fichier
-            << "    { 0x" << Hex8{p.first} << ", x"
-            << lcid_str << "_scancode_0x" << Hex8{p.first} << "_" << name << " },\n"
+            << "    { " << Hex8{p.first} << ", x"
+            << lcid_str << "_scancode_" << Hex8{p.first} << "_" << name << " },\n"
         ;
     }
     fichier << "};\n\n";
@@ -212,4 +231,54 @@ void tabToReversedMap(
     fichier
         << "constexpr Keylayout_r::KeyLayoutMap_t x" << lcid_str
         << "_" << name << "{ array_view{x" << lcid_str << "_data_" << name << "} };\n\n";
+}
+
+void tabToReversedDeadMap(
+    ArrayView<Keylayout::dkey_t> dkeys,
+    std::ostream & fichier,
+    std::string_view lcid_str)
+{
+    struct Keys { uint16_t first, second; };
+    using Scancodes = std::array<Keys, 256>;
+    using Prefix = uint8_t;
+
+    std::map<Prefix, Scancodes> map;
+
+    for (Keylayout::dkey_t const& dkey : dkeys) {
+        for (Keylayout::dkey_key_t const& dkeykey : view(dkey.secondKeys, dkey.nbSecondKeys)) {
+            map[dkeykey.modifiedKey >> 8][dkeykey.modifiedKey & 0xffu]
+                = {dkey.uchar, dkeykey.secondKey};
+        }
+    }
+
+    for (auto&& p : map) {
+        fichier
+            << "constexpr Keylayout_r::KeyLayoutMap_t::extended_scancode_type x"
+            << lcid_str << "_extended_scancode_" << Hex8{p.first} << "[] {\n"
+        ;
+        int i = 0;
+        for (Keys keys : p.second) {
+            fichier
+                << ((i % 4) ? " " : "    ")
+                << "{ " << Hex16{keys.first} << ", " << Hex16{keys.second} << " }"
+                << (((i+1) % 4) ? "," : ",\n");
+            ++i;
+        }
+        fichier << "};\n\n";
+    }
+
+    fichier
+        << "constexpr Keylayout_r::KeyLayoutMap_t::dead_data_type x"
+        << lcid_str << "_extended_data[] {\n";
+    for (auto&& p : map) {
+        fichier
+            << "    { " << Hex8{p.first} << ", x"
+            << lcid_str << "_extended_scancode_" << Hex8{p.first} << " },\n"
+        ;
+    }
+    fichier << "};\n\n";
+
+    fichier
+        << "constexpr Keylayout_r::KeyLayoutMap_t x" << lcid_str
+        << "_extended{ array_view{x" << lcid_str << "_extended_data} };\n\n";
 }

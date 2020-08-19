@@ -125,6 +125,7 @@ public:
     }
 
     void keyPressEvent(QKeyEvent *e) override {
+        LOG(LOG_DEBUG, "%x", e->nativeVirtualKey());
         this->rdp_keyLayout_api->key_event(0, e->key(), e->text().toStdString());
         uint16_t keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode) {
