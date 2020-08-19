@@ -73,7 +73,6 @@ private:
 
 class Session
 {
-    ModuleIndex last_state = MODULE_UNKNOWN;
     class KeepAlive
     {
         // Keep alive Variables
@@ -86,7 +85,6 @@ class Session
         bool connected = false;
 
     public:
-
         KeepAlive(std::chrono::seconds grace_delay_)
         : grace_delay(grace_delay_.count())
         {
@@ -189,6 +187,7 @@ class Session
         }
     };
 
+    ModuleIndex last_state = MODULE_UNKNOWN;
     Inifile & ini;
 
     static const time_t select_timeout_tv_sec = 3;
@@ -758,7 +757,11 @@ public:
 
             const time_t start_time = time(nullptr);
 
+            sesman.set_login_language
+                (ini.get<cfg::translation::login_language>());
+
             bool run_session = true;
+            bool is_first_looping_on_mod_selector = true;
 
             using namespace std::chrono_literals;
 
@@ -1181,6 +1184,14 @@ public:
                         {
                             inactivity.start_timer(ini.get<cfg::globals::session_timeout>(),
                                                    time_base.get_current_time().tv_sec);
+                            if (is_first_looping_on_mod_selector)
+                            {
+                                Language lang = this->ini.get<cfg::translation::language>();
+
+                                this->ini.set_acl<cfg::translation::login_language>
+                                    (to_login_language(lang));
+                                is_first_looping_on_mod_selector = false;
+                            }
                         }
                         else if (mod_wrapper.current_mod == MODULE_INTERNAL_LOGIN)
                         {
@@ -1205,9 +1216,11 @@ public:
                         sesman.set_disconnect_target();
                         mod_wrapper.disconnect();
                         if (ini.get<cfg::globals::enable_close_box>()) {
-                            rail_client_execute.enable_remote_program(front.client_info.remote_program);
-
+                            rail_client_execute.enable_remote_program
+                                (front.client_info.remote_program);
+                            
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
+                            
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                             mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                             run_session = true;

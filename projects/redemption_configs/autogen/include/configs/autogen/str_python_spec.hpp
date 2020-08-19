@@ -1172,14 +1172,11 @@ allow_resize_hosted_desktop = boolean(default=True)
 
 [translation]
 
-#_advanced
+#_hidden
 language = option('en', 'fr', default='en')
 
 #_advanced
-password_en = string(default='')
-
-#_advanced
-password_fr = string(default='')
+login_language = option('Auto', 'EN', 'FR', default='Auto')
 
 [internal_mod]
 

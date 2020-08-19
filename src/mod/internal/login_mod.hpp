@@ -43,6 +43,7 @@ using LoginModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask>,
     vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
+    vcfg::var<cfg::translation::login_language,         vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
     vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,

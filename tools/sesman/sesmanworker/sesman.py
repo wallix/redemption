@@ -397,6 +397,8 @@ class Sesman():
 
         self.shared[u'auth_notify'] = u''
 
+        self.shared[u'login_language'] = MAGICASK
+
         self.internal_target = False
         self.check_session_parameters = False
 
@@ -448,9 +450,9 @@ class Sesman():
         self.engine.reset_proxy_rights()
         self.rtmanager.reset()
 
-    def load_login_message(self):
+    def load_login_message(self, language):
         try:
-            self.login_message = self.engine.get_warning_message(self.language)
+            self.login_message = self.engine.get_warning_message(language)
         except Exception:
             pass
 
@@ -470,8 +472,13 @@ class Sesman():
                 pass
         if keylayout in french_layouts:
             self.language = 'fr'
-
-        self.load_login_message()
+            
+        login_language = (self.shared.get(u'login_language').lower()
+                          if (self.shared.get(u'login_language') != MAGICASK
+                              and self.shared.get(u'login_language') != 'Auto')
+                          else self.language)
+        
+        self.load_login_message(login_language)
 
     # TODO: is may be possible to delay sending data until the next
     #       input through receive_data
@@ -924,7 +931,7 @@ class Sesman():
                 )
 
             self.language = self.engine.get_language()
-            self.load_login_message()
+            self.load_login_message(self.language)
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
                 self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
@@ -1090,11 +1097,14 @@ class Sesman():
                         _status, _error = self.receive_data()
 
                         if self.shared.get(u'login') == MAGICASK:
+                            self.language = self.engine.get_language()
+                            self.load_login_message(self.language)
                             self.send_data({
                                 u'login': MAGICASK,
                                 u'selector_lines_per_page': u'0',
                                 u'login_message': cut_message(
                                     self.login_message, 8192),
+                                u'language': self.language,
                                 u'module': u'login',
                             })
                             Logger().info(u"Logout")

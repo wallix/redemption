@@ -102,16 +102,4 @@ RED_AUTO_TEST_CASE(TestTranslation)
 
     RED_CHECK_EQUAL(TR(trkeys::close, lang),      "Fermer");
     RED_CHECK_EQUAL(TR(trkeys::password, lang),   "Mot de passe");
-
-    Inifile ini;
-    TRANSLATIONCONF.set_ini(&ini);
-    ini.set<cfg::translation::password_en>("pouloup");
-    RED_CHECK_EQUAL(TR(trkeys::password, lang), "Mot de passe");
-    ini.set<cfg::translation::password_fr>("pompidou");
-    RED_CHECK_EQUAL(TR(trkeys::password, lang), "pompidou");
-    lang = Translation::EN;
-    RED_CHECK_EQUAL(TR(trkeys::password, lang), "pouloup");
-
-    // inhibit scan-build warn
-    TRANSLATIONCONF.set_ini(nullptr);
 }

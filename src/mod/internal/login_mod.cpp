@@ -90,14 +90,14 @@ LoginMod::LoginMod(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this, "Redemption " VERSION,
         nullptr, nullptr, nullptr,
-        TR(trkeys::login, language(vars)),
-        TR(trkeys::password, language(vars)),
-        TR(trkeys::target, language(vars)),
+        TR(trkeys::login, login_language(vars)),
+        TR(trkeys::password, login_language(vars)),
+        TR(trkeys::target, login_language(vars)),
         vars.get<cfg::context::opt_message>().c_str(),
         AclNewLineConverter(vars.get<cfg::context::login_message>()).zstring().c_str(),
         &this->language_button,
         vars.get<cfg::internal_mod::enable_target_field>(),
-        font, Translator(language(vars)), theme)
+        font, Translator(login_language(vars)), theme)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {

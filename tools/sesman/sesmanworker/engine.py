@@ -232,10 +232,14 @@ class Engine(object):
         return banner
 
     def get_warning_message(self, lang=None, format_terminal=False):
-        if not lang:
-            lang = self.get_language()
-        msg = (u"Warning! Unauthorizedé access to this system is"
-               u" forbidden and will be prosecuted by law.")
+        if lang == 'en':
+            msg = (u"Warning! Unauthorizedé access to this system is"
+                   u" forbidden and will be prosecuted by law.")
+        elif lang == 'fr':
+            msg = (u"Attention! Toute tentative d'acces sans"
+                   u" autorisation ou de maintien frauduleux" 
+                   u" dans ce systeme fera l'objet de"
+                   u" poursuites judiciaires.")
         try:
             loginfile = '/var/wab/etc/proxys/messages/login.%s' % lang
             with open(loginfile, "rb") as f:

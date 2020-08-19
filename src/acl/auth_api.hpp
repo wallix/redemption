@@ -30,6 +30,8 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/array_view.hpp"
 
+#include "configs/autogen/enums.hpp"
+
 #include <sys/time.h> // timeval
 
 enum class LogId : unsigned;
@@ -89,6 +91,8 @@ struct AuthApi : noncopyable
 
     virtual void set_keyboard_layout(unsigned keyboard_layout) = 0;
 
+    virtual void set_login_language(LoginLanguage login_language) = 0;
+
     virtual ~AuthApi() = default;
 
 };
@@ -119,5 +123,6 @@ struct NullAuthentifier : AuthApi
                            std::string /*device*/, 
                            std::string /*proto*/) override {}
     void set_keyboard_layout(unsigned /*keyboard_layout*/) override {}
+    void set_login_language(LoginLanguage /*login_language*/) override {}
 };
 

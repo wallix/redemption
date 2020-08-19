@@ -450,6 +450,8 @@ inline Translation::language_t language(Language lang)
     return static_cast<Translation::language_t>(lang);
 }
 
+LoginLanguage to_login_language(Language lang);
+
 struct Translator
 {
     explicit Translator(Translation::language_t lang = Translation::EN) /*NOLINT*/

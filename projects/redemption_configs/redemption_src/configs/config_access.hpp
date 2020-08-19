@@ -117,6 +117,23 @@ Translation::language_t language(variables<Cfg...> const & vars) {
     return ::language(vars.template get<cfg::translation::language>());
 }
 
+template<class... Cfg>
+Translation::language_t login_language(variables<Cfg...> const & vars)
+{
+    switch (vars.template get<cfg::translation::login_language>())
+    {
+        case LoginLanguage::Auto :
+            return language(vars);
+        case LoginLanguage::EN :
+            return ::language(Language::en);
+        case LoginLanguage::FR :
+            return ::language(Language::fr);
+        default :
+            assert("Unknown LoginLanguage value");
+    }
+    return Translation::language_t { };
+}
+
 } // namespace vcfg
 
 using vcfg::language; /*NOLINT*/

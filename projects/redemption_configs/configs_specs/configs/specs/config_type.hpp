@@ -234,6 +234,13 @@ inline void config_type_definition(type_enumerations & e)
       .value("SimulateErrorRead")
       .value("SimulateErrorWrite")
     ;
+
+    e.enumeration_list("LoginLanguage")
+      .value("Auto")
+      .value("EN")
+      .value("FR")
+      .set_string_parser()
+    ;
 }
 
 }

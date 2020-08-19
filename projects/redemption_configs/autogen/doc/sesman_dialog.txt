@@ -315,8 +315,7 @@ cfg::crypto::key1 ⇐ sign_key   [std::array<unsigned char, 32>]
 cfg::remote_program::allow_resize_hosted_desktop ⇐ allow_resize_hosted_desktop   [bool]
 
 cfg::translation::language ⇐ language   [Language]
-cfg::translation::password_en ⇐ password_en   [std::string]
-cfg::translation::password_fr ⇐ password_fr   [std::string]
+cfg::translation::login_language ⇒ login_language   [LoginLanguage]
 
 
 cfg::context::psid ⇒ psid   [std::string]
