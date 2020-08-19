@@ -51,7 +51,7 @@ void WidgetNumberEdit::insert_text(const char* text)
 void WidgetNumberEdit::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
 {
     if (keymap->nb_kevent_available() && keymap->top_kevent() == Keymap2::KEVENT_KEY){
-        uint32_t c = keymap->top_char();
+        uint16_t c = keymap->top_char();
         if (c < '0' || '9' < c) {
             keymap->get_char();
             keymap->get_kevent();

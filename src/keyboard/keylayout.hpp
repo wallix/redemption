@@ -76,7 +76,7 @@ struct Keylayout
     };
 
     struct dkey_t {                                 // Struture holding a deadkey and the rules to apply to available second keys:
-         uint32_t   uchar;                       // unicode code point
+         uint16_t   uchar;                       // unicode code point
          uint8_t    extendedKeyCode;             // scancode + extended bit
          uint8_t    nbSecondKeys;                // number of second keys available for that deadkey
          dkey_key_t secondKeys[MAX_SECOND_KEYS]; // the couples second key/modified key

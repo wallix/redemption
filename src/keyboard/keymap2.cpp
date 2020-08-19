@@ -90,7 +90,7 @@ void Keymap2::synchronize(uint16_t param1)
 }
 
 
-void Keymap2::DecodedKeys::set_uchar(uint32_t uchar)
+void Keymap2::DecodedKeys::set_uchar(uint16_t uchar)
 {
     assert(this->count < 2);
     this->uchars[this->count++] = uchar;
@@ -243,9 +243,9 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                             ? &this->keylayout_WORK->altGr
                             : &this->keylayout_WORK->noMod;
                         // Translate the incoming RDP scancode to a X11 scancode
-                        uint8_t sym = map[extendedKeyCode];
+                        const uint8_t sym = map[extendedKeyCode];
                         // Translate the X11 scancode to an unicode code point
-                        uint32_t uchar = (*layout)[sym];
+                        const uint16_t uchar = (*layout)[sym];
                         decoded_key.set_uchar(uchar);
                         this->push(uchar);
                     }
@@ -352,9 +352,9 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                         }
                     }
                     // Translate the RDP scancode to an X11 scancode
-                    uint8_t sym = map[extendedKeyCode];
+                    const uint8_t sym = map[extendedKeyCode];
                     // Translate the X11 scancode to an unicode code point
-                    uint32_t uchar = (*layout)[sym];
+                    const uint16_t uchar = (*layout)[sym];
 
                     if (this->verbose){
                         LOG(LOG_INFO, "uchar=0x%02" PRIx32, uchar);
@@ -552,14 +552,14 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
 } // END METHOD : event
 
 
-void Keymap2::push(uint32_t uchar)
+void Keymap2::push(uint16_t uchar)
 {
     this->push_char(uchar);
     this->push_kevent(KEVENT_KEY);
 
 } // END METHOD : push
 
-void Keymap2::push_char(uint32_t uchar)
+void Keymap2::push_char(uint16_t uchar)
 {
     if (this->nbuf < SIZE_KEYBUF){
         this->buffer[this->ibuf] = uchar;
@@ -572,14 +572,14 @@ void Keymap2::push_char(uint32_t uchar)
 
 } // END METHOD : push_char
 
-uint32_t Keymap2::get_char()
+uint16_t Keymap2::get_char()
 {
     if (this->nbuf > 0){
         // remove top KEY KEVENT if present and any event may have occured before it
         if (this->nbuf_kevent > 0 && this->top_kevent() == KEVENT_KEY){
             this->nbuf_kevent--;
         }
-        uint32_t res = this->buffer[(SIZE_KEYBUF + this->ibuf - this->nbuf) % SIZE_KEYBUF];
+        uint16_t res = this->buffer[(SIZE_KEYBUF + this->ibuf - this->nbuf) % SIZE_KEYBUF];
 
         if (this->nbuf > 0){
             this->nbuf--;
@@ -591,7 +591,7 @@ uint32_t Keymap2::get_char()
 
 
 // head of keyboard buffer (or keyboard buffer of size 1)
-uint32_t Keymap2::top_char() const
+uint16_t Keymap2::top_char() const
 {
     return this->buffer[(SIZE_KEYBUF + this->ibuf - this->nbuf) % SIZE_KEYBUF];
 
@@ -605,7 +605,7 @@ uint32_t Keymap2::nb_char_available() const
 } // END METHOD : nb_char_available
 
 
-void Keymap2::push_kevent(uint32_t uevent)
+void Keymap2::push_kevent(KEvent uevent)
 {
     if (this->nbuf_kevent < SIZE_KEYBUF_KEVENT){
         this->buffer_kevent[this->ibuf_kevent] = uevent;
@@ -618,9 +618,9 @@ void Keymap2::push_kevent(uint32_t uevent)
 } // END METHOD : push_kevent
 
 
-uint32_t Keymap2::get_kevent()
+Keymap2::KEvent Keymap2::get_kevent()
 {
-    uint32_t res = this->buffer_kevent[(SIZE_KEYBUF_KEVENT + this->ibuf_kevent - this->nbuf_kevent) % SIZE_KEYBUF_KEVENT];
+    Keymap2::KEvent res = this->buffer_kevent[(SIZE_KEYBUF_KEVENT + this->ibuf_kevent - this->nbuf_kevent) % SIZE_KEYBUF_KEVENT];
 
     if (this->nbuf_kevent > 0){
         if (res == KEVENT_KEY && this->nbuf > 0){
@@ -634,10 +634,9 @@ uint32_t Keymap2::get_kevent()
 
 
 // head of keyboard buffer (or keyboard buffer of size 1)
-uint32_t Keymap2::top_kevent() const
+Keymap2::KEvent Keymap2::top_kevent() const
 {
     return this->buffer_kevent[this->ibuf_kevent?this->ibuf_kevent-1:SIZE_KEYBUF_KEVENT-1];
-
 } // END METHOD : top_kevent
 
 

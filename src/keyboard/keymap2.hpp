@@ -79,7 +79,7 @@ public:
         SIZE_KEYBUF_KEVENT = 20
     };
 
-    enum {
+    enum KEvent : uint8_t {
           KEVENT_KEY = 0x01
         , KEVENT_TAB = 0x02
         , KEVENT_BACKTAB = 0x3
@@ -104,11 +104,11 @@ public:
 private:
     uint32_t ibuf; // first free position in char buffer
     uint32_t nbuf; // number of char in char buffer
-    uint32_t buffer[SIZE_KEYBUF]; // actual char buffer
+    uint16_t buffer[SIZE_KEYBUF]; // actual char buffer
 
     uint32_t ibuf_kevent; // first free position
     uint32_t nbuf_kevent; // number of char in char buffer
-    uint32_t buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
+    KEvent buffer_kevent[SIZE_KEYBUF_KEVENT]; // actual char buffer
 
     //uint32_t last_char_key;
 
@@ -166,28 +166,28 @@ public:
 // triggered the event.
     struct DecodedKeys
     {
-        uint32_t uchars[2]{};
-        unsigned count = 0;
+        uint16_t uchars[2]{};
+        uint16_t count = 0;
 
-        void set_uchar(uint32_t uchar);
+        void set_uchar(uint16_t uchar);
     };
 
     DecodedKeys event(const uint16_t keyboardFlags, const uint16_t keyCode, bool & tsk_switch_shortcuts);
 
-    void push(uint32_t uchar);
-    void push_char(uint32_t uchar);
-    void push_kevent(uint32_t uevent);
+    void push(uint16_t uchar);
+    void push_char(uint16_t uchar);
+    void push_kevent(KEvent uevent);
 
-    uint32_t get_char();
-    uint32_t get_kevent();
+    uint16_t get_char();
+    KEvent get_kevent();
 
     // head of keyboard buffer (or keyboard buffer of size 1)
-    [[nodiscard]] uint32_t top_char() const;
+    [[nodiscard]] uint16_t top_char() const;
 
     [[nodiscard]] uint32_t nb_char_available() const;
 
     // head of keyboard buffer (or keyboard buffer of size 1)
-    [[nodiscard]] uint32_t top_kevent() const;
+    [[nodiscard]] KEvent top_kevent() const;
 
     [[nodiscard]] uint32_t nb_kevent_available() const;
 
