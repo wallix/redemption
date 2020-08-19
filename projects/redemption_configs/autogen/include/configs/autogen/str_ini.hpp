@@ -1220,7 +1220,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # FFmpeg options for video codec.
 #_advanced
-#ffmpeg_options = profile=baseline preset=ultrafast flags=+qscale b=80000
+#ffmpeg_options = crf=0 preset=superfast
 
 # value: 0 or 1
 #_advanced

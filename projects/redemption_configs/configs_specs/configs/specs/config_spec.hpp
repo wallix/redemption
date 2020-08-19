@@ -610,7 +610,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("mp4"));
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), "framerate", set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg options for video codec."}, set("profile=baseline preset=ultrafast flags=+qscale b=80000"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264"}, set("crf=0 preset=superfast"));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));

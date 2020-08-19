@@ -42,6 +42,7 @@ struct Codec
 };
 [[maybe_unused]]
 constexpr Codec flv{"flv", "flags=+qscale b=30000"};
+constexpr char const* mp4_options{"profile=baseline preset=ultrafast b=80000"};
 
 // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
 uint8_t hmac_key[] = {
@@ -938,6 +939,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
+        "-D", mp4_options,
     };
 
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
@@ -1030,6 +1032,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
+        "-D", mp4_options,
     };
 
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
@@ -1057,6 +1060,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
+        "-D", mp4_options,
     };
 
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
@@ -1082,6 +1086,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
+        "-D", mp4_options,
     };
 
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,

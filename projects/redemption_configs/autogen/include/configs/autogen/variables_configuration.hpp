@@ -3305,14 +3305,14 @@ namespace cfg
     };
     /// FFmpeg options for video codec. <br/>
     /// type: std::string <br/>
-    /// default:  = "profile=baseline preset=ultrafast flags=+qscale b=80000" <br/>
+    /// default:  = "crf=0 preset=superfast" <br/>
     struct video::ffmpeg_options {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "profile=baseline preset=ultrafast flags=+qscale b=80000";
+        type value = "crf=0 preset=superfast";
     };
     /// type: bool <br/>
     /// default: {false} <br/>
