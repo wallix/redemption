@@ -52,7 +52,7 @@ public:
         EventContainer& events,
         ClientRedemptionConfig & config)
     : ClientRedemption(time_base, events, config)
-    , qt_graphic(&this->_callback, &this->config)
+    , qt_graphic(&this->_callback, &this->qt_rdp_keylayout, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
     , qt_socket_listener(this->qt_graphic.get_static_qwidget(), time_base, events)
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
@@ -62,8 +62,6 @@ public:
         this->clientCLIPRDRChannel.set_api(&this->qt_clipboard);
         this->clientRDPDRChannel.set_api(&this->ioDisk);
         this->clientRemoteAppChannel.set_api(&this->qt_graphic);
-
-        this->_callback.set_rdp_keyLayout_api(&this->qt_rdp_keylayout);
 
         this->qt_graphic.init_form();
 

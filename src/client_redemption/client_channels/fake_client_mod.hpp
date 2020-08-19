@@ -253,11 +253,11 @@ public:
 
     void key_event(const int /*flag*/, const int /*key*/, std::string_view /*text*/) override {}
 
-    int get_scancode() override {
+    uint16_t get_scancode() override {
         return 0;
     }
 
-    int get_flag() override {
+    uint16_t get_flag() override {
         return 0;
     }
 };

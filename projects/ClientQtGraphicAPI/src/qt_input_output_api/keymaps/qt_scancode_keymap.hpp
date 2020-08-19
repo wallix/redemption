@@ -112,7 +112,7 @@ class Qt_ScanCode_KeyMap
     bool                                _unvalidScanCode;
 
 public:
-    int scanCode;
+    uint16_t scanCode;
     uint16_t flag;
 
 private:
@@ -149,7 +149,7 @@ private:
             : *this->_layout;
         this->_deadKeys = false;
 
-        if (auto scancode = layout.find(scanCode)) {
+        if (auto scancode = layout.find(this->scanCode)) {
             this->scanCode = scancode;
         }
         else {
@@ -161,7 +161,6 @@ private:
 
     void showkey(const int keyStatusFlag, const int key, const char text) {
         int abc(text);
-        std::string keyStatus;
         if (keyStatusFlag == 0) {
             std::cout << std::hex << "keyPressed=0x" << key << " scanCode=0x" << this->scanCode << " text=\'" << text << "\' text(hexa)=0x" << abc << "." << std::endl;
         } else {

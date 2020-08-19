@@ -33,7 +33,7 @@ public:
 
     virtual void key_event(int flag, int key, std::string_view text) = 0;
 
-    virtual int get_scancode() = 0;
+    virtual uint16_t get_scancode() = 0;
 
-    virtual int get_flag() = 0;
+    virtual uint16_t get_flag() = 0;
 };

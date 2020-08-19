@@ -22,7 +22,6 @@
 
 #include "keyboard/keymap2.hpp"
 #include "client_redemption/client_redemption_api.hpp"
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "mod/internal/replay_mod.hpp"
 
 
@@ -35,7 +34,6 @@ private:
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
 
-    ClientKeyLayoutAPI * rdp_keyLayout_api;
     ReplayMod * replay_mod = nullptr;
 
 public:
@@ -46,12 +44,7 @@ public:
 
     ClientCallback(ClientRedemptionAPI * client)
     : client(client)
-    , rdp_keyLayout_api(nullptr)
     {}
-
-    void set_rdp_keyLayout_api(ClientKeyLayoutAPI * rdp_keyLayout_api) {
-        this->rdp_keyLayout_api = rdp_keyLayout_api;
-    }
 
     mod_api * get_mod() {
         return this->mod;
@@ -115,22 +108,6 @@ public:
     // Controller
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
-    }
-
-    void keyPressEvent(const int key, std::string_view text) {
-        this->rdp_keyLayout_api->key_event(0, key, text);
-        int keyCode = this->rdp_keyLayout_api->get_scancode();
-        if (keyCode != 0) {
-            this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
-        }
-    }
-
-    void keyReleaseEvent(const int key, std::string_view text) {
-        this->rdp_keyLayout_api->key_event(KBD_FLAG_UP, key, text);
-        int keyCode = this->rdp_keyLayout_api->get_scancode();
-        if (keyCode != 0) {
-            this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
-        }
     }
 
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
@@ -209,7 +186,7 @@ public:
         return false;
     }
 
-    void send_rdp_scanCode(int keyCode, int flag) {
+    void send_rdp_scanCode(uint16_t keyCode, uint16_t flag) {
         bool tsk_switch_shortcuts = false;
         Keymap2::DecodedKeys decoded_keys = this->keymap.event(flag, keyCode, tsk_switch_shortcuts);
         switch (decoded_keys.count)

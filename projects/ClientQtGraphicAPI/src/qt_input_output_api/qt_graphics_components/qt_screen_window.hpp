@@ -30,6 +30,7 @@
 
 #include "redemption_qt_include_widget.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
+#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
@@ -71,10 +72,11 @@ public:
 
 private:
     bool           _connexionLasted;
+    ClientKeyLayoutAPI * rdp_keyLayout_api;
 
 
 public:
-    QtScreen(WindowsData * win_data, ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, int w, int h)
+    QtScreen(WindowsData * win_data, ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
     , callback(callback)
@@ -84,6 +86,7 @@ public:
     , _penColor(Qt::black)
     , _cache(cache)
     , _connexionLasted(false)
+    , rdp_keyLayout_api(rdp_keyLayout_api)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);
@@ -122,11 +125,19 @@ public:
     }
 
     void keyPressEvent(QKeyEvent *e) override {
-        this->callback->keyPressEvent(e->key(), e->text().toStdString());
+        this->rdp_keyLayout_api->key_event(0, e->key(), e->text().toStdString());
+        uint16_t keyCode = this->rdp_keyLayout_api->get_scancode();
+        if (keyCode) {
+            this->callback->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
+        }
     }
 
     void keyReleaseEvent(QKeyEvent *e) override {
-        this->callback->keyReleaseEvent(e->key(), e->text().toStdString());
+        this->rdp_keyLayout_api->key_event(KBD_FLAG_UP, e->key(), e->text().toStdString());
+        uint16_t keyCode = this->rdp_keyLayout_api->get_scancode();
+        if (keyCode) {
+            this->callback->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
+        }
     }
 
     void wheelEvent(QWheelEvent *e) override {
@@ -223,8 +234,8 @@ public:
 
 
 
-    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(wind_data, callback, /*client_graphic_api, */cache, width, height)
+    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(wind_data, callback, rdp_keyLayout_api, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -350,8 +361,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, bool is_spanning, std::string & target_IP)
-        : QtScreen(wind_data, callback, /*client_graphic_api,*/ cache, cache->width(), cache->height())
+    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, QPixmap * cache, bool is_spanning, std::string & target_IP)
+        : QtScreen(wind_data, callback, rdp_keyLayout_api, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -480,8 +491,8 @@ public:
     time_t real_time_record;
 
 public:
-    ReplayQtScreen (ClientCallback * callback, /*ClientOutputGraphicAPI * client_graphic_api,*/ QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
-        : QtScreen(win_data, callback, /*client_graphic_api,*/ cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
+        : QtScreen(win_data, callback, rdp_keyLayout_api, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)

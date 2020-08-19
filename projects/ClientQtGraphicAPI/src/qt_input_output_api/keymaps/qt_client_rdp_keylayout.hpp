@@ -48,11 +48,11 @@ public:
         this->qtRDPKeymap.keyEvent(flag, key, text);
     }
 
-    int get_scancode() override {
+    uint16_t get_scancode() override {
         return this->qtRDPKeymap.scanCode;
     }
 
-    int get_flag() override {
+    uint16_t get_flag() override {
         return this->qtRDPKeymap.flag;
     }
 };
