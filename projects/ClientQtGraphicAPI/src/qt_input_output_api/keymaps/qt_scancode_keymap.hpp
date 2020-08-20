@@ -18,524 +18,202 @@
    Author(s): Clément Moroldo
 */
 
-
-/******************************************************************************
- *
- *  =================
- *    DOCUMENTATION
- *  =================
- *
- *  Qt_ScanCode_KeyMap matches Qt key codes you get when catching a QKeyEvent to standard scan codes.
- *
- *
- *
- *  Basic example:
- *  --------------
- *
- *      #include "Qt_ScanCode_KeyMap.hpp"
- *
- *
- *
- *
- *      void keyPressEvent(QKeyEvent * keyEvent) {                              // standard Qt function to catch a key press event
- *
- *           Qt_ScanCode_KeyMap qsckm();                                        // construct a Qt_ScanCode_KeyMap.
- *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US);                        // Keyboard language can be set using KEYBOARDS enum.
- *           Qt_ScanCode_KeyMap qsckm(KEYBOARDS::EN_US, verbose);               // verbose is an integer.
- *
- *           qsckm.setKeyboardLayout(KEYBOARDS::EN_US);                         // set keyboard type from KEYBOARDS::
- *
- *           qsckm.keyQtEvent(Qt_ScanCode_KeyMap::KBD_FLAGS_PRESS, keyEvent);   // call keyEvent(uint16_t keyStatusFlag, QKeyEvent * keyEvent),
- *                                                                              // if key is pressed then keyStatusFlag = Qt_ScanCode_KeyMap::KBD_FLAGS_PRESS or 0,
- *                                                                              // if key is released keyStatusFlag = Qt_ScanCode_KeyMap::KBD_FLAGS_RELEASE or 0x8000 .
- *
- *           int Scan_Code     = qsckm.scanCode;                                // retrieve the scan code (The Unicode character input code. ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
- *
- *           uint16_t Keyboard_Flag = qsckm.flag;                               // retrieve the 2 bytes keyboard flag (A 16-bit unsigned integer. The flags describing the Unicode keyboard event.
- *                                                                              //                                     ref: msdn.microsoft.com 2.2.8.1.1.3.1.1.2 )
- *       }
- *
- *
- *
- *  Customize:
- *  ----------
- *
- *      Qt_ScanCode_KeyMap qsckm();
- *
- *                                                                              // code and an ASCII8 code Qt_ScanCode_KeyMap will find within the active keyboard layout. Else you can directly
- *                                                                              // match a Qt key code with scan code as well. Set a variable to 0 to avoid the match.
- *
- *
- *  Get data:
- *  ---------
- *
- *      const Keylayout_r * keylayoutsList[];                                   // The keyboard language list is a static const variable.
- *
- *      char * name = keylayoutsList[i]->locale_name;                           // keylayout IDs and names are public.
- *
- *      int ID = keylayoutsList[i]->LCID;
- *
- *
- *
- *  Error Messages:
- *  ---------------
- *
- *      # Error: Key(0x1001257) not recognized.                                                         // Qt didn't identify this key, its Qt key code can be add as custom match or improve the code.
- *
- *      # Unknown key(0x1001257) to current layout 0x40c fr-FR.                                         // Qt identified this key as a character, but it didn't match inside the specific current character layout
- *                                                                                                      // change the current layout or improve current layout table
- *
- *      # Unknown keyboard layout (0x1). Reverting to default (English - United States - International) // If you call the constructor setting an unknown layout ID, default layout is set instead
- *
- *
- *****************************************************************************/
-
-
 #pragma once
 
+#include "reversed_keymaps/keylayout_r.hpp"
 
-#include <iostream>
-#include <string_view>
-#include "reversed_keymaps/keylayouts_r.hpp"
-#include <QtGui/QKeyEvent>
+#include <QtCore/QEvent>
+
+#include "utils/log.hpp"
 
 class Qt_ScanCode_KeyMap
 {
-    int                                 _verbose;
+    int8_t _keyboardMods = 0;
+    Keylayout_r::KeyLayoutMap_t currentLayout;
+    Keylayout_r::KeyLayoutMap_t const* currentDeadLayout = nullptr;
+    Keylayout_r::DeadKeyLayoutMap_t deadLayout;
+    Keylayout_r::KeyLayoutMap_t layouts[9];
 
-    uint8_t                             _keyboardMods;
-    const Keylayout_r                 * _keylayout_WORK;
-    const Keylayout_r::KeyLayoutMap_t * _layoutMods[9];
-    const Keylayout_r::KeyLayoutMap_t * _layout;
-
-    bool                                _deadKeys;
-    bool                                _unvalidScanCode;
+    enum : int8_t
+    {
+        NO_MOD       = 0x00,
+        SHIFT_MOD    = 0x01,
+        ALTGR_MOD    = 0x02,
+        CAPSLOCK_MOD = 0x04,
+        CTRL_MOD     = 0x08,
+        ALT_MOD      = 0x10,
+    };
 
 public:
-    uint16_t scanCode;
-    uint16_t flag;
+    Qt_ScanCode_KeyMap(Keylayout_r const& keylayout)
+    {
+        this->setKeyboardLayout(keylayout);
+    }
 
-private:
-    int qKeyCode;
+    void setKeyboardLayout(Keylayout_r const& keylayout)
+    {
+        LOG(LOG_DEBUG, "layout = %s", keylayout.locale_name);
+        this->layouts[NO_MOD] = keylayout.noMod;
+        this->layouts[SHIFT_MOD] = keylayout.shift;
+        this->layouts[ALTGR_MOD] = keylayout.altGr;
+        this->layouts[CTRL_MOD] = keylayout.ctrl;
 
-    enum : int {
-          ALT_MOD      = 0x10
-        , CTRL_MOD     = 0x08
-        , CAPSLOCK_MOD = 0x04
-        , ALTGR_MOD    = 0x02
-        , SHIFT_MOD    = 0x01
-        , NO_MOD       = 0x00
+        this->layouts[SHIFT_MOD | ALTGR_MOD] = keylayout.shiftAltGr;
+
+        this->layouts[CAPSLOCK_MOD] = keylayout.capslock_noMod;
+        this->layouts[CAPSLOCK_MOD | SHIFT_MOD] = keylayout.capslock_shift;
+        this->layouts[CAPSLOCK_MOD | ALTGR_MOD] = keylayout.capslock_altGr;
+        this->layouts[CAPSLOCK_MOD | SHIFT_MOD | ALTGR_MOD] = keylayout.capslock_shiftAltGr;
+
+        this->deadLayout = keylayout.dead;
+        this->currentLayout = keylayout.noMod;
+        this->currentDeadLayout = nullptr;
+    }
+
+    struct Scancode
+    {
+        uint16_t scancode;
+        uint16_t flag;
     };
 
-    enum : int {
-          MAX_CHAR_QT_KEY_VALUE     = 256
-        , MIN_NON_CHAR_QT_KEY_VALUE = 0x00FFFFFF
-        , MIN_DEAD_QT_KEY_VALUE     = 0x01001249
-        , MAX_DEAD_QT_KEY_VALUE     = 0x01001263
-        , MASK_ALT                  = 0x0F
-    };
-
-    enum : int {
-           KBD_FLAGS_PRESS    = 0x0000
-         , KBD_FLAGS_EXTENDED = 0x0100
-         , KBD_FLAGS_DOWN     = 0x4000
-         , KBD_FLAGS_RELEASE  = 0x8000
-    };
-
-    void applyCharTable()
+    Scancode keyEvent(uint16_t flag, const int key)
     {
-        Keylayout_r::KeyLayoutMap_t const& layout = this->_deadKeys
-            ? this->_keylayout_WORK->deadkeys
-            : *this->_layout;
-        this->_deadKeys = false;
+        auto update_modifier = [&](int modifier){
+            if (flag == 0) {
+                this->_keyboardMods += modifier;
+            }
+            else {
+                this->_keyboardMods -= modifier;
+            }
 
-        if (auto scancode = layout.find(this->scanCode)) {
-            this->scanCode = scancode;
-        }
-        else {
-            std::cerr << std::hex << "Unknown key(0x" << this->scanCode << ") to current layout 0x" << this->_keylayout_WORK->LCID << " " << this->_keylayout_WORK->locale_name << "." << std::endl;
-            this->_unvalidScanCode = true;
-        }
-    }
+            auto mods = this->_keyboardMods;
+            if ((mods & (CTRL_MOD | ALT_MOD)) == (CTRL_MOD | ALT_MOD)) {
+                mods &= ~(CTRL_MOD | ALT_MOD);
+                mods |= ALTGR_MOD;
+            }
+            else if (mods & ALTGR_MOD) {
+                mods &= ~(CTRL_MOD | ALT_MOD);
+            }
+            else if (mods & CTRL_MOD) {
+                mods = CTRL_MOD;
+            }
+            else {
+                mods &= ~ALT_MOD; // ALT has no mod
+            }
 
+            this->currentLayout = this->layouts[mods];
+        };
 
-    void showkey(const int keyStatusFlag, const int key, const char text) {
-        int abc(text);
-        if (keyStatusFlag == 0) {
-            std::cout << std::hex << "keyPressed=0x" << key << " scanCode=0x" << this->scanCode << " text=\'" << text << "\' text(hexa)=0x" << abc << "." << std::endl;
-        } else {
-            std::cout << std::hex << "keyRelease=0x" << key << " scanCode=0x" << this->scanCode << " text=\'" << text << "\' text(hexa)=0x" << abc << "." << std::endl;
-        }
-    }
+        const uint16_t extended = flag | 0x100;
 
-
-    void layout_Work_Update() {
-        //                                         ___________________________________________________________________
-        //                                        |       |       |        |       |       |        |        |        |
-        //   bitcode for _keyboardMods (unint8):  |   0   |   0   |   0    | ALT   | CTRL  | CAPS   | ALTGR  | SHFT   |
-        //                                        |_______|_______|________|_______|_______|________|________|________|
-        //
-        if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
-            this->_layout = this->_layoutMods[CTRL_MOD];
-        } else {
-            this->_layout = this->_layoutMods[this->_keyboardMods & MASK_ALT];   // set appropriate mod (ALT has no mod)
-        }
-    }
-
-    void getKeyChar(const char text)
-    {
-        switch (this->qKeyCode) {
-            case Qt::Key_Eacute      : this->scanCode = 0xE9; break; /*é*/
-            case Qt::Key_Ccedilla    : this->scanCode = 0xE7; break; /*ç*/
-            case Qt::Key_Agrave      : this->scanCode = 0xE0; break; /*à*/
-            case Qt::Key_Ugrave      : this->scanCode = 0xF9; break; /*ù*/
-            case Qt::Key_Egrave      : this->scanCode = 0xE8; break; /*è*/
-            case Qt::Key_section     : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_twosuperior : this->scanCode = 0xB2; break; // square
-            case Qt::Key_sterling    : this->scanCode = 0xA3; break; // £
-            case Qt::Key_currency    : this->scanCode = 0x1B; break; //
-            case Qt::Key_degree      : this->scanCode = 0xB0; break; // °
-            case Qt::Key_mu          : this->scanCode = 0xB5; break; /*µ*/
-            case Qt::Key_Slash    :
-                if (this->_keyboardMods == 0) {
-                    this->scanCode = 0x21;
-                    this->flag = this->flag | KBD_FLAGS_EXTENDED;
-                }
-                break;
-
-            default:
-                this->scanCode = text;
-                break;
+        switch (key) {
+            case Qt::Key_Alt        : update_modifier(ALT_MOD);      return {0x38, flag};
+            case Qt::Key_AltGr      : update_modifier(ALTGR_MOD);    return {0x38, extended};
+            case Qt::Key_Control    : update_modifier(CTRL_MOD);     return {0x1D, extended};
+            case Qt::Key_Shift      : update_modifier(SHIFT_MOD);    return {0x36, flag};
+            case Qt::Key_CapsLock   : update_modifier(CAPSLOCK_MOD); return {0x3A, flag};
         }
 
-        this->applyCharTable();
-    }
-
-    void getCharShortCut() {
-
-        switch (this->qKeyCode) {
-            case Qt::Key_A         : this->scanCode = 'a'; break;
-            case Qt::Key_Z         : this->scanCode = 'z'; break;
-            case Qt::Key_Y         : this->scanCode = 'y'; break;
-            case Qt::Key_X         : this->scanCode = 'x'; break;
-            case Qt::Key_C         : this->scanCode = 'c'; break;
-            case Qt::Key_V         : this->scanCode = 'v'; break;
-            case Qt::Key_E         : this->scanCode = 'e'; break;
-            case Qt::Key_R         : this->scanCode = 'r'; break;
-            case Qt::Key_T         : this->scanCode = 't'; break;
-            case Qt::Key_U         : this->scanCode = 'u'; break;
-            case Qt::Key_I         : this->scanCode = 'i'; break;
-            case Qt::Key_Asterisk  : this->scanCode = '*'; break;
-            case Qt::Key_B         : this->scanCode = 'b'; break;
-            case Qt::Key_Underscore: this->scanCode = '_'; break;
-            case Qt::Key_D         : this->scanCode = 'd'; break;
-            case Qt::Key_QuoteDbl  : this->scanCode = '"'; break;
-            case Qt::Key_F         : this->scanCode = 'f'; break;
-            case Qt::Key_Apostrophe: this->scanCode = '\'' ; break;
-            case Qt::Key_G         : this->scanCode = 'g'; break;
-            case Qt::Key_Comma     : this->scanCode = ','; break;
-            case Qt::Key_H         : this->scanCode = 'h'; break;
-            case Qt::Key_Plus      : this->scanCode = '+'; break;
-            case Qt::Key_J         : this->scanCode = 'j'; break;
-            case Qt::Key_Minus     : this->scanCode = '-'; break;
-            case Qt::Key_K         : this->scanCode = 'k'; break;
-            case Qt::Key_ParenLeft : this->scanCode = '('; break;
-            case Qt::Key_L         : this->scanCode = 'l'; break;
-            case Qt::Key_ParenRight: this->scanCode = ')'; break;
-            case Qt::Key_M         : this->scanCode = 'm'; break;
-            case Qt::Key_Equal     : this->scanCode = '='; break;
-            case Qt::Key_N         : this->scanCode = 'n'; break;
-            case Qt::Key_Exclam    : this->scanCode = '!'; break;
-            case Qt::Key_O         : this->scanCode = 'o'; break;
-            case Qt::Key_Colon     : this->scanCode = ':'; break;
-            case Qt::Key_P         : this->scanCode = 'p'; break;
-            case Qt::Key_Dollar    : this->scanCode = '$'; break;
-            case Qt::Key_Q         : this->scanCode = 'q'; break;
-            case Qt::Key_multiply  : this->scanCode = '*'; break;
-            case Qt::Key_S         : this->scanCode = 's'; break;
-            case Qt::Key_Space     : this->scanCode = ' '; break;
-            case Qt::Key_W         : this->scanCode = 'w'; break;
-            case Qt::Key_section   : this->scanCode = 0xA7; break; /*§*/
-            case Qt::Key_Eacute    : this->scanCode = 0x0E; break; /*é*/
-            case Qt::Key_degree    : this->scanCode = 0xB0; break; /*°*/
-            case Qt::Key_Ccedilla  : this->scanCode = 0xE7; break; /*ç*/
-            case Qt::Key_Agrave    : this->scanCode = 0xE0; break; /*à*/
-            case Qt::Key_Ugrave    : this->scanCode = 0xF9; break; /*ù*/
-            case Qt::Key_Egrave    : this->scanCode = 0xE8; break; /*è*/
-            case Qt::Key_twosuperior: this->scanCode = 0xB2; break; // œ or square
-            case Qt::Key_Slash     :
-                if (this->_keyboardMods == 0) {
-                    this->scanCode = 0x21;
-                    this->flag = this->flag | KBD_FLAGS_EXTENDED;
-                }
-                break; /* / */
-
-            default: break;
-        }
-
-        if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
-            this->_layout = _layoutMods[NO_MOD]; // noMod
-        }
-
-        this->applyCharTable();
-
-        if ((this->_keyboardMods & CTRL_MOD) == CTRL_MOD) {
-            this->_layout = _layoutMods[CTRL_MOD];  // ctrl mod
-        }
-    }
-
-    void getNonCharKeys() {
-        switch (this->qKeyCode) {
-
-        //------------------------------------------
-        //    Not mod neither char keys Extended
-        //------------------------------------------
-            case Qt::Key_Enter      : this->scanCode = 0x1C; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  ENTER KP
-            case Qt::Key_NumLock    : this->scanCode = 0x45; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  NUMLOCK
-            case Qt::Key_Insert     : this->scanCode = 0x52; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  INSERT
-            case Qt::Key_Delete     : this->scanCode = 0x53; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  DELETE
-            case Qt::Key_End        : this->scanCode = 0x4F; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  END
-            case Qt::Key_PageDown   : this->scanCode = 0x51; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  PG DN
-            case Qt::Key_PageUp     : this->scanCode = 0x49; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  PG UP
-            case Qt::Key_Up         : this->scanCode = 0x48; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  U ARROW
-            case Qt::Key_Left       : this->scanCode = 0x4B; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  L ARROW
-            case Qt::Key_Down       : this->scanCode = 0x50; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  D ARROW
-            case Qt::Key_Right      : this->scanCode = 0x4D; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  R ARROW
-            case Qt::Key_Meta       : this->scanCode = 0x5b; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  R and L WINDOW
-            case Qt::Key_Menu       : this->scanCode = 0x5D; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  MENU APPS
-	    case Qt::Key_Home       : this->scanCode = 0x47; this->flag = this->flag | KBD_FLAGS_EXTENDED; break; //  HOME
-    //------------------------------------------------------------------------------------------------------------------------
-        //---------------------------------------------
-        //    Not mod neither char keys NOT Extended
-        //---------------------------------------------
-            case Qt::Key_Return               : this->scanCode = 0x1C; break; //  ENTER
-            case Qt::Key_Backspace            : this->scanCode = 0x0E; break; //  BKSP
-            case Qt::Key_Escape               : this->scanCode = 0x01; break; //  ESCAPE
-            case Qt::Key_F1                   : this->scanCode = 0x3B; break; //  F1
-            case Qt::Key_F2                   : this->scanCode = 0x3C; break; //  F2
-            case Qt::Key_F3                   : this->scanCode = 0x3D; break; //  F3
-            case Qt::Key_F4                   : this->scanCode = 0x3E; break; //  F4
-            case Qt::Key_F5                   : this->scanCode = 0x3F; break; //  F5
-            case Qt::Key_F6                   : this->scanCode = 0x40; break; //  F6
-            case Qt::Key_F7                   : this->scanCode = 0x41; break; //  F7
-            case Qt::Key_F8                   : this->scanCode = 0x42; break; //  F8
-            case Qt::Key_F9                   : this->scanCode = 0x43; break; //  F9
-            case Qt::Key_F10                  : this->scanCode = 0x44; break; //  F10
-            case Qt::Key_F11                  : this->scanCode = 0x57; break; //  F11
-            case Qt::Key_F12                  : this->scanCode = 0x58; break; //  F12
-            case Qt::Key_ScrollLock           : this->scanCode = 0x46; break; //  SCROLL
-            case Qt::Key_Pause                : this->scanCode = 0xE1; break; //  PAUSE
-            case Qt::Key_Tab                  : this->scanCode = 0x0F; break; //  TAB
-
-            case Qt::Key_MediaStop            : this->scanCode = 0x24; break; //
-            case Qt::Key_MediaPrevious        : this->scanCode = 0x10; break; //
-            case Qt::Key_MediaNext            : this->scanCode = 0x19; break; //
-            case Qt::Key_MediaTogglePlayPause : this->scanCode = 0x22; break; //
-            case Qt::Key_LaunchMail           : this->scanCode = 0x47; break; //
-            case Qt::Key_Search               : this->scanCode = 0x47; break; //
-            case Qt::Key_Favorites            : this->scanCode = 0x66; break; //
-            case Qt::Key_HomePage             : this->scanCode = 0x32; break; //
-            case Qt::Key_VolumeDown           : this->scanCode = 0x2E; break; //
-            case Qt::Key_VolumeUp             : this->scanCode = 0x30; break; //
-            case Qt::Key_VolumeMute           : this->scanCode = 0x20; break; //
-            case Qt::Key_PowerOff             : this->scanCode = 0x5E; break; //
-            case Qt::Key_WakeUp               : this->scanCode = 0x63; break; //
-            case Qt::Key_Sleep                : this->scanCode = 0x5F; break; //
-    //----------------------------------------------------------------------
-            //--------------------------
-            //    keyboard modifiers
-            //--------------------------
-            case Qt::Key_Alt : this->scanCode = 0x38;         //  L ALT
-                if (this->flag == 0) {
-                    if (this->_keyboardMods & CTRL_MOD) {
-                        this->_keyboardMods += ALTGR_MOD;
-                        this->_keyboardMods -= CTRL_MOD;
-                    } else {
-                        this->_keyboardMods += ALT_MOD;
-                    }
-                } else {
-                    if (this->_keyboardMods & ALTGR_MOD) {
-                        this->_keyboardMods -= ALTGR_MOD;
-                        this->_keyboardMods += CTRL_MOD;
-                    } else {
-                        this->_keyboardMods -= ALT_MOD;
-                    }
-                }
-                //this->flag = this->flag | KBD_FLAGS_EXTENDED;
-                this->layout_Work_Update();
-                break;
-
-            case Qt::Key_AltGr : this->scanCode = 0x38;       //  R ALT GR
-                if (this->flag == 0) {
-                    if (this->_keyboardMods & CTRL_MOD) {
-                        this->_keyboardMods -= CTRL_MOD;
-                    }
-                    if (this->_keyboardMods & ALT_MOD) {
-                        this->_keyboardMods -= ALT_MOD;
-                    }
-                    this->_keyboardMods += ALTGR_MOD;
-                } else {
-                    this->_keyboardMods -= ALTGR_MOD;
-                }
-                this->flag = this->flag | KBD_FLAGS_EXTENDED;
-                this->layout_Work_Update();
-                break;
-
-            case Qt::Key_Control : this->scanCode = 0x1D;     //  R L CTRL
-                if (this->flag == 0) {
-                    if (this->_keyboardMods & ALT_MOD) {
-                        this->_keyboardMods += ALTGR_MOD;
-                        this->_keyboardMods -= ALT_MOD;
-                    } else {
-                        this->_keyboardMods += CTRL_MOD;
-                    }
-                } else {
-                    if (this->_keyboardMods & ALTGR_MOD) {
-                        this->_keyboardMods -= ALTGR_MOD;
-                        this->_keyboardMods += ALT_MOD;
-                    } else {
-                        this->_keyboardMods -= CTRL_MOD;
-                    }
-                }
-                this->flag = this->flag | KBD_FLAGS_EXTENDED;
-                this->layout_Work_Update();
-                break;
-
-            case Qt::Key_Shift : this->scanCode = 0x36;       // R L SHFT
-                if (this->flag == 0) {
-                    this->_keyboardMods += SHIFT_MOD;
-                } else {
-                    this->_keyboardMods -= SHIFT_MOD;
-                }
-                this->layout_Work_Update();
-                break;
-
-            case Qt::Key_CapsLock : this->scanCode = 0x3A;    //  CAPSLOCK
-                if (this->flag == 0) {
-                    if ((this->_keyboardMods & CAPSLOCK_MOD) == CAPSLOCK_MOD) {
-                        this->_keyboardMods -= CAPSLOCK_MOD;
-                    } else {
-                        this->_keyboardMods += CAPSLOCK_MOD;
-                    }
-                    this->layout_Work_Update();
-                }
-                break;
-
-            default: break;
-        }
-    }
-
-    void getDeadKeys()
-    {
-        switch (this->qKeyCode) {
-            case Qt::Key_Dead_Circumflex       : this->scanCode = 0x5E; this->_deadKeys = true; break; //  ^
-            case Qt::Key_Dead_Grave            : this->scanCode = 0x60; this->_deadKeys = true; break; //  ` grave
-            case Qt::Key_Dead_Tilde            : this->scanCode = 0x7E; this->_deadKeys = true; break; //
-            case Qt::Key_Dead_Diaeresis        : this->scanCode = 0xA8; this->_deadKeys = true; break; // ¨
-            case Qt::Key_Dead_Acute            : this->scanCode = 0xB4; this->_deadKeys = true; break; //
-            case Qt::Key_Dead_Macron           : this->scanCode = 0xAF; this->_deadKeys = true;  break; //
-            case Qt::Key_Dead_Cedilla          : this->scanCode = 0xB8; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Breve            : this->scanCode = ''; this->_deadKeys = true;  break; //
-            //case Qt::Key_Dead_Abovedot         : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Abovering        : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Doubleacute      : this->scanCode = ''; this->_deadKeys = true; break; //
-            //case Qt::Key_Dead_Caron            : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Ogonek           : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Iota             : this->scanCode = ''; this->_deadKeys = true; break;
-            //Case Qt::Key_Dead_Voiced_Sound     : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Semivoiced_Sound : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Belowdot         : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Hook             : this->scanCode = ''; this->_deadKeys = true; break;
-            //case Qt::Key_Dead_Horn             : this->scanCode = ''; this->_deadKeys = true; break;
-
-            default: break;
-        }
-
-        this->applyCharTable();
-    }
-
-public:
-    Qt_ScanCode_KeyMap(int LCID = KEYBOARDS::EN_US_INTERNATIONAL, int verbose = 0):
-      _verbose(verbose)
-    , _keyboardMods(0)
-    , _keylayout_WORK(nullptr)
-    , _layoutMods()
-    , _layout(nullptr)
-    , _deadKeys(false)
-    , _unvalidScanCode(false)
-    {
-        this->setKeyboardLayout(LCID);
-    }
-
-    void setKeyboardLayout(int LCID) {
-        Keylayout_r const* layout = find_keylayout_r(LCID);
-        if (!layout){
-            std::cout << std::hex << "Unknown keyboard layout (0x" << LCID << "). Reverting to default (English - United States - International)." << std::endl;
-            layout = find_keylayout_r(KEYBOARDS::EN_US_INTERNATIONAL);
-        }
-        this->_keylayout_WORK = layout;
-
-        this->_layoutMods[NO_MOD                              ] = &this->_keylayout_WORK->noMod;
-        this->_layoutMods[SHIFT_MOD                           ] = &this->_keylayout_WORK->shift;
-        this->_layoutMods[ALTGR_MOD                           ] = &this->_keylayout_WORK->altGr;
-        this->_layoutMods[ALTGR_MOD    + SHIFT_MOD            ] = &this->_keylayout_WORK->shiftAltGr;
-        this->_layoutMods[CAPSLOCK_MOD + NO_MOD               ] = &this->_keylayout_WORK->capslock_noMod;
-        this->_layoutMods[CAPSLOCK_MOD + SHIFT_MOD            ] = &this->_keylayout_WORK->capslock_shift;
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD            ] = &this->_keylayout_WORK->capslock_altGr;
-        this->_layoutMods[CAPSLOCK_MOD + ALTGR_MOD + SHIFT_MOD] = &this->_keylayout_WORK->capslock_shiftAltGr;
-        this->_layoutMods[CTRL_MOD                            ] = &this->_keylayout_WORK->ctrl;
-
-        this->_layout = this->_layoutMods[0]; // noMod
-    }
-
-    void keyEvent(const uint16_t keyStatusFlag, const int key, const std::string_view text) {
-        this->flag = keyStatusFlag;
-        int keyCode(key);
-        this->_deadKeys = false;
-        this->_unvalidScanCode = false;
-
-        this->qKeyCode = key;
-
-        if (keyCode != 0) {
-
-            if (keyCode < MAX_CHAR_QT_KEY_VALUE ) {
-                if ((this->_keyboardMods & CTRL_MOD) ==  CTRL_MOD || this->_keyboardMods == ALT_MOD) {
-
-                    //--------------------------------------
-                    //      Char ShortCuts CTRL or ALT
-                    //--------------------------------------
-                    this->getCharShortCut();
-                } else {
-
-                    //--------------------------------------
-                    //             CHARACTERS
-                    //--------------------------------------
-                    this->getKeyChar(text[0]);
-                }
-            } else {
-                if (keyCode > MIN_NON_CHAR_QT_KEY_VALUE) {
-                    if (keyCode < MAX_DEAD_QT_KEY_VALUE && keyCode > MIN_DEAD_QT_KEY_VALUE) {
-
-                        //--------------------------------------
-                        //              DEAD KEYS
-                        //--------------------------------------
-                        this->getDeadKeys();
-                    } else {
-
-                        //--------------------------------------
-                        //            NON CHAR KEYS
-                        //--------------------------------------
-                        this->getNonCharKeys();
-                    }
-                }
+        if (this->currentDeadLayout) {
+            auto scancode = key <= 0xffff ? this->currentDeadLayout->find(key) : uint8_t();
+            this->currentDeadLayout = nullptr;
+            if (scancode) {
+                return {scancode, flag};
             }
         }
 
-        if (this->_verbose > 0) {
-            this->showkey(keyStatusFlag, key, text[0]);
+        auto dead_key = [&](uint8_t dkey) {
+            auto scancode = this->layouts[0].find_ascii(dkey);
+            if (scancode) {
+                this->currentDeadLayout = this->deadLayout.find_layout(dkey);
+            }
+            return Scancode{scancode, flag};
+        };
+
+        switch (key) {
+            case Qt::Key_Enter      : return {0x1C, extended};
+            case Qt::Key_NumLock    : return {0x45, extended};
+            case Qt::Key_Insert     : return {0x52, extended};
+            case Qt::Key_Delete     : return {0x53, extended};
+            case Qt::Key_End        : return {0x4F, extended};
+            case Qt::Key_PageDown   : return {0x51, extended};
+            case Qt::Key_PageUp     : return {0x49, extended};
+            case Qt::Key_Up         : return {0x48, extended};
+            case Qt::Key_Left       : return {0x4B, extended};
+            case Qt::Key_Down       : return {0x50, extended};
+            case Qt::Key_Right      : return {0x4D, extended};
+            case Qt::Key_Meta       : return {0x5b, extended};
+            case Qt::Key_Menu       : return {0x5D, extended};
+            case Qt::Key_Home       : return {0x47, extended};
+
+            case Qt::Key_Return     : return {0x1C, flag};
+            case Qt::Key_Backspace  : return {0x0E, flag};
+            case Qt::Key_Escape     : return {0x01, flag};
+            case Qt::Key_F1         : return {0x3B, flag};
+            case Qt::Key_F2         : return {0x3C, flag};
+            case Qt::Key_F3         : return {0x3D, flag};
+            case Qt::Key_F4         : return {0x3E, flag};
+            case Qt::Key_F5         : return {0x3F, flag};
+            case Qt::Key_F6         : return {0x40, flag};
+            case Qt::Key_F7         : return {0x41, flag};
+            case Qt::Key_F8         : return {0x42, flag};
+            case Qt::Key_F9         : return {0x43, flag};
+            case Qt::Key_F10        : return {0x44, flag};
+            case Qt::Key_F11        : return {0x57, flag};
+            case Qt::Key_F12        : return {0x58, flag};
+            case Qt::Key_ScrollLock : return {0x46, flag};
+            case Qt::Key_Pause      : return {0xE1, flag};
+            case Qt::Key_Tab        : return {0x0F, flag};
+            case Qt::Key_Backtab    : return {0x0F, flag};  // Shift + tab
+
+            case Qt::Key_MediaStop            : return {0x24, extended};
+            case Qt::Key_MediaPrevious        : return {0x10, extended};
+            case Qt::Key_MediaNext            : return {0x19, extended};
+            case Qt::Key_MediaTogglePlayPause : return {0x22, extended};
+            case Qt::Key_LaunchMail           : return {0x47, extended};
+            case Qt::Key_Search               : return {0x47, extended};
+            case Qt::Key_Favorites            : return {0x66, extended};
+            case Qt::Key_HomePage             : return {0x32, extended};
+            case Qt::Key_VolumeDown           : return {0x2E, extended};
+            case Qt::Key_VolumeUp             : return {0x30, extended};
+            case Qt::Key_VolumeMute           : return {0x20, extended};
+            case Qt::Key_PowerOff             : return {0x5E, extended};
+            case Qt::Key_WakeUp               : return {0x63, extended};
+            case Qt::Key_Sleep                : return {0x5F, extended};
+
+            case Qt::Key_Dead_Circumflex       : return dead_key(0x5E);
+            case Qt::Key_Dead_Grave            : return dead_key(0x60);
+            case Qt::Key_Dead_Tilde            : return dead_key(0x7E);
+            case Qt::Key_Dead_Diaeresis        : return dead_key(0xA8);
+            case Qt::Key_Dead_Acute            : return dead_key(0xB4);
+            case Qt::Key_Dead_Macron           : return dead_key(0xAF);
+            case Qt::Key_Dead_Cedilla          : return dead_key(0xB8);
+            // case Qt::Key_Dead_Breve            : return {0, flag};
+            // case Qt::Key_Dead_Abovedot         : return {0, flag};
+            // case Qt::Key_Dead_Abovering        : return {0, flag};
+            // case Qt::Key_Dead_Doubleacute      : return {0, flag};
+            // case Qt::Key_Dead_Caron            : return {0, flag};
+            // case Qt::Key_Dead_Ogonek           : return {0, flag};
+            // case Qt::Key_Dead_Iota             : return {0, flag};
+            // case Qt::Key_Dead_Voiced_Sound     : return {0, flag};
+            // case Qt::Key_Dead_Semivoiced_Sound : return {0, flag};
+            // case Qt::Key_Dead_Belowdot         : return {0, flag};
+            // case Qt::Key_Dead_Hook             : return {0, flag};
+            // case Qt::Key_Dead_Horn             : return {0, flag};
+
+            default:
+                if (key < 0x7F) {
+                    uint8_t lower = ('A' <= key && key <= 'Z') ? key + 'a' - 'A' : key;
+                    if (auto scancode = this->currentLayout.find_ascii(lower)) {
+                        return {scancode, flag};
+                    }
+                }
+                return {0, flag};
         }
-        if (this->_unvalidScanCode) {
-            this->scanCode = 0;
-        }
+    }
+
+    Scancode unicodeToScancode(uint16_t keycode) const
+    {
+        return {this->currentLayout.find(keycode), 0};
     }
 };

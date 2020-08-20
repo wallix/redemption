@@ -22,10 +22,8 @@
 #pragma once
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_callback.hpp"
-
-
-#include "../keymaps/qt_scancode_keymap.hpp"
+#include "reversed_keymaps/keylayouts_r.hpp"
+#include "reversed_keymaps/keylayout_r.hpp"
 
 #include "redemption_qt_include_widget.hpp"
 
@@ -40,6 +38,8 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+
+class ClientCallback;
 
 
 class QtKeyLabel :  public QWidget

@@ -25,8 +25,9 @@
 
 #pragma once
 
-#include "reversed_keymaps/keylayout_r.hpp"
 #include "utils/sugar/array_view.hpp"
+
+class Keylayout_r;
 
 Keylayout_r const* find_keylayout_r(int LCID) noexcept;
 

@@ -30,7 +30,6 @@
 #include "qt_input_output_api/qt_IO_graphic_mouse_keyboard.hpp"
 #include "qt_input_output_api/qt_input_socket.hpp"
 #include "qt_input_output_api/IO_disk.hpp"
-#include "qt_input_output_api/keymaps/qt_client_rdp_keylayout.hpp"
 #include "system/scoped_ssl_init.hpp"
 
 
@@ -43,7 +42,6 @@ private:
     QtOutputSound qt_sound;
     QtInputSocket qt_socket_listener;
     QtInputOutputClipboard qt_clipboard;
-    QtClientRDPKeyLayout qt_rdp_keylayout;
     IODisk ioDisk;
 
 public:
@@ -52,7 +50,7 @@ public:
         EventContainer& events,
         ClientRedemptionConfig & config)
     : ClientRedemption(time_base, events, config)
-    , qt_graphic(&this->_callback, &this->qt_rdp_keylayout, &this->config)
+    , qt_graphic(&this->_callback, *find_keylayout_r(KEYBOARDS::EN_US_INTERNATIONAL), &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
     , qt_socket_listener(this->qt_graphic.get_static_qwidget(), time_base, events)
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
@@ -157,7 +155,7 @@ public:
     }
 
     void update_keylayout() override {
-        this->qt_rdp_keylayout.update_keylayout(this->config.info.keylayout);
+        this->qt_graphic.updateKeylayout(this->config.info.keylayout);
 
         ClientRedemption::update_keylayout();
     }

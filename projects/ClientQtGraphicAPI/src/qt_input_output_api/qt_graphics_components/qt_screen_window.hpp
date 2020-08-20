@@ -28,9 +28,9 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
 
+#include "qt_input_output_api/keymaps/qt_scancode_keymap.hpp"
 #include "redemption_qt_include_widget.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 
 #include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
@@ -62,7 +62,6 @@ private:
 
 public:
     ClientCallback * callback;
-//     ClientOutputGraphicAPI * client_graphic_api;
 
     int            _width;
     int            _height;
@@ -72,21 +71,19 @@ public:
 
 private:
     bool           _connexionLasted;
-    ClientKeyLayoutAPI * rdp_keyLayout_api;
-
+    Qt_ScanCode_KeyMap qtRDPKeymap;
 
 public:
-    QtScreen(WindowsData * win_data, ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, QPixmap * cache, int w, int h)
+    QtScreen(WindowsData * win_data, ClientCallback * callback, Keylayout_r const& keylayout, QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
     , callback(callback)
-//     , client_graphic_api(client_graphic_api)
     , _width(w)
     , _height(h)
     , _penColor(Qt::black)
     , _cache(cache)
     , _connexionLasted(false)
-    , rdp_keyLayout_api(rdp_keyLayout_api)
+    , qtRDPKeymap(keylayout)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);
@@ -103,7 +100,12 @@ public:
         }
     }
 
-    virtual void mouseReleaseEvent(QMouseEvent *e) override {
+    void updateKeylayout(Keylayout_r const& keylayout)
+    {
+        this->qtRDPKeymap.setKeyboardLayout(keylayout);
+    }
+
+    void mouseReleaseEvent(QMouseEvent *e) override {
         int flag(0);
         switch (e->button()) {
 
@@ -124,21 +126,31 @@ public:
         this->callback->mouseButtonEvent(x, y, flag);
     }
 
-    void keyPressEvent(QKeyEvent *e) override {
-        LOG(LOG_DEBUG, "%x", e->nativeVirtualKey());
-        this->rdp_keyLayout_api->key_event(0, e->key(), e->text().toStdString());
-        uint16_t keyCode = this->rdp_keyLayout_api->get_scancode();
-        if (keyCode) {
-            this->callback->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
+    void send_scancode(uint16_t flag, QKeyEvent *e)
+    {
+        auto scancode1 = this->qtRDPKeymap.keyEvent(flag, e->key());
+        if (scancode1.scancode) {
+            this->callback->send_rdp_scanCode(scancode1.scancode, scancode1.flag);
+        }
+        else {
+            QString text = e->text();
+            if (text.size() == 1) {
+                auto scancode2 = this->qtRDPKeymap.unicodeToScancode(text[0].unicode());
+                if (scancode2.scancode) {
+                    this->callback->send_rdp_scanCode(scancode2.scancode, flag);
+                }
+            }
         }
     }
 
-    void keyReleaseEvent(QKeyEvent *e) override {
-        this->rdp_keyLayout_api->key_event(KBD_FLAG_UP, e->key(), e->text().toStdString());
-        uint16_t keyCode = this->rdp_keyLayout_api->get_scancode();
-        if (keyCode) {
-            this->callback->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
-        }
+    void keyPressEvent(QKeyEvent *e) override
+    {
+        this->send_scancode(0, e);
+    }
+
+    void keyReleaseEvent(QKeyEvent *e) override
+    {
+        this->send_scancode(KBD_FLAG_UP, e);
     }
 
     void wheelEvent(QWheelEvent *e) override {
@@ -235,8 +247,8 @@ public:
 
 
 
-    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(wind_data, callback, rdp_keyLayout_api, cache, width, height)
+    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, Keylayout_r const& keylayout, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(wind_data, callback, keylayout, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -362,8 +374,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, QPixmap * cache, bool is_spanning, std::string & target_IP)
-        : QtScreen(wind_data, callback, rdp_keyLayout_api, cache, cache->width(), cache->height())
+    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, Keylayout_r const& keylayout, QPixmap * cache, bool is_spanning, std::string & target_IP)
+        : QtScreen(wind_data, callback, keylayout, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -492,8 +504,8 @@ public:
     time_t real_time_record;
 
 public:
-    ReplayQtScreen (ClientCallback * callback, ClientKeyLayoutAPI * rdp_keyLayout_api, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
-        : QtScreen(win_data, callback, rdp_keyLayout_api, cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientCallback * callback, Keylayout_r const& keylayout, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
+        : QtScreen(win_data, callback, keylayout, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)

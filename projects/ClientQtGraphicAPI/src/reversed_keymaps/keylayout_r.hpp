@@ -48,12 +48,6 @@
 
 struct Keylayout_r
 {
-    enum {
-          MAX_DEADKEYS = 35
-        , MAX_SECOND_KEYS = 35
-        , MAX_LAYOUT_CHARS = 128
-    };
-
     struct KeyLayoutMap_t
     {
         using scancode_type = uint8_t;
@@ -61,7 +55,8 @@ struct Keylayout_r
         struct data_type
         {
             uint8_t high;
-            const scancode_type* scancodes;
+            // array of 256 elements
+            scancode_type const* scancodes;
         };
 
         array_view<data_type> scancodes_list;
@@ -70,18 +65,42 @@ struct Keylayout_r
         {
             for (data_type const& d : scancodes_list) {
                 if (REDEMPTION_LIKELY(d.high == uint8_t(uchar >> 8u))) {
-                    return d.scancodes[uchar & 0xff];
+                    scancode_type scancode = d.scancodes[uchar & 0xff];
+                    if (REDEMPTION_LIKELY(scancode)) {
+                        return scancode;
+                    }
                 }
             }
             return 0;
+        }
+
+        scancode_type find_ascii(uint8_t uchar) const
+        {
+            return scancodes_list[0].scancodes[uchar];
+        }
+    };
+
+    struct DeadKeyLayoutMap_t
+    {
+        uint8_t const* high_ids;
+        // view on array of u8[256]
+        uint8_t const* const* low_ids;
+        KeyLayoutMap_t const* layouts;
+
+        KeyLayoutMap_t const* find_layout(uint16_t uchar) const
+        {
+            if (auto id = high_ids[uchar >> 8]) {
+                if (auto layout_id = low_ids[id-1][uchar & 0xffu]) {
+                    return &layouts[layout_id-1];
+                }
+            }
+
+            return nullptr;
         }
     };
 
     int LCID; // Microsoft Locale ID code used for keyboard layouts
     char const * locale_name;
-
-    // keylayout working tables (X11 mode : begins in 8e position.)
-    // Each one contains at most MAX_LAYOUT_CHARS key mappings for a given modifier keys combination
 
     KeyLayoutMap_t noMod;
     KeyLayoutMap_t shift;
@@ -92,45 +111,5 @@ struct Keylayout_r
     KeyLayoutMap_t capslock_shift;
     KeyLayoutMap_t capslock_altGr;
     KeyLayoutMap_t capslock_shiftAltGr;
-    KeyLayoutMap_t deadkeys;
-
-    uint8_t nbDeadkeys;  // Effective number of deadkeys for the locale
-
-    uint32_t verbose;
-
-
-    Keylayout_r ( int LCID
-                , char const * LCID_locale_name
-                , KeyLayoutMap_t LCID_noMod
-                , KeyLayoutMap_t LCID_shift
-                , KeyLayoutMap_t LCID_altGr
-                , KeyLayoutMap_t LCID_shiftAltGr
-                , KeyLayoutMap_t LCID_ctrl
-                , KeyLayoutMap_t LCID_capslock_noMod
-                , KeyLayoutMap_t LCID_capslock_shift
-                , KeyLayoutMap_t LCID_capslock_altGr
-                , KeyLayoutMap_t LCID_capslock_shiftAltGr
-                , KeyLayoutMap_t LCID_deadkeys
-                , uint8_t nbDeadkeys
-                , uint32_t verbose = 0
-             )
-        : LCID(LCID)
-        , locale_name(LCID_locale_name)
-        , noMod(LCID_noMod)
-        , shift(LCID_shift)
-        , altGr(LCID_altGr)
-        , shiftAltGr(LCID_shiftAltGr)
-        , ctrl(LCID_ctrl)
-        , capslock_noMod(LCID_capslock_noMod)
-        , capslock_shift(LCID_capslock_shift)
-        , capslock_altGr(LCID_capslock_altGr)
-        , capslock_shiftAltGr(LCID_capslock_shiftAltGr)
-        , deadkeys(LCID_deadkeys)
-        , nbDeadkeys(nbDeadkeys)
-        , verbose(verbose)
-    {}
-
-
-    Keylayout_r (Keylayout_r const &) = delete;
-    Keylayout_r & operator=(Keylayout_r const &) = delete;
+    DeadKeyLayoutMap_t dead;
 };
