@@ -590,7 +590,7 @@ struct CSCore {
         if (this->length == 230) { return; }
 
         stream.out_uint32_le(this->deviceScaleFactor);
-        if (this->length == 234) { return; }
+        //if (this->length == 234) { return; }
     }
 
     public:
@@ -699,6 +699,16 @@ struct CSCore {
         LOG(LOG_INFO, "cs_core::pad1octet = %u", this->pad1octet);
         if (this->length < 216) { return; }
         LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
+        if (this->length < 220) { return; }
+        LOG(LOG_INFO, "cs_core::desktopPhysicalWidth = %u", this->desktopPhysicalWidth);
+        if (this->length < 224) { return; }
+        LOG(LOG_INFO, "cs_core::desktopPhysicalHeight = %u", this->desktopPhysicalHeight);
+        if (this->length < 226) { return; }
+        LOG(LOG_INFO, "cs_core::desktopOrientation = %u", this->desktopOrientation);
+        if (this->length < 230) { return; }
+        LOG(LOG_INFO, "cs_core::desktopScaleFactor = %u", this->desktopScaleFactor);
+        if (this->length < 234) { return; }
+        LOG(LOG_INFO, "cs_core::deviceScaleFactor = %u", this->deviceScaleFactor);
     }
 };
 } // namespace UserData

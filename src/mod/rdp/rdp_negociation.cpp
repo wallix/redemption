@@ -896,9 +896,6 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             if (this->nego.tls){
                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
             }
-            if (bool(this->verbose & RDPVerbose::security)) {
-                cs_core.log("Sending to Server");
-            }
 
             if (has_scale_factor) {
                 cs_core.desktopPhysicalWidth = this->desktop_physical_width;
@@ -908,6 +905,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 cs_core.deviceScaleFactor = this->device_scale_factor;
 
                 cs_core.length = 234;
+            }
+
+            if (bool(this->verbose & RDPVerbose::security)) {
+                cs_core.log("Sending to Server");
             }
 
             cs_core.emit(stream);
