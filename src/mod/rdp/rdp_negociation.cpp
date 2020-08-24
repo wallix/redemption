@@ -859,7 +859,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
         this->trans,
         [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
             // ------------------------------------------------------------
-            const bool has_scale_factor = this->device_scale_factor > 0;
+            const bool has_scale_factor = allow_scale_factor && this->device_scale_factor > 0;
 
             GCC::UserData::CSCore cs_core;
 
