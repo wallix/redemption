@@ -171,6 +171,7 @@ public:
         }
     }
 
+private:
     auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(

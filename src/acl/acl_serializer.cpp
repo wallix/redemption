@@ -293,7 +293,6 @@ void AclSerializer::in_items()
             LOG(LOG_WARNING, "Unexpected receive '%s' - '%.*s'",
                 sauthid, int(val.size()), val.data());
         }
-
     }
 }
 

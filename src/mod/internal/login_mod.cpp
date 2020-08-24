@@ -33,25 +33,32 @@
 
 namespace
 {
-    inline std::pair<std::string, std::string> rpartition(std::string text,
-                                                          const char* seps) {
+    inline std::pair<std::string, std::string>
+    rpartition(std::string_view text, const char* seps)
+    {
         size_t sep_pos = text.find_last_of(seps);
         if (sep_pos != std::string::npos) {
-            return std::make_pair(text.substr(0, sep_pos),
-                                  text.substr(sep_pos + 1));
+            return std::make_pair(
+                std::string(text.substr(0, sep_pos)),
+                std::string(text.substr(sep_pos + 1))
+            );
         }
-        return std::make_pair(std::string(),
-                              text);
+
+        return std::make_pair(std::string(), std::string(text));
     }
 
-    inline std::string concat_target_login(std::string login, std::string target) {
+    inline std::string
+    concat_target_login(std::string_view login, std::string_view target)
+    {
         if (target.empty()) {
-            return login;
+            return std::string(login);
         }
+
         size_t sep_pos = target.find_last_of("+:");
         if (sep_pos != std::string::npos) {
             return str_concat(target, target[sep_pos], login);
         }
+
         return str_concat(target, ':', login);
     }
 }

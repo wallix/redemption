@@ -406,8 +406,7 @@ private:
                               Sesman & sesman,
                               ClientExecute & rail_client_execute)
     {
-        auto & module_cstr = ini.get<cfg::context::module>();
-        auto next_state = get_module_id(module_cstr);
+        auto next_state = get_module_id(ini.get<cfg::context::module>());
 
         switch (next_state){
         case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
@@ -1110,11 +1109,11 @@ public:
                         if (acl_serial.is_connected() && acl_serial.remote_answer){
                             acl_serial.remote_answer = false;
 
-                            auto & module_cstr = ini.get<cfg::context::module>();
-                            auto next_state = get_module_id(module_cstr);
+                            auto next_state = get_module_id(ini.get<cfg::context::module>());
 
                             if (mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION
-                            || next_state == MODULE_TRANSITORY) {
+                             || next_state == MODULE_TRANSITORY
+                            ) {
                                 run_session = this->next_backend_module(
                                                 acl_serial, log_file, ini,
                                                 mod_factory, mod_wrapper, front,
