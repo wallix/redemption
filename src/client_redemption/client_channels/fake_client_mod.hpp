@@ -241,27 +241,6 @@ public:
 };
 
 
-class FakeClientKeyLayout : public ClientKeyLayoutAPI {
-
-public:
-
-    FakeClientKeyLayout() = default;
-
-
-    void update_keylayout(const int /*LCID*/) override {}
-
-    void key_event(const int /*flag*/, const int /*key*/, std::string_view /*text*/) override {}
-
-    uint16_t get_scancode() override {
-        return 0;
-    }
-
-    uint16_t get_flag() override {
-        return 0;
-    }
-};
-
-
 class FakeIODisk : public ClientIODiskAPI
 {
 

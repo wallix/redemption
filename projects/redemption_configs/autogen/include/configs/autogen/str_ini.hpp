@@ -103,6 +103,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #allow_using_multiple_monitors = 1
 
+# value: 0 or 1
+#allow_scale_factor = 0
+
 # Needed to refresh screen of Windows Server 2012.
 # value: 0 or 1
 #_advanced
@@ -1218,7 +1221,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #framerate = 5
 
-# FFmpeg options for video codec.
+# FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 #_advanced
 #ffmpeg_options = crf=0 preset=superfast
 

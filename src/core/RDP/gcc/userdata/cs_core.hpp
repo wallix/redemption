@@ -608,8 +608,8 @@ private:
         if (limit != this->length || limit < 132
         || (limit != 134 && limit != 136 && limit != 140 && limit != 142
          && limit != 144 && limit != 146 && limit != 210 && limit != 211
-         && limit != 212 && limit != 216 && limit != 220 && limit != 224
-         && limit != 226 && limit != 230 && limit != 234)) {
+         && limit != 212 && limit != 216 && limit != 224 && limit != 226
+         && limit != 234)) {
             LOG(LOG_ERR, "CSCore::emit inconsistant length=(%u, %u) for optional parameters", this->length, limit);
             throw Error(ERR_GCC);
         }
@@ -644,8 +644,6 @@ private:
         if (this->length == 216) { return; }
 
         stream.out_uint32_le(this->desktopPhysicalWidth);
-        if (this->length == 220) { return; }
-
         stream.out_uint32_le(this->desktopPhysicalHeight);
         if (this->length == 224) { return; }
 
@@ -653,8 +651,6 @@ private:
         if (this->length == 226) { return; }
 
         stream.out_uint32_le(this->desktopScaleFactor);
-        if (this->length == 230) { return; }
-
         stream.out_uint32_le(this->deviceScaleFactor);
         if (this->length == 234) { return; }
     }

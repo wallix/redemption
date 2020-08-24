@@ -184,8 +184,7 @@ struct CSMonitorEx {
             throw Error(ERR_GCC);
         }
 
-        const unsigned expected = this->compute_length();
-        // = header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
+        const uint16_t expected = this->compute_length();
 
         if (length != expected) {
             LOG(LOG_ERR, "CSMonitorEx::recv bad header length, expecting=%u got=%u",

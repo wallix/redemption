@@ -41,6 +41,7 @@ namespace cfg
         struct enable_osd_display_remote_target;
         struct enable_wab_integration;
         struct allow_using_multiple_monitors;
+        struct allow_scale_factor;
         struct bogus_refresh_rect;
         struct large_pointer_support;
         struct unicode_keyboard_event_support;

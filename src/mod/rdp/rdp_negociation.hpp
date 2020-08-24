@@ -27,6 +27,7 @@
 #include "acl/license_api.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/nego.hpp"
 #include "core/channel_names.hpp"
@@ -139,6 +140,12 @@ private:
     RDPServerNotifier server_notifier;
     RdpNego nego;
 
+    const uint32_t desktop_physical_width;
+    const uint32_t desktop_physical_height;
+    const uint16_t desktop_orientation;
+    const uint32_t desktop_scale_factor;
+    const uint32_t device_scale_factor;
+
     Transport& trans;
     const uint32_t password_printing_mode;
     const bool enable_session_probe;
@@ -149,7 +156,9 @@ private:
     const bool bogus_sc_net_size;
 
     const bool allow_using_multiple_monitors;
+    const bool allow_scale_factor;
     GCC::UserData::CSMonitor cs_monitor;
+    GCC::UserData::CSMonitorEx cs_monitor_ex;
 
     const bool perform_automatic_reconnection;
     const std::array<uint8_t, 28> server_auto_reconnect_packet_ref;

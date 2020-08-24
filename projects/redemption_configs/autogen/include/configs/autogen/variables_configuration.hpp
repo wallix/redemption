@@ -457,6 +457,16 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// type: bool <br/>
+    /// default: {false} <br/>
+    struct globals::allow_scale_factor {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
     /// Needed to refresh screen of Windows Server 2012. <br/>
     /// type: bool <br/>
     /// default: {true} <br/>
@@ -3303,7 +3313,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// FFmpeg options for video codec. <br/>
+    /// FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264 <br/>
     /// type: std::string <br/>
     /// default:  = "crf=0 preset=superfast" <br/>
     struct video::ffmpeg_options {
@@ -5249,6 +5259,7 @@ struct globals
 , cfg::globals::enable_osd_display_remote_target
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
+, cfg::globals::allow_scale_factor
 , cfg::globals::bogus_refresh_rect
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support

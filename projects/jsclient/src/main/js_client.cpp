@@ -354,6 +354,12 @@ public:
         extract_str(config, "workingDirectory",
             make_writable_array_view(client_info.working_dir));
 
+        set_if(config, "desktopPhysicalWidth", client_info.desktop_physical_width);
+        set_if(config, "desktopPhysicalHeight", client_info.desktop_physical_height);
+        set_if(config, "desktopOrientation", client_info.desktop_orientation);
+        set_if(config, "desktopScaleFactor", client_info.desktop_scale_factor);
+        set_if(config, "deviceScaleFactor", client_info.device_scale_factor);
+
         if (enable_large_pointer) {
             client_info.large_pointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
             maxRequestSize = std::max(maxRequestSize, uint32_t(38'055));
@@ -417,6 +423,9 @@ public:
                 rdp_params.enable_persistent_disk_bitmap_cache);
 
         set_if(config, "lang", rdp_params.lang);
+
+        rdp_params.allow_scale_factor
+            = client_info.desktop_scale_factor && client_info.device_scale_factor;
 
         rdp_params.adjust_performance_flags_for_recording = false;
         rdp_params.large_pointer_support = enable_large_pointer;
