@@ -187,7 +187,6 @@ struct CSMonitorEx {
         }
 
         unsigned expected = 4 + 4 + 4 + 4 + this->monitorCount * 20;
-        // = header(4) + flags(4) + monitorAttributeSize(4) + monitorCount(4) + monitorCount * monitorAttributesArray(20)
 
         if (this->length != expected) {
             LOG(LOG_ERR, "CSMonitorEx::recv bad header length, expecting=%u got=%u",

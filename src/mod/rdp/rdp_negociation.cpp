@@ -220,6 +220,11 @@ RdpNegociation::RdpNegociation(
         tls_client_params,
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
         )
+    , desktop_physical_width(info.desktop_physical_width)
+    , desktop_physical_height(info.desktop_physical_height)
+    , desktop_orientation(info.desktop_orientation)
+    , desktop_scale_factor(info.desktop_scale_factor)
+    , device_scale_factor(info.device_scale_factor)
     , trans(trans)
     , password_printing_mode(mod_rdp_params.password_printing_mode)
 #ifndef __EMSCRIPTEN__
@@ -242,7 +247,9 @@ RdpNegociation::RdpNegociation(
     , remote_program(mod_rdp_params.remote_app_params.enable_remote_program)
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
+    , allow_scale_factor(mod_rdp_params.allow_scale_factor)
     , cs_monitor(info.cs_monitor)
+    , cs_monitor_ex(info.cs_monitor_ex)
     , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
     , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
     , info_packet_extra_flags(info.has_sound_code ? INFO_REMOTECONSOLEAUDIO : InfoPacketFlags{})
@@ -796,8 +803,12 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
     write_packets(
         this->trans,
         [this, &hostname](StreamSize<65536-1024> /*maxlen*/, OutStream & stream) {
-            // ------------------------------------------------------------
-            GCC::UserData::CSCore cs_core(216); // 216: optional parameters up to serverSelectedProtocol
+            // 216: optional parameters up to serverSelectedProtocol
+            // 234: optional parameters up to deviceScaleFactor
+            const uint16_t cs_core_length = (allow_scale_factor && this->device_scale_factor > 0)
+                ? 234 : 216;
+
+            GCC::UserData::CSCore cs_core(cs_core_length);
             LOG(LOG_INFO, "Sending CS_CORE to server: color_depth %d", int(this->front_bpp));
 
             if (this->enable_remotefx) {
@@ -849,10 +860,17 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             if (this->nego.tls){
                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
             }
+
+            cs_core.desktopPhysicalWidth = this->desktop_physical_width;
+            cs_core.desktopPhysicalHeight = this->desktop_physical_height;
+            cs_core.desktopOrientation = this->desktop_orientation;
+            cs_core.desktopScaleFactor = this->desktop_scale_factor;
+            cs_core.deviceScaleFactor = this->device_scale_factor;
+
             if (bool(this->verbose & RDPVerbose::security)) {
                 cs_core.log("Sending to Server");
             }
-            cs_core.emit(stream, 216); // 216: optional parameters up to serverSelectedProtocol
+            cs_core.emit(stream, cs_core_length);
             // --------------------------------------------------------------------------------
 
             GCC::UserData::CSCluster cs_cluster;
@@ -1106,6 +1124,13 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     this->cs_monitor.log("Sending to server");
                 //}
                 this->cs_monitor.emit(stream);
+
+                if (allow_scale_factor
+                 && this->cs_monitor.monitorCount == this->cs_monitor_ex.monitorCount
+                ) {
+                    this->cs_monitor_ex.log("Sending to server");
+                    this->cs_monitor_ex.emit(stream);
+                }
             }
         },
         [](StreamSize<256> /*maxlen*/, OutStream & gcc_header, std::size_t packet_size) {

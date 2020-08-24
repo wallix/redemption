@@ -178,6 +178,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_wab_integration", set((CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_using_multiple_monitors", set(true));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_scale_factor", set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bogus_refresh_rect", desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
 

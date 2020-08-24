@@ -1500,6 +1500,13 @@ public:
                                 this->client_info.screen_info.bpp,
                                 BitsPerPixel{checked_int(this->ini.get<cfg::client::max_color_depth>())});
                         }
+
+                        this->client_info.desktop_physical_width = cs_core.desktopPhysicalWidth;
+                        this->client_info.desktop_physical_height = cs_core.desktopPhysicalHeight;
+                        this->client_info.desktop_orientation = cs_core.desktopOrientation;
+                        this->client_info.desktop_scale_factor = cs_core.desktopScaleFactor;
+                        this->client_info.device_scale_factor = cs_core.deviceScaleFactor;
+
                         this->client_support_monitor_layout_pdu =
                             (cs_core.earlyCapabilityFlags &
                              GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU);
@@ -1571,6 +1578,16 @@ public:
                         if (this->ini.get<cfg::globals::allow_using_multiple_monitors>()) {
                             this->client_info.screen_info.width  = client_monitors_rect.cx + 1;
                             this->client_info.screen_info.height = client_monitors_rect.cy + 1;
+                        }
+                    }
+                    break;
+                    case CS_MONITOR_EX:
+                    {
+                        GCC::UserData::CSMonitorEx & cs_monitor_ex =
+                            this->client_info.cs_monitor_ex;
+                        cs_monitor_ex.recv(f.payload);
+                        if (bool(this->verbose & Verbose::basic_trace)) {
+                            cs_monitor_ex.log("Front::incoming: Receiving from Client");
                         }
                     }
                     break;

@@ -31,6 +31,7 @@
 #include "core/misc.hpp"
 #include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
+#include "core/RDP/gcc/userdata/cs_monitor_ex.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
@@ -108,8 +109,14 @@ struct ClientInfo
     char alternate_shell[512] = { 0 };
     char working_dir[512] = { 0 };
 
-    GCC::UserData::CSCore cs_core;
+    uint32_t desktop_physical_width = 0;
+    uint32_t desktop_physical_height = 0;
+    uint16_t desktop_orientation = 0;
+    uint32_t desktop_scale_factor = 0;
+    uint32_t device_scale_factor = 0;
+
     GCC::UserData::CSMonitor cs_monitor;
+    GCC::UserData::CSMonitorEx cs_monitor_ex;
 
     ClientTimeZone client_time_zone;
 
@@ -135,7 +142,7 @@ struct ClientInfo
     GlyphCacheCaps          glyph_cache_caps;
     RailCaps                rail_caps;
     WindowListCaps          window_list_caps;
-    
+
     uint8_t dummy1[32768];
     Recv_CS_BitmapCodecCaps bitmap_codec_caps;
     uint8_t dummy2[32768];

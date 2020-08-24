@@ -93,6 +93,8 @@ enable_wab_integration = boolean(default=)gen_config_ini" << (REDEMPTION_CONFIG_
 
 allow_using_multiple_monitors = boolean(default=True)
 
+allow_scale_factor = boolean(default=False)
+
 # Needed to refresh screen of Windows Server 2012.
 #_advanced
 bogus_refresh_rect = boolean(default=True)

@@ -106,6 +106,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #allow_using_multiple_monitors = 1
 
+# value: 0 or 1
+#allow_scale_factor = 0
+
 # Needed to refresh screen of Windows Server 2012.
 # value: 0 or 1
 #_advanced
