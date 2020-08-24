@@ -133,7 +133,7 @@ namespace MCS
         MCSPDU_CONNECT_RESULT              = 104
     };
 
-    static const char* const RT_RESULT[] = {
+    inline constexpr char const* RT_RESULT[] = {
         "rt-successful",
         "rt-domain-merging",
         "rt-domain-not-hierarchical",

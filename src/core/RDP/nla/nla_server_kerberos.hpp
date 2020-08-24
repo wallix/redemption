@@ -233,7 +233,7 @@ class rdpCredsspServerKerberos final
 
         bool get_service_name(chars_view server, gss_name_t * name) {
             gss_buffer_desc output;
-            const char service_name[] = "TERMSRV";
+            const char* service_name = "TERMSRV";
             gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
             auto size = (strlen(service_name) + 1 + server.size() + 1);
             auto output_value = std::make_unique<char[]>(size);

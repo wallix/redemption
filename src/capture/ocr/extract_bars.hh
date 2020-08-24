@@ -31,7 +31,7 @@ namespace ocr
         { return this->bg == c || this->fg == c; }
     };
 
-    static const titlebar_color titlebar_colors[] = {
+    inline constexpr titlebar_color titlebar_colors[] = {
         {rgb8(8,   36,  107), rgb8(255,255,255), 0},
         {rgb8(8,   32,  107), rgb8(255,255,255), 0}, // 2008r2 (russe IT-Bastion)
         {rgb8(10,  36,  106), rgb8(255,255,255), 0}, // 2008r2

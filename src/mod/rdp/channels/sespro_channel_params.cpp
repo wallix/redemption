@@ -87,9 +87,9 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
     if (comme_separated_monitoring_rules) {
         const char * rule = comme_separated_monitoring_rules;
 
-        char const RULE_PREFIX_ALLOW[]  = "$allow:";
-        char const RULE_PREFIX_NOTIFY[] = "$notify:";
-        char const RULE_PREFIX_DENY[]   = "$deny:";
+        char const* RULE_PREFIX_ALLOW  = "$allow:";
+        char const* RULE_PREFIX_NOTIFY = "$notify:";
+        char const* RULE_PREFIX_DENY   = "$deny:";
 
         while (*rule) {
             if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
@@ -199,8 +199,8 @@ ProcessMonitorRules::ProcessMonitorRules(const char * comme_separated_rules)
     if (comme_separated_rules) {
         const char * rule = comme_separated_rules;
 
-        char const RULE_PREFIX_NOTIFY[] = "$notify:";
-        char const RULE_PREFIX_DENY[]   = "$deny:";
+        char const* RULE_PREFIX_NOTIFY = "$notify:";
+        char const* RULE_PREFIX_DENY   = "$deny:";
 
         while (*rule) {
             if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {

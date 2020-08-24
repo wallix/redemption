@@ -667,7 +667,7 @@ enum {
     NTLMSSP_NEGOTIATE_UNICODE = 0x00000001, /* A   (31) */
 };
 
-static const char* const NTLM_NEGOTIATE_STRINGS[] ={
+inline constexpr char const* NTLM_NEGOTIATE_STRINGS[] ={
     "NTLMSSP_NEGOTIATE_56",
     "NTLMSSP_NEGOTIATE_KEY_EXCH",
     "NTLMSSP_NEGOTIATE_128",

@@ -180,7 +180,7 @@ namespace
         struct tm t;
         gmtime_r(&time, &t);
 
-        constexpr char const* months[]{
+        static char const* months[]{
             "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
         };
 

@@ -25,7 +25,7 @@
 
 namespace
 {
-    char const * ascii_table_to_cyrillic[] {
+    inline constexpr char const * ascii_table_to_cyrillic[] {
         /* 0 */ nullptr,
         /* 1 */ nullptr,
         /* 2 */ nullptr,

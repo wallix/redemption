@@ -133,7 +133,7 @@ private:
                 }
             };
 
-            
+
             this->princname = user;
             copy(this->princpass, pass);
         }
@@ -196,7 +196,7 @@ private:
 
     bool sspi_get_service_name(const std::string & server, gss_name_t * name) {
         gss_buffer_desc output;
-        const char service_name[] = "TERMSRV";
+        const char* service_name = "TERMSRV";
         gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
         auto size = (strlen(service_name) + 1 + server.size() + 1);
 
@@ -769,7 +769,7 @@ public:
         this->client_auth_data.input_buffer.clear();
 
         this->client_auth_data.state = ClientAuthenticateData::Loop;
-        
+
         /*
          * from tspkg.dll: 0x00000132
          * ISC_REQ_MUTUAL_AUTH
@@ -778,7 +778,7 @@ public:
          * ISC_REQ_ALLOCATE_MEMORY
          */
         //unsigned long const fContextReq
-        
+
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         const std::string pszTargetName = this->ServicePrincipalName;
@@ -911,19 +911,19 @@ public:
         {
             case ClientAuthenticateData::Start:
                 return credssp::State::Err;
-                
+
             case ClientAuthenticateData::Loop:
                 this->ts_request = recvTSRequest(in_data, this->credssp_verbose);
                 this->error_code = this->ts_request.error_code;
 
                 LOG_IF(this->verbose, LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
                 this->client_auth_data.input_buffer.assign(this->ts_request.negoTokens.data(),this->ts_request.negoTokens.data()+this->ts_request.negoTokens.size());
-            
+
                 if (Res::Err == this->authenticate_send()) {
                     return credssp::State::Err;
                 }
                 return credssp::State::Cont;
-                
+
             case ClientAuthenticateData::Final:
             {
                 /* Encrypted Public Key +1 */

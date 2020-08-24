@@ -38,14 +38,14 @@
 
 // static const uint8_t lm_magic[] = "KGS!@#$%";
 
-static const uint8_t client_sign_magic[] =
-    "session key to client-to-server signing key magic constant";
-static const uint8_t server_sign_magic[] =
-    "session key to server-to-client signing key magic constant";
-static const uint8_t client_seal_magic[] =
-    "session key to client-to-server sealing key magic constant";
-static const uint8_t server_seal_magic[] =
-    "session key to server-to-client sealing key magic constant";
+inline constexpr auto client_sign_magic =
+    "session key to client-to-server signing key magic constant"_av;
+inline constexpr auto server_sign_magic =
+    "session key to server-to-client signing key magic constant"_av;
+inline constexpr auto client_seal_magic =
+    "session key to client-to-server sealing key magic constant"_av;
+inline constexpr auto server_seal_magic =
+    "session key to server-to-client sealing key magic constant"_av;
 
 #include "transport/transport.hpp"
 
@@ -326,10 +326,10 @@ public:
                     // SERVER COMPUTE SHARED KEY WITH CLIENT
                     array_md5 SessionBaseKey = authenticate.compute_session_base_key(password_hash);
                     array_md5 ExportedSessionKey = authenticate.get_exported_session_key(SessionBaseKey);
-                    this->ClientSigningKey = Md5(ExportedSessionKey, make_array_view(client_sign_magic));
-                    this->ClientSealingKey = Md5(ExportedSessionKey, make_array_view(client_seal_magic));
-                    this->ServerSigningKey = Md5(ExportedSessionKey, make_array_view(server_sign_magic));
-                    this->ServerSealingKey  = Md5(ExportedSessionKey, make_array_view(server_seal_magic));
+                    this->ClientSigningKey = Md5(ExportedSessionKey, client_sign_magic);
+                    this->ClientSealingKey = Md5(ExportedSessionKey, client_seal_magic);
+                    this->ServerSigningKey = Md5(ExportedSessionKey, server_sign_magic);
+                    this->ServerSealingKey  = Md5(ExportedSessionKey, server_seal_magic);
 
                     /**
                      * Initialize RC4 stream cipher states for sealing.

@@ -237,7 +237,7 @@ inline const EVP_CIPHER * get_cipher_and_prepare_key(
 ) noexcept
 {
     const EVP_CIPHER * cipher = ::EVP_aes_256_cbc();
-    const uint8_t salt[] = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
+    static const uint8_t salt[] = { 0x39, 0x30, 0x00, 0x00, 0x31, 0xd4, 0x00, 0x00 };
     const int     nrounds = 5;
     const int i = ::EVP_BytesToKey(
         cipher, EVP_sha1(), salt, trace_key,
