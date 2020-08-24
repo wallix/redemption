@@ -30,7 +30,7 @@
 
 namespace
 {
-    static const Keylayout * keylayouts[] = {
+    inline constexpr Keylayout const * keylayouts[] = {
         &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407, &keylayout_x00000408,
         &keylayout_x00000409, &keylayout_x0000040a, &keylayout_x0000040b, &keylayout_x0000040c,
         &keylayout_x0000040f, &keylayout_x00000410, &keylayout_x00000413, &keylayout_x00000414,
@@ -176,8 +176,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
             // This table translates the RDP scancodes to X11 scancodes :
             //  - the fist block (0-127) forces some values to 0
             //  - the second block (128-255) give the code for the extended keys that have a meaningful one
-            const uint8_t map[256] =  {
-
+            static const uint8_t map[256] =  {
                  0x0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, // 0x00 - 0x07
                 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, // 0x08 - 0x0f
                 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, // 0x10 - 0x17
