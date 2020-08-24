@@ -32,7 +32,6 @@
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_channels/client_remoteapp_channel.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 
 #include <chrono>
 
