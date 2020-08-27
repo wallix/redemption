@@ -47,8 +47,6 @@
 #include "acl/session_logfile.hpp"
 
 
-
-
 namespace
 {
     enum {
@@ -67,10 +65,7 @@ AclSerializer::AclSerializer(Inifile & ini)
     std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
 }
 
-AclSerializer::~AclSerializer()
-{
-}
-
+AclSerializer::~AclSerializer() = default;
 
 namespace
 {

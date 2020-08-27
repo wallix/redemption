@@ -63,6 +63,16 @@
 namespace
 {
 
+struct VerboseSession
+{
+    static bool has_verbose_event(Inifile const& ini) { return debug(ini) & 0x02; }
+    static bool has_verbose_acl(Inifile const& ini) { return debug(ini) & 0x04; }
+    static bool has_verbose_trace(Inifile const& ini) { return debug(ini) & 0x08; }
+
+private:
+    static uint32_t debug(Inifile const& ini) { return ini.get<cfg::debug::session>(); }
+};
+
 class Session
 {
     ModuleIndex last_state = MODULE_UNKNOWN;
@@ -121,7 +131,7 @@ class Session
                 if (this->wait_answer
                     && !ini.is_asked<cfg::context::keepalive>()
                     && ini.get<cfg::context::keepalive>()) {
-                    LOG_IF(bool(bool(ini.get<cfg::debug::session>()&0x08) & 2),
+                    LOG_IF(VerboseSession::has_verbose_event(ini),
                         LOG_INFO, "auth::keep_alive ACL incoming event");
                     this->timeout    = now + 2*this->grace_delay;
                     this->renew_time = now + this->grace_delay;
@@ -198,7 +208,14 @@ class Session
     static const time_t select_timeout_tv_sec = 3;
 
 private:
-    int end_session_exception(Error const& e, Inifile & ini, const ModWrapper & mod_wrapper)
+    enum class EndSessionResult
+    {
+        close_box,
+        retry,
+        redirection,
+    };
+
+    EndSessionResult end_session_exception(Error const& e, Inifile & ini, const ModWrapper & mod_wrapper)
     {
         if (e.id == ERR_RAIL_LOGON_FAILED_OR_WARNING){
             ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(ini)));
@@ -214,72 +231,73 @@ private:
         ||  (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS)
         ||  (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED)
         ||  (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG)
-        ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
+        ||  (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)
+        ) {
             if (ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
                     SessionProbeOnLaunchFailure::retry_without_session_probe)
             {
                 LOG(LOG_INFO, "Retry connection without session probe");
                 ini.set<cfg::mod_rdp::enable_session_probe>(false);
-                return 2;
+                return EndSessionResult::retry;
             }
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
             LOG(LOG_INFO, "Retry Session Probe Disconnection Reconnection");
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
             LOG(LOG_INFO, "Retry Automatic Reconnection Required");
             ini.set<cfg::context::perform_automatic_reconnection>(true);
-            return 2;
+            return EndSessionResult::retry;
         }
         else if (e.id == ERR_RAIL_NOT_ENABLED) {
             LOG(LOG_INFO, "Retry without native remoteapp capability");
             ini.set<cfg::mod_rdp::use_native_remoteapp_capability>(false);
-            return 2;
+            return EndSessionResult::retry;
         }
         else if (e.id == ERR_RDP_SERVER_REDIR){
             if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                 LOG(LOG_INFO, "Server redirection");
-                return 3;
+                return EndSessionResult::redirection;
             }
             else {
                 LOG(LOG_ERR, "Start Session Failed: forbidden redirection = %s", e.errmsg());
                 this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-                return 1;
+                return EndSessionResult::close_box;
             }
         }
         else if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
             LOG(LOG_INFO, "Close because disconnection time reached");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_MCS_APPID_IS_MCS_DPUM){
             LOG(LOG_INFO, "Remote Session Closed by User");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
             // Close by rejeted message received
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
             LOG(LOG_INFO, "Close because rejected message was received : %s", this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED) {
             LOG(LOG_INFO, "Close because of missed ACL keepalive");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
             LOG(LOG_INFO, "Close because of user Inactivity");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (e.id == ERR_SESSION_CLOSE_MODULE_NEXT) {
             LOG(LOG_INFO, "Acl confirmed user close");
-            return 1;
+            return EndSessionResult::close_box;
         }
         else if (   (e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
                  && mod_wrapper.get_mod_transport()
@@ -290,18 +308,20 @@ private:
             LOG(LOG_INFO, "Session::end_session_exception: target link exception. %s",
                 ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA");
             ini.set<cfg::context::perform_automatic_reconnection>(true);
-            return 2;
+            return EndSessionResult::retry;
         }
 
-LOG(LOG_INFO, "ModTrans=<%p> Sock=%d AutoReconnection=%s AutoReconnectable=%s ErrorEncountered=%s", mod_wrapper.get_mod_transport(),
-    (mod_wrapper.get_mod_transport() ? mod_wrapper.get_mod_transport()->sck : -1),
-    (ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>() ? "Yes" : "No"),
-    (mod_wrapper.get_mod()->is_auto_reconnectable() ? "Yes" : "No"),
-    (mod_wrapper.get_mod()->server_error_encountered() ? "Yes" : "No")
-    );
+        LOG(LOG_INFO,
+            "ModTrans=<%p> Sock=%d AutoReconnection=%s AutoReconnectable=%s ErrorEncountered=%s",
+            mod_wrapper.get_mod_transport(),
+            (mod_wrapper.get_mod_transport() ? mod_wrapper.get_mod_transport()->sck : -1),
+            (ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>() ? "Yes" : "No"),
+            (mod_wrapper.get_mod()->is_auto_reconnectable() ? "Yes" : "No"),
+            (mod_wrapper.get_mod()->server_error_encountered() ? "Yes" : "No")
+            );
 
         this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
-        return 1;
+        return EndSessionResult::close_box;
     }
 
 private:
@@ -337,7 +357,7 @@ private:
     {
         if (mod_wrapper.current_mod != MODULE_INTERNAL_TRANSITION){
             this->last_state = mod_wrapper.current_mod;
-            LOG_IF(bool(ini.get<cfg::debug::session>()&0x08),
+            LOG_IF(VerboseSession::has_verbose_trace(ini),
                 LOG_INFO, "new_mod::changed state Current Mod is %s Previous %s next %s",
                 get_module_name(mod_wrapper.current_mod),
                 get_module_name(this->last_state),
@@ -844,14 +864,15 @@ public:
                         try {
                             acl_serial.incoming();
                             if (ini.get<cfg::context::module>() == "RDP"
-                            ||  ini.get<cfg::context::module>() == "VNC") {
+                             || ini.get<cfg::context::module>() == "VNC"
+                            ) {
                                 session_type = ini.get<cfg::context::module>();
                             }
                             acl_serial.remote_answer = true;
                         } catch (...) {
                             LOG(LOG_INFO, "acl_serial.incoming() Session lost");
                             // acl connection lost
-                            acl_serial.acl_status = AclSerializer::acl_state_disconnected_by_authentifier;
+                            acl_serial.acl_status = AclSerializer::State::disconnected_by_authentifier;
                             ini.set_acl<cfg::context::authenticated>(false);
 
                             if (acl_serial.acl_manager_disconnect_reason.empty()) {
@@ -886,13 +907,13 @@ public:
                             log_siem_arcsight(time_base.get_current_time().tv_sec, id, kv_list, ini, session_type);
                             log_file.log6(id, kv_list);
                         });
-                    sesman.flush_acl(bool(ini.get<cfg::debug::session>()&0x04));
+                    sesman.flush_acl(VerboseSession::has_verbose_acl(ini));
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
-                        for (auto field : this->ini.get_fields_changed()) {
-                               zstring_view key = field.get_acl_name();
-                               LOG_IF(bool(ini.get<cfg::debug::session>()&0x08), LOG_INFO,
-                                     "field to send: %s", key.c_str());
+                        if (VerboseSession::has_verbose_trace(ini)) {
+                            for (auto field : this->ini.get_fields_changed()) {
+                                LOG(LOG_INFO, "field to send: %s", field.get_acl_name());
+                            }
                         }
 
                         acl_serial.remote_answer = false;
@@ -911,7 +932,7 @@ public:
                             mod_wrapper.disconnect();
                             run_session = false;
                             LOG(LOG_INFO, "Session Closed by ACL : %s",
-                                (acl_serial.acl_status == AclSerializer::acl_state_disconnected_by_authentifier)?
+                                (acl_serial.acl_status == AclSerializer::State::disconnected_by_authentifier)?
                                     "closed by authentifier":"closed by proxy");
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 auto next_state = MODULE_INTERNAL_CLOSE;
@@ -953,8 +974,8 @@ public:
                             continue;
                         }
                         else {
-                           LOG_IF(bool(ini.get<cfg::debug::session>()&0x04),
-                            LOG_ERR, "can't flush acl: not connected yet");
+                            LOG_IF(VerboseSession::has_verbose_acl(ini),
+                                   LOG_ERR, "can't flush acl: not connected yet");
                         }
                     }
                 }
@@ -962,7 +983,7 @@ public:
                 try {
                     events.execute_events(time_base.get_current_time(),
                         [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);},
-                            bool(ini.get<cfg::debug::session>()&0x02));
+                            VerboseSession::has_verbose_event(ini));
 
                     if (front.state == Front::FRONT_UP_AND_RUNNING) {
                         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
@@ -1027,7 +1048,7 @@ public:
                                 for (auto field : this->ini.get_fields_changed()) {
                                         zstring_view key = field.get_acl_name();
 
-                                        LOG_IF(bool(ini.get<cfg::debug::session>()&0x08),
+                                        LOG_IF(VerboseSession::has_verbose_trace(ini),
                                                LOG_INFO, "field to send: %s", key.c_str());
                                 }
                                 keepalive.stop();
@@ -1048,7 +1069,7 @@ public:
                             continue;
                         }
 
-                        LOG_IF(bool(ini.get<cfg::debug::session>()&0x08),
+                        LOG_IF(VerboseSession::has_verbose_trace(ini),
                             LOG_INFO, " Current Mod is %s Previous %s Acl_mod %s",
                             get_module_name(mod_wrapper.current_mod),
                             get_module_name(this->last_state),
@@ -1084,15 +1105,17 @@ public:
                         }
 
                         if (mod_wrapper.is_connected()
-                        && (mod_wrapper.current_mod == MODULE_RDP)) {
+                         && mod_wrapper.current_mod == MODULE_RDP
+                        ) {
                             auto mod = mod_wrapper.get_mod();
                             // AuthCHANNEL CHECK
                             // if an answer has been received, send it to
                             // rdp serveur via mod (should be rdp module)
                             auto & auth_channel_answer = ini.get<cfg::context::auth_channel_answer>();
                             if (ini.get<cfg::mod_rdp::auth_channel>()[0]
-                            // Get sesman answer to AUTHCHANNEL_TARGET
-                            && !auth_channel_answer.empty()) {
+                             // Get sesman answer to AUTHCHANNEL_TARGET
+                             && !auth_channel_answer.empty()
+                            ) {
                                 // If set, transmit to auth_channel
                                 mod->send_auth_channel_data(auth_channel_answer.c_str());
                                 // Erase the context variable
@@ -1104,8 +1127,9 @@ public:
                             // rdp serveur via mod (should be rdp module)
                             auto & pm_response = ini.get<cfg::context::pm_response>();
                             if (ini.get<cfg::mod_rdp::checkout_channel>()[0]
-                            // Get sesman answer to AUTHCHANNEL_TARGET
-                            && !pm_response.empty()) {
+                             // Get sesman answer to AUTHCHANNEL_TARGET
+                             && !pm_response.empty()
+                            ) {
                                 // If set, transmit to auth_channel channel
                                 mod->send_checkout_channel_data(pm_response.c_str());
                                     // Erase the context variable
@@ -1145,9 +1169,7 @@ public:
                     }
 
                     switch (end_session_exception(e, ini, mod_wrapper)){
-                    case 0: // End of session loop
-                    break;
-                    case 1: // Close Box
+                    case EndSessionResult::close_box:
                     {
                         keepalive.stop();
                         sesman.set_disconnect_target();
@@ -1166,7 +1188,7 @@ public:
                         }
                     }
                     break;
-                    case 3:
+                    case EndSessionResult::redirection:
                     {
                         // SET new target in ini
                         const char * host = char_ptr_cast(redir_info.host);
@@ -1187,9 +1209,10 @@ public:
                         auto message = str_concat(change_user, '@', host);
                         sesman.report("SERVER_REDIRECTION", message.c_str());
                     }
-
                     REDEMPTION_CXX_FALLTHROUGH;
-                    case 2: // TODO: should we put some counter to avoid retrying indefinitely?
+
+                    // TODO: should we put some counter to avoid retrying indefinitely?
+                    case EndSessionResult::retry:
                         retry_rdp(acl_serial, rail_client_execute, front, mod_wrapper, mod_factory, sesman);
 
                         run_session = true;
@@ -1203,8 +1226,7 @@ public:
         }
         catch (Error const& e) {
             // silent message for localhost for watchdog
-            if (!source_is_localhost
-                || e.id != ERR_TRANSPORT_WRITE_FAILED) {
+            if (!source_is_localhost || e.id != ERR_TRANSPORT_WRITE_FAILED) {
                 LOG(LOG_INFO, "Session Init exception %s", e.errmsg());
             }
         }
@@ -1226,12 +1248,13 @@ public:
 
     Session(Session const &) = delete;
 
-    ~Session() {
-        if (this->ini.template get<cfg::debug::performance>() & 0x8000) {
+    ~Session()
+    {
+        if (this->ini.get<cfg::debug::performance>() & 0x8000) {
             this->write_performance_log(this->perf_last_info_collect_time + 3);
         }
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        auto const& session_id = this->ini.template get<cfg::context::session_id>();
+        auto const& session_id = this->ini.get<cfg::context::session_id>();
         if (!session_id.empty()) {
             char new_session_file[256];
             snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"

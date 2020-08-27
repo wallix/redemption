@@ -44,17 +44,14 @@ class ModWrapper;
 
 class AclSerializer final
 {
-
-    using authid_t = ::configs::authid_t;
-
 public:
-
-    enum {
-        acl_state_not_yet_connected = 0,
-        acl_state_connected,
-        acl_state_connection_failed,
-        acl_state_disconnected_by_redemption,
-        acl_state_disconnected_by_authentifier
+    enum class State
+    {
+        not_yet_connected,
+        connected,
+        connection_failed,
+        disconnected_by_redemption,
+        disconnected_by_authentifier
     };
 
     std::function<void()> on_inactivity_timeout = []{};
@@ -62,12 +59,11 @@ public:
     Inifile & ini;
     Transport * auth_trans;
     std::string acl_manager_disconnect_reason;
-    int acl_status = acl_state_not_yet_connected;
+    State acl_status = State::not_yet_connected;
 
 private:
     char session_id[256];
 
-private:
 public:
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
@@ -87,8 +83,8 @@ public:
     ~AclSerializer();
 
     void disconnect() {
-        if (this->acl_status == acl_state_connected) {
-            this->acl_status = acl_state_disconnected_by_redemption;
+        if (this->acl_status == State::connected) {
+            this->acl_status = State::disconnected_by_redemption;
             if (this->auth_trans){
                 this->auth_trans->disconnect();
                 this->auth_trans = nullptr;
@@ -106,46 +102,47 @@ public:
     void set_auth_trans(Transport * auth_trans)
     {
         this->auth_trans = auth_trans;
-        this->acl_status = acl_state_connected;
+        this->acl_status = State::connected;
     }
 
     void set_failed_auth_trans()
     {
-        this->acl_status = acl_state_connection_failed;
+        this->acl_status = State::connection_failed;
     }
 
     bool is_connexion_failed() const
     {
-        return this->acl_status == acl_state_connection_failed;
+        return this->acl_status == State::connection_failed;
     }
 
     bool is_before_connexion() const
     {
-        return this->acl_status == acl_state_not_yet_connected;
+        return this->acl_status == State::not_yet_connected;
     }
 
     bool is_after_connexion() const
     {
-        return this->acl_status == acl_state_disconnected_by_authentifier
-        || this->acl_status == acl_state_disconnected_by_redemption;
+        return this->acl_status == State::disconnected_by_authentifier
+            || this->acl_status == State::disconnected_by_redemption;
     }
 
     bool is_connected() const
     {
-        return acl_status == acl_state_connected;
+        return acl_status == State::connected;
     }
 
-    std::string show() const {
+    std::string_view show() const
+    {
         switch (this->acl_status) {
-        case acl_state_not_yet_connected:
+        case State::not_yet_connected:
             return "Acl not yet connected";
-        case acl_state_connected:
+        case State::connected:
             return "Acl connected";
-        case acl_state_connection_failed:
+        case State::connection_failed:
             return "Acl connection failed";
-        case acl_state_disconnected_by_redemption:
+        case State::disconnected_by_redemption:
             return "Acl disconnected by redemption";
-        case acl_state_disconnected_by_authentifier:
+        case State::disconnected_by_authentifier:
             return "Acl disconnected by authentifier";
         }
         return "Acl unexpected state";
@@ -154,7 +151,4 @@ public:
     void in_items();
     void incoming();
     void send_acl_data();
-
-
 };
-
