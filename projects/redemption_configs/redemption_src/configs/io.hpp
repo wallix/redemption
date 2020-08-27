@@ -356,18 +356,18 @@ struct UpperArray
             return;
         }
 
-        auto p = arr.data();
+        auto p = buffer.data();
         for (char c : s) {
-            *p++ = ('a' <= c && c <= 'z')  ? c - 'a' + 'A' : c;
+            *p++ = ('a' <= c && c <= 'z') ? c - 'a' + 'A' : c;
         }
-        str = {arr.data(), p};
+        str = {buffer.data(), p};
     }
 
     chars_view str;
 
 private:
-    // fix -Wstringop-overflow= with gcc to release (bug?)
-    std::array<char, (N <= 9 ? 9 : N)> arr;
+    // fix -Wstringop-overflow= with gcc-10 to release (bug?)
+    std::array<char, (N <= 9 ? 9 : N)> buffer;
 };
 
 inline constexpr std::pair<chars_view, bool> boolean_strings[]{
