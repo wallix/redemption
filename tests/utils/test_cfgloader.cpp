@@ -54,6 +54,7 @@ struct SectionOrKeyValue
     , str2(value_name)
     {}
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
     friend std::ostream& operator<<(std::ostream& out, SectionOrKeyValue const& other)
     {
         switch (other.type)
@@ -71,6 +72,7 @@ struct SectionOrKeyValue
 
         return out;
     }
+#endif
 
     bool operator == (SectionOrKeyValue const& other) const
     {

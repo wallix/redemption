@@ -35,14 +35,15 @@
 namespace
 {
 
+#ifndef REDEMPTION_NO_FFMPEG
 struct Codec
 {
     char const* name;
     char const* options;
 };
-[[maybe_unused]]
 constexpr Codec flv{"flv", "flags=+qscale b=30000"};
 constexpr char const* mp4_options{"profile=baseline preset=ultrafast b=80000"};
+#endif
 
 // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
 uint8_t hmac_key[] = {

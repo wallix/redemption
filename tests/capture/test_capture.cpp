@@ -2290,6 +2290,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
     RED_CHECK_WORKSPACE(record_wd);
 }
 
+#ifndef REDEMPTION_NO_FFMPEG
 namespace
 {
     // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
@@ -2316,6 +2317,7 @@ namespace
         return 0;
     }
 }
+#endif
 
 #ifndef REDEMPTION_NO_FFMPEG
 #include "lib/do_recorder.hpp"
