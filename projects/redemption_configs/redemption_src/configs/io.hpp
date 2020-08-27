@@ -366,7 +366,8 @@ struct UpperArray
     chars_view str;
 
 private:
-    std::array<char, N> arr;
+    // fix -Wstringop-overflow= with gcc to release (bug?)
+    std::array<char, (N <= 9 ? 9 : N)> arr;
 };
 
 inline constexpr std::pair<chars_view, bool> boolean_strings[]{
