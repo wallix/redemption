@@ -940,7 +940,7 @@ public:
                         }
                         continue;
                     }
-                    else {
+                    else if (front.state == Front::FRONT_UP_AND_RUNNING) {
                         if (acl_serial.is_before_connexion()) {
                             try {
                                 unique_fd client_sck = addr_connect_non_blocking(
@@ -972,6 +972,7 @@ public:
                                     run_session = true;
                                 }
                             }
+
                             continue;
                         }
                         else {
