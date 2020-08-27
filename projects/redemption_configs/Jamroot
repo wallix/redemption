@@ -16,6 +16,8 @@ project configs
     <include>$(REDEMPTION_SRC_PATH)
     <include>$(SYSTEM_SRC_PATH)
 
+    <rtti>off
+
     $(REDEMPTION_CXXFLAGS)
     <toolset>clang:<cxxflags>-Wno-class-varargs
 

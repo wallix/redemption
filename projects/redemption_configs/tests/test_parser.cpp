@@ -119,6 +119,8 @@ RED_AUTO_TEST_CASE(TestEnumParser)
         RED_CHECK(v == RdpModeConsole::allow);
         RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "foRbI"_zv));
         RED_CHECK(v == RdpModeConsole::allow);
+        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "foRbIdden"_zv));
+        RED_CHECK(v == RdpModeConsole::allow);
 
         RED_CHECK("forbid"_av ==
             assign_zbuf_from_cfg(zbuf_av, cfg_s_type<RdpModeConsole>{}, RdpModeConsole(2)));

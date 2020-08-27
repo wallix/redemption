@@ -41,12 +41,9 @@ namespace
         const char * context, const char * key, T & x, U u, zstring_view av)
     {
         auto const err = parse_from_cfg(x, u, av);
-        if (err) {
-            LOG(LOG_WARNING,
-                "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
-                key, context, int(av.size()), av.data(), err.c_str()
-            );
-        }
+        LOG_IF(err, LOG_WARNING,
+            "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
+            key, context, int(av.size()), av.data(), err.c_str());
         return err;
     }
 
