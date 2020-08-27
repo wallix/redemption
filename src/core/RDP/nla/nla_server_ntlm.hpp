@@ -39,13 +39,13 @@
 // static const uint8_t lm_magic[] = "KGS!@#$%";
 
 inline constexpr auto client_sign_magic =
-    "session key to client-to-server signing key magic constant"_av;
+    "session key to client-to-server signing key magic constant\0"_av;
 inline constexpr auto server_sign_magic =
-    "session key to server-to-client signing key magic constant"_av;
+    "session key to server-to-client signing key magic constant\0"_av;
 inline constexpr auto client_seal_magic =
-    "session key to client-to-server sealing key magic constant"_av;
+    "session key to client-to-server sealing key magic constant\0"_av;
 inline constexpr auto server_seal_magic =
-    "session key to server-to-client sealing key magic constant"_av;
+    "session key to server-to-client sealing key magic constant\0"_av;
 
 #include "transport/transport.hpp"
 
