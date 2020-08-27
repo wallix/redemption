@@ -581,7 +581,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/acl_serializer.cpp

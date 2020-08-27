@@ -24,23 +24,15 @@
 
 #pragma once
 
-#include "core/back_event_t.hpp"
-#include "acl/auth_api.hpp"
-#include "transport/crypto_transport.hpp"
-#include "transport/socket_transport.hpp"
 #include "utils/verbose_flags.hpp"
-#include "utils/timebase.hpp"
-#include "acl/session_logfile.hpp"
+#include "transport/transport.hpp"
 
 #include <string>
-#include <chrono>
+#include <functional>
 
-#include <ctime>
 
 class Inifile;
-class ModuleManager;
-class AuthApi;
-class ModWrapper;
+class Transport;
 
 class AclSerializer final
 {
@@ -65,6 +57,7 @@ private:
     char session_id[256];
 
 public:
+    // TODO not used
     bool remote_answer;       // false initialy, set to true once response is
                               // received from acl and asked_remote_answer is
                               // set to false
@@ -82,17 +75,14 @@ public:
     AclSerializer(Inifile & ini);
     ~AclSerializer();
 
-    void disconnect() {
+    void disconnect()
+    {
         if (this->acl_status == State::connected) {
             this->acl_status = State::disconnected_by_redemption;
-            if (this->auth_trans){
-                this->auth_trans->disconnect();
-                this->auth_trans = nullptr;
-            }
-            return;
         }
+
         // If connexion was cut by authentifier, we also want to call disconnect on transport
-        if (this->auth_trans){
+        if (this->auth_trans) {
             this->auth_trans->disconnect();
             this->auth_trans = nullptr;
         }
@@ -131,24 +121,9 @@ public:
         return acl_status == State::connected;
     }
 
-    std::string_view show() const
-    {
-        switch (this->acl_status) {
-        case State::not_yet_connected:
-            return "Acl not yet connected";
-        case State::connected:
-            return "Acl connected";
-        case State::connection_failed:
-            return "Acl connection failed";
-        case State::disconnected_by_redemption:
-            return "Acl disconnected by redemption";
-        case State::disconnected_by_authentifier:
-            return "Acl disconnected by authentifier";
-        }
-        return "Acl unexpected state";
-    }
-
-    void in_items();
     void incoming();
     void send_acl_data();
+
+private:
+    void in_items();
 };

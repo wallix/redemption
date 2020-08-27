@@ -859,7 +859,7 @@ public:
                 }
 
                 // exchange data with sesman
-                if (acl_serial.is_connected()){
+                if (acl_serial.is_connected()) {
                     if (ioswitch.is_set_for_reading(acl_serial.auth_trans->get_sck())) {
                         try {
                             acl_serial.incoming();
@@ -901,7 +901,6 @@ public:
                     sesman.flush_acl_log6(
                         [&ini,&log_file,&time_base,&session_type](LogId id, KVList kv_list)
                         {
-    //                        const timeval time = timebase.get_current_time();
                             /* Log to SIEM (redirected syslog) */
                             log_siem_syslog(id, kv_list, ini, session_type);
                             log_siem_arcsight(time_base.get_current_time().tv_sec, id, kv_list, ini, session_type);
@@ -925,27 +924,28 @@ public:
                     });
 
                 }
-                else {
-                    if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE){
-                        if (acl_serial.is_after_connexion()){
-                            this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
-                            mod_wrapper.disconnect();
-                            run_session = false;
-                            LOG(LOG_INFO, "Session Closed by ACL : %s",
-                                (acl_serial.acl_status == AclSerializer::State::disconnected_by_authentifier)?
-                                    "closed by authentifier":"closed by proxy");
-                            if (ini.get<cfg::globals::enable_close_box>()) {
-                                auto next_state = MODULE_INTERNAL_CLOSE;
-                                this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                                run_session = true;
-                            }
-                            continue;
+                else if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE) {
+                    if (acl_serial.is_after_connexion()) {
+                        this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
+                        mod_wrapper.disconnect();
+                        run_session = false;
+                        LOG(LOG_INFO, "Session Closed by ACL : %s",
+                            (acl_serial.acl_status == AclSerializer::State::disconnected_by_authentifier)
+                                ? "closed by authentifier"
+                                : "closed by proxy");
+                        if (ini.get<cfg::globals::enable_close_box>()) {
+                            auto next_state = MODULE_INTERNAL_CLOSE;
+                            this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                            run_session = true;
                         }
-                        else if (acl_serial.is_before_connexion()) {
+                        continue;
+                    }
+                    else {
+                        if (acl_serial.is_before_connexion()) {
                             try {
                                 unique_fd client_sck = addr_connect_non_blocking(
-                                                            ini.get<cfg::globals::authfile>().c_str(),
-                                                            (strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") == 0));
+                                    ini.get<cfg::globals::authfile>().c_str(),
+                                    (ini.get<cfg::globals::host>() == "127.0.0.1"));
 
                                 if (!client_sck.is_open()) {
                                     LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
@@ -955,7 +955,8 @@ public:
                                     throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
                                 }
 
-                                auth_trans = std::make_unique<SocketTransport>("Authentifier", std::move(client_sck),
+                                auth_trans = std::make_unique<SocketTransport>(
+                                    "Authentifier", std::move(client_sck),
                                     ini.get<cfg::globals::authfile>().c_str(), 0,
                                     std::chrono::seconds(1), SocketTransport::Verbose::none);
 
@@ -975,15 +976,15 @@ public:
                         }
                         else {
                             LOG_IF(VerboseSession::has_verbose_acl(ini),
-                                   LOG_ERR, "can't flush acl: not connected yet");
+                                LOG_ERR, "can't flush acl: not connected yet");
                         }
                     }
                 }
 
                 try {
                     events.execute_events(time_base.get_current_time(),
-                        [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd);},
-                            VerboseSession::has_verbose_event(ini));
+                        [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd); },
+                        VerboseSession::has_verbose_event(ini));
 
                     if (front.state == Front::FRONT_UP_AND_RUNNING) {
                         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();

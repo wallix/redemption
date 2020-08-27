@@ -320,7 +320,7 @@ struct Sesman : public AuthApi
         this->flush_acl_keyboard_layout(verbose);
     }
 
-    void flush_acl_report(std::function<void(std::string,std::string)> fn)
+    void flush_acl_report(std::function<void(std::string const&, std::string const&)> fn)
     {
         if (!this->report_sent) {
             for(auto & report: this->reports){
