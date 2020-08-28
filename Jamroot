@@ -99,7 +99,7 @@ actions gen_targets
              /^\s*</!d
              s/^\s*</requirement_list += </
              s/$/ ;/' \
-        | sort > projects/ClientQtGraphicAPI/redemption_deps.jam
+        | sort > projects/qtclient/redemption_deps.jam
 }
 
 explicit targets.jam ;

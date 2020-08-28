@@ -84,7 +84,7 @@ if $(qtversion) = 4
 # for `Q_UNUSED(_a);` within moc_*.cpp
 REDEMPTION_CXXFLAGS += <toolset>clang:<cxxflags>-Wno-extra-semi-stmt ;
 
-project redemption_qt_client
+project qtclient
     : requirements
 
     <conditional>@flags

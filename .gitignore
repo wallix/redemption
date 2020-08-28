@@ -15,21 +15,12 @@
 
 # Jamroot
 /bin
-/projects/browser_client_JS/bin
-/projects/ClientQtGraphicAPI/bin
-/projects/js/bin
+/projects/jsclient/bin
+/projects/qtclient/bin
 /projects/redemption_configs/bin
 /coverage.summary
 /coverage
-projects/ClientQtGraphicAPI/a.out
-projects/ClientQtGraphicAPI/is_loading_replay_mod
-projects/ClientQtGraphicAPI/note.txt
-projects/ClientQtGraphicAPI/notepad.txt
-projects/ClientQtGraphicAPI/rdp_metrics-2018-Jul-27.log
-projects/ClientQtGraphicAPI/src/try_writev.cpp
-projects/ClientQtGraphicAPI/test_writev.txt
-projects/ClientQtGraphicAPI/writev
-projects/ClientQtGraphicAPI/DATA/config
+projects/qtclient/DATA/
 # bin
 /tools/valgrind-filter/valgrind-filter
 /tools/redcryptofile/redcryptofile.so
