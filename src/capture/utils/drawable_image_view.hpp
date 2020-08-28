@@ -54,7 +54,7 @@ public:
     using value_type = Color;
 
     Color operator()(unsigned row, unsigned col) const
-    { return {this->drawable.data(col, row)}; }
+    { return {this->drawable.data(int(col), int(row))}; }
 
     Color operator[](::mln::point2d p) const
     { return {this->drawable.data(p.col(), p.row())}; }

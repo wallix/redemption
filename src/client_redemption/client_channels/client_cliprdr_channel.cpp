@@ -927,7 +927,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
 
 void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) const
 {
-    int first_part_data_size(0);
+    size_t first_part_data_size = 0;
     uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
     StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
     auto const type_id = this->clientIOClipboardAPI->get_buffer_type_id();

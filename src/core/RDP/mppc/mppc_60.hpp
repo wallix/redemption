@@ -858,8 +858,8 @@ private:
                     int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
                     if (ExtraBitsLength) {
                         LOG_IF(this->verbose, LOG_INFO, "ExtraBitsLength=%d", ExtraBitsLength);
-                        int ExtraBits   = copy_offset & ((1 << ExtraBitsLength) - 1);
-                        LOG_IF(this->verbose, LOG_INFO, "ExtraBits=%d", ExtraBits);
+                        uint32_t ExtraBits = copy_offset & ((1 << ExtraBitsLength) - 1);
+                        LOG_IF(this->verbose, LOG_INFO, "ExtraBits=%u", ExtraBits);
                         ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
                             bits_left, opb_index, this->verbose);
                     }

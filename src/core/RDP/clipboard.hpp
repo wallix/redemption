@@ -2001,8 +2001,8 @@ public:
         while(notEOF) {
 
             // 2.3 WMF Records
-            int size = chunk.in_uint32_le() * 2;
-            unsigned type = chunk.in_uint16_le();
+            uint32_t size = chunk.in_uint32_le() * 2u;
+            uint16_t type = chunk.in_uint16_le();
 
             switch (type) {
 
@@ -2058,7 +2058,7 @@ public:
 
                 default:
                     LOG(LOG_INFO, "DEFAULT: unknown record type=%x size=%d octets", type, size);
-                    chunk.in_skip_bytes(size - 6);
+                    chunk.in_skip_bytes(size - 6u);
                 break;
             }
         }

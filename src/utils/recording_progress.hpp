@@ -117,7 +117,7 @@ public:
         assert(this->time_percentage < 100);
 
         if (this->time_percentage != this->last_written_time_percentage) {
-            unsigned int const elapsed_time = ::time(nullptr) - this->processing_start_time;
+            long const elapsed_time = ::time(nullptr) - this->processing_start_time;
             this->time_remaining = elapsed_time * 100 / this->time_percentage - elapsed_time;
             this->write_datas();
             this->last_written_time_percentage = this->time_percentage;

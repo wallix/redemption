@@ -369,7 +369,9 @@ namespace
             const size_t destn = cx * dimpl.nbbytes_color();
             const size_t srcn = cx * bmp_Bpp;
             const size_t inc_line = line_size - destn;
-            const int inc_bmp_line = upToBottom ? (bmp_line_size - srcn) : -(bmp_line_size + srcn);
+            const int inc_bmp_line = upToBottom
+                ? int(bmp_line_size - srcn)
+                : -int(bmp_line_size + srcn);
 
             for (cP ep = dest + line_size * cy; dest < ep; dest += inc_line, src += inc_bmp_line) {
                 const cP dest_e = dest + destn;

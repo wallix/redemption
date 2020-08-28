@@ -68,6 +68,7 @@ struct VerboseSession
     static bool has_verbose_event(Inifile const& ini) { return debug(ini) & 0x02; }
     static bool has_verbose_acl(Inifile const& ini) { return debug(ini) & 0x04; }
     static bool has_verbose_trace(Inifile const& ini) { return debug(ini) & 0x08; }
+    static bool has_verbose_performance(Inifile const& ini) { return debug(ini) & 0x8000; }
 
 private:
     static uint32_t debug(Inifile const& ini) { return ini.get<cfg::debug::session>(); }
@@ -1252,7 +1253,7 @@ public:
 
     ~Session()
     {
-        if (this->ini.get<cfg::debug::performance>() & 0x8000) {
+        if (VerboseSession::has_verbose_performance(this->ini)) {
             this->write_performance_log(this->perf_last_info_collect_time + 3);
         }
         // Suppress Session file from disk (original name with PID or renamed with session_id)

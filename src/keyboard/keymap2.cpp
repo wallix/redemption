@@ -774,7 +774,7 @@ void Keymap2::init_layout(int LCID)
     }
 } // END METHOD - init_layout
 
-unsigned Keymap2::layout_id() const
+int Keymap2::layout_id() const
 {
     return this->keylayout_WORK->LCID;
 }

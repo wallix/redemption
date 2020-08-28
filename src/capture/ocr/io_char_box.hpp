@@ -40,7 +40,7 @@ inline void display_char_box(
         const unsigned maxrow = first->bbox.pmax().row();
         const unsigned mincol = first->bbox.pmin().col();
         const unsigned minrow = first->bbox.pmin().row();
-        os << std::setw(maxcol-mincol + 4) << std::setfill('X') << "\n";
+        os << std::setw(int(maxcol-mincol) + 4) << std::setfill('X') << "\n";
         for (unsigned row = minrow; row <= maxrow; ++row) {
             os << "X";
             for (unsigned col = mincol; col <= maxcol; ++col) {
@@ -48,6 +48,6 @@ inline void display_char_box(
             }
             os << "X\n";
         }
-        os << std::setw(maxcol-mincol + 5) << std::setfill('X') << "\n\n";
+        os << std::setw(int(maxcol-mincol) + 5) << std::setfill('X') << "\n\n";
     }
 }

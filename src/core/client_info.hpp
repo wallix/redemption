@@ -220,7 +220,7 @@ struct ClientInfo
         }
         if (infoPacket.flags & INFO_COMPRESSION){
             this->rdp_compression      = 1;
-            this->rdp_compression_type = ((infoPacket.flags & CompressionTypeMask) >> 9);
+            this->rdp_compression_type = int((infoPacket.flags & CompressionTypeMask) >> 9);
         }
 
         this->remote_program          = (infoPacket.flags & INFO_RAIL);

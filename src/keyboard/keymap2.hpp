@@ -214,5 +214,5 @@ public:
     static array_view<Keylayout const *> keylayouts() noexcept;
     static Keylayout const & default_layout() noexcept;
 
-    [[nodiscard]] unsigned layout_id() const;
+    [[nodiscard]] int layout_id() const;
 }; // END STRUCT - Keymap2

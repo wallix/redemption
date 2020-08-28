@@ -92,10 +92,9 @@ public:
         // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
 
         if (data.size() > first_part_data_size ) {
-
-            int real_total = data.size() - first_part_data_size;
-            const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
-            const int remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
+            size_t real_total = data.size() - first_part_data_size;
+            const size_t cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
+            const size_t remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
             int data_sent(0);
 
             // First Part

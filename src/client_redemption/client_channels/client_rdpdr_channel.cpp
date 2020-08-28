@@ -1105,7 +1105,6 @@ void ClientRDPDRChannel::provess_iorequest_write(InStream & chunk, rdpdr::Device
     size_t WriteDataLen(dwr.Length);
 
     if (dwr.Length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-
         this->writeData_to_wait = dwr.Length - rdpdr::DeviceWriteRequest::FISRT_PART_DATA_MAX_LEN;
         this->file_to_write_id = id;
         WriteDataLen = rdpdr::DeviceWriteRequest::FISRT_PART_DATA_MAX_LEN;

@@ -231,8 +231,7 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
             this->impl_sound->setData(chunk.remaining_bytes());
         }
 
-        if (!(this->wave_data_to_wait)) {
-
+        if (!this->wave_data_to_wait) {
             LOG_IF(bool(this->verbose & RDPVerbose::rdpsnd), LOG_INFO,
                 "SERVER >> RDPEA: Wave PDU");
 

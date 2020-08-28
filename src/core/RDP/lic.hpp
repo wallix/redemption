@@ -1247,9 +1247,9 @@ namespace LIC
         {
             uint8_t null_data[SEC_MODULUS_SIZE] {};
 
-            int userlen = strlen(username) + 1;
-            int hostlen = strlen(hostname) + 1;
-            int length = 128 + userlen + hostlen;
+            size_t userlen = strlen(username) + 1;
+            size_t hostlen = strlen(hostname) + 1;
+            size_t length = 128 + userlen + hostlen;
 
             stream.out_uint8(LIC::NEW_LICENSE_REQUEST);
             stream.out_uint8(version);

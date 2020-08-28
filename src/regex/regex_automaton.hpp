@@ -21,12 +21,10 @@
 
 #pragma once
 
-#include <iostream>
 #include <new>
 #include <vector>
 #include <utility>
 #include <algorithm>
-#include <iomanip>
 #include <cstring> //memset
 #include <cassert>
 #include <cstdint>
@@ -34,14 +32,17 @@
 #include "regex_utils.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
-namespace re {
 #ifdef DISPLAY_TRACE
-    enum { g_trace_active = 1 };
-#else
-    enum { g_trace_active = 0 };
+#include <iostream>
+#include <iomanip>
 #endif
 
-#define RE_SHOW !::re::g_trace_active ? void() : void
+namespace re {
+#ifdef DISPLAY_TRACE
+    #define RE_SHOW void
+#else
+    #define RE_SHOW(...)
+#endif
 
     class StateMachine2
     {
@@ -1040,6 +1041,7 @@ namespace re {
         }
 
     public:
+#ifdef DISPLAY_TRACE
         static void display_elem_state_list(const StateList& e, unsigned idx)
         {
             std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t"
@@ -1133,6 +1135,7 @@ namespace re {
             std::cout.fill(oldfill);
             std::cout.flush();
         }
+#endif
 
     private:
         struct StepRangeList {
@@ -1289,9 +1292,11 @@ namespace re {
                             }
 
                             if (!count_consume || (count_consume_is_one && !stl.next && consumer.valid() && (exact_match || stl.is_terminate))) {
-                                if (g_trace_active && stl.next) {
+                                #ifdef DISPLAY_TRACE
+                                if (stl.next) {
                                     RE_SHOW(std::cout << "\t\033[35mx " << stl.next->st_num << "\033[0m\n");
                                 }
+                                #endif
                                 continue;
                             }
 
@@ -1323,9 +1328,11 @@ namespace re {
                         }
                         else {
                             if (!stl.next && consumer.valid() && (exact_match || stl.is_terminate)) {
-                                if (g_trace_active && stl.next) {
+                                #ifdef DISPLAY_TRACE
+                                if (stl.next) {
                                     RE_SHOW(std::cout << "\t\033[35mx " << (stl.next->st_num) << "\033[0m\n");
                                 }
+                                #endif
                                 continue;
                             }
 

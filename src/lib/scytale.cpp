@@ -335,7 +335,7 @@ int scytale_writer_write(ScytaleWriterHandle * handle, uint8_t const * buffer, u
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(handle->out_crypto_transport.send(buffer, len), ERR_TRANSPORT_WRITE_FAILED);
-    return len;
+    return checked_int{len};
 }
 
 int scytale_writer_close(ScytaleWriterHandle * handle) {
@@ -765,7 +765,7 @@ int scytale_tfl_writer_write(
     CHECK_HANDLE(handle);
     CHECK_NOTHROW_R(handle->tfl_file.trans.send(buffer, len),
         -1, handle->fdx.error_ctx, ERR_TRANSPORT_WRITE_FAILED);
-    return len;
+    return checked_int{len};
 }
 
 int scytale_tfl_writer_close(

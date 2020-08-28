@@ -409,10 +409,12 @@ namespace re
             return ranges;
         }
 
+#ifdef DISPLAY_TRACE
         void display() const
         {
             this->sm.display_states();
         }
+#endif
     };
 }  // namespace re
 

@@ -150,7 +150,7 @@ private:
     }
 
 public:
-    std::unordered_map<int, std::string> paths;
+    std::unordered_map<uint32_t, std::string> paths;
 
 private:
     std::string share_dir;
@@ -177,8 +177,8 @@ public:
     bool fileSystemCapacity[6] = { true, true, false, false, false, false };
 
 private:
-    int writeData_to_wait = 0;
-    int file_to_write_id = 0;
+    uint32_t writeData_to_wait = 0;
+    uint32_t file_to_write_id = 0;
 
     std::vector<std::string> elem_in_path;
 public:

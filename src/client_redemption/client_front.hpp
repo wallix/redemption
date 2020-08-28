@@ -96,13 +96,13 @@ inline int run_connection_test(
         LOG(LOG_INFO, "run_connection_test");
 
         timeval now = tvtime();
-        unsigned max = 0;
+        int max = 0;
         fd_set   rfds;
         io_fd_zero(rfds);
 
         timeval ultimatum =  now + timeout;
 
-        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
+        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, fd);});
         events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
         if (ultimatum < now){
             ultimatum = now;
