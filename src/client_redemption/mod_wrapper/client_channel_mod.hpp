@@ -112,7 +112,7 @@ public:
 //             ::hexdump(out_stream_first_part.get_produced_bytes());
 
 
-            for (int i = 0; i < cmpt_PDU_part; i++) {
+            for (size_t i = 0; i < cmpt_PDU_part; i++) {
 
             // Next Part
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
