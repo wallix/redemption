@@ -20,6 +20,7 @@
 
 #include "mod/rdp/channels/sespro_channel_params.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <iterator>
 
@@ -87,9 +88,9 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
     if (comme_separated_monitoring_rules) {
         const char * rule = comme_separated_monitoring_rules;
 
-        char const* RULE_PREFIX_ALLOW  = "$allow:";
-        char const* RULE_PREFIX_NOTIFY = "$notify:";
-        char const* RULE_PREFIX_DENY   = "$deny:";
+        auto RULE_PREFIX_ALLOW  = "$allow:"_zv;
+        auto RULE_PREFIX_NOTIFY = "$notify:"_zv;
+        auto RULE_PREFIX_DENY   = "$deny:"_zv;
 
         while (*rule) {
             if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
@@ -100,20 +101,20 @@ OutboundConnectionMonitorRules::OutboundConnectionMonitorRules(
             char const * rule_begin = rule;
 
             Type uType = Type::Deny;
-            if (strcasestr(rule, RULE_PREFIX_ALLOW) == rule)
+            if (strcasestr(rule, RULE_PREFIX_ALLOW.c_str()) == rule)
             {
                 uType  = Type::Allow;
-                rule  += sizeof(RULE_PREFIX_ALLOW) - 1;
+                rule  += RULE_PREFIX_ALLOW.size();
             }
-            else if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
+            else if (strcasestr(rule, RULE_PREFIX_NOTIFY.c_str()) == rule)
             {
                 uType  = Type::Notify;
-                rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
+                rule  += RULE_PREFIX_NOTIFY.size();
             }
-            else if (strcasestr(rule, RULE_PREFIX_DENY) == rule)
+            else if (strcasestr(rule, RULE_PREFIX_DENY.c_str()) == rule)
             {
                 uType  = Type::Deny;
-                rule  += sizeof(RULE_PREFIX_DENY) - 1;
+                rule  += RULE_PREFIX_DENY.size();
             }
 
             const char * rule_separator = strchr(rule, ',');
@@ -199,8 +200,8 @@ ProcessMonitorRules::ProcessMonitorRules(const char * comme_separated_rules)
     if (comme_separated_rules) {
         const char * rule = comme_separated_rules;
 
-        char const* RULE_PREFIX_NOTIFY = "$notify:";
-        char const* RULE_PREFIX_DENY   = "$deny:";
+        auto RULE_PREFIX_NOTIFY = "$notify:"_zv;
+        auto RULE_PREFIX_DENY   = "$deny:"_zv;
 
         while (*rule) {
             if ((*rule == ',') || (*rule == '\t') || (*rule == ' ')) {
@@ -211,15 +212,15 @@ ProcessMonitorRules::ProcessMonitorRules(const char * comme_separated_rules)
             char const * rule_begin = rule;
 
             Type uType = Type::Deny;
-            if (strcasestr(rule, RULE_PREFIX_NOTIFY) == rule)
+            if (strcasestr(rule, RULE_PREFIX_NOTIFY.c_str()) == rule)
             {
                 uType  = Type::Notify;
-                rule  += sizeof(RULE_PREFIX_NOTIFY) - 1;
+                rule  += RULE_PREFIX_NOTIFY.size();
             }
-            else if (strcasestr(rule, RULE_PREFIX_DENY) == rule)
+            else if (strcasestr(rule, RULE_PREFIX_DENY.c_str()) == rule)
             {
                 uType  = Type::Deny;
-                rule  += sizeof(RULE_PREFIX_DENY) - 1;
+                rule  += RULE_PREFIX_DENY.size();
             }
 
             const char * rule_separator = strchr(rule, ',');
