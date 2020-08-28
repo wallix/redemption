@@ -68,7 +68,11 @@ struct VerboseSession
     static bool has_verbose_event(Inifile const& ini) { return debug(ini) & 0x02; }
     static bool has_verbose_acl(Inifile const& ini) { return debug(ini) & 0x04; }
     static bool has_verbose_trace(Inifile const& ini) { return debug(ini) & 0x08; }
-    static bool has_verbose_performance(Inifile const& ini) { return debug(ini) & 0x8000; }
+
+    static bool has_verbose_performance(Inifile const& ini)
+    {
+        return ini.get<cfg::debug::performance>() & 0x8000;
+    }
 
 private:
     static uint32_t debug(Inifile const& ini) { return ini.get<cfg::debug::session>(); }
@@ -728,7 +732,7 @@ public:
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
-            if (ini.get<cfg::debug::performance>() & 0x8000) {
+            if (VerboseSession::has_verbose_performance(ini)) {
                 this->write_performance_log(start_time);
             }
 
@@ -808,7 +812,7 @@ public:
 
                 time_base.set_current_time(tvtime());
 
-                if (ini.get<cfg::debug::performance>() & 0x8000) {
+                if (VerboseSession::has_verbose_performance(ini)) {
                     this->write_performance_log(time_base.get_current_time().tv_sec);
                 }
 
