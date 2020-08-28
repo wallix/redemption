@@ -849,7 +849,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             uint16_t hostlen = strlen(hostname);
             uint16_t maxhostlen = std::min(uint16_t(15), hostlen);
             for (size_t i = 0; i < maxhostlen ; i++){
-                cs_core.clientName[i] = hostname[i];
+                cs_core.clientName[i] = byte_ptr(hostname)[i];
             }
             memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
 

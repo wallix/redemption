@@ -30,12 +30,11 @@ namespace
     inline std::pair<bool, long int>
     to_long_int_base16_or_10(std::string_view str_view) noexcept
     {
-        std::pair<bool, long int> res { false, 0 };
-        
-        if (str_view.empty())
-            return res;
-        
-        auto converter = [](const char *str, int base) -> decltype(res)
+        if (str_view.empty()) {
+            return {};
+        }
+
+        auto converter = [](const char *str, int base)
         {
             long int value = 0;
             bool success = false;
@@ -44,37 +43,35 @@ namespace
             errno = 0;
             value = strtol(str, &endptr, base);
             success = !(endptr == str || *endptr != '\0' || errno);
-            return { success, value };
+            return std::pair<bool, long int>{ success, value };
         };
 
         std::size_t size = str_view.size();
-        
+
         if (size > 2 && str_view[0] == '0' && str_view[1] == 'x')
         {
-            res = converter(str_view.data(), 16);
+            return converter(str_view.data(), 16);
         }
-        else if (size > 1 && str_view[0] == '#')
+
+        if (size > 1 && str_view[0] == '#')
         {
-            res = converter(str_view.data() + 1, 16);
+            return converter(str_view.data() + 1, 16);
         }
-        else
-        {
-            res = converter(str_view.data(), 10);
-        }
-        return res;
+
+        return converter(str_view.data(), 10);
     }
-    
+
     BGRColor color_from_cstr(std::string_view str_view) noexcept
     {
         BGRColor bgr;
-        
+
         if (false); /*NOLINT*/
-#define ELSE_COLOR(COLOR_NAME)                                            \
-        else if (::strncasecmp(#COLOR_NAME,                               \
-                               str_view.data(),                           \
-                               str_view.size()) == 0)                     \
-        {                                                                 \
-            bgr = COLOR_NAME;                                             \
+#define ELSE_COLOR(COLOR_NAME)                        \
+        else if (::strncasecmp(#COLOR_NAME,           \
+                               str_view.data(),       \
+                               str_view.size()) == 0) \
+        {                                             \
+            bgr = COLOR_NAME;                         \
         }
         ELSE_COLOR(BLACK)
         ELSE_COLOR(GREY)
@@ -125,8 +122,10 @@ namespace
 
 void load_theme(Theme& theme, Inifile& ini) noexcept
 {
-    if (!ini.get<cfg::theme::enable_theme>())
+    if (!ini.get<cfg::theme::enable_theme>()) {
         return;
+    }
+
     theme.global.bgcolor =
         color_from_cstr(ini.get<cfg::theme::bgcolor>());
     theme.global.fgcolor =
@@ -160,22 +159,22 @@ void load_theme(Theme& theme, Inifile& ini) noexcept
         color_from_cstr(ini.get<cfg::theme::selector_line1_bgcolor>());
     theme.selector_line1.fgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_line1_fgcolor>());
-    
+
     theme.selector_line2.bgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_line2_bgcolor>());
     theme.selector_line2.fgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_line2_fgcolor>());
-    
+
     theme.selector_selected.bgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_selected_bgcolor>());
     theme.selector_selected.fgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_selected_fgcolor>());
-    
+
     theme.selector_focus.bgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_focus_bgcolor>());
     theme.selector_focus.fgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_focus_fgcolor>());
-    
+
     theme.selector_label.bgcolor =
         color_from_cstr(ini.get<cfg::theme::selector_label_bgcolor>());
     theme.selector_label.fgcolor =

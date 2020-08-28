@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
 /* 0080 */ 0x2b, 0x2f, 0x03, 0xb5, 0x74, 0x5e, 0x35, 0x02, 0x03, 0x01, 0x00, 0x01,                          // +/..t^5.....
     };
     std::string user("Christophe");
-    std::string domain("");
+    std::string domain;
     uint8_t pass[] = "SecureLinux$42";
     std::string host("WIN10CGR");
     ReplayRandom rand(std::vector<uint8_t>({
@@ -421,7 +421,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     RED_TEST_MESSAGE("==================== TestNlaserver0 ===================");
 
     std::string user("Christophe");
-    std::string domain("");
+    std::string domain;
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xad, 0x62, 0xb1, 0xe4, 0x68, 0x0d, 0x3c}));
 
     TimeBase time_base({0x01d5754E,0x9df41160});
@@ -429,8 +429,8 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av){
             auto user_str = ::UTF16toUTF8(user_av);
             auto domain_str = ::UTF16toUTF8(domain_av);
-            RED_CHECK(user_str == std::string("Christophe"));
-            RED_CHECK(domain_str == std::string(""));
+            RED_CHECK(user_str == "Christophe");
+            RED_CHECK(domain_str == "");
             return std::pair<PasswordCallback,array_md4>{PasswordCallback::Ok,Md4(::UTF8toUTF16("SecureLinux$42"_av))};
         };
 
@@ -560,7 +560,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
     RED_TEST_MESSAGE("==================== TestNlaserver1 ===================");
 
     std::string user("Administrator@proxykdc.lab");
-    std::string domain("");
+    std::string domain;
     uint8_t pass[] = "SecureLinux!3";
 
 //Time Stamp (1569948384, 939173)

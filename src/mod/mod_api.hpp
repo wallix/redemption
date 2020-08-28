@@ -69,5 +69,5 @@ public:
 
     virtual void DLP_antivirus_check_channels_files() {}
 
-    virtual void acl_update() override {}
+    void acl_update() override {}
 };

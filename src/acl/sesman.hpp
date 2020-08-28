@@ -320,7 +320,7 @@ struct Sesman : public AuthApi
         this->flush_acl_keyboard_layout(verbose);
     }
 
-    void flush_acl_report(std::function<void(std::string const&, std::string const&)> fn)
+    void flush_acl_report(std::function<void(std::string const&, std::string const&)> const& fn)
     {
         if (!this->report_sent) {
             for(auto & report: this->reports){
@@ -331,7 +331,7 @@ struct Sesman : public AuthApi
         }
     }
 
-    void flush_acl_disconnect_target(std::function<void(void)> close_log)
+    void flush_acl_disconnect_target(std::function<void(void)> const& close_log)
     {
         if (!this->disconnect_target_sent)
         {
@@ -345,7 +345,7 @@ struct Sesman : public AuthApi
     }
 
 
-    void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> log6)
+    void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> const& log6)
     {
         if (!this->log6_sent) {
             if (!this->buffered_log_params.empty()) {

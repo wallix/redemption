@@ -39,15 +39,15 @@ DynamicChannelsAuthorizations::DynamicChannelsAuthorizations(
             if (trimmed.empty()) {
                 continue;
             }
+
             if ((trimmed[0] == '*') && (trimmed.size() == 1)) {
                 names.clear();
-
                 return true;
             }
-            else {
-                names.emplace_back(trimmed.begin(), trimmed.end());
-            }
+
+            names.emplace_back(trimmed.begin(), trimmed.end());
         }
+
         return false;
     };
 

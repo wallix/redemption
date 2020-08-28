@@ -60,15 +60,15 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{62, 0},[](int){return false;}, 0);
+        events.execute_events(timeval{62, 0},[](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_1.png");
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{580, 0},[](int){return false;}, 0);
+        events.execute_events(timeval{580, 0},[](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_2.png");
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{600, 0},[](int){return false;}, 0);
+        events.execute_events(timeval{600, 0},[](int){return false;}, false);
         RED_CHECK(events.queue.size() == 1);
 
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_3.png");
@@ -76,7 +76,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     }
     // When Close mod goes out of scope remaining events should be garbaged
     RED_CHECK(events.queue.size() == 1);
-    events.execute_events(timeval{600, 0},[](int){return false;}, 0);
+    events.execute_events(timeval{600, 0},[](int){return false;}, false);
     RED_CHECK(events.queue.size() == 0);
 }
 
@@ -103,7 +103,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    events.execute_events(timeval{1,0},[](int){return false;}, 0);
+    events.execute_events(timeval{1,0},[](int){return false;}, false);
 
     RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_selector_1.png");
 }

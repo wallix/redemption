@@ -74,7 +74,7 @@ public:
         virtual void disable_input_event() = 0;
         virtual void enable_input_event() = 0;
         virtual void display_osd_message(std::string const & message) = 0;
-        virtual ~Callbacks() {}
+        virtual ~Callbacks() = default;
     };
 
 private:

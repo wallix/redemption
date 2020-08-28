@@ -366,7 +366,7 @@ private:
             return bool(this->get_word(i) & this->get_mask(i));
         }
 
-        [[nodiscard]] uint_fast get_mask(uint_fast i) const
+        [[nodiscard]] static uint_fast get_mask(uint_fast i)
         {
             return uint_fast{1} << (i % sizeof(uint_fast));
         }

@@ -1832,15 +1832,16 @@ public:
 class mod_rdp : public mod_api, public rdp_api
 {
 #ifndef __EMSCRIPTEN__
-    struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks {
+    struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks
+    {
         mod_rdp & mod;
         SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {}
-        virtual void freeze_screen() override { mod.freeze_screen(); }
-        virtual void disable_input_event() override { mod.disable_input_event(); }
-        virtual void enable_input_event() override { mod.enable_input_event(); }
-        virtual void enable_graphics_update() override { mod.enable_graphics_update(); }
-        virtual void disable_graphics_update() override { mod.disable_graphics_update(); }
-        virtual void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
+        void freeze_screen() override { mod.freeze_screen(); }
+        void disable_input_event() override { mod.disable_input_event(); }
+        void enable_input_event() override { mod.enable_input_event(); }
+        void enable_graphics_update() override { mod.enable_graphics_update(); }
+        void disable_graphics_update() override { mod.disable_graphics_update(); }
+        void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
     } spvc_callbacks;
 #endif
 
@@ -2428,7 +2429,6 @@ public:
                 }
             }
         }
-        return;
     }
 
     void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override
@@ -3179,15 +3179,11 @@ public:
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                     }
-                                    case FrontAPI::ResizeResult::instant_done:
-                                    break;
                                     case FrontAPI::ResizeResult::done:
-//                                        this->front.restart_capture(sesman);
-                                    break;
+                                    case FrontAPI::ResizeResult::instant_done:
                                     case FrontAPI::ResizeResult::no_need:
-                                    break;
                                     case FrontAPI::ResizeResult::remoteapp:
-                                    break;
+                                        break;
                                     }
 
                                     this->connection_finalization_state = WAITING_CTL_COOPERATE;

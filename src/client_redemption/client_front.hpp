@@ -121,9 +121,9 @@ inline int run_connection_test(
         }
 
         timeval now_after_select = tvtime();
-        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
+        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
         if (num) {
-            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, 0);
+            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, false);
             if (mod.is_up_and_running()) {
                 LOG(LOG_INFO, "%s CLIENT :: Done", type);
                 return 0;
@@ -135,7 +135,6 @@ inline int run_connection_test(
         if (timeout_counter == timeout_counter_max) {
             return 2;
         }
-        continue;
     }
 }
 
@@ -183,16 +182,15 @@ inline int wait_for_screenshot(
         }
 
         timeval now_after_select = tvtime();
-        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
+        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
         if (num > 0) {
-            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, 9);
+            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, true);
             LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
         }
-        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
+        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
         if (timeout == 0ms) {
             return 0;
         }
-        continue;
     }
 }
 

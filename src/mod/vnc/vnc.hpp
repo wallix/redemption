@@ -420,8 +420,9 @@ public:
             {
                 case State::Size:
                     this->state = this->read_size(buf);
-                    if (this->state != State::Data)
+                    if (this->state != State::Data) {
                         return false;
+                    }
                     REDEMPTION_CXX_FALLTHROUGH;
                 case State::Data:
                     this->state = this->read_data(buf, f);

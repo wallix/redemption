@@ -131,9 +131,9 @@ struct EQ<::LineForTest, ::LineForTest>
     gdi::MultiLineTextMetrics::Line expected_[] {__VA_ARGS__};                              \
     array_view lines_ = metrics.lines();                                                    \
     array_view<LineForTest> expected{                                                       \
-        static_cast<LineForTest const*>(&expected_[0]), std::size(expected_)};              \
+        static_cast<LineForTest const*>(&expected_[0]), std::size(expected_)}; /*NOLINT*/   \
     array_view lines = {                                                                    \
-        static_cast<LineForTest const*>(lines_.data()), lines_.size()};                     \
+        static_cast<LineForTest const*>(lines_.data()), lines_.size()}; /*NOLINT*/          \
     RED_CHECK_EQUAL_RANGES(lines, expected);                                                \
     if (lines.size() != expected.size()) {                                                  \
         std::size_t min = std::min(lines.size(), expected.size());                          \

@@ -106,9 +106,9 @@ public:
 
         timeval now_after_select = tvtime();
 
-        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; }, 0);
+        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
         if (num) {
-            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, 0);
+            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, false);
         }
         return 0;
     }

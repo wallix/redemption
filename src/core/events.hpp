@@ -269,7 +269,7 @@ struct EventContainer {
         }
     }
 
-    void get_fds_timeouts(std::function<void(timeval tv)> fn)
+    void get_fds_timeouts(std::function<void(timeval tv)> const& fn)
     {
         for (auto & pevent: this->queue){
             Event & event = *pevent;
@@ -279,7 +279,7 @@ struct EventContainer {
         }
     }
 
-    void get_timeouts(std::function<void(timeval tv)> fn)
+    void get_timeouts(std::function<void(timeval tv)> const& fn)
     {
         for (auto & pevent: this->queue){
             Event & event = *pevent;
@@ -289,9 +289,9 @@ struct EventContainer {
         }
     }
 
-    void execute_events(const timeval tv, const std::function<bool(int fd)> & fn, bool verbose)
+    void execute_events(const timeval tv, std::function<bool(int fd)> const& fn, bool verbose)
     {
-        for (size_t i = 0 ; i < this->queue.size(); i++){
+        for (size_t i = 0 ; i < this->queue.size(); ++i){ /*NOLINT*/
             auto & event = *this->queue[i];
             // These are needed to change the event method running
             // from inside an event method. In the large majority
@@ -342,7 +342,7 @@ struct EventContainer {
 
 
     void exec_teardowns() {
-        for (size_t i = 0; i < this->queue.size() ; i++){
+        for (size_t i = 0; i < this->queue.size() ; ++i){ /*NOLINT*/
             Event & event = *this->queue[i];
             if (not event.garbage
             and event.teardown){
@@ -437,7 +437,7 @@ struct EventContainer {
         Event * pevent = new Event(name, lifespan);
         Event & event = *pevent;
         event.alarm.set_timeout(trigger_time);
-        event.actions.set_timeout_function(timeout);
+        event.actions.set_timeout_function(std::move(timeout));
         int event_id = event.id;
         this->queue.push_back(pevent);
         return event_id;
@@ -453,8 +453,8 @@ struct EventContainer {
         Event & event = *pevent;
         event.alarm.set_fd(fd, grace_delay);
         event.alarm.set_timeout(trigger_time);
-        event.actions.set_action_function(on_fd);
-        event.actions.set_timeout_function(on_timeout);
+        event.actions.set_action_function(std::move(on_fd));
+        event.actions.set_timeout_function(std::move(on_timeout));
         int event_id = event.id;
         this->queue.push_back(pevent);
         return event_id;

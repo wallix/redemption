@@ -283,17 +283,17 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
     EventContainer events;
 
     Context context(events, time_base);
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 0);
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     time_base.set_current_time({3,0});
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, 2);
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, 2);
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
 }

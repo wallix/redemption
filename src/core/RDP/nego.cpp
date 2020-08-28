@@ -59,8 +59,6 @@ RdpNego::RdpNego(
 , enabled_protocols(RdpNegoProtocols::Rdp
     | (this->tls ? RdpNegoProtocols::Tls : 0)
     | (this->nla ? RdpNegoProtocols::Nla : 0))
-, hostname{}
-, password{}
 , target_host(target_host)
 , current_password(nullptr)
 , rand(rand)

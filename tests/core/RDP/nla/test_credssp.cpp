@@ -54,7 +54,7 @@ struct U8Array
 template<>
 struct U8Array<0>
 {
-    bytes_view av() const
+    static bytes_view av()
     {
         return {};
     }

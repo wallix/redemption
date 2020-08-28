@@ -104,8 +104,6 @@ public:
     , verbose(verbose)
     {}
 
-    ~RdpdrDriveReadTask(){}
-
     Event * configure_event(timeval now, void * lifespan) override
     {
         Event * pevent = new Event("RdpdrDriveReadTask", lifespan);
@@ -224,8 +222,6 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    ~RdpdrSendDriveIOResponseTask(){}
-
     Event * configure_event(timeval now, void * lifespan) override
     {
         Event * pevent = new Event("RdpdrSendDriveIOResponseTask", lifespan);
@@ -311,8 +307,6 @@ public:
 
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
-
-    ~RdpdrSendClientMessageTask(){}
 
     Event * configure_event(timeval now, void * lifespan) override
     {

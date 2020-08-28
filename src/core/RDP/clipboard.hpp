@@ -263,38 +263,37 @@ static std::string generic_flags_to_string(FlagType flags, ToName to_name, Flag.
     if (!flags) {
         return std::string("0x0");
     }
-    else {
-        constexpr std::size_t frag_num = 5*sizeof...(flag);
-        std::array<chars_view, frag_num> views;
-        std::array<std::array<char, 32>, frag_num> buffers;
 
-        auto views_it = std::begin(views);
-        auto buffer_it = std::begin(buffers);
+    constexpr std::size_t frag_num = 5*sizeof...(flag);
+    std::array<chars_view, frag_num> views;
+    std::array<std::array<char, 32>, frag_num> buffers;
 
-        bool has_value = false;
-        auto init_fragment = [&](auto flag)
-        {
-            if (flags & flag) {
-                auto r = std::to_chars(
-                    buffer_it->begin(), buffer_it->end(),
-                    FlagType(flag), 16);
-                *views_it++ = has_value ? " | "_av : ""_av;
-                *views_it++ = to_name(flag);
-                *views_it++ = {buffer_it->data(), r.ptr};
-                *views_it++ = "(0x"_av;
-                *views_it++ = ")"_av;
-                has_value = true;
-            }
-            else {
-                views_it += 5;
-            }
-            ++buffer_it;
-        };
+    auto views_it = std::begin(views);
+    auto buffer_it = std::begin(buffers);
 
-        (..., void(init_fragment(flag)));
+    bool has_value = false;
+    auto init_fragment = [&](auto flag)
+    {
+        if (flags & flag) {
+            auto r = std::to_chars(
+                buffer_it->begin(), buffer_it->end(),
+                FlagType(flag), 16);
+            *views_it++ = has_value ? " | "_av : ""_av;
+            *views_it++ = to_name(flag);
+            *views_it++ = {buffer_it->data(), r.ptr};
+            *views_it++ = "(0x"_av;
+            *views_it++ = ")"_av;
+            has_value = true;
+        }
+        else {
+            views_it += 5;
+        }
+        ++buffer_it;
+    };
 
-        return std::apply([](auto... av){ return str_concat(av...); }, views);
-    }
+    (..., void(init_fragment(flag)));
+
+    return std::apply([](auto... av){ return str_concat(av...); }, views);
 }
 
 static inline std::string msgFlags_to_string(uint16_t msgFlags)

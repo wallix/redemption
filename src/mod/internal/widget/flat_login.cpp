@@ -249,7 +249,7 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
         line_metrics.max_width() + WIDGET_MULTILINE_BORDER_X * 2,
         (this->font.max_height() + WIDGET_MULTILINE_BORDER_Y)
         * line_metrics.lines().size() + WIDGET_MULTILINE_BORDER_Y * 2
-        - (line_metrics.lines().size() ? WIDGET_MULTILINE_BORDER_Y : 0));
+        - (line_metrics.lines().empty() ? 0 : WIDGET_MULTILINE_BORDER_Y));
     this->login_message_label.set_text(std::move(line_metrics));
 
     dim = this->error_message_label.get_optimal_dim();

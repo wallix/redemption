@@ -162,18 +162,18 @@ namespace Cliprdr
     {
         if (bool(is_long_format))
         {
-            while (format_list_extract_long_format(in_stream, process_format))
-                ;
+            while (format_list_extract_long_format(in_stream, process_format)) {
+            }
         }
         else if (bool(is_ascii))
         {
-            while (format_list_extract_ascii_format(in_stream, process_format))
-                ;
+            while (format_list_extract_ascii_format(in_stream, process_format)) {
+            }
         }
         else
         {
-            while (format_list_extract_unicode_format(in_stream, process_format))
-                ;
+            while (format_list_extract_unicode_format(in_stream, process_format)) {
+            }
         }
     }
 } // namespace Cliprdr

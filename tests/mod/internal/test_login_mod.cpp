@@ -82,9 +82,9 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
     d.init();
 
-    events.execute_events(timeval{0,0},[](int){return false;}, 0);
+    events.execute_events(timeval{0,0},[](int){return false;}, false);
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_mod_signal());
 
-    events.execute_events(timeval{2,1},[](int){return false;}, 0);
+    events.execute_events(timeval{2,1},[](int){return false;}, false);
     RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_mod_signal());
 }

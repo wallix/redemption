@@ -846,9 +846,7 @@ struct Emit_SC_BitmapCodec
     {
         uint16_t len{0};
 
-        Emit_RFXSrvrCaps()
-        {
-        }
+        Emit_RFXSrvrCaps() = default;
 
         void emit(OutStream & out_stream) const
         {
@@ -1066,9 +1064,7 @@ struct Recv_SC_BitmapCodec
     {
         uint16_t len{0};
 
-        Recv_RFXSrvrCaps()
-        {
-        }
+        Recv_RFXSrvrCaps() = default;
 
         void emit(OutStream & out_stream) const
         {

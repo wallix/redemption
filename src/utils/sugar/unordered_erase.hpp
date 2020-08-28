@@ -45,7 +45,7 @@ std::vector<T>& unordered_erase_if(std::vector<T>& v, F&& pred)
 
     for (; first != last; ++first) {
         if (pred(*first)) {
-            while(1) {
+            for(;;) {
                 if (first == --last) {
                     goto erase;
                 }

@@ -85,29 +85,23 @@ class Session
     {
         // Keep alive Variables
         int  grace_delay;
-        long timeout;
-        long renew_time;
-        bool wait_answer;     // true when we are waiting for a positive response
-                              // false when positive response has been received and
-                              // timers have been set to new timers.
-        bool connected;
+        long timeout = 0;
+        long renew_time = 0;
+        bool wait_answer = false;   // true when we are waiting for a positive response
+                                    // false when positive response has been received and
+                                    // timers have been set to new timers.
+        bool connected = false;
 
     public:
 
         KeepAlive(std::chrono::seconds grace_delay_)
         : grace_delay(grace_delay_.count())
-        , timeout(0)
-        , renew_time(0)
-        , wait_answer(false)
-        , connected(false)
         {
         }
 
-        ~KeepAlive()
-        {
-        }
+        ~KeepAlive() = default;
 
-        bool is_started()
+        bool is_started() const
         {
             return this->connected;
         }
@@ -191,9 +185,9 @@ class Session
         }
 
         void set_timeout(timeval next_timeout){ this->timeout = next_timeout; }
-        timeval get_timeout() { return this->timeout; }
-        bool is_set_for_writing(int fd){ bool res = io_fd_isset(fd, this->wfds); return res; }
-        bool is_set_for_reading(int fd){ bool res = io_fd_isset(fd, this->rfds); return res; }
+        timeval get_timeout() const { return this->timeout; }
+        bool is_set_for_writing(int fd) const { bool res = io_fd_isset(fd, this->wfds); return res; }
+        bool is_set_for_reading(int fd) const { bool res = io_fd_isset(fd, this->rfds); return res; }
         void set_read_sck(int sck) { this->max = prepare_fds(sck, this->max, this->rfds); }
         void set_write_sck(int sck) {
             if (!this->want_write) {
@@ -248,21 +242,25 @@ private:
             this->ini.set<cfg::context::auth_error_message>(local_err_msg(e, language(ini)));
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
+
+        if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
             LOG(LOG_INFO, "Retry Session Probe Disconnection Reconnection");
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+
+        if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
             LOG(LOG_INFO, "Retry Automatic Reconnection Required");
             ini.set<cfg::context::perform_automatic_reconnection>(true);
             return EndSessionResult::retry;
         }
-        else if (e.id == ERR_RAIL_NOT_ENABLED) {
+
+        if (e.id == ERR_RAIL_NOT_ENABLED) {
             LOG(LOG_INFO, "Retry without native remoteapp capability");
             ini.set<cfg::mod_rdp::use_native_remoteapp_capability>(false);
             return EndSessionResult::retry;
         }
-        else if (e.id == ERR_RDP_SERVER_REDIR){
+
+        if (e.id == ERR_RDP_SERVER_REDIR){
             if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                 LOG(LOG_INFO, "Server redirection");
                 return EndSessionResult::redirection;
@@ -273,45 +271,55 @@ private:
                 return EndSessionResult::close_box;
             }
         }
-        else if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
+
+        if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
             LOG(LOG_INFO, "Close because disconnection time reached");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_MCS_APPID_IS_MCS_DPUM){
+
+        if (e.id == ERR_MCS_APPID_IS_MCS_DPUM){
             LOG(LOG_INFO, "Remote Session Closed by User");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
+
+        if (e.id == ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE){
             // Close by rejeted message received
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
             LOG(LOG_INFO, "Close because rejected message was received : %s", this->ini.get<cfg::context::rejected>());
             this->ini.set_acl<cfg::context::rejected>("");
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED) {
+
+        if (e.id == ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED) {
             LOG(LOG_INFO, "Close because of missed ACL keepalive");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::miss_keepalive, language(this->ini)));
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
+
+        if (e.id == ERR_SESSION_CLOSE_USER_INACTIVITY) {
             LOG(LOG_INFO, "Close because of user Inactivity");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::close_inactivity, language(this->ini)));
             return EndSessionResult::close_box;
         }
-        else if (e.id == ERR_SESSION_CLOSE_MODULE_NEXT) {
+
+        if (e.id == ERR_SESSION_CLOSE_MODULE_NEXT) {
             LOG(LOG_INFO, "Acl confirmed user close");
             return EndSessionResult::close_box;
         }
-        else if (   (e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
-                 && mod_wrapper.get_mod_transport()
-                 && mod_wrapper.get_mod_transport()->sck == e.data
-                 && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
-                 && mod_wrapper.get_mod()->is_auto_reconnectable()
-                 && !mod_wrapper.get_mod()->server_error_encountered()) {
+
+        if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
+         && mod_wrapper.get_mod_transport()
+         && mod_wrapper.get_mod_transport()->sck == e.data
+         && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
+         && mod_wrapper.get_mod()->is_auto_reconnectable()
+         && !mod_wrapper.get_mod()->server_error_encountered()
+        ) {
             LOG(LOG_INFO, "Session::end_session_exception: target link exception. %s",
-                ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA");
+                ERR_TRANSPORT_WRITE_FAILED == e.id
+                    ? "ERR_TRANSPORT_WRITE_FAILED"
+                    : "ERR_TRANSPORT_NO_MORE_DATA");
             ini.set<cfg::context::perform_automatic_reconnection>(true);
             return EndSessionResult::retry;
         }
@@ -330,14 +338,16 @@ private:
     }
 
 private:
-    void wabam_settings(Inifile & ini, Front & front){
+    static void wabam_settings(Inifile & ini, Front & front)
+    {
         if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>()
-            &&  ini.get<cfg::context::is_wabam>()) {
-                front.force_using_cache_bitmap_r2();
+         && ini.get<cfg::context::is_wabam>()
+        ) {
+            front.force_using_cache_bitmap_r2();
         }
     }
 
-    void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
+    static void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
     {
         auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
 
@@ -351,10 +361,6 @@ private:
                 mod_wrapper.display_osd_message(message);
             }
         }
-//        if (this->ini.get<cfg::context::forcemodule>() && !mod_wrapper.is_connected()) {
-//            this->ini.set<cfg::context::forcemodule>(false);
-//            // Do not send back the value to sesman.
-//        }
     }
 
 
@@ -472,10 +478,9 @@ private:
             }
         } // case next_state == MODULE_INTERNAL  in switch (next_state)
         break;
+
         case MODULE_UNKNOWN:
-            throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
         case MODULE_INTERNAL_CLOSE:
-            throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
         case MODULE_INTERNAL_CLOSE_BACK:
             throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
 
@@ -561,7 +566,7 @@ private:
         return true;
     }
 
-    void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper)
+    static void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper)
     {
         if (front.front_must_notify_resize) {
             LOG(LOG_INFO, "Notify resize to front");

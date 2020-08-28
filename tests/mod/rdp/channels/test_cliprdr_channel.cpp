@@ -564,7 +564,7 @@ namespace
                 return ;
             }
 
-            while (1) {
+            for(;;) {
                 if (this->index_table < this->fn_table.size()) {
                     bool r = this->fn_table[this->index_table](this->data, msg);
                     ++this->index_table;
@@ -678,9 +678,7 @@ namespace
 
     struct Buffer
     {
-        StaticOutStream<1600> out;
-
-        Buffer() {}
+        StaticOutStream<1600> out {};
 
         template<class F>
         bytes_view build(uint16_t msgType, uint16_t msgFlags, F f) &
@@ -896,7 +894,7 @@ namespace
 
                 this->validator_transport.buf_reader = out.get_produced_bytes();
                 this->clipboard_virtual_channel.DLP_antivirus_check_channels_files();
-                return this->validator_transport.buf_reader.size() == 0;
+                return this->validator_transport.buf_reader.empty();
             }
 
         private:

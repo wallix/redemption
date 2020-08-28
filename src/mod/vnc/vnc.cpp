@@ -599,17 +599,20 @@ bool mod_vnc::readSecurityResult(InStream &s, uint32_t &status, bool &haveReason
          */
         if (this->spokenProtocol >= 3008) {
             haveReason = true;
-            if (s.in_remain() < 4)
+            if (s.in_remain() < 4) {
                 return false;
+            }
 
             uint32_t reasonLen = s.in_uint32_be();
-            if (s.in_remain() < reasonLen)
+            if (s.in_remain() < reasonLen) {
                 return false;
+            }
 
             reason = "";
             reason.append(char_ptr_cast(s.get_current()), reasonLen);
             skipLen = 4 + 4 + reasonLen;
-        } else {
+        }
+        else {
             haveReason = false;
         }
         return true;

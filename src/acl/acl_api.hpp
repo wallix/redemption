@@ -31,6 +31,6 @@ struct AclApi
 {
     // notify that acl have been updated
     virtual void acl_update() = 0;
-    virtual ~AclApi() {}
+    virtual ~AclApi() = default;
 };
 

@@ -170,9 +170,9 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     auto end_tv = time_base.get_current_time();
     events.queue[0]->alarm.fd = 0;
-    events.execute_events(end_tv,[](int /*fd*/){ return false; }, 0);
+    events.execute_events(end_tv,[](int /*fd*/){ return false; }, false);
     for (int count=0; count < 100 && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, 0);
+        events.execute_events(timeval{1,0},[](int){return true;}, false);
     }
 }
 

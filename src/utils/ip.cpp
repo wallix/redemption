@@ -2,7 +2,7 @@
 #include <string_view>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <errno.h>
+#include <cerrno>
 #include <arpa/inet.h>
 
 #include "ip.hpp"
@@ -10,18 +10,18 @@
 namespace
 {
     using namespace std::string_view_literals;
-    
+
     constexpr auto IPV4_MAPPED_IPV6_PREFIX = "::ffff:"sv;
 }
 
 bool is_ipv4_mapped_ipv6(const char *ipv6_address) noexcept
 {
     unsigned char buf[sizeof(in6_addr)] { };
-    
+
     if (!ipv6_address || inet_pton(AF_INET6, ipv6_address, buf) != 1)
     {
         return false;
-    }    
+    }
     return std::strncmp(ipv6_address,
                         IPV4_MAPPED_IPV6_PREFIX.data(),
                         IPV4_MAPPED_IPV6_PREFIX.size()) == 0;
@@ -33,7 +33,7 @@ void get_ipv4_address(const char *ipv6_address,
 {
     const char *ipv4_address = ipv6_address + IPV4_MAPPED_IPV6_PREFIX.size();
 
-    std::strncpy(dest_ip, ipv4_address, dest_ip_size); 
+    std::strncpy(dest_ip, ipv4_address, dest_ip_size);
 }
 
 const char *get_underlying_ip_port(const sockaddr& sa,

@@ -91,10 +91,10 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     auto end_tv = time_base.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
         time_base.set_current_time(end_tv);
-        events.execute_events(end_tv, [](int/*fd*/){ return true; }, 0);
+        events.execute_events(end_tv, [](int/*fd*/){ return true; }, false);
         end_tv.tv_sec++;
     }
-    events.execute_events(end_tv, [](int/*fd*/){ return true; }, 0);
+    events.execute_events(end_tv, [](int/*fd*/){ return true; }, false);
     RED_CHECK(events.queue.empty());
     RED_CHECK(tasks.empty());
 }
@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     timeval timeout = time_base.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
         auto const end_tv = time_base.get_current_time();
-        events.execute_events(end_tv, [](int/*fd*/){return false;}, 0);
+        events.execute_events(end_tv, [](int/*fd*/){return false;}, false);
         time_base.set_current_time(timeout);
         ++timeout.tv_sec;
     }

@@ -2335,7 +2335,7 @@ public:
     {
         InStream new_x224_stream(tpdu);
         FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
-        int num_events = cfpie.numEvents;
+        uint8_t num_events = cfpie.numEvents;
         for (uint8_t i = 0; i < num_events; i++) {
             ::check_throw(cfpie.payload, 1, "Front::Fast-Path input event PDU", ERR_RDP_DATA_TRUNCATED);
 
@@ -2466,8 +2466,8 @@ public:
                  BogusNumberOfFastpathInputEvent::all_input_events) &&
                 !((i + 1) < num_events)) {
                 LOG(LOG_INFO,
-                    "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%d",
-                    cfpie.payload.in_remain(), num_events);
+                    "Front::incoming: BogusNumberOfFastpathInputEvent::all_input_events. in_remain=%zu num_events=%u",
+                    cfpie.payload.in_remain(), unsigned(num_events));
                 num_events++;
             }
         }

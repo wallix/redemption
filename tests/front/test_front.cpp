@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(TestFront)
     int n = 38;
     events.queue[0]->alarm.fd = 0;
     for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, 0);
+        events.execute_events(timeval{1,0},[](int){return true;}, false);
     }
 
     RED_CHECK_EQ(count, n);

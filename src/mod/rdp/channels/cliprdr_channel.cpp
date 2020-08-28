@@ -1775,9 +1775,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 if (file_rng.file_size != CliprdFileInfo::invalid_size) {
                     return false;
                 }
-                else {
-                    file_rng.file_size = file_rng.file_offset;
-                }
+                file_rng.file_size = file_rng.file_offset;
             }
 
             file_rng.sig.final();

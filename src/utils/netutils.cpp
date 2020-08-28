@@ -579,26 +579,24 @@ bool get_local_ip_address(IpAddress& client_address, int fd, const char **error_
             strerror(errno));
         return false;
     }
-    else
+    else if (int res = ::getnameinfo(&u.s,
+                                     sizeof(u.ss),
+                                     client_address.ip_addr,
+                                     sizeof(client_address.ip_addr),
+                                     nullptr,
+                                     0,
+                                     NI_NUMERICHOST))
     {
-        if (int res = ::getnameinfo(&u.s,
-                                    sizeof(u.ss),
-                                    client_address.ip_addr,
-                                    sizeof(client_address.ip_addr),
-                                    nullptr,
-                                    0,
-                                    NI_NUMERICHOST))
+        if (error_result)
         {
-            if (error_result)
-            {
-                *error_result = "Cannot get local ip address";
-            }
-            LOG(LOG_ERR,
-                "getnameinfo failed : %s",
-                (res == EAI_SYSTEM) ?
-                ::strerror(errno) : ::gai_strerror(res));
-            return false;
+            *error_result = "Cannot get local ip address";
         }
+        LOG(LOG_ERR,
+            "getnameinfo failed : %s",
+            (res == EAI_SYSTEM) ?
+            ::strerror(errno) : ::gai_strerror(res));
+        return false;
     }
+
     return true;
 }

@@ -213,16 +213,16 @@ public:
         {
             switch (zone){
             case ZONE_N  : return MOUSE_BUTTON_PRESSED_NORTH;
-            case ZONE_NWN: return MOUSE_BUTTON_PRESSED_NORTHWEST;
+            case ZONE_NWN:
             case ZONE_NWW: return MOUSE_BUTTON_PRESSED_NORTHWEST;
             case ZONE_W  : return MOUSE_BUTTON_PRESSED_WEST;
-            case ZONE_SWW: return MOUSE_BUTTON_PRESSED_SOUTHWEST;
+            case ZONE_SWW:
             case ZONE_SWS: return MOUSE_BUTTON_PRESSED_SOUTHWEST;
             case ZONE_S  : return MOUSE_BUTTON_PRESSED_SOUTH;
-            case ZONE_SES: return MOUSE_BUTTON_PRESSED_SOUTHEAST;
+            case ZONE_SES:
             case ZONE_SEE: return MOUSE_BUTTON_PRESSED_SOUTHEAST;
             case ZONE_E  : return MOUSE_BUTTON_PRESSED_EAST;
-            case ZONE_NEE: return MOUSE_BUTTON_PRESSED_NORTHEAST;
+            case ZONE_NEE:
             case ZONE_NEN: return MOUSE_BUTTON_PRESSED_NORTHEAST;
             }
             return MOUSE_BUTTON_PRESSED_NONE;
@@ -231,17 +231,17 @@ public:
         static inline int get_pointer_type(size_t zone)
         {
             switch (zone){
-            case ZONE_N  : return Pointer::POINTER_SIZENS;
-            case ZONE_NWN: return Pointer::POINTER_SIZENWSE;
-            case ZONE_NWW: return Pointer::POINTER_SIZENWSE;
-            case ZONE_W  : return Pointer::POINTER_SIZEWE;
-            case ZONE_SWW: return Pointer::POINTER_SIZENESW;
-            case ZONE_SWS: return Pointer::POINTER_SIZENESW;
+            case ZONE_N  :
             case ZONE_S  : return Pointer::POINTER_SIZENS;
-            case ZONE_SES: return Pointer::POINTER_SIZENWSE;
+            case ZONE_E  :
+            case ZONE_W  : return Pointer::POINTER_SIZEWE;
+            case ZONE_NWN:
+            case ZONE_NWW:
+            case ZONE_SES:
             case ZONE_SEE: return Pointer::POINTER_SIZENWSE;
-            case ZONE_E  : return Pointer::POINTER_SIZEWE;
-            case ZONE_NEE: return Pointer::POINTER_SIZENESW;
+            case ZONE_SWW:
+            case ZONE_SWS:
+            case ZONE_NEE:
             case ZONE_NEN: return Pointer::POINTER_SIZENESW;
             }
             return Pointer::POINTER_NORMAL;
@@ -250,18 +250,18 @@ public:
         static inline Pointer get_pointer(size_t zone)
         {
             switch (zone){
-            case ZONE_N  : return size_NS_pointer();
-            case ZONE_NWN: return size_NESW_pointer();
-            case ZONE_NWW: return size_NESW_pointer();
-            case ZONE_W  : return size_WE_pointer();
-            case ZONE_SWW: return size_NESW_pointer();
-            case ZONE_SWS: return size_NESW_pointer();
+            case ZONE_N  :
             case ZONE_S  : return size_NS_pointer();
-            case ZONE_SES: return size_NESW_pointer();
-            case ZONE_SEE: return size_NESW_pointer();
-            case ZONE_E  : return size_WE_pointer();
-            case ZONE_NEE: return size_NESW_pointer();
+            case ZONE_NWN:
+            case ZONE_NWW:
+            case ZONE_SWW:
+            case ZONE_SWS:
+            case ZONE_SES:
+            case ZONE_SEE:
+            case ZONE_NEE:
             case ZONE_NEN: return size_NESW_pointer();
+            case ZONE_E  :
+            case ZONE_W  : return size_WE_pointer();
             }
             return normal_pointer();
         }
