@@ -25,7 +25,7 @@
 
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 
 #include <unordered_map>
 #include <memory>
@@ -49,7 +49,7 @@ public:
 
     //  set distant clipboard data
     virtual void setClipboard_text(std::string const& str) = 0;
-    virtual void setClipboard_image(ConstImageDataView const& image) = 0;
+    virtual void setClipboard_image(ImageView const& image) = 0;
     virtual void setClipboard_files(std::string const& name) = 0;
     virtual void write_clipboard_temp_file(std::string const& fileName, bytes_view data) = 0;
 
@@ -58,7 +58,7 @@ public:
     virtual int get_citems_number() = 0;
 
     virtual u8_array_view get_cliboard_text() = 0;
-    virtual ConstImageDataView get_image() = 0;
+    virtual ImageView get_image() = 0;
     virtual std::string get_file_item_name(int index) = 0;
     virtual chars_view get_file_item(int index) = 0;
 

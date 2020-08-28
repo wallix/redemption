@@ -23,7 +23,7 @@
 #pragma once
 
 #include "core/front_api.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 
 #include <memory>
 
@@ -51,7 +51,7 @@ public:
 
     void update_pointer_position(uint16_t /*x*/, uint16_t /*y*/) override {}
 
-    operator ConstImageDataView () const;
+    operator ImageView () const;
 
     gdi::GraphicApi& gd() noexcept;
 

@@ -87,13 +87,13 @@ public:
         /* TODO x, y, out_width, out_height -> Rect*/
         unsigned int x, unsigned int y,
         unsigned int out_width, unsigned int out_height)
-    : VideoCropper(imageFrameApi, imageFrameApi.get_mutable_image_view(), x, y, out_width, out_height)
+    : VideoCropper(imageFrameApi, imageFrameApi.get_writable_image_view(), x, y, out_width, out_height)
     {}
 
     void resize(ImageFrameApi& imageFrameApi) {
         this->image_frame_api_ptr = &imageFrameApi;
 
-        ImageView const & image_view = imageFrameApi.get_mutable_image_view();
+        ImageView const & image_view = imageFrameApi.get_writable_image_view();
 
         this->in_width   = image_view.width();
         this->in_height  = image_view.height();
@@ -125,20 +125,20 @@ private:
             static_cast<uint16_t>(this->out_width),
             static_cast<uint16_t>(this->out_height),
             this->out_rowsize,
-            ConstImageDataView::BytesPerPixel(this->bytes_per_pixel),
-            ConstImageDataView::Storage::TopToBottom
+            ImageView::BytesPerPixel(this->bytes_per_pixel),
+            ImageView::Storage::TopToBottom
         };
     }
 
 public:
-    ImageView get_mutable_image_view() override
+    WritableImageView get_writable_image_view() override
     {
-        return this->create_image_view<ImageView>();
+        return this->create_image_view<WritableImageView>();
     }
 
-    [[nodiscard]] ConstImageView get_image_view() const override
+    [[nodiscard]] ImageView get_image_view() const override
     {
-        return this->create_image_view<ConstImageView>();
+        return this->create_image_view<ImageView>();
     }
 
     void prepare_image_frame() override {

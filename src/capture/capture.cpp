@@ -675,7 +675,7 @@ protected:
     explicit PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
         RDPDrawable & drawable,
-        gdi::ImageFrameApi & imageFrameApi, MutableImageDataView const & image_view)
+        gdi::ImageFrameApi & imageFrameApi, WritableImageView const & image_view)
     : trans(
         FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path, capture_params.basename, ".png",
@@ -703,7 +703,7 @@ protected:
         }
     }
 
-    void resize(MutableImageDataView const & image_view) {
+    void resize(WritableImageView const & image_view) {
         this->scaled_width  = ((((image_view.width()  * this->zoom_factor) / 100) + 3) & 0xFFC);
         this->scaled_height =  (((image_view.height() * this->zoom_factor) / 100));
 
@@ -716,16 +716,16 @@ public:
         RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi)
     : PngCapture(
         capture_params, png_params, drawable,
-        imageFrameApi, imageFrameApi.get_mutable_image_view())
+        imageFrameApi, imageFrameApi.get_writable_image_view())
     {}
 
     void resize(gdi::ImageFrameApi & imageFrameApi) {
-        this->resize(imageFrameApi.get_mutable_image_view());
+        this->resize(imageFrameApi.get_writable_image_view());
     }
 
     void dump()
     {
-        auto const image_view = this->image_frame_api.get_mutable_image_view();
+        auto const image_view = this->image_frame_api.get_writable_image_view();
         if (this->zoom_factor == 100) {
             ::dump_png24(this->trans, image_view, true);
         }
@@ -887,7 +887,7 @@ public:
 
 
             if (this->image_frame_api.reset(rect.x, rect.y, rect.cx, rect.cy)) {
-                this->timestamp_tracer = TimestampTracer(this->image_frame_api.get_mutable_image_view());
+                this->timestamp_tracer = TimestampTracer(this->image_frame_api.get_writable_image_view());
             }
         }
     }

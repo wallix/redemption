@@ -391,8 +391,8 @@ void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const
         this->RDPDrawable::draw(bitmap_data, bitmap);
     }
 
-//    ConstImageDataView constImg(content.data, content.width, content.rect.height(), content.stride,
-//            BitsPerPixel{32}, ConstImageDataView::Storage::TopToBottom);
+//    ImageView constImg(content.data, content.width, content.rect.height(), content.stride,
+//            BitsPerPixel{32}, ImageView::Storage::TopToBottom);
 
 //    this->drawable.draw_bitmap(cmd.destRect, constImg);
 }

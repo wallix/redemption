@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 
 #include <QtCore/QObject>
@@ -127,7 +127,7 @@ public:
     void setClipboard_text(std::string const& str) override;
 
     // Paste image to client
-    void setClipboard_image(ConstImageDataView const& image) override;
+    void setClipboard_image(ImageView const& image) override;
 
     void clean_CB_temp_dir();
 
@@ -138,15 +138,15 @@ public Q_SLOTS:
 
     void mem_clipboard();
 
-    ConstImageDataView get_image() override
+    ImageView get_image() override
     {
-        return ConstImageDataView(
+        return ImageView(
             this->_chunk.get(),
             this->_bufferImage.width(),
             this->_bufferImage.height(),
             this->_bufferImage.width(),
-            ConstImageDataView::BitsPerPixel(this->_bufferImage.depth()),
-            ConstImageDataView::Storage::TopToBottom
+            ImageView::BitsPerPixel(this->_bufferImage.depth()),
+            ImageView::Storage::TopToBottom
         );
     }
 

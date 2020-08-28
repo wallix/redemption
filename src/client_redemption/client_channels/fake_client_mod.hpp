@@ -26,7 +26,7 @@
 #include "core/channel_names.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/stream.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
@@ -149,7 +149,7 @@ public:
         return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
-    void setClipboard_image(ConstImageDataView const& image) override {
+    void setClipboard_image(ImageView const& image) override {
         (void)image;
     }
 
@@ -176,11 +176,11 @@ public:
     uint16_t get_buffer_type_id() override {return this->_bufferTypeID;}
     int get_citems_number() override {return this->_cItems;}
     size_t get_cliboard_data_length() override {return this->_cliboard_data_length;}
-    ConstImageDataView get_image() override {
-        return ConstImageDataView(
+    ImageView get_image() override {
+        return ImageView(
             byte_ptr_cast(""),
-            0, 0, 0, ConstImageDataView::BitsPerPixel{},
-            ConstImageDataView::Storage::TopToBottom
+            0, 0, 0, ImageView::BitsPerPixel{},
+            ImageView::Storage::TopToBottom
         );
     }
 };

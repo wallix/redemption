@@ -25,7 +25,7 @@
 #include <memory>
 
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
 
@@ -339,20 +339,20 @@ public:
      * a cache (data) and insert a subpart (srcx, srcy) to the local
      * image cache (this->impl_.first_pixel()) a the given position (rect).
      */
-    void mem_blt(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy);
+    void mem_blt(Rect rect, ImageView bmp, const uint16_t srcx, const uint16_t srcy);
 
-    void mem_blt_invert(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy);
+    void mem_blt_invert(Rect rect, ImageView bmp, const uint16_t srcx, const uint16_t srcy);
 
     void mem_blt_ex( Rect rect
-                   , const ConstImageDataView & bmp
+                   , const ImageView & bmp
                    , const uint16_t srcx
                    , const uint16_t srcy
                    , uint8_t rop);
 
-    void draw_bitmap(Rect rect, const ConstImageDataView & bmp);
+    void draw_bitmap(Rect rect, const ImageView & bmp);
 
     void mem_3_blt( Rect rect
-                  , const ConstImageDataView & bmp
+                  , const ImageView & bmp
                   , const uint16_t srcx
                   , const uint16_t srcy
                   , uint8_t rop
@@ -412,21 +412,21 @@ public:
     void trace_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
     void clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave);
 
-    operator ConstImageDataView () const
+    operator ImageView () const
     {
-        return ConstImageDataView{
+        return ImageView{
             this->data(),
             this->width(), this->height(),
             this->rowsize(),
-            ConstImageDataView::BytesPerPixel(this->Bpp),
-            ConstImageDataView::Storage::TopToBottom
+            ImageView::BytesPerPixel(this->Bpp),
+            ImageView::Storage::TopToBottom
         };
     }
 
 private:
     template <typename Op, class... Color>
     void mem_blt_op(
-        Rect rect , const ConstImageDataView & bmp,
+        Rect rect , const ImageView & bmp,
         const uint16_t srcx, const uint16_t srcy, Color... c);
 
     template <typename Op>
@@ -442,18 +442,18 @@ private:
 
 namespace gdi
 {
-    inline MutableImageDataView get_mutable_image_view(Drawable & drawable)
+    inline WritableImageView get_writable_image_view(Drawable & drawable)
     {
-        return MutableImageDataView{
+        return WritableImageView{
             drawable.first_pixel(),
             drawable.width(), drawable.height(),
             drawable.rowsize(),
-            MutableImageDataView::BytesPerPixel(drawable.Bpp),
-            MutableImageDataView::Storage::TopToBottom
+            WritableImageView::BytesPerPixel(drawable.Bpp),
+            WritableImageView::Storage::TopToBottom
         };
     }
 
-    inline ConstImageDataView get_image_view(Drawable const & drawable)
+    inline ImageView get_image_view(Drawable const & drawable)
     {
         return drawable;
     }

@@ -136,7 +136,7 @@ void QtInputOutputClipboard::setClipboard_text(std::string const& str)
 }
 
 // Paste image to client
-void QtInputOutputClipboard::setClipboard_image(ConstImageDataView const& image)
+void QtInputOutputClipboard::setClipboard_image(ImageView const& image)
 {
     QImage qtimage(image.data(), image.width(), image.height(),
         this->bpp_to_QFormat(image.bits_per_pixel(), false));

@@ -27,7 +27,7 @@
     RED_TEST(check_img(img, filedata_path));   \
 }()
 
-class ConstImageDataView;
+class ImageView;
 
 namespace ut
 {
@@ -40,6 +40,6 @@ namespace ut
         ~CheckImg();
         #endif
 
-        bool operator()(ConstImageDataView const& img, char const* filedata_path);
+        bool operator()(ImageView const& img, char const* filedata_path);
     };
 }

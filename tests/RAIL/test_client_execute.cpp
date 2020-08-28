@@ -26,7 +26,7 @@
 
 #include "acl/gd_provider.hpp"
 #include "core/front_api.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "core/channel_list.hpp"
 #include "core/app_path.hpp"
 
@@ -67,7 +67,7 @@ public:
         return ResizeResult::done;
     }
     void update_pointer_position(uint16_t /*x*/, uint16_t /*y*/) override {}
-    operator ConstImageDataView() const { return this->data.gd; }
+    operator ImageView() const { return this->data.gd; }
     gdi::GraphicApi& gd() noexcept { return this->data.gd; }
 
     void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}

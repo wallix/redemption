@@ -32,18 +32,18 @@
 #include <cstddef>
 
 class OutStream;
-class ConstImageDataView;
-class MutableImageDataView;
+class ImageView;
+class WritableImageView;
 
-void rle_compress(ConstImageDataView const & image, OutStream & outbuffer);
+void rle_compress(ImageView const & image, OutStream & outbuffer);
 
-void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer);
+void rle_compress60(ImageView const & image, OutStream & outbuffer);
 
 // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 void rle_decompress(
-    MutableImageDataView const & image,
+    WritableImageView const & image,
     const uint8_t* input, uint16_t src_cx, uint16_t src_cy, std::size_t size, std::size_t* RM18446_adjusted_size);
 
 void rle_decompress60(
-  MutableImageDataView const & image,
+  WritableImageView const & image,
   uint16_t src_cx, uint16_t src_cy, const uint8_t *data, std::size_t data_size);

@@ -25,12 +25,12 @@
 
 #include "core/RDP/rdp_pointer.hpp"
 
-// static ConstImageDataView xor_mask_to_img(u8_array_view av, uint16_t w, uint16_t h)
+// static ImageView xor_mask_to_img(u8_array_view av, uint16_t w, uint16_t h)
 // {
 //     RED_REQUIRE(av.size() == w*h*3);
-//     return ConstImageDataView(
+//     return ImageView(
 //         av.data(), w, h, w, BitsPerPixel(24),
-//         ConstImageDataView::Storage::TopToBottom);
+//         ImageView::Storage::TopToBottom);
 // }
 
 RED_AUTO_TEST_CASE(TestDataSize)

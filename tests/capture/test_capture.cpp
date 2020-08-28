@@ -1784,7 +1784,7 @@ RED_AUTO_TEST_CASE(TestReadPNGFromTransport)
 
     RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png);
-    read_png24(in_png_trans, gdi::get_mutable_image_view(d));
+    read_png24(in_png_trans, gdi::get_writable_image_view(d));
     BufTransport png_trans;
     dump_png24(png_trans, d, true);
 }

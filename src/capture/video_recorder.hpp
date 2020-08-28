@@ -25,7 +25,7 @@
 #include <memory>
 #include <cstdint>
 
-class ConstImageDataView;
+class ImageView;
 
 
 class video_recorder
@@ -36,7 +36,7 @@ public:
 
     video_recorder(
         write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-        ConstImageDataView const & image_view, int frame_rate,
+        ImageView const & image_view, int frame_rate,
         const char * codec_name, char const* codec_options, int log_level
     );
 

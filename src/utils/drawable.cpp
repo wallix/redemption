@@ -322,17 +322,17 @@ namespace
         }
 
         template<class Op, class... Col>
-        void mem_blt(Rect rect, const ConstImageDataView & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
+        void mem_blt(Rect rect, const ImageView & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
         {
             P dest = dimpl.first_pixel(rect);
-            const int startY = (bmp.storage_type() == ConstImageDataView::Storage::BottomToTop)
+            const int startY = (bmp.storage_type() == ImageView::Storage::BottomToTop)
                     ? bmp.height() - srcy - 1
                     : srcy;
             cP src = bmp.data(srcx, startY);
             const size_t n = rect.cx * dimpl.nbbytes_color();
             const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
             const size_t bmp_line_size = bmp.line_size();
-            const int bmp_line_delta = (bmp.storage_type() == ConstImageDataView::Storage::BottomToTop)
+            const int bmp_line_delta = (bmp.storage_type() == ImageView::Storage::BottomToTop)
                         ? -bmp_line_size
                         : bmp_line_size;
 
@@ -343,7 +343,7 @@ namespace
                 }
             }
             else {
-                bool upToBottom = (bmp.storage_type() == ConstImageDataView::Storage::TopToBottom);
+                bool upToBottom = (bmp.storage_type() == ImageView::Storage::TopToBottom);
                 switch (bmp_bpp) {
                     case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
                         safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor8{bmp.palette()}, c...); break;
@@ -383,7 +383,7 @@ namespace
         }
 
     public:
-        void draw_bitmap(Rect rect, ConstImageDataView bmp)
+        void draw_bitmap(Rect rect, ImageView bmp)
         {
             this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
         }
@@ -801,7 +801,7 @@ void Drawable::resize(int width, int height)
 
 template <typename Op, class... Color_>
 void Drawable::mem_blt_op( Rect rect
-                , const ConstImageDataView & bmp
+                , const ImageView & bmp
                 , const uint16_t srcx
                 , const uint16_t srcy
                 , Color_... c) {
@@ -829,18 +829,18 @@ void Drawable::mem_blt_op( Rect rect
  * a cache (data) and insert a subpart (srcx, srcy) to the local
  * image cache (dimpl.impl().first_pixel()) a the given position (rect).
  */
-void Drawable::mem_blt(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy)
+void Drawable::mem_blt(Rect rect, ImageView bmp, const uint16_t srcx, const uint16_t srcy)
 {
     this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);
 }
 
-void Drawable::mem_blt_invert(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy)
+void Drawable::mem_blt_invert(Rect rect, ImageView bmp, const uint16_t srcx, const uint16_t srcy)
 {
     this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
 }
 
 void Drawable::mem_blt_ex( Rect rect
-                , const ConstImageDataView & bmp
+                , const ImageView & bmp
                 , const uint16_t srcx
                 , const uint16_t srcy
                 , uint8_t rop) {
@@ -887,13 +887,13 @@ void Drawable::mem_blt_ex( Rect rect
     }
 }
 
-void Drawable::draw_bitmap(Rect rect, const ConstImageDataView & bmp)
+void Drawable::draw_bitmap(Rect rect, const ImageView & bmp)
 {
     this->mem_blt_op<Ops::CopySrc>(rect, bmp, 0, 0);
 }
 
 void Drawable::mem_3_blt( Rect rect
-                , const ConstImageDataView & bmp
+                , const ImageView & bmp
                 , const uint16_t srcx
                 , const uint16_t srcy
                 , uint8_t rop

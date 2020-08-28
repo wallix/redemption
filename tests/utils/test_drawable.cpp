@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
     Drawable gd(width, height);
-    TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(gd));
+    TimestampTracer timestamp_tracer(gdi::get_writable_image_view(gd));
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED));
 
     time_t rawtime;
@@ -654,7 +654,7 @@ RED_AUTO_TEST_CASE(TestMemblt4)
     };
     Rect bitmapRect(1, 1, 4, 4);
 
-    ConstImageDataView imgView(bitmap_bytes, 4, 4, 16, BitsPerPixel{32}, ConstImageDataView::Storage::TopToBottom, nullptr);
+    ImageView imgView(bitmap_bytes, 4, 4, 16, BitsPerPixel{32}, ImageView::Storage::TopToBottom, nullptr);
     gd.draw_bitmap(bitmapRect, imgView);
 
     uint8_t expected[] = {

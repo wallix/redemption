@@ -52,7 +52,7 @@ class TimestampTracer
     unsigned int rowsize;
 
 public:
-    explicit TimestampTracer(const MutableImageDataView & image_view)
+    explicit TimestampTracer(const WritableImageView & image_view)
     : previous_timestamp_length(0)
     , width(image_view.width())
     , height(image_view.height())

@@ -744,13 +744,13 @@ void ClientCLIPRDRChannel::send_to_clipboard_Buffer(InStream & chunk) {
 void ClientCLIPRDRChannel::send_imageBuffer_to_clipboard() {
 
     this->clientIOClipboardAPI->set_local_clipboard_stream(false);
-    this->clientIOClipboardAPI->setClipboard_image(ConstImageDataView(
+    this->clientIOClipboardAPI->setClipboard_image(ImageView(
         this->_cb_buffers.data.get(),
         this->_cb_buffers.pic_width,
         this->_cb_buffers.pic_height,
         this->_cb_buffers.pic_width,
         BitsPerPixel(checked_int(this->_cb_buffers.pic_bpp)),
-        ConstImageDataView::Storage::BottomToTop
+        ImageView::Storage::BottomToTop
     ));
     this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 

@@ -19,7 +19,7 @@
 
 #include "test_only/test_framework/check_img.hpp"
 
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/png.hpp"
 
@@ -53,7 +53,7 @@ namespace
     int img_counter = 0;
 #endif
 
-    bool img_equals(ConstImageDataView const& img1, ConstImageDataView const& img2)
+    bool img_equals(ImageView const& img1, ImageView const& img2)
     {
         // because unimplemented...
         assert(img1.bits_per_pixel() == BitsPerPixel(24));
@@ -92,7 +92,7 @@ namespace
     }
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-    Bitmap create_diff_img(ConstImageDataView const& img1, ConstImageDataView const& img2)
+    Bitmap create_diff_img(ImageView const& img1, ImageView const& img2)
     {
         // because unimplemented...
         assert(img1.bits_per_pixel() == BitsPerPixel(24));
@@ -152,7 +152,7 @@ namespace
 
 namespace ut
 {
-    bool CheckImg::operator()(ConstImageDataView const& img, char const* filedata_path)
+    bool CheckImg::operator()(ImageView const& img, char const* filedata_path)
     {
         std::string_view prefix_error;
 

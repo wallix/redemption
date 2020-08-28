@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/rect.hpp"
 
 #include "utils/sugar/noncopyable.hpp"
@@ -29,15 +29,12 @@ namespace gdi {
 
 struct ImageFrameApi : private noncopyable
 {
-    using ImageView = MutableImageDataView;
-    using ConstImageView = ConstImageDataView;
-
     virtual ~ImageFrameApi() = default;
 
-    virtual ImageView get_mutable_image_view() = 0;
-    [[nodiscard]] virtual ConstImageView get_image_view() const = 0;
+    virtual WritableImageView get_writable_image_view() = 0;
+    [[nodiscard]] virtual ImageView get_image_view() const = 0;
 
-    operator ConstImageView () const
+    operator ImageView () const
     {
         return get_image_view();
     }
@@ -58,14 +55,14 @@ struct ImageFrameApi : private noncopyable
     [[nodiscard]] virtual Rect get_rect() const = 0;
 };
 
-inline ImageFrameApi::ConstImageView get_image_view(ImageFrameApi const & image_frame)
+inline ImageView get_image_view(ImageFrameApi const & image_frame)
 {
     return image_frame.get_image_view();
 }
 
-inline ImageFrameApi::ImageView get_mutable_image_view(ImageFrameApi & image_frame)
+inline WritableImageView get_writable_image_view(ImageFrameApi & image_frame)
 {
-    return image_frame.get_mutable_image_view();
+    return image_frame.get_writable_image_view();
 }
 
 }  // namespace gdi

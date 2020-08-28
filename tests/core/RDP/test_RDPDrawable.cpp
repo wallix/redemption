@@ -515,7 +515,7 @@ RED_AUTO_TEST_CASE(TestScaleImage)
     BufTransport trans;
     RDPDrawable drawable(scr.cx, scr.cy);
 
-    read_png24(FIXTURES_PATH "/win2008capture10.png", gdi::get_mutable_image_view(drawable));
+    read_png24(FIXTURES_PATH "/win2008capture10.png", gdi::get_writable_image_view(drawable));
 
     // TODO: zooming should be managed by some dedicated Drawable
     unsigned zoom_factor = 50;

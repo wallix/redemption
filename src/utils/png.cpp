@@ -23,7 +23,7 @@
 #include "transport/transport.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/file.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/log.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
@@ -280,7 +280,7 @@ void dump_png24(
     // fwrite(this->data, 3, this->width * this->height, file);
 }
 
-void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool bgr)
+void dump_png24(Transport & trans, ImageView const & image_view, bool bgr)
 {
     ::dump_png24(
         trans, image_view.data(),
@@ -289,7 +289,7 @@ void dump_png24(Transport & trans, ConstImageDataView const & image_view, bool b
         bgr);
 }
 
-void dump_png24(std::FILE * file, ConstImageDataView const & image_view, bool bgr)
+void dump_png24(std::FILE * file, ImageView const & image_view, bool bgr)
 {
     assert(BytesPerPixel{3} == image_view.bytes_per_pixel());
 
@@ -308,7 +308,7 @@ void dump_png24(std::FILE * file, ConstImageDataView const & image_view, bool bg
     png_write_end(png.ppng, png.pinfo);
 }
 
-void dump_png24(const char * filename, ConstImageDataView const & image_view, bool bgr)
+void dump_png24(const char * filename, ImageView const & image_view, bool bgr)
 {
     if (File f{filename, "wb"}) {
         dump_png24(f.get(), image_view, bgr);
@@ -316,14 +316,14 @@ void dump_png24(const char * filename, ConstImageDataView const & image_view, bo
 }
 
 
-void read_png24(const char * filename, MutableImageDataView const & mutable_image_view)
+void read_png24(const char * filename, WritableImageView const & mutable_image_view)
 {
     if (File f{filename, "r"}) {
         read_png24(f.get(), mutable_image_view);
     }
 }
 
-void read_png24(std::FILE * file, MutableImageDataView const & mutable_image_view)
+void read_png24(std::FILE * file, WritableImageView const & mutable_image_view)
 {
     PngReadStruct png;
     png_init_io(png.ppng, file);
@@ -332,7 +332,7 @@ void read_png24(std::FILE * file, MutableImageDataView const & mutable_image_vie
         mutable_image_view.line_size());
 }
 
-void read_png24(Transport & trans, MutableImageDataView const & mutable_image_view)
+void read_png24(Transport & trans, WritableImageView const & mutable_image_view)
 {
     assert(BytesPerPixel{3} == mutable_image_view.bytes_per_pixel());
 

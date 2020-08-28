@@ -44,7 +44,7 @@ extern "C" {
 
 #include "core/error.hpp"
 #include "cxx/diagnostic.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/log.hpp"
 
@@ -140,7 +140,7 @@ static void check_errnum(int errnum, char const* msg)
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    ConstImageDataView const & image_view, int frame_rate,
+    ImageView const & image_view, int frame_rate,
     const char * codec_name, char const* codec_options, int log_level
 )
 : d(new D)
@@ -396,7 +396,7 @@ struct video_recorder::D {};
 
 video_recorder::video_recorder(
     write_packet_fn_t write_packet_fn, seek_fn_t /*seek_fn*/, void * io_params,
-    ConstImageDataView const & /*image_view*/, int /*frame_rate*/,
+    ImageView const & /*image_view*/, int /*frame_rate*/,
     const char * /*codec_name*/, char const* /*codec_options*/, int /*log_level*/
 ) {
     uint8_t buf[1]{};

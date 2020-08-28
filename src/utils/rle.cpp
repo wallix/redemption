@@ -32,7 +32,7 @@
 #include "utils/rle.hpp"
 #include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 #include "utils/stream.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 
@@ -412,7 +412,7 @@ unsigned get_fom_count_set(std::size_t line_size, const uint8_t * pmin, const ui
 
 // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 void decompress_(
-  MutableImageDataView const & image,
+  WritableImageView const & image,
   const uint8_t* input, uint16_t src_cx, size_t size, size_t* RM18446_adjusted_size)
 {
     // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
@@ -693,7 +693,7 @@ void decompress_(
     }
 }
 
-void compress_(ConstImageDataView const & image, OutStream & outbuffer)
+void compress_(ImageView const & image, OutStream & outbuffer)
 {
     struct RLE_OutStream {
         OutStream & stream;
@@ -1315,7 +1315,7 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
 
 } // namespace
 
-void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
+void rle_compress60(ImageView const & image, OutStream & outbuffer)
 {
     //LOG(LOG_INFO, "bmp compress60");
     assert(image.bits_per_pixel() == BitsPerPixel{24}
@@ -1372,7 +1372,7 @@ void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
 }
 
 void rle_decompress60(
-  MutableImageDataView const & image,
+  WritableImageView const & image,
   uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size)
 {
     //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
@@ -1441,7 +1441,7 @@ void rle_decompress60(
 
 // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 void rle_decompress(
-    MutableImageDataView const & image,
+    WritableImageView const & image,
     const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size, size_t* RM18446_adjusted_size)
 {
     (void)src_cy;
@@ -1455,7 +1455,7 @@ void rle_decompress(
 }
 
 // TODO simplify and enhance compression using 1 pixel orders BLACK or WHITE.
-void rle_compress(ConstImageDataView const & image, OutStream & outbuffer)
+void rle_compress(ImageView const & image, OutStream & outbuffer)
 {
     switch (image.bits_per_pixel()) {
         case BitsPerPixel{8 }: return RLEDecompressorImpl< 8>{}.compress_(image, outbuffer);

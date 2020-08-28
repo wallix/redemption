@@ -45,7 +45,7 @@ FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server)
     return ResizeResult::done;
 }
 
-FakeFront::operator ConstImageDataView() const
+FakeFront::operator ImageView() const
 {
     return d->gd;
 }

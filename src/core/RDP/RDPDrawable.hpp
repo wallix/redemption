@@ -66,14 +66,14 @@ public:
 
     void resize(uint16_t width, uint16_t height) override;
 
-    [[nodiscard]] ConstImageView get_image_view() const override
+    [[nodiscard]] ImageView get_image_view() const override
     {
         return gdi::get_image_view(this->drawable);
     }
 
-    ImageView get_mutable_image_view() override
+    WritableImageView get_writable_image_view() override
     {
-        return gdi::get_mutable_image_view(this->drawable);
+        return gdi::get_writable_image_view(this->drawable);
     }
 
     uint8_t * first_pixel() noexcept

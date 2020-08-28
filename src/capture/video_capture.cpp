@@ -180,7 +180,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 , trace_timestamp(trace_timestamp)
 , image_by_interval(image_by_interval)
 , image_frame_api(imageFrameApi)
-, timestamp_tracer(imageFrameApi.get_mutable_image_view())
+, timestamp_tracer(imageFrameApi.get_writable_image_view())
 {}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)

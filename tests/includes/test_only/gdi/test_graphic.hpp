@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 
 #include <memory>
 
@@ -39,7 +39,7 @@ struct TestGraphic
     [[nodiscard]] uint16_t width() const;
     [[nodiscard]] uint16_t height() const;
 
-    operator ConstImageDataView () const;
+    operator ImageView () const;
     operator gdi::GraphicApi& ();
     operator gdi::ImageFrameApi& ();
     gdi::GraphicApi* operator->();
@@ -50,7 +50,7 @@ struct TestGraphic
     void show_mouse_cursor(bool display);
     void set_mouse_cursor_pos(uint16_t x, uint16_t y);
 
-    MutableImageDataView get_mutable_image_view();
+    WritableImageView get_writable_image_view();
 
 private:
     class D;

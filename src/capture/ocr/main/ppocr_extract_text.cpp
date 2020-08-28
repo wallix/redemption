@@ -16,7 +16,7 @@
 #include "capture/ocr/extract_text_classification.hh"
 
 
-using ImageView = ocr::Image2dView<ocr::rgb8>;
+using Image2dView = ocr::Image2dView<ocr::rgb8>;
 
 using resolution_clock = std::chrono::high_resolution_clock;
 
@@ -34,7 +34,7 @@ struct Classification
     , display_char(display_char)
     {}
 
-    void operator()(ImageView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(Image2dView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
     {
         if (this->display_char) {
             mln::image2d<bool> ima;
@@ -132,7 +132,7 @@ struct ReferenceClassification
     : ref(ref_)
     {}
 
-    void operator()(ImageView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
+    void operator()(Image2dView const & input, unsigned tid, mln::box2d const & box, unsigned button_col)
     {
         this->ref(input, tid, box, button_col);
     }
@@ -194,7 +194,7 @@ int main(int argc, char** argv)
     auto t2 = resolution_clock::now();
     std::cerr << "load: " << std::chrono::duration<double>(t2-t1).count() << "s\n\n";
     t1 = resolution_clock::now();
-    extract_titles.extract_titles(ImageView(input), ReferenceClassification(classification));
+    extract_titles.extract_titles(Image2dView(input), ReferenceClassification(classification));
     t2 = resolution_clock::now();
     std::cerr << std::chrono::duration<double>(t2-t1).count() << "s\n";
 

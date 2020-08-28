@@ -33,7 +33,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/log.hpp"
 #include "utils/rect.hpp"
 #include "utils/rle.hpp"
@@ -128,13 +128,13 @@ Bitmap::Bitmap(
     //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
     if (compressed) {
         this->data_bitmap->copy_compressed_buffer(data, size);
-        MutableImageDataView const image_view{
+        WritableImageView const image_view{
             this->data_bitmap->get(),
             this->cx(),
             this->cy(),
             this->line_size(),
             this->bpp(),
-            ConstImageDataView::Storage::BottomToTop
+            ImageView::Storage::BottomToTop
         };
 
         if (session_color_depth == BitsPerPixel{32} && (bpp == BitsPerPixel{24} || bpp == BitsPerPixel{32})) {
@@ -297,13 +297,13 @@ void Bitmap::compress(BitsPerPixel session_color_depth, OutStream & outbuffer) c
 
     uint8_t * tmp_data_compressed = outbuffer.get_current();
 
-    ConstImageDataView const image_view{
+    ImageView const image_view{
         this->data(),
         this->cx(),
         this->cy(),
         this->line_size(),
         this->bpp(),
-        ConstImageDataView::Storage::BottomToTop
+        ImageView::Storage::BottomToTop
     };
 
     if ((session_color_depth == BitsPerPixel{32}) && ((this->bpp() == BitsPerPixel{24}) || (this->bpp() == BitsPerPixel{32}))) {
@@ -401,16 +401,16 @@ Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
     }
 }
 
-Bitmap::operator ConstImageDataView() const
+Bitmap::operator ImageView() const
 {
     // 8, 15, 16 = BGR
     // 24 = RGB
-    return ConstImageDataView{
+    return ImageView{
         this->data(),
         this->cx(), this->cy(),
         this->line_size(),
         this->bpp(),
-        ConstImageDataView::Storage::BottomToTop,
+        ImageView::Storage::BottomToTop,
         &this->data_bitmap->palette()
     };
 }

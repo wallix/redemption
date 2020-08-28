@@ -43,7 +43,7 @@ uint16_t TestGraphic::height() const
     return this->d->gd.height();
 }
 
-TestGraphic::operator ConstImageDataView() const
+TestGraphic::operator ImageView() const
 {
     return this->d->gd;
 }
@@ -88,7 +88,7 @@ void TestGraphic::set_mouse_cursor_pos(uint16_t x, uint16_t y)
     this->d->gd.set_mouse_cursor_pos(x, y);
 }
 
-MutableImageDataView TestGraphic::get_mutable_image_view()
+WritableImageView TestGraphic::get_writable_image_view()
 {
-    return gdi::get_mutable_image_view(this->d->gd);
+    return gdi::get_writable_image_view(this->d->gd);
 }

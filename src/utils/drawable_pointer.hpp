@@ -38,7 +38,7 @@
 #include "utils/bitfu.hpp"
 #include "utils/log.hpp"
 #include "utils/pixel_io.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
 #include <cstdint>
@@ -191,8 +191,8 @@ struct DrawablePointer
     uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
     uint8_t mask24[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
 
-    ConstImageDataView image_data_view_data;
-    ConstImageDataView image_data_view_mask24;
+    ImageView image_data_view_data;
+    ImageView image_data_view_mask24;
 
     DrawablePointer()
     : image_data_view_data(create_img(nullptr))
@@ -230,15 +230,15 @@ struct DrawablePointer
     }
 
 private:
-    ConstImageDataView create_img(uint8_t const* data) const
+    ImageView create_img(uint8_t const* data) const
     {
-        return ConstImageDataView(
+        return ImageView(
             data,
             this->width,
             this->height,
             this->line_bytes,
             BytesPerPixel{3},
-            ConstImageDataView::Storage::BottomToTop
+            ImageView::Storage::BottomToTop
         );
     }
 };  // struct DrawablePointer

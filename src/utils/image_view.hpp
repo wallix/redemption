@@ -45,7 +45,7 @@ struct BitsOrBytePerPixel
     BytesPerPixel bytes_per_pixel;
 };
 
-struct ConstImageDataView
+struct ImageView
 {
 protected:
     using size_t = std::size_t;
@@ -56,7 +56,7 @@ public:
 
     enum class Storage : bool { BottomToTop, TopToBottom };
 
-    explicit ConstImageDataView(
+    explicit ImageView(
         uint8_t const * data,
         uint16_t width,
         uint16_t height,
@@ -95,11 +95,11 @@ public:
     [[nodiscard]] size_t offset(uint16_t x, uint16_t y) const noexcept
     { return y * this->rowsize_ + x * int(this->bytes_per_pixel_); }
 
-    [[nodiscard]] ConstImageDataView sub_view(Rect rect) const noexcept
+    [[nodiscard]] ImageView sub_view(Rect rect) const noexcept
     {
         const unsigned physical_y = (this->storage_ == Storage::BottomToTop ? (this->height_ - rect.ebottom()) : rect.y);
 
-        return ConstImageDataView(
+        return ImageView(
                 this->data_ + physical_y * this->rowsize_ + rect.x * underlying_cast(this->bytes_per_pixel_),
                 rect.cx,
                 rect.cy,
@@ -121,9 +121,9 @@ private:
     BGRPalette const * palette_;
 };
 
-struct MutableImageDataView : ConstImageDataView
+struct WritableImageView : ImageView
 {
-    explicit MutableImageDataView(
+    explicit WritableImageView(
         uint8_t * data,
         uint16_t width,
         uint16_t height,
@@ -132,7 +132,7 @@ struct MutableImageDataView : ConstImageDataView
         Storage storage,
         BGRPalette const * palette = nullptr /*NOLINT*/
     ) noexcept
-    : ConstImageDataView(data, width, height, line_size, bytes_or_byte_per_pixel, storage, palette)
+    : ImageView(data, width, height, line_size, bytes_or_byte_per_pixel, storage, palette)
     {}
 
     uint8_t * mutable_data() const noexcept { return const_cast<uint8_t*>(this->data()); /*NOLINT*/ }

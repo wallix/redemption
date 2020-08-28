@@ -26,15 +26,15 @@
 #include "test_only/test_framework/working_directory.hpp"
 
 #include "utils/png.hpp"
-#include "utils/image_data_view.hpp"
+#include "utils/image_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/fileutils.hpp"
 #include "transport/transport.hpp"
 
 
-ConstImageDataView const img(
+ImageView const img(
     byte_ptr_cast("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"),
-    3, 3, 4, BytesPerPixel{3}, ConstImageDataView::Storage::TopToBottom);
+    3, 3, 4, BytesPerPixel{3}, ImageView::Storage::TopToBottom);
 
 RED_AUTO_TEST_CASE_WF(TestPngWriteFile, wf)
 {
