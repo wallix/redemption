@@ -326,15 +326,15 @@ namespace
         {
             P dest = dimpl.first_pixel(rect);
             const int startY = (bmp.storage_type() == ImageView::Storage::BottomToTop)
-                    ? bmp.height() - srcy - 1
-                    : srcy;
+                ? bmp.height() - srcy - 1
+                : srcy;
             cP src = bmp.data(srcx, startY);
             const size_t n = rect.cx * dimpl.nbbytes_color();
             const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
             const size_t bmp_line_size = bmp.line_size();
             const int bmp_line_delta = (bmp.storage_type() == ImageView::Storage::BottomToTop)
-                        ? -bmp_line_size
-                        : bmp_line_size;
+                ? -bmp_line_size
+                : bmp_line_size;
 
             if (bmp_bpp == dimpl.bpp()) {
                 const size_t line_size = dimpl.rowsize();
@@ -800,11 +800,10 @@ void Drawable::resize(int width, int height)
 }
 
 template <typename Op, class... Color_>
-void Drawable::mem_blt_op( Rect rect
-                , const ImageView & bmp
-                , const uint16_t srcx
-                , const uint16_t srcy
-                , Color_... c) {
+void Drawable::mem_blt_op(
+    Rect rect, const ImageView & bmp,
+    const uint16_t srcx, const uint16_t srcy, Color_... c)
+{
     if (bmp.width() < srcx || bmp.height() < srcy) {
         return ;
     }
@@ -839,11 +838,10 @@ void Drawable::mem_blt_invert(Rect rect, ImageView bmp, const uint16_t srcx, con
     this->mem_blt_op<Ops::InvertSrc>(rect, bmp, srcx, srcy);
 }
 
-void Drawable::mem_blt_ex( Rect rect
-                , const ImageView & bmp
-                , const uint16_t srcx
-                , const uint16_t srcy
-                , uint8_t rop) {
+void Drawable::mem_blt_ex(
+    Rect rect, const ImageView & bmp,
+    const uint16_t srcx, const uint16_t srcy, uint8_t rop)
+{
     switch (rop) {
         // +------+-------------------------------+
         // | 0x22 | ROP: 0x00220326               |
@@ -892,12 +890,10 @@ void Drawable::draw_bitmap(Rect rect, const ImageView & bmp)
     this->mem_blt_op<Ops::CopySrc>(rect, bmp, 0, 0);
 }
 
-void Drawable::mem_3_blt( Rect rect
-                , const ImageView & bmp
-                , const uint16_t srcx
-                , const uint16_t srcy
-                , uint8_t rop
-                , const Color pattern_color)
+void Drawable::mem_3_blt(
+    Rect rect, const ImageView & bmp,
+    const uint16_t srcx, const uint16_t srcy, uint8_t rop,
+    const Color pattern_color)
 {
     switch (rop) {
         // +------+-------------------------------+
