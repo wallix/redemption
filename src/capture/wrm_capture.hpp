@@ -752,7 +752,7 @@ public:
         }
 
         Microseconds periodic_snapshot(
-            const timeval & now, int x, int y, bool ignore_frame_in_timeval
+            const timeval & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
         ) override {
             (void)ignore_frame_in_timeval;
             if (difftimeval(now, this->start_native_capture)
@@ -845,7 +845,7 @@ public:
     }
 
     Microseconds periodic_snapshot(
-        const timeval & now, int x, int y, bool ignore_frame_in_timeval
+        const timeval & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
     ) override {
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }

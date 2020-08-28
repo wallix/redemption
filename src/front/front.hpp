@@ -135,8 +135,8 @@ class Front : public FrontAPI, public gdi::GraphicApi
     using voidp = void const *;
 
     bool nomouse;
-    int mouse_x = 0;
-    int mouse_y = 0;
+    uint16_t mouse_x = 0;
+    uint16_t mouse_y = 0;
 
 public:
     bool has_user_activity = true;

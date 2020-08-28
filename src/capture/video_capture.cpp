@@ -441,13 +441,13 @@ FullVideoCaptureImpl::~FullVideoCaptureImpl()
 
 
 void FullVideoCaptureImpl::frame_marker_event(
-    const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    const timeval& /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
     this->video_cap_ctx.frame_marker_event(this->recorder);
 }
 
 Microseconds FullVideoCaptureImpl::periodic_snapshot(
-    const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval)
+    const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool ignore_frame_in_timeval)
 {
     return this->video_cap_ctx.snapshot(this->recorder, now, ignore_frame_in_timeval);
 }
@@ -522,7 +522,7 @@ void SequencedVideoCaptureImpl::SequenceTransport::do_send(const uint8_t * data,
 }
 
 Microseconds SequencedVideoCaptureImpl::periodic_snapshot(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
 {
     this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     if (!this->ic_has_first_img) {
@@ -532,7 +532,7 @@ Microseconds SequencedVideoCaptureImpl::periodic_snapshot(
 }
 
 void SequencedVideoCaptureImpl::frame_marker_event(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
 {
     this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
     if (!this->ic_has_first_img) {
@@ -544,13 +544,13 @@ void SequencedVideoCaptureImpl::frame_marker_event(
 }
 
 void SequencedVideoCaptureImpl::FirstImage::frame_marker_event(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
 {
     this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
 }
 
 Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
-    const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    const timeval& now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
 {
     Microseconds ret;
 
@@ -632,13 +632,13 @@ void SequencedVideoCaptureImpl::VideoCapture::encoding_video_frame()
 }
 
 void SequencedVideoCaptureImpl::VideoCapture::frame_marker_event(
-    const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    const timeval& /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
     this->video_cap_ctx.frame_marker_event(*this->recorder);
 }
 
 Microseconds SequencedVideoCaptureImpl::VideoCapture::periodic_snapshot(
-    const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool ignore_frame_in_timeval)
+    const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool ignore_frame_in_timeval)
 {
     return this->video_cap_ctx.snapshot(*this->recorder, now, ignore_frame_in_timeval);
 }
@@ -711,7 +711,7 @@ void SequencedVideoCaptureImpl::VideoSequencer::reset_now(const timeval& now)
 }
 
 Microseconds SequencedVideoCaptureImpl::VideoSequencer::periodic_snapshot(
-    const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
     assert(this->break_interval.count());
     auto const interval = difftimeval(now, this->start_break);
@@ -723,7 +723,7 @@ Microseconds SequencedVideoCaptureImpl::VideoSequencer::periodic_snapshot(
 }
 
 void SequencedVideoCaptureImpl::VideoSequencer::frame_marker_event(
-    timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval)
+    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
 {
     this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
 }

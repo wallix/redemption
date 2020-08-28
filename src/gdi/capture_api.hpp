@@ -71,13 +71,13 @@ struct CaptureApi : private noncopyable
 
     virtual Microseconds periodic_snapshot(
         timeval const & now,
-        int cursor_x, int cursor_y,
+        uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     ) = 0;
 
     virtual void frame_marker_event(
         timeval const & now,
-        int cursor_x, int cursor_y,
+        uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     )
     {

@@ -110,7 +110,7 @@ public:
 
     Microseconds periodic_snapshot(
         timeval const & now,
-        int cursor_x, int cursor_y,
+        uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     ) override;
 
@@ -222,9 +222,9 @@ private:
 
     struct MouseTrace
     {
-        timeval last_now;
-        int     last_x;
-        int     last_y;
+        timeval  last_now;
+        uint16_t last_x;
+        uint16_t last_y;
     };
 
     class Graphic;

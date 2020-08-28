@@ -482,7 +482,7 @@ public:
 
 private:
     Microseconds periodic_snapshot(
-        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+        const timeval& now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
     ) override {
         (void)cursor_x;
         (void)cursor_y;
@@ -752,7 +752,7 @@ public:
      }
 
     Microseconds periodic_snapshot(
-        timeval const & now, int x, int y, bool ignore_frame_in_timeval
+        timeval const & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
     ) override {
         (void)x;
         (void)y;
@@ -834,7 +834,7 @@ public:
     }
 
     Microseconds periodic_snapshot(
-        timeval const & now, int x, int y, bool ignore_frame_in_timeval
+        timeval const & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
     ) override {
         if (this->enable_rt_display) {
             return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
@@ -1050,7 +1050,7 @@ public:
     }
 
     Microseconds periodic_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         this->last_time = now.tv_sec;
         return std::chrono::seconds{10};
@@ -1285,7 +1285,7 @@ public:
 
 
     Microseconds periodic_snapshot(
-        const timeval& now, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
         std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
 
@@ -1454,7 +1454,10 @@ Capture::Capture(
     Rect const & crop_rect)
 : is_replay_mod(!capture_params.sesman)
 , update_progress_data(update_progress_data)
-, mouse_info{capture_params.now, drawable_params.width / 2, drawable_params.height / 2}
+, mouse_info{
+    capture_params.now,
+    static_cast<uint16_t>(drawable_params.width / 2),
+    static_cast<uint16_t>(drawable_params.height / 2)}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 , smart_video_cropping(capture_params.smart_video_cropping)
 , verbose(capture_params.verbose)
@@ -1822,7 +1825,7 @@ void Capture::add_graphic(gdi::GraphicApi & gd)
 
 Capture::Microseconds Capture::periodic_snapshot(
     timeval const & now,
-    int cursor_x, int cursor_y,
+    uint16_t cursor_x, uint16_t cursor_y,
     bool ignore_frame_in_timeval
 ) {
     if (this->gd_drawable) {

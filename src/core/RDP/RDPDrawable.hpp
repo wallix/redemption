@@ -45,8 +45,8 @@ class RDPDrawable final
     uint16_t save_mouse_y;
 public:
     // TODO private
-    int mouse_cursor_pos_x;
-    int mouse_cursor_pos_y;
+    uint16_t mouse_cursor_pos_x;
+    uint16_t mouse_cursor_pos_y;
 private:
     int mouse_cursor_hotspot_x;
     int mouse_cursor_hotspot_y;

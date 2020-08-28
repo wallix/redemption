@@ -131,11 +131,11 @@ struct FullVideoCaptureImpl : gdi::CaptureApi
     ~FullVideoCaptureImpl();
 
     void frame_marker_event(
-        const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        const timeval& /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override;
 
     Microseconds periodic_snapshot(
-        const timeval& now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+        const timeval& now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
     ) override;
 
     void encoding_video_frame();
@@ -189,12 +189,12 @@ class SequencedVideoCaptureImpl : public gdi::CaptureApi
 
 public:
     void frame_marker_event(
-        timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+        timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
     ) override;
 
     Microseconds periodic_snapshot(
         timeval const & now,
-        int cursor_x, int cursor_y,
+        uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     ) override;
 
@@ -213,11 +213,11 @@ public:
 
         Microseconds periodic_snapshot(
             timeval const & now,
-            int cursor_x, int cursor_y,
+            uint16_t cursor_x, uint16_t cursor_y,
             bool ignore_frame_in_timeval
         );
 
-        void frame_marker_event(timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval);
+        void frame_marker_event(timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval);
     } first_image;
 
 public:
@@ -239,11 +239,11 @@ public:
 
         void encoding_video_frame();
 
-        void frame_marker_event(const timeval& /*now*/, int /*cursor_x*/, int /*cursor_y*/, bool /*ignore_frame_in_timeval*/);
+        void frame_marker_event(const timeval& /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/);
 
         Microseconds periodic_snapshot(
             timeval const & now,
-            int cursor_x, int cursor_y,
+            uint16_t cursor_x, uint16_t cursor_y,
             bool ignore_frame_in_timeval
         );
 
@@ -309,12 +309,12 @@ public:
 
         Microseconds periodic_snapshot(
             timeval const & now,
-            int cursor_x, int cursor_y,
+            uint16_t cursor_x, uint16_t cursor_y,
             bool ignore_frame_in_timeval
         );
 
         void frame_marker_event(
-            timeval const & now, int cursor_x, int cursor_y, bool ignore_frame_in_timeval
+            timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
         );
     } video_sequencer;
 
