@@ -37,5 +37,5 @@ if [ "$1" = "compiler" ] || [ -z "$1" ] ; then
     echo
     echo $title'# Compiler config for `-s cxx_color=always` or `cxx-color=always`:'$reset
     echo
-    sed -E 's/^constant jln_[^[]+\[ jln-get-env ([^ ]+) : ([^]]+) \].*/'$var'\1 '$sep'='$reset' \2/;t;d' jam/cxxflags.jam
+    sed -E 's/^feature <([^>]+)> : _ (.*) :.*/'$var'\1 '$sep'='$reset' \2/;ta;d;:a;/-incidental/d' jam/cxxflags.jam
 fi
