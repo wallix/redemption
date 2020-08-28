@@ -31,7 +31,7 @@ static FlatWabClose build_close_widget(
     Rect const widget_rect,
     CloseMod & mod,
     WidgetScreen & screen,
-    std::string auth_error_message,
+    char const* auth_error_message,
     CloseModVariables vars,
     Font const& font, Theme const& theme, bool back_selector)
 {
@@ -68,7 +68,7 @@ static FlatWabClose build_close_widget(
 
     return FlatWabClose(
         drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
-        screen, &mod, auth_error_message.c_str(),
+        screen, &mod, auth_error_message,
         is_asked ? nullptr : vars.get<cfg::globals::auth_user>().c_str(),
         is_asked ? nullptr : temporary_text(vars).text,
         true,
@@ -79,7 +79,7 @@ static FlatWabClose build_close_widget(
 
 
 CloseMod::CloseMod(
-    std::string auth_error_message,
+    char const* auth_error_message,
     CloseModVariables vars,
     TimeBase& time_base,
     EventContainer& events,

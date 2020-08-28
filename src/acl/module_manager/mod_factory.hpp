@@ -258,41 +258,27 @@ private:
         LOG(LOG_INFO, "----------------------- create_close_mod() -> ModPack -----------------");
 
         bool back_to_selector = false;
-        std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
-        if (auth_error_message.empty()) {
-            auth_error_message = TR(trkeys::connection_ended, language(this->ini));
-        }
-
-        auto new_mod = new CloseMod(
-            auth_error_message,
-            this->ini,
-            this->time_base,
-            this->events,
-            this->mod_wrapper, this->front,
-            this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
-            this->rail_client_execute,
-            this->glyphs,
-            this->theme,
-            back_to_selector
-        );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return this->_create_close_mod(back_to_selector);
     }
 
     auto create_close_mod_back_to_selector() -> ModPack
     {
-
         LOG(LOG_INFO, "----------------------- create_close_mod_back_to_selector() -> ModPack -----------------");
 
         bool back_to_selector = true;
-        std::string auth_error_message = this->ini.get<cfg::context::auth_error_message>();
+        return this->_create_close_mod(back_to_selector);
+    }
+
+private:
+    auto _create_close_mod(bool back_to_selector) -> ModPack
+    {
+        zstring_view auth_error_message = this->ini.get<cfg::context::auth_error_message>();
         if (auth_error_message.empty()) {
             auth_error_message = TR(trkeys::connection_ended, language(this->ini));
         }
 
         auto new_mod = new CloseMod(
-            auth_error_message,
+            auth_error_message.c_str(),
             this->ini,
             this->time_base,
             this->events,
@@ -308,6 +294,7 @@ private:
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
+public:
     auto create_interactive_target_mod() -> ModPack
     {
         auto new_mod = new InteractiveTargetMod(
@@ -327,61 +314,34 @@ private:
 
     auto create_valid_message_mod() -> ModPack
     {
-        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         const char * button = TR(trkeys::refused, language(this->ini));
         const char * caption = "Information";
-        auto new_mod = new DialogMod(
-            this->ini,
-            this->time_base,
-            this->events,
-            this->graphics, this->front,
-            this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
-            caption,
-            message.zstring().c_str(),
-            button,
-            this->rail_client_execute,
-            this->glyphs,
-            this->theme
-        );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return this->_create_dialog(button, caption, NO_CHALLENGE);
     }
 
     auto create_display_message_mod() -> ModPack
     {
-        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         const char * button = nullptr;
         const char * caption = "Information";
-        auto new_mod = new DialogMod(
-            this->ini,
-            this->time_base,
-            this->events,
-            this->graphics, this->front,
-            this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
-            caption,
-            message.zstring().c_str(),
-            button,
-            this->rail_client_execute,
-            this->glyphs,
-            this->theme
-        );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return this->_create_dialog(button, caption, NO_CHALLENGE);
     }
 
     auto create_dialog_challenge_mod() -> ModPack
     {
-        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         const char * button = nullptr;
         const char * caption = "Challenge";
-        ChallengeOpt challenge = CHALLENGE_HIDE;
-        if (this->ini.get<cfg::context::authentication_challenge>()) {
-            challenge = CHALLENGE_ECHO;
-        }
+        const ChallengeOpt challenge = this->ini.get<cfg::context::authentication_challenge>()
+            ? CHALLENGE_ECHO
+            : CHALLENGE_HIDE;
         this->ini.ask<cfg::context::authentication_challenge>();
         this->ini.ask<cfg::context::password>();
+        return this->_create_dialog(button, caption, challenge);
+    }
+
+private:
+    auto _create_dialog(const char * button, const char * caption, ChallengeOpt challenge) -> ModPack
+    {
+        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         auto new_mod = new DialogMod(
             this->ini,
             this->time_base,
@@ -401,6 +361,7 @@ private:
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 
+public:
     auto create_wait_info_mod() -> ModPack
     {
         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");

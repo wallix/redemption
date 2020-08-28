@@ -55,7 +55,7 @@ class CloseMod : public mod_api, public NotifyApi
 
 public:
     CloseMod(
-        std::string auth_error_message,
+        char const* auth_error_message,
         CloseModVariables vars,
         TimeBase& time_base,
         EventContainer& events,
