@@ -167,7 +167,7 @@ if [ $fast -eq 0 ]; then
     find \
       src \
       tests \
-      projects/ClientQtGraphicAPI/src/ \
+      projects/qtclient/src/ \
       projects/redemption_configs/ \
       \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' \) \
       -exec ./tools/c++-analyzer/todo_extractor '{}' +
