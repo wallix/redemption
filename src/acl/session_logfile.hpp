@@ -261,19 +261,18 @@ namespace
         append("account=\"",    account);
     }
 
+    inline chars_view get_target_ip(const Inifile & ini)
+    {
+        char c = ini.get<cfg::context::target_host>()[0];
+        using av = chars_view;
+        return ('0' <= c && c <= '9')
+            ? av(ini.get<cfg::context::target_host>())
+            : av(ini.get<cfg::context::ip_target>());
+    }
 
     inline void log_siem_syslog(LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
     {
         if (ini.get<cfg::session_log::enable_session_log>()) {
-
-            auto target_ip = [&ini]{
-                char c = ini.get<cfg::context::target_host>()[0];
-                using av = chars_view;
-                return ('0' <= c && '9' <= c)
-                    ? av(ini.get<cfg::context::target_host>())
-                    : av(ini.get<cfg::context::ip_target>());
-            };
-
             std::string buffer_info;
             buffer_info.reserve(kv_list.size() * 50 + 30);
             log_format_set_info(buffer_info, id, kv_list);
@@ -286,7 +285,7 @@ namespace
                 ini.get<cfg::globals::target_user>(),
                 ini.get<cfg::context::session_id>(),
                 ini.get<cfg::globals::host>(),
-                target_ip(),
+                get_target_ip(ini),
                 ini.get<cfg::globals::target_device>(),
                 ini.get<cfg::context::target_service>());
 
@@ -331,15 +330,6 @@ namespace
     inline void log_siem_arcsight(std::time_t time_now, LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
     {
         if (ini.get<cfg::session_log::enable_arcsight_log>()) {
-
-            auto target_ip = [&ini]{
-                char c = ini.get<cfg::context::target_host>()[0];
-                using av = chars_view;
-                return ('0' <= c && '9' <= c)
-                    ? av(ini.get<cfg::context::target_host>())
-                    : av(ini.get<cfg::context::ip_target>());
-            };
-
             std::string buffer;
             log_format_set_arcsight(
                 buffer, id, time_now,
@@ -348,7 +338,7 @@ namespace
                 ini.get<cfg::globals::target_user>(),
                 ini.get<cfg::context::session_id>(),
                 ini.get<cfg::globals::host>(),
-                target_ip(),
+                get_target_ip(ini),
                 ini.get<cfg::globals::target_device>(),
                 ini.get<cfg::context::target_service>(),
                 kv_list);
