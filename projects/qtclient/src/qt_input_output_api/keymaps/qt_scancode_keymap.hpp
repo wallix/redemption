@@ -107,11 +107,11 @@ public:
         const uint16_t extended = flag | 0x100;
 
         switch (key) {
-            case Qt::Key_Alt        : update_modifier(ALT_MOD);      return {0x38, flag};
-            case Qt::Key_AltGr      : update_modifier(ALTGR_MOD);    return {0x38, extended};
-            case Qt::Key_Control    : update_modifier(CTRL_MOD);     return {0x1D, extended};
-            case Qt::Key_Shift      : update_modifier(SHIFT_MOD);    return {0x36, flag};
-            case Qt::Key_CapsLock   : update_modifier(CAPSLOCK_MOD); return {0x3A, flag};
+            case Qt::Key_Alt     : update_modifier(ALT_MOD);      return {0x38, flag};
+            case Qt::Key_AltGr   : update_modifier(ALTGR_MOD);    return {0x38, extended};
+            case Qt::Key_Control : update_modifier(CTRL_MOD);     return {0x1D, extended};
+            case Qt::Key_Shift   : update_modifier(SHIFT_MOD);    return {0x36, flag};
+            case Qt::Key_CapsLock: update_modifier(CAPSLOCK_MOD); return {0x3A, flag};
         }
 
         if (this->currentDeadLayout) {
@@ -145,6 +145,7 @@ public:
             case Qt::Key_Meta       : return {0x5b, extended};
             case Qt::Key_Menu       : return {0x5D, extended};
             case Qt::Key_Home       : return {0x47, extended};
+            case Qt::Key_Clear      : return {0x4C, extended};
 
             case Qt::Key_Return     : return {0x1C, flag};
             case Qt::Key_Backspace  : return {0x0E, flag};
@@ -181,13 +182,13 @@ public:
             case Qt::Key_WakeUp               : return {0x63, extended};
             case Qt::Key_Sleep                : return {0x5F, extended};
 
-            case Qt::Key_Dead_Circumflex       : return dead_key(0x5E);
-            case Qt::Key_Dead_Grave            : return dead_key(0x60);
-            case Qt::Key_Dead_Tilde            : return dead_key(0x7E);
-            case Qt::Key_Dead_Diaeresis        : return dead_key(0xA8);
-            case Qt::Key_Dead_Acute            : return dead_key(0xB4);
-            case Qt::Key_Dead_Macron           : return dead_key(0xAF);
-            case Qt::Key_Dead_Cedilla          : return dead_key(0xB8);
+            case Qt::Key_Dead_Circumflex      : return dead_key(0x5E);
+            case Qt::Key_Dead_Grave           : return dead_key(0x60);
+            case Qt::Key_Dead_Tilde           : return dead_key(0x7E);
+            case Qt::Key_Dead_Diaeresis       : return dead_key(0xA8);
+            case Qt::Key_Dead_Acute           : return dead_key(0xB4);
+            case Qt::Key_Dead_Macron          : return dead_key(0xAF);
+            case Qt::Key_Dead_Cedilla         : return dead_key(0xB8);
             // case Qt::Key_Dead_Breve            : return {0, flag};
             // case Qt::Key_Dead_Abovedot         : return {0, flag};
             // case Qt::Key_Dead_Abovering        : return {0, flag};
