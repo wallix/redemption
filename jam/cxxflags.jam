@@ -13,6 +13,8 @@ REDEMPTION_CXXFLAGS +=
     <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
     <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
 
+    <toolset>clang:<cxxflags>-Wno-used-but-marked-unused # quick fix
+
     # <cxxflags>-Werror=return-type
     # <toolset>gcc:<cxxflags>-Werror=suggest-override
 
