@@ -131,6 +131,9 @@ void config_spec_definition(Writer && W)
 
     W.section("globals", [&]
     {
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::chrono::milliseconds>(), "front_connection_time", desc{"from incoming connection to \"up_and_running\" state"});
+        W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<std::chrono::milliseconds>(), "target_connection_time", desc{"from Module rdp creation to \"up_and_running\" state"});
+
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "capture_chunk");
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "nla_auth_user", sesman::name{"nla_login"});
