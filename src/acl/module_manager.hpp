@@ -716,6 +716,9 @@ private:
     Theme & theme;
 
 public:
+    timeval target_connection_start_time {};
+
+public:
     ModuleManager(ModFactory & mod_factory, SessionReactor& session_reactor, FrontAPI & front, gdi::GraphicApi & graphics, Keymap2 & keymap, ClientInfo & client_info, windowing_api* &winapi, ModWrapper & mod_wrapper, ClientExecute & rail_client_execute, ModOSD & mod_osd, Font & glyphs, Theme & theme, Inifile & ini, CryptoContext & cctx, Random & gen, TimeObj & timeobj)
         : mod_factory(mod_factory)
         , mod_wrapper(mod_wrapper)
@@ -749,6 +752,8 @@ public:
 
     void remove_mod()
     {
+        this->target_connection_start_time = {};
+
         if (this->get_mod_wrapper().has_mod()){
             this->clear_osd_message();
             this->get_mod_wrapper().remove_mod();
@@ -907,6 +912,7 @@ public:
         }
 
         case MODULE_RDP:
+            this->target_connection_start_time = tvtime();
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
                 this->graphics, this->front, this->client_info,
@@ -915,6 +921,7 @@ public:
             break;
 
         case MODULE_VNC:
+            this->target_connection_start_time = tvtime();
             this->create_mod_vnc(
                 authentifier, report_message, this->ini,
                 this->graphics, this->front, this->client_info,

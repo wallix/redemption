@@ -607,7 +607,7 @@ class Session
     }
 
 public:
-    Session(SocketTransport&& front_trans, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+    Session(SocketTransport&& front_trans, timeval sck_start_time, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
     : ini(ini)
     {
         TRANSLATIONCONF.set_ini(&ini);
@@ -617,7 +617,28 @@ public:
 
         SessionReactor session_reactor;
         session_reactor.set_current_time(tvtime());
-        Front front(
+
+        struct SessionFront : Front
+        {
+            ModuleManager* mm_ptr = nullptr;
+            Inifile* ini_ptr = nullptr;
+
+            using Front::Front;
+
+            bool can_be_start_capture() override
+            {
+                if (this->mm_ptr && this->mm_ptr->target_connection_start_time != timeval{}) {
+                    auto elapsed = difftimeval(tvtime(), this->mm_ptr->target_connection_start_time);
+                    this->ini_ptr->set_acl<cfg::globals::target_connection_time>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
+                    this->mm_ptr->target_connection_start_time = {};
+                }
+
+                return this->Front::can_be_start_capture();
+            }
+        };
+
+        SessionFront front(
             session_reactor, front_trans, rnd, ini, cctx, authentifier,
             ini.get<cfg::client::fast_path>()
         );
@@ -650,6 +671,9 @@ public:
 
             ModFactory mod_factory(session_reactor, front.client_info, front, front, ini, glyphs, theme, rail_client_execute);
             ModuleManager mm(mod_factory, session_reactor, front, front, front.keymap, front.client_info, winapi, mod_wrapper, rail_client_execute, mod_osd, glyphs, theme, this->ini, cctx, rnd, timeobj);
+
+            front.mm_ptr = &mm;
+            front.ini_ptr = &ini;
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;
@@ -739,6 +763,9 @@ public:
                 {
                     if (!acl && !mm.last_module) {
                         this->start_acl_running(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+                        auto elapsed = difftimeval(tvtime(), sck_start_time);
+                        this->ini.set_acl<cfg::globals::front_connection_time>(
+                            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
                     }
                     bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                     run_session = this->front_up_and_running(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, now, start_time, ini, mm, front, authentifier);
@@ -753,6 +780,9 @@ public:
                     SessionReactor::EnableGraphics enable_graphics{false};
                     if (!acl && front.is_in_nla() && !mm.last_module) {
                         this->start_acl_activate(acl, cctx, rnd, now, ini, mm, session_reactor, authentifier, signal, fstat);
+                        auto elapsed = difftimeval(tvtime(), sck_start_time);
+                        this->ini.set_acl<cfg::globals::front_connection_time>(
+                            std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
                     }
                     run_session = this->front_starting(front_is_set, ioswitch, session_reactor, signal, front_signal, acl, ini, mm, front, authentifier);
                     if (!acl && BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
@@ -971,7 +1001,7 @@ private:
 
 template<class SocketType, class... Args>
 void session_start_sck(
-    char const* name, unique_fd sck,
+    char const* name, unique_fd sck, timeval sck_start_time,
     Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
     Args&&... args)
 {
@@ -979,25 +1009,25 @@ void session_start_sck(
         name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
         static_cast<Args&&>(args)...,
         to_verbose_flags(ini.get<cfg::debug::front>() | (!strcmp(ini.get<cfg::globals::host>().c_str(), "127.0.0.1") ? uint64_t(SocketTransport::Verbose::watchdog) : 0))
-    ), ini, cctx, rnd, fstat);
+    ), sck_start_time, ini, cctx, rnd, fstat);
 }
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_tls(unique_fd sck, timeval sck_start_time, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
-    session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini, cctx, rnd, fstat);
+    session_start_sck<SocketTransport>("RDP Client", std::move(sck), sck_start_time, ini, cctx, rnd, fstat);
 }
 
-void session_start_ws(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_ws(unique_fd sck, timeval sck_start_time, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
-    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini, cctx, rnd, fstat,
+    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), sck_start_time, ini, cctx, rnd, fstat,
         WsTransport::UseTls(false), WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
+void session_start_wss(unique_fd sck, timeval sck_start_time, Inifile& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat)
 {
-    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini, cctx, rnd, fstat,
+    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), sck_start_time, ini, cctx, rnd, fstat,
         WsTransport::UseTls(true), WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),
