@@ -383,6 +383,15 @@ private:
             }
         }
 
+        switch (mod_wrapper.current_mod) {
+            case MODULE_RDP:
+            case MODULE_VNC:
+                this->target_connection_start_time = tvtime();
+                break;
+            default:
+                this->target_connection_start_time = {};
+        }
+
         auto mod_pack = mod_factory.create_mod(next_state);
         mod_wrapper.set_mod(next_state, mod_pack);
     }
@@ -665,8 +674,10 @@ private:
         }
     }
 
+    timeval target_connection_start_time {};
+
 public:
-    Session(SocketTransport&& front_trans, Inifile& ini)
+    Session(SocketTransport&& front_trans, timeval sck_start_time, Inifile& ini)
     : ini(ini)
     {
         CryptoContext cctx;
@@ -683,9 +694,31 @@ public:
 
         Sesman sesman(ini, time_base);
 
-        Front front(time_base, events, sesman,
+        struct SessionFront : Front
+        {
+            timeval* target_connection_start_time_ptr = nullptr;
+            Inifile* ini_ptr = nullptr;
+
+            using Front::Front;
+
+            bool can_be_start_capture(bool force_capture) override
+            {
+                if (*this->target_connection_start_time_ptr != timeval{}) {
+                    auto elapsed = difftimeval(tvtime(), *this->target_connection_start_time_ptr);
+                    this->ini_ptr->set_acl<cfg::globals::target_connection_time>(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
+                    *this->target_connection_start_time_ptr = {};
+                }
+
+                return this->Front::can_be_start_capture(force_capture);
+            }
+        };
+
+        SessionFront front(time_base, events, sesman,
             front_trans, rnd, ini, cctx, ini.get<cfg::client::fast_path>()
         );
+        front.ini_ptr = &ini;
+        front.target_connection_start_time_ptr = &this->target_connection_start_time;
         sesman.set_front(&front);
 
         KeepAlive keepalive(ini.get<cfg::globals::keepalive_grace_delay>());
@@ -971,6 +1004,11 @@ public:
                                     std::chrono::seconds(1), SocketTransport::Verbose::none);
 
                                 acl_serial.set_auth_trans(auth_trans.get());
+
+                                auto elapsed = difftimeval(tvtime(), sck_start_time);
+                                this->ini.set_acl<cfg::globals::front_connection_time>(
+                                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        elapsed));
                             }
                             catch (...) {
                                 this->ini.set<cfg::context::auth_error_message>("No authentifier available");
@@ -1353,7 +1391,7 @@ private:
 template<class SocketType, class... Args>
 void session_start_sck(
     char const* name, unique_fd&& sck,
-    Inifile& ini,
+    timeval sck_start_time, Inifile& ini,
     Args&&... args)
 {
     Session session(SocketType(
@@ -1364,25 +1402,25 @@ void session_start_sck(
             ? uint64_t(SocketTransport::Verbose::watchdog)
             : 0u
         ))
-    ), ini);
+    ), sck_start_time, ini);
 }
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, Inifile& ini)
+void session_start_tls(unique_fd sck, timeval sck_start_time, Inifile& ini)
 {
-    session_start_sck<SocketTransport>("RDP Client", std::move(sck), ini);
+    session_start_sck<SocketTransport>("RDP Client", std::move(sck), sck_start_time, ini);
 }
 
-void session_start_ws(unique_fd sck, Inifile& ini)
+void session_start_ws(unique_fd sck, timeval sck_start_time, Inifile& ini)
 {
-    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), ini,
+    session_start_sck<WsTransport>("RDP Ws Client", std::move(sck), sck_start_time, ini,
         WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, Inifile& ini)
+void session_start_wss(unique_fd sck, timeval sck_start_time, Inifile& ini)
 {
-    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), ini,
+    session_start_sck<WsTransport>("RDP Wss Client", std::move(sck), sck_start_time, ini,
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),

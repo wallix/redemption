@@ -216,6 +216,8 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
+            timeval start_time = tvtime();
+
             char source_ip[256] { };
             char source_port_buf[8] { };
 
@@ -387,16 +389,16 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, ini);
+                        session_start_ws(unique_fd{sck}, start_time, ini);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, ini);
+                        session_start_wss(unique_fd{sck}, start_time, ini);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, ini);
+                        session_start_tls(unique_fd{sck}, start_time, ini);
                         break;
                 }
 
