@@ -162,7 +162,7 @@ struct Hex8
 {
     uint8_t x;
 
-    void push(std::ostream& out)
+    void push(std::ostream& out) const
     {
         char const* hex = "0123456789abcdef";
         out << hex[x >> 4] << hex[x & 0xf];
@@ -170,8 +170,9 @@ struct Hex8
 
     friend std::ostream& operator<<(std::ostream& out, Hex8 const& h)
     {
-        char const* hex = "0123456789abcdef";
-        return out << "0x" << hex[h.x >> 4] << hex[h.x & 0xfu];
+        out << "0x";
+        h.push(out);
+        return out;
     }
 };
 
@@ -200,6 +201,37 @@ struct Hex32
         Hex8{uint8_t(h.x >> 8)}.push(out);
         Hex8{uint8_t(h.x)}.push(out);
         return out;
+    }
+};
+
+struct Hex8C
+{
+    int i;
+    uint8_t x;
+
+    friend std::ostream& operator<<(std::ostream& out, Hex8C const& h)
+    {
+        if (h.i % 8) {
+            out << " ";
+        }
+        else {
+            out << "/* ";
+            Hex8{uint8_t(h.i)}.push(out);
+            out << " - ";
+            Hex8{uint8_t(h.i+7)}.push(out);
+            out << " */ ";
+        }
+
+        out << Hex8{h.x};
+
+        if (' ' <= h.i && h.i <= '~') {
+            out << " /*" << char(h.i) << "*/";
+        }
+        else {
+            out << "      ";
+        }
+
+        return out << (((h.i+1) % 8) ? "," : ",\n");
     }
 };
 
@@ -234,7 +266,7 @@ void tabToReversedMap(
         ;
         int i = 0;
         for (uint8_t idx : p.second) {
-            fichier << ((i % 8) ? " " : "    ") << Hex8{idx} << (((i+1) % 8) ? "," : ",\n");
+            fichier << Hex8C{i, idx};
             ++i;
         }
         fichier << "};\n\n";
@@ -292,7 +324,7 @@ void tabToReversedDeadMap(
                 ;
                 int i = 0;
                 for (uint8_t idx : p.second) {
-                    fichier << ((i % 8) ? " " : "    ") << Hex8{idx} << (((i+1) % 8) ? "," : ",\n");
+                    fichier << Hex8C{i, idx};
                     ++i;
                 }
                 fichier << "};\n\n";
@@ -352,7 +384,7 @@ void tabToReversedDeadMap(
         for (int idx = 0; idx < 256; ++idx) {
             auto p = dead_scancodes.find(uint8_t(unsigned(idx)));
             uint8_t real_id = (p == dead_scancodes.end()) ? 0 : p->second.idx + 1u;
-            fichier << ((idx % 8) ? " " : "        ") << Hex8{real_id} << (((idx+1) % 8) ? "," : ",\n");
+            fichier << Hex8C{idx, real_id};
         }
         fichier << "};\n\n";
 
@@ -379,7 +411,7 @@ void tabToReversedDeadMap(
     id = 0;
     for (auto&& dead_scancodes : dead_map) {
         uint8_t real_id = dead_scancodes.empty() ? 0 : ++id;
-        fichier << ((i % 8) ? " " : "        ") << Hex8{real_id} << (((i+1) % 8) ? "," : ",\n");
+        fichier << Hex8C{i, real_id};
         ++i;
     }
     fichier << "};\n\n";
