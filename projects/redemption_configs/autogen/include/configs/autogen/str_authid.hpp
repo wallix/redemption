@@ -10,6 +10,8 @@
 namespace configs
 {
     constexpr zstring_view const authstr[] = {
+        "front_connection_time"_zv,
+        "target_connection_time"_zv,
         "capture_chunk"_zv,
         "nla_login"_zv,
         "login"_zv,
