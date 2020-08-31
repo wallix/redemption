@@ -112,7 +112,7 @@ public:
         const char * target_host, const bool krb, Random & rand, TimeBase & time_base,
         std::string& extra_message, Translation::language_t lang,
         const TLSClientParams & tls_client_params,
-        const Verbose verbose = {});
+        const Verbose verbose);
 
     ~RdpNego();
 

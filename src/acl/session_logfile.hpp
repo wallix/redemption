@@ -173,7 +173,7 @@ namespace
         std::size_t len;
     };
 
-    StringBuf<64> from_gmtime(std::time_t time) noexcept
+    inline StringBuf<64> from_gmtime(std::time_t time) noexcept
     {
         StringBuf<64> buf;
 

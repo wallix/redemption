@@ -23,30 +23,25 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "configs/config.hpp"
-#include "utils/timebase.hpp"
 #include "acl/auth_api.hpp"
+#include "configs/config.hpp"
+#include "core/log_id.hpp"
+#include "utils/log.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log_siem.hpp"
-#include "core/log_id.hpp"
 #include "utils/netutils.hpp"
-#include "utils/load_theme.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "utils/sugar/update_lock.hpp"
-#include "utils/log_siem.hpp"
-#include "utils/fileutils.hpp"
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include "acl/module_manager/enums.hpp"
-#include "core/back_event_t.hpp"
 
-static inline unique_fd connect_to_target_host(Inifile & ini, AuthApi& sesman, trkeys::TrKey const& authentification_fail, bool enable_ipv6 = false)
+
+inline unique_fd connect_to_target_host(
+    Inifile & ini, AuthApi& sesman,
+    trkeys::TrKey const& authentification_fail, bool enable_ipv6)
 {
     auto throw_error = [&ini, &sesman](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
@@ -76,7 +71,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, AuthApi& sesman, t
     int port = ini.get<cfg::context::target_port>();
     const char *error_message = nullptr;
     char resolved_ip_addr[NI_MAXHOST] { };
-    unique_fd client_sck { -1 };
+    unique_fd client_sck = invalid_fd();
 
     // Handle ipv4 or both ipv4 and ipv6
     if (!enable_ipv6)
@@ -88,6 +83,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, AuthApi& sesman, t
             // TODO: actually this is DNS Failure or invalid address
             throw_error(error_message, 1);
         }
+
         snprintf(resolved_ip_addr,
                  sizeof(resolved_ip_addr),
                  "%s",
@@ -103,6 +99,7 @@ static inline unique_fd connect_to_target_host(Inifile & ini, AuthApi& sesman, t
         {
             throw_error(error_message, 1);
         }
+
         if (int res = ::getnameinfo(addr_info_ptr->ai_addr,
                                     addr_info_ptr->ai_addrlen,
                                     resolved_ip_addr,
@@ -115,14 +112,16 @@ static inline unique_fd connect_to_target_host(Inifile & ini, AuthApi& sesman, t
                 ::strerror(errno) : ::gai_strerror(res);
             throw_error(error_message, 1);
         }
+
         client_sck = ip_connect_both_ipv4_and_ipv6(ip, port, &error_message);
     }
+
     if (!client_sck.is_open())
     {
         throw_error(error_message, 2);
     }
-    ini.set<cfg::context::auth_error_message>(TR(authentification_fail,
-                                                 language(ini)));
+
+    ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(ini)));
     ini.set<cfg::context::ip_target>(resolved_ip_addr);
     return client_sck;
 }

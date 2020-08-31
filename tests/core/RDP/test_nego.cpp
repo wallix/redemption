@@ -114,7 +114,9 @@ RED_AUTO_TEST_CASE(TestNego)
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
     TLSClientParams tls_client_params;
-    RdpNego nego(true, "test", true, false, "127.0.0.1", false, rand, time_base, extra_message, lang, tls_client_params);
+    RdpNego nego(
+        true, "test", true, false, "127.0.0.1", false, rand, time_base,
+        extra_message, lang, tls_client_params, RdpNego::Verbose());
     nego.set_identity(user, domain, pass, host);
 
     TpduBuffer buf;
