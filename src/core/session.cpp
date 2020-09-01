@@ -35,7 +35,6 @@
 #include "mod/mod_api.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/ws_transport.hpp"
-#include "utils/file.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/netutils.hpp"
@@ -53,7 +52,6 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
-#include <sys/resource.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -68,11 +66,6 @@ struct VerboseSession
     static bool has_verbose_event(Inifile const& ini) { return debug(ini) & 0x02; }
     static bool has_verbose_acl(Inifile const& ini) { return debug(ini) & 0x04; }
     static bool has_verbose_trace(Inifile const& ini) { return debug(ini) & 0x08; }
-
-    static bool has_verbose_performance(Inifile const& ini)
-    {
-        return ini.get<cfg::debug::performance>() & 0x8000;
-    }
 
 private:
     static uint32_t debug(Inifile const& ini) { return ini.get<cfg::debug::session>(); }
@@ -199,10 +192,6 @@ class Session
     };
 
     Inifile & ini;
-
-    time_t      perf_last_info_collect_time = 0;
-    const pid_t perf_pid = getpid();
-    File        perf_file = nullptr;
 
     static const time_t select_timeout_tv_sec = 3;
 
@@ -770,9 +759,6 @@ public:
             EndSessionWarning end_session_warning;
 
             const time_t start_time = time(nullptr);
-            if (VerboseSession::has_verbose_performance(ini)) {
-                this->write_performance_log(start_time);
-            }
 
             bool run_session = true;
 
@@ -849,10 +835,6 @@ public:
                 }
 
                 time_base.set_current_time(tvtime());
-
-                if (VerboseSession::has_verbose_performance(ini)) {
-                    this->write_performance_log(time_base.get_current_time().tv_sec);
-                }
 
                 try {
                     bool const front_is_set = front_trans.has_tls_pending_data()
@@ -1300,9 +1282,6 @@ public:
 
     ~Session()
     {
-        if (VerboseSession::has_verbose_performance(this->ini)) {
-            this->write_performance_log(this->perf_last_info_collect_time + 3);
-        }
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         auto const& session_id = this->ini.get<cfg::context::session_id>();
         if (!session_id.empty()) {
@@ -1317,74 +1296,6 @@ public:
             sprintf(old_session_file, "%s/session_%d.pid", app_path(AppPath::LockDir).c_str(), child_pid);
             unlink(old_session_file);
         }
-    }
-
-private:
-    void write_performance_log(time_t now) {
-        if (!this->perf_last_info_collect_time) {
-            assert(!this->perf_file);
-
-            this->perf_last_info_collect_time = now - this->select_timeout_tv_sec;
-
-            struct tm tm_;
-
-            localtime_r(&this->perf_last_info_collect_time, &tm_);
-
-            char filename[2048];
-            snprintf(filename, sizeof(filename), "%s/rdpproxy,%04d%02d%02d-%02d%02d%02d,%d.perf",
-                this->ini.template get<cfg::video::record_tmp_path>().c_str(),
-                tm_.tm_year + 1900, tm_.tm_mon + 1, tm_.tm_mday, tm_.tm_hour, tm_.tm_min, tm_.tm_sec, this->perf_pid
-                );
-
-            this->perf_file = File(filename, "w");
-            this->perf_file.write(cstr_array_view(
-                "time_t;"
-                "ru_utime.tv_sec;ru_utime.tv_usec;ru_stime.tv_sec;ru_stime.tv_usec;"
-                "ru_maxrss;ru_ixrss;ru_idrss;ru_isrss;ru_minflt;ru_majflt;ru_nswap;"
-                "ru_inblock;ru_oublock;ru_msgsnd;ru_msgrcv;ru_nsignals;ru_nvcsw;ru_nivcsw\n"));
-        }
-        else if (this->perf_last_info_collect_time + this->select_timeout_tv_sec > now) {
-            return;
-        }
-
-        struct rusage resource_usage;
-
-        getrusage(RUSAGE_SELF, &resource_usage);
-
-        do {
-            this->perf_last_info_collect_time += this->select_timeout_tv_sec;
-
-            struct tm result;
-
-            localtime_r(&this->perf_last_info_collect_time, &result);
-
-            ::fprintf(
-                  this->perf_file.get()
-                , "%lu;"
-                  "%lu;%lu;%lu;%lu;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld\n"
-                , static_cast<unsigned long>(now)
-                , static_cast<unsigned long>(resource_usage.ru_utime.tv_sec)  /* user CPU time used */
-                , static_cast<unsigned long>(resource_usage.ru_utime.tv_usec)
-                , static_cast<unsigned long>(resource_usage.ru_stime.tv_sec)  /* system CPU time used */
-                , static_cast<unsigned long>(resource_usage.ru_stime.tv_usec)
-                , resource_usage.ru_maxrss                                    /* maximum resident set size */
-                , resource_usage.ru_ixrss                                     /* integral shared memory size */
-                , resource_usage.ru_idrss                                     /* integral unshared data size */
-                , resource_usage.ru_isrss                                     /* integral unshared stack size */
-                , resource_usage.ru_minflt                                    /* page reclaims (soft page faults) */
-                , resource_usage.ru_majflt                                    /* page faults (hard page faults)   */
-                , resource_usage.ru_nswap                                     /* swaps */
-                , resource_usage.ru_inblock                                   /* block input operations */
-                , resource_usage.ru_oublock                                   /* block output operations */
-                , resource_usage.ru_msgsnd                                    /* IPC messages sent */
-                , resource_usage.ru_msgrcv                                    /* IPC messages received */
-                , resource_usage.ru_nsignals                                  /* signals received */
-                , resource_usage.ru_nvcsw                                     /* voluntary context switches */
-                , resource_usage.ru_nivcsw                                    /* involuntary context switches */
-            );
-            this->perf_file.flush();
-        }
-        while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
 };
 
