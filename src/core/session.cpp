@@ -92,8 +92,6 @@ class Session
         {
         }
 
-        ~KeepAlive() = default;
-
         bool is_started() const
         {
             return this->connected;
@@ -300,7 +298,7 @@ private:
 
         if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
          && mod_wrapper.get_mod_transport()
-         && mod_wrapper.get_mod_transport()->sck == e.data
+         && static_cast<uintptr_t>(mod_wrapper.get_mod_transport()->sck) == e.data
          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
          && mod_wrapper.get_mod()->is_auto_reconnectable()
          && !mod_wrapper.get_mod()->server_error_encountered()
