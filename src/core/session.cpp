@@ -383,7 +383,7 @@ private:
             }
         }
 
-        switch (mod_wrapper.current_mod) {
+        switch (next_state) {
             case MODULE_RDP:
             case MODULE_VNC:
                 this->target_connection_start_time = tvtime();
