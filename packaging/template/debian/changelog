@@ -1,5 +1,13 @@
 redemption (%REDEMPTION_VERSION%%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
+  * Auto reconnection on losing target link
+  * fix inactivity timers
+  * connection time metrics
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 01 Sep 2020 17:01:56 +0200
+
+redemption (8.1.67%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
   * Fix back to selector
   * Fix login page escape
   * Fix OSD
