@@ -9,10 +9,9 @@ REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
 
-# qt4: bjam -sqt=4
 # qt5: bjam -sqt=5
+# qt6: bjam -sqt=6
 
-## Qt version {
 # select best Qt version
 ## @{
 import os ;
@@ -29,40 +28,28 @@ if ! $(qtversion)
         {
             echo "KDE_SESSION_VERSION=$(qtversion) found. Use Qt$(qtversion)." ;
         }
+        else
+        {
+            qtversion = 5 ;
+            echo "Assume Qt$(qtversion). (bjam -s qt5)" ;
+        }
     }
 }
 
-if $(qtversion) != 4 && $(qtversion) != 5
+if $(qtversion) != 5 && $(qtversion) != 6
 {
     echo "Unknown Qt$(qtversion)." ;
     qtversion = ;
-    exit "Please set a valid Qt version (4 or 5) with `bjam -s qt=4`." ;
+    exit "Please set a valid Qt version (5 or 6) with `bjam -s qt=5`." ;
 }
 ## @}
 
-
-if $(qtversion) = 4
-{
-    # TODO search include qt4 directory
-    constant QT4_INCLUDE : [ setvar QT4_INCLUDE : /usr/include/qt4 ] ;
-
-    constant QT_INCLUDES : $(QT4_INCLUDE) ;
-}
-
-if $(qtversion) = 5
-{
-    # Need packages qttools5-dev libphonon4qt5-dev
-    # TODO search include qt5 directory
-    constant QT5_INCLUDE : [ setvar QT5_INCLUDE : /usr/include/x86_64-linux-gnu/qt$(qtversion) ] ;
-    constant QT5_TOOL_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
-    constant QT5_LIB_PATH : [ setvar QT5_TOOL_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
-    # TODO search include phonon directory
-    constant QT5_PHONON_INCLUDE : [ setvar QT5_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/KDE ] ;
-
-    constant QT_INCLUDES : $(QT5_INCLUDE) $(QT5_PHONON_INCLUDE) ;
-}
-## } Qt version
-
+# TODO search include qt5 directory
+constant QT_INCLUDE : [ setvar QT_INCLUDE : /usr/include/x86_64-linux-gnu/qt$(qtversion) ] ;
+# TODO search include phonon directory
+constant QT_PHONON_INCLUDE : [ setvar QT_PHONON_INCLUDE : /usr/include/phonon4qt$(qtversion)/KDE ] ;
+constant QT_LIB_PATH : [ setvar QT_LIB_PATH : "" ] ;
+constant QT_TOOLS_PATH : [ setvar QT_TOOLS_PATH : /usr/lib/x86_64-linux-gnu/qt$(qtversion) ] ;
 
 include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
@@ -72,7 +59,7 @@ constant NO_FFMPEG : 1 ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 
-constant SHELL_PWD : $(REDEMPTION_PUBLIC_PATH)/projects/ClientQtGraphicAPI ; # rule location
+constant SHELL_PWD : $(REDEMPTION_PUBLIC_PATH)/projects/qtclient ; # rule location
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
 
 if $(qtversion) = 4
@@ -99,7 +86,8 @@ project qtclient
 
     <define>QT_NO_KEYWORDS
 
-    <cxxflags>-isystem$(QT_INCLUDES)
+    <cxxflags>-isystem$(QT_INCLUDE)
+    <cxxflags>-isystem$(QT_PHONON_INCLUDE)
 
     <include>src
 
@@ -114,7 +102,7 @@ alias instexe : install-bin ;
 alias install : install-bin ;
 
 install install-bin
-    : client_rdp
+    : qtclient
     : <install-type>EXE <install-dependencies>on
     : <location>$(INSTALLDIR)/usr/local/bin
     ;
@@ -153,40 +141,27 @@ constant EXE_DEPENDENCIES :
     $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
-if $(qtversion) = 4
-{
-    local CXX_BJAM_YEAR_VERSION = [ modules.peek : JAMVERSION ] ;
-    if $(CXX_BJAM_YEAR_VERSION) < 2016.00 {
-        using qt : /usr ;
-    }
-    else {
-        using qt4 : /usr ;
-    }
-    alias libqtclient : /qt//QtGui ;
-    alias libphonon : /qt//phonon ;
-}
-else
-{
-    using qt5
-        : $(QT5_TOOL_PATH)
-        : 5.3
-        :
-        :
-        :
-        :
-        : $(QT5_INCLUDE)
-        : $(QT5_LIBS)
-        ;
 
-    alias libqtclient :
-        /qt5//QtGui
-        /qt5//QtNetwork
-        /qt5//QtWidgets
-        /qt5//QtCore
+using qt$(qtversion)
+    : $(QT_TOOLS_PATH)
+    : $(qtversion).0
+    :
+    :
+    :
+    :
+    : $(QT_INCLUDE)
+    : $(QT_LIB_PATH)
     ;
 
-    lib libphonon : : <name>phonon4qt5 <link>shared ;
-}
+alias libqtclient :
+    /qt$(qtversion)//QtGui
+    /qt$(qtversion)//QtNetwork
+    /qt$(qtversion)//QtWidgets
+    /qt$(qtversion)//QtCore
+;
+
+lib libphonon : : <name>phonon4qt$(qtversion) <link>shared ;
+
 
 obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <define>REDEMPTION_DECL_LOG_TEST
@@ -194,7 +169,7 @@ obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <include>$(REDEMPTION_TEST_PATH)/includes # lcg/fixed random
 ;
 
-exe client_rdp :
+exe qtclient :
     src/qt_input_output_api/qt_output_sound.hpp
     src/qt_input_output_api/qt_input_output_clipboard.cpp
     src/qt_input_output_api/qt_input_output_clipboard.hpp

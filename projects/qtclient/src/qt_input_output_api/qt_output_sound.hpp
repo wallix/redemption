@@ -26,9 +26,8 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
-#include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+#include <QtWidgets/QWidget>
 
 #if REDEMPTION_QT_VERSION == 4
 #include <phonon/AudioOutput>

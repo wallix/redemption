@@ -26,12 +26,11 @@
 #include <QtGui/QClipboard>
 #include <QtCore/QUrl>
 
-#include "redemption_qt_include_widget.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QWidget>
 
 #include <fstream>
 

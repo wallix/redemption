@@ -26,9 +26,8 @@
 #include "utils/timebase.hpp"
 #include "utils/difftimeval.hpp"
 
-#include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+#include <QtWidgets/QWidget>
 
 #include <QtCore/QSocketNotifier>
 #include <QtCore/QTimer>

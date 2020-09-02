@@ -25,19 +25,18 @@
 #include "reversed_keymaps/keylayouts_r.hpp"
 #include "reversed_keymaps/keylayout_r.hpp"
 
-#include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QLineEdit)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QTableWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QTabWidget>
+#include <QtWidgets/QTableWidget>
+#include <QtWidgets/QWidget>
 
 class ClientCallback;
 

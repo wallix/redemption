@@ -68,7 +68,7 @@ To compile ReDemPtion you need the following packages:
 
 ### Prerequies
 
-- Installer les libs Qt4 ou Qt5.
+- Installer les libs Qt.
 - Installer les dépendances de redemption (`../../README.md`)
 
 
@@ -76,27 +76,19 @@ To compile ReDemPtion you need the following packages:
 
 Pour le compiler il faut se placer dans le dossier `redemption/project/ClientQtGraphicAPI` (dossier de ce `README.md`):
 
-Pour compiler avec la bibliothèque Qt4:
-
-    bjam -s qt=4 client_rdp_Qt
-
 Pour compiler avec la bibliothèque Qt5:
 
-    bjam -s qt=5 client_rdp_Qt
+    bjam qtclient
 
-Note: Les includes de Qt peuvent être configurés avec les variables d'environnement `QT4_INCLUDE`, `QT5_INCLUDE` `QT5_TOOL_PATH`, `QT5_LIB` et `QT5_PHONON_INCLUDE` depuis le shell avec `export` ou avec `-s` de bjam.
+Note: Les includes de Qt peuvent être configurés avec les variables d'environnement `QT_INCLUDE` `QT_TOOLS_PATH`, `QT_LIB_PATH` et `QT_PHONON_INCLUDE` depuis le shell avec `export` ou avec `-s` de bjam.
 
-    bjam -s qt=5 -s QT5_INCLUDE=/usr/include/qt client_rdp_Qt
-
-    bjam -a -s qt=5 -s QT5_INCLUDE=~/Qt/5.14.1/gcc_64/include/ -s QT5_TOOL_PATH=~/Qt/5.14.1/gcc_64 -s QT5_LIB=~/Qt/5.14.1/gcc_64/lib
-
-    bjam -a -j1 -s qt=5 -s QT5_INCLUDE=~/Qt/5.14.1/gcc_64/include/ -s QT5_TOOL_PATH=~/Qt/5.14.1/gcc_64 -s QT5_LIB=~/Qt/5.14.1/gcc_64/lib -s QT5_PHONON_INCLUDE=/usr/include/phonon4qt5/KDE/
+    bjam qtclient -s QT_INCLUDE=/usr/include/qt -s QT_TOOLS_PATH=/usr/ -s QT_PHONON_INCLUDE=/usr/include/phonon4qt5/KDE
 
 
 ## Utilisation du client Qt RDP
 
-//Le client Qt RDP contient une implementation de `mod_rdp` ainsi qu'une boite de dialogue
-//pour renseigner les options de la session RDP.
+Le client Qt RDP contient une implementation de `mod_rdp` ainsi qu'une boite de dialogue
+pour renseigner les options de la session RDP.
 
 
 ### Virtual channels
@@ -109,34 +101,34 @@ Le client Qt RDP implémente plusieurs sous protocoles RDP passant par des canna
 - Le canal du partage de l'imprimante (n'est pas fonctionnel mais les logs sont implémentés)
 
 
-### Lancement en ligne de commande de l'exe client_rdp_Qt4
+### Lancement en ligne de commande de l'exe qtclient4
 
 Commandes de connexion:
 
-	-u [user_name]     renseigne le nom de l'user du compte de la cible.
-	-p [user_password] renseigne le mot de passe de l'user du compte de la cible.
-	-i [target_IP]     resenigne l'adresse IP de la cible.
-	-P [port]          renseigne le port de connexion à la cible.
+    -u [user_name]     renseigne le nom de l'user du compte de la cible.
+    -p [user_password] renseigne le mot de passe de l'user du compte de la cible.
+    -i [target_IP]     resenigne l'adresse IP de la cible.
+    -P [port]          renseigne le port de connexion à la cible.
 
 Commandes verbose:
 
-	--cliprdr 	    affiche le contenu des PDU reçu et envoyé par le client sur le channel du copier/coller.
-	--cliprdr_dump idem que --cliprdr en ajoutant le dump des données brutes du PDU.
-	--rdpdr        affiche le contenu des PDU reçu et envoyé par le client sur le channel du partage de disque.
-	--rdpdr_dump   idem que --rdpdr en ajoutant le dump des données brutes du PDU.
-	--rdpsnd       affiche le contenu des PDU reçu et envoyé par le client sur le channel son.
-	--graphics	   affiche des informations sur les ordres de tracés reçus par le client.
-	--printer      affiche le contenu des PDU reçu et envoyé par le client sur le channel de partage de l'imprimante(non implémenté).
-	--basic_trace  affiche des logs du mod_rdp.
-	--connection   affiche des logs du mod_rdp concernant la connexion à la cible.
-	--rail_order   affiche les logs du rail order du mod_rdp.
-	--asynchronous_task    affiche les logs des fonctions des tâches asynchrones du mod_rdp.
-	--capabilities affiche les logs des capabilities lors de la négociation entre mod_rdp et cible.
-	--keyboard     affiche les logs des entrées claviers.
-	--rail         affiche les logs du cannal rail.
-	--rail_dump    affiche les logs du cannal rail ainsi que le contenu brute des rail PDU.
-	--remote_app
-	--VNC
+    --cliprdr      affiche le contenu des PDU reçu et envoyé par le client sur le channel du copier/coller.
+    --cliprdr_dump idem que --cliprdr en ajoutant le dump des données brutes du PDU.
+    --rdpdr        affiche le contenu des PDU reçu et envoyé par le client sur le channel du partage de disque.
+    --rdpdr_dump   idem que --rdpdr en ajoutant le dump des données brutes du PDU.
+    --rdpsnd       affiche le contenu des PDU reçu et envoyé par le client sur le channel son.
+    --graphics     affiche des informations sur les ordres de tracés reçus par le client.
+    --printer      affiche le contenu des PDU reçu et envoyé par le client sur le channel de partage de l'imprimante(non implémenté).
+    --basic_trace  affiche des logs du mod_rdp.
+    --connection   affiche des logs du mod_rdp concernant la connexion à la cible.
+    --rail_order   affiche les logs du rail order du mod_rdp.
+    --asynchronous_task    affiche les logs des fonctions des tâches asynchrones du mod_rdp.
+    --capabilities affiche les logs des capabilities lors de la négociation entre mod_rdp et cible.
+    --keyboard     affiche les logs des entrées claviers.
+    --rail         affiche les logs du cannal rail.
+    --rail_dump    affiche les logs du cannal rail ainsi que le contenu brute des rail PDU.
+    --remote_app
+    --VNC
 
 
 ## Boite de dialogue des options du client Qt RDP
@@ -168,71 +160,3 @@ ainsi que la résolution.
 - Une combobox permet de spécifier la langue du clavier
 - Un tableau permet de configurer des touches du clavier (le Qt scan code et nécessaire
 ainsi que le scan code ou le code ascii de la touche.
-
-
-### Implémentation du client
-
-Il suffit d'appeller le constructeur du client.
-
-	ClientRedemption client_qt(argv, argc, verbose
-		              , graphic_api_ptr
-		              , clipboard_api_ptr
-		              , sound_api_ptr
-		              , socket_api_ptr
-		              , control_api_ptr);
-
-
-### La fonction "main" avec Qt
-
-La fonction `main()` devra être de la forme suivante:
-
-- Appel de `QApplication::QApplication(int argc, char** argv)`
-- Appel du constructeur de votre classe front (celle qui hérite de `FrontQtRDPGraphicAPI`)
-- Appel de `QApplication::exec()`
-
-Exemple:
-
-    int main(int argc, char** argv) {
-
-	QApplication app(argc, argv);
-
-        VotreFront votreFront();
-
-        app.exec();
-    }
-
-
-### Compilation avec bjam
-
-Dans le fichier
-    `redemption/projects/ClientQtGraphicAPI/Jamroot`
-
-Ajouter les lignes suivantes:
-
-    obj [votre_fichier_main].o : [votre_fichier_main].cpp :
-        <define>REDEMPTION_DECL_LOG_TEST
-        $(EXE_DEPENDENCIES)
-    ;
-
-    exe votre_client_exe_Qt$(qtversion) :
-
-	[votre_fichier_main].o
-
-        [Optionnel: chemins vers les fichiers .hpp contenant des classes dérivées de QObject si vous en avez ajouté]
-        [nom_du_fichier_qui_contient_votre_class_front.hpp]
-
-        $(obj_list)
-        $(lib_list)
-        $(obj_list_VNC) # si necessaire
-        config.o
-        hexdump.o
-
-        libqtclient
-    :
-        $(EXE_DEPENDENCIES)
-    ;
-
-Enfin, compiler votre client à l'aide de la commande suivante:
-
-	bjam -s qt=$version votre_client_exe
-

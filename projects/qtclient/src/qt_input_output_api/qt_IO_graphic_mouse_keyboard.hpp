@@ -33,11 +33,10 @@
 #include <QtGui/QImage>
 #include <QtGui/QPainter>
 
-#include "redemption_qt_include_widget.hpp"
 #include "client_redemption/pointer_to_rgba8888.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QDesktopWidget>
 
 
 class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI

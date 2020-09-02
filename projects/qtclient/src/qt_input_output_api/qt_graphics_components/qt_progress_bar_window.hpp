@@ -23,11 +23,10 @@
 
 #include "cxx/diagnostic.hpp"
 
-#include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QProgressBar)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
+#include <QtWidgets/QProgressBar>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QDesktopWidget>
 
 
 

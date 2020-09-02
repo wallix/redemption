@@ -27,16 +27,16 @@
 #include <QtCore/QTimer>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QPainter>
+#include <QtGui/QPainterPath>
 
 #include "qt_input_output_api/keymaps/qt_scancode_keymap.hpp"
-#include "redemption_qt_include_widget.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QToolTip)
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QToolTip>
 
 
 class QtScreen : public QWidget

@@ -37,21 +37,20 @@
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
 
-#include "redemption_qt_include_widget.hpp"
 
-#include REDEMPTION_QT_INCLUDE_WIDGET(QApplication)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QDesktopWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QCheckBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QComboBox)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QPushButton)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QLabel)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QFormLayout)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QLineEdit)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QFileDialog)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QGridLayout)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QTabWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
-#include REDEMPTION_QT_INCLUDE_WIDGET(QScrollArea)
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QFormLayout>
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QFileDialog>
+#include <QtWidgets/QGridLayout>
+#include <QtWidgets/QTabWidget>
+#include <QtWidgets/QWidget>
+#include <QtWidgets/QScrollArea>
 
 #define QT_ORANGE_WALLIX QColor(0xFF, 0x8C, 0x00)
 
