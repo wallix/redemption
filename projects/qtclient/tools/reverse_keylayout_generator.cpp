@@ -1,5 +1,3 @@
-// g++ -O3 -std=c++17 -I ../../../src reverseKeylayoutGenerator.cpp
-
 #include <iostream>
 #include <algorithm>
 #include <fstream>
@@ -11,7 +9,7 @@
 #include <cerrno>
 #include <cctype>
 #include <cstring>
-#include "../src/keyboard/keylayouts.hpp"
+#include "keyboard/keylayouts.hpp"
 
 
 
