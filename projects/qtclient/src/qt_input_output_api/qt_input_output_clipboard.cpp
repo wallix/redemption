@@ -194,10 +194,10 @@ void QtInputOutputClipboard::mem_clipboard()
             }
             this->_bufferImage = bufferImageTmp;
 
-            this->_cliboard_data_length = this->_bufferImage.byteCount();
+            this->_cliboard_data_length = this->_bufferImage.sizeInBytes();
 
             this->_chunk = std::make_unique<uint8_t[]>(this->_cliboard_data_length + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE);
-            for (int i  = 0; i < this->_bufferImage.byteCount(); i++) {
+            for (int i  = 0; i < this->_bufferImage.sizeInBytes(); i++) {
                 this->_chunk.get()[i] = this->_bufferImage.bits()[i];
             }
             RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;

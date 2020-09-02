@@ -154,8 +154,8 @@ public:
     }
 
     void wheelEvent(QWheelEvent *e) override {
-//         LOG(LOG_INFO, "QtScreen::wheelEvent x=%d y=%d delta=%d", e->x(), e->y(), e->delta());
-        this->callback->wheelEvent(e->delta());
+        // LOG(LOG_INFO, "QtScreen::wheelEvent x=%d y=%d delta=%d", e->x(), e->y(), e->delta());
+        this->callback->wheelEvent(e->angleDelta().x());
     }
 
     void setPenColor(QColor color) {

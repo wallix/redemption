@@ -82,8 +82,6 @@ project qtclient
     $(BOOST_STACKTRACE_CXXFLAGS)
 
     # <cxxflags>-fPIC
-    <variant>debug:<cxxflags>-frtti
-
     <define>QT_NO_KEYWORDS
 
     <cxxflags>-isystem$(QT_INCLUDE)
