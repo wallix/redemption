@@ -270,7 +270,7 @@ rule exe-js ( name : src : objs * : deps * )
     alias $(name) : $(name).em ;
 }
 
-rule test-run-js ( name : sources + : objs + : deps * )
+rule test-run-js ( name : sources + : objs * : deps * )
 {
     local src = ;
     local jssources = ;
@@ -370,3 +370,18 @@ actions install_node_modules
 {
     npm install --local canvas source-map-support
 }
+
+exejs reverse_keylayout_generator
+    : tools/reverse_keylayout_generator.cpp
+    : $(TEST_DEPENDENCIES)
+    ;
+
+# actions genkeymaps
+# {
+#     $(>) src/reversed_keymaps/
+# }
+
+# make update_reversed_keymaps : reverse_keylayout_generator : @genkeymaps ;
+
+# explicit reverse_keylayout_generator update_reversed_keymaps ;
+explicit reverse_keylayout_generator ;

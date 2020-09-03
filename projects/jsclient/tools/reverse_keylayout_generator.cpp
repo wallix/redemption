@@ -59,12 +59,12 @@ struct Hex8
         out << hex[x >> 4] << hex[x & 0xf];
     }
 
-    // friend std::ostream& operator<<(std::ostream& out, Hex8 const& h)
-    // {
-    //     out << "0x";
-    //     h.push(out);
-    //     return out;
-    // }
+    friend std::ostream& operator<<(std::ostream& out, Hex8 const& h)
+    {
+        out << "0x";
+        h.push(out);
+        return out;
+    }
 };
 
 struct Hex16
@@ -85,6 +85,24 @@ struct Hex16
     }
 };
 
+struct Hex32
+{
+    uint32_t x;
+
+    void push(std::ostream& out) const
+    {
+        Hex16{uint16_t(x >> 16)}.push(out);
+        Hex16{uint16_t(x)}.push(out);
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, Hex32 const& h)
+    {
+        out << "0x";
+        h.push(out);
+        return out;
+    }
+};
+
 struct UnicodeC
 {
     uint16_t unicode;
@@ -92,22 +110,40 @@ struct UnicodeC
     friend std::ostream& operator<<(std::ostream& out, UnicodeC const& u)
     {
         if (' ' <= u.unicode && u.unicode <= '~') {
+            out << " ";
             out << uint8_t(u.unicode);
         }
+        else if ('\a' <= u.unicode && u.unicode <= '\r') {
+            out << "\\" << "abtnvfr"[u.unicode - '\a'];
+        }
         else if (u.unicode & 0xF800u) {
+            out << " ";
             out << uint8_t(0xE0 | ((u.unicode >> 12) & 0x0Fu));
             out << uint8_t(0x80 | ((u.unicode & 0x0F00u) >> 6) | ((u.unicode & 0xFFu) >> 6));
             out << uint8_t(0x80 | (u.unicode & 0x3Fu));
         }
         else if (u.unicode & 0xFF80u) {
+            out << " ";
             out << uint8_t(0xC0 | ((u.unicode >> 6) & 0x1Cu) | ((u.unicode >> 6) & 0x3u));
             out << uint8_t(0x80 | (u.unicode & 0x3Fu));
         }
         else {
-            out << " ";
+            out << "  ";
         }
 
         return out;
+    }
+};
+
+struct UnicodeCJs
+{
+    uint16_t unicode;
+
+    friend std::ostream& operator<<(std::ostream& out, UnicodeCJs const& u)
+    {
+        out << "/* " << UnicodeC{u.unicode} << " */ '\\u";
+        Hex16{u.unicode}.push(out);
+        return out << "'";
     }
 };
 
@@ -132,14 +168,14 @@ int main()
 {
     auto& fichier = std::cout;
 
-    fichier << "const layout = {";
+    fichier << "const layouts = [";
 
     for(Keylayout const* layout_ptr : keylayouts) {
         auto& layout = *layout_ptr;
 
         fichier
             << "\n{ name: \"" << layout.locale_name
-            << "\", lcid: " << layout.LCID
+            << "\", lcid: " << Hex32{uint32_t(layout.LCID)}
             << ", keymap: {\n"
         ;
 
@@ -204,14 +240,11 @@ int main()
             "    //                  "
             "                      (S)hift, (C)trl, (A)ltGr, Caps(L)ock\n"
             "    //                  "
-            "            mod:  0  | 1 | 2 | 3 |  4  | 5 |  6  |  7  |   8   |\n"
+            "           mod:  0  | 1 | 2 | 3 |  4  | 5 |  6  |  7  |   8   |\n"
             ;
         for (KeyCode k : keycodes) {
             if (k.scancode) {
-                fichier
-                    << "    /* " << UnicodeC{ucs} << " */ '\\u"
-                    << Hex16{ucs} << "': 0x"
-                ;
+                fichier << "    " << UnicodeCJs{ucs} << ": 0x";
                 Hex16{k.mod_flags}.push(fichier);
                 Hex16{k.scancode}.push(fichier);
                 fichier << ", //";
@@ -223,25 +256,40 @@ int main()
             ++ucs;
         }
 
-        fichier << "}, deadmap: {\n";
+        fichier << "}, deadmap: {";
+
+        for (auto const& dkey : view(layout.deadkeys, layout.nbDeadkeys)) {
+            fichier << "\n    //                   " << UnicodeC{dkey.uchar};
+            for (auto const& dkk : view(dkey.secondKeys, dkey.nbSecondKeys)) {
+                fichier
+                    << "\n    " << UnicodeCJs{dkk.modifiedKey} << ": ["
+                    << Hex8{dkey.extendedKeyCode} << ", "
+                    << Hex8{keycodes[dkk.secondKey].scancode}
+                    << "], //" << UnicodeC{dkk.secondKey}
+                ;
+            }
+        }
+
+        fichier << "\n}, deadmaps: {\n";
 
         for (auto const& dkey : view(layout.deadkeys, layout.nbDeadkeys)) {
             fichier
-                << "    /* " << UnicodeC{dkey.uchar} << " */ '\\u"
-                << Hex16{dkey.uchar} << "': {"
+                << "    " << UnicodeCJs{dkey.uchar}
+                << ": {\n        scancode: " << Hex8{dkey.extendedKeyCode}
+                << ","
             ;
             for (auto const& dkk : view(dkey.secondKeys, dkey.nbSecondKeys)) {
                 fichier
-                    << "\n        /* " << UnicodeC{dkk.secondKey} << " */ '\\u"
-                    << Hex16{dkk.secondKey} << "': " << Hex16{dkk.modifiedKey}
-                    << ", // " << UnicodeC{dkk.modifiedKey}
+                    << "\n        " << UnicodeCJs{dkk.secondKey} << ": "
+                    << Hex8{keycodes[dkk.secondKey].scancode} << ", // "
+                    << UnicodeC{dkk.modifiedKey} << "  " << Hex16{dkk.modifiedKey}
                 ;
             }
             fichier << "\n    },\n";
         }
 
-        fichier << "}},\n";
+        fichier << "} },\n";
     }
 
-    fichier << "};\n";
+    fichier << "];\n";
 }
