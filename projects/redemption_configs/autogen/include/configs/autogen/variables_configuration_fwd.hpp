@@ -338,7 +338,6 @@ namespace cfg
         struct password;
         struct compression;
         struct cache;
-        struct performance;
         struct pass_dialog_box;
         struct ocr;
         struct ffmpeg;

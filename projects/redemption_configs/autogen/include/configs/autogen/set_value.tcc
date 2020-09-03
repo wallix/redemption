@@ -2220,14 +2220,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "performance"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::performance&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
         else if (key == "pass_dialog_box"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
