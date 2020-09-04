@@ -205,7 +205,7 @@ function MultiSelectToInt(e, constants)
 }
 
 const gdImplTable = {
-    ['2d']:newRdpGraphics2D,
+    '2d':newRdpGraphics2D,
     webgl:newRdpGraphicsGL,
     webgl2:newRdpGraphicsGL2,
 };
@@ -235,7 +235,15 @@ function run(openCb, closeCb)
 
     function scancodeKeyEvent(flag, evt)
     {
-        const scancode = toScancode(evt.code);
+        // KeyboardEvent.code available with
+        // - chrome 8+
+        // - edge 79+
+        // - firefox 38+
+        // - opera 11+
+        // - safari 10+
+        // Check support with `new KeyboardEvent(0).code !== undefined`
+
+        const scancode = keycodeToScancode(evt.code);
         // console.log(flag, evt.key, evt.code, scancode, evt.isComposing);
         if (scancode) {
             // switch (scancode) {
@@ -260,38 +268,40 @@ function run(openCb, closeCb)
             rdpclient.writeScancodeEvent(scancode | flag);
             sendData();
         }
-        // else {
-        //     console.log(flag, evt.key, evt.keyCode)
-        // }
+        else {
+            const scancodes = keycodeToMultiScancodes(evt.code);
+            if (scancodes) {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+                rdpclient.writeScancodeEvent(scancodes[0] | flag);
+                rdpclient.writeScancodeEvent(scancodes[1] | flag);
+                sendData();
+            }
+            else {
+                console.warn('unknown keycode', flag, evt.key, evt.code)
+            }
+        }
     }
 
     function unicodeKeyEvent(flag, evt)
     {
         // console.log(flag, evt.key, evt.code);
-        if (evt.key === 'Dead') return;
+        const key = evt.key;
 
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
-
-        if (evt.ctrlKey || evt.metaKey || evt.altKey) {
-            const scancode = toScancode(evt.code);
-            if (scancode) {
-                rdpclient.writeScancodeEvent(scancode | flag);
-            }
+        if (key.length === 1) {
+            const unicode = key.codePointAt(0);
+            // console.log(key, unicode);
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+            rdpclient.writeUnicodeEvent(unicode, flag);
+            sendData();
+        }
+        else if (key === 'Dead') {
+            return
         }
         else {
-            const scancode = unicodeScancodeTable[evt.code];
-            if (scancode) {
-                rdpclient.writeScancodeEvent(scancode | flag);
-            }
-            else {
-                const unicode = evt.key.codePointAt(0);
-                // console.log(evt.key, unicode);
-                rdpclient.writeUnicodeEvent(unicode, flag);
-            }
+            scancodeKeyEvent(flag, evt);
         }
-
-        sendData();
     }
 
     function sendMouseEvent(evt, flags)
@@ -346,10 +356,10 @@ function run(openCb, closeCb)
         mousedown: onMouseDown,
         mouseup: onMouseUp,
         wheel: onMouseWheel,
-        contextmenu: event => {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-        }
+        // contextmenu: event => {
+        //     event.preventDefault();
+        //     event.stopImmediatePropagation();
+        // }
     };
 
     const canvasFocusEvents = {
