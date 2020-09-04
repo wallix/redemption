@@ -214,10 +214,11 @@ struct Error
 {
     error_type id;
     int errnum;
+    uintptr_t data;
 
 public:
     Error() = delete;
-    explicit Error(error_type id, int errnum = 0) noexcept; /*NOLINT*/
+    explicit Error(error_type id, int errnum = 0, uintptr_t data = 0) noexcept; /*NOLINT*/
 
     [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept; /*NOLINT*/
 };

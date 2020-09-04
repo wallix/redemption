@@ -86,6 +86,10 @@ public:
 
     [[nodiscard]] bool is_up_and_running() const override;
 
+    bool is_auto_reconnectable() const override;
+
+    bool server_error_encountered() const override;
+
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override;
 

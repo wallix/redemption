@@ -42,6 +42,7 @@
 #include "mod/xup/xup.hpp"
 
 #include "transport/socket_transport.hpp"
+#include "transport/failure_simulation_socket_transport.hpp"
 
 #include "utils/load_theme.hpp"
 #include "utils/netutils.hpp"
@@ -522,26 +523,24 @@ public:
     class sock_mod_barrier {};
 
     template<class Mod>
-    class ModWithSocket final : private SocketTransport, public Mod
+    class ModWithSocket final : public Mod
     {
+        std::unique_ptr<SocketTransport> socket_transport_ptr;
+
         ModuleManager & mm;
         bool target_info_is_shown = false;
 
     public:
         template<class... Args>
         ModWithSocket(
+            std::unique_ptr<SocketTransport> socket_transport_ptr_,
             ModuleManager & mm, AuthApi & /*authentifier*/,
-            const char * name, unique_fd sck, uint32_t verbose,
-            std::string * error_message, sock_mod_barrier /*unused*/, Args && ... mod_args)
-        : SocketTransport( name, std::move(sck)
-                         , mm.ini.get<cfg::context::target_host>().c_str()
-                         , mm.ini.get<cfg::context::target_port>()
-                         , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
-                         , to_verbose_flags(verbose), error_message)
-        , Mod(*this, std::forward<Args>(mod_args)...)
+            sock_mod_barrier /*unused*/, Args && ... mod_args)
+        : Mod(*(socket_transport_ptr_.get()), std::forward<Args>(mod_args)...)
+        , socket_transport_ptr(std::move(socket_transport_ptr_))
         , mm(mm)
         {
-            this->mm.socket_transport = this;
+            this->mm.socket_transport = this->socket_transport_ptr.get();
         }
 
         ~ModWithSocket()
@@ -787,6 +786,46 @@ private:
         this->winapi = winapi;
     }
 
+    std::unique_ptr<SocketTransport> create_socket_transport(
+          ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
+        , ModuleManager & mm, const char * name, unique_fd sck, uint32_t verbose, std::string * error_message)
+    {
+        std::unique_ptr<SocketTransport> t(
+                []( ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
+                  , const char * name, unique_fd sck, const char *ip_address, int port
+                  , std::chrono::milliseconds recv_timeout, uint32_t verbose, std::string * error_message) -> SocketTransport*
+                    {
+                        if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport)
+                        {
+                            return new SocketTransport( name, std::move(sck)
+                                                      , ip_address
+                                                      , port
+                                                      , recv_timeout
+                                                      , to_verbose_flags(verbose), error_message);
+                        }
+
+                        LOG(LOG_WARNING, "ModuleManager::create_socket_transport: Use Failure Simulation Socket Transport (mode=%s)",
+                            (  ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport
+                             ? "SimulateErrorRead" : "SimulateErrorWrite"));
+
+                        return new FailureSimulationSocketTransport(
+                              ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport
+                            , name, std::move(sck)
+                            , ip_address
+                            , port
+                            , recv_timeout
+                            , to_verbose_flags(verbose), error_message);
+                    }( use_failure_simulation_socket_transport,
+                       name, std::move(sck)
+                     , mm.ini.get<cfg::context::target_host>().c_str()
+                     , mm.ini.get<cfg::context::target_port>()
+                     , std::chrono::milliseconds(mm.ini.get<cfg::globals::mod_recv_timeout>())
+                     , verbose, error_message)
+            );
+
+        return t;
+    }
+
 public:
     void new_mod(ModuleIndex target_module, AuthApi & authentifier, ReportMessageApi & report_message)
     {
@@ -888,13 +927,15 @@ public:
             unique_fd client_sck = this->connect_to_target_host(
                 report_message, trkeys::authentification_x_fail);
 
+            std::unique_ptr<SocketTransport> socket_transport_ptr =
+                create_socket_transport(
+                      ModRdpUseFailureSimulationSocketTransport::Off
+                    , *this, name, std::move(client_sck), this->ini.get<cfg::debug::mod_xup>(), nullptr);
+
             auto new_xup_mod = new ModWithSocket<xup_mod>(
+                std::move(socket_transport_ptr),
                 *this,
                 authentifier,
-                name,
-                std::move(client_sck),
-                this->ini.get<cfg::debug::mod_xup>(),
-                nullptr,
                 sock_mod_barrier(),
                 this->session_reactor,
                 this->front,

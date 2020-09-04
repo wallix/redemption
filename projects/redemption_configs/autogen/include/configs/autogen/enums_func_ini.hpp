@@ -291,6 +291,17 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(SessionProbeOnAccountManipulation & x, spec_type<SessionProbeOnAccountManipulation> /*type*/, array_view_const_char value)
 ;
 
+template<> struct zstr_buffer_traits<ModRdpUseFailureSimulationSocketTransport> : zstr_buffer_traits<unsigned long> {};
+
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<ModRdpUseFailureSimulationSocketTransport> & buf,
+    cfg_s_type<ModRdpUseFailureSimulationSocketTransport> /*type*/,
+    ModRdpUseFailureSimulationSocketTransport x
+);
+
+parse_error parse(ModRdpUseFailureSimulationSocketTransport & x, spec_type<ModRdpUseFailureSimulationSocketTransport> /*type*/, array_view_const_char value)
+;
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 array_view_const_char assign_zbuf_from_cfg(

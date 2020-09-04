@@ -212,6 +212,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("notify", "(Same thing as 'allow') ")
       .value("deny",   "User action will be rejected")
     ;
+
+    e.enumeration_list("ModRdpUseFailureSimulationSocketTransport")
+      .value("Off")
+      .value("SimulateErrorRead")
+      .value("SimulateErrorWrite")
+    ;
 }
 
 }

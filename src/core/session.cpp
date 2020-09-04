@@ -148,7 +148,7 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
-    int check_exception(Error const& e, Inifile& ini)
+    int check_exception(Error const& e, Inifile& ini, ModuleManager & mm)
     {
         if ((e.id == ERR_SESSION_PROBE_LAUNCH)
         ||  (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE)
@@ -182,6 +182,18 @@ class Session
         else if (e.id == ERR_RDP_SERVER_REDIR){
             return 3;
         }
+        else if (  (e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
+                && mm.get_socket()
+                && static_cast<uintptr_t>(mm.get_socket()->sck) == e.data
+                && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
+                && mm.get_mod()->is_auto_reconnectable()
+                && !mm.get_mod()->server_error_encountered()) {
+            LOG(LOG_INFO, "Session::check_exception: target link exception. %s",
+                ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA");
+            ini.set<cfg::context::perform_automatic_reconnection>(true);
+            return 1;
+        }
+
         return 0;
     }
 
@@ -240,7 +252,7 @@ class Session
                 return mm.get_graphic_wrapper();
             });
         } catch (Error const& e) {
-            switch (this->check_exception(e, ini)){
+            switch (this->check_exception(e, ini, mm)){
             case 3:
                 if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                     set_server_redirection_target(ini, authentifier);
@@ -343,7 +355,7 @@ class Session
                 return mm.get_graphic_wrapper();
             });
         } catch (Error const& e) {
-            switch (this->check_exception(e, ini)){
+            switch (this->check_exception(e, ini, mm)){
             case 3:
                 if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                     set_server_redirection_target(ini, authentifier);
@@ -415,8 +427,27 @@ class Session
                 }
             }
         } catch (Error const& e) {
+            //LOG(LOG_INFO, "eid=%u sck=%d edata=%d auto_reconnection=%s reconnectable=%s error_encountered=%s",
+            //    e.id,
+            //    (mm.get_socket() ? mm.get_socket()->sck : -1),
+            //    e.data,
+            //    (ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>() ? "Yes" : "No"),
+            //    (mm.get_mod()->is_auto_reconnectable() ? "Yes" : "No"),
+            //    (mm.get_mod()->server_error_encountered() ? "Yes" : "No"));
+
             if (ERR_DISCONNECT_BY_USER == e.id) {
                 front_signal = BACK_EVENT_NEXT;
+            }
+            else if (  (e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
+                    && mm.get_socket()
+                    && static_cast<uintptr_t>(mm.get_socket()->sck) == e.data
+                    && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
+                    && mm.get_mod()->is_auto_reconnectable()
+                    && !mm.get_mod()->server_error_encountered()) {
+                LOG(LOG_INFO, "Session::front_up_and_running: target link exception. %s",
+                    ERR_TRANSPORT_WRITE_FAILED == e.id ? "ERR_TRANSPORT_WRITE_FAILED" : "ERR_TRANSPORT_NO_MORE_DATA");
+                ini.set<cfg::context::perform_automatic_reconnection>(true);
+                session_reactor.signal = BACK_EVENT_RETRY_CURRENT;
             }
             else {
                 if (
@@ -482,7 +513,7 @@ class Session
                     }
                 }
                 catch (Error const & e) {
-                    switch (this->check_exception(e, ini)){
+                    switch (this->check_exception(e, ini, mm)){
                     case 3:
                         if (ini.get<cfg::mod_rdp::server_redirection_support>()) {
                             set_server_redirection_target(ini, authentifier);

@@ -616,13 +616,16 @@ void ModuleManager::create_mod_rdp(
                 ini.get<cfg::metrics::log_interval>());
         }
 
+        std::unique_ptr<SocketTransport> socket_transport_ptr =
+            create_socket_transport(
+                  this->ini.get<cfg::debug::mod_rdp_use_failure_simulation_socket_transport>()
+                , *this, name, std::move(client_sck), this->ini.get<cfg::debug::mod_rdp>()
+                , &ini.get_mutable_ref<cfg::context::auth_error_message>());
+
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
+            std::move(socket_transport_ptr),
             *this,
             authentifier,
-            name,
-            std::move(client_sck),
-            ini.get<cfg::debug::mod_rdp>(),
-            &ini.get_mutable_ref<cfg::context::auth_error_message>(),
             sock_mod_barrier(),
             this->session_reactor,
             drawable,

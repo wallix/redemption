@@ -119,6 +119,16 @@ bool RailModuleHostMod::is_up_and_running() const
     return this->rail_module_host.get_managed_mod().is_up_and_running();
 }
 
+bool RailModuleHostMod::is_auto_reconnectable() const
+{
+    return this->rail_module_host.get_managed_mod().is_auto_reconnectable();
+}
+
+bool RailModuleHostMod::server_error_encountered() const
+{
+    return this->rail_module_host.get_managed_mod().server_error_encountered();
+}
+
 void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t width,
                         uint16_t height)
 {

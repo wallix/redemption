@@ -244,6 +244,8 @@ public:
         const bool enable_remote_program;
 
     private:
+        const bool perform_automatic_reconnection;
+
         const bool remote_program_enhanced;
 
     public:
@@ -261,8 +263,9 @@ public:
         WindowsExecuteShellParams real_client_execute;
 
     public:
-        RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params)
+        RemoteApp(ModRDPParams::RemoteAppParams const& remote_app_params, bool perform_automatic_reconnection)
         : enable_remote_program(remote_app_params.enable_remote_program)
+        , perform_automatic_reconnection(perform_automatic_reconnection)
         , remote_program_enhanced(remote_app_params.remote_program_enhanced)
         , convert_remoteapp_to_desktop(remote_app_params.convert_remoteapp_to_desktop)
         , should_ignore_first_client_execute(
@@ -426,7 +429,7 @@ public:
     , metrics(metrics)
     , gen(gen)
     , session_probe(mod_rdp_params.session_probe_params)
-    , remote_app(mod_rdp_params.remote_app_params)
+    , remote_app(mod_rdp_params.remote_app_params, mod_rdp_params.perform_automatic_reconnection)
     , clipboard(mod_rdp_params.clipboard_params)
     , dynamic_channels(mod_rdp_params.dynamic_channels_params)
     , file_system(mod_rdp_params.file_system_params)
@@ -848,8 +851,10 @@ private:
         remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
             this->session_probe.used_to_launch_remote_program;
 
-        remote_programs_virtual_channel_params.client_execute = this->remote_app.client_execute;
-        remote_programs_virtual_channel_params.client_execute_2 = this->remote_app.real_client_execute;
+        if (!this->remote_app.perform_automatic_reconnection) {
+            remote_programs_virtual_channel_params.client_execute = this->remote_app.client_execute;
+            remote_programs_virtual_channel_params.client_execute_2 = this->remote_app.real_client_execute;
+        }
 
         remote_programs_virtual_channel_params.rail_session_manager               =
             this->remote_programs_session_manager.get();
@@ -1947,6 +1952,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     bool mcs_disconnect_provider_ultimatum_pdu_received = false;
     bool errinfo_graphics_subsystem_failed_encountered  = false;
+    bool errinfo_encountered                            = false;
 
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
@@ -1954,8 +1960,10 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::chrono::seconds session_time_start;
 
-    bool clean_up_32_bpp_cursor;
-    bool large_pointer_support;
+    const bool clean_up_32_bpp_cursor;
+    const bool large_pointer_support;
+
+    const bool perform_automatic_reconnection;
 
     std::unique_ptr<uint8_t[]> multifragment_update_buffer;
     OutStream multifragment_update_data;
@@ -2066,6 +2074,7 @@ public:
         , session_time_start(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
+        , perform_automatic_reconnection(mod_rdp_params.perform_automatic_reconnection)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
         , multifragment_update_data({multifragment_update_buffer.get(), 65536})
         , client_large_pointer_caps(info.large_pointer_caps)
@@ -2835,6 +2844,7 @@ public:
                                 LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                     LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                 uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
+                                this->errinfo_encountered = (0 != error_info);
                                 this->process_error_info(error_info);
                                 if (error_info == ERRINFO_SERVER_DENIED_CONNECTION) {
                                     str_append(
@@ -3071,9 +3081,11 @@ public:
                                         LOG_IF(bool(this->verbose & RDPVerbose::connection),
                                             LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");
                                         uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
+                                        this->errinfo_encountered = (0 != error_info);
                                         this->process_error_info(error_info);
 
-                                        if (ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info)
+                                        if (   ERRINFO_GRAPHICSSUBSYSTEMFAILED == error_info
+                                            && this->is_server_auto_reconnec_packet_received)
                                         {
                                             this->errinfo_graphics_subsystem_failed_encountered = true;
                                             throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
@@ -5838,13 +5850,18 @@ public:
     [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->negociation_result.front_width, this->negociation_result.front_height); }
 
-    bool is_auto_reconnectable() override {
+    bool is_auto_reconnectable() const override {
         return this->is_server_auto_reconnec_packet_received
             && this->is_up_and_running()
+            && !this->mcs_disconnect_provider_ultimatum_pdu_received
 #ifndef __EMSCRIPTEN__
             && (!this->channels.session_probe.session_probe_launcher || this->channels.session_probe.session_probe_launcher->is_stopped())
 #endif
             ;
+    }
+
+    bool server_error_encountered() const override {
+        return this->errinfo_encountered;
     }
 
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,

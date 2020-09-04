@@ -1268,6 +1268,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "auto_reconnection_on_losing_target_link")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::auto_reconnection_on_losing_target_link&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -2053,6 +2061,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::debug::config&>(this->variables).value,
                 ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "mod_rdp_use_failure_simulation_socket_transport")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::debug::mod_rdp_use_failure_simulation_socket_transport&>(this->variables).value,
+                ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport>{},
                 av
             );
         }

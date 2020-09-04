@@ -640,7 +640,15 @@ bool AclSerializer::check(
                 this->keepalive.stop();
             }
             if (mm.get_mod()) {
-                mm.get_mod()->disconnect();
+                try
+                {
+                    mm.get_mod()->disconnect();
+                }
+                catch (Error const& e) {
+                    if (ERR_TRANSPORT_WRITE_FAILED != e.id) {
+                        throw;
+                    }
+                }
             }
             mm.remove_mod();
             try {

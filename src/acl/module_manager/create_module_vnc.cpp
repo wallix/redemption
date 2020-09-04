@@ -87,13 +87,15 @@ void ModuleManager::create_mod_vnc(
                 ini.get<cfg::metrics::log_interval>());
         }
 
+        std::unique_ptr<SocketTransport> socket_transport_ptr =
+            create_socket_transport(
+                  ModRdpUseFailureSimulationSocketTransport::Off
+                , *this, name, std::move(client_sck), this->ini.get<cfg::debug::mod_vnc>(), nullptr);
+
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
+            std::move(socket_transport_ptr),
             *this,
             authentifier,
-            name,
-            std::move(client_sck),
-            ini.get<cfg::debug::mod_vnc>(),
-            nullptr,
             sock_mod_barrier(),
             this->session_reactor,
             ini.get<cfg::globals::target_user>().c_str(),

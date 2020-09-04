@@ -88,9 +88,10 @@ namespace
 # endif
 #endif
 
-Error::Error(error_type id, int errnum) noexcept
+Error::Error(error_type id, int errnum, uintptr_t data) noexcept
 : id(id)
 , errnum(errnum)
+, data(data)
 {
 #ifndef NDEBUG
     if (id == NO_ERROR) {

@@ -510,6 +510,7 @@ void config_spec_definition(Writer && W)
                  set(false));
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "auto_reconnection_on_losing_target_link", set(false));
     });
 
     W.section("metrics", [&]
@@ -666,6 +667,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ffmpeg");
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), spec::type_<bool>(), "config", set(2));
+
+        W.member(hidden_in_gui, no_sesman, L, type_<ModRdpUseFailureSimulationSocketTransport>(), "mod_rdp_use_failure_simulation_socket_transport", set(ModRdpUseFailureSimulationSocketTransport::Off));
     });
 
     W.section("translation", [&]
