@@ -71,10 +71,9 @@ public:
 
 private:
     bool           _connexionLasted;
-    Qt_ScanCode_KeyMap qtRDPKeymap;
 
 public:
-    QtScreen(WindowsData * win_data, ClientCallback * callback, Keylayout_r const& keylayout, QPixmap * cache, int w, int h)
+    QtScreen(WindowsData * win_data, ClientCallback * callback, QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
     , callback(callback)
@@ -83,7 +82,6 @@ public:
     , _penColor(Qt::black)
     , _cache(cache)
     , _connexionLasted(false)
-    , qtRDPKeymap(keylayout)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);
@@ -98,11 +96,6 @@ public:
         if (!this->_connexionLasted) {
             this->callback->close();
         }
-    }
-
-    void updateKeylayout(Keylayout_r const& keylayout)
-    {
-        this->qtRDPKeymap.setKeyboardLayout(keylayout);
     }
 
     void mouseReleaseEvent(QMouseEvent *e) override {
@@ -128,18 +121,10 @@ public:
 
     void send_scancode(uint16_t flag, QKeyEvent *e)
     {
-        auto scancode1 = this->qtRDPKeymap.keyEvent(flag, e->key());
-        if (scancode1.scancode) {
-            this->callback->send_rdp_scanCode(scancode1.scancode, scancode1.flag);
-        }
-        else {
-            QString text = e->text();
-            if (text.size() == 1) {
-                auto scancode2 = this->qtRDPKeymap.unicodeToScancode(text[0].unicode());
-                if (scancode2.scancode) {
-                    this->callback->send_rdp_scanCode(scancode2.scancode, flag);
-                }
-            }
+        const uint16_t scancode = Qt_ScanCode_KeyMap
+            ::x11_native_scancode_to_rdp_scancode(e->nativeScanCode());
+        if (scancode) {
+            this->callback->send_rdp_scanCode(scancode & 0xffu, flag | (scancode & 0xff00u));
         }
     }
 
@@ -247,8 +232,8 @@ public:
 
 
 
-    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, Keylayout_r const& keylayout, int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(wind_data, callback, keylayout, cache, width, height)
+    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(wind_data, callback, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -374,8 +359,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, Keylayout_r const& keylayout, QPixmap * cache, bool is_spanning, std::string & target_IP)
-        : QtScreen(wind_data, callback, keylayout, cache, cache->width(), cache->height())
+    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, QPixmap * cache, bool is_spanning, std::string & target_IP)
+        : QtScreen(wind_data, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -504,8 +489,8 @@ public:
     time_t real_time_record;
 
 public:
-    ReplayQtScreen (ClientCallback * callback, Keylayout_r const& keylayout, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
-        : QtScreen(win_data, callback, keylayout, cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientCallback * callback, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
+        : QtScreen(win_data, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)

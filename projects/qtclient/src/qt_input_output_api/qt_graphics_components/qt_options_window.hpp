@@ -22,9 +22,7 @@
 #pragma once
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "reversed_keymaps/keylayouts_r.hpp"
-#include "reversed_keymaps/keylayout_r.hpp"
-
+#include "keyboard/keymap2.hpp"
 
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QComboBox>
@@ -220,7 +218,7 @@ public:
         const QString strKeyboard("Keyboard");
         this->_layoutKeyboard = new QFormLayout(this->_keyboardTab);
 
-        for (auto* layout : get_keylayout_r_list()) {
+        for (auto* layout : Keymap2::keylayouts()) {
             this->_languageComboBox.addItem(layout->locale_name, layout->LCID);
         }
         this->_languageComboBox.setStyleSheet("combobox-popup: 0;");

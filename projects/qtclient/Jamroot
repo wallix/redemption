@@ -123,8 +123,6 @@ add_obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
 ;
-add_obj keylayouts_r.o : src/reversed_keymaps/keylayouts_r.cpp ;
-
 add_src client_redemption/pointer_to_rgba8888.cpp ;
 add_src utils/log_as_logprint.cpp ;
 
@@ -188,17 +186,3 @@ exe qtclient :
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
     <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
 ;
-
-exe reverse_keylayout_generator
-    : tools/reverse_keylayout_generator.cpp
-    : $(BOOST_STACKTRACE_LINKFLAGS)
-    ;
-
-actions genkeymaps
-{
-    $(>) src/reversed_keymaps/
-}
-
-make update_reversed_keymaps : reverse_keylayout_generator : @genkeymaps ;
-
-explicit reverse_keylayout_generator update_reversed_keymaps ;

@@ -50,7 +50,7 @@ public:
         EventContainer& events,
         ClientRedemptionConfig & config)
     : ClientRedemption(time_base, events, config)
-    , qt_graphic(&this->_callback, *find_keylayout_r(KEYBOARDS::EN_US_INTERNATIONAL), &this->config)
+    , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
     , qt_socket_listener(this->qt_graphic.get_static_qwidget(), time_base, events)
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
@@ -152,12 +152,6 @@ public:
     void close() override {
         this->qt_graphic.close();
         this->disconnect("", false);
-    }
-
-    void update_keylayout() override {
-        this->qt_graphic.updateKeylayout(this->config.info.keylayout);
-
-        ClientRedemption::update_keylayout();
     }
 
     void set_error_msg(const std::string & error) override {
