@@ -62,12 +62,6 @@ include $(JAM_INCLUDE_PATH)/libs.jam ;
 constant SHELL_PWD : $(REDEMPTION_PUBLIC_PATH)/projects/qtclient ; # rule location
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
 
-if $(qtversion) = 4
-{
-    REDEMPTION_CXXFLAGS +=
-        <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
-    ;
-}
 # for `Q_UNUSED(_a);` within moc_*.cpp
 REDEMPTION_CXXFLAGS += <toolset>clang:<cxxflags>-Wno-extra-semi-stmt ;
 
@@ -165,7 +159,7 @@ obj front_Qt$(qtversion)_rdp.o : src/main_qt_client_redemption.cpp :
     <include>$(REDEMPTION_TEST_PATH)/includes # lcg/fixed random
 ;
 
-exe qtclient :
+exe qt$(qtversion)client :
     src/qt_input_output_api/qt_output_sound.hpp
     src/qt_input_output_api/qt_input_output_clipboard.cpp
     src/qt_input_output_api/qt_input_output_clipboard.hpp
@@ -186,3 +180,5 @@ exe qtclient :
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
     <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
 ;
+
+alias qtclient : qt$(qtversion)client ;
