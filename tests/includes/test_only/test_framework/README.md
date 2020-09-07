@@ -90,6 +90,13 @@ RED_AUTO_TEST_CASE(test_name)
         RED_CHECK(foo(data.x), data.result);
     }
 
+    RED_TEST_DATAS(
+        (param1, param2) // first context
+        (param1, param2) // second context
+        // etc
+    ) >>= [&](auto p1, auto p2){
+        RED_CHECK(foo(p1), p2);
+    };
 
     RED_FAIL("because x = " << x);
     RED_ERROR("because x = " << x);
@@ -118,28 +125,6 @@ RED_AUTO_TEST_CASE(test_name)
     // or
 
     RED_TEST_FILE_CONTENTS("filename", "bla bla");
-}
-```
-
-# test_framework/data_test_case.hpp
-
-```cpp
-RED_DATA_TEST_CASE(TestNewOCRRussian, (std::array/* or other container*/{
-    data1,
-    data2,
-    // ...
-}), data)
-{
-    // ...
-}
-
-RED_BIND_DATA_TEST_CASE(TestOutCryptoTransport, (std::array/* or other container*/{
-    std::tuple/* or other tuple like*/(x1, y1, z1),
-    std::tuple/* or other tuple like*/(x2, y2, z2),
-    // ...
-}), x, y, z)
-{
-    // ...
 }
 ```
 

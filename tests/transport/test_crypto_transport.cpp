@@ -20,7 +20,6 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/data_test_case.hpp"
 #include "test_only/test_framework/file.hpp"
 
 #include "transport/crypto_transport.hpp"
@@ -707,46 +706,47 @@ RED_AUTO_TEST_CASE(TestEncryptionSmallNoEncryptionChecksum)
 }
 
 
-RED_BIND_DATA_TEST_CASE(TestOutCryptoTransport, (std::array{
-    std::tuple(TraceType::cryptofile,
+RED_AUTO_TEST_CASE(TestRdpLogonInfo)
+{
+    RED_TEST_DATAS(
+        (TraceType::cryptofile,
         "\x2a\xcc\x1e\x2c\xbf\xfe\x64\x03\x0d\x50\xea\xe7\x84\x5a\x9d\xce"
-        "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5"_av),
-    std::tuple(TraceType::localfile_hashed,
+        "\x6e\xc4\xe8\x4a\xc2\x43\x5f\x6c\x0f\x7f\x16\xf8\x7b\x01\x80\xf5"_av)    (TraceType::localfile_hashed,
         "\xc5\x28\xb4\x74\x84\x3d\x8b\x14\xcf\x5b\xf4\x3a\x9c\x04\x9a\xf3"
-        "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b"_av),
-    std::tuple(TraceType::localfile,
+        "\x23\x9f\xac\x56\x4d\x86\xb4\x32\x90\x69\xb5\xe1\x45\xd0\x76\x9b"_av)
+        (TraceType::localfile,
         "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
         "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"_av)
-}), trace_type, hash)
-{
-    uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
-    uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
+    ) >>= [&](TraceType trace_type, bytes_view hash){
+        uint8_t qhash[MD_HASH::DIGEST_LENGTH]{};
+        uint8_t fhash[MD_HASH::DIGEST_LENGTH]{};
 
-    FakeFstat fstat;
-    LCGRandom rnd;
-    CryptoContext cctx;
-    init_keys(cctx);
+        FakeFstat fstat;
+        LCGRandom rnd;
+        CryptoContext cctx;
+        init_keys(cctx);
 
-    WorkingDirectory wd;
+        WorkingDirectory wd;
 
-    auto finalname = wd.add_file("encrypted.txt");
-    auto hash_finalname = wd.add_file("hash_encrypted.txt");
+        auto finalname = wd.add_file("encrypted.txt");
+        auto hash_finalname = wd.add_file("hash_encrypted.txt");
 
-    {
-        cctx.set_trace_type(trace_type);
+        {
+            cctx.set_trace_type(trace_type);
 
-        OutCryptoTransport ct(cctx, rnd, fstat, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
-        ct.send("We write, ", 10);
-        ct.send("and again, ", 11);
-        ct.send("and so on.", 10);
-        ct.close(qhash, fhash);
-    }
+            OutCryptoTransport ct(cctx, rnd, fstat, [](const Error & /*error*/){});
+            ct.open(finalname, hash_finalname, 0, -1);
+            ct.send("We write, ", 10);
+            ct.send("and again, ", 11);
+            ct.send("and so on.", 10);
+            ct.close(qhash, fhash);
+        }
 
-    RED_CHECK(make_array_view(fhash) == make_array_view(qhash));
-    RED_CHECK(make_array_view(qhash) == make_array_view(hash));
+        RED_CHECK(make_array_view(fhash) == make_array_view(qhash));
+        RED_CHECK(make_array_view(qhash) == hash);
 
-    RED_CHECK_WORKSPACE(wd);
+        RED_CHECK_WORKSPACE(wd);
+    };
 }
 
 

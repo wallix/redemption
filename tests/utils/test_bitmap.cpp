@@ -22,7 +22,6 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/data_test_case.hpp"
 #include "test_only/test_framework/check_img.hpp"
 
 #include "utils/bitmap.hpp"
@@ -3292,32 +3291,35 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     }
 }
 
-RED_DATA_TEST_CASE(TestRDP60BitmapCompression, (std::array{
-    FIXTURES_PATH "/color_image.bmp",
-    FIXTURES_PATH "/logo-redemption.bmp"
-    FIXTURES_PATH "/color_image.png",
-    FIXTURES_PATH "/logo-redemption.png",
-    FIXTURES_PATH "/color_image_40x30.png",
-    FIXTURES_PATH "/color_image_160x120.png",
-    FIXTURES_PATH "/red_box.png",
-    FIXTURES_PATH "/wablogoblue_220x76.png",
-    FIXTURES_PATH "/red_box_20x20.png"
-}), filename)
+RED_AUTO_TEST_CASE(TestRDP60BitmapCompression)
 {
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
-    Bitmap bmp = bitmap_from_file(filename, BLACK);
+    RED_TEST_DATAS(
+        (FIXTURES_PATH "/color_image.bmp")
+        (FIXTURES_PATH "/logo-redemption.bmp")
+        (FIXTURES_PATH "/color_image.png")
+        (FIXTURES_PATH "/logo-redemption.png")
+        (FIXTURES_PATH "/color_image_40x30.png")
+        (FIXTURES_PATH "/color_image_160x120.png")
+        (FIXTURES_PATH "/red_box.png")
+        (FIXTURES_PATH "/wablogoblue_220x76.png")
+        (FIXTURES_PATH "/red_box_20x20.png")
+    ) >>= [&](char const* filename)
+    {
+        Bitmap bmp = bitmap_from_file(filename, BLACK);
 
-    auto sz = std::max(std::size_t{65536}, 2u * bmp.bmp_size());
-    auto uptr = std::make_unique<uint8_t[]>(sz);
+        auto sz = std::max(std::size_t{65536}, 2u * bmp.bmp_size());
+        auto uptr = std::make_unique<uint8_t[]>(sz);
 
-    OutStream compressed_bitmap_data({uptr.get(), sz});
+        OutStream compressed_bitmap_data({uptr.get(), sz});
 
-    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
+        bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
-    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
+        Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
-    RED_CHECK(array_view(bmp.data(), bmp.bmp_size()) == array_view(bmp2.data(), bmp2.bmp_size()));
+        RED_CHECK(array_view(bmp.data(), bmp.bmp_size()) == array_view(bmp2.data(), bmp2.bmp_size()));
+    };
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression)

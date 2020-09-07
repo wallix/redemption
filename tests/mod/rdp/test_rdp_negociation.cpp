@@ -21,38 +21,35 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/data_test_case.hpp"
 
 #include "mod/rdp/rdp_negociation.hpp"
 
-#include <array>
 #include <string_view>
 
 using namespace std::string_view_literals;
 
-
-RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
-    std::array{"mer"sv, "mollusque@rocher"sv, ""sv, "mollusque@rocher"sv},
-    std::array{"sable"sv, "coquillage\\crustacé@plageabandonnée"sv,
-               ""sv, "coquillage\\crustacé@plageabandonnée"sv},
-    std::array{"what"sv, "tounicoti\\tournicoton"sv, "tounicoti"sv, "tournicoton"sv},
-    std::array{"ohnon"sv, "zigouigoui"sv, ""sv, "zigouigoui"sv}
-}), hostname, target_user, domain, username)
+RED_AUTO_TEST_CASE(TestRdpLogonInfo)
 {
-    RdpLogonInfo logon_info(hostname.data(), false, target_user.data(), false);
-    RED_CHECK(logon_info.domain() == domain);
-    RED_CHECK(logon_info.username() == username);
-}
-
-RED_BIND_DATA_TEST_CASE(TestRdpLogonInfoLegacy, (std::array{
-    std::array{"mer"sv, "mollusque@rocher"sv, "rocher"sv, "mollusque"sv},
-    std::array{"sable"sv, "coquillage\\crustacé@plageabandonnée"sv,
-               "coquillage"sv, "crustacé@plageabandonnée"sv},
-    std::array{"what"sv, "tounicoti\\tournicoton"sv, "tounicoti"sv, "tournicoton"sv},
-    std::array{"ohnon"sv, "zigouigoui"sv, ""sv, "zigouigoui"sv}
-}), hostname, target_user, domain, username)
-{
-    RdpLogonInfo logon_info(hostname.data(), false, target_user.data(), true);
-    RED_CHECK(logon_info.domain() == domain);
-    RED_CHECK(logon_info.username() == username);
+    RED_TEST_DATAS(
+        ("mer"sv, "mollusque@rocher"sv, ""sv, "mollusque@rocher"sv, false)
+        ("mer"sv, "mollusque@rocher"sv, "rocher"sv, "mollusque"sv, true)
+        ("what"sv, "tounicoti\\tournicoton"sv, "tounicoti"sv, "tournicoton"sv, false)
+        ("what"sv, "tounicoti\\tournicoton"sv, "tounicoti"sv, "tournicoton"sv, true)
+        ("ohnon"sv, "zigouigoui"sv, ""sv, "zigouigoui"sv, false)
+        ("ohnon"sv, "zigouigoui"sv, ""sv, "zigouigoui"sv, true)
+        ("sable"sv, "coquillage\\crustacé@plageabandonnée"sv,
+            ""sv, "coquillage\\crustacé@plageabandonnée"sv, false)
+        ("sable"sv, "coquillage\\crustacé@plageabandonnée"sv,
+            "coquillage"sv, "crustacé@plageabandonnée"sv, true)
+    ) >>= [&](
+        std::string_view hostname,
+        std::string_view target_user,
+        std::string_view domain,
+        std::string_view username,
+        bool split_domain
+    ){
+        RdpLogonInfo logon_info(hostname.data(), false, target_user.data(), split_domain);
+        RED_CHECK(logon_info.domain() == domain);
+        RED_CHECK(logon_info.username() == username);
+    };
 }

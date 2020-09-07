@@ -360,6 +360,99 @@ namespace std /*NOLINT*/
 
 #endif
 
+namespace redemption_unit_test__
+{
+    #if REDEMPTION_UNIT_TEST_FAST_CHECK || defined(IN_IDE_PARSER)
+    template<class F>
+    struct DatasChain
+    {
+        F f;
+
+        template<class... Xs>
+        DatasChain operator()(Xs&&... xs)
+        {
+            f(xs...);
+            return *this;
+        }
+    };
+    #else
+    template<class F>
+    struct OStreamFunc
+    {
+        F f;
+
+    };
+
+    template<class FF>
+    std::ostream& operator<<(std::ostream& out, OStreamFunc<FF> const& of)
+    {
+        of.f(out);
+        return out;
+    }
+
+    template<int N>
+    struct DatasFuncCounter
+    {
+        template<class... Xs>
+        DatasFuncCounter<N+1> operator()(Xs const&...)
+        {
+            return {};
+        }
+
+        static const int count = N;
+    };
+
+    template<class F>
+    struct DatasChain
+    {
+        int i;
+        int n;
+        F f;
+
+        template<class... Xs>
+        DatasChain operator()(Xs&&... xs)
+        {
+            auto print = [&](std::ostream& out){
+                out << "[" << i << "/" << n << "] (";
+                (..., (out << xs << ", "));
+                out << ")";
+            };
+            ++i;
+            RED_TEST_CONTEXT(OStreamFunc<decltype(print)>{print}) {
+                f(xs...);
+            }
+
+            return *this;
+        }
+    };
+    #endif
+
+    template<class FD>
+    struct DatasCtx
+    {
+        FD fd;
+
+        template<class F>
+        void operator>>=(F f)
+        {
+            #if REDEMPTION_UNIT_TEST_FAST_CHECK || defined(IN_IDE_PARSER)
+            fd(DatasChain<F>{f});
+            #else
+            fd(DatasChain<F>{0, decltype(fd(DatasFuncCounter<0>()))::count, f});
+            #endif
+        }
+    };
+
+    template<class FD>
+    DatasCtx<FD> make_datas_ctx(FD fd)
+    {
+        return {fd};
+    }
+} // namespace redemption_unit_test__
+
+#define RED_TEST_DATAS(datas) ::redemption_unit_test__ \
+    ::make_datas_ctx([](auto f) { return f datas; })
+
 #if REDEMPTION_UNIT_TEST_FAST_CHECK
 # define RED_TEST_DELEGATE_PRINT_II(a, b) \
     [[maybe_unused]] inline int a##b = 0

@@ -21,8 +21,6 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/data_test_case.hpp"
-
 
 #include "capture/title_extractors/ocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_filter.hpp"
@@ -511,30 +509,33 @@ RED_AUTO_TEST_CASE(TestOCRBug)
 }
 
 
-RED_DATA_TEST_CASE(TestNewOCRRussian, (std::array{
-    FIXTURES_PATH "/win_unknown_russian.png",
-    FIXTURES_PATH "/win_unknown_russian2.png"
-}), filename)
+RED_AUTO_TEST_CASE(TestNewOCRRussian)
 {
-    Drawable drawable(816, 639);
+    RED_TEST_DATAS(
+        (FIXTURES_PATH "/win_unknown_russian.png")
+        (FIXTURES_PATH "/win_unknown_russian2.png")
+    ) >>= [&](char const* filename)
+    {
+        Drawable drawable(816, 639);
 
-    using ocr::locale::LocaleId;
-    OcrTitlesExtractor extractor(true, 100, LocaleId{LocaleId::cyrillic});
+        using ocr::locale::LocaleId;
+        OcrTitlesExtractor extractor(true, 100, LocaleId{LocaleId::cyrillic});
 
-    OcrTitleFilter filter;
-    std::vector<OcrTitle> out_titles;
+        OcrTitleFilter filter;
+        std::vector<OcrTitle> out_titles;
 
-    draw_bitmap(drawable, filename);
-    extractor.extract_titles(drawable, out_titles);
+        draw_bitmap(drawable, filename);
+        extractor.extract_titles(drawable, out_titles);
 
-    std::array expected{
-        "Устройства и принтеры"_av
-        };
-    RED_CHECK_EQUAL(out_titles.size(), expected.size());
+        std::array expected{
+            "Устройства и принтеры"_av
+            };
+        RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
-    auto idx_best = filter.extract_best_title(out_titles);
-    RED_CHECK_EQUAL(idx_best, 0);
-    RED_CHECK(expected[idx_best] == filter.get_title());
+        auto idx_best = filter.extract_best_title(out_titles);
+        RED_CHECK_EQUAL(idx_best, 0);
+        RED_CHECK(expected[idx_best] == filter.get_title());
+    };
 }
 
 RED_AUTO_TEST_CASE(TestBogusOCR)
