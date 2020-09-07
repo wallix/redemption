@@ -2021,6 +2021,8 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::unique_ptr<PrivateRdpNegociation> private_rdp_negociation;
 
+    uint8_t status_of_keyboard_toggle_keys = 0;
+
 public:
     using Verbose = RDPVerbose;
 
@@ -2490,6 +2492,8 @@ public:
     }
 
     void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override {
+        this->status_of_keyboard_toggle_keys = param1;
+
         (void)time;
         (void)param2;
         if (UP_AND_RUNNING == this->connection_finalization_state) {
@@ -6190,6 +6194,26 @@ public:
     bool server_error_encountered() const override
     {
         return this->errinfo_encountered;
+    }
+
+    void reset_keyboard_status() override
+    {
+        LOG(LOG_INFO, "mod_rdp::reset_keyboard_status()");
+
+        this->rdp_input_scancode(0xF, 0, 0x8000, 0, nullptr);
+        this->rdp_input_synchronize(0, 0, this->status_of_keyboard_toggle_keys, 0);
+        this->rdp_input_scancode(0xF, 0, 0x8000, 0, nullptr);
+
+        this->rdp_input_scancode(0x2A, 0, 0x0000, 0, nullptr);
+        this->rdp_input_scancode(0x2A, 0, 0x8000, 0, nullptr);
+
+        this->rdp_input_scancode(0x1D, 0, 0x0000, 0, nullptr);
+        this->rdp_input_scancode(0x1D, 0, 0x8000, 0, nullptr);
+
+        this->rdp_input_scancode(0x38, 0, 0x0000, 0, nullptr);
+        this->rdp_input_scancode(0x38, 0, 0x8000, 0, nullptr);
+
+        this->rdp_input_scancode(0x5B, 0, 0x8100, 0, nullptr);
     }
 
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,

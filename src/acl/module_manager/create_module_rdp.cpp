@@ -459,6 +459,8 @@ inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)
          ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
     spp.clipboard_based_launcher.short_delay_ms =
         ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
+    spp.clipboard_based_launcher.reset_keyboard_status =
+        ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_reset_keyboard_status>();
     spp.vc_params.end_of_session_check_delay_time = ini.get<cfg::mod_rdp::session_probe_end_of_session_check_delay_time>();
     spp.vc_params.ignore_ui_less_processes_during_end_of_session_check =
         ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();

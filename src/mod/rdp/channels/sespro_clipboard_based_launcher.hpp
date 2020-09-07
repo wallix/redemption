@@ -789,6 +789,10 @@ public:
                 this->cliprdr_channel->empty_client_clipboard();
             }
         }
+
+        if (this->params.reset_keyboard_status) {
+            this->mod.reset_keyboard_status();
+        }
     }
 
 private:

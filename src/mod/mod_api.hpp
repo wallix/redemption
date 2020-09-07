@@ -70,4 +70,6 @@ public:
     virtual void DLP_antivirus_check_channels_files() {}
 
     void acl_update() override {}
+
+    virtual void reset_keyboard_status() {}
 };

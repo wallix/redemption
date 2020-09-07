@@ -2347,7 +2347,7 @@ public:
                     FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
 
                     LOG_IF(bool(this->verbose & Verbose::basic_trace3), LOG_INFO,
-                        "Front::incoming: Received Fast-Path PDU, scancode eventCode=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
+                        "Front::incoming: Received Fast-Path PDU, scancode eventFlags=0x%X SPKeyboardFlags=0x%X, keyCode=0x%X",
                         ke.eventFlags, ke.spKeyboardFlags, ke.keyCode);
                     // Bug #14538
                     // Workaround for a bug of RDP Linux client xfreerdp.

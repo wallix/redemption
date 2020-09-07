@@ -429,6 +429,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_enable_cleaner", set(true));
 
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_clipboard_based_launcher_reset_keyboard_status", set(true));
+
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_exe_or_file", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), "application_driver_script_argument", set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));

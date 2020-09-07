@@ -2100,6 +2100,16 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// type: bool <br/>
+    /// default: {true} <br/>
+    struct mod_rdp::session_probe_clipboard_based_launcher_reset_keyboard_status {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
+    };
     /// type: char[257] <br/>
     /// default:  = REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE <br/>
     struct mod_rdp::application_driver_exe_or_file {
@@ -5510,6 +5520,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait
 , cfg::mod_rdp::session_probe_enable_cleaner
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_reset_keyboard_status
 , cfg::mod_rdp::application_driver_exe_or_file
 , cfg::mod_rdp::application_driver_script_argument
 , cfg::mod_rdp::application_driver_chrome_uia_script

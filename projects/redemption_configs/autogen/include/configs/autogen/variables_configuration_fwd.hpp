@@ -174,6 +174,7 @@ namespace cfg
         struct session_probe_on_account_manipulation;
         struct session_probe_at_end_of_session_freeze_connection_and_wait;
         struct session_probe_enable_cleaner;
+        struct session_probe_clipboard_based_launcher_reset_keyboard_status;
         struct application_driver_exe_or_file;
         struct application_driver_script_argument;
         struct application_driver_chrome_uia_script;
