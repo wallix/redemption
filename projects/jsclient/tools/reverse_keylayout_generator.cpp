@@ -1,5 +1,3 @@
-// g++ -O3 -std=c++17 -I ../../../src reverseKeylayoutGenerator.cpp
-
 #include <iostream>
 #include <limits>
 #include <array>
@@ -236,7 +234,7 @@ int main()
         uint16_t ucs = 0;
         fichier <<
             "    // scancode = x & 0xff\n"
-            "    // modMask = (x >> 16) & (1 << mod)\n"
+            "    // modMask = x & (0x10000 << mod)\n"
             "    //                  "
             "                      (S)hift, (C)trl, (A)ltGr, Caps(L)ock\n"
             "    //                  "
