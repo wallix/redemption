@@ -76,6 +76,11 @@ const createBuffer = function(bufferLength, module) {
 };
 
 const newRdpCanvas = function(canvasElement, module, ropError) {
+    const _ctx2d = canvasElement.getContext('2d', {alpha: false});
+    if (!_ctx2d) {
+        return ;
+    }
+
     let _width = canvasElement.width;
     let _height = canvasElement.height;
 
@@ -84,7 +89,6 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
     const _imgBuffer = createBuffer(64*64*4, module);
     let _imgBufferIndex = _imgBuffer.getBufferPtr();
 
-    const _ctx2d = canvasElement.getContext('2d', {alpha: false});
     const _cacheImages = [];
 
     _ctx2d.imageSmoothingEnabled = false;
@@ -498,6 +502,18 @@ const isPowerOf2 = function(value) {
 }
 
 const newRdpGL = function(canvasElement, module, ropError) {
+    const glOptions = {
+        preserveDrawingBuffer: true,
+        antialias: false,
+        alpha: false,
+    };
+    const gl = canvasElement.getContext('webgl', glOptions)
+            || canvasElement.getContext('experimental-webgl', glOptions);
+
+    if (!gl) {
+        return ;
+    }
+
     let _width = canvasElement.width;
     let _height = canvasElement.height;
 
@@ -507,14 +523,6 @@ const newRdpGL = function(canvasElement, module, ropError) {
     const _imgBuffer = createBuffer(64*64*4, module);
 
     const unsupportedRop = ropError;
-
-    const glOptions = {
-        preserveDrawingBuffer: true,
-        antialias: false,
-        alpha: false,
-    };
-    const gl = canvasElement.getContext('webgl', glOptions)
-            || canvasElement.getContext('experimental-webgl', glOptions);
 
     const compilePairShader = function(prog, code) {
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -929,6 +937,434 @@ const newRdpGL = function(canvasElement, module, ropError) {
     };
 };
 
+const newRdpGL2 = function(canvasElement, module, ropError) {
+    const glOptions = {
+        // TODO premultipliedAlpha: true,
+        preserveDrawingBuffer: true,
+        antialias: false,
+        alpha: false,
+    };
+    const gl = canvasElement.getContext('webgl2', glOptions);
+
+    if (!gl) {
+        return ;
+    }
+
+    let _width = canvasElement.width;
+    let _height = canvasElement.height;
+
+    const _u8buffer = module.HEAPU8.buffer;
+    const _u16buffer = module.HEAPU16.buffer;
+
+    const _imgBuffer = createBuffer(64*64*4, module);
+
+    const unsupportedRop = ropError;
+
+    const compilePairShader = function(prog, code) {
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+
+        gl.attachShader(prog, fragmentShader);
+        gl.attachShader(prog, vertexShader);
+
+        gl.shaderSource(fragmentShader, code);
+        gl.compileShader(fragmentShader);
+
+        return [vertexShader, fragmentShader];
+    };
+
+    const rectProgram = gl.createProgram();
+    const imgProgram = gl.createProgram();
+    const img24Program = gl.createProgram();
+
+    const [rectVertexShader, rectFragmentShader] = compilePairShader(rectProgram, `
+        // precision highp float;
+        precision mediump float;
+
+        uniform vec3 uColor;
+
+        void main() {
+            gl_FragColor = vec4(uColor.x, uColor.y, uColor.z, 1.0);
+        }`);
+
+    const [imgVertexShader, imgFragmentShader] = compilePairShader(imgProgram, `
+        // precision highp float;
+        precision mediump float;
+        uniform sampler2D texture;
+
+        varying vec2 vTex;
+
+        void main() {
+            gl_FragColor = texture2D(texture, vTex);
+        }`);
+
+    const [img24VertexShader, img24FragmentShader] = compilePairShader(img24Program, `
+        // precision highp float;
+        precision mediump float;
+        uniform sampler2D texture;
+
+        varying vec2 vTex;
+
+        void main() {
+            vec4 color = texture2D(texture, vTex);
+            float tmp = color.x;
+            color.x = color.z;
+            color.z = tmp;
+            gl_FragColor = color;
+        }`);
+
+    const programs = [
+        [rectProgram, rectVertexShader, rectFragmentShader],
+        [imgProgram, imgVertexShader, imgFragmentShader],
+        [img24Program, img24VertexShader, img24FragmentShader],
+    ];
+
+    const compileShader = function(shader, code){
+        gl.shaderSource(shader, code);
+        gl.compileShader(shader);
+    };
+
+    const deletePrograms = function() {
+        for (const [prog, vs, fs] of programs) {
+            gl.deleteProgram(prog);
+        }
+    };
+
+    const buildPrograms = function() {
+        const computePosition = `
+            // clip from 0 to 2
+            vec2 zeroToTwo = aLocation / vec2(${_width/2}, ${_height/2});
+
+            // convert 0->2 to -1->+1
+            vec2 clipSpace = (zeroToTwo - 1.0);
+
+            // flip y coordinate
+            vec2 finalPosition = clipSpace * vec2(1, -1);
+
+            gl_Position = vec4(finalPosition, 0, 1);
+        `;
+
+        compileShader(rectVertexShader, `
+            attribute vec2 aLocation;
+
+            void main() {
+                ${computePosition}
+            }`
+        );
+
+        const imgSource = `
+            attribute vec2 aLocation;
+            attribute vec2 aTextureLocation;
+            // uniform vec2 pos;
+
+            varying vec2 vTex;
+
+            void main() {
+                ${computePosition}
+                vTex = aTextureLocation;
+            }`;
+        compileShader(imgVertexShader, imgSource);
+        compileShader(img24VertexShader, imgSource);
+
+        // link in parallel threads
+        for (const [prog, vs, fs] of programs) {
+            gl.linkProgram(prog);
+        }
+
+        let hasError = false;
+        for (const [prog, vs, fs] of programs) {
+            if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+                console.error('Link failed: ' + gl.getProgramInfoLog(prog));
+                console.error('vs info-log: ' + gl.getShaderInfoLog(vs));
+                console.error('fs info-log: ' + gl.getShaderInfoLog(fs));
+                hasError = true;
+            }
+        }
+
+        if (hasError) {
+            const err = gl.getError();
+            deletePrograms();
+            throw new Error(err);
+        }
+
+        rectProgram.aLocation = gl.getAttribLocation(rectProgram, "aLocation");
+        imgProgram.aLocation = gl.getAttribLocation(imgProgram, "aLocation");
+        imgProgram.aTextureLocation = gl.getAttribLocation(imgProgram, "aTextureLocation");
+        img24Program.aLocation = gl.getAttribLocation(img24Program, "aLocation");
+        img24Program.aTextureLocation = gl.getAttribLocation(img24Program, "aTextureLocation");
+    };
+
+    const initShaders = function(){
+        buildPrograms();
+
+        gl.viewport(0, 0, _width, _height);
+        gl.clearColor(.0, .0, .0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+    };
+
+    initShaders();
+
+    const rectVertexBuffer = gl.createBuffer();
+    const texVertexBuffer = gl.createBuffer();
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    const drawRect = function(x, y, w, h, color) {
+        // console.log('drawRect');
+        gl.useProgram(rectProgram);
+
+        const vertex = [
+            x+w,y, x,y+h, x,y,
+            x+w,y, x,y+h, x+w,y+h
+        ];
+
+        let vertexArray = new Float32Array(vertex);
+        gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, vertexArray, gl.STATIC_DRAW);
+
+        const aLocation = rectProgram.aLocation;
+
+        gl.enableVertexAttribArray(aLocation);
+        gl.vertexAttribPointer(aLocation, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
+
+        const red   = ((color >> 16) & 0xff) / 255.;
+        const green = ((color >> 8 ) & 0xff) / 255.;
+        const blue  = ((color      ) & 0xff) / 255.;
+
+        // TODO external
+        const uColor = gl.getUniformLocation(rectProgram, "uColor");
+
+        gl.uniform3fv(uColor, [red, green, blue]);
+
+        gl.drawArrays(gl.TRIANGLES, 0, /*vertexCount=*/6);
+    };
+
+    return {
+        get width() { return _width; },
+        get height() { return _height; },
+
+        delete() {
+            deletePrograms();
+        },
+
+        frameMarker: function(isFrameStart) {
+        },
+
+        drawRect: drawRect,
+
+        // mendatory for drawRect
+        drawPatBlt: function(brushData, orgX, orgY, style, x, y, w, h, rop, backColor, foreColor) {
+            switch (rop) {
+                case 0x00: drawRect(x,y,w,h, 0); break;
+                // case 0x05: _transformPixels(x,y,w,h, (src) => ~(backColor | src)); break;
+                // case 0x0f: _transformPixels(x,y,w,h, (src) => ~src); break;
+                // case 0x50: _transformPixels(x,y,w,h, (src) => src & ~backColor); break;
+                // case 0x55: _transformPixels(x,y,w,h, (src) => src ^ 0xffffff); break;
+                // case 0x5a:
+                //     if (style === 0x03) {
+                //         _transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData,
+                //                               (src,c) => src ^ c);
+                //     }
+                //     else {
+                //         _transformPixels(x,y,w,h, (src) => backColor ^ src);
+                //     }
+                //     break;
+                // case 0x5f: _transformPixels(x,y,w,h, (src) => ~(backColor & src)); break;
+                // case 0xa0: _transformPixels(x,y,w,h, (src) => backColor & src); break;
+                // case 0xa5: _transformPixels(x,y,w,h, (src) => ~(backColor ^ src)); break;
+                // case 0xaa: break;
+                // case 0xaf: _transformPixels(x,y,w,h, (src) => backColor | ~src); break;
+                case 0xf0:
+                    const fb = gl.createFramebuffer();
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+                    // gl.viewport(0, 0, w,h);
+                    // drawRect(0,0,w,h,0xff00ff);
+                    // const attachmentPoint = gl.COLOR_ATTACHMENT0;
+                    // gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint,
+                    //                         gl.TEXTURE_2D, texture, 0);
+                    gl.activeTexture(gl.TEXTURE1);
+                    // gl.bindTexture(gl.TEXTURE_2D, texture);
+                    // gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+                    const program = imgProgram;
+                    gl.useProgram(program);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        x,    y,
+                        x,    y+h,
+                        x+w,  y+h,
+                        x+w,  y,
+                    ]), gl.STATIC_DRAW);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        0, 1,
+                        0, 0,
+                        1, 0,
+                        1, 1,
+                    ]), gl.STATIC_DRAW);
+
+                    if (isPowerOf2(w) && isPowerOf2(h)) {
+                        gl.generateMipmap(gl.TEXTURE_2D);
+                    }
+                    else {
+                        // wrapping to clamp to edge
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    }
+
+                    const vloc = program.aLocation;
+                    const tloc = program.aTextureLocation;
+
+                    gl.enableVertexAttribArray(vloc);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
+                    gl.vertexAttribPointer(vloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
+
+                    gl.enableVertexAttribArray(tloc);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
+                    gl.vertexAttribPointer(tloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
+
+                    gl.drawArrays(gl.TRIANGLE_FAN, 0, /*vertexCount=*/4);
+
+                    // if (style === 0x03) {
+                    //     unsupportedRop('PatBlt', rop);
+                    //     // _transformPixelsBrush(x,y,w,h,backColor,foreColor,brushData,
+                    //     //                       (src,c) => src);
+                    // }
+                    // else {
+                    //     drawRect(x,y,w,h, backColor);
+                    // }
+                    break;
+                // case 0xfa: _transformPixels(x,y,w,h, (src) => src | backColor); break;
+                // case 0xf5: _transformPixels(x,y,w,h, (src) => src | ~backColor); break;
+                // case 0xff: drawRect(x,y,w,h, 0xffffff); break;
+
+                default:
+                    unsupportedRop('PatBlt', rop);
+                    break;
+            }
+        },
+
+        resizeCanvas: function(w, h, bpp) {
+            console.log('RdpGraphics: resize(' + w + ', ' + h + ', ' + bpp + ')');
+            if (_width != w || _height != h) {
+                canvasElement.width = _width = w;
+                canvasElement.height = _height = h;
+                initShaders();
+            }
+            drawRect(0, 0, w, h, 0);
+        },
+
+        drawImage: function(byteOffset, bitsPerPixel, w, h, lineSize, dx, dy) {
+            // console.log('img');
+            let program;
+            let xration;
+            let texWidth;
+            let format;
+            let type;
+            let pixels;
+
+            switch (bitsPerPixel) {
+                case 15:
+                    xratio = w * 2 / lineSize;
+                    program = imgProgram;
+                    texWidth = lineSize / 2;
+                    format = gl.RGB565;
+                    type = gl.UNSIGNED_SHORT_5_6_5;
+                    pixels = new Uint16Array(_u16buffer, byteOffset, texWidth*h);
+
+                case 16:
+                    xratio = w * 2 / lineSize;
+                    program = imgProgram;
+                    texWidth = lineSize / 2;
+                    format = gl.RGB;
+                    type = gl.UNSIGNED_SHORT_5_6_5;
+                    pixels = new Uint16Array(_u16buffer, byteOffset, texWidth*h);
+                    break;
+
+                case 24:
+                    xratio = w * 3 / lineSize;
+                    program = img24Program;
+                    // what to do if is not divisible by 3?
+                    texWidth = lineSize / 3;
+                    format = gl.RGB;
+                    type = gl.UNSIGNED_BYTE;
+                    pixels = new Uint8Array(_u8buffer, byteOffset, lineSize*h);
+                    break;
+
+                case 32:
+                    xratio = w * 4 / lineSize;
+                    program = imgProgram;
+                    texWidth = lineSize / 4;
+                    format = gl.RGBA;
+                    type = gl.UNSIGNED_BYTE;
+                    pixels = new Uint8Array(_u8buffer, byteOffset, lineSize*h);
+                    break;
+
+                case 8:
+                    const bufLen = lineSize*h*2;
+                    const pbuf = _imgBuffer.reserve(bufLen);
+                    module.convertBmp8ToBmp16(pbuf, byteOffset, h, lineSize);
+
+                    xratio = w / lineSize;
+                    program = imgProgram;
+                    texWidth = lineSize;
+                    format = gl.RGB;
+                    type = gl.UNSIGNED_SHORT_5_6_5;
+                    pixels = new Uint16Array(_u16buffer, pbuf, texWidth*h);
+                    break;
+
+                default:
+                    console.error(`invalid bitsPerPixel: ${bitsPerPixel}`);
+                    return ;
+            }
+
+            gl.useProgram(program);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                dx,    dy,
+                dx,    dy+h,
+                dx+w,  dy+h,
+                dx+w,  dy,
+            ]), gl.STATIC_DRAW);
+
+            gl.texImage2D(gl.TEXTURE_2D, 0, format, texWidth, h, 0, format, type, pixels);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                0, 1,
+                0, 0,
+                xratio, 0,
+                xratio, 1,
+            ]), gl.STATIC_DRAW);
+
+            gl.generateMipmap(gl.TEXTURE_2D);
+
+            const vloc = program.aLocation;
+            const tloc = program.aTextureLocation;
+
+            gl.enableVertexAttribArray(vloc);
+            gl.bindBuffer(gl.ARRAY_BUFFER, rectVertexBuffer);
+            gl.vertexAttribPointer(vloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
+
+            gl.enableVertexAttribArray(tloc);
+            gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
+            gl.vertexAttribPointer(tloc, /*numComponents=*/2, gl.FLOAT, false, 0, 0);
+
+            gl.drawArrays(gl.TRIANGLE_FAN, 0, /*vertexCount=*/4);
+        },
+    };
+};
+
 const createCtx = function(...contexts) {
     const deleters = [];
     for (const ctx of contexts) {
@@ -972,11 +1408,27 @@ const newRdpGraphicsGL = function(canvasElement, module, ropError) {
                      newRdpPointer(canvasElement, module));
 };
 
+const newRdpGraphicsGL2 = function(canvasElement, module, ropError) {
+    ropError = ropError || getDefaultRopError();
+    return createCtx(newRdpGL2(canvasElement, module, ropError),
+                     newRdpPointer(canvasElement, module));
+};
+
+const newRdpGraphics = function(canvasElement, module, ropError) {
+    ropError = ropError || getDefaultRopError();
+    const ctx = newRdpGL2(canvasElement, module, ropError)
+             || newRdpCanvas(canvasElement, module, ropError);
+    return ctx ? createCtx(ctx, newRdpPointer(canvasElement, module)) : undefined;
+};
+
 try {
     module.exports.newRdpGraphics2D = newRdpGraphics2D;
     module.exports.newRdpGraphicsGL = newRdpGraphicsGL;
+    module.exports.newRdpGraphicsGL2 = newRdpGraphicsGL2;
+    module.exports.newRdpGraphics = newRdpGraphics;
     module.exports.newRdpCanvas = newRdpCanvas;
     module.exports.newRdpGL = newRdpGL;
+    module.exports.newRdpGL2 = newRdpGL2;
     module.exports.newRdpPointer = newRdpPointer;
 }
 catch (e) {

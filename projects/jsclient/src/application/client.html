@@ -82,6 +82,7 @@ form {
             <label for="gdimpl">Impl: <select name="gdimpl" id="gdimpl">
                 <option value="2d" selected="selected">Canvas 2d</option>
                 <option value="webgl">WebGL</option>
+                <option value="webgl2">WebGL2</option>
             </select>
         </fieldset>
         <fieldset>
@@ -206,6 +207,7 @@ function MultiSelectToInt(e, constants)
 const gdImplTable = {
     ['2d']:newRdpGraphics2D,
     webgl:newRdpGraphicsGL,
+    webgl2:newRdpGraphicsGL2,
 };
 
 function run(openCb, closeCb)
