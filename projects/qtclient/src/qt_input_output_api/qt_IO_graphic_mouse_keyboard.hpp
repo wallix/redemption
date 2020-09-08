@@ -58,11 +58,10 @@ private:
 public:
     QtIOGraphicMouseKeyboard(ClientCallback * controller, ClientRedemptionConfig * config)
     : ClientRemoteAppGraphicAPI(controller, config, QApplication::desktop()->width(), QApplication::desktop()->height())
-    , form(nullptr)
+    , form(new QtForm(this->config, this->controller))
     , screen(nullptr)
     , bar(nullptr)
     {
-        this->form = new QtForm(this->config, this->controller);
     }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
@@ -182,65 +181,86 @@ public:
 
     void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
-        this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(&this->config->windowsData, this->controller, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map.emplace(id, new RemoteAppQtScreen(&this->config->windowsData, this->controller, w, h, x, y, &this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
+private:
+    RemoteAppQtScreen* find_remote_app(uint32_t id)
+    {
+        auto it = this->remote_app_screen_map.find(id);
+        return it == this->remote_app_screen_map.end() ? nullptr : it->second;
+    }
+
+public:
     void show_screen(uint32_t id) override {
         if (this->form) {
             this->form->hide();
-            if (this->remote_app_screen_map[id]) {
-                this->remote_app_screen_map[id]->show();
+            if (auto* screen = this->find_remote_app(id)) {
+                screen->show();
             }
         }
     }
 
     void move_screen(uint32_t id, int x, int y) override {
-        if (this->remote_app_screen_map[id]) {
-            this->remote_app_screen_map[id]->move(x, y);
+        if (auto* screen = this->find_remote_app(id)) {
+            screen->move(x, y);
         }
     }
 
     void set_screen_size(uint32_t id, int x, int y) override {
-        if (this->remote_app_screen_map[id]) {
-            this->remote_app_screen_map[id]->setFixedSize(x, y);
+        if (auto* screen = this->find_remote_app(id)) {
+            screen->setFixedSize(x, y);
         }
     }
 
     void set_pixmap_shift(uint32_t id, int x, int y) override {
-        if (this->remote_app_screen_map[id]) {
-            this->remote_app_screen_map[id]->x_pixmap_shift = x;
-            this->remote_app_screen_map[id]->y_pixmap_shift = y;
+        if (auto* screen = this->find_remote_app(id)) {
+            screen->x_pixmap_shift = x;
+            screen->y_pixmap_shift = y;
         }
     }
 
     int get_visible_width(uint32_t id) override {
-        return this->remote_app_screen_map[id]->width();
+        if (auto* screen = this->find_remote_app(id)) {
+            return screen->width();
+        }
+        return -1;
     }
 
     int get_visible_height(uint32_t id) override {
-        return this->remote_app_screen_map[id]->height();
+        if (auto* screen = this->find_remote_app(id)) {
+            return screen->height();
+        }
+        return -1;
     }
 
     int get_mem_width(uint32_t id) override {
-        return this->remote_app_screen_map[id]->_width;
+        if (auto* screen = this->find_remote_app(id)) {
+            return screen->_width;
+        }
+        return -1;
     }
 
     int get_mem_height(uint32_t id) override {
-        return this->remote_app_screen_map[id]->_height;
+        if (auto* screen = this->find_remote_app(id)) {
+            return screen->_height;
+        }
+        return -1;
     }
 
     void set_mem_size(uint32_t id, int w, int h) override {
-        this->remote_app_screen_map[id]->_width = w;
-        this->remote_app_screen_map[id]->_height = h;
+        if (auto* screen = this->find_remote_app(id)) {
+            screen->_width = w;
+            screen->_height = h;
+        }
     }
 
     void clear_remote_app_screen() override {
-        for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
-            if (it->second) {
-                it->second->disconnection();
-                it->second = nullptr;
+        for (auto& p : this->remote_app_screen_map) {
+            if (p.second) {
+                p.second->disconnection();
+                p.second = nullptr;
             }
         }
         this->remote_app_screen_map.clear();
@@ -264,9 +284,9 @@ public:
         }
 
         if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-            for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
-                if (it->second) {
-                    it->second->update_view();
+            for (auto& p : this->remote_app_screen_map) {
+                if (p.second) {
+                    p.second->update_view();
                 }
             }
         } else {
@@ -532,13 +552,7 @@ public:
 
     QColor u32_to_qcolor(RDPColor color, gdi::ColorCtx color_ctx) {
 
-        if (gdi::Depth::from_bpp(this->config->info.screen_info.bpp) != color_ctx.depth()) {
-            BGRColor d = color_decode(color, color_ctx);
-            color      = color_encode(d, this->config->info.screen_info.bpp);
-        }
-
-        BGRColor bgr = color_decode(color, this->config->info.screen_info.bpp, this->config->mod_palette);
-
+        BGRColor bgr = color_decode(color, color_ctx);
         return {bgr.red(), bgr.green(), bgr.blue()};
     }
 
@@ -709,8 +723,8 @@ public:
 
     //using ClientRedemptionAPI::draw;
 
-    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-
+    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override
+    {
         const Rect rect = clip.intersect(this->cache.width(), this->cache.height()).intersect(cmd.rect);
         // this->setClip(rect.x, rect.y, rect.cx, rect.cy);
 
