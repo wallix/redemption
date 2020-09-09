@@ -59,83 +59,8 @@ public:
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override
     {
-        const Rect rect = clip.intersect(this->cache.width(), this->cache.height()).intersect(cmd.rect);
-        // this->setClip(rect.x, rect.y, rect.cx, rect.cy);
-
-        const QColor backColor = qcolor(cmd.back_color, color_ctx);
-        const QColor foreColor = qcolor(cmd.fore_color, color_ctx);
-
-        auto drawModeWithBrush = [&](Qt::BrushStyle style, QPainter::CompositionMode mode){
-            this->painter.setBrush(QBrush(backColor, style));
-            this->painter.setCompositionMode(mode);
-            this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
-            this->painter.setCompositionMode(Rop::Reset);
-            this->painter.setBrush(Qt::SolidPattern);
-        };
-
-        auto drawMode = [&](QPainter::CompositionMode mode){
-            this->painter.setCompositionMode(mode);
-            this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
-            this->painter.setCompositionMode(Rop::Reset);
-        };
-
-        if (cmd.brush.style == 0x03 && (cmd.rop == 0xF0 || cmd.rop == 0x5A)) {
-            switch (cmd.rop) {
-                case 0x5A: drawModeWithBrush(Qt::Dense4Pattern, Rop::DPx); break;
-
-                // +------+-------------------------------+
-                // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
-                // |      | RPN: P                        |
-                // +------+-------------------------------+
-                case 0xF0:
-                    this->painter.setPen(Qt::NoPen);
-                    this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                    this->painter.setBrush(QBrush(foreColor, Qt::Dense4Pattern));
-                    this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    this->painter.setBrush(Qt::SolidPattern);
-                    break;
-                default: LOG(LOG_WARNING, "RDPPatBlt brush_style = 0x03 rop = %x", cmd.rop);
-                    break;
-            }
-        }
-        else {
-            switch (cmd.rop) {
-                case 0x00: // blackness
-                    this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
-                    break;
-
-                case 0x05: drawMode(Rop::DPon); break;
-                case 0x0F: drawMode(Rop::Pn); break;
-                case 0x50: drawMode(Rop::PDna); break;
-                case 0x55: drawMode(Rop::Dn); break;
-                case 0x5A: drawMode(Rop::DPx); break;
-                case 0x5F: drawMode(Rop::DPan); break;
-                case 0xA0: drawMode(Rop::DPa); break;
-                case 0xA5: drawMode(Rop::PDxn); break;
-                case 0xAA: break;
-                case 0xAF: drawMode(Rop::DPno); break;
-
-                // +------+-------------------------------+
-                // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
-                // |      | RPN: P                        |
-                // +------+-------------------------------+
-                case 0xF0:
-                    this->painter.setPen(Qt::NoPen);
-                    this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
-                    this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
-                    break;
-
-                case 0xF5: drawMode(Rop::PDno); break;
-                case 0xFA: drawMode(Rop::DPo); break;
-
-                case 0xFF: // whiteness
-                    this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
-                    break;
-
-                default: LOG(LOG_WARNING, "RDPPatBlt rop = %x", cmd.rop);
-                    break;
-            }
-        }
+        const auto rect = qrect(this->computeClip(clip).intersect(cmd.rect));
+        this->drawPatBlt(&rect, 1, cmd.brush, cmd.rop, cmd.back_color, cmd.fore_color, color_ctx);
     }
 
 
@@ -187,7 +112,7 @@ public:
                 break;
 
             case 0x55: {
-                QImage img(this->cache.toImage().copy(srcx, srcy, drect.cx, drect.cy));
+                QImage img(this->cache.copy(srcx, srcy, drect.cx, drect.cy).toImage());
                 img.invertPixels();
                 this->painter.drawImage(QRect(drect.x, drect.y, drect.cx, drect.cy), img);
                 break;
@@ -197,7 +122,7 @@ public:
                 break;
 
             case 0xCC: {
-                QImage img(this->cache.toImage().copy(srcx, srcy, drect.cx, drect.cy));
+                QImage img(this->cache.copy(srcx, srcy, drect.cx, drect.cy).toImage());
                 this->painter.drawImage(QRect(drect.x, drect.y, drect.cx, drect.cy), img);
                 break;
             }
@@ -280,31 +205,36 @@ public:
 
     void draw(const RDPDestBlt & cmd, Rect clip) override
     {
-        ImagePos p(cmd.rect.cx, cmd.rect.cy, cmd.rect, clip, cmd.rect.x, cmd.rect.y);
-
-        if (p.isEmpty()) {
-            return;
-        }
-
-        switch (cmd.rop) {
-            case 0x00: this->_fillRect(p, Qt::black); break;
-
-            case 0x55: {
-                this->painter.setCompositionMode(Rop::Dn);
-                this->_drawRect(p);
-                this->painter.setCompositionMode(Rop::Reset);
-                break;
-            }
-
-            case 0xAA: break;
-            case 0xFF: this->_fillRect(p, Qt::white); break;
-
-            default: LOG(LOG_WARNING, "DEFAULT: RDPDestBlt rop = %x", cmd.rop);
-                break;
-        }
+        const auto rect = qrect(this->computeClip(clip).intersect(cmd.rect));
+        this->drawDstBlt(&rect, 1, cmd.rop);
     }
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override
+    {
+        this->drawMulti(cmd, clip, [&](QRect const* rects, int count_rect){
+            this->drawDstBlt(rects, count_rect, cmd.bRop);
+        });
+    }
+
+    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override
+    {
+        this->drawMulti(cmd, clip, [&](QRect const* rects, int count_rect){
+            this->painter.setBrush(qcolor(cmd._Color, color_ctx));
+            this->painter.drawRects(rects, count_rect);
+        });
+    }
+
+    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override
+    {
+        this->drawMulti(cmd, clip, [&](QRect const* rects, int count_rect){
+            this->drawPatBlt(
+                rects, count_rect, cmd.brush, cmd.bRop,
+                cmd.BackColor, cmd.ForeColor, color_ctx
+            );
+        });
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override
     {
         const Rect viewport = computeClip(clip).intersect(to_rect(cmd));
 
@@ -312,57 +242,49 @@ public:
             return ;
         }
 
-        Rects rects(cmd, viewport);
+        const int deltax = cmd.nXSrc - cmd.rect.x;
+        const int deltay = cmd.nYSrc - cmd.rect.y;
+
+        auto compute_rects = [&](auto f){
+            draw_multi(cmd, [&](Rect const& cmd_rect) {
+                Rect drect = clip.intersect(cmd_rect);
+                Rect src = this->computeClip(cmd_rect.offset(deltax, deltay));
+                Rect trect(drect.x, drect.y, std::min(drect.cx, src.cx), std::min(drect.cy, src.cy));
+                f(trect, src.x, src.y);
+            });
+        };
+
+        auto draw_blt = [&](auto const& invertPixels){
+            compute_rects([&](Rect const& rect, int srcx, int srcy){
+                QImage img(this->cache.copy(srcx, srcy, rect.cx, rect.cy).toImage());
+                if (invertPixels) {
+                    img.invertPixels();
+                }
+                this->painter.drawImage(qrect(rect), img);
+            });
+        };
+
+        auto draw_color = [&](Qt::GlobalColor color){
+            QRect rects[256];
+            auto* prect = rects;
+            compute_rects([&](Rect const& rect, auto...){
+                *prect = qrect(rect);
+                ++prect;
+            });
+            this->painter.setBrush(color);
+            this->painter.drawRects(rects, prect - std::begin(rects));
+        };
 
         switch (cmd.bRop) {
-            case 0x00:
-                this->painter.setBrush(Qt::black);
-                this->painter.drawRects(rects.rects, rects.length);
-                break;
+            case 0x00: draw_color(Qt::black); break;
+            case 0x55: draw_blt(std::true_type{}); break;
+            case 0xAA: break;
+            case 0xCC: draw_blt(std::false_type{}); break;
+            case 0xFF: draw_color(Qt::white); break;
 
-            case 0x55: {
-                this->painter.setCompositionMode(Rop::Dn);
-                this->painter.drawRects(rects.rects, rects.length);
-                this->painter.setCompositionMode(Rop::Reset);
-                break;
-            }
-
-            case 0xAA:
-                break;
-
-            case 0xFF:
-                this->painter.setBrush(Qt::white);
-                this->painter.drawRects(rects.rects, rects.length);
-                break;
-
-            default: LOG(LOG_WARNING, "DEFAULT: RDPMultiDstBlt rop = %x", cmd.bRop);
+            default: LOG(LOG_WARNING, "DEFAULT: RDPMultiScrBlt rop = %x", cmd.bRop);
                 break;
         }
-    }
-
-    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override
-    {
-        (void) cmd;
-        (void) clip;
-        (void) color_ctx;
-
-        LOG(LOG_WARNING, "DEFAULT: RDPMultiOpaqueRect");
-    }
-
-    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override
-    {
-        (void) color_ctx;
-        (void) cmd;
-        (void) clip;
-        LOG(LOG_WARNING, "DEFAULT: RDPMultiPatBlt");
-    }
-
-    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override
-    {
-        (void) cmd;
-        (void) clip;
-
-        LOG(LOG_WARNING, "DEFAULT: RDPMultiScrBlt");
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
@@ -558,6 +480,11 @@ private:
         return {bgr.red(), bgr.green(), bgr.blue()};
     }
 
+    static QRect qrect(Rect const& rect)
+    {
+        return QRect(rect.x, rect.y, rect.cx, rect.cy);
+    }
+
     Rect computeClip(Rect const& clip)
     {
         return clip.intersect(this->cache.width(), this->cache.height());
@@ -643,10 +570,123 @@ private:
         this->painter.fillRect(p.x, p.y, p.w, p.h, color);
     }
 
+    void drawPatBlt(
+        QRect const* rects, int count_rect, RDPBrush const& brush, uint8_t rop,
+        RDPColor back_color, RDPColor fore_color, gdi::ColorCtx color_ctx)
+    {
+        const QColor backColor = qcolor(back_color, color_ctx);
+        const QColor foreColor = qcolor(fore_color, color_ctx);
+
+        if (brush.style == 0x03 && (rop == 0xF0 || rop == 0x5A)) {
+            auto drawModeWithBrush = [&](Qt::BrushStyle style, QPainter::CompositionMode mode){
+                this->painter.setBrush(QBrush(backColor, style));
+                this->painter.setCompositionMode(mode);
+                this->painter.drawRects(rects, count_rect);
+                this->painter.setCompositionMode(Rop::Reset);
+                this->painter.setBrush(Qt::SolidPattern);
+            };
+
+            switch (rop) {
+                case 0x5A: drawModeWithBrush(Qt::Dense4Pattern, Rop::DPx); break;
+
+                // +------+-------------------------------+
+                // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
+                // |      | RPN: P                        |
+                // +------+-------------------------------+
+                case 0xF0:
+                    // this->painter.setPen(Qt::NoPen);
+                    this->painter.setBrush(QBrush(foreColor, Qt::Dense4Pattern));
+                    // this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
+                    this->painter.drawRects(rects, count_rect);
+                    this->painter.setBrush(Qt::SolidPattern);
+                    break;
+
+                default: LOG(LOG_WARNING, "RDPPatBlt brush_style = 0x03 rop = %x", rop);
+                    break;
+            }
+        }
+        else {
+            auto drawMode = [&](QPainter::CompositionMode mode){
+                this->painter.setCompositionMode(mode);
+                this->painter.drawRects(rects, count_rect);
+                this->painter.setCompositionMode(Rop::Reset);
+            };
+
+            switch (rop) {
+                case 0x00: // blackness
+                    this->painter.setBrush(Qt::black);
+                    this->painter.drawRects(rects, count_rect);
+                    break;
+
+                case 0x05: drawMode(Rop::DPon); break;
+                case 0x0F: drawMode(Rop::Pn); break;
+                case 0x50: drawMode(Rop::PDna); break;
+                case 0x55: drawMode(Rop::Dn); break;
+                case 0x5A: drawMode(Rop::DPx); break;
+                case 0x5F: drawMode(Rop::DPan); break;
+                case 0xA0: drawMode(Rop::DPa); break;
+                case 0xA5: drawMode(Rop::PDxn); break;
+                case 0xAA: break;
+                case 0xAF: drawMode(Rop::DPno); break;
+
+                // +------+-------------------------------+
+                // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
+                // |      | RPN: P                        |
+                // +------+-------------------------------+
+                case 0xF0:
+                    this->painter.setBrush(backColor);
+                    this->painter.drawRects(rects, count_rect);
+                    break;
+
+                case 0xF5: drawMode(Rop::PDno); break;
+                case 0xFA: drawMode(Rop::DPo); break;
+
+                case 0xFF: // whiteness
+                    this->painter.setBrush(Qt::white);
+                    this->painter.drawRects(rects, count_rect);
+                    break;
+
+                default: LOG(LOG_WARNING, "RDPPatBlt rop = %x", rop);
+                    break;
+            }
+        }
+    }
+
+    void drawDstBlt(QRect const* rects, int count_rect, uint8_t rop)
+    {
+        switch (rop) {
+            case 0x00:
+                this->painter.setBrush(Qt::black);
+                this->painter.drawRects(rects, count_rect);
+                break;
+
+            case 0x55: {
+                this->painter.setCompositionMode(Rop::Dn);
+                this->painter.drawRects(rects, count_rect);
+                this->painter.setCompositionMode(Rop::Reset);
+                break;
+            }
+
+            case 0xAA:
+                break;
+
+            case 0xFF:
+                this->painter.setBrush(Qt::white);
+                this->painter.drawRects(rects, count_rect);
+                break;
+
+            default: LOG(LOG_WARNING, "DEFAULT: RDPDstBlt rop = %x", rop);
+                break;
+        }
+    }
+
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
     //@{
     static Rect to_rect(RDPMultiDstBlt const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
+
+    static Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
+    { return cmd.rect; }
 
     static Rect to_rect(RDPMultiOpaqueRect const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
@@ -656,7 +696,7 @@ private:
     //@}
 
     template<class RDPMulti, class FRect>
-    static void draw_multi(const RDPMulti & cmd, Rect clip, FRect f)
+    static void draw_multi(const RDPMulti & cmd, FRect f)
     {
         Rect cmd_rect;
 
@@ -665,7 +705,7 @@ private:
             cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
             cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-            f(clip.intersect(cmd_rect));
+            f(cmd_rect);
         }
     }
 
@@ -675,7 +715,8 @@ private:
         Rects(const RDPMulti & cmd, Rect clip)
         {
             QRect* prect = rects;
-            draw_multi(cmd, clip, [&](Rect const& rect) {
+            draw_multi(cmd, [&](Rect const& drect) {
+                const auto rect = clip.intersect(drect);
                 *prect = QRect(rect.x, rect.y, rect.cx, rect.cy);
             });
             length = prect - std::begin(rects);
@@ -684,6 +725,20 @@ private:
         QRect rects[256];
         int length;
     };
+
+    template<class Cmd, class F>
+    void drawMulti(Cmd const& cmd, Rect clip, F f)
+    {
+        const Rect viewport = computeClip(clip).intersect(to_rect(cmd));
+
+        if (viewport.isempty()) {
+            return ;
+        }
+
+        Rects rects(cmd, viewport);
+
+        f(rects.rects, rects.length);
+    }
 
     struct Rop
     {
