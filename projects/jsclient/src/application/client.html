@@ -89,7 +89,11 @@ form {
             <legend>Others</legend>
             <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
             <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
-            <label for="useUnicode">unicode: <input type="checkbox" id="useUnicode" checked="1"/></label>
+            <label for="gdimpl">Keyboard type: <select name="kbtype" id="kbtype">
+                <option value="unicode">Unicode</option>
+                <option value="scancode" selected="selected">KeyboardEvent.code</option>
+                <option value="key">KeyboardEvent.key</option>
+            </select>
         </fieldset>
         <p>
             <input type="submit" value="New Connection"/>
@@ -153,7 +157,7 @@ const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const disabled_graphics_input = document.getElementById('disabledGraphics');
 const verbose_input = document.getElementById('verbose');
-const useUnicode_input = document.getElementById('useUnicode');
+const kbtype_input = document.getElementById('kbtype');
 const jsonConfig_input = document.getElementById('jsonConfig');
 const pass_input = document.getElementById('pass');
 const url_input = document.getElementById('url');
@@ -304,6 +308,11 @@ function run(openCb, closeCb)
         }
     }
 
+    function unicodeToScancodeKeyEvent(flag, evt)
+    {
+        console.log('reverse scancode');
+    }
+
     function sendMouseEvent(evt, flags)
     {
         evt.preventDefault();
@@ -429,7 +438,8 @@ function run(openCb, closeCb)
         ecanvas.onclick = canvasEnableFocus;
     }
 
-    function updateInput() {
+    function updateInput()
+    {
         const inputFlags = rdpclient.getInputFlags();
         const keyboardLayout = rdpclient.getKeyboardLayout();
         console.log(`keyboardLayout: 0x${keyboardLayout.toString(16)}`);
@@ -440,9 +450,14 @@ function run(openCb, closeCb)
         console.groupEnd();
         hWheelSupport = Boolean(inputFlags & InputFlags.HorizontalWheel);
         MouseXSupport = Boolean(inputFlags & InputFlags.MouseX);
-        onKeyEvent = (inputFlags & InputFlags.Unicode) && useUnicode.checked
-            ? unicodeKeyEvent
-            : scancodeKeyEvent;
+
+        const kbTypeId = kbtype_input.selectedIndex;
+        if (kbTypeId === 0 && !(inputFlags & InputFlags.Unicode)) {
+            console.log('don\'t support unicode');
+            kbTypeId = 1;
+        }
+        console.log(`keyboardType: (${kbTypeId}) ${kbtype_input[kbTypeId].value}`);
+        onKeyEvent = [unicodeKeyEvent, scancodeKeyEvent, unicodeToScancodeKeyEvent][kbTypeId];
         canvasStopEvents();
         canvasStartEvents();
     }
@@ -565,7 +580,7 @@ const inputs = {
     height: [height_input, 'value', number],
     verbose: [verbose_input, 'value', number],
     config: [jsonConfig_input, 'value', identity],
-    unicode: [useUnicode_input, 'checked', isTrue],
+    kbtype: [kbtype_input, 'selectedIndex', identity],
     bpp: [bpp_input, 'selectedIndex', parseInt],
     gdimpl: [gdimpl_input, 'selectedIndex', identity],
 };
