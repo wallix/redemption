@@ -196,51 +196,6 @@ public:
 };
 
 
-class FakeClientOutputGraphic : public ClientRemoteAppGraphicAPI
-{
-
-public:
-    FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
-
-    void draw(RDP::FrameMarker    const & /*cmd*/) override {}
-    void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
-    void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
-    void draw(RDPScrBlt           const & /*cmd*/, Rect /*clip*/) override {}
-    void draw(RDP::RDPMultiScrBlt const & /*cmd*/, Rect /*clip*/) override {}
-    void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
-    void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
-
-    void draw(RDPPatBlt           const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPOpaqueRect       const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPMultiOpaqueRect  const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPLineTo           const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPPolygonSC        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPPolygonCB        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPPolyline         const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPEllipseSC        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
-    void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
-    void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
-    void draw(RDPSetSurfaceCommand const & /*cmd*/) override { }
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override { }
-
-    void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}
-    void draw(const RDP::RAIL::WindowIcon & /*cmd*/) override {}
-    void draw(const RDP::RAIL::CachedIcon & /*cmd*/) override {}
-    void draw(const RDP::RAIL::DeletedWindow & /*cmd*/) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons & /*cmd*/) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*cmd*/) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override {}
-
-    void draw(RDPColCache   const & /*cmd*/) override {}
-    void draw(RDPBrushCache const & /*cmd*/) override {}
-
-    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
-};
-
-
 class FakeIODisk : public ClientIODiskAPI
 {
 

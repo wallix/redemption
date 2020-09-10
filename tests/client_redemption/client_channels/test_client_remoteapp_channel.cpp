@@ -41,10 +41,10 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     mod_channel.set_mod(&mod);
     ClientCallback callback(nullptr);
     callback.set_mod(&mod);
-    FakeClientOutputGraphic graph_io(nullptr, nullptr);
+    ClientRemoteAppGraphicAPI client_remote(nullptr, nullptr, 0, 0);
 
     ClientRemoteAppChannel channel(RDPVerbose::rail, &callback, &mod_channel);
-    channel.set_api(&graph_io);
+    channel.set_api(&client_remote);
 
     RDPRemoteAppConfig config;
 

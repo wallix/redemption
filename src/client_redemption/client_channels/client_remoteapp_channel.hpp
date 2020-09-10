@@ -44,7 +44,7 @@ namespace RDP
 }
 
 
-class ClientRemoteAppGraphicAPI : public gdi::GraphicApi
+class ClientRemoteAppGraphicAPI
 {
 protected:
     ClientCallback * controller;

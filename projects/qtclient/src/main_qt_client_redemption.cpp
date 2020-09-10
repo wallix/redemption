@@ -160,7 +160,7 @@ public:
     }
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
-        this->qt_graphic.set_pointer(cache_idx, cursor, mode);
+        this->qt_graphic.get_graphics().set_pointer(cache_idx, cursor, mode);
     }
 
     bool init_mod() override {
@@ -184,14 +184,14 @@ public:
 
     void begin_update() override {
         if ((this->config.connected || this->config.is_replaying)) {
-            this->qt_graphic.begin_update();
+            this->qt_graphic.get_graphics().begin_update();
         }
         ClientRedemption::begin_update();
     }
 
     void end_update() override {
         if ((this->config.connected || this->config.is_replaying)) {
-            this->qt_graphic.end_update();
+            this->qt_graphic.get_graphics().end_update();
         }
         ClientRedemption::end_update();
     }
@@ -220,97 +220,97 @@ public:
     using gdi::GraphicApi::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        this->qt_graphic.draw(bitmap_data, bmp);
+        this->qt_graphic.get_graphics().draw(bitmap_data, bmp);
         ClientRedemption::draw(bitmap_data, bmp);
     }
 
     void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPScrBlt & cmd, Rect clip) override {
-        this->qt_graphic.draw(cmd, clip);
+        this->qt_graphic.get_graphics().draw(cmd, clip);
         ClientRedemption::draw(cmd, clip);
     }
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        this->qt_graphic.draw(cmd, clip, bitmap);
+        this->qt_graphic.get_graphics().draw(cmd, clip, bitmap);
         ClientRedemption::draw(cmd, clip, bitmap);
     }
 
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx, bitmap);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx, bitmap);
         ClientRedemption::draw(cmd, clip, color_ctx, bitmap);
     }
 
     void draw(const RDPDestBlt & cmd, Rect clip) override {
-        this->qt_graphic.draw(cmd, clip);
+        this->qt_graphic.get_graphics().draw(cmd, clip);
         ClientRedemption::draw(cmd, clip);
     }
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
-        this->qt_graphic.draw(cmd, clip);
+        this->qt_graphic.get_graphics().draw(cmd, clip);
         ClientRedemption::draw(cmd, clip);
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
-        this->qt_graphic.draw(cmd, clip);
+        this->qt_graphic.get_graphics().draw(cmd, clip);
         ClientRedemption::draw(cmd, clip);
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx, gly_cache);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx, gly_cache);
         ClientRedemption::draw(cmd, clip, color_ctx, gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        this->qt_graphic.draw(cmd, clip, color_ctx);
+        this->qt_graphic.get_graphics().draw(cmd, clip, color_ctx);
         ClientRedemption::draw(cmd, clip, color_ctx);
     }
 
     void draw(const RDP::FrameMarker& order) override {
-        this->qt_graphic.draw(order);
+        this->qt_graphic.get_graphics().draw(order);
         ClientRedemption::draw(order);
     }
 
@@ -332,7 +332,7 @@ public:
         img.save(QString("/tmp/img%1.png").arg(frameNo), "PNG", 100);
 #endif
 
-        this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+        this->qt_graphic.draw_image(QPoint(cmd.destRect.x, cmd.destRect.y), img);
     }
 };
 

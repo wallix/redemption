@@ -32,7 +32,7 @@ namespace qtclient
 class Graphics : public gdi::GraphicApi
 {
 public:
-    Graphics() = default;
+    Graphics() {}
 
     void resize(int width, int height);
 
@@ -58,8 +58,24 @@ public:
     void draw(const RDPSetSurfaceCommand & cmd) override;
     void draw(const RDPSetSurfaceCommand & cmd, RDPSurfaceContent const & content) override;
 
-    QPixmap& getPixmap() noexcept { return this->cache; }
-    QPainter& getPainter() noexcept { return this->painter; }
+    void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
+    void draw(const RDP::RAIL::WindowIcon & ) override {}
+    void draw(const RDP::RAIL::CachedIcon & ) override {}
+    void draw(const RDP::RAIL::DeletedWindow & ) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
+
+    void set_pointer(uint16_t cache_idx, Pointer const& pointer, SetPointerMode mode) override
+    {
+        (void)cache_idx;
+        (void)pointer;
+        (void)mode;
+    }
+
+    QPixmap& get_pixmap() noexcept { return this->cache; }
+    QPainter& get_painter() noexcept { return this->painter; }
 
 private:
     QPixmap cache;
