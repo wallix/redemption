@@ -32,7 +32,7 @@
 
 class Font;
 
-class RDPDestBlt;
+class RDPDstBlt;
 class RDPMultiDstBlt;
 class RDPPatBlt;
 class RDPOpaqueRect;
@@ -264,7 +264,7 @@ struct GraphicApi : private noncopyable
     virtual void set_palette(BGRPalette   const & /*unused*/) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
-    virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
+    virtual void draw(RDPDstBlt          const & cmd, Rect clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
     virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
     virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
@@ -340,7 +340,7 @@ class NullGraphic : public GraphicApi
 public:
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
 
-    void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPDstBlt          const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPPatBlt           const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
     void draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}

@@ -61,7 +61,7 @@
 //                      0xAA = D (do nothing)
 //                      0xFF = WHITENESS
 
-class RDPDestBlt {
+class RDPDstBlt {
     public:
     Rect rect;
     uint8_t rop;
@@ -71,11 +71,11 @@ class RDPDestBlt {
         return RDP::DESTBLT;
     }
 
-    RDPDestBlt(const Rect r, uint8_t rop) :
+    RDPDstBlt(const Rect r, uint8_t rop) :
         rect(r), rop(rop)
         {}
 
-    bool operator==(const RDPDestBlt &other) const {
+    bool operator==(const RDPDstBlt &other) const {
         return  (this->rect == other.rect)
              && (this->rop == other.rop)
              ;
@@ -84,7 +84,7 @@ class RDPDestBlt {
     void emit(OutStream & stream,
               RDPOrderCommon & common,
               const RDPOrderCommon & oldcommon,
-              const RDPDestBlt & oldcmd) const
+              const RDPDstBlt & oldcmd) const
     {
         using namespace RDP;
         RDPPrimaryOrderHeader header(STANDARD, 0);

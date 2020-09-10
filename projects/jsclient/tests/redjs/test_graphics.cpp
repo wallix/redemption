@@ -27,7 +27,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
@@ -222,10 +222,10 @@ RED_JS_AUTO_TEST_CASE(
         "VkvAC74BharyJ87gAAAABJRU5ErkJggg=="_av);
 
 
-    // RDPDestBlt
+    // RDPDstBlt
     {
         // restore previous image
-        gd.draw(RDPDestBlt(screen, 0x55), screen);
+        gd.draw(RDPDstBlt(screen, 0x55), screen);
     }
     RED_CHECK(to_data_url(canvas) == "data:image/png;base64,"
         "iVBORw0KGgoAAAANSUhEUgAAAZAAAAEsCAIAAABi1XKVAAAABmJLR0QA/wD/AP+gvaeTA"

@@ -21,7 +21,7 @@
 #include "mod/internal/widget/module_host.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
@@ -282,7 +282,7 @@ struct WidgetModuleHost::Impl
 
 
 void WidgetModuleHost::draw(RDP::FrameMarker    const & cmd)  { Impl::draw_impl(*this, cmd); }
-void WidgetModuleHost::draw(RDPDestBlt          const & cmd, Rect clip)  { Impl::draw_impl(*this, cmd, clip); }
+void WidgetModuleHost::draw(RDPDstBlt          const & cmd, Rect clip)  { Impl::draw_impl(*this, cmd, clip); }
 void WidgetModuleHost::draw(RDPMultiDstBlt      const & cmd, Rect clip)  { Impl::draw_impl(*this, cmd, clip); }
 void WidgetModuleHost::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx)  { Impl::draw_impl(*this, cmd, clip, color_ctx); }
 void WidgetModuleHost::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx)  { Impl::draw_impl(*this, cmd, clip, color_ctx); }

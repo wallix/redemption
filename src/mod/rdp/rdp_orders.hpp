@@ -37,7 +37,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
@@ -78,7 +78,7 @@ class rdp_orders
     RDPMem3Blt         mem3blt;
     RDPOpaqueRect      opaquerect;
     RDPScrBlt          scrblt;
-    RDPDestBlt         destblt;
+    RDPDstBlt         destblt;
     RDPMultiDstBlt     multidstblt;
     RDPMultiOpaqueRect multiopaquerect;
     RDP::RDPMultiPatBlt multipatblt;
@@ -166,7 +166,7 @@ public:
         this->mem3blt         = RDPMem3Blt(0, Rect(), 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0);
         this->opaquerect      = RDPOpaqueRect(Rect(), RDPColor{});
         this->scrblt          = RDPScrBlt(Rect(), 0, 0, 0);
-        this->destblt         = RDPDestBlt(Rect(), 0);
+        this->destblt         = RDPDstBlt(Rect(), 0);
         this->multidstblt     = RDPMultiDstBlt();
         this->multiopaquerect = RDPMultiOpaqueRect();
         this->multipatblt     = RDP::RDPMultiPatBlt();

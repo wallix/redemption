@@ -21,7 +21,7 @@
 #pragma once
 
 
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
@@ -42,7 +42,7 @@
 
 struct StateChunk {
     RDPOrderCommon          common{RDP::PATBLT, Rect(0, 0, 1, 1)};
-    RDPDestBlt              destblt{Rect(), 0};
+    RDPDstBlt              destblt{Rect(), 0};
     RDPMultiDstBlt          multidstblt;
     RDPMultiOpaqueRect      multiopaquerect;
     RDP::RDPMultiPatBlt     multipatblt;

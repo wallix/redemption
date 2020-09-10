@@ -128,7 +128,7 @@ private:
         io_uint8(stream, sc.common.order);
         io_rect(stream, sc.common.clip);
 
-        // RDPDestBlt destblt;
+        // RDPDstBlt destblt;
         io_rect(stream, sc.destblt.rect);
         io_uint8(stream, sc.destblt.rop);
 

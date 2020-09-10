@@ -129,7 +129,7 @@ namespace
             {
                 if (!this->number_of_subrectangles_remain) {
                     // TODO: why are we sending the tiles that way
-                    // TODO: using MultiDestBlt should be better
+                    // TODO: using MultiDstBlt should be better
                     // TODO use MultiRect
                     update_lock<gdi::GraphicApi> lock(drawable);
                     this->draw_tile(rect, this->rre_raw.data(), drawable);

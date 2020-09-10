@@ -48,7 +48,7 @@ public:
     void draw(RDP::FrameMarker    const & cmd) override {
         this->drawable.draw(cmd);
     }
-    void draw(RDPDestBlt          const & cmd, Rect clip) override {
+    void draw(RDPDstBlt          const & cmd, Rect clip) override {
         this->drawable.draw(cmd, clip);
     }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {

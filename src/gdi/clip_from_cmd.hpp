@@ -23,7 +23,7 @@
 #include "utils/rect.hpp"
 
 class RDPScrBlt;
-class RDPDestBlt;
+class RDPDstBlt;
 class RDPPatBlt;
 class RDPMemBlt;
 class RDPMem3Blt;
@@ -50,7 +50,7 @@ class RDPPolyline;
 
 
 Rect clip_from_cmd(RDPScrBlt const & cmd);
-Rect clip_from_cmd(RDPDestBlt const & cmd);
+Rect clip_from_cmd(RDPDstBlt const & cmd);
 Rect clip_from_cmd(RDPPatBlt const & cmd);
 Rect clip_from_cmd(RDPMemBlt const & cmd);
 Rect clip_from_cmd(RDPMem3Blt const & cmd);

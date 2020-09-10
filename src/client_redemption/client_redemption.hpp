@@ -164,7 +164,7 @@ private:
     struct WRMGraphicStat {
 
         enum : uint8_t {
-            RDPDestBlt,
+            RDPDstBlt,
             RDPMultiDstBlt,
             RDPScrBlt,
             RDPMultiScrBlt,
@@ -188,7 +188,7 @@ private:
         static std::string get_field_name(uint8_t index) {
 
             switch (index) {
-                case RDPDestBlt:         return "RDPDestBlt         ";
+                case RDPDstBlt:         return "RDPDstBlt         ";
                 case RDPMultiDstBlt:     return "RDPMultiDstBlt     ";
                 case RDPScrBlt:          return "RDPScrBlt          ";
                 case RDPMultiScrBlt:     return "RDPMultiScrBlt     ";
@@ -1026,10 +1026,10 @@ public:
         }*/
     }
 
-    void draw(const RDPDestBlt & cmd, Rect clip) override {
+    void draw(const RDPDstBlt & cmd, Rect clip) override {
         if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPDestBlt, rect.cx * rect.cy);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPDstBlt, rect.cx * rect.cy);
         }
         this->draw_impl(with_log{}, cmd, clip);
     }

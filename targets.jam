@@ -1789,10 +1789,10 @@ test-run tests/core/RDP/orders/test_RDPOrdersCommon :
 :
   <covfile>src/core/RDP/orders/RDPOrdersCommon.hpp
 ;
-test-run tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt :
-  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp
+test-run tests/core/RDP/orders/test_RDPOrdersPrimaryDstBlt :
+  $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryDstBlt.cpp
 :
-  <covfile>src/core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp
+  <covfile>src/core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp
@@ -5921,7 +5921,7 @@ alias test_credssp : tests/core/RDP/nla/test_credssp ;
 alias test_nla : tests/core/RDP/nla/test_nla ;
 alias test_AlternateSecondaryWindowing : tests/core/RDP/orders/test_AlternateSecondaryWindowing ;
 alias test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon ;
-alias test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt ;
+alias test_RDPOrdersPrimaryDstBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDstBlt ;
 alias test_RDPOrdersPrimaryEllipseCB : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB ;
 alias test_RDPOrdersPrimaryEllipseSC : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC ;
 alias test_RDPOrdersPrimaryGlyphIndex : tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex ;
@@ -6257,7 +6257,7 @@ alias test_mppc_61.coverage : tests/core/RDP/mppc/test_mppc_61.coverage ;
 alias test_credssp.coverage : tests/core/RDP/nla/test_credssp.coverage ;
 alias test_AlternateSecondaryWindowing.coverage : tests/core/RDP/orders/test_AlternateSecondaryWindowing.coverage ;
 alias test_RDPOrdersCommon.coverage : tests/core/RDP/orders/test_RDPOrdersCommon.coverage ;
-alias test_RDPOrdersPrimaryDestBlt.coverage : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.coverage ;
+alias test_RDPOrdersPrimaryDstBlt.coverage : tests/core/RDP/orders/test_RDPOrdersPrimaryDstBlt.coverage ;
 alias test_RDPOrdersPrimaryEllipseCB.coverage : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.coverage ;
 alias test_RDPOrdersPrimaryEllipseSC.coverage : tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.coverage ;
 alias test_RDPOrdersPrimaryGlyphIndex.coverage : tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.coverage ;
@@ -6633,7 +6633,7 @@ alias tests/core/RDP/nla.norec :
 alias tests/core/RDP/orders.norec :
   tests/core/RDP/orders/test_AlternateSecondaryWindowing
   tests/core/RDP/orders/test_RDPOrdersCommon
-  tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt
+  tests/core/RDP/orders/test_RDPOrdersPrimaryDstBlt
   tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB
   tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC
   tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex

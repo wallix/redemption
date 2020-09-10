@@ -19,7 +19,7 @@
 */
 
 #include "gdi/clip_from_cmd.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
@@ -43,7 +43,7 @@
 
 
 Rect clip_from_cmd(RDPScrBlt const & cmd) { return cmd.rect; }
-Rect clip_from_cmd(RDPDestBlt const & cmd) { return cmd.rect; }
+Rect clip_from_cmd(RDPDstBlt const & cmd) { return cmd.rect; }
 Rect clip_from_cmd(RDPPatBlt const & cmd) { return cmd.rect; }
 Rect clip_from_cmd(RDPMemBlt const & cmd) { return cmd.rect; }
 Rect clip_from_cmd(RDPMem3Blt const & cmd) { return cmd.rect; }

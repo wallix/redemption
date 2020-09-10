@@ -249,7 +249,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
     RED_CHECK_IMG(gd, IMG_TEST_PATH "pat_blt.png");
 }
 
-RED_AUTO_TEST_CASE(TestDestBlt)
+RED_AUTO_TEST_CASE(TestDstBlt)
 {
     // Create a simple capture image and dump it to file
     uint16_t width = 640;

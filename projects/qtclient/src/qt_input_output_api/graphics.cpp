@@ -31,7 +31,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
@@ -504,7 +504,7 @@ void Graphics::draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, 
     }
 }
 
-void Graphics::draw(const RDPDestBlt & cmd, Rect clip)
+void Graphics::draw(const RDPDstBlt & cmd, Rect clip)
 {
     const auto rect = qrect(intersect(clip, this->cache).intersect(cmd.rect));
     drawDstBlt(this->painter, &rect, 1, cmd.rop);

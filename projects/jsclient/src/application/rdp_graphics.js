@@ -473,7 +473,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
             }
         },
 
-        drawDestBlt: function(x, y, w, h, rop) {
+        drawDstBlt: function(x, y, w, h, rop) {
             switch (rop) {
             case 0x00:
                 _ctx2d.fillStyle = "#000";
@@ -487,7 +487,7 @@ const newRdpCanvas = function(canvasElement, module, ropError) {
                 break;
 
             default:
-                unsupportedRop('DestBlt', rop);
+                unsupportedRop('DstBlt', rop);
                 break;
             }
         },

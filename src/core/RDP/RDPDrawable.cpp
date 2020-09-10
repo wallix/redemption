@@ -37,7 +37,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
@@ -205,7 +205,7 @@ void RDPDrawable::draw(const RDPScrBlt & cmd, Rect clip)
     this->last_update_index++;
 }
 
-void RDPDrawable::draw(const RDPDestBlt & cmd, Rect clip)
+void RDPDrawable::draw(const RDPDstBlt & cmd, Rect clip)
 {
     const Rect trect = intersect(this->drawable, clip, cmd.rect);
     this->drawable.destblt(trect, cmd.rop);

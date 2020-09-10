@@ -35,7 +35,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
@@ -141,7 +141,7 @@ namespace
         constexpr char const* draw_ellipse_sc = "drawEllipseCB";
         constexpr char const* draw_ellipse_cb = "drawEllipseSC";
         constexpr char const* draw_pat_blt = "drawPatBlt";
-        constexpr char const* draw_dest_blt = "drawDestBlt";
+        constexpr char const* draw_dest_blt = "drawDstBlt";
 
         constexpr char const* draw_image = "drawImage";
         constexpr char const* draw_memblt = "drawMemBlt";
@@ -296,9 +296,9 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     });
 }
 
-void Graphics::draw(const RDPDestBlt & cmd, Rect clip)
+void Graphics::draw(const RDPDstBlt & cmd, Rect clip)
 {
-    // LOG(LOG_INFO, "Graphics::RDPDestBlt");
+    // LOG(LOG_INFO, "Graphics::RDPDstBlt");
 
     const Rect trect = intersect(clip, cmd.rect);
     emval_call(this->callbacks, jsnames::draw_dest_blt,

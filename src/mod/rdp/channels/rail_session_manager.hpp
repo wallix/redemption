@@ -99,7 +99,7 @@ class RemoteProgramsSessionManager final
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
-    void draw(RDPDestBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPDstBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }

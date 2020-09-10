@@ -604,7 +604,7 @@ public:
 
     // GRAPHIC API
     void draw(RDP::FrameMarker    const & cmd) override { this->graphic_to_file.draw(cmd);}
-    void draw(RDPDestBlt          const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
+    void draw(RDPDstBlt          const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override {this->graphic_to_file.draw(cmd, clip);}
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         this->graphic_to_file.draw(cmd, clip, color_ctx);

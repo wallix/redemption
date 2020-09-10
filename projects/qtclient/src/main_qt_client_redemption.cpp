@@ -254,7 +254,7 @@ public:
         ClientRedemption::draw(cmd, clip, color_ctx, bitmap);
     }
 
-    void draw(const RDPDestBlt & cmd, Rect clip) override {
+    void draw(const RDPDstBlt & cmd, Rect clip) override {
         this->qt_graphic.get_graphics().draw(cmd, clip);
         ClientRedemption::draw(cmd, clip);
     }

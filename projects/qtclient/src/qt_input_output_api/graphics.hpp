@@ -43,7 +43,7 @@ public:
     void draw(const RDPScrBlt & cmd, Rect clip) override;
     void draw(const RDPMemBlt & cmd, Rect clip, Bitmap const& bmp) override;
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const& bmp) override;
-    void draw(const RDPDestBlt & cmd, Rect clip) override;
+    void draw(const RDPDstBlt & cmd, Rect clip) override;
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override;
     void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override;

@@ -317,7 +317,7 @@ public:
         }
     }
 
-    void draw(const RDPDestBlt & cmd, Rect clip) override {
+    void draw(const RDPDstBlt & cmd, Rect clip) override {
         this->reserve_order(21);
         RDPOrderCommon newcommon(RDP::DESTBLT, clip);
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.destblt);

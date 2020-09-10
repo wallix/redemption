@@ -131,7 +131,7 @@ public:
     void possible_active_window_change() override;
 
     void draw(RDP::FrameMarker    const & cmd) override;
-    void draw(RDPDestBlt          const & cmd, Rect clip) override;
+    void draw(RDPDstBlt          const & cmd, Rect clip) override;
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override;
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;

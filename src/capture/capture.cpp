@@ -1978,7 +1978,7 @@ void Capture::draw_impl(const Ts & ... args)
 }
 
 void Capture::draw(RDP::FrameMarker    const & cmd) { this->draw_impl(cmd); }
-void Capture::draw(RDPDestBlt          const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
+void Capture::draw(RDPDstBlt          const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
 void Capture::draw(RDPMultiDstBlt      const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
 void Capture::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
 void Capture::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }

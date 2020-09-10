@@ -23,10 +23,10 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryDstBlt.hpp"
 
 
-RED_AUTO_TEST_CASE(TestDestBlt)
+RED_AUTO_TEST_CASE(TestDstBlt)
 {
     using namespace RDP;
 
@@ -35,10 +35,10 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 
         // DESTBLT = 0, hence we won't have order change
         RDPOrderCommon state_common(0, Rect(311, 0, 800, 600));
-        RDPDestBlt state_destblt(Rect(), 0);
+        RDPDstBlt state_destblt(Rect(), 0);
 
         RDPOrderCommon newcommon(DESTBLT, Rect(311, 0, 800, 600));
-        RDPDestBlt(Rect(300, 400, 50, 60), 0xFF).emit(out_stream, newcommon, state_common, state_destblt);
+        RDPDstBlt(Rect(300, 400, 50, 60), 0xFF).emit(out_stream, newcommon, state_common, state_destblt);
 
         uint8_t datas[11] = {
             STANDARD | BOUNDS | LASTBOUNDS,
@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 
         RED_CHECK_EQUAL(static_cast<uint8_t>(DESTBLT), common_cmd.order);
 
-        RDPDestBlt cmd(Rect(), 0);
+        RDPDstBlt cmd(Rect(), 0);
 
         cmd.receive(in_stream, header);
 
