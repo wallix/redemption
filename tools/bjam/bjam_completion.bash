@@ -7,7 +7,7 @@ _bjam_completion () {
     H
     /_src$/!p
   }'\'' Jamroot;
-  sed -n -E '\''/^(exe(-js)?|alias|lib|test-run) /{
+  sed -n -E '\''/^(test-run|exe(-js)?|alias|lib) /{
     /\.coverage /d
     s/^[^ ]+\s+([-_a-zA-Z0-9\/.]+) .*/\1/p
   }'\'' targets.jam 2>/dev/null)' -- "$cur" ))

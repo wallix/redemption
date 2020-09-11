@@ -92,7 +92,7 @@ form {
             <label for="gdimpl">Keyboard type: <select name="kbtype" id="kbtype">
                 <option value="unicode">Unicode</option>
                 <option value="scancode" selected="selected">KeyboardEvent.code</option>
-                <option value="key">KeyboardEvent.key</option>
+                <option value="key">KeyboardEvent.key to Scancode</option>
             </select>
         </fieldset>
         <p>
@@ -138,6 +138,7 @@ form {
 
 <script src="js_client.js"></script>
 <script src="to_scancode.js"></script>
+<script src="reverse_scancode.js"></script>
 <script src="rdp_graphics.js"></script>
 <script src="out_stream.js"></script>
 <script src="clipboard.js"></script>
@@ -214,6 +215,46 @@ const gdImplTable = {
     webgl2:newRdpGraphicsGL2,
 };
 
+const ModFlag = Object.freeze({
+    NoMod: 0x10000 << 0,
+    Shift: 0x10000 << 1,
+    AltGr: 0x10000 << 2,
+    Ctrl: 0x10000 << 3,
+    ShiftAltGr: 0x10000 << 4,
+    CapsLock: 0x10000 << 5,
+    ShiftCapsLock: 0x10000 << 6,
+    AltGrCapsLock: 0x10000 << 7,
+    ShiftAltGrCapsLock: 0x10000 << 8,
+});
+
+const ControlScancode = Object.freeze({
+    ShiftLeft: 0x002A,
+    ShiftRight: 0x0036,
+});
+
+// same name as KeyboardEvent.code
+const CodeControlMask = Object.freeze({
+    ShiftLeft: 1 << 0,
+    ShiftRight: 1 << 1,
+    CtrlLeft: 1 << 2,
+    CtrlRight: 1 << 3,
+    OSLeft: 1 << 4,
+    OSRight: 1 << 5,
+    AltLeft: 1 << 6,
+    AltRight: 1 << 7,
+});
+
+// same name as KeyboardEvent.key
+const KeyControlMap = Object.freeze({
+    //      mask, scancode (left key)
+    Shift: [1 << 0, 0x2A],
+    Ctrl: [1 << 1, 0x1D],
+    OS: [1 << 2, 0x15B],
+    // Win: [1 << 2, 0x15B], // (OS) on IE and maybe Edge
+    Alt: [1 << 3, 0x38],
+    AltGraph: [1 << 4, 0x138],
+});
+
 function run(openCb, closeCb)
 {
     console.info('Graphics implementation: ' + gdimpl_input.value);
@@ -246,6 +287,8 @@ function run(openCb, closeCb)
         // - opera 11+
         // - safari 10+
         // Check support with `new KeyboardEvent(0).code !== undefined`
+
+        // TODO support of special configuration as Esc <-> CapsLock (use key id code.length > 1 ?)
 
         const scancode = keycodeToScancode(evt.code);
         // console.log(flag, evt.key, evt.code, scancode, evt.isComposing);
@@ -308,9 +351,120 @@ function run(openCb, closeCb)
         }
     }
 
+    let modMask = ModFlag.NoMod;
+    let controlMask = 0;
+    let layoutName = "fr-FR";
+    // let layoutName = "en-US.international";
+    let layout;
+    for (let i = 0; i < layouts.length; ++i) {
+        if (layouts[i].name === layoutName) {
+            layout = layouts[i];
+        }
+    }
+    let hasShiftLeft = false;
+    let hasShiftRight = false;
     function unicodeToScancodeKeyEvent(flag, evt)
     {
-        console.log('reverse scancode');
+        console.log('reverse scancode', flag, evt.key, evt.code);
+
+        const key = evt.key;
+        if (key.length === 1) {
+            console.log('key.len == 1');
+            const datas = layout.keymap[key];
+            if (datas) {
+                console.log(`data: ${datas}  modMask: ${modMask.toString(16)}`);
+                const len = datas.length;
+                for (let i = 0; i < len; ++i) {
+                    const data = datas[i];
+                    console.log(`data: ${data.toString(16)}`);
+                    if (data & modMask) {
+                        console.log('match mod');
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                        rdpclient.writeScancodeEvent(data & 0xff | flag);
+                        sendData();
+                        return;
+                    }
+                }
+
+                const data = datas[0];
+                const mod = data & ~0xffff;
+                if (mod & ModFlag.NoMod) {
+                    console.log('& nomod');
+                    for (const k in KeyControlMap) {
+                        console.log(k)
+                        if (controlMask & KeyControlMap[k][0]) {
+                            console.log('<reverse')
+                            rdpclient.writeScancodeEvent(KbdFlags.Release | KeyControlMap[k][1]);
+                        }
+                    }
+                    rdpclient.writeScancodeEvent(data & 0xff | flag);
+                    for (const k in KeyControlMap) {
+                        console.log(k)
+                        if (controlMask & KeyControlMap[k][0]) {
+                            console.log('<reverse')
+                            rdpclient.writeScancodeEvent(KeyControlMap[k][1]);
+                        }
+                    }
+                    sendData();
+                }
+                else if (mod & ModFlag.Shift) {
+                    console.log('& shift');
+                    for (const k in KeyControlMap) {
+                        console.log(k)
+                        if (controlMask & ~KeyControlMap.Shift[0] & KeyControlMap[k][0]) {
+                            console.log('<reverse')
+                            rdpclient.writeScancodeEvent(KbdFlags.Release | KeyControlMap[k][1]);
+                        }
+                    }
+                    rdpclient.writeScancodeEvent(KeyControlMap.Shift[1] | flag);
+                    rdpclient.writeScancodeEvent(data & 0xff | flag);
+                    rdpclient.writeScancodeEvent(KeyControlMap.Shift[1] | KbdFlags.Release);
+                    for (const k in KeyControlMap) {
+                        console.log(k)
+                        if (controlMask & KeyControlMap[k][0]) {
+                            console.log('<reverse')
+                            rdpclient.writeScancodeEvent(KeyControlMap[k][1]);
+                        }
+                    }
+                    sendData();
+                }
+            }
+            else {
+                const deadmap = layout.deadmaps[key];
+                console.log(`deadmap: ${deadmap}`);
+                if (deadmap) {
+                    rdpclient.writeScancodeEvent(deadmap.scancode | flag);
+                }
+            }
+        }
+        else {
+            const control = KeyControlMap[key];
+            let scancode;
+            switch (key) {
+                case 'Shift':
+                    if (flag) {
+                        modMask = 0;
+                        controlMask &= ~KeyControlMap.Shift[0];
+                    }
+                    else {
+                        modMask = ModFlag.Shift;
+                        controlMask |= KeyControlMap.Shift[0];
+                    }
+                    scancode = 0x2A;
+                    break;
+                // TODO etc
+                // on window Ctrl+Alt = AltGr
+            }
+            console.log(`controlMask: ${controlMask}`);
+
+            if (scancode) {
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+                rdpclient.writeScancodeEvent(scancode | flag);
+                sendData();
+            }
+        }
     }
 
     function sendMouseEvent(evt, flags)
@@ -321,6 +475,7 @@ function run(openCb, closeCb)
         sendData();
     }
 
+    //TODO rename KbdFlags.Down to KbdFlags.Press and add KbdFlags.Down = 0
     const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
     const onKeyDown = (evt) => { onKeyEvent(0, evt); };
     const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
@@ -357,7 +512,8 @@ function run(openCb, closeCb)
     const docEvents = {
         keyup: onKeyUp,
         keydown: onKeyDown,
-        keypress: onKeyPress,
+        // TODO re-enable ?
+        // keypress: onKeyPress,
     };
 
     const canvasEvents = {
@@ -365,6 +521,7 @@ function run(openCb, closeCb)
         mousedown: onMouseDown,
         mouseup: onMouseUp,
         wheel: onMouseWheel,
+        // TODO re-enable ?
         // contextmenu: event => {
         //     event.preventDefault();
         //     event.stopImmediatePropagation();

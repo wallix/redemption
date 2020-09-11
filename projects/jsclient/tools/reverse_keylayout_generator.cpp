@@ -1,8 +1,13 @@
 #include <iostream>
+#include <bitset>
 #include <limits>
+#include <algorithm>
+#include <vector>
 #include <array>
 #include <cctype>
+#include <cassert>
 #include "../src/keyboard/keylayouts.hpp"
+
 
 namespace
 {
@@ -28,7 +33,7 @@ static const Keylayout* keylayouts[] = {
     &keylayout_x0001043b, &keylayout_x0001080c, &keylayout_x0001083b, &keylayout_x00011009,
     &keylayout_x00011809, &keylayout_x00020405, &keylayout_x00020408, &keylayout_x00020409,
     &keylayout_x0002083b, &keylayout_x00030402, &keylayout_x00030408, &keylayout_x00030409,
-    &keylayout_x00040408, &keylayout_x00040409, &keylayout_x00050408, &keylayout_x00060408
+    &keylayout_x00040408, &keylayout_x00040409, &keylayout_x00050408, &keylayout_x00060408,
 };
 
 template<class T>
@@ -155,10 +160,51 @@ enum class Mods : int8_t
     CTRL_MOD     = 0x08,
 };
 
-Mods operator|(Mods a, Mods b)
+inline constexpr std::size_t max_regular_mods = 9;
+
+constexpr Mods operator|(Mods a, Mods b)
 {
     return Mods(int(a) | int(b));
 }
+
+inline constexpr const char * modnames[]{
+    "   |",
+    " N |",
+    "   |",
+    " S |",
+    "   |",
+    " A |",
+    "   |",
+    " C |",
+    "     |",
+    " S+A |",
+    "   |",
+    " L |",
+    "     |",
+    " L+S |",
+    "     |",
+    " L+A |",
+    "      ",
+    " L+S+A",
+};
+
+struct ScancodeMods
+{
+    uint8_t scancode;
+    uint16_t mod_flags;
+
+    friend std::ostream& operator<<(std::ostream& out, ScancodeMods const& x)
+    {
+        out << "0x";
+        Hex16{x.mod_flags}.push(out);
+        Hex16{x.scancode}.push(out);
+        out << " /*";
+        for (std::size_t i = 0; i < max_regular_mods; ++i) {
+            out << modnames[i*2 + ((x.mod_flags >> i) & 1)];
+        }
+        return out << "*/";
+    }
+};
 
 }
 
@@ -177,13 +223,20 @@ int main()
             << ", keymap: {\n"
         ;
 
-        struct KeyCode
+        auto is_numpad = [](uint8_t scancode){
+            return 0x47 <= scancode && scancode <= 0x53;
+        };
+
+        struct KeyInfo
         {
             uint8_t scancode;
-            uint16_t mod_flags;
+            Mods mods;
         };
+
+        using Keys = std::vector<KeyInfo>;
+
         // index is a unicode character
-        std::array<KeyCode, std::numeric_limits<uint16_t>::max()> keycodes {};
+        std::array<Keys, std::numeric_limits<uint16_t>::max()> keycodes {};
 
         struct Layout
         {
@@ -203,53 +256,48 @@ int main()
         }) {
             uint8_t scancode = 0;
             for (uint16_t ucs : layout.klayout) {
-                if (ucs) {
-                    keycodes[ucs].scancode = scancode;
-                    keycodes[ucs].mod_flags |= (1u << int(layout.mods));
+                if (ucs && !is_numpad(scancode)) {
+                    keycodes[ucs].push_back(KeyInfo{scancode, layout.mods});
                 }
                 ++scancode;
             }
         }
 
-        const char * modnames[]{
-            "       |",
-            " NoMod |",
-            "   |",
-            " S |",
-            "   |",
-            " A |",
-            "   |",
-            " C |",
-            "     |",
-            " S+A |",
-            "   |",
-            " L |",
-            "     |",
-            " L+S |",
-            "     |",
-            " L+A |",
-            "       |",
-            " L+S+A |",
+        auto for_each_key = [](Keys const& keys, auto f){
+            assert(!keys.empty());
+            auto first = keys.begin();
+            auto last = keys.end();
+            uint8_t scancode = first->scancode;
+            unsigned mod_flags = 1u << int(first->mods);
+            while (++first != last) {
+                if (first->scancode != scancode) {
+                    f(ScancodeMods{scancode, uint16_t(mod_flags)});
+                    scancode = first->scancode;
+                    mod_flags = 0;
+                }
+                mod_flags |= 1u << int(first->mods);
+            }
+            f(ScancodeMods{scancode, uint16_t(mod_flags)});
         };
+
         uint16_t ucs = 0;
         fichier <<
             "    // scancode = x & 0xff\n"
             "    // modMask = x & (0x10000 << mod)\n"
-            "    //                  "
-            "                      (S)hift, (C)trl, (A)ltGr, Caps(L)ock\n"
-            "    //                  "
-            "           mod:  0  | 1 | 2 | 3 |  4  | 5 |  6  |  7  |   8   |\n"
+            "    //            (N)oMod, (S)hift, (C)trl, (A)ltGr, Caps(L)ock\n"
+            "    //           mod: 0 | 1 | 2 | 3 |  4  | 5 |  6  |  7  |   8\n"
             ;
-        for (KeyCode k : keycodes) {
-            if (k.scancode) {
-                fichier << "    " << UnicodeCJs{ucs} << ": 0x";
-                Hex16{k.mod_flags}.push(fichier);
-                Hex16{k.scancode}.push(fichier);
-                fichier << ", //";
-                for (int i = 0; i < 9; ++i) {
-                    fichier << modnames[i*2 + ((k.mod_flags >> i) & 1)];
-                }
-                fichier << "\n";
+        for (Keys& keys : keycodes) {
+            if (!keys.empty()) {
+                std::sort(keys.begin(), keys.end(), [](KeyInfo& a, KeyInfo& b){
+                    return a.scancode < b.scancode;
+                });
+
+                fichier << "    " << UnicodeCJs{ucs} << ": [\n";
+                for_each_key(keys, [&](ScancodeMods scancode_mods){
+                    fichier << "        " << scancode_mods << ",\n";
+                });
+                fichier << "    ],\n";
             }
             ++ucs;
         }
@@ -261,10 +309,13 @@ int main()
             for (auto const& dkk : view(dkey.secondKeys, dkey.nbSecondKeys)) {
                 fichier
                     << "\n    " << UnicodeCJs{dkk.modifiedKey} << ": ["
-                    << Hex8{dkey.extendedKeyCode} << ", "
-                    << Hex8{keycodes[dkk.secondKey].scancode}
-                    << "], //" << UnicodeC{dkk.secondKey}
+                    << Hex8{dkey.extendedKeyCode} << ", [\n        // "
+                    << UnicodeC{dkk.secondKey} << "\n"
                 ;
+                for_each_key(keycodes[dkk.secondKey], [&](ScancodeMods scancode_mods){
+                    fichier << "        " << scancode_mods << ",\n";
+                });
+                fichier << "    ]],\n";
             }
         }
 
@@ -278,10 +329,14 @@ int main()
             ;
             for (auto const& dkk : view(dkey.secondKeys, dkey.nbSecondKeys)) {
                 fichier
-                    << "\n        " << UnicodeCJs{dkk.secondKey} << ": "
-                    << Hex8{keycodes[dkk.secondKey].scancode} << ", // "
+                    << "\n        " << UnicodeCJs{dkk.secondKey} << ": [ // "
                     << UnicodeC{dkk.modifiedKey} << "  " << Hex16{dkk.modifiedKey}
+                    << "\n"
                 ;
+                for_each_key(keycodes[dkk.secondKey], [&](ScancodeMods scancode_mods){
+                    fichier << "            " << scancode_mods << ",\n";
+                });
+                fichier << "        ],";
             }
             fichier << "\n    },\n";
         }
