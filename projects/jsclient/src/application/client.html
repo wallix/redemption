@@ -89,10 +89,10 @@ form {
             <legend>Others</legend>
             <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
             <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
-            <label for="gdimpl">Keyboard type: <select name="kbtype" id="kbtype">
-                <option value="unicode">Unicode</option>
-                <option value="scancode" selected="selected">KeyboardEvent.code</option>
-                <option value="key">KeyboardEvent.key to Scancode</option>
+            <label for="kbtype">Keyboard type: <select name="kbtype" id="kbtype">
+                <option value="unicode">Unicode (KeyboardEvent.key)</option>
+                <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
+                <option value="unicodeToScancode">UnicodeToScancode (KeyboardEvent.key)</option>
             </select>
         </fieldset>
         <p>
@@ -227,32 +227,15 @@ const ModFlag = Object.freeze({
     ShiftAltGrCapsLock: 0x10000 << 8,
 });
 
-const ControlScancode = Object.freeze({
-    ShiftLeft: 0x002A,
-    ShiftRight: 0x0036,
-});
-
-// same name as KeyboardEvent.code
-const CodeControlMask = Object.freeze({
-    ShiftLeft: 1 << 0,
-    ShiftRight: 1 << 1,
-    CtrlLeft: 1 << 2,
-    CtrlRight: 1 << 3,
-    OSLeft: 1 << 4,
-    OSRight: 1 << 5,
-    AltLeft: 1 << 6,
-    AltRight: 1 << 7,
-});
-
 // same name as KeyboardEvent.key
 const KeyControlMap = Object.freeze({
     //      mask, scancode (left key)
-    Shift: [1 << 0, 0x2A],
-    Ctrl: [1 << 1, 0x1D],
-    OS: [1 << 2, 0x15B],
+    Shift: [ModFlag.Shift, 0x2A],
+    Ctrl: [ModFlag.Ctrl, 0x1D],
+    OS: [0x10000 << 9, 0x15B],
     // Win: [1 << 2, 0x15B], // (OS) on IE and maybe Edge
-    Alt: [1 << 3, 0x38],
-    AltGraph: [1 << 4, 0x138],
+    Alt: [0x10000 << 10, 0x38],
+    AltGraph: [ModFlag.AltGr, 0x138],
 });
 
 function run(openCb, closeCb)
@@ -352,7 +335,7 @@ function run(openCb, closeCb)
     }
 
     let modMask = ModFlag.NoMod;
-    let controlMask = 0;
+    let controlMask = ModFlag.NoMod;
     let layoutName = "fr-FR";
     // let layoutName = "en-US.international";
     let layout;
@@ -363,21 +346,75 @@ function run(openCb, closeCb)
     }
     let hasShiftLeft = false;
     let hasShiftRight = false;
+    let isDead = false;
+
+    function syncScancode(controlMask, scancodeFlag)
+    {
+        for (const k in KeyControlMap) {
+            console.log(k)
+            if (controlMask & KeyControlMap[k][0]) {
+                console.log('sync', KeyControlMap[k][0], scancodeFlag)
+                rdpclient.writeScancodeEvent(scancodeFlag | KeyControlMap[k][1]);
+            }
+        }
+    }
+
+    function emulateKey(controlMask, scancodes)
+    {
+        syncScancode(controlMask, KbdFlags.Release);
+        for (let i = 0; i < scancodes.length; ++i) {
+            rdpclient.writeScancodeEvent(scancodes[i]);
+        }
+        syncScancode(controlMask, 0);
+        sendData();
+    }
+
     function unicodeToScancodeKeyEvent(flag, evt)
     {
         console.log('reverse scancode', flag, evt.key, evt.code);
 
         const key = evt.key;
+        if (key == 'Space') {
+            key = ' ';
+        }
+
+        if (isDead) {
+            if (flag) return;
+            console.log('isdead')
+            isDead = false;
+            const codes = layout.deadmap[key];
+            console.log(codes);
+            if (codes) {
+                const datas = codes[1];
+                console.log(`data: ${datas}  controlMask: 0x${controlMask.toString(16)}`);
+                const len = datas.length;
+                for (let i = 0; i < len; ++i) {
+                    const data = datas[i];
+                    console.log(`data: 0x${data.toString(16)}`);
+                    if (data & controlMask) {
+                        console.log('match mod');
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                        rdpclient.writeScancodeEvent(codes[0]);
+                        rdpclient.writeScancodeEvent(data & 0xff);
+                        sendData();
+                        return;
+                    }
+                }
+            }
+            return ;
+        }
+
         if (key.length === 1) {
             console.log('key.len == 1');
             const datas = layout.keymap[key];
             if (datas) {
-                console.log(`data: ${datas}  modMask: ${modMask.toString(16)}`);
+                console.log(`data: ${datas}  controlMask: 0x${controlMask.toString(16)}`);
                 const len = datas.length;
                 for (let i = 0; i < len; ++i) {
                     const data = datas[i];
-                    console.log(`data: ${data.toString(16)}`);
-                    if (data & modMask) {
+                    console.log(`data: 0x${data.toString(16)}`);
+                    if (data & controlMask) {
                         console.log('match mod');
                         evt.preventDefault();
                         evt.stopImmediatePropagation();
@@ -387,54 +424,40 @@ function run(openCb, closeCb)
                     }
                 }
 
+                // TODO don't remove ctrl
                 const data = datas[0];
                 const mod = data & ~0xffff;
                 if (mod & ModFlag.NoMod) {
                     console.log('& nomod');
-                    for (const k in KeyControlMap) {
-                        console.log(k)
-                        if (controlMask & KeyControlMap[k][0]) {
-                            console.log('<reverse')
-                            rdpclient.writeScancodeEvent(KbdFlags.Release | KeyControlMap[k][1]);
-                        }
-                    }
-                    rdpclient.writeScancodeEvent(data & 0xff | flag);
-                    for (const k in KeyControlMap) {
-                        console.log(k)
-                        if (controlMask & KeyControlMap[k][0]) {
-                            console.log('<reverse')
-                            rdpclient.writeScancodeEvent(KeyControlMap[k][1]);
-                        }
-                    }
-                    sendData();
+                    emulateKey(controlMask, [
+                        data & 0xff | flag
+                    ]);
                 }
                 else if (mod & ModFlag.Shift) {
                     console.log('& shift');
-                    for (const k in KeyControlMap) {
-                        console.log(k)
-                        if (controlMask & ~KeyControlMap.Shift[0] & KeyControlMap[k][0]) {
-                            console.log('<reverse')
-                            rdpclient.writeScancodeEvent(KbdFlags.Release | KeyControlMap[k][1]);
-                        }
-                    }
-                    rdpclient.writeScancodeEvent(KeyControlMap.Shift[1] | flag);
-                    rdpclient.writeScancodeEvent(data & 0xff | flag);
-                    rdpclient.writeScancodeEvent(KeyControlMap.Shift[1] | KbdFlags.Release);
-                    for (const k in KeyControlMap) {
-                        console.log(k)
-                        if (controlMask & KeyControlMap[k][0]) {
-                            console.log('<reverse')
-                            rdpclient.writeScancodeEvent(KeyControlMap[k][1]);
-                        }
-                    }
-                    sendData();
+                    emulateKey(controlMask & ~KeyControlMap.Shift[0], [
+                        KeyControlMap.Shift[1],
+                        data & 0xff | flag,
+                        KeyControlMap.Shift[1] | KbdFlags.Release,
+                    ]);
                 }
-            }
-            else {
-                const deadmap = layout.deadmaps[key];
-                console.log(`deadmap: ${deadmap}`);
-                if (deadmap) {
-                    rdpclient.writeScancodeEvent(deadmap.scancode | flag);
+                else if (mod & ModFlag.AltGr) {
+                    console.log('& altgr');
+                    emulateKey(controlMask & ~KeyControlMap.AltGraph[0], [
+                        KeyControlMap.AltGraph[1],
+                        data & 0xff | flag,
+                        KeyControlMap.AltGraph[1] | KbdFlags.Release,
+                    ]);
+                }
+                else if (mod & ModFlag.AltGrShift) {
+                    console.log('& altgr shift');
+                    emulateKey(controlMask & ~(KeyControlMap.AltGraph[0] | KeyControlMap.Shift[0]), [
+                        KeyControlMap.Shift[1],
+                        KeyControlMap.AltGraph[1],
+                        data & 0xff | flag,
+                        KeyControlMap.AltGraph[1] | KbdFlags.Release,
+                        KeyControlMap.Shift[1] | KbdFlags.Release,
+                    ]);
                 }
             }
         }
@@ -442,28 +465,99 @@ function run(openCb, closeCb)
             const control = KeyControlMap[key];
             let scancode;
             switch (key) {
+                case 'Dead': {
+                    isDead = true;
+                    return ;
+                }
+
                 case 'Shift':
                     if (flag) {
-                        modMask = 0;
+                        modMask &= ~KeyControlMap.Shift[0];
                         controlMask &= ~KeyControlMap.Shift[0];
                     }
                     else {
-                        modMask = ModFlag.Shift;
+                        modMask |= KeyControlMap.Shift[0];
                         controlMask |= KeyControlMap.Shift[0];
                     }
                     scancode = 0x2A;
                     break;
-                // TODO etc
-                // on window Ctrl+Alt = AltGr
-            }
-            console.log(`controlMask: ${controlMask}`);
+                case 'Ctrl':
+                    if (flag) {
+                        if (((modMask & (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) == (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0]))
+                         && !(modMask & KeyControlMap.AltGraph[0])) {
+                            controlMask &= ~KeyControlMap.AltGraph[0];
+                        }
+                        modMask &= ~KeyControlMap.Ctrl[0];
+                        controlMask &= ~KeyControlMap.Ctrl[0];
+                    }
+                    else {
+                        modMask |= KeyControlMap.Ctrl[0];
+                        controlMask |= KeyControlMap.Ctrl[0];
+                        if (((modMask & (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) == (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) ) {
+                            controlMask |= KeyControlMap.AltGraph[0];
+                        }
+                    }
+                    scancode = 0x1D;
+                    break;
+                case 'Alt':
+                    if (flag) {
+                        if (((modMask & (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) == (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0]))
+                         && !(modMask & KeyControlMap.AltGraph[0])) {
+                            controlMask &= ~KeyControlMap.AltGraph[0];
+                        }
+                        modMask &= ~KeyControlMap.Alt[0];
+                        controlMask &= ~KeyControlMap.Alt[0];
+                    }
+                    else {
+                        modMask |= KeyControlMap.Alt[0];
+                        controlMask |= KeyControlMap.Alt[0];
+                        if (((modMask & (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) == (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) ) {
+                            controlMask |= KeyControlMap.AltGraph[0];
+                        }
+                    }
+                    scancode = 0x38;
+                    break;
+                case 'AltGraph':
+                    if (flag) {
+                        modMask &= ~KeyControlMap.AltGraph[0];
+                        if (((modMask & (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0]))) != (KeyControlMap.Ctrl[0] | KeyControlMap.Alt[0])) {
+                            controlMask &= ~KeyControlMap.AltGraph[0];
+                        }
+                    }
+                    else {
+                        modMask |= KeyControlMap.AltGraph[0];
+                        controlMask |= KeyControlMap.AltGraph[0];
+                    }
+                    scancode = 0x138;
+                    break;
+                case 'OS':
+                    if (flag) {
+                        modMask &= ~KeyControlMap.OS[0];
+                        controlMask &= ~KeyControlMap.OS[0];
+                    }
+                    else {
+                        modMask |= KeyControlMap.OS[0];
+                        controlMask |= KeyControlMap.OS[0];
+                    }
+                    scancode = 0x15B;
+                    break;
 
-            if (scancode) {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
-                rdpclient.writeScancodeEvent(scancode | flag);
-                sendData();
+                default:
+                    return;
             }
+
+            modMask &= ~ModFlag.NoMod;
+            controlMask &= ~ModFlag.NoMod;
+            if (!modMask) {
+                modMask |= ModFlag.NoMod;
+                controlMask |= ModFlag.NoMod;
+            }
+            console.log(`>controlMask: 0x${controlMask.toString(16)}  modMask: 0x${modMask.toString(16)}`);
+
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+            rdpclient.writeScancodeEvent(scancode | flag);
+            sendData();
         }
     }
 
