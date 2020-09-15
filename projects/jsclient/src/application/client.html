@@ -253,23 +253,6 @@ function run(openCb, closeCb)
         const scancode = keycodeToScancode(evt.code);
         // console.log(flag, evt.key, evt.code, scancode, evt.isComposing);
         if (scancode) {
-            // switch (scancode) {
-            // case 0x1d: // control left
-            // case 0x11d: // control right
-            //     console.log('control', flag !== KbdFlags.Release);
-            //     break;
-            // case 0x38: // alt left
-            // case 0x138: // alt right
-            //     console.log('alt', flag !== KbdFlags.Release);
-            //     break;
-            // case 0x2a: // shift left
-            // case 0x36: // shift right
-            //     console.log('shift', flag !== KbdFlags.Release);
-            //     break;
-            // case 0x15b: // win
-            //     console.log('meta', flag !== KbdFlags.Release);
-            //     break;
-            // }
             evt.preventDefault();
             evt.stopImmediatePropagation();
             rdpclient.writeScancodeEvent(scancode | flag);
@@ -317,16 +300,15 @@ function run(openCb, closeCb)
         const NoMod = 0x10000 << 0;
         const ShiftMod = 0x10000 << 1;
         const AltGrMod = 0x10000 << 2;
-        const CtrlMod = 0x10000 << 3;
-        const ShiftAltGrMod = 0x10000 << 4;
-        // const CapsLockMod = 0x10000 << 5;
-        // const ShiftCapsLockMod = 0x10000 << 6;
-        // const AltGrCapsLockMod = 0x10000 << 7;
-        // const ShiftAltGrCapsLockMod = 0x10000 << 8;
+        const ShiftAltGrMod = 0x10000 << 3;
+        // const CapsLockMod = 0x10000 << 4;
+        // const ShiftCapsLockMod = 0x10000 << 5;
+        // const AltGrCapsLockMod = 0x10000 << 6;
+        // const ShiftAltGrCapsLockMod = 0x10000 << 7;
+        const CtrlMod = 0x10000 << 8;
 
         // extra flags
-        const MetaMod = 0x10000 << 9;
-        const AltMod = 0x10000 << 10;
+        const AltMod = 0x10000 << 9;
 
         // Control scancodes
         const ShiftScancode = 0x2A;
@@ -386,12 +368,19 @@ function run(openCb, closeCb)
             [ShiftMod | AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod | CtrlMod,
         };
 
-        const controlMaskMap = windowsControlMaskMap;
         const controlMaskMapMask = ShiftMod | AltGrMod | CtrlMod | AltMod;
+
+        const windowsCtrlFilterMask = AltGrMod | AltMod;
+        const linuxCtrlFilterMask = 0;
+
+        // on window, alt+ctrl = altgr
+        let osType = 'windows';
+        let ctrlFilterMask = windowsCtrlFilterMask;
+        let controlMaskMap = windowsControlMaskMap;
 
         // current with combination mask (ShiftAltGrMod)
         let modMask = NoMod;
-        // virtual mask without combination ((CtrlMod | ShiftMod | AltGrMod | MetaMod) or NoMod)
+        // virtual mask without combination ((CtrlMod | ShiftMod | AltGrMod) or NoMod)
         // Note: CtrlMod+AltMod => AltGrMod
         let controlMask = NoMod;
         let isDeadKey = false;
@@ -399,7 +388,6 @@ function run(openCb, closeCb)
         const syncControlScancode = function(scancodeFlag, modMask, accu) {
             if (modMask & ShiftMod) accu.push(scancodeFlag | ShiftScancode);
             if (modMask & CtrlMod)  accu.push(scancodeFlag | CtrlScancode);
-            if (modMask & MetaMod)  accu.push(scancodeFlag | MetaScancode);
             if (modMask & AltMod)   accu.push(scancodeFlag | AltScancode);
             if (modMask & AltGrMod) accu.push(scancodeFlag | AltGrScancode);
             return accu;
@@ -425,7 +413,7 @@ function run(openCb, closeCb)
 
         const convert = function(flag, evt) {
             const key = evt.key;
-            if (key == 'Space') {
+            if (key === 'Space') {
                 key = ' ';
             }
 
@@ -452,29 +440,28 @@ function run(openCb, closeCb)
                         return [scancode | flag];
                     }
 
-                    // TODO don't remove ctrl
                     const data = datas[0];
                     if (data & NoMod) {
-                        return emulateKey(controlMask,
+                        return emulateKey((modMask & ctrlFilterMask) ? modMask : (modMask & ~CtrlMod),
                             data & 0xff | flag
                         );
                     }
                     else if (data & ShiftMod) {
-                        return emulateKey(controlMask & ~ShiftMod,
+                        return emulateKey((modMask & ctrlFilterMask) ? (modMask | ~ShiftMod) : (modMask & ~(CtrlMod | ShiftMod)),
                             ShiftScancode,
                             data & 0xff | flag,
                             ShiftScancode | ReleaseKeyFlag,
                         );
                     }
                     else if (data & AltGrMod) {
-                        return emulateKey(controlMask & ~AltGrMod,
+                        return emulateKey(modMask & ~(AltGrMod | CtrlMod),
                             AltGrScancode,
                             data & 0xff | flag,
                             AltGrScancode | ReleaseKeyFlag,
                         );
                     }
                     else if (data & ShiftAltGrMod) {
-                        return emulateKey(controlMask & ~(AltGrMod | ShiftMod),
+                        return emulateKey(modMask & ~(AltGrMod | ShiftMod | CtrlMod),
                             ShiftScancode,
                             AltGrScancode,
                             data & 0xff | flag,
@@ -532,18 +519,11 @@ function run(openCb, closeCb)
                         scancode = 0x138;
                         break;
 
-                    case 'OS':
-                        if (flag) {
-                            modMask &= ~MetaMod;
-                        }
-                        else {
-                            modMask |= MetaMod;
-                        }
-                        scancode = 0x15B;
-                        break;
+                    case 'OS': return [flag | 0x15B];
 
                     default:
-                        return;
+                        scancode = keycodeToScancode(evt.key);
+                        return scancode ? [scancode | flag] : undefined;
                 }
 
                 modMask &= ~NoMod;
@@ -566,10 +546,25 @@ function run(openCb, closeCb)
         return {
             set layout(newLayout) { layout = newLayout; },
             get layout() { return layout; },
+            set controlBehavior(os) {
+                osType = os.toLowerCase();
+                if (osType === 'window') {
+                    let ctrlFilterMask = windowsCtrlFilterMask;
+                    let controlMaskMap = windowsControlMaskMap;
+                }
+                else {
+                    let ctrlFilterMask = linuxCtrlFilterMask;
+                    let controlMaskMap = linuxControlMaskMap;
+                }
+            }
+            get controlBehavior() { return osType; }
+
+            convert: convert,
+
+            // states for test
             get controlMask() { return controlMask; },
             get modMask() { return modMask; },
             isDeadKey: function() { return isDeadKey; },
-            convert: convert,
         }
     };
 
@@ -590,11 +585,11 @@ function run(openCb, closeCb)
         console.log('reverse scancode', flag, evt.key, evt.code);
         const scancodes = ucs2scancode.convert(flag, evt);
         if (scancodes) {
-            console.log(scancodes.map((x)=>{ return '0x'+x.toString(16); }).join(', '));
+            console.log(scancodes);
             evt.preventDefault();
             evt.stopImmediatePropagation();
             for (let i = 0; i < scancodes.length; ++i) {
-                console.log('send', scancodes[i]);
+                console.log('send', scancodes[i], '0x'+scancodes[i].toString(16));
                 rdpclient.writeScancodeEvent(scancodes[i]);
             }
             sendData();
