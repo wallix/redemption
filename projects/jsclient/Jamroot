@@ -318,6 +318,7 @@ rule htmljs ( name : objs + : deps * )
 
 
 include targets.jam ;
+
 # echo $(JS_CLIENT_COPY_MODE) ;
 if $(JS_CLIENT_COPY_MODE) = "copy"
 {
@@ -349,11 +350,35 @@ rule app ( name : src + : deps_for_path : deps_target * )
     explicit $(app_files) $(name) ;
 }
 
+exejs reverse_keylayout_generator
+    : tools/reverse_keylayout_generator.cpp
+    : $(TEST_DEPENDENCIES)
+    ;
+
+actions genkeymaps
+{
+    node $(>:S=.js) > $(<)
+}
+
+make reversed_keylayouts.js : reverse_keylayout_generator : @genkeymaps ;
+
+explicit reverse_keylayout_generator reversed_keylayouts.js ;
+
 make player_server.py : src/main/player_server.py _dummy : @copy_client ;
 
-app common_js : rdp_graphics.js : _dummy ;
-app rdpclient : to_scancode.js clipboard.js out_stream.js client.html : common_js ;
-app rdpplayer : player.html : common_js : player_server.py ;
+app common_js
+    : rdp_graphics.js
+    : _dummy ;
+
+app rdpclient
+    : scancodes.js clipboard.js out_stream.js client.html
+    : common_js
+    : reversed_keylayouts.js js_client ;
+
+app rdpplayer
+    : player.html
+    : common_js
+    : player_server.py ;
 
 actions cwd
 {
@@ -370,18 +395,3 @@ actions install_node_modules
 {
     npm install --local canvas source-map-support
 }
-
-exejs reverse_keylayout_generator
-    : tools/reverse_keylayout_generator.cpp
-    : $(TEST_DEPENDENCIES)
-    ;
-
-# actions genkeymaps
-# {
-#     $(>) src/reversed_keymaps/
-# }
-
-# make update_reversed_keymaps : reverse_keylayout_generator : @genkeymaps ;
-
-# explicit reverse_keylayout_generator update_reversed_keymaps ;
-explicit reverse_keylayout_generator ;

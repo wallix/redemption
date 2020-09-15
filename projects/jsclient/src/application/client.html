@@ -137,8 +137,8 @@ form {
 <section>
 
 <script src="js_client.js"></script>
-<script src="to_scancode.js"></script>
-<script src="reverse_scancode.js"></script>
+<script src="scancodes.js"></script>
+<script src="reversed_keylayouts.js"></script>
 <script src="rdp_graphics.js"></script>
 <script src="out_stream.js"></script>
 <script src="clipboard.js"></script>
@@ -241,7 +241,6 @@ function run(openCb, closeCb)
     const sendScancodes = function(scancodes, evt)
     {
         if (scancodes) {
-            console.log(scancodes);
             evt.preventDefault();
             evt.stopImmediatePropagation();
             for (let i = 0; i < scancodes.length; ++i) {
@@ -253,14 +252,6 @@ function run(openCb, closeCb)
         else {
             console.warn('unknown keycode', evt.key, evt.code)
         }
-    }
-
-    function keycodeToScancodes(flag, k)
-    {
-        const scancode = keycodeToScancode(k);
-        if (scancode) return [scancode | flag];
-        const scancodes = keycodeToMultiScancodes(k);
-        if (scancodes) return [scancodes[0] | flag, scancodes[1] | flag];
     }
 
     function scancodeKeyEvent(flag, evt)
@@ -303,279 +294,7 @@ function run(openCb, closeCb)
         }
     }
 
-    const unicodeToScancodeConverter = function(layout)
-    {
-        // reverse keylayout mask
-        const NoMod = 0x10000 << 0;
-        const ShiftMod = 0x10000 << 1;
-        const AltGrMod = 0x10000 << 2;
-        const ShiftAltGrMod = 0x10000 << 3;
-        // const CapsLockMod = 0x10000 << 4;
-        // const ShiftCapsLockMod = 0x10000 << 5;
-        // const AltGrCapsLockMod = 0x10000 << 6;
-        // const ShiftAltGrCapsLockMod = 0x10000 << 7;
-        const CtrlMod = 0x10000 << 8;
-
-        // extra flags
-        const AltMod = 0x10000 << 9;
-
-        // Control scancodes
-        const ShiftScancode = 0x2A;
-        const CtrlScancode = 0x1D;
-        const AltScancode = 0x38;
-        const AltGrScancode = 0x138;
-        const MetaScancode = 0x15B;
-
-        const ReleaseKeyFlag = 0x8000;
-        const AcquireKeyFlag = 0;
-
-        const windowsControlMaskMap = {
-            [ShiftMod]: ShiftMod,
-            [AltGrMod]: AltGrMod,
-            [CtrlMod]: CtrlMod,
-            [AltMod]: AltMod,
-
-            [ShiftMod | AltGrMod]: ShiftAltGrMod,
-            [ShiftMod | CtrlMod]: ShiftMod | CtrlMod,
-            [ShiftMod | AltMod]: ShiftMod | AltMod,
-
-            [AltGrMod | CtrlMod]: AltGrMod,
-            [AltGrMod | AltMod]: AltGrMod,
-
-            [CtrlMod | AltMod]: AltGrMod,
-
-            [ShiftMod | AltGrMod | CtrlMod]: ShiftAltGrMod,
-            [ShiftMod | AltGrMod | AltMod]: ShiftAltGrMod,
-            [ShiftMod | CtrlMod | AltMod]: ShiftAltGrMod,
-
-            [AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod,
-
-            [ShiftMod | AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod,
-        };
-
-        const linuxControlMaskMap = {
-            [ShiftMod]: ShiftMod,
-            [AltGrMod]: AltGrMod,
-            [CtrlMod]: CtrlMod,
-            [AltMod]: AltMod,
-
-            [ShiftMod | AltGrMod]: ShiftAltGrMod,
-            [ShiftMod | CtrlMod]: ShiftMod | CtrlMod,
-            [ShiftMod | AltMod]: ShiftMod | AltMod,
-
-            [AltGrMod | CtrlMod]: AltGrMod | CtrlMod,
-            [AltGrMod | AltMod]: AltGrMod,
-
-            [CtrlMod | AltMod]: CtrlMod | AltMod,
-
-            [ShiftMod | AltGrMod | CtrlMod]: ShiftAltGrMod | CtrlMod,
-            [ShiftMod | AltGrMod | AltMod]: ShiftAltGrMod,
-            [ShiftMod | CtrlMod | AltMod]: ShiftMod | CtrlMod | AltMod,
-
-            [AltGrMod | CtrlMod | AltMod]: AltGrMod | CtrlMod,
-
-            [ShiftMod | AltGrMod | CtrlMod | AltMod]: ShiftAltGrMod | CtrlMod,
-        };
-
-        const controlMaskMapMask = ShiftMod | AltGrMod | CtrlMod | AltMod;
-
-        const windowsCtrlFilterMask = AltGrMod | AltMod;
-        const linuxCtrlFilterMask = 0;
-
-        // on window, alt+ctrl = altgr
-        let osType = 'windows';
-        let ctrlFilterMask = windowsCtrlFilterMask;
-        let controlMaskMap = windowsControlMaskMap;
-
-        // current with combination mask (ShiftAltGrMod)
-        let modMask = NoMod;
-        // virtual mask without combination ((CtrlMod | ShiftMod | AltGrMod) or NoMod)
-        // Note: CtrlMod+AltMod => AltGrMod
-        let controlMask = NoMod;
-        let isDeadKey = false;
-
-        const syncControlScancode = function(scancodeFlag, modMask, accu) {
-            if (modMask & ShiftMod) accu.push(scancodeFlag | ShiftScancode);
-            if (modMask & CtrlMod)  accu.push(scancodeFlag | CtrlScancode);
-            if (modMask & AltMod)   accu.push(scancodeFlag | AltScancode);
-            if (modMask & AltGrMod) accu.push(scancodeFlag | AltGrScancode);
-            return accu;
-        };
-
-        const emulateKey = function(modMask, ...scancodes) {
-            const accu = [];
-            syncControlScancode(ReleaseKeyFlag, modMask, accu);
-            accu.push(...scancodes);
-            syncControlScancode(AcquireKeyFlag, modMask, accu);
-            return accu;
-        };
-
-        const searchScancodeWithMask = function(scancodeMods) {
-            const len = scancodeMods.length;
-            for (let i = 0; i < len; ++i) {
-                const data = scancodeMods[i];
-                if (data & controlMask) {
-                    return data & 0xff;
-                }
-            }
-        };
-
-        const convert = function(flag, evt) {
-            const key = evt.key;
-            if (key === 'Space') {
-                key = ' ';
-            }
-
-            if (isDeadKey) {
-                // ignore released dead key
-                if (flag) return;
-
-                isDeadKey = false;
-                const codes = layout.deadmap[key];
-                if (codes) {
-                    const scancode = searchScancodeWithMask(codes[1]);
-                    if (scancode) {
-                        return [codes[0], scancode];
-                    }
-                }
-                return ;
-            }
-
-            if (key.length === 1) {
-                const datas = layout.keymap[key];
-                if (datas) {
-                    const scancode = searchScancodeWithMask(datas);
-                    if (scancode) {
-                        return [scancode | flag];
-                    }
-
-                    const data = datas[0];
-                    if (data & NoMod) {
-                        return emulateKey((modMask & ctrlFilterMask) ? modMask : (modMask & ~CtrlMod),
-                            data & 0xff | flag
-                        );
-                    }
-                    else if (data & ShiftMod) {
-                        return emulateKey((modMask & ctrlFilterMask) ? (modMask | ~ShiftMod) : (modMask & ~(CtrlMod | ShiftMod)),
-                            ShiftScancode,
-                            data & 0xff | flag,
-                            ShiftScancode | ReleaseKeyFlag,
-                        );
-                    }
-                    else if (data & AltGrMod) {
-                        return emulateKey(modMask & ~(AltGrMod | CtrlMod),
-                            AltGrScancode,
-                            data & 0xff | flag,
-                            AltGrScancode | ReleaseKeyFlag,
-                        );
-                    }
-                    else if (data & ShiftAltGrMod) {
-                        return emulateKey(modMask & ~(AltGrMod | ShiftMod | CtrlMod),
-                            ShiftScancode,
-                            AltGrScancode,
-                            data & 0xff | flag,
-                            AltGrScancode | ReleaseKeyFlag,
-                            ShiftScancode | ReleaseKeyFlag,
-                        );
-                    }
-                }
-            }
-            else {
-                let scancode;
-                switch (key) {
-                    case 'Dead': {
-                        isDeadKey = true;
-                        return ;
-                    }
-
-                    case 'Shift':
-                        if (flag) {
-                            modMask &= ~ShiftMod;
-                        }
-                        else {
-                            modMask |= ShiftMod;
-                        }
-                        scancode = 0x2A;
-                        break;
-
-                    case 'Control':
-                        if (flag) {
-                            modMask &= ~CtrlMod;
-                        }
-                        else {
-                            modMask |= CtrlMod;
-                        }
-                        scancode = 0x1D;
-                        break;
-
-                    case 'Alt':
-                        if (flag) {
-                            modMask &= ~AltMod;
-                        }
-                        else {
-                            modMask |= AltMod;
-                        }
-                        scancode = 0x38;
-                        break;
-
-                    case 'AltGraph':
-                        if (flag) {
-                            modMask &= ~AltGrMod;
-                        }
-                        else {
-                            modMask |= AltGrMod;
-                        }
-                        scancode = 0x138;
-                        break;
-
-                    case 'OS': return [flag | 0x15B];
-                    case 'CapsLock': return ;
-                    default: return keycodeToScancodes(flag, evt.key);
-                }
-
-                modMask &= ~NoMod;
-                if (!modMask) {
-                    modMask = NoMod;
-                    controlMask = NoMod;
-                }
-                else {
-                    controlMask = modMask & ~controlMaskMapMask
-                                | controlMaskMap[modMask & controlMaskMapMask];
-                    if (!controlMask) {
-                        controlMask = NoMod;
-                    }
-                }
-
-                return [scancode | flag];
-            }
-        };
-
-        return {
-            set layout(newLayout) { layout = newLayout; },
-            get layout() { return layout; },
-            set controlBehavior(os) {
-                osType = os.toLowerCase();
-                if (osType === 'window') {
-                    let ctrlFilterMask = windowsCtrlFilterMask;
-                    let controlMaskMap = windowsControlMaskMap;
-                }
-                else {
-                    let ctrlFilterMask = linuxCtrlFilterMask;
-                    let controlMaskMap = linuxControlMaskMap;
-                }
-            },
-            get controlBehavior() { return osType; },
-
-            convert: convert,
-
-            // states for test
-            get controlMask() { return controlMask; },
-            get modMask() { return modMask; },
-            isDeadKey: function() { return isDeadKey; },
-        }
-    };
-
-    const ucs2scancode = unicodeToScancodeConverter((() => {
+    const ucs2scancode = createUnicodeToScancodeConverter((() => {
         let layoutName = "fr-FR";
         // let layoutName = "en-US.international";
         let layout;
@@ -590,7 +309,7 @@ function run(openCb, closeCb)
     function unicodeToScancodeKeyEvent(flag, evt)
     {
         console.log('reverse scancode', flag, evt.key, evt.code);
-        sendScancodes(ucs2scancode.convert(flag, evt), evt);
+        sendScancodes(ucs2scancode(evt.key, flag), evt);
     }
 
     function sendMouseEvent(evt, flags)
