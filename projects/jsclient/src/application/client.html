@@ -238,6 +238,31 @@ function run(openCb, closeCb)
         }
     };
 
+    const sendScancodes = function(scancodes, evt)
+    {
+        if (scancodes) {
+            console.log(scancodes);
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+            for (let i = 0; i < scancodes.length; ++i) {
+                console.log('send', scancodes[i], '0x'+scancodes[i].toString(16));
+                rdpclient.writeScancodeEvent(scancodes[i]);
+            }
+            sendData();
+        }
+        else {
+            console.warn('unknown keycode', evt.key, evt.code)
+        }
+    }
+
+    function keycodeToScancodes(flag, k)
+    {
+        const scancode = keycodeToScancode(k);
+        if (scancode) return [scancode | flag];
+        const scancodes = keycodeToMultiScancodes(k);
+        if (scancodes) return [scancodes[0] | flag, scancodes[1] | flag];
+    }
+
     function scancodeKeyEvent(flag, evt)
     {
         // KeyboardEvent.code available with
@@ -248,28 +273,12 @@ function run(openCb, closeCb)
         // - safari 10+
         // Check support with `new KeyboardEvent(0).code !== undefined`
 
-        // TODO support of special configuration as Esc <-> CapsLock (use key id code.length > 1 ?)
-
-        const scancode = keycodeToScancode(evt.code);
-        // console.log(flag, evt.key, evt.code, scancode, evt.isComposing);
-        if (scancode) {
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-            rdpclient.writeScancodeEvent(scancode | flag);
-            sendData();
+        if (evt.code.length === 1) {
+            sendScancodes(keycodeToScancodes(flag, evt.code), evt);
         }
+        // use key for special configuration that as Esc <-> CapsLock
         else {
-            const scancodes = keycodeToMultiScancodes(evt.code);
-            if (scancodes) {
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
-                rdpclient.writeScancodeEvent(scancodes[0] | flag);
-                rdpclient.writeScancodeEvent(scancodes[1] | flag);
-                sendData();
-            }
-            else {
-                console.warn('unknown keycode', flag, evt.key, evt.code)
-            }
+            sendScancodes(keycodeToScancodes(flag, evt.key) || keycodeToScancodes(flag, evt.code), evt);
         }
     }
 
@@ -520,10 +529,8 @@ function run(openCb, closeCb)
                         break;
 
                     case 'OS': return [flag | 0x15B];
-
-                    default:
-                        scancode = keycodeToScancode(evt.key);
-                        return scancode ? [scancode | flag] : undefined;
+                    case 'CapsLock': return ;
+                    default: return keycodeToScancodes(flag, evt.key);
                 }
 
                 modMask &= ~NoMod;
@@ -556,8 +563,8 @@ function run(openCb, closeCb)
                     let ctrlFilterMask = linuxCtrlFilterMask;
                     let controlMaskMap = linuxControlMaskMap;
                 }
-            }
-            get controlBehavior() { return osType; }
+            },
+            get controlBehavior() { return osType; },
 
             convert: convert,
 
@@ -583,17 +590,7 @@ function run(openCb, closeCb)
     function unicodeToScancodeKeyEvent(flag, evt)
     {
         console.log('reverse scancode', flag, evt.key, evt.code);
-        const scancodes = ucs2scancode.convert(flag, evt);
-        if (scancodes) {
-            console.log(scancodes);
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-            for (let i = 0; i < scancodes.length; ++i) {
-                console.log('send', scancodes[i], '0x'+scancodes[i].toString(16));
-                rdpclient.writeScancodeEvent(scancodes[i]);
-            }
-            sendData();
-        }
+        sendScancodes(ucs2scancode.convert(flag, evt), evt);
     }
 
     function sendMouseEvent(evt, flags)
