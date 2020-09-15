@@ -174,8 +174,6 @@ inline constexpr const char * modnames[]{
     " S |",
     "   |",
     " A |",
-    "   |",
-    " C |",
     "     |",
     " S+A |",
     "   |",
@@ -184,8 +182,10 @@ inline constexpr const char * modnames[]{
     " L+S |",
     "     |",
     " L+A |",
-    "      ",
-    " L+S+A",
+    "       |",
+    " L+S+A |",
+    "   ",
+    " C ",
 };
 
 struct ScancodeMods
