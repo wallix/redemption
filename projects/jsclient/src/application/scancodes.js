@@ -138,6 +138,7 @@ const keycodeToSingleScancode = function(code) {
     case "BrowserHome": return 0x132;
     case "NumpadDivide": return 0x135;
     case "PrintScreen": return 0x137;
+    case "AltGraph": return 0x138;
     case "AltRight": return 0x138;
     case "Help": return 0x13B;
     case "NumLock": return 0x145;
@@ -173,6 +174,32 @@ const keycodeToMultiScancodes = function(code) {
     switch (code)
     {
     case "Pause": return [0x001D, 0x0045];
+    }
+};
+
+const numpadKeyToScancode = function(key) {
+    switch (key)
+    {
+    case "Escape":                  return 0x0001;
+    case "*":                       return 0x0037;
+    case "7": case "Home":          return 0x0047;
+    case "8": case "ArrowUp":       return 0x0048;
+    case "9": case "PageUp":        return 0x0049;
+    case "-":                       return 0x004A;
+    case "4": case "ArrowLeft":     return 0x004B;
+    case "5": case "Unidentified":  return 0x004C;
+    case "6": case "AltRight":      return 0x004D;
+    case "+":                       return 0x004E;
+    case "1": case "End":           return 0x004F;
+    case "2": case "ArrowDown":     return 0x0050;
+    case "3": case "PageDown":      return 0x0051;
+    case "0": case "Insert":        return 0x0052;
+    case ".": case "Delete":        return 0x0053;
+    case "=":                       return 0x0059;
+    case ",":                       return 0x007E;
+    case "Enter":                   return 0x11C;
+    case "/":                       return 0x135;
+    case "NumLock":                 return 0x145;
     }
 };
 
@@ -455,8 +482,11 @@ const createUnicodeToScancodeConverter = function(layout)
 };
 
 try {
+    module.exports.keycodeToSingleScancode = keycodeToSingleScancode;
+    module.exports.keycodeToMultiScancodes = keycodeToMultiScancodes;
     module.exports.keycodeToScancodes = keycodeToScancodes;
     module.exports.createUnicodeToScancodeConverter = createUnicodeToScancodeConverter;
+    module.exports.numpadKeyToScancode = numpadKeyToScancode;
 }
 catch (e) {
     // module not found

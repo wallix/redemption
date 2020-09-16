@@ -89,10 +89,11 @@ form {
             <legend>Others</legend>
             <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
             <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
-            <label for="kbtype">Keyboard type: <select name="kbtype" id="kbtype">
-                <option value="unicode">Unicode (KeyboardEvent.key)</option>
-                <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
+            <label for="kbdmethod">Keyboard method: <select name="kbdmethod" id="kbdmethod">
                 <option value="unicodeToScancode">UnicodeToScancode (KeyboardEvent.key)</option>
+                <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
+                <option value="unicodeKey">Unicode + keycode (KeyboardEvent.key)</option>
+                <option value="unicodeCode">Unicode + scancode (KeyboardEvent.code)</option>
             </select>
         </fieldset>
         <p>
@@ -158,7 +159,7 @@ const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const disabled_graphics_input = document.getElementById('disabledGraphics');
 const verbose_input = document.getElementById('verbose');
-const kbtype_input = document.getElementById('kbtype');
+const kbdmethod_input = document.getElementById('kbdmethod');
 const jsonConfig_input = document.getElementById('jsonConfig');
 const pass_input = document.getElementById('pass');
 const url_input = document.getElementById('url');
@@ -228,7 +229,7 @@ function run(openCb, closeCb)
 
     let hWheelSupport = false;
     let MouseXSupport = false;
-    let onKeyEvent = unicodeKeyEvent;
+    let onKeyEvent = unicodeToScancodeKeyEvent;
 
     const sendData = function() {
         const out = rdpclient.getOutputData();
@@ -254,7 +255,7 @@ function run(openCb, closeCb)
         }
     }
 
-    function scancodeKeyEvent(flag, evt)
+    function scancodeKeyEvent(evt, flag)
     {
         // KeyboardEvent.code available with
         // - chrome 8+
@@ -264,19 +265,28 @@ function run(openCb, closeCb)
         // - safari 10+
         // Check support with `new KeyboardEvent(0).code !== undefined`
 
+        console.log('scancode', flag, evt.key, evt.code, evt.location);
+
         const kcode = evt.code;
         if (kcode.length === 1) {
             sendScancodes(keycodeToScancodes(kcode, flag), evt);
         }
         // use key for special configuration such as Esc <-> CapsLock
         else {
-            sendScancodes(keycodeToScancodes(evt.key, flag) || keycodeToScancodes(kcode, flag), evt);
+            switch (evt.location) {
+                case 3 /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/:
+                    sendScancodes(keycodeToScancodes(kcode, flag), evt);
+                    break;
+
+                default:
+                    sendScancodes(keycodeToScancodes(evt.key, flag) || keycodeToScancodes(kcode, flag), evt);
+            }
         }
     }
 
-    function unicodeKeyEvent(flag, evt)
+    function unicodeKey(evt, flag)
     {
-        // console.log(flag, evt.key, evt.code);
+        console.log('unicode', flag, evt.key, evt.code, evt.location);
         const key = evt.key;
 
         if (key.length === 1) {
@@ -286,12 +296,64 @@ function run(openCb, closeCb)
             evt.stopImmediatePropagation();
             rdpclient.writeUnicodeEvent(unicode, flag);
             sendData();
+            return true;
         }
-        else if (key === 'Dead') {
-            return
+
+        if (key === 'Dead') {
+            return true;
         }
-        else {
-            scancodeKeyEvent(flag, evt);
+    }
+
+    function unicodeAndScancodeKeyEvent(evt, flag)
+    {
+        switch (evt.location) {
+            case 3: /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
+                const scancode = numpadKeyToScancode(evt.key);
+                if (scancode) {
+                    sendScancodes([scancode | flag], evt);
+                }
+                else if (!unicodeKey(evt, flag)) {
+                    sendScancodes(keycodeToScancodes(evt.code, flag), evt);
+                }
+                break;
+
+            default: /*KeyboardEvent.DOM_KEY_LOCATION_STANDARD*/
+                     /*KeyboardEvent.DOM_KEY_LOCATION_LEFT*/
+                     /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
+                if (!unicodeKey(evt, flag)) {
+                    // use key for special configuration such as Esc <-> CapsLock
+                    sendScancodes(keycodeToScancodes(evt.key, flag) || keycodeToScancodes(evt.code, flag), evt);
+                }
+                break;
+        }
+    }
+
+    function unicodeAndKeyKeyEvent(evt, flag)
+    {
+        switch (evt.location) {
+            case 1: { /*KeyboardEvent.DOM_KEY_LOCATION_LEFT*/
+                const scancode = keycodeToSingleScancode(evt.key + 'Left');
+                if (scancode) sendScancodes([scancode | flag], evt);
+                break;
+            }
+
+            case 2: { /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
+                const scancode = keycodeToSingleScancode(evt.key + 'Right');
+                if (scancode) sendScancodes([scancode | flag], evt);
+                break;
+            }
+
+            case 3: { /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
+                const scancode = numpadKeyToScancode(evt.key);
+                if (scancode) sendScancodes([scancode | flag], evt);
+                break;
+            }
+
+            default: /*KeyboardEvent.DOM_KEY_LOCATION_STANDARD*/
+                if (!unicodeKey(evt, flag)) {
+                    sendScancodes(keycodeToScancodes(evt.key, flag), evt);
+                }
+                break;
         }
     }
 
@@ -307,9 +369,18 @@ function run(openCb, closeCb)
         return layout;
     })());
 
-    function unicodeToScancodeKeyEvent(flag, evt)
+    function unicodeToScancodeKeyEvent(evt, flag)
     {
-        console.log('reverse scancode', flag, evt.key, evt.code);
+        console.log('reverse scancode', flag, evt.key, evt.code, evt.location);
+
+        if (evt.location === 3) { /*KeyboardEvent.DOM_KEY_LOCATION_NUMPAD*/
+            const scancode = numpadKeyToScancode(evt.key);
+            if (scancode) {
+                sendScancodes([scancode | flag], evt);
+                return ;
+            }
+        }
+
         sendScancodes(ucs2scancode(evt.key, flag), evt);
     }
 
@@ -322,9 +393,9 @@ function run(openCb, closeCb)
     }
 
     //TODO rename KbdFlags.Down to KbdFlags.Press and add KbdFlags.Down = 0
-    const onKeyUp = (evt) => { onKeyEvent(KbdFlags.Release, evt); };
-    const onKeyDown = (evt) => { onKeyEvent(0, evt); };
-    const onKeyPress = (evt) => { onKeyEvent(KbdFlags.Down, evt); };
+    const onKeyUp = (evt) => { onKeyEvent(evt, KbdFlags.Release); };
+    const onKeyDown = (evt) => { onKeyEvent(evt, 0); };
+    const onKeyPress = (evt) => { onKeyEvent(evt, KbdFlags.Down); };
 
     function sendMouseButton(evt, flag)
     {
@@ -454,13 +525,13 @@ function run(openCb, closeCb)
         hWheelSupport = Boolean(inputFlags & InputFlags.HorizontalWheel);
         MouseXSupport = Boolean(inputFlags & InputFlags.MouseX);
 
-        const kbTypeId = kbtype_input.selectedIndex;
-        if (kbTypeId === 0 && !(inputFlags & InputFlags.Unicode)) {
+        const kbMethodId = kbdmethod_input.selectedIndex;
+        if (kbMethodId % 2 === 1 && !(inputFlags & InputFlags.Unicode)) {
             console.log('don\'t support unicode');
-            kbTypeId = 1;
+            --kbMethodId;
         }
-        console.log(`keyboardType: (${kbTypeId}) ${kbtype_input[kbTypeId].value}`);
-        onKeyEvent = [unicodeKeyEvent, scancodeKeyEvent, unicodeToScancodeKeyEvent][kbTypeId];
+        console.log(`keyboardType: (${kbMethodId}) ${kbdmethod_input[kbMethodId].value}`);
+        onKeyEvent = [unicodeToScancodeKeyEvent, scancodeKeyEvent, unicodeAndKeyKeyEvent, unicodeAndScancodeKeyEvent][kbMethodId];
         canvasStopEvents();
         canvasStartEvents();
     }
@@ -583,7 +654,7 @@ const inputs = {
     height: [height_input, 'value', number],
     verbose: [verbose_input, 'value', number],
     config: [jsonConfig_input, 'value', identity],
-    kbtype: [kbtype_input, 'selectedIndex', identity],
+    kbdmethod: [kbdmethod_input, 'selectedIndex', identity],
     bpp: [bpp_input, 'selectedIndex', parseInt],
     gdimpl: [gdimpl_input, 'selectedIndex', identity],
 };
