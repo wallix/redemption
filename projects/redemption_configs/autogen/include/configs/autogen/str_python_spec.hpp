@@ -1042,7 +1042,7 @@ framerate = integer(min=0, default=5)
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
 #_advanced
-ffmpeg_options = string(default='crf=0 preset=superfast')
+ffmpeg_options = string(default='crf=1 preset=superfast')
 
 #_advanced
 notimestamp = boolean(default=False)
