@@ -1,0 +1,462 @@
+# French translations for PACKAGE package
+# Traductions françaises du paquet PACKAGE.
+# Copyright (C) 2020 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-10-09 18:52+0200\n"
+"PO-Revision-Date: 2020-09-25 18:59+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: ../../src/utils/translation.hpp:40
+msgid "Password"
+msgstr "Mot de passe"
+
+#: ../../src/utils/translation.hpp:63
+msgid "Login"
+msgstr "Login"
+
+#: ../../src/utils/translation.hpp:64
+msgid "Diagnostic"
+msgstr "Diagnostic"
+
+#: ../../src/utils/translation.hpp:65
+msgid "Connection closed"
+msgstr "Connexion fermée"
+
+#: ../../src/utils/translation.hpp:66
+msgid "OK"
+msgstr "OK"
+
+#: ../../src/utils/translation.hpp:67
+msgid "Cancel"
+msgstr "Annuler"
+
+#: ../../src/utils/translation.hpp:68
+msgid "Help"
+msgstr "Aide"
+
+#: ../../src/utils/translation.hpp:69
+msgid "Close"
+msgstr "Fermer"
+
+#: ../../src/utils/translation.hpp:70
+msgid "Refused"
+msgstr "Refuser"
+
+#: ../../src/utils/translation.hpp:71
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+#: ../../src/utils/translation.hpp:72
+msgid "Your Bastion password will expire soon. Please change it."
+msgstr "Votre mot de passe Bastion va bientôt expirer. Veuillez le changer."
+
+#: ../../src/utils/translation.hpp:73
+msgid "Protocol"
+msgstr "Protocole"
+
+#: ../../src/utils/translation.hpp:74
+msgid "Authorization"
+msgstr "Autorisation"
+
+#: ../../src/utils/translation.hpp:75
+msgid "Target"
+msgstr "Cible"
+
+#: ../../src/utils/translation.hpp:76
+msgid "Description"
+msgstr "Description"
+
+#: ../../src/utils/translation.hpp:77
+msgid "Close Time"
+msgstr "Date de clôture"
+
+#: ../../src/utils/translation.hpp:78
+msgid "Logout"
+msgstr "Déconnexion"
+
+#: ../../src/utils/translation.hpp:79
+msgid "Apply"
+msgstr "Appliquer"
+
+#: ../../src/utils/translation.hpp:80
+msgid "Filter"
+msgstr "Filtrer"
+
+#: ../../src/utils/translation.hpp:81
+msgid "Connect"
+msgstr "Connecter"
+
+#: ../../src/utils/translation.hpp:82
+msgid "Time left"
+msgstr "Temps restant"
+
+#: ../../src/utils/translation.hpp:83
+msgid "second"
+msgstr "seconde"
+
+#: ../../src/utils/translation.hpp:84
+msgid "minute"
+msgstr "minute"
+
+#: ../../src/utils/translation.hpp:85
+msgid "hour"
+msgstr "heure"
+
+#: ../../src/utils/translation.hpp:86
+msgid "before closing"
+msgstr "avant fermeture"
+
+#: ../../src/utils/translation.hpp:87
+msgid "Your session is observed by an administrator"
+msgstr "Votre session est observée par un administrateur."
+
+#: ../../src/utils/translation.hpp:88
+msgid "Your session is no longer observed by an administrator."
+msgstr "Votre session n'est plus observée par un administrateur."
+
+#: ../../src/utils/translation.hpp:89
+msgid "Connection closed by manager."
+msgstr "Le gestionnaire de session a coupé la connexion."
+
+#: ../../src/utils/translation.hpp:90
+msgid "End of connection"
+msgstr "Fin de connexion"
+
+#: ../../src/utils/translation.hpp:92
+msgid ""
+"The \"Target\" field can be entered with a string labelled in this format:\n"
+"\"Account@Domain@Device:Service:Auth\".\n"
+"The \"Domain\", \"Service\" and \"Auth\" parts are optional.\n"
+"This field is optional and case-sensitive.\n"
+"\n"
+"The \"Login\" field must refer to a user declared on the Bastion.\n"
+"This field is required and not case-sensitive.\n"
+"\n"
+"Contact your system administrator for assistance."
+msgstr ""
+"Le champ \"Cible\" peut contenir une chaîne de caractères au format:\n"
+"\"Account@Domain@Device:Service:Auth\".\n"
+"Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnelles.\n"
+"Ce champ est optionnel et sensible à la casse.\n"
+"\n"
+"Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.\n"
+"Ce champ est requis et insensible à la casse.\n"
+"\n"
+"Contactez votre administrateur système pour obtenir de l'aide."
+
+#: ../../src/utils/translation.hpp:101
+msgid "Selector"
+msgstr "Sélecteur"
+
+#: ../../src/utils/translation.hpp:102
+msgid "Session is out of allowed timeframe"
+msgstr "L'autorisation de la session a expiré"
+
+#: ../../src/utils/translation.hpp:103
+msgid "Missed keepalive from ACL"
+msgstr "Absence de réponse de Keepalive de l'ACL"
+
+#: ../../src/utils/translation.hpp:104
+msgid "Connection closed on inactivity"
+msgstr "Fermeture sur inactivité"
+
+#: ../../src/utils/translation.hpp:105
+msgid "Authentifier service failed"
+msgstr "Echec du service d'authentification"
+
+#: ../../src/utils/translation.hpp:106
+msgid "Failed to connect to remote host."
+msgstr "Échec de la connexion à l'hôte distant."
+
+#: ../../src/utils/translation.hpp:107
+msgid "Failed to authenticate with remote RDP host."
+msgstr "Échec de l'authentification avec l'hôte RDP distant."
+
+#: ../../src/utils/translation.hpp:108
+msgid "Failed to authenticate with remote VNC host."
+msgstr "Échec de l'authentification avec l'hôte VNC distant."
+
+#: ../../src/utils/translation.hpp:109
+msgid "Failed to authenticate with remote X host."
+msgstr "Échec de l'authentification avec l'hôte X distant."
+
+#: ../../src/utils/translation.hpp:110
+msgid "Connection to server ended."
+msgstr "Connexion au serveur terminée."
+
+#: ../../src/utils/translation.hpp:111
+msgid "No results found"
+msgstr "Aucun résultat"
+
+#: ../../src/utils/translation.hpp:112
+msgid "Back to Selector"
+msgstr "Retour au Sélecteur"
+
+#: ../../src/utils/translation.hpp:113
+msgid "Exit"
+msgstr "Sortir"
+
+#: ../../src/utils/translation.hpp:114
+msgid "Comment"
+msgstr "Commentaire"
+
+#: ../../src/utils/translation.hpp:115
+msgid "Comment *"
+msgstr "Commentaire *"
+
+#: ../../src/utils/translation.hpp:116
+msgid "Ticket Ref."
+msgstr "Ticket Ref."
+
+#: ../../src/utils/translation.hpp:117
+msgid "Ticket Ref. *"
+msgstr "Ticket Ref. *"
+
+#: ../../src/utils/translation.hpp:118
+msgid "Duration"
+msgstr "Durée"
+
+#: ../../src/utils/translation.hpp:119
+msgid "Duration *"
+msgstr "Durée *"
+
+#: ../../src/utils/translation.hpp:120
+msgid "Format: [hours]h[mins]m"
+msgstr "Format: [heures]h[mins]m"
+
+#: ../../src/utils/translation.hpp:121
+msgid "(*) required fields"
+msgstr "(*) champs requis"
+
+#: ../../src/utils/translation.hpp:122
+msgid "Confirm"
+msgstr "Confirmer"
+
+#: ../../src/utils/translation.hpp:123
+#, c-format
+msgid "Error: %s field is required."
+msgstr "Erreur: le champ %s est requis."
+
+#: ../../src/utils/translation.hpp:124
+#, c-format
+msgid "Error: %s invalid format."
+msgstr "Erreur: format %s invalide."
+
+#: ../../src/utils/translation.hpp:125
+#, c-format
+msgid "Error: %s is too high (max: %d minutes)."
+msgstr "Erreur: %s trop haute (max: %d minutes)."
+
+#: ../../src/utils/translation.hpp:126
+msgid "Information"
+msgstr "Information"
+
+#: ../../src/utils/translation.hpp:127
+msgid "Authentication Required"
+msgstr "Authentification Requise"
+
+#: ../../src/utils/translation.hpp:128
+msgid "Target Information Required"
+msgstr "Informations Cible Requises"
+
+#: ../../src/utils/translation.hpp:129
+msgid "Device"
+msgstr "Machine"
+
+#: ../../src/utils/translation.hpp:130
+msgid "(insert key or left click to hide)"
+msgstr "(cacher avec touche insert ou clic gauche)"
+
+#: ../../src/utils/translation.hpp:131
+msgid "Another user connected to the resource, so your connection was lost."
+msgstr "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."
+
+#: ../../src/utils/translation.hpp:132
+#, c-format
+msgid "The process '%s' was interrupted in accordance with security policies."
+msgstr "Le processus '%s' a été interrompu conformément aux politiques de sécurité."
+
+#: ../../src/utils/translation.hpp:133
+#, c-format
+msgid "The account manipulation initiated by process '%s' was rejected in accordance with security policies."
+msgstr "L'édition de compte d'utilisateur effectuée via le processus '%s' a été rejeté conformément aux politiques de sécurité."
+
+#: ../../src/utils/translation.hpp:134
+msgid "Session logoff in progress."
+msgstr "Fermeture de session en cours."
+
+#: ../../src/utils/translation.hpp:135
+msgid "Starting RemoteApp ..."
+msgstr "Lancement de RemoteApp ..."
+
+#: ../../src/utils/translation.hpp:136
+msgid "All RemoteApp windows are closed."
+msgstr "Toutes les fenêtre de RemoteApp sont fermées."
+
+#: ../../src/utils/translation.hpp:137
+msgid "Disconnect Now"
+msgstr "Se déconnecter maintenant"
+
+#: ../../src/utils/translation.hpp:138
+msgid "The computer that you are trying to connect to is redirecting you to another computer!"
+msgstr "L'ordinateur auquel vous essayez de vous connecter vous redirige vers un autre ordinateur!"
+
+#: ../../src/utils/translation.hpp:139
+msgid "NLA Authentication Failed!"
+msgstr "Échec d'authentification NLA!"
+
+#: ../../src/utils/translation.hpp:140
+msgid "TLS certificate changed!"
+msgstr "Certificat TLS modifié!"
+
+#: ../../src/utils/translation.hpp:141
+msgid "TLS certificate missed!"
+msgstr "Certificat TLS est manquant!"
+
+#: ../../src/utils/translation.hpp:142
+msgid "TLS certificate corrupted!"
+msgstr "Certificat TLS est corrompu!"
+
+#: ../../src/utils/translation.hpp:143
+msgid "TLS certificate  is inaccessible!"
+msgstr "Certificat TLS est inaccessible!"
+
+#: ../../src/utils/translation.hpp:144
+msgid "VNC connection error!"
+msgstr "Error de connexion VNC!"
+
+#: ../../src/utils/translation.hpp:145
+msgid "Unsupported client display monitor layout!"
+msgstr "La disposition du moniteur d'affichage du client n'est pas supportée!"
+
+#: ../../src/utils/translation.hpp:146
+msgid "An error occurred during the licensing protocol!"
+msgstr "Une erreur de protocole de licence s'est produite!"
+
+#: ../../src/utils/translation.hpp:147
+msgid "The RemoteApp program did not start on the remote computer!"
+msgstr "Le programme RemoteApp n'a pas démarré sur l'ordinateur distant!"
+
+#: ../../src/utils/translation.hpp:148
+msgid "Cannot start the RemoteApp program!"
+msgstr "Impossible de démarrer le programme RemoteApp!"
+
+#: ../../src/utils/translation.hpp:149
+msgid "The RemoteApp program is not in the list of authorized programs!"
+msgstr "Le programme RemoteApp n'est pas dans la liste des programmes autorisés!"
+
+#: ../../src/utils/translation.hpp:150
+msgid "Logon timer expired!"
+msgstr "Le délai d'attente d'ouverture de session a expiré!"
+
+#: ../../src/utils/translation.hpp:151
+msgid "Could not launch Session Probe!"
+msgstr "Impossible de lancer Session Probe!"
+
+#: ../../src/utils/translation.hpp:153
+msgid "(ASBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target."
+msgstr "(ASBL) Impossible de lancer Session Probe! Le canal virtuel du système de fichiers n'est pas disponible. Veuillez autorisez la redirection du lecteur dans les paramètres des Services de bureau à distance de la cible."
+
+#: ../../src/utils/translation.hpp:156
+msgid "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. Is the target running under Microsoft Server products? The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. Please also check the temporary directory to ensure there is enough free space."
+msgstr "(ASBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. La cible fonctionne-t-elle sous un produit de famille Microsoft Server? L'invite de commande doit être publiée comme programme RemoteApp et accepter tout type de paramètres de ligne de commande. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
+
+#: ../../src/utils/translation.hpp:160
+msgid "(ASBL) Session Probe launch has failed for unknown reason!"
+msgstr "(ASBL) Le lancement de Session Probe a échoué pour une raison inconnue!"
+
+#: ../../src/utils/translation.hpp:162
+msgid "(CBBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target."
+msgstr "(CBBL) Impossible de lancer Session Probe! Le canal virtuel du système de fichiers n'est pas disponible. Veuillez autorisez la redirection du lecteur dans les paramètres des Services de bureau à distance de la cible."
+
+#: ../../src/utils/translation.hpp:165
+msgid "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is unavailable. Please allow the clipboard redirection in the Remote Desktop Services settings of the target."
+msgstr "(CBBL) Impossible de lancer Session Probe! Le canal virtuel du presse-papier n'est pas disponible. Veuillez autorisez la redirection du presse-papier dans les paramètres des Services de bureau à distance de la cible."
+
+#: ../../src/utils/translation.hpp:168
+msgid "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. Is the target running under Windows Server 2008 R2 or more recent version?"
+msgstr "(CBBL) Impossible de lancer Session Probe! Le lecteur de Session Probe n'est pas encore prêt. La cible fonctionne-t-elle sous Windows Server 2008 R2 ou une version plus récente?"
+
+#: ../../src/utils/translation.hpp:171
+msgid "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. Please also check the temporary directory to ensure there is enough free space."
+msgstr "(CBBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
+
+#: ../../src/utils/translation.hpp:174
+msgid "(CBBL) Session Probe launch cycle has been interrupted! The launch timeout duration may be too short."
+msgstr "(CBBL) Le cycle de lancement de Session Probe a été interrompu! La durée du délai d'attente de lancement peut être trop courte."
+
+#: ../../src/utils/translation.hpp:177
+msgid "(CBBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition."
+msgstr "(CBBL) Le lancement de Session Probe a échoué pour une raison inconnue! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
+
+#: ../../src/utils/translation.hpp:180
+msgid "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition."
+msgstr "(RP) Impossible de lancer Session Probe! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
+
+#: ../../src/utils/translation.hpp:182
+msgid "Unknown backend failure."
+msgstr "Erreur de backend inconnue."
+
+#: ../../src/utils/translation.hpp:183
+msgid "Provided login/password is probably incorrect."
+msgstr "Le nom d'utilisateur/mot de passe fourni est probablement incorrect."
+
+#: ../../src/utils/translation.hpp:184
+msgid "Please wait..."
+msgstr "Veuillez patienter..."
+
+#: ../../src/utils/translation.hpp:185
+msgid "Enable NLA is probably required."
+msgstr "Il est probablement nécessaire d'activer NLA."
+
+#: ../../src/utils/translation.hpp:186
+msgid "Enable TLS is probably required."
+msgstr "Il est probablement nécessaire d'activer TLS."
+
+#: ../../src/utils/translation.hpp:187
+msgid "Please check provided Load Balance Info."
+msgstr "Veuillez vérifier le Load Balance Info fournies."
+
+#: ../../src/utils/translation.hpp:188
+msgid "Fail during TLS security exchange."
+msgstr "Échec lors de l'échange de sécurité TLS."
+
+#: ../../src/utils/translation.hpp:189
+msgid "Fail during basic setting exchange."
+msgstr "Échec lors de l'échange de paramètres de base."
+
+#: ../../src/utils/translation.hpp:190 ../../src/utils/translation.hpp:191
+msgid "Fail during channels connection."
+msgstr "Échec lors de la connexion des canaux."
+
+#: ../../src/utils/translation.hpp:192
+msgid "Failed while trying to get licence."
+msgstr "Échec en essayant d'obtenir une licence."
+
+#: ../../src/utils/translation.hpp:193
+msgid "Fail while connecting session on the target."
+msgstr "Échec lors de la connexion de la session sur la cible."
+
+#: ../../src/utils/translation.hpp:194
+msgid "File being analyzed: "
+msgstr "Fichier en cours d'analyse: "
+
+#: ../../src/utils/translation.hpp:195
+msgid "Valid file: "
+msgstr "Fichier valide: "
+
+#: ../../src/utils/translation.hpp:196
+msgid "Invalid file: "
+msgstr "Fichier invalide: "

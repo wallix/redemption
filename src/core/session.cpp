@@ -641,7 +641,6 @@ public:
         UdevRandom rnd;
         Fstat fstat;
 
-        TRANSLATIONCONF.set_ini(&ini);
         std::string disconnection_message_error;
 
         TimeBase time_base(tvtime());

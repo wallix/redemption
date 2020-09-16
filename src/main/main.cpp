@@ -55,7 +55,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-
 inline void daemonize(const char * pid_file)
 {
     int pid;

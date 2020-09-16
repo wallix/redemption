@@ -200,6 +200,7 @@ alias install :
     install-etc
     install-etc-ppocr
     install-share
+    install-gettext
 ;
 alias exe     : rdpproxy rdpclient rdpinichecker ;
 alias libs    : libredrec ;
@@ -313,3 +314,26 @@ make ppocr_resources :
 ;
 
 ## } ppocr resources
+
+
+
+# Compile all translation files and build gettext environment (as administrator) :
+#
+#   bjam install-gettext
+#
+actions make_gettextinstall
+{
+    ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/gen_msg_catalog.py -C -p $(REDEMPTION_PUBLIC_PATH)/tools/i18n/ -b $(<).d
+    :>$(<)
+}
+actions make_gettextinstall2
+{
+    mkdir -p $(INSTALLDIR)$(SHARE_PREFIX)
+    cp -R $(>).d $(INSTALLDIR)$(SHARE_PREFIX)/$(>:B) ;
+}
+
+explicit install-gettext ;
+make install-gettext : locale : @make_gettextinstall2 ;
+
+explicit locale ;
+make locale : : @make_gettextinstall ;
