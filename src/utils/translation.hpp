@@ -25,26 +25,28 @@
 #include "cxx/diagnostic.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
+#include "utils/i18n/message_translator_gettext.hpp"
+
 #include <cstdio>
 
 namespace trkeys
 {
-    struct TrKey { zstring_view translations[2]; };
+    struct TrKey { zstring_view translation; };
 
-#define TR_PROTECTED_KV(name, en, fr) \
-    constexpr struct TrKey##_##name   \
-    { zstring_view translations[2]; } name{{en ""_zv, fr ""_zv}}
+#define TR_PROTECTED_KV(name, en)                       \
+    constexpr struct TrKey##_##name                     \
+    { zstring_view translation; } name{en ""_zv}
 
-    TR_PROTECTED_KV(password, "Password", "Mot de passe");
+    TR_PROTECTED_KV(password, "Password");
 
 #undef TR_PROTECTED_KV
 
     template<class T> struct TrKeyFmt
     {
-        const char * translations[2];
+        zstring_view translation;
     };
 
-#define TR_KV_FMT(name, en, fr)                      \
+#define TR_KV_FMT(name, en)                          \
     struct TrKeyFmt##_##name                         \
     {                                                \
         template<class... Ts>                        \
@@ -52,317 +54,158 @@ namespace trkeys
             char* s, std::size_t n, Ts const& ... xs \
         ) {                                          \
             (void)std::snprintf(s, n, en, xs...);    \
-            (void)std::snprintf(s, n, fr, xs...);    \
             return int();                            \
         }                                            \
     };                                               \
-    constexpr TrKeyFmt<TrKeyFmt##_##name> name{{en, fr}}
+    constexpr TrKeyFmt<TrKeyFmt##_##name> name{en ""_zv}
 
-#define TR_KV(name, en, fr) constexpr TrKey name{{en ""_zv, fr ""_zv}}
-    TR_KV(login, "Login", "Login");
-    TR_KV(diagnostic, "Diagnostic", "Diagnostic");
-    TR_KV(connection_closed, "Connection closed", "Connexion fermée");
-    TR_KV(OK, "OK", "OK");
-    TR_KV(cancel, "Cancel", "Annuler");
-    TR_KV(help, "Help", "Aide");
-    TR_KV(close, "Close", "Fermer");
-    TR_KV(refused, "Refused", "Refuser");
-    TR_KV(username, "Username", "Nom d'utilisateur");
-    TR_KV(password_expire,
-        "Your Bastion password will expire soon. Please change it.",
-        "Votre mot de passe Bastion va bientôt expirer. Veuillez le changer.");
-    TR_KV(protocol, "Protocol", "Protocole");
-    TR_KV(authorization, "Authorization", "Autorisation");
-    TR_KV(target, "Target", "Cible");
-    TR_KV(description, "Description", "Description");
-    TR_KV(close_time, "Close Time", "Date de clôture");
-    TR_KV(logout, "Logout", "Déconnexion");
-    TR_KV(apply, "Apply", "Appliquer");
-    TR_KV(filter, "Filter", "Filtrer");
-    TR_KV(connect, "Connect", "Connecter");
-    TR_KV(timeleft, "Time left", "Temps restant");
-    TR_KV(second, "second", "seconde");
-    TR_KV(minute, "minute", "minute");
-    TR_KV(hour, "hour", "heure");
-    TR_KV(before_closing, "before closing", "avant fermeture");
-
-    TR_KV(enable_rt_display, "Your session is observed by an administrator", "Votre session est observée par un administrateur.");
-    TR_KV(disable_rt_display, "Your session is no longer observed by an administrator.", "Votre session n'est plus observée par un administrateur.");
-
-    TR_KV(manager_close_cnx,
-        "Connection closed by manager.",
-        "Le gestionnaire de session a coupé la connexion.");
-    TR_KV(end_connection, "End of connection", "Fin de connexion");
+#define TR_KV(name, en) constexpr TrKey name{en ""_zv}
+    TR_KV(login, "Login");
+    TR_KV(diagnostic, "Diagnostic");
+    TR_KV(connection_closed, "Connection closed");
+    TR_KV(OK, "OK");
+    TR_KV(cancel, "Cancel");
+    TR_KV(help, "Help");
+    TR_KV(close, "Close");
+    TR_KV(refused, "Refused");
+    TR_KV(username, "Username");
+    TR_KV(password_expire, "Your Bastion password will expire soon. Please change it.");
+    TR_KV(protocol, "Protocol");
+    TR_KV(authorization, "Authorization");
+    TR_KV(target, "Target");
+    TR_KV(description, "Description");
+    TR_KV(close_time, "Close Time");
+    TR_KV(logout, "Logout");
+    TR_KV(apply, "Apply");
+    TR_KV(filter, "Filter");
+    TR_KV(connect, "Connect");
+    TR_KV(timeleft, "Time left");
+    TR_KV(second, "second");
+    TR_KV(minute, "minute");
+    TR_KV(hour, "hour");
+    TR_KV(before_closing, "before closing");
+    TR_KV(enable_rt_display, "Your session is observed by an administrator");
+    TR_KV(disable_rt_display, "Your session is no longer observed by an administrator.");
+    TR_KV(manager_close_cnx, "Connection closed by manager.");
+    TR_KV(end_connection, "End of connection");
     TR_KV(help_message,
-        "The \"Target\" field can be entered with a string labelled in this format:\n"
-        "\"Account@Domain@Device:Service:Auth\".\n"
-        "The \"Domain\", \"Service\" and \"Auth\" parts are optional.\n"
-        "This field is optional and case-sensitive.\n"
-        "\n"
-        "The \"Login\" field must refer to a user declared on the Bastion.\n"
-        "This field is required and not case-sensitive.\n"
-        "\n"
-        "Contact your system administrator for assistance.",
-
-        "Le champ \"Cible\" peut contenir une chaîne de caractères au format:\n"
-        "\"Account@Domain@Device:Service:Auth\".\n"
-        "Les parties \"Domain\", \"Service\" et \"Auth\" sont optionnelles.\n"
-        "Ce champ est optionnel et sensible à la casse.\n"
-        "\n"
-        "Le champ \"Login\" doit désigner un utilisateur déclaré dans le Bastion.\n"
-        "Ce champ est requis et insensible à la casse.\n"
-        "\n"
-        "Contactez votre administrateur système pour obtenir de l'aide.");
-    TR_KV(selector, "Selector", "Sélecteur");
-    TR_KV(session_out_time,
-        "Session is out of allowed timeframe",
-        "L'autorisation de la session a expiré");
-    TR_KV(miss_keepalive,
-        "Missed keepalive from ACL",
-        "Absence de réponse de Keepalive de l'ACL");
-    TR_KV(close_inactivity,
-        "Connection closed on inactivity",
-        "Fermeture sur inactivité");
-    TR_KV(acl_fail,
-        "Authentifier service failed",
-        "Echec du service d'authentification");
-    TR_KV(target_fail,
-        "Failed to connect to remote host.",
-        "Échec de la connexion à l'hôte distant.");
-
-    TR_KV(authentification_rdp_fail,
-        "Failed to authenticate with remote RDP host.",
-        "Échec de l'authentification avec l'hôte RDP distant.");
-    TR_KV(authentification_vnc_fail,
-        "Failed to authenticate with remote VNC host.",
-        "Échec de l'authentification avec l'hôte VNC distant.");
-    TR_KV(authentification_x_fail,
-        "Failed to authenticate with remote X host.",
-        "Échec de l'authentification avec l'hôte X distant.");
-    TR_KV(connection_ended,
-        "Connection to server ended.",
-        "Connexion au serveur terminée.");
-
-    TR_KV(no_results, "No results found", "Aucun résultat");
-    TR_KV(back_selector, "Back to Selector", "Retour au Sélecteur");
-    TR_KV(exit, "Exit", "Sortir");
-    TR_KV(comment, "Comment", "Commentaire");
-    TR_KV(comment_r, "Comment *", "Commentaire *");
-    TR_KV(ticket, "Ticket Ref.", "Ticket Ref.");
-    TR_KV(ticket_r, "Ticket Ref. *", "Ticket Ref. *");
-    TR_KV(duration, "Duration", "Durée");
-    TR_KV(duration_r, "Duration *", "Durée *");
-    TR_KV(note_duration_format, "Format: [hours]h[mins]m", "Format: [heures]h[mins]m");
-    TR_KV(note_required, "(*) required fields", "(*) champs requis");
-    TR_KV(confirm, "Confirm", "Confirmer");
-    TR_KV_FMT(fmt_field_required,
-        "Error: %s field is required.",
-        "Erreur: le champ %s est requis.");
-    TR_KV_FMT(fmt_invalid_format,
-        "Error: %s invalid format.",
-        "Erreur: format %s invalide.");
-    TR_KV_FMT(fmt_toohigh_duration,
-        "Error: %s is too high (max: %d minutes).",
-        "Erreur: %s trop haute (max: %d minutes).");
-    TR_KV(information, "Information", "Information");
-    TR_KV(authentication_required,  "Authentication Required", "Authentification Requise");
-    TR_KV(target_info_required, "Target Information Required", "Informations Cible Requises");
-    TR_KV(device, "Device", "Machine");
-    TR_KV(disable_osd,
-        "(insert key or left click to hide)",
-        "(cacher avec touche insert ou clic gauche)");
-    TR_KV(disconnected_by_otherconnection,
-        "Another user connected to the resource, so your connection was lost.",
-        "Un autre utilisateur s'est connecté à la ressource, provoquant la perte de votre connexion."
-    );
-    TR_KV_FMT(process_interrupted_security_policies,
-        "The process '%s' was interrupted in accordance with security policies.",
-        "Le processus '%s' a été interrompu conformément aux politiques de sécurité."
-    );
-    TR_KV_FMT(account_manipulation_blocked_security_policies,
-        "The account manipulation initiated by process '%s' was rejected in accordance with security policies.",
-        "L'édition de compte d'utilisateur effectuée via le processus '%s' a été rejeté conformément aux politiques de sécurité."
-    );
-    TR_KV(session_logoff_in_progress,
-        "Session logoff in progress.",
-        "Fermeture de session en cours."
-    );
-    TR_KV(starting_remoteapp,
-        "Starting RemoteApp ...",
-        "Lancement de RemoteApp ..."
-    );
-    TR_KV(closing_remoteapp,
-        "All RemoteApp windows are closed.",
-        "Toutes les fenêtre de RemoteApp sont fermées."
-    );
-    TR_KV(disconnect_now,
-        "Disconnect Now",
-        "Se déconnecter maintenant"
-    );
-    TR_KV(err_rdp_server_redir,
-        "The computer that you are trying to connect to is redirecting you to another computer!",
-        "L'ordinateur auquel vous essayez de vous connecter vous redirige vers un autre ordinateur!"
-    );
-    TR_KV(err_nla_authentication_failed,
-        "NLA Authentication Failed!",
-        "Échec d'authentification NLA!"
-    );
-    TR_KV(err_transport_tls_certificate_changed,
-        "TLS certificate changed!",
-        "Certificat TLS modifié!"
-    );
-    TR_KV(err_transport_tls_certificate_missed,
-        "TLS certificate missed!",
-        "Certificat TLS est manquant!"
-    );
-    TR_KV(err_transport_tls_certificate_corrupted,
-        "TLS certificate corrupted!",
-        "Certificat TLS est corrompu!"
-    );
-    TR_KV(err_transport_tls_certificate_inaccessible,
-        "TLS certificate  is inaccessible!",
-        "Certificat TLS est inaccessible!"
-    );
-    TR_KV(err_vnc_connection_error,
-        "VNC connection error!",
-        "Error de connexion VNC!"
-    );
-    TR_KV(err_rdp_unsupported_monitor_layout,
-        "Unsupported client display monitor layout!",
-        "La disposition du moniteur d'affichage du client n'est pas supportée!"
-    );
-    TR_KV(err_lic,
-        "An error occurred during the licensing protocol!",
-        "Une erreur de protocole de licence s'est produite!"
-    );
-    TR_KV(err_rail_client_execute,
-        "The RemoteApp program did not start on the remote computer!",
-        "Le programme RemoteApp n'a pas démarré sur l'ordinateur distant!"
-    );
-    TR_KV(err_rail_starting_program,
-        "Cannot start the RemoteApp program!",
-        "Impossible de démarrer le programme RemoteApp!"
-    );
-    TR_KV(err_rail_unauthorized_program,
-        "The RemoteApp program is not in the list of authorized programs!",
-        "Le programme RemoteApp n'est pas dans la liste des programmes autorisés!"
-    );
-    TR_KV(err_rdp_open_session_timeout,
-        "Logon timer expired!",
-        "Le délai d'attente d'ouverture de session a expiré!"
-    );
-    TR_KV(err_session_probe_launch,
-        "Could not launch Session Probe!",
-        "Impossible de lancer Session Probe!"
-    );
+          "The \"Target\" field can be entered with a string labelled in this format:\n"
+          "\"Account@Domain@Device:Service:Auth\".\n"
+          "The \"Domain\", \"Service\" and \"Auth\" parts are optional.\n"
+          "This field is optional and case-sensitive.\n"
+          "\n"
+          "The \"Login\" field must refer to a user declared on the Bastion.\n"
+          "This field is required and not case-sensitive.\n"
+          "\n"
+          "Contact your system administrator for assistance.");
+    TR_KV(selector, "Selector");
+    TR_KV(session_out_time, "Session is out of allowed timeframe");
+    TR_KV(miss_keepalive, "Missed keepalive from ACL");
+    TR_KV(close_inactivity, "Connection closed on inactivity");
+    TR_KV(acl_fail, "Authentifier service failed");
+    TR_KV(target_fail, "Failed to connect to remote host.");
+    TR_KV(authentification_rdp_fail, "Failed to authenticate with remote RDP host.");
+    TR_KV(authentification_vnc_fail, "Failed to authenticate with remote VNC host.");
+    TR_KV(authentification_x_fail, "Failed to authenticate with remote X host.");
+    TR_KV(connection_ended, "Connection to server ended.");
+    TR_KV(no_results, "No results found");
+    TR_KV(back_selector, "Back to Selector");
+    TR_KV(exit, "Exit");
+    TR_KV(comment, "Comment");
+    TR_KV(comment_r, "Comment *");
+    TR_KV(ticket, "Ticket Ref.");
+    TR_KV(ticket_r, "Ticket Ref. *");
+    TR_KV(duration, "Duration");
+    TR_KV(duration_r, "Duration *");
+    TR_KV(note_duration_format, "Format: [hours]h[mins]m");
+    TR_KV(note_required, "(*) required fields");
+    TR_KV(confirm, "Confirm");
+    TR_KV_FMT(fmt_field_required, "Error: %s field is required.");
+    TR_KV_FMT(fmt_invalid_format, "Error: %s invalid format.");
+    TR_KV_FMT(fmt_toohigh_duration, "Error: %s is too high (max: %d minutes).");
+    TR_KV(information, "Information");
+    TR_KV(authentication_required,  "Authentication Required");
+    TR_KV(target_info_required, "Target Information Required");
+    TR_KV(device, "Device");
+    TR_KV(disable_osd, "(insert key or left click to hide)");
+    TR_KV(disconnected_by_otherconnection, "Another user connected to the resource, so your connection was lost.");
+    TR_KV_FMT(process_interrupted_security_policies, "The process '%s' was interrupted in accordance with security policies.");
+    TR_KV_FMT(account_manipulation_blocked_security_policies, "The account manipulation initiated by process '%s' was rejected in accordance with security policies.");
+    TR_KV(session_logoff_in_progress, "Session logoff in progress.");
+    TR_KV(starting_remoteapp, "Starting RemoteApp ...");
+    TR_KV(closing_remoteapp, "All RemoteApp windows are closed.");
+    TR_KV(disconnect_now, "Disconnect Now");
+    TR_KV(err_rdp_server_redir, "The computer that you are trying to connect to is redirecting you to another computer!");
+    TR_KV(err_nla_authentication_failed, "NLA Authentication Failed!");
+    TR_KV(err_transport_tls_certificate_changed, "TLS certificate changed!");
+    TR_KV(err_transport_tls_certificate_missed, "TLS certificate missed!");
+    TR_KV(err_transport_tls_certificate_corrupted, "TLS certificate corrupted!");
+    TR_KV(err_transport_tls_certificate_inaccessible, "TLS certificate  is inaccessible!");
+    TR_KV(err_vnc_connection_error, "VNC connection error!");
+    TR_KV(err_rdp_unsupported_monitor_layout, "Unsupported client display monitor layout!");
+    TR_KV(err_lic, "An error occurred during the licensing protocol!");
+    TR_KV(err_rail_client_execute, "The RemoteApp program did not start on the remote computer!");
+    TR_KV(err_rail_starting_program, "Cannot start the RemoteApp program!");
+    TR_KV(err_rail_unauthorized_program, "The RemoteApp program is not in the list of authorized programs!");
+    TR_KV(err_rdp_open_session_timeout, "Logon timer expired!");
+    TR_KV(err_session_probe_launch,"Could not launch Session Probe!");
     TR_KV(err_session_probe_asbl_fsvc_unavailable,
-        "(ASBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target.",
-        "(ASBL) Impossible de lancer Session Probe! Le canal virtuel du système de fichiers n'est pas disponible. Veuillez autorisez la redirection du lecteur dans les paramètres des Services de bureau à distance de la cible."
-    );
+          "(ASBL) Could not launch Session Probe! File System Virtual Channel is unavailable. "
+          "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
     TR_KV(err_session_probe_asbl_maybe_something_blocks,
-        "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. Is the target running under Microsoft Server products? The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. Please also check the temporary directory to ensure there is enough free space.",
-        "(ASBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. La cible fonctionne-t-elle sous un produit de famille Microsoft Server? L'invite de commande doit être publiée comme programme RemoteApp et accepter tout type de paramètres de ligne de commande. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
-    );
-    TR_KV(err_session_probe_asbl_unknown_reason,
-        "(ASBL) Session Probe launch has failed for unknown reason!",
-        "(ASBL) Le lancement de Session Probe a échoué pour une raison inconnue!"
-    );
+          "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. "
+          "Is the target running under Microsoft Server products? "
+          "The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. "
+          "Please also check the temporary directory to ensure there is enough free space.");
+    TR_KV(err_session_probe_asbl_unknown_reason, "(ASBL) Session Probe launch has failed for unknown reason!");
     TR_KV(err_session_probe_cbbl_fsvc_unavailable,
-        "(CBBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target.",
-        "(CBBL) Impossible de lancer Session Probe! Le canal virtuel du système de fichiers n'est pas disponible. Veuillez autorisez la redirection du lecteur dans les paramètres des Services de bureau à distance de la cible."
-    );
+          "(CBBL) Could not launch Session Probe! File System Virtual Channel is unavailable. "
+          "Please allow the drive redirection in the Remote Desktop Services settings of the target.");
     TR_KV(err_session_probe_cbbl_cbvc_unavailable,
-        "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is unavailable. Please allow the clipboard redirection in the Remote Desktop Services settings of the target.",
-        "(CBBL) Impossible de lancer Session Probe! Le canal virtuel du presse-papier n'est pas disponible. Veuillez autorisez la redirection du presse-papier dans les paramètres des Services de bureau à distance de la cible."
-    );
+          "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is unavailable. "
+          "Please allow the clipboard redirection in the Remote Desktop Services settings of the target.");
     TR_KV(err_session_probe_cbbl_drive_not_ready_yet,
-        "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. Is the target running under Windows Server 2008 R2 or more recent version?",
-        "(CBBL) Impossible de lancer Session Probe! Le lecteur de Session Probe n'est pas encore prêt. La cible fonctionne-t-elle sous Windows Server 2008 R2 ou une version plus récente?"
-    );
+          "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. "
+          "Is the target running under Windows Server 2008 R2 or more recent version?");
     TR_KV(err_session_probe_cbbl_maybe_something_blocks,
-        "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. Please also check the temporary directory to ensure there is enough free space.",
-        "(CBBL) Impossible de lancer Session Probe! Peut-être que quelque chose le bloque sur la cible. Veuillez vérifier également le répertoire temporaire afin d'assurer qu'il y a suffisamment d'espace libre."
-    );
+          "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. "
+          "Please also check the temporary directory to ensure there is enough free space.");
     TR_KV(err_session_probe_cbbl_launch_cycle_interrupted,
-        "(CBBL) Session Probe launch cycle has been interrupted! The launch timeout duration may be too short.",
-        "(CBBL) Le cycle de lancement de Session Probe a été interrompu! La durée du délai d'attente de lancement peut être trop courte."
-    );
+          "(CBBL) Session Probe launch cycle has been interrupted! "
+          "The launch timeout duration may be too short.");
     TR_KV(err_session_probe_cbbl_unknown_reason_refer_to_syslog,
-        "(CBBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition.",
-        "(CBBL) Le lancement de Session Probe a échoué pour une raison inconnue! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
-    );
+          "(CBBL) Session Probe launch has failed for unknown reason! "
+          "Please refer to the syslog file for more detailed information regarding the error condition.");
     TR_KV(err_session_probe_rp_launch_refer_to_syslog,
-        "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition.",
-        "(RP) Impossible de lancer Session Probe! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
-    );
-    TR_KV(err_session_unknown_backend,
-        "Unknown backend failure.",
-        "Erreur de backend inconnue."
-    );
-    TR_KV(err_login_password,
-        "Provided login/password is probably incorrect.",
-        "Le nom d'utilisateur/mot de passe fourni est probablement incorrect."
-    );
-    TR_KV(wait_msg,
-        "Please wait...",
-        "Veuillez patienter..."
-    );
-    TR_KV(err_nla_required,
-        "Enable NLA is probably required.",
-        "Il est probablement nécessaire d'activer NLA."
-    );
-    TR_KV(err_tls_required,
-        "Enable TLS is probably required.",
-        "Il est probablement nécessaire d'activer TLS."
-    );
-    TR_KV(err_server_denied_connection,
-        "Please check provided Load Balance Info.",
-        "Veuillez vérifier le Load Balance Info fournies."
-    );
-
-    TR_KV(err_mod_rdp_nego,
-        "Fail during TLS security exchange.",
-        "Échec lors de l'échange de sécurité TLS."
-    );
-    TR_KV(err_mod_rdp_basic_settings_exchange,
-        "Fail during basic setting exchange.",
-        "Échec lors de l'échange de paramètres de base."
-    );
-    TR_KV(err_mod_rdp_channel_connection_attach_user,
-        "Fail during channels connection.",
-        "Échec lors de la connexion des canaux."
-    );
-    TR_KV(mod_rdp_channel_join_confirme,
-        "Fail during channels connection.",
-        "Échec lors de la connexion des canaux."
-    );
-    TR_KV(mod_rdp_get_license,
-        "Failed while trying to get licence.",
-        "Échec en essayant d'obtenir une licence."
-    );
-    TR_KV(err_mod_rdp_connected,
-        "Fail while connecting session on the target.",
-        "Échec lors de la connexion de la session sur la cible."
-    );
-
-    TR_KV(file_verification_wait,
-        "File being analyzed: ",
-        "Fichier en cours d'analyse: "
-    );
-    TR_KV(file_verification_accepted,
-        "Valid file: ",
-        "Fichier valide: "
-    );
-    TR_KV(file_verification_rejected,
-        "Invalid file: ",
-        "Fichier invalide: "
-    );
+          "(RP) Could not launch Session Probe! "
+          "Please refer to the syslog file for more detailed information regarding the error condition.");
+    TR_KV(err_session_unknown_backend, "Unknown backend failure.");
+    TR_KV(err_login_password, "Provided login/password is probably incorrect.");
+    TR_KV(wait_msg, "Please wait...");
+    TR_KV(err_nla_required, "Enable NLA is probably required.");
+    TR_KV(err_tls_required, "Enable TLS is probably required.");
+    TR_KV(err_server_denied_connection, "Please check provided Load Balance Info.");
+    TR_KV(err_mod_rdp_nego, "Fail during TLS security exchange.");
+    TR_KV(err_mod_rdp_basic_settings_exchange, "Fail during basic setting exchange.");
+    TR_KV(err_mod_rdp_channel_connection_attach_user, "Fail during channels connection.");
+    TR_KV(mod_rdp_channel_join_confirme, "Fail during channels connection.");
+    TR_KV(mod_rdp_get_license, "Failed while trying to get licence.");
+    TR_KV(err_mod_rdp_connected, "Fail while connecting session on the target.");
+    TR_KV(file_verification_wait, "File being analyzed: ");
+    TR_KV(file_verification_accepted, "Valid file: ");
+    TR_KV(file_verification_rejected, "Invalid file: ");
 #undef TR_KV
 #undef TR_KV_FMT
 } // namespace trkeys
 
-class Inifile;
 
+/* Need to pass type with template on Translation struct
+   for avoid strong dependency but it forces to change a 
+   lot of file in project */
+using MessageTranslator_t = i18n::MessageTranslatorGettext;
+
+class Inifile;
+        
 struct Translation
 {
     enum language_t : unsigned char
@@ -374,9 +217,32 @@ struct Translation
 
 private:
     language_t lang;
-    Inifile * ini = nullptr;
+    language_t prev_lang;
+    mutable MessageTranslator_t message_translator;
 
     Translation() = default;
+
+    inline void reset_message_translator_context() const
+    {
+        if (this->lang != this->prev_lang)
+        {
+            this->message_translator.clear_context();
+
+            /* check if it's english language for avoid useless context reset 
+               because text is already in english by default in code */
+            if (this->lang != language_t::EN)
+            {
+                this->message_translator.set_context(to_sv(this->lang));
+            }
+        }
+    }
+
+    [[nodiscard]]
+    inline zstring_view _translate(zstring_view text) const
+    {
+        reset_message_translator_context();
+        return this->message_translator.get_translated_text(text);
+    }
 
 public:
     Translation(Translation const&) = delete;
@@ -388,26 +254,39 @@ public:
         return instance;
     }
 
+    static zstring_view to_sv(language_t lang)
+    {
+        switch (lang)
+        {
+            case Translation::language_t::EN :
+                return "en"_zv;
+            case Translation::language_t::FR :
+                return "fr"_zv;
+            case Translation::language_t::MAX_LANG :
+                return "MAX_LANG"_zv;
+        }
+        assert(false);
+        return ""_zv;
+    }
+
     bool set_lang(language_t lang)
     {
         if (lang >= MAX_LANG) {
             return false;
         }
+        this->prev_lang = this->lang;
         this->lang = lang;
         return true;
     }
 
-    void set_ini(Inifile * ini)
+    [[nodiscard]] zstring_view translate(trkeys::TrKey_password k) const
     {
-        this->ini = ini;
+        return _translate(k.translation);
     }
-
-    // implementation in config.cpp
-    [[nodiscard]] zstring_view translate(trkeys::TrKey_password k) const;
 
     [[nodiscard]] zstring_view translate(trkeys::TrKey k) const
     {
-        return k.translations[this->lang];
+        return _translate(k.translation);
     }
 
     template<class T, class... Ts>
@@ -416,7 +295,7 @@ public:
     {
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-        return std::snprintf(s, n, k.translations[this->lang], xs...);
+        return std::snprintf(s, n, _translate(k.translation).c_str(), xs...);
         REDEMPTION_DIAGNOSTIC_POP
     }
 };
