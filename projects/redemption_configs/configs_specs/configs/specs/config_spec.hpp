@@ -618,7 +618,10 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "codec_id", set("mp4"));
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), "framerate", set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{"FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264"}, set("crf=1 preset=superfast"));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "ffmpeg_options", desc{
+            "FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264\n"
+            "/!\\ Some browsers and video decoders don't support crf=0"
+        }, set("crf=35 preset=superfast"));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "notimestamp", set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));
@@ -629,7 +632,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_rt_without_recording", desc { "Allow Realtime display (4eyes) without recording of session" }, set(false));
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::file_permission>(), "file_permissions", desc { "Allow to control permissions on recorded files with octal number" }, set(0440));
-        
+
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "rt_basename_only_sid", desc{"Use only session id for basename"}, set(false));
     });
 

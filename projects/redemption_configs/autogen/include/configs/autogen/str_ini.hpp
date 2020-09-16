@@ -1223,8 +1223,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #framerate = 5
 
 # FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
+# /!\ Some browsers and video decoders don't support crf=0
 #_advanced
-#ffmpeg_options = crf=1 preset=superfast
+#ffmpeg_options = crf=35 preset=superfast
 
 # value: 0 or 1
 #_advanced
