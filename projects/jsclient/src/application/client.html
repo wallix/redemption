@@ -264,12 +264,13 @@ function run(openCb, closeCb)
         // - safari 10+
         // Check support with `new KeyboardEvent(0).code !== undefined`
 
-        if (evt.code.length === 1) {
-            sendScancodes(keycodeToScancodes(flag, evt.code), evt);
+        const kcode = evt.code;
+        if (kcode.length === 1) {
+            sendScancodes(keycodeToScancodes(kcode, flag), evt);
         }
-        // use key for special configuration that as Esc <-> CapsLock
+        // use key for special configuration such as Esc <-> CapsLock
         else {
-            sendScancodes(keycodeToScancodes(flag, evt.key) || keycodeToScancodes(flag, evt.code), evt);
+            sendScancodes(keycodeToScancodes(evt.key, flag) || keycodeToScancodes(kcode, flag), evt);
         }
     }
 
