@@ -6,6 +6,7 @@
 // /!\ rotate digit code
 // Note: special code and key are same value (ControlLeft, ArrowDown, etc)
 
+/// \return Number | undefined
 const keycodeToSingleScancode = function(code) {
     switch (code)
     {
@@ -170,6 +171,7 @@ const keycodeToSingleScancode = function(code) {
     }
 };
 
+/// \return Array[Number] | undefined
 const keycodeToMultiScancodes = function(code) {
     switch (code)
     {
@@ -177,6 +179,7 @@ const keycodeToMultiScancodes = function(code) {
     }
 };
 
+/// \return Number | undefined
 const numpadKeyToScancode = function(key) {
     switch (key)
     {
@@ -203,6 +206,8 @@ const numpadKeyToScancode = function(key) {
     }
 };
 
+/// \brief convert keycode to scancodes
+/// \return Array[Number] | undefined
 const keycodeToScancodes = function(k, flag) {
     const scancode = keycodeToSingleScancode(k);
     if (scancode) return [scancode | flag];
@@ -314,6 +319,12 @@ const searchScancodeWithMask = function(scancodeMods, controlMask) {
     }
 };
 
+/// \return a function (key, flag) => (Array[Number]| undefined)
+/// and add properties follow:
+/// - getLayout()
+/// - setLayout(layout)
+/// - getOSBehavior()
+/// - setOSBehavior(osType)
 const createUnicodeToScancodeConverter = function(layout)
 {
     // on window, alt+ctrl = altgr
@@ -458,9 +469,9 @@ const createUnicodeToScancodeConverter = function(layout)
         }
     };
 
-    convert.setLayout = () => { layout = newLayout; };
+    convert.setLayout = (newLayout) => { layout = newLayout; };
     convert.getLayout = () => layout;
-    convert.setControlBehavior = function(os) {
+    convert.setOSBehavior = function(os) {
         osType = os.toLowerCase();
         if (osType === 'windows') {
             let ctrlFilterMask = windowsCtrlFilterMask;
@@ -471,7 +482,7 @@ const createUnicodeToScancodeConverter = function(layout)
             let controlMaskMap = linuxControlMaskMap;
         }
     };
-    convert.getControlBehavior = () => osType;
+    convert.getOSBehavior = () => osType;
 
     // states for test
     convert.getControlMask = () => controlMask;

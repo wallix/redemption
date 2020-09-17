@@ -86,15 +86,24 @@ form {
             </select>
         </fieldset>
         <fieldset>
+            <legend>Keyboard</legend>
+            <label for="kbdmethod">Method: <select name="kbdmethod" id="kbdmethod">
+                <option value="unicodeToScancode">Unicode -> Scancode (KeyboardEvent.key)</option>
+                <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
+                <option value="unicodeKey">Unicode + Keycode (KeyboardEvent.key)</option>
+                <option value="unicodeCode">Unicode + Scancode (KeyboardEvent.code)</option>
+            </select>
+            <fieldset>
+                <legend>Unicode -> Scancode</legend>
+                <label for="kbdlayout">Layout: <select name="kbdlayout" id="kbdlayout"></select>
+                <label for="kbdos"><input type="checkbox" id="kbdos" name="kbdos" checked="checked"/>Ctrl + Alt = AltGr</label>
+                </select>
+            </fieldset>
+        </fieldset>
+        <fieldset>
             <legend>Others</legend>
             <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
             <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
-            <label for="kbdmethod">Keyboard method: <select name="kbdmethod" id="kbdmethod">
-                <option value="unicodeToScancode">UnicodeToScancode (KeyboardEvent.key)</option>
-                <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
-                <option value="unicodeKey">Unicode + keycode (KeyboardEvent.key)</option>
-                <option value="unicodeCode">Unicode + scancode (KeyboardEvent.code)</option>
-            </select>
         </fieldset>
         <p>
             <input type="submit" value="New Connection"/>
@@ -160,6 +169,8 @@ const user_input = document.getElementById('user');
 const disabled_graphics_input = document.getElementById('disabledGraphics');
 const verbose_input = document.getElementById('verbose');
 const kbdmethod_input = document.getElementById('kbdmethod');
+const kbdlayout_input = document.getElementById('kbdlayout');
+const kbdos_input = document.getElementById('kbdos');
 const jsonConfig_input = document.getElementById('jsonConfig');
 const pass_input = document.getElementById('pass');
 const url_input = document.getElementById('url');
@@ -171,6 +182,27 @@ const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
 const permalink = document.getElementById('permalink');
+
+// init kbdlayout_input
+let defaultLayoutId;
+for (let i = 0; i < layouts.length; ++i) {
+    const layout = layouts[i];
+    const name = layout.name;
+    const opt = document.createElement('option');
+    opt.textContent = `${name} (0x${layout.lcid.toString(16).padStart(5, '0')})`;
+    opt.value = i;
+    if (name === 'fr-FR') {
+        opt.selected = true;
+        defaultLayoutId = i;
+    }
+    kbdlayout_input.appendChild(opt);
+}
+
+let kbdInputLayoutEvent = () => {};
+for (const input of [kbdmethod_input, kbdlayout_input, kbdos_input]) {
+    input.addEventListener('input', () => { kbdInputLayoutEvent(); }, false);
+}
+
 
 let _Module;
 WallixModule({
@@ -357,17 +389,7 @@ function run(openCb, closeCb)
         }
     }
 
-    const ucs2scancode = createUnicodeToScancodeConverter((() => {
-        let layoutName = "fr-FR";
-        // let layoutName = "en-US.international";
-        let layout;
-        for (let i = 0; i < layouts.length; ++i) {
-            if (layouts[i].name === layoutName) {
-                layout = layouts[i];
-            }
-        }
-        return layout;
-    })());
+    const ucs2scancode = createUnicodeToScancodeConverter();
 
     function unicodeToScancodeKeyEvent(evt, flag)
     {
@@ -512,8 +534,34 @@ function run(openCb, closeCb)
         ecanvas.onclick = canvasEnableFocus;
     }
 
+    let isClosed = false;
+
+    function updateKbdInput(inputFlags)
+    {
+        const kbdMethodId = kbdmethod_input.selectedIndex;
+        const kbdLayoutId = kbdlayout_input.selectedIndex;
+        const kbdOsType = kbdos_input.checked ? 'windows' : 'other';
+        if (kbdMethodId % 2 === 1 && !(inputFlags & InputFlags.Unicode)) {
+            console.log('don\'t support unicode');
+            --kbdMethodId;
+        }
+        const layout = layouts[kbdLayoutId];
+        console.group('keyboard');
+        console.log(`method: (${kbdMethodId}) ${kbdmethod_input[kbdMethodId].value}`);
+        if (kbdMethodId === 0) {
+            console.log(`layout: (0x${layout.lcid.toString(16)}) ${layout.name}`);
+            console.log(`OS: ${kbdOsType}`);
+            ucs2scancode.setLayout(layout);
+            ucs2scancode.setOSBehavior(kbdOsType);
+        }
+        console.groupEnd();
+        onKeyEvent = [unicodeToScancodeKeyEvent, scancodeKeyEvent, unicodeAndKeyKeyEvent, unicodeAndScancodeKeyEvent][kbdMethodId];
+    }
+
     function updateInput()
     {
+        if (isClosed) return;
+
         const inputFlags = rdpclient.getInputFlags();
         const keyboardLayout = rdpclient.getKeyboardLayout();
         console.log(`keyboardLayout: 0x${keyboardLayout.toString(16)}`);
@@ -525,13 +573,12 @@ function run(openCb, closeCb)
         hWheelSupport = Boolean(inputFlags & InputFlags.HorizontalWheel);
         MouseXSupport = Boolean(inputFlags & InputFlags.MouseX);
 
-        const kbMethodId = kbdmethod_input.selectedIndex;
-        if (kbMethodId % 2 === 1 && !(inputFlags & InputFlags.Unicode)) {
-            console.log('don\'t support unicode');
-            --kbMethodId;
+        updateKbdInput(inputFlags);
+        kbdInputLayoutEvent = () => {
+            if (isClosed) return;
+            updateKbdInput(inputFlags);
         }
-        console.log(`keyboardType: (${kbMethodId}) ${kbdmethod_input[kbMethodId].value}`);
-        onKeyEvent = [unicodeToScancodeKeyEvent, scancodeKeyEvent, unicodeAndKeyKeyEvent, unicodeAndScancodeKeyEvent][kbMethodId];
+
         canvasStopEvents();
         canvasStartEvents();
     }
@@ -548,8 +595,6 @@ function run(openCb, closeCb)
         channels.push(channel);
         rdpclient.addChannelReceiver(channel.getChannelReceiver());
     }
-
-    let isClosed = false;
 
     socket.onopen = function(event) {
         const config = Object.assign({
@@ -644,19 +689,22 @@ function updatePermalink()
 }
 
 const identity = (x) => x;
-const isTrue = (x) => x === 'true';
 const number = (x) => Number(x) || 0;
+const checkedTrue = (x) => x === '' || x === '1' || x === 'true';
+const numberOrDefault = (d) => (x) => x ? Number(x) : d;
 const inputs = {
     user: [user_input, 'value', identity],
     pass: [pass_input, 'value', identity],
     url: [url_input, 'value', identity],
     width: [width_input, 'value', number],
     height: [height_input, 'value', number],
-    verbose: [verbose_input, 'value', number],
-    config: [jsonConfig_input, 'value', identity],
-    kbdmethod: [kbdmethod_input, 'selectedIndex', identity],
     bpp: [bpp_input, 'selectedIndex', parseInt],
     gdimpl: [gdimpl_input, 'selectedIndex', identity],
+    verbose: [verbose_input, 'value', number],
+    kbdmethod: [kbdmethod_input, 'selectedIndex', identity],
+    kbdlayout: [kbdlayout_input, 'selectedIndex', numberOrDefault(defaultLayoutId)],
+    kbdos: [kbdos_input, 'checked', checkedTrue],
+    config: [jsonConfig_input, 'value', identity],
 };
 for (const k in inputs) {
     const d = inputs[k];
