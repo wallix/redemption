@@ -6,13 +6,53 @@
 
 body {
     display: flex;
+    align-items: flex-start;
 }
-form {
-    margin-bottom: 2em
+
+form > fieldset, #loginInputs > fieldset{
+    border: none;
+    border-top: 1px solid yellow
+}
+form > fieldset > legend, #loginInputs > fieldset > legend {
+    background: yellow;
+}
+
+div, section, canvas{
+    padding:0;
+    margin:0;
 }
 
 #login {
-    background: orange
+    background: orange;
+    margin:0;
+    padding: 5px 5px 0px 5px;
+}
+#login > p {
+    margin: 0;
+    padding: 1em
+}
+
+#loginInputs {
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(100px, auto);
+}
+#loginInputs > fieldset > fieldset {
+    margin-top: 1em;
+}
+#loginInputs > fieldset, #loginInputs > fieldset > fieldset {
+    display:grid;
+    grid-template-columns: 1fr;
+}
+#loginInputs > fieldset:nth-child(4n-2),
+#loginInputs > fieldset:nth-child(4n-1) {
+    background: darkorange
+}
+
+#login, #loginInputs, #clip, #clipForms {
+    margin:0;
+    padding:0;
+    /* padding: 0px 5px 0px 5px; */
 }
 
 #clip {
@@ -22,21 +62,15 @@ form {
 #canvasFocus {
     width: 0px;
     height: 0px;
-    position: relative;
+    position: absolute;
     z-index: -10;
-    top: -800px;
+    /* top: -800px; */
+    /* left: -800px; */
+    padding:0;
+    margin:0;
 }
 #cbDownload {
     display: hidden
-}
-#login > fieldset {
-    padding-bottom: 0;
-}
-#login, fieldset {
-    column-count: auto;
-}
-#login label {
-    display: inline-block
 }
 
 #clipForms form {
@@ -45,21 +79,16 @@ form {
     display: inline-block
 }
 
-#login, #clipForms {
-    margin:0;
-    padding: 0px 5px 0px 5px;
-}
-
     </style>
 </head>
 <body>
 
 <div>
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <input id="canvasFocus" type="text"/>
+    <canvas id="canvas" width="800" height="600"></canvas><input id="canvasFocus" type="text"/>
 </div>
 <section>
     <form id="login" method="get" action="#">
+        <div id="loginInputs">
         <fieldset>
             <legend>Identification</legend>
             <label for="url">url: <input type="url" id="url" name="url" value="ws://localhost:3390" placeholder="websocket"/></label>
@@ -83,7 +112,7 @@ form {
                 <option value="2d" selected="selected">Canvas 2d</option>
                 <option value="webgl">WebGL</option>
                 <option value="webgl2">WebGL2</option>
-            </select>
+            </select></label>
         </fieldset>
         <fieldset>
             <legend>Keyboard</legend>
@@ -92,10 +121,10 @@ form {
                 <option value="scancode" selected="selected">Scancode (KeyboardEvent.code)</option>
                 <option value="unicodeKey">Unicode + Keycode (KeyboardEvent.key)</option>
                 <option value="unicodeCode">Unicode + Scancode (KeyboardEvent.code)</option>
-            </select>
+            </select></label>
             <fieldset>
                 <legend>Unicode -> Scancode</legend>
-                <label for="kbdlayout">Layout: <select name="kbdlayout" id="kbdlayout"></select>
+                <label for="kbdlayout">Layout: <select name="kbdlayout" id="kbdlayout"></select></label>
                 <label for="kbdos"><input type="checkbox" id="kbdos" name="kbdos" checked="checked"/>Ctrl + Alt = AltGr</label>
                 </select>
             </fieldset>
@@ -105,6 +134,7 @@ form {
             <label for="verbose">verbose: <input type="text" id="verbose" name="verbose" placeholder="Verbose"/></label>
             <label for="jsonConfig">JSON config: <textarea id="jsonConfig"></textarea></label>
         </fieldset>
+        </div>
         <p>
             <input type="submit" value="New Connection"/>
             <button id="disconnect" type="button" disabled="disabled">Disconnect</button>
