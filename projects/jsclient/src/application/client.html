@@ -433,7 +433,8 @@ function run(openCb, closeCb)
             }
         }
 
-        sendScancodes(ucs2scancode(evt.key, flag), evt);
+        const isRight = (evt.location === 2); /*KeyboardEvent.DOM_KEY_LOCATION_RIGHT*/
+        sendScancodes(ucs2scancode(evt.key, flag, isRight), evt);
     }
 
     function sendMouseEvent(evt, flags)
