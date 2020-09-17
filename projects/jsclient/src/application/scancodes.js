@@ -301,7 +301,9 @@ const linuxControlMaskMap = {
 const windowsCtrlFilterMask = AltGrMod | AltMod;
 const linuxCtrlFilterMask = 0;
 
-const syncControlScancode = function(scancodeFlag, modMask, accu) {
+const syncControls = function(scancodeFlag, modMask, accu) {
+    if (modMask & ShiftRightMod) accu.push(scancodeFlag | ShiftRightScancode);
+    if (modMask & CtrlRightMod)  accu.push(scancodeFlag | CtrlRightScancode);
     if (modMask & ShiftMod) accu.push(scancodeFlag | ShiftLeftScancode);
     if (modMask & CtrlMod)  accu.push(scancodeFlag | CtrlLeftScancode);
     if (modMask & AltMod)   accu.push(scancodeFlag | AltScancode);
@@ -311,9 +313,9 @@ const syncControlScancode = function(scancodeFlag, modMask, accu) {
 
 const emulateKey = function(modMask, ...scancodes) {
     const accu = [];
-    syncControlScancode(ReleaseKeyFlag, modMask, accu);
+    syncControls(ReleaseKeyFlag, modMask, accu);
     accu.push(...scancodes);
-    syncControlScancode(AcquireKeyFlag, modMask, accu);
+    syncControls(AcquireKeyFlag, modMask, accu);
     return accu;
 };
 
@@ -382,7 +384,7 @@ const createUnicodeToScancodeConverter = function(layout)
                     return emulateKey(mask, data & 0xff | flag);
                 }
                 else if (data & ShiftMod) {
-                    const mask = (modMask & ctrlFilterMask) ? modMask : (modMask & ~BothCtrlMod);
+                    const mask = (modMask & ctrlFilterMask) ? (modMask | ~BothShiftMod) : (modMask & ~(BothCtrlMod | BothShiftMod));
                     if (controlMask & ShiftMod) {
                         return emulateKey(mask, data & 0xff | flag);
                     }
