@@ -227,6 +227,14 @@ int main()
             return 0x47 <= scancode && scancode <= 0x53;
         };
 
+        auto is_ascii = [](uint16_t ucs){
+            return 0x20 <= ucs && ucs <= 0x7E;
+        };
+
+        auto is_standard_scancode = [](uint8_t scancode){
+            return scancode <= 0x60;
+        };
+
         struct KeyInfo
         {
             uint8_t scancode;
@@ -256,7 +264,11 @@ int main()
         }) {
             uint8_t scancode = 0;
             for (uint16_t ucs : layout.klayout) {
-                if (ucs && !is_numpad(scancode)) {
+                if (ucs
+                 && !is_numpad(scancode)
+                 // filter stange values
+                 && (!is_ascii(ucs) || is_standard_scancode(scancode))
+                ) {
                     keycodes[ucs].push_back(KeyInfo{scancode, layout.mods});
                 }
                 ++scancode;
