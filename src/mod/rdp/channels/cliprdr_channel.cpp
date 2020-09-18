@@ -1233,7 +1233,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     case ClipCtx::TransferState::RequestedRange:
                     case ClipCtx::TransferState::RequestedSyncRange:
                         LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_data_response_pdu:"
-                            " invalid state");
+                            " invalid state %d", int(clip.nolock_data.transfer_state));
                         throw Error(ERR_RDP_PROTOCOL);
 
                     case ClipCtx::TransferState::Empty:
@@ -1304,7 +1304,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                             case ClipCtx::TransferState::RequestedSyncRange:
                             case ClipCtx::TransferState::Text:
                                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_format_data_response_pdu:"
-                                    " invalid state");
+                                    " invalid state %d", int(clip.nolock_data.transfer_state));
                                 throw Error(ERR_RDP_PROTOCOL);
                         }
 
@@ -1842,7 +1842,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
             case ClipCtx::TransferState::WaitingContinuationRange:
                 LOG(LOG_ERR, "ClipboardVirtualChannel::process_filecontents_response:"
-                    " invalid state");
+                    " invalid state %d", int(clip.nolock_data.transfer_state));
                 throw Error(ERR_RDP_PROTOCOL);
 
             case ClipCtx::TransferState::Size:
