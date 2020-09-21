@@ -279,6 +279,52 @@ RED_JS_AUTO_TEST_CASE(
     RED_CHECK(getControlMask() == NoMod);
     //@}
 
+    // a with Shift
+    //@{
+    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == ShiftMod);
+    RED_CHECK(getControlMask() == ShiftMod);
+
+    RED_CHECK(convert("a", keyAcquire) == U16A(0x802A, 0x10, 0x2A));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == ShiftMod);
+    RED_CHECK(getControlMask() == ShiftMod);
+
+    RED_CHECK(convert("a", keyRelease) == U16A(0x802A, 0x8010, 0x2A));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == ShiftMod);
+    RED_CHECK(getControlMask() == ShiftMod);
+
+    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == Zero);
+    RED_CHECK(getControlMask() == NoMod);
+    //@}
+
+    // a' with Shift
+    //@{
+    RED_CHECK(convert("Shift", keyAcquire) == U16A(0x2A));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == ShiftMod);
+    RED_CHECK(getControlMask() == ShiftMod);
+
+    RED_CHECK(convert("a", keyAcquire) == U16A(0x802A, 0x10, 0x2A));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == ShiftMod);
+    RED_CHECK(getControlMask() == ShiftMod);
+
+    RED_CHECK(convert("Shift", keyRelease) == U16A(0x802a));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == Zero);
+    RED_CHECK(getControlMask() == NoMod);
+
+    RED_CHECK(convert("a", keyRelease) == U16A(0x8010));
+    RED_CHECK(!isDeadKey());
+    RED_CHECK(getModMask() == Zero);
+    RED_CHECK(getControlMask() == NoMod);
+    //@}
+
     // õ
     //@{
     RED_CHECK(convert("Dead", keyAcquire).isUndefined());
