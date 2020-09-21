@@ -22,7 +22,8 @@ Author(s): Jonathan Poelen
 # define REDEMPTION_UNIT_TEST_CPP
 #endif
 
-#include "./redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/compare_collection.hpp"
 #include "cxx/cxx.hpp"
 
 #include <boost/test/results_collector.hpp>
@@ -52,119 +53,56 @@ namespace redemption_unit_test__
     // based on element_compare from boost/test/tools/collection_comparison_op.hpp
     boost::test_tools::assertion_result bytes_EQ(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
-        boost::test_tools::assertion_result ar(true);
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = pos != a.size() || a.size() != b.size();
-        if (REDEMPTION_UNLIKELY(r))
-        {
-            ar = false;
-
-            ar.message()
-              << "[" << Put2Mem{pos, a, b, " == ", min_len, pattern} << "]\n"
-                "Mismatch at position " << pos;
-
-            if (a.size() != b.size())
-            {
-                ar.message()
-                    << "\nCollections size mismatch: "
-                    << a.size() << " != " << b.size()
-                ;
-            }
-        }
-
-        return ar;
+        return ut::ops::compare_collection_EQ(a, b, [&](
+            boost::wrap_stringstream& out, size_t pos, char const* op, bool /*r*/
+        ){
+            out << Put2Mem{pos, a, b, op, min_len, pattern};
+        });
     }
 
     boost::test_tools::assertion_result bytes_NE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
-        boost::test_tools::assertion_result ar(true);
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = pos == a.size() && a.size() == b.size();
-        if (REDEMPTION_UNLIKELY(r))
-        {
-            ar = false;
-            ar.message() << "[" << Put2Mem{pos, a, b, " != ", min_len, pattern} << "]";
-        }
-
-        return ar;
+        return ut::ops::compare_collection_NE(a, b, [&](
+            boost::wrap_stringstream& out, size_t pos, char const* op, bool /*r*/
+        ){
+            out << Put2Mem{pos, a, b, op, min_len, pattern};
+        });
     }
 
     boost::test_tools::assertion_result bytes_LT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
-        boost::test_tools::assertion_result ar(true);
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = (pos == a.size())
-            ? a.size() < b.size()
-            : (pos != b.size() && a[pos] < b[pos]);
-        if (REDEMPTION_UNLIKELY(r))
-        {
-            ar = false;
-            ar.message()
-              << "[" << Put2Mem{pos, a, b, " >= ", min_len, pattern} << "]\n"
-                "Mismatch at position " << pos;
-        }
-
-        return ar;
+        return ut::ops::compare_collection_LT(a, b, [&](
+            boost::wrap_stringstream& out, size_t pos, char const* op, bool /*r*/
+        ){
+            out << Put2Mem{pos, a, b, op, min_len, pattern};
+        });
     }
 
     boost::test_tools::assertion_result bytes_LE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
-        boost::test_tools::assertion_result ar(true);
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = (pos == a.size())
-            ? a.size() <= b.size()
-            : (pos != b.size() && a[pos] <= b[pos]);
-        if (REDEMPTION_UNLIKELY(r))
-        {
-            ar = false;
-            ar.message()
-              << "[" << Put2Mem{pos, a, b, " > ", min_len, pattern} << "]\n"
-                "Mismatch at position " << pos;
-        }
-
-        return ar;
+        return ut::ops::compare_collection_LE(a, b, [&](
+            boost::wrap_stringstream& out, size_t pos, char const* op, bool /*r*/
+        ){
+            out << Put2Mem{pos, a, b, op, min_len, pattern};
+        });
     }
 
     boost::test_tools::assertion_result bytes_GT(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
-        boost::test_tools::assertion_result ar(true);
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = (pos == a.size())
-            ? a.size() > b.size()
-            : (pos != b.size() && a[pos] > b[pos]);
-        if (REDEMPTION_UNLIKELY(r))
-        {
-            ar = false;
-            ar.message()
-              << "[" << Put2Mem{pos, a, b, " <= ", min_len, pattern} << "]\n"
-                "Mismatch at position " << pos;
-        }
-
-        return ar;
+        return ut::ops::compare_collection_GT(a, b, [&](
+            boost::wrap_stringstream& out, size_t pos, char const* op, bool /*r*/
+        ){
+            out << Put2Mem{pos, a, b, op, min_len, pattern};
+        });
     }
 
     boost::test_tools::assertion_result bytes_GE(bytes_view a, bytes_view b, ::ut::PatternView pattern, unsigned min_len)
     {
-        boost::test_tools::assertion_result ar(true);
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = (pos == a.size())
-            ? a.size() >= b.size()
-            : (pos != b.size() && a[pos] >= b[pos]);
-        if (REDEMPTION_UNLIKELY(r))
-        {
-            ar = false;
-            ar.message()
-              << "[" << Put2Mem{pos, a, b, " < ", min_len, pattern} << "]\n"
-                "Mismatch at position " << pos;
-        }
-
-        return ar;
+        return ut::ops::compare_collection_GE(a, b, [&](
+            boost::wrap_stringstream& out, size_t pos, char const* op, bool /*r*/
+        ){
+            out << Put2Mem{pos, a, b, op, min_len, pattern};
+        });
     }
 
     std::ostream & operator<<(std::ostream & out, Put2Mem const & x)

@@ -21,6 +21,7 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/compare_collection.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "test_only/core/font.hpp"
@@ -64,65 +65,31 @@ static std::ostream& boost_test_print_type(std::ostream& ostr, LineForTest const
     return ostr << "{.width=" << line.width << ", .str=" << std::quoted(line.str) << "}";
 }
 
-namespace boost {
-namespace test_tools {
-namespace assertion {
-namespace op {
-
-template<>
-struct EQ<::LineForTest, ::LineForTest>
+static ut::ops::assertion_result test_comp_lines_EQ(LineForTest const& lhs, LineForTest const& rhs)
 {
-    using result_type = assertion_result;
-    using L = ::LineForTest;
-    using R = L;
-    using OP = EQ<L, R>;
-    using elem_op = op::EQ<L, R>;
+    const bool rw = (lhs.width != rhs.width);
 
-    static assertion_result
-    eval(L const& lhs, R const& rhs)
-    {
-        assertion_result ar(true);
+    const bytes_view a{lhs.str, strlen(lhs.str)};
+    const bytes_view b{rhs.str, strlen(rhs.str)};
 
-        bytes_view a{lhs.str, strlen(lhs.str)};
-        bytes_view b{rhs.str, strlen(rhs.str)};
-
-        size_t pos = std::mismatch(a.begin(), a.end(), b.begin(), b.end()).first - a.begin();
-        const bool r = pos != a.size() || a.size() != b.size();
-        const bool rx = lhs.width != rhs.width;
-        if (REDEMPTION_UNLIKELY(r) || REDEMPTION_UNLIKELY(rx))
-        {
-            ar = false;
-
-            if (rx) {
-                ar.message() << "[" << lhs.width << " == " << rhs.width << (r ? " && " : "]");
-            }
-
-            if (r) {
-                ar.message()
-                << (rx ? "" : "[")
-                << redemption_unit_test__::Put2Mem{
-                    pos, a, b, " == ", 0, ::ut::PatternView::ascii
-                }
-                << "] (text mismatch at position " << pos << ")";
-            }
+    return ut::ops::compare_collection_EQ(a, b, [&](
+        boost::wrap_stringstream& out, size_t pos, char const* op, bool r
+    ){
+        if (rw) {
+            out << lhs.width << " == " << rhs.width;
         }
-
-        return ar;
-    }
-
-    template<class PrevExprType>
-    static void
-    report(std::ostream&, PrevExprType const&, R const&)
-    {}
-
-    static char const* revert()
-    { return " != "; }
-};
-
+        if (rw && r) {
+            out << " && ";
+        }
+        if (r) {
+            out << ::redemption_unit_test__::Put2Mem{
+                pos, a, b, op, 0, ::ut::PatternView::ascii
+            };
+        }
+    }, rw);
 }
-}
-}
-}
+
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::LineForTest), (::LineForTest), test_comp_lines_)
 #endif
 
 #define TEST_LINES(font, s, max_width, ...) [&](                                            \

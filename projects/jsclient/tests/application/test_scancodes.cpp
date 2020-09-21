@@ -19,6 +19,7 @@ Author(s): Jonathan Poelen
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/compare_collection.hpp"
 #include "test_only/js_auto_test_case.hpp"
 
 #include "red_emscripten/val.hpp"
@@ -64,75 +65,30 @@ static std::ostream& boost_test_print_type(std::ostream& out, Hex32 const& h)
     return out;
 }
 
-static boost::test_tools::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
+static ut::ops::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
 {
-    boost::test_tools::assertion_result ar(true);
-
     const bool is_array = v.isArray();
     const auto vec = is_array ? ::emscripten::vecFromJSArray<uint16_t>(v) : std::vector<uint16_t>{};
 
-    size_t pos = std::mismatch(ref.a.begin(), ref.a.end(), vec.begin(), vec.end()).first - ref.a.begin();
-    const bool r = pos != ref.a.size() || ref.a.size() != vec.size();
-    if (REDEMPTION_UNLIKELY(r))
-    {
-        ar = false;
-
-        ar.message() << "[" << std::hex;
+    return ut::ops::compare_collection_EQ(vec, ref.a, [&](
+        boost::wrap_stringstream& out, size_t /*pos*/, char const* op, bool /*r*/
+    ){
         if (is_array) {
-            ar.message() << "{" << std::hex;
-            for (auto scancode : vec) { ar.message() << "0x" << scancode << ", "; }
-            ar.message() << "}";
+            out << "{" << std::hex;
+            for (auto scancode : vec) { out << "0x" << scancode << ", "; }
+            out << "}";
         }
         else {
-            ar.message() << (v.isUndefined() ? "undefined" : "not_array");
+            out << (v.isUndefined() ? "undefined" : "not_array");
         }
 
-        ar.message() << " == {" << std::hex;
-        for (auto scancode : ref.a) { ar.message() << "0x" << scancode << ", "; }
-
-        ar.message() << std::dec << "}]\nMismatch at position " << pos;
-
-        if (vec.size() != ref.a.size())
-        {
-            ar.message()
-                << "\nCollections size mismatch: "
-                << vec.size() << " != " << ref.a.size()
-            ;
-        }
-    }
-
-    return ar;
+        out << " " << op << " {" << std::hex;
+        for (auto scancode : ref.a) { out << "0x" << scancode << ", "; }
+        out << std::dec << "}";
+    });
 }
 
-namespace boost::test_tools::assertion::op
-{
-#define DEFINE_EMSCRIPTEN_COMPARISON(oper, name, rev)             \
-    template<>                                                    \
-    struct name<::emscripten::val, U16Array>                      \
-    {                                                             \
-        using result_type = assertion_result;                     \
-        using OP = name;                                          \
-                                                                  \
-        static assertion_result                                   \
-        eval( ::emscripten::val const& lhs, U16Array const& rhs ) \
-        {                                                         \
-            return ::scancodes_##name(lhs, rhs);                  \
-        }                                                         \
-                                                                  \
-        template<class PrevExprType>                              \
-        static void                                               \
-        report( std::ostream&,                                    \
-                PrevExprType const&,                              \
-                U16Array const&)                                  \
-        {}                                                        \
-                                                                  \
-        static char const* revert()                               \
-        { return " " #rev " "; }                                  \
-    };
-// BOOST_TEST_FOR_EACH_COMP_OP(DEFINE_EMSCRIPTEN_COMPARISON)
-DEFINE_EMSCRIPTEN_COMPARISON(==, EQ, !=);
-#undef DEFINE_EMSCRIPTEN_COMPARISON
-}
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::emscripten::val), (::U16Array), scancodes_)
 #endif
 
 RED_JS_AUTO_TEST_CASE(
