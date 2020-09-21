@@ -437,9 +437,6 @@ struct name<T, U, std::enable_if_t<(                                      \
 {                                                                         \
     using result_type = assertion_result;                                 \
     using OP = name<T, U>;                                                \
-    using L = typename T::value_type;                                     \
-    using R = typename U::value_type;                                     \
-    using elem_op = op::name<L, R>;                                       \
                                                                           \
     static assertion_result                                               \
     eval( T const& lhs, U const& rhs )                                    \
@@ -478,9 +475,12 @@ struct name<T, U, std::enable_if_t<(                                      \
         }                                                                 \
         else                                                              \
         {                                                                 \
+            using L = typename T::value_type;                             \
+            using R = typename U::value_type;                             \
+            using elem_op = op::name<L, R>;                               \
             return boost::test_tools::assertion::op::compare_collections( \
-                redemption_unit_test__::View<L const>{lhs},               \
-                redemption_unit_test__::View<R const>{rhs},               \
+                ::redemption_unit_test__::View<L>{lhs},                   \
+                ::redemption_unit_test__::View<R>{rhs},                   \
                 static_cast<boost::type<elem_op>*>(nullptr),              \
                 mpl::true_());                                            \
         }                                                                 \

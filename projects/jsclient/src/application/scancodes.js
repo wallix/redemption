@@ -236,7 +236,7 @@ const BothShiftMod = ShiftMod | ShiftRightMod;
 
 // move CtrlRightMod/ShiftRightMod into CtrlMod/ShiftMod
 const modMaskToUndirectionalMod = function(m) {
-    return (m | (m << 16)) & ~0xff0000;
+    return (m & ~0xffff) | ((m & (ShiftRightMod | CtrlRightMod)) << 16);
 }
 
 // Control scancodes
@@ -308,10 +308,12 @@ const syncControls = function(scancodeFlag, modMask, accu) {
     if (modMask & CtrlMod)  accu.push(scancodeFlag | CtrlLeftScancode);
     if (modMask & AltMod)   accu.push(scancodeFlag | AltScancode);
     if (modMask & AltGrMod) accu.push(scancodeFlag | AltGrScancode);
-    return accu;
 };
 
 const emulateKey = function(modMask, ...scancodes) {
+    // /**/console.log(`mod: 0x${modMask.toString(16)}`)
+    // /**/for (const x of [...scancodes]) console.log(`    scancode: 0x${x.toString(16)}`);
+
     const accu = [];
     syncControls(ReleaseKeyFlag, modMask, accu);
     accu.push(...scancodes);
@@ -320,10 +322,13 @@ const emulateKey = function(modMask, ...scancodes) {
 };
 
 const searchScancodeWithMask = function(scancodeMods, controlMask) {
+    // /**/let s = ''; for (const x of scancodeMods) s += ` 0x${x.toString(16)},`;
+    // /**/console.log(`search: (0x${controlMask.toString(16)}) ${s}`);
     const len = scancodeMods.length;
     for (let i = 0; i < len; ++i) {
         const data = scancodeMods[i];
         if (data & controlMask) {
+            // /**/console.log('0x'+(data & 0xff).toString(16))
             return data & 0xff;
         }
     }
@@ -335,6 +340,7 @@ const searchScancodeWithMask = function(scancodeMods, controlMask) {
 /// - setLayout(layout)
 /// - getOSBehavior()
 /// - setOSBehavior(osType)
+/// - getModifierScancodes() : Array[Number] | undefined
 const createUnicodeToScancodeConverter = function(layout)
 {
     // on window, alt+ctrl = altgr
@@ -456,7 +462,7 @@ const createUnicodeToScancodeConverter = function(layout)
                     else {
                         modMask |= mod;
                     }
-                    scancode = isRightKey ? ShiftLeftScancode : ShiftRightScancode;
+                    scancode = isRightKey ? ShiftRightScancode : ShiftLeftScancode;
                     break;
                 }
 
@@ -517,6 +523,14 @@ const createUnicodeToScancodeConverter = function(layout)
         }
     };
     convert.getOSBehavior = () => osType;
+
+    convert.getModifierScancodes = () => {
+        if (modMask) {
+            const accu = [];
+            syncControls(0, modMask, accu);
+            return accu;
+        }
+    }
 
     // states for test
     convert.getControlMask = () => controlMask;

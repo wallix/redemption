@@ -1088,12 +1088,12 @@ public:
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
         const char *real_png_basename = record_filebase;
-        
+
         if (ini.get<cfg::video::rt_basename_only_sid>())
         {
             real_png_basename = ini.get<cfg::context::session_id>().c_str();
         }
-        
+
         PngParams png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
@@ -1131,7 +1131,7 @@ public:
             hash_path.c_str(),
             ini
         );
-        
+
         CaptureParams capture_params{
             this->time_base.get_current_time(),
             record_filebase,

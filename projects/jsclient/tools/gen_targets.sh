@@ -12,7 +12,7 @@ done < <(grep -R '"src/application/[^"]\+' -o tests/)
 
 addjs_deps=''
 for cpp in "${!jsdeps[@]}" ; do
-  addjs_deps+="s#^  $d/$cpp#  $cpp${jsdeps[$cpp]}#;t"
+  addjs_deps+="s#^  $d/$cpp#  $cpp${jsdeps[$cpp]}#;t;"
 done
 
 cd "../.."

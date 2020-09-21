@@ -78,6 +78,10 @@ exe-js js_player :
 ;
 
 
+test-run-js tests/application/test_scancodes :
+  tests/application/test_scancodes.cpp src/application/scancodes.js
+:
+;
 test-run-js tests/red_channels/test_clipboard :
   tests/red_channels/test_clipboard.cpp
 :
@@ -208,6 +212,7 @@ objjs src/utils/strutils.bc : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 objjs src/utils/sugar/multisz.bc : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 
+alias test_scancodes : tests/application/test_scancodes ;
 alias test_clipboard : tests/red_channels/test_clipboard ;
 alias test_js_channel : tests/red_channels/test_js_channel ;
 alias test_front : tests/redjs/test_front ;
@@ -215,6 +220,9 @@ alias test_graphics : tests/redjs/test_graphics ;
 alias test_image_conversions : tests/redjs/test_image_conversions ;
 alias test_transport : tests/redjs/test_transport ;
 alias test_ssl_mod_exp : tests/system/test_ssl_mod_exp ;
+alias tests/application.norec :
+  tests/application/test_scancodes
+;
 alias tests/red_channels.norec :
   tests/red_channels/test_clipboard
   tests/red_channels/test_js_channel
@@ -228,13 +236,17 @@ alias tests/redjs.norec :
 alias tests/system.norec :
   tests/system/test_ssl_mod_exp
 ;
-alias tests/red_channels :
-  tests/red_channels.norec
+alias tests/application :
+  tests/application.norec
 ;
 alias tests :
+  tests/application
   tests/red_channels
   tests/redjs
   tests/system
+;
+alias tests/red_channels :
+  tests/red_channels.norec
 ;
 alias tests/redjs :
   tests/redjs.norec
@@ -243,13 +255,15 @@ alias tests/system :
   tests/system.norec
 ;
 explicit
+  tests/application.norec
   tests/red_channels.norec
   tests/redjs.norec
   tests/system.norec
 ;
 explicit
-  tests/red_channels
+  tests/application
   tests
+  tests/red_channels
   tests/redjs
   tests/system
 ;
