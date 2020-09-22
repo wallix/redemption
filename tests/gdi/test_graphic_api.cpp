@@ -51,72 +51,55 @@ RED_AUTO_TEST_CASE(TextMetrics)
 
 struct LineForTest : gdi::MultiLineTextMetrics::Line
 {
-#if REDEMPTION_UNIT_TEST_FAST_CHECK
     bool operator == (LineForTest const& other) const
     {
         return this->width == other.width && 0 == strcmp(this->str, other.str);
     }
-#endif
 };
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-static std::ostream& boost_test_print_type(std::ostream& ostr, LineForTest const& line)
+static ut::assertion_result test_comp_lines(
+    array_view<LineForTest> const& a,
+    array_view<LineForTest> const& b)
 {
-    return ostr << "{.width=" << line.width << ", .str=" << std::quoted(line.str) << "}";
+    return ut::ops::compare_collection_EQ(a, b, [&](std::ostream& out, size_t pos, ...){
+        auto put_view = [&](std::ostream& oss, auto av){
+            if (pos != 0) {
+                oss << "..., ";
+            }
+
+            if (av.empty()) {
+                oss << "--";
+            }
+            else {
+                auto put = [&](LineForTest const& line) {
+                    oss << "{.width=" << line.width << ", .str=" << std::quoted(line.str) << "}";
+                };
+                put(av.front());
+                for (auto const& l : av.from_offset(1)) {
+                    oss << "  ";
+                    put(l);
+                }
+            }
+        };
+
+        ut::put_data_with_diff(out, a.from_offset(pos), "!=", b.from_offset(pos), put_view);
+    });
 }
 
-static ut::ops::assertion_result test_comp_lines_EQ(LineForTest const& lhs, LineForTest const& rhs)
-{
-    const bool rw = (lhs.width != rhs.width);
-
-    const bytes_view a{lhs.str, strlen(lhs.str)};
-    const bytes_view b{rhs.str, strlen(rhs.str)};
-
-    return ut::ops::compare_collection_EQ(a, b, [&](
-        boost::wrap_stringstream& out, size_t pos, char const* op, bool r
-    ){
-        if (rw) {
-            out << lhs.width << " == " << rhs.width;
-        }
-        if (rw && r) {
-            out << " && ";
-        }
-        if (r) {
-            out << ::redemption_unit_test__::Put2Mem{
-                pos, a, b, op, 0, ::ut::PatternView::ascii
-            };
-        }
-    }, rw);
-}
-
-RED_TEST_DISPATCH_COMPARISON_EQ((), (::LineForTest), (::LineForTest), test_comp_lines_)
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::array_view<::LineForTest>), (::array_view<::LineForTest>), ::test_comp_lines)
 #endif
 
-#define TEST_LINES(font, s, max_width, ...) [&](                                            \
-    gdi::MultiLineTextMetrics const& metrics                                                \
-) {                                                                                         \
-    gdi::MultiLineTextMetrics::Line expected_[] {__VA_ARGS__};                              \
-    array_view lines_ = metrics.lines();                                                    \
-    array_view<LineForTest> expected{                                                       \
-        static_cast<LineForTest const*>(&expected_[0]), std::size(expected_)}; /*NOLINT*/   \
-    array_view lines = {                                                                    \
-        static_cast<LineForTest const*>(lines_.data()), lines_.size()}; /*NOLINT*/          \
-    RED_CHECK_EQUAL_RANGES(lines, expected);                                                \
-    if (lines.size() != expected.size()) {                                                  \
-        std::size_t min = std::min(lines.size(), expected.size());                          \
-        std::size_t max = std::max(lines.size(), expected.size());                          \
-        RED_CHECK_EQUAL_RANGES(lines.first(min), expected.first(min));                      \
-        for (std::size_t i = min; i < max; ++i) {                                           \
-            auto line = i < lines.size() ? lines[i] : LineForTest{{"", -1}};                \
-            auto expected_line = i < expected.size() ? expected[i] : LineForTest{{"", -1}}; \
-            RED_TEST(line == expected_line);                                                \
-        }                                                                                   \
-    }                                                                                       \
-    for (auto&& line : lines) {                                                             \
-        RED_TEST_CONTEXT(std::quoted(line.str)) {                                           \
-            RED_TEST(gdi::TextMetrics(font, line.str).width == line.width);                 \
-        }                                                                                   \
-    }                                                                                       \
+#define TEST_LINES(font, s, max_width, ...) [&](                                          \
+    gdi::MultiLineTextMetrics const& metrics                                              \
+) {                                                                                       \
+    gdi::MultiLineTextMetrics::Line expected_[] {__VA_ARGS__};                            \
+    array_view lines_ = metrics.lines();                                                  \
+    array_view<LineForTest> expected{                                                     \
+        static_cast<LineForTest const*>(&expected_[0]), std::size(expected_)}; /*NOLINT*/ \
+    array_view lines = {                                                                  \
+        static_cast<LineForTest const*>(lines_.data()), lines_.size()}; /*NOLINT*/        \
+    RED_CHECK(lines == expected);                                                         \
 }(gdi::MultiLineTextMetrics(font, s, max_width))
 
 

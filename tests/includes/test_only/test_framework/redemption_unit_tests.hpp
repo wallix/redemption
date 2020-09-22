@@ -60,6 +60,10 @@ namespace ut
     bool compare_bytes(size_t& pos, bytes_view b, bytes_view a) noexcept;
     void put_view(size_t pos, std::ostream& out, flagged_bytes_view x);
 
+    void put_message_with_diff(std::ostream& out, ::chars_view s1, char const* op, ::chars_view s2, bool nocolor = false); /*NOLINT*/
+
+    void print_hex(std::ostream& out, uint64_t x, int nbytes);
+
     struct PatternViewSaver
     {
         PatternViewSaver(PatternView pattern) noexcept;
@@ -290,9 +294,9 @@ namespace redemption_unit_test__
     template<class E, E value>
     struct EnumValue
     {
-        static std::string_view str()
+        static ::chars_view str()
         {
-            return __PRETTY_FUNCTION__;
+            return make_array_view(__PRETTY_FUNCTION__);
         }
     };
 
@@ -300,7 +304,7 @@ namespace redemption_unit_test__
     {
         template<class E, class = std::enable_if_t<std::is_enum<E>::value>>
         Enum(E e) noexcept
-        : name(get_type_name(__PRETTY_FUNCTION__))
+        : name(get_type_name(make_array_view(__PRETTY_FUNCTION__)))
         , value_name(
             get_value_name(static_cast<long long>(e),
             this->name,
@@ -318,18 +322,18 @@ namespace redemption_unit_test__
         , is_signed(std::is_signed_v<std::underlying_type_t<E>>)
         {}
 
-        static std::string_view get_type_name(std::string_view s) noexcept;
+        static ::chars_view get_type_name(::chars_view s) noexcept;
 
-        static std::string_view get_value_name(
-            long long x, std::string_view name,
-            std::string_view s0, std::string_view s1, std::string_view s2,
-            std::string_view s3, std::string_view s4, std::string_view s5,
-            std::string_view s6, std::string_view s7, std::string_view s8,
-            std::string_view s9
+        static ::chars_view get_value_name(
+            long long x, ::chars_view name,
+            ::chars_view s0, ::chars_view s1, ::chars_view s2,
+            ::chars_view s3, ::chars_view s4, ::chars_view s5,
+            ::chars_view s6, ::chars_view s7, ::chars_view s8,
+            ::chars_view s9
         ) noexcept;
 
-        std::string_view name;
-        std::string_view value_name;
+        ::chars_view name;
+        ::chars_view value_name;
         long long x;
         bool is_signed;
     };

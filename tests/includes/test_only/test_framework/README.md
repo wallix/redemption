@@ -170,3 +170,13 @@ RED_AUTO_TEST_CASE_WD(test_name, wd)
     // ...
 }
 ```
+
+# test_framework/hex.hpp
+
+```cpp
+RED_AUTO_TEST_CASE(test_name)
+{
+    RED_TEST(ut:hex16{4} == 3); // 0x0004 != 0x0003
+    RED_TEST(ut:hex_minimal{4} == 3); // 0x04 != 0x03
+}
+```

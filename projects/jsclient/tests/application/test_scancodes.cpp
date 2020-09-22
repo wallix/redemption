@@ -20,75 +20,57 @@ Author(s): Jonathan Poelen
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/compare_collection.hpp"
+#include "test_only/test_framework/hex.hpp"
 #include "test_only/js_auto_test_case.hpp"
 
 #include "red_emscripten/val.hpp"
 
 struct U16Array
 {
-    bool operator == (emscripten::val const& x);
     u16_array_view a;
 };
+// for IDE coloration only
 bool operator == (emscripten::val const& x, U16Array const&);
 
-template<class... Xs>
-auto make_u16av(Xs... xs)
-{
-    return std::array<uint16_t, sizeof...(xs)>{uint16_t(xs)...};
-};
-#define U16A(...) U16Array{make_u16av(__VA_ARGS__)}
-
-struct Hex32
-{
-    uint32_t x;
-    bool operator == (Hex32 const& other) const { return x == other.x; }
-    Hex32 operator | (Hex32 const& other) const { return {x | other.x}; }
-};
+using U16CArray = uint16_t[];
+#define U16A(...) U16Array{make_array_view(U16CArray{__VA_ARGS__})}
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
-static std::ostream& boost_test_print_type(std::ostream& out, Hex32 const& h)
-{
-    char const* s = "0123456789ABCDEF";
-    char buf[10];
-    char* p = buf;
-    *p++ = '0';
-    *p++ = 'x';
-    auto f = [&](uint32_t x){
-        *p++ = s[(x >> 4) & 0xf];
-        *p++ = s[x & 0xf];
-    };
-    f(h.x >> 24);
-    f(h.x >> 16);
-    f(h.x >> 8 );
-    f(h.x      );
-    out.write(buf, 10);
-    return out;
-}
-
-static ut::ops::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
+static ut::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
 {
     const bool is_array = v.isArray();
     const auto vec = is_array ? ::emscripten::vecFromJSArray<uint16_t>(v) : std::vector<uint16_t>{};
 
     return ut::ops::compare_collection_EQ(vec, ref.a, [&](
-        boost::wrap_stringstream& out, size_t /*pos*/, char const* op, bool /*r*/
+        std::ostream& out, size_t /*pos*/, char const* op
     ){
+        std::stringstream oss;
+        auto putseq = [&](array_view<uint16_t> av){
+            oss << "{";
+            for (auto scancode : av) {
+                ut::boost_test_print_type(oss, ut::minimal_hex{scancode});
+                oss << ", ";
+            }
+            oss << "}";
+        };
+
         if (is_array) {
-            out << "{" << std::hex;
-            for (auto scancode : vec) { out << "0x" << scancode << ", "; }
-            out << "}";
+            putseq(vec);
         }
         else {
-            out << (v.isUndefined() ? "undefined" : "not_array");
+            oss << (v.isUndefined() ? "undefined" : "not_array");
         }
 
-        out << " " << op << " {" << std::hex;
-        for (auto scancode : ref.a) { out << "0x" << scancode << ", "; }
-        out << std::dec << "}";
+        auto s1 = oss.str();
+        oss.str({});
+
+        putseq(ref.a);
+
+        ut::put_message_with_diff(out, s1, op, oss.str());
     });
 }
 
-RED_TEST_DISPATCH_COMPARISON_EQ((), (::emscripten::val), (::U16Array), scancodes_)
+RED_TEST_DISPATCH_COMPARISON_EQ((), (::emscripten::val), (::U16Array), ::scancodes_EQ)
 #endif
 
 RED_JS_AUTO_TEST_CASE(
@@ -127,11 +109,11 @@ RED_JS_AUTO_TEST_CASE(
     };
 
     auto getControlMask = [&unicodeToScancode]{
-        return Hex32{unicodeToScancode.call<uint32_t>("getControlMask")};
+        return ut::hex32{unicodeToScancode.call<uint32_t>("getControlMask")};
     };
 
     auto getModMask = [&unicodeToScancode]{
-        return Hex32{unicodeToScancode.call<uint32_t>("getModMask")};
+        return ut::hex32{unicodeToScancode.call<uint32_t>("getModMask")};
     };
 
     auto isDeadKey = [&unicodeToScancode]{
@@ -141,13 +123,13 @@ RED_JS_AUTO_TEST_CASE(
     const unsigned keyAcquire = 0;
     const unsigned keyRelease = 0x8000;
 
-    const Hex32 Zero {0};
-    const Hex32 NoMod   {  0x1'0000};
-    const Hex32 ShiftMod{  0x2'0000};
-    const Hex32 AltGrMod{  0x4'0000};
-    const Hex32 CtrlMod {0x100'0000};
-    const Hex32 AltMod  {0x200'0000};
-    const Hex32 ShiftRightMod {0x2};
+    const ut::hex32 Zero {0};
+    const ut::hex32 NoMod   {  0x1'0000};
+    const ut::hex32 ShiftMod{  0x2'0000};
+    const ut::hex32 AltGrMod{  0x4'0000};
+    const ut::hex32 CtrlMod {0x100'0000};
+    const ut::hex32 AltMod  {0x200'0000};
+    const ut::hex32 ShiftRightMod {0x2};
 
     RED_CHECK(!isDeadKey());
     RED_CHECK(getModMask() == Zero);
