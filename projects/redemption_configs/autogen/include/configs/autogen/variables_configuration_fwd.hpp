@@ -201,6 +201,7 @@ namespace cfg {
         struct force_smartcard_authentication;
         struct mode_console;
         struct auto_reconnection_on_losing_target_link;
+        struct forward_client_build_number;
     };
 
     struct mod_vnc {

@@ -75,6 +75,9 @@ cp_spec = {
         u'mod_rdp:auto_reconnection_on_losing_target_link': (
             'auto_reconnection_on_losing_target_link', False
         ),
+        u'mod_rdp:forward_client_build_number': (
+            'forward_client_build_number', True
+        ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
         ),
