@@ -2790,7 +2790,6 @@ namespace cfg {
         type value{false};
     };
     /// Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server. <br/>
-    /// Enabling this setting may be required for correct support of some smartcard models. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesman::name: mod_rdp:forward_client_build_number <br/>

@@ -128,7 +128,7 @@ mode_console = option('allow', 'force', 'forbid', default='allow')
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
 # Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
-# Enabling this setting may be required for correct support of some smartcard models.
+#_advanced
 forward_client_build_number = boolean(default=True)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
