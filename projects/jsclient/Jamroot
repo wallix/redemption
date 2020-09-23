@@ -357,7 +357,7 @@ exejs reverse_keylayout_generator
 
 actions genkeymaps
 {
-    node $(>:S=.js) > $(<)
+    node "$(>:S=.js)" > "$(<)"
 }
 
 make reversed_keylayouts.js : reverse_keylayout_generator : @genkeymaps ;

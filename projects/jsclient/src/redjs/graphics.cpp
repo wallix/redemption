@@ -46,6 +46,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "core/RDP/orders/for_each_delta_rect.hpp"
+#include "gdi/clip_from_cmd.hpp"
 
 #include "client_redemption/pointer_to_rgba8888.hpp"
 
@@ -61,34 +63,13 @@ namespace
         return a.intersect(w, h).intersect(b);
     }
 
-    //@{
-    Rect to_rect(RDPMultiDstBlt const & cmd)
-    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
-
-    Rect to_rect(RDPMultiOpaqueRect const & cmd)
-    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
-
-    Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
-    { return cmd.rect; }
-
-    Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
-    { return cmd.rect; }
-    //@}
-
     template<class RDPMulti, class FRect>
     void draw_multi(uint16_t w, uint16_t h, const RDPMulti & cmd, Rect clip, FRect f)
     {
-        const Rect clip_drawable_cmd_intersect = intersect(w, h, clip, to_rect(cmd));
-
-        Rect cmd_rect;
-
-        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
-            cmd_rect.x += cmd.deltaEncodedRectangles[i].leftDelta;
-            cmd_rect.y += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx = cmd.deltaEncodedRectangles[i].width;
-            cmd_rect.cy = cmd.deltaEncodedRectangles[i].height;
+        const Rect clip_drawable_cmd_intersect = intersect(w, h, clip, clip_from_cmd(cmd));
+        for_each_delta_rect(cmd, [&](Rect const& cmd_rect){
             f(clip_drawable_cmd_intersect.intersect(cmd_rect));
-        }
+        });
     }
 
     std::array<uint8_t, 8> to_brush_data(RDPBrush const& brush)

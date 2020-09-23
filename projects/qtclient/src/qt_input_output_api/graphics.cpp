@@ -46,6 +46,8 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
+#include "core/RDP/orders/for_each_delta_rect.hpp"
+#include "gdi/clip_from_cmd.hpp"
 
 #include <QtGui/QPainter>
 #include <QtGui/QPixmap>
@@ -277,42 +279,13 @@ namespace
         drawImage(painter, p, bmp);
     }
 
-    // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
-    //@{
-    static Rect to_rect(RDPMultiDstBlt const & cmd)
-    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
-
-    static Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
-    { return cmd.rect; }
-
-    static Rect to_rect(RDPMultiOpaqueRect const & cmd)
-    { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
-
-    static Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
-    { return cmd.rect; }
-    //@}
-
-    template<class RDPMulti, class FRect>
-    static void draw_multi(const RDPMulti & cmd, FRect f)
-    {
-        Rect cmd_rect;
-
-        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
-            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
-            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
-            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
-            f(cmd_rect);
-        }
-    }
-
     struct Rects
     {
         template<class RDPMulti>
         Rects(const RDPMulti & cmd, Rect clip)
         {
             QRect* prect = rects;
-            draw_multi(cmd, [&](Rect const& drect) {
+            for_each_delta_rect(cmd, [&](Rect const& drect) {
                 const auto rect = clip.intersect(drect);
                 *prect = QRect(rect.x, rect.y, rect.cx, rect.cy);
             });
@@ -326,7 +299,7 @@ namespace
     template<class Cmd, class F>
     void drawMulti(Cmd const& cmd, Rect clip, F f)
     {
-        const Rect viewport = clip.intersect(to_rect(cmd));
+        const Rect viewport = clip.intersect(clip_from_cmd(cmd));
 
         if (viewport.isempty()) {
             return ;
@@ -537,7 +510,7 @@ void Graphics::draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx co
 
 void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
 {
-    const Rect viewport = intersect(clip, this->cache).intersect(to_rect(cmd));
+    const Rect viewport = intersect(clip, this->cache).intersect(clip_from_cmd(cmd));
 
     if (viewport.isempty()) {
         return ;
@@ -547,7 +520,7 @@ void Graphics::draw(const RDP::RDPMultiScrBlt & cmd, Rect clip)
     const int deltay = cmd.nYSrc - cmd.rect.y;
 
     auto compute_rects = [&](auto f){
-        draw_multi(cmd, [&](Rect const& cmd_rect) {
+        for_each_delta_rect(cmd, [&](Rect const& cmd_rect) {
             Rect drect = clip.intersect(cmd_rect);
             Rect src = intersect(cmd_rect.offset(deltax, deltay), this->cache);
             Rect trect(drect.x, drect.y, std::min(drect.cx, src.cx), std::min(drect.cy, src.cy));

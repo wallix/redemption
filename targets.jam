@@ -433,6 +433,7 @@ lib libredrec :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -517,6 +518,7 @@ test-run tests/RAIL/test_client_execute :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -733,6 +735,7 @@ test-run tests/capture/test_capture :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
@@ -844,6 +847,7 @@ test-run tests/capture/test_video_capture :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
@@ -873,6 +877,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -978,6 +983,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -1939,6 +1945,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -2019,6 +2026,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -2814,6 +2822,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
@@ -2880,6 +2889,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -2912,6 +2922,7 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/close_mod.o
@@ -2958,6 +2969,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3000,6 +3012,7 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3047,6 +3060,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3094,6 +3108,7 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3217,6 +3232,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -3288,6 +3304,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/core/error.o
   <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget_test_mod.o
@@ -3316,6 +3333,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3343,6 +3361,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3375,6 +3394,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3410,6 +3430,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3443,6 +3464,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3480,6 +3502,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3514,6 +3537,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3552,6 +3576,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3591,6 +3616,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3628,6 +3654,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3667,6 +3694,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3700,6 +3728,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3736,6 +3765,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3767,6 +3797,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3798,6 +3829,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3854,6 +3886,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3889,6 +3922,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3922,6 +3956,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3955,6 +3990,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3987,6 +4023,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
@@ -4016,6 +4053,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4052,6 +4090,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4092,6 +4131,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4543,6 +4583,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -5647,6 +5688,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
