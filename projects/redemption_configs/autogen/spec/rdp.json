@@ -213,6 +213,13 @@
           "description": ""
         },
         {
+          "name": "forward_client_build_number",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": "Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server."
+        },
+        {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
           "min": 3000,

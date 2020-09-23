@@ -215,6 +215,9 @@ struct ModRDPParams
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
+    /// Note: may be required for correct smartcard support; see issue #27767.
+    bool forward_client_build_number = true;
+
     ModRDPParams( const char * target_user
                 , const char * target_password
                 , const char * target_host

@@ -830,6 +830,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #auto_reconnection_on_losing_target_link = 0
 
+# Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
+# value: 0 or 1
+#_hidden
+#forward_client_build_number = 1
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

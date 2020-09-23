@@ -157,6 +157,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             //mod_rdp_params.extra_orders                    = "";
             mod_rdp_params.large_pointer_support             = false;
             mod_rdp_params.experimental_fix_input_event_sync = false;
+            mod_rdp_params.forward_client_build_number       = false;
 
             mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
 
@@ -434,6 +435,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             //mod_rdp_params.extra_orders                    = "";
             mod_rdp_params.large_pointer_support             = false;
             mod_rdp_params.experimental_fix_input_event_sync = false;
+            mod_rdp_params.forward_client_build_number       = false;
 
             mod_rdp_params.load_balance_info = "tsv://MS Terminal Services Plugin.1.Sessions";
 
