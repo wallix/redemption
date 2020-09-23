@@ -99,17 +99,32 @@ namespace ut
         template<class T, class U>
         assertion_result test_hex_EQ(T x, U y)
         {
+            using printer = put_default_print_type_t;
             if constexpr (is_hex_int<T>::value && is_hex_int<U>::value) {
                 return create_assertion_result(
-                    (x.x == y.x), x, "!=", y, put_default_print_type_t{});
+                    (x.x == y.x), x, "!=", y, printer{});
             }
             else if constexpr (is_hex_int<T>::value) {
-                return create_assertion_result(
-                    (x.x == y), x, "!=", T{typename T::int_type(y)}, put_default_print_type_t{});
+                const auto max = typename T::int_type(~0ull);
+                if (max < y) {
+                    return create_assertion_result(
+                        (x.x == y), x, "!=", minimal_hex{uint64_t(y)}, printer{});
+                }
+                else {
+                    return create_assertion_result(
+                        (x.x == y), x, "!=", T{typename T::int_type(y)}, printer{});
+                }
             }
             else {
-                return create_assertion_result(
-                    (x == y.x), U{typename U::int_type(x)}, "!=", y, put_default_print_type_t{});
+                const auto max = typename U::int_type(~0ull);
+                if (max < x) {
+                    return create_assertion_result(
+                        (x == y.x), minimal_hex{uint64_t(x)}, "!=", y, printer{});
+                }
+                else {
+                    return create_assertion_result(
+                        (x == y.x), U{typename U::int_type(x)}, "!=", y, printer{});
+                }
             }
         }
     }
