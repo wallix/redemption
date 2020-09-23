@@ -277,6 +277,73 @@ namespace ut
     struct flagged_bytes_view;
     enum class PatternView : char;
 #endif
+
+    using assertion_result = boost::test_tools::assertion_result;
+
+    namespace detail
+    {
+        void print_hex_int_compare(
+            std::ostream& out, uint64_t x, uint64_t y, int ndigit, char const* rev_op);
+    }
+
+    namespace op
+    {
+        template<class OP>
+        struct op_to_predicate;
+
+        #define DEC_OP_PREDICATE(name, OP)                                       \
+            template<class T, class U>                                           \
+            struct op_to_predicate<boost::test_tools::assertion::op::name<T, U>> \
+            {                                                                    \
+                static bool compute(T const& x, U const& y) { return x OP y; }   \
+            }
+
+        DEC_OP_PREDICATE(EQ, ==);
+        DEC_OP_PREDICATE(NE, !=);
+        DEC_OP_PREDICATE(LT, <);
+        DEC_OP_PREDICATE(LE, <=);
+        DEC_OP_PREDICATE(GT, >);
+        DEC_OP_PREDICATE(GE, >=);
+        #undef DEC_OP_PREDICATE
+    }
+
+#define RED_TEST_CREATE_DECORATOR(name, f)                                         \
+    template<class T, class U, typename OP>                                        \
+    inline assertion_result operator<<(                                            \
+        ::boost::test_tools::tt_detail::assertion_evaluate_t<                      \
+            ::boost::test_tools::assertion::binary_expr<T,U,OP>> const& ae,        \
+        name const& decorator)                                                     \
+    {                                                                              \
+        return f(ae.m_e.lhs().value(), ae.m_e.rhs(), decorator,                    \
+                 static_cast<OP*>(nullptr));                                       \
+    }                                                                              \
+                                                                                   \
+    inline int                                                                     \
+    operator<<(::boost::unit_test::lazy_ostream const&, name const&) { return 0; } \
+                                                                                   \
+    inline ::boost::test_tools::tt_detail::check_type                              \
+    operator<<(::boost::test_tools::tt_detail::assertion_type const&, name const&) \
+    {                                                                              \
+        return ::boost::test_tools::tt_detail::CHECK_BUILT_ASSERTION;              \
+    }
+
+    namespace detail
+    {
+        template<class OP>
+        inline assertion_result
+        hex_int_compare(uint64_t x, uint64_t y, hex_int h, OP const*)
+        {
+            bool const r = op::op_to_predicate<OP>::compute(x, y);
+            assertion_result ar(r);
+
+            if (!r) {
+                detail::print_hex_int_compare(ar.message().stream(), x, y, h.ndigit, OP::revert());
+            }
+
+            return ar;
+        }
+    }
+    RED_TEST_CREATE_DECORATOR(hex_int, detail::hex_int_compare)
 }
 
 namespace redemption_unit_test__

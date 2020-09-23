@@ -673,21 +673,61 @@ namespace ut
         }
     }
 
-    void print_hex(std::ostream& out, uint64_t x, int nbytes)
+    void print_hex(std::ostream& out, uint64_t x, int ndigit, bool align_by_byte)
     {
+        int n = 1;
+        if (x > 0xffffffffu) {
+            n += 8;
+            x >>= 32;
+        }
+        if (x > 0xffffu) {
+            n += 4;
+            x >>= 16;
+        }
+        if (x > 0xffu) {
+            n += 2;
+            x >>= 8;
+        }
+        ndigit = std::max(n, ndigit);
+
         char const* s = "0123456789ABCDEF";
         char buf[20];
         char* p = buf;
         *p++ = '0';
         *p++ = 'x';
+
+        if (ndigit & 1) {
+            if (align_by_byte) {
+                ++ndigit;
+            }
+            else {
+                *p++ = s[(x >> (ndigit / 2 * 8)) & 0xf];
+                --ndigit;
+            }
+        }
         auto f = [&](uint32_t x){
             *p++ = s[(x >> 4) & 0xf];
             *p++ = s[x & 0xf];
         };
-        while (nbytes-- > 0) {
-            f(x >> (nbytes * 8));
+        while (ndigit > 0) {
+            ndigit -= 2;
+            f(x >> (ndigit * 8));
         }
+
         out.write(buf, p-buf);
+    }
+
+    namespace detail
+    {
+        void print_hex_int_compare(
+            std::ostream& out, uint64_t x, uint64_t y, int ndigit, char const* rev_op)
+        {
+            out << " [";
+            put_data_with_diff(out, x, rev_op, y, [&](std::ostream& out, uint64_t n){
+                print_hex(out, n, ndigit);
+            });
+            out << "]";
+        }
     }
 
     PatternView default_pattern_view = PatternView::deduced;

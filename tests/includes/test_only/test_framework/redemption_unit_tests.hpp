@@ -62,7 +62,7 @@ namespace ut
 
     void put_message_with_diff(std::ostream& out, ::chars_view s1, char const* op, ::chars_view s2, bool nocolor = false); /*NOLINT*/
 
-    void print_hex(std::ostream& out, uint64_t x, int nbytes);
+    void print_hex(std::ostream& out, uint64_t x, int ndigit = 0, bool align_by_byte = false);
 
     struct PatternViewSaver
     {
@@ -81,7 +81,11 @@ namespace ut
     private:
         unsigned min_len;
     };
+
+    struct hex_int { int ndigit = 0; };
 } // namespace ut
+
+
 
 namespace redemption_unit_test__
 {
@@ -244,6 +248,8 @@ bool operator!=(bytes_view, ut::flagged_bytes_view);
 //@{
 # define RED_TEST_WARN(expr) RED_CHECK(expr)
 //@}
+
+#define RED_TEST_CREATE_DECORATOR(name, f)
 
 #else
 
