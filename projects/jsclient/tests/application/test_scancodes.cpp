@@ -23,6 +23,7 @@ Author(s): Jonathan Poelen
 #include "test_only/test_framework/hex.hpp"
 #include "test_only/js_auto_test_case.hpp"
 
+#include "utils/sugar/overload.hpp"
 #include "red_emscripten/val.hpp"
 
 struct U16Array
@@ -38,36 +39,28 @@ using U16CArray = uint16_t[];
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 static ut::assertion_result scancodes_EQ(emscripten::val const& v, U16Array ref)
 {
-    const bool is_array = v.isArray();
-    const auto vec = is_array ? ::emscripten::vecFromJSArray<uint16_t>(v) : std::vector<uint16_t>{};
+    auto putseq = [&](std::ostream& out, array_view<uint16_t> av){
+        out << "{";
+        for (auto scancode : av) {
+            ut::boost_test_print_type(out, ut::minimal_hex{scancode}) << ", ";
+        }
+        out << "}";
+    };
 
-    return ut::ops::compare_collection_EQ(vec, ref.a, [&](
-        std::ostream& out, size_t /*pos*/, char const* op
-    ){
-        std::stringstream oss;
-        auto putseq = [&](array_view<uint16_t> av){
-            oss << "{";
-            for (auto scancode : av) {
-                ut::boost_test_print_type(oss, ut::minimal_hex{scancode});
-                oss << ", ";
-            }
-            oss << "}";
+    if (v.isArray()) {
+        const auto vec = ::emscripten::vecFromJSArray<uint16_t>(v);
+        return ut::ops::compare_collection_EQ(vec, ref.a, [&](
+            std::ostream& out, size_t /*pos*/, char const* op
+        ){
+            ut::put_data_with_diff(out, vec, op, ref.a, putseq);
+        });
+    }
+    else {
+        auto putval = [](std::ostream& out, emscripten::val const& v){
+            out << (v.isUndefined() ? "undefined" : "not_array");
         };
-
-        if (is_array) {
-            putseq(vec);
-        }
-        else {
-            oss << (v.isUndefined() ? "undefined" : "not_array");
-        }
-
-        auto s1 = oss.str();
-        oss.str({});
-
-        putseq(ref.a);
-
-        ut::put_message_with_diff(out, s1, op, oss.str());
-    });
+        return ut::create_assertion_result(false, v, " != ", ref.a, overload{putseq, putval});
+    }
 }
 
 RED_TEST_DISPATCH_COMPARISON_EQ((), (::emscripten::val), (::U16Array), ::scancodes_EQ)
