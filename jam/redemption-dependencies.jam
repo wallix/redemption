@@ -2,7 +2,15 @@ obj log_print.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
 if $(FORCE_LOGPRINT) = 1
 {
-    alias log.o : log_print.o ;
+    if $(TIMESTAMP_WITH_LOGPRINT) = 1
+    {
+        obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp
+            : <define>REDEMPTION_LOG_PRINT_WITH_TIMESTAMP ;
+    }
+    else
+    {
+        alias log.o : log_print.o ;
+    }
 }
 else
 {

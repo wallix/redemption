@@ -116,4 +116,5 @@ constant FAST_CHECK : [ setvar FAST_CHECK : 0 ] ; # fast RED_CHECK(...) and co
 
 constant ENABLE_COVERAGE : [ setvar coverage : off ] ; # bjam -s coverage=on debug test_rect.coverage
 
-constant FORCE_LOGPRINT : [ setvar FORCE_LOGPRINT : 0 ] ;
+constant FORCE_LOGPRINT : [ setvar FORCE_LOGPRINT : 0 ] ; # use log_as_logprint.cpp rather that syslog()
+constant TIMESTAMP_WITH_LOGPRINT : [ setvar TIMESTAMP_WITH_LOGPRINT : 0 ] ; # add date with log_as_logprint.cpp

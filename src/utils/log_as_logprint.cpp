@@ -34,6 +34,11 @@ REDEMPTION_DIAGNOSTIC_POP
 #include <cstdarg>
 #include <cstdio>
 
+#ifdef REDEMPTION_LOG_PRINT_WITH_TIMESTAMP
+#include <ctime>
+#endif
+
+
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept /*NOLINT(cert-dcl50-cpp)*/
 {
     (void)priority;
@@ -55,8 +60,16 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
         }
     }, priority, buffer, len);
 #else
-    std::vprintf(format, ap); /*NOLINT*/
-    std::puts("");
+#ifdef REDEMPTION_LOG_PRINT_WITH_TIMESTAMP
+    std::time_t t = std::time(nullptr);
+    char mbstr[100];
+    if (std::strftime(mbstr, sizeof(mbstr), "%b %e %T ", std::localtime(&t))) {
+        std::fprintf(stderr, "%s", mbstr);
+    }
+#endif
+    std::vfprintf(stderr, format, ap); /*NOLINT*/
+    std::fputs("\n", stderr);
+    // std::fflush(stderr);
 #endif
     REDEMPTION_DIAGNOSTIC_POP
 

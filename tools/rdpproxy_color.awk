@@ -1,7 +1,7 @@
 #!/usr/bin/awk  -OSf
-# colout '-po' '-ER' '^(rdpproxy: )?(INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?' 'n' 'b' 'g' 'b' '--' '-ERci2' '^(rdpproxy: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT))[^-]+-- ' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' '--' '-cER' '(#[0-9]+)()' '+v,W' '+rv' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '-c' '^(rdpproxy: )?(\[RDP )(Session|Proxy\]) ' 'n' '137' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' '243' '--' '-c' '(.+) in (/.*)' 'w' 'i,da' '--' '-cER' '^SUMMARY:' 'r'
+# colout '-po' '-ER' '^(... .. ..:..:.. |rdpproxy: )?(INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?' 'n' 'b' 'g' 'b' '--' '-ERci2' '^(... .. ..:..:.. |rdpproxy: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT))[^-]+-- ' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' '--' '-cER' '(#[0-9]+)()' '+v,W' '+rv' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '-c' '^(... .. ..:..:.. |rdpproxy: )?(\[RDP )(Session|Proxy\]) ' 'n' '137' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' '243' '--' '-c' '(.+) in (/.*)' 'w' 'i,da' '--' '-cER' '^SUMMARY:' 'r'
 
-# created Tue Jun 16 13:57:57 2020
+# created jeu. sept. 24 12:11:25 2020
 
 BEGIN {
 esc_reset = "\033[0m"
@@ -44,7 +44,7 @@ nb_colors7 = 2
 
 {
 s = ""
-if (match($0, /^(rdpproxy: )?(INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?/, a)) {
+if (match($0, /^(... .. ..:..:.. |rdpproxy: )?(INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?/, a)) {
 	n = length(a) / 3
 	if (n == 1) {
 		i = 0
@@ -66,7 +66,7 @@ if (match($0, /^(rdpproxy: )?(INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?/, a)) {
 	}
 	$0 = substr($0, RLENGTH + RSTART) esc_reset
 }
-if (match($0, /^(rdpproxy: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT))[^-]+-- /, a)) {
+if (match($0, /^(... .. ..:..:.. |rdpproxy: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT))[^-]+-- /, a)) {
 	n = length(a) / 3
 	if (n == 1) {
 		i = 0
@@ -157,7 +157,7 @@ if (match($0, /(Assertion) `(.*)' failed./, a)) {
 	}
 	$0 = substr($0, RLENGTH + RSTART)
 }
-if (match($0, /^(rdpproxy: )?(\[RDP )(Session|Proxy\]) /, a)) {
+if (match($0, /^(... .. ..:..:.. |rdpproxy: )?(\[RDP )(Session|Proxy\]) /, a)) {
 	n = length(a) / 3
 	if (n == 1) {
 		i = 0
