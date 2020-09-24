@@ -42,6 +42,7 @@
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     ClientInfo info;
+    info.build                 = 2600;
     info.keylayout             = 0x040C;
     info.console_session       = false;
     info.brush_cache_code      = 0;
@@ -124,7 +125,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
     mod_rdp_params.experimental_fix_input_event_sync = false;
-    mod_rdp_params.forward_client_build_number       = false;
 
     // To always get the same client random, in tests
     LCGRandom gen;
@@ -158,6 +158,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
     ClientInfo info;
+    info.build                 = 2600;
     info.keylayout             = 0x040C;
     info.console_session       = false;
     info.brush_cache_code      = 0;
@@ -243,7 +244,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
     mod_rdp_params.experimental_fix_input_event_sync = false;
-    mod_rdp_params.forward_client_build_number       = false;
 
     // To always get the same client random, in tests
     LCGRandom gen;

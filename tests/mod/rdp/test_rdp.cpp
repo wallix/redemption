@@ -142,6 +142,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
 
     ClientInfo info;
+    info.build = 2600;
     info.keylayout = 0x04C;
     info.console_session = false;
     info.brush_cache_code = 0;
@@ -222,7 +223,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     //mod_rdp_params.extra_orders                    = "";
     mod_rdp_params.large_pointer_support             = false;
     mod_rdp_params.experimental_fix_input_event_sync = false;
-    mod_rdp_params.forward_client_build_number       = false;
 
     TLSClientParams tls_client_params;
 
