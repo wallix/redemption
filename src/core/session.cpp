@@ -1218,9 +1218,9 @@ public:
                         if (ini.get<cfg::globals::enable_close_box>()) {
                             rail_client_execute.enable_remote_program
                                 (front.client_info.remote_program);
-                            
+
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-                            
+
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                             mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                             run_session = true;
@@ -1316,15 +1316,19 @@ void session_start_sck(
     timeval sck_start_time, Inifile& ini,
     Args&&... args)
 {
-    Session session(SocketType(
-        name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
-        static_cast<Args&&>(args)...,
-        to_verbose_flags(ini.get<cfg::debug::front>() | (
-            (ini.get<cfg::globals::host>() == "127.0.0.1")
-            ? uint64_t(SocketTransport::Verbose::watchdog)
-            : 0u
-        ))
-    ), sck_start_time, ini);
+    auto const watchdog_verbosity = (ini.get<cfg::globals::host>() == "127.0.0.1")
+        ? SocketTransport::Verbose::watchdog
+        : SocketTransport::Verbose();
+    auto const sck_verbosity = safe_cast<SocketTransport::Verbose>(
+        ini.get<cfg::debug::sck_front>());
+
+    Session session(
+        SocketType(
+            name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
+            static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
+        ),
+        sck_start_time, ini
+    );
 }
 
 } // anonymous namespace

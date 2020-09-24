@@ -28,43 +28,49 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
 {
     none,
 
-    basic_trace         = 0x00000001,  // unspecific RDP loop events log
-    connection          = 0x00000002,  // regroup connection log events which don't concern
+    basic_trace         = 0x0000'0001, // unspecific RDP loop events log
+    connection          = 0x0000'0002, // regroup connection log events which don't concern
                                        // directly license, security, channels or capabilities
-    security            = 0x00000004,
-    capabilities        = 0x00000008,
+    security            = 0x0000'0004,
+    capabilities        = 0x0000'0008,
 
-    license             = 0x00000010,
-    asynchronous_task   = 0x00000020,
-    graphics_pointer    = 0x00000040,
-    graphics            = 0x00000080,
+    license             = 0x0000'0010,
+    asynchronous_task   = 0x0000'0020,
+    graphics_pointer    = 0x0000'0040,
+    graphics            = 0x0000'0080,
 
-    input               = 0x00000100,
-    rail_order          = 0x00000200,
-    credssp             = 0x00000400,
-    negotiation         = 0x00000800,
+    input               = 0x0000'0100,
+    rail_order          = 0x0000'0200,
+    credssp             = 0x0000'0400,
+    negotiation         = 0x0000'0800,
 
-    cache_persister     = 0x00001000,
+    cache_persister     = 0x0000'1000,
 
-    fsdrvmgr            = 0x00002000,
-    sesprobe_launcher   = 0x00004000,
-    sesprobe_repetitive = 0x00008000,
+    fsdrvmgr            = 0x0000'2000,
+    sesprobe_launcher   = 0x0000'4000,
+    sesprobe_repetitive = 0x0000'8000,
 
-    drdynvc             = 0x00010000,
-    surfaceCmd          = 0x00020000,
+    drdynvc             = 0x0001'0000,
+    surfaceCmd          = 0x0002'0000,
 
-    drdynvc_dump        = 0x00100000,
-    printer             = 0x00200000,
-    rdpsnd              = 0x00400000,
-    channels            = 0x00800000,
+    // BmpCachePersister
+    //@{
+    cache_from_disk     = 0x0004'0000,
+    bmp_info            = 0x0008'0000,
+    //@}
 
-    rail                = 0x01000000,
-    sesprobe            = 0x02000000,
-    cliprdr             = 0x04000000,
-    rdpdr               = 0x08000000,
+    drdynvc_dump        = 0x0010'0000,
+    printer             = 0x0020'0000,
+    rdpsnd              = 0x0040'0000,
+    channels            = 0x0080'0000,
 
-    rail_dump           = 0x10000000,
-    sesprobe_dump       = 0x20000000,
-    cliprdr_dump        = 0x40000000,
-    rdpdr_dump          = 0x80000000,
+    rail                = 0x0100'0000,
+    sesprobe            = 0x0200'0000,
+    cliprdr             = 0x0400'0000,
+    rdpdr               = 0x0800'0000,
+
+    rail_dump           = 0x1000'0000,
+    sesprobe_dump       = 0x2000'0000,
+    cliprdr_dump        = 0x4000'0000,
+    rdpdr_dump          = 0x8000'0000,
 };

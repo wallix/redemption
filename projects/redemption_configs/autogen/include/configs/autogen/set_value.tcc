@@ -2124,30 +2124,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "primary_orders"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::primary_orders&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "secondary_orders"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::secondary_orders&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
-        else if (key == "bitmap_update"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::debug::bitmap_update&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                value
-            );
-        }
         else if (key == "capture"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -2200,6 +2176,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::debug::mod_internal&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "sck_mod"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::sck_mod&>(this->variables).value,
+                ::configs::spec_type<uint32_t>{},
+                value
+            );
+        }
+        else if (key == "sck_front"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::debug::sck_front&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 value
             );

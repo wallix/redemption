@@ -165,13 +165,14 @@ public:
     REDEMPTION_VERBOSE_FLAGS(protected, verbose)
     {
         none,
-        pointer             = 4,
-        primary_orders      = 32,
-        secondary_orders    = 64,
-        bitmap_update       = 128,
-        surface_commands    = 256,
-        bmp_cache           = 512,
-        internal_buffer     = 1024
+        pointer             = 0x0004,
+        primary_orders      = 0x0020,
+        secondary_orders    = 0x0040,
+        bitmap_update       = 0x0080,
+        surface_commands    = 0x0100,
+        bmp_cache           = 0x0200,
+        internal_buffer     = 0x0400,
+        // update Front::Verbose when verbose > 0xffff
     };
 
     RDPSerializer( OutStream & stream_orders

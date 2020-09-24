@@ -144,7 +144,8 @@ int main(int argc, char** argv)
 
     SocketTransport mod_trans(
         is_vnc ? "VNC Server" : "RDP Server", std::move(sck), target_device.c_str(),
-        target_port, std::chrono::seconds(1), to_verbose_flags(verbose), nullptr);
+        target_port, std::chrono::seconds(1),
+        safe_cast<SocketTransport::Verbose>(uint32_t(verbose >> 32)), nullptr);
 
     ScopedSslInit scoped_ssl;
 

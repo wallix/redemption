@@ -1292,21 +1292,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0
 #_advanced
 #_hex
-#primary_orders = 0
-
-# min = 0
-#_advanced
-#_hex
-#secondary_orders = 0
-
-# min = 0
-#_advanced
-#_hex
-#bitmap_update = 0
-
-# min = 0
-#_advanced
-#_hex
 #capture = 0
 
 # min = 0
@@ -1338,6 +1323,16 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #_hex
 #mod_internal = 0
+
+# min = 0
+#_advanced
+#_hex
+#sck_mod = 0
+
+# min = 0
+#_advanced
+#_hex
+#sck_front = 0
 
 # min = 0
 #_hidden

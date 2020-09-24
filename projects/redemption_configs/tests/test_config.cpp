@@ -148,8 +148,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -433,8 +431,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
         "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"
         "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"_av);
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -629,8 +625,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
         "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"_av);
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -790,8 +784,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -962,8 +954,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1110,8 +1100,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1259,8 +1247,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1394,8 +1380,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());
@@ -1520,8 +1504,7 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
 
-    RED_CHECK_EQUAL(TraceType::localfile_hashed,
-                                                        ini.get<cfg::globals::trace_type>());
+    RED_CHECK_EQUAL(TraceType::localfile_hashed,      ini.get<cfg::globals::trace_type>());
     RED_CHECK_EQUAL("0.0.0.0",                        ini.get<cfg::globals::listen_address>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
@@ -1531,8 +1514,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::secondary_orders>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::capture>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::auth>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::session>());

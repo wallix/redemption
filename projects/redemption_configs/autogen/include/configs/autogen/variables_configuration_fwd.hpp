@@ -326,9 +326,6 @@ namespace cfg
 
     struct debug {
         struct fake_target_ip;
-        struct primary_orders;
-        struct secondary_orders;
-        struct bitmap_update;
         struct capture;
         struct auth;
         struct session;
@@ -336,6 +333,8 @@ namespace cfg
         struct mod_rdp;
         struct mod_vnc;
         struct mod_internal;
+        struct sck_mod;
+        struct sck_front;
         struct password;
         struct compression;
         struct cache;

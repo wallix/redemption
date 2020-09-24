@@ -129,7 +129,7 @@ private:
 public:
 
     ModWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
-        const char * name, unique_fd sck, uint32_t verbose,
+        const char * name, unique_fd sck, SocketTransport::Verbose verbose,
         std::string * error_message,
         TimeBase& time_base,
         EventContainer& events,
@@ -154,10 +154,10 @@ public:
         VNCMetrics * metrics
         )
     : socket_transport( name, std::move(sck)
-                     , ini.get<cfg::context::target_host>().c_str()
-                     , ini.get<cfg::context::target_port>()
-                     , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
-                     , to_verbose_flags(verbose), error_message)
+                      , ini.get<cfg::context::target_host>().c_str()
+                      , ini.get<cfg::context::target_port>()
+                      , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
+                      , verbose, error_message)
     , mod(this->socket_transport, time_base, mod_wrapper, events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
@@ -336,12 +336,14 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
             ini.get<cfg::metrics::log_interval>());
     }
 
+    const auto vnc_verbose = safe_cast<VNCVerbose>(ini.get<cfg::debug::mod_vnc>());
+
     auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
         mod_wrapper,
         ini,
         name,
         std::move(client_sck),
-        ini.get<cfg::debug::mod_vnc>(),
+        safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
         nullptr,
         time_base,
         events,
@@ -365,7 +367,7 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         ini.get<cfg::mod_vnc::server_unix_alt>(),
         ini.get<cfg::mod_vnc::support_cursor_pseudo_encoding>(),
         (client_info.remote_program ? &rail_client_execute : nullptr),
-        to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
+        vnc_verbose,
         enable_metrics ? &metrics->protocol_metrics : nullptr
     );
 

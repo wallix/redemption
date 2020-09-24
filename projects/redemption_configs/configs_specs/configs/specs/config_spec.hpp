@@ -668,10 +668,6 @@ void config_spec_definition(Writer && W)
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "fake_target_ip");
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "primary_orders");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "secondary_orders");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "bitmap_update");
-
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "capture");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "auth");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "session");
@@ -680,6 +676,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_rdp");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_vnc");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_internal");
+
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sck_mod");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sck_front");
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), "password");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression");

@@ -79,11 +79,13 @@ public:
         if(pid == 0) {
             close(sck);
 
-//            int nodelay = 1;
-//            if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
-//                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
-//                _exit(1);
-//            }
+            // int nodelay = 1;
+            // if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
+            //     LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
+            //     _exit(1);
+            // }
+
+            const auto sck_verbose = safe_cast<SocketTransport::Verbose>(uint32_t(verbosity >> 32));
 
             char finalPathBuffer[256];
             char const* finalPath = captureTemplate.format(
@@ -91,9 +93,13 @@ public:
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
             RecorderFile outFile(this->time_base, finalPath);
 
-            SocketTransport lowFrontConn("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
-            SocketTransport lowBackConn("back", ip_connect(this->targetHost.c_str(), this->targetPort),
-                this->targetHost.c_str(), this->targetPort, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
+            SocketTransport lowFrontConn(
+                "front", std::move(sck_in), "127.0.0.1", 3389,
+                std::chrono::milliseconds(100), sck_verbose);
+            SocketTransport lowBackConn(
+                "back", ip_connect(this->targetHost.c_str(), this->targetPort),
+                this->targetHost.c_str(), this->targetPort,
+                std::chrono::milliseconds(100), sck_verbose);
             TraceTransport frontConn("front", lowFrontConn);
             TraceTransport backConn("back", lowBackConn);
             NlaTeeTransport front_nla_tee_trans(frontConn, outFile, NlaTeeTransport::Type::Server);

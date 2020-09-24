@@ -3542,36 +3542,6 @@ namespace cfg
     };
     /// type: uint32_t <br/>
     /// default: {} <br/>
-    struct debug::primary_orders {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
-    /// type: uint32_t <br/>
-    /// default: {} <br/>
-    struct debug::secondary_orders {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
-    /// type: uint32_t <br/>
-    /// default: {} <br/>
-    struct debug::bitmap_update {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
-    /// type: uint32_t <br/>
-    /// default: {} <br/>
     struct debug::capture {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3633,6 +3603,26 @@ namespace cfg
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::mod_internal {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: uint32_t <br/>
+    /// default: {} <br/>
+    struct debug::sck_mod {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = uint32_t;
+        using sesman_and_spec_type = uint32_t;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: uint32_t <br/>
+    /// default: {} <br/>
+    struct debug::sck_front {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = uint32_t;
@@ -5562,9 +5552,6 @@ struct websocket
 
 struct debug
 : cfg::debug::fake_target_ip
-, cfg::debug::primary_orders
-, cfg::debug::secondary_orders
-, cfg::debug::bitmap_update
 , cfg::debug::capture
 , cfg::debug::auth
 , cfg::debug::session
@@ -5572,6 +5559,8 @@ struct debug
 , cfg::debug::mod_rdp
 , cfg::debug::mod_vnc
 , cfg::debug::mod_internal
+, cfg::debug::sck_mod
+, cfg::debug::sck_front
 , cfg::debug::password
 , cfg::debug::compression
 , cfg::debug::cache

@@ -89,8 +89,8 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        from_disk = 1,
-        bmp_info  = 0x100000
+        from_disk = 0x00'0001,
+        bmp_info  = 0x10'0000
     };
 
     // Preloads bitmap from file to be used later with Client Persistent Key List PDUs.

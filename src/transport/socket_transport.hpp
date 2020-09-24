@@ -74,12 +74,9 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-
-        basic    = 1u << 29,
-
-        dump     = 1u << 30,
-
-        watchdog = 1u << 31
+        basic    = 0x0001,
+        dump     = 0x0002,
+        watchdog = 0x0004,
     };
 
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport

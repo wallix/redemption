@@ -60,7 +60,7 @@ AclSerializer::AclSerializer(Inifile & ini)
 , auth_trans(nullptr)
 , session_id{}
 , remote_answer(false)
-, verbose(to_verbose_flags(ini.get<cfg::debug::auth>()))
+, verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
 {
     std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
 }

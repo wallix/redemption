@@ -250,17 +250,21 @@ public:
         if(pid == 0) {
             close(sck);
 
-//            int nodelay = 1;
-//            if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
-//                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
-//                _exit(1);
-//            }
+            // int nodelay = 1;
+            // if (setsockopt(sck_in.fd(), IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay)) < 0) {
+            //     LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
+            //     _exit(1);
+            // }
+
+            const auto sck_verbose = safe_cast<SocketTransport::Verbose>(uint32_t(verbosity >> 32));
 
             TimeBase time_base(tvtime());
 
             TpduBuffer buffer;
             buffer.trace_pdu = true;
-            SocketTransport trans("front", std::move(sck_in), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity));
+            SocketTransport trans(
+                "front", std::move(sck_in), "127.0.0.1", 3389,
+                std::chrono::milliseconds(100), sck_verbose);
 
             try {
                 fd_set rset;

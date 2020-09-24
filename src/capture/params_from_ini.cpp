@@ -20,8 +20,6 @@
 
 #include "capture/params_from_ini.hpp"
 
-#include "core/RDP/RDPSerializer.hpp"
-
 #include "configs/config.hpp"
 
 VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini)
@@ -102,13 +100,7 @@ WrmParams wrm_params_from_ini(
         ini.get<cfg::video::frame_interval>(),
         ini.get<cfg::video::break_interval>(),
         ini.get<cfg::video::wrm_compression_algorithm>(),
-        uint32_t(to_verbose_flags(ini.get<cfg::debug::capture>())
-            | (ini.get<cfg::debug::primary_orders>()
-                ? RDPSerializer::Verbose::primary_orders : RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::secondary_orders>()
-                ? RDPSerializer::Verbose::secondary_orders : RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::bitmap_update>()
-               ? RDPSerializer::Verbose::bitmap_update : RDPSerializer::Verbose::none)),
-            ini.get<cfg::video::file_permissions>()
+        ini.get<cfg::debug::capture>(),
+        ini.get<cfg::video::file_permissions>()
     };
 }

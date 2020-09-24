@@ -273,10 +273,19 @@ public:
             InFileTransport ift(unique_fd{fd});
 
             try {
-                LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "rdp_orders::create_cache_bitmap: filename=\"%s\"", filename);
+                LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO,
+                    "rdp_orders::create_cache_bitmap: filename=\"%s\"", filename);
+                const auto cache_persister_verbosity = BmpCachePersister::Verbose()
+                    | (bool(this->verbose & RDPVerbose::cache_from_disk)
+                         ? BmpCachePersister::Verbose::from_disk
+                         : BmpCachePersister::Verbose())
+                    | (bool(this->verbose & RDPVerbose::bmp_info)
+                         ? BmpCachePersister::Verbose::bmp_info
+                         : BmpCachePersister::Verbose())
+                    ;
                 BmpCachePersister::load_all_from_disk(
                     *this->bmp_cache, ift, filename,
-                    convert_verbose_flags(this->verbose)
+                    cache_persister_verbosity
                 );
             }
             catch (...) {

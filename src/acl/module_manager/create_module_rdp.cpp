@@ -233,7 +233,7 @@ private:
 
 public:
     ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
-        const char * name, unique_fd sck, uint32_t verbose
+        const char * name, unique_fd sck, SocketTransport::Verbose verbose
       , std::string * error_message
       , TimeBase& time_base
       , EventContainer & events
@@ -252,38 +252,32 @@ public:
       , [[maybe_unused]] FileValidatorService * file_validator_service
       , ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
         )
-    : socket_transport_ptr([](  ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport
-                              , const char * name, unique_fd sck
-                              , const char *ip_address, int port, std::chrono::milliseconds recv_timeout
-                              , uint32_t verbose, std::string * error_message) -> SocketTransport*
-        {
-            if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport)
-            {
-                return new SocketTransport(  name, std::move(sck)
-                                           , ip_address
-                                           , port
-                                           , recv_timeout
-                                           , to_verbose_flags(verbose)
-                                           , error_message);
+    : socket_transport_ptr([](
+            ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport,
+            const char * name, unique_fd sck, const char *ip_address, int port,
+            std::chrono::milliseconds recv_timeout, SocketTransport::Verbose verbose,
+            std::string * error_message
+        ) -> SocketTransport* {
+            if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
+                return new SocketTransport( /*NOLINT*/
+                    name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message
+                );
             }
 
+            const bool is_read_error_simulation
+                = ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport;
             LOG(LOG_WARNING, "ModRDPWithSocketAndMetrics::ModRDPWithSocketAndMetrics: Mod_rdp use Failure Simulation Socket Transport (mode=%s)",
-                (  ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport
-                 ? "SimulateErrorRead" : "SimulateErrorWrite"));
+                is_read_error_simulation ? "SimulateErrorRead" : "SimulateErrorWrite");
 
-            return new FailureSimulationSocketTransport(
-                  ModRdpUseFailureSimulationSocketTransport::SimulateErrorRead == use_failure_simulation_socket_transport
-                , name, std::move(sck)
-                , ip_address
-                , port
-                , recv_timeout
-                , to_verbose_flags(verbose)
-                , error_message);
-        }(  use_failure_simulation_socket_transport, name, std::move(sck)
-          , ini.get<cfg::context::target_host>().c_str()
-          , ini.get<cfg::context::target_port>()
-          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
-          , verbose, error_message))
+            return new FailureSimulationSocketTransport( /*NOLINT*/
+                is_read_error_simulation,
+                name, std::move(sck) , ip_address , port , recv_timeout , verbose , error_message
+            );
+        }( use_failure_simulation_socket_transport, name, std::move(sck)
+         , ini.get<cfg::context::target_host>().c_str()
+         , ini.get<cfg::context::target_port>()
+         , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
+         , verbose, error_message))
     , sesman(sesman)
     , mod(*this->socket_transport_ptr, time_base, mod_wrapper, events
         , sesman,gd, front, info, redir_info, gen
@@ -562,6 +556,7 @@ ModPack create_mod_rdp(
     // END READ PROXY_OPT
 
     const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
+    const auto rdp_verbose = safe_cast<RDPVerbose>(ini.get<cfg::debug::mod_rdp>());
 
     ini.set<cfg::context::close_box_extra_message>("");
     ModRDPParams mod_rdp_params(
@@ -574,8 +569,7 @@ ModPack create_mod_rdp(
       , theme
       , server_auto_reconnect_packet
       , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-      , to_verbose_flags(ini.get<cfg::debug::mod_rdp>())
-      //, RDPVerbose::basic_trace4 | RDPVerbose::basic_trace3 | RDPVerbose::basic_trace7 | RDPVerbose::basic_trace
+      , rdp_verbose
     );
 
     SCOPE_EXIT(ini.set<cfg::context::perform_automatic_reconnection>(false));
@@ -650,11 +644,11 @@ ModPack create_mod_rdp(
     mod_rdp_params.enable_cache_waiting_list = ini.get<cfg::mod_rdp::cache_waiting_list>();
     mod_rdp_params.persist_bitmap_cache_on_disk = ini.get<cfg::mod_rdp::persist_bitmap_cache_on_disk>();
     mod_rdp_params.password_printing_mode = ini.get<cfg::debug::password>();
-    mod_rdp_params.cache_verbose = to_verbose_flags(ini.get<cfg::debug::cache>());
+    mod_rdp_params.cache_verbose = safe_cast<BmpCache::Verbose>(ini.get<cfg::debug::cache>());
 
     mod_rdp_params.disabled_orders                     += parse_primary_drawing_orders(
         ini.get<cfg::mod_rdp::disabled_orders>().c_str(),
-        bool(to_verbose_flags(ini.get<cfg::debug::mod_rdp>()) & (RDPVerbose::basic_trace | RDPVerbose::capabilities)));
+        bool(rdp_verbose & (RDPVerbose::basic_trace | RDPVerbose::capabilities)));
 
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
@@ -977,7 +971,7 @@ ModPack create_mod_rdp(
         ini,
         name,
         std::move(client_sck),
-        ini.get<cfg::debug::mod_rdp>(),
+        safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
         time_base,
         events,

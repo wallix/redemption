@@ -1101,18 +1101,6 @@ fake_target_ip = string(default='')
 
 #_advanced
 #_hex
-primary_orders = integer(min=0, default=0)
-
-#_advanced
-#_hex
-secondary_orders = integer(min=0, default=0)
-
-#_advanced
-#_hex
-bitmap_update = integer(min=0, default=0)
-
-#_advanced
-#_hex
 capture = integer(min=0, default=0)
 
 #_advanced
@@ -1138,6 +1126,14 @@ mod_vnc = integer(min=0, default=0)
 #_advanced
 #_hex
 mod_internal = integer(min=0, default=0)
+
+#_advanced
+#_hex
+sck_mod = integer(min=0, default=0)
+
+#_advanced
+#_hex
+sck_front = integer(min=0, default=0)
 
 #_hidden
 password = integer(min=0, default=0)

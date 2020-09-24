@@ -145,29 +145,24 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        basic_trace     = 1u << 0,
-        basic_trace2    = 1u << 1,
-        basic_trace3    = 1u << 2,
-        basic_trace4    = 1u << 3,
-        basic_trace5    = 1u << 5,
-        graphic         = 1u << 6,
-        channel         = 1u << 7,
-        global_channel  = 1u << 13,
-        sec_decrypted   = 1u << 14,
-        keymap          = 1u << 15,
-
-        // RDPSerializer
-        bmp_cache        = 1u << 8,
-        internal_buffer  = 1u << 9,
-
+        basic_trace     = 0x0000'0001,
+        basic_trace2    = 0x0000'0002,
+        basic_trace3    = 0x0000'0004,
+        basic_trace4    = 0x0000'0008,
+        basic_trace5    = 0x0000'0020,
+        graphic         = 0x0000'0040,
+        channel         = 0x0000'0080,
         // BmpCachePersister
-        cache_from_disk  = 1u << 10,
-        bmp_info         = 1u << 11,
+        //@{
+        cache_from_disk = 0x0000'0400,
+        bmp_info        = 0x0000'0800,
+        //@}
+        global_channel  = 0x0000'2000,
+        sec_decrypted   = 0x0000'4000,
+        keymap          = 0x0000'8000,
 
-        // SocketTransport (see 'socket_transport.hpp')
-        sock_basic       = 1u << 29,
-        sock_dump        = 1u << 30,
-        sock_watch       = 1u << 31
+        // /!\ RDPSerializer
+        // (verbose >> 16) & 0xffff
     };
 
 private:
@@ -406,13 +401,7 @@ private:
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
           , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : false
-          , ( (ini.get<cfg::debug::primary_orders>() ? RDPSerializer::Verbose::primary_orders : RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::secondary_orders>() ? RDPSerializer::Verbose::secondary_orders : RDPSerializer::Verbose::none)
-            | (ini.get<cfg::debug::bitmap_update>() ? RDPSerializer::Verbose::bitmap_update : RDPSerializer::Verbose::none)
-            | (bool(verbose & Verbose::bmp_cache) ? RDPSerializer::Verbose::bmp_cache : RDPSerializer::Verbose::none)
-            | (bool(verbose & Verbose::internal_buffer) ? RDPSerializer::Verbose::internal_buffer : RDPSerializer::Verbose::none)
-            | (bool(verbose & Verbose::basic_trace4) ? RDPSerializer::Verbose::pointer : RDPSerializer::Verbose::none)
-            )
+          , safe_cast<RDPSerializer::Verbose>(underlying_cast(verbose) >> 16)
         )
         {}
     };
