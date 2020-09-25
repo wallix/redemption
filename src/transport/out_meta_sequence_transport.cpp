@@ -88,7 +88,7 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     const int groupid,
     AuthApi * sesman,
     uint32_t file_permissions)
-: meta_buf_encrypt_transport(cctx, rnd, fstat, 
+: meta_buf_encrypt_transport(cctx, rnd, fstat,
     [&sesman](const Error & error){
         if (sesman && error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;

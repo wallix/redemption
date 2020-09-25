@@ -34,7 +34,7 @@ public:
     , simulate_read_failure(simulate_read_failure)
     {}
 
-protected:
+private:
     size_t do_partial_read(uint8_t * buffer, size_t len) override
     {
         if (this->simulate_read_failure)
@@ -83,7 +83,7 @@ protected:
         SocketTransport::do_send(buffer, len);
     }
 
-protected:
+private:
     const bool simulate_read_failure;
 
     static constexpr size_t max_successful_read_operations = 800;

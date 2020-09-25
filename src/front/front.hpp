@@ -338,7 +338,7 @@ private:
                 client_info.cache5_entries
               , client_info.cache5_size
               , client_info.cache5_persistent),
-            to_verbose_flags(ini.get<cfg::debug::cache>())
+            safe_cast<BmpCache::Verbose>(ini.get<cfg::debug::cache>())
           )
         , bmp_cache_persister([&ini, verbose, this]() {
             std::unique_ptr<BmpCachePersister> bmp_cache_persister;

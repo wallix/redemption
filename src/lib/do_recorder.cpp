@@ -347,7 +347,7 @@ static int do_recompress(
     bool & program_requested_to_shutdown,
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
-    FileToChunk player(&in_wrm_trans, to_verbose_flags(verbose));
+    FileToChunk player(&in_wrm_trans, safe_cast<FileToChunk::Verbose>(verbose));
     auto outfile = ParsePath(output_filename);
 
     if (verbose) {
@@ -1142,7 +1142,10 @@ inline void get_join_visibility_rect(
         in_wrm_trans.next();
     }
 
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, ini.get<cfg::video::play_video_with_corrupted_bitmap>(), to_verbose_flags(verbose));
+    FileToGraphic player(
+        in_wrm_trans, begin_capture, end_capture, false,
+        ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+        safe_cast<FileToGraphic::Verbose>(verbose));
 
     player.play(program_requested_to_shutdown);
 
@@ -1314,7 +1317,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             }
 
             LOG(LOG_INFO, "player begin_capture = %ld", begin_capture.tv_sec);
-            FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, ini.get<cfg::video::play_video_with_corrupted_bitmap>(), to_verbose_flags(verbose));
+            FileToGraphic player(
+                in_wrm_trans, begin_capture, end_capture, false,
+                ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+                safe_cast<FileToGraphic::Verbose>(verbose));
 
             if (show_file_metadata) {
                 show_metadata(player);
@@ -1403,7 +1409,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
-                        if (ini.get<cfg::debug::capture>()) {
+                        if (ini.get<cfg::debug::capture>() || 1) {
                             LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
                                 capture_wrm ?"wrm ":"",
                                 capture_png ?"png ":"",
