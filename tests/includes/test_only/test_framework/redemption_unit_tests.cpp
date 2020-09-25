@@ -142,25 +142,25 @@ namespace redemption_unit_test__
         ::chars_view s6, ::chars_view s7, ::chars_view s8,
         ::chars_view s9) noexcept
     {
-        ::chars_view sparam;
+        std::string_view s;
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 9)
+        auto to_sv = [](chars_view av){ return std::string_view{av.data(), av.size()}; };
         switch (x)
         {
-            case 0: sparam = s0; break;
-            case 1: sparam = s1; break;
-            case 2: sparam = s2; break;
-            case 3: sparam = s3; break;
-            case 4: sparam = s4; break;
-            case 5: sparam = s5; break;
-            case 6: sparam = s6; break;
-            case 7: sparam = s7; break;
-            case 8: sparam = s8; break;
-            case 9: sparam = s9; break;
+            case 0: s = to_sv(s0); break;
+            case 1: s = to_sv(s1); break;
+            case 2: s = to_sv(s2); break;
+            case 3: s = to_sv(s3); break;
+            case 4: s = to_sv(s4); break;
+            case 5: s = to_sv(s5); break;
+            case 6: s = to_sv(s6); break;
+            case 7: s = to_sv(s7); break;
+            case 8: s = to_sv(s8); break;
+            case 9: s = to_sv(s9); break;
             default:
                 return {};
         }
 
-        std::string_view s{sparam.data(), sparam.size()};
         s.remove_prefix(prefix_value_name);
 
 #ifdef __clang__
