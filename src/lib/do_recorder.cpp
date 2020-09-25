@@ -1407,21 +1407,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         bool capture_meta = capture_ocr;
                         bool capture_kbd = false;
 
-                        OcrParams const ocr_params = ocr_params_from_ini(ini);
-
-                        if (ini.get<cfg::debug::capture>() || 1) {
-                            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                                capture_wrm ?"wrm ":"",
-                                capture_png ?"png ":"",
-                                capture_kbd ? 1 : 0,
-                                capture_video ?"video ":"",
-                                capture_video_full ?"video_full ":"",
-                                capture_pattern_checker ?"pattern ":"",
-                                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-                                capture_meta?"meta ":""
-                            );
-                        }
-
+                        const OcrParams ocr_params = ocr_params_from_ini(ini);
                         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
                         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
 
