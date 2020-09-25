@@ -149,7 +149,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_ssl;
 
-    ClientFront front(client_info.screen_info, verbose);
+    ClientFront front(client_info.screen_info, verbose & 0x8000'0000);
     TimeBase time_base(tvtime());
     EventContainer events;
 
@@ -218,7 +218,9 @@ int main(int argc, char** argv)
               , false          /*remove_server_alt_state_for_char*/
               , true           /* support Cursor Pseudo-Encoding */
               , nullptr
-              , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace
+              , safe_cast<VNCVerbose>(uint32_t(verbose))
+              | VNCVerbose::connection
+              | VNCVerbose::basic_trace
               , nullptr);
         }) ? 1 : 0;
     }
@@ -239,7 +241,7 @@ int main(int argc, char** argv)
         , theme
         , server_auto_reconnect_packet
         , close_box_extra_message
-        , to_verbose_flags(verbose));
+        , RDPVerbose(verbose));
 
     mod_rdp_params.device_id                  = "device_id";
     mod_rdp_params.enable_tls                 = true;

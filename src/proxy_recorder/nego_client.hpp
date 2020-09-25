@@ -39,13 +39,12 @@ public:
     NegoClient(
         bool is_nla, bool is_admin_mode, Transport& trans, TimeBase & time_base,
         char const* host, char const* target_user, char const* password,
-        bool enable_kerberos, const TLSClientParams & tls_client_params, uint64_t verbosity
+        bool enable_kerberos, const TLSClientParams & tls_client_params, RdpNego::Verbose verbosity
     )
     : trans(trans)
     , nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
         this->random, time_base, this->extra_message, Translation::EN,
-        tls_client_params,
-        to_verbose_flags(verbosity))
+        tls_client_params, verbosity)
     {
         auto [username, domain] = extract_user_domain(target_user);
         nego.set_identity(username, domain, password, "ProxyRecorder");

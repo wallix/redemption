@@ -116,7 +116,8 @@ void ProxyRecorder::back_step1(writable_u8_array_view key, Transport & backConn,
         this->back_nla_tee_trans, this->time_base,
         this->host, nla_username.c_str(),
         nla_password.c_str(),
-        enable_kerberos, tls_client_params, this->verbosity > 8);
+        enable_kerberos, tls_client_params,
+        safe_cast<RdpNego::Verbose>(uint32_t(this->verbosity >> 32)));
 
     // equivalent to nego_client->send_negotiation_request()
     StaticOutStream<256> back_x224_stream;

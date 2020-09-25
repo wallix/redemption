@@ -20,35 +20,8 @@
 
 #pragma once
 
-#include "utils/sugar/flags.hpp"
-
 #include <type_traits>
 #include <cinttypes>
-
-
-namespace detail
-{
-    struct to_verbose_flags_
-    {
-        uint32_t verbose;
-
-        template<class E>
-        operator E () const
-        {
-            static_assert(std::is_enum<E>::value, "must be a enum type");
-            return static_cast<E>(this->verbose);
-        }
-    };
-} // namespace detail
-
-inline detail::to_verbose_flags_
-to_verbose_flags(uint32_t verbose)
-{ return {verbose}; }
-
-template<class E>
-typename std::enable_if<std::is_enum<E>::value, detail::to_verbose_flags_>::type
-convert_verbose_flags(E verbose)
-{ return {static_cast<uint32_t>(verbose)}; }
 
 
 #define REDEMPTION_DECLARE_ENUM_OPS(Prefix, enum_name)                 \

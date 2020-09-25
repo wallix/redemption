@@ -1378,12 +1378,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
                                 return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
                             };
-                            png_params.zoom = std::max<unsigned>(
-//                                    get_percent(png_params.png_width, player.screen_rect.cx),
-                                    get_percent(png_params.png_width, max_screen_dim.w),
-//                                    get_percent(png_params.png_height, player.screen_rect.cy)
-                                    get_percent(png_params.png_height, max_screen_dim.h)
-                                );
+                            png_params.zoom = std::max(
+                                get_percent(png_params.png_width, max_screen_dim.w),
+                                get_percent(png_params.png_height, max_screen_dim.h)
+                            );
                             //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
 
@@ -1418,8 +1416,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.rt_display = ini.get<cfg::video::rt_display>();
                         png_params.real_basename = spath.basename.c_str();
 
-                        RDPDrawable rdp_drawable{
-                            max_screen_dim.w, max_screen_dim.h};
+                        RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};
 
                         DrawableParams const drawable_params{
                             max_screen_dim.w,

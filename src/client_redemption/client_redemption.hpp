@@ -457,8 +457,7 @@ public:
                   , true                                    // alt server unix
                   , true                                    // support Cursor Pseudo-encoding
                   , nullptr
-                  // , to_verbose_flags(0xfffffffd)
-                  , to_verbose_flags(0)
+                  , VNCVerbose()
                   , nullptr
                 );
                 break;
@@ -504,8 +503,7 @@ public:
                     this->config.target_IP.c_str(),
                     this->config.port,
                     std::chrono::seconds(1),
-                    to_verbose_flags(0x0),
-                    //SocketTransport::Verbose::dump,
+                    SocketTransport::Verbose(),
                     &this->error_message);
 
                 if (this->config.is_full_capturing) {
@@ -727,8 +725,7 @@ public:
               , ClientRedemptionConfig::BALISED_FRAME
               , false
               , false
-              //, FileToGraphic::Verbose::rdp_orders
-              , to_verbose_flags(0)
+              , FileToGraphic::Verbose()
             );
 
             this->_callback.set_replay(this->replay_mod.get());

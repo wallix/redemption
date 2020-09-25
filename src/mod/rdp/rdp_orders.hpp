@@ -199,7 +199,7 @@ private:
           this->target_host.c_str(),
           this->bmp_cache->bpp,
           this->notify_error,
-          convert_verbose_flags(this->verbose)
+          safe_cast<BmpCachePersister::Verbose>(this->verbose)
       );
     }
 #endif

@@ -201,7 +201,7 @@ RED_AUTO_TEST_CASE(TestFront)
                                 , theme
                                 , server_auto_reconnect_packet
                                 , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                                , to_verbose_flags(0)
+                                , RDPVerbose(0)
                                 );
     mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = false;
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(TestFront)
     mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.verbose = to_verbose_flags(verbose);
+    mod_rdp_params.verbose = RDPVerbose(verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen2;
@@ -372,7 +372,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     //                            , ini.get<cfg::theme>()
     //                            , ini.get_mutable_ref<cfg::context::server_auto_reconnect_packet>()
     //                            , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-    //                            , to_verbose_flags(0)
+    //                            , RDPVerbose(0)
     //                            );
     // mod_rdp_params.device_id                       = "device_id";
     // mod_rdp_params.enable_tls                      = false;
@@ -388,7 +388,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // //mod_rdp_params.open_session_timeout            = 5s;
     // //mod_rdp_params.certificate_change_action       = 0;
     // //mod_rdp_params.extra_orders                    = "";
-    // mod_rdp_params.verbose = to_verbose_flags(verbose);
+    // mod_rdp_params.verbose = RDPVerbose(verbose);
     //
     // // To always get the same client random, in tests
     // LCGRandom gen2;
@@ -541,7 +541,7 @@ RED_AUTO_TEST_CASE(TestFront3)
                                , ini.get<cfg::theme>()
                                , ini.get_mutable_ref<cfg::context::server_auto_reconnect_packet>()
                                , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                               , to_verbose_flags(0)
+                               , RDPVerbose(0)
                                );
     mod_rdp_params.device_id                       = "device_id";
     mod_rdp_params.enable_tls                      = false;
@@ -557,7 +557,7 @@ RED_AUTO_TEST_CASE(TestFront3)
     //mod_rdp_params.open_session_timeout            = 5s;
     //mod_rdp_params.certificate_change_action       = 0;
     //mod_rdp_params.extra_orders                    = "";
-    mod_rdp_params.verbose = to_verbose_flags(verbose);
+    mod_rdp_params.verbose = RDPVerbose(verbose);
 
     // To always get the same client random, in tests
     LCGRandom gen2;

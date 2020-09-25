@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     init_formats(conf);
-    ClientCLIPRDRChannel channel(to_verbose_flags(0x0), &callback, conf);
+    ClientCLIPRDRChannel channel(RDPVerbose(0x0), &callback, conf);
     channel.set_api(&clip_io);
     channel.server_use_long_format_names = false;
 
@@ -235,7 +235,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     init_formats(conf);
-    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, conf);
+    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr/*RDPVerbose(0x0)*/, &callback, conf);
     channel.set_api(&clip_io);
 
     // COPY from clipboard
@@ -517,7 +517,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     init_formats(conf);
-    ClientCLIPRDRChannel channel(to_verbose_flags(0x0), &callback, conf);
+    ClientCLIPRDRChannel channel(RDPVerbose(0x0), &callback, conf);
     channel.set_api(&clip_io);
 
     // COPY from clipboard

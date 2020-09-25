@@ -70,20 +70,24 @@ class NLAServer
         LOG(LOG_INFO, "NTLM Check identity");
         hexdump_d(user_av);
 
+        auto bytes_to_zstring_view = [](std::vector<uint8_t>& cont){
+            cont.push_back(0);
+            return zstring_view(zstring_view::is_zero_terminated{},
+                byte_ptr(cont.data()).as_charp(), cont.size());
+        };
+
         auto [username, domain] = extract_user_domain(this->nla_username);
         // from protocol
         auto tmp_utf8_user = ::encode_UTF16_to_UTF8(user_av);
-        std::string u8user(reinterpret_cast<char*>(tmp_utf8_user.data()),
-                             reinterpret_cast<char*>(tmp_utf8_user.data())+tmp_utf8_user.size());
+        auto u8user = bytes_to_zstring_view(tmp_utf8_user);
         auto tmp_utf8_domain = ::encode_UTF16_to_UTF8(domain_av);
-        std::string u8domain(reinterpret_cast<char*>(tmp_utf8_domain.data()),
-                             reinterpret_cast<char*>(tmp_utf8_domain.data())+tmp_utf8_domain.size());
+        auto u8domain = bytes_to_zstring_view(tmp_utf8_domain);
 
         LOG(LOG_INFO, "NTML IDENTITY(message): identity.User=%s identity.Domain=%s username=%s, domain=%s",
             u8user, u8domain, username, domain);
 
         if (u8domain.size() == 0){
-            auto [identity_username, identity_domain] = extract_user_domain(u8user);
+            auto [identity_username, identity_domain] = extract_user_domain(u8user.to_sv());
 
             bool user_match = username == identity_username;
             bool domain_match = domain == identity_domain;
@@ -93,7 +97,7 @@ class NLAServer
                 return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->nla_password))};
             }
         }
-        else if ((username == u8user) && (domain == u8domain)){
+        else if (u8user == username && u8domain == domain){
             return {PasswordCallback::Ok, Md4(::UTF8toUTF16(this->nla_password))};
         }
 
@@ -115,8 +119,8 @@ class NLAServer
 
 public:
     NLAServer(std::string nla_username, std::string nla_password, bool forkable, TimeBase & time_base, uint64_t verbosity)
-        : nla_username(nla_username)
-        , nla_password(nla_password)
+        : nla_username(std::move(nla_username))
+        , nla_password(std::move(nla_password))
         , forkable(forkable)
         , time_base(time_base)
         , verbosity(verbosity)
@@ -347,29 +351,6 @@ private:
     uint64_t verbosity;
 };
 
-struct CliPassword
-{
-    cli::Res operator()(cli::ParseResult& pr) const
-    {
-        if (!pr.str) {
-            return cli::Res::BadFormat;
-        }
-
-        char* s = av[pr.opti];
-        password = s;
-        // hide password in /proc/...
-        for (int i = 0; *s; ++s, ++i) {
-            *s = (i < 3) ? '*' : '\0';
-        }
-        ++pr.opti;
-
-        return cli::Res::Ok;
-    }
-
-    std::string& password;
-    char ** av;
-};
-
 int main(int argc, char *argv[])
 {
     int listen_port = 8001;
@@ -386,7 +367,8 @@ int main(int argc, char *argv[])
             .action(cli::quit([]{ std::cout << "NLAFront 1.0, " << redemption_info_version() << "\n"; })),
         cli::option('P', "port").help("Listen port").action(cli::arg_location(listen_port)),
         cli::option("user").action(cli::arg_location("username", nla_username)),
-        cli::option("pass").action(CliPassword{nla_password, argv}),
+        // TODO add value name
+        cli::option("pass").action(cli::RewritePassword{nla_password}),
         cli::option("enable-kerberos").action(cli::on_off_location(enable_kerberos)),
         cli::option('N', "no-fork").action(cli::on_off_location(no_forkable)),
         cli::option('V', "verbose").action(cli::arg_location("verbosity", verbosity))
@@ -407,14 +389,14 @@ int main(int argc, char *argv[])
                 std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
             }
             std::cerr << "\n";
-            return -1;
+            return 1;
         case cli::Res::BadOption:
             std::cerr << "Bad option at parameter " << cli_result.opti;
             if (cli_result.opti < cli_result.argc) {
                 std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
             }
             std::cerr << "\n";
-            return -1;
+            return 1;
     }
 
     ScopedSslInit scoped_ssl;
@@ -424,7 +406,7 @@ int main(int argc, char *argv[])
     NLAServer front(std::move(nla_username), std::move(nla_password), !no_forkable, time_base, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
-        return -2;
+        return 2;
     }
     return unique_server_loop(std::move(sck), [&](int sck){
         time_base.set_current_time(tvtime());

@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister)
                       , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
-                      , to_verbose_flags(verbose)
+                      , BmpCache::Verbose(verbose)
                       );
 
     int          result;
@@ -286,7 +286,7 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister)
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
     CheckTransport t(cstr_array_view(outdata));
 
-    BmpCachePersister::save_all_to_disk(bmp_cache, t, to_verbose_flags(verbose));
+    BmpCachePersister::save_all_to_disk(bmp_cache, t, BmpCachePersister::Verbose(verbose));
 }
 
 RED_AUTO_TEST_CASE(TestBmpCachePersister1)
@@ -301,13 +301,13 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister1)
                       , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
-                      , to_verbose_flags(verbose)
+                      , BmpCache::Verbose(verbose)
                       );
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
     GeneratorTransport t(cstr_array_view(outdata));
 
-    BmpCachePersister bmp_cache_persister(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", to_verbose_flags(verbose));
+    BmpCachePersister bmp_cache_persister(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", BmpCachePersister::Verbose(verbose));
 
     RDP::BitmapCachePersistentListEntry persistent_list[] = {
         { 0x99E1C40C, 0x17C187AF },
@@ -342,13 +342,13 @@ RED_AUTO_TEST_CASE(TestBmpCachePersister2)
                       , BmpCache::CacheOption(2553, nbbytes(bpp) * 64 * 64, true)
                       , BmpCache::CacheOption()
                       , BmpCache::CacheOption()
-                      , to_verbose_flags(verbose)
+                      , BmpCache::Verbose(verbose)
                       );
 
     #include "fixtures/persistent_disk_bitmap_cache.hpp"
     GeneratorTransport t(cstr_array_view(outdata));
 
-    BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", to_verbose_flags(verbose));
+    BmpCachePersister::load_all_from_disk(bmp_cache, t, "fixtures/persistent_disk_bitmap_cache.hpp", BmpCachePersister::Verbose(verbose));
 
     uint8_t cache_id = 2;
     RED_CHECK(bmp_cache.get_cache(cache_id)[0].sig.sig_32[0] == 0x99E1C40C);

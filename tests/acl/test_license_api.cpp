@@ -143,7 +143,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                                        , theme
                                        , server_auto_reconnect_packet
                                        , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                                       , to_verbose_flags(0)
+                                       , RDPVerbose(0)
                                        );
             mod_rdp_params.device_id                       = "device_id";
             //mod_rdp_params.enable_tls                      = true;
@@ -444,7 +444,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                                        , theme
                                        , server_auto_reconnect_packet
                                        , ini.get_mutable_ref<cfg::context::close_box_extra_message>()
-                                       , to_verbose_flags(0)
+                                       , RDPVerbose(0)
                                        );
             mod_rdp_params.device_id                       = "device_id";
             //mod_rdp_params.enable_tls                      = true;

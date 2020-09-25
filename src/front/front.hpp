@@ -1251,7 +1251,7 @@ public:
                     this->sesman.report("FILESYSTEM_FULL", "100|unknown");
                 }
             },
-            convert_verbose_flags(this->verbose)
+            safe_cast<BmpCachePersister::Verbose>(this->verbose)
         );
     }
 

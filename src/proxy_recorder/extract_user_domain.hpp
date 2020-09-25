@@ -26,7 +26,7 @@
 #include <string>
 #include <string_view>
 
-// \return {username, domain}
+/// \return {username, domain}
 static std::pair<std::string, std::string>
 extract_user_domain(std::string_view target_user)
 {

@@ -1307,7 +1307,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, FileToGraphic::Verbose(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
@@ -1910,7 +1910,7 @@ RED_AUTO_TEST_CASE(TestReload)
             end_capture.tv_sec = 0; end_capture.tv_usec = 0;
             FileToGraphic player(
                 in_wrm_trans, begin_capture, end_capture,
-                false, false, to_verbose_flags(0));
+                false, false, FileToGraphic::Verbose(0));
             RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
             player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
             while (player.next_order()){
@@ -2080,7 +2080,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, to_verbose_flags(0));
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, FileToGraphic::Verbose(0));
 
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
 

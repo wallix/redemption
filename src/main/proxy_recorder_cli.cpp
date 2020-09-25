@@ -286,36 +286,6 @@ private:
     uint64_t verbosity;
 };
 
-
-struct CliPassword
-{
-    cli::Res operator()(cli::ParseResult& pr) const
-    {
-        if (!pr.str) {
-            return cli::Res::BadFormat;
-        }
-
-        char* s = av[pr.opti];
-        password = s;
-        // hide password in /proc/...
-        for (int i = 0; *s; ++s, ++i) {
-            *s = (i < 3) ? '*' : '\0';
-        }
-        ++pr.opti;
-
-        return cli::Res::Ok;
-    }
-
-    std::string& password;
-    char ** av;
-};
-
-template<class Output, class Opt>
-void print_action(Output&& out, Opt const& /*unused*/, CliPassword const& /*clipass*/)
-{
-    out << " [password]";
-}
-
 int main(int argc, char *argv[])
 {
     char const* target_host = nullptr;
@@ -337,7 +307,7 @@ int main(int argc, char *argv[])
         cli::option('p', "target-port").action(cli::arg_location("port", target_port)),
         cli::option('P', "port").help("Listen port").action(cli::arg_location(listen_port)),
         cli::option("nla-username").action(cli::arg_location("username", nla_username)),
-        cli::option("nla-password").action(CliPassword{nla_password, argv}),
+        cli::option("nla-password").action(cli::RewritePassword{nla_password}),
         cli::option("enable-kerberos").action(cli::on_off_location(enable_kerberos)),
         cli::option('t', "template").help("Ex: dump-%d.out")
             .action(cli::arg_location("path", capture_file)),

@@ -352,22 +352,6 @@ namespace cli
     }
 
     template<class T>
-    struct SetStr
-    {
-        T& value;
-
-        static_assert(std::is_same<void, decltype(
-            void(std::declval<T&>() = std::declval<char const*>())
-        )>::value);
-
-        Res operator()(ParseResult& pr) const
-        {
-            value = pr.str;
-            return Ok;
-        }
-    };
-
-    template<class T>
     inline auto arg_location(char const* name, T& x)
     {
         return arg<T>(name, [&x](auto&& value) { x = std::forward<decltype(value)>(value); });
@@ -561,6 +545,7 @@ namespace cli
         (void)t;
         (void)ac;
         (void)av;
+        return ParseResult{};
     }
 
     namespace detail {
@@ -630,4 +615,32 @@ namespace cli
 #ifdef IN_IDE_PARSER
     }
 #endif
+
+
+    struct RewritePassword
+    {
+        RewritePassword(std::string& password) noexcept
+        : password_ref(&password)
+        {}
+
+        cli::Res operator()(cli::ParseResult& pr) const
+        {
+            if (!pr.str) {
+                return cli::Res::BadFormat;
+            }
+
+            char* s = const_cast<char*>(pr.argv[pr.opti]);
+            *password_ref = s;
+            // hide password in /proc/...
+            for (int i = 0; *s; ++s, ++i) {
+                *s = (i < 3) ? '*' : '\0';
+            }
+            ++pr.opti;
+
+            return cli::Res::Ok;
+        }
+
+    private:
+        std::string* password_ref;
+    };
 } // namespace cli
