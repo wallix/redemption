@@ -155,7 +155,7 @@ show_duration $toolset_clang
 
 if [ $fast -eq 0 ]; then
     # debug with coverage
-    build $toolset_gcc debug -scoverage=on covbin=gcov-7 -s FAST_CHECK=1
+    build $toolset_gcc debug -scoverage=on covbin=gcov-9 -s FAST_CHECK=1
 
     show_duration $toolset_gcc coverage
 
