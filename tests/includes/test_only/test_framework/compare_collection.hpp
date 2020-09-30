@@ -26,64 +26,13 @@ Author(s): Jonathan Poelen
 #include <boost/test/test_tools.hpp>
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/dispatch_comparison.hpp"
 
 #include <algorithm>
 
 
-#define RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, t3, func, name, rev)          \
-    namespace boost::test_tools::assertion::op {                                  \
-        template<RED_PP_IDENTITY tpl>                                             \
-        struct name<RED_PP_IDENTITY t1, RED_PP_IDENTITY t2, RED_PP_IDENTITY t3>   \
-        {                                                                         \
-            using result_type = assertion_result;                                 \
-            using OP = name;                                                      \
-                                                                                  \
-            static assertion_result                                               \
-            eval(RED_PP_IDENTITY t1 const& lhs, RED_PP_IDENTITY t2 const& rhs)    \
-            {                                                                     \
-                return func(lhs, rhs);                                            \
-            }                                                                     \
-                                                                                  \
-            template<class PrevExprType>                                          \
-            static void                                                           \
-            report(std::ostream&, PrevExprType const&, RED_PP_IDENTITY t2 const&) \
-            {}                                                                    \
-                                                                                  \
-            static char const* revert()                                           \
-            { return " " #rev " "; }                                              \
-        };                                                                        \
-    }
-
-#define RED_TEST_DISPATCH_COMPARISON_EQ(tpl, t1, t2, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, (void), func, EQ, !=)
-#define RED_TEST_DISPATCH_COMPARISON_NE(tpl, t1, t2, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, (void), func, NE, !=)
-#define RED_TEST_DISPATCH_COMPARISON_LT(tpl, t1, t2, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, (void), func, LT, <)
-#define RED_TEST_DISPATCH_COMPARISON_LE(tpl, t1, t2, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, (void), func, LE, <=)
-#define RED_TEST_DISPATCH_COMPARISON_GT(tpl, t1, t2, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, (void), func, GT, >)
-#define RED_TEST_DISPATCH_COMPARISON_GE(tpl, t1, t2, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, (void), func, GE, >=)
-
-#define RED_TEST_DISPATCH_COMPARISON_EQ2(tpl, t1, t2, t3, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, t3, func, EQ, !=)
-#define RED_TEST_DISPATCH_COMPARISON_NE2(tpl, t1, t2, t3, func) \
-    RED_TEST_DISPATCH_COMPARISON_I(tpl, t1, t2, t3, func, NE, !=)
-
-#define RED_TEST_DISPATCH_COMPARISONS(tpl, t1, t2, func)     \
-    RED_TEST_DISPATCH_COMPARISON_EQ(tpl, t1, t2, func ## EQ) \
-    RED_TEST_DISPATCH_COMPARISON_NE(tpl, t1, t2, func ## NE) \
-    RED_TEST_DISPATCH_COMPARISON_LT(tpl, t1, t2, func ## LT) \
-    RED_TEST_DISPATCH_COMPARISON_LE(tpl, t1, t2, func ## LE) \
-    RED_TEST_DISPATCH_COMPARISON_GT(tpl, t1, t2, func ## GT) \
-    RED_TEST_DISPATCH_COMPARISON_GE(tpl, t1, t2, func ## GE)
-
 namespace ut
 {
-    using assertion_result = boost::test_tools::assertion_result;
-
     template<class Cmp>
     struct comparator;
 

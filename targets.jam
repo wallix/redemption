@@ -5424,6 +5424,11 @@ test-run tests/utils/test_channels_authorizations :
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
+test-run tests/utils/test_cli :
+  $(REDEMPTION_TEST_PATH)/utils/test_cli.cpp
+:
+  <covfile>src/utils/cli.hpp
+;
 test-run tests/utils/test_colors :
   $(REDEMPTION_TEST_PATH)/utils/test_colors.cpp
 :
@@ -6182,6 +6187,7 @@ alias test_bitmap_shrink : tests/utils/test_bitmap_shrink ;
 alias test_bitstream : tests/utils/test_bitstream ;
 alias test_cfgloader : tests/utils/test_cfgloader ;
 alias test_channels_authorizations : tests/utils/test_channels_authorizations ;
+alias test_cli : tests/utils/test_cli ;
 alias test_colors : tests/utils/test_colors ;
 alias test_compression_transport_builder : tests/utils/test_compression_transport_builder ;
 alias test_contiguous_sub_rect_f : tests/utils/test_contiguous_sub_rect_f ;
@@ -6508,6 +6514,7 @@ alias test_bitmap_from_file.coverage : tests/utils/test_bitmap_from_file.coverag
 alias test_bitmap_shrink.coverage : tests/utils/test_bitmap_shrink.coverage ;
 alias test_bitstream.coverage : tests/utils/test_bitstream.coverage ;
 alias test_cfgloader.coverage : tests/utils/test_cfgloader.coverage ;
+alias test_cli.coverage : tests/utils/test_cli.coverage ;
 alias test_colors.coverage : tests/utils/test_colors.coverage ;
 alias test_compression_transport_builder.coverage : tests/utils/test_compression_transport_builder.coverage ;
 alias test_contiguous_sub_rect_f.coverage : tests/utils/test_contiguous_sub_rect_f.coverage ;
@@ -6950,6 +6957,7 @@ alias tests/utils.norec :
   tests/utils/test_bitstream
   tests/utils/test_cfgloader
   tests/utils/test_channels_authorizations
+  tests/utils/test_cli
   tests/utils/test_colors
   tests/utils/test_compression_transport_builder
   tests/utils/test_contiguous_sub_rect_f

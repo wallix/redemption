@@ -362,16 +362,15 @@ int main(int argc, char *argv[])
     uint64_t verbosity = 0;
 
     auto options = cli::options(
-        cli::option('h', "help").help("Show help").action(cli::help),
+        cli::option('h', "help").help("Show help").parser(cli::help()),
         cli::option('v', "version").help("Show version")
-            .action(cli::quit([]{ std::cout << "NLAFront 1.0, " << redemption_info_version() << "\n"; })),
-        cli::option('P', "port").help("Listen port").action(cli::arg_location(listen_port)),
-        cli::option("user").action(cli::arg_location("username", nla_username)),
-        // TODO add value name
-        cli::option("pass").action(cli::RewritePassword{nla_password}),
-        cli::option("enable-kerberos").action(cli::on_off_location(enable_kerberos)),
-        cli::option('N', "no-fork").action(cli::on_off_location(no_forkable)),
-        cli::option('V', "verbose").action(cli::arg_location("verbosity", verbosity))
+            .parser(cli::quit([]{ std::cout << "NLAFront 1.0, " << redemption_info_version() << "\n"; })),
+        cli::option('P', "port").help("Listen port").parser(cli::arg_location(listen_port)),
+        cli::option("user").parser(cli::arg_location(nla_username)).argname("<username>"),
+        cli::option("pass").parser(cli::password_location(argv, nla_password)),
+        cli::option("enable-kerberos").parser(cli::on_off_location(enable_kerberos)),
+        cli::option('N', "no-fork").parser(cli::on_off_location(no_forkable)),
+        cli::option('V', "verbose").parser(cli::arg_location(verbosity)).argname("<verbosity>")
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -384,14 +383,10 @@ int main(int argc, char *argv[])
             cli::print_help(options, std::cout);
             return 0;
         case cli::Res::BadFormat:
-            std::cerr << "Bad format at parameter " << cli_result.opti;
-            if (cli_result.opti < cli_result.argc) {
-                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
-            }
-            std::cerr << "\n";
-            return 1;
         case cli::Res::BadOption:
-            std::cerr << "Bad option at parameter " << cli_result.opti;
+        case cli::Res::NotOption:
+        case cli::Res::StopParsing:
+            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
             if (cli_result.opti < cli_result.argc) {
                 std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
             }

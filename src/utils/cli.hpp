@@ -14,7 +14,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2018
+Copyright (C) Wallix 2010-2020
 Author(s): Jonathan Poelen
 */
 
@@ -23,293 +23,679 @@ Author(s): Jonathan Poelen
 #include <iomanip>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <type_traits>
+#include <charconv>
 
-#include <cstdlib>
-#include <cstring>
-#include <utility>
-
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/array_view.hpp"
 
 
 namespace cli
 {
-    template<class T, class = void>
-    struct has_optional_value : std::false_type
-    {};
+
+enum class Res
+{
+    Ok,
+    Exit,
+    Help,
+    NotOption,
+    BadOption,
+    BadFormat,
+    StopParsing,
+};
+
+struct ParseResult
+{
+    int opti;
+    int argc;
+    char const * const * argv;
+    char const * str;
+    Res res;
+};
+
+namespace parsers
+{
+    enum class ValueProperty
+    {
+        Optional,
+        Required,
+        NoValue,
+    };
+
+    using optional_value = std::integral_constant<ValueProperty, ValueProperty::Optional>;
+    using required_value = std::integral_constant<ValueProperty, ValueProperty::Required>;
+    using no_value = std::integral_constant<ValueProperty, ValueProperty::NoValue>;
 
     template<class T>
-    struct has_optional_value<T, std::void_t<typename T::has_optional_value>>
-    : T::has_optional_value
-    {};
+    constexpr bool is_optional_value
+        = std::decay_t<T>::value_property::value == optional_value::value;
 
-    enum class Res
+    template<class T>
+    constexpr bool is_required_value
+        = std::decay_t<T>::value_property::value == required_value::value;
+
+    template<class T>
+    constexpr bool is_no_value
+        = std::decay_t<T>::value_property::value == no_value::value;
+
+    template<class T>
+    struct argname_traits
     {
-        Ok,
-        Exit,
-        Help,
-        BadOption,
-        BadFormat
+        static constexpr std::string_view default_argname = "<value>";
     };
+}
 
-    struct ParseResult
+namespace detail
+{
+    class uninit_t {};
+
+    template<class T>
+    constexpr bool is_uninit = std::is_same_v<std::decay_t<T>, uninit_t>;
+}
+
+template<
+    class Short = detail::uninit_t,
+    class Long = detail::uninit_t,
+    class Parser = detail::uninit_t,
+    class Argname = detail::uninit_t>
+struct [[nodiscard]] Option
+{
+    Short _short_name {};
+    Long _long_name {};
+    Parser _parser {};
+    std::string_view _help {};
+    Argname _argname {};
+
+    Option&
+    help(std::string_view desc)
     {
-        int opti;
-        int argc;
-        char const * const * argv;
-        char const * str;
-        Res res;
-    };
-
-    struct DataOption
-    {
-        char short_name;
-        char const * long_name;
-        char const * help;
-        // tribool None, Required, Optional
-        bool optional_value;
-    };
-
-    constexpr struct Ok_ : std::integral_constant<Res, Res::Ok> {} Ok {};
-
-    template<class Act>
-    auto apply_option_impl(ParseResult& pr, Act && act, int /*unused*/)
-    -> decltype(act(pr))
-    {
-        return act(pr);
+        _help = desc;
+        return *this;
     }
 
-    template<class Act>
-    auto apply_option_impl(ParseResult& /*pr*/, Act && act, char /*unused*/)
-    -> decltype(act())
+    Option<Short, Long, Parser, std::string_view>
+    argname(std::string_view name)
     {
-        return act();
-    }
-
-    template<class Act>
-    Res apply_option(ParseResult& pr, Act && act)
-    {
-        return apply_option_impl(pr, act, 1), Ok;
-    }
-
-    template<class Act>
-    struct Option
-    {
-        DataOption d;
-        Act act;
-
-        Option(char short_name, char const * long_name, Act act = Act{}) /*NOLINT*/
-          : d{short_name, long_name, "", false}
-          , act(act)
-        {}
-
-        Option(DataOption const & d, Act act)
-          : d(d)
-          , act(act)
-        {}
-
-        Option& optional()
-        {
-            this->d.optional_value = true;
-            return *this;
+        if constexpr (!std::is_same_v<Parser, detail::uninit_t>) {
+            static_assert(!parsers::is_no_value<Parser>,
+                "argname() is used with a no_value parser");
         }
 
-        Option & help(char const * mess)
-        {
-            this->d.help = mess;
-            return *this;
+        return {
+            _short_name,
+            _long_name,
+            _parser,
+            _help,
+            name,
+        };
+    }
+
+    template<class P>
+    auto
+    parser(P parser)
+    {
+        // concept like
+        static_assert(std::is_same_v<Res, decltype(parser(std::declval<ParseResult&>()))>);
+
+        if constexpr (std::is_same_v<Argname, detail::uninit_t> && !parsers::is_no_value<P>) {
+            return Option<Short, Long, P, std::string_view>{
+                _short_name,
+                _long_name,
+                parser,
+                _help,
+                parsers::argname_traits<P>::default_argname,
+            };
         }
+        else {
+            static_assert(std::is_same_v<Argname, detail::uninit_t> || !parsers::is_no_value<P>,
+                "argname() is used with a no_value parser");
 
-        template<class NewAct>
-        Option<NewAct> action(NewAct act)
+            return Option<Short, Long, P, Argname>{
+                _short_name,
+                _long_name,
+                parser,
+                _help,
+                _argname,
+            };
+        }
+    }
+};
+
+inline Option<char, std::string_view>
+option(char short_name, std::string_view long_name)
+{
+    return {short_name, long_name};
+}
+
+inline Option<detail::uninit_t, std::string_view>
+option(std::string_view long_name)
+{
+    return {{}, long_name};
+}
+
+inline Option<char>
+option(char short_name)
+{
+    return {short_name};
+}
+
+
+namespace detail
+{
+    template<class Ints, class... Opts>
+    struct tuple_options;
+
+    template<std::size_t, class Opt>
+    struct indexed_option
+    {
+        Opt option;
+    };
+
+    template<std::size_t... Ints, class... Opts>
+    struct tuple_options<std::index_sequence<Ints...>, Opts...>
+    : indexed_option<Ints, Opts>...
+    {
+        template<class F>
+        auto operator()(F&& f) const
         {
-            static_assert(std::is_same<void, decltype(
-                void(apply_option(std::declval<ParseResult&>(), act))
-            )>::value);
+            return f(static_cast<indexed_option<Ints, Opts> const&>(*this).option...);
+        }
+    };
+} // namespace detail
 
-            if (has_optional_value<NewAct>::value) {
-                this->d.optional_value = true;
+template<class... Opts>
+struct Options : detail::tuple_options<std::index_sequence_for<Opts...>, Opts...>
+{};
+
+struct Helper
+{
+    std::string_view s;
+};
+
+inline Helper helper(std::string_view s)
+{
+    return {s};
+}
+
+#ifndef NDEBUG
+namespace detail
+{
+    struct ShortNameChecker
+    {
+        template<class... Opts>
+        bool check(Opts const&... opts)
+        {
+            (..., init(opts));
+
+            for (int short_name : short_names) {
+                if (short_name > 1) {
+                    return false;
+                }
             }
-            return {this->d, act};
+
+            return true;
+        }
+
+    private:
+        int short_names[257]{};
+
+        static void init(Helper /*opt*/)
+        {}
+
+        template<class Opt>
+        void init(Opt const& opt)
+        {
+            if constexpr (!std::is_same_v<uninit_t, decltype(opt._short_name)>) {
+                ++short_names[static_cast<unsigned char>(opt._short_name)];
+            }
         }
     };
 
-    struct NoAct
+    struct LongNameChecker
     {
-        void operator()() const
+        template<class... Opts>
+        bool check(Opts const&... opts)
+        {
+            std::string_view long_names[sizeof...(opts)+1]{};
+            last = long_names;
+            (..., init(opts));
+
+            auto* first = std::begin(long_names);
+            std::sort(first, last);
+            first = std::find_if(first, last, [](std::string_view s){
+                return !s.empty();
+            });
+            return std::adjacent_find(first, last) == last;
+        }
+
+    private:
+        std::string_view* last;
+
+        static void init(Helper /*opt*/)
         {}
+
+        template<class Opt>
+        void init(Opt const& opt)
+        {
+            if constexpr (!std::is_same_v<uninit_t, decltype(opt._long_name)>) {
+                *last++ = opt._long_name;
+            }
+        }
     };
+} // namespace detail
+#endif
+
+template<class... Opts>
+auto options(Opts&&... opts)
+{
+    assert(detail::ShortNameChecker().check(opts...));
+    assert(detail::LongNameChecker().check(opts...));
+    return Options<std::decay_t<Opts>...>{{
+        {{static_cast<Opts&&>(opts)}}...
+    }};
+}
+
+
+namespace detail
+{
+    constexpr bool parse_short_option(
+        char const * /*s*/, ParseResult& /*pr*/, Helper const& /*helper*/, Res& /*res*/)
+    {
+        return true;
+    }
+
+    template<class Option>
+    bool parse_short_option(char const * s, ParseResult& pr, Option const& opt, Res& res)
+    {
+        if constexpr (!std::is_same_v<uninit_t, decltype(opt._short_name)>) {
+            if (*s != opt._short_name) {
+                return true;
+            }
+
+            if constexpr (parsers::is_required_value<decltype(opt._parser)>) {
+                int inc = 1;
+                if (s[1]) {
+                    pr.str = s + ((s[1] == '=') ? 2 : 1);
+                }
+                else if (pr.opti < pr.argc) {
+                    pr.str = pr.argv[pr.opti+1];
+                    ++inc;
+                }
+                else {
+                    res = Res::BadFormat;
+                    return false;
+                }
+
+                res = opt._parser(pr);
+                if (res == Res::Ok) {
+                    pr.opti += inc;
+                }
+            }
+            else if constexpr (parsers::is_optional_value<decltype(opt._parser)>) {
+                if (s[1]) {
+                    pr.str = s + ((s[1] == '=') ? 2 : 1);
+                }
+                else {
+                    pr.str = nullptr;
+                }
+
+                res = opt._parser(pr);
+                if (res == Res::Ok) {
+                    ++pr.opti;
+                }
+            }
+            // is no_value
+            else if (s[1] == '=') {
+                res = Res::BadFormat;
+            }
+            else {
+                res = opt._parser(pr);
+                if (res == Res::Ok && !s[1]) {
+                    ++pr.opti;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    constexpr bool parse_long_option(
+        std::string_view /*sv*/, ParseResult& /*pr*/, Helper const& /*helper*/, Res& /*res*/)
+    {
+        return true;
+    }
+
+    template<class Option>
+    bool parse_long_option(std::string_view sv, ParseResult& pr, Option const& opt, Res& res)
+    {
+        if constexpr (!std::is_same_v<uninit_t, decltype(opt._long_name)>) {
+            if (opt._long_name == sv) {
+                char const* s = sv.end();
+                if (!*s) {
+                    int inc = 1;
+                    if constexpr (parsers::is_required_value<decltype(opt._parser)>) {
+                        if (pr.opti < pr.argc) {
+                            ++inc;
+                            pr.str = pr.argv[pr.opti+1];
+                        }
+                        else {
+                            res = Res::BadFormat;
+                            return false;
+                        }
+                    }
+                    else {
+                        pr.str = nullptr;
+                    }
+
+                    res = opt._parser(pr);
+                    if (res == Res::Ok) {
+                        pr.opti += inc;
+                    }
+                }
+                else if constexpr (parsers::is_no_value<decltype(opt._parser)>) {
+                    res = Res::BadOption;
+                }
+                else if (*s == '=') {
+                    pr.str = s + 1;
+                    res = opt._parser(pr);
+                    if (res == Res::Ok) {
+                        ++pr.opti;
+                    }
+                }
+                else {
+                    res = Res::BadOption;
+                }
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    template<class... Opts>
+    Res parse_short_options(char const * s, ParseResult& pr, Opts const&... opts)
+    {
+        Res r = Res::Ok;
+        return (... && (r == Res::Ok && parse_short_option(s, pr, opts, r))) ? Res::BadOption : r;
+    }
+
+    template<class... Opts>
+    Res parse_long_options(std::string_view s, ParseResult& pr, Opts const&... opts)
+    {
+        Res r = Res::Ok;
+        return (... && (r == Res::Ok && parse_long_option(s, pr, opts, r))) ? Res::BadOption : r;
+    }
+
+    template<class... Opts>
+    Res parse_options(ParseResult& pr, Opts const&... opts)
+    {
+        while (pr.opti < pr.argc) {
+            auto * s = pr.argv[pr.opti];
+            if (s[0] == '-' && s[1]) {
+                Res res = Res::BadFormat;
+                if (s[1] == '-') {
+                    if (s[2]) {
+                        char const* begin = s+2;
+                        char const* end = begin + 1;
+                        while (*end && *end != '=') {
+                            ++end;
+                        }
+                        res = parse_long_options(std::string_view(begin, end-begin), pr, opts...);
+                    }
+                    else {
+                        return Res::StopParsing;
+                    }
+                }
+                else {
+                    auto const old_opti = pr.opti;
+                    res = parse_short_options(++s, pr, opts...);
+                    while (res == Res::Ok && old_opti == pr.opti) {
+                        res = parse_short_options(++s, pr, opts...);
+                    }
+                }
+
+                if (res != Res::Ok) {
+                    return res;
+                }
+            }
+            else {
+                return Res::NotOption;
+            }
+        }
+        return Res::Ok;
+    }
+} // namespace detail
+
+template<class Tuple>
+ParseResult parse(Tuple const& t, int const ac, char const * const av[])
+{
+    ParseResult pr;
+    pr.argc = ac;
+    pr.argv = av;
+    pr.opti = 1;
+    pr.str = nullptr;
+    pr.res = t([&pr](auto... opts) {
+#ifndef IN_IDE_PARSER
+        return detail::parse_options(pr, opts...);
+#else
+        (void)pr;
+        (void(opts), ...);
+        return Res::Ok;
+#endif
+    });
+    return pr;
+}
+
+template<class... Opts>
+ParseResult parse(int const ac, char const * const av[], Opts const&... opts)
+{
+    ParseResult pr;
+    pr.argc = ac;
+    pr.argv = av;
+    pr.opti = 1;
+    pr.str = nullptr;
+#ifndef IN_IDE_PARSER
+    pr.res = detail::parse_options(pr, opts...);
+#else
+    (void(opts), ...);
+    pr.res = Res::Ok;
+#endif
+    return pr;
+}
+
+
+constexpr struct Ok_ : std::integral_constant<Res, Res::Ok> {} Ok {};
+
+template<class T>
+T operator, (T x, Ok_ /*unused*/)
+{ return x; }
+
+
+namespace detail
+{
+    template<class T>
+    Res arg_parse_int(T& result, std::string_view s)
+    {
+        auto [p, ec] = std::from_chars(s.begin(), s.end(), result);
+        return (ec == std::errc()) ? Res::Ok : Res::BadFormat;
+    }
+}
+
+namespace arg_parsers
+{
+    inline Res arg_parse(int& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(unsigned& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(long& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(unsigned long& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(long long& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(unsigned long long& result, char const * s)
+    {
+        return detail::arg_parse_int(result, s);
+    }
+
+    inline Res arg_parse(std::string& result, char const * s)
+    {
+        result = s;
+        return Res::Ok;
+    }
+
+    inline Res arg_parse(char const *& result, char const * s)
+    {
+        result = s;
+        return Res::Ok;
+    }
+
+    inline Res arg_parse(bytes_view& result, char const * s)
+    {
+        result = std::string_view(s);
+        return Res::Ok;
+    }
 
     template<class T>
-    T operator, (T x, Ok_ /*unused*/)
-    { return x; }
-
-    template<class Act>
-    struct Quit
+    Res arg_parse(array_view<T>& result, char const * s)
     {
-        Act act;
+        *result = std::string_view(s);
+        return Res::Ok;
+    }
 
-        Res operator()(ParseResult& pr) const
+    template<class T, class = void>
+    struct arg_parse_traits
+    {
+        static Res parse(T& result, char const* s)
         {
-            apply_option(pr, act);
-            return Res::Exit;
+            return arg_parse(result, s);
         }
+    };
+} // namespace arg_parsers
+
+namespace detail
+{
+    struct NoAction
+    {
+        template<class... T>
+        Res operator()(T const&... /*unused*/) const
+        {
+            return Res::Ok;
+        }
+    };
+} // namespace detail
+
+namespace parsers
+{
+    template<class Act>
+    struct trigger
+    {
+        using value_property = no_value;
+
+        Res operator()(ParseResult& /*pr*/) const
+        {
+            const Res r = (this->act(), Ok);
+            return r;
+        }
+
+        Act act;
     };
 
     template<class Act>
-    Quit<Act> quit(Act act)
+    struct required_arg
     {
-        return {act};
-    }
-
-    constexpr struct Help
-    {
-        Res operator()(ParseResult const& /*unused*/) const
-        {
-            return Res::Help;
-        }
-    } help {};
-
-    template<class Act>
-    Res arg_parse(int* /*unused*/, char const * s, Act act)
-    {
-        char* end{};
-        auto const n = std::strtol(s, &end, 0);
-        using limits = std::numeric_limits<int>;
-        return (*end || n > limits::max() || n < limits::min())
-            ? Res::BadFormat : (act(int(n)), Ok);
-    }
-
-    template<class Act>
-    Res arg_parse(unsigned* /*unused*/, char const * s, Act act)
-    {
-        char* end{};
-        auto const n = std::strtoul(s, &end, 0);
-        using limits = std::numeric_limits<unsigned>;
-        return (*end || n > limits::max()) ? Res::BadFormat : (act(unsigned(n)), Ok);
-    }
-
-    template<class Act>
-    Res arg_parse(long* /*unused*/, char const * s, Act act)
-    {
-        errno = 0;
-        char* end{};
-        auto const n = std::strtol(s, &end, 0);
-        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
-    }
-
-    template<class Act>
-    Res arg_parse(unsigned long* /*unused*/, char const * s, Act act)
-    {
-        errno = 0;
-        char* end{};
-        auto const n = std::strtoul(s, &end, 0);
-        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
-    }
-
-    template<class Act>
-    Res arg_parse(long long* /*unused*/, char const * s, Act act)
-    {
-        errno = 0;
-        char* end{};
-        auto const n = std::strtoll(s, &end, 0);
-        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
-    }
-
-    template<class Act>
-    Res arg_parse(unsigned long long* /*unused*/, char const * s, Act act)
-    {
-        errno = 0;
-        char* end{};
-        auto const n = std::strtoull(s, &end, 0);
-        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
-    }
-
-    template<class Act>
-    Res arg_parse(std::string* /*unused*/, char const * s, Act act)
-    {
-        return act(s), Ok;
-    }
-
-    template<class Act>
-    Res arg_parse(char const ** /*unused*/, char const * s, Act act)
-    {
-        return act(s), Ok;
-    }
-
-    template<class T, class Act>
-    Res arg_parse(array_view<T>* /*unused*/, char const * s, Act act)
-    {
-        return act({s, strlen(s)}), Ok;
-    }
-
-    template<class T, class Act>
-    struct Arg
-    {
-        char const * name;
-        Act act;
-
-        static_assert(std::is_same<void, decltype(
-            void(std::declval<Act const&>()(std::declval<T>()))
-        )>::value);
+        using value_property = required_value;
 
         Res operator()(ParseResult& pr) const
         {
-            auto r = arg_parse(static_cast<T*>(nullptr), pr.str, act);
+            const Res r = (this->act(pr.str), Ok);
+            return r;
+        }
+
+        Act act;
+    };
+
+    template<class Act>
+    struct optional_arg
+    {
+        using value_property = optional_value;
+
+        Res operator()(ParseResult& pr) const
+        {
+            const Res r = (this->act(pr.str), Ok);
+            return r;
+        }
+
+        Act act;
+    };
+
+    template<class T, class Act = detail::NoAction>
+    struct arg_location
+    {
+        using value_property = required_value;
+
+        Res operator()(ParseResult& pr) const
+        {
+            Res r = arg_parsers::arg_parse_traits<T>::parse(*value, pr.str);
             if (r == Res::Ok) {
-                ++pr.opti;
+                r = (act(*value), Ok);
             }
             return r;
         }
+
+        T* value;
+        Act act {};
     };
 
-    template<class T, class Act>
-    Arg<T, Act> arg(char const * name, Act act)
+    template<class T, class Act = detail::NoAction>
+    struct password_location
     {
-        return {name, act};
-    }
+        using value_property = required_value;
 
-    template<class T, class Act>
-    Arg<T, Act> arg(Act act)
-    {
-        return {nullptr, act};
-    }
+        Res operator()(ParseResult& pr) const
+        {
+            const Res r = arg_location<T, Act const&>{value, act}(pr);
+            if (r == Res::Ok) {
+                char* s = argv[pr.opti] + (pr.str - pr.argv[pr.opti]);
+                // hide password in /proc/...
+                if (*s) {
+                    *s++ = '*';
+                    while (*s) {
+                        *s++ = '\0';
+                    }
+                }
+            }
+            return r;
+        }
 
-    template<class Mem>
-    struct ParamTypeMem;
-
-    template<class R, class M, class T>
-    struct ParamTypeMem<R (M::*)(T) const>
-    {
-        using type = typename std::decay<T>::type;
+        T* value;
+        char** argv;
+        Act act {};
     };
 
-    template<class F>
-    using ParamType = typename ParamTypeMem<decltype(&F::operator())>::type;
-
     template<class Act>
-    Arg<ParamType<Act>, Act> arg(char const * name, Act act)
+    struct on_off
     {
-        return {name, act};
-    }
-
-    template<class Act>
-    Arg<ParamType<Act>, Act> arg(Act act)
-    {
-        return {nullptr, act};
-    }
-
-    template<class Act>
-    struct OnOff
-    {
-        // TODO has_optional_value() function: true_type, false_type, bool
-        using has_optional_value = std::true_type;
-
-        Act act;
-
-        static_assert(std::is_same<void, decltype(
-            void(std::declval<Act const&>()(bool{}))
-        )>::value);
+        using value_property = optional_value;
 
         Res operator()(ParseResult& pr) const
         {
@@ -320,327 +706,230 @@ namespace cli
             }
 
             Res r = (this->act(on), Ok);
-            if (r == Res::Ok) {
-                ++pr.opti;
-            }
             return r;
         }
+
+        Act act {};
+    };
+
+    template<Res R, class Act = detail::NoAction>
+    struct set_res
+    {
+        using value_property = no_value;
+
+        Res operator()(ParseResult& /*pr*/) const
+        {
+            const Res r = (this->act(), Ok);
+            return (r == Res::Ok) ? R : r;
+        }
+
+        Act act {};
+    };
+
+    template<class T, class Act>
+    struct argname_traits<password_location<T, Act>>
+    {
+        static constexpr std::string_view default_argname = "<password>";
     };
 
     template<class Act>
-    OnOff<Act> on_off(Act act)
+    struct argname_traits<on_off<Act>>
     {
-        return {act};
-    }
-
-    inline auto on_off_location(bool& x)
-    {
-        return on_off([&](bool state){ x = state; });
-    }
-
-    template<auto X, class T>
-    inline auto on_off_bit_location(T& value)
-    {
-        return on_off([&](bool state){
-            if (state) {
-                value |= X;
-            }
-            else {
-                value &= ~X;
-            }
-        });
-    }
-
-    template<class T>
-    inline auto arg_location(char const* name, T& x)
-    {
-        return arg<T>(name, [&x](auto&& value) { x = std::forward<decltype(value)>(value); });
-    }
-
-    template<class T>
-    inline auto arg_location(T& x)
-    {
-        return arg_location(nullptr, x);
-    }
-
-    inline Option<NoAct> option(char short_name, char const * long_name)
-    {
-        return {short_name, long_name};
-    }
-
-    inline Option<NoAct> option(char short_name)
-    {
-        return {short_name, ""};
-    }
-
-    inline Option<NoAct> option(char const * long_name)
-    {
-        return {0, long_name};
-    }
-
-    struct Helper
-    {
-        char const * s;
+        static constexpr std::string_view default_argname = "{on|off}";
     };
+} // namespace parsers
 
-    inline Helper helper(char const * s)
-    {
-        return {s};
-    }
+template<class Act>
+auto trigger(Act act)
+{
+    return parsers::trigger<Act>{act};
+}
 
-    inline Res parse_long_option(char const * /*unused*/, ParseResult const& /*unused*/)
-    {
-        return Res::BadOption;
-    }
+inline auto arg_triggered(bool& v)
+{
+    return trigger([&]{ v = true; });
+}
 
-    template<class... Opts>
-    Res parse_long_option(char const * s, ParseResult& pr, Helper const& /*unused*/, Opts const&... opts)
-    {
-        return parse_long_option(s, pr, opts...);
-    }
+template<class T>
+auto arg_increment(T& x)
+{
+    return trigger([&]{ ++x; });
+}
 
-    template<class Opt, class... Opts>
-    Res parse_long_option(char const * s, ParseResult& pr, Opt const& opt, Opts const&... opts)
-    {
-        auto* s1 = opt.d.long_name;
-        auto* s2 = s;
-        for (; *s1 == *s2 && *s1; ++s1, ++s2) {
-        }
-        if (!*s1) {
-            if (!*s2) {
-                if (opt.d.optional_value) {
-                    pr.str = nullptr;
-                }
-                else {
-                    ++pr.opti;
-                    pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
-                }
-                return apply_option(pr, opt.act);
-            }
-            if (*s2 == '=') {
-                pr.str = s2 + 1;
-                return apply_option(pr, opt.act);
-            }
-        }
-        return parse_long_option(s, pr, opts...);
-    }
+template<class T, class Act = detail::NoAction>
+auto arg_location(T& x, Act act = {})
+{
+    return parsers::arg_location<T, Act>{&x, act};
+}
 
-    inline Res parse_short_option(char const * /*unused*/, ParseResult const& /*unused*/)
-    {
-        return Res::BadOption;
-    }
+template<class T, class Act = detail::NoAction>
+auto password_location(char** argv, T& x, Act act = {})
+{
+    return parsers::password_location<T, Act>{&x, argv, act};
+}
 
-    template<class... Opts>
-    Res parse_short_option(char const * s, ParseResult& pr, Helper const& /*unused*/, Opts const&... opts)
-    {
-        return parse_short_option(s, pr, opts...);
-    }
+template<class Act>
+auto raw(Act act)
+{
+    return parsers::required_arg<Act>{act};
+}
 
-    template<class Opt, class... Opts>
-    Res parse_short_option(char const * s, ParseResult& pr, Opt const& opt, Opts const&... opts)
-    {
-        if (opt.d.short_name == s[0]) {
-            if (s[1]) {
-                pr.str = s + ((s[1] == '=') ? 2 : 1);
-            }
-            else if (opt.d.optional_value) {
-                pr.str = nullptr;
-            }
-            else {
-                ++pr.opti;
-                pr.str = (pr.opti < pr.argc) ? pr.argv[pr.opti] : "";
-            }
-            return apply_option(pr, opt.act);
-        }
-        return parse_short_option(s, pr, opts...);
-    }
+template<class Act>
+auto on_off(Act act)
+{
+    return parsers::on_off<Act>{act};
+}
 
-    template<class Output, class Opt, class T, class Act>
-    void print_action(Output&& out, Opt const& opt, Arg<T, Act> const& arg)
-    {
-        out << " [";
-        if (arg.name) {
-            out << arg.name;
-        }
-        else if (*opt.d.long_name) {
-            out << opt.d.long_name;
+template<class T>
+auto on_off_location(T& x)
+{
+    return on_off([&](bool state){ x = state; });
+}
+
+template<auto X, class T>
+auto on_off_bit_location(T& value)
+{
+    return on_off([&](bool state){
+        if (state) {
+            value |= X;
         }
         else {
-            out << opt.d.short_name;
+            value &= ~X;
         }
-        out << ']';
-    }
+    });
+}
 
-    template<class Output, class Opt, class Act>
-    void print_action(Output&& out, Opt const& /*unused*/, OnOff<Act> const& /*unused*/)
+template<class Act = detail::NoAction>
+inline auto help(Act act = {})
+{
+    return parsers::set_res<Res::Help, Act>{act};
+};
+
+template<class Act = detail::NoAction>
+inline auto quit(Act act = {})
+{
+    return parsers::set_res<Res::Exit, Act>{act};
+};
+
+namespace detail
+{
+    template<class Mem>
+    struct first_mem_param;
+
+    template<class R, class M, class T>
+    struct first_mem_param<R(M::*)(T) const>
     {
-        out << "[={on|off}]";
-    }
+        using type = std::decay_t<T>;
+    };
 
-    template<class Output, class Opt, class Act>
-    void print_action(Output&& /*unused*/, Opt const& /*unused*/, Act const& /*unused*/)
-    {}
-
-    template<class Opt>
-    void print_help(std::ostream& out, Opt const& opt)
+    template<class R, class M>
+    struct first_mem_param<R(M::*)() const>
     {
-        constexpr int minlen = 32;
+        using type = void;
+    };
+}
+
+template<class Act>
+auto arg(Act act)
+{
+    using T = typename detail::first_mem_param<decltype(&Act::operator())>::type;
+
+    if constexpr (std::is_void_v<T>) {
+        return trigger(act);
+    }
+    else {
+        return raw([=](char const* s) {
+            if constexpr (std::is_constructible_v<T, char const*>) {
+                return act(T(s)), Ok;
+            }
+            else {
+                T value;
+                const Res r = arg_parsers::arg_parse_traits<T>::parse(value, s);
+                return (r == Res::Ok) ? (act(value), Ok) : r;
+            }
+        });
+    }
+}
+
+namespace detail
+{
+    struct output_len_counter
+    {
         int n = 0;
 
-        if (opt.d.short_name) {
-            n += 2;
-            out << '-' << opt.d.short_name;
-            if (*opt.d.long_name) {
-                n += 4;
-                n += int(strlen(opt.d.long_name));
-                out << ", --" << opt.d.long_name;
-            }
-        }
-        else if (*opt.d.long_name) {
-            n += 2;
-            n += int(strlen(opt.d.long_name));
-            out << "--" << opt.d.long_name;
-        }
-
-        struct Output
+        output_len_counter& operator<<(std::string_view s)
         {
-            std::ostream& out;
-            int& n;
-            Output& operator<<(char const* s)
-            {
-                n += int(strlen(s));
-                out << s;
-                return *this;
-            }
-
-            Output& operator<<(char c)
-            {
-                n += 1;
-                out << c;
-                return *this;
-            }
-        };
-        print_action(Output{out, n}, opt, opt.act);
-
-        out << std::setw(std::max(minlen - n, 0)) << "  " << opt.d.help << "\n";
-    }
-
-    inline void print_help(std::ostream & out, Helper h)
-    {
-        out << "\n" << h.s << "\n\n";
-    }
-
-    template<class... Opts>
-    auto options(Opts... opts)
-    {
-        return [opts...](auto && f){
-            return f(opts...);
-        };
-    }
-
-#ifdef IN_IDE_PARSER
-    template<class Tuple>
-    ParseResult parse(Tuple const& t, int const ac, char const * const * const av)
-    {
-        (void)t;
-        (void)ac;
-        (void)av;
-        return ParseResult{};
-    }
-
-    namespace detail {
-        template<class Tuple>
-        ParseResult parse_impl(Tuple const& t, int const ac, char const * const * const av)
-#else
-    template<class Tuple>
-    ParseResult parse(Tuple const& t, int const ac, char const * const * const av)
-#endif
-    {
-        ParseResult r;
-        r.argc = ac;
-        r.argv = av;
-        r.opti = 1;
-        r.str = nullptr;
-        r.res = t([&r](auto... opts) {
-            while (r.opti < r.argc) {
-                auto * s = r.argv[r.opti];
-                Res res = Res::BadFormat;
-                if (s[0] == '-' && s[1]) {
-                    if (s[1] == '-') {
-                        if (s[2]) {
-                            res = parse_long_option(s+2, r, opts...);
-                        }
-                    }
-                    else {
-                        auto const old_opti = r.opti;
-                        res = parse_short_option(s+1, r, opts...);
-                        while (res == Res::Ok && old_opti == r.opti && r.str) {
-                            res = parse_short_option(r.str, r, opts...);
-                        }
-                    }
-                }
-                if (res != Res::Ok) {
-                    return res;
-                }
-            }
-            return Res::Ok;
-        });
-        return r;
-    }
-
-#ifdef IN_IDE_PARSER
-    }
-
-    template<class Tuple>
-    void print_help(Tuple const& t, std::ostream & out)
-    {
-        (void)t;
-        (void)out;
-    }
-
-    namespace detail {
-        template<class Tuple>
-        void print_help_impl(Tuple const& t, std::ostream & out)
-#else
-    template<class Tuple>
-    void print_help(Tuple const& t, std::ostream & out)
-#endif
-    {
-        t([&out](auto... opts) {
-            (void)std::initializer_list<int>{
-                (print_help(out, opts), 0)...
-            };
-        });
-    }
-#ifdef IN_IDE_PARSER
-    }
-#endif
-
-
-    struct RewritePassword
-    {
-        RewritePassword(std::string& password) noexcept
-        : password_ref(&password)
-        {}
-
-        cli::Res operator()(cli::ParseResult& pr) const
-        {
-            if (!pr.str) {
-                return cli::Res::BadFormat;
-            }
-
-            char* s = const_cast<char*>(pr.argv[pr.opti]);
-            *password_ref = s;
-            // hide password in /proc/...
-            for (int i = 0; *s; ++s, ++i) {
-                *s = (i < 3) ? '*' : '\0';
-            }
-            ++pr.opti;
-
-            return cli::Res::Ok;
+            n += int(s.size());
+            return *this;
         }
 
-    private:
-        std::string* password_ref;
+        output_len_counter& operator<<(char /*c*/)
+        {
+            ++n;
+            return *this;
+        }
     };
+
+    template<class OStream>
+    OStream& print_option_name(OStream && out, Helper const& /*helper*/)
+    {
+        return out;
+    }
+
+    template<class OStream, class Opt>
+    OStream& print_option_name(OStream && out, Opt const& opt)
+    {
+        constexpr bool has_short_name = !std::is_same_v<detail::uninit_t, decltype(opt._short_name)>;
+        constexpr bool has_long_name = !std::is_same_v<detail::uninit_t, decltype(opt._long_name)>;
+
+        if constexpr (has_short_name) {
+            out << '-' << opt._short_name;
+            if constexpr (has_long_name) {
+                out << ", --" << opt._long_name;
+            }
+        }
+        else {
+            out << "--" << opt._long_name;
+        }
+
+        if constexpr (parsers::is_required_value<decltype(opt._parser)>) {
+            out << "=" << opt._argname;
+        }
+        else if constexpr (parsers::is_optional_value<decltype(opt._parser)>) {
+            out << "[=" << opt._argname << "]";
+        }
+
+        return out;
+    }
+}
+
+template<class Opt>
+void print_help(std::ostream& out, Opt const& opt, int pad)
+{
+    out << "  ";
+    detail::print_option_name(out, opt);
+
+    // if constexpr (!std::is_same_v<detail::uninit_t, decltype(opt._help)>) {
+    if (!opt._help.empty()) {
+        out << std::setw(pad) << "" << opt._help;
+    }
+    out << "\n";
+}
+
+inline void print_help(std::ostream& out, Helper h, int /*pad*/)
+{
+    out << "\n" << h.s << "\n\n";
+}
+
+template<class Tuple>
+void print_help(Tuple const& t, std::ostream& out, int maxlen = 32)
+{
+    t([&](auto... opts) {
+        int const lengths[] = {0, detail::print_option_name(detail::output_len_counter{}, opts).n...};
+        int const* p = lengths + 1;
+        int max = std::min(maxlen, *std::max_element(p, std::end(lengths)));
+        (..., print_help(out, opts, std::max(max - *p++, 0) + 4));
+    });
+}
+
 } // namespace cli

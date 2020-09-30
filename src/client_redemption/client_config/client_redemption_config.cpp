@@ -128,33 +128,33 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         cli::helper("Client ReDemPtion Help menu."),
 
         cli::option('h', "help").help("Show help")
-        .action(cli::help),
+        .parser(cli::help()),
 
         cli::option('v', "version").help("Show version")
-        .action(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
+        .parser(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
 
         cli::helper("========= Connection ========="),
 
         cli::option('u', "username").help("Set target session user name")
-        .action(cli::arg([&config](std::string s) {
+        .parser(cli::arg([&config](std::string s) {
             config.user_name = std::move(s);
             config.connection_info_cmd_complete |= ClientRedemptionConfig::NAME_GOT;
         })),
 
         cli::option('p', "password").help("Set target session user password")
-        .action(cli::arg([&config](std::string s) {
+        .parser(cli::arg([&config](std::string s) {
             config.user_password = std::move(s);
             config.connection_info_cmd_complete |= ClientRedemptionConfig::PWD_GOT;
         })),
 
         cli::option('i', "ip").help("Set target IP address")
-        .action(cli::arg([&config](std::string s) {
+        .parser(cli::arg([&config](std::string s) {
             config.target_IP = std::move(s);
             config.connection_info_cmd_complete |= ClientRedemptionConfig::IP_GOT;
         })),
 
         cli::option('P', "port").help("Set port to use on target")
-        .action(cli::arg([&config](int n) {
+        .parser(cli::arg([&config](int n) {
             config.port = n;
             config.connection_info_cmd_complete |= ClientRedemptionConfig::PORT_GOT;
         })),
@@ -162,69 +162,70 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         cli::helper("========= Verbose ========="),
 
         cli::option("rdpdr").help("Active rdpdr logs")
-        .action(cli::on_off_bit_location<RDPVerbose::rdpdr>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::rdpdr>(config.verbose)),
 
         cli::option("rdpsnd").help("Active rdpsnd logs")
-        .action(cli::on_off_bit_location<RDPVerbose::rdpsnd>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::rdpsnd>(config.verbose)),
 
         cli::option("cliprdr").help("Active cliprdr logs")
-        .action(cli::on_off_bit_location<RDPVerbose::cliprdr>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::cliprdr>(config.verbose)),
 
         cli::option("graphics").help("Active graphics logs")
-        .action(cli::on_off_bit_location<RDPVerbose::graphics>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::graphics>(config.verbose)),
 
         cli::option("printer").help("Active printer logs")
-        .action(cli::on_off_bit_location<RDPVerbose::printer>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::printer>(config.verbose)),
 
         cli::option("rdpdr-dump").help("Actives rdpdr logs and dump brute rdpdr PDU")
-        .action(cli::on_off_bit_location<RDPVerbose::rdpdr_dump>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::rdpdr_dump>(config.verbose)),
 
         cli::option("cliprd-dump").help("Actives cliprdr logs and dump brute cliprdr PDU")
-        .action(cli::on_off_bit_location<RDPVerbose::cliprdr_dump>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::cliprdr_dump>(config.verbose)),
 
         cli::option("basic-trace").help("Active basic-trace logs")
-        .action(cli::on_off_bit_location<RDPVerbose::basic_trace>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::basic_trace>(config.verbose)),
 
         cli::option("connection").help("Active connection logs")
-        .action(cli::on_off_bit_location<RDPVerbose::connection>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::connection>(config.verbose)),
 
         cli::option("rail-order").help("Active rail-order logs")
-        .action(cli::on_off_bit_location<RDPVerbose::rail_order>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::rail_order>(config.verbose)),
 
         cli::option("asynchronous-task").help("Active asynchronous-task logs")
-        .action(cli::on_off_bit_location<RDPVerbose::asynchronous_task>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::asynchronous_task>(config.verbose)),
 
         cli::option("capabilities").help("Active capabilities logs")
-        .action(cli::on_off_bit_location<RDPVerbose::capabilities>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::capabilities>(config.verbose)),
 
         cli::option("rail").help("Active rail logs")
-        .action(cli::on_off_bit_location<RDPVerbose::rail>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::rail>(config.verbose)),
 
         cli::option("rail-dump").help("Actives rail logs and dump brute rail PDU")
-        .action(cli::on_off_bit_location<RDPVerbose::rail_dump>(config.verbose)),
+        .parser(cli::on_off_bit_location<RDPVerbose::rail_dump>(config.verbose)),
 
 
         cli::helper("========= Protocol ========="),
 
         cli::option("vnc").help("Set connection mod to VNC")
-        .action([&config]() {
+        .parser(cli::trigger([&config]() {
             config.mod_state = ClientRedemptionConfig::MOD_VNC;
             if (!bool(config.connection_info_cmd_complete & ClientRedemptionConfig::PORT_GOT)) {
                 config.port = 5900;
             }
-        }),
+        })),
 
         cli::option("rdp").help("Set connection mod to RDP (default).")
-        .action([&config]() {
+        .parser(cli::trigger([&config]() {
             config.mod_state = ClientRedemptionConfig::MOD_RDP;
             config.port = 3389;
-        }),
+        })),
 
         cli::option("remote-app").help("Connection as remote application.")
-        .action(cli::on_off_bit_location<ClientRedemptionConfig::MOD_RDP_REMOTE_APP>(config.mod_state)),
+        .parser(cli::on_off_bit_location<ClientRedemptionConfig::MOD_RDP_REMOTE_APP>(config.mod_state)),
 
         cli::option("remote-exe").help("Connection as remote application and set the line command.")
-        .action(cli::arg("command", [&config](std::string line) {
+        .argname("command")
+        .parser(cli::arg([&config](std::string line) {
             config.mod_state = ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
             config.modRDPParamsData.enable_shared_remoteapp = true;
             auto pos(line.find(' '));
@@ -239,112 +240,116 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         })),
 
         cli::option("span").help("Span the screen size on local screen")
-        .action(cli::on_off_location(config.is_spanning)),
+        .parser(cli::on_off_location(config.is_spanning)),
 
         cli::option("enable-clipboard").help("Enable clipboard sharing")
-        .action(cli::on_off_location(config.enable_shared_clipboard)),
+        .parser(cli::on_off_location(config.enable_shared_clipboard)),
 
         cli::option("enable-nla").help("Enable NLA protocol")
-        .action(cli::on_off_location(config.modRDPParamsData.enable_nla)),
+        .parser(cli::on_off_location(config.modRDPParamsData.enable_nla)),
 
         cli::option("enable-tls").help("Enable TLS protocol")
-        .action(cli::on_off_location(config.modRDPParamsData.enable_tls)),
+        .parser(cli::on_off_location(config.modRDPParamsData.enable_tls)),
 
         cli::option("tls-min-level").help("Minimal TLS protocol level")
-        .action(cli::arg_location(config.tls_client_params_data.tls_min_level)),
+        .parser(cli::arg_location(config.tls_client_params_data.tls_min_level)),
 
         cli::option("tls-max-level").help("Maximal TLS protocol level allowed")
-        .action(cli::arg_location(config.tls_client_params_data.tls_max_level)),
+        .parser(cli::arg_location(config.tls_client_params_data.tls_max_level)),
 
         cli::option("show_common_cipher_list").help("Show TLS Cipher List")
-        .action(cli::on_off_location(config.tls_client_params_data.show_common_cipher_list)),
+        .parser(cli::on_off_location(config.tls_client_params_data.show_common_cipher_list)),
 
         cli::option("cipher_string").help("Set TLS Cipher allowed for TLS <= 1.2")
-        .action(cli::arg([&config](std::string s){
+        .parser(cli::arg([&config](std::string s){
             config.tls_client_params_data.cipher_string = std::move(s);
         })),
 
         cli::option("enable-sound").help("Enable sound")
-        .action(cli::on_off_location(config.modRDPParamsData.enable_sound)),
+        .parser(cli::on_off_location(config.modRDPParamsData.enable_sound)),
 
         cli::option("enable-fullwindowdrag").help("Enable full window draging")
-        .action(cli::on_off_bit_location<~PERF_DISABLE_FULLWINDOWDRAG>(
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_FULLWINDOWDRAG>(
             config.info.rdp5_performanceflags)),
 
         cli::option("enable-menuanimations").help("Enable menu animations")
-        .action(cli::on_off_bit_location<~PERF_DISABLE_MENUANIMATIONS>(
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_MENUANIMATIONS>(
             config.info.rdp5_performanceflags)),
 
         cli::option("enable-theming").help("Enable theming")
-        .action(cli::on_off_bit_location<~PERF_DISABLE_THEMING>(
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_THEMING>(
             config.info.rdp5_performanceflags)),
 
         cli::option("enable-cursor-shadow").help("Enable cursor shadow")
-        .action(cli::on_off_bit_location<~PERF_DISABLE_CURSOR_SHADOW>(
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_CURSOR_SHADOW>(
             config.info.rdp5_performanceflags)),
 
         cli::option("enable-cursorsettings").help("Enable cursor settings")
-        .action(cli::on_off_bit_location<~PERF_DISABLE_CURSORSETTINGS>(
+        .parser(cli::on_off_bit_location<~PERF_DISABLE_CURSORSETTINGS>(
             config.info.rdp5_performanceflags)),
 
         cli::option("enable-font-smoothing").help("Enable font smoothing")
-        .action(cli::on_off_bit_location<PERF_ENABLE_FONT_SMOOTHING>(
+        .parser(cli::on_off_bit_location<PERF_ENABLE_FONT_SMOOTHING>(
             config.info.rdp5_performanceflags)),
 
         cli::option("enable-desktop-composition").help("Enable desktop composition")
-        .action(cli::on_off_bit_location<PERF_ENABLE_DESKTOP_COMPOSITION>(
+        .parser(cli::on_off_bit_location<PERF_ENABLE_DESKTOP_COMPOSITION>(
             config.info.rdp5_performanceflags)),
 
         cli::option("vnc-applekeyboard").help("Set keyboard compatibility mod with apple VNC server")
-        .action(cli::on_off_location(config.modVNCParamsData.is_apple)),
+        .parser(cli::on_off_location(config.modVNCParamsData.is_apple)),
 
         cli::option("keep_alive_frequence")
         .help("Set timeout to send keypress to keep the session alive")
-        .action(cli::arg([&](int t){ config.keep_alive_freq = t; })),
+        .parser(cli::arg([&](int t){ config.keep_alive_freq = t; })),
 
         cli::option("remotefx").help("enable remotefx")
-        .action(cli::on_off_location(config.enable_remotefx)),
+        .parser(cli::on_off_location(config.enable_remotefx)),
 
 
         cli::helper("========= Client ========="),
 
         cli::option("width").help("Set screen width")
-        .action(cli::arg_location(config.rdp_width)),
+        .parser(cli::arg_location(config.rdp_width)),
 
         cli::option("height").help("Set screen height")
-        .action(cli::arg_location(config.rdp_height)),
+        .parser(cli::arg_location(config.rdp_height)),
 
         cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24, 32)")
-        .action(cli::arg("bit_per_pixel", [&config](int x) {
+        .argname("bit_per_pixel")
+        .parser(cli::arg([&config](int x) {
             config.info.screen_info.bpp = checked_int(x);
         })),
 
         cli::option("keylayout").help("Set windows keylayout")
-        .action(cli::arg_location(config.info.keylayout)),
+        .parser(cli::arg_location(config.info.keylayout)),
 
         cli::option("enable-record").help("Enable session recording as .wrm movie")
-        .action(cli::on_off_location(config.is_recording)),
+        .parser(cli::on_off_location(config.is_recording)),
 
         cli::option("persist").help("Set connection to persist")
-        .action([&config]() {
+        .parser(cli::trigger([&config]() {
             config.quick_connection_test = false;
             config.persist = true;
-        }),
+        })),
 
         cli::option("timeout").help("Set timeout response before to disconnect in millisecond")
-        .action(cli::arg("time", [&](long time){
+        .argname("time")
+        .parser(cli::arg([&](long time){
             config.quick_connection_test = false;
             config.time_out_disconnection = std::chrono::milliseconds(time);
         })),
 
         cli::option("share-dir").help("Set directory path on local disk to share with your session.")
-        .action(cli::arg("directory", [&config](std::string s) {
+        .argname("directory")
+        .parser(cli::arg([&config](std::string s) {
             config.modRDPParamsData.enable_shared_virtual_disk = !s.empty();
             config.SHARE_DIR = std::move(s);
         })),
 
         cli::option("remote-dir").help("Remote working directory")
-        .action(cli::arg_location("directory", config.rDPRemoteAppConfig.source_of_WorkingDir))
+        .argname("directory")
+        .parser(cli::arg_location(config.rDPRemoteAppConfig.source_of_WorkingDir))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -361,6 +366,8 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
             break;
         case cli::Res::BadFormat:
         case cli::Res::BadOption:
+        case cli::Res::NotOption:
+        case cli::Res::StopParsing:
             std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
             if (cli_result.opti < cli_result.argc) {
                 std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";

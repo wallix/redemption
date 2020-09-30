@@ -302,7 +302,7 @@ namespace redemption_unit_test__
     {
         static ::chars_view str()
         {
-            return make_array_view(__PRETTY_FUNCTION__);
+            return cstr_array_view(__PRETTY_FUNCTION__);
         }
     };
 
@@ -310,7 +310,7 @@ namespace redemption_unit_test__
     {
         template<class E, class = std::enable_if_t<std::is_enum<E>::value>>
         Enum(E e) noexcept
-        : name(get_type_name(make_array_view(__PRETTY_FUNCTION__)))
+        : name(get_type_name(cstr_array_view(__PRETTY_FUNCTION__)))
         , value_name(
             get_value_name(static_cast<long long>(e),
             this->name,

@@ -119,11 +119,11 @@ namespace redemption_unit_test__
         constexpr std::size_t start_type_name = 43;
         constexpr std::size_t end_type_name = 1;
 
-        constexpr std::size_t prefix_value_name = 60;
+        constexpr std::size_t prefix_value_name = 56;
         constexpr char end_value_name = '>';
 #elif defined(__GNUC__)
         constexpr std::size_t start_type_name = 48;
-        constexpr std::size_t end_type_name = 34;
+        constexpr std::size_t end_type_name = 35;
 
         [[maybe_unused]] constexpr std::size_t prefix_value_name = 97;
         [[maybe_unused]] constexpr char end_value_name = ';';
