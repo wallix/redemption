@@ -29,7 +29,7 @@ jobs:
       id: cache-apt
       with:
         path: ~/dpkg_cache
-        key: ${{ runner.os }}-apt_deps2
+        key: ${{ runner.os }}-apt_deps5
     - name: Install packages
       env:
         CACHE_HIT: ${{steps.cache-apt.outputs.cache-hit}}
@@ -55,9 +55,9 @@ jobs:
 
           # fix snappy version
           sudo sed -i \
-            -e 's/^#define SNAPPY_MAJOR/& 1/' \
-            -e 's/^#define SNAPPY_MINOR/& 1/' \
-            -e 's/^#define SNAPPY_PATCHLEVEL/& 8/' \
+            -e 's/^#define SNAPPY_MAJOR.*/#define SNAPPY_MAJOR 1/' \
+            -e 's/^#define SNAPPY_MINOR.*/#define SNAPPY_MINOR 1/' \
+            -e 's/^#define SNAPPY_PATCHLEVEL.*/#define SNAPPY_PATCHLEVEL 8/' \
             /usr/include/snappy-stubs-public.h
 
           mkdir -p "$DPKG_CACHE"
