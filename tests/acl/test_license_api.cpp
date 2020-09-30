@@ -53,6 +53,7 @@
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
     ClientInfo info;
+    info.build                 = 2600;
     info.keylayout             = 0x040C;
     info.console_session       = false;
     info.brush_cache_code      = 0;
@@ -354,6 +355,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 RED_AUTO_TEST_CASE(TestWithExistingLicense)
 {
     ClientInfo info;
+    info.build                 = 2600;
     info.keylayout             = 0x040C;
     info.console_session       = false;
     info.brush_cache_code      = 0;
