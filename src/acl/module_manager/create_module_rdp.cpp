@@ -730,6 +730,7 @@ ModPack create_mod_rdp(
 
     mod_rdp_params.enable_restricted_admin_mode = ini.get<cfg::mod_rdp::enable_restricted_admin_mode>();
     mod_rdp_params.file_system_params.smartcard_passthrough        = smartcard_passthrough;
+    mod_rdp_params.forward_client_build_number = ini.get<cfg::mod_rdp::forward_client_build_number>();
 
     mod_rdp_params.session_probe_params.alternate_directory_environment_variable = ini.get<cfg::mod_rdp::session_probe_alternate_directory_environment_variable>();
     enum {

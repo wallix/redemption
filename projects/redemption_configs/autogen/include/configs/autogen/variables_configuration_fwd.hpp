@@ -208,6 +208,7 @@ namespace cfg
         struct enable_ipv6;
         struct mode_console;
         struct auto_reconnection_on_losing_target_link;
+        struct forward_client_build_number;
     };
 
     struct mod_vnc {

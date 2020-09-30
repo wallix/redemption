@@ -15,24 +15,24 @@ namespace configs
         inline constexpr int section1 = 19; /* session_log */
         inline constexpr int section2 = 20; /* client */
         inline constexpr int section3 = 22; /* mod_rdp */
-        inline constexpr int section4 = 94; /* mod_vnc */
-        // inline constexpr int section5 = 102; /* metrics */
-        inline constexpr int section6 = 102; /* file_verification */
-        inline constexpr int section7 = 110; /* file_storage */
-        // inline constexpr int section8 = 111; /* icap_server_down */
-        // inline constexpr int section9 = 111; /* icap_server_up */
-        inline constexpr int section10 = 111; /* mod_replay */
-        // inline constexpr int section11 = 112; /* ocr */
-        inline constexpr int section12 = 112; /* video */
-        inline constexpr int section13 = 117; /* capture */
-        inline constexpr int section14 = 120; /* crypto */
-        // inline constexpr int section15 = 122; /* websocket */
-        // inline constexpr int section16 = 122; /* debug */
-        inline constexpr int section17 = 122; /* remote_program */
-        inline constexpr int section18 = 123; /* translation */
-        // inline constexpr int section19 = 125; /* internal_mod */
-        inline constexpr int section20 = 125; /* context */
-        // inline constexpr int section21 = 206; /* theme */
+        inline constexpr int section4 = 95; /* mod_vnc */
+        // inline constexpr int section5 = 103; /* metrics */
+        inline constexpr int section6 = 103; /* file_verification */
+        inline constexpr int section7 = 111; /* file_storage */
+        // inline constexpr int section8 = 112; /* icap_server_down */
+        // inline constexpr int section9 = 112; /* icap_server_up */
+        inline constexpr int section10 = 112; /* mod_replay */
+        // inline constexpr int section11 = 113; /* ocr */
+        inline constexpr int section12 = 113; /* video */
+        inline constexpr int section13 = 118; /* capture */
+        inline constexpr int section14 = 121; /* crypto */
+        // inline constexpr int section15 = 123; /* websocket */
+        // inline constexpr int section16 = 123; /* debug */
+        inline constexpr int section17 = 123; /* remote_program */
+        inline constexpr int section18 = 124; /* translation */
+        // inline constexpr int section19 = 126; /* internal_mod */
+        inline constexpr int section20 = 126; /* context */
+        // inline constexpr int section21 = 207; /* theme */
     }
 }
 
@@ -2545,6 +2545,22 @@ namespace cfg
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
+    };
+    /// Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server. <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:forward_client_build_number <br/>
+    /// default: {true} <br/>
+    struct mod_rdp::forward_client_build_number {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 72};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
     };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
@@ -5434,6 +5450,7 @@ struct mod_rdp
 , cfg::mod_rdp::enable_ipv6
 , cfg::mod_rdp::mode_console
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
+, cfg::mod_rdp::forward_client_build_number
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -5825,6 +5842,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::enable_ipv6
 , cfg::mod_rdp::mode_console
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
+, cfg::mod_rdp::forward_client_build_number
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
@@ -5947,14 +5965,14 @@ struct BitFlags {
 
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111101111111111111
-, 0b1111110011111111111111111111111111111111111111111111111111111111
-, 0b1101111111111111111111111111111111111111111111011011111011111111
-, 0b0000000000000000000000000000000000000000000000000011111111111111
+, 0b1111100111111111111111111111111111111111111111111111111111111111
+, 0b1011111111111111111111111111111111111111111110110111110111111111
+, 0b0000000000000000000000000000000000000000000000000111111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000000100000000000000000
+, 0b0000000000000000000000000000000000000000000001000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs
