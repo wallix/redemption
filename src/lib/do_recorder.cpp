@@ -1198,11 +1198,11 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   uint32_t order_count,
                   bool show_file_metadata,
                   bool show_statistics,
-                  uint32_t clear,
+                  bool clear,
                   bool full_video,
                   bool remove_input_file,
                   int wrm_compression_algorithm,
-                  uint32_t video_break_interval,
+                  std::chrono::seconds video_break_interval,
                   TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx,
                   Rect const & crop_rect,
@@ -1389,8 +1389,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
                         ini.set<cfg::video::codec_id>(video_params.codec);
-                        video_params = video_params_from_ini(
-                            std::chrono::seconds{video_break_interval}, ini);
+                        video_params = video_params_from_ini(video_break_interval, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
@@ -1638,7 +1637,7 @@ struct RecorderParams {
 
     // video output options
     bool full_video = false; // create full video
-    uint32_t    video_break_interval = 10*60;
+    std::chrono::seconds video_break_interval {10*60};
 
     // wrm output options
     int wrm_compression_algorithm = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
@@ -1654,7 +1653,7 @@ struct RecorderParams {
     CaptureFlags capture_flags = CaptureFlags::none; // output control
     bool auto_output_file   = false;
     bool remove_input_file  = false;
-    uint32_t    clear       = 1; // default on
+    bool clear              = true;
     bool infile_is_encrypted = false;
     bool chunk = false;
 
@@ -1727,10 +1726,10 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
 
         cli::option('b', "begin").help("begin capture time (in seconds)")
-            .parser(cli::arg_location(recorder.begin_cap)),
+            .parser(cli::arg_location(recorder.begin_cap)).argname("<seconds>"),
 
         cli::option('e', "end").help("end capture time (in seconds)")
-            .parser(cli::arg_location(recorder.end_cap)),
+            .parser(cli::arg_location(recorder.end_cap)).argname("<seconds>"),
 
         cli::option('n', "png-interval").help("time interval between png captures, default=60 seconds")
             .parser(cli::arg_location(recorder.png_params.png_interval)),
@@ -1760,10 +1759,10 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::on_off_location(recorder.chunk)),
 
         cli::option("clear").help("clear old capture files with same prefix (default on, 0 to disable)")
-            .parser(cli::arg_location(recorder.clear)),
+            .parser(cli::on_off_location(recorder.clear)),
 
         cli::option("verbose").help("more logs")
-            .parser(cli::arg_location(verbose)),
+            .parser(cli::arg_location(verbose)).argname("<verbosity>"),
 
         cli::option("zoom").help("scaling factor for png capture (default 100%)")
             .parser(cli::arg_location(recorder.png_params.zoom, [&](unsigned zoom){
@@ -1773,7 +1772,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
 
                 return cli::Res::Ok;
-            })),
+            })).argname("<percent>"),
 
         cli::option('g', "png-geometry").help("png capture geometry (Ex. 160x120)")
             .parser(cli::arg([&](std::string_view geometry){
@@ -1797,7 +1796,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 recorder.png_params.png_height = unsigned(png_h);
 
                 return cli::Res::Ok;
-            })),
+            })).argname("<geometry>"),
 
         cli::option('m', "meta").help("show file metadata")
             .parser(cli::on_off_location(recorder.show_file_metadata)),
@@ -1829,7 +1828,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
 
                 return cli::Res::Ok;
-            })),
+            })).argname("<algorithm>"),
 
         cli::option('d', "color-depth").help("wrm color depth (default=original, 16, 24)")
             .parser(cli::arg([&](std::string_view depth){
@@ -1848,7 +1847,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
                 }
 
                 return cli::Res::Ok;
-            })),
+            })).argname("<depth>"),
 
         cli::option('y', "encryption").help("wrm encryption (default=original, enable, disable)")
             .parser(cli::arg([&](std::string_view level){
@@ -1873,7 +1872,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::on_off_location(recorder.remove_input_file)),
 
         cli::option("config-file").help("use another ini file")
-            .parser(cli::arg_location(recorder.config_filename)),
+            .parser(cli::arg_location(recorder.config_filename)).argname("<path>"),
 
         cli::option('a', "video-break-interval").help("number of seconds between splitting video files (by default, one video every 10 minutes)")
             .parser(cli::arg_location(recorder.video_break_interval)),
@@ -1882,13 +1881,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::raw([](char const* /*unused*/){})),
 
         cli::option('D', "video-codec-options").help("FFmpeg codec option, format: key1=value1 key2=value2")
-            .parser(cli::arg_location(codec_options)),
+            .parser(cli::arg_location(codec_options)).argname("<ffmpeg-option>"),
 
         cli::option("video-codec").help("ffmpeg video codec name (flv, mp4, etc)")
-            .parser(cli::arg_location(recorder.video_params.codec)),
+            .parser(cli::arg_location(recorder.video_params.codec)).argname("<codec>"),
 
         cli::option("ocr-version").help("version 1 or 2")
-            .parser(cli::arg_location(recorder.ocr_version)),
+            .parser(cli::arg_location(recorder.ocr_version)).argname("<version>"),
 
         cli::option("bogus-vlc").help("Needed to play a video with ffplay or VLC")
             .parser(cli::on_off_location(bogus_vlc)),
@@ -2180,7 +2179,7 @@ extern "C" {
             }
 
             if (rp.chunk) {
-                rp.video_break_interval = 60*10; // 10 minutes
+                // rp.video_break_interval = std::chrono::seconds(60*10); // 10 minutes
                 rp.png_params.png_interval = std::chrono::seconds{1};
             }
 
