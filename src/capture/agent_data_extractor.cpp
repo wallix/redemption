@@ -274,6 +274,7 @@ bool AgentDataExtractor::extract_list(Av data)
         switch (this->id) {
             case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
             case LogId::UAC_PROMPT_BECOME_VISIBLE:
+            case LogId::SESSION_LOCKED:
             case LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS:
                 return line_with_1_var("status"_av);
             case LogId::INPUT_LANGUAGE:
@@ -447,6 +448,7 @@ bool AgentDataExtractor::relevant_log_id(LogId id) noexcept
 
         case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
         case LogId::UAC_PROMPT_BECOME_VISIBLE:
+        case LogId::SESSION_LOCKED:
         case LogId::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS:
         case LogId::INPUT_LANGUAGE:
         case LogId::NEW_PROCESS:

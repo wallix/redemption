@@ -70,6 +70,7 @@ public:
     virtual void set_focus_on_password_textbox(bool /*unused*/) {}
     virtual void set_focus_on_unidentified_input_field(bool /*unused*/) {}
     virtual void set_consent_ui_visible(bool /*unused*/) {}
+    virtual void set_session_locked(bool /*unused*/) {}
     virtual void session_update(LogId id, KVList kv_list) { (void)id; (void)kv_list; }
 
     ////////////////////////////////

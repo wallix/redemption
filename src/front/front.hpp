@@ -604,6 +604,7 @@ private:
     bool focus_on_password_textbox         = false;
     bool focus_on_unidentified_input_field = false;
     bool consent_ui_is_visible             = false;
+    bool session_locked                    = false;
 
     bool session_probe_started_ = false;
 
@@ -2989,6 +2990,12 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
+    void set_session_locked(bool set) override {
+        this->session_locked = set;
+
+        this->update_keyboard_input_mask_state();
+    }
+
     void session_update(LogId id, KVList kv_list) override {
         if (this->capture) {
             this->capture->session_update(this->session_reactor.get_current_time(), id, kv_list);
@@ -5079,7 +5086,7 @@ private:
                     this->focus_on_password_textbox ||
                     ((keyboard_input_masking_level == ::KeyboardInputMaskingLevel::password_and_unidentified) &&
                      this->focus_on_unidentified_input_field) ||
-                    this->consent_ui_is_visible || mask_unidentified_data
+                    this->consent_ui_is_visible || this->session_locked || mask_unidentified_data
                 );
         }
     }
