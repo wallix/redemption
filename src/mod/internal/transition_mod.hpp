@@ -24,19 +24,14 @@
 
 #pragma once
 
-#include "configs/config_access.hpp"
-#include "mod/internal/widget/tooltip.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/internal/widget/tooltip.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "core/events.hpp"
 #include "keyboard/mouse.hpp"
 
-using TransitionModVariables = vcfg::variables<
-    vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
->;
 
+class FrontAPI;
 class ClientExecute;
 class TimeBase;
 
@@ -126,11 +121,9 @@ protected:
 private:
     WidgetTooltip ttmessage;
 
-    TransitionModVariables vars;
-
 public:
     TransitionMod(
-        TransitionModVariables vars,
+        char const * message,
         TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,

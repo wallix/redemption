@@ -386,7 +386,7 @@ public:
     auto create_transition_mod() -> ModPack
     {
         auto new_mod = new TransitionMod(
-            this->ini,
+            TR(trkeys::wait_msg, language(this->ini)),
             this->time_base,
             this->events,
             this->graphics, this->front,

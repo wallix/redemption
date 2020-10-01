@@ -18,13 +18,11 @@
  *   Author(s): Meng Tan
  */
 
-#include "configs/config.hpp"
 #include "mod/internal/transition_mod.hpp"
-#include "mod/internal/widget/tooltip.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/front_api.hpp"
-#include "core/RDP/slowpath.hpp"
 #include "RAIL/client_execute.hpp"
+
 
 void TransitionMod::rdp_input_invalidate(Rect r)
 {
@@ -95,7 +93,7 @@ bool TransitionMod::is_resizing_hosted_desktop_allowed() const
 }
 
 TransitionMod::TransitionMod(
-    TransitionModVariables vars,
+    char const * message,
     TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
@@ -113,11 +111,9 @@ TransitionMod::TransitionMod(
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , events(events)
-    , ttmessage(drawable, this->screen, nullptr,
-                TR(trkeys::wait_msg, language(vars)),
+    , ttmessage(drawable, this->screen, nullptr, message,
                 theme.tooltip.fgcolor, theme.tooltip.bgcolor,
                 theme.tooltip.border_color, font)
-    , vars(vars)
 {
     this->screen.set_wh(width, height);
     Dimension dim = this->ttmessage.get_optimal_dim();
