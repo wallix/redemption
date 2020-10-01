@@ -121,7 +121,8 @@ using LogCategoryFlags = utils::flags_t<LogCategoryId>;
     f(BESTSAFE_SERVICE_LOG, BestSafe)                            \
     f(DYNAMIC_CHANNEL_CREATION_ALLOWED, DynamicChannel)          \
     f(DYNAMIC_CHANNEL_CREATION_REJECTED, DynamicChannel)         \
-    f(FILE_BLOCKED, FileVerification)
+    f(FILE_BLOCKED, FileVerification)                            \
+    f(SESSION_LOCKED, Session)
 
 
 enum class LogId : unsigned
