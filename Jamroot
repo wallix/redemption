@@ -78,8 +78,6 @@ include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 
 
-obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
-
 make test_libredrec : libredrec : @test_libredrec : <variant>san:<build>no ;
 
 actions test_libredrec

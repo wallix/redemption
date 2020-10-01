@@ -109,7 +109,6 @@ exe rdpproxy :
   <library>openssl
   <library>png
   <library>ppocr
-  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
@@ -313,7 +312,6 @@ exe rdpclient :
   <library>krb5
   <library>openssl
   <library>png
-  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
@@ -418,7 +416,6 @@ lib libredrec :
   <library>log.o
   <library>png
   <library>ppocr
-  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
@@ -721,7 +718,6 @@ test-run tests/capture/test_capture :
   <library>ffmpeg
   <library>png
   <library>ppocr
-  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
@@ -2807,7 +2803,6 @@ test-run tests/lib/test_do_recorder :
   <library>ffmpeg
   <library>png
   <library>ppocr
-  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o

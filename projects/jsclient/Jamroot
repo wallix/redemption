@@ -241,8 +241,6 @@ alias png.bc : libpng.bc z.bc ;
 alias ffmpeg.bc ;
 alias ppocr.bc ;
 
-# objjs program_options.bc : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
-
 
 actions gen_targets
 {

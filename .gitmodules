@@ -1,6 +1,3 @@
-[submodule "modules/program_options"]
-	path = modules/program_options
-	url = ../program_options.git
 [submodule "modules/ppocr"]
 	path = modules/ppocr
 	url = ../ppocr.git
