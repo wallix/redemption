@@ -80,10 +80,15 @@ namespace parsers
         = std::decay_t<T>::value_property::value == no_value::value;
 
     template<class T>
-    struct argname_traits
+    struct argname_value_traits
     {
         static constexpr std::string_view default_argname = "<value>";
     };
+
+    template<class T>
+    struct argname_parser_traits
+    : argname_value_traits<void>
+    {};
 }
 
 namespace detail
@@ -144,7 +149,7 @@ struct [[nodiscard]] Option
                 _long_name,
                 parser,
                 _help,
-                parsers::argname_traits<P>::default_argname,
+                parsers::argname_parser_traits<P>::default_argname,
             };
         }
         else {
@@ -667,6 +672,26 @@ namespace parsers
     };
 
     template<class T, class Act = detail::NoAction>
+    struct value
+    {
+        using value_property = required_value;
+
+        Res operator()(ParseResult& pr) const
+        {
+            if constexpr (std::is_constructible_v<T, char const*>) {
+                return act(T(pr.str)), Ok;
+            }
+            else {
+                T value;
+                const Res r = arg_parsers::arg_parse_traits<T>::parse(value, pr.str);
+                return (r == Res::Ok) ? (act(value), Ok) : r;
+            }
+        }
+
+        Act act;
+    };
+
+    template<class T, class Act = detail::NoAction>
     struct password_location
     {
         using value_property = required_value;
@@ -727,16 +752,26 @@ namespace parsers
     };
 
     template<class T, class Act>
-    struct argname_traits<password_location<T, Act>>
+    struct argname_parser_traits<password_location<T, Act>>
     {
         static constexpr std::string_view default_argname = "<password>";
     };
 
     template<class Act>
-    struct argname_traits<on_off<Act>>
+    struct argname_parser_traits<on_off<Act>>
     {
         static constexpr std::string_view default_argname = "{on|off}";
     };
+
+    template<class T, class Act>
+    struct argname_parser_traits<arg_location<T, Act>>
+    : argname_value_traits<T>
+    {};
+
+    template<class T, class Act>
+    struct argname_parser_traits<value<T, Act>>
+    : argname_value_traits<T>
+    {};
 } // namespace parsers
 
 template<class Act>
@@ -799,17 +834,24 @@ auto on_off_bit_location(T& value)
     });
 }
 
+template<class T, class Act>
+auto value(Act act)
+{
+
+    return parsers::value<T, Act>{act};
+}
+
 template<class Act = detail::NoAction>
 inline auto help(Act act = {})
 {
     return parsers::set_res<Res::Help, Act>{act};
-};
+}
 
 template<class Act = detail::NoAction>
 inline auto quit(Act act = {})
 {
     return parsers::set_res<Res::Exit, Act>{act};
-};
+}
 
 namespace detail
 {
@@ -835,19 +877,10 @@ auto arg(Act act)
     using T = typename detail::first_mem_param<decltype(&Act::operator())>::type;
 
     if constexpr (std::is_void_v<T>) {
-        return trigger(act);
+        return parsers::trigger<Act>{act};
     }
     else {
-        return raw([=](char const* s) {
-            if constexpr (std::is_constructible_v<T, char const*>) {
-                return act(T(s)), Ok;
-            }
-            else {
-                T value;
-                const Res r = arg_parsers::arg_parse_traits<T>::parse(value, s);
-                return (r == Res::Ok) ? (act(value), Ok) : r;
-            }
-        });
+        return parsers::value<T, Act>{act};
     }
 }
 

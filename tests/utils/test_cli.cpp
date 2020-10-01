@@ -27,6 +27,8 @@
 
 
 #include "utils/cli.hpp"
+#include "utils/cli_chrono.hpp"
+
 
 namespace cli
 {
@@ -590,11 +592,13 @@ RED_AUTO_TEST_CASE(TestCLI_help)
 {
     int x;
     auto options = cli::options(
-        cli::option('c').parser(cli::arg_location(x)),
-        cli::option('d').parser(cli::arg_location(x)).argname("<P>"),
+        cli::option('a').parser(cli::arg_location(x)),
+        cli::option('b').parser(cli::arg_location(x)).argname("<A>"),
         cli::helper("Password options:"),
-        cli::option('a').parser(cli::password_location(nullptr, x)),
-        cli::option('b').parser(cli::password_location(nullptr, x)).argname("<P>")
+        cli::option('c').parser(cli::password_location(nullptr, x)),
+        cli::option('d').parser(cli::password_location(nullptr, x)).argname("<P>"),
+        cli::option('e').parser(cli::arg([](std::chrono::milliseconds /*ms*/){})),
+        cli::option('f').parser(cli::arg([](std::chrono::milliseconds /*ms*/){})).argname("<C>")
     );
 
     char const* argv[] {"progname", ""};
@@ -604,9 +608,11 @@ RED_AUTO_TEST_CASE(TestCLI_help)
     std::ostringstream oss;
     cli::print_help(options, oss);
     RED_CHECK(oss.str() ==
-        "  -c=<value>\n"
-        "  -d=<P>\n"
+        "  -a=<value>\n"
+        "  -b=<A>\n"
         "\nPassword options:\n\n"
-        "  -a=<password>\n"
-        "  -b=<P>\n"_av);
+        "  -c=<password>\n"
+        "  -d=<P>\n"
+        "  -e=<milliseconds>\n"
+        "  -f=<C>\n"_av);
 }
