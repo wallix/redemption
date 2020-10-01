@@ -27,9 +27,6 @@ Author(s): Jonathan Poelen
 #include <type_traits>
 #include <charconv>
 
-#include "utils/sugar/bytes_view.hpp"
-#include "utils/sugar/array_view.hpp"
-
 
 namespace cli
 {
@@ -338,16 +335,19 @@ namespace detail
                 }
             }
             else if constexpr (parsers::is_optional_value<decltype(opt._parser)>) {
-                if (s[1]) {
-                    pr.str = s + ((s[1] == '=') ? 2 : 1);
+                if (s[1] == '=') {
+                    pr.str = s + 2;
+                    res = opt._parser(pr);
+                    if (res == Res::Ok) {
+                        ++pr.opti;
+                    }
                 }
                 else {
                     pr.str = nullptr;
-                }
-
-                res = opt._parser(pr);
-                if (res == Res::Ok) {
-                    ++pr.opti;
+                    res = opt._parser(pr);
+                    if (res == Res::Ok && !s[1]) {
+                        ++pr.opti;
+                    }
                 }
             }
             // is no_value
@@ -568,22 +568,15 @@ namespace arg_parsers
         return Res::Ok;
     }
 
-    inline Res arg_parse(char const *& result, char const * s)
+    inline Res arg_parse(std::string_view& result, char const * s)
     {
         result = s;
         return Res::Ok;
     }
 
-    inline Res arg_parse(bytes_view& result, char const * s)
+    inline Res arg_parse(char const *& result, char const * s)
     {
-        result = std::string_view(s);
-        return Res::Ok;
-    }
-
-    template<class T>
-    Res arg_parse(array_view<T>& result, char const * s)
-    {
-        *result = std::string_view(s);
+        result = s;
         return Res::Ok;
     }
 
@@ -778,11 +771,6 @@ template<class Act>
 auto trigger(Act act)
 {
     return parsers::trigger<Act>{act};
-}
-
-inline auto arg_triggered(bool& v)
-{
-    return trigger([&]{ v = true; });
 }
 
 template<class T>

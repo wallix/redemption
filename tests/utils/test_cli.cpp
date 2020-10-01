@@ -136,7 +136,7 @@ RED_AUTO_TEST_CASE(TestCLI_parse_short_required_option)
 
 RED_AUTO_TEST_CASE(TestCLI_parse_short_optional_option)
 {
-    char const* argv[] {"progname", "-x", "-x=off", "-xon", "-xx", ""};
+    char const* argv[] {"progname", "-x", "-x=off", "-xx", ""};
     const int argc = int(std::size(argv))-1;
 
     auto mk_pr = [&](int opti){
@@ -175,16 +175,7 @@ RED_AUTO_TEST_CASE(TestCLI_parse_short_optional_option)
         auto res = cli::Res::Ok;
         RED_CHECK(!cli::detail::parse_short_option(argv[3]+1, pr, opt, res));
         RED_CHECK(res == cli::Res::Ok);
-        RED_CHECK(pr.opti == 4);
-        RED_CHECK(n1 == 1);
-    }
-
-    {
-        cli::ParseResult pr = mk_pr(4);
-        auto res = cli::Res::Ok;
-        RED_CHECK(!cli::detail::parse_short_option(argv[4]+1, pr, opt, res));
-        RED_CHECK(res == cli::Res::BadFormat);
-        RED_CHECK(pr.opti == 4);
+        RED_CHECK(pr.opti == 3);
     }
 }
 
@@ -452,11 +443,19 @@ RED_AUTO_TEST_CASE(TestCLI_on_off)
         RED_CHECK(n3 == 2);
     }
     {
-        char const* argv[] {"progname", "-xoff", "--z=on", ""};
+        char const* argv[] {"progname", "-x=off", "--z=on", ""};
         const int argc = int(std::size(argv))-1;
         RED_CHECK(cli::parse(options, argc, argv) == (cli::ParseResult{argc, argc, argv, nullptr, cli::Res::Ok}));
         RED_CHECK(n1 == 0);
         RED_CHECK(n2 == 2);
+        RED_CHECK(n3 == 1);
+    }
+    {
+        char const* argv[] {"progname", "-xy=off", ""};
+        const int argc = int(std::size(argv))-1;
+        RED_CHECK(cli::parse(options, argc, argv) == (cli::ParseResult{argc, argc, argv, nullptr, cli::Res::Ok}));
+        RED_CHECK(n1 == 1);
+        RED_CHECK(n2 == 0);
         RED_CHECK(n3 == 1);
     }
 
@@ -555,7 +554,7 @@ RED_AUTO_TEST_CASE(TestCLI_positional)
 {
     bool a = false;
     auto options = cli::options(
-        cli::option("a").parser(cli::arg_triggered(a))
+        cli::option("a").parser(cli::on_off_location(a))
     );
 
     {
@@ -578,8 +577,8 @@ RED_AUTO_TEST_CASE(TestCLI_conflict)
     bool a = false;
     bool b = false;
     auto options = cli::options(
-        cli::option("abc").parser(cli::arg_triggered(a)),
-        cli::option("abcd").parser(cli::arg_triggered(b))
+        cli::option("abc").parser(cli::on_off_location(a)),
+        cli::option("abcd").parser(cli::on_off_location(b))
     );
 
     char const* argv[] {"progname", "--abcd", ""};

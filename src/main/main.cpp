@@ -32,7 +32,6 @@
 #include "core/mainloop.hpp"
 
 #include "main/version.hpp"
-#include "program_options/program_options.hpp"
 #include "system/scoped_crypto_init.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "transport/file_transport.hpp"
@@ -43,6 +42,7 @@
 #include "utils/log.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/cli.hpp"
 
 #include <iostream>
 
@@ -218,13 +218,6 @@ inline int shutdown()
 
 int main(int argc, char** argv)
 {
-    const char * const copyright_notice = "\n"
-        "A Remote Desktop Protocol proxy.\n"
-        "Copyright (C) WALLIX 2010-2018.\n"
-        "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
-        "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou,\n"
-        "Meng Tan, Jennifer Inthavong, Clement Moroldo and David Fort.";
-
     setlocale(LC_CTYPE, "C");
 
     const unsigned uid = getuid();
@@ -233,54 +226,112 @@ int main(int argc, char** argv)
     unsigned euid = uid;
     unsigned egid = gid;
 
+    bool is_nodeamon = false;
+
     std::string config_filename = app_path(AppPath::CfgIni).to_string();
 
-    static constexpr char const * opt_print_ini_spec = "print-spec";
-    static constexpr char const * opt_print_rdp_cp_spec = "print-rdp-cp-spec";
-    static constexpr char const * opt_print_vnc_cp_spec = "print-vnc-cp-spec";
-    static constexpr char const * opt_print_cp_mapping = "print-cp-mapping";
-    static constexpr char const * opt_print_ini = "print-default-ini";
+    bool enable_check = false;
+    bool enable_kill = false;
+    bool enable_force = false;
+    bool enable_nofork = false;
 
-    program_options::options_description desc({
-        {'h', "help", "produce help message"},
-        {'v', "version", "show software version"},
-        {'k', "kill", "shut down rdpproxy"},
-        {'n', "nodaemon", "don't fork into background"},
+    auto const options = cli::options(
+        cli::option('h', "help").help("produce help message")
+            .parser(cli::help()),
 
-        {'u', "uid", &euid, "run with given uid"},
+        cli::option('v', "version").help("show software version")
+            .parser(cli::quit([]{
+                std::cout
+                    << redemption_info_version() << "\n"
+                    << redemption_info_copyright() << std::endl
+                ;
+            })),
 
-        {'g', "gid", &egid, "run with given gid"},
+        cli::option('k', "kill").help("shut down rdpproxy")
+            .parser(cli::on_off_location(enable_kill)),
 
-        //{'t', "trace", "trace behaviour"},
+        cli::option('n', "nodaemon").help("don't fork into background")
+            .parser(cli::on_off_location(is_nodeamon)),
 
-        {'c', "check", "check installation files"},
+        cli::option('u', "uid").help("run with given uid")
+            .parser(cli::arg_location(euid)).argname("<uid>"),
 
-        {'f', "force", "remove application lock file"},
+        cli::option('g', "gid").help("run with given gid")
+            .parser(cli::arg_location(egid)).argname("<gid>"),
 
-        {'N', "nofork", "not forkable (debug)"},
+        cli::option('c', "check").help("check installation files")
+            .parser(cli::on_off_location(enable_check)),
 
-        {"config-file", &config_filename, "use an another ini file"},
+        cli::option('f', "force").help("remove application lock file")
+            .parser(cli::on_off_location(enable_force)),
 
-        {opt_print_ini_spec, "Show file spec for rdpproxy.ini"},
-        {opt_print_rdp_cp_spec, "Show connection policy spec for rdp protocol"},
-        {opt_print_vnc_cp_spec, "Show connection policy spec for vnc protocol"},
-        {opt_print_cp_mapping, "Show connection policy mapping for sesman"},
-        {opt_print_ini, "Show default rdpproxy.ini"}
+        cli::option('N', "nofork").help("not forkable (debug)")
+            .parser(cli::on_off_location(enable_nofork)),
 
-        //{"test", "check Inifile syntax"}
-    });
+        cli::option("config-file").help("use an another ini file")
+            .parser(cli::arg_location(config_filename)).argname("<path>"),
 
-    program_options::variables_map options;
+        cli::option("print-spec").help("Show file spec for rdpproxy.ini")
+            .parser(cli::quit([]{
+                std::cout <<
+                    #include "configs/autogen/str_python_spec.hpp"
+                ;
+            })),
 
-    try {
-        options = program_options::parse_command_line(argc, argv, desc);
+        cli::option("print-rdp-cp-spec").help("Show connection policy spec for rdp protocol")
+            .parser(cli::quit([]{
+                std::cout <<
+                    #include "configs/autogen/rdp_cp_spec.hpp"
+                ;
+            })),
+
+        cli::option("print-vnc-cp-spec").help("Show connection policy spec for vnc protocol")
+            .parser(cli::quit([]{
+                std::cout <<
+                    #include "configs/autogen/vnc_cp_spec.hpp"
+                ;
+            })),
+
+        cli::option("print-cp-mapping").help("Show connection policy mapping for sesman")
+            .parser(cli::quit([]{
+                std::cout <<
+                    #include "configs/autogen/cp_mapping.hpp"
+                ;
+            })),
+
+        cli::option("print-default-ini").help("Show default rdpproxy.ini")
+            .parser(cli::quit([]{
+                std::cout <<
+                    #include "configs/autogen/str_ini.hpp"
+                ;
+            }))
+    );
+
+    auto const cli_result = cli::parse(options, argc, argv);
+    switch (cli_result.res) {
+        case cli::Res::Ok:
+            break;
+        case cli::Res::Exit:
+            return 0;
+        case cli::Res::Help:
+            std::cout << "Usage: rdpproxy [options]\n\n";
+            cli::print_help(options, std::cout);
+            return 0;
+        case cli::Res::BadFormat:
+        case cli::Res::BadOption:
+        case cli::Res::NotOption:
+        case cli::Res::StopParsing:
+            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
+            if (cli_result.opti < cli_result.argc) {
+                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
+            }
+            std::cerr << "\n";
+            return 17;
     }
-    catch (std::exception const& e) {
-        std::cerr << argv[0] << ": error: " << e.what() << "\n";
-        return 17;
-    }
 
-    if (options.count("kill")) {
+    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
+
+    if (enable_kill) {
         int status = shutdown();
         if (status){
             // TODO check the real error that occured
@@ -290,52 +341,7 @@ int main(int argc, char** argv)
         return status;
     }
 
-    if (options.count("help")) {
-        std::cout << redemption_info_version() << copyright_notice << "\n\n";
-        std::cout << "Usage: rdpproxy [options]\n\n";
-        std::cout << desc << std::endl;
-        return 0;
-    }
-
-    if (options.count("version")) {
-        std::cout << redemption_info_version() << copyright_notice << std::endl;
-        return 0;
-    }
-
-    if (options.count(opt_print_ini_spec)) {
-        std::cout <<
-            #include "configs/autogen/str_python_spec.hpp"
-        ;
-        return 0;
-    }
-    if (options.count(opt_print_rdp_cp_spec)) {
-        std::cout <<
-            #include "configs/autogen/rdp_cp_spec.hpp"
-        ;
-        return 0;
-    }
-    if (options.count(opt_print_vnc_cp_spec)) {
-        std::cout <<
-            #include "configs/autogen/vnc_cp_spec.hpp"
-        ;
-        return 0;
-    }
-    if (options.count(opt_print_cp_mapping)) {
-        std::cout <<
-            #include "configs/autogen/cp_mapping.hpp"
-        ;
-        return 0;
-    }
-    if (options.count(opt_print_ini)) {
-        std::cout <<
-            #include "configs/autogen/str_ini.hpp"
-        ;
-        return 0;
-    }
-
-    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
-
-    if (options.count("check")) {
+    if (enable_check) {
         /*
           setgid(egid);
           setuid(euid);
@@ -375,7 +381,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (options.count("force")){
+    if (enable_force){
         shutdown();
     }
 
@@ -407,7 +413,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    if (!options.count("nodaemon")) {
+    if (!is_nodeamon) {
         daemonize(app_path(AppPath::LockFile));
     }
 
@@ -442,7 +448,7 @@ int main(int argc, char** argv)
     redemption_main_loop(
         ini, euid, egid,
         std::move(config_filename),
-        !options.count("nofork"));
+        !enable_nofork);
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

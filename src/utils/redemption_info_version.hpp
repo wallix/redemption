@@ -28,7 +28,14 @@
 #include "main/version.hpp"
 #include "utils/pp.hpp"
 
-inline char const* redemption_info_version() noexcept
+#include <string_view>
+
+inline std::string_view redemption_info_copyright()
+{
+    return "Copyright (C) Wallix 2010-2020";
+}
+
+inline std::string_view redemption_info_version() noexcept
 {
     return "ReDemPtion " VERSION
         " ("

@@ -30,7 +30,6 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
-#include "program_options/program_options.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/cfgloader.hpp"
@@ -41,6 +40,8 @@
 #include "utils/redemption_info_version.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
+#include "utils/cli.hpp"
+#include "utils/cli_chrono.hpp"
 #include "acl/sesman.hpp"
 #include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
@@ -57,10 +58,10 @@ int main(int argc, char** argv)
 {
     uint64_t verbose = 0;
     std::string target_device;
-    int target_port = 3389;
+    int port = 0;
 
-    unsigned inactivity_time_ms = 1000u;
-    unsigned max_time_ms = 5u * inactivity_time_ms;
+    std::chrono::milliseconds inactivity_time_ms {1000};
+    std::chrono::milliseconds max_time_ms {inactivity_time_ms * 5};
     std::string screen_output;
     std::string record_output;
 
@@ -70,58 +71,95 @@ int main(int argc, char** argv)
     std::string load_balance_info;
     std::string ini_file;
 
-    int cert_check;
+    int cert_check = 0;
+    bool is_vnc = false;
+    bool use_LCGRandom = false;
 
-    /* Program options */
-    namespace po = program_options;
-    po::options_description desc({
-        {'v', "version",""},
-        {'h', "help","produce help message"},
-        {'t', "target-device", &target_device, "target device"},
-        {'u', "username", &username, "username"},
-        {'p', "password", &password, "password"},
-        {'P', "port", &target_port, "port"},
-        {'a', "inactivity-time", &inactivity_time_ms, "milliseconds inactivity before sreenshot"},
-        {'m', "max-time", &max_time_ms, "maximum milliseconds before sreenshot"},
-        {'s', "screen-output", &screen_output, "png screenshot path"},
-        {'r', "record-path", &record_output, "dump socket path"},
-        {'V', "vnc", "dump socket path"},
-        {'l', "lcg", "use LCGRandom"},
-        {'b', "load-balance-info", &load_balance_info, ""},
-        {'n', "ini", &ini_file, "load ini filename"},
-        {'c', "cert-check", &cert_check,
-            "0 = fails if certificates doesn't match or miss.\n"
-            "1 = fails if certificate doesn't match, succeed if no known certificate\n"
-            "2 = succeed if certificates exists (not checked), fails if missing.\n"
-            "3 = always succeed.\n"
-        },
-        {"verbose", &verbose, "verbose"},
-    });
+    auto positive_duration_location = [](std::chrono::milliseconds& ms){
+        return cli::arg_location(ms, [](std::chrono::milliseconds& ms){
+            return ms < std::chrono::milliseconds::zero() ? cli::Res::BadFormat : cli::Res::Ok;
+        });
+    };
 
-    auto options = po::parse_command_line(argc, argv, desc);
+    auto const options = cli::options(
+        cli::option('h', "help").help("produce help message")
+            .parser(cli::help()),
 
-    if (options.count("help") > 0) {
-        std::cout <<
-            "\n"
-            "ReDemPtion stand alone RDP Client. " << redemption_info_version() << ".\n"
-            "Copyright (C) Wallix 2010-2018.\n"
-            "\n"
-            "Usage: " << argv[0] << " [options]\n\n"
-            << desc << std::endl
-        ;
-        return 0;
+        cli::option('v', "version").help("show software version")
+            .parser(cli::quit([]{
+                std::cout << redemption_info_version() << std::endl;
+            })),
+
+        cli::option('t', "target-device")
+            .parser(cli::arg_location(target_device)).argname("<address>"),
+
+        cli::option('u', "username")
+            .parser(cli::arg_location(username)).argname("<username>"),
+
+        cli::option('p', "password")
+            .parser(cli::password_location(argv, password)),
+
+        cli::option('P', "port")
+            .parser(cli::arg_location(port)).argname("<port>"),
+
+        cli::option('a', "inactivity-time").help("milliseconds inactivity before sreenshot")
+            .parser(positive_duration_location(inactivity_time_ms)),
+
+        cli::option('m', "max-time").help("maximum milliseconds before sreenshot")
+            .parser(positive_duration_location(max_time_ms)),
+
+        cli::option('s', "screen-output").help("png screenshot path")
+            .parser(cli::arg_location(screen_output)).argname("<path>"),
+
+        cli::option('r', "record-path").help("dump socket path")
+            .parser(cli::arg_location(record_output)).argname("<path>"),
+
+        cli::option('V', "vnc").help("enable vnc instead of rdp")
+            .parser(cli::on_off_location(is_vnc)),
+
+        cli::option('l', "lcg").help("use LCGRandom")
+            .parser(cli::on_off_location(use_LCGRandom)),
+
+        cli::option('b', "load-balance-info")
+            .parser(cli::arg_location(load_balance_info)).argname("<data>"),
+
+        cli::option('n', "ini").help("load ini filename")
+            .parser(cli::arg_location(ini_file)).argname("<path>"),
+
+        cli::option('c', "cert-check").help("\n"
+            "    0 = fails if certificates doesn't match or miss.\n"
+            "    1 = fails if certificate doesn't match, succeed if no known certificate\n"
+            "    2 = succeed if certificates exists (not checked), fails if missing.\n"
+            "    3 = always succeed.")
+            .parser(cli::arg_location(cert_check)).argname("<number>"),
+
+        cli::option("verbose")
+            .parser(cli::arg_location(verbose)).argname("<verbosity>")
+    );
+
+    auto const cli_result = cli::parse(options, argc, argv);
+    switch (cli_result.res) {
+        case cli::Res::Ok:
+            break;
+        case cli::Res::Exit:
+            return 0;
+        case cli::Res::Help:
+            std::cout << "Usage: rdpclient [options]\n\n";
+            cli::print_help(options, std::cout);
+            return 0;
+        case cli::Res::BadFormat:
+        case cli::Res::BadOption:
+        case cli::Res::NotOption:
+        case cli::Res::StopParsing:
+            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
+            if (cli_result.opti < cli_result.argc) {
+                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
+            }
+            std::cerr << "\n";
+            return 1;
     }
 
-    if (options.count("version") > 0) {
-        std::cout << redemption_info_version() << std::endl;
-        return 0;
-    }
-
-    bool const is_vnc = options.count("vnc");
-
-    if (is_vnc && !options.count("port")) {
-        target_port = 5900;
-    }
+    int const target_port = port ? port : (is_vnc ? 5900 : 3389);
 
     openlog("rdpclient", LOG_CONS | LOG_PERROR, LOG_USER);
 
@@ -178,9 +216,8 @@ int main(int argc, char** argv)
             trans = &recorder;
         }
         auto mod = create_mod(*trans);
-        using Ms = std::chrono::milliseconds;
         return run_test_client(is_vnc ? "VNC" : "RDP", events, *mod,
-            Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
+            inactivity_time_ms, max_time_ms, screen_output);
     };
 
     Inifile ini;
@@ -259,7 +296,7 @@ int main(int argc, char** argv)
         mod_rdp_params.log();
     }
 
-    bool const use_system_obj = record_output.empty() && !options.count("lcg");
+    bool const use_system_obj = record_output.empty() && !use_LCGRandom;
 
     const ChannelsAuthorizations channels_authorizations("*", std::string{});
 

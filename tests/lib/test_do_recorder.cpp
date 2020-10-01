@@ -536,7 +536,7 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
 
     TEST_DO_MAIN(argv, 0, hmac_key_2016, trace_20161025_fn,
         "No error detected during the data verification.\n\nverify ok\n"_av,
-            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash//"
+            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash/"
             "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025"
             "-164758,wab-4-2-4.yourdomain,7192.mwrm"
             "\"\n\n"_av);
@@ -561,7 +561,7 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
 
     TEST_DO_MAIN(argv, 0, hmac_key_2016, trace_20161025_fn,
         "No error detected during the data verification.\n\nverify ok\n"_av,
-            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash//"
+            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash/"
             "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
             "-165619,wab-4-2-4.yourdomain,2510.mwrm"
             "\"\n\n"_av);
