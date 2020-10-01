@@ -218,6 +218,7 @@ public:
         this->front.set_focus_on_password_textbox(false);
         this->front.set_focus_on_unidentified_input_field(false);
         this->front.set_consent_ui_visible(false);
+        this->front.set_session_locked(false);
     }
 
     ~SessionProbeVirtualChannel()
@@ -1138,6 +1139,19 @@ public:
                         });
 
                         this->front.set_consent_ui_visible(!::strcasecmp(parameters_[0].c_str(), "yes"));
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "SESSION_LOCKED")) {
+                    if (parameters_.size() == 1) {
+                        this->log6(
+                            LogId::SESSION_LOCKED, {
+                            KVLog("status"_av, parameters_[0]),
+                        });
+
+                        this->front.set_session_locked(!::strcasecmp(parameters_[0].c_str(), "yes"));
                     }
                     else {
                         message_format_invalid = true;
