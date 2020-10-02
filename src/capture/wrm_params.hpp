@@ -20,14 +20,11 @@
 
 #pragma once
 
+#include "core/RDP/RDPSerializerVerbose.hpp"
 #include "configs/autogen/enums.hpp"
 #include "gdi/screen_info.hpp"
 
 #include <chrono>
-
-#ifdef basename
-# undef basename
-#endif
 
 class CryptoContext;
 class Random;
@@ -44,32 +41,6 @@ struct WrmParams
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
-    uint32_t wrm_verbose;
+    RDPSerializerVerbose wrm_verbose;
     uint32_t file_permissions;
-
-    WrmParams(BitsPerPixel capture_bpp,
-              bool remote_app,
-              CryptoContext & cctx,
-              Random & rnd,
-              Fstat & fstat,
-              const char * hash_path,
-              std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
-              std::chrono::seconds break_interval,
-              WrmCompressionAlgorithm wrm_compression_algorithm,
-              // TODO Verbose::WrmCapture
-              uint32_t wrm_verbose,
-              uint32_t file_permissions)
-    : capture_bpp(capture_bpp)
-    , remote_app(remote_app)
-    , cctx(cctx)
-    , rnd(rnd)
-    , fstat(fstat)
-    , hash_path(hash_path)
-    , frame_interval(frame_interval)
-    , break_interval(break_interval)
-    , wrm_compression_algorithm(wrm_compression_algorithm)
-    , wrm_verbose(wrm_verbose)
-    , file_permissions(file_permissions)
-    {
-    }
 };

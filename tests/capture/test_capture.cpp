@@ -108,7 +108,7 @@ namespace
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0,
+            RDPSerializerVerbose::none,
             S_IRUSR | S_IRGRP
         }
         , capture_params{
@@ -959,7 +959,7 @@ namespace
         , drawable(scr.cx, scr.cy)
         , consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache,
             drawable, WrmCompressionAlgorithm::no_compression,
-            GraphicToFile::SendInput::NO, GraphicToFile::Verbose::none)
+            GraphicToFile::SendInput::NO, RDPSerializerVerbose::none)
         {}
 
         void next_second(int n = 1) /*NOLINT*/
@@ -2111,7 +2111,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     GraphicToFile graphic_to_file(
         player.record_now, out_wrm_trans, BitsPerPixel{24}, false,
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
-        GraphicToFile::SendInput::NO, GraphicToFile::Verbose::none
+        GraphicToFile::SendInput::NO, RDPSerializerVerbose::none
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 

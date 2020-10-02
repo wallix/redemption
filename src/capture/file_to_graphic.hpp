@@ -29,7 +29,6 @@
 #include "utils/verbose_flags.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/timeval_ops.hpp"
-#include "utils/stream.hpp"
 
 #include <chrono>
 
@@ -38,6 +37,8 @@
 
 class Transport;
 class BmpCache;
+class InStream;
+
 namespace gdi
 {
     class GraphicApi;
@@ -48,6 +49,7 @@ namespace gdi
     class RelayoutApi;
     class ResizeApi;
 }
+
 namespace RDP
 {
     class AltsecDrawingOrderHeader;

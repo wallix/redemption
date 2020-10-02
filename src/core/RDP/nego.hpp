@@ -100,8 +100,11 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
+        // same as rdp_verbose.hpp
+        //@{
         credssp     = 0x400,
         negotiation = 0x800,
+        //@}
     };
 
     [[nodiscard]] bool enhanced_rdp_security_is_in_effect() const;

@@ -89,7 +89,6 @@
 //   field of the Drawing Order identifies the type of drawing order.
 
 #include "utils/sugar/finally.hpp"
-#include "utils/verbose_flags.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
 
@@ -108,6 +107,7 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "core/RDP/RDPSerializerVerbose.hpp"
 
 #include "utils/stream.hpp"
 #include "transport/transport.hpp"
@@ -159,21 +159,9 @@ protected:
     GlyphCache    & glyph_cache;
     PointerCache  & pointer_cache;
 
-    // RDPSerializer serializer(, ...., RDPSerializer::Verbose)
+    RDPSerializerVerbose verbose;
 
 public:
-    REDEMPTION_VERBOSE_FLAGS(protected, verbose)
-    {
-        none,
-        pointer             = 0x0004,
-        primary_orders      = 0x0020,
-        secondary_orders    = 0x0040,
-        bitmap_update       = 0x0080,
-        surface_commands    = 0x0100,
-        bmp_cache           = 0x0200,
-        internal_buffer     = 0x0400,
-        // update Front::Verbose when verbose > 0xffff
-    };
 
     RDPSerializer( OutStream & stream_orders
                  , OutStream & stream_bitmaps
@@ -186,7 +174,7 @@ public:
                  , const bool use_compact_packets
                  , size_t max_data_block_size
                  , bool experimental_enable_serializer_data_block_size_limit
-                 , Verbose verbose)
+                 , RDPSerializerVerbose verbose)
     : stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
     , capture_bpp(bpp)
@@ -234,7 +222,7 @@ public:
         // To support 64x64 32-bit bitmap.
         size_t const max_packet_size = std::min(this->stream_orders.get_capacity(), this->max_data_block_size);
         size_t const used_size = this->stream_orders.get_offset();
-        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO
           , "<Serializer %p> RDPSerializer::reserve_order[%zu](%zu) used=%zu free=%zu"
           , static_cast<void*>(this)
           , this->order_count
@@ -300,7 +288,7 @@ public:
             this->ssc.common = newcommon;
             this->ssc.opaquerect = cmd;
 
-            if (bool(this->verbose & Verbose::primary_orders)) {
+            if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
                 cmd.log(LOG_INFO, this->ssc.common.clip);
             }
         });
@@ -313,7 +301,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.scrblt);
         this->ssc.common = newcommon;
         this->ssc.scrblt = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
             cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
@@ -324,7 +312,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.destblt);
         this->ssc.common = newcommon;
         this->ssc.destblt = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
             cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
@@ -335,7 +323,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multidstblt);
         this->ssc.common      = newcommon;
         this->ssc.multidstblt = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
             cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
@@ -347,7 +335,7 @@ public:
             cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiopaquerect);
             this->ssc.common          = newcommon;
             this->ssc.multiopaquerect = cmd;
-            if (bool(this->verbose & Verbose::primary_orders)) {
+            if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
                 cmd.log(LOG_INFO, this->ssc.common.clip);
             }
         });
@@ -360,7 +348,7 @@ public:
             cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multipatblt);
             this->ssc.common      = newcommon;
             this->ssc.multipatblt = cmd;
-            if (bool(this->verbose & Verbose::primary_orders)) {
+            if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
                 cmd.log(LOG_INFO, this->ssc.common.clip);
             }
         });
@@ -372,7 +360,7 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.multiscrblt);
         this->ssc.common      = newcommon;
         this->ssc.multiscrblt = cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
             cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
@@ -384,7 +372,7 @@ public:
             cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.patblt);
             this->ssc.common = newcommon;
             this->ssc.patblt = cmd;
-            if (bool(this->verbose & Verbose::primary_orders)) {
+            if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
                 cmd.log(LOG_INFO, this->ssc.common.clip);
             }
         });
@@ -410,7 +398,7 @@ protected:
         }
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx,
             this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
-            bool(this->verbose & Verbose::secondary_orders));
+            bool(this->verbose & RDPSerializerVerbose::secondary_orders));
         bool really_use_bitmap_comp = this->use_bitmap_comp;
         if (really_use_bitmap_comp) {
             if (!cmd_cache.bmp.has_data_compressed()) {
@@ -425,7 +413,7 @@ protected:
         cmd_cache.emit( this->capture_bpp, this->stream_orders, this->bitmap_cache_version
                       , really_use_bitmap_comp, this->use_compact_packets);
 
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             cmd_cache.log(LOG_INFO);
         }
     }
@@ -440,7 +428,7 @@ protected:
         this->reserve_order(cmd.total_order_size());
         cmd.emit(this->stream_orders);
 
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             cmd.log(LOG_INFO);
         }
     }
@@ -456,7 +444,7 @@ public:
 
         using is_RDPMemBlt = std::is_same<RDPMemBlt, MemBlt>;
 
-        LOG_IF(bool(this->verbose & Verbose::bmp_cache), LOG_INFO
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::bmp_cache), LOG_INFO
           , "RDPSerializer: draw %s, cache_id=%u cache_index=%u in_wait_list=%s"
           , is_RDPMemBlt() ? "MemBlt" : "Mem3Blt", cache_id, cache_idx
           , (in_wait_list ? "true" : "false"));
@@ -478,7 +466,7 @@ public:
         newcmd.emit(this->stream_orders, newcommon, this->ssc.common, this_memblt);
         this->ssc.common = newcommon;
         this_memblt = newcmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
             newcmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
@@ -501,7 +489,7 @@ public:
             cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.lineto);
             this->ssc.common = newcommon;
             this->ssc.lineto = cmd;
-            if (bool(this->verbose & Verbose::primary_orders)) {
+            if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
                 cmd.log(LOG_INFO, this->ssc.common.clip);
             }
         });
@@ -547,7 +535,7 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                    LOG_IF(bool(this->verbose & RDPSerializerVerbose::primary_orders), LOG_INFO,
                         "RDPSerializer::draw(RDPGlyphIndex, ...): "
                         "Experimental support of "
                         "the distance between two consecutive glyphs "
@@ -565,7 +553,7 @@ public:
                 if (has_delta_byte) {
                     const uint16_t delta = get_delta(new_cmd, i);
 
-                    LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                    LOG_IF(bool(this->verbose & RDPSerializerVerbose::primary_orders), LOG_INFO,
                         "RDPSerializer::draw(RDPGlyphIndex, ...): "
                             "Experimental support of "
                             "the distance between two consecutive fragments "
@@ -575,7 +563,7 @@ public:
                         delta);
                 }
 
-                LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                LOG_IF(bool(this->verbose & RDPSerializerVerbose::primary_orders), LOG_INFO,
                     "RDPSerializer::draw(RDPGlyphIndex, ...): "
                         "Experimental support of USE (0xFE) operation byte in "
                         "GlyphIndex Primary Drawing Order. "
@@ -588,7 +576,7 @@ public:
                 const uint8_t fragment_index = new_cmd.data[i++];
                 const uint8_t fragment_size  = new_cmd.data[i++];
 
-                LOG_IF(bool(this->verbose & Verbose::primary_orders), LOG_INFO,
+                LOG_IF(bool(this->verbose & RDPSerializerVerbose::primary_orders), LOG_INFO,
                     "RDPSerializer::draw(RDPGlyphIndex, ...): "
                         "Experimental support of ADD (0xFF) operation byte in "
                         "GlyphIndex Primary Drawing Order. "
@@ -604,7 +592,7 @@ public:
         new_cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.glyphindex);
         this->ssc.common = newcommon;
         this->ssc.glyphindex = new_cmd;
-        if (bool(this->verbose & Verbose::primary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
             new_cmd.log(LOG_INFO, this->ssc.common.clip);
         }
     }
@@ -646,7 +634,7 @@ public:
             cmd.emit(this->stream_orders, newcommon, this->ssc.common, this->ssc.polyline);
             this->ssc.common   = newcommon;
             this->ssc.polyline = cmd;
-            if (bool(this->verbose & Verbose::primary_orders)) {
+            if (bool(this->verbose & RDPSerializerVerbose::primary_orders)) {
                 cmd.log(LOG_INFO, this->ssc.common.clip);
             }
         });
@@ -675,7 +663,7 @@ public:
     void draw(const RDP::FrameMarker & order) override {
         this->reserve_order(5);
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -683,7 +671,7 @@ public:
     void draw(const RDP::RAIL::NewOrExistingWindow & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -691,7 +679,7 @@ public:
     void draw(const RDP::RAIL::WindowIcon & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -699,7 +687,7 @@ public:
     void draw(const RDP::RAIL::CachedIcon & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -707,7 +695,7 @@ public:
     void draw(const RDP::RAIL::DeletedWindow & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -715,7 +703,7 @@ public:
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -723,7 +711,7 @@ public:
     void draw(const RDP::RAIL::DeletedNotificationIcons & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -731,7 +719,7 @@ public:
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -739,7 +727,7 @@ public:
     void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
         this->reserve_order(order.size());
         order.emit(this->stream_orders);
-        if (bool(this->verbose & Verbose::secondary_orders)) {
+        if (bool(this->verbose & RDPSerializerVerbose::secondary_orders)) {
             order.log(LOG_INFO);
         }
     }
@@ -750,7 +738,7 @@ public:
         size_t const max_packet_size = std::min(this->stream_bitmaps.get_capacity(), this->max_data_block_size);
         // TODO QuickFix, should set a max packet size according to RDP compression version of client, proxy and server
         size_t const used_size       = this->stream_bitmaps.get_offset();
-        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO
           , "<Serializer %p> RDPSerializer::reserve_bitmap[%zu](%zu) used=%zu free=%zu"
           , static_cast<void*>(this)
           , this->bitmap_count
@@ -804,7 +792,7 @@ public:
 
             this->stream_bitmaps.out_copy_bytes(bmp.data(), bmp.bmp_size());
         }
-        if (bool(this->verbose & Verbose::bitmap_update)) {
+        if (bool(this->verbose & RDPSerializerVerbose::bitmap_update)) {
             bitmap_data.log(LOG_INFO);
         }
     }

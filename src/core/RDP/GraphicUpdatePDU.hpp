@@ -489,7 +489,7 @@ public:
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
                      , bool send_new_pointer
-                     , Verbose verbose
+                     , RDPSerializerVerbose verbose
                      )
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
                        , this->buffer_stream_bitmaps.get_data_stream()
@@ -513,13 +513,13 @@ public:
     ~GraphicsUpdatePDU() = default;
 
     void init_orders() {
-        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO
           , "GraphicsUpdatePDU::init::Initializing orders batch mcs_userid=%u shareid=%d"
           , this->userid, this->shareid);
     }
 
     void init_bitmaps() {
-        LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO
           , "GraphicsUpdatePDU::init::Initializing bitmaps batch mcs_userid=%u shareid=%d"
           , this->userid, this->shareid);
 
@@ -537,7 +537,7 @@ public:
 protected:
     void flush_orders() override {
         if (this->order_count > 0){
-            LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO,
+            LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO,
                 "GraphicsUpdatePDU::flush_orders: order_count=%zu", this->order_count);
 
             ::send_server_update( this->trans, this->fastpath_support, this->compression
@@ -553,7 +553,7 @@ protected:
 
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            LOG_IF(bool(this->verbose & Verbose::internal_buffer), LOG_INFO
+            LOG_IF(bool(this->verbose & RDPSerializerVerbose::internal_buffer), LOG_INFO
               , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%zu offset=%" PRIu32
               , this->bitmap_count, this->offset_bitmap_count);
             this->stream_bitmaps.stream_at(this->offset_bitmap_count).out_uint16_le(this->bitmap_count);
@@ -856,7 +856,7 @@ protected:
 
 
     void send_pointer(int cache_idx, const Pointer & cursor) override {
-        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
 
         if (this->send_new_pointer) {
@@ -878,7 +878,7 @@ protected:
                                 , 0, stream, underlying_cast(this->verbose));
         }
 
-        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::send_pointer done");
     }   // void send_pointer(int cache_idx, const Pointer & cursor)
 
@@ -896,7 +896,7 @@ protected:
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
     void cached_pointer_update(int cache_idx) override {
-        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::set_pointer(cache_idx=%d)", cache_idx);
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -907,13 +907,13 @@ protected:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_CACHED
                             , 0, stream, underlying_cast(this->verbose));
 
-        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::set_pointer done");
     }   // void cached_pointer_update(int cache_idx)
 
 public:
     void send_set_surface_command(RDPSetSurfaceCommand const & cmd) {
-        LOG_IF(bool(this->verbose & Verbose::surface_commands), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::surface_commands), LOG_INFO,
             "GraphicsUpdatePDU::send_surface_command");
 
         DynamicOutReservedStreamHelper stream(1024, 65536 - 1024 + cmd.bitmapDataLength);
@@ -930,7 +930,7 @@ public:
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos)
     {
-        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::update_pointer_position(xPos=%u, yPos=%u)", xPos, yPos);
 
         StaticOutReservedStreamHelper<1024, 65536-1024> stream;
@@ -942,7 +942,7 @@ public:
                             , this->encrypt, this->userid, SERVER_UPDATE_POINTER_POSITION
                             , 0, stream, underlying_cast(this->verbose));
 
-        LOG_IF(bool(this->verbose & Verbose::pointer), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::update_pointer_position done");
     }
 };

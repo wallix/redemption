@@ -40,7 +40,7 @@ public:
                   , const bool use_compact_packets
                   , size_t max_data_block_size
                   , bool experimental_enable_serializer_data_block_size_limit
-                  , Verbose verbose) :
+                  , RDPSerializerVerbose verbose) :
         RDPSerializer( stream_orders
                      , stream_bitmaps
                      , bpp
@@ -301,7 +301,7 @@ RED_AUTO_TEST_CASE(TestXXX)
 
     FakeSerializer serializer(stream_orders, stream_bitmaps, BitsPerPixel{bpp},
         bmp_cache, gly_cache, ptr_cache, bitmap_cache_version, use_bitmap_comp,
-        use_compact_packets, max_data_block_size, experimental_enable_serializer_data_block_size_limit, RDPSerializer::Verbose::internal_buffer);
+        use_compact_packets, max_data_block_size, experimental_enable_serializer_data_block_size_limit, RDPSerializerVerbose::internal_buffer);
 
     serializer.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), Rect(0, 0, bogus.cx(), bogus.cy()), bogus);
 

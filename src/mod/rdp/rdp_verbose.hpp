@@ -41,8 +41,12 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
 
     input               = 0x0000'0100,
     rail_order          = 0x0000'0200,
+
+    // same as nego.hpp
+    //@{
     credssp             = 0x0000'0400,
     negotiation         = 0x0000'0800,
+    //@}
 
     cache_persister     = 0x0000'1000,
 

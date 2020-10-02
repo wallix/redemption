@@ -79,7 +79,7 @@ struct MatchFinder
      */
     static void configure_regexes(
         ConfigureRegexes conf_regex, const char * filters_list,
-        NamedRegexArray & regexes_filter_ref, int verbose,
+        NamedRegexArray & regexes_filter_ref, bool verbose,
         WithCapture is_capturing);
 
     static void report(

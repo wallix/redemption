@@ -312,8 +312,8 @@ private:
                 throw;
             }
 
-            LOG_IF(bool(this->verbose), LOG_INFO, "receive error %u : end of transport", e.id);
-            // receive error, end of transport
+            LOG_IF(bool(this->verbose & Verbose::end_of_transport), LOG_INFO,
+                "receive error %u : end of transport", e.id);
             return false;
         }
 

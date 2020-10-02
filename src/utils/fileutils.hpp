@@ -30,6 +30,10 @@
 #ifdef __EMSCRIPTEN__
 char* basename(char* path) noexcept;
 char const* basename(char const* path) noexcept;
+#else
+# ifdef basename
+#   undef basename
+# endif
 #endif
 
 struct SplitedPath {

@@ -77,10 +77,10 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         FakeFstat fstat;
         CryptoContext cctx;
 
-        GraphicToFile::Verbose wrm_verbose{}
-        //     |GraphicToFile::Verbose::primary_orders)
-        //     |GraphicToFile::Verbose::secondary_orders)
-        //     |GraphicToFile::Verbose::bitmap_update)
+        RDPSerializerVerbose wrm_verbose = RDPSerializerVerbose::none
+        //     |RDPSerializerVerbose::primary_orders)
+        //     |RDPSerializerVerbose::secondary_orders)
+        //     |RDPSerializerVerbose::bitmap_update)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
@@ -91,7 +91,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         cctx.set_trace_type(TraceType::localfile);
 
-        WrmParams wrm_params(
+        WrmParams wrm_params{
             BitsPerPixel{24},
             false,
             cctx,
@@ -101,9 +101,9 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose),
-            -1
-        );
+            wrm_verbose,
+            -1u,
+        };
 
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         cctx.set_trace_type(TraceType::localfile_hashed);
 
-        WrmParams wrm_params(
+        WrmParams wrm_params{
             BitsPerPixel{24},
             false,
             cctx,
@@ -212,9 +212,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
             std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
-            0, //0xFFFF VERBOSE
-            -1
-        );
+            RDPSerializerVerbose::none, //0xFFFF VERBOSE
+            -1u,
+        };
 
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
@@ -492,10 +492,10 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         FakeFstat fstat;
         CryptoContext cctx;
 
-        GraphicToFile::Verbose wrm_verbose {}
-        //     |GraphicToFile::Verbose::primary_orders)
-        //     |GraphicToFile::Verbose::secondary_orders)
-        //     |GraphicToFile::Verbose::bitmap_update)
+        RDPSerializerVerbose wrm_verbose {}
+        //     |RDPSerializerVerbose::primary_orders)
+        //     |RDPSerializerVerbose::secondary_orders)
+        //     |RDPSerializerVerbose::bitmap_update)
         ;
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
@@ -506,7 +506,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         cctx.set_trace_type(TraceType::localfile);
 
-        WrmParams wrm_params(
+        WrmParams wrm_params{
             BitsPerPixel{24},
             false,
             cctx,
@@ -516,9 +516,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose),
-            -1
-        );
+            wrm_verbose,
+            -1u
+        };
 
         TestGraphic gd_drawable(4, 1);
 
@@ -634,7 +634,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         FakeFstat fstat;
         CryptoContext cctx;
 
-        GraphicToFile::Verbose wrm_verbose {};
+        RDPSerializerVerbose wrm_verbose {};
 
         WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
         std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
@@ -644,7 +644,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 
         cctx.set_trace_type(TraceType::localfile);
 
-        WrmParams wrm_params(
+        WrmParams wrm_params{
             BitsPerPixel{24},
             true,   // RemoteApp
             cctx,
@@ -654,9 +654,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
             wrm_frame_interval,
             wrm_break_interval,
             wrm_compression_algorithm,
-            int(wrm_verbose),
-            -1
-        );
+            wrm_verbose,
+            -1u
+        };
 
         auto const color_cxt = gdi::ColorCtx::depth24();
 

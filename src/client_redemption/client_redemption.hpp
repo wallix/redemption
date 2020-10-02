@@ -681,7 +681,7 @@ public:
         movie_name += "-Replay";
 
         bool const is_remoteapp = false;
-        WrmParams wrmParams(
+        WrmParams wrmParams{
               this->config.info.screen_info.bpp
             , is_remoteapp
             , this->cctx
@@ -691,9 +691,9 @@ public:
             , std::chrono::duration<unsigned int, std::ratio<1, 100> >{60}
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
-            , 0
-            , -1
-        );
+            , RDPSerializerVerbose::none
+            , -1u
+        };
 
         CaptureParams captureParams;
         captureParams.now = tvtime();

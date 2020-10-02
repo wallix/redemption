@@ -174,7 +174,8 @@ private:
         PointerCache pointer_cache;
         GlyphCache glyph_cache;
 
-        struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU {
+        struct PrivateGraphicsUpdatePDU final : GraphicsUpdatePDU
+        {
             size_t max_data_block_size;
 
             PrivateGraphicsUpdatePDU(
@@ -197,7 +198,7 @@ private:
               , rdp_mppc_enc * mppc_enc
               , bool compression
               , bool send_new_pointer
-              , GraphicsUpdatePDU::Verbose verbose
+              , RDPSerializerVerbose verbose
             )
             : GraphicsUpdatePDU(
                 trans
@@ -401,7 +402,7 @@ private:
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
           , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : false
-          , safe_cast<RDPSerializer::Verbose>(underlying_cast(verbose) >> 16)
+          , safe_cast<RDPSerializerVerbose>(underlying_cast(verbose) >> 16)
         )
         {}
     };

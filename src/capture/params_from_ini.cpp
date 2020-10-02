@@ -19,8 +19,10 @@
 */
 
 #include "capture/params_from_ini.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include "configs/config.hpp"
+
 
 VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini)
 {
@@ -100,7 +102,7 @@ WrmParams wrm_params_from_ini(
         ini.get<cfg::video::frame_interval>(),
         ini.get<cfg::video::break_interval>(),
         ini.get<cfg::video::wrm_compression_algorithm>(),
-        ini.get<cfg::debug::capture>(),
+        safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>()),
         ini.get<cfg::video::file_permissions>()
     };
 }

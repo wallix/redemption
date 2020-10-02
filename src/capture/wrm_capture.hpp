@@ -145,7 +145,7 @@ public:
                 , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input
-                , Verbose verbose)
+                , RDPSerializerVerbose verbose)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
                    , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, true, verbose)
     , compression_bullder(trans, wrm_compression_algorithm)
@@ -525,7 +525,7 @@ class WrmCaptureImpl :
                 , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input
-                , GraphicToFile::Verbose verbose)
+                , RDPSerializerVerbose verbose)
             : GraphicToFile(now, trans, capture_bpp, remote_app,
                             bmp_cache, gly_cache, ptr_cache,
                             image_frame_api, wrm_compression_algorithm,
@@ -808,7 +808,7 @@ public:
         capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
-        GraphicToFile::Verbose(wrm_params.wrm_verbose))
+        wrm_params.wrm_verbose)
     , nc(this->graphic_to_file, capture_params.now,
         wrm_params.frame_interval, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
