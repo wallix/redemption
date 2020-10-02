@@ -69,16 +69,6 @@ DialogMod::DialogMod(
     if (this->dialog_widget.challenge) {
         this->dialog_widget.set_widget_focus(this->dialog_widget.challenge.get(), Widget::focus_reason_tabkey);
     }
-
-    if (vars.get<cfg::debug::pass_dialog_box>()) {
-        this->events.create_event_timeout(
-            "Dialog Timeout", this,
-            this->time_base.get_current_time()+std::chrono::milliseconds(vars.get<cfg::debug::pass_dialog_box>()),
-            [this](Event&)
-            {
-                this->accepted();
-            });
-    }
 }
 
 

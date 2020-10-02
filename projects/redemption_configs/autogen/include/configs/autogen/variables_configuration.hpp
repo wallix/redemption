@@ -3678,16 +3678,6 @@ namespace cfg
     };
     /// type: uint32_t <br/>
     /// default: {} <br/>
-    struct debug::pass_dialog_box {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
-        using mapped_type = sesman_and_spec_type;
-        type value{};
-    };
-    /// type: uint32_t <br/>
-    /// default: {} <br/>
     struct debug::ocr {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -5581,7 +5571,6 @@ struct debug
 , cfg::debug::password
 , cfg::debug::compression
 , cfg::debug::cache
-, cfg::debug::pass_dialog_box
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
 , cfg::debug::config

@@ -1152,10 +1152,6 @@ cache = integer(min=0, default=0)
 
 #_advanced
 #_hex
-pass_dialog_box = integer(min=0, default=0)
-
-#_advanced
-#_hex
 ocr = integer(min=0, default=0)
 
 #_advanced

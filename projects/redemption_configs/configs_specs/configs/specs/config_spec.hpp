@@ -690,7 +690,6 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), "password");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "cache");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "pass_dialog_box");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ocr");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ffmpeg");
 

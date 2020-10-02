@@ -36,7 +36,6 @@ using DialogModVariables = vcfg::variables<
     vcfg::var<cfg::context::accept_message,             vcfg::accessmode::set>,
     vcfg::var<cfg::context::display_message,            vcfg::accessmode::set>,
     vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
-    vcfg::var<cfg::debug::pass_dialog_box,              vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
