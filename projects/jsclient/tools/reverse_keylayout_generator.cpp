@@ -6,35 +6,11 @@
 #include <array>
 #include <cctype>
 #include <cassert>
-#include "../src/keyboard/keylayouts.hpp"
+#include "keyboard/keymap2.hpp"
 
 
 namespace
 {
-
-static const Keylayout* keylayouts[] = {
-    &keylayout_x00000405, &keylayout_x00000406, &keylayout_x00000407, &keylayout_x00000408,
-    &keylayout_x00000409, &keylayout_x0000040a, &keylayout_x0000040b, &keylayout_x0000040c,
-    &keylayout_x0000040f, &keylayout_x00000410, &keylayout_x00000413, &keylayout_x00000414,
-    &keylayout_x00000415, &keylayout_x00000416, &keylayout_x00000418, &keylayout_x00000419,
-    &keylayout_x0000041a, &keylayout_x0000041b, &keylayout_x0000041d, &keylayout_x0000041f,
-    &keylayout_x00000422, &keylayout_x00000424, &keylayout_x00000425, &keylayout_x00000426,
-    &keylayout_x00000427, &keylayout_x0000042f, &keylayout_x00000438, &keylayout_x0000043a,
-    &keylayout_x0000043b, &keylayout_x0000043f, &keylayout_x00000440, &keylayout_x00000444,
-    &keylayout_x00000450, &keylayout_x00000452, &keylayout_x0000046e, &keylayout_x00000481,
-    &keylayout_x00000807, &keylayout_x00000809, &keylayout_x0000080a, &keylayout_x0000080c,
-    &keylayout_x00000813, &keylayout_x00000816, &keylayout_x0000081a, &keylayout_x0000083b,
-    &keylayout_x00000843, &keylayout_x0000085d, &keylayout_x00000c0c, &keylayout_x00000c1a,
-    &keylayout_x00001009, &keylayout_x0000100c, &keylayout_x0000201a, &keylayout_x00010402,
-    &keylayout_x00010405, &keylayout_x00001809, &keylayout_x00010407, &keylayout_x00010408,
-    &keylayout_x0001040a, &keylayout_x0001040e, &keylayout_x00010409, &keylayout_x00010410,
-    &keylayout_x00010415, &keylayout_x00010416, &keylayout_x00010419, &keylayout_x0001041b,
-    &keylayout_x0001041f, &keylayout_x00010426, &keylayout_x00010427, &keylayout_x0001043a,
-    &keylayout_x0001043b, &keylayout_x0001080c, &keylayout_x0001083b, &keylayout_x00011009,
-    &keylayout_x00011809, &keylayout_x00020405, &keylayout_x00020408, &keylayout_x00020409,
-    &keylayout_x0002083b, &keylayout_x00030402, &keylayout_x00030408, &keylayout_x00030409,
-    &keylayout_x00040408, &keylayout_x00040409, &keylayout_x00050408, &keylayout_x00060408,
-};
 
 template<class T>
 struct ArrayView
@@ -214,7 +190,7 @@ int main()
 
     fichier << "const layouts = [";
 
-    for(Keylayout const* layout_ptr : keylayouts) {
+    for(Keylayout const* layout_ptr : Keymap2::keylayouts()) {
         auto& layout = *layout_ptr;
 
         fichier

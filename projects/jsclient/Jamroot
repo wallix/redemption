@@ -349,7 +349,7 @@ rule app ( name : src + : deps_for_path : deps_target * )
 }
 
 exejs reverse_keylayout_generator
-    : tools/reverse_keylayout_generator.cpp
+    : tools/reverse_keylayout_generator.cpp $(REDEMPTION_PUBLIC_PATH)/src/keyboard/keymap2.cpp
     : $(TEST_DEPENDENCIES)
     ;
 
