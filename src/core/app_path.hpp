@@ -54,18 +54,12 @@ enum class AppPath
 zstring_view app_path(AppPath) noexcept;
 
 // TODO move these into configuration
-// #define LOGIN_LOGO24 "ad24b.png"
 #define LOGIN_WAB_BLUE "wablogoblue.png"
 #define LOGO_PNG "logo.png"
 #define LOGO_BMP "logo.bmp"
-// #define HELP_ICON "helpicon.png"
-// #define CURSOR0 "cursor0.cur"
-// #define CURSOR1 "cursor1.cur"
-// #define FONT1 "sans-10.rbf"
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
 
-// #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 
 #define DEFAULT_FONT_NAME "dejavu_14.rbf"

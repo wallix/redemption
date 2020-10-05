@@ -284,9 +284,9 @@ RED_AUTO_TEST_CASE(TraceWidgetImage_transparent_png)
         },
         Png
         {
-            FIXTURES_PATH"/alpha-channel-without-background-transparent.png",
+            FIXTURES_PATH"/alpha-channel-without-background-transparent3.png",
             WHITE,
-            IMG_TEST_PATH "image_transparent_alpha_channel_1.png",
+            IMG_TEST_PATH "image_transparent_alpha_channel_3.png",
         },
         Png
         {

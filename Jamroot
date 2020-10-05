@@ -216,7 +216,7 @@ install install-bin
     ;
 
 install install-share
-    : [ glob "$(REDEMPTION_SYS_PATH)/share/rdpproxy/[^.k]*" ]
+    : [ glob "$(REDEMPTION_SYS_PATH)/share/rdpproxy/*" ]
     :
     : <location>$(INSTALLDIR)$(SHARE_PREFIX)
     ;
