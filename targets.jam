@@ -564,7 +564,6 @@ test-run tests/acl/test_acl_serializer :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/acl/acl_serializer.o
@@ -572,12 +571,10 @@ test-run tests/acl/test_acl_serializer :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/log_siem.o
-  <library>src/utils/netutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -681,19 +678,15 @@ test-run tests/acl/test_session_logfile :
 :
   <library>app_path_test.o
   <library>crypto
-  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
   <library>src/utils/log_siem.o
-  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o

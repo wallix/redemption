@@ -27,6 +27,7 @@
 #include "acl/acl_serializer.hpp"
 #include "acl/sesman.hpp"
 #include "acl/mod_pack.hpp"
+#include "acl/session_logfile.hpp"
 
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
@@ -774,7 +775,7 @@ public:
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(
-                front, front.get_palette(), front, front.keymap, front.client_info, glyphs,
+                front.get_palette(), front, front.keymap, front.client_info, glyphs,
                 rail_client_execute, winapi, this->ini, sesman);
             ModFactory mod_factory(
                 mod_wrapper, time_base, sesman, events, front.client_info, front, front,

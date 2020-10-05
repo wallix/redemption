@@ -16,19 +16,17 @@
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2019
   Author(s): Christophe Grosjean
-
 */
+
 #pragma once
 
 #include "RAIL/client_execute.hpp"
 #include "acl/gd_provider.hpp"
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
-#include "acl/session_logfile.hpp"
 #include "acl/time_before_closing.hpp"
 #include "configs/config.hpp"
 #include "core/callback_forwarder.hpp"
-#include "core/front_api.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
@@ -46,19 +44,20 @@
 class SocketTransport;
 class rdp_api;
 
-struct ModWrapper : public GdProvider
+class ModWrapper final : public GdProvider
 {
-    struct InputFilter {
-    };
-
     struct CallbackForwarder<ModWrapper> callback;
 
-    struct GFilter {
+    class GFilter
+    {
         gdi::GraphicApi & sink;
         Callback & callback;
+
+    public:
         BGRPalette const & palette;
         Rect protected_rect;
 
+    public:
         GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect)
             : sink(sink), callback(callback), palette(palette), protected_rect(rect) {}
 
@@ -175,30 +174,84 @@ struct ModWrapper : public GdProvider
         void set_row(std::size_t rownum, bytes_view data) { this->sink.set_row(rownum, data); }
         void begin_update() { this->sink.begin_update(); }
         void end_update() { this->sink.end_update(); }
-    } gfilter;
+    };
+
+    GFilter gfilter;
 
     struct gdi::GraphicApiForwarder<GFilter> g;
 
-    FrontAPI & front;
+    bool connected = false;
+
+public:
+    ModuleIndex current_mod = MODULE_UNKNOWN;
+    bool target_info_is_shown = false;
+
+private:
+    bool enable_osd = false;
+
+    ClientInfo const & client_info;
+    ClientExecute & rail_client_execute;
+
+public:
+    rdp_api * rdpapi = nullptr;
+    RailModuleHostMod * rail_module_host_mod_ptr = nullptr;
+    windowing_api *& winapi;
+
+private:
+    Inifile & ini;
+    Sesman & sesman;
+
+    std::string osd_message;
+    Rect clip;
+    RDPColor color;
+    RDPColor background_color;
+    bool is_disable_by_input = false;
+    bool bogus_refresh_rect_ex;
+    const Font & glyphs;
+    Keymap2 & keymap;
+
+    SocketTransport * psocket_transport = nullptr;
+    null_mod no_mod;
+    mod_api* modi = &no_mod;
+
+
+public:
+    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini, Sesman & sesman)
+    : callback(*this)
+    , gfilter(graphics, callback, palette, Rect{})
+    , g(gfilter)
+    , client_info(client_info)
+    , rail_client_execute(rail_client_execute)
+    , winapi(winapi)
+    , ini(ini)
+    , sesman(sesman)
+    , bogus_refresh_rect_ex(false)
+    , glyphs(glyphs)
+    , keymap(keymap)
+    {}
+
+    ~ModWrapper()
+    {
+        this->remove_mod();
+    }
+
+    Callback & get_callback() noexcept
+    {
+        return this->callback;
+    }
 
     std::string module_name() const
     {
         return this->modi->module_name();
     }
 
-public:
-    bool connected = false;
-    ModuleIndex current_mod = MODULE_UNKNOWN;
-public:
-
-    bool target_info_is_shown = false;
-    bool enable_osd = false;
-
-    bool is_connected() const {
+    bool is_connected() const
+    {
         return this->connected;
     }
 
-    rdp_api* get_rdp_api() const {
+    rdp_api* get_rdp_api() const
+    {
         return this->rdpapi;
     }
 
@@ -207,7 +260,10 @@ public:
         return this->g;
     }
 
-    bool is_ready_to_draw() override { return true; }
+    bool is_ready_to_draw() override
+    {
+        return true;
+    }
 
     // FIXME: we should always be able to use graphic_wrapper directly
     // finding out the actual internal graphics interface should never be necessary
@@ -222,168 +278,17 @@ public:
 
     void display_osd_message(const std::string& message) override
     {
-        if (message != this->get_message()) {
+        if (message != this->osd_message) {
             this->clear_osd_message();
         }
         if (!message.empty()) {
-            this->osd_message = std::move(message);
+            str_assign(this->osd_message, message, "  ", TR(trkeys::disable_osd, language(this->ini)));
             this->is_disable_by_input = true;
-            str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->ini)));
             this->prepare_osd_message();
             this->draw_osd_message();
         }
     }
 
-    [[nodiscard]] Rect get_protected_rect() const
-    { return this->gfilter.protected_rect; }
-
-    void set_protected_rect(Rect const rect)
-    { this->gfilter.protected_rect = rect; }
-
-private:
-    ClientInfo const & client_info;
-    ClientExecute & rail_client_execute;
-    public:
-    rdp_api*       rdpapi = nullptr;
-    RailModuleHostMod* rail_module_host_mod_ptr = nullptr;
-    windowing_api* &winapi;
-    private:
-    Inifile & ini;
-    Sesman & sesman;
-
-    std::string osd_message;
-    Rect clip;
-    RDPColor color;
-    RDPColor background_color;
-    bool is_disable_by_input = false;
-    bool bogus_refresh_rect_ex;
-    const Font & glyphs;
-    Keymap2 & keymap;
-
-public:
-    explicit ModWrapper(FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini, Sesman & sesman)
-    : callback(*this)
-    , gfilter(graphics, callback, palette, Rect{})
-    , g(gfilter)
-    , front(front)
-    , client_info(client_info)
-    , rail_client_execute(rail_client_execute)
-    , winapi(winapi)
-    , ini(ini)
-    , sesman(sesman)
-    , bogus_refresh_rect_ex(false)
-    , glyphs(glyphs)
-    , keymap(keymap)
-    {}
-
-    ~ModWrapper(){
-        this->remove_mod();
-    }
-
-    Callback & get_callback() noexcept
-    {
-        return this->callback;
-    }
-
-    [[nodiscard]] bool is_input_owner() const { return this->is_disable_by_input; }
-
-    [[nodiscard]] std::string const& get_message() const {
-        return this->osd_message;
-    }
-
-    void prepare_osd_message()
-    {
-        this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
-         && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
-         && (this->client_info.cs_monitor.monitorCount > 1));
-
-
-        gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
-        int w = tm.width + padw * 2;
-        int h = tm.height + padh * 2;
-        this->color = color_encode(BGRColor(BLACK), this->client_info.screen_info.bpp);
-        this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->client_info.screen_info.bpp);
-
-        if (this->client_info.remote_program
-        && (this->winapi == static_cast<windowing_api*>(&this->rail_client_execute))) {
-
-            Rect current_work_area_rect = this->rail_client_execute.get_current_work_area_rect();
-
-            this->clip = Rect(
-                current_work_area_rect.x +
-                    (current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
-                0, w, h);
-        }
-        else {
-            this->clip = Rect(this->client_info.screen_info.width < w ? 0 : (this->client_info.screen_info.width - w) / 2, 0, w, h);
-        }
-
-        this->set_protected_rect(this->clip);
-
-        if (this->winapi) {
-            this->winapi->create_auxiliary_window(this->clip);
-        }
-    }
-
-    static constexpr int padw = 16;
-    static constexpr int padh = 16;
-
-    void draw_osd_message()
-    {
-        auto rect = this->get_protected_rect();
-        this->set_protected_rect(Rect{});
-        this->get_graphics().begin_update();
-        this->draw_osd_message_impl(this->get_graphics(), rect);
-        this->get_graphics().end_update();
-        this->set_protected_rect(rect);
-    }
-
-
-private:
-    void draw_osd_message_impl(gdi::GraphicApi & drawable, Rect osd_rect)
-    {
-        if (this->clip.isempty()) {
-            return ;
-        }
-
-        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->gfilter.palette);
-
-        drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
-
-        RDPLineTo line_ileft(1, this->clip.x, this->clip.y, this->clip.x, this->clip.y + this->clip.cy - 1,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_ileft, this->clip, color_ctx);
-        RDPLineTo line_ibottom(1, this->clip.x, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_ibottom, this->clip, color_ctx);
-
-        RDPLineTo line_iright(1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_iright, this->clip, color_ctx);
-        RDPLineTo line_etop(1, this->clip.x + this->clip.cx - 1, this->clip.y, this->clip.x, this->clip.y,
-            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
-        drawable.draw(line_etop, this->clip, color_ctx);
-
-        gdi::server_draw_text(
-            drawable, this->glyphs,
-            osd_rect.x + padw, padh,
-            this->osd_message.c_str(),
-            this->color, this->background_color, color_ctx, this->clip
-        );
-
-        this->clip = Rect();
-    }
-
-private:
-    SocketTransport * psocket_transport = nullptr;
-
-public:
-
-    null_mod no_mod;
-private:
-    mod_api* modi = &no_mod;
-
-public:
     void acl_update()
     {
         this->get_mod()->acl_update();
@@ -404,25 +309,9 @@ public:
         return this->get_mod()->get_mod_signal();
     }
 
-    void remove_mod()
+    bool is_up_and_running() const
     {
-        if (this->modi != &this->no_mod){
-            this->clear_osd_message();
-            delete this->modi;
-            this->modi = &this->no_mod;
-            this->rdpapi = nullptr;
-            this->winapi = nullptr;
-            this->rail_module_host_mod_ptr = nullptr;
-        }
-    }
-
-    bool is_up_and_running() const {
         return (this->modi != &this->no_mod) && this->get_mod()->is_up_and_running();
-    }
-
-    void set_mod_transport(SocketTransport * psocket_transport)
-    {
-        this->psocket_transport = psocket_transport;
     }
 
     void set_mod(ModuleIndex next_state, ModPack mod_pack)
@@ -436,10 +325,10 @@ public:
             }
         }
 
-//        LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
-//            get_module_name(next_state),
-//            get_module_name(this->current_mod),
-//            mod_pack.psocket_transport);
+       // LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
+       //     get_module_name(next_state),
+       //     get_module_name(this->current_mod),
+       //     mod_pack.psocket_transport);
 
         while (this->keymap.nb_char_available()) {
             this->keymap.get_char();
@@ -466,44 +355,6 @@ public:
     [[nodiscard]] SocketTransport* get_mod_transport() const noexcept
     {
         return this->psocket_transport;
-    }
-
-    void disable_osd()
-    {
-        this->is_disable_by_input = false;
-        auto const protected_rect = this->get_protected_rect();
-        this->set_protected_rect(Rect{});
-
-        if (this->bogus_refresh_rect_ex) {
-            this->get_mod()->rdp_suppress_display_updates();
-            this->get_mod()->rdp_allow_display_updates(0, 0,
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height);
-        }
-
-        if (this->winapi) {
-            this->winapi->destroy_auxiliary_window();
-        }
-
-        this->get_mod()->rdp_input_invalidate(protected_rect);
-    }
-
-    void clear_osd_message()
-    {
-        if (!this->get_protected_rect().isempty()) {
-            this->disable_osd();
-        }
-    }
-
-    bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
-    {
-        if (this->is_disable_by_input
-         && this->get_protected_rect().contains_pt(x, y)
-         && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-            this->disable_osd();
-            return true;
-        }
-        return false;
     }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
@@ -556,7 +407,7 @@ public:
                                 "  [", time_before_closing(elapsed_time, Translator(ini)), ']');
                         }
                     }
-                    if (msg != this->get_message()) {
+                    if (msg != this->osd_message) {
                         this->clear_osd_message();
                     }
                     if (!msg.empty()) {
@@ -601,13 +452,19 @@ public:
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
-    { this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2); }
+    {
+        this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2);
+    }
 
     void rdp_gdi_up_and_running()
-    { this->get_mod()->rdp_gdi_up_and_running(); }
+    {
+        this->get_mod()->rdp_gdi_up_and_running();
+    }
 
     void rdp_gdi_down()
-    { this->get_mod()->rdp_gdi_down(); }
+    {
+        this->get_mod()->rdp_gdi_down();
+    }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
     {
@@ -615,7 +472,9 @@ public:
     }
 
     void rdp_suppress_display_updates()
-    { this->get_mod()->rdp_suppress_display_updates(); }
+    {
+        this->get_mod()->rdp_suppress_display_updates();
+    }
 
     void refresh(Rect r)
     {
@@ -657,10 +516,146 @@ public:
         }
     }
 
-    [[nodiscard]] Dimension get_dim() const
+private:
+    [[nodiscard]] Rect get_protected_rect() const
     {
-        return this->get_mod()->get_dim();
+        return this->gfilter.protected_rect;
     }
 
+    void set_protected_rect(Rect const rect)
+    {
+        this->gfilter.protected_rect = rect;
+    }
+
+    static constexpr int padw = 16;
+    static constexpr int padh = 16;
+
+    void prepare_osd_message()
+    {
+        this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
+         && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
+         && (this->client_info.cs_monitor.monitorCount > 1));
+
+
+        gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
+        int w = tm.width + padw * 2;
+        int h = tm.height + padh * 2;
+        this->color = color_encode(BGRColor(BLACK), this->client_info.screen_info.bpp);
+        this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->client_info.screen_info.bpp);
+
+        if (this->client_info.remote_program
+        && (this->winapi == static_cast<windowing_api*>(&this->rail_client_execute))) {
+
+            Rect current_work_area_rect = this->rail_client_execute.get_current_work_area_rect();
+
+            this->clip = Rect(
+                current_work_area_rect.x +
+                    (current_work_area_rect.cx < w ? 0 : (current_work_area_rect.cx - w) / 2),
+                0, w, h);
+        }
+        else {
+            this->clip = Rect(this->client_info.screen_info.width < w ? 0 : (this->client_info.screen_info.width - w) / 2, 0, w, h);
+        }
+
+        this->set_protected_rect(this->clip);
+
+        if (this->winapi) {
+            this->winapi->create_auxiliary_window(this->clip);
+        }
+    }
+
+    void draw_osd_message()
+    {
+        auto rect = this->get_protected_rect();
+        this->set_protected_rect(Rect{});
+        this->get_graphics().begin_update();
+        this->draw_osd_message_impl(this->get_graphics(), rect);
+        this->get_graphics().end_update();
+        this->set_protected_rect(rect);
+    }
+
+    void draw_osd_message_impl(gdi::GraphicApi & drawable, Rect osd_rect)
+    {
+        if (this->clip.isempty()) {
+            return ;
+        }
+
+        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->gfilter.palette);
+
+        drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
+
+        RDPLineTo line_ileft(1, this->clip.x, this->clip.y, this->clip.x, this->clip.y + this->clip.cy - 1,
+            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+        drawable.draw(line_ileft, this->clip, color_ctx);
+        RDPLineTo line_ibottom(1, this->clip.x, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1,
+            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+        drawable.draw(line_ibottom, this->clip, color_ctx);
+
+        RDPLineTo line_iright(1, this->clip.x + this->clip.cx - 1, this->clip.y + this->clip.cy - 1, this->clip.x + this->clip.cx - 1, this->clip.y,
+            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+        drawable.draw(line_iright, this->clip, color_ctx);
+        RDPLineTo line_etop(1, this->clip.x + this->clip.cx - 1, this->clip.y, this->clip.x, this->clip.y,
+            encode_color24()(BLACK), 0x0D, RDPPen(0, 0, encode_color24()(BLACK)));
+        drawable.draw(line_etop, this->clip, color_ctx);
+
+        gdi::server_draw_text(
+            drawable, this->glyphs,
+            osd_rect.x + padw, padh,
+            this->osd_message.c_str(),
+            this->color, this->background_color, color_ctx, this->clip
+        );
+
+        this->clip = Rect();
+    }
+
+    void remove_mod()
+    {
+        if (this->modi != &this->no_mod){
+            this->clear_osd_message();
+            delete this->modi;
+            this->modi = &this->no_mod;
+            this->rdpapi = nullptr;
+            this->winapi = nullptr;
+            this->rail_module_host_mod_ptr = nullptr;
+        }
+    }
+
+    void disable_osd()
+    {
+        this->is_disable_by_input = false;
+        auto const protected_rect = this->get_protected_rect();
+        this->set_protected_rect(Rect{});
+
+        if (this->bogus_refresh_rect_ex) {
+            this->get_mod()->rdp_suppress_display_updates();
+            this->get_mod()->rdp_allow_display_updates(0, 0,
+                this->client_info.screen_info.width,
+                this->client_info.screen_info.height);
+        }
+
+        if (this->winapi) {
+            this->winapi->destroy_auxiliary_window();
+        }
+
+        this->get_mod()->rdp_input_invalidate(protected_rect);
+    }
+
+    void clear_osd_message()
+    {
+        if (!this->get_protected_rect().isempty()) {
+            this->disable_osd();
+        }
+    }
+
+    bool try_input_mouse(int device_flags, int x, int y, Keymap2 * /*unused*/)
+    {
+        if (this->is_disable_by_input
+         && this->get_protected_rect().contains_pt(x, y)
+         && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+            this->disable_osd();
+            return true;
+        }
+        return false;
+    }
 };
 

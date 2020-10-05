@@ -20,23 +20,16 @@
 
 #pragma once
 
-#include "gdi/screen_info.hpp"
-#include "utils/sugar/noncopyable.hpp"
-#include "utils/sugar/bytes_view.hpp"
-#include "utils/colors.hpp"
-#include "utils/rect.hpp"
-#include "cxx/cxx.hpp"
-
-#include <cassert>
-#include <string>
-
 #include "gdi/graphic_api.hpp"
 
 namespace gdi
 {
-template<class ForwardTo> class GraphicApiForwarder : public gdi::GraphicApi
+
+template<class ForwardTo>
+class GraphicApiForwarder : public gdi::GraphicApi
 {
     ForwardTo & sink;
+
 public:
     GraphicApiForwarder(ForwardTo & sink) : sink(sink){}
 
@@ -125,4 +118,5 @@ public:
     void end_update()
             override {this->sink.end_update();}
 };
+
 }  // namespace gdi

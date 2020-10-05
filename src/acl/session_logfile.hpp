@@ -24,22 +24,19 @@
 
 #pragma once
 
-#include "core/back_event_t.hpp"
-#include "acl/auth_api.hpp"
 #include "transport/crypto_transport.hpp"
-#include "transport/socket_transport.hpp"
-#include "utils/verbose_flags.hpp"
 #include "utils/timebase.hpp"
 #include "configs/config.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/fileutils.hpp"
-#include "main/version.hpp"
 #include "utils/log_siem.hpp"
+#include "main/version.hpp"
+
 #include <string>
-#include <chrono>
 
 #include <ctime>
+
 
 class SessionLogFile
 {
