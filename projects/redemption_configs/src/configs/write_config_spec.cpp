@@ -30,12 +30,23 @@
 int main()
 {
     auto evaluate = [](auto&&... writers){
-        cfg_generators::ConfigSpecWrapper<std::remove_reference_t<decltype(writers)>...> config;
+        auto dispatch = [&](auto&& f){ return f(writers...); };
+        cfg_generators::ConfigSpecWrapper<decltype(dispatch)> config{dispatch};
+
 #ifndef IN_IDE_PARSER
         cfg_specs::config_type_definition(config.enums);
+#endif
+
+        (writers.do_init(), ...);
+
+#ifndef IN_IDE_PARSER
         cfg_specs::config_spec_definition(config);
 #endif
-        return config.evaluate(writers...);
+
+        int error_code = 0;
+        int err;
+        ((error_code = (err = writers.do_finish()) ? err : error_code), ...);
+        return error_code;
     };
 
     using PythonSpec = cfg_generators::python_spec_writer::PythonSpecWriterBase;

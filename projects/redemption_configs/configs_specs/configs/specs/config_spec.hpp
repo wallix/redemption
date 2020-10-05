@@ -28,7 +28,7 @@
 
 #include "include/debug_verbose_description.hpp"
 
-#include "keyboard/keymap2.hpp" // keylayouts
+#include "keyboard/keymap2.hpp" // Keymap2::keylayouts()
 
 #include <algorithm>
 #include <chrono>
@@ -77,32 +77,6 @@ void config_spec_definition(Writer && W)
     using namespace cfg_attributes::spec::constants;
     using namespace cfg_attributes::sesman::constants;
     using namespace cfg_attributes::connpolicy::constants;
-
-    // force ordering section
-    {
-        char const * sections_name[] = {
-            "globals",
-            "session_log",
-            "client",
-            "mod_rdp",
-            "mod_vnc",
-            "metrics",
-            "file_verification",
-            "file_storage",
-            "icap_server_down",
-            "icap_server_up",
-            "mod_replay",
-            "ocr",
-            "video",
-            "capture",
-            "crypto",
-            "websocket",
-            "debug",
-        };
-        for (char const * section : sections_name) {
-            W.section(section, [&]{});
-        }
-    }
 
     prefix_value disable_prefix_val{"disable"};
 
@@ -231,7 +205,7 @@ void config_spec_definition(Writer && W)
     {
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<types::unsigned_>(), "keyboard_layout", set(0));
         std::string keyboard_layout_proposals_desc;
-        for (auto k : Keymap2::keylayouts()) {
+        for (auto const* k : Keymap2::keylayouts()) {
             keyboard_layout_proposals_desc += k->locale_name;
             keyboard_layout_proposals_desc += ", ";
         }
@@ -544,17 +518,8 @@ void config_spec_definition(Writer && W)
                 "Forward the build number advertised by the client to the server. "
                 "If forwarding is disabled a default (static) build number will be sent to the server."
             },
-            set(true));
-        });
-
-    W.section("metrics", [&]
-    {
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_rdp_metrics", set(false));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_vnc_metrics", set(false));
-        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics))));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "log_interval", set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
+            set(true)
+        );
     });
 
     W.section(W.names("mod_vnc", connpolicy::name{"vnc"}), [&]
@@ -584,6 +549,61 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, vnc_connpolicy, L, type_<bool>(), "enable_ipv6", desc { "Enable target connection on ipv6" }, set(false));
     });
+
+    W.section("metrics", [&]
+    {
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_rdp_metrics", set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_vnc_metrics", set(false));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Metrics))));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "log_interval", set(5));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
+        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
+    });
+
+    W.section("file_verification", [&]
+    {
+        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up", desc{"Enable use of ICAP service for file verification on upload."});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down", desc{"Enable use of ICAP service for file verification on download."});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_up", desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_down", desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."}, set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."}, set(50));
+    });
+
+    W.section("file_storage", [&]
+    {
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpStoreFile>(), "store_file", set(RdpStoreFile::never), desc{"Enable storage of transferred files (via RDP Clipboard)."});
+    });
+
+    for (char const* section_name : {"icap_server_down", "icap_server_up"}) {
+        // TODO temporary
+        // please, update $REDEMPTION/tools/c++-analyzer/lua-checker/checkers/config.lua for each changement of value
+        W.section(section_name, [&]
+        {
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<types::unsigned_>(), "port", desc{"Port of ICAP server"}, set(1344));
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
+
+            // for validator only
+            W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
+            // for validator only
+            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
+                    desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
+            // for validator only
+            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "filename_percent_encoding",
+                     desc{"Filename sent to ICAP as percent encoding"}, set(false));
+        });
+    }
 
     W.section("mod_replay", [&]
     {
@@ -680,11 +700,6 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "listen_address", desc{"${addr}:${port} or ${port} or ${unix_socket_path}"}, set(":3390"));
     });
 
-    W.section("remote_program", [&]
-    {
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "allow_resize_hosted_desktop", set(true));
-    });
-
     W.section("debug", [&]
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "fake_target_ip");
@@ -725,6 +740,11 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<ModRdpUseFailureSimulationSocketTransport>(), "mod_rdp_use_failure_simulation_socket_transport", set(ModRdpUseFailureSimulationSocketTransport::Off));
     });
 
+    W.section("remote_program", [&]
+    {
+        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "allow_resize_hosted_desktop", set(true));
+    });
+
     W.section("translation", [&]
     {
         W.member(hidden_in_gui, sesman_to_proxy, not_target_ctx, L, type_<Language>{}, "language", set(Language::en));
@@ -737,51 +757,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_target_field",
                  desc{"Enable target edit field in login page."}, set(true));
     });
-
-    W.section("file_verification", [&]
-    {
-        W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "socket_path", set(CPP_EXPR(REDEMPTION_CONFIG_VALIDATOR_PATH)));
-
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_up", desc{"Enable use of ICAP service for file verification on upload."});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "enable_down", desc{"Enable use of ICAP service for file verification on download."});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_up", desc{"Verify text data via clipboard from client to server.\nFile verification on upload must be enabled via option Enable up."});
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "clipboard_text_down", desc{"Verify text data via clipboard from server to client\nFile verification on download must be enabled via option Enable down."});
-
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_up", desc{"Block file transfer from client to server on invalid file verification.\nFile verification on upload must be enabled via option Enable up."}, set(false));
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "block_invalid_file_down", desc{"Block file transfer from server to client on invalid file verification.\nFile verification on download must be enabled via option Enable down."}, set(false));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "log_if_accepted", set(true));
-
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<types::u32>(), "max_file_size_rejected", desc{"If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).\nWarning: This value affects the RAM used by the session."}, set(50));
-    });
-
-    W.section("file_storage", [&]
-    {
-        W.member(hidden_in_gui, rdp_connpolicy, L, type_<RdpStoreFile>(), "store_file", set(RdpStoreFile::never), desc{"Enable storage of transferred files (via RDP Clipboard)."});
-    });
-
-    for (char const* section_name : {"icap_server_up", "icap_server_down"}) {
-        // TODO temporary
-        // please, update $REDEMPTION/tools/c++-analyzer/lua-checker/checkers/config.lua for each changement of value
-        W.section(section_name, [&]
-        {
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "host", desc{"Ip or fqdn of ICAP server"});
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<types::unsigned_>(), "port", desc{"Port of ICAP server"}, set(1344));
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<std::string>(), "service_name", desc{"Service name on ICAP server"}, set("avscan"));
-
-            // for validator only
-            W.member(ini_and_gui, no_sesman, L, type_<bool>(), "tls", desc{"ICAP server uses tls"});
-            // for validator only
-            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_x_context",
-                    desc{"Send X Context (Client-IP, Server-IP, Authenticated-User) to ICAP server"}, set(true));
-            // for validator only
-            W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "filename_percent_encoding",
-                     desc{"Filename sent to ICAP as percent encoding"}, set(false));
-        });
-    }
 
     W.section("context", [&]
     {

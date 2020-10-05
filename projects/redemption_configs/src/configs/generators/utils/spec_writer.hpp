@@ -24,10 +24,8 @@
 #include "configs/enumeration.hpp"
 #include "utils/sugar/algostring.hpp"
 
-#include <stdexcept>
 #include <type_traits>
 #include <string>
-#include <unordered_map>
 #include <memory>
 
 
@@ -245,25 +243,6 @@ namespace detail_
         }
         {}
 
-        void merge(Names_ const& other)
-        {
-            for (std::size_t i = 0; i < std::size(names); ++i) {
-                if (!other.names[i].empty()) {
-                    if (names[i].empty()) {
-                        names[i] = other.names[i];
-                    }
-                    else if (names[i] != other.names[i]) {
-                        std::string msg = "name redefined: '";
-                        msg += names[i];
-                        msg += "' and '";
-                        msg += other.names[i];
-                        msg += "'";
-                        throw std::runtime_error(msg);
-                    }
-                }
-            }
-        }
-
         template<class T>
         std::string const& name() const
         {
@@ -282,50 +261,18 @@ namespace detail_
 using Names = cfg_attributes::names::f<detail_::Names_>;
 
 
-template<class... Writers>
+template<class Dispatch>
 struct ConfigSpecWrapper
 {
     type_enumerations enums;
+    Dispatch dispatch;
+
+    ConfigSpecWrapper(Dispatch dispatch)
+    : dispatch(dispatch)
+    {}
 
 private:
-    struct InfosBase
-    {
-        virtual void apply(type_enumerations& enums, Names const& names, std::pair<Writers&, std::string>&... pws) = 0;
-        virtual ~InfosBase() = default;
-    };
-
-    template<class... Ts>
-    struct Infos final : InfosBase
-    {
-        template<class... Us>
-        Infos(Us&& ... args)
-        : infos{static_cast<Us&&>(args)...}
-        {}
-
-        void apply(type_enumerations& enums, Names const& names, std::pair<Writers&, std::string>&... pws) override
-        {
-            (pws.first.evaluate_member(names, pws.second, this->infos, enums), ...);
-        }
-
-        pack_type<Ts...> infos;
-    };
-
-    struct Sections
-    {
-        Names names;
-        std::vector<std::string> members_ordered {};
-        std::unordered_map<std::string, std::unique_ptr<InfosBase>> members {};
-
-        std::string const& name() const
-        {
-            return names.names[0];
-        }
-    };
-    std::unordered_map<std::string, Sections> sections;
-    std::vector<std::string> sections_ordered;
-
-    Sections* section_;
-
+    Names current_names {pack_type<cfg_attributes::name_>{{""}}};
 
     template<class... Ts>
     static Names names_impl(Ts&&... s)
@@ -341,19 +288,23 @@ public:
     }
 
     template<class Fn>
-    void section(Names names, Fn fn)
+    void section(Names&& names, Fn fn)
     {
-        auto const& name = names.names[0];
-        auto it = this->sections.find(name);
-        if (it == this->sections.end()) {
-            this->sections_ordered.push_back(name);
-            it = this->sections.emplace(name, Sections{names}).first;
-        }
-        else {
-            it->second.names.merge(names);
-        }
-        this->section_ = &it->second;
+        current_names = std::move(names);
+
+        dispatch([&](auto&... writer){
+            (..., writer.do_start_section(current_names, current_names.template name<
+                typename std::remove_reference_t<decltype(writer)>::attribute_name_type>()
+            ));
+        });
+
         fn();
+
+        dispatch([&](auto&... writer){
+            (..., writer.do_stop_section(current_names, current_names.template name<
+                typename std::remove_reference_t<decltype(writer)>::attribute_name_type>()
+            ));
+        });
     }
 
     template<class Fn>
@@ -392,47 +343,19 @@ public:
             is_convertible_v<Ts, decltype(cfg_attributes::sesman::constants::no_sesman)>
          )|| ...), "sesman::is_target_context is missing or specified with no_sesman");
 
-        using infos_type = Infos<decltype(detail_::normalize_info_arg(args))...>;
-        std::unique_ptr<infos_type> u(new infos_type{detail_::normalize_info_arg(args)...});
+        using infos_type = pack_type<decltype(detail_::normalize_info_arg(args))...>;
+        const infos_type infos{detail_::normalize_info_arg(args)...};
 
-        std::string const& varname = get_elem<cfg_attributes::name_>(u->infos).name;
-        auto it = this->section_->members.find(varname);
-        if (it != this->section_->members.end()) {
-            throw std::runtime_error(str_concat("duplicates member '", varname,
-                "' in section '", this->section_->name() + "'"));
-        }
-        this->section_->members_ordered.push_back(varname);
-        this->section_->members.emplace(varname, std::move(u));
-    }
-
-    int evaluate(Writers&... ws)
-    {
-        (ws.do_init(), ...);
-        for (std::string const & global_section_name : this->sections_ordered) {
-            auto const & section = this->sections.find(global_section_name)->second;
-
-            pack_type<std::pair<Writers&, std::string>...> pws{
-                {ws, section.names.template name<
-                    typename std::remove_reference_t<decltype(ws)>::attribute_name_type>()
-                }...
-            };
-
-            (ws.do_start_section(section.names, static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
-            for (std::string const & member_name : section.members_ordered) {
-                section.members.find(member_name)->second
-                    ->apply(this->enums, section.names, static_cast<std::pair<Writers&, std::string>&>(pws)...);
-            }
-            (ws.do_stop_section(section.names, static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
-        }
-
-        auto error_code = 0;
-        auto check_final = [&](auto& w){
-            if (int err = w.do_finish()) {
-                error_code = error_code ? error_code : err;
-            }
-        };
-        (check_final(ws), ...);
-        return error_code;
+        dispatch([&](auto&... writer){
+            (..., writer.evaluate_member(
+                current_names,
+                current_names.template name<
+                    typename std::remove_reference_t<decltype(writer)>::attribute_name_type
+                >(),
+                infos,
+                this->enums
+            ));
+        });
     }
 };
 

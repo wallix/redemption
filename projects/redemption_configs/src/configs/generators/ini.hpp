@@ -30,7 +30,6 @@
 #include <iostream>
 #include <sstream>
 #include <chrono>
-#include <vector>
 
 #include <cerrno>
 #include <cstring>
