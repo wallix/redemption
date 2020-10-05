@@ -1103,38 +1103,133 @@ listen_address = string(default=':3390')
 #_hidden
 fake_target_ip = string(default='')
 
+# - kbd / ocr when != 0
+# 
+# (Wrm)
+# - pointer             = 0x0004
+# - primary_orders      = 0x0020
+# - secondary_orders    = 0x0040
+# - bitmap_update       = 0x0080
+# - surface_commands    = 0x0100
+# - bmp_cache           = 0x0200
+# - internal_buffer     = 0x0400
 #_advanced
 #_hex
 capture = integer(min=0, default=0)
 
+# - variable = 0x02
+# - buffer   = 0x40
 #_advanced
 #_hex
 auth = integer(min=0, default=0)
 
+#     Event   = 0x02,
+#     Acl     = 0x04,
+#     Trace   = 0x08,
 #_advanced
 #_hex
 session = integer(min=0, default=0)
 
+# - basic_trace     = 0x0000'0001
+# - basic_trace2    = 0x0000'0002
+# - basic_trace3    = 0x0000'0004
+# - basic_trace4    = 0x0000'0008
+# - basic_trace5    = 0x0000'0020
+# - graphic         = 0x0000'0040
+# - channel         = 0x0000'0080
+# - cache_from_disk = 0x0000'0400
+# - bmp_info        = 0x0000'0800
+# - global_channel  = 0x0000'2000
+# - sec_decrypted   = 0x0000'4000
+# - keymap          = 0x0000'8000
+# 
+# (Serializer)
+# - pointer             = 0x0004'0000
+# - primary_orders      = 0x0020'0000
+# - secondary_orders    = 0x0040'0000
+# - bitmap_update       = 0x0080'0000
+# - surface_commands    = 0x0100'0000
+# - bmp_cache           = 0x0200'0000
+# - internal_buffer     = 0x0400'0000
 #_advanced
 #_hex
 front = integer(min=0, default=0)
 
+# - basic_trace         = 0x0000'0001
+# - connection          = 0x0000'0002
+# - security            = 0x0000'0004
+# - capabilities        = 0x0000'0008
+# - license             = 0x0000'0010
+# - asynchronous_task   = 0x0000'0020
+# - graphics_pointer    = 0x0000'0040
+# - graphics            = 0x0000'0080
+# - input               = 0x0000'0100
+# - rail_order          = 0x0000'0200
+# - credssp             = 0x0000'0400
+# - negotiation         = 0x0000'0800
+# - cache_persister     = 0x0000'1000
+# - fsdrvmgr            = 0x0000'2000
+# - sesprobe_launcher   = 0x0000'4000
+# - sesprobe_repetitive = 0x0000'8000
+# - drdynvc             = 0x0001'0000
+# - surfaceCmd          = 0x0002'0000
+# - cache_from_disk     = 0x0004'0000
+# - bmp_info            = 0x0008'0000
+# - drdynvc_dump        = 0x0010'0000
+# - printer             = 0x0020'0000
+# - rdpsnd              = 0x0040'0000
+# - channels            = 0x0080'0000
+# - rail                = 0x0100'0000
+# - sesprobe            = 0x0200'0000
+# - cliprdr             = 0x0400'0000
+# - rdpdr               = 0x0800'0000
+# - rail_dump           = 0x1000'0000
+# - sesprobe_dump       = 0x2000'0000
+# - cliprdr_dump        = 0x4000'0000
+# - rdpdr_dump          = 0x8000'0000
 #_advanced
 #_hex
 mod_rdp = integer(min=0, default=0)
 
+# - basic_trace     = 0x0000'0001
+# - keymap_stack    = 0x0000'0002
+# - draw_event      = 0x0000'0004
+# - input           = 0x0000'0008
+# - connection      = 0x0000'0010
+# - hextile_encoder = 0x0000'0020
+# - cursor_encoder  = 0x0000'0040
+# - clipboard       = 0x0000'0080
+# - zrle_encoder    = 0x0000'0100
+# - zrle_trace      = 0x0000'0200
+# - hextile_trace   = 0x0000'0400
+# - cursor_trace    = 0x0000'1000
+# - rre_encoder     = 0x0000'2000
+# - rre_trace       = 0x0000'4000
+# - raw_encoder     = 0x0000'8000
+# - raw_trace       = 0x0001'0000
+# - copyrect_encoder= 0x0002'0000
+# - copyrect_trace  = 0x0004'0000
+# - keymap          = 0x0008'0000
 #_advanced
 #_hex
 mod_vnc = integer(min=0, default=0)
 
+# - copy_paste != 0
+# - client_execute = 0x01
 #_advanced
 #_hex
 mod_internal = integer(min=0, default=0)
 
+# - basic    = 0x0001
+# - dump     = 0x0002
+# - watchdog = 0x0004
 #_advanced
 #_hex
 sck_mod = integer(min=0, default=0)
 
+# - basic    = 0x0001
+# - dump     = 0x0002
+# - watchdog = 0x0004
 #_advanced
 #_hex
 sck_front = integer(min=0, default=0)
@@ -1142,18 +1237,23 @@ sck_front = integer(min=0, default=0)
 #_hidden
 password = integer(min=0, default=0)
 
+# - when != 0
 #_advanced
 #_hex
 compression = integer(min=0, default=0)
 
+# - life       = 0x0001
+# - persistent = 0x0200
 #_advanced
 #_hex
 cache = integer(min=0, default=0)
 
+# - when != 0
 #_advanced
 #_hex
 ocr = integer(min=0, default=0)
 
+# avlog level
 #_advanced
 #_hex
 ffmpeg = integer(min=0, default=0)

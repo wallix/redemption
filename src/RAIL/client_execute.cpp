@@ -75,12 +75,6 @@ ClientExecute::~ClientExecute()
     this->reset(false);
 }
 
-void ClientExecute::set_verbose(bool verbose)
-{
-    LOG_IF(this->verbose, LOG_INFO, "ClientExecute::set_verbose()");
-    this->verbose = this->verbose | verbose;
-}
-
 void ClientExecute::enable_remote_program(bool enable)
 {
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::enable_remote_program()");

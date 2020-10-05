@@ -66,10 +66,8 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        variable = 0x2,
+        variable = 0x02,
         buffer   = 0x40,
-        state    = 0x10,
-        arcsight  = 0x20,
     };
 
     AclSerializer(Inifile & ini);

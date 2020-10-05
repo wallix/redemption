@@ -251,7 +251,8 @@ public:
         , events(events)
         , sesman(ini, time_base)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps, false)
+        , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps,
+            bool((RDPVerbose::rail | RDPVerbose::rail_dump) & this->config.verbose))
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
@@ -260,9 +261,7 @@ public:
         , secondary_connection_finished(false)
         , local_IP("unknown_local_IP")
         , gd_forwarder(*this)
-    {
-        this->rail_client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
-    }
+    {}
 
    ~ClientRedemption() = default;
 

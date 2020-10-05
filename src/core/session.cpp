@@ -43,6 +43,7 @@
 #include "utils/load_theme.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/redirection_info.hpp"
+#include "utils/verbose_flags.hpp"
 
 #include <cassert>
 #include <cerrno>
@@ -61,14 +62,40 @@
 namespace
 {
 
+enum class SessionVerbose : uint32_t
+{
+    Event   = 0x02,
+    Acl     = 0x04,
+    Trace   = 0x08,
+};
+
+bool operator & (SessionVerbose a, SessionVerbose b)
+{
+    return bool(uint32_t(a) & uint32_t(b));
+}
+
 struct VerboseSession
 {
-    static bool has_verbose_event(Inifile const& ini) { return debug(ini) & 0x02; }
-    static bool has_verbose_acl(Inifile const& ini) { return debug(ini) & 0x04; }
-    static bool has_verbose_trace(Inifile const& ini) { return debug(ini) & 0x08; }
+    static bool has_verbose_event(Inifile const& ini)
+    {
+        return debug(ini) & SessionVerbose::Event;
+    }
+
+    static bool has_verbose_acl(Inifile const& ini)
+    {
+        return debug(ini) & SessionVerbose::Acl;
+    }
+
+    static bool has_verbose_trace(Inifile const& ini)
+    {
+        return debug(ini) & SessionVerbose::Trace;
+    }
 
 private:
-    static uint32_t debug(Inifile const& ini) { return ini.get<cfg::debug::session>(); }
+    static SessionVerbose debug(Inifile const& ini)
+    {
+        return safe_cast<SessionVerbose>(ini.get<cfg::debug::session>());
+    }
 };
 
 class Session
@@ -1115,7 +1142,7 @@ public:
 
                         if (mod_wrapper.get_mod_signal() == BACK_EVENT_NEXT){
                             rail_client_execute.enable_remote_program(
-                                            front.client_info.remote_program);
+                                front.client_info.remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                             auto next_state = MODULE_INTERNAL_TRANSITION;
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -1131,9 +1158,9 @@ public:
                              || next_state == MODULE_TRANSITORY
                             ) {
                                 run_session = this->next_backend_module(
-                                                acl_serial, log_file, ini,
-                                                mod_factory, mod_wrapper, front,
-                                                sesman, rail_client_execute);
+                                    acl_serial, log_file, ini,
+                                    mod_factory, mod_wrapper, front,
+                                    sesman, rail_client_execute);
                             }
                         }
 
@@ -1216,8 +1243,8 @@ public:
                         sesman.set_disconnect_target();
                         mod_wrapper.disconnect();
                         if (ini.get<cfg::globals::enable_close_box>()) {
-                            rail_client_execute.enable_remote_program
-                                (front.client_info.remote_program);
+                            rail_client_execute.enable_remote_program(
+                                front.client_info.remote_program);
 
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
 

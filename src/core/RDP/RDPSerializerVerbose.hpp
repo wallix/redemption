@@ -26,13 +26,13 @@
 
 REDEMPTION_VERBOSE_FLAGS_DEF(RDPSerializerVerbose)
 {
-        none,
-        pointer             = 0x0004,
-        primary_orders      = 0x0020,
-        secondary_orders    = 0x0040,
-        bitmap_update       = 0x0080,
-        surface_commands    = 0x0100,
-        bmp_cache           = 0x0200,
-        internal_buffer     = 0x0400,
-        // update Front::Verbose when verbose > 0xffff
+    none,
+    pointer             = 0x0004,
+    primary_orders      = 0x0020,
+    secondary_orders    = 0x0040,
+    bitmap_update       = 0x0080,
+    surface_commands    = 0x0100,
+    bmp_cache           = 0x0200,
+    internal_buffer     = 0x0400,
+    // update Front::Verbose when verbose > 0xffff
 };

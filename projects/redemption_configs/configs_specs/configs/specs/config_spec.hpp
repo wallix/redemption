@@ -26,6 +26,8 @@
 #include "configs/autogen/enums.hpp"
 #include "configs/type_name.hpp"
 
+#include "include/debug_verbose_description.hpp"
+
 #include "keyboard/keymap2.hpp" // keylayouts
 
 #include <algorithm>
@@ -37,6 +39,18 @@
 namespace cfg_specs {
 
 #ifdef IN_IDE_PARSER
+    constexpr char const* CONFIG_DESC_AUTH = "";
+    constexpr char const* CONFIG_DESC_FRONT = "";
+    constexpr char const* CONFIG_DESC_RDP = "";
+    constexpr char const* CONFIG_DESC_VNC = "";
+    constexpr char const* CONFIG_DESC_SCK = "";
+    constexpr char const* CONFIG_DESC_CAPTURE = "";
+    constexpr char const* CONFIG_DESC_SESSION = "";
+    constexpr char const* CONFIG_DESC_MOD_INTERNAL = "";
+    constexpr char const* CONFIG_DESC_COMPRESSION = "";
+    constexpr char const* CONFIG_DESC_CACHE = "";
+    constexpr char const* CONFIG_DESC_OCR = "";
+
     // for coloration...
     struct Writer
     {
@@ -675,23 +689,36 @@ void config_spec_definition(Writer && W)
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "fake_target_ip");
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "capture");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "auth");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "session");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "front");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "capture",
+            desc{CONFIG_DESC_CAPTURE});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "auth",
+            desc{CONFIG_DESC_AUTH});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "session",
+            desc{CONFIG_DESC_SESSION});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "front",
+            desc{CONFIG_DESC_FRONT});
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_rdp");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_vnc");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_internal");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_rdp",
+            desc{CONFIG_DESC_RDP});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_vnc",
+            desc{CONFIG_DESC_VNC});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mod_internal",
+            desc{CONFIG_DESC_MOD_INTERNAL});
 
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sck_mod");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sck_front");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sck_mod",
+            desc{CONFIG_DESC_SCK});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sck_front",
+            desc{CONFIG_DESC_SCK});
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::u32>(), "password");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "cache");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ocr");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ffmpeg");
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "compression",
+            desc{CONFIG_DESC_COMPRESSION});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "cache",
+            desc{CONFIG_DESC_CACHE});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ocr",
+            desc{CONFIG_DESC_OCR});
+        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "ffmpeg",
+            desc{"avlog level"});
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), spec::type_<bool>(), "config", set(2));
 

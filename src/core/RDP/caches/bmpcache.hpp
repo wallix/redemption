@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-
 #pragma once
 
 #include <set>
@@ -398,8 +397,8 @@ public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        life = 1,
-        persistent = 512,
+        life       = 0x0001,
+        persistent = 0x0200,
     };
 
     explicit BmpCache(

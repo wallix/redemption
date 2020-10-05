@@ -3556,6 +3556,16 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - kbd / ocr when != 0 <br/>
+    ///  <br/>
+    /// (Wrm) <br/>
+    /// - pointer             = 0x0004 <br/>
+    /// - primary_orders      = 0x0020 <br/>
+    /// - secondary_orders    = 0x0040 <br/>
+    /// - bitmap_update       = 0x0080 <br/>
+    /// - surface_commands    = 0x0100 <br/>
+    /// - bmp_cache           = 0x0200 <br/>
+    /// - internal_buffer     = 0x0400 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::capture {
@@ -3566,6 +3576,8 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - variable = 0x02 <br/>
+    /// - buffer   = 0x40 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::auth {
@@ -3576,6 +3588,9 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    ///     Event   = 0x02, <br/>
+    ///     Acl     = 0x04, <br/>
+    ///     Trace   = 0x08, <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::session {
@@ -3586,6 +3601,27 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - basic_trace     = 0x0000'0001 <br/>
+    /// - basic_trace2    = 0x0000'0002 <br/>
+    /// - basic_trace3    = 0x0000'0004 <br/>
+    /// - basic_trace4    = 0x0000'0008 <br/>
+    /// - basic_trace5    = 0x0000'0020 <br/>
+    /// - graphic         = 0x0000'0040 <br/>
+    /// - channel         = 0x0000'0080 <br/>
+    /// - cache_from_disk = 0x0000'0400 <br/>
+    /// - bmp_info        = 0x0000'0800 <br/>
+    /// - global_channel  = 0x0000'2000 <br/>
+    /// - sec_decrypted   = 0x0000'4000 <br/>
+    /// - keymap          = 0x0000'8000 <br/>
+    ///  <br/>
+    /// (Serializer) <br/>
+    /// - pointer             = 0x0004'0000 <br/>
+    /// - primary_orders      = 0x0020'0000 <br/>
+    /// - secondary_orders    = 0x0040'0000 <br/>
+    /// - bitmap_update       = 0x0080'0000 <br/>
+    /// - surface_commands    = 0x0100'0000 <br/>
+    /// - bmp_cache           = 0x0200'0000 <br/>
+    /// - internal_buffer     = 0x0400'0000 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::front {
@@ -3596,6 +3632,38 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - basic_trace         = 0x0000'0001 <br/>
+    /// - connection          = 0x0000'0002 <br/>
+    /// - security            = 0x0000'0004 <br/>
+    /// - capabilities        = 0x0000'0008 <br/>
+    /// - license             = 0x0000'0010 <br/>
+    /// - asynchronous_task   = 0x0000'0020 <br/>
+    /// - graphics_pointer    = 0x0000'0040 <br/>
+    /// - graphics            = 0x0000'0080 <br/>
+    /// - input               = 0x0000'0100 <br/>
+    /// - rail_order          = 0x0000'0200 <br/>
+    /// - credssp             = 0x0000'0400 <br/>
+    /// - negotiation         = 0x0000'0800 <br/>
+    /// - cache_persister     = 0x0000'1000 <br/>
+    /// - fsdrvmgr            = 0x0000'2000 <br/>
+    /// - sesprobe_launcher   = 0x0000'4000 <br/>
+    /// - sesprobe_repetitive = 0x0000'8000 <br/>
+    /// - drdynvc             = 0x0001'0000 <br/>
+    /// - surfaceCmd          = 0x0002'0000 <br/>
+    /// - cache_from_disk     = 0x0004'0000 <br/>
+    /// - bmp_info            = 0x0008'0000 <br/>
+    /// - drdynvc_dump        = 0x0010'0000 <br/>
+    /// - printer             = 0x0020'0000 <br/>
+    /// - rdpsnd              = 0x0040'0000 <br/>
+    /// - channels            = 0x0080'0000 <br/>
+    /// - rail                = 0x0100'0000 <br/>
+    /// - sesprobe            = 0x0200'0000 <br/>
+    /// - cliprdr             = 0x0400'0000 <br/>
+    /// - rdpdr               = 0x0800'0000 <br/>
+    /// - rail_dump           = 0x1000'0000 <br/>
+    /// - sesprobe_dump       = 0x2000'0000 <br/>
+    /// - cliprdr_dump        = 0x4000'0000 <br/>
+    /// - rdpdr_dump          = 0x8000'0000 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::mod_rdp {
@@ -3606,6 +3674,25 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - basic_trace     = 0x0000'0001 <br/>
+    /// - keymap_stack    = 0x0000'0002 <br/>
+    /// - draw_event      = 0x0000'0004 <br/>
+    /// - input           = 0x0000'0008 <br/>
+    /// - connection      = 0x0000'0010 <br/>
+    /// - hextile_encoder = 0x0000'0020 <br/>
+    /// - cursor_encoder  = 0x0000'0040 <br/>
+    /// - clipboard       = 0x0000'0080 <br/>
+    /// - zrle_encoder    = 0x0000'0100 <br/>
+    /// - zrle_trace      = 0x0000'0200 <br/>
+    /// - hextile_trace   = 0x0000'0400 <br/>
+    /// - cursor_trace    = 0x0000'1000 <br/>
+    /// - rre_encoder     = 0x0000'2000 <br/>
+    /// - rre_trace       = 0x0000'4000 <br/>
+    /// - raw_encoder     = 0x0000'8000 <br/>
+    /// - raw_trace       = 0x0001'0000 <br/>
+    /// - copyrect_encoder= 0x0002'0000 <br/>
+    /// - copyrect_trace  = 0x0004'0000 <br/>
+    /// - keymap          = 0x0008'0000 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::mod_vnc {
@@ -3616,6 +3703,8 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - copy_paste != 0 <br/>
+    /// - client_execute = 0x01 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::mod_internal {
@@ -3626,6 +3715,9 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - basic    = 0x0001 <br/>
+    /// - dump     = 0x0002 <br/>
+    /// - watchdog = 0x0004 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::sck_mod {
@@ -3636,6 +3728,9 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - basic    = 0x0001 <br/>
+    /// - dump     = 0x0002 <br/>
+    /// - watchdog = 0x0004 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::sck_front {
@@ -3656,6 +3751,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - when != 0 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::compression {
@@ -3666,6 +3762,8 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - life       = 0x0001 <br/>
+    /// - persistent = 0x0200 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::cache {
@@ -3676,6 +3774,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// - when != 0 <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::ocr {
@@ -3686,6 +3785,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// avlog level <br/>
     /// type: uint32_t <br/>
     /// default: {} <br/>
     struct debug::ffmpeg {
