@@ -759,7 +759,7 @@ public:
                     >= this->inter_frame_interval_native_capture) {
                 this->recorder.timestamp(now);
                 this->time_to_wait = this->inter_frame_interval_native_capture;
-                this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
+                this->recorder.mouse(x, y);
                 this->start_native_capture = now;
                 if ((difftimeval(now, this->start_break_capture) >=
                      this->inter_frame_interval_start_break_capture)) {

@@ -2056,7 +2056,7 @@ public:
                 break;
 
                 default:
-                    LOG(LOG_INFO, "DEFAULT: unknown record type=%x size=%d octets", type, size);
+                    LOG(LOG_INFO, "DEFAULT: unknown record type=%x size=%u octets", type, size);
                     chunk.in_skip_bytes(size - 6u);
                 break;
             }
