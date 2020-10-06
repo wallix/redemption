@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # cd /var/lib/jenkins/jobs/redemption-future/workspace
 cd $(realpath -m "$0/../..")
@@ -11,9 +11,18 @@ fi
 set -ex
 
 typeset -i fast=0
-if [ "$1" = fast ]; then
-    fast=1
-fi
+typeset -i update=0
+for act in "$@" ; do
+    case "$act" in
+        fast) fast=1 ;;
+        update) update=1 ;;
+        *)  set +x ; echo "$0 [fast] [update]
+
+fast: enable fast compilation
+update: update targets.jam and others generated files";
+            exit 1 ;;
+    esac
+done
 
 # Cleaning
 #rm -fr cmake_temp
@@ -21,7 +30,7 @@ fi
 git clean -fd
 git submodule update --init
 
-if [ $fast -eq 0 ]; then
+if [[ $fast -eq 0 ]]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
 
@@ -36,20 +45,21 @@ show_duration()
 # jsclient (emscripten)
 pushd projects/jsclient
 source ~/emsdk/emsdk_env.sh
-if [ $fast -eq 0 ]; then
+if [[ $fast -eq 0 ]]; then
     rm -rf bin
 fi
 version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
 echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
-if [ ! -d system_include/boost ]; then
+if [[ ! -d system_include/boost ]]; then
     mkdir -p system_include
     ln -s /usr/include/boost/ system_include
 fi
-if [ ! -d node_modules ]; then
+if [[ ! -d node_modules ]]; then
     ln -s ~/node_jsclient/future/node_modules .
 fi
 set -o pipefail
-bjam -qj2 toolset=clang-$version debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
+toolset_emscripten=toolset=clang-$version
+bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
 popd
 
@@ -79,7 +89,7 @@ export UBSAN_OPTIONS=print_stacktrace=1
 
 export BOOST_TEST_COLOR_OUTPUT=0
 
-if [ $fast -eq 0 ]; then
+if [[ $fast -eq 0 ]]; then
     rm -rf bin
 else
     rm -rf bin/tmp/
@@ -137,7 +147,7 @@ set -o pipefail
 diff <(echo "$beforerun") <(rootlist) | while read l ; do
     echo "Jenkins:${diffline:-0}:0: warnings: $l [directory integrity]"
     ((++diffline))
-done || if [ $fast -eq 1 ]; then
+done || if [[ $fast -eq 1 ]]; then
     # error with fast compilation
     echo "Directory integrity error: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
     exit 1
@@ -145,7 +155,6 @@ fi
 set +o pipefail
 
 
-#bjam -a -q toolset=clang-8 -sNO_FFMPEG=1 san
 build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
@@ -153,7 +162,7 @@ build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
 show_duration $toolset_clang
 
 
-if [ $fast -eq 0 ]; then
+if [[ $fast -eq 0 ]]; then
     # debug with coverage
     build $toolset_gcc debug -scoverage=on covbin=gcov-9 -s FAST_CHECK=1
 
@@ -190,4 +199,39 @@ if [ $fast -eq 0 ]; then
       parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
 
     show_duration valgrind
+fi
+
+if [[ $update -eq 1 ]]; then
+    set -e
+    # update targets.jam files
+    bjam $toolset_gcc targets.jam
+    cd projects/jsclient
+    bjam $toolset_emscripten debug targets.jam
+    cd ../redemption_configs
+
+    # update verbose description
+    desc=autogen/src/include/debug_verbose_description.hpp
+    [[ -f "$desc" ]]
+    ./extract_verbose.sh > "$desc".new
+    cmp "$desc".new "$desc" || {
+        # recompile configs
+        cp ../../project-config.jam .
+        mv "$desc".new "$desc"
+        bjam $toolset_clang debug -j2 generate
+        git add autogen
+    }
+    cd ../..
+
+    # commit files
+    git add targets.jam projects/{qt,js}client/targets.jam
+    r=$(git status --ignore-submodules --porcelain | sed '/^ M /!d')
+    [[ -z "$r" ]] || {
+        git commit -m '[ci] update files'
+        git push origin "$GIT_LOCAL_BRANCH" || {
+            git reset @^
+            false
+        }
+    }
+
+    show_duration update
 fi
