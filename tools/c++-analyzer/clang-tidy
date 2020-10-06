@@ -115,7 +115,8 @@ $(find tests/ -name 'test_*.cpp' \
 -DBOOST_AUTO_TEST_MAIN \
 -DBOOST_TEST_DYN_LINK \
 -DFAST_CHECK=1 \
--DCLANG_TIDY
+-DCLANG_TIDY \
+-fsyntax-only
 
 # highlighting
 # sed "s#`pwd`/##" | colout '(^[pst][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w
