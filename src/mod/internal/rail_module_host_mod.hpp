@@ -35,7 +35,6 @@ class ClientExecute;
 class TimeBase;
 
 using RailModuleHostModVariables = vcfg::variables<
-    vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
     vcfg::var<cfg::remote_program::allow_resize_hosted_desktop,  vcfg::accessmode::get>,
     vcfg::var<cfg::context::rail_module_host_mod_is_active,      vcfg::accessmode::set>
 >;

@@ -23,6 +23,7 @@ local list_checkers = {
     log6 = true,
     config = true,
     error = true,
+    vcfg = true,
 }
 
 local utils = require'utils'
@@ -78,8 +79,7 @@ end
 
 
 for i,checker in ipairs(checkers) do
-    require('checkers/' .. checker)
-    checkers[i] = require(checker .. '_checker')
+    checkers[i] = require('checkers/' .. checker)
     checkers[i].init(args.configs[checker])
 end
 

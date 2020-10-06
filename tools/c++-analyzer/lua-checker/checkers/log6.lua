@@ -1,9 +1,3 @@
-local utils = require'utils'
-local print_error = utils.print_error
-local pairs, ipairs, assert, math, table, string = pairs, ipairs, assert, math, table, string
-
-module "log6_checker"
-
 local Log6, LogIds, NewLinePos
 
 do
@@ -72,7 +66,7 @@ function init(args)
     assert(i > 10) -- random magic number
 end
 
-logs = {}
+local logs = {}
 function file(content, filename)
     local r = Log6:match(content)
     if r then
@@ -148,3 +142,6 @@ function terminate()
 
     return errcount
 end
+
+
+return {init=init, file=file, terminate=terminate}

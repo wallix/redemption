@@ -43,6 +43,8 @@ peg.word = peg.wordchars^1
 peg.space = peg.S'\n\t '
 peg.ws0 = peg.space^0
 peg.ws = peg.space^1
+peg.singleLineComment = '//' * peg.After('\n')
+peg.multiLineComment = '/*' * peg.After('*/')
 
 
 -- checker utility

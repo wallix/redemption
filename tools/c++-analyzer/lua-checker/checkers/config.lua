@@ -1,7 +1,5 @@
 local utils = require'utils'
 
-module "config_checker"
-
 local patternType, patternTypeSearch, patternVar, patternVarSearch
 do
     local peg = utils.peg
@@ -10,10 +8,8 @@ do
     local Ct = peg.Ct
     local After = peg.After
     local Ident = 'cfg:' * (peg.word + ':')^1
-    local SingleLineComment = '//' * After('\n')
-    local MultiLineComment = '/*' * After('*/')
     patternVar = Ct(After(C(Ident))^0)
-    patternVarSearch = Ct(After('<' * C(Ident) * '>'+ SingleLineComment + MultiLineComment)^0)
+    patternVarSearch = Ct(After('<' * C(Ident) * '>'+ peg.singleLineComment + peg.multiLineComment)^0)
     patternType = Ct((After('.enumeration_') * After('"') * C(peg.Until('"')))^0)
     patternTypeSearch = Ct(After((1-peg.wordchars) * C((R'AZ' * R('AZ','az')^1)))^0)
 end
@@ -55,3 +51,5 @@ function terminate()
     return utils.count_error(values, "%s not used")
          + utils.count_error(types, "%s not used")
 end
+
+return {init=init, file=file, terminate=terminate}
