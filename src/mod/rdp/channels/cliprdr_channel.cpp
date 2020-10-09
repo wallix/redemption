@@ -2533,6 +2533,11 @@ void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
 {
     (void)out_asynchronous_task;
 
+    if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+        this->send_message_to_client(total_length, flags, chunk_data);
+        return;
+    }
+
     InStream chunk(chunk_data);
     RDPECLIP::CliprdrHeader header;
     bool send_message_to_client = true;

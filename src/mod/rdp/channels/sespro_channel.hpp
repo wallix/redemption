@@ -325,7 +325,7 @@ private:
         LOG(((this->sespro_params.on_launch_failure ==
                 SessionProbeOnLaunchFailure::disconnect_user) ?
                 LOG_ERR : LOG_WARNING),
-            "SessionProbeVirtualChannel::process_event: "
+            "SessionProbeVirtualChannel::process_event_launch: "
                 "Session Probe is not ready yet!");
 
         error_type err_id = ERR_SESSION_PROBE_LAUNCH;
@@ -351,7 +351,7 @@ private:
     {
         if (!this->session_probe_keep_alive_received) {
             LOG(LOG_ERR,
-                "SessionProbeVirtualChannel::process_event: "
+                "SessionProbeVirtualChannel::process_event_ready: "
                     "No keep alive received from Session Probe!");
 
             if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
@@ -362,12 +362,12 @@ private:
             if (!this->disconnection_reconnection_required) {
                 if (this->session_probe_ending_in_progress) {
                     LOG(LOG_INFO,
-                        "SessionProbeVirtualChannel::process_event: "
+                        "SessionProbeVirtualChannel::process_event_ready: "
                             "Session ending is in progress.");
 
                     if (this->sespro_params.at_end_of_session_freeze_connection_and_wait) {
                         LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_event: "
+                            "SessionProbeVirtualChannel::process_event_ready: "
                                 "Freezes connection and wait end of session.");
 
                         if (!this->client_input_disabled_because_session_probe_keepalive_is_missing) {
@@ -380,7 +380,7 @@ private:
                     }
                     else {
                         LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_event: "
+                            "SessionProbeVirtualChannel::process_event_ready: "
                                 "Precipitates the end of the session.");
 
                         this->rdp.sespro_ending_in_progress();
@@ -453,6 +453,10 @@ public:
             const bool send              = false;
             const bool from_or_to_client = false;
             ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
+        }
+
+        if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+            return;
         }
 
         InStream chunk(chunk_data);
@@ -563,7 +567,7 @@ public:
                     });
 
                     LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
-                        "SessionProbeVirtualChannel::process_event: "
+                        "SessionProbeVirtualChannel::process_server_message: "
                             "Session Probe keep alive requested");
 
                     this->session_probe_timer = this->events.erase_event(this->session_probe_timer);
@@ -1029,7 +1033,7 @@ public:
                         else {
                             if (this->sespro_params.log_level >= SessionProbeLogLevel::Off) {
                                 LOG(LOG_WARNING,
-                                    "SessionProbeVirtualChannel::process_event: "
+                                    "SessionProbeVirtualChannel::process_server_message: "
                                         "Log levels are not supported by Session Probe! OtherVersion=0x%X",
                                     this->other_version);
                             }
@@ -1038,7 +1042,7 @@ public:
                     else {
                         if (this->sespro_params.enable_log_rotation) {
                             LOG(LOG_WARNING,
-                                "SessionProbeVirtualChannel::process_event: "
+                                "SessionProbeVirtualChannel::process_server_message: "
                                     "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
                                 this->other_version);
                         }
