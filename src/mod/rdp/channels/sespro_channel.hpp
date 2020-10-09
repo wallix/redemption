@@ -293,7 +293,7 @@ private:
         LOG(((this->sespro_params.on_launch_failure ==
                 SessionProbeOnLaunchFailure::disconnect_user) ?
                 LOG_ERR : LOG_WARNING),
-            "SessionProbeVirtualChannel::process_event: "
+            "SessionProbeVirtualChannel::process_event_launch: "
                 "Session Probe is not ready yet!");
 
         error_type err_id = ERR_SESSION_PROBE_LAUNCH;
@@ -318,7 +318,7 @@ private:
 
         if (need_full_screen_update) {
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
-                "SessionProbeVirtualChannel::process_event: "
+                "SessionProbeVirtualChannel::process_event_launch: "
                     "Force full screen update. Rect=(0, 0, %u, %u)",
                 this->param_front_width, this->param_front_height);
             this->mod.rdp_input_invalidate(Rect(0, 0,
@@ -338,7 +338,7 @@ private:
                     disable_input_event, disable_graphics_update);
 
                 LOG(LOG_ERR,
-                    "SessionProbeVirtualChannel::process_event: "
+                    "SessionProbeVirtualChannel::process_event_ready: "
                         "No keep alive received from Session Probe!");
             }
 
@@ -419,8 +419,7 @@ public:
             ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
-        if (!(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME)))
-        {
+        if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
             return;
         }
 
@@ -546,7 +545,7 @@ public:
                     });
 
                     LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
-                        "SessionProbeVirtualChannel::process_event: "
+                        "SessionProbeVirtualChannel::process_server_message: "
                             "Session Probe keep alive requested");
 
                     this->session_probe_timer = this->session_reactor.create_timer()
