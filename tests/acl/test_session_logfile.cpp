@@ -60,7 +60,7 @@ inline void init_keys(CryptoContext & cctx)
 RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
 {
     Inifile ini;
-    ini.clear_send_index();
+    ini.clear_acl_fields_changed();
 
     LCGRandom rnd;
     Fstat fstat;

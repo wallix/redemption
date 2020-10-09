@@ -169,7 +169,7 @@ namespace spec_types
             return *this;
         }
 
-        directory_path & operator = (zstring_view new_path)
+        directory_path & operator = (chars_view new_path)
         {
             this->path.assign(new_path.begin(), new_path.end());
             this->normalize();

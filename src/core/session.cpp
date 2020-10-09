@@ -220,6 +220,10 @@ class Session
 
     static const time_t select_timeout_tv_sec = 3;
 
+    bool remote_answer = false; // false initialy, set to true once response is
+                                // received from acl and asked_remote_answer is
+                                // set to false
+
 private:
     enum class EndSessionResult
     {
@@ -423,7 +427,7 @@ private:
         case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
         {
             // In case of transitory we are still expecting spontaneous data
-            acl_serial.remote_answer = true;
+            this->remote_answer = true;
             auto next_state = MODULE_INTERNAL_TRANSITION;
             this->new_mod(next_state, mod_wrapper, mod_factory, front);
         } // case next_state == MODULE_TRANSITORY  in switch (next_state)
@@ -658,7 +662,7 @@ private:
     void retry_rdp(AclSerializer & acl_serial, ClientExecute & rail_client_execute, Front & front, ModWrapper & mod_wrapper, ModFactory & mod_factory, Sesman & sesman)
     {
         LOG(LOG_INFO, "Retry RDP");
-        acl_serial.remote_answer = false;
+        this->remote_answer = false;
 
         rail_client_execute.enable_remote_program(front.client_info.remote_program);
         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
@@ -922,7 +926,7 @@ public:
                             ) {
                                 session_type = ini.get<cfg::context::module>();
                             }
-                            acl_serial.remote_answer = true;
+                            this->remote_answer = true;
                         } catch (...) {
                             LOG(LOG_INFO, "acl_serial.incoming() Session lost");
                             // acl connection lost
@@ -937,7 +941,7 @@ public:
                                 acl_serial.acl_manager_disconnect_reason.clear();
                             }
                         }
-                        if (!ini.changed_field_size()) {
+                        if (!ini.get_acl_fields_changed().size()) {
                             mod_wrapper.acl_update();
                         }
                     }
@@ -961,19 +965,12 @@ public:
                             log_file.log6(id, kv_list);
                         });
                     sesman.flush_acl(VerboseSession::has_verbose_acl(ini));
-                    // send over wire if any field changed
-                    if (this->ini.changed_field_size()) {
-                        if (VerboseSession::has_verbose_trace(ini)) {
-                            for (auto field : this->ini.get_fields_changed()) {
-                                LOG(LOG_INFO, "field to send: %s", field.get_acl_name());
-                            }
-                        }
 
-                        acl_serial.remote_answer = false;
-                        acl_serial.send_acl_data();
+                    if (acl_serial.send_acl_data()) {
+                        this->remote_answer = false;
                     }
-                    sesman.flush_acl_disconnect_target([&log_file]()
-                    {
+
+                    sesman.flush_acl_disconnect_target([&log_file]() {
                         log_file.close_session_log();
                     });
 
@@ -1106,7 +1103,7 @@ public:
                             mod_wrapper.disconnect();
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
                             if (acl_serial.is_connected()){
-                                for (auto field : this->ini.get_fields_changed()) {
+                                for (auto field : this->ini.get_acl_fields_changed()) {
                                         zstring_view key = field.get_acl_name();
 
                                         LOG_IF(VerboseSession::has_verbose_trace(ini),
@@ -1114,7 +1111,7 @@ public:
                                 }
                                 keepalive.stop();
                                 sesman.set_disconnect_target();
-                                acl_serial.remote_answer = false;
+                                this->remote_answer = false;
                                 acl_serial.send_acl_data();
                             }
                             else {
@@ -1150,8 +1147,8 @@ public:
                         }
 
                         // There are modified fields to send to sesman
-                        if (acl_serial.is_connected() && acl_serial.remote_answer){
-                            acl_serial.remote_answer = false;
+                        if (acl_serial.is_connected() && this->remote_answer){
+                            this->remote_answer = false;
 
                             auto next_state = get_module_id(ini.get<cfg::context::module>());
 

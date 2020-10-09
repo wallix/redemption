@@ -554,11 +554,6 @@ test-run tests/RAIL/test_client_execute :
   <covfile>src/RAIL/client_execute.cpp
   <covfile>src/RAIL/client_execute.hpp
 ;
-test-run tests/acl/module_manager/test_acl_new_line_converter :
-  $(REDEMPTION_TEST_PATH)/acl/module_manager/test_acl_new_line_converter.cpp
-:
-  <covfile>src/acl/module_manager/acl_new_line_converter.hpp
-;
 test-run tests/acl/test_acl_serializer :
   $(REDEMPTION_TEST_PATH)/acl/test_acl_serializer.cpp
 :
@@ -5870,7 +5865,6 @@ obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_T
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
 
 alias test_client_execute : tests/RAIL/test_client_execute ;
-alias test_acl_new_line_converter : tests/acl/module_manager/test_acl_new_line_converter ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_end_session_warning : tests/acl/test_end_session_warning ;
@@ -6217,7 +6211,6 @@ alias test_pattern : tests/utils/winpr/test_pattern ;
 if $(ENABLE_COVERAGE) = "on"
 {
 alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
-alias test_acl_new_line_converter.coverage : tests/acl/module_manager/test_acl_new_line_converter.coverage ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
@@ -6544,9 +6537,6 @@ alias test_pattern.coverage : tests/utils/winpr/test_pattern.coverage ;
 }
 alias tests/RAIL.norec :
   tests/RAIL/test_client_execute
-;
-alias tests/acl/module_manager.norec :
-  tests/acl/module_manager/test_acl_new_line_converter
 ;
 alias tests/acl.norec :
   tests/acl/test_acl_serializer
@@ -7008,11 +6998,7 @@ alias tests :
   tests/transport
   tests/utils
 ;
-alias tests/acl/module_manager :
-  tests/acl/module_manager.norec
-;
 alias tests/acl :
-  tests/acl/module_manager
   tests/acl.norec
 ;
 alias tests/capture/ocr/locale :
@@ -7197,7 +7183,6 @@ alias tests/utils/winpr :
 ;
 explicit
   tests/RAIL.norec
-  tests/acl/module_manager.norec
   tests/acl.norec
   tests/capture/ocr/locale.norec
   tests/capture.norec
@@ -7250,7 +7235,6 @@ explicit
 explicit
   tests/RAIL
   tests
-  tests/acl/module_manager
   tests/acl
   tests/capture/ocr/locale
   tests/capture/ocr

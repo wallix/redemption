@@ -139,7 +139,7 @@ namespace cpp_enumeration_writer
             out << "}\n\n";
 
             write(e,
-                "parse_error parse_from_cfg(%e & x, ::configs::spec_type<%e> /*type*/, zstring_view value)\n"
+                "parse_error parse_from_cfg(%e & x, ::configs::spec_type<%e> /*type*/, bytes_view value)\n"
                 "{\n"
             );
 

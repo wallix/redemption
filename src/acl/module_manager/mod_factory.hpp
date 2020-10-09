@@ -53,7 +53,7 @@
 #include "acl/file_system_license_store.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
-#include "acl/module_manager/acl_new_line_converter.hpp"
+
 
 class ModFactory
 {
@@ -336,7 +336,6 @@ public:
 private:
     auto _create_dialog(const char * button, const char * caption, ChallengeOpt challenge) -> ModPack
     {
-        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         auto new_mod = new DialogMod(
             this->ini,
             this->time_base,
@@ -346,7 +345,7 @@ private:
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
-            message.zstring().c_str(),
+            this->ini.get<cfg::context::message>().c_str(),
             button,
             this->rail_client_execute,
             this->glyphs,
@@ -361,7 +360,6 @@ public:
     {
         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
         const char * caption = TR(trkeys::information, language(this->ini));
-        AclNewLineConverter message{this->ini.get<cfg::context::message>()};
         bool showform = this->ini.get<cfg::context::showform>();
         uint flag = this->ini.get<cfg::context::formflag>();
         auto new_mod = new WaitMod(
@@ -373,7 +371,7 @@ public:
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
             caption,
-            message.zstring().c_str(),
+            this->ini.get<cfg::context::message>().c_str(),
             this->rail_client_execute,
             this->glyphs,
             this->theme,

@@ -1881,7 +1881,7 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
     RED_CHECK(ini.check_from_acl());
     RED_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 
-    ini.clear_send_index();
+    ini.clear_acl_fields_changed();
     RED_CHECK(!ini.check_from_acl());
 
     // setting a field without changing it should not notify that something changed
@@ -1896,15 +1896,8 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
     ini.set_acl<cfg::globals::target>("35.53.0.2");
     RED_CHECK(!ini.check_from_acl());
 
-    auto list = ini.get_fields_changed();
-    {
-        std::size_t distance = 0;
-        for (auto x : list) {
-            (void)x;
-            ++distance;
-        }
-        RED_CHECK_EQUAL(4, distance);
-    }
+    auto list = ini.get_acl_fields_changed();
+    RED_CHECK_EQUAL(4, list.size());
 
     for (auto var : list) {
         RED_CHECK((
@@ -1914,6 +1907,7 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
          || var.authid() == cfg::globals::target::index
         ));
     }
-    ini.clear_send_index();
+    ini.clear_acl_fields_changed();
     RED_CHECK(!ini.check_from_acl());
+    RED_CHECK(ini.get_acl_fields_changed().size() == 0);
 }

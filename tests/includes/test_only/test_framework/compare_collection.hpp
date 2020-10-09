@@ -227,7 +227,7 @@ namespace ut::ops
             auto& out = ar.message().stream();
 
             out << "[";
-            fmismatch(out, pos, "!=");
+            fmismatch(out, pos, " != ");
             out << "]\nMismatch at position " << pos;
 
             if (a.size() != b.size())
@@ -256,7 +256,7 @@ namespace ut::ops
             auto& out = ar.message().stream();
 
             out << "[";
-            fmismatch(out, pos, "==");
+            fmismatch(out, pos, " == ");
             out << "]";
         }
 
@@ -279,7 +279,7 @@ namespace ut::ops
             auto& out = ar.message().stream();
 
             out << "[";
-            fmismatch(out, pos, ">=");
+            fmismatch(out, pos, " >= ");
             out << "]\nMismatch at position " << pos;
         }
 
@@ -302,7 +302,7 @@ namespace ut::ops
             auto& out = ar.message().stream();
 
             out << "[";
-            fmismatch(out, pos, ">");
+            fmismatch(out, pos, " > ");
             out << "]\nMismatch at position " << pos;
         }
 
@@ -325,7 +325,7 @@ namespace ut::ops
             auto& out = ar.message().stream();
 
             out << "[";
-            fmismatch(out, pos, ">=");
+            fmismatch(out, pos, " >= ");
             out << "]\nMismatch at position " << pos;
         }
 
@@ -348,7 +348,7 @@ namespace ut::ops
             auto& out = ar.message().stream();
 
             out << "[";
-            fmismatch(out, pos, "<");
+            fmismatch(out, pos, " < ");
             out << "]\nMismatch at position " << pos;
         }
 

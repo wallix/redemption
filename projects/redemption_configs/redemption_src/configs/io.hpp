@@ -25,7 +25,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
-#include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/string_c.hpp"
 #include "utils/chex_to_int.hpp"
 
@@ -156,14 +156,14 @@ private:
 
 constexpr parse_error no_parse_error {nullptr};
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<std::string> /*type*/, zstring_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
 {
-    x.assign(value.data(), value.size());
+    x.assign(value.as_chars().data(), value.size());
     return no_parse_error;
 }
 
 template<std::size_t N>
-parse_error parse_from_cfg(char (&x)[N], ::configs::spec_type<::configs::spec_types::fixed_string> /*type*/, zstring_view value)
+parse_error parse_from_cfg(char (&x)[N], ::configs::spec_type<::configs::spec_types::fixed_string> /*type*/, bytes_view value)
 {
     using namespace jln::literals;
     if (value.size() >= N) {
@@ -178,7 +178,7 @@ template<std::size_t N>
 parse_error parse_from_cfg(
     std::array<unsigned char, N> & key,
     ::configs::spec_type<::configs::spec_types::fixed_binary> /*type*/,
-    zstring_view value
+    bytes_view value
 ) {
     using namespace jln::literals;
     if (value.size() != N*2) {
@@ -188,7 +188,7 @@ parse_error parse_from_cfg(
     }
 
     std::array<unsigned char, N> tmp;
-    char const* data = value.begin();
+    char const* data = value.as_chars().begin();
     int err = 0;
     for (std::size_t i = 0; i < N; ++i, data += 2) {
         tmp[i] = (chex_to_int(data[0], err) << 4) | chex_to_int(data[1], err);
@@ -203,18 +203,18 @@ parse_error parse_from_cfg(
     return no_parse_error;
 }
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<std::string>> /*type*/, zstring_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<std::string>> /*type*/, bytes_view value)
 {
-    x.assign(value.data(), value.size());
+    x.assign(value.as_chars().data(), value.size());
     return no_parse_error;
 }
 
 inline parse_error parse_from_cfg(
     ::configs::spec_types::directory_path & x,
     ::configs::spec_type<::configs::spec_types::directory_path> /*type*/,
-    zstring_view value
+    bytes_view value
 ) {
-    x = std::string(value.data(), value.size());
+    x = value.as_chars();
     return no_parse_error;
 }
 
@@ -234,7 +234,7 @@ parse_error make_invalid_range_error()
 
 template<bool InList = false, class TInt, TInt min, TInt max>
 parse_error parse_integral(
-    TInt & x, chars_view value,
+    TInt & x, bytes_view value,
     std::integral_constant<TInt, min> /*unused*/,
     std::integral_constant<TInt, max> /*unused*/)
 {
@@ -249,9 +249,10 @@ parse_error parse_integral(
         base = 16;
     }
 
-    auto r = std::from_chars(value.begin(), value.end(), tmp, base);
+    auto const chars = value.as_chars();
+    auto const r = std::from_chars(chars.begin(), chars.end(), tmp, base);
 
-    if (r.ec == std::errc() && r.ptr == value.end()) {
+    if (r.ec == std::errc() && r.ptr == chars.end()) {
         if (tmp < min || max < tmp) {
             return make_invalid_range_error<TInt, min, max>();
         }
@@ -282,7 +283,7 @@ template<class TInt>
 std::enable_if_t<
     std::is_integral_v<TInt> && !std::is_same_v<TInt, bool>,
     parse_error>
-parse_from_cfg(TInt & x, ::configs::spec_type<TInt> /*type*/, zstring_view value)
+parse_from_cfg(TInt & x, ::configs::spec_type<TInt> /*type*/, bytes_view value)
 {
     return parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>());
 }
@@ -293,7 +294,7 @@ template<class T,
 parse_error parse_from_cfg(
     T & x,
     ::configs::spec_type<::configs::spec_types::range<T, min, max>> /*type*/,
-    zstring_view value
+    bytes_view value
 ) {
     using namespace jln::literals;
     using Int = ::configs::spec_types::underlying_type_for_range_t<T>;
@@ -309,7 +310,7 @@ template<class T, class Ratio>
 parse_error parse_from_cfg(
     std::chrono::duration<T, Ratio> & x,
     ::configs::spec_type<std::chrono::duration<T, Ratio>> /*type*/,
-    zstring_view value
+    bytes_view value
 ) {
     T y{}; // create with default value
     if (parse_error err = parse_integral(y, value, zero_integral<T>(), max_integral<T>())) {
@@ -320,26 +321,27 @@ parse_error parse_from_cfg(
 }
 
 template<class IntOrigin>
-parse_error parse_integral_list(std::string & x, zstring_view value) {
-    for (auto r : get_split(value, ',')) {
+parse_error parse_integral_list(std::string & x, bytes_view value) {
+    const auto chars = value.as_chars();
+    for (auto r : get_split(chars, ',')) {
         IntOrigin i;
         auto rng = trim(r);
         if (auto err = parse_integral<true>(
-          i, {rng.begin(), rng.size()},
-          min_integral<IntOrigin>(),
-          max_integral<IntOrigin>())
+            i, {rng.begin(), rng.size()},
+            min_integral<IntOrigin>(),
+            max_integral<IntOrigin>())
         ) {
             return err;
         }
     }
-    x.assign(value.data(), value.size());
+    x.assign(chars.data(), chars.size());
     return no_parse_error;
 }
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<int>> /*type*/, zstring_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<int>> /*type*/, bytes_view value)
 { return parse_integral_list<int>(x, value); }
 
-inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<unsigned>> /*type*/, zstring_view value)
+inline parse_error parse_from_cfg(std::string & x, ::configs::spec_type<::configs::spec_types::list<unsigned>> /*type*/, bytes_view value)
 { return parse_integral_list<unsigned>(x, value); }
 
 inline bool str_compare(chars_view x, chars_view y)
@@ -392,9 +394,9 @@ constexpr std::size_t str_value_pairs_max_len()
 }
 
 template<auto& Pairs, class T>
-parse_error parse_str_value_pairs(T & x, zstring_view value, char const* error_msg)
+parse_error parse_str_value_pairs(T & x, bytes_view value, char const* error_msg)
 {
-    UpperArray<str_value_pairs_max_len<Pairs>()> av_value{value};
+    UpperArray<str_value_pairs_max_len<Pairs>()> av_value{value.as_chars()};
 
     for (auto const& pair : Pairs) {
         if (str_compare(pair.first, av_value.str)) {
@@ -408,7 +410,7 @@ parse_error parse_str_value_pairs(T & x, zstring_view value, char const* error_m
 
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, parse_error>::type
-parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, zstring_view value)
+parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<boolean_strings>(
         x, value, "bad value, expected: 1, on, yes, true, 0, off, no, false");
@@ -416,13 +418,19 @@ parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, zstring_view value)
 
 inline parse_error parse_from_cfg(
     uint32_t& x, ::configs::spec_type<::configs::spec_types::file_permission> /*type*/,
-    zstring_view value)
+    bytes_view value)
 {
     uint32_t tmp = 0;
 
-    if ('0' <= value.c_str()[0] && value.c_str()[0] <= '9') {
-        if (auto [p, ec] = std::from_chars(value.begin(), value.end(), tmp, 8);
-            p != value.end() || ec != std::errc()
+    if (value.empty()) {
+        return parse_error{"File permission is empty"};
+    }
+
+    auto chars = value.as_chars();
+
+    if ('0' <= chars[0] && chars[0] <= '9') {
+        if (auto [p, ec] = std::from_chars(chars.begin(), chars.end(), tmp, 8);
+            p != chars.end() || ec != std::errc()
         ){
             return parse_error{"Cannot parse file permission because it's not an octal number"};
         }
@@ -436,11 +444,12 @@ inline parse_error parse_from_cfg(
         return no_parse_error;
     }
 
-    char const* p = value.c_str();
+    char const* p = chars.begin();
+    char const* e = chars.end();
 
-    auto consume_right = [&p]{
+    auto consume_right = [&p, e]{
         int r = 0;
-        for (;; ++p) {
+        while (++p != e) {
             switch (*p) {
                 case 'r': r |= 4; break;
                 case 'w': r |= 2; break;
@@ -448,6 +457,7 @@ inline parse_error parse_from_cfg(
                 default: return r;
             }
         }
+        return r;
     };
 
     parse_error parsing_error{
@@ -468,20 +478,19 @@ inline parse_error parse_from_cfg(
             default: return parsing_error;
         }
 
+        if (p == e) return parsing_error;
+
         int r;
         switch (*p) {
             case '=':
-                ++p;
                 r = consume_right();
                 tmp = ((r << 6) | (r << 3) | r) & mask;
                 break;
             case '+':
-                ++p;
                 r = consume_right();
                 tmp |= ((r << 6) | (r << 3) | r) & mask;
                 break;
             case '-':
-                ++p;
                 r = consume_right();
                 tmp &= ~(((r << 6) | (r << 3) | r) & mask);
                 break;
@@ -489,17 +498,20 @@ inline parse_error parse_from_cfg(
                 continue;
         }
 
+        if (p == e) {
+            x = tmp;
+            return no_parse_error;
+        }
+
         switch (*p) {
             case ',':
-                while (*++p == ' ') {
+                while (++p != e && *p == ' ') {
                 }
-                if (*p != '\0') {
-                    break;
+                if (p == e) {
+                    x = tmp;
+                    return no_parse_error;
                 }
-                [[fallthrough]];
-            case '\0':
-                x = tmp;
-                return no_parse_error;
+                break;
 
             default: return parsing_error;
         }

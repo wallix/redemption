@@ -58,7 +58,7 @@ class SesmanConfig(object):
                 ),
                 u'not_display_message': u"Impossible d'afficher le message",
                 u'changepassword': (
-                    u"Vous devez changer votre mot de passe<br>"
+                    u"Vous devez changer votre mot de passe "
                     u"pour vous connecter."
                 ),
                 u"Connection closed by client": (

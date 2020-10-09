@@ -27,27 +27,49 @@
 #include "acl/acl_serializer.hpp"
 #include "configs/config.hpp"
 
+#include <string_view>
+
+
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
 // - Recover fields from network and update Config
 
 RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
-    class NullTransport : public Transport
-    {
-        void do_send(const uint8_t * const /*buffer*/, size_t /*len*/) override
-        {
-            // TEST test
-        }
-    };
-
     Inifile ini;
-    NullTransport trans;
+
+    BufTransport trans;
 
     AclSerializer acl(ini);
     acl.set_auth_trans(&trans);
 
-    RED_CHECK_NO_THROW(acl.send_acl_data());
+    acl.send_acl_data();
+    RED_CHECK(trans.buf ==
+        "\x00\x16"
+        "!\x03""bpp\x00\x00\x00\x02""24"
+        "!\x05width\x00\x00\x00\x03""800"
+        "!\x06height\x00\x00\x00\x03""600"
+        "!\x15selector_current_page\x00\x00\x00\x01\x31"
+        "!\x16selector_device_filter\x00\x00\x00\x00"
+        "!\x15selector_group_filter\x00\x00\x00\x00"
+        "!\x15selector_proto_filter\x00\x00\x00\x00"
+        "!\x17selector_lines_per_page\x00\x00\x00\x01\x30"
+        "?\x0ftarget_password"
+        "?\x0btarget_host"
+        "?\x0aproto_dest"
+        "?\x08password"
+        "!\x09reporting\x00\x00\x00\x00"
+        "!\x13""auth_channel_target\x00\x00\x00\x00"
+        "!\x0e""accept_message\x00\x00\x00\x05""False"
+        "!\x0f""display_message\x00\x00\x00\x05""False"
+        "!\x12real_target_device\x00\x00\x00\x00"
+        "?\x05login"
+        "!\x09ip_client\x00\x00\x00\x00"
+        "!\x09ip_target\x00\x00\x00\x00"
+        "?\x0dtarget_device"
+        "?\x0ctarget_login"_av);
+
+    trans.buf.clear();
 
     struct ThrowTransport : Transport
     {
@@ -57,12 +79,15 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         }
     };
     ThrowTransport transexcpt;
-    AclSerializer aclexcpt(ini);
 
-    aclexcpt.set_auth_trans(&transexcpt);
+    acl.set_auth_trans(&transexcpt);
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
-    aclexcpt.send_acl_data();
+
+    acl.send_acl_data();
+    RED_CHECK(trans.buf == ""_av);
+    trans.buf.clear();
+
     RED_CHECK(!ini.get<cfg::context::authenticated>());
     RED_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
 }
@@ -70,19 +95,16 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 {
     Inifile ini;
-    StaticOutStream<1024> stream;
-    // NORMAL CASE WITH SESSION ID CHANGE
-    stream.out_uint32_be(0);
-    stream.out_copy_bytes("login\nASK\n"_av);
-    stream.out_copy_bytes("password\nASK\n"_av);
-
-    stream.out_copy_bytes("session_id\n!6455\n"_av);
-    stream.stream_at(0).out_uint32_be(stream.get_offset() - 4);
-
-    GeneratorTransport trans(stream.get_produced_bytes());
     AclSerializer acl(ini);
 
+    GeneratorTransport trans(
+        "\x00\x03"
+        "?\x05login"
+        "?\x08password"
+        "!\x0asession_id\x00\x00\x00\x04""6455"
+        ""_av);
     acl.set_auth_trans(&trans);
+
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
@@ -90,137 +112,67 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 
     RED_CHECK_NO_THROW(acl.incoming());
     RED_CHECK(ini.is_asked<cfg::globals::auth_user>());
-    RED_CHECK(!ini.get<cfg::context::session_id>().empty());
-
-    // CASE EXCEPTION
-    // try exception
-    size_t const k64 = 64 * 1024 - 1;
-    size_t const sz = 1024 * 1024 * 2;
-    std::unique_ptr<char[]> u(new char[sz]);
-    OutStream big_stream({u.get(), sz});
-    big_stream.out_uint16_be(1);
-    big_stream.out_uint16_be(0xFFFF);
-    big_stream.out_copy_bytes("login\n!"_av);
-    memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
-    big_stream.out_skip_bytes(k64 - big_stream.get_offset());
-
-    RED_CHECK_EQUAL(big_stream.get_offset(), k64);
-
-    while(big_stream.tailroom() > k64 + 1) {
-        big_stream.out_uint16_be(1);
-        big_stream.out_uint16_be(0xFFFF);
-        memset(big_stream.get_current(), 'a', k64 - 4u);
-        big_stream.out_skip_bytes(k64 - 4u);
-    }
-    big_stream.out_uint16_be(0);
-    big_stream.out_uint16_be(0x2);
-    big_stream.out_copy_bytes("a\n"_av);
-
-    GeneratorTransport transexcpt({u.get(), big_stream.get_offset()});
-    transexcpt.disable_remaining_error();
-    AclSerializer aclexcpt(ini);
-
-    aclexcpt.set_auth_trans(&transexcpt);
-    RED_CHECK_EXCEPTION_ERROR_ID(aclexcpt.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
+    RED_CHECK(ini.get<cfg::context::session_id>() == "6455");
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
+RED_AUTO_TEST_CASE(TestAclSerializeTooBigMessage)
 {
     Inifile ini;
-    ini.clear_send_index();
-
-    std::string s =
-        "----"
-        "password\nASK\n"
-        "login\n!didier\n";
-    OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
-
-    GeneratorTransport trans(s);
     AclSerializer acl(ini);
 
+    auto prefix =
+        "\x00\x01"
+        "!\x05login\x00\x10\x00\x01"
+        ""_av;
+    std::string message(1024*1024+1 + prefix.size(), 'a');
+    memcpy(message.data(), prefix.data(), prefix.size());
+
+    GeneratorTransport trans(message);
+    trans.disable_remaining_error();
     acl.set_auth_trans(&trans);
 
-    RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
-    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
-
-    ini.ask<cfg::context::opt_bpp>();
-    ini.set_acl<cfg::context::reporting>("didier");
-
-    acl.incoming();
-
-    RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
-    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
+    RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
-
 
 RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 {
     Inifile ini;
-    ini.clear_send_index();
+    ini.clear_acl_fields_changed();
 
-    size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = "rejected"_av;
-    auto const total_sz = sz_string + 8u + key.size() + 3;
-    std::unique_ptr<char[]> u(new char[total_sz]);
-    OutStream big_stream({u.get(), total_sz});
-    big_stream.out_uint16_be(1);
-    big_stream.out_uint16_be(0xffff - 4);
-    big_stream.out_copy_bytes(key);
-    big_stream.out_copy_bytes("\n!"_av);
-    memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
-    auto subsz = k64 - big_stream.get_offset();
-    big_stream.out_skip_bytes(subsz);
-    big_stream.out_uint16_be(0);
-    big_stream.out_uint16_be(sz_string - subsz + 1);
-    memset(big_stream.get_current(), 'a', sz_string - subsz);
-    big_stream.out_skip_bytes(sz_string - subsz);
-    big_stream.out_copy_bytes("\n"_av);
-
-    RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
-
-    CheckTransport trans({u.get(), big_stream.get_offset()});
+    auto prefix =
+        "\x00\x01"
+        "!\x08rejected\x00\x01\x08\x00"
+        ""_av;
+    std::string message(1024*66 + prefix.size(), 'a');
+    memcpy(message.data(), prefix.data(), prefix.size());
 
     AclSerializer acl(ini);
+    BufTransport trans;
     acl.set_auth_trans(&trans);
 
     ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
 
-    RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>().size(), sz_string);
-    RED_REQUIRE_EQUAL(ini.changed_field_size(), 1);
-
-    acl.send_acl_data();
+    RED_CHECK(ini.get<cfg::context::rejected>().size() == sz_string);
+    RED_CHECK(ini.get_acl_fields_changed().size() == 1);
+    RED_CHECK(acl.send_acl_data() == 1);
+    RED_CHECK(trans.buf == bytes_view(message));
 }
 
 RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 {
     Inifile ini;
-    ini.clear_send_index();
-
-    size_t const k64 = 64 * 1024 - 1;
-    size_t const sz_string = 1024*66;
-    auto const key = "rejected"_av;
-    auto const total_sz = sz_string + 8u + key.size() + 3;
-    std::unique_ptr<char[]> u(new char[total_sz]);
-    OutStream big_stream({u.get(), total_sz});
-    big_stream.out_uint16_be(1);
-    big_stream.out_uint16_be(0xffff - 4);
-    big_stream.out_copy_bytes(key);
-    big_stream.out_copy_bytes("\n!"_av);
-    memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
-    auto subsz = k64 - big_stream.get_offset();
-    big_stream.out_skip_bytes(subsz);
-    big_stream.out_uint16_be(0);
-    big_stream.out_uint16_be(sz_string - subsz + 1);
-    memset(big_stream.get_current(), 'a', sz_string - subsz);
-    big_stream.out_skip_bytes(sz_string - subsz);
-    big_stream.out_copy_bytes("\n"_av);
-
-    RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
-
-    GeneratorTransport trans({u.get(), big_stream.get_offset()});
-
     AclSerializer acl(ini);
+
+    size_t const sz_string = 1024*66;
+    auto prefix =
+        "\x00\x01"
+        "!\x08rejected\x00\x01\x08\x00"
+        ""_av;
+    std::string message(1024*66 + prefix.size(), 'a');
+    memcpy(message.data(), prefix.data(), prefix.size());
+
+    GeneratorTransport trans(message);
     acl.set_auth_trans(&trans);
 
     std::string result(sz_string, 'a');
@@ -228,69 +180,51 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 
     acl.incoming();
 
-    RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
+    RED_REQUIRE_EQ(ini.get<cfg::context::rejected>(), result);
 }
 
-RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
+RED_AUTO_TEST_CASE(TestAclSerializeTruncateKeyInternal)
 {
     Inifile ini;
-    ini.clear_send_index();
 
-    auto const key1 = "rejected"_av;
-    auto const key2 = "message"_av;
-    size_t const key2_splitted_len = key2.size() / 2;
-    auto const total_sz = 4 * 2 + key1.size() + key2.size() + 5 * 2;
-    std::unique_ptr<char[]> u(new char[total_sz]);
-    OutStream big_stream({u.get(), total_sz});
-    big_stream.out_uint16_be(1);
-    big_stream.out_uint16_be(key1.size() + 5 + key2_splitted_len);
-    big_stream.out_copy_bytes(key1);
-    big_stream.out_copy_bytes("\n!aa\n"_av);
-    big_stream.out_copy_bytes(key1.first(key2_splitted_len));
-    big_stream.out_uint16_be(0);
-    big_stream.out_uint16_be(key2.size() - key2_splitted_len + 5);
-    big_stream.out_copy_bytes(key2.from_offset(key2_splitted_len));
-    big_stream.out_copy_bytes("\n!xy\n"_av);
+    auto prefix =
+        "\x00\x02"
+        "!\x08rejected\x00\x00\xff\xe8"
+        ""_av;
+    std::string message(65512 + prefix.size(), 'a');
+    memcpy(message.data(), prefix.data(), prefix.size());
 
-    RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
+    using namespace std::string_view_literals;
+    message += "!\x07message\x00\x00\x00\x02xy"sv;
 
-    GeneratorTransport trans({u.get(), big_stream.get_offset()});
-
+    GeneratorTransport trans(message);
     AclSerializer acl(ini);
     acl.set_auth_trans(&trans);
 
-    RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
+    acl.incoming();
 
-    trans.disable_remaining_error();
+    RED_CHECK(ini.get<cfg::context::rejected>().size() == 65512);
+    RED_CHECK(ini.get<cfg::context::message>() == "xy");
 }
 
 RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 {
     Inifile ini;
-    ini.clear_send_index();
 
-    std::string s("----abcd\n!something\nefg\n!other something\n");
-    OutStream({&s[0], 4}).out_uint32_be(s.size() - 4u);
-
-    GeneratorTransport trans(s);
+    GeneratorTransport trans(
+        "\x00\x02"
+        "!\x04""abcd\x00\x00\x00\x09""something"
+        "!\x03""efg\x00\x00\x00\x0f""other something"
+        ""_av);
     AclSerializer acl(ini);
 
     acl.set_auth_trans(&trans);
 
-    RED_CHECK(not ini.is_asked<cfg::context::opt_bpp>());
-    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "");
-
-    ini.ask<cfg::context::opt_bpp>();
-    ini.set_acl<cfg::context::reporting>("didier");
-
     {
         tu::log_buffered logbuf;
         acl.incoming();
-        RED_CHECK_EQ(logbuf.buf(),
+        RED_CHECK(logbuf.buf() ==
             "WARNING -- Unexpected receive 'abcd' - 'something'\n"
-            "WARNING -- Unexpected receive 'efg' - 'other something'\n");
+            "WARNING -- Unexpected receive 'efg' - 'other something'\n"_av);
     }
-
-    RED_CHECK(ini.is_asked<cfg::context::opt_bpp>());
-    RED_CHECK_EQUAL(ini.get<cfg::context::reporting>(), "didier");
 }

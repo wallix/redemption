@@ -57,17 +57,12 @@ private:
     char session_id[256];
 
 public:
-    // TODO not used
-    bool remote_answer;       // false initialy, set to true once response is
-                              // received from acl and asked_remote_answer is
-                              // set to false
-
-public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
-        variable = 0x02,
-        buffer   = 0x40,
+        variable = 0x0002,
+        buffer   = 0x0040,
+        dump     = 0x1000,
     };
 
     AclSerializer(Inifile & ini);
@@ -120,7 +115,7 @@ public:
     }
 
     void incoming();
-    void send_acl_data();
+    std::size_t send_acl_data();
 
 private:
     void in_items();

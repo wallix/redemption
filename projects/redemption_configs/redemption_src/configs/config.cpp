@@ -36,35 +36,44 @@ REDEMPTION_DIAGNOSTIC_POP
 
 namespace
 {
-    template<class T, class U>
-    parse_error config_parse_and_log(
-        const char * context, const char * key, T & x, U u, zstring_view av)
+    parse_error log_ini_parse_err(
+        parse_error err, const char * context, char const* key, bytes_view av)
     {
-        auto const err = parse_from_cfg(x, u, av);
         LOG_IF(err, LOG_WARNING,
             "parsing error with parameter '%s' in section [%s] for \"%.*s\": %s",
-            key, context, int(av.size()), av.data(), err.c_str());
+            key, context, int(av.size()), av.as_chars().data(), err.c_str());
+        return err;
+    }
+
+    template<class T, class U>
+    parse_error config_parse_and_log(
+        const char * context, char const* key, T & x, U u, bytes_view av)
+    {
+        return log_ini_parse_err(parse_from_cfg(x, u, av), context, key, av);
+    }
+
+    parse_error log_acl_parse_err(
+        parse_error err, zstring_view key, bytes_view value)
+    {
+        LOG_IF(err, LOG_WARNING,
+            "parsing error with acl parameter '%s' for \"%.*s\": %s",
+            key, int(value.size()), value.as_chars().data(), err.c_str());
+
         return err;
     }
 
     template<class T>
     struct ConfigFieldVTable
     {
-        static bool parse(configs::VariablesConfiguration & variables, zstring_view value)
+        static bool parse(configs::VariablesConfiguration & variables, bytes_view value)
         {
-            auto const err = parse_from_cfg(
-                static_cast<T&>(variables).value,
-                configs::spec_type<typename T::sesman_and_spec_type>{},
+            return !log_acl_parse_err(
+                parse_from_cfg(
+                    static_cast<T&>(variables).value,
+                    configs::spec_type<typename T::sesman_and_spec_type>{},
+                    value),
+                configs::authstr[unsigned(T::index)],
                 value);
-
-            if (err) {
-                LOG(LOG_WARNING,
-                    "parsing error with acl parameter '%s' for \"%s\": %s",
-                    configs::authstr[unsigned(T::index)], value, err.c_str());
-                return false;
-            }
-
-            return true;
         }
 
         static zstring_view to_zstring_view(
@@ -123,7 +132,7 @@ zstring_view Inifile::FieldConstReference::get_acl_name() const
     return configs::authstr[unsigned(this->id)];
 }
 
-bool Inifile::FieldReference::set(zstring_view value)
+bool Inifile::FieldReference::set(bytes_view value)
 {
     bool const err = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
     if (err) {
@@ -176,7 +185,7 @@ zstring_view Translation::translate(trkeys::TrKey_password k) const
                    return k.translations[language_t::EN];
                }
            }
-           break;     
+           break;
            case Translation::FR: {
                if (this->ini->template get<cfg::translation::language>()
                    == Language::fr) {

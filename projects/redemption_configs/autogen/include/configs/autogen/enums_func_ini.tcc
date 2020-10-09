@@ -15,7 +15,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(CaptureFlags & x, ::configs::spec_type<CaptureFlags> /*type*/, zstring_view value)
+parse_error parse_from_cfg(CaptureFlags & x, ::configs::spec_type<CaptureFlags> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<CaptureFlags>;
@@ -60,7 +60,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_Level[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(Level & x, ::configs::spec_type<Level> /*type*/, zstring_view value)
+parse_error parse_from_cfg(Level & x, ::configs::spec_type<Level> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_Level>(
         x, value, "bad value, expected: low, medium, high");
@@ -89,7 +89,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_Language[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(Language & x, ::configs::spec_type<Language> /*type*/, zstring_view value)
+parse_error parse_from_cfg(Language & x, ::configs::spec_type<Language> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_Language>(
         x, value, "bad value, expected: en, fr");
@@ -118,7 +118,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_ClipboardEncodingType[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(ClipboardEncodingType & x, ::configs::spec_type<ClipboardEncodingType> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ClipboardEncodingType & x, ::configs::spec_type<ClipboardEncodingType> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_ClipboardEncodingType>(
         x, value, "bad value, expected: utf-8, latin1");
@@ -134,7 +134,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(KeyboardLogFlagsCP & x, ::configs::spec_type<KeyboardLogFlagsCP> /*type*/, zstring_view value)
+parse_error parse_from_cfg(KeyboardLogFlagsCP & x, ::configs::spec_type<KeyboardLogFlagsCP> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<KeyboardLogFlagsCP>;
@@ -164,7 +164,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(KeyboardLogFlags & x, ::configs::spec_type<KeyboardLogFlags> /*type*/, zstring_view value)
+parse_error parse_from_cfg(KeyboardLogFlags & x, ::configs::spec_type<KeyboardLogFlags> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<KeyboardLogFlags>;
@@ -194,7 +194,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ClipboardLogFlags & x, ::configs::spec_type<ClipboardLogFlags> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ClipboardLogFlags & x, ::configs::spec_type<ClipboardLogFlags> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ClipboardLogFlags>;
@@ -224,7 +224,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(FileSystemLogFlags & x, ::configs::spec_type<FileSystemLogFlags> /*type*/, zstring_view value)
+parse_error parse_from_cfg(FileSystemLogFlags & x, ::configs::spec_type<FileSystemLogFlags> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<FileSystemLogFlags>;
@@ -254,7 +254,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ServerNotification & x, ::configs::spec_type<ServerNotification> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ServerNotification & x, ::configs::spec_type<ServerNotification> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ServerNotification>;
@@ -284,7 +284,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ServerCertCheck & x, ::configs::spec_type<ServerCertCheck> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ServerCertCheck & x, ::configs::spec_type<ServerCertCheck> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ServerCertCheck>;
@@ -314,7 +314,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(TraceType & x, ::configs::spec_type<TraceType> /*type*/, zstring_view value)
+parse_error parse_from_cfg(TraceType & x, ::configs::spec_type<TraceType> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<TraceType>;
@@ -344,7 +344,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(KeyboardInputMaskingLevel & x, ::configs::spec_type<KeyboardInputMaskingLevel> /*type*/, zstring_view value)
+parse_error parse_from_cfg(KeyboardInputMaskingLevel & x, ::configs::spec_type<KeyboardInputMaskingLevel> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<KeyboardInputMaskingLevel>;
@@ -374,7 +374,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(SessionProbeOnLaunchFailure & x, ::configs::spec_type<SessionProbeOnLaunchFailure> /*type*/, zstring_view value)
+parse_error parse_from_cfg(SessionProbeOnLaunchFailure & x, ::configs::spec_type<SessionProbeOnLaunchFailure> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<SessionProbeOnLaunchFailure>;
@@ -404,7 +404,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(VncBogusClipboardInfiniteLoop & x, ::configs::spec_type<VncBogusClipboardInfiniteLoop> /*type*/, zstring_view value)
+parse_error parse_from_cfg(VncBogusClipboardInfiniteLoop & x, ::configs::spec_type<VncBogusClipboardInfiniteLoop> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<VncBogusClipboardInfiniteLoop>;
@@ -434,7 +434,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ColorDepthSelectionStrategy & x, ::configs::spec_type<ColorDepthSelectionStrategy> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ColorDepthSelectionStrategy & x, ::configs::spec_type<ColorDepthSelectionStrategy> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ColorDepthSelectionStrategy>;
@@ -464,7 +464,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(WrmCompressionAlgorithm & x, ::configs::spec_type<WrmCompressionAlgorithm> /*type*/, zstring_view value)
+parse_error parse_from_cfg(WrmCompressionAlgorithm & x, ::configs::spec_type<WrmCompressionAlgorithm> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<WrmCompressionAlgorithm>;
@@ -494,7 +494,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(RdpCompression & x, ::configs::spec_type<RdpCompression> /*type*/, zstring_view value)
+parse_error parse_from_cfg(RdpCompression & x, ::configs::spec_type<RdpCompression> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<RdpCompression>;
@@ -537,7 +537,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_OcrLocale[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(OcrLocale & x, ::configs::spec_type<OcrLocale> /*type*/, zstring_view value)
+parse_error parse_from_cfg(OcrLocale & x, ::configs::spec_type<OcrLocale> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_OcrLocale>(
         x, value, "bad value, expected: latin, cyrillic");
@@ -553,7 +553,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(BogusNumberOfFastpathInputEvent & x, ::configs::spec_type<BogusNumberOfFastpathInputEvent> /*type*/, zstring_view value)
+parse_error parse_from_cfg(BogusNumberOfFastpathInputEvent & x, ::configs::spec_type<BogusNumberOfFastpathInputEvent> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<BogusNumberOfFastpathInputEvent>;
@@ -583,7 +583,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(SessionProbeOnKeepaliveTimeout & x, ::configs::spec_type<SessionProbeOnKeepaliveTimeout> /*type*/, zstring_view value)
+parse_error parse_from_cfg(SessionProbeOnKeepaliveTimeout & x, ::configs::spec_type<SessionProbeOnKeepaliveTimeout> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<SessionProbeOnKeepaliveTimeout>;
@@ -613,7 +613,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(SmartVideoCropping & x, ::configs::spec_type<SmartVideoCropping> /*type*/, zstring_view value)
+parse_error parse_from_cfg(SmartVideoCropping & x, ::configs::spec_type<SmartVideoCropping> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<SmartVideoCropping>;
@@ -658,7 +658,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_RdpModeConsole[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(RdpModeConsole & x, ::configs::spec_type<RdpModeConsole> /*type*/, zstring_view value)
+parse_error parse_from_cfg(RdpModeConsole & x, ::configs::spec_type<RdpModeConsole> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_RdpModeConsole>(
         x, value, "bad value, expected: allow, force, forbid");
@@ -674,7 +674,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(SessionProbeDisabledFeature & x, ::configs::spec_type<SessionProbeDisabledFeature> /*type*/, zstring_view value)
+parse_error parse_from_cfg(SessionProbeDisabledFeature & x, ::configs::spec_type<SessionProbeDisabledFeature> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<SessionProbeDisabledFeature>;
@@ -719,7 +719,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_RdpStoreFile[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(RdpStoreFile & x, ::configs::spec_type<RdpStoreFile> /*type*/, zstring_view value)
+parse_error parse_from_cfg(RdpStoreFile & x, ::configs::spec_type<RdpStoreFile> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_RdpStoreFile>(
         x, value, "bad value, expected: never, always, on_invalid_verification");
@@ -735,7 +735,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(SessionProbeOnAccountManipulation & x, ::configs::spec_type<SessionProbeOnAccountManipulation> /*type*/, zstring_view value)
+parse_error parse_from_cfg(SessionProbeOnAccountManipulation & x, ::configs::spec_type<SessionProbeOnAccountManipulation> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<SessionProbeOnAccountManipulation>;
@@ -765,7 +765,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ClientAddressSent & x, ::configs::spec_type<ClientAddressSent> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ClientAddressSent & x, ::configs::spec_type<ClientAddressSent> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ClientAddressSent>;
@@ -795,7 +795,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(SessionProbeLogLevel & x, ::configs::spec_type<SessionProbeLogLevel> /*type*/, zstring_view value)
+parse_error parse_from_cfg(SessionProbeLogLevel & x, ::configs::spec_type<SessionProbeLogLevel> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<SessionProbeLogLevel>;
@@ -825,7 +825,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ModRdpUseFailureSimulationSocketTransport & x, ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ModRdpUseFailureSimulationSocketTransport & x, ::configs::spec_type<ModRdpUseFailureSimulationSocketTransport> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ModRdpUseFailureSimulationSocketTransport>;
@@ -870,7 +870,7 @@ zstring_view assign_zbuf_from_cfg(
     return enum_zstr_LoginLanguage[static_cast<unsigned long>(x)];
 }
 
-parse_error parse_from_cfg(LoginLanguage & x, ::configs::spec_type<LoginLanguage> /*type*/, zstring_view value)
+parse_error parse_from_cfg(LoginLanguage & x, ::configs::spec_type<LoginLanguage> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_LoginLanguage>(
         x, value, "bad value, expected: Auto, EN, FR");
@@ -886,7 +886,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(ColorDepth & x, ::configs::spec_type<ColorDepth> /*type*/, zstring_view value)
+parse_error parse_from_cfg(ColorDepth & x, ::configs::spec_type<ColorDepth> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<ColorDepth>;
@@ -925,7 +925,7 @@ zstring_view assign_zbuf_from_cfg(
     return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
 }
 
-parse_error parse_from_cfg(OcrVersion & x, ::configs::spec_type<OcrVersion> /*type*/, zstring_view value)
+parse_error parse_from_cfg(OcrVersion & x, ::configs::spec_type<OcrVersion> /*type*/, bytes_view value)
 {
     using ul = unsigned long;
     using enum_int = std::underlying_type_t<OcrVersion>;

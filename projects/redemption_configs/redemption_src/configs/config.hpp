@@ -27,7 +27,7 @@
 
 #include "utils/cfgloader.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/zstring_view.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
 #include <cstring>
@@ -252,9 +252,7 @@ public:
             return this->id;
         }
 
-        bool set(char const *) = delete; // use `set("blah blah"_av)` instead
-
-        bool set(zstring_view value);
+        bool set(bytes_view value);
 
     private:
         Inifile* ini = nullptr;
@@ -277,12 +275,7 @@ public:
         return std::exchange(this->new_from_acl, false);
     }
 
-    std::size_t changed_field_size() const
-    {
-        return this->to_send_index.size();
-    }
-
-    void clear_send_index()
+    void clear_acl_fields_changed()
     {
         this->to_send_index.clear();
     }
@@ -322,6 +315,8 @@ public:
         [[nodiscard]] iterator begin() const { return {this->ini->to_send_index.cbegin(), *this->ini}; }
         [[nodiscard]] iterator end() const { return {this->ini->to_send_index.cend(), *this->ini}; }
 
+        [[nodiscard]] std::size_t size() const { return this->ini->to_send_index.size(); }
+
     private:
         Inifile const * ini;
 
@@ -332,7 +327,7 @@ public:
         {}
     };
 
-    FieldsChanged get_fields_changed() const
+    FieldsChanged get_acl_fields_changed() const
     {
         return {*this};
     }
