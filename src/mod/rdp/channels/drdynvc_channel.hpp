@@ -133,6 +133,11 @@ public:
             ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
+        if (!(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+            this->send_message_to_client(total_length, flags, chunk_data);
+            return;
+        }
+
         uint8_t Cmd = 0x00;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {

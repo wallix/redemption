@@ -76,6 +76,13 @@ rdp_mppc_unified_dec::~rdp_mppc_unified_dec()
 
 bytes_view rdp_mppc_unified_dec::decompress(bytes_view cbuf, int ctype)
 {
+    if (ctype & PACKET_AT_FRONT) {
+        LOG(LOG_ERR, "rdp_mppc_unified_dec::decompress(): PACKET_AT_FRONT is not supported yet!");
+    }
+    if (ctype & PACKET_FLUSHED) {
+        delete this->mppc_dec;
+        this->mppc_dec = nullptr;
+    }
     if (!this->mppc_dec) {
         const int type = ctype & 0x0f;
         switch (type) {

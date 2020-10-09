@@ -419,6 +419,11 @@ public:
             ::msgdump_c(send, from_or_to_client, total_length, flags, chunk_data);
         }
 
+        if (!(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME)))
+        {
+            return;
+        }
+
         InStream chunk(chunk_data);
 
         uint16_t message_length = chunk.in_uint16_le();
@@ -996,7 +1001,7 @@ public:
                         }
                         else {
                             LOG(LOG_INFO,
-                                "SessionProbeVirtualChannel::process_event: "
+                                "SessionProbeVirtualChannel::process_server_message: "
                                     "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
                                 this->other_version);
                         }

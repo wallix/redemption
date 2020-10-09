@@ -470,6 +470,10 @@ namespace
             }
         };
 
+        if (!(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+            return current_message_type;
+        }
+
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             /* msgType(2) + msgFlags(2) + dataLen(4) */
             if (!chunk.in_check_rem(8)) {
@@ -1688,6 +1692,11 @@ void ClipboardVirtualChannel::process_server_message(
     this->server_ctx.message_type = process_header_message(
         this->server_ctx.message_type, total_length, flags, chunk, header,
         Direction::FileFromServer, this->verbose);
+
+    if (!(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+        this->send_message_to_client(total_length, flags, chunk_data);
+        return;
+    }
 
     switch (this->server_ctx.message_type)
     {
