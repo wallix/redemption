@@ -44,11 +44,11 @@ jobs:
             libboost-tools-dev
             libkrb5-dev
             libsnappy-dev
-            libavcodec-dev
-            libavformat-dev
-            libavutil-dev
-            libswscale-dev
-            libx264-dev
+            # libavcodec-dev
+            # libavformat-dev
+            # libavutil-dev
+            # libswscale-dev
+            # libx264-dev
           )
           sudo apt update
           sudo apt install -yq ${deps[@]}
@@ -95,6 +95,6 @@ jobs:
     - name: compile
       run: |
         ~/boost-build/bin/bjam -q --toolset=${{ matrix.cxx }} san \
-          cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING'
+          -s NO_FFMPEG=1 cxxflags='-DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING'
 
 # kate: space-indent on; indent-width 2; replace-tabs on;
