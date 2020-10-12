@@ -1,3 +1,10 @@
+redemption (1.1.195%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Support Virtual Channel traffic suspending/resuming.
+  * Support RDP Bulk decompressor history buffer reinitializing on demand.
+
+ -- WALLIX Dev Team <dev at wallix.com>  Mon, 12 Oct 2020 15:50:22 +0200
+
 redemption (1.1.191%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Connection time metrics
