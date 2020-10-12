@@ -1832,6 +1832,11 @@ public:
                 chunk_data, chunk_data_length);
         }
 
+        if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+            this->send_message_to_client(total_length, flags, chunk_data, chunk_data_length);
+            return;
+        }
+
         InStream chunk(chunk_data, chunk_data_length);
 
         RDPECLIP::CliprdrHeader header;

@@ -640,7 +640,7 @@ private:
         LOG(((this->param_session_probe_on_launch_failure ==
                 SessionProbeOnLaunchFailure::disconnect_user) ?
                 LOG_ERR : LOG_WARNING),
-            "SessionProbeVirtualChannel::process_event: "
+            "SessionProbeVirtualChannel::process_event_launch: "
                 "Session Probe is not ready yet!");
 
         error_type err_id = ERR_SESSION_PROBE_LAUNCH;
@@ -666,7 +666,7 @@ private:
         if (need_full_screen_update) {
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO,
-                    "SessionProbeVirtualChannel::process_event: "
+                    "SessionProbeVirtualChannel::process_event_launch: "
                         "Force full screen update. Rect=(0, 0, %u, %u)",
                     this->param_front_width, this->param_front_height);
             }
@@ -687,7 +687,7 @@ private:
                     disable_input_event, disable_graphics_update);
 
                 LOG(LOG_ERR,
-                    "SessionProbeVirtualChannel::process_event: "
+                    "SessionProbeVirtualChannel::process_event_ready: "
                         "No keep alive received from Session Probe!");
             }
 
@@ -772,6 +772,10 @@ public:
             const bool from_or_to_client = false;
             ::msgdump_c(send, from_or_to_client, total_length, flags,
                 chunk_data, chunk_data_length);
+        }
+
+        if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+            return;
         }
 
         InStream chunk(chunk_data, chunk_data_length);
@@ -904,7 +908,7 @@ public:
 
                     if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                         LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_event: "
+                            "SessionProbeVirtualChannel::process_server_message: "
                                 "Session Probe keep alive requested");
                     }
 
@@ -1388,7 +1392,7 @@ public:
                             }
                             else {
                                 LOG(LOG_INFO,
-                                    "SessionProbeVirtualChannel::process_event: "
+                                    "SessionProbeVirtualChannel::process_server_message: "
                                         "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
                                     this->other_version);
                             }
