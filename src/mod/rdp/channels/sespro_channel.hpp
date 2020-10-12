@@ -745,6 +745,10 @@ public:
                 chunk_data, chunk_data_length);
         }
 
+        if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
+            return;
+        }
+
         InStream chunk(chunk_data, chunk_data_length);
 
         uint16_t message_length = chunk.in_uint16_le();
@@ -883,7 +887,7 @@ public:
 
                 if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                     LOG(LOG_INFO,
-                        "SessionProbeVirtualChannel::process_event: "
+                        "SessionProbeVirtualChannel::process_server_message: "
                             "Session Probe keep alive requested");
                 }
 
@@ -1443,7 +1447,7 @@ public:
                     }
                     else {
                         LOG(LOG_INFO,
-                            "SessionProbeVirtualChannel::process_event: "
+                            "SessionProbeVirtualChannel::process_server_message: "
                                 "Log file rotation is not supported by Session Probe! OtherVersion=0x%X",
                             this->other_version);
                     }
