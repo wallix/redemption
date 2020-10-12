@@ -1124,7 +1124,7 @@ namespace jln
 
         bool is_final_sequence() const noexcept
         {
-            return this->i == int{NamedIndexPack::count} - 1;
+            return this->i == NamedIndexPack::count - 1;
         }
 
         IndexSequence index() const noexcept
