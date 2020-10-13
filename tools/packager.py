@@ -34,6 +34,11 @@ except getopt.GetoptError as err:
     usage()
     sys.exit(2)
 
+def try_system(cmd):
+    status = os.system(cmd)
+    if status:
+        raise Exception("system fail with code %d: %s" % (status, cmd))
+
 
 class opts(object):
     tag = None
@@ -354,21 +359,13 @@ try:
 
         # tags and commits BEGIN
         if opts.git_commit:
-            status = os.system("git commit -am 'Version %s'" % opts.tag)
-            if status:
-                raise ""
+            try_system("git commit -am 'Version %s'" % opts.tag)
             if opts.git_push:
-                status = os.system("git push")
-                if status:
-                    raise ""
+                try_system("git push")
             if opts.git_tag:
-                status = os.system("git tag %s" % opts.tag)
-                if status:
-                    raise ""
+                try_system("git tag %s" % opts.tag)
                 if opts.git_push_tag:
-                    status = os.system("git push --tags")
-                if status:
-                    raise ""
+                    try_system("git push --tags")
         # tags and commits END
 
     if opts.build_package:
@@ -454,10 +451,8 @@ try:
         # Set debian (packaging data) directory with
         # distro specific packaging files END
 
-        status = os.system("dpkg-buildpackage -b -tc -us -uc -r")
-        if status:
-            raise ""
-    exit(0)
+        try_system("dpkg-buildpackage -b -tc -us -uc -r")
+
 except Exception as e:
     if remove_diff:
         res = subprocess.Popen(
