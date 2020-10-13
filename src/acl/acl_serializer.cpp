@@ -56,10 +56,10 @@ namespace
 
 
 AclSerializer::AclSerializer(Inifile & ini)
-: ini(ini)
+: verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
+, ini(ini)
 , auth_trans(nullptr)
 , session_id{}
-, verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
 {
     std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
 }
@@ -203,52 +203,54 @@ namespace
         REDEMPTION_UNREACHABLE();
     }
 
-} // anonymous namespace
+    using Verbose = AclSerializer::Verbose;
 
-void AclSerializer::in_items()
-{
-    Reader reader(*this->auth_trans, this->verbose);
+    void read_acl_fields(Inifile& ini, Transport& auth_trans, Verbose verbose)
+    {
+        Reader reader(auth_trans, verbose);
 
-    while (reader.has_field()) {
-        auto key = reader.read_key();
-        if (auto field = this->ini.get_acl_field_by_name(key)) {
-            if (reader.is_ask()) {
-                field.ask();
-                LOG_IF(bool(this->verbose & Verbose::variable), LOG_INFO,
-                    "receiving ASK '%*s'", int(key.size()), key.data());
-                // callback if the key is listened to for asks
-            }
-            else {
-                auto zkey = field.get_acl_name();
-                if (field.set(reader.read_value(zkey)) && bool(this->verbose & Verbose::variable)) {
-                    Inifile::ZStringBuffer zstring_buffer;
-                    zstring_view val = field.to_zstring_view(zstring_buffer);
+        while (reader.has_field()) {
+            auto key = reader.read_key();
+            if (auto field = ini.get_acl_field_by_name(key)) {
+                if (reader.is_ask()) {
+                    field.ask();
+                    LOG_IF(bool(verbose & Verbose::variable), LOG_INFO,
+                        "receiving ASK '%*s'", int(key.size()), key.data());
+                    // callback if the key is listened to for asks
+                }
+                else {
+                    auto zkey = field.get_acl_name();
+                    if (field.set(reader.read_value(zkey)) && bool(verbose & Verbose::variable)) {
+                        Inifile::ZStringBuffer zstring_buffer;
+                        zstring_view val = field.to_zstring_view(zstring_buffer);
 
-                    chars_view display_val = get_loggable_value(
-                        val, field.loggable_category(), this->ini.get<cfg::debug::password>());
+                        chars_view display_val = get_loggable_value(
+                            val, field.loggable_category(), ini.get<cfg::debug::password>());
 
-                    LOG(LOG_INFO, "receiving '%s'='%.*s'",
-                        zkey, int(display_val.size()), display_val.data());
+                        LOG(LOG_INFO, "receiving '%s'='%.*s'",
+                            zkey, int(display_val.size()), display_val.data());
+                    }
                 }
             }
-        }
-        else {
-            char sauthid[256];
-            std::size_t const min = std::min(std::size(sauthid)-1, key.size());
-            memcpy(sauthid, key.data(), min);
-            sauthid[min] = 0;
-            // this invalidate key value
-            auto val = reader.read_value("<unknown>"_zv);
-            LOG(LOG_WARNING, "Unexpected receive '%s' - '%.*s'",
-                sauthid, int(val.size()), val.data());
+            else {
+                char sauthid[256];
+                std::size_t const min = std::min(std::size(sauthid)-1, key.size());
+                memcpy(sauthid, key.data(), min);
+                sauthid[min] = 0;
+                // this invalidate key value
+                auto val = reader.read_value("<unknown>"_zv);
+                LOG(LOG_WARNING, "Unexpected receive '%s' - '%.*s'",
+                    sauthid, int(val.size()), val.data());
+            }
         }
     }
-}
+
+} // anonymous namespace
 
 void AclSerializer::incoming()
 {
     bool flag = this->ini.get<cfg::context::session_id>().empty();
-    this->in_items();
+    read_acl_fields(this->ini, *this->auth_trans, this->verbose);
     if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
         char old_session_file[2048];
         std::snprintf(old_session_file, sizeof(old_session_file), "%s/session_%s.pid",

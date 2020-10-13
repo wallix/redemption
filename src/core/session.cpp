@@ -414,8 +414,7 @@ private:
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
-    bool next_backend_module(AclSerializer & acl_serial,
-                             SessionLogFile & log_file, Inifile& ini,
+    bool next_backend_module(SessionLogFile & log_file, Inifile& ini,
                              ModFactory & mod_factory, ModWrapper & mod_wrapper,
                              Front & front,
                              Sesman & sesman,
@@ -544,7 +543,7 @@ private:
         } // switch (next_state)
 
         if (!ini.get<cfg::context::disconnect_reason>().empty()) {
-            acl_serial.acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
+            acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
             ini.set<cfg::context::disconnect_reason>("");
             ini.set_acl<cfg::context::disconnect_reason_ack>(true);
         }
@@ -661,7 +660,7 @@ private:
         return false;
     }
 
-    void retry_rdp(AclSerializer & acl_serial, ClientExecute & rail_client_execute, Front & front, ModWrapper & mod_wrapper, ModFactory & mod_factory, Sesman & sesman)
+    void retry_rdp(ClientExecute & rail_client_execute, Front & front, ModWrapper & mod_wrapper, ModFactory & mod_factory, Sesman & sesman)
     {
         LOG(LOG_INFO, "Retry RDP");
         this->remote_answer = false;
@@ -695,6 +694,8 @@ private:
     }
 
     timeval target_connection_start_time {};
+
+    std::string acl_manager_disconnect_reason;
 
 public:
     Session(SocketTransport&& front_trans, timeval sck_start_time, Inifile& ini)
@@ -823,7 +824,7 @@ public:
                 events.get_fds([&ioswitch](int fd){ioswitch.set_read_sck(fd);});
 
                 if (acl_serial.is_connected()) {
-                    ioswitch.set_read_sck(acl_serial.auth_trans->get_sck());
+                    ioswitch.set_read_sck(auth_trans->get_sck());
                 }
 
                 timeval ultimatum = ioswitch.get_timeout();
@@ -868,7 +869,8 @@ public:
                     if (front_is_set){
                         this->front_incoming_data(front_trans, front, mod_wrapper);
                     }
-                } catch (Error const& e) {
+                }
+                catch (Error const& e) {
                     if (ERR_TRANSPORT_WRITE_FAILED == e.id || ERR_TRANSPORT_NO_MORE_DATA == e.id)
                     {
                         SocketTransport* socket_transport_ptr = mod_wrapper.get_mod_transport();
@@ -883,7 +885,7 @@ public:
 
                             ini.set<cfg::context::perform_automatic_reconnection>(true);
 
-                            retry_rdp(acl_serial, rail_client_execute, front, mod_wrapper, mod_factory, sesman);
+                            retry_rdp(rail_client_execute, front, mod_wrapper, mod_factory, sesman);
                             continue;
                         }
                     }
@@ -911,7 +913,7 @@ public:
 
                 // exchange data with sesman
                 if (acl_serial.is_connected()) {
-                    if (ioswitch.is_set_for_reading(acl_serial.auth_trans->get_sck())) {
+                    if (ioswitch.is_set_for_reading(auth_trans->get_sck())) {
                         try {
                             acl_serial.incoming();
                             if (ini.get<cfg::context::module>() == "RDP"
@@ -929,20 +931,22 @@ public:
                                 inactivity.update_inactivity_timeout(timeout);
                             }
                             this->remote_answer = true;
-                        } catch (...) {
+                        }
+                        catch (...) {
                             LOG(LOG_INFO, "acl_serial.incoming() Session lost");
                             // acl connection lost
-                            acl_serial.acl_status = AclSerializer::State::disconnected_by_authentifier;
+                            acl_serial.set_disconnected_by_authentifier();
                             ini.set_acl<cfg::context::authenticated>(false);
 
-                            if (acl_serial.acl_manager_disconnect_reason.empty()) {
+                            if (acl_manager_disconnect_reason.empty()) {
                                 ini.set_acl<cfg::context::rejected>(TR(trkeys::manager_close_cnx, language(ini)));
                             }
                             else {
-                                ini.set_acl<cfg::context::rejected>(acl_serial.acl_manager_disconnect_reason);
-                                acl_serial.acl_manager_disconnect_reason.clear();
+                                ini.set_acl<cfg::context::rejected>(acl_manager_disconnect_reason);
+                                acl_manager_disconnect_reason.clear();
                             }
                         }
+
                         if (!ini.get_acl_fields_changed().size()) {
                             mod_wrapper.acl_update();
                         }
@@ -975,7 +979,6 @@ public:
                     sesman.flush_acl_disconnect_target([&log_file]() {
                         log_file.close_session_log();
                     });
-
                 }
                 else if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE) {
                     if (acl_serial.is_after_connexion()) {
@@ -983,7 +986,7 @@ public:
                         mod_wrapper.disconnect();
                         run_session = false;
                         LOG(LOG_INFO, "Session Closed by ACL : %s",
-                            (acl_serial.acl_status == AclSerializer::State::disconnected_by_authentifier)
+                            (acl_serial.is_disconnected_by_authentifier())
                                 ? "closed by authentifier"
                                 : "closed by proxy");
                         if (ini.get<cfg::globals::enable_close_box>()) {
@@ -995,19 +998,25 @@ public:
                     }
                     else if (front.state == Front::FRONT_UP_AND_RUNNING) {
                         if (acl_serial.is_before_connexion()) {
-                            try {
-                                unique_fd client_sck = addr_connect_non_blocking(
-                                    ini.get<cfg::globals::authfile>().c_str(),
-                                    (ini.get<cfg::globals::host>() == "127.0.0.1"));
+                            unique_fd client_sck = addr_connect_non_blocking(
+                                ini.get<cfg::globals::authfile>().c_str(),
+                                (ini.get<cfg::globals::host>() == "127.0.0.1"));
 
-                                if (!client_sck.is_open()) {
-                                    LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
-                                        ini.get<cfg::globals::authfile>().c_str());
-                                    acl_serial.set_failed_auth_trans();
-                                    // will go to the catch below
-                                    throw Error(ERR_SOCKET_CONNECT_AUTHENTIFIER_FAILED);
+                            if (!client_sck.is_open()) {
+                                LOG(LOG_ERR, "Failed to connect to authentifier (%s)",
+                                    ini.get<cfg::globals::authfile>().c_str());
+                                acl_serial.set_failed_auth_trans();
+
+                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
+                                run_session = false;
+                                LOG(LOG_INFO, "Start of acl failed : no authentifier available");
+                                if (ini.get<cfg::globals::enable_close_box>()) {
+                                    auto next_state = MODULE_INTERNAL_CLOSE;
+                                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
+                                    run_session = true;
                                 }
-
+                            }
+                            else {
                                 auth_trans = std::make_unique<SocketTransport>(
                                     "Authentifier", std::move(client_sck),
                                     ini.get<cfg::globals::authfile>().c_str(), 0,
@@ -1019,16 +1028,6 @@ public:
                                 this->ini.set_acl<cfg::globals::front_connection_time>(
                                     std::chrono::duration_cast<std::chrono::milliseconds>(
                                         elapsed));
-                            }
-                            catch (...) {
-                                this->ini.set<cfg::context::auth_error_message>("No authentifier available");
-                                run_session = false;
-                                LOG(LOG_INFO, "Start of acl failed : no authentifier available");
-                                if (ini.get<cfg::globals::enable_close_box>()) {
-                                    auto next_state = MODULE_INTERNAL_CLOSE;
-                                    this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                                    run_session = true;
-                                }
                             }
 
                             continue;
@@ -1160,9 +1159,8 @@ public:
                              || next_state == MODULE_TRANSITORY
                             ) {
                                 run_session = this->next_backend_module(
-                                    acl_serial, log_file, ini,
-                                    mod_factory, mod_wrapper, front,
-                                    sesman, rail_client_execute);
+                                    log_file, ini, mod_factory, mod_wrapper,
+                                    front, sesman, rail_client_execute);
                             }
                         }
 
@@ -1285,8 +1283,7 @@ public:
 
                     // TODO: should we put some counter to avoid retrying indefinitely?
                     case EndSessionResult::retry:
-                        retry_rdp(acl_serial, rail_client_execute, front, mod_wrapper, mod_factory, sesman);
-
+                        retry_rdp(rail_client_execute, front, mod_wrapper, mod_factory, sesman);
                         run_session = true;
                     break;
                     }

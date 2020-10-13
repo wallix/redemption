@@ -36,24 +36,6 @@ class Transport;
 class AclSerializer final
 {
 public:
-    enum class State
-    {
-        not_yet_connected,
-        connected,
-        connection_failed,
-        disconnected_by_redemption,
-        disconnected_by_authentifier
-    };
-
-    Inifile & ini;
-    Transport * auth_trans;
-    std::string acl_manager_disconnect_reason;
-    State acl_status = State::not_yet_connected;
-
-private:
-    char session_id[256];
-
-public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -85,6 +67,11 @@ public:
         this->acl_status = State::connected;
     }
 
+    void set_disconnected_by_authentifier()
+    {
+        this->acl_status = State::disconnected_by_authentifier;
+    }
+
     void set_failed_auth_trans()
     {
         this->acl_status = State::connection_failed;
@@ -93,6 +80,11 @@ public:
     bool is_connexion_failed() const
     {
         return this->acl_status == State::connection_failed;
+    }
+
+    bool is_disconnected_by_authentifier() const
+    {
+        return this->acl_status == State::disconnected_by_authentifier;
     }
 
     bool is_before_connexion() const
@@ -115,5 +107,17 @@ public:
     std::size_t send_acl_data();
 
 private:
-    void in_items();
+    enum class State
+    {
+        not_yet_connected,
+        connected,
+        connection_failed,
+        disconnected_by_redemption,
+        disconnected_by_authentifier
+    };
+
+    State acl_status = State::not_yet_connected;
+    Inifile & ini;
+    Transport * auth_trans;
+    char session_id[256];
 };
