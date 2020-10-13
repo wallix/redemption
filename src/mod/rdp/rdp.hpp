@@ -2248,6 +2248,11 @@ public:
 
                     if (negotiation_finished) {
                         this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
+
+                        if (this->buf.remaining()){
+                            this->draw_event(this->gd_provider.get_graphics());
+                        }
+
                         event.alarm.set_timeout(this->time_base.get_current_time()
                             // trigger timeout after 1 hour inactivity
                             + std::chrono::seconds{3600});
