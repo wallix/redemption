@@ -1,49 +1,41 @@
+#include "acl/session_inactivity.hpp"
+#include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
 
-#include "session_inactivity.hpp"
 
-SessionInactivity::SessionInactivity() noexcept :
-    _inactivity_timeout(0s),
-    _last_activity_time(0),
-    _timer_started(false)
-{ }
-
-std::chrono::seconds SessionInactivity::get_inactivity_timeout() const noexcept
+namespace
 {
-    return _inactivity_timeout;
-}
-
-time_t SessionInactivity::get_last_activity_time() const noexcept
-{
-    return _last_activity_time;
+    constexpr std::chrono::seconds ACCEPTED_TIMEOUT_MIN = 30s;
+    constexpr std::chrono::seconds ACCEPTED_TIMEOUT_MAX = 168h; // one week
 }
 
 bool SessionInactivity::activity(time_t now, bool& has_user_activity)
-    noexcept
 {
     if (_timer_started
-        && !has_user_activity
-        && _inactivity_timeout != 0s
-        && now > _last_activity_time + _inactivity_timeout.count())
-    {
+     && !has_user_activity
+     && _inactivity_timeout != 0s
+     && now > _last_activity_time + _inactivity_timeout.count()
+    ){
         _last_activity_time = now;
         LOG(LOG_INFO, "User session inactivity : closing");
         return false;
     }
+
     if (has_user_activity)
     {
         _last_activity_time = now;
     }
+
     has_user_activity = false;
     return true;
 }
 
 void SessionInactivity::update_inactivity_timeout(std::chrono::seconds timeout)
-{    
+{
     _inactivity_timeout = timeout;
+
     if (timeout == 0s)
     {
-        _inactivity_timeout = 0s;
         LOG(LOG_INFO, "User session inactivity : unlimited");
     }
     else if (timeout < ACCEPTED_TIMEOUT_MIN)
@@ -58,14 +50,14 @@ void SessionInactivity::update_inactivity_timeout(std::chrono::seconds timeout)
         _inactivity_timeout = 0s;
         LOG(LOG_INFO, "Inactivity timeout is larger than one week : timeout disabled");
     }
+
     LOG(LOG_INFO,
         "User session inactivity : set to %ld seconds",
         _inactivity_timeout.count());
 }
 
 void SessionInactivity::start_timer(std::chrono::seconds timeout, time_t start)
-    noexcept
-{    
+{
     if (!_timer_started)
     {
         update_inactivity_timeout(timeout);
@@ -75,7 +67,7 @@ void SessionInactivity::start_timer(std::chrono::seconds timeout, time_t start)
     }
 }
 
-void SessionInactivity::stop_timer() noexcept
+void SessionInactivity::stop_timer()
 {
     if (_timer_started)
     {

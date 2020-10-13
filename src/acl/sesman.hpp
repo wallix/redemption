@@ -443,8 +443,8 @@ private:
             this->ini.ask<cfg::globals::target_user>();
             this->ini.ask<cfg::globals::target_device>();
             this->ini.ask<cfg::context::target_protocol>();
-            if (!password.empty()) {
-                this->ini.set_acl<cfg::context::password>(password);
+            if (!this->password.empty()) {
+                this->ini.set_acl<cfg::context::password>(this->password);
             }
             this->auth_info_sent = true;
         }
@@ -516,7 +516,7 @@ private:
     {
         if (!this->pm_request_sent){
             LOG_IF(verbose, LOG_INFO, "flush_acl_pm_request()");
-            this->ini.set_acl<cfg::context::pm_request>(request);
+            this->ini.set_acl<cfg::context::pm_request>(this->request);
             this->pm_request_sent = true;
         }
     }

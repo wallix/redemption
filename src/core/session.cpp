@@ -451,7 +451,8 @@ private:
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
                 if (ini.get<cfg::globals::bogus_refresh_rect>()
                 && ini.get<cfg::globals::allow_using_multiple_monitors>()
-                && (front.client_info.cs_monitor.monitorCount > 1)) {
+                && (front.client_info.cs_monitor.monitorCount > 1)
+                ) {
                     mod_wrapper.get_mod()->rdp_suppress_display_updates();
                     mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
                         front.client_info.screen_info.width, front.client_info.screen_info.height);
@@ -647,7 +648,8 @@ private:
             }
 
             if (front_trans.sck != INVALID_SOCKET
-            && ioswitch.is_set_for_writing(front_trans.sck)) {
+             && ioswitch.is_set_for_writing(front_trans.sck)
+            ) {
                 front_trans.send_waiting_data();
             }
 
@@ -712,7 +714,7 @@ public:
 
         Sesman sesman(ini, time_base);
 
-        struct SessionFront : Front
+        struct SessionFront final : Front
         {
             timeval* target_connection_start_time_ptr = nullptr;
             Inifile* ini_ptr = nullptr;
@@ -744,15 +746,6 @@ public:
         SessionInactivity inactivity;
 
         AclSerializer acl_serial(ini);
-
-        acl_serial.on_inactivity_timeout = [&inactivity, &ini]
-        {
-            auto timeout = (ini.get<cfg::globals::inactivity_timeout>().count() != 0) ?
-                ini.get<cfg::globals::inactivity_timeout>() :
-                ini.get<cfg::globals::session_timeout>();
-
-            inactivity.update_inactivity_timeout(timeout);
-        };
 
         std::string session_type;
         SessionLogFile log_file(ini, time_base, cctx, rnd, fstat,
@@ -925,6 +918,15 @@ public:
                              || ini.get<cfg::context::module>() == "VNC"
                             ) {
                                 session_type = ini.get<cfg::context::module>();
+
+                                auto const& inactivity_timeout
+                                    = ini.get<cfg::globals::inactivity_timeout>();
+
+                                auto timeout = (inactivity_timeout == inactivity_timeout.zero())
+                                    ? inactivity_timeout
+                                    : ini.get<cfg::globals::session_timeout>();
+
+                                inactivity.update_inactivity_timeout(timeout);
                             }
                             this->remote_answer = true;
                         } catch (...) {
@@ -1057,7 +1059,8 @@ public:
                         }
                         if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE_BACK
                             && !inactivity.activity(time_base.get_current_time().tv_sec,
-                                                     front.has_user_activity)) {
+                                                     front.has_user_activity)
+                        ) {
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
 
@@ -1079,8 +1082,8 @@ public:
                         }
 
                         if (acl_serial.is_connected()
-                        && !keepalive.is_started()
-                        && mod_wrapper.is_connected())
+                         && !keepalive.is_started()
+                         && mod_wrapper.is_connected())
                         {
                             if (ini.get<cfg::globals::inactivity_timeout>().count() != 0)
                             {
@@ -1097,8 +1100,9 @@ public:
                         }
 
                         // BACK FROM EXTERNAL MODULE (RDP, VNC)
-                        if ((mod_wrapper.get_mod_signal() == BACK_EVENT_NEXT)
-                        && mod_wrapper.is_connected()){
+                        if (mod_wrapper.get_mod_signal() == BACK_EVENT_NEXT
+                         && mod_wrapper.is_connected()
+                        ) {
                             LOG(LOG_INFO, "Exited from target connection");
                             mod_wrapper.disconnect();
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
@@ -1252,7 +1256,7 @@ public:
                             inactivity.stop_timer();
                         }
                         else {
-                          LOG(LOG_INFO, "Close Box disabled : ending session");
+                            LOG(LOG_INFO, "Close Box disabled : ending session");
                         }
                     }
                     break;

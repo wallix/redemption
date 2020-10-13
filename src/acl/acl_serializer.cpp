@@ -229,11 +229,6 @@ void AclSerializer::in_items()
 
                     LOG(LOG_INFO, "receiving '%s'='%.*s'",
                         zkey, int(display_val.size()), display_val.data());
-
-                    // TODO: big hack, generalize this to a set of callbacks to call
-                    if (field.authid() == cfg::globals::inactivity_timeout::index){
-                        this->on_inactivity_timeout();
-                    }
                 }
             }
         }

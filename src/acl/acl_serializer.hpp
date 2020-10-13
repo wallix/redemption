@@ -28,7 +28,6 @@
 #include "transport/transport.hpp"
 
 #include <string>
-#include <functional>
 
 
 class Inifile;
@@ -45,8 +44,6 @@ public:
         disconnected_by_redemption,
         disconnected_by_authentifier
     };
-
-    std::function<void()> on_inactivity_timeout = []{};
 
     Inifile & ini;
     Transport * auth_trans;
