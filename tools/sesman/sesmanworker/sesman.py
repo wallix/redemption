@@ -176,7 +176,7 @@ def rvalue(value):
     return value
 
 
-DEBUG = True
+DEBUG = False
 
 
 def truncat_string(item, maxsize=20):
@@ -573,16 +573,16 @@ class Sesman():
                         Logger().info(d)
                     return d
 
-                if DEBUG:
-                    Logger().info("received_buffer (empty packet)")
-                raise AuthentifierSocketClosed()
-
             except Exception:
                 # Logger().info("%s <<<%s>>>" % (
                 #     u"Failed to read data from rdpproxy authentifier socket",
                 #     traceback.format_exc(e))
                 # )
                 raise AuthentifierSocketClosed()
+
+            if DEBUG:
+                Logger().info("received_buffer (empty packet)")
+            raise AuthentifierSocketClosed()
 
         class Buffer:
             def __init__(self):
