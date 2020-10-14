@@ -23,6 +23,7 @@
 #include "core/log_id.hpp"
 #include "acl/auth_api.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <string>
 #include <algorithm>
@@ -59,9 +60,7 @@ inline void escaped_qvalue(
 
     decltype(first) p;
     while ((p = std::find_if(first, last, escaped)) != last) {
-        escaped_subject.append(first, p);
-        escaped_subject += '\\';
-        escaped_subject += escaped(*p);
+        str_append(escaped_subject, chars_view{first, p}, '\\', escaped(*p));
         first = p + 1;
     }
 
@@ -75,9 +74,7 @@ inline std::string& kv_list_to_string(
     std::array<char, 256> const& escaped_table)
 {
     for (auto& kv : kv_list) {
-        buffer += ' ';
-        buffer.append(kv.key.data(), kv.key.size());
-        buffer += prefix;
+        str_append(buffer, ' ', kv.key, prefix);
         escaped_qvalue(buffer, kv.value, escaped_table);
         buffer += suffix;
     }

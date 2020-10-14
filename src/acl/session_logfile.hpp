@@ -245,9 +245,7 @@ namespace
             buffer += "[Neutral Session] ";
         }
         else {
-            buffer += '[';
-            buffer.append(session_type.data(), session_type.size());
-            buffer += " Session] ";
+            str_append(buffer, '[', session_type, " Session] "_av);
         }
         append("session_id=\"", session_id);
         append("client_ip=\"",  host);
@@ -343,6 +341,4 @@ namespace
             LOG_SIEM("%s", buffer);
         }
     }
-
 }
-
