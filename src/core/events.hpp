@@ -23,6 +23,7 @@
 
 #include "utils/timeval_ops.hpp"
 #include "utils/invalid_socket.hpp"
+#include "utils/sugar/noncopyable.hpp"
 #include <vector>
 #include <string>
 #include <functional>
@@ -256,7 +257,8 @@ struct Sequencer {
     }
 };
 
-struct EventContainer {
+struct EventContainer : noncopyable
+{
     std::vector<Event*> queue;
 
     void get_fds(std::function<void(int fd)> fn)
@@ -377,23 +379,26 @@ struct EventContainer {
     }
 
     // returns timeval{0, 0} if no alarm is set
-    timeval next_timeout()
+    timeval next_timeout() const
     {
-       timeval ultimatum = {0, 0};
-       for(auto & pevent: this->queue){
-            Event & event = *pevent;
+        timeval ultimatum = {0, 0};
+        auto first = this->queue.begin();
+        auto last = this->queue.end();
+        for (; first != last; ++first){
+            Event const& event = **first;
             if (not (event.garbage or event.teardown) and event.alarm.active){
                 ultimatum = event.alarm.trigger_time;
                 break;
             }
-       }
-       for(auto & pevent: this->queue){
-            Event & event = *pevent;
-            if (not (event.garbage or event.teardown)
-            and event.alarm.active){
+        }
+
+        for (; first != last; ++first){
+            Event const& event = **first;
+            if (not (event.garbage or event.teardown) and event.alarm.active){
                 ultimatum = std::min(event.alarm.trigger_time, ultimatum);
             }
         }
+
         return ultimatum;
     }
 
@@ -466,5 +471,4 @@ struct EventContainer {
             delete pevent;
         }
     }
-
 };
