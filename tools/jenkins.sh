@@ -224,7 +224,7 @@ if [[ $update -eq 1 ]]; then
 
     # commit files
     git add targets.jam projects/jsclient/targets.jam projects/qtclient/redemption_deps.jam
-    r=$(git status --ignore-submodules --porcelain | sed '/^ M /!d')
+    r=$(git status --ignore-submodules --porcelain | sed '/^M /!d')
     [[ -z "$r" ]] || {
         git commit -m '[ci] update generated files'
         git push origin "$GIT_LOCAL_BRANCH" || {
