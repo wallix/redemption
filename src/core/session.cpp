@@ -1155,8 +1155,8 @@ public:
 
                             auto next_state = get_module_id(ini.get<cfg::context::module>());
 
-                            if (mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION
-                             || next_state == MODULE_TRANSITORY
+                            if ((mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION)
+                             != (next_state == MODULE_TRANSITORY)
                             ) {
                                 run_session = this->next_backend_module(
                                     log_file, ini, mod_factory, mod_wrapper,

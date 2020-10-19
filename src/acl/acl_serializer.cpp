@@ -88,6 +88,10 @@ namespace
         : trans(trans)
         , verbose(verbose)
         {
+        }
+
+        void read_nfield()
+        {
             this->read(4);
             this->nfield = safe_int{this->in_stream.in_uint16_be()};
         }
@@ -95,6 +99,11 @@ namespace
         bool has_field() const
         {
             return this->nfield;
+        }
+
+        bool has_data() const
+        {
+            return this->in_stream.in_remain();
         }
 
         chars_view read_key()
@@ -209,40 +218,43 @@ namespace
     {
         Reader reader(auth_trans, verbose);
 
-        while (reader.has_field()) {
-            auto key = reader.read_key();
-            if (auto field = ini.get_acl_field_by_name(key)) {
-                if (reader.is_ask()) {
-                    field.ask();
-                    LOG_IF(bool(verbose & Verbose::variable), LOG_INFO,
-                        "receiving ASK '%*s'", int(key.size()), key.data());
-                    // callback if the key is listened to for asks
-                }
-                else {
-                    auto zkey = field.get_acl_name();
-                    if (field.set(reader.read_value(zkey)) && bool(verbose & Verbose::variable)) {
-                        Inifile::ZStringBuffer zstring_buffer;
-                        zstring_view val = field.to_zstring_view(zstring_buffer);
+        do {
+            reader.read_nfield();
+            while (reader.has_field()) {
+                auto key = reader.read_key();
+                if (auto field = ini.get_acl_field_by_name(key)) {
+                    if (reader.is_ask()) {
+                        field.ask();
+                        LOG_IF(bool(verbose & Verbose::variable), LOG_INFO,
+                            "receiving ASK '%*s'", int(key.size()), key.data());
+                        // callback if the key is listened to for asks
+                    }
+                    else {
+                        auto zkey = field.get_acl_name();
+                        if (field.set(reader.read_value(zkey)) && bool(verbose & Verbose::variable)) {
+                            Inifile::ZStringBuffer zstring_buffer;
+                            zstring_view val = field.to_zstring_view(zstring_buffer);
 
-                        chars_view display_val = get_loggable_value(
-                            val, field.loggable_category(), ini.get<cfg::debug::password>());
+                            chars_view display_val = get_loggable_value(
+                                val, field.loggable_category(), ini.get<cfg::debug::password>());
 
-                        LOG(LOG_INFO, "receiving '%s'='%.*s'",
-                            zkey, int(display_val.size()), display_val.data());
+                            LOG(LOG_INFO, "receiving '%s'='%.*s'",
+                                zkey, int(display_val.size()), display_val.data());
+                        }
                     }
                 }
+                else {
+                    char sauthid[256];
+                    std::size_t const min = std::min(std::size(sauthid)-1, key.size());
+                    memcpy(sauthid, key.data(), min);
+                    sauthid[min] = 0;
+                    // this invalidate key value
+                    auto val = reader.read_value("<unknown>"_zv);
+                    LOG(LOG_WARNING, "Unexpected receive '%s' - '%.*s'",
+                        sauthid, int(val.size()), val.data());
+                }
             }
-            else {
-                char sauthid[256];
-                std::size_t const min = std::min(std::size(sauthid)-1, key.size());
-                memcpy(sauthid, key.data(), min);
-                sauthid[min] = 0;
-                // this invalidate key value
-                auto val = reader.read_value("<unknown>"_zv);
-                LOG(LOG_WARNING, "Unexpected receive '%s' - '%.*s'",
-                    sauthid, int(val.size()), val.data());
-            }
-        }
+        } while (reader.has_data());
     }
 
 } // anonymous namespace

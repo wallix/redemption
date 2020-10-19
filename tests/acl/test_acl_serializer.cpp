@@ -115,6 +115,31 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     RED_CHECK(ini.get<cfg::context::session_id>() == "6455");
 }
 
+RED_AUTO_TEST_CASE(TestAclSerializeIncomingMulti)
+{
+    Inifile ini;
+    AclSerializer acl(ini);
+
+    GeneratorTransport trans(
+        "\x00\x03"
+        "?\x05login"
+        "?\x08password"
+        "!\x0asession_id\x00\x00\x00\x04""6455"
+        "\x00\x01"
+        "!\x0asession_id\x00\x00\x00\x04""1234"
+        ""_av);
+    acl.set_auth_trans(&trans);
+
+    ini.set<cfg::context::session_id>("");
+    ini.set_acl<cfg::globals::auth_user>("testuser");
+    RED_CHECK(ini.get<cfg::context::session_id>().empty());
+    RED_CHECK(!ini.is_asked<cfg::globals::auth_user>());
+
+    RED_CHECK_NO_THROW(acl.incoming());
+    RED_CHECK(ini.is_asked<cfg::globals::auth_user>());
+    RED_CHECK(ini.get<cfg::context::session_id>() == "1234");
+}
+
 RED_AUTO_TEST_CASE(TestAclSerializeTooBigMessage)
 {
     Inifile ini;
