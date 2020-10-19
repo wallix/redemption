@@ -54,6 +54,7 @@ from .logtime import logtime_function_pause
 if sys.version_info[0] < 3:
     def bytes(data, encoding="utf-8"):
         return data.encode(encoding)
+
     text_type = unicode
     binary_type = str
 
@@ -91,47 +92,9 @@ def print_exception_caught(func):
         try:
             return func(self, *args, **kwargs)
         except Exception:
-            import traceback
             Logger().info(traceback.format_exc())
             raise
     return method_wrapper
-
-
-# quick equicalent to struct.pack('B', x)
-u8_byte_table=(
-    b'\x00', b'\x01', b'\x02', b'\x03', b'\x04', b'\x05', b'\x06', b'\x07',
-    b'\x08', b'\x09', b'\x0a', b'\x0b', b'\x0c', b'\x0d', b'\x0e', b'\x0f',
-    b'\x10', b'\x11', b'\x12', b'\x13', b'\x14', b'\x15', b'\x16', b'\x17',
-    b'\x18', b'\x19', b'\x1a', b'\x1b', b'\x1c', b'\x1d', b'\x1e', b'\x1f',
-    b'\x20', b'\x21', b'\x22', b'\x23', b'\x24', b'\x25', b'\x26', b'\x27',
-    b'\x28', b'\x29', b'\x2a', b'\x2b', b'\x2c', b'\x2d', b'\x2e', b'\x2f',
-    b'\x30', b'\x31', b'\x32', b'\x33', b'\x34', b'\x35', b'\x36', b'\x37',
-    b'\x38', b'\x39', b'\x3a', b'\x3b', b'\x3c', b'\x3d', b'\x3e', b'\x3f',
-    b'\x40', b'\x41', b'\x42', b'\x43', b'\x44', b'\x45', b'\x46', b'\x47',
-    b'\x48', b'\x49', b'\x4a', b'\x4b', b'\x4c', b'\x4d', b'\x4e', b'\x4f',
-    b'\x50', b'\x51', b'\x52', b'\x53', b'\x54', b'\x55', b'\x56', b'\x57',
-    b'\x58', b'\x59', b'\x5a', b'\x5b', b'\x5c', b'\x5d', b'\x5e', b'\x5f',
-    b'\x60', b'\x61', b'\x62', b'\x63', b'\x64', b'\x65', b'\x66', b'\x67',
-    b'\x68', b'\x69', b'\x6a', b'\x6b', b'\x6c', b'\x6d', b'\x6e', b'\x6f',
-    b'\x70', b'\x71', b'\x72', b'\x73', b'\x74', b'\x75', b'\x76', b'\x77',
-    b'\x78', b'\x79', b'\x7a', b'\x7b', b'\x7c', b'\x7d', b'\x7e', b'\x7f',
-    b'\x80', b'\x81', b'\x82', b'\x83', b'\x84', b'\x85', b'\x86', b'\x87',
-    b'\x88', b'\x89', b'\x8a', b'\x8b', b'\x8c', b'\x8d', b'\x8e', b'\x8f',
-    b'\x90', b'\x91', b'\x92', b'\x93', b'\x94', b'\x95', b'\x96', b'\x97',
-    b'\x98', b'\x99', b'\x9a', b'\x9b', b'\x9c', b'\x9d', b'\x9e', b'\x9f',
-    b'\xa0', b'\xa1', b'\xa2', b'\xa3', b'\xa4', b'\xa5', b'\xa6', b'\xa7',
-    b'\xa8', b'\xa9', b'\xaa', b'\xab', b'\xac', b'\xad', b'\xae', b'\xaf',
-    b'\xb0', b'\xb1', b'\xb2', b'\xb3', b'\xb4', b'\xb5', b'\xb6', b'\xb7',
-    b'\xb8', b'\xb9', b'\xba', b'\xbb', b'\xbc', b'\xbd', b'\xbe', b'\xbf',
-    b'\xc0', b'\xc1', b'\xc2', b'\xc3', b'\xc4', b'\xc5', b'\xc6', b'\xc7',
-    b'\xc8', b'\xc9', b'\xca', b'\xcb', b'\xcc', b'\xcd', b'\xce', b'\xcf',
-    b'\xd0', b'\xd1', b'\xd2', b'\xd3', b'\xd4', b'\xd5', b'\xd6', b'\xd7',
-    b'\xd8', b'\xd9', b'\xda', b'\xdb', b'\xdc', b'\xdd', b'\xde', b'\xdf',
-    b'\xe0', b'\xe1', b'\xe2', b'\xe3', b'\xe4', b'\xe5', b'\xe6', b'\xe7',
-    b'\xe8', b'\xe9', b'\xea', b'\xeb', b'\xec', b'\xed', b'\xee', b'\xef',
-    b'\xf0', b'\xf1', b'\xf2', b'\xf3', b'\xf4', b'\xf5', b'\xf6', b'\xf7',
-    b'\xf8', b'\xf9', b'\xfa', b'\xfb', b'\xfc', b'\xfd', b'\xfe', b'\xff',
-)
 
 
 class RdpProxyLog(object):
@@ -535,27 +498,33 @@ class Sesman():
 
         self.shared.update(data)
 
-        def _toval(k,v):
-            k = k.encode('utf-8')
-            try:
-                v = v.encode('utf-8')
-            except:
-                # int, etc
-                v = str(v).encode('utf-8')
-            return (True, k, (b'!', u8_byte_table[len(k)], k, pack('>L', len(v)), v))
+        def _toval(key, value):
+            key = to_utf8(key)
+            value = to_utf8(str(value))
+            key_len = len(key)
+            value_len = len(value)
+            return (
+                True, key,
+                pack(f'>1sB{key_len}sL{value_len}s',
+                     b'!', key_len, key, value_len, value)
+            )
 
-        def _toask(k):
-            k = k.encode('utf-8')
-            return (False, k, (b'?', u8_byte_table[len(k)], k))
+        def _toask(key):
+            key = to_utf8(key)
+            key_len = len(key)
+            return (
+                False, key,
+                pack(f'>1sB{key_len}s', b'?', key_len, key)
+            )
 
         _list = [(_toval(key, value) if value != MAGICASK else _toask(key))
-                   for key, value in data.items()]
+                 for key, value in data.items()]
         _list.sort()
 
         if DEBUG:
             Logger().info(u'send_data (on the wire) length = %s' % len(_list))
 
-        _r_data = b''.join(s for t in _list for s in t[2])
+        _r_data = b''.join(t[2] for t in _list)
         self.proxy_conx.sendall(pack('>H', len(_list)))
         self.proxy_conx.sendall(_r_data)
 
@@ -592,15 +561,15 @@ class Sesman():
             def reserve_data(self, n):
                 while len(self._data) - self._offset < n:
                     if DEBUG:
-                        Logger().info("received_buffer (big packet) "\
+                        Logger().info("received_buffer (big packet) "
                                       "old = %d / %d ; required = %d"
                                       % (self._offset, len(self._data), n))
                     self._data = self._data[self._offset:] + read_sck()
                     self._offset = 0
 
-            def extract_name(self, n):
+            def extract_string(self, n):
                 self.reserve_data(n)
-                _name = self._data[self._offset:self._offset+n].decode('utf-8')
+                _name = self._data[self._offset:self._offset + n].decode('utf-8')
                 self._offset += n
                 return _name
 
@@ -624,28 +593,27 @@ class Sesman():
 
             for _ in range(0, _nfield):
                 _type, _n = _buffer.unpack("BB", 2)
-                _key = _buffer.extract_name(_n)
+                _key = _buffer.extract_string(_n)
 
                 if DEBUG:
                     Logger().info("received_buffer (key)   = %s%s"
                                   % ('?' if _type == 0x3f else '!', _key,))
 
-                if _type == 0x3f: # b'?'
+                if _type == 0x3f:  # b'?'
                     _data[_key] = MAGICASK
                 else:
                     _n, = _buffer.unpack('>L', 4)
-                    _data[_key] = _buffer.extract_name(_n)
+                    _data[_key] = _buffer.extract_string(_n)
 
                     if DEBUG:
                         Logger().info("received_buffer (value) = %s"
-                                    % (_data[_key],))
+                                      % (_data[_key],))
 
             if _buffer.is_empty():
                 break
 
             if DEBUG:
                 Logger().info("received_buffer (several packet)")
-
 
         if not (expected_list and isinstance(expected_list, list)):
             expected_list = []
@@ -2386,7 +2354,7 @@ class Sesman():
                 self.rdplog.log("TIME_METRICS",
                                 session_id=self.shared.get(u'session_id'),
                                 **metrics)
-            except Exception as e:
+            except Exception:
                 pass
             self.shared[u"target_connection_time"] = None
 
