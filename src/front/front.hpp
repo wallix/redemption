@@ -140,8 +140,11 @@ class Front : public FrontAPI, public gdi::GraphicApi
 
 public:
     bool has_user_activity = true;
+
+private:
     std::unique_ptr<Capture> capture;
 
+public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
