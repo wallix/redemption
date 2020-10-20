@@ -494,7 +494,7 @@ class Sesman():
         uint8                    key_size
         byte[key_size]           key
         uint32                   value_size
-        byte[key_value]          value
+        byte[value_size]         value
 
         * request_ask format:
         uint8                    "?"
@@ -502,6 +502,7 @@ class Sesman():
         byte[key_size]           key
 
         key and value are utf8 encoded
+        uint are big-endian byte ordered
         """
 
         if DEBUG:
@@ -564,7 +565,7 @@ class Sesman():
         uint8                    key_size
         byte[key_size]           key
         uint32                   value_size
-        byte[key_value]          value
+        byte[value_size]         value
 
         * request_ask format:
         uint8                    "?"
@@ -572,6 +573,7 @@ class Sesman():
         byte[key_size]           key
 
         key and value are utf8 encoded
+        uint are big-endian byte ordered
         """
 
         self._changed_keys = []
