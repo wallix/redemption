@@ -487,16 +487,16 @@ class Sesman():
         request[request_count]   requests
 
         * request format:
-        request := request_data_update | request_data_ask
+        request := request_update | request_ask
 
-        * request_data_update format:
+        * request_update format:
         uint8                    "!"
         uint8                    key_size
         byte[key_size]           key
         uint32                   value_size
         byte[key_value]          value
 
-        * request_data_ask format:
+        * request_ask format:
         uint8                    "?"
         uint8                    key_size
         byte[key_size]           key
@@ -557,16 +557,16 @@ class Sesman():
         request[request_count]   requests
 
         * request format:
-        request := request_data_update | request_data_ask
+        request := request_update | request_ask
 
-        * request_data_update format:
+        * request_update format:
         uint8                    "!"
         uint8                    key_size
         byte[key_size]           key
         uint32                   value_size
         byte[key_value]          value
 
-        * request_data_ask format:
+        * request_ask format:
         uint8                    "?"
         uint8                    key_size
         byte[key_size]           key
