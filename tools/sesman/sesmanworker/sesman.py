@@ -481,7 +481,28 @@ class Sesman():
     # TODO: is may be possible to delay sending data until the next
     #       input through receive_data
     def send_data(self, data):
-        """ NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
+        """ NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded
+        * Packet format:
+        uint16                   request_count
+        request[request_count]   requests
+
+        * request format:
+        request := request_data_update | request_data_ask
+
+        * request_data_update format:
+        uint8                    "!"
+        uint8                    key_size
+        byte[key_size]           key
+        uint32                   value_size
+        byte[key_value]          value
+
+        * request_data_ask format:
+        uint8                    "?"
+        uint8                    key_size
+        byte[key_size]           key
+
+        key and value are utf8 encoded
+        """
 
         if DEBUG:
             Logger().info(u'=> send_data (update) = %s' % data.keys())
@@ -530,7 +551,28 @@ class Sesman():
 
     @logtime_function_pause
     def receive_data(self, expected_list=None):
-        """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
+        """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded
+        * Packet format:
+        uint16                   request_count
+        request[request_count]   requests
+
+        * request format:
+        request := request_data_update | request_data_ask
+
+        * request_data_update format:
+        uint8                    "!"
+        uint8                    key_size
+        byte[key_size]           key
+        uint32                   value_size
+        byte[key_value]          value
+
+        * request_data_ask format:
+        uint8                    "?"
+        uint8                    key_size
+        byte[key_size]           key
+
+        key and value are utf8 encoded
+        """
 
         self._changed_keys = []
 
@@ -569,7 +611,8 @@ class Sesman():
 
             def extract_string(self, n):
                 self.reserve_data(n)
-                _name = self._data[self._offset:self._offset + n].decode('utf-8')
+                _name = self._data[self._offset:self._offset + n]
+                _name = _name.decode('utf8')
                 self._offset += n
                 return _name
 
@@ -606,8 +649,12 @@ class Sesman():
                     _data[_key] = _buffer.extract_string(_n)
 
                     if DEBUG:
-                        Logger().info("received_buffer (value) = %s"
-                                      % (_data[_key],))
+                        if "password" in _key.lower():
+                            Logger().info("received_buffer (value) = *****")
+                        else:
+                            Logger().info(
+                                f"received_buffer (value) = {_data[_key]}"
+                            )
 
             if _buffer.is_empty():
                 break
