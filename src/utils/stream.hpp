@@ -26,6 +26,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/parse.hpp"
+#include "utils/log.hpp"
 #include "utils/sugar/buffer_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/buf_maker.hpp"
@@ -630,11 +631,35 @@ public:
     //    signed delta value.
 
     void out_DEP(int16_t point) noexcept {
-        if ((point > 0x3F)||(point < -127)){
-            this->out_uint16_be(point|0x8000);
+        uint16_t abs_point = abs(point);
+
+        if (abs_point > 0x3F) {
+            uint16_t data = abs_point;
+
+            if (point < 0) {
+                data = ~data;
+                data++;
+
+                data |= 0x4000;
+            }
+
+            data |= 0x8000;
+
+            this->out_uint16_be(data);
         }
         else {
-            this->out_uint8(point&0x7F);
+            uint8_t data = abs_point;
+
+            if (point < 0) {
+                data = ~data;
+                data++;
+
+                data |= 0x40;
+            }
+
+            data &= ~0x80;
+
+            this->out_uint8(data);
         }
     }
 
