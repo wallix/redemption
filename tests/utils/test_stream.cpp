@@ -316,14 +316,13 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
         0x20,  // 32
         0x3F,  // 63
         0x7F,  // -1
-        0x40,  // -64
+        0xFF, 0xC0,  // -64
         0x41,  // -63
         0x61,  // -31
         0x00, // 0
         0xC0, 0x00,
         0xDF, 0xFF,
         0xE0, 0x00,
-        0xBF, 0xFF,
         0xBF, 0xFF,
     };
 
@@ -339,10 +338,6 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
     stream.out_DEP(-8193); // 0xDF, 0xFF
     stream.out_DEP(-8192); // 0xE0, 0x00
     stream.out_DEP(16383); // 0xBF, 0xFF 0x1011 0x1111
-    // Actually the example below is invalid, the function only apply
-    // in range -16384 .. 16383 (15 bits)
-    // -16385 gave the same output as +16383
-    stream.out_DEP(-16385); // 0xBF, 0xFF
 
     RED_CHECK(stream.get_produced_bytes() == make_array_view(expected));
     InStream in_stream(stream.get_produced_bytes());
@@ -358,7 +353,6 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
     RED_CHECK(-16384 == in_stream.in_DEP()); // 0xC0, 0x00
     RED_CHECK(-8193 == in_stream.in_DEP()); // 0xDF, 0xFF
     RED_CHECK(-8192 == in_stream.in_DEP()); // 0xE0, 0x00
-    RED_CHECK(16383 == in_stream.in_DEP()); // 0xBF, 0xFF 0x1011 0x1111
     RED_CHECK(16383 == in_stream.in_DEP()); // 0xBF, 0xFF 0x1011 0x1111
 }
 
