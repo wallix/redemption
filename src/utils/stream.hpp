@@ -631,35 +631,11 @@ public:
     //    signed delta value.
 
     void out_DEP(int16_t point) noexcept {
-        uint16_t abs_point = abs(point);
-
-        if (abs_point > 0x3F) {
-            uint16_t data = abs_point;
-
-            if (point < 0) {
-                data = ~data;
-                data++;
-
-                data |= 0x4000;
-            }
-
-            data |= 0x8000;
-
-            this->out_uint16_be(data);
+        if ((point > 0x3F)||(point < -64)){
+            this->out_uint16_be(point|0x8000);
         }
         else {
-            uint8_t data = abs_point;
-
-            if (point < 0) {
-                data = ~data;
-                data++;
-
-                data |= 0x40;
-            }
-
-            data &= ~0x80;
-
-            this->out_uint8(data);
+            this->out_uint8(point&0x7F);
         }
     }
 
