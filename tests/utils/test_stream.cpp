@@ -290,7 +290,9 @@ RED_AUTO_TEST_CASE(TestParse_in_DEP)
         0xE0, 0x00,
         0xBF, 0xFF,
         0x00, // 0
-        0xFF, 0xFF};
+        0xFF, 0xFF,
+        0xFF, 0xBF
+    };
     Parse data(buffer);
     RED_CHECK_EQUAL(16, data.in_DEP());
     RED_CHECK_EQUAL(32, data.in_DEP());
@@ -305,6 +307,7 @@ RED_AUTO_TEST_CASE(TestParse_in_DEP)
     RED_CHECK_EQUAL(16383, data.in_DEP());
     RED_CHECK_EQUAL(0, data.in_DEP());
     RED_CHECK_EQUAL(-1, data.in_DEP());
+    RED_CHECK_EQUAL(-65, data.in_DEP());
 }
 
 RED_AUTO_TEST_CASE(TestStream_out_DEP)
@@ -316,7 +319,8 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
         0x20,  // 32
         0x3F,  // 63
         0x7F,  // -1
-        0xFF, 0xC0,  // -64
+        0xFF, 0xBF,  // -65
+        0x40,  // -64
         0x41,  // -63
         0x61,  // -31
         0x00, // 0
@@ -324,12 +328,14 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
         0xDF, 0xFF,
         0xE0, 0x00,
         0xBF, 0xFF,
+        0xBF, 0xFF,
     };
 
     stream.out_DEP(16); // 0x10
     stream.out_DEP(32); // 0x20
     stream.out_DEP(63); // 0x3F
     stream.out_DEP(-1); // 0x7F
+    stream.out_DEP(-65); // 0xFF, 0xBF
     stream.out_DEP(-64); // 0x40
     stream.out_DEP(-63); // 0x41
     stream.out_DEP(-31); // 0x61
@@ -338,6 +344,10 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
     stream.out_DEP(-8193); // 0xDF, 0xFF
     stream.out_DEP(-8192); // 0xE0, 0x00
     stream.out_DEP(16383); // 0xBF, 0xFF 0x1011 0x1111
+    // Actually the example below is invalid, the function only apply
+    // in range -16384 .. 16383 (15 bits)
+    // -16385 gave the same output as +16383
+    stream.out_DEP(-16385); // 0xBF, 0xFF
 
     RED_CHECK(stream.get_produced_bytes() == make_array_view(expected));
     InStream in_stream(stream.get_produced_bytes());
@@ -346,6 +356,7 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
     RED_CHECK(32 == in_stream.in_DEP()); // 0x20
     RED_CHECK(63 == in_stream.in_DEP()); // 0x3F
     RED_CHECK(-1 == in_stream.in_DEP()); // 0x7F
+    RED_CHECK(-65 == in_stream.in_DEP()); // 0xFF, 0xBF
     RED_CHECK(-64 == in_stream.in_DEP()); // 0x40
     RED_CHECK(-63 == in_stream.in_DEP()); // 0x41
     RED_CHECK(-31 == in_stream.in_DEP()); // 0x61
@@ -354,8 +365,23 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
     RED_CHECK(-8193 == in_stream.in_DEP()); // 0xDF, 0xFF
     RED_CHECK(-8192 == in_stream.in_DEP()); // 0xE0, 0x00
     RED_CHECK(16383 == in_stream.in_DEP()); // 0xBF, 0xFF 0x1011 0x1111
+    RED_CHECK(16383 == in_stream.in_DEP()); // 0xBF, 0xFF 0x1011 0x1111
 }
 
+RED_AUTO_TEST_CASE(TestStream_in_out_DEP)
+{
+    for (int i = -16384; i < 16383; i++) {
+        LOG(LOG_INFO, "TestStream_in_out_DEP: Value=%d", i);
+
+        StaticOutStream<256> stream;
+
+        stream.out_DEP(i);
+
+        InStream in_stream(stream.get_produced_bytes());
+
+        RED_CHECK(i == in_stream.in_DEP());
+    }
+}
 
 RED_AUTO_TEST_CASE(TestStream_sint32)
 {
