@@ -747,6 +747,14 @@ public:
 
         std::unique_ptr<Transport> auth_trans;
 
+        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type](LogId id, KVList kv_list)
+        {
+            /* Log to SIEM (redirected syslog) */
+            log_siem_syslog(id, kv_list, ini, session_type);
+            log_siem_arcsight(time_base.get_current_time().tv_sec, id, kv_list, ini, session_type);
+            log_file.log6(id, kv_list);
+        };
+
         try {
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
 
@@ -941,14 +949,7 @@ public:
                                 ini.get<cfg::globals::target_device>().c_str(), message.c_str());
                             ini.set_acl<cfg::context::reporting>(report);
                         });
-                    sesman.flush_acl_log6(
-                        [&ini,&log_file,&time_base,&session_type](LogId id, KVList kv_list)
-                        {
-                            /* Log to SIEM (redirected syslog) */
-                            log_siem_syslog(id, kv_list, ini, session_type);
-                            log_siem_arcsight(time_base.get_current_time().tv_sec, id, kv_list, ini, session_type);
-                            log_file.log6(id, kv_list);
-                        });
+                    sesman.flush_acl_log6(write_acl_log6_fn);
                     sesman.flush_acl(VerboseSession::has_verbose_acl(ini));
                     // send over wire if any field changed
                     if (this->ini.changed_field_size()) {
@@ -1211,6 +1212,7 @@ public:
                     run_session = false;
 
                     if (front.state != Front::FRONT_UP_AND_RUNNING) {
+                        sesman.flush_acl_log6(write_acl_log6_fn);
                         sesman.flush_acl_disconnect_target([&log_file]()
                         {
                             log_file.close_session_log();
@@ -1286,6 +1288,7 @@ public:
         catch(...) {
             LOG(LOG_ERR, "Session unexpected exception");
         }
+
         // silent message for localhost for watchdog
         if (!source_is_localhost) {
             if (!ini.is_asked<cfg::globals::host>()) {
@@ -1293,7 +1296,17 @@ public:
             }
             log_proxy::disconnection(disconnection_message_error.c_str());
         }
+
         front.must_be_stop_capture();
+
+
+        // flush buffered messages
+        try {
+            sesman.flush_acl_log6(write_acl_log6_fn);
+        }
+        catch (...) {
+            LOG(LOG_ERR, "flush_acl_log6()");
+        }
     }
 
     Session(Session const &) = delete;

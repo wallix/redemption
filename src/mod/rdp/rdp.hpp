@@ -6067,6 +6067,9 @@ private:
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
+            // force kbd flush before disconnect event
+            this->front.possible_active_window_change();
+
             this->sesman.log6(LogId::SESSION_DISCONNECTION,
                 {KVLog("duration"_av, {duration_str, len}),});
 
