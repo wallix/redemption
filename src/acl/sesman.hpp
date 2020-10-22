@@ -35,6 +35,7 @@
 #include "core/log_id.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
+#include "acl/kvlist_buffer.hpp"
 #include "utils/timebase.hpp"
 #include "utils/sugar/algostring.hpp"
 
@@ -45,32 +46,10 @@ struct Sesman : public AuthApi
 {
     Inifile & ini;
 
-    struct LogParam
-    {
-        LogId id;
-        struct KV
-        {
-            std::string key;
-            std::string value;
-        };
-        std::vector<KV> kv_list;
-
-        LogParam(LogId id, KVList list)
-        : id(id)
-        {
-            kv_list.reserve(list.size());
-            for (auto const& kv : list) {
-                this->kv_list.emplace_back(KV{
-                    std::string(kv.key.data(), kv.key.size()),
-                    std::string(kv.value.data(), kv.value.size()),
-                });
-            }
-        }
-    };
-
     bool log6_sent = false;
     bool session_log_is_open = false;
-    std::vector<LogParam> buffered_log_params;
+
+    KVListBuffer buffered_log_params;
 
     bool screen_info_sent = true;
     ScreenInfo screen_info;
@@ -166,7 +145,7 @@ struct Sesman : public AuthApi
     void log6(LogId id, KVList kv_list) override
     {
         this->log6_sent = false;
-        this->buffered_log_params.emplace_back(id, kv_list);
+        this->buffered_log_params.append(this->time_base.get_current_time(), id, kv_list);
 
         if (!this->dispatch_to_capture) {
             return;
@@ -348,20 +327,10 @@ struct Sesman : public AuthApi
     void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> const& log6)
     {
         if (!this->log6_sent) {
-            if (!this->buffered_log_params.empty()) {
-                std::vector<KVLog> v;
-                for (LogParam const & log_param : this->buffered_log_params) {
-                    v.reserve(log_param.kv_list.size());
-                    for (auto const& kv : log_param.kv_list) {
-                        v.emplace_back(KVLog{kv.key, kv.value});
-                    }
-                    //serializer.log6(log_param.id, {v});
-                    log6(log_param.id, {v});
-                    v.clear();
-                }
-                this->buffered_log_params.clear();
-                this->buffered_log_params.shrink_to_fit();
+            for (auto&& kv_event : this->buffered_log_params) {
+                log6(/*kv_event.time, */kv_event.id, kv_event.kv_list);
             }
+            this->buffered_log_params.clear();
             this->log6_sent = true;
         }
     }

@@ -20,17 +20,17 @@
 
 #pragma once
 
-#include "utils/sugar/noncopyable.hpp"
 #include "gdi/screen_info.hpp"
-
-#include <cstdint>
-#include <string_view>
-#include <string>
-
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/array_view.hpp"
 
-#include <sys/time.h> // timeval
+#include "configs/autogen/enums.hpp"
+
+#include <string_view>
+#include <string>
+
+#include <cstdint>
+
 
 enum class LogId : unsigned;
 
@@ -44,6 +44,7 @@ struct KVLog
     KVLog(chars_view key, chars_view value) noexcept : key(key), value(value) {}
 };
 
+// TODO rename to KVLogList
 struct KVList : array_view<KVLog>
 {
     KVList(array_view<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
@@ -84,7 +85,7 @@ struct AuthApi : noncopyable
     virtual void set_auth_channel_target(const char * target) = 0;
 
     virtual std::string get_auth_error_message() = 0;
-    
+
     virtual void set_selector_page(unsigned current, std::string group, std::string device, std::string proto) = 0;
 
     virtual void set_keyboard_layout(unsigned keyboard_layout) = 0;
@@ -114,9 +115,9 @@ struct NullAuthentifier : AuthApi
     void set_auth_info(std::string const& /*username*/, std::string const& /*domain*/, std::string const& /*password*/) override {}
     void set_recording_started() override {}
     void set_rt_ready() override {}
-    void set_selector_page(unsigned /*current*/, 
-                           std::string /*group*/, 
-                           std::string /*device*/, 
+    void set_selector_page(unsigned /*current*/,
+                           std::string /*group*/,
+                           std::string /*device*/,
                            std::string /*proto*/) override {}
     void set_keyboard_layout(unsigned /*keyboard_layout*/) override {}
 };
