@@ -97,6 +97,7 @@
 #include "core/front_api.hpp"
 #include "core/glyph_to_24_bitmap.hpp"
 #include "acl/auth_api.hpp"
+#include "acl/kvlist_buffer.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
@@ -143,6 +144,7 @@ public:
 
 private:
     std::unique_ptr<Capture> capture;
+    KVListBuffer kvlist_buffer;
 
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -1193,6 +1195,11 @@ public:
         if (capture_png){
             this->sesman.set_rt_ready();
         }
+
+        for (auto&& kv_event : this->kvlist_buffer) {
+            this->capture->session_update(kv_event.time, kv_event.id, kv_event.kv_list);
+        }
+        this->kvlist_buffer.clear();
 
         return true;
     }
@@ -3092,6 +3099,9 @@ public:
     {
         if (this->capture) {
             this->capture->session_update(now, id, kv_list);
+        }
+        else if (this->ini.get<cfg::globals::is_rec>()) {
+            this->kvlist_buffer.append(now, id, kv_list);
         }
     }
 

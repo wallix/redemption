@@ -17,6 +17,7 @@ exe headlessclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
@@ -113,6 +114,7 @@ exe rdpproxy :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
@@ -315,6 +317,7 @@ exe rdpclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -510,6 +513,7 @@ test-run tests/RAIL/test_client_execute :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -587,6 +591,13 @@ test-run tests/acl/test_end_session_warning :
 :
   <covfile>src/acl/end_session_warning.hpp
 ;
+test-run tests/acl/test_kvlist_buffer :
+  $(REDEMPTION_TEST_PATH)/acl/test_kvlist_buffer.cpp
+:
+  <library>src/acl/kvlist_buffer.o
+  <covfile>src/acl/kvlist_buffer.cpp
+  <covfile>src/acl/kvlist_buffer.hpp
+;
 test-run tests/acl/test_license_api :
   $(REDEMPTION_TEST_PATH)/acl/test_license_api.cpp
 :
@@ -599,6 +610,7 @@ test-run tests/acl/test_license_api :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -657,6 +669,7 @@ test-run tests/acl/test_sesman :
 :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/utils/cfgloader.o
   <library>src/utils/pattutils.o
   <covfile>src/acl/sesman.hpp
@@ -675,6 +688,7 @@ test-run tests/acl/test_session_logfile :
   <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -906,6 +920,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -996,6 +1011,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -1060,6 +1076,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -1122,6 +1139,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
@@ -1168,6 +1186,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
@@ -1214,6 +1233,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
@@ -1260,6 +1280,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
@@ -2350,6 +2371,7 @@ test-run tests/core/test_front_api :
 :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/utils/cfgloader.o
   <library>src/utils/pattutils.o
   <covfile>src/core/front_api.hpp
@@ -2385,6 +2407,7 @@ test-run tests/core/test_mainloop :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
@@ -2528,6 +2551,7 @@ test-run tests/core/test_session :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
@@ -2662,6 +2686,7 @@ test-run tests/front/test_front :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
@@ -2867,6 +2892,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>app_path_test.o
   <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -2900,6 +2926,7 @@ test-run tests/mod/internal/test_close_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -2948,6 +2975,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -2990,6 +3018,7 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -3038,6 +3067,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -3086,6 +3116,7 @@ test-run tests/mod/internal/test_login_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -3135,6 +3166,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/core/error.o
@@ -3173,6 +3205,7 @@ test-run tests/mod/internal/test_selector_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
@@ -3243,6 +3276,7 @@ test-run tests/mod/internal/test_wait_mod :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
@@ -3282,6 +3316,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>app_path_test.o
   <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -3634,6 +3669,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3708,6 +3744,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3845,6 +3882,7 @@ test-run tests/mod/internal/widget/test_language_button :
 :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -4270,6 +4308,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
@@ -4304,6 +4343,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>app_path_test.o
   <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
@@ -4330,6 +4370,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4379,6 +4420,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
@@ -4458,6 +4500,7 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>krb5
   <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/channels_authorizations.o
@@ -4607,6 +4650,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
+  <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/events.o
@@ -4737,6 +4781,7 @@ test-run tests/server/test_mstsc_client :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -4796,6 +4841,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -4855,6 +4901,7 @@ test-run tests/server/test_rdesktop_client :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -5708,6 +5755,7 @@ test-run tests/utils/winpr/test_pattern :
 obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp ;
+obj src/acl/kvlist_buffer.o : $(REDEMPTION_SRC_PATH)/acl/kvlist_buffer.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/session_inactivity.o : $(REDEMPTION_SRC_PATH)/acl/session_inactivity.cpp ;
@@ -5868,6 +5916,7 @@ alias test_client_execute : tests/RAIL/test_client_execute ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_end_session_warning : tests/acl/test_end_session_warning ;
+alias test_kvlist_buffer : tests/acl/test_kvlist_buffer ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_sesman : tests/acl/test_sesman ;
 alias test_session_inactivity : tests/acl/test_session_inactivity ;
@@ -6214,6 +6263,7 @@ alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
+alias test_kvlist_buffer.coverage : tests/acl/test_kvlist_buffer.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
 alias test_sesman.coverage : tests/acl/test_sesman.coverage ;
 alias test_session_inactivity.coverage : tests/acl/test_session_inactivity.coverage ;
@@ -6542,6 +6592,7 @@ alias tests/acl.norec :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
   tests/acl/test_end_session_warning
+  tests/acl/test_kvlist_buffer
   tests/acl/test_license_api
   tests/acl/test_sesman
   tests/acl/test_session_inactivity
