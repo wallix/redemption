@@ -63,7 +63,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
     aclexcpt.send_acl_data();
-    RED_CHECK(!ini.get<cfg::context::authenticated>());
     RED_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
 }
 
@@ -160,7 +159,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
-    auto const key = "rejected"_av;
+    auto const key = "password"_av;
     auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream({u.get(), total_sz});
@@ -184,9 +183,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     AclSerializer acl(ini);
     acl.set_auth_trans(&trans);
 
-    ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
+    ini.set_acl<cfg::context::password>(std::string(sz_string, 'a'));
 
-    RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>().size(), sz_string);
+    RED_REQUIRE_EQUAL(ini.get<cfg::context::password>().size(), sz_string);
     RED_REQUIRE_EQUAL(ini.changed_field_size(), 1);
 
     acl.send_acl_data();

@@ -108,7 +108,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::auth_channel_target>(s);
     ini.set<cfg::context::auth_error_message>(cs);
     ini.set<cfg::context::auth_error_message>(s);
-    ini.set_acl<cfg::context::authenticated>(true);
     ini.set<cfg::context::authentication_challenge>(true);
     ini.set_acl<cfg::context::comment>(cs);
     ini.set_acl<cfg::context::comment>(s);
@@ -144,8 +143,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::proxy_opt>(s);
     ini.set_acl<cfg::context::real_target_device>(cs);
     ini.set_acl<cfg::context::real_target_device>(s);
-    ini.set_acl<cfg::context::rejected>(cs);
-    ini.set_acl<cfg::context::rejected>(s);
     ini.set_acl<cfg::context::reporting>(cs);
     ini.set_acl<cfg::context::reporting>(s);
     ini.set<cfg::context::selector>(true);

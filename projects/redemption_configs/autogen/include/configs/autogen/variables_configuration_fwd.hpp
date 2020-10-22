@@ -388,7 +388,6 @@ namespace cfg
         struct accept_message;
         struct display_message;
         struct rejected;
-        struct authenticated;
         struct keepalive;
         struct session_id;
         struct end_date_cnx;

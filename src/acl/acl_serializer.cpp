@@ -422,8 +422,7 @@ void AclSerializer::send_acl_data()
         }
         catch (Error const & e) {
             LOG(LOG_ERR, "ACL SERIALIZER : %s", e.errmsg());
-            this->ini.set_acl<cfg::context::authenticated>(false);
-            this->ini.set_acl<cfg::context::rejected>(TR(trkeys::acl_fail, language(this->ini)));
+            this->ini.set<cfg::context::rejected>(TR(trkeys::acl_fail, language(this->ini)));
         }
 
         this->ini.clear_send_index();

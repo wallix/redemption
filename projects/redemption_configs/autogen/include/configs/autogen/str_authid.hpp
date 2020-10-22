@@ -162,7 +162,6 @@ namespace configs
         "accept_message"_zv,
         "display_message"_zv,
         "rejected"_zv,
-        "authenticated"_zv,
         "keepalive"_zv,
         "session_id"_zv,
         "timeclose"_zv,
