@@ -1313,8 +1313,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hex
 #capture = 0
 
-# - variable = 0x02
-# - buffer   = 0x40
+# - variable = 0x0002
+# - buffer   = 0x0040
+# - dump     = 0x1000
 # min = 0
 #_advanced
 #_hex

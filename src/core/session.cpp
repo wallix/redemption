@@ -306,7 +306,7 @@ private:
             // Close by rejeted message received
             this->ini.set<cfg::context::auth_error_message>(this->ini.get<cfg::context::rejected>());
             LOG(LOG_INFO, "Close because rejected message was received : %s", this->ini.get<cfg::context::rejected>());
-            this->ini.set_acl<cfg::context::rejected>("");
+            this->ini.set<cfg::context::rejected>("");
             return EndSessionResult::close_box;
         }
 
@@ -542,54 +542,6 @@ private:
             break;
         } // switch (next_state)
 
-        if (!ini.get<cfg::context::disconnect_reason>().empty()) {
-            acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
-            ini.set<cfg::context::disconnect_reason>("");
-            ini.set_acl<cfg::context::disconnect_reason_ack>(true);
-        }
-        else if (!ini.get<cfg::context::auth_command>().empty()) {
-            if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(), "rail_exec")) {
-                const uint16_t flags                = ini.get<cfg::context::auth_command_rail_exec_flags>();
-                const char*    original_exe_or_file = ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
-                const char*    exe_or_file          = ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
-                const char*    working_dir          = ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
-                const char*    arguments            = ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
-                const uint16_t exec_result          = ini.get<cfg::context::auth_command_rail_exec_exec_result>();
-                const char*    account              = ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
-                const char*    password             = ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
-
-                rdp_api* rdpapi = mod_wrapper.get_rdp_api();
-
-                if (!exec_result) {
-                    //LOG(LOG_INFO,
-                    //    "RailExec: "
-                    //        "original_exe_or_file=\"%s\" "
-                    //        "exe_or_file=\"%s\" "
-                    //        "working_dir=\"%s\" "
-                    //        "arguments=\"%s\" "
-                    //        "flags=%u",
-                    //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
-
-                    if (rdpapi) {
-                        rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
-                    }
-                }
-                else {
-                    //LOG(LOG_INFO,
-                    //    "RailExec: "
-                    //        "exec_result=%u "
-                    //        "original_exe_or_file=\"%s\" "
-                    //        "flags=%u",
-                    //    exec_result, original_exe_or_file, flags);
-
-                    if (rdpapi) {
-                        rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
-                    }
-                }
-            }
-
-            ini.set<cfg::context::auth_command>("");
-        }
         return true;
     }
 
@@ -875,7 +827,7 @@ public:
                     {
                         SocketTransport* socket_transport_ptr = mod_wrapper.get_mod_transport();
 
-                        if (   socket_transport_ptr && (e.data == socket_transport_ptr->sck)
+                        if (   socket_transport_ptr && (static_cast<int>(e.data) == socket_transport_ptr->sck)
                             && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
                             && mod_wrapper.get_mod()->is_auto_reconnectable()
                             && !mod_wrapper.get_mod()->server_error_encountered())
@@ -936,13 +888,12 @@ public:
                             LOG(LOG_INFO, "acl_serial.incoming() Session lost");
                             // acl connection lost
                             acl_serial.set_disconnected_by_authentifier();
-                            ini.set_acl<cfg::context::authenticated>(false);
 
                             if (acl_manager_disconnect_reason.empty()) {
-                                ini.set_acl<cfg::context::rejected>(TR(trkeys::manager_close_cnx, language(ini)));
+                                ini.set<cfg::context::rejected>(TR(trkeys::manager_close_cnx, language(ini)));
                             }
                             else {
-                                ini.set_acl<cfg::context::rejected>(acl_manager_disconnect_reason);
+                                ini.set<cfg::context::rejected>(acl_manager_disconnect_reason);
                                 acl_manager_disconnect_reason.clear();
                             }
                         }
@@ -980,7 +931,7 @@ public:
                         log_file.close_session_log();
                     });
                 }
-                else if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE) {
+                else if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE && mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE_BACK) {
                     if (acl_serial.is_after_connexion()) {
                         this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
                         mod_wrapper.disconnect();
@@ -1204,6 +1155,55 @@ public:
                                     rd_shadow_userdata.c_str(),
                                     rd_shadow_type.c_str());
                                 ini.set<cfg::context::rd_shadow_type>("");
+                            }
+
+                            if (!ini.get<cfg::context::disconnect_reason>().empty()) {
+                                acl_manager_disconnect_reason = ini.get<cfg::context::disconnect_reason>();
+                                ini.set<cfg::context::disconnect_reason>("");
+                                ini.set_acl<cfg::context::disconnect_reason_ack>(true);
+                            }
+                            else if (!ini.get<cfg::context::auth_command>().empty()) {
+                                if (!::strcasecmp(this->ini.get<cfg::context::auth_command>().c_str(), "rail_exec")) {
+                                    const uint16_t flags                = ini.get<cfg::context::auth_command_rail_exec_flags>();
+                                    const char*    original_exe_or_file = ini.get<cfg::context::auth_command_rail_exec_original_exe_or_file>().c_str();
+                                    const char*    exe_or_file          = ini.get<cfg::context::auth_command_rail_exec_exe_or_file>().c_str();
+                                    const char*    working_dir          = ini.get<cfg::context::auth_command_rail_exec_working_dir>().c_str();
+                                    const char*    arguments            = ini.get<cfg::context::auth_command_rail_exec_arguments>().c_str();
+                                    const uint16_t exec_result          = ini.get<cfg::context::auth_command_rail_exec_exec_result>();
+                                    const char*    account              = ini.get<cfg::context::auth_command_rail_exec_account>().c_str();
+                                    const char*    password             = ini.get<cfg::context::auth_command_rail_exec_password>().c_str();
+
+                                    rdp_api* rdpapi = mod_wrapper.get_rdp_api();
+
+                                    if (!exec_result) {
+                                        //LOG(LOG_INFO,
+                                        //    "RailExec: "
+                                        //        "original_exe_or_file=\"%s\" "
+                                        //        "exe_or_file=\"%s\" "
+                                        //        "working_dir=\"%s\" "
+                                        //        "arguments=\"%s\" "
+                                        //        "flags=%u",
+                                        //    original_exe_or_file, exe_or_file, working_dir, arguments, flags);
+
+                                        if (rdpapi) {
+                                            rdpapi->auth_rail_exec(flags, original_exe_or_file, exe_or_file, working_dir, arguments, account, password);
+                                        }
+                                    }
+                                    else {
+                                        //LOG(LOG_INFO,
+                                        //    "RailExec: "
+                                        //        "exec_result=%u "
+                                        //        "original_exe_or_file=\"%s\" "
+                                        //        "flags=%u",
+                                        //    exec_result, original_exe_or_file, flags);
+
+                                        if (rdpapi) {
+                                            rdpapi->auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
+                                        }
+                                    }
+                                }
+
+                                ini.set<cfg::context::auth_command>("");
                             }
                         }
 

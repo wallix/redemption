@@ -4,8 +4,9 @@
 
 namespace cfg_specs {
 
-constexpr char const* CONFIG_DESC_AUTH = R"(- variable = 0x02
-- buffer   = 0x40)";
+constexpr char const* CONFIG_DESC_AUTH = R"(- variable = 0x0002
+- buffer   = 0x0040
+- dump     = 0x1000)";
 
 constexpr char const* CONFIG_DESC_FRONT = R"(- basic_trace     = 0x0000'0001
 - basic_trace2    = 0x0000'0002

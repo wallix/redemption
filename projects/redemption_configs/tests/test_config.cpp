@@ -263,8 +263,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::rejected>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::authenticated>());
-
 
     RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::keepalive>());
 
@@ -1798,14 +1796,6 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL("rejected", ini.get<cfg::context::rejected>());
 
     RED_CHECK_EQUAL("rejected"_av, get_zstring(cfg::context::rejected::index));
-
-
-    // authenticated
-    get_acl_field(ini, cfg::context::authenticated::index).set("True"_zv);
-
-    RED_CHECK_EQUAL(true,   ini.get<cfg::context::authenticated>());
-
-    RED_CHECK_EQUAL("True"_av, get_zstring(cfg::context::authenticated::index));
 
 
     // keepalive

@@ -88,7 +88,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     RED_CHECK(trans.buf == ""_av);
     trans.buf.clear();
 
-    RED_CHECK(!ini.get<cfg::context::authenticated>());
     RED_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
 }
 
@@ -167,7 +166,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     size_t const sz_string = 1024*66;
     auto prefix =
         "\x00\x01"
-        "!\x08rejected\x00\x01\x08\x00"
+        "!\x08password\x00\x01\x08\x00"
         ""_av;
     std::string message(1024*66 + prefix.size(), 'a');
     memcpy(message.data(), prefix.data(), prefix.size());
@@ -176,9 +175,9 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     BufTransport trans;
     acl.set_auth_trans(&trans);
 
-    ini.set_acl<cfg::context::rejected>(std::string(sz_string, 'a'));
+    ini.set_acl<cfg::context::password>(std::string(sz_string, 'a'));
 
-    RED_CHECK(ini.get<cfg::context::rejected>().size() == sz_string);
+    RED_CHECK(ini.get<cfg::context::password>().size() == sz_string);
     RED_CHECK(ini.get_acl_fields_changed().size() == 1);
     RED_CHECK(acl.send_acl_data() == 1);
     RED_CHECK(trans.buf == bytes_view(message));

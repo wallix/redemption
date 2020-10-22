@@ -1120,8 +1120,9 @@ fake_target_ip = string(default='')
 #_hex
 capture = integer(min=0, default=0)
 
-# - variable = 0x02
-# - buffer   = 0x40
+# - variable = 0x0002
+# - buffer   = 0x0040
+# - dump     = 0x1000
 #_advanced
 #_hex
 auth = integer(min=0, default=0)

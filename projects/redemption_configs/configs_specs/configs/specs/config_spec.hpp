@@ -803,9 +803,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, not_target_ctx, L, type_<bool>(), "accept_message");
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<bool>(), "display_message");
 
-        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), "rejected");
-
-        W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<bool>(), "authenticated", set(false));
+        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), "rejected");
 
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "keepalive", set(false));
 
