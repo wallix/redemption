@@ -863,13 +863,19 @@ ModPack create_mod_rdp(
     // ================== Application Driver =========================
     char const * application_driver_exe_or_file            = nullptr;
     char const * application_driver_script                 = nullptr;
+    char const * application_driver_script_argument_extra  = nullptr;
     if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_IE__")) {
-        application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
-        application_driver_script      = ini.get<cfg::mod_rdp::application_driver_ie_script>();
+        application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script                = ini.get<cfg::mod_rdp::application_driver_ie_script>();
     }
     else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_CHROME_UIA__")) {
-        application_driver_exe_or_file = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
-        application_driver_script      = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
+        application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
+    }
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_UIA__")) {
+        application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
+        application_driver_script_argument_extra = "/e:UseEdgeChromium=Yes";
     }
     if (application_driver_exe_or_file) {
         char const * session_probe_dir_remote = "\\\\tsclient\\SESPRO\\";
@@ -939,6 +945,10 @@ ModPack create_mod_rdp(
         std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
 
         application_driver_shell_arguments  = ini.get<cfg::mod_rdp::application_driver_script_argument>();
+        if (application_driver_script_argument_extra) {
+            application_driver_shell_arguments += " ";
+            application_driver_shell_arguments += application_driver_script_argument_extra;
+        }
         application_driver_shell_arguments += " ";
         application_driver_shell_arguments += ini.get<cfg::mod_rdp::shell_arguments>();
 
