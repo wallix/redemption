@@ -34,7 +34,6 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/log_buffered.hpp"
-#include "acl/sesman.hpp"
 #include "acl/session_logfile.hpp"
 
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
@@ -86,15 +85,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogfileLog, wd)
     GeneratorTransport trans(""_av);
     std::string session_type;
 
-    Sesman sesman(ini, timebase);
-
-    auto notify_error = [&sesman](const Error & error)
-    {
-        if (error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            sesman.report("FILESYSTEM_FULL", "100|unknown");
-        }
-    };
+    auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
     SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
 

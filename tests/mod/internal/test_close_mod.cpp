@@ -30,6 +30,7 @@
 #include "RAIL/client_execute.hpp"
 #include "mod/internal/close_mod.hpp"
 #include "keyboard/keymap2.hpp"
+#include "configs/config.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/close_mod/"

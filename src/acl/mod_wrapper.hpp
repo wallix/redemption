@@ -199,7 +199,7 @@ public:
 
 private:
     Inifile & ini;
-    Sesman & sesman;
+    AuthApi & sesman;
 
     std::string osd_message;
     Rect clip;
@@ -216,7 +216,7 @@ private:
 
 
 public:
-    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini, Sesman & sesman)
+    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini, AuthApi & sesman)
     : callback(*this)
     , gfilter(graphics, callback, palette, Rect{})
     , g(gfilter)

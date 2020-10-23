@@ -25,9 +25,9 @@
 #pragma once
 
 #include "gdi/screen_info.hpp"
+#include "gdi/capture_probe_api.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
-#include "acl/sesman.hpp"
 
 
 namespace CHANNELS {
