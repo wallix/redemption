@@ -22,22 +22,22 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "acl/kvlist_buffer.hpp"
+#include "capture/session_update_buffer.hpp"
 
 
-RED_AUTO_TEST_CASE(TestKVListBuffer)
+RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
 {
-    KVListBuffer buffer;
+    SessionUpdateBuffer buffer;
 
-    buffer.append(timeval{1, 0}, LogId::TITLE_BAR, KVList{
+    buffer.append(timeval{1, 0}, LogId::TITLE_BAR, KVLogList{
         KVLog{"title"_av, "bloc note"_av},
     });
-    buffer.append(timeval{2, 770}, LogId::BUTTON_CLICKED, KVList{
+    buffer.append(timeval{2, 770}, LogId::BUTTON_CLICKED, KVLogList{
         KVLog{"value1"_av, "button"_av},
         KVLog{"value2"_av, "bla"_av},
     });
 
-    KVListBuffer::KVEvent kv_event {};
+    SessionUpdateBuffer::Data kv_event {};
 
     auto it = buffer.begin();
     RED_REQUIRE((it != buffer.end()));

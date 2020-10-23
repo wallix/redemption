@@ -17,10 +17,10 @@ exe headlessclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
-  <library>src/acl/kvlist_buffer.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
+  <library>src/capture/session_update_buffer.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
@@ -113,7 +113,6 @@ exe rdpproxy :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
-  <library>src/acl/kvlist_buffer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
@@ -124,6 +123,7 @@ exe rdpproxy :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -316,8 +316,8 @@ exe rdpclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
-  <library>src/acl/kvlist_buffer.o
   <library>src/capture/fdx_capture.o
+  <library>src/capture/session_update_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -587,13 +587,6 @@ test-run tests/acl/test_end_session_warning :
 :
   <covfile>src/acl/end_session_warning.hpp
 ;
-test-run tests/acl/test_kvlist_buffer :
-  $(REDEMPTION_TEST_PATH)/acl/test_kvlist_buffer.cpp
-:
-  <library>src/acl/kvlist_buffer.o
-  <covfile>src/acl/kvlist_buffer.cpp
-  <covfile>src/acl/kvlist_buffer.hpp
-;
 test-run tests/acl/test_license_api :
   $(REDEMPTION_TEST_PATH)/acl/test_license_api.cpp
 :
@@ -663,7 +656,7 @@ test-run tests/acl/test_sesman :
 :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/acl/kvlist_buffer.o
+  <library>src/capture/session_update_buffer.o
   <library>src/utils/cfgloader.o
   <covfile>src/acl/sesman.hpp
 ;
@@ -824,6 +817,13 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+;
+test-run tests/capture/test_session_update_buffer :
+  $(REDEMPTION_TEST_PATH)/capture/test_session_update_buffer.cpp
+:
+  <library>src/capture/session_update_buffer.o
+  <covfile>src/capture/session_update_buffer.cpp
+  <covfile>src/capture/session_update_buffer.hpp
 ;
 test-run tests/capture/test_video_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_video_capture.cpp
@@ -2371,7 +2371,6 @@ test-run tests/core/test_mainloop :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
-  <library>src/acl/kvlist_buffer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
@@ -2382,6 +2381,7 @@ test-run tests/core/test_mainloop :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2515,7 +2515,6 @@ test-run tests/core/test_session :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/acl/acl_serializer.o
-  <library>src/acl/kvlist_buffer.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
@@ -2526,6 +2525,7 @@ test-run tests/core/test_session :
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -2650,12 +2650,12 @@ test-run tests/front/test_front :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/RAIL/client_execute.o
-  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -4679,11 +4679,11 @@ test-run tests/server/test_mstsc_client :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -4739,11 +4739,11 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -4799,11 +4799,11 @@ test-run tests/server/test_rdesktop_client :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/acl/kvlist_buffer.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/session_update_buffer.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
@@ -5653,7 +5653,6 @@ test-run tests/utils/winpr/test_pattern :
 obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp ;
-obj src/acl/kvlist_buffer.o : $(REDEMPTION_SRC_PATH)/acl/kvlist_buffer.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/session_inactivity.o : $(REDEMPTION_SRC_PATH)/acl/session_inactivity.cpp ;
@@ -5667,6 +5666,7 @@ obj src/capture/ocr/main/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/mai
 obj src/capture/ocr/main/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/ppocr_extract_text.cpp ;
 obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
+obj src/capture/session_update_buffer.o : $(REDEMPTION_SRC_PATH)/capture/session_update_buffer.cpp ;
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
@@ -5814,7 +5814,6 @@ alias test_client_execute : tests/RAIL/test_client_execute ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
 alias test_end_session_warning : tests/acl/test_end_session_warning ;
-alias test_kvlist_buffer : tests/acl/test_kvlist_buffer ;
 alias test_license_api : tests/acl/test_license_api ;
 alias test_sesman : tests/acl/test_sesman ;
 alias test_session_inactivity : tests/acl/test_session_inactivity ;
@@ -5826,6 +5825,7 @@ alias test_fdx_capture : tests/capture/test_fdx_capture ;
 alias test_mwrm3 : tests/capture/test_mwrm3 ;
 alias test_ocr : tests/capture/test_ocr ;
 alias test_ppocr : tests/capture/test_ppocr ;
+alias test_session_update_buffer : tests/capture/test_session_update_buffer ;
 alias test_video_capture : tests/capture/test_video_capture ;
 alias test_wrm_capture : tests/capture/test_wrm_capture ;
 alias test_match_finder : tests/capture/utils/test_match_finder ;
@@ -6161,7 +6161,6 @@ alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
 alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
-alias test_kvlist_buffer.coverage : tests/acl/test_kvlist_buffer.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
 alias test_sesman.coverage : tests/acl/test_sesman.coverage ;
 alias test_session_inactivity.coverage : tests/acl/test_session_inactivity.coverage ;
@@ -6171,6 +6170,7 @@ alias test_capture.coverage : tests/capture/test_capture.coverage ;
 alias test_cryptofile.coverage : tests/capture/test_cryptofile.coverage ;
 alias test_fdx_capture.coverage : tests/capture/test_fdx_capture.coverage ;
 alias test_mwrm3.coverage : tests/capture/test_mwrm3.coverage ;
+alias test_session_update_buffer.coverage : tests/capture/test_session_update_buffer.coverage ;
 alias test_video_capture.coverage : tests/capture/test_video_capture.coverage ;
 alias test_wrm_capture.coverage : tests/capture/test_wrm_capture.coverage ;
 alias test_match_finder.coverage : tests/capture/utils/test_match_finder.coverage ;
@@ -6490,7 +6490,6 @@ alias tests/acl.norec :
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
   tests/acl/test_end_session_warning
-  tests/acl/test_kvlist_buffer
   tests/acl/test_license_api
   tests/acl/test_sesman
   tests/acl/test_session_inactivity
@@ -6506,6 +6505,7 @@ alias tests/capture.norec :
   tests/capture/test_mwrm3
   tests/capture/test_ocr
   tests/capture/test_ppocr
+  tests/capture/test_session_update_buffer
   tests/capture/test_video_capture
   tests/capture/test_wrm_capture
 ;

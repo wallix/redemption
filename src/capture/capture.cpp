@@ -272,7 +272,7 @@ public:
     }
 };
 
-bool update_enable_probe(bool& enable_probe, LogId id, KVList kv_list)
+bool update_enable_probe(bool& enable_probe, LogId id, KVLogList kv_list)
 {
     if (id == LogId::INPUT_LANGUAGE) {
         enable_probe = true;
@@ -595,7 +595,7 @@ public:
         }
     }
 
-    void session_update(timeval /*now*/, LogId id, KVList kv_list) override {
+    void session_update(timeval /*now*/, LogId id, KVLogList kv_list) override {
         update_enable_probe(this->is_probe_enabled_session, id, kv_list);
     }
 
@@ -897,7 +897,7 @@ public:
 
 namespace {
 
-bool is_logable_kvlist(LogId id, KVList kv_list, MetaParams meta_params)
+bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
 {
     switch (detail::log_id_category_map[underlying_cast(id)]) {
         case LogCategoryId::Drive:
@@ -1037,7 +1037,7 @@ public:
         this->send_data(rawtime, this->formatted_message, '+');
     }
 
-    void session_update(timeval now, LogId id, KVList kv_list) override {
+    void session_update(timeval now, LogId id, KVLogList kv_list) override {
         if (!update_enable_probe(this->is_probe_enabled_session, id, kv_list)
           && is_logable_kvlist(id, kv_list, this->meta_params)
         ) {
@@ -1181,7 +1181,7 @@ public:
     , meta_params(meta_params)
     {}
 
-    void session_update(timeval now, LogId id, KVList kv_list) override {
+    void session_update(timeval now, LogId id, KVLogList kv_list) override {
         if (id != LogId::PROBE_STATUS && is_logable_kvlist(id, kv_list, this->meta_params)) {
             log_format_set_info(this->formatted_message, id, kv_list);
             this->session_meta.send_line(now.tv_sec, this->formatted_message);
@@ -1314,7 +1314,7 @@ public:
         return this->usec_ocr_interval - diff;
     }
 
-    void session_update(timeval /*now*/, LogId id, KVList kv_list) override {
+    void session_update(timeval /*now*/, LogId id, KVLogList kv_list) override {
         update_enable_probe(this->enable_probe, id, kv_list);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
@@ -2188,7 +2188,7 @@ void Capture::external_time(timeval const & now)
     }
 }
 
-void Capture::session_update(timeval now, LogId id, KVList kv_list)
+void Capture::session_update(timeval now, LogId id, KVLogList kv_list)
 {
     for (gdi::CaptureProbeApi & cap_prob : this->probes) {
         cap_prob.session_update(now, id, kv_list);

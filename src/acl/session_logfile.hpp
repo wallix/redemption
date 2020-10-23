@@ -77,7 +77,7 @@ public:
     }
 
 public:
-    void log6(LogId id, KVList kv_list)
+    void log6(LogId id, KVLogList kv_list)
     {
         const timeval time = this->time_base.get_current_time();
         std::string buffer_info;
@@ -265,7 +265,7 @@ namespace
             : av(ini.get<cfg::context::ip_target>());
     }
 
-    inline void log_siem_syslog(LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
+    inline void log_siem_syslog(LogId id, KVLogList kv_list, const Inifile & ini, const std::string & session_type)
     {
         if (ini.get<cfg::session_log::enable_session_log>()) {
             std::string buffer_info;
@@ -300,7 +300,7 @@ namespace
         chars_view target_ip,
         chars_view device,
         chars_view service,
-        KVList kv_list)
+        KVLogList kv_list)
     {
         static_assert(std::size(ints_s) >= std::size(detail::log_id_string_map));
         buffer.clear();
@@ -322,7 +322,7 @@ namespace
         kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
     }
 
-    inline void log_siem_arcsight(std::time_t time_now, LogId id, KVList kv_list, const Inifile & ini, const std::string & session_type)
+    inline void log_siem_arcsight(std::time_t time_now, LogId id, KVLogList kv_list, const Inifile & ini, const std::string & session_type)
     {
         if (ini.get<cfg::session_log::enable_arcsight_log>()) {
             std::string buffer;

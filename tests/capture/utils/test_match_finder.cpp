@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(report_notify)
         bool has_log = false;
         bool has_report = false;
 
-        void log6(LogId id, KVList kv_list) override {
+        void log6(LogId id, KVLogList kv_list) override {
             RED_CHECK(id == LogId::NOTIFY_PATTERN_DETECTED);
             RED_REQUIRE(kv_list.size() > 0);
             RED_CHECK(kv_list[0].key == "pattern"_av);
@@ -182,7 +182,7 @@ RED_AUTO_TEST_CASE(report_kill)
         bool has_log = false;
         bool has_report = false;
 
-        void log6(LogId id, KVList kv_list) override {
+        void log6(LogId id, KVLogList kv_list) override {
             RED_CHECK(id == LogId::KILL_PATTERN_DETECTED);
             RED_REQUIRE(kv_list.size() > 0);
             RED_CHECK(kv_list[0].key == "pattern"_av);

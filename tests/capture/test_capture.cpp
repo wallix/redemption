@@ -1928,7 +1928,7 @@ struct ReportMessage : NullAuthentifier
 {
     std::string s;
 
-    void log6(LogId id, KVList kv_list) override
+    void log6(LogId id, KVLogList kv_list) override
     {
         s += detail::log_id_string_map[int(id)].data();
         for (auto& kv : kv_list) {

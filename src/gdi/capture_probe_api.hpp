@@ -34,13 +34,13 @@ struct CaptureProbeApi : private noncopyable
 {
     virtual ~CaptureProbeApi() = default;
 
-    virtual void session_update(timeval now, LogId id, KVList kv_list) = 0;
+    virtual void session_update(timeval now, LogId id, KVLogList kv_list) = 0;
     virtual void possible_active_window_change() = 0;
 };
 
 struct NullCaptureProbe : public CaptureProbeApi
 {
-    void session_update(timeval /*now*/, LogId /*id*/, KVList /*kv_list*/) override {}
+    void session_update(timeval /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
     void possible_active_window_change() override {}
 
 };

@@ -446,7 +446,7 @@ protected:
     }
 
 public:
-    void session_update(timeval now, LogId id, KVList kv_list) override {
+    void session_update(timeval now, LogId id, KVLogList kv_list) override {
         this->timer = now;
         this->last_sent_timer = this->timer;
 
@@ -599,7 +599,7 @@ public:
     }
 
     // CAPTURE PROBE API
-    void session_update(timeval now, LogId id, KVList kv_list) override {
+    void session_update(timeval now, LogId id, KVLogList kv_list) override {
         this->graphic_to_file.session_update(now, id, kv_list);
     }
     void possible_active_window_change() override { this->graphic_to_file.possible_active_window_change(); }

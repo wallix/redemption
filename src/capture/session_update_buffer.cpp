@@ -18,22 +18,22 @@ Copyright (C) Wallix 2010-2020
 Author(s): Jonathan Poelen
 */
 
-#include "acl/kvlist_buffer.hpp"
+#include "capture/session_update_buffer.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 
-char* KVListBuffer::Event::keys_values()
+char* SessionUpdateBuffer::Event::keys_values()
 {
     return reinterpret_cast<char*>(this) + sizeof(*this);
 }
 
-KVListBuffer::KVListBuffer()
+SessionUpdateBuffer::SessionUpdateBuffer()
 {
     events_.reserve(8);
 }
 
-void KVListBuffer::append(timeval time, LogId id, KVList kv_list)
+void SessionUpdateBuffer::append(timeval time, LogId id, KVLogList kv_list)
 {
     assert(kv_list.size() <= maximal_nb_key_value);
 
@@ -62,53 +62,53 @@ void KVListBuffer::append(timeval time, LogId id, KVList kv_list)
     events_.push_back(std::unique_ptr<Event, EventDeleter>(event));
 }
 
-void KVListBuffer::clear()
+void SessionUpdateBuffer::clear()
 {
     events_.clear();
 }
 
-void KVListBuffer::EventDeleter::operator()(KVListBuffer::Event* event) noexcept
+void SessionUpdateBuffer::EventDeleter::operator()(SessionUpdateBuffer::Event* event) noexcept
 {
     event->~Event();
     ::operator delete(event);
 }
 
-std::size_t KVListBuffer::empty() const
+std::size_t SessionUpdateBuffer::empty() const
 {
     return events_.empty();
 }
 
-KVListBuffer::KVListIterator KVListBuffer::begin() const
+SessionUpdateBuffer::DataIterator SessionUpdateBuffer::begin() const
 {
     return {events_.begin()};
 }
 
-KVListBuffer::KVListIterator KVListBuffer::end() const
+SessionUpdateBuffer::DataIterator SessionUpdateBuffer::end() const
 {
     return {events_.end()};
 }
 
-KVListBuffer::KVListIterator::KVListIterator(const EventContainer::const_iterator& iterator)
+SessionUpdateBuffer::DataIterator::DataIterator(const EventContainer::const_iterator& iterator)
 : iterator_(iterator)
 {}
 
-KVListBuffer::KVListIterator & KVListBuffer::KVListIterator::operator++()
+SessionUpdateBuffer::DataIterator & SessionUpdateBuffer::DataIterator::operator++()
 {
     ++iterator_;
     return *this;
 }
 
-bool KVListBuffer::KVListIterator::operator==(const KVListBuffer::KVListIterator& other)
+bool SessionUpdateBuffer::DataIterator::operator==(const SessionUpdateBuffer::DataIterator& other)
 {
     return iterator_ == other.iterator_;
 }
 
-bool KVListBuffer::KVListIterator::operator!=(const KVListBuffer::KVListIterator& other)
+bool SessionUpdateBuffer::DataIterator::operator!=(const SessionUpdateBuffer::DataIterator& other)
 {
     return !(*this == other);
 }
 
-KVListBuffer::KVEvent KVListBuffer::KVListIterator::operator*()
+SessionUpdateBuffer::Data SessionUpdateBuffer::DataIterator::operator*()
 {
     auto& event = *iterator_->get();
     auto* p = kv_logs;

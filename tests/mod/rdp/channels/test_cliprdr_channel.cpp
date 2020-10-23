@@ -637,7 +637,7 @@ namespace
         : msg_comparator(msg_comparator)
         {}
 
-        void log6(LogId id, KVList kv_list) override
+        void log6(LogId id, KVLogList kv_list) override
         {
             std::string s = detail::log_id_string_map[int(id)].data();
             for (auto& kv : kv_list) {

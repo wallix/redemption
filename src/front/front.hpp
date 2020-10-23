@@ -39,6 +39,7 @@
 #include "capture/sequenced_video_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "capture/session_update_buffer.hpp"
 #include "configs/config.hpp"
 #include "core/RDP/GraphicUpdatePDU.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
@@ -97,7 +98,6 @@
 #include "core/front_api.hpp"
 #include "core/glyph_to_24_bitmap.hpp"
 #include "acl/auth_api.hpp"
-#include "acl/kvlist_buffer.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "gdi/clip_from_cmd.hpp"
@@ -143,7 +143,7 @@ public:
 
 private:
     std::unique_ptr<Capture> capture;
-    KVListBuffer kvlist_buffer;
+    SessionUpdateBuffer session_update_buffer;
 
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -1195,10 +1195,10 @@ public:
             this->sesman.set_rt_ready();
         }
 
-        for (auto&& kv_event : this->kvlist_buffer) {
+        for (auto&& kv_event : this->session_update_buffer) {
             this->capture->session_update(kv_event.time, kv_event.id, kv_event.kv_list);
         }
-        this->kvlist_buffer.clear();
+        this->session_update_buffer.clear();
 
         return true;
     }
@@ -3094,13 +3094,13 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(timeval now, LogId id, KVList kv_list) override
+    void session_update(timeval now, LogId id, KVLogList kv_list) override
     {
         if (this->capture) {
             this->capture->session_update(now, id, kv_list);
         }
         else if (this->ini.get<cfg::globals::is_rec>()) {
-            this->kvlist_buffer.append(now, id, kv_list);
+            this->session_update_buffer.append(now, id, kv_list);
         }
     }
 

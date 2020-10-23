@@ -36,8 +36,8 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
     sesman.report("reason1", "msg1");
     sesman.report("reason2", "msg2");
 
-    sesman.log6(LogId::BUTTON_CLICKED, KVList{KVLog{"k1"_av, "v1"_av}});
-    sesman.log6(LogId::CHECKBOX_CLICKED, KVList{KVLog{"k2"_av, "v2"_av}});
+    sesman.log6(LogId::BUTTON_CLICKED, KVLogList{KVLog{"k1"_av, "v1"_av}});
+    sesman.log6(LogId::CHECKBOX_CLICKED, KVLogList{KVLog{"k2"_av, "v2"_av}});
 
     int i = 0;
     sesman.flush_acl_report([&](chars_view reason, chars_view msg){
@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
     RED_CHECK(i == 2);
 
     i = 0;
-    sesman.flush_acl_log6([&](LogId log_id, KVList kv_list){
+    sesman.flush_acl_log6([&](LogId log_id, KVLogList kv_list){
         switch (i++) {
             case 0:
                 RED_CHECK(log_id == LogId::BUTTON_CLICKED);

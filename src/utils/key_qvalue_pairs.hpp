@@ -69,7 +69,7 @@ inline void escaped_qvalue(
 
 template<class Prefix, class Suffix>
 inline std::string& kv_list_to_string(
-    std::string& buffer, KVList kv_list,
+    std::string& buffer, KVLogList kv_list,
     Prefix prefix, Suffix suffix,
     std::array<char, 256> const& escaped_table)
 {
@@ -88,7 +88,7 @@ constexpr inline chars_view log_id_string_type_map[]{
     #undef f
 };
 
-inline chars_view log_format_set_info(std::string& buffer, LogId id, KVList kv_list)
+inline chars_view log_format_set_info(std::string& buffer, LogId id, KVLogList kv_list)
 {
     auto type = log_id_string_type_map[int(id)];
     buffer.assign(type.begin(), type.end());

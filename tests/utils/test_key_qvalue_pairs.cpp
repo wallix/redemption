@@ -29,7 +29,7 @@
 
 RED_AUTO_TEST_CASE(TestQValue)
 {
-    auto to_string = [s = std::string{}](KVList kv_list) mutable -> std::string const& {
+    auto to_string = [s = std::string{}](KVLogList kv_list) mutable -> std::string const& {
         log_format_set_info(s, LogId::INPUT_LANGUAGE, kv_list);
         return s;
     };

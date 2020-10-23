@@ -711,7 +711,7 @@ public:
 
         std::unique_ptr<Transport> auth_trans;
 
-        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type](LogId id, KVList kv_list)
+        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type](LogId id, KVLogList kv_list)
         {
             /* Log to SIEM (redirected syslog) */
             log_siem_syslog(id, kv_list, ini, session_type);

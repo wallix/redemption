@@ -30,7 +30,7 @@ Author(s): Jonathan Poelen
 #include <sys/time.h> // timeval
 
 
-class KVListBuffer
+class SessionUpdateBuffer
 {
     static const std::size_t maximal_nb_key_value = 8;
 
@@ -42,7 +42,7 @@ class KVListBuffer
 
         // lenght of each key/value
         std::array<int, maximal_nb_key_value*2> string_sizes;
-        // all key/value in KVList
+        // all key/value in KVLogList
 
         char* keys_values();
     };
@@ -56,36 +56,36 @@ class KVListBuffer
     EventContainer events_;
 
 public:
-    struct KVEvent
+    struct Data
     {
         LogId id;
         timeval time;
-        KVList kv_list;
+        KVLogList kv_list;
     };
 
-    struct KVListIterator
+    struct DataIterator
     {
-        KVListIterator& operator++();
-        KVEvent operator*();
-        bool operator==(KVListIterator const& other);
-        bool operator!=(KVListIterator const& other);
+        DataIterator& operator++();
+        Data operator*();
+        bool operator==(DataIterator const& other);
+        bool operator!=(DataIterator const& other);
 
     private:
         EventContainer::const_iterator iterator_;
 
-        friend class KVListBuffer;
-        KVListIterator(EventContainer::const_iterator const& iterator);
+        friend class SessionUpdateBuffer;
+        DataIterator(EventContainer::const_iterator const& iterator);
 
         KVLog kv_logs[maximal_nb_key_value];
     };
 
-    KVListBuffer();
+    SessionUpdateBuffer();
 
-    void append(timeval time, LogId id, KVList kv_list);
+    void append(timeval time, LogId id, KVLogList kv_list);
     void clear();
 
     std::size_t empty() const;
 
-    KVListIterator begin() const;
-    KVListIterator end() const;
+    DataIterator begin() const;
+    DataIterator end() const;
 };

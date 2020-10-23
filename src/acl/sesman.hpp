@@ -34,9 +34,9 @@
 #include "core/log_id.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "acl/auth_api.hpp"
-#include "acl/kvlist_buffer.hpp"
 #include "utils/timebase.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "capture/session_update_buffer.hpp"
 
 #include <functional>
 
@@ -47,7 +47,7 @@ class Sesman : public AuthApi
 
     bool session_log_is_open = false;
 
-    KVListBuffer buffered_log_params;
+    SessionUpdateBuffer buffered_log_params;
 
     bool screen_info_sent = true;
     ScreenInfo screen_info;
@@ -145,7 +145,7 @@ public:
         this->front = front;
     }
 
-    void log6(LogId id, KVList kv_list) override
+    void log6(LogId id, KVLogList kv_list) override
     {
         this->buffered_log_params.append(this->time_base.get_current_time(), id, kv_list);
 
@@ -328,7 +328,7 @@ public:
     }
 
 
-    void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> const& log6)
+    void flush_acl_log6(std::function<void(LogId id, KVLogList kv_list)> const& log6)
     {
         if (!this->buffered_log_params.empty()) {
             for (auto&& kv_event : this->buffered_log_params) {

@@ -138,7 +138,7 @@ private:
         return ms.count();
     }
 
-    void log6(LogId id, KVList kv_list)
+    void log6(LogId id, KVLogList kv_list)
     {
         this->sesman.log6(id, kv_list);
 

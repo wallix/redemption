@@ -574,7 +574,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         }
 
-        void session_update(timeval /*now*/, LogId id, KVList kv_list) override
+        void session_update(timeval /*now*/, LogId id, KVLogList kv_list) override
         {
             std::string buf;
             log_format_set_info(buf, id, kv_list);

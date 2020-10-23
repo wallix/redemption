@@ -53,7 +53,7 @@ namespace
     {
         for (auto&& service : {up_target_name, down_target_name}) {
             if (not service.empty()) {
-                const KVList data = {
+                const KVLogList data = {
                         KVLog("icap_service"_av, service),
                         KVLog("status"_av, msg),
                 };

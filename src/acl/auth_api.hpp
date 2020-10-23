@@ -44,17 +44,16 @@ struct KVLog
     KVLog(chars_view key, chars_view value) noexcept : key(key), value(value) {}
 };
 
-// TODO rename to KVLogList
-struct KVList : array_view<KVLog>
+struct KVLogList : array_view<KVLog>
 {
-    KVList(array_view<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
-    KVList(std::initializer_list<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
+    KVLogList(array_view<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
+    KVLogList(std::initializer_list<KVLog> kv_list) noexcept : array_view<KVLog>(kv_list) {}
 };
 
 struct AuthApi : noncopyable
 {
     virtual void report(const char * reason, const char * message) = 0;
-    virtual void log6(LogId id, KVList kv_list) = 0;
+    virtual void log6(LogId id, KVLogList kv_list) = 0;
     virtual void begin_dispatch_to_capture() = 0;
     virtual void end_dispatch_to_capture() = 0;
 
@@ -99,7 +98,7 @@ struct AuthApi : noncopyable
 struct NullAuthentifier : AuthApi
 {
     void report(const char * /* reason */, const char * /* message */) override {}
-    void log6(LogId /*id*/, KVList /*kv_list*/) override {}
+    void log6(LogId /*id*/, KVLogList /*kv_list*/) override {}
     void begin_dispatch_to_capture() override {}
     void end_dispatch_to_capture() override {}
 

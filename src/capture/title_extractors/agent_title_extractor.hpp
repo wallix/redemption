@@ -56,7 +56,7 @@ public:
         }
     }
 
-    void session_update(LogId id, KVList kv_list)
+    void session_update(LogId id, KVLogList kv_list)
     {
         if (id == LogId::FOREGROUND_WINDOW_CHANGED && not kv_list.empty()) {
             auto title = kv_list[0].value;

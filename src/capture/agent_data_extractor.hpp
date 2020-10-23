@@ -29,9 +29,9 @@ struct AgentDataExtractor
 {
     bool extract_old_format_list(chars_view data);
 
-    [[nodiscard]] KVList kvlist() const noexcept
+    [[nodiscard]] KVLogList kvlist() const noexcept
     {
-        return KVList{{this->kvlogs.data(), this->kvlogs_end}};
+        return KVLogList{{this->kvlogs.data(), this->kvlogs_end}};
     }
 
     [[nodiscard]] LogId log_id() const noexcept
