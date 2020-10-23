@@ -73,6 +73,11 @@ void KVListBuffer::EventDeleter::operator()(KVListBuffer::Event* event) noexcept
     ::operator delete(event);
 }
 
+std::size_t KVListBuffer::empty() const
+{
+    return events_.empty();
+}
+
 KVListBuffer::KVListIterator KVListBuffer::begin() const
 {
     return {events_.begin()};

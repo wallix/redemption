@@ -84,6 +84,8 @@ public:
     void append(timeval time, LogId id, KVList kv_list);
     void clear();
 
+    std::size_t empty() const;
+
     KVListIterator begin() const;
     KVListIterator end() const;
 };

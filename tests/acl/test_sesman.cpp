@@ -27,9 +27,53 @@
 
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {
+    using namespace std::string_view_literals;
+
     TimeBase time_base({0,0});
     Inifile ini;
     Sesman sesman(ini, time_base);
 
-    RED_CHECK(sesman.reports.empty());
+    sesman.report("reason1", "msg1");
+    sesman.report("reason2", "msg2");
+
+    sesman.log6(LogId::BUTTON_CLICKED, KVList{KVLog{"k1"_av, "v1"_av}});
+    sesman.log6(LogId::CHECKBOX_CLICKED, KVList{KVLog{"k2"_av, "v2"_av}});
+
+    int i = 0;
+    sesman.flush_acl_report([&](chars_view reason, chars_view msg){
+        switch (i++) {
+            case 0:
+                RED_CHECK(reason == "reason1"sv);
+                RED_CHECK(msg == "msg1"sv);
+                break;
+            case 1:
+                RED_CHECK(reason == "reason2"sv);
+                RED_CHECK(msg == "msg2"sv);
+                break;
+            default:
+                RED_CHECK(false);
+        }
+    });
+    RED_CHECK(i == 2);
+
+    i = 0;
+    sesman.flush_acl_log6([&](LogId log_id, KVList kv_list){
+        switch (i++) {
+            case 0:
+                RED_CHECK(log_id == LogId::BUTTON_CLICKED);
+                RED_CHECK(kv_list.size() == 1);
+                RED_CHECK(kv_list[0].key == "k1"_av);
+                RED_CHECK(kv_list[0].value == "v1"_av);
+                break;
+            case 1:
+                RED_CHECK(log_id == LogId::CHECKBOX_CLICKED);
+                RED_CHECK(kv_list.size() == 1);
+                RED_CHECK(kv_list[0].key == "k2"_av);
+                RED_CHECK(kv_list[0].value == "v2"_av);
+                break;
+            default:
+                RED_CHECK(false);
+        }
+    });
+    RED_CHECK(i == 2);
 }

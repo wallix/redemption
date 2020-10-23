@@ -28,7 +28,6 @@
 #include <string>
 
 #include "utils/log.hpp"
-#include "utils/pattutils.hpp"
 #include "configs/config.hpp"
 #include "gdi/screen_info.hpp"
 #include "gdi/capture_probe_api.hpp"
@@ -42,11 +41,10 @@
 #include <functional>
 
 
-struct Sesman : public AuthApi
+class Sesman : public AuthApi
 {
     Inifile & ini;
 
-    bool log6_sent = false;
     bool session_log_is_open = false;
 
     KVListBuffer buffered_log_params;
@@ -70,12 +68,12 @@ struct Sesman : public AuthApi
     std::string smartcard_login;
 
     bool rd_shadow_invitation_sent = true;
-    uint32_t error_code;
+    uint32_t error_code = 0;
     std::string shadow_error_message;
     std::string userdata;
     std::string id;
     std::string addr;
-    uint16_t port;
+    uint16_t port = 0;
 
     bool rd_shadow_available_sent = true;
 
@@ -105,8 +103,8 @@ struct Sesman : public AuthApi
     bool login_language_sent = true;
     LoginLanguage login_language;
 
-    bool report_sent = true;
-    struct Report {
+    struct Report
+    {
         std::string reason;
         std::string message;
     };
@@ -119,9 +117,14 @@ struct Sesman : public AuthApi
 
     TimeBase & time_base;
 
+public:
+    Sesman(Inifile & ini, TimeBase & time_base)
+      : ini(ini), time_base(time_base)
+    {}
+
     void begin_dispatch_to_capture() override
     {
-        dispatch_to_capture = true;
+        this->dispatch_to_capture = true;
 
         if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
             this->dont_log |= LogCategoryId::Drive;
@@ -130,14 +133,12 @@ struct Sesman : public AuthApi
             this->dont_log |= LogCategoryId::Clipboard;
         }
     }
+
     void end_dispatch_to_capture() override
     {
-        dispatch_to_capture = false;
+        this->dispatch_to_capture = false;
         this->dont_log = ::LogCategoryFlags();
     }
-
-
-    Sesman(Inifile & ini, TimeBase & time_base) : ini(ini), time_base(time_base) {}
 
     void set_front(gdi::CaptureProbeApi * front)
     {
@@ -146,14 +147,13 @@ struct Sesman : public AuthApi
 
     void log6(LogId id, KVList kv_list) override
     {
-        this->log6_sent = false;
         this->buffered_log_params.append(this->time_base.get_current_time(), id, kv_list);
 
         if (!this->dispatch_to_capture) {
             return;
         }
 
-        if (dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
+        if (this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
             return ;
         }
 
@@ -164,7 +164,6 @@ struct Sesman : public AuthApi
     {
         this->session_log_is_open = true;
     }
-
 
     void set_selector_page(unsigned current, std::string group, std::string device, std::string proto) override
     {
@@ -282,11 +281,8 @@ struct Sesman : public AuthApi
 
     void report(const char * reason, const char * message) override
     {
-        this->report_sent = false;
-        Report report{reason, message};
-        this->reports.push_back(report);
+        this->reports.push_back(Report{reason, message});
     }
-
 
     // flush_acl is only called from session and is no part of AuthApi interface
     void flush_acl(bool verbose)
@@ -308,14 +304,13 @@ struct Sesman : public AuthApi
         this->flush_acl_login_language(verbose);
     }
 
-    void flush_acl_report(std::function<void(std::string const&, std::string const&)> const& fn)
+    void flush_acl_report(std::function<void(zstring_view reason, zstring_view msg)> const& fn)
     {
-        if (!this->report_sent) {
+        if (!this->reports.empty()) {
             for(auto & report: this->reports){
                 fn(report.reason, report.message);
             }
             this->reports.clear();
-            this->report_sent = true;
         }
     }
 
@@ -335,17 +330,15 @@ struct Sesman : public AuthApi
 
     void flush_acl_log6(std::function<void(LogId id, KVList kv_list)> const& log6)
     {
-        if (!this->log6_sent) {
+        if (!this->buffered_log_params.empty()) {
             for (auto&& kv_event : this->buffered_log_params) {
                 log6(/*kv_event.time, */kv_event.id, kv_event.kv_list);
             }
             this->buffered_log_params.clear();
-            this->log6_sent = true;
         }
     }
 
 private:
-
     void flush_acl_selector_page(bool verbose)
     {
         if (!this->selector_page_sent) {
@@ -371,7 +364,6 @@ private:
             this->keyboard_layout_sent = true;
         }
     }
-
 
     void flush_acl_server_cert(bool verbose)
     {
@@ -427,7 +419,6 @@ private:
             this->recording_started_sent = true;
         }
     }
-
 
     void flush_acl_rt_ready(bool verbose)
     {
