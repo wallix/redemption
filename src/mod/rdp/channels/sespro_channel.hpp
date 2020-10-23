@@ -1101,11 +1101,29 @@ public:
                     }
                 }
                 else if (!::strcasecmp(order_.c_str(), "BESTSAFE_SERVICE_LOG")) {
-                    std::vector<KVLog> vecLog;
-                    for (size_t i = 0, c = parameters_.size() / 2; i < c; ++i) {
-                        vecLog.emplace_back(KVLog{parameters_[i * 2], parameters_[i * 2 + 1]});
+                    KVLog kvlogs[255];
+                    array_view logs {parameters_};
+                    assert(logs.size() % 2 == 0);
+                    while (logs.size() > 1) {
+                        // WrmChunkType::SESSION_UPDATE is limited to 255 entry
+                        auto n = std::min(logs.size() / 2, std::size_t(255));
+                        auto first = logs.first(n * 2);
+                        auto* pkv = kvlogs;
+                        // WrmChunkType::SESSION_UPDATE packet len
+                        int data_len = 0;
+                        for (size_t i = 0, c = first.size() / 2; i < c; ++i) {
+                            *pkv = KVLog{first[i * 2], first[i * 2 + 1]};
+                            data_len += int(pkv->key.size() + pkv->value.size()) + 3;
+                            ++pkv;
+                            // maximal size of WrmChunkType::SESSION_UPDATE
+                            if (data_len > 1024 * 16 - 10) {
+                                n = i + 1u;
+                                break;
+                            }
+                        }
+                        logs = logs.from_offset(n);
+                        this->log6(LogId::BESTSAFE_SERVICE_LOG, array_view{kvlogs, pkv});
                     }
-                    this->log6(LogId::BESTSAFE_SERVICE_LOG, {vecLog});
                 }
                 else if (!::strcasecmp(order_.c_str(), "PASSWORD_TEXT_BOX_GET_FOCUS")) {
                     this->log6(
