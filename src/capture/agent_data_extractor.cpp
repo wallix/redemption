@@ -421,9 +421,6 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
             case LogId::DYNAMIC_CHANNEL_CREATION_REJECTED:
                 return line_with_1_var("channel_name"_av);
 
-            case LogId::FILE_BLOCKED:
-                return line_with_2_var("direction"_av, "file_name"_av);
-
             default:
                 LOG(LOG_WARNING,
                     "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
