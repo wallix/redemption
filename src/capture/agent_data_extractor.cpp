@@ -87,7 +87,7 @@ namespace
     }();
 } // anonymous namespace
 
-bool AgentDataExtractor::extract_list(Av data)
+bool AgentDataExtractor::extract_old_format_list(Av data)
 {
     auto find = [](Av const & s, char c) {
         auto p = std::find(begin(s), end(s), c);
@@ -434,7 +434,7 @@ bool AgentDataExtractor::extract_list(Av data)
     return false;
 }
 
-bool AgentDataExtractor::relevant_log_id(LogId id) noexcept
+bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
 {
     switch (id) {
         // extracted by OCR / FOREGROUND_WINDOW_CHANGED

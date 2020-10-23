@@ -27,7 +27,7 @@ Author(s): Jonathan Poelen
 
 struct AgentDataExtractor
 {
-    bool extract_list(chars_view data);
+    bool extract_old_format_list(chars_view data);
 
     [[nodiscard]] KVList kvlist() const noexcept
     {
@@ -39,7 +39,7 @@ struct AgentDataExtractor
         return this->id;
     }
 
-    static bool relevant_log_id(LogId id) noexcept;
+    static bool is_relevant_log_id(LogId id) noexcept;
 
 private:
     std::array<KVLog, 7> kvlogs;

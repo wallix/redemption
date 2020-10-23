@@ -776,7 +776,7 @@ void FileToGraphic::interpret_order()
         }
         else if (this->chunk_type == WrmChunkType::OLD_SESSION_UPDATE) {
             AgentDataExtractor extractor;
-            if (extractor.extract_list(message.as_chars())) {
+            if (extractor.extract_old_format_list(message.as_chars())) {
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
                     cap_probe->session_update(this->record_now,
                         extractor.log_id(), extractor.kvlist());
@@ -792,7 +792,7 @@ void FileToGraphic::interpret_order()
                 LOG(LOG_WARNING, "FileToGraphic::interpret_order(): "
                     "Invalid LogId %" PRIu32, log_id);
             }
-            else if (AgentDataExtractor::relevant_log_id(LogId(log_id))) {
+            else if (AgentDataExtractor::is_relevant_log_id(LogId(log_id))) {
                 KVLog kvlogs[128];
                 auto* pkv = kvlogs;
 
