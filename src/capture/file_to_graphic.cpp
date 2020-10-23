@@ -793,14 +793,12 @@ void FileToGraphic::interpret_order()
                     "Invalid LogId %" PRIu32, log_id);
             }
             else if (AgentDataExtractor::is_relevant_log_id(LogId(log_id))) {
-                KVLog kvlogs[128];
+                KVLog kvlogs[255];
                 auto* pkv = kvlogs;
 
-                auto nbkv = in.in_uint8();
-                assert(nbkv < std::size(kvlogs));
-                nbkv = std::min(uint8_t(std::size(kvlogs)), nbkv);
+                int nbkv = safe_int{in.in_uint8()};
 
-                for (unsigned i = 0; i < nbkv; ++i) {
+                for (int i = 0; i < nbkv; ++i) {
                     auto klen = in.in_uint8();
                     auto vlen = in.in_uint16_le();
                     auto key = in.in_skip_bytes(klen);
