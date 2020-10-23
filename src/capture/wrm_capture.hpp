@@ -466,10 +466,12 @@ public:
                 kv_len = uint8_t(&kv - kv_list.begin());
                 break;
             }
-            out_stream.out_uint8(checked_int(kv.key.size()));
-            out_stream.out_uint16_le(checked_int(kv.value.size()));
-            out_stream.out_copy_bytes(kv.key);
-            out_stream.out_copy_bytes(kv.value);
+            uint8_t const key_len = checked_int(kv.key.size());
+            uint16_t const value_len = checked_int(kv.value.size());
+            out_stream.out_uint8(key_len);
+            out_stream.out_uint16_le(value_len);
+            out_stream.out_copy_bytes(kv.key.first(key_len));
+            out_stream.out_copy_bytes(kv.value.first(value_len));
         }
 
         kvheader.out_uint16_le(out_stream.get_offset() - 8 - 2);
