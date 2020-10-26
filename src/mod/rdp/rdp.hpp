@@ -139,6 +139,7 @@ struct FileValidatorService;
 #include "mod/rdp/rdp_negociation.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
+#include "configs/config.hpp"
 
 #include <cstdlib>
 #include <deque>
