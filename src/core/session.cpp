@@ -913,6 +913,19 @@ public:
                         }
                     }
 
+                    /* On target disconnection, condition will be only executed
+                       after received packet containing module=close_back
+                       from Sesman, but also when user can 
+                       access several targets on selector */
+                    if (ModuleIndex next_state = 
+                        get_module_id(ini.get<cfg::context::module>());
+                        next_state == MODULE_INTERNAL_CLOSE_BACK
+                        && mod_wrapper.current_mod == MODULE_INTERNAL_CLOSE)
+                    {
+                        new_mod(next_state, mod_wrapper, mod_factory, front);
+                        mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                    }
+
                     // propagate changes made in sesman structure to actual acl changes
                     sesman.flush_acl_report(
                         [&ini](zstring_view reason, zstring_view message)
@@ -1252,18 +1265,22 @@ public:
                         keepalive.stop();
                         sesman.set_disconnect_target();
                         mod_wrapper.disconnect();
-                        if (ini.get<cfg::globals::enable_close_box>()) {
-                            rail_client_execute.enable_remote_program(
-                                front.get_client_info().remote_program);
-
-                            auto next_state = MODULE_INTERNAL_CLOSE_BACK;
-
-                            this->new_mod(next_state, mod_wrapper, mod_factory, front);
-                            mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
+                        if (ini.get<cfg::globals::enable_close_box>())
+                        {
+                            rail_client_execute
+                                .enable_remote_program(front.get_client_info()
+                                                       .remote_program);
+                            new_mod(MODULE_INTERNAL_CLOSE,
+                                    mod_wrapper,
+                                    mod_factory,
+                                    front);
+                            mod_wrapper
+                                .get_mod()->set_mod_signal(BACK_EVENT_NONE);
                             run_session = true;
                             inactivity.stop_timer();
                         }
-                        else {
+                        else
+                        {
                             LOG(LOG_INFO, "Close Box disabled : ending session");
                         }
                     }
