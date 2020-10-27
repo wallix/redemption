@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python3 -O
 #
 # Copyright (c) 2011 WALLIX, SAS. All rights reserved.
 # Licensed computer software. Property of WALLIX.

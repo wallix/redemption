@@ -1,4 +1,4 @@
-#!/usr/bin/python -O
+#!/usr/bin/env python3 -O
 # -*- coding: utf-8 -*-
 ##
 # Author(s): Meng Tan
