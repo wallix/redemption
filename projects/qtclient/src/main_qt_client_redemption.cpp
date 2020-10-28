@@ -198,7 +198,7 @@ public:
 
     void print_wrm_graphic_stat(const std::string & movie_path) override {
         this->config.is_pre_loading = true;
-        this->qt_graphic.pre_load_movie(movie_path, this->replay_mod->get_wrm_version() == WrmVersion::v2);
+        // this->qt_graphic.pre_load_movie(movie_path, this->replay_mod->get_wrm_version() == WrmVersion::v2);
         this->config.is_pre_loading = false;
         this->qt_graphic.stop_replay();
         this->qt_graphic.show_screen();

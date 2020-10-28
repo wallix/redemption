@@ -79,28 +79,31 @@ public:
     }
 
     void set_sync() {
-        this->replay_mod->set_sync();
+        // this->replay_mod->set_sync();
     }
 
     bool is_replay_on() {
-        if (!this->replay_mod->get_break_privplay_client()) {
-            if (!this->replay_mod->play_client()) {
-                return true;
-            }
-        }
+        // if (!this->replay_mod->get_break_privplay_client()) {
+        //     if (!this->replay_mod->play_client()) {
+        //         return true;
+        //     }
+        // }
         return false;
     }
 
     time_t get_real_time_movie_begin() {
-        return this->replay_mod->get_real_time_movie_begin();
+        // return this->replay_mod->get_real_time_movie_begin();
+        return 0;
     }
 
     void set_pause(timeval time) {
-        this->replay_mod->set_pause(time);
+        // this->replay_mod->set_pause(time);
+        (void)time;
     }
 
     void instant_play_client(std::chrono::microseconds time) {
-        this->replay_mod->instant_play_client(time);
+        // this->replay_mod->instant_play_client(time);
+        (void)time;
     }
 
 

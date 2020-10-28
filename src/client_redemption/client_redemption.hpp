@@ -710,21 +710,25 @@ public:
 
     bool load_replay_mod(timeval begin_read, timeval end_read) override
     {
-         try {
+        try {
+            (void)begin_read;
+            (void)end_read;
             this->replay_mod = std::make_unique<ReplayMod>(
+                this->time_base
+            , this->events,
                 *this
-              , *this
-              , this->config._movie_full_path.c_str()
-              , 0             //this->config.info.width
-              , 0             //this->config.info.height
-              , this->_error
-              , true
-              , begin_read
-              , end_read
-              , ClientRedemptionConfig::BALISED_FRAME
-              , false
-              , false
-              , FileToGraphic::Verbose()
+            , *this
+            , this->config._movie_full_path.c_str()
+            // , 0             //this->config.info.width
+            // , 0             //this->config.info.height
+            , this->_error
+            , true
+            // , begin_read
+            // , end_read
+            // , ClientRedemptionConfig::BALISED_FRAME
+            , false
+            , false
+            , FileToGraphic::Verbose()
             );
 
             this->_callback.set_replay(this->replay_mod.get());
@@ -793,43 +797,48 @@ public:
 
     timeval reload_replay_mod(int begin, timeval now_stop) override
     {
-        timeval movie_time_start;
+        // timeval movie_time_start;
+        //
+        // switch (this->replay_mod->get_wrm_version()) {
+        //     case WrmVersion::v1:
+        //         if (this->load_replay_mod({0, 0}, {0, 0})) {
+        //             this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+        //             movie_time_start = tvtime();
+        //             return movie_time_start;
+        //         }
+        //         break;
+        //
+        //     case WrmVersion::v2:
+        //     {
+        //         int last_balised = (begin / ClientRedemptionConfig::BALISED_FRAME);
+        //         this->config.is_loading_replay_mod = true;
+        //         if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+        //
+        //             this->config.is_loading_replay_mod = false;
+        //
+        //             this->instant_replay_client(begin, last_balised);
+        //
+        //             movie_time_start = tvtime();
+        //             timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
+        //             timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
+        //             this->replay_mod->set_wait_after_load_client(wait_duration);
+        //         }
+        //         this->config.is_loading_replay_mod = false;
+        //
+        //         return movie_time_start;
+        //     }
+        // }
+        //
+        // return movie_time_start;
 
-        switch (this->replay_mod->get_wrm_version()) {
-            case WrmVersion::v1:
-                if (this->load_replay_mod({0, 0}, {0, 0})) {
-                    this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
-                    movie_time_start = tvtime();
-                    return movie_time_start;
-                }
-                break;
-
-            case WrmVersion::v2:
-            {
-                int last_balised = (begin / ClientRedemptionConfig::BALISED_FRAME);
-                this->config.is_loading_replay_mod = true;
-                if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
-
-                    this->config.is_loading_replay_mod = false;
-
-                    this->instant_replay_client(begin, last_balised);
-
-                    movie_time_start = tvtime();
-                    timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
-                    timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
-                    this->replay_mod->set_wait_after_load_client(wait_duration);
-                }
-                this->config.is_loading_replay_mod = false;
-
-                return movie_time_start;
-            }
-        }
-
-        return movie_time_start;
+        return {};
+        (void)begin;
+        (void)now_stop;
     }
 
     virtual void instant_replay_client(int begin, int /*last_balised*/) {
-        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+        // this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
+        (void)begin;
     }
 
 
