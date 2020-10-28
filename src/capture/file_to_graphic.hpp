@@ -67,10 +67,9 @@ class FileToGraphic
     Transport * trans;
 
 public:
-    Rect screen_rect;
-
     Dimension max_screen_dim;
 
+private:
     // Internal state of orders
     StateChunk ssc;
 
@@ -82,22 +81,14 @@ public:
     uint32_t chunk_size;
     WrmChunkType chunk_type;
     uint16_t chunk_count;
-private:
     uint16_t remaining_order_count;
 
-public:
     // total number of RDP orders read from the start of the movie
     // (non orders chunks are counted as 1 order)
     uint32_t total_orders_count;
 
     timeval record_now;
 
-private:
-    timeval start_record_now;
-public:
-    timeval start_synctime_now;
-
-private:
     template<class T, std::size_t N>
     struct fixed_ptr_array
     {
@@ -141,16 +132,16 @@ private:
     bool timestamp_ok;
     uint16_t mouse_x;
     uint16_t mouse_y;
-    const bool real_time;
 
     const timeval begin_capture;
     const timeval end_capture;
+
 public:
     uint32_t max_order_count;
 
+private:
     WrmMetaChunk info {};
 
-private:
     bool ignore_frame_in_timeval;
 
 public:
@@ -202,10 +193,7 @@ public:
         Order DeletedWindow;
     } statistics;
 
-    bool break_privplay_client;
-
-    std::chrono::microseconds movie_elapsed_client;
-
+private:
     bool play_video_with_corrupted_bitmap;
 
 public:
@@ -219,9 +207,14 @@ public:
         frame_marker    = 128
     };
 
-    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, bool play_video_with_corrupted_bitmap, Verbose verbose);
+    FileToGraphic(
+        Transport & trans, const timeval begin_capture, const timeval end_capture,
+        bool play_video_with_corrupted_bitmap, Verbose verbose);
 
     ~FileToGraphic();
+
+    WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
+    timeval get_current_time() const noexcept { return this->record_now; }
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
@@ -264,8 +257,6 @@ public:
 
     void play(bool const & requested_to_stop);
 
-    bool play_client();
-
     template<class CbUpdateProgress>
     void play(CbUpdateProgress update_progess, bool const & requested_to_stop)
     {
@@ -277,8 +268,6 @@ public:
             }
         }, requested_to_stop);
     }
-
-    void instant_play_client(std::chrono::microseconds endin_frame);
 
 private:
     void snapshot_play();
@@ -292,7 +281,7 @@ private:
 
             this->interpret_order();
 
-            if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
+            if (this->begin_capture.tv_sec == 0 || this->begin_capture <= this->record_now) {
                 this->snapshot_play();
                 this->ignore_frame_in_timeval = false;
                 update_progess(this->record_now.tv_sec);
@@ -306,46 +295,6 @@ private:
                 break;
             }
         }
-    }
-
-    template<class CbUpdateProgress>
-    bool privplay_client(CbUpdateProgress update_progess)
-    {
-        timeval const now                       = tvtime();
-        std::chrono::microseconds const elapsed = difftimeval(now, this->start_synctime_now) ;
-
-        bool res(false);
-
-        //LOG(LOG_INFO, "begin = %u movie_elapsed_client = %u elapsed = %u", unsigned(this->begin_to_elapse), unsigned(this->movie_elapsed_client), elapsed);
-        if (elapsed >= this->movie_elapsed_client) {
-            if (this->next_order()) {
-                this->log_play();
-
-                if (this->remaining_order_count > 0) {
-                    res = true;
-                }
-
-                this->interpret_order();
-
-                if (  (this->begin_capture.tv_sec == 0) || this->begin_capture <= this->record_now ) {
-                    this->snapshot_play();
-                    this->ignore_frame_in_timeval = false;
-                    update_progess(this->record_now.tv_sec);
-                }
-
-                if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
-                    break_privplay_client = true;
-                }
-
-                if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
-                    break_privplay_client = true;
-                }
-            } else {
-                break_privplay_client = true;
-            }
-        }
-
-        return res;
     }
 
     friend class ReceiveOrder;

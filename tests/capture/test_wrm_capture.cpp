@@ -592,7 +592,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
     RED_REQUIRE_NE(fd, -1);
     InFileTransport in_wrm_trans(unique_fd{fd});
 
-    FileToGraphic player(in_wrm_trans, {}, {}, false, false, FileToGraphic::Verbose(0));
+    FileToGraphic player(in_wrm_trans, {}, {}, false, FileToGraphic::Verbose(0));
 
     std::string output;
     KbdInput kbd_input(output);
@@ -693,14 +693,14 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
     RED_REQUIRE_NE(fd, -1);
     InFileTransport in_wrm_trans(unique_fd{fd});
 
-    FileToGraphic player(in_wrm_trans, {}, {}, false, false, FileToGraphic::Verbose(0));
+    FileToGraphic player(in_wrm_trans, {}, {}, false, FileToGraphic::Verbose(0));
 
     while(player.next_order())
     {
         player.interpret_order();
     }
 
-    RED_CHECK(player.info.remote_app);
+    RED_CHECK(player.get_wrm_info().remote_app);
     RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
     RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 

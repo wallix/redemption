@@ -1307,8 +1307,8 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, FileToGraphic::Verbose(0));
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
+    RDPDrawable drawable1(player.get_wrm_info().width, player.get_wrm_info().height);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     BufTransport buftrans;
@@ -1910,14 +1910,14 @@ RED_AUTO_TEST_CASE(TestReload)
             end_capture.tv_sec = 0; end_capture.tv_usec = 0;
             FileToGraphic player(
                 in_wrm_trans, begin_capture, end_capture,
-                false, false, FileToGraphic::Verbose(0));
-            RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+                false, FileToGraphic::Verbose(0));
+            RDPDrawable drawable(player.get_wrm_info().width, player.get_wrm_info().height);
             player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
             while (player.next_order()){
                 player.interpret_order();
             }
             ::dump_png24(trans, drawable, true);
-            RED_CHECK_EQUAL(test.time, static_cast<unsigned>(player.record_now.tv_sec));
+            RED_CHECK_EQUAL(test.time, player.get_current_time().tv_sec);
         }
 
         RED_TEST(trans.size() == test.file_len);
@@ -2080,54 +2080,55 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, false, FileToGraphic::Verbose(0));
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
 
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable1(player.get_wrm_info().width, player.get_wrm_info().height);
 
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     BufSequenceTransport out_wrm_trans;
 
-    auto to_cache_option = [](const BmpCache::cache_ & cache) {
-        return BmpCache::CacheOption(cache.entries(), cache.bmp_size(), cache.persistent());
-    };
-
+    auto const& info = player.get_wrm_info();
     BmpCache bmp_cache(
-        BmpCache::Recorder,
-        player.bmp_cache->bpp,
-        player.bmp_cache->number_of_cache,
-        player.bmp_cache->use_waiting_list,
-        to_cache_option(player.bmp_cache->get_cache(0)),
-        to_cache_option(player.bmp_cache->get_cache(1)),
-        to_cache_option(player.bmp_cache->get_cache(2)),
-        to_cache_option(player.bmp_cache->get_cache(3)),
-        to_cache_option(player.bmp_cache->get_cache(4)),
+        BmpCache::Recorder, info.bpp,
+        info.number_of_cache,
+        info.use_waiting_list,
+        BmpCache::CacheOption(
+            info.cache_0_entries, info.cache_0_size, info.cache_0_persistent),
+        BmpCache::CacheOption(
+            info.cache_1_entries, info.cache_1_size, info.cache_1_persistent),
+        BmpCache::CacheOption(
+            info.cache_2_entries, info.cache_2_size, info.cache_2_persistent),
+        BmpCache::CacheOption(
+            info.cache_3_entries, info.cache_3_size, info.cache_3_persistent),
+        BmpCache::CacheOption(
+            info.cache_4_entries, info.cache_4_size, info.cache_4_persistent),
         BmpCache::Verbose::none
     );
     GlyphCache gly_cache;
     PointerCache ptr_cache;
 
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(info.width, info.height);
     GraphicToFile graphic_to_file(
-        player.record_now, out_wrm_trans, BitsPerPixel{24}, false,
+        player.get_current_time(), out_wrm_trans, BitsPerPixel{24}, false,
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
         GraphicToFile::SendInput::NO, RDPSerializerVerbose::none
     );
-    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
+    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.get_current_time(), std::chrono::seconds{1}, std::chrono::seconds{20});
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
     player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr, nullptr);
 
     bool requested_to_stop = false;
 
-    RED_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.record_now.tv_sec));
+    RED_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.get_current_time().tv_sec));
     player.play(requested_to_stop);
 
     BufTransport out_png_trans;
     ::dump_png24(out_png_trans, drawable, true);
     RED_TEST(out_png_trans.size() == 21280);
 
-    RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.record_now.tv_sec));
+    RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.get_current_time().tv_sec));
 
     graphic_to_file.sync();
 

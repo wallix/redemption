@@ -44,7 +44,7 @@
 #include "utils/png.hpp"
 
 
-FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, bool play_video_with_corrupted_bitmap, Verbose verbose)
+FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool play_video_with_corrupted_bitmap, Verbose verbose)
     : stream(stream_buf)
     , compression_builder(trans, WrmCompressionAlgorithm::no_compression)
     , trans_source(&trans)
@@ -60,14 +60,11 @@ FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, con
     , timestamp_ok(false)
     , mouse_x(0)
     , mouse_y(0)
-    , real_time(real_time)
     , begin_capture(begin_capture)
     , end_capture(end_capture)
     , max_order_count(0)
     , ignore_frame_in_timeval(false)
     , statistics()
-    , break_privplay_client(false)
-    , movie_elapsed_client{}
     , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
     , verbose(verbose)
 {
@@ -108,16 +105,6 @@ void FileToGraphic::clear_consumer()
     this->capture_probe_consumers.clear();
     this->external_event_consumers.clear();
     this->resize_consumers.clear();
-}
-
-void FileToGraphic::set_pause_client(timeval & time)
-{
-    this->start_synctime_now = {this->start_synctime_now.tv_sec + time.tv_sec, this->start_synctime_now.tv_usec + time.tv_usec};
-}
-
-void FileToGraphic::set_wait_after_load_client(timeval & time)
-{
-    this->start_synctime_now = {time.tv_sec, time.tv_usec};
 }
 
 /* order count set this->stream.p to the beginning of the next order.
@@ -352,7 +339,9 @@ void FileToGraphic::interpret_order()
         }
         else if (class_ == RDP::STANDARD) {
             RDPPrimaryOrderHeader header = this->ssc.common.receive(this->stream, control);
-            const Rect clip = (control & RDP::BOUNDS) ? this->ssc.common.clip : this->screen_rect;
+            const Rect clip = (control & RDP::BOUNDS)
+                ? this->ssc.common.clip
+                : Rect(0, 0, this->info.width, this->info.height);
             switch (this->ssc.common.order) {
             case RDP::GLYPHINDEX:
                 receive_order.read_and_draw(
@@ -509,19 +498,7 @@ void FileToGraphic::interpret_order()
         }
 
         if (!this->timestamp_ok) {
-            if (this->real_time) {
-                this->start_record_now   = this->record_now;
-                this->start_synctime_now = tvtime();
-                this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
-            }
             this->timestamp_ok = true;
-        }
-        else if (this->real_time) {
-            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->sync();
-            }
-
-            this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
         }
 
         this->statistics.timestamp_chunk.total_len += this->stream.get_current() - p;
@@ -529,6 +506,9 @@ void FileToGraphic::interpret_order()
     break;
     case WrmChunkType::META_FILE:
     {
+        auto const old_width = this->info.width;
+        auto const old_height = this->info.height;
+
         this->info.receive(this->stream);
         this->trans = &this->compression_builder.reset(
             *this->trans_source, this->info.compression_algorithm
@@ -552,16 +532,15 @@ void FileToGraphic::interpret_order()
                 BmpCache::CacheOption(
                     this->info.cache_4_entries, this->info.cache_4_size, this->info.cache_4_persistent),
                 BmpCache::Verbose::none);
-//            this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
             this->meta_ok = true;
         }
-        this->screen_rect = Rect(0, 0, this->info.width, this->info.height);
 
-        if ((this->max_screen_dim.w != this->info.width) || (this->max_screen_dim.h != this->info.height)) {
-            this->max_screen_dim.w = std::max(this->max_screen_dim.w, this->info.width);
-            this->max_screen_dim.h = std::max(this->max_screen_dim.h, this->info.height);
+        this->max_screen_dim.w = std::max(this->max_screen_dim.w, this->info.width);
+        this->max_screen_dim.h = std::max(this->max_screen_dim.h, this->info.height);
 
+        if (old_width != this->info.width || old_height != this->info.height) {
             for (gdi::ResizeApi * obj : this->resize_consumers){
+                // Capture::resize use external_breakpoint()
                 obj->resize(this->info.width, this->info.height);
             }
         }
@@ -586,7 +565,7 @@ void FileToGraphic::interpret_order()
                 *this->trans,
                 this->chunk_type,
                 this->chunk_size,
-                this->screen_rect.cx,
+                this->info.width,
                 this->graphic_consumers
             );
         }
@@ -807,19 +786,7 @@ void FileToGraphic::interpret_order()
         }
 
         if (!this->timestamp_ok) {
-            if (this->real_time) {
-                this->start_record_now   = this->record_now;
-                this->start_synctime_now = tvtime();
-                this->start_synctime_now.tv_sec -= this->begin_capture.tv_sec;
-            }
             this->timestamp_ok = true;
-        }
-        else if (this->real_time) {
-            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->sync();
-            }
-
-            this->movie_elapsed_client = difftimeval(this->record_now, this->start_record_now);
         }
     }
     break;
@@ -1029,42 +996,12 @@ void FileToGraphic::play(bool const & requested_to_stop)
     this->privplay([](time_t /*t*/){}, requested_to_stop);
 }
 
-bool FileToGraphic::play_client()
-{
-    return this->privplay_client([](time_t /*t*/){});
-}
-
-void FileToGraphic::instant_play_client(std::chrono::microseconds endin_frame)
-{
-
-    while (endin_frame >= this->movie_elapsed_client) {
-
-        if (this->next_order()) {
-
-            LOG_IF(bool(this->verbose & Verbose::play), LOG_INFO,
-                "replay TIMESTAMP (first timestamp) = %u order=%u",
-                unsigned(this->record_now.tv_sec), this->total_orders_count);
-
-            this->interpret_order();
-
-            if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
-                break_privplay_client = true;
-            }
-            if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
-                break_privplay_client = true;
-            }
-        } else {
-            break_privplay_client = true;
-        }
-    }
-}
-
 void FileToGraphic::snapshot_play()
 {
     for (gdi::CaptureApi * cap : this->capture_consumers){
         cap->periodic_snapshot(
-            this->record_now, this->mouse_x, this->mouse_y
-            , this->ignore_frame_in_timeval
+            this->record_now, this->mouse_x, this->mouse_y,
+            this->ignore_frame_in_timeval
         );
     }
 }

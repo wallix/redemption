@@ -240,13 +240,13 @@ class FileToChunk
 
     ChunkToFile * consumer = nullptr;
 
-public:
     timeval record_now;
 
     bool meta_ok = false;
 
     WrmMetaChunk info;
 
+public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
@@ -267,6 +267,9 @@ public:
             }
         }
     }
+
+    WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
+    timeval get_current_time() const noexcept { return this->record_now; }
 
     void set_consumer(ChunkToFile & chunk_device) {
         assert(!this->consumer);
@@ -364,7 +367,7 @@ static int do_recompress(
 //    }
     ini.set<cfg::video::wrm_compression_algorithm>(
         (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-        ? player.info.compression_algorithm
+        ? player.get_wrm_info().compression_algorithm
         : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
     );
 
@@ -380,15 +383,15 @@ static int do_recompress(
             ini.get<cfg::video::hash_path>().c_str(),
             outfile.basename.c_str(),
             begin_record,
-            player.info.width,
-            player.info.height,
+            player.get_wrm_info().width,
+            player.get_wrm_info().height,
             ini.get<cfg::video::capture_groupid>(),
             nullptr,
             -1
         );
         {
             ChunkToFile recorder(
-                &trans, player.info, ini.get<cfg::video::wrm_compression_algorithm>());
+                &trans, player.get_wrm_info(), ini.get<cfg::video::wrm_compression_algorithm>());
 
             player.set_consumer(recorder);
 
@@ -864,39 +867,43 @@ static void raise_error(
 }
 
 static void show_metadata(FileToGraphic const & player) {
+    auto& info = player.get_wrm_info();
     std::cout
-    << "\nWRM file version      : " << static_cast<int>(player.info.version)
-    << "\nWidth                 : " << player.info.width
-    << "\nHeight                : " << player.info.height
-    << "\nBpp                   : " << static_cast<int>(player.info.bpp)
-    << "\nCache 0 entries       : " << player.info.cache_0_entries
-    << "\nCache 0 size          : " << player.info.cache_0_size
-    << "\nCache 1 entries       : " << player.info.cache_1_entries
-    << "\nCache 1 size          : " << player.info.cache_1_size
-    << "\nCache 2 entries       : " << player.info.cache_2_entries
-    << "\nCache 2 size          : " << player.info.cache_2_size
-    << '\n';
+        << "\nWRM file version      : " << static_cast<int>(info.version)
+        << "\nWidth                 : " << info.width
+        << "\nHeight                : " << info.height
+        << "\nBpp                   : " << static_cast<int>(info.bpp)
+        << "\nCache 0 entries       : " << info.cache_0_entries
+        << "\nCache 0 size          : " << info.cache_0_size
+        << "\nCache 1 entries       : " << info.cache_1_entries
+        << "\nCache 1 size          : " << info.cache_1_size
+        << "\nCache 2 entries       : " << info.cache_2_entries
+        << "\nCache 2 size          : " << info.cache_2_size
+        << '\n';
 
-    if (player.info.version > 3) {
+    if (info.version > 3) {
         //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
         //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
         //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
         //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
-        std::cout << "Compression algorithm : " << static_cast<int>(player.info.compression_algorithm) << '\n';
+        std::cout << "Compression algorithm : " << static_cast<int>(info.compression_algorithm) << '\n';
     }
+
     if (!player.max_image_frame_rect.isempty()) {
         std::cout << "Max image frame rect  : (" <<
-            player.max_image_frame_rect.x << ", "  <<
-            player.max_image_frame_rect.y << ", "  <<
-            player.max_image_frame_rect.cx << ", "  <<
-            player.max_image_frame_rect.cy << ")"  << '\n';
+            player.max_image_frame_rect.x << ", " <<
+            player.max_image_frame_rect.y << ", " <<
+            player.max_image_frame_rect.cx << ", " <<
+            player.max_image_frame_rect.cy << ")" << '\n';
     }
+
     if (!player.min_image_frame_dim.isempty()) {
         std::cout << "Min image frame dim   : (" <<
-            player.min_image_frame_dim.w << ", "  <<
-            player.min_image_frame_dim.h << ")"  << '\n';
+            player.min_image_frame_dim.w << ", " <<
+            player.min_image_frame_dim.h << ")" << '\n';
     }
-    std::cout << "RemoteApp session     : " << (player.info.remote_app ? "Yes" : "No") << '\n';
+
+    std::cout << "RemoteApp session     : " << (info.remote_app ? "Yes" : "No") << '\n';
     std::cout.flush();
 }
 
@@ -1144,17 +1151,18 @@ inline void get_join_visibility_rect(
     }
 
     FileToGraphic player(
-        in_wrm_trans, begin_capture, end_capture, false,
+        in_wrm_trans, begin_capture, end_capture,
         ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
         safe_cast<FileToGraphic::Verbose>(verbose));
 
     player.play(program_requested_to_shutdown);
+    auto& info = player.get_wrm_info();
 
-    if (player.info.remote_app) {
-        out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info.width, player.info.height));
+    if (info.remote_app) {
+        out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, info.width, info.height));
         if (out_max_image_frame_rect.cx & 1)
         {
-            if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < player.info.width) {
+            if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < info.width) {
                 out_max_image_frame_rect.cx += 1;
             }
             else if (out_max_image_frame_rect.x > 0) {
@@ -1164,15 +1172,15 @@ inline void get_join_visibility_rect(
         }
 
         out_min_image_frame_rect = Rect(0, 0,
-            std::min(player.min_image_frame_dim.w, player.info.width),
-            std::min(player.min_image_frame_dim.h, player.info.height));
+            std::min(player.min_image_frame_dim.w, info.width),
+            std::min(player.min_image_frame_dim.h, info.height));
         if (!out_min_image_frame_rect.isempty()) {
             if (out_min_image_frame_rect.cx & 1) {
                 out_min_image_frame_rect.cx++;
             }
 
-            out_min_image_frame_rect.x = (player.info.width  - out_min_image_frame_rect.cx) / 2;
-            out_min_image_frame_rect.y = (player.info.height - out_min_image_frame_rect.cy) / 2;
+            out_min_image_frame_rect.x = (info.width  - out_min_image_frame_rect.cx) / 2;
+            out_min_image_frame_rect.y = (info.height - out_min_image_frame_rect.cy) / 2;
         }
     }
 
@@ -1319,7 +1327,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
             LOG(LOG_INFO, "player begin_capture = %ld", begin_capture.tv_sec);
             FileToGraphic player(
-                in_wrm_trans, begin_capture, end_capture, false,
+                in_wrm_trans, begin_capture, end_capture,
                 ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 safe_cast<FileToGraphic::Verbose>(verbose));
 
@@ -1354,12 +1362,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                     ini.set<cfg::video::wrm_compression_algorithm>(
                         (wrm_compression_algorithm == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-                        ? player.info.compression_algorithm
+                        ? player.get_wrm_info().compression_algorithm
                         : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm)
                     );
 
                     if (wrm_color_depth == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
-                        wrm_color_depth = safe_int(player.info.bpp);
+                        wrm_color_depth = safe_int(player.get_wrm_info().bpp);
                     }
 
                     {
@@ -1445,7 +1453,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams const wrm_params = wrm_params_from_ini(
                             checked_int(wrm_color_depth),
-                            player.info.remote_app,
+                            player.get_wrm_info().remote_app,
                             cctx,
                             rnd,
                             fstat,
@@ -1515,7 +1523,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
                         }
                         else {
-                            set_capture_consumer(player.record_now);
+                            set_capture_consumer(player.get_current_time());
                         }
 
                         if (update_progress_data.is_valid()) {

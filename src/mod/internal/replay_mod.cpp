@@ -52,16 +52,14 @@ struct ReplayMod::Reader
         this->in_trans,
         timeval{0, 0},
         timeval{0, 0},
-        false,
         play_video_with_corrupted_bitmap,
         debug_capture)
     {}
 
     void server_resize(gdi::GraphicApi & drawable, FrontAPI & front)
     {
-        switch (front.server_resize(
-            {this->reader.info.width , this->reader.info.height , this->reader.info.bpp})
-        ) {
+        auto& info = this->reader.get_wrm_info();
+        switch (front.server_resize({info.width , info.height , info.bpp})) {
             case FrontAPI::ResizeResult::no_need:
             case FrontAPI::ResizeResult::instant_done:
             case FrontAPI::ResizeResult::remoteapp:
@@ -111,7 +109,7 @@ ReplayMod::ReplayMod(
             const auto now = this->time_base.get_current_time();
 
             const auto& reader = this->internal_reader->reader;
-            const auto replay_delay = reader.record_now - this->start_time_replay;
+            const auto replay_delay = reader.get_current_time() - this->start_time_replay;
             const auto real_delay = now - this->start_time;
 
             const auto next_time = (replay_delay <= real_delay)
@@ -143,13 +141,13 @@ ReplayMod::~ReplayMod()
 bool ReplayMod::next_timestamp()
 {
     auto& reader = this->internal_reader->reader;
-    auto previous = reader.record_now;
+    auto previous = reader.get_current_time();
     bool has_order;
 
     try {
         while ((has_order = reader.next_order())) {
             reader.interpret_order();
-            if (previous != reader.record_now) {
+            if (previous != reader.get_current_time()) {
                 break;
             }
         }
@@ -179,7 +177,7 @@ void ReplayMod::init_reader()
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
     this->start_time = this->time_base.get_current_time();
-    this->start_time_replay = this->internal_reader->reader.record_now;
+    this->start_time_replay = this->internal_reader->reader.get_current_time();
     this->internal_reader->server_resize(this->drawable, this->front);
 }
 
@@ -196,6 +194,6 @@ void ReplayMod::rdp_input_scancode(
 
 Dimension ReplayMod::get_dim() const
 {
-    auto const& info = this->internal_reader->reader.info;
+    auto const& info = this->internal_reader->reader.get_wrm_info();
     return Dimension(info.width , info.height);
 }
