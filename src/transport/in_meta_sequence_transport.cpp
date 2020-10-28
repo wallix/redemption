@@ -33,7 +33,6 @@ InMetaSequenceTransport::InMetaSequenceTransport(
     EncryptionMode encryption,
     Fstat & fstat)
 : cfb(cctx, encryption, fstat)
-, begin_time(0)
 , buf_meta(cctx, encryption, fstat)
 , mwrm_reader(this->buf_meta)
 {

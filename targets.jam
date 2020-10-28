@@ -1119,7 +1119,6 @@ test-run tests/client_mods/test_rdp_client_wab :
 test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_cliprdr_channel.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1134,6 +1133,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -1162,7 +1162,6 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
 test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpdr_channel.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1177,6 +1176,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -1205,7 +1205,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
 test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1220,6 +1219,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -1248,7 +1248,6 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
 test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_remoteapp_channel.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1263,6 +1262,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -3107,17 +3107,21 @@ test-run tests/mod/internal/test_login_mod :
 test-run tests/mod/internal/test_replay_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_replay_mod.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/events.o
   <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
+  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -3126,6 +3130,8 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -3133,6 +3139,9 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/front/fake_front.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/replay_mod.cpp

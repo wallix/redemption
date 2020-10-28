@@ -609,7 +609,7 @@ class Engine(object):
                     or target_info.target_name == u'bouncer2'
                     or target_info.target_name == u'widget2_message'
                     or target_info.target_name == u'widgettest'
-                    or target_info.target_name == u'test_card'):
+                    or target_info.target_name == u'card'):
                     temp_service_login = target_info.service_login.replace(
                         u':RDP',
                         u':INTERNAL', 1)

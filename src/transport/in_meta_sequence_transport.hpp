@@ -48,11 +48,6 @@ public:
         return this->mwrm_reader.get_header().version;
     }
 
-    void set_begin_time(time_t begin_time)
-    {
-        this->begin_time = begin_time;
-    }
-
     bool disconnect() override;
 
     [[nodiscard]] time_t begin_chunk_time() const noexcept
@@ -80,7 +75,6 @@ private:
     Read do_atomic_read(uint8_t * data, size_t len) override;
 
     InCryptoTransport cfb;
-    time_t            begin_time;
     InCryptoTransport buf_meta;
 
     MwrmReader mwrm_reader;

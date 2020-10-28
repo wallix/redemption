@@ -120,12 +120,6 @@ void FileToGraphic::set_wait_after_load_client(timeval & time)
     this->start_synctime_now = {time.tv_sec, time.tv_usec};
 }
 
-void FileToGraphic::set_sync()
-{
-    timeval now = tvtime();
-    this->start_synctime_now = {now.tv_sec + this->begin_capture.tv_sec, now.tv_usec};
-}
-
 /* order count set this->stream.p to the beginning of the next order.
     * Most of the times it means not changing it, except when it must read next chunk
     * when remaining order count is 0.

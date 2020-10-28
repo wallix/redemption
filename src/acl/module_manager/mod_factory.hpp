@@ -185,21 +185,24 @@ private:
 
     auto create_mod_replay() -> ModPack
     {
-            auto new_mod = new ReplayMod(this->graphics, this->front,
-                str_concat(
-                    this->ini.get<cfg::video::replay_path>().as_string(),
-                    this->ini.get<cfg::globals::target_user>(),
-                    ".mwrm"_av
-                ).c_str(),
-                this->client_info.screen_info.width,
-                this->client_info.screen_info.height,
-                this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
-                !this->ini.get<cfg::mod_replay::on_end_of_data>(),
-                timeval{0, 0}, timeval{0, 0}, 0,
-                this->ini.get<cfg::mod_replay::replay_on_loop>(),
-                this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
-                safe_cast<FileToGraphic::Verbose>(this->ini.get<cfg::debug::capture>())
-            );
+        auto new_mod = new ReplayMod(
+            this->time_base,
+            this->events,
+            this->graphics,
+            this->front,
+            str_concat(
+                this->ini.get<cfg::video::replay_path>().as_string(),
+                this->ini.get<cfg::globals::target_user>(),
+                ".mwrm"_av
+            ),
+            // this->client_info.screen_info.width,
+            // this->client_info.screen_info.height,
+            this->ini.get_mutable_ref<cfg::context::auth_error_message>(),
+            !this->ini.get<cfg::mod_replay::on_end_of_data>(),
+            this->ini.get<cfg::mod_replay::replay_on_loop>(),
+            this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+            safe_cast<FileToGraphic::Verbose>(this->ini.get<cfg::debug::capture>())
+        );
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 

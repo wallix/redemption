@@ -28,76 +28,36 @@
 #include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
 #include "transport/mwrm_reader.hpp" // WrmVersion
 #include "mod/mod_api.hpp"
-#include "utils/timebase.hpp"
+
+#include <sys/time.h>
+
 
 class FrontAPI;
+struct TimeBase;
+struct EventContainer;
+struct Event;
 
 class ReplayMod : public mod_api
 {
-    std::string& auth_error_message;
-
-    class WindowingFilter;
-    std::unique_ptr<WindowingFilter> internal_windowing_filter;
-
-    uint16_t front_width;
-    uint16_t front_height;
-    gdi::GraphicApi & drawable;
-    FrontAPI& front;
-
-    class Reader;
-    std::unique_ptr<Reader> internal_reader;
-
-    bool end_of_data;
-    bool wait_for_escape;
-
-    bool sync_setted;
-
-    bool replay_on_loop;
-    bool play_video_with_corrupted_bitmap;
-
 public:
     using Verbose = FileToGraphic::Verbose;
 
-    ReplayMod(gdi::GraphicApi & drawable
+    ReplayMod( TimeBase & time_base
+             , EventContainer & events
+             , gdi::GraphicApi & drawable
              , FrontAPI & front
-             , const char * replay_path
-             , uint16_t width
-             , uint16_t height
+             , std::string replay_path
              , std::string & auth_error_message
              , bool wait_for_escape
-             , timeval const & begin_read // timeval{0, 0}
-             , timeval const & end_read   // timeval{0, 0}
-             , time_t balise_time_frame   // 0
              , bool replay_on_loop
              , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture);
 
-    ~ReplayMod() override;
+    bool next_timestamp();
 
-    std::string module_name() override {return "Replay Mod";}
+    ~ReplayMod();
 
-
-    void add_consumer(
-        gdi::GraphicApi * graphic_ptr,
-        gdi::CaptureApi * capture_ptr,
-        gdi::KbdInputApi * kbd_input_ptr,
-        gdi::CaptureProbeApi * capture_probe_ptr,
-        gdi::ExternalCaptureApi * external_event_ptr,
-        gdi::RelayoutApi * relayout_ptr,
-        gdi::ResizeApi * resize_ptr
-    );
-
-    void play();
-
-    bool play_client();
-
-    void set_sync();
-
-    [[nodiscard]] WrmVersion get_wrm_version() const;
-
-    bool get_break_privplay_client();
-
-    void instant_play_client(std::chrono::microseconds endin_frame);
+    std::string module_name() override { return "Replay Mod"; }
 
     void rdp_input_invalidate(Rect /*rect*/) override
     {}
@@ -115,19 +75,9 @@ public:
 
     void rdp_gdi_down() override {}
 
-    void set_pause(timeval & time);
-
-    void set_wait_after_load_client(timeval & time);
-
-    time_t get_real_time_movie_begin();
-
-    [[nodiscard]] std::string get_mwrm_path() const;
-
     [[nodiscard]] Dimension get_dim() const override;
 
     void refresh(Rect /*rect*/) override {}
-
-    void draw_event(gdi::GraphicApi & gd);
 
     [[nodiscard]] bool is_up_and_running() const override
     { return true; }
@@ -139,4 +89,28 @@ public:
     void send_auth_channel_data(const char * /*data*/) override {}
     void send_checkout_channel_data(const char * /*data*/) override {}
 
+
+private:
+    void init_reader();
+
+    timeval start_time;
+    timeval start_time_replay;
+    TimeBase& time_base;
+
+    std::string& auth_error_message;
+
+    gdi::GraphicApi& drawable;
+    FrontAPI& front;
+
+    std::string const prefix_path;
+
+    class Reader;
+    std::unique_ptr<Reader> internal_reader;
+
+    Event * pevent = nullptr;
+
+    Verbose const debug_capture;
+    bool const wait_for_escape;
+    bool const replay_on_loop;
+    bool const play_video_with_corrupted_bitmap;
 };
