@@ -45,22 +45,23 @@
 namespace
 {
 void file_verification_error(
-    FrontAPI& front,
-    timeval now,
     AuthApi & sesman,
-    chars_view up_target_name,
-    chars_view down_target_name,
+    std::string_view up_target_name,
+    std::string_view down_target_name,
     chars_view msg)
 {
-    for (auto&& service : {up_target_name, down_target_name}) {
-        if (not service.empty()) {
-            const KVLogList data = {
-                KVLog("icap_service"_av, service),
-                KVLog("status"_av, msg),
-            };
-            sesman.log6(LogId::FILE_VERIFICATION_ERROR, data);
-            front.session_update(now, LogId::FILE_VERIFICATION_ERROR, data);
-        }
+    if (!up_target_name.empty()) {
+        sesman.log6(LogId::FILE_VERIFICATION_ERROR, KVLogList{
+            KVLog("icap_service"_av, up_target_name),
+            KVLog("status"_av, msg),
+        });
+    }
+
+    if (!down_target_name.empty() && down_target_name != up_target_name) {
+        sesman.log6(LogId::FILE_VERIFICATION_ERROR, KVLogList{
+            KVLog("icap_service"_av, down_target_name),
+            KVLog("status"_av, msg),
+        });
     }
 }
 
@@ -75,12 +76,9 @@ struct RdpData
 
     struct FileValidator
     {
-        struct CtxError
-        {
-            AuthApi & sesman;
+        struct CtxError { AuthApi & sesman;
             std::string up_target_name;
             std::string down_target_name;
-            FrontAPI& front;
         };
 
     private:
@@ -103,18 +101,15 @@ struct RdpData
 
         CtxError ctx_error;
         FileValidatorTransport trans;
-        TimeBase & time_base;
 
     public:
         // TODO wait result (add delay)
         FileValidatorService service;
 
-        FileValidator(unique_fd&& fd, CtxError&& ctx_error, TimeBase & time_base)
+        FileValidator(unique_fd&& fd, CtxError&& ctx_error)
         : ctx_error(std::move(ctx_error))
         , trans(std::move(fd), [this](const Error & err){
             file_verification_error(
-                this->ctx_error.front,
-                this->time_base.get_current_time(),
                 this->ctx_error.sesman,
                 this->ctx_error.up_target_name,
                 this->ctx_error.down_target_name,
@@ -122,7 +117,6 @@ struct RdpData
             );
             return err;
         })
-        , time_base(time_base)
         , service(this->trans)
         {}
 
@@ -812,9 +806,7 @@ ModPack create_mod_rdp(
                     sesman,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
-                    front
-                },
-                time_base);
+                });
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
                 "client_ip"_av, ini.get<cfg::globals::host>(),
@@ -824,8 +816,6 @@ ModPack create_mod_rdp(
         else {
             LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
             file_verification_error(
-                front,
-                time_base.get_current_time(),
                 sesman,
                 mod_rdp_params.validator_params.up_target_name,
                 mod_rdp_params.validator_params.down_target_name,
