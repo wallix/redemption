@@ -517,15 +517,13 @@ private:
     GraphicsPointer orders;
 
     not_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
-    not_null_ptr<gdi::GraphicApi> graphics_update = &gdi::null_gd();
 
     void set_gd(gdi::GraphicApi * new_gd) {
         this->gd = new_gd;
-        this->graphics_update = new_gd;
     }
 
     void set_gd(gdi::GraphicApi & new_gd) {
-        this->set_gd(&new_gd);
+        this->gd = &new_gd;
     }
 
 public:
@@ -711,7 +709,7 @@ public:
         && cmd.codec == RDPSetSurfaceCommand::SETSURFACE_CODEC_REMOTEFX) {
             // only notifies capture callbacks, don't send anything to the front client, it has already been done by
             // a previous draw_impl(RDPSetSurfaceCommand const & cmd) call (with raw blob)
-            this->graphics_update->draw(cmd, content);
+            this->gd->draw(cmd, content);
             return;
         }
 
@@ -941,10 +939,10 @@ public:
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
         if ((cursor.get_dimensions().width % 2) && ini.get<cfg::client::bogus_pointer_xormask_padding>()) {
             Pointer new_cursor = harmonize_pointer(cursor);
-            this->graphics_update->set_pointer(cache_idx, new_cursor, mode);
+            this->gd->set_pointer(cache_idx, new_cursor, mode);
         }
         else {
-            this->graphics_update->set_pointer(cache_idx, cursor, mode);
+            this->gd->set_pointer(cache_idx, cursor, mode);
         }
     }
 
@@ -4459,7 +4457,7 @@ private:
     template<class Cmd, class... Args>
     void draw_impl(Cmd const & cmd, Rect clip, Args && ... args) {
         if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
-            this->graphics_update->draw(cmd, clip, args...);
+            this->gd->draw(cmd, clip, args...);
         }
     }
 
@@ -4495,7 +4493,7 @@ private:
 
 
 
-            this->graphics_update->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
+            this->gd->draw(RDPScrBlt(drect, cmd.rop, srcx, srcy), clip);
         }
     }
 
@@ -4554,7 +4552,7 @@ private:
     }
 
     void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
-        this->graphics_update->draw(cmd);
+        this->gd->draw(cmd);
 
         if (!this->capture &&
             (cmd.header.FieldsPresentFlags() & (RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) &&
@@ -4569,7 +4567,7 @@ private:
     }
 
     void draw_impl(RDP::RAIL::DeletedWindow const & cmd) {
-        this->graphics_update->draw(cmd);
+        this->gd->draw(cmd);
 
         this->rail_window_rect.empty();
     }
@@ -4707,7 +4705,7 @@ private:
                                              | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                         sub_image_data.bitmap_length = bmp_stream.get_offset();
 
-                        this->graphics_update->draw(sub_image_data, sub_image);
+                        this->gd->draw(sub_image_data, sub_image);
                     }
                 );
             }
@@ -4722,14 +4720,14 @@ private:
                                          | uint16_t(NO_BITMAP_COMPRESSION_HDR);
                 target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
-                this->graphics_update->draw(target_bitmap_data, new_bmp);
+                this->gd->draw(target_bitmap_data, new_bmp);
             }
         }
     }
 
     void draw_impl(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx) {
         if (this->client_info.order_caps.orderSupport[TS_NEG_LINETO_INDEX]) {
-            this->graphics_update->draw(cmd, clip, color_ctx);
+            this->gd->draw(cmd, clip, color_ctx);
         }
         else {
             if ((cmd.startx == cmd.endx) || (cmd.starty == cmd.endy)) {
@@ -4753,7 +4751,7 @@ private:
         }
 
         if (this->client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX]) {
-            this->graphics_update->draw(cmd, clip, color_ctx);
+            this->gd->draw(cmd, clip, color_ctx);
         }
         else {
             Rect image_rect = dest_rect;
@@ -4844,7 +4842,7 @@ private:
 
     template<class Cmd>
     void draw_impl(Cmd const & cmd) {
-        this->graphics_update->draw(cmd);
+        this->gd->draw(cmd);
     }
 
     void draw_impl(RDP::FrameMarker const & order) {
@@ -4867,10 +4865,10 @@ private:
                 Cmd new_cmd = cmd;
                 // this change the brush and send it to to remote cache
                 this->update_cache_brush(new_cmd.brush);
-                this->graphics_update->draw(new_cmd, clip, args...);
+                this->gd->draw(new_cmd, clip, args...);
             }
             else {
-              this->graphics_update->draw(cmd, clip, args...);
+              this->gd->draw(cmd, clip, args...);
             }
         }
     }
@@ -4885,7 +4883,7 @@ private:
         const Bitmap tiled_bmp(bitmap, src_tile);
         const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
 
-        this->graphics_update->draw(cmd2, clip, tiled_bmp);
+        this->gd->draw(cmd2, clip, tiled_bmp);
     }
 
     void draw_tile(Rect dst_tile, Rect src_tile, const RDPMem3Blt & cmd, const Bitmap & bitmap, Rect clip, gdi::ColorCtx color_ctx)
@@ -4909,7 +4907,7 @@ private:
         // this may change the brush add send it to to remote cache
         //this->cache_brush(cmd2.brush);
 
-        this->graphics_update->draw(cmd2, clip, color_ctx, tiled_bmp);
+        this->gd->draw(cmd2, clip, color_ctx, tiled_bmp);
     }
 
     template<class MemBlt, class... ColorCtx>
