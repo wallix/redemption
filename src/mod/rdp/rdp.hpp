@@ -150,22 +150,15 @@ struct FileValidatorService;
 struct AsynchronousTaskContainer
 {
 public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events)
-        : time_base(time_base), gd_provider(gd_provider), events(events)
+    explicit AsynchronousTaskContainer(TimeBase& time_base, EventContainer & events)
+        : time_base(time_base)
+        , events(events)
     {
     }
 
     ~AsynchronousTaskContainer()
     {
         this->events.end_of_lifespan(this);
-    }
-
-    static void remover(AsynchronousTaskContainer * self, AsynchronousTask * task)
-    {
-        (void)task;
-        assert(task == self->tasks.front().get());
-        self->tasks.pop_front();
-        self->next();
     }
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
@@ -185,28 +178,27 @@ private:
     void next()
     {
         if (!this->tasks.empty()) {
-            auto container_task = this->tasks.front().get();
             auto pevent = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
             this->events.add(pevent);
             pevent->actions.set_teardown_function(
-                [this, container_task](Event&event)
+                [this](Event& event)
                 {
-                    AsynchronousTaskContainer::remover(this, container_task);
+                    this->tasks.pop_front();
+                    this->next();
                     event.garbage = true;
                 });
         }
     }
 
     std::deque<std::unique_ptr<AsynchronousTask>> tasks;
-public:
+
     TimeBase& time_base;
-    GdProvider & gd_provider;
     EventContainer& events;
 };
 #else
 struct AsynchronousTaskContainer
 {
-    explicit AsynchronousTaskContainer(TimeBase&, GdProvider & /*gd_provider*/, EventContainer & /*events*/)
+    explicit AsynchronousTaskContainer(TimeBase& /*time_base*/, EventContainer& /*events*/)
     {}
 };
 #endif
@@ -795,18 +787,18 @@ private:
         fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
-                asynchronous_tasks.time_base,
-                asynchronous_tasks.events,
-                this->file_system_to_client_sender.get(),
-                this->file_system_to_server_sender.get(),
-                this->drive.file_system_drive_manager,
-                false,
-                "",
-                client_name,
-                ::getpid(),
-                this->drive.proxy_managed_prefix.c_str(),
-                base_params,
-                fsvc_params);
+            this->time_base,
+            this->events,
+            this->file_system_to_client_sender.get(),
+            this->file_system_to_server_sender.get(),
+            this->drive.file_system_drive_manager,
+            false,
+            "",
+            client_name,
+            ::getpid(),
+            this->drive.proxy_managed_prefix.c_str(),
+            base_params,
+            fsvc_params);
         if (this->file_system_to_server_sender) {
             if (this->session_probe.enable_session_probe || this->drive.use_application_driver) {
                 this->file_system_virtual_channel->enable_session_probe_drive();
@@ -2105,7 +2097,7 @@ public:
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         #ifndef __EMSCRIPTEN__
-        , asynchronous_tasks(time_base, gd_provider, events)
+        , asynchronous_tasks(time_base, events)
         #endif
         , lang(mod_rdp_params.lang)
         , session_time_start(time_base.get_current_time().tv_sec)

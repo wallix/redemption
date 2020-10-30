@@ -34,10 +34,9 @@
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 
-class AsynchronousTask
+class AsynchronousTask : noncopyable
 {
 public:
-    AsynchronousTask() = default;
     virtual ~AsynchronousTask() = default;
     virtual Event * configure_event(timeval now, void * lifespan) = 0;
 };

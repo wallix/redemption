@@ -33,6 +33,10 @@
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "acl/connect_to_target_host.hpp"
 
+
+namespace
+{
+
 struct ModVNCWithMetrics : public mod_vnc
 {
     struct ModMetrics : Metrics
@@ -42,18 +46,21 @@ struct ModVNCWithMetrics : public mod_vnc
         VNCMetrics protocol_metrics{*this};
     };
 
+private:
     std::unique_ptr<ModMetrics> metrics;
-    int metrics_timer = 0;
 
     EventsGuard events_guard;
     TimeBase & time_base;
 
-    void set_metrics_timer(std::chrono::seconds log_interval)
+public:
+    void set_metrics(std::unique_ptr<ModMetrics> && metrics, std::chrono::seconds log_interval)
     {
-        this->metrics_timer = this->events_guard.create_event_timeout(
+        assert(!this->metrics);
+        this->metrics = std::move(metrics);
+        this->events_guard.create_event_timeout(
             "VNC Metrics Timer",
             this->time_base.get_current_time() + log_interval,
-            [this,log_interval](Event&event)
+            [this,log_interval](Event& event)
             {
                 event.alarm.reset_timeout(event.alarm.now + log_interval);
                 this->metrics->log(event.alarm.now);
@@ -118,12 +125,12 @@ class ModWithSocketAndMetrics final : public mod_api
 public:
     SocketTransport socket_transport;
     ModVNCWithMetrics mod;
+
 private:
     ModWrapper & mod_wrapper;
     Inifile & ini;
 
 public:
-
     ModWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, SocketTransport::Verbose verbose,
         std::string * error_message,
@@ -163,12 +170,10 @@ public:
     , ini(ini)
     {
         this->mod_wrapper.target_info_is_shown = false;
-//        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
     ~ModWithSocketAndMetrics()
     {
-//        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
     }
@@ -287,6 +292,8 @@ public:
     }
 };
 
+}
+
 ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
@@ -368,11 +375,10 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
     );
 
     if (enable_metrics) {
-        new_mod->mod.metrics = std::move(metrics);
-        new_mod->mod.set_metrics_timer(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()));
+        new_mod->mod.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
     }
 
-    auto tmp_psocket_transport = &(new_mod->socket_transport);
+    auto tmp_psocket_transport = &new_mod->socket_transport;
 
     if (!client_info.remote_program) {
         auto mod = new_mod.release();

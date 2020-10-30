@@ -41,25 +41,25 @@
 #include "acl/mod_pack.hpp"
 #include "transport/failure_simulation_socket_transport.hpp"
 
+
 namespace
 {
-    void file_verification_error(
-        FrontAPI& front,
-        timeval now,
-        AuthApi & sesman,
-        chars_view up_target_name,
-        chars_view down_target_name,
-        chars_view msg)
-    {
-        for (auto&& service : {up_target_name, down_target_name}) {
-            if (not service.empty()) {
-                const KVLogList data = {
-                        KVLog("icap_service"_av, service),
-                        KVLog("status"_av, msg),
-                };
-                sesman.log6(LogId::FILE_VERIFICATION_ERROR, data);
-                front.session_update(now, LogId::FILE_VERIFICATION_ERROR, data);
-            }
+void file_verification_error(
+    FrontAPI& front,
+    timeval now,
+    AuthApi & sesman,
+    chars_view up_target_name,
+    chars_view down_target_name,
+    chars_view msg)
+{
+    for (auto&& service : {up_target_name, down_target_name}) {
+        if (not service.empty()) {
+            const KVLogList data = {
+                KVLog("icap_service"_av, service),
+                KVLog("status"_av, msg),
+            };
+            sesman.log6(LogId::FILE_VERIFICATION_ERROR, data);
+            front.session_update(now, LogId::FILE_VERIFICATION_ERROR, data);
         }
     }
 }
@@ -75,6 +75,15 @@ struct RdpData
 
     struct FileValidator
     {
+        struct CtxError
+        {
+            AuthApi & sesman;
+            std::string up_target_name;
+            std::string down_target_name;
+            FrontAPI& front;
+        };
+
+    private:
         struct FileValidatorTransport : FileTransport
         {
             using FileTransport::FileTransport;
@@ -92,23 +101,15 @@ struct RdpData
             }
         };
 
-        struct CtxError
-        {
-            AuthApi & sesman;
-            std::string up_target_name;
-            std::string down_target_name;
-            FrontAPI& front;
-        };
-
         CtxError ctx_error;
         FileValidatorTransport trans;
+        TimeBase & time_base;
+
+    public:
         // TODO wait result (add delay)
         FileValidatorService service;
-        TimeBase & time_base;
-        EventsGuard events_guard;
-        mod_rdp * mod = nullptr;
 
-        FileValidator(unique_fd&& fd, CtxError&& ctx_error, TimeBase & time_base, EventContainer & events)
+        FileValidator(unique_fd&& fd, CtxError&& ctx_error, TimeBase & time_base)
         : ctx_error(std::move(ctx_error))
         , trans(std::move(fd), [this](const Error & err){
             file_verification_error(
@@ -121,25 +122,9 @@ struct RdpData
             );
             return err;
         })
-        , service(this->trans)
         , time_base(time_base)
-        , events_guard(events)
-        {
-            this->events_guard.create_event_fd_timeout(
-                "File Validator Event",
-                this->trans.get_fd(),std::chrono::seconds(3600),
-                this->time_base.get_current_time()+std::chrono::seconds(3600),
-                [this](Event&/*event*/)
-                {
-                    if (this->mod){
-                        this->mod->DLP_antivirus_check_channels_files();
-                    }
-                },
-                [](Event&event)
-                {
-                    event.alarm.set_timeout(event.alarm.now+std::chrono::seconds(3600));
-                });
-        }
+        , service(this->trans)
+        {}
 
         ~FileValidator()
         {
@@ -149,85 +134,117 @@ struct RdpData
             catch (...) {
             }
         }
+
+        int get_fd() const
+        {
+            return this->trans.get_fd();
+        }
     };
 
-    std::unique_ptr<ModMetrics> metrics;
-    int metrics_timer = 0;
-
-    void set_metrics_timer(std::chrono::seconds log_interval)
-    {
-        this->metrics_timer = this->events_guard.create_event_timeout(
-            "RDP Metrics Timer",
-            this->time_base.get_current_time() + log_interval,
-            [this,log_interval](Event&event)
-            {
-                event.alarm.reset_timeout(event.alarm.now + log_interval);
-                this->metrics->log(event.alarm.now);
-            });
-    }
-
-    TimeBase & time_base;
-    EventsGuard events_guard;
-
-    std::unique_ptr<FileValidator> file_validator;
-    std::unique_ptr<FdxCapture> fdx_capture;
-    Fstat fstat;
-
+public:
     RdpData(TimeBase & time_base, EventContainer & events)
     : time_base(time_base)
     , events_guard(events)
     {}
 
     ~RdpData() = default;
-};
 
+    void set_metrics(std::unique_ptr<ModMetrics> && metrics, std::chrono::seconds log_interval)
+    {
+        assert(!this->metrics);
+        this->metrics = std::move(metrics);
+        this->events_guard.create_event_timeout(
+            "RDP Metrics Timer",
+            this->time_base.get_current_time() + log_interval,
+            [this,log_interval](Event& event)
+            {
+                event.alarm.reset_timeout(event.alarm.now + log_interval);
+                this->metrics->log(event.alarm.now);
+            });
+    }
+
+    void set_file_validator(std::unique_ptr<RdpData::FileValidator>&& file_validator, mod_rdp& mod)
+    {
+        assert(!this->file_validator);
+        this->file_validator = std::move(file_validator);
+        this->events_guard.create_event_fd_timeout(
+            "File Validator Event",
+            this->file_validator->get_fd(),
+            3600s,
+            this->time_base.get_current_time() + 3600s,
+            [&mod](Event& /*event*/)
+            {
+                mod.DLP_antivirus_check_channels_files();
+            },
+            [](Event& event)
+            {
+                event.alarm.set_timeout(event.alarm.now + 3600s);
+            });
+    }
+
+private:
+    std::unique_ptr<ModMetrics> metrics;
+
+    TimeBase & time_base;
+    EventsGuard events_guard;
+
+    std::unique_ptr<FileValidator> file_validator;
+};
 
 
 class ModRDPWithSocketAndMetrics final : public mod_api
 {
-public:
     std::unique_ptr<SocketTransport> socket_transport_ptr;
     ModRdpFactory rdp_factory;
     AuthApi & sesman;
+    Fstat fstat;
+
+public:
     mod_rdp mod;
+    RdpData rdp_data;
+
+private:
+    ModWrapper & mod_wrapper;
+    Inifile & ini;
+
+    std::unique_ptr<FdxCapture> fdx_capture;
+
+public:
+    SocketTransport& get_transport() const
+    {
+        return *this->socket_transport_ptr.get();
+    }
 
     FdxCapture* get_fdx_capture(Random & gen, Inifile & ini, CryptoContext & cctx)
     {
-        if (!this->rdp_data.fdx_capture) {
+        if (!this->fdx_capture) {
             LOG(LOG_INFO, "Enable clipboard file storage");
-            int  const groupid = ini.get<cfg::video::capture_groupid>();
+            int  const groupid = int(ini.get<cfg::video::capture_groupid>());
             auto const& session_id = ini.get<cfg::context::session_id>();
             auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
             auto const& record_dir = ini.get<cfg::video::record_path>();
             auto const& hash_dir = ini.get<cfg::video::hash_path>();
             auto const& filebase = ini.get<cfg::capture::record_filebase>();
 
-            this->rdp_data.fdx_capture = std::make_unique<FdxCapture>(
+            this->fdx_capture = std::make_unique<FdxCapture>(
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, groupid, cctx, gen, this->rdp_data.fstat,
+                session_id, groupid, cctx, gen, this->fstat,
                 /* TODO should be a log (siem?)*/
                 [](const Error & /*error*/){});
 
-            ini.set_acl<cfg::capture::fdx_path>(this->rdp_data.fdx_capture->get_fdx_path());
+            ini.set_acl<cfg::capture::fdx_path>(this->fdx_capture->get_fdx_path());
         }
 
-        return this->rdp_data.fdx_capture.get();
+        return this->fdx_capture.get();
     }
-
-    RdpData rdp_data;
 
     ModRdpFactory& get_rdp_factory() noexcept
     {
         return this->rdp_factory;
     }
 
-private:
-    ModWrapper & mod_wrapper;
-    Inifile & ini;
-
-public:
     ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, SocketTransport::Verbose verbose
       , std::string * error_message
@@ -250,7 +267,7 @@ public:
         )
     : socket_transport_ptr([](
             ModRdpUseFailureSimulationSocketTransport use_failure_simulation_socket_transport,
-            const char * name, unique_fd sck, const char *ip_address, int port,
+            const char * name, unique_fd sck, const char *ip_address, unsigned port,
             std::chrono::milliseconds recv_timeout, SocketTransport::Verbose verbose,
             std::string * error_message
         ) -> SocketTransport* {
@@ -276,7 +293,7 @@ public:
          , verbose, error_message))
     , sesman(sesman)
     , mod(*this->socket_transport_ptr, time_base, mod_wrapper, events
-        , sesman,gd, front, info, redir_info, gen
+        , sesman, gd, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -286,15 +303,12 @@ public:
     {
         this->mod_wrapper.target_info_is_shown = false;
         this->sesman.begin_dispatch_to_capture();
-//        this->mod_wrapper.set_mod_transport(&this->socket_transport);
     }
 
     std::string module_name() override {return "RDP Mod With Socket And Metrics";}
 
     ~ModRDPWithSocketAndMetrics()
     {
-//        log_proxy::target_disconnection(this->sesman.get_auth_error_message())
-//        this->mod_wrapper.set_mod_transport(nullptr);
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
         this->sesman.end_dispatch_to_capture();
@@ -508,6 +522,7 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
     return ap;
 }
 
+}
 
 ModPack create_mod_rdp(
     ModWrapper & mod_wrapper,
@@ -799,7 +814,7 @@ ModPack create_mod_rdp(
                     mod_rdp_params.validator_params.down_target_name,
                     front
                 },
-                time_base, events);
+                time_base);
             file_validator->service.send_infos({
                 "server_ip"_av, ini.get<cfg::context::target_host>(),
                 "client_ip"_av, ini.get<cfg::globals::host>(),
@@ -991,13 +1006,11 @@ ModPack create_mod_rdp(
     );
 
     if (enable_validator) {
-        new_mod->rdp_data.file_validator = std::move(file_validator);
-        new_mod->rdp_data.file_validator->mod = &new_mod->mod;
+        new_mod->rdp_data.set_file_validator(std::move(file_validator), new_mod->mod);
     }
 
     if (enable_metrics) {
-        new_mod->rdp_data.metrics = std::move(metrics);
-        new_mod->rdp_data.set_metrics_timer(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()));
+        new_mod->rdp_data.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
     }
 
     if (new_mod) {
@@ -1013,11 +1026,13 @@ ModPack create_mod_rdp(
                 }
                 [[fallthrough]];
             case RdpStoreFile::always:
-                new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{ return mod->get_fdx_capture(gen, ini, cctx);};
+                new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{
+                    return mod->get_fdx_capture(gen, ini, cctx);
+                };
         }
     }
 
-    auto tmp_psocket_transport = &(*new_mod->socket_transport_ptr);
+    auto tmp_psocket_transport = &new_mod->get_transport();
 
     if (!host_mod_in_widget) {
         auto mod = new_mod.release();

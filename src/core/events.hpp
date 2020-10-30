@@ -475,7 +475,7 @@ struct EventContainer : noncopyable
  * EventContainer wrapper that provides a convenient RAII-style mechanism
  * to release events when control leave the scope.
  */
-struct EventsGuard : noncopyable
+struct EventsGuard : private noncopyable
 {
     EventsGuard(EventContainer& events) noexcept
     : events(events)
