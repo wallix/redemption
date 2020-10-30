@@ -47,7 +47,6 @@ DialogMod::DialogMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
@@ -178,7 +177,6 @@ bool DialogMod::is_resizing_hosted_desktop_allowed() const
 
 DialogMod::~DialogMod()
 {
-    this->events.end_of_lifespan(this);
     this->screen.clear();
     this->rail_client_execute.reset(true);
 }

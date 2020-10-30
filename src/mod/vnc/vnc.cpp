@@ -75,7 +75,7 @@ mod_vnc::mod_vnc( Transport & t
     , rail_client_execute(rail_client_execute)
     , time_base(time_base)
     , gd_provider(gd_provider)
-    , events(events)
+    , events_guard(events)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
     , sesman(sesman)
@@ -96,8 +96,8 @@ mod_vnc::mod_vnc( Transport & t
     std::snprintf(this->username, sizeof(this->username), "%s", username);
     std::snprintf(this->password, sizeof(this->password), "%s", password);
 
-    this->events.create_event_timeout(
-        "VNC Init Event", this,
+    this->events_guard.create_event_timeout(
+        "VNC Init Event",
         this->time_base.get_current_time(),
         [this](Event&event)
         {
@@ -114,6 +114,8 @@ mod_vnc::mod_vnc( Transport & t
             });
         });
 }
+
+mod_vnc::~mod_vnc() = default;
 
 bool mod_vnc::ms_logon(Buf64k & buf)
 {
@@ -1463,7 +1465,7 @@ void mod_vnc::check_timeout()
         size_t chunk_size = length;
 
         this->clipboard_requesting_for_data_is_delayed = false;
-        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
+        this->clipboard_timeout_timer = this->events_guard.event_container().erase_event(this->clipboard_timeout_timer);
         this->send_to_front_channel( channel_names::cliprdr
                                    , out_s.get_data()
                                    , length
@@ -1503,7 +1505,7 @@ bool mod_vnc::lib_clip_data(Buf64k & buf)
 
         // Can stop RDP to VNC clipboard infinite loop.
         this->clipboard_requesting_for_data_is_delayed = false;
-        this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
+        this->clipboard_timeout_timer = this->events_guard.event_container().erase_event(this->clipboard_timeout_timer);
     }
     else {
         LOG(LOG_WARNING, "mod_vnc::lib_clip_data: Clipboard Channel Redirection unavailable");
@@ -1719,7 +1721,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     chunk_size = out_s.get_offset();
 
                     this->clipboard_requesting_for_data_is_delayed = false;
-                    this->clipboard_timeout_timer = this->events.erase_event(this->clipboard_timeout_timer);
+                    this->clipboard_timeout_timer = this->events_guard.event_container().erase_event(this->clipboard_timeout_timer);
                     this->send_to_front_channel( channel_names::cliprdr
                                                , out_s.get_data()
                                                , chunk_size // total length is chunk_size
@@ -1735,8 +1737,8 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                             RDPECLIP::CB_FORMAT_DATA_REQUEST);
                         this->clipboard_requesting_for_data_is_delayed = true;
                         // arms timeout
-                        this->clipboard_timeout_timer = this->events.create_event_timeout(
-                            "VNC Clipboard Timeout Event", this,
+                        this->clipboard_timeout_timer = this->events_guard.create_event_timeout(
+                            "VNC Clipboard Timeout Event",
                             this->time_base.get_current_time()+(MINIMUM_TIMEVAL - timeval_diff),
                             [this](Event&){this->check_timeout();});
                     }

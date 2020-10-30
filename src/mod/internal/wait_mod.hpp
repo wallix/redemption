@@ -155,7 +155,7 @@ private:
 
 protected:
     TimeBase& time_base;
-    EventContainer& events;
+    EventsGuard events_guard;
 
 private:
     LanguageButton language_button;

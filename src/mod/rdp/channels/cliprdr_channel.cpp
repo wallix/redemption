@@ -144,7 +144,7 @@ struct ClipboardVirtualChannel::OSD::D
             self.osd.msg_type = OSD::MsgType::WaitValidator;
             // TODO: this is a common pattern appearing at several places in code, we could define a create_event of reset timeout method in EventContainer
             if (self.osd.id_event) {
-                for (Event* pevent : self.osd.events.queue) {
+                for (Event* pevent : self.osd.events_guard.event_container().queue) {
                     Event & event = *pevent;
                     if (event.id == self.osd.id_event) {
                         event.alarm.set_timeout(self.time_base.get_current_time() + self.osd.delay);
@@ -155,15 +155,15 @@ struct ClipboardVirtualChannel::OSD::D
                 assert(false);
             }
             else {
-                self.osd.id_event = self.osd.events.create_event_timeout(
-                        "FileVerifOSD", &self,
-                        self.time_base.get_current_time() + self.osd.delay,
-                        [&self, &filename](Event& event){
-                            self.osd.gd_provider.display_osd_message(str_concat(
-                            TR(trkeys::file_verification_wait, self.osd.lang), filename));
-                            self.osd.id_event = 0;
-                            event.garbage = true;
-                        });
+                self.osd.id_event = self.osd.events_guard.create_event_timeout(
+                    "FileVerifOSD",
+                    self.time_base.get_current_time() + self.osd.delay,
+                    [&self, &filename](Event& event){
+                        self.osd.gd_provider.display_osd_message(str_concat(
+                        TR(trkeys::file_verification_wait, self.osd.lang), filename));
+                        self.osd.id_event = 0;
+                        event.garbage = true;
+                    });
             }
         }
     }
@@ -186,7 +186,7 @@ struct ClipboardVirtualChannel::OSD::D
                 self.osd.gd_provider.display_osd_message(str_concat(
                     TR(trkeys::file_verification_accepted, self.osd.lang), filename));
             }
-            self.osd.id_event = self.osd.events.erase_event(self.osd.id_event);
+            self.osd.id_event = self.osd.events_guard.event_container().erase_event(self.osd.id_event);
             self.osd.msg_type = OSD::MsgType::Nothing;
         }
     }
@@ -2426,13 +2426,6 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 
 ClipboardVirtualChannel::~ClipboardVirtualChannel()
 {
-    this->osd.id_event = this->osd.events.erase_event(this->osd.id_event);
-    if (this->osd.id_event){
-        LOG(LOG_ERR, "Expected OSD event %d not found", this->osd.id_event);
-        assert(false);
-    }
-    this->osd.events.end_of_lifespan(this);
-
     try {
         using namespace std::string_view_literals;
 

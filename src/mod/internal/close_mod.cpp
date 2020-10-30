@@ -100,7 +100,7 @@ CloseMod::CloseMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
 {
     this->screen.set_wh(this->front_width, this->front_height);
 
@@ -116,8 +116,8 @@ CloseMod::CloseMod(
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->events.create_event_timeout(
-        "Close Event", this,
+    this->events_guard.create_event_timeout(
+        "Close Event",
         time_base.get_current_time()+std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()},
         [this](Event&e)
         {
@@ -125,8 +125,8 @@ CloseMod::CloseMod(
             e.garbage = true;
         });
 
-    this->events.create_event_timeout(
-        "Close Refresh Message Event", this,
+    this->events_guard.create_event_timeout(
+        "Close Refresh Message Event",
         time_base.get_current_time(),
         [this](Event& event)
         {
@@ -140,7 +140,6 @@ CloseMod::CloseMod(
 
 CloseMod::~CloseMod()
 {
-    this->events.end_of_lifespan(this);
     this->vars.set<cfg::context::close_box_extra_message>("");
     this->screen.clear();
     this->rail_client_execute.reset(true);

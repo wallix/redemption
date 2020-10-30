@@ -77,7 +77,7 @@ class LoginMod : public mod_api, public NotifyApi
     MouseOwner current_mouse_owner;
 
     TimeBase& time_base;
-    EventContainer& events;
+    EventsGuard events_guard;
 
     LanguageButton language_button;
     FlatLogin login;

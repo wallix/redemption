@@ -292,7 +292,7 @@ private:
     bool rail_enabled = false;
 
     TimeBase& time_base;
-    EventContainer& events;
+    EventsGuard events_guard;
     Rect protocol_window_rect;
 
 public:

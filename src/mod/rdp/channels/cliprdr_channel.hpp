@@ -359,7 +359,7 @@ private:
 
     struct OSD
     {
-        EventContainer& events;
+        EventsGuard events_guard;
         GdProvider& gd_provider;
         const std::chrono::seconds delay;
         const bool enable_osd;

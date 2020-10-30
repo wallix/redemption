@@ -49,7 +49,7 @@ class Bouncer2Mod : public mod_api
     int mouse_x = 0;
     int mouse_y = 0;
 
-    EventContainer & events;
+    EventsGuard events_guard;
     GdProvider & gd_provider;
 
     [[nodiscard]] Rect get_screen_rect() const;

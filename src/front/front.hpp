@@ -649,7 +649,7 @@ private:
     bool is_first_memblt = true;
 
     TimeBase& time_base;
-    EventContainer& events;
+    EventsGuard events_guard;
     int handshake_timeout = 0;
     int capture_timer = 0;
     int flow_control_timer = 0;
@@ -772,7 +772,7 @@ public:
 
 public:
     Front( TimeBase& time_base
-         , EventContainer& events_
+         , EventContainer& events
          , AuthApi & sesman
          , Transport & trans
          , Random & gen
@@ -795,7 +795,7 @@ public:
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , sesman(sesman)
     , time_base(time_base)
-    , events(events_)
+    , events_guard(events)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
              (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
@@ -805,8 +805,8 @@ public:
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
 
-            this->handshake_timeout = this->events.create_event_timeout(
-                "Front Handshake Timer", this,
+            this->handshake_timeout = this->events_guard.create_event_timeout(
+                "Front Handshake Timer",
                 time_base.get_current_time()+this->ini.get<cfg::globals::handshake_timeout>(),
                 [](Event&)
                 {
@@ -846,8 +846,8 @@ public:
 
         if (this->rdp_keepalive_connection_interval.count()) {
 
-            this->flow_control_timer = this->events.create_event_timeout(
-                "Front Flow Control Timer", this,
+            this->flow_control_timer = this->events_guard.create_event_timeout(
+                "Front Flow Control Timer",
                 this->time_base.get_current_time(),
                 [this](Event& event)
                 {
@@ -870,7 +870,6 @@ public:
 
     ~Front() override
     {
-        this->events.end_of_lifespan(this);
         if (this->orders.has_bmp_cache_persister()) {
             this->save_persistent_disk_bitmap_cache();
         }
@@ -1163,8 +1162,8 @@ public:
             this->capture->add_graphic(this->orders.graphics_update_pdu());
         }
 
-        this->capture_timer = this->events.create_event_timeout(
-            "Front Capture Timer", this,
+        this->capture_timer = this->events_guard.create_event_timeout(
+            "Front Capture Timer",
             this->time_base.get_current_time(),
             [this](Event& event)
             {
@@ -1208,7 +1207,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            this->capture_timer = this->events.erase_event(this->capture_timer);
+            this->capture_timer = this->events_guard.event_container().erase_event(this->capture_timer);
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -4335,7 +4334,7 @@ private:
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
-                this->handshake_timeout = this->events.erase_event(this->handshake_timeout);
+                this->handshake_timeout = this->events_guard.event_container().erase_event(this->handshake_timeout);
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API

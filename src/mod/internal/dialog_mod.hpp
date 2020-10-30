@@ -130,7 +130,6 @@ private:
 
 protected:
     TimeBase& time_base;
-    EventContainer& events;
 
 private:
     LanguageButton language_button;

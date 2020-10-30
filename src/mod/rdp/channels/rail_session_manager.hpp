@@ -95,7 +95,7 @@ class RemoteProgramsSessionManager final
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
     TimeBase& time_base;
-    EventContainer & events;
+    EventsGuard events_guard;
 
 public:
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl( cmd); }
@@ -150,13 +150,10 @@ public:
     , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
     {}
 
-    ~RemoteProgramsSessionManager()
-    {
-        this->events.end_of_lifespan(this);
-    }
+    ~RemoteProgramsSessionManager() = default;
 
     void begin_update() override
     {
@@ -466,8 +463,8 @@ public:
         && this->has_previous_window)
         {
             this->currently_without_window = true;
-            this->events.create_event_timeout(
-                "Rail Waiting Screen Event", this,
+            this->events_guard.create_event_timeout(
+                "Rail Waiting Screen Event",
                 this->time_base.get_current_time()+this->rail_disconnect_message_delay,
                 [this](Event&event)
                 {

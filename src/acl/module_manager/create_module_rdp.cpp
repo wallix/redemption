@@ -105,7 +105,7 @@ struct RdpData
         // TODO wait result (add delay)
         FileValidatorService service;
         TimeBase & time_base;
-        EventContainer & events;
+        EventsGuard events_guard;
         mod_rdp * mod = nullptr;
 
         FileValidator(unique_fd&& fd, CtxError&& ctx_error, TimeBase & time_base, EventContainer & events)
@@ -123,10 +123,10 @@ struct RdpData
         })
         , service(this->trans)
         , time_base(time_base)
-        , events(events)
+        , events_guard(events)
         {
-            this->events.create_event_fd_timeout(
-                "File Validator Event", this,
+            this->events_guard.create_event_fd_timeout(
+                "File Validator Event",
                 this->trans.get_fd(),std::chrono::seconds(3600),
                 this->time_base.get_current_time()+std::chrono::seconds(3600),
                 [this](Event&/*event*/)
@@ -148,7 +148,6 @@ struct RdpData
             }
             catch (...) {
             }
-            this->events.end_of_lifespan(this);
         }
     };
 
@@ -157,8 +156,8 @@ struct RdpData
 
     void set_metrics_timer(std::chrono::seconds log_interval)
     {
-        this->metrics_timer = this->events.create_event_timeout(
-            "RDP Metrics Timer", this,
+        this->metrics_timer = this->events_guard.create_event_timeout(
+            "RDP Metrics Timer",
             this->time_base.get_current_time() + log_interval,
             [this,log_interval](Event&event)
             {
@@ -168,21 +167,18 @@ struct RdpData
     }
 
     TimeBase & time_base;
-    EventContainer & events;
+    EventsGuard events_guard;
 
     std::unique_ptr<FileValidator> file_validator;
     std::unique_ptr<FdxCapture> fdx_capture;
     Fstat fstat;
 
     RdpData(TimeBase & time_base, EventContainer & events)
-     : time_base(time_base)
-     , events(events)
+    : time_base(time_base)
+    , events_guard(events)
     {}
 
-    ~RdpData()
-    {
-        this->events.end_of_lifespan(this);
-    }
+    ~RdpData() = default;
 };
 
 

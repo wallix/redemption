@@ -855,7 +855,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     }
 
     TimeBase& time_base;
-    EventContainer & events;
+    EventsGuard events_guard;
     int initialization_timeout_event = 0;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
@@ -911,7 +911,7 @@ public:
           params.smartcard_passthrough,
           base_params.verbose)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
     {}
@@ -956,7 +956,6 @@ public:
             );
         }
 #endif  // #ifndef NDEBUG
-        this->events.end_of_lifespan(this);
     }
 
     void disable_session_probe_drive() {
@@ -1846,7 +1845,8 @@ public:
                     client_announce_reply.receive(chunk);
                     client_announce_reply.log(LOG_INFO);
                 }
-                this->initialization_timeout_event = this->events.erase_event(this->initialization_timeout_event);
+                this->initialization_timeout_event = this->events_guard.event_container().erase_event(
+                    this->initialization_timeout_event);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -1988,8 +1988,8 @@ public:
 
         // Virtual channel is opened at client side and is authorized.
         if (this->has_valid_to_client_sender()) {
-            this->initialization_timeout_event = this->events.create_event_timeout(
-                "Initialisation timeout Event", this,
+            this->initialization_timeout_event = this->events_guard.create_event_timeout(
+                "Initialisation timeout Event",
                 this->time_base.get_current_time()+this->initialization_timeout,
                 [this](Event&)
                 {
@@ -2836,7 +2836,8 @@ public:
 
 private:
     void process_event() {
-        this->initialization_timeout_event = this->events.erase_event(this->initialization_timeout_event);
+        this->initialization_timeout_event = this->events_guard.event_container().erase_event(
+            this->initialization_timeout_event);
         uint8_t message_buffer[1024];
 
         {

@@ -110,7 +110,6 @@ TransitionMod::TransitionMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
     , ttmessage(drawable, this->screen, nullptr, message,
                 theme.tooltip.fgcolor, theme.tooltip.bgcolor,
                 theme.tooltip.border_color, font)
@@ -126,7 +125,6 @@ TransitionMod::TransitionMod(
 
 TransitionMod::~TransitionMod()
 {
-    this->events.end_of_lifespan(this);
     this->rail_client_execute.reset(true);
     this->screen.clear();
 }

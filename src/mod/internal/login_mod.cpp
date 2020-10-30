@@ -82,7 +82,7 @@ LoginMod::LoginMod(
     , mouse_state(time_base, events)
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, drawable, front, font, theme)
@@ -129,8 +129,8 @@ LoginMod::LoginMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
-        this->events.create_event_timeout(
-            "Log Box Timeout", this,
+        this->events_guard.create_event_timeout(
+            "Log Box Timeout",
             this->time_base.get_current_time()+std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()),
             [this](Event&e)
             {
@@ -154,7 +154,6 @@ void LoginMod::init()
 
 LoginMod::~LoginMod()
 {
-    this->events.end_of_lifespan(this);
     this->rail_client_execute.reset(true);
     this->screen.clear();
 }

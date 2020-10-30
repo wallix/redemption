@@ -147,7 +147,6 @@ private:
 
 protected:
     TimeBase& time_base;
-    EventContainer& events;
     AuthApi & sesman;
 
 private:

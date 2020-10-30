@@ -101,6 +101,7 @@ ReplayMod::ReplayMod(
 , wait_for_escape(wait_for_escape)
 , replay_on_loop(replay_on_loop)
 , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
+, events_guards(events)
 {
     this->init_reader();
 
@@ -122,21 +123,16 @@ ReplayMod::ReplayMod(
             ev.alarm.set_timeout(this->start_time);
         }
         else if (!this->wait_for_escape) {
-            this->pevent->garbage = true;
+            ev.garbage = true;
             this->set_mod_signal(BACK_EVENT_STOP);
             // throw Error(ERR_BACK_EVENT_NEXT);
         }
     };
 
-    events.create_event_timeout("replay", this, this->time_base.get_current_time(), action);
-
-    this->pevent = events.queue.back();
+    this->events_guards.create_event_timeout("replay", this->time_base.get_current_time(), action);
 }
 
-ReplayMod::~ReplayMod()
-{
-    this->pevent->garbage = true;
-}
+ReplayMod::~ReplayMod() = default;
 
 bool ReplayMod::next_timestamp()
 {

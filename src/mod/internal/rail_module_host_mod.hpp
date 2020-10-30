@@ -112,7 +112,7 @@ private:
 
 protected:
     TimeBase& time_base;
-    EventContainer& events;
+    EventsGuard events_guard;
 
 public:
     RailModuleHostMod(
@@ -126,7 +126,6 @@ public:
 
     ~RailModuleHostMod() override
     {
-        this->events.end_of_lifespan(this);
         this->rail_client_execute.reset(true);
         this->screen.clear();
         this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);

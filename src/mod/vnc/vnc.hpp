@@ -328,7 +328,7 @@ private:
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    EventContainer & events;
+    EventsGuard events_guard;
     int clipboard_timeout_timer = 0;
 
 #ifndef __EMSCRIPTEN__
@@ -389,9 +389,7 @@ public:
 
     std::string module_name() override {return "VNC Mod";}
 
-    ~mod_vnc(){
-        this->events.end_of_lifespan(this);
-    }
+    ~mod_vnc();
 
     void init() override;
 

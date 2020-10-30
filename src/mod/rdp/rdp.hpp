@@ -177,15 +177,7 @@ public:
         // instead of creating events early
 
         if (this->tasks.size() == 1u) {
-            auto container_task = this->tasks.front().get();
-            auto pevent = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
-            pevent->actions.set_teardown_function(
-                [this, container_task](Event&event)
-                {
-                    AsynchronousTaskContainer::remover(this, container_task);
-                    event.garbage = true;
-                });
-            this->events.add(pevent);
+            this->next();
         }
     }
 
@@ -194,14 +186,14 @@ private:
     {
         if (!this->tasks.empty()) {
             auto container_task = this->tasks.front().get();
-            auto pevent  = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            auto pevent = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
+            this->events.add(pevent);
             pevent->actions.set_teardown_function(
                 [this, container_task](Event&event)
                 {
                     AsynchronousTaskContainer::remover(this, container_task);
                     event.garbage = true;
                 });
-            this->events.add(pevent);
         }
     }
 
@@ -544,7 +536,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->time_base, events, gd, mod_rdp, mod_rdp_params.lang,
+                this->time_base, this->events, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, this->sesman,
                 session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
@@ -1934,7 +1926,7 @@ class mod_rdp : public mod_api, public rdp_api
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    EventContainer & events;
+    EventsGuard events_guard;
     AuthApi & sesman;
 
 #ifndef __EMSCRIPTEN__
@@ -2109,7 +2101,7 @@ public:
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
         , gd_provider(gd_provider)
-        , events(events)
+        , events_guard(events)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         #ifndef __EMSCRIPTEN__
@@ -2232,8 +2224,8 @@ public:
         LOG(LOG_INFO, "**** Start Negociation");
         rdp_negociation.start_negociation();
 
-        this->events.create_event_fd_timeout(
-            "RDP Negociation", this,
+        this->events_guard.create_event_fd_timeout(
+            "RDP Negociation",
             this->trans.get_fd(), std::chrono::seconds{3600},
             this->time_base.get_current_time()+ this->private_rdp_negociation->open_session_timeout,
             [this](Event&event)
@@ -2354,7 +2346,6 @@ public:
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
         }
-        this->events.end_of_lifespan(this);
     }
 
 
@@ -5145,8 +5136,9 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
-                                                this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice
+              = this->events_guard.event_container().erase_event(
+                  this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
         }
         break;
@@ -5160,8 +5152,9 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
-                                                this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice
+              = this->events_guard.event_container().erase_event(
+                  this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
         }
         break;
@@ -5210,9 +5203,9 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
-                                                this->remoteapp_one_shot_bypass_window_legalnotice);
-
+            this->remoteapp_one_shot_bypass_window_legalnotice
+              = this->events_guard.event_container().erase_event(
+                  this->remoteapp_one_shot_bypass_window_legalnotice);
 #endif
             }
 
@@ -5258,19 +5251,21 @@ public:
                                 }
                             }
                         }};
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
-                                                this->remoteapp_one_shot_bypass_window_legalnotice);
+                        this->remoteapp_one_shot_bypass_window_legalnotice
+                          = this->events_guard.event_container().erase_event(
+                              this->remoteapp_one_shot_bypass_window_legalnotice);
 
-                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events.create_event_timeout(
-                            "Bypass Legal Notice Timer", this,
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->events_guard.create_event_timeout(
+                            "Bypass Legal Notice Timer",
                             this->time_base.get_current_time()
                                 +this->channels.remote_app.bypass_legal_notice_delay,
                                 chain);
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    this->remoteapp_one_shot_bypass_window_legalnotice = this->events.erase_event(
-                                                this->remoteapp_one_shot_bypass_window_legalnotice);
+                    this->remoteapp_one_shot_bypass_window_legalnotice
+                      = this->events_guard.event_container().erase_event(
+                          this->remoteapp_one_shot_bypass_window_legalnotice);
                 }
 #endif
             }

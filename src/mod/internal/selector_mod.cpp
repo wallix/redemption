@@ -166,7 +166,6 @@ SelectorMod::SelectorMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
     , sesman(sesman)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),

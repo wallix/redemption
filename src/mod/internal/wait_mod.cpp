@@ -137,7 +137,7 @@ WaitMod::WaitMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
     , wait_widget(drawable, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
@@ -158,7 +158,7 @@ WaitMod::WaitMod(
     this->screen.set_widget_focus(&this->wait_widget, Widget::focus_reason_tabkey);
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->events.create_event_timeout("Wait Mod Timeout", this,
+    this->events_guard.create_event_timeout("Wait Mod Timeout",
         this->time_base.get_current_time()+std::chrono::seconds(600),
         [this](Event&)
         {
@@ -180,7 +180,6 @@ void WaitMod::init()
 
 WaitMod::~WaitMod()
 {
-    this->events.end_of_lifespan(this);
     this->rail_client_execute.reset(true);
     this->screen.clear();
 }

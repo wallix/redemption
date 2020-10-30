@@ -41,10 +41,10 @@ struct WidgetTestMod::WidgetTestModPrivate
     WidgetTestModPrivate(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events, WidgetTestMod& /*mod*/)
       : time_base(time_base)
       , gd_provider(gd_provider)
-      , events(events)
+      , events_guard(events)
     {
-        this->timer = this->events.create_event_timeout(
-            "WidgetTestMod Timer", this,
+        this->timer = this->events_guard.create_event_timeout(
+            "WidgetTestMod Timer",
             this->time_base.get_current_time(),
             [this](Event&)
             {
@@ -87,15 +87,12 @@ struct WidgetTestMod::WidgetTestModPrivate
             });
     }
 
-    ~WidgetTestModPrivate()
-    {
-        this->events.end_of_lifespan(this);
-    }
+    ~WidgetTestModPrivate() = default;
 
     TimeBase& time_base;
     GdProvider & gd_provider;
     int timer;
-    EventContainer & events;
+    EventsGuard events_guard;
 };
 
 WidgetTestMod::WidgetTestMod(

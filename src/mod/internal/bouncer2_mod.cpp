@@ -38,11 +38,11 @@ Bouncer2Mod::Bouncer2Mod(
 , front_height(height)
 , front(front)
 , dancing_rect(0,0,100,100)
-, events(events)
+, events_guard(events)
 , gd_provider(gd_provider)
 {
-    this->events.create_event_timeout(
-        "Bouncer Periodic Timer", this,
+    this->events_guard.create_event_timeout(
+        "Bouncer Periodic Timer",
         time_base.get_current_time() + std::chrono::milliseconds(33),
         [this](Event&event)
         {
@@ -52,10 +52,7 @@ Bouncer2Mod::Bouncer2Mod(
         });
 }
 
-Bouncer2Mod::~Bouncer2Mod()
-{
-    this->events.end_of_lifespan(this);
-}
+Bouncer2Mod::~Bouncer2Mod() = default;
 
 Rect Bouncer2Mod::get_screen_rect() const
 {

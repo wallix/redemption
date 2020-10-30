@@ -86,7 +86,7 @@ RailModuleHostMod::RailModuleHostMod(
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
@@ -251,13 +251,13 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
 
         if (this->disconnection_reconnection_timer) {
-            this->events.reset_timeout(this->time_base.get_current_time()+std::chrono::seconds{1},
-                          this->disconnection_reconnection_timer);
-
+            this->events_guard.event_container().reset_timeout(
+                this->time_base.get_current_time() + std::chrono::seconds{1},
+                this->disconnection_reconnection_timer);
         }
         else {
-            this->disconnection_reconnection_timer = this->events.create_event_timeout(
-                "RAIL Module Host Disconnection Reconnection Timeout", this,
+            this->disconnection_reconnection_timer = this->events_guard.create_event_timeout(
+                "RAIL Module Host Disconnection Reconnection Timeout",
                 this->time_base.get_current_time()+std::chrono::seconds(1),
                 [this](Event&)
                 {

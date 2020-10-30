@@ -116,7 +116,6 @@ private:
 
 protected:
     TimeBase& time_base;
-    EventContainer& events;
 
 private:
     WidgetTooltip ttmessage;

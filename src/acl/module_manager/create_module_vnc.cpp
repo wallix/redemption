@@ -45,10 +45,13 @@ struct ModVNCWithMetrics : public mod_vnc
     std::unique_ptr<ModMetrics> metrics;
     int metrics_timer = 0;
 
+    EventsGuard events_guard;
+    TimeBase & time_base;
+
     void set_metrics_timer(std::chrono::seconds log_interval)
     {
-        this->metrics_timer = this->events.create_event_timeout(
-            "VNC Metrics Timer", this,
+        this->metrics_timer = this->events_guard.create_event_timeout(
+            "VNC Metrics Timer",
             this->time_base.get_current_time() + log_interval,
             [this,log_interval](Event&event)
             {
@@ -56,9 +59,6 @@ struct ModVNCWithMetrics : public mod_vnc
                 this->metrics->log(event.alarm.now);
             });
     }
-
-    EventContainer & events;
-    TimeBase & time_base;
 
     ModVNCWithMetrics(Transport & t
            , TimeBase& time_base
@@ -89,15 +89,12 @@ struct ModVNCWithMetrics : public mod_vnc
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
           rail_client_execute, verbose, metrics, sesman)
-    , events(events)
+    , events_guard(events)
     , time_base(time_base)
     {
     }
 
-    ~ModVNCWithMetrics()
-    {
-        this->events.end_of_lifespan(this);
-    }
+    ~ModVNCWithMetrics() = default;
 
     void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override
     {
@@ -113,7 +110,6 @@ struct ModVNCWithMetrics : public mod_vnc
     {
         LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");
     }
-
 };
 
 

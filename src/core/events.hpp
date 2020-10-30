@@ -41,7 +41,7 @@ struct Event {
     int id = 0;
 
     std::string name;
-    void * lifespan_handle = nullptr;
+    void const* lifespan_handle = nullptr;
     bool garbage = false;
     bool teardown = false;
 
@@ -183,7 +183,7 @@ struct Event {
         }
     } actions;
 
-    Event(std::string name, void * lifespan)
+    Event(std::string name, void const* lifespan)
         : id(Event::counter++)
         , name(name)
         , lifespan_handle(lifespan)
@@ -194,9 +194,7 @@ struct Event {
     {
         this->name = string;
     }
-
 };
-
 
 struct Sequencer {
     struct Item {
@@ -368,7 +366,7 @@ struct EventContainer : noncopyable
         }
     }
 
-    void end_of_lifespan(void * lifespan)
+    void end_of_lifespan(void const* lifespan)
     {
         for (auto & pevent: this->queue){
             Event & event = *pevent;
@@ -435,7 +433,7 @@ struct EventContainer : noncopyable
         this->queue.push_back(pevent);
     }
 
-    int create_event_timeout(std::string name, void * lifespan,
+    int create_event_timeout(std::string name, void const* lifespan,
         timeval trigger_time,
         std::function<void(Event&)> timeout)
     {
@@ -448,7 +446,7 @@ struct EventContainer : noncopyable
         return event_id;
     }
 
-    int create_event_fd_timeout(std::string name, void * lifespan,
+    int create_event_fd_timeout(std::string name, void const* lifespan,
         int fd, std::chrono::microseconds grace_delay,
         timeval trigger_time,
         std::function<void(Event&)> on_fd,
@@ -471,4 +469,57 @@ struct EventContainer : noncopyable
             delete pevent;
         }
     }
+};
+
+/**
+ * EventContainer wrapper that provides a convenient RAII-style mechanism
+ * to release events when control leave the scope.
+ */
+struct EventsGuard : noncopyable
+{
+    EventsGuard(EventContainer& events) noexcept
+    : events(events)
+    {}
+
+    int create_event_timeout(
+        std::string name,
+        timeval trigger_time,
+        std::function<void(Event&)> timeout)
+    {
+        return this->events.create_event_timeout(
+            std::move(name), this,
+            trigger_time, std::move(timeout));
+    }
+
+    int create_event_fd_timeout(
+        std::string name,
+        int fd,
+        std::chrono::microseconds grace_delay,
+        timeval trigger_time,
+        std::function<void(Event&)> on_fd,
+        std::function<void(Event&)> on_timeout)
+    {
+        return this->events.create_event_fd_timeout(
+            std::move(name), this, fd,
+            grace_delay, trigger_time,
+            std::move(on_fd), std::move(on_timeout));
+    }
+
+    void end_of_lifespan()
+    {
+        this->events.end_of_lifespan(this);
+    }
+
+    ~EventsGuard()
+    {
+        this->end_of_lifespan();
+    }
+
+    EventContainer& event_container()
+    {
+        return this->events;
+    }
+
+private:
+    EventContainer& events;
 };

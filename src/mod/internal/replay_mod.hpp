@@ -26,8 +26,8 @@
 #pragma once
 
 #include "capture/file_to_graphic.hpp" // FileToGraphic::Verbose
-#include "transport/mwrm_reader.hpp" // WrmVersion
 #include "mod/mod_api.hpp"
+#include "core/events.hpp"
 
 #include <sys/time.h>
 
@@ -59,8 +59,7 @@ public:
 
     std::string module_name() override { return "Replay Mod"; }
 
-    void rdp_input_invalidate(Rect /*rect*/) override
-    {}
+    void rdp_input_invalidate(Rect /*rect*/) override {}
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
 
@@ -68,8 +67,7 @@ public:
                             long /*param3*/, long /*param4*/, Keymap2 * keymap) override;
 
     void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                               int16_t /*param1*/, int16_t /*param2*/) override
-    {}
+                               int16_t /*param1*/, int16_t /*param2*/) override {}
 
     void rdp_gdi_up_and_running() override {}
 
@@ -79,8 +77,7 @@ public:
 
     void refresh(Rect /*rect*/) override {}
 
-    [[nodiscard]] bool is_up_and_running() const override
-    { return true; }
+    [[nodiscard]] bool is_up_and_running() const override { return true; }
 
     bool server_error_encountered() const override { return false; }
 
@@ -107,10 +104,10 @@ private:
     class Reader;
     std::unique_ptr<Reader> internal_reader;
 
-    Event * pevent = nullptr;
-
     Verbose const debug_capture;
     bool const wait_for_escape;
     bool const replay_on_loop;
     bool const play_video_with_corrupted_bitmap;
+
+    EventsGuard events_guards;
 };

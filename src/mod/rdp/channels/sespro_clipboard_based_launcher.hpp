@@ -77,7 +77,7 @@ public:
     bool    delay_wainting_clipboard_response = false;
 
     TimeBase& time_base;
-    EventContainer& events;
+    EventsGuard events_guard;
 
     const RDPVerbose verbose;
 
@@ -102,7 +102,7 @@ public:
     , mod(mod)
     , alternate_shell(alternate_shell)
     , time_base(time_base)
-    , events(events)
+    , events_guard(events)
     , verbose(verbose)
     {
         this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
@@ -119,10 +119,7 @@ public:
             ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
     }
 
-    ~SessionProbeClipboardBasedLauncher()
-    {
-        this->events.end_of_lifespan(this);
-    }
+    ~SessionProbeClipboardBasedLauncher() = default;
 
     bool on_clipboard_initialize() override {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_launcher), LOG_INFO,
@@ -147,9 +144,9 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event_id = this->events.erase_event(this->event_id);
-            this->event_id = this->events.create_event_timeout(
-                "SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready", this,
+            this->event_id = this->events_guard.event_container().erase_event(this->event_id);
+            this->event_id = this->events_guard.create_event_timeout(
+                "SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready",
                 this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms,
                 [this](Event&event)
                 {
@@ -493,9 +490,9 @@ public:
         }
         }};
 
-        this->event_id = this->events.erase_event(this->event_id);
-        this->event_id = this->events.create_event_timeout(
-            "SessionProbeClipboardBasedLauncher Event", this,
+        this->event_id = this->events_guard.event_container().erase_event(this->event_id);
+        this->event_id = this->events_guard.create_event_timeout(
+            "SessionProbeClipboardBasedLauncher Event",
             this->time_base.get_current_time()+this->params.short_delay_ms,
             std::move(chain));
     }
@@ -602,9 +599,9 @@ public:
             }
         }}};
 
-        this->event_id = this->events.erase_event(this->event_id);
-        this->event_id = this->events.create_event_timeout(
-            "SessionProbeClipboardBasedLauncher Event", this,
+        this->event_id = this->events_guard.event_container().erase_event(this->event_id);
+        this->event_id = this->events_guard.create_event_timeout(
+            "SessionProbeClipboardBasedLauncher Event",
             this->time_base.get_current_time()+this->params.short_delay_ms,
             std::move(chain));
     }
@@ -726,7 +723,7 @@ public:
             "SessionProbeClipboardBasedLauncher :=> stop");
 
         this->state = State::STOP;
-        this->event_id = this->events.erase_event(this->event_id);
+        this->event_id = this->events_guard.event_container().erase_event(this->event_id);
 
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {
