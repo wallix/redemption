@@ -61,7 +61,7 @@ class ModFactory
     TimeBase & time_base;
     AuthApi & sesman;
     EventContainer & events;
-    ClientInfo & client_info;
+    ClientInfo const& client_info;
     FrontAPI & front;
     gdi::GraphicApi & graphics;
     RedirectionInfo & redir_info;
@@ -76,11 +76,19 @@ class ModFactory
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
 public:
+    struct ClientInfoRef
+    {
+        ClientInfoRef(ClientInfo const&&) = delete;
+        ClientInfoRef(ClientInfo const& client_info) : ref(client_info) {}
+
+        ClientInfo const& ref;
+    };
+
     ModFactory(ModWrapper & mod_wrapper,
                TimeBase & time_base,
                AuthApi & sesman,
                EventContainer & events,
-               ClientInfo & client_info,
+               ClientInfoRef client_info_ref,
                FrontAPI & front,
                gdi::GraphicApi & graphics,
                RedirectionInfo & redir_info,
@@ -96,7 +104,7 @@ public:
         , time_base(time_base)
         , sesman(sesman)
         , events(events)
-        , client_info(client_info)
+        , client_info(client_info_ref.ref)
         , front(front)
         , graphics(graphics)
         , redir_info(redir_info)

@@ -19,6 +19,7 @@ Author(s): Jonathan Poelen
 */
 
 #include "test_only/front/front_wrapper.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 #include "front/front.hpp"
 
 
@@ -31,6 +32,8 @@ struct FrontWrapper::D
     };
 
     MyFront front;
+    Transport& trans;
+    TpduBuffer rbuf {};
 };
 
 const CHANNELS::ChannelDefArray & FrontWrapper::get_channel_list() const
@@ -95,7 +98,6 @@ void FrontWrapper::possible_active_window_change()
     d->front.possible_active_window_change();
 }
 
-
 void FrontWrapper::send_savesessioninfo()
 {
     d->front.send_savesessioninfo();
@@ -108,21 +110,16 @@ int FrontWrapper::get_keylayout() const
 
 bool FrontWrapper::is_up_and_running() const
 {
-    return d->front.state == Front::FRONT_UP_AND_RUNNING;
-}
-
-void FrontWrapper::set_up_and_running()
-{
-    d->front.state = Front::FRONT_UP_AND_RUNNING;
+    return d->front.is_up_and_running();
 }
 
 void FrontWrapper::incoming(Callback & cb)
 {
-    d->front.rbuf.load_data(d->front.trans);
-    while (d->front.rbuf.next(TpduBuffer::PDU))
+    d->rbuf.load_data(d->trans);
+    while (d->rbuf.next(TpduBuffer::PDU))
     {
-        bytes_view tpdu = d->front.rbuf.current_pdu_buffer();
-        uint8_t current_pdu_type = d->front.rbuf.current_pdu_get_type();
+        bytes_view tpdu = d->rbuf.current_pdu_buffer();
+        uint8_t current_pdu_type = d->rbuf.current_pdu_get_type();
         d->front.incoming(tpdu, current_pdu_type, cb);
     }
 }
@@ -134,18 +131,13 @@ void FrontWrapper::set_ignore_rdesktop_bogus_clip(bool set)
 
 ScreenInfo const& FrontWrapper::screen_info() const
 {
-    return d->front.client_info.screen_info;
+    return d->front.get_client_info().screen_info;
 }
 
 
 gdi::GraphicApi& FrontWrapper::gd() noexcept
 {
     return d->front;
-}
-
-CHANNELS::ChannelDefArray & FrontWrapper::get_mutable_channel_list()
-{
-    return d->front.channel_list;
 }
 
 FrontWrapper::FrontWrapper(
@@ -164,7 +156,7 @@ FrontWrapper::FrontWrapper(
     auth,
     trans, gen, ini, cctx,
     fp_support
-}})
+}, trans})
 {}
 
 FrontWrapper::~FrontWrapper()

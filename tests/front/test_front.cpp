@@ -68,11 +68,6 @@ public:
 
     using FrontWrapper::FrontWrapper;
 
-    void clear_channels()
-    {
-        this->get_mutable_channel_list().clear_channels();
-    }
-
     void send_to_channel(
         const CHANNELS::ChannelDef & /*channel*/,
         bytes_view /*chunk_data*/,
@@ -91,6 +86,7 @@ struct FrontTransport : GeneratorTransport
         // TEST test
     }
 };
+
 
 RED_AUTO_TEST_CASE(TestFront)
 {
@@ -226,7 +222,6 @@ RED_AUTO_TEST_CASE(TestFront)
     // To always get the same client random, in tests
     LCGRandom gen2;
 
-    front.clear_channels();
     NullLicenseStore license_store;
     class RDPMetrics * metrics = nullptr;
     const ChannelsAuthorizations channels_authorizations{};
@@ -250,7 +245,6 @@ RED_AUTO_TEST_CASE(TestFront)
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
-    front.set_up_and_running();
 
     RED_TEST_PASSPOINT();
 

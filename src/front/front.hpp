@@ -129,8 +129,6 @@ enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
 class Front : public FrontAPI, public gdi::GraphicApi
 {
-    using gdi::GraphicApi::draw;
-
     // for printf with %p
     using voidp = void const *;
 
@@ -513,7 +511,10 @@ private:
             ~U() {} /*NOLINT*/
         } u;
         bool is_initialized = false;
-    } orders;
+    };
+
+private:
+    GraphicsPointer orders;
 
     not_null_ptr<gdi::GraphicApi> gd = &gdi::null_gd();
     not_null_ptr<gdi::GraphicApi> graphics_update = &gdi::null_gd();
@@ -530,20 +531,16 @@ private:
 public:
     Keymap2 keymap;
 
-protected:
+private:
     CHANNELS::ChannelDefArray channel_list;
 
-private:
     int share_id = 65538;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
 
-public:
     ClientInfo client_info;
 
-private:
     bool Revision2BitmapCachesAdvertised = false;
 
-public:
    // TODO: this should be extracted from the class
     Transport & trans;
 
@@ -557,7 +554,6 @@ private:
 
     int order_level = 0;
 
-private:
     Inifile & ini;
     CryptoContext & cctx;
 
@@ -568,8 +564,7 @@ private:
     BitsPerPixel mod_bpp {0};
     BitsPerPixel capture_bpp {0};
 
-public:
-    enum {
+    enum : char {
         CONNECTION_INITIATION,
         PRIMARY_AUTH_NLA,
         BASIC_SETTINGS_EXCHANGE,
@@ -584,38 +579,6 @@ public:
         FRONT_UP_AND_RUNNING
     } state = CONNECTION_INITIATION;
 
-
-    std::string state_name(){
-        switch (this->state){
-        case CONNECTION_INITIATION:
-            return "Front::CONNECTION_INITIATION";
-        case PRIMARY_AUTH_NLA:
-            return "Front::PRIMARY_AUTH_NLA";
-        case BASIC_SETTINGS_EXCHANGE:
-            return "Front::BASIC_SETTINGS_EXCHANGE";
-        case CHANNEL_ATTACH_USER:
-            return "Front::CHANNEL_ATTACH_USER";
-        case CHANNEL_JOIN_REQUEST:
-            return "Front::CHANNEL_JOIN_REQUEST";
-        case CHANNEL_JOIN_CONFIRM_USER_ID:
-            return "Front::CHANNEL_JOIN_CONFIRM_USER_ID";
-        case CHANNEL_JOIN_CONFIRM_CHECK_USER_ID:
-            return "Front::CHANNEL_JOIN_CONFIRM_CHECK_USER_ID";
-        case CHANNEL_JOIN_CONFIRM_LOOP:
-            return "Front::CHANNEL_JOIN_CONFIRM_LOOP";
-        case WAITING_FOR_LOGON_INFO:
-            return "Front::WAITING_FOR_LOGON_INFO";
-        case WAITING_FOR_ANSWER_TO_LICENSE:
-            return "Front::WAITING_FOR_ANSWER_TO_LICENSE";
-        case ACTIVATE_AND_PROCESS_DATA:
-            return "Front::ACTIVATE_AND_PROCESS_DATA";
-        case FRONT_UP_AND_RUNNING:
-            return "Front::FRONT_UP_AND_RUNNING";
-        }
-        return "Front::UNKNOWN_STATE";
-    }
-
-private:
     Random & gen;
     Fstat fstat;
 
@@ -654,12 +617,32 @@ private:
     int capture_timer = 0;
     int flow_control_timer = 0;
 
+public:
+    bool front_must_notify_resize = false;
+
+public:
+    bool ignore_rdesktop_bogus_clip = false;
+
+private:
+    bool palette_sent = false;
+
     const std::chrono::milliseconds rdp_keepalive_connection_interval;
     const PrimaryDrawingOrdersSupport supported_orders;
 
-public:
+    size_t channel_list_index = 0;
 
-    bool front_must_notify_resize = false;
+    Rect rail_window_rect;
+
+public:
+    bool is_up_and_running() const noexcept
+    {
+        return state == Front::FRONT_UP_AND_RUNNING;
+    }
+
+    ClientInfo const& get_client_info() const noexcept
+    {
+        return this->client_info;
+    }
 
     void notify_resize(Callback & cb)
     {
@@ -678,10 +661,8 @@ public:
         this->front_must_notify_resize = false;
     }
 
-    bool ignore_rdesktop_bogus_clip = false;
-
     void draw(RDP::FrameMarker    const & cmd) override { this->draw_impl(cmd); }
-    void draw(RDPDstBlt          const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
+    void draw(RDPDstBlt           const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override { this->draw_impl(cmd, clip); }
     void draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
     void draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override { this->draw_impl(cmd, clip, color_ctx); }
@@ -1376,8 +1357,6 @@ public:
                                           , this->encryptionLevel, userid, channel.chanid
                                           , total_length, flags, chunk_data);
     }
-
-    size_t channel_list_index = 0;
 
     void connection_initiation(bytes_view tpdu, bool bogus_neg_req, bool enable_nla, const Front::Verbose & verbose)
     {
@@ -2804,10 +2783,6 @@ public:
             this->process_data_tpdu_running(tpdu, cb);
         }
     }
-
-
-    // TODO: this should be extracted
-    TpduBuffer rbuf;
 
     void front_nla(Transport & trans, bytes_view data)
     {
@@ -4480,7 +4455,7 @@ public:
         this->keymap.toggle_num_lock(LedFlags & SlowPath::TS_SYNC_NUM_LOCK);
     }
 
-protected:
+private:
     template<class Cmd, class... Args>
     void draw_impl(Cmd const & cmd, Rect clip, Args && ... args) {
         if (!clip.intersect(clip_from_cmd(cmd)).isempty()) {
@@ -4578,8 +4553,6 @@ protected:
         this->priv_draw_and_update_cache_brush(cmd, clip, color_ctx);
     }
 
-    Rect rail_window_rect;
-
     void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
         this->graphics_update->draw(cmd);
 
@@ -4601,7 +4574,7 @@ protected:
         this->rail_window_rect.empty();
     }
 
-protected:
+private:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
     {
         if (this->client_info.glyph_cache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
@@ -5052,8 +5025,6 @@ private:
             stream.out_uint8(color.red());
         }
     }
-
-    bool palette_sent = false;
 
     void send_palette() {
         if (BitsPerPixel{8} != this->client_info.screen_info.bpp || this->palette_sent) {

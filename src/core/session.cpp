@@ -21,6 +21,7 @@
 #include "acl/end_session_warning.hpp"
 
 #include "acl/module_manager/mod_factory.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 #include "core/session.hpp"
 
 #include "acl/session_inactivity.hpp"
@@ -439,7 +440,7 @@ private:
                 }
                 throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
             }
-            rail_client_execute.enable_remote_program(front.client_info.remote_program);
+            rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
             try {
@@ -450,14 +451,14 @@ private:
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
                 if (ini.get<cfg::globals::bogus_refresh_rect>()
                 && ini.get<cfg::globals::allow_using_multiple_monitors>()
-                && (front.client_info.cs_monitor.monitorCount > 1)
+                && (front.get_client_info().cs_monitor.monitorCount > 1)
                 ) {
                     mod_wrapper.get_mod()->rdp_suppress_display_updates();
                     mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                        front.client_info.screen_info.width, front.client_info.screen_info.height);
+                        front.get_client_info().screen_info.width, front.get_client_info().screen_info.height);
                 }
                 mod_wrapper.get_mod()->rdp_input_invalidate(
-                        Rect(0, 0, front.client_info.screen_info.width, front.client_info.screen_info.height));
+                        Rect(0, 0, front.get_client_info().screen_info.width, front.get_client_info().screen_info.height));
                 ini.set<cfg::context::auth_error_message>("");
             }
             catch (...) {
@@ -476,7 +477,7 @@ private:
                 throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
             }
 
-            rail_client_execute.enable_remote_program(front.client_info.remote_program);
+            rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
             log_proxy::set_user(ini.get<cfg::globals::auth_user>().c_str());
 
             try {
@@ -499,7 +500,7 @@ private:
         {
             next_state = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
             if (next_state != last_state){
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             }
@@ -513,27 +514,27 @@ private:
 
         case MODULE_INTERNAL_LOGIN:
                 log_proxy::set_user("");
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
         case MODULE_INTERNAL_WAIT_INFO:
                 log_proxy::set_user("");
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
                 log_proxy::set_user("");
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
                 log_proxy::set_user("");
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
                 log_proxy::set_user("");
-                rail_client_execute.enable_remote_program(front.client_info.remote_program);
+                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
         default:
@@ -543,23 +544,6 @@ private:
         } // switch (next_state)
 
         return true;
-    }
-
-    static void front_incoming_data(SocketTransport& front_trans, Front & front, ModWrapper & mod_wrapper)
-    {
-        if (front.front_must_notify_resize) {
-            LOG(LOG_INFO, "Notify resize to front");
-            front.notify_resize(mod_wrapper.get_callback());
-        }
-
-        front.rbuf.load_data(front_trans);
-
-        while (front.rbuf.next(TpduBuffer::PDU)) // or TdpuBuffer::CredSSP in NLA
-        {
-            bytes_view tpdu = front.rbuf.current_pdu_buffer();
-            uint8_t current_pdu_type = front.rbuf.current_pdu_get_type();
-            front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
-        }
     }
 
     // This function takes care of outgoing data waiting in buffers
@@ -617,7 +601,7 @@ private:
         LOG(LOG_INFO, "Retry RDP");
         this->remote_answer = false;
 
-        rail_client_execute.enable_remote_program(front.client_info.remote_program);
+        rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
         auto next_state = MODULE_RDP;
@@ -626,15 +610,15 @@ private:
 
             if (ini.get<cfg::globals::bogus_refresh_rect>() &&
                 ini.get<cfg::globals::allow_using_multiple_monitors>() &&
-                (front.client_info.cs_monitor.monitorCount > 1)) {
+                (front.get_client_info().cs_monitor.monitorCount > 1)) {
                 mod_wrapper.get_mod()->rdp_suppress_display_updates();
                 mod_wrapper.get_mod()->rdp_allow_display_updates(0, 0,
-                    front.client_info.screen_info.width, front.client_info.screen_info.height);
+                    front.get_client_info().screen_info.width, front.get_client_info().screen_info.height);
             }
             mod_wrapper.get_mod()->rdp_input_invalidate(
                     Rect(0, 0,
-                        front.client_info.screen_info.width,
-                        front.client_info.screen_info.height));
+                        front.get_client_info().screen_info.width,
+                        front.get_client_info().screen_info.height));
             ini.set<cfg::context::auth_error_message>("");
         }
         catch (...) {
@@ -719,6 +703,8 @@ public:
             log_file.log6(id, kv_list);
         };
 
+        TpduBuffer rbuf;
+
         try {
             Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
 
@@ -728,15 +714,15 @@ public:
             RedirectionInfo redir_info;
 
             ClientExecute rail_client_execute(
-                time_base, events, front, front, front.client_info.window_list_caps,
+                time_base, events, front, front, front.get_client_info().window_list_caps,
                 ini.get<cfg::debug::mod_internal>() & 1);
 
             windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(
-                front.get_palette(), front, front.keymap, front.client_info, glyphs,
+                front.get_palette(), front, front.keymap, front.get_client_info(), glyphs,
                 rail_client_execute, winapi, this->ini, sesman);
             ModFactory mod_factory(
-                mod_wrapper, time_base, sesman, events, front.client_info, front, front,
+                mod_wrapper, time_base, sesman, events, front.get_client_info(), front, front,
                 redir_info, ini, glyphs, theme, rail_client_execute, front.keymap, rnd,
                 cctx);
             EndSessionWarning end_session_warning;
@@ -827,7 +813,19 @@ public:
                     bool const front_is_set = front_trans.has_tls_pending_data()
                         || (front_trans.sck != INVALID_SOCKET && ioswitch.is_set_for_reading(front_trans.sck));
                     if (front_is_set){
-                        this->front_incoming_data(front_trans, front, mod_wrapper);
+                        if (front.front_must_notify_resize) {
+                            LOG(LOG_INFO, "Notify resize to front");
+                            front.notify_resize(mod_wrapper.get_callback());
+                        }
+
+                        rbuf.load_data(front_trans);
+
+                        while (rbuf.next(TpduBuffer::PDU)) // or TdpuBuffer::CredSSP in NLA
+                        {
+                            bytes_view tpdu = rbuf.current_pdu_buffer();
+                            uint8_t current_pdu_type = rbuf.current_pdu_get_type();
+                            front.incoming(tpdu, current_pdu_type, mod_wrapper.get_callback());
+                        }
                     }
                 }
                 catch (Error const& e) {
@@ -948,7 +946,7 @@ public:
                         }
                         continue;
                     }
-                    else if (front.state == Front::FRONT_UP_AND_RUNNING) {
+                    else if (front.is_up_and_running()) {
                         if (acl_serial.is_before_connexion()) {
                             unique_fd client_sck = addr_connect_non_blocking(
                                 ini.get<cfg::globals::authfile>().c_str(),
@@ -996,7 +994,7 @@ public:
                         [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd); },
                         VerboseSession::has_verbose_event(ini));
 
-                    if (front.state == Front::FRONT_UP_AND_RUNNING) {
+                    if (front.is_up_and_running()) {
                         const uint32_t enddate = this->ini.get<cfg::context::end_date_cnx>();
                         if (enddate != 0
                         && (static_cast<uint32_t>(time_base.get_current_time().tv_sec) > enddate)) {
@@ -1095,7 +1093,7 @@ public:
 
                         if (mod_wrapper.get_mod_signal() == BACK_EVENT_NEXT){
                             rail_client_execute.enable_remote_program(
-                                front.client_info.remote_program);
+                                front.get_client_info().remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                             auto next_state = MODULE_INTERNAL_TRANSITION;
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -1229,7 +1227,7 @@ public:
                 } catch (Error const& e) {
                     run_session = false;
 
-                    if (front.state != Front::FRONT_UP_AND_RUNNING) {
+                    if (!front.is_up_and_running()) {
                         sesman.flush_acl_log6(write_acl_log6_fn);
                         sesman.flush_acl_disconnect_target([&log_file]()
                         {
@@ -1246,7 +1244,7 @@ public:
                         mod_wrapper.disconnect();
                         if (ini.get<cfg::globals::enable_close_box>()) {
                             rail_client_execute.enable_remote_program(
-                                front.client_info.remote_program);
+                                front.get_client_info().remote_program);
 
                             auto next_state = MODULE_INTERNAL_CLOSE_BACK;
 

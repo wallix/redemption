@@ -24,7 +24,6 @@
 #ifndef __EMSCRIPTEN__
 
 #include "core/RDP/nla/credssp.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
 
