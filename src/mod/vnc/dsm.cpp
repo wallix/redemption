@@ -208,7 +208,7 @@ const EVP_CIPHER* UltraDSM::getCipher(uint32_t dwFlags, int &nKeyLength) {
             return EVP_idea_ofb();
         } else {
             LOG(LOG_ERR, "Invalid keysize for cipher (flags 0x%08x).", dwFlags);
-            return NULL;
+            return nullptr;
         }
 #endif
     } else if (dwFlags & svncCipherCAST5) {
