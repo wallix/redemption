@@ -124,11 +124,6 @@ void FrontWrapper::incoming(Callback & cb)
     }
 }
 
-void FrontWrapper::set_ignore_rdesktop_bogus_clip(bool set)
-{
-    d->front.ignore_rdesktop_bogus_clip = set;
-}
-
 ScreenInfo const& FrontWrapper::screen_info() const
 {
     return d->front.get_client_info().screen_info;

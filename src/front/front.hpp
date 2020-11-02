@@ -618,9 +618,6 @@ private:
 public:
     bool front_must_notify_resize = false;
 
-public:
-    bool ignore_rdesktop_bogus_clip = false;
-
 private:
     bool palette_sent = false;
 
@@ -678,7 +675,7 @@ public:
     void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) override {
         // TODO: check if this is still necessary with current rdesktop (likely not)
         /// NOTE force resize cliping with rdesktop...
-        if (this->is_first_memblt && !this->ignore_rdesktop_bogus_clip){
+        if (this->is_first_memblt){
             this->draw_impl(cmd, Rect(clip.x,clip.y,1,1), bmp);
             this->is_first_memblt = false;
         }

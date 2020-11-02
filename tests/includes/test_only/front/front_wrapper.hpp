@@ -81,7 +81,6 @@ public:
 
     bool is_up_and_running() const;
     void incoming(Callback & cb);
-    void set_ignore_rdesktop_bogus_clip(bool set);
     ScreenInfo const& screen_info() const;
 
 private:

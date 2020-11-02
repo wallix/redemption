@@ -105,7 +105,6 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     EventContainer events;
     NullAuthentifier auth;
     FrontWrapper front(time_base, events, auth, front_trans, gen, ini, cctx, fastpath_support);
-    front.set_ignore_rdesktop_bogus_clip(true);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {
@@ -114,9 +113,9 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
     //LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-    GdForwarder gd_forwarder(front);
-    TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
-    mod.init();
+    // GdForwarder gd_forwarder(front);
+    // TestCardMod mod(gd_forwarder, front.screen_info().width, front.screen_info().height, global_font());
+    // mod.init();
 //    mod.draw_event(front);
 
     // Uncomment the code block below to generate testing data.

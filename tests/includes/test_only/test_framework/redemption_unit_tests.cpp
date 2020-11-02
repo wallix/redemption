@@ -368,6 +368,9 @@ namespace
                 if (c == '\\') {
                     out << "\\\\";
                 }
+                else if (c == '"') {
+                    out << "\\\"";
+                }
                 else {
                     out << char(c);
                 }
