@@ -80,7 +80,7 @@ public:
         this->screen.redo_mouse_pointer_change(x, y);
     }
 
-protected:
+private:
     uint16_t front_width;
     uint16_t front_height;
 
@@ -89,7 +89,6 @@ protected:
     WidgetScreen screen;
     ClientExecute& rail_client_execute;
 
-private:
     DVCManager dvc_manager;
 
     bool alt_key_pressed = false;
@@ -110,7 +109,6 @@ private:
     int old_mouse_x = 0;
     int old_mouse_y = 0;
 
-protected:
     TimeBase& time_base;
     EventsGuard events_guard;
 

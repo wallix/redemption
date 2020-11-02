@@ -143,7 +143,7 @@ public:
         return this->ptr_;
     }
 
-protected:
+private:
     uint8_t const * data_palette() const noexcept
     {
         //assert(this->bpp() == 8);

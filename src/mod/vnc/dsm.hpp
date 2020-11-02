@@ -28,70 +28,70 @@
 #include "utils/stream.hpp"
 
 /**
- *	@brief UltraVNC DSM plugin
+ *    @brief UltraVNC DSM plugin
  */
 class UltraDSM {
-	/** @brief plug-in state */
-	enum UltraDsmState {
-		DSM_WAITING_CHALLENGE,
-	};
+    /** @brief plug-in state */
+    enum UltraDsmState {
+        DSM_WAITING_CHALLENGE,
+    };
 
-	/** various plug-in constants */
-	enum {
-		svncInvalid					= 0x00,
-		svncCipherAES				= 0x01,
-		svncCipherARC4				= 0x02,
-		svncCipherBlowfish			= 0x04,
-		svncCipherIDEA				= 0x08,
-		svncCipherCAST5				= 0x10,
-		svncCipherAESCFB			= 0x20,
-		svncCipher3AESOFB			= 0x40,
+    /** various plug-in constants */
+    enum {
+        svncInvalid                    = 0x00,
+        svncCipherAES                = 0x01,
+        svncCipherARC4                = 0x02,
+        svncCipherBlowfish            = 0x04,
+        svncCipherIDEA                = 0x08,
+        svncCipherCAST5                = 0x10,
+        svncCipherAESCFB            = 0x20,
+        svncCipher3AESOFB            = 0x40,
 
-		svncCipherMask				= 0xFF,
+        svncCipherMask                = 0xFF,
 
-		svncKey128					= 0x1000,
-		svncKey192					= 0x2000,
-		svncKey256					= 0x4000,
-		svncKey448					= 0x8000,
-		svncKey56					= 0x0100,
+        svncKey128                    = 0x1000,
+        svncKey192                    = 0x2000,
+        svncKey256                    = 0x4000,
+        svncKey448                    = 0x8000,
+        svncKey56                    = 0x0100,
 
-		svncKeyMask					= 0xFF00,
+        svncKeyMask                    = 0xFF00,
 
-		svncClientAuthRequired		= 0x00010000,
+        svncClientAuthRequired        = 0x00010000,
 
-		svncOverridePassphrase		= 0x00020000,
-		svncLowKey					= 0x00040000,
-		svncNewKey					= 0x00800000,
-		RC4_DROP_BYTES 				= 3072,
-	};
-
-public:
-	UltraDSM(char *password);
-
-	~UltraDSM();
-
-	void reset();
-	bool handleChallenge(InStream &instream, uint16_t &challengeLen, uint8_t &passphraseused);
-	bool getResponse(OutStream &out);
-	bool encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out);
-	bool decrypt(const uint8_t *buffer, size_t len, writable_bytes_view out);
+        svncOverridePassphrase        = 0x00020000,
+        svncLowKey                    = 0x00040000,
+        svncNewKey                    = 0x00800000,
+        RC4_DROP_BYTES                 = 3072,
+    };
 
 public:
-	static uint32_t checkBestSupportedFlags(uint32_t dwFlags);
-	static const EVP_CIPHER* getCipher(uint32_t dwFlags, int &nKeyLength);
+    UltraDSM(char *password);
 
-protected:
-	UltraDsmState m_state;
-	char *m_password;
-	RSA *m_rsa;
-	int m_nRSASize;
-	uint32_t m_challengeFlags;
-	uint32_t m_responseFlags;
-	EVP_CIPHER_CTX *m_contextVS1;
-	EVP_CIPHER_CTX *m_contextSV1;
-	EVP_CIPHER_CTX *m_contextVS2;
-	EVP_CIPHER_CTX *m_contextSV2;
-	EVP_CIPHER_CTX *m_contextVS3;
-	EVP_CIPHER_CTX *m_contextSV3;
-	bool m_bTriple;
+    ~UltraDSM();
+
+    void reset();
+    bool handleChallenge(InStream &instream, uint16_t &challengeLen, uint8_t &passphraseused);
+    bool getResponse(OutStream &out);
+    bool encrypt(byte_ptr buffer, size_t len, writable_bytes_view & out);
+    bool decrypt(const uint8_t *buffer, size_t len, writable_bytes_view out);
+
+public:
+    static uint32_t checkBestSupportedFlags(uint32_t dwFlags);
+    static const EVP_CIPHER* getCipher(uint32_t dwFlags, int &nKeyLength);
+
+private:
+    UltraDsmState m_state;
+    char *m_password;
+    RSA *m_rsa;
+    int m_nRSASize;
+    uint32_t m_challengeFlags;
+    uint32_t m_responseFlags;
+    EVP_CIPHER_CTX *m_contextVS1;
+    EVP_CIPHER_CTX *m_contextSV1;
+    EVP_CIPHER_CTX *m_contextVS2;
+    EVP_CIPHER_CTX *m_contextSV2;
+    EVP_CIPHER_CTX *m_contextVS3;
+    EVP_CIPHER_CTX *m_contextSV3;
+    bool m_bTriple;
 };

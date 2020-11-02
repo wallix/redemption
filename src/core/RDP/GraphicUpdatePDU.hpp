@@ -152,7 +152,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                        , rdp_mppc_enc * mppc_enc, uint32_t shareId, int encryptionLevel
                        , CryptContext & encrypt, uint16_t initiator, ServerUpdateType type
                        , uint16_t data_extra
-					   , OutReservedStreamHelper & data_common
+                       , OutReservedStreamHelper & data_common
                        // TODO enum Verbose
                        , uint32_t verbose) {
     LOG_IF(verbose & 4, LOG_INFO
@@ -181,13 +181,13 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
 
         switch (type) {
             case SERVER_UPDATE_GRAPHICS_ORDERS:
-			{
+            {
                     updateCode = FastPath::UpdateType::ORDERS;
                     StaticOutStream<2> data;
                     data.out_uint16_le(data_extra);
                     data_common.copy_to_head(data.get_produced_bytes());
-			}
-			break;
+            }
+            break;
 
             case SERVER_UPDATE_GRAPHICS_BITMAP:
                 updateCode = FastPath::UpdateType::BITMAP;
@@ -255,7 +255,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             }
 
             //LOG(LOG_INFO, "fastPdu fragment id=%d startAt=%d(%u) fragmentSize=%lu(%d)",
-            //		fragmentId, startAt, payloadSize, fragmentPayload->get_packet().size(), fragmentSize);
+            //        fragmentId, startAt, payloadSize, fragmentPayload->get_packet().size(), fragmentSize);
 
             startAt += fragmentSize;
 
@@ -916,7 +916,8 @@ public:
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::surface_commands), LOG_INFO,
             "GraphicsUpdatePDU::send_surface_command");
 
-        DynamicOutReservedStreamHelper stream(1024, 65536 - 1024 + cmd.bitmapDataLength);
+        std::unique_ptr<uint8_t[]> buffer(new uint8_t[65536 + cmd.bitmapDataLength]); /* NOLINT */
+        OutReservedStreamHelper stream(buffer.get(), 1024, 65536 - 1024 + cmd.bitmapDataLength);
         stream.get_data_stream().out_uint16_le(0x0001); // CMDTYPE_SET_SURFACE_BITS
         cmd.emit(stream.get_data_stream());
 

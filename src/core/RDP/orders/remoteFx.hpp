@@ -247,7 +247,7 @@ public:
     void recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::GraphicApi & drawable);
 
 
-protected:
+private:
     DecoderState decoderState;
     uint8_t haveFlags = 0;
     TS_RFX_REGION currentRegion;
@@ -259,9 +259,11 @@ public:
     RfxEncoder();
 
     void sendFrame();
-protected:
+
+private:
     void sendInitSequence();
-protected:
+
+private:
     bool initialized;
     uint32_t frameCounter;
 };

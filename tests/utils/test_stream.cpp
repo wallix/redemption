@@ -461,28 +461,3 @@ RED_AUTO_TEST_CASE(TestStreamAt)
     RED_CHECK(stream.get_produced_bytes() == "axcde"_av);
 }
 
-RED_AUTO_TEST_CASE(TestDynamicReservedStream)
-{
-	StaticOutStream<2> ostream;
-	ostream.out_uint16_be(0x0001);
-
-	DynamicOutReservedStreamHelper dstream(2, 8+2);
-	dstream.get_data_stream().out_uint64_be(0x0203040506070809);
-
-	dstream.copy_to_head(ostream.get_produced_bytes());
-	RED_CHECK(dstream.get_packet() == "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09"_av);
-
-	// dstream is supposed to be
-	//     v headPtr
-	// 0 1 0 1 4 5 6 7 8 9
-	//         ^ payloadStream
-	OutReservedStreamHelper sub(dstream.get_sub_stream(1, 3));
-	RED_CHECK(sub.get_packet() == "\x01\x02\x03"_av);
-
-	StaticOutStream<1> ostream2;
-	ostream2.out_uint8(0x00);
-
-	sub.copy_to_head(ostream2.get_produced_bytes());
-	RED_CHECK(sub.get_packet() == "\x00\x01\x02\x03"_av);
-}
-

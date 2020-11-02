@@ -29,6 +29,7 @@
 
 #include <memory>
 #include "utils/sugar/bytes_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 class OutStream;
 
@@ -426,11 +427,8 @@ enum {
 };
 
 
-struct rdp_mppc_dec
+class rdp_mppc_dec : noncopyable
 {
-protected:
-    explicit rdp_mppc_dec() = default;
-
 public:
     virtual ~rdp_mppc_dec() = default;
 

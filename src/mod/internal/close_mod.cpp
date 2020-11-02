@@ -99,7 +99,6 @@ CloseMod::CloseMod(
     , mouse_state(time_base, events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , time_base(time_base)
     , events_guard(events)
 {
     this->screen.set_wh(this->front_width, this->front_height);

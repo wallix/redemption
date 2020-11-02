@@ -109,7 +109,6 @@ TransitionMod::TransitionMod(
     , mouse_state(time_base, events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , time_base(time_base)
     , ttmessage(drawable, this->screen, nullptr, message,
                 theme.tooltip.fgcolor, theme.tooltip.bgcolor,
                 theme.tooltip.border_color, font)

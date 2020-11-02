@@ -140,45 +140,34 @@ public:
 
         Transport &getTransport() const { return m_trans; }
 
-    protected:
+    private:
         Transport & m_trans;
         mod_vnc & m_mod;
     };
 
     /** @brief a custom Vnc Buf64k */
-    struct VncBuf64k : public Buf64k {
+    struct VncBuf64k : Buf64k
+    {
         VncBuf64k(mod_vnc &mod)
             : m_mod(mod)
         {
         }
 
-        size_type read_from(VncTransport vncTrans) {
+        size_type read_from(VncTransport vncTrans)
+        {
             Transport & trans = vncTrans.getTransport();
 
-            if (!m_mod.dsmEncryption){
-                return Buf64k::read_from(trans);
+            const size_type read_len = Buf64k::read_from(trans);
+
+            if (m_mod.dsmEncryption){
+                writable_bytes_view buf = this->av();
+                m_mod.dsm->decrypt(buf.data(), read_len, buf);
             }
 
-            BufMaker<0x10000> buf;
-
-            size_t readBytes;
-            if (this->idx == this->len) {
-                this->len = readBytes = trans.partial_read(writable_byte_ptr(buf.static_array().data()), this->max_len);
-                this->idx = 0;
-                m_mod.dsm->decrypt(buf.static_array().data(), readBytes, writable_bytes_view(this->buf, this->max_len));
-            } else {
-                if (this->idx) {
-                    std::memmove(this->buf, this->buf + this->idx, this->remaining());
-                    this->len -= this->idx;
-                    this->idx = 0;
-                }
-                readBytes = trans.partial_read(writable_byte_ptr(buf.static_array().data()), this->max_len - this->len);
-                m_mod.dsm->decrypt(buf.static_array().data(), readBytes, writable_bytes_view(this->buf + this->len, this->max_len - this->len));
-                this->len += readBytes;
-            }
-            return readBytes;
+            return read_len;
         }
 
+    private:
         mod_vnc & m_mod;
     };
 
@@ -228,7 +217,7 @@ public:
 
 
 
-protected:
+private:
     VncTransport t;
     UltraDSM *dsm;
     bool dsmEncryption;
@@ -852,7 +841,7 @@ public:
 
     void send_keyevent(uint8_t down_flag, uint32_t key);
 
-protected:
+private:
     void rdp_input_clip_data(bytes_view data);
 
 public:
@@ -871,7 +860,7 @@ public:
         this->rdp_input_invalidate(r);
     }
 
-protected:
+private:
 
 //   Encoding value |   Mnemonic     | Encoding Description
 // -------------------------------------------------------------------------------------

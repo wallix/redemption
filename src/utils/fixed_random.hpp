@@ -39,6 +39,6 @@ public:
         memset(dest, value, size);
     }
 
-protected:
+private:
     uint8_t value;
 };

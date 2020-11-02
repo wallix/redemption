@@ -99,7 +99,6 @@ class DialogMod : public mod_api, public NotifyApi
 private:
     [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
 
-protected:
     uint16_t front_width;
     uint16_t front_height;
 
@@ -107,7 +106,6 @@ protected:
 
     WidgetScreen screen;
 
-private:
     ClientExecute & rail_client_execute;
     DVCManager dvc_manager;
 
@@ -128,10 +126,6 @@ private:
     int old_mouse_x = 0;
     int old_mouse_y = 0;
 
-protected:
-    TimeBase& time_base;
-
-private:
     LanguageButton language_button;
     FlatDialog dialog_widget;
 

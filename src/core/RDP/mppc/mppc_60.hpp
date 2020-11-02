@@ -237,7 +237,7 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec
     , history_ptr(this->history_buf)
     {}
 
-protected:
+private:
     static inline uint16_t LEChash(uint16_t key)
     {
         return ((key & 0x1ff) ^ (key  >> 9) ^ (key >> 4) ^ (key >> 7));

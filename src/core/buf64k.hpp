@@ -95,7 +95,7 @@ struct BasicStaticBuffer
     template<class PartialReader>
     size_type read_with(PartialReader && partial_read)
     {
-    	size_type readLen;
+        size_type readLen;
 
         if (this->idx == this->len) {
             this->len = readLen = partial_read(this->buf, max_len);
@@ -114,11 +114,11 @@ struct BasicStaticBuffer
     }
 
 
-protected:
+private:
     static constexpr std::size_t max_len = Capacity;
-    uint8_t buf[max_len];
     size_type len = 0;
     size_type idx = 0;
+    uint8_t buf[max_len];
 };
 
 struct Buf64k : BasicStaticBuffer<uint16_t(~uint16_t{}), uint16_t>

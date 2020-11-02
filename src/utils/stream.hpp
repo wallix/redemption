@@ -827,9 +827,9 @@ private:
  * @brief an OutStream that has some space reserved before the payload
  *
  *                v  payload_stream
- * 	 |------------+----------------------------------------------|
+ *      |------------+----------------------------------------------|
  *            ^ head_ptr
- * 	  <------>   reserved_leading_space
+ *       <------>   reserved_leading_space
  *    <----------------- full_size ----------------------------->
  */
 struct OutReservedStreamHelper
@@ -837,7 +837,6 @@ struct OutReservedStreamHelper
     OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len) noexcept
     : head_ptr(data + reserved_leading_space)
     , reserved_leading_space(reserved_leading_space)
-    , full_size(buf_len)
     , payload_stream({this->head_ptr, buf_len - reserved_leading_space})
     {}
 
@@ -859,28 +858,28 @@ struct OutReservedStreamHelper
      * @return the corresponding substream
      */
     OutReservedStreamHelper get_sub_stream(size_t offset, size_t len = 0) noexcept /*NOLINT*/ {
-    	// this object is like:
-    	//    reserved_leading_space
-    	//  <----->
-    	//        v  headPtr
-    	//  |-----------+-------------------------|
-    	//              ^  payloadStream
-    	//  <------------------------------------->
+        // this object is like:
+        //    reserved_leading_space
+        //  <----->
+        //        v  headPtr
+        //  |-----------+-------------------------|
+        //              ^  payloadStream
+        //  <------------------------------------->
 
         // and we wanna return:
-    	//        |<--- offset -->|<-- len -->|
-    	//                        v headPtr
-    	//  |---------------------+-----------|
-    	//                        ^ payloadStream
+        //        |<--- offset -->|<-- len -->|
+        //                        v headPtr
+        //  |---------------------+-----------|
+        //                        ^ payloadStream
 
-    	if (len == 0) {
-    		len = (this->payload_stream.get_offset() - offset);
+        if (len == 0) {
+            len = (this->payload_stream.get_offset() - offset);
         }
-    	uint8_t *originalBuf = this->head_ptr - this->reserved_leading_space;
+        uint8_t *originalBuf = this->head_ptr - this->reserved_leading_space;
 
-    	OutReservedStreamHelper ret(originalBuf, this->reserved_leading_space + offset, this->reserved_leading_space + offset + len);
-    	ret.payload_stream.rewind(len);
-    	return ret;
+        OutReservedStreamHelper ret(originalBuf, this->reserved_leading_space + offset, this->reserved_leading_space + offset + len);
+        ret.payload_stream.rewind(len);
+        return ret;
     }
 
     writable_bytes_view copy_to_head(bytes_view data) noexcept {
@@ -917,31 +916,10 @@ struct OutReservedStreamHelper
         this->head_ptr = this->payload_stream.get_data();
     }
 
-protected:
+private:
     uint8_t * head_ptr;
     std::size_t reserved_leading_space;
-    std::size_t full_size;
     OutStream payload_stream;
-};
-
-/**
- * @brief a reserved stream helper that self allocates the target buffer
- */
-struct DynamicOutReservedStreamHelper : OutReservedStreamHelper
-{
-	DynamicOutReservedStreamHelper(std::size_t reserved_leading_space, std::size_t buf_len)
-	: OutReservedStreamHelper(nullptr, reserved_leading_space, buf_len)
-	, allocatedBuf( new uint8_t[reserved_leading_space + buf_len]())
-	{
-		head_ptr = this->allocatedBuf + reserved_leading_space;
-		payload_stream = OutStream({this->head_ptr, buf_len - reserved_leading_space});
-	}
-
-	~DynamicOutReservedStreamHelper() {
-		delete[] allocatedBuf;
-	}
-protected:
-	uint8_t * allocatedBuf;
 };
 
 template<std::size_t HeaderSz, std::size_t StreamSz>

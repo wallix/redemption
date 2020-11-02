@@ -72,17 +72,11 @@ public:
 protected:
     Primitives() noexcept;
 
-    /** @brief kind of acceleration */
-    enum {
-        ACCEL_GENERIC,
-        ACCEL_SSE,
-    } accel;
-
 public:
     _lShiftC_16s_t lShiftC_16s;
     _yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
 
-protected:
+private:
     static Primitives s_instance;
     static Primitives s_genericInstance;
 };

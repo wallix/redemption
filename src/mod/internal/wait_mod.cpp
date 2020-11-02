@@ -136,7 +136,6 @@ WaitMod::WaitMod(
     , mouse_state(time_base, events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
     , current_mouse_owner(MouseOwner::WidgetModule)
-    , time_base(time_base)
     , events_guard(events)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
@@ -159,7 +158,7 @@ WaitMod::WaitMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->events_guard.create_event_timeout("Wait Mod Timeout",
-        this->time_base.get_current_time()+std::chrono::seconds(600),
+        time_base.get_current_time()+std::chrono::seconds(600),
         [this](Event&)
         {
             this->refused();

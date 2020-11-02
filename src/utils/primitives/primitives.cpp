@@ -243,8 +243,7 @@ Primitives Primitives::s_instance;
 Primitives Primitives::s_genericInstance;
 
 Primitives::Primitives() noexcept
-    : accel(Primitives::ACCEL_GENERIC)
-    , lShiftC_16s(general_lShiftC_16s)
+    : lShiftC_16s(general_lShiftC_16s)
     , yCbCrToRGB_16s8u_P3AC4R(general_yCbCrToRGB_16s8u_P3AC4R)
 {
 #ifndef __EMSCRIPTEN__

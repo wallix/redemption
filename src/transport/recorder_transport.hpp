@@ -32,7 +32,8 @@ class TimeBase;
 /**
  * @brief a file containing a capture
  */
-class RecorderFile {
+class RecorderFile
+{
 public:
     /** @brief type of packet */
     enum class PacketType : uint8_t
@@ -57,7 +58,7 @@ public:
 
     void write_packet(PacketType type, bytes_view buffer);
 
-protected:
+private:
     TimeBase& time_base;
     std::chrono::milliseconds start_time;
     OutFileTransport file;
@@ -70,7 +71,6 @@ protected:
 class RecorderTransport : public Transport
 {
 public:
-
     explicit RecorderTransport(Transport& trans, TimeBase& time_base, char const* filename);
 
     void add_info(bytes_view info);
