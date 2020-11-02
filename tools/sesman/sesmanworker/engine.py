@@ -48,6 +48,7 @@ except Exception:
         #               traceback.format_exc())
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
+        
 from .logtime import logtime_function_pause
 import time
 import socket
@@ -60,6 +61,7 @@ from .checkout import (
     SHADOW_ACCEPTED,
     SHADOW_REJECTED,
 )
+from . import targetaccuratefilter as taf
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
 DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
@@ -637,10 +639,35 @@ class Engine(object):
                 return string if case_sensitive else string.lower()
 
             if (not fc(group_filter) in fc(target_info.group)
-                or not fc(device_filter) in fc(temp_service_login)
                 or not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
+            if not device_filter.startswith('$') : # apply target global filter mode
+                if not fc(device_filter) in fc(temp_service_login) :
+                    item_filtered = True
+                    continue
+            else : # apply target accurate filter mode
+                try :
+                    target_login_domain = target_info.target_login.split('@')
+                    target_login_real = target_login_domain[0]
+                    target_domain_real = (target_login_domain[1]
+                                          if len(target_login_domain) > 1
+                                          else "")
+                    target_device = target_info.target_name
+                    target_service = target_info.service_name
+                    target_field_dict = {
+                        "account" : fc(target_login_real),
+                        "domain" : fc(target_domain_real),
+                        "device" : fc(target_device),
+                        "service" : fc(target_service)}
+                    
+                    if not taf.is_filterable(fc(device_filter),
+                                             target_field_dict) :
+                        item_filtered = True
+                        continue
+                except (RuntimeError, ValueError) :
+                    item_filtered = True
+                    continue
 
             targets.append((target_info.group,  # ( = concatenated list)
                             temp_service_login,
