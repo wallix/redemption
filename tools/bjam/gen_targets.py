@@ -746,10 +746,48 @@ if explicit_rec:
 
 
 if not filter_targets and not has_set_arg:
+    include_by = dict()
+    unused = []
+    movetotest = []
     for f in all_files.values():
-        if f.type == 'C' and not f.used and \
-        f.path != 'src/capture/ocr/display_learning.cc' and \
-        f.path != 'src/capture/ocr/extract_text.cc' and \
-        f.path != 'src/capture/ocr/learning.cc' and \
-        f.path != 'src/capture/ocr/ppocr_extract_text.cpp':
-            print('\x1B[1;31m', f.path, ' is unused\x1B[0m', file=sys.stderr, sep='')
+        if not f.used and f.type == 'C':
+            unused.append(f.path)
+
+        for finc in f.user_includes:
+            includes = include_by.setdefault(finc, set())
+            includes.add(f.path)
+
+    def append_with_filter(f, a):
+        if not f.path.startswith('src/client_redemption/') \
+        and not f.path.startswith('src/utils/crypto/') \
+        and not f.path.startswith('src/system/'):
+            a.append(f.path)
+
+    for f,v in include_by.items():
+        fname = f.path[:-3] # path with dot without extension (file.hpp -> file.)
+        if fname.startswith('src/system/linux/'):
+            fname = fname[17:]
+        if f.root.startswith('tests/'):
+            if not any(not by.startswith(fname) for by in v):
+                append_with_filter(f, unused)
+        else:
+            if f.type != 'C' and all(by.startswith('tests/') for by in v):
+                append_with_filter(f, movetotest)
+            if not any(not by.startswith(fname) and
+                       not by.startswith('tests/') or
+                       by.startswith('src/lib/') for by in v):
+                if f.type != 'C' or fname+'hpp' not in all_files:
+                    append_with_filter(f, unused)
+
+    if unused:
+        print('\x1B[1;31mfollowing files are unused:\n  ', file=sys.stderr, end='')
+        print('\n  '.join(unused), file=sys.stderr, end='')
+        print('\x1B[0m', file=sys.stderr)
+
+    if movetotest:
+        if unused:
+            print(file=sys.stderr)
+        print('\x1B[1;31mfollowing files should be inside tests/includes:\n  ',
+              file=sys.stderr, end='')
+        print('\n  '.join(movetotest), file=sys.stderr, end='')
+        print('\x1B[0m', file=sys.stderr)

@@ -1711,7 +1711,6 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   <library>crypto
   <library>gssapi_krb5
   <library>krb5
-  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
