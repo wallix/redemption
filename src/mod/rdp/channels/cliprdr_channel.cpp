@@ -18,6 +18,7 @@ Copyright (C) Wallix 2010-2020
 Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 */
 
+#include "acl/auth_api.hpp"
 #include "acl/gd_provider.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
@@ -2379,11 +2380,12 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     TimeBase& time_base,
     EventContainer& events,
     GdProvider& gd_provider,
-    const BaseVirtualChannel::Params & base_params,
     const ClipboardVirtualChannelParams & params,
     FileValidatorService * file_validator_service,
-    FileStorage file_storage)
-: BaseVirtualChannel(to_client_sender_, to_server_sender_, base_params)
+    FileStorage file_storage,
+    AuthApi & sesman,
+    RDPVerbose verbose)
+: BaseVirtualChannel(to_client_sender_, to_server_sender_)
 // TODO decompose (extract validatorparam)
 , params([&]{
     auto p = params;
@@ -2404,6 +2406,8 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , time_base(time_base)
 , file_validator(file_validator_service)
 , fdx_capture(file_storage.fdx_capture)
+, sesman(sesman)
+, verbose(verbose)
 , always_file_storage(file_storage.always_file_storage)
 , proxy_managed(to_client_sender_ == nullptr)
 , client_ctx(

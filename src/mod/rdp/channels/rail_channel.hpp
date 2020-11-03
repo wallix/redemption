@@ -31,6 +31,7 @@
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/mod_rdp_variables.hpp"
 #include "core/stream_throw_helpers.hpp"
+#include "utils/uninit_checked.hpp"
 
 
 class FrontAPI;
@@ -80,6 +81,9 @@ private:
     SessionProbeVirtualChannel * session_probe_channel = nullptr;
 
     SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
+
+    AuthApi & sesman;
+    RDPVerbose verbose;
 
     bool exe_or_file_exec_ok = false;
     bool session_probe_launch_confirmed = false;
@@ -131,11 +135,10 @@ public:
         uint16_t desktop_width,
         uint16_t desktop_height,
         ModRdpVariables vars,
-        const BaseVirtualChannel::Params & base_params,
-        const RemoteProgramsVirtualChannelParams& params)
-    : BaseVirtualChannel(to_client_sender_,
-                         to_server_sender_,
-                         base_params)
+        const RemoteProgramsVirtualChannelParams& params,
+        AuthApi & sesman,
+        RDPVerbose verbose)
+    : BaseVirtualChannel(to_client_sender_, to_server_sender_)
     , windows_execute_shell_params(params.windows_execute_shell_params)
     , windows_execute_shell_params_2(params.windows_execute_shell_params_2)
     , param_rail_session_manager(params.rail_session_manager)
@@ -143,6 +146,8 @@ public:
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
     //, param_client_supports_handshakeex_pdu(params.client_supports_handshakeex_pdu)
     //, param_client_supports_enhanced_remoteapp(params.client_supports_enhanced_remoteapp)
+    , sesman(sesman)
+    , verbose(verbose)
     , vars(vars)
     , proxy_managed(proxy_managed)
     , desktop_width(desktop_width)

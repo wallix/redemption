@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "core/log_id.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
 #include "utils/timebase.hpp"
@@ -34,12 +35,12 @@
 #include "core/stream_throw_helpers.hpp"
 #include <deque>
 
-#include <map>
-
-
 
 class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
+    AuthApi & sesman;
+    const RDPVerbose verbose;
+
     VirtualChannelDataSender& to_server_sender;
 
     rdpdr::SharedHeader client_message_header;
@@ -882,11 +883,12 @@ public:
         const char * client_name,
         uint32_t random_number,
         const char * proxy_managed_drive_prefix,
-        const BaseVirtualChannel::Params & base_params,
-        const FileSystemVirtualChannelParams& params)
-    : BaseVirtualChannel(to_client_sender_,
-                         to_server_sender_,
-                         base_params)
+        const FileSystemVirtualChannelParams& params,
+        AuthApi & sesman,
+        RDPVerbose verbose)
+    : BaseVirtualChannel(to_client_sender_, to_server_sender_)
+    , sesman(sesman)
+    , verbose(verbose)
     , to_server_sender(to_server_sender_ ? *to_server_sender_  : null_virtual_channel_data_sender)
     , serverVersionMinor(0xC)
     , file_system_drive_manager(file_system_drive_manager)
@@ -909,7 +911,7 @@ public:
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.smartcard_passthrough,
-          base_params.verbose)
+          verbose)
     , time_base(time_base)
     , events_guard(events)
     , channel_filter_on(channel_filter_on)

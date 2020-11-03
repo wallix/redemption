@@ -165,7 +165,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         TimeBase time_base({0,0});
         EventContainer events;
         NullAuthentifier auth;
-        BaseVirtualChannel::Params base_params(auth, verbose);
 
         FileSystemDriveManager file_system_drive_manager;
 
@@ -189,7 +188,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
         FileSystemVirtualChannel file_system_virtual_channel(
             time_base, events, &to_client_sender, &to_server_sender,
-            file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, d.file_system_virtual_channel_params);
+            file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, d.file_system_virtual_channel_params,
+            auth, verbose);
 
         RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 

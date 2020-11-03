@@ -36,6 +36,7 @@ class GdProvider;
 class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
+class AuthApi;
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
@@ -52,10 +53,11 @@ public:
         TimeBase& time_base,
         EventContainer& events,
         GdProvider& gd_provider,
-        const BaseVirtualChannel::Params & base_params,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
-        FileStorage file_storage);
+        FileStorage file_storage,
+        AuthApi & sesman,
+        RDPVerbose verbose);
 
     ~ClipboardVirtualChannel();
 
@@ -98,6 +100,10 @@ private:
     FileValidatorService * file_validator;
 
     FdxCapture * fdx_capture;
+
+    AuthApi & sesman;
+
+    const RDPVerbose verbose;
 
     const bool always_file_storage;
     bool can_lock = false;

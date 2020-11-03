@@ -18,14 +18,10 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
-#include "utils/uninit_checked.hpp"
-#include "acl/auth_api.hpp"
-#include "mod/rdp/rdp_verbose.hpp"
 
 #include <memory>
 
@@ -46,31 +42,12 @@ protected:
         return this->to_server_sender;
     }
 
-    AuthApi & sesman;
-    const RDPVerbose verbose;
-
-public:
-    // TODO: move that to BaseVirtualChannelConstructor
-    struct Params
-    {
-        AuthApi & sesman;
-        RDPVerbose verbose;
-
-        explicit Params(AuthApi & sesman, RDPVerbose verbose)
-          : sesman(sesman)
-          , verbose(verbose)
-        {}
-    };
-
 protected:
     BaseVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
-        VirtualChannelDataSender* to_server_sender_,
-        const Params & params)
+        VirtualChannelDataSender* to_server_sender_)
     : to_client_sender(to_client_sender_)
     , to_server_sender(to_server_sender_)
-    , sesman(params.sesman)
-    , verbose(params.verbose)
     {}
 
 public:

@@ -36,17 +36,20 @@ struct DynamicChannelVirtualChannelParam
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations;
+    AuthApi & sesman;
+    RDPVerbose verbose;
 
 public:
     explicit DynamicChannelVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        const BaseVirtualChannel::Params & base_params,
-        const DynamicChannelVirtualChannelParam & params)
-    : BaseVirtualChannel(to_client_sender_,
-                         to_server_sender_,
-                         base_params)
+        const DynamicChannelVirtualChannelParam & params,
+        AuthApi & sesman,
+        RDPVerbose verbose)
+    : BaseVirtualChannel(to_client_sender_, to_server_sender_)
     , dynamic_channels_authorizations(params.allowed_channels, params.denied_channels)
+    , sesman(sesman)
+    , verbose(verbose)
     {}
 
     void process_client_message(uint32_t total_length,

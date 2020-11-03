@@ -35,6 +35,7 @@
 #include "capture/fdx_capture.hpp"
 #include "mod/file_validator_service.hpp"
 #include "acl/gd_provider.hpp"
+#include "acl/auth_api.hpp"
 
 #include "./test_channel.hpp"
 
@@ -109,9 +110,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
     TimeBase time_base({0,0});
     FileValidatorService * ipca_service = nullptr;
     NullAuthentifier auth;
-
-    BaseVirtualChannel::Params base_params(auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
-
     EventContainer events;
 
     struct D
@@ -142,7 +140,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, time_base, events, gd_provider,
-            base_params, d.cb_params, ipca_service, {nullptr, false});
+            d.cb_params, ipca_service, {nullptr, false},
+            auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
         RED_CHECK_EXCEPTION_ERROR_ID(
             CHECK_CHANNEL(t, clipboard_virtual_channel),
@@ -163,8 +162,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullAuthentifier auth;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
-
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -176,8 +173,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base, events, gd_provider,
-        base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
+        &to_client_sender, &to_server_sender, time_base, events, gd_provider, clipboard_virtual_channel_params, ipca_service, {nullptr, false},
+        auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
     InStream virtual_channel_stream(virtual_channel_data);
@@ -200,8 +197,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullAuthentifier auth;
     FileValidatorService * ipca_service = nullptr;
 
-    BaseVirtualChannel::Params base_params(auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
-
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -212,7 +207,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base, events, gd_provider,
-        base_params, clipboard_virtual_channel_params, ipca_service, {nullptr, false});
+        clipboard_virtual_channel_params, ipca_service, {nullptr, false},
+        auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
 // Recv done on channel (28) n bytes
@@ -865,13 +861,14 @@ namespace
             , clipboard_virtual_channel(
                 &to_client_sender, &to_server_sender,
                 time_base, events, gd_provider,
-                BaseVirtualChannel::Params(report_message, verbose),
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
                 ClipboardVirtualChannel::FileStorage{
                     fdx_ctx ? &fdx_ctx->fdx : nullptr,
                     d.always_file_storage
-                }
+                },
+                report_message,
+                verbose
             )
             {}
 

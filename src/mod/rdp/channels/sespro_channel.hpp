@@ -35,8 +35,7 @@
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
-#include <functional>
-
+#include "utils/uninit_checked.hpp"
 
 #include <chrono>
 #include <memory>
@@ -125,10 +124,11 @@ private:
 
     TimeBase& time_base;
     EventsGuard events_guard;
-    int session_probe_timer = 0;
     Callbacks & callbacks;
     AuthApi & sesman;
 
+    RDPVerbose verbose;
+    int session_probe_timer = 0;
     bool launch_aborted = false;
 
     uint32_t options = 0;
@@ -185,10 +185,10 @@ public:
         rdp_api& rdp,
         FileSystemVirtualChannel& file_system_virtual_channel,
         Random & gen,
-        const BaseVirtualChannel::Params & base_params,
         const Params& params,
-        Callbacks & callbacks)
-    : BaseVirtualChannel(nullptr, to_server_sender_, base_params)
+        Callbacks & callbacks,
+        RDPVerbose verbose)
+    : BaseVirtualChannel(nullptr, to_server_sender_)
     , sespro_params(params.sespro_params)
     , param_target_informations(params.target_informations)
     , param_front_width(params.front_width)
@@ -207,6 +207,7 @@ public:
     , events_guard(events)
     , callbacks(callbacks)
     , sesman(sesman)
+    , verbose(verbose)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::SessionProbeVirtualChannel:"

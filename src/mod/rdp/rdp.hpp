@@ -607,8 +607,6 @@ private:
         this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
         this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
-
         ClipboardVirtualChannelParams cvc_params;
         cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
         cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
@@ -623,13 +621,14 @@ private:
             this->time_base,
             this->events,
             this->gd_provider,
-            base_params,
             std::move(cvc_params),
             file_validator_service,
             ClipboardVirtualChannel::FileStorage{
                 this->mod_rdp_factory.get_fdx_capture(),
                 this->mod_rdp_factory.always_file_storage
-            }
+            },
+            this->sesman,
+            this->verbose
         );
     }
 
@@ -741,8 +740,6 @@ private:
         this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
         this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
-        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
-
         DynamicChannelVirtualChannelParam dynamic_channel_virtual_channel_params;
 
         dynamic_channel_virtual_channel_params.allowed_channels =
@@ -754,8 +751,9 @@ private:
             std::make_unique<DynamicChannelVirtualChannel>(
                 this->dynamic_channel_to_client_sender.get(),
                 this->dynamic_channel_to_server_sender.get(),
-                base_params,
-                dynamic_channel_virtual_channel_params);
+                dynamic_channel_virtual_channel_params,
+                this->sesman,
+                this->verbose);
     }
 
     inline void create_file_system_virtual_channel(
@@ -772,8 +770,6 @@ private:
                                             ? this->create_to_client_sender(channel_names::rdpdr, front)
                                             : nullptr);
         this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
-
-        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         FileSystemVirtualChannelParams fsvc_params;
 
@@ -797,8 +793,9 @@ private:
             client_name,
             ::getpid(),
             this->drive.proxy_managed_prefix.c_str(),
-            base_params,
-            fsvc_params);
+            fsvc_params,
+            this->sesman,
+            this->verbose);
         if (this->file_system_to_server_sender) {
             if (this->session_probe.enable_session_probe || this->drive.use_application_driver) {
                 this->file_system_virtual_channel->enable_session_probe_drive();
@@ -828,13 +825,10 @@ public:
 
         FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
 
-        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
-
         SessionProbeVirtualChannel::Params sp_vc_params;
 
         sp_vc_params.sespro_params = this->session_probe.session_probe_channel_params;
         sp_vc_params.target_informations = this->session_probe.target_informations.c_str();
-
 
         sp_vc_params.front_width = stc.negociation_result.front_width;
         sp_vc_params.front_height = stc.negociation_result.front_height;
@@ -854,9 +848,9 @@ public:
             rdp,
             file_system_virtual_channel,
             this->gen,
-            base_params,
             sp_vc_params,
-            this->callbacks
+            this->callbacks,
+            this->verbose
             );
     }
 
@@ -875,8 +869,6 @@ private:
         }
         this->remote_programs_to_server_sender =
             this->create_to_server_synchronous_sender(channel_names::rail, stc);
-
-        BaseVirtualChannel::Params base_params(this->sesman, this->verbose);
 
         RemoteProgramsVirtualChannelParams remote_programs_virtual_channel_params;
 
@@ -909,8 +901,8 @@ private:
                 stc.negociation_result.front_width,
                 stc.negociation_result.front_height,
                 vars,
-                base_params,
-                remote_programs_virtual_channel_params);
+                remote_programs_virtual_channel_params,
+                this->sesman, this->verbose);
     }
 
     // TODO: make that private again when callers will be moved to channels
