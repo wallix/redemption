@@ -1027,6 +1027,7 @@ public:
     }
 
 private:
+    // buffer for log_format_set_info
     std::string formatted_message;
 
 public:

@@ -117,6 +117,7 @@ exe rdpproxy :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
+  <library>src/acl/session_logfile.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/fdx_capture.o
@@ -584,6 +585,7 @@ test-run tests/acl/test_acl_serializer :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/acl/acl_serializer.o
+  <library>src/acl/session_logfile.o
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -705,6 +707,7 @@ test-run tests/acl/test_session_logfile :
   <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/acl/session_logfile.o
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -716,8 +719,8 @@ test-run tests/acl/test_session_logfile :
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
-  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/acl/session_logfile.cpp
   <covfile>src/acl/session_logfile.hpp
 ;
 test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
@@ -2702,6 +2705,7 @@ test-run tests/core/test_mainloop :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
+  <library>src/acl/session_logfile.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/fdx_capture.o
@@ -2847,6 +2851,7 @@ test-run tests/core/test_session :
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/session_inactivity.o
+  <library>src/acl/session_logfile.o
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/capture.o
   <library>src/capture/fdx_capture.o
@@ -6298,6 +6303,7 @@ obj src/acl/acl_serializer.o : $(REDEMPTION_SRC_PATH)/acl/acl_serializer.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/session_inactivity.o : $(REDEMPTION_SRC_PATH)/acl/session_inactivity.cpp ;
+obj src/acl/session_logfile.o : $(REDEMPTION_SRC_PATH)/acl/session_logfile.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
 obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;

@@ -88,10 +88,16 @@ constexpr inline chars_view log_id_string_type_map[]{
     #undef f
 };
 
-inline chars_view log_format_set_info(std::string& buffer, LogId id, KVLogList kv_list)
+inline chars_view log_format_append_info(std::string& buffer, LogId id, KVLogList kv_list)
 {
     auto type = log_id_string_type_map[int(id)];
-    buffer.assign(type.begin(), type.end());
+    buffer.append(type.begin(), type.end());
     kv_list_to_string(buffer, kv_list, "=\"", '"', qvalue_table_formats::log_table);
     return buffer;
+}
+
+inline chars_view log_format_set_info(std::string& buffer, LogId id, KVLogList kv_list)
+{
+    buffer.clear();
+    return log_format_append_info(buffer, id, kv_list);
 }

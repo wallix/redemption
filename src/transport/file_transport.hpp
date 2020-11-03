@@ -29,7 +29,7 @@ struct FileTransport : Transport
 {
     explicit FileTransport(unique_fd fd, std::function<void(const Error & error)> notify_error = [](const Error&){}) noexcept /*NOLINT*/
     : file(std::move(fd))
-    , notify_error(notify_error)
+    , notify_error(std::move(notify_error))
     {}
 
     bool disconnect() override

@@ -662,7 +662,7 @@ OutCryptoTransport::OutCryptoTransport(
     std::function<void(const Error & error)> notify_error
 ) noexcept
 : encrypter(cctx, rnd)
-, out_file(invalid_fd(), notify_error)
+, out_file(invalid_fd(), std::move(notify_error))
 , cctx(cctx)
 , rnd(rnd)
 , fstat(fstat)
@@ -739,7 +739,7 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
     }
     if (chmod(this->tmpname, file_permissions) == -1) {
         int const err = errno;
-        
+
         LOG( LOG_ERR, "can't set file %s mod to %o : %s [%d]"
             , this->tmpname
             , file_permissions

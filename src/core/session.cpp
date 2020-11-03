@@ -694,11 +694,14 @@ public:
 
         std::unique_ptr<Transport> auth_trans;
 
-        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type](LogId id, KVLogList kv_list)
+        SiemLogger siem_logger;
+        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type,&siem_logger](
+            LogId id, KVLogList kv_list)
         {
             /* Log to SIEM (redirected syslog) */
-            log_siem_syslog(id, kv_list, ini, session_type);
-            log_siem_arcsight(time_base.get_current_time().tv_sec, id, kv_list, ini, session_type);
+            siem_logger.log_syslog_format(id, kv_list, ini, session_type);
+            auto const now = time_base.get_current_time().tv_sec;
+            siem_logger.log_arcsight_format(now, id, kv_list, ini, session_type);
             log_file.log6(id, kv_list);
         };
 
