@@ -126,7 +126,7 @@ obj working_directory.o
     $(CXXFLAGS_TEST)
 ;
 
-obj message_translator_gettext.o : $(REDEMPTION_SRC_PATH)/utils/i18n/message_translator_gettext.cpp ;
+obj message_translator_gettext.o : $(REDEMPTION_SRC_PATH)/system/linux/system/i18n/message_translator_gettext.cpp ;
 
 rule test-run ( name )
 {
