@@ -126,8 +126,6 @@ obj working_directory.o
     $(CXXFLAGS_TEST)
 ;
 
-obj message_translator_gettext.o : $(REDEMPTION_SRC_PATH)/system/linux/system/i18n/message_translator_gettext.cpp ;
-
 rule test-run ( name )
 {
     unit-test $(name) : tests/$(name).cpp generate_config_spec :
@@ -141,7 +139,6 @@ rule test-run ( name )
         <library>font.o
         <library>hexdump.o
         <library>working_directory.o
-        <library>message_translator_gettext.o
         # <cxxflags>-frtti
         <include>redemption_src
         <conditional>@defines-for-test
