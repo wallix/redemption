@@ -33,7 +33,7 @@ namespace i18n
         void set_context(zstring_view locale_name);
 
         [[nodiscard]]
-        zstring_view get_translated_text(const char *text) const noexcept;
+        zstring_view get_translated_text(zstring_view text) const noexcept;
 
     private :
         bool _clearable_context;

@@ -270,7 +270,7 @@ namespace i18n
     }
 
     zstring_view
-    MessageTranslatorGettext::get_translated_text(const char *text)
+    MessageTranslatorGettext::get_translated_text(zstring_view text)
         const noexcept
     {
         const char *translated_text = gettext(text);

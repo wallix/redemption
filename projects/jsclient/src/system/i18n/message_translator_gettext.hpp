@@ -31,9 +31,6 @@ namespace i18n
         void set_context(zstring_view locale_name) { (void)locale_name; }
 
         [[nodiscard]]
-        zstring_view get_translated_text(const char *text) const noexcept
-        {
-            return zstring_view(zstring_view::is_zero_terminated(), text, strlen(text));
-        }
+        zstring_view get_translated_text(zstring_view text) const noexcept { return text; }
     };
 }
