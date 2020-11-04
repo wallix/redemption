@@ -216,8 +216,8 @@ struct Translation
     };
 
 private:
-    language_t lang;
-    language_t prev_lang;
+    language_t lang = EN;
+    language_t prev_lang = EN;
     mutable MessageTranslator_t message_translator;
 
     Translation() = default;
