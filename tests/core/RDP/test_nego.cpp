@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestNego)
 
     NullServerNotifier null_server_notifier;
     std::string extra_message;
-    Translation::language_t lang = Translation::EN;
+    Language lang = Language::en;
     TLSClientParams tls_client_params;
     RdpNego nego(
         true, "test", true, false, "127.0.0.1", false, rand, time_base,

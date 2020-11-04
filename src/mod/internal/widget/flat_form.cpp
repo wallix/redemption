@@ -29,7 +29,7 @@ using namespace std::chrono_literals;
 FlatForm::FlatForm(
     gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
     Widget & parent, NotifyApi* notifier, int group_id,
-    Font const & font, Theme const & theme, Translation::language_t lang,
+    Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
     : FlatForm(drawable, parent, notifier, group_id, font, theme, lang, flags, duration_max)
@@ -40,7 +40,7 @@ FlatForm::FlatForm(
 FlatForm::FlatForm(
     gdi::GraphicApi& drawable,
     Widget & parent, NotifyApi* notifier, int group_id,
-    Font const & font, Theme const & theme, Translation::language_t lang,
+    Font const & font, Theme const & theme, Language lang,
     unsigned flags, std::chrono::minutes duration_max
 )
     : WidgetParent(drawable, parent, notifier, group_id)

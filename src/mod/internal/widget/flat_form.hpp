@@ -66,13 +66,13 @@ public:
 
     FlatForm(gdi::GraphicApi& drawable, int16_t left, int16_t top, int16_t width, int16_t height,
              Widget & parent, NotifyApi* notifier, int group_id,
-             Font const & font, Theme const & theme, Translation::language_t lang,
+             Font const & font, Theme const & theme, Language lang,
              unsigned flags = NONE,
              std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 
     FlatForm(gdi::GraphicApi& drawable,
              Widget & parent, NotifyApi* notifier, int group_id,
-             Font const & font, Theme const & theme, Translation::language_t lang,
+             Font const & font, Theme const & theme, Language lang,
              unsigned flags = NONE,
              std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 

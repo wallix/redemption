@@ -51,7 +51,7 @@ class RemoteProgramsSessionManager final
     gdi::GraphicApi & front;
     mod_api  & mod;
 
-    Translation::language_t lang;
+    Language lang;
 
     Font  const & font;
     Theme const & theme;
@@ -133,7 +133,7 @@ public:
     explicit RemoteProgramsSessionManager(
         TimeBase& time_base,
         EventContainer & events,
-        gdi::GraphicApi& front, mod_api& mod, Translation::language_t lang,
+        gdi::GraphicApi& front, mod_api& mod, Language lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
         not_null_ptr<ClientExecute> rail_client_execute,

@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     params.label[2] = "Protocol";
 
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
-                                "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
+                                "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -176,7 +176,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(),  Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
@@ -205,7 +205,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -238,7 +238,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -270,7 +270,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -382,7 +382,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     params.label[2] = "Protocol";
 
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Language::en);
 
     chars_view const add1[] = {
         "reptile"_av, "snake@10.10.14.111"_av,

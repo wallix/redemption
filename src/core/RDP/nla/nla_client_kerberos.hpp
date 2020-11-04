@@ -374,7 +374,7 @@ private:
     const std::string target_host;
     Random & rand;
     std::string& extra_message;
-    Translation::language_t lang;
+    Language lang;
     const bool credssp_verbose;
     const bool verbose;
 
@@ -729,7 +729,7 @@ public:
                const bool restricted_admin_mode,
                Random & rand,
                std::string& extra_message,
-               Translation::language_t lang,
+               Language lang,
                const bool credssp_verbose,
                const bool verbose)
         : ts_request(6) // Credssp Version 6 Supported

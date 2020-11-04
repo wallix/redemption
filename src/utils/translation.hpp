@@ -204,20 +204,11 @@ namespace trkeys
    lot of file in project */
 using MessageTranslator_t = i18n::MessageTranslatorGettext;
 
-class Inifile;
-
 struct Translation
 {
-    enum language_t : unsigned char
-    {
-        EN,
-        FR,
-        MAX_LANG
-    };
-
 private:
-    language_t lang = EN;
-    language_t prev_lang = EN;
+    Language lang = Language::en;
+    Language prev_lang = Language::en;
     mutable MessageTranslator_t message_translator;
 
     Translation() = default;
@@ -230,9 +221,14 @@ private:
 
             /* check if it's english language for avoid useless context reset
                because text is already in english by default in code */
-            if (this->lang != language_t::EN)
+            switch (this->lang)
             {
-                this->message_translator.set_context(to_sv(this->lang));
+                case Language::en:
+                    // this->message_translator.set_context("en"_zv);
+                    return ;
+                case Language::fr:
+                    this->message_translator.set_context("fr"_zv);
+                    return ;
             }
         }
     }
@@ -254,29 +250,10 @@ public:
         return instance;
     }
 
-    static zstring_view to_sv(language_t lang)
+    void set_lang(Language lang)
     {
-        switch (lang)
-        {
-            case Translation::language_t::EN :
-                return "en"_zv;
-            case Translation::language_t::FR :
-                return "fr"_zv;
-            case Translation::language_t::MAX_LANG :
-                return "MAX_LANG"_zv;
-        }
-        assert(false);
-        return ""_zv;
-    }
-
-    bool set_lang(language_t lang)
-    {
-        if (lang >= MAX_LANG) {
-            return false;
-        }
         this->prev_lang = this->lang;
         this->lang = lang;
-        return true;
     }
 
     [[nodiscard]] zstring_view translate(trkeys::TrKey_password k) const
@@ -301,43 +278,29 @@ public:
 };
 
 
-inline zstring_view TR(trkeys::TrKey_password k, Translation::language_t lang)
+inline zstring_view TR(trkeys::TrKey_password k, Language lang)
 {
     Translation::getInstance().set_lang(lang);
     return Translation::getInstance().translate(k);
 }
 
-inline zstring_view TR(trkeys::TrKey k, Translation::language_t lang)
+inline zstring_view TR(trkeys::TrKey k, Language lang)
 {
     Translation::getInstance().set_lang(lang);
     return Translation::getInstance().translate(k);
 }
 
 template<class T, class... Ts>
-int TR_fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Translation::language_t lang, Ts const&... xs)
+int TR_fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Language lang, Ts const&... xs)
 {
     Translation::getInstance().set_lang(lang);
     return Translation::getInstance().translate_fmt(s, n, k, xs...);
 }
 
-// implementation in config.cpp
-Translation::language_t language(Inifile const & ini);
-
-inline Translation::language_t language(Language lang)
-{
-    return static_cast<Translation::language_t>(lang);
-}
-
-LoginLanguage to_login_language(Language lang);
-
 struct Translator
 {
-    explicit Translator(Translation::language_t lang = Translation::EN) /*NOLINT*/
+    explicit Translator(Language lang)
       : lang(lang)
-    {}
-
-    explicit Translator(Inifile const & ini)
-      : lang(language(ini))
     {}
 
     zstring_view operator()(trkeys::TrKey_password const & k) const
@@ -357,5 +320,5 @@ struct Translator
     }
 
 private:
-    Translation::language_t lang;
+    Language lang;
 };

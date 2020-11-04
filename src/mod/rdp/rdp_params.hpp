@@ -26,7 +26,6 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/channels/validator_params.hpp"
 #include "utils/log.hpp"
-#include "utils/translation.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/RDP/capabilities/order.hpp"
 
@@ -138,7 +137,7 @@ struct ModRDPParams
 
     DriveParams drive_params;
 
-    Translation::language_t lang = Translation::EN;
+    Language lang = Language::en;
 
     bool allow_using_multiple_monitors = false;
     bool allow_scale_factor = false;
@@ -378,11 +377,12 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     s_or_none,             drive_params.proxy_managed_drives);
         RDP_PARAMS_LOG("%s",     s_or_none,             drive_params.proxy_managed_prefix);
 
-        auto to_lang = [](Translation::language_t lang) {
-            return
-                lang == Translation::EN ? "EN" :
-                lang == Translation::FR ? "FR" :
-                "<unknown>";
+        auto to_lang = [](Language lang) {
+            switch (lang) {
+                case Language::en: return "EN";
+                case Language::fr: return "FR";
+            }
+            return "<unknown>";
         };
         RDP_PARAMS_LOG("%s",     to_lang,               lang);
 

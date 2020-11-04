@@ -46,7 +46,7 @@ class rdpCredsspServerKerberos final
 
     writable_u8_array_view public_key;
     std::string& extra_message;
-    Translation::language_t lang;
+    Language lang;
     const bool credssp_verbose;
     const bool verbose;
 
@@ -650,7 +650,7 @@ public:
 public:
     rdpCredsspServerKerberos(writable_u8_array_view key,
                std::string& extra_message,
-               Translation::language_t lang,
+               Language lang,
                const bool credssp_verbose,
                const bool verbose)
         : public_key(key)

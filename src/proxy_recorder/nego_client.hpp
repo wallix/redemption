@@ -43,7 +43,7 @@ public:
     )
     : trans(trans)
     , nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
-        this->random, time_base, this->extra_message, Translation::EN,
+        this->random, time_base, this->extra_message, Language::en,
         tls_client_params, verbosity)
     {
         auto [username, domain] = extract_user_domain(target_user);

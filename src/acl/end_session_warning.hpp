@@ -45,7 +45,7 @@ public:
         this->osd_state = OSD_STATE_NOT_YET_COMPUTED;
     }
 
-    std::string update_osd_state(Translation::language_t lang, time_t start_time, time_t end_time, time_t now)
+    std::string update_osd_state(Language lang, time_t start_time, time_t end_time, time_t now)
     {
         LOG(LOG_INFO, "Update OSD STATE");
 

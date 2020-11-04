@@ -113,25 +113,23 @@ public:
 };
 
 template<class... Cfg>
-Translation::language_t language(variables<Cfg...> const & vars) {
-    return ::language(vars.template get<cfg::translation::language>());
+::Language language(variables<Cfg...> const & vars)
+{
+    return vars.template get<cfg::translation::language>();
 }
 
 template<class... Cfg>
-Translation::language_t login_language(variables<Cfg...> const & vars)
+::Language login_language(variables<Cfg...> const & vars)
 {
     switch (vars.template get<cfg::translation::login_language>())
     {
-        case LoginLanguage::Auto :
-            return language(vars);
-        case LoginLanguage::EN :
-            return ::language(Language::en);
-        case LoginLanguage::FR :
-            return ::language(Language::fr);
-        default :
-            assert("Unknown LoginLanguage value");
+        case LoginLanguage::Auto: return language(vars);
+        case LoginLanguage::EN: return ::Language::en;
+        case LoginLanguage::FR: return ::Language::fr;
     }
-    return Translation::language_t { };
+
+    assert("Unknown LoginLanguage value");
+    return ::Language::en;
 }
 
 } // namespace vcfg

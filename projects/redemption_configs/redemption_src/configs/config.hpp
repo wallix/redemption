@@ -557,3 +557,5 @@ private:
         }
     }
 };
+
+::Language language(Inifile const & ini);

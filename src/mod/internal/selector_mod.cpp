@@ -178,7 +178,7 @@ SelectorMod::SelectorMod(
         params.weight[1] = 70;
         params.weight[2] = 10;
 
-        Translator tr(language(vars.get<cfg::translation::language>()));
+        Translator tr(vars.get<cfg::translation::language>());
         params.label[0] = tr(trkeys::authorization);
         params.label[1] = tr(trkeys::target);
         params.label[2] = tr(trkeys::protocol);

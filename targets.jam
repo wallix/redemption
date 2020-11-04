@@ -4547,17 +4547,13 @@ test-run tests/mod/rdp/test_rdp_orders :
 test-run tests/mod/rdp/test_rdp_params :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_params.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>src/core/error.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
-  <library>src/utils/fileutils.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/rdp_params.hpp
 ;

@@ -19,9 +19,10 @@
 */
 
 #include "utils/local_err_msg.hpp"
+#include "utils/translation.hpp"
 #include "core/error.hpp"
 
-zstring_view local_err_msg(Error const& error, Translation::language_t lang, bool with_id) noexcept
+zstring_view local_err_msg(Error const& error, Language lang, bool with_id) noexcept
 {
     switch (error.id) {
     case ERR_SESSION_UNKNOWN_BACKEND:

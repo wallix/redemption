@@ -1215,10 +1215,16 @@ public:
                                                    time_base.get_current_time().tv_sec);
                             if (is_first_looping_on_mod_selector)
                             {
-                                Language lang = this->ini.get<cfg::translation::language>();
-
-                                this->ini.set_acl<cfg::translation::login_language>
-                                    (to_login_language(lang));
+                                switch (this->ini.get<cfg::translation::language>()) {
+                                    case Language::en:
+                                        this->ini.set_acl<cfg::translation::login_language>(
+                                            LoginLanguage::EN);
+                                        break;
+                                    case Language::fr:
+                                        this->ini.set_acl<cfg::translation::login_language>(
+                                            LoginLanguage::FR);
+                                        break;
+                                }
                                 is_first_looping_on_mod_selector = false;
                             }
                         }

@@ -751,7 +751,7 @@ public:
                     FrontAPI& front,
                     ServerTransportContext stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
-                    rdp_api& rdp, const Translation::language_t & lang,
+                    rdp_api& rdp, const Language & lang,
                     const bool bogus_refresh_rect,
                     const uint32_t monitor_count,
                     GeneralCaps const & client_general_caps,
@@ -1600,7 +1600,7 @@ public:
         const char (& client_name)[128],
         const uint32_t monitor_count,
         const bool bogus_refresh_rect,
-        const Translation::language_t & lang,
+        const Language & lang,
         FileValidatorService * file_validator_service)
     {
         assert(this->session_probe.enable_session_probe);
@@ -1868,7 +1868,7 @@ class mod_rdp : public mod_api, public rdp_api
     AsynchronousTaskContainer asynchronous_tasks;
 #endif
 
-    Translation::language_t lang;
+    Language lang;
 
     bool already_upped_and_running = false;
 

@@ -30,7 +30,7 @@ using namespace std::string_view_literals;
 
 RED_AUTO_TEST_CASE(TestTranslation)
 {
-    Translation::language_t lang = Translation::EN;
+    Language lang = Language::en;
 
     {
         constexpr std::size_t n = 128;

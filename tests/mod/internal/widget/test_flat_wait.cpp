@@ -74,7 +74,7 @@ RED_AUTO_TEST_CASE(TraceFlatWait)
 
     WidgetFlatButton * extra_button = nullptr;
     FlatWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
-                         text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Translation::EN);
+                         text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Pending Approbation",
     //                      text_pending, 0, colors);
     // FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "Out of Timeframe",
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE(TraceFlatWaitWithForm)
 
     WidgetFlatButton * extra_button = nullptr;
     FlatWait flat_dialog(drawable, 0, 0, 800, 600, parent, notifier, "Invalid Target",
-                         text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Translation::EN, true,
+                         text_invalid, 0, extra_button, global_font_deja_vu_14(), colors, Language::en, true,
                          FlatForm::COMMENT_DISPLAY | FlatForm::COMMENT_MANDATORY |
                             FlatForm::TICKET_DISPLAY | FlatForm::TICKET_MANDATORY |
                             FlatForm::DURATION_DISPLAY);

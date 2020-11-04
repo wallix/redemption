@@ -60,7 +60,7 @@ private:
 
     long prev_time;
 
-    Translation::language_t lang;
+    Language lang;
 
     bool showtimer;
 
@@ -75,7 +75,7 @@ public:
                  NotifyApi* notifier, const char * diagnostic_text,
                  const char * username, const char * target,
                  bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
-                 Translation::language_t lang, bool back_selector = false); /*NOLINT*/
+                 Language lang, bool back_selector = false); /*NOLINT*/
 
     ~FlatWabClose();
 

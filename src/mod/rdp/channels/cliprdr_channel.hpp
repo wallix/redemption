@@ -369,7 +369,7 @@ private:
         GdProvider& gd_provider;
         const std::chrono::seconds delay;
         const bool enable_osd;
-        Translation::language_t lang;
+        Language lang;
 
         enum class MsgType : bool { Nothing, WaitValidator };
 

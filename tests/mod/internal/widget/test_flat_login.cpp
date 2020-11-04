@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin)
                          "test1", "rec", "rec", "",
                          "Login", "Password", "Target", "", LOGON_MESSAGE,
                          extra_button, false, global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         Translator{Language::en}, Theme{});
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.get_rect());
@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
                          "Login", "Password", "Target", "",
                          LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         Translator{Language::en}, Theme{});
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(flat_login.x(),
@@ -107,7 +107,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test3",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
-                         global_font_deja_vu_14(), Translator{}, Theme{});
+                         global_font_deja_vu_14(), Translator{Language::en}, Theme{});
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget::focus_reason_tabkey);
 
@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test4",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
-                         global_font_deja_vu_14(), Translator{}, Theme{});
+                         global_font_deja_vu_14(), Translator{Language::en}, Theme{});
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(flat_login.x(),
@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip)
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
-                         global_font_deja_vu_14(), Translator{}, Theme{});
+                         global_font_deja_vu_14(), Translator{Language::en}, Theme{});
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
@@ -208,7 +208,7 @@ RED_AUTO_TEST_CASE(TraceFlatLoginClip2)
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, notifier, "test6",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
-                         global_font_deja_vu_14(), Translator{}, Theme{});
+                         global_font_deja_vu_14(), Translator{Language::en}, Theme{});
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.x(),
@@ -243,7 +243,7 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
                          nullptr, nullptr, nullptr, "Login", "Password", "Target",
                          "", LOGON_MESSAGE, extra_button, false,
-                         global_font_deja_vu_14(), Translator{}, Theme{});
+                         global_font_deja_vu_14(), Translator{Language::en}, Theme{});
 
     RED_CHECK(notifier.sender == nullptr);
     RED_CHECK(notifier.event == 0);
@@ -266,7 +266,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin4)
                              "By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
                          extra_button, false,
                          global_font_deja_vu_14(),
-                         Translator{}, Theme{});
+                         Translator{Language::en}, Theme{});
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.get_rect());
@@ -309,7 +309,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_transparent_png_with_theme_color)
                          extra_button,
                          false,
                          global_font_deja_vu_14(),
-                         Translator { },
+                         Translator{Language::en},
                          colors);
 
     flat_login.rdp_input_invalidate(flat_login.get_rect());
@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin_target_field)
                          extra_button,
                          true,
                          global_font_deja_vu_14(),
-                         Translator { },
+                         Translator{Language::en},
                          colors);
 
     flat_login.rdp_input_invalidate(flat_login.get_rect());

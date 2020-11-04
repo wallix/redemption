@@ -48,7 +48,7 @@ struct RdpNegoProtocols
 RdpNego::RdpNego(
     const bool tls, const std::string & username, bool nla, bool admin_mode,
     const char * target_host, const bool krb, Random & rand, TimeBase & time_base,
-    std::string& extra_message, Translation::language_t lang,
+    std::string& extra_message, Language lang,
     const TLSClientParams & tls_client_params,
     const Verbose verbose)
 : tls(nla || tls)

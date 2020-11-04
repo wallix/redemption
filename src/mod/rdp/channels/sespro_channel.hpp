@@ -166,7 +166,7 @@ public:
         uninit_checked<const char*> real_alternate_shell;
         uninit_checked<const char*> real_working_dir;
 
-        uninit_checked<Translation::language_t> lang;
+        uninit_checked<Language> lang;
 
         uninit_checked<bool> bogus_refresh_rect_ex;
 

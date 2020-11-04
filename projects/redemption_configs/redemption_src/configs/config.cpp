@@ -155,24 +155,9 @@ Inifile::FieldReference Inifile::get_acl_field_by_name(chars_view name)
     return {};
 }
 
-Translation::language_t language(Inifile const & ini)
+::Language language(Inifile const & ini)
 {
-    return static_cast<Translation::language_t>(
-        ini.template get<cfg::translation::language>());
-}
-
-LoginLanguage to_login_language(Language lang)
-{
-    switch (lang)
-    {
-        case Language::en :
-            return LoginLanguage::EN;
-        case Language::fr :
-            return LoginLanguage::FR;
-        default :
-            assert("Unknown Language value");
-    }
-    return LoginLanguage();
+    return ini.get<cfg::translation::language>();
 }
 
 void Inifile::initialize()

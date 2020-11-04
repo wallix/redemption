@@ -54,7 +54,7 @@ public:
              Widget & parent, NotifyApi* notifier,
              const char* caption, const char * text, int group_id,
              WidgetFlatButton * extra_button,
-             Font const & font, Theme const & theme, Translation::language_t lang,
+             Font const & font, Theme const & theme, Language lang,
              bool showform = false, unsigned flags = FlatForm::NONE,
              std::chrono::minutes duration_max = std::chrono::minutes::zero()); /*NOLINT*/
 

@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "utils/translation.hpp"
+#include "configs/autogen/enums.hpp" // Language
 #include "utils/sugar/zstring_view.hpp"
 
 class Error;
 
-zstring_view local_err_msg(Error const& error, Translation::language_t lang, bool with_id = true) noexcept; /*NOLINT*/
+zstring_view local_err_msg(Error const& error, Language lang, bool with_id = true) noexcept; /*NOLINT*/

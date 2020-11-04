@@ -126,7 +126,7 @@ public:
                    const char * number_of_page,
                    WidgetFlatButton * extra_button,
                    WidgetSelectorParams const & selector_params,
-                   Font const & font, Theme const & theme, Translation::language_t lang);
+                   Font const & font, Theme const & theme, Language lang);
 
     ~WidgetSelector() override;
 

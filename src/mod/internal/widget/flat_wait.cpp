@@ -38,7 +38,7 @@ FlatWait::FlatWait(
     Widget & parent, NotifyApi* notifier,
     const char* caption, const char * text, int group_id,
     WidgetFlatButton * extra_button,
-    Font const & font, Theme const & theme, Translation::language_t lang,
+    Font const & font, Theme const & theme, Language lang,
     bool showform, unsigned flags, std::chrono::minutes duration_max
 )
     : WidgetParent(drawable, parent, notifier, group_id)

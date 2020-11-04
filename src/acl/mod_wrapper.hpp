@@ -404,7 +404,9 @@ public:
                         // only if "reasonable" time
                         if (elapsed_time < 60*60*24*366L) {
                             str_append(msg,
-                                "  [", time_before_closing(elapsed_time, Translator(ini)), ']');
+                                "  [",
+                                time_before_closing(elapsed_time, Translator(language(ini))),
+                                ']');
                         }
                     }
                     if (msg != this->osd_message) {

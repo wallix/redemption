@@ -82,7 +82,7 @@ private:
     #endif
 
     std::string& extra_message;
-    Translation::language_t lang;
+    Language lang;
 
     enum class /*REDEMPTION_CXX_NODISCARD*/ State
     {
@@ -114,7 +114,7 @@ public:
     RdpNego(
         const bool tls, const std::string & username, bool nla, bool admin_mode,
         const char * target_host, const bool krb, Random & rand, TimeBase & time_base,
-        std::string& extra_message, Translation::language_t lang,
+        std::string& extra_message, Language lang,
         const TLSClientParams & tls_client_params,
         const Verbose verbose);
 

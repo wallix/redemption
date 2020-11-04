@@ -33,7 +33,7 @@ FlatWabClose::FlatWabClose(
     NotifyApi* notifier, const char * diagnostic_text,
     const char * username, const char * target,
     bool showtimer, const char * extra_message, Font const & font, Theme const & theme,
-    Translation::language_t lang, bool back_selector)
+    Language lang, bool back_selector)
 : WidgetParent(drawable, parent, notifier)
 , connection_closed_label(drawable, *this, nullptr, TR(trkeys::connection_closed, lang).to_sv(),
                             -13, theme.global.fgcolor,
