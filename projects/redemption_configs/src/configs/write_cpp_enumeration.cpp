@@ -21,7 +21,7 @@
 #include "configs/specs/config_type.hpp"
 #include "configs/generators/cpp_enumeration.hpp"
 
-int main(int ac, char ** av)
+int main(int /*ac*/, char ** av)
 {
-    return cfg_generators::app_write_cpp_enumeration(&cfg_specs::config_type_definition, ac, av);
+    return cfg_generators::app_write_cpp_enumeration(&cfg_specs::config_type_definition, av[0]);
 }

@@ -340,7 +340,7 @@ namespace impl
                 write_value_(out, d, v, prefix);
             }
             else {
-                auto f = (1ull << d >> 1);
+                auto f = type_enumeration::mask_of(int(d));
                 if (!(f & e.exclude_flag)) {
                     write_value_(out, HexFlag{f, e.values.size()}, v, prefix);
                     if (f) {

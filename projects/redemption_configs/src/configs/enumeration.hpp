@@ -94,7 +94,7 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
 
     type_enumeration & exclude()
     {
-        this->exclude_flag |= (1 << this->values.size() >> 2);
+        this->exclude_flag |= mask_of(int(this->values.size()) - 1);
         return *this;
     }
 
@@ -115,6 +115,10 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
             : (1u << (this->values.size() - 1u)) - 1u;
     }
 
+    static uint64_t mask_of(int i)
+    {
+        return i ? (1ull << (i-1)) : 0;
+    }
 
     flag_type flag;
 

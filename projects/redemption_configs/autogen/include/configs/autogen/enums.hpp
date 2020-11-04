@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <iosfwd>
-
 
 // Specifies the type of data to be captured:
 enum class CaptureFlags : unsigned char
@@ -35,12 +33,6 @@ inline CaptureFlags & operator &= (CaptureFlags & x, CaptureFlags y) { return x 
 inline CaptureFlags & operator += (CaptureFlags & x, CaptureFlags y) { return x = x + y; }
 inline CaptureFlags & operator -= (CaptureFlags & x, CaptureFlags y) { return x = x - y; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, CaptureFlags e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class Level : unsigned char
 {
     low = 0,
@@ -51,12 +43,6 @@ enum class Level : unsigned char
 inline bool is_valid_enum_value(Level e)
 { return static_cast<unsigned long>(e) <= 2; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, Level e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class Language : unsigned char
 {
     en = 0,
@@ -66,12 +52,6 @@ enum class Language : unsigned char
 inline bool is_valid_enum_value(Language e)
 { return static_cast<unsigned long>(e) <= 1; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, Language e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class ClipboardEncodingType : unsigned char
 {
     utf8 = 0,
@@ -80,12 +60,6 @@ enum class ClipboardEncodingType : unsigned char
 
 inline bool is_valid_enum_value(ClipboardEncodingType e)
 { return static_cast<unsigned long>(e) <= 1; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ClipboardEncodingType e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class KeyboardLogFlagsCP : unsigned char
 {
@@ -113,12 +87,6 @@ inline KeyboardLogFlagsCP & operator |= (KeyboardLogFlagsCP & x, KeyboardLogFlag
 inline KeyboardLogFlagsCP & operator &= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x & y; }
 inline KeyboardLogFlagsCP & operator += (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x + y; }
 inline KeyboardLogFlagsCP & operator -= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x - y; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlagsCP e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class KeyboardLogFlags : unsigned char
 {
@@ -149,12 +117,6 @@ inline KeyboardLogFlags & operator &= (KeyboardLogFlags & x, KeyboardLogFlags y)
 inline KeyboardLogFlags & operator += (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x + y; }
 inline KeyboardLogFlags & operator -= (KeyboardLogFlags & x, KeyboardLogFlags y) { return x = x - y; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlags e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class ClipboardLogFlags : unsigned char
 {
     none = 0,
@@ -183,12 +145,6 @@ inline ClipboardLogFlags & operator |= (ClipboardLogFlags & x, ClipboardLogFlags
 inline ClipboardLogFlags & operator &= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x & y; }
 inline ClipboardLogFlags & operator += (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x + y; }
 inline ClipboardLogFlags & operator -= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x - y; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ClipboardLogFlags e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class FileSystemLogFlags : unsigned char
 {
@@ -219,12 +175,6 @@ inline FileSystemLogFlags & operator &= (FileSystemLogFlags & x, FileSystemLogFl
 inline FileSystemLogFlags & operator += (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x + y; }
 inline FileSystemLogFlags & operator -= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x - y; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, FileSystemLogFlags e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class ServerNotification : unsigned char
 {
     nobody = 0,
@@ -254,12 +204,6 @@ inline ServerNotification & operator &= (ServerNotification & x, ServerNotificat
 inline ServerNotification & operator += (ServerNotification & x, ServerNotification y) { return x = x + y; }
 inline ServerNotification & operator -= (ServerNotification & x, ServerNotification y) { return x = x - y; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ServerNotification e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 // Behavior of certificates check.
 // System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
 enum class ServerCertCheck : unsigned char
@@ -277,12 +221,6 @@ enum class ServerCertCheck : unsigned char
 inline bool is_valid_enum_value(ServerCertCheck e)
 { return static_cast<unsigned long>(e) <= 3; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ServerCertCheck e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 // Session record options.
 // When session records are encrypted, they can be read only by the WAB where they have been generated.
 enum class TraceType : unsigned char
@@ -297,12 +235,6 @@ enum class TraceType : unsigned char
 
 inline bool is_valid_enum_value(TraceType e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, TraceType e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class KeyboardInputMaskingLevel : unsigned char
 {
@@ -319,12 +251,6 @@ enum class KeyboardInputMaskingLevel : unsigned char
 inline bool is_valid_enum_value(KeyboardInputMaskingLevel e)
 { return static_cast<unsigned long>(e) <= 3; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, KeyboardInputMaskingLevel e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 // Behavior on failure to launch Session Probe.
 enum class SessionProbeOnLaunchFailure : unsigned char
 {
@@ -339,12 +265,6 @@ enum class SessionProbeOnLaunchFailure : unsigned char
 inline bool is_valid_enum_value(SessionProbeOnLaunchFailure e)
 { return static_cast<unsigned long>(e) <= 2; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnLaunchFailure e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class VncBogusClipboardInfiniteLoop : unsigned char
 {
     delayed = 0,
@@ -354,12 +274,6 @@ enum class VncBogusClipboardInfiniteLoop : unsigned char
 
 inline bool is_valid_enum_value(VncBogusClipboardInfiniteLoop e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, VncBogusClipboardInfiniteLoop e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 // The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
 enum class ColorDepthSelectionStrategy : unsigned char
@@ -373,12 +287,6 @@ enum class ColorDepthSelectionStrategy : unsigned char
 inline bool is_valid_enum_value(ColorDepthSelectionStrategy e)
 { return static_cast<unsigned long>(e) <= 1; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ColorDepthSelectionStrategy e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 // The compression method of native video capture:
 enum class WrmCompressionAlgorithm : unsigned char
 {
@@ -389,12 +297,6 @@ enum class WrmCompressionAlgorithm : unsigned char
 
 inline bool is_valid_enum_value(WrmCompressionAlgorithm e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, WrmCompressionAlgorithm e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 // Specifies the highest compression package support available on the front side
 enum class RdpCompression : unsigned char
@@ -414,12 +316,6 @@ enum class RdpCompression : unsigned char
 inline bool is_valid_enum_value(RdpCompression e)
 { return static_cast<unsigned long>(e) <= 4; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, RdpCompression e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class OcrLocale : unsigned char
 {
     latin = 0,
@@ -428,12 +324,6 @@ enum class OcrLocale : unsigned char
 
 inline bool is_valid_enum_value(OcrLocale e)
 { return static_cast<unsigned long>(e) <= 1; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, OcrLocale e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class BogusNumberOfFastpathInputEvent : unsigned char
 {
@@ -445,12 +335,6 @@ enum class BogusNumberOfFastpathInputEvent : unsigned char
 inline bool is_valid_enum_value(BogusNumberOfFastpathInputEvent e)
 { return static_cast<unsigned long>(e) <= 2; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, BogusNumberOfFastpathInputEvent e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class SessionProbeOnKeepaliveTimeout : unsigned char
 {
     ignore_and_continue = 0,
@@ -460,12 +344,6 @@ enum class SessionProbeOnKeepaliveTimeout : unsigned char
 
 inline bool is_valid_enum_value(SessionProbeOnKeepaliveTimeout e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnKeepaliveTimeout e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class SmartVideoCropping : unsigned char
 {
@@ -480,12 +358,6 @@ enum class SmartVideoCropping : unsigned char
 inline bool is_valid_enum_value(SmartVideoCropping e)
 { return static_cast<unsigned long>(e) <= 2; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class RdpModeConsole : unsigned char
 {
     // Forward Console mode request from client to the target.
@@ -498,12 +370,6 @@ enum class RdpModeConsole : unsigned char
 
 inline bool is_valid_enum_value(RdpModeConsole e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, RdpModeConsole e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class SessionProbeDisabledFeature : unsigned short
 {
@@ -546,12 +412,6 @@ inline SessionProbeDisabledFeature & operator &= (SessionProbeDisabledFeature & 
 inline SessionProbeDisabledFeature & operator += (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x + y; }
 inline SessionProbeDisabledFeature & operator -= (SessionProbeDisabledFeature & x, SessionProbeDisabledFeature y) { return x = x - y; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeDisabledFeature e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class RdpStoreFile : unsigned char
 {
     // Never store transferred files.
@@ -564,12 +424,6 @@ enum class RdpStoreFile : unsigned char
 
 inline bool is_valid_enum_value(RdpStoreFile e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, RdpStoreFile e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 // For targets running WALLIX BestSafe only.
 enum class SessionProbeOnAccountManipulation : unsigned char
@@ -585,12 +439,6 @@ enum class SessionProbeOnAccountManipulation : unsigned char
 inline bool is_valid_enum_value(SessionProbeOnAccountManipulation e)
 { return static_cast<unsigned long>(e) <= 2; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnAccountManipulation e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 // Client Address to send to target(in InfoPacket)
 enum class ClientAddressSent : unsigned char
 {
@@ -604,12 +452,6 @@ enum class ClientAddressSent : unsigned char
 
 inline bool is_valid_enum_value(ClientAddressSent e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ClientAddressSent e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 enum class SessionProbeLogLevel : unsigned char
 {
@@ -625,12 +467,6 @@ enum class SessionProbeLogLevel : unsigned char
 inline bool is_valid_enum_value(SessionProbeLogLevel e)
 { return static_cast<unsigned long>(e) <= 6; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeLogLevel e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class ModRdpUseFailureSimulationSocketTransport : unsigned char
 {
     Off = 0,
@@ -641,12 +477,6 @@ enum class ModRdpUseFailureSimulationSocketTransport : unsigned char
 inline bool is_valid_enum_value(ModRdpUseFailureSimulationSocketTransport e)
 { return static_cast<unsigned long>(e) <= 2; }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ModRdpUseFailureSimulationSocketTransport e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class LoginLanguage : unsigned char
 {
     Auto = 0,
@@ -656,12 +486,6 @@ enum class LoginLanguage : unsigned char
 
 inline bool is_valid_enum_value(LoginLanguage e)
 { return static_cast<unsigned long>(e) <= 2; }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, LoginLanguage e)
-{ return os << static_cast<unsigned long>(e); }
-
 
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
@@ -690,12 +514,6 @@ inline bool is_valid_enum_value(ColorDepth e)
     ;
 }
 
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, ColorDepth e)
-{ return os << static_cast<unsigned long>(e); }
-
-
 enum class OcrVersion : unsigned char
 {
     v1 = 1,
@@ -710,10 +528,4 @@ inline bool is_valid_enum_value(OcrVersion e)
      || i == 2
     ;
 }
-
-template<class Ch, class Tr>
-std::basic_ostream<Ch, Tr> &
-operator << (std::basic_ostream<Ch, Tr> & os, OcrVersion e)
-{ return os << static_cast<unsigned long>(e); }
-
 

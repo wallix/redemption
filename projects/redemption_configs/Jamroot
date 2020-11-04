@@ -32,7 +32,7 @@ constant FILEGEN_VERBOSE_DESC : autogen/src/include/debug_verbose_description.hp
 
 actions generate_cpp_enumeration
 {
-    $(>) $(FILEGEN_ENUM) $(AUTOGEN_INC_DIR)/enums_func_ini.hpp $(AUTOGEN_INC_DIR)/enums_func_ini.tcc
+    $(>) $(AUTOGEN_INC_DIR)
 }
 
 actions generate_config_spec
