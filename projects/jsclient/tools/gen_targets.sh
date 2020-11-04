@@ -29,6 +29,7 @@ for f in \
     src/utils/fileutils.hpp \
     src/utils/cfgloader.hpp \
     src/utils/primitives/primitives_sse2.hpp \
+    src/utils/i18n/*.hpp \
     src/transport/file_transport.hpp ;
 do
     disable_sources+=" --disable-src $f"

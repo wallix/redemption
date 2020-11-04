@@ -36,6 +36,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/translation.hpp"
 
 #include <string>
 #include <algorithm>

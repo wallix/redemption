@@ -46,6 +46,7 @@
 #include "utils/difftimeval.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/local_err_msg.hpp"
 
 #include <cassert>
 #include <cerrno>

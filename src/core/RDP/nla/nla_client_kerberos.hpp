@@ -28,6 +28,7 @@
 #include "system/ssl_sha256.hpp"
 
 #include "core/RDP/nla/kerberos.hpp"
+#include "utils/translation.hpp"
 
 #include "transport/transport.hpp"
 

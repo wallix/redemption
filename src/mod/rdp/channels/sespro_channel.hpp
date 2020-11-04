@@ -36,6 +36,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/uninit_checked.hpp"
+#include "utils/translation.hpp"
 
 #include <chrono>
 #include <memory>

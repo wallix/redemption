@@ -26,6 +26,7 @@
 #include "configs/autogen/enums.hpp"
 #include "transport/transport.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/translation.hpp"
 
 #include <memory>
 

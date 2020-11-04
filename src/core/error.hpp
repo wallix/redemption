@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "utils/translation.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
 #define EACH_ERROR(f, fv)                                    \
@@ -244,8 +243,6 @@ public:
 
     [[nodiscard]] zstring_view errmsg(bool with_id = true) const noexcept; /*NOLINT*/
 };
-
-zstring_view local_err_msg(const Error& error, Translation::language_t lang, bool with_id = true) noexcept; /*NOLINT*/
 
 #ifndef NOT_UNDEF_EACH_ERROR
 # undef EACH_ERROR

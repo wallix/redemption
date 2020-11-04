@@ -46,7 +46,6 @@ exe-js js_client :
   src/utils/bitmap_data_allocator.bc
   src/utils/hexdump.bc
   src/utils/parse_primary_drawing_orders.bc
-  src/utils/pattutils.bc
   src/utils/primitives/primitives.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
@@ -112,12 +111,10 @@ test-run-js tests/red_channels/test_js_channel :
 test-run-js tests/redjs/test_front :
   tests/redjs/test_front.cpp
 :
-  app_path_test.bc
   src/redjs/front.bc
   src/redjs/graphics.bc
   src/redjs/image_conversions.bc
   src/system/ssl_mod_exp.bc
-  projects/redemption_configs/redemption_src/configs/config.bc
   src/client_redemption/pointer_to_rgba8888.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -128,7 +125,6 @@ test-run-js tests/redjs/test_front :
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
   src/utils/hexdump.bc
-  src/utils/pattutils.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
   src/utils/utf.bc
@@ -209,7 +205,6 @@ objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/bitmap_data_allocator.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/parse_primary_drawing_orders.bc : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
-objjs src/utils/pattutils.bc : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 objjs src/utils/rle.bc : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 objjs src/utils/stacktrace.bc : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;

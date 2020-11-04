@@ -25,7 +25,7 @@
 #include "cxx/diagnostic.hpp"
 #include "utils/sugar/zstring_view.hpp"
 
-#include "utils/i18n/message_translator_gettext.hpp"
+#include "system/i18n/message_translator_gettext.hpp"
 
 #include <cstdio>
 
@@ -200,12 +200,12 @@ namespace trkeys
 
 
 /* Need to pass type with template on Translation struct
-   for avoid strong dependency but it forces to change a 
+   for avoid strong dependency but it forces to change a
    lot of file in project */
 using MessageTranslator_t = i18n::MessageTranslatorGettext;
 
 class Inifile;
-        
+
 struct Translation
 {
     enum language_t : unsigned char
@@ -228,7 +228,7 @@ private:
         {
             this->message_translator.clear_context();
 
-            /* check if it's english language for avoid useless context reset 
+            /* check if it's english language for avoid useless context reset
                because text is already in english by default in code */
             if (this->lang != language_t::EN)
             {

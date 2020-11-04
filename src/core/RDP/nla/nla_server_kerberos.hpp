@@ -24,6 +24,7 @@
 #include "core/RDP/nla/credssp.hpp"
 #include "utils/hexdump.hpp"
 #include "system/ssl_sha256.hpp"
+#include "utils/translation.hpp"
 
 #ifndef __EMSCRIPTEN__
 #include "core/RDP/nla/kerberos.hpp"
