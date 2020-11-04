@@ -42,7 +42,6 @@ struct Event {
     std::string name;
     void const* lifespan_handle = nullptr;
     bool garbage = false;
-    bool teardown = false;
 
     struct Trigger {
         int fd = -1;
@@ -149,37 +148,6 @@ struct Event {
                 this->on_action_changed = false;
             }
         }
-
-    private:
-        bool on_teardown_running = false;
-        bool on_teardown_changed = false;
-        std::function<void(Event &)> on_teardown = [](Event &){};
-        std::function<void(Event &)> future_on_teardown = [](Event &){};
-
-    public:
-        void set_teardown_function(std::function<void(Event &)> fn) {
-            if (this->on_teardown_running){
-                this->future_on_teardown = std::move(fn);
-                this->on_teardown_changed = true;
-                return;
-            }
-            this->on_teardown_changed = false;
-            this->on_teardown = std::move(fn);
-        }
-
-        void exec_teardown(Event & event) {
-            this->on_teardown_running = true;
-            this->on_teardown(event);
-        }
-
-        void update_on_teardown()
-        {
-            this->on_teardown_running = false;
-            if (this->on_teardown_changed){
-                this->on_teardown = std::move(this->future_on_teardown);
-                this->on_teardown_changed = false;
-            }
-        }
     } actions;
 
     Event(std::string name, void const* lifespan)
@@ -262,7 +230,7 @@ struct EventContainer : noncopyable
     {
         for (auto & pevent: this->queue){
             Event & event = *pevent;
-            if ((not (event.garbage or event.teardown)) and event.alarm.fd != INVALID_SOCKET){
+            if (not event.garbage and event.alarm.fd != INVALID_SOCKET){
                 fn(event.alarm.fd);
             }
         }
@@ -272,7 +240,7 @@ struct EventContainer : noncopyable
     {
         for (auto & pevent: this->queue){
             Event & event = *pevent;
-            if ((not (event.garbage or event.teardown)) and event.alarm.fd != INVALID_SOCKET){
+            if (not event.garbage and event.alarm.fd != INVALID_SOCKET){
                 fn(event.alarm.trigger_time);
             }
         }
@@ -282,7 +250,7 @@ struct EventContainer : noncopyable
     {
         for (auto & pevent: this->queue){
             Event & event = *pevent;
-            if ((not (event.garbage or event.teardown)) and event.alarm.fd == INVALID_SOCKET){
+            if (not event.garbage and event.alarm.fd == INVALID_SOCKET){
                 fn(event.alarm.trigger_time);
             }
         }
@@ -303,18 +271,13 @@ struct EventContainer : noncopyable
             if (not event.garbage){
                 event.actions.update_on_timeout();
                 event.actions.update_on_action();
-                event.actions.update_on_teardown();
             }
             if (event.garbage) {
                 LOG_IF(verbose, LOG_INFO, "GARBAGE EVENT '%s' (%d) timeout=%d now=%d =========",
                     event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             }
-            if (event.teardown) {
-                LOG_IF(verbose, LOG_INFO, "TEARDOWN EVENT '%s' (%d) timeout=%d now=%d",
-                    event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-            }
 
-            if (not (event.garbage or event.teardown)) {
+            if (not event.garbage) {
                 if (event.alarm.fd != -1 && fn(event.alarm.fd)) {
                     LOG_IF(verbose, LOG_INFO, "FD EVENT TRIGGER '%s' (%d) timeout=%d now=%d",
                         event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
@@ -323,7 +286,7 @@ struct EventContainer : noncopyable
                     continue;
                 }
             }
-            if (not (event.garbage or event.teardown)) {
+            if (not event.garbage) {
                 if (!event.alarm.active){
                     LOG_IF(verbose & 0x20, LOG_INFO, "EXPIRED TIMEOUT EVENT '%s' (%d) timeout=%d now=%d",
                         event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
@@ -335,23 +298,8 @@ struct EventContainer : noncopyable
                 }
             }
         }
-        this->exec_teardowns();
         this->garbage_collector();
     }
-
-
-    void exec_teardowns() {
-        for (size_t i = 0; i < this->queue.size() ; ++i){ /*NOLINT*/
-            Event & event = *this->queue[i];
-            if (not event.garbage
-            and event.teardown){
-                event.actions.exec_teardown(event);
-                event.teardown = false;
-                event.garbage = true;
-            }
-        }
-    }
-
 
     void garbage_collector() {
         for (size_t i = 0; i < this->queue.size() ; i++){
@@ -383,7 +331,7 @@ struct EventContainer : noncopyable
         auto last = this->queue.end();
         for (; first != last; ++first){
             Event const& event = **first;
-            if (not (event.garbage or event.teardown) and event.alarm.active){
+            if (not event.garbage and event.alarm.active){
                 ultimatum = event.alarm.trigger_time;
                 break;
             }
@@ -391,7 +339,7 @@ struct EventContainer : noncopyable
 
         for (; first != last; ++first){
             Event const& event = **first;
-            if (not (event.garbage or event.teardown) and event.alarm.active){
+            if (not event.garbage and event.alarm.active){
                 ultimatum = std::min(event.alarm.trigger_time, ultimatum);
             }
         }
@@ -405,8 +353,7 @@ struct EventContainer : noncopyable
         if (event_id) {
             for(auto & pevent: this->queue){
                 Event & event = *pevent;
-                if (not (event.garbage or event.teardown)
-                and (event.id == event_id)){
+                if (not event.garbage and event.id == event_id){
                     event.garbage = true;
                     event.id = 0;
                     event_id = 0;
@@ -420,8 +367,7 @@ struct EventContainer : noncopyable
     {
         for(auto & pevent: this->queue){
             Event & event = *pevent;
-            if (not (event.garbage or event.teardown)
-            and (event.id == event_id)){
+            if (not event.garbage and event.id == event_id){
                 event.alarm.set_timeout(trigger_time);
             }
         }

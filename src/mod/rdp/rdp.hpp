@@ -114,7 +114,8 @@ struct FileValidatorService;
 # include "mod/rdp/channels/drdynvc_channel.hpp"
 # include "mod/rdp/channels/rdpdr_channel.hpp"
 # include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
-#include "core/RDP/channels/rdpdr.hpp"
+# include "mod/rdp/channels/asynchronous_task_container.hpp"
+# include "core/RDP/channels/rdpdr.hpp"
 # include "core/RDP/capabilities/rail.hpp"
 # include "RAIL/client_execute.hpp"
 #endif
@@ -144,64 +145,6 @@ struct FileValidatorService;
 #include <cstdlib>
 #include <deque>
 
-
-#ifndef __EMSCRIPTEN__
-// TODO: isn't AsynchronousTaskContainer a general purpose class that should have it's own file ?
-struct AsynchronousTaskContainer
-{
-public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, EventContainer & events)
-        : time_base(time_base)
-        , events(events)
-    {
-    }
-
-    ~AsynchronousTaskContainer()
-    {
-        this->events.end_of_lifespan(this);
-    }
-
-    void add(std::unique_ptr<AsynchronousTask>&& task)
-    {
-        this->tasks.emplace_back(std::move(task));
-
-        // TODO: we could simplify that code by keeping only the current task as event
-        // and creating the next event only when poping task and changing event
-        // instead of creating events early
-
-        if (this->tasks.size() == 1u) {
-            this->next();
-        }
-    }
-
-private:
-    void next()
-    {
-        if (!this->tasks.empty()) {
-            auto pevent = this->tasks.front()->configure_event(this->time_base.get_current_time(), this);
-            this->events.add(pevent);
-            pevent->actions.set_teardown_function(
-                [this](Event& event)
-                {
-                    this->tasks.pop_front();
-                    this->next();
-                    event.garbage = true;
-                });
-        }
-    }
-
-    std::deque<std::unique_ptr<AsynchronousTask>> tasks;
-
-    TimeBase& time_base;
-    EventContainer& events;
-};
-#else
-struct AsynchronousTaskContainer
-{
-    explicit AsynchronousTaskContainer(TimeBase& /*time_base*/, EventContainer& /*events*/)
-    {}
-};
-#endif
 
 class mod_rdp_channels
 {

@@ -1177,6 +1177,7 @@ test-run tests/client_mods/test_rdp_client_wab :
 test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_cliprdr_channel.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1221,6 +1222,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
 test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpdr_channel.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1265,6 +1267,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
 test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -1309,6 +1312,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
 test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_remoteapp_channel.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -3468,6 +3472,7 @@ test-run tests/mod/internal/test_login_mod :
 test-run tests/mod/internal/test_replay_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_replay_mod.cpp
 :
+  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy

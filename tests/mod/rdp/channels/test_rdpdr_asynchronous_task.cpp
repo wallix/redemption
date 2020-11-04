@@ -32,7 +32,8 @@
 #include <deque>
 
 
-class TestToServerSender : public VirtualChannelDataSender {
+class TestToServerSender : public VirtualChannelDataSender
+{
     Transport & transport;
 
 public:
@@ -67,38 +68,22 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
     TimeBase time_base({0,0});
-    auto now = time_base.get_current_time();
     EventContainer events;
 
-    RdpdrDriveReadTask rdpdr_drive_read_task(
+    AsynchronousTaskContainer tasks(time_base, events);
+    tasks.add(std::make_unique<RdpdrDriveReadTask>(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
         test_to_server_sender,
-        RDPVerbose(0));
-
-    std::deque<AsynchronousTask*> tasks;
-
-    std::function<void(Event&)> remover = [&tasks](Event&/*event*/) -> void
-    {
-        tasks.pop_front();
-    };
-
-    auto pevent = rdpdr_drive_read_task.configure_event(now, nullptr);
-    Event & event = *pevent;
-    event.actions.set_teardown_function(remover);
-    events.add(pevent);
-    AsynchronousTask* task(&rdpdr_drive_read_task);
-    tasks.push_back(task);
+        RDPVerbose(0)));
 
     RED_CHECK(!events.queue.empty());
-    auto end_tv = time_base.get_current_time();
+    timeval now = time_base.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
-        time_base.set_current_time(end_tv);
-        events.execute_events(end_tv, [](int/*fd*/){ return true; }, false);
-        end_tv.tv_sec++;
+        time_base.set_current_time(now);
+        events.execute_events(now, [](int/*fd*/){ return true; }, false);
+        ++now.tv_sec;
     }
-    events.execute_events(end_tv, [](int/*fd*/){ return true; }, false);
     RED_CHECK(events.queue.empty());
-    RED_CHECK(tasks.empty());
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -115,39 +100,22 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     TestToServerSender test_to_server_sender(check_transport);
 
     TimeBase time_base({0,0});
-    auto now = time_base.get_current_time();
     EventContainer events;
 
-    RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
+    AsynchronousTaskContainer tasks(time_base, events);
+    tasks.add(std::make_unique<RdpdrSendDriveIOResponseTask>(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
         contents.size(), test_to_server_sender,
-        RDPVerbose(0));
-
-    std::deque<AsynchronousTask*> tasks;
-
-    std::function<void(Event&)> remover = [&tasks](Event&/*event*/) -> void
-    {
-        tasks.pop_front();
-    };
-
-    auto pevent = rdpdr_send_drive_io_response_task.configure_event(now, nullptr);
-    Event & event = *pevent;
-    event.actions.set_teardown_function(remover);
-    events.add(pevent);
-    AsynchronousTask * task(&rdpdr_send_drive_io_response_task);
-    tasks.push_back(task);
-
+        RDPVerbose(0)));
 
     RED_CHECK(!events.queue.empty());
 
-    timeval timeout = time_base.get_current_time();
+    timeval now = time_base.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
-        auto const end_tv = time_base.get_current_time();
-        events.execute_events(end_tv, [](int/*fd*/){return false;}, false);
-        time_base.set_current_time(timeout);
-        ++timeout.tv_sec;
+        events.execute_events(now, [](int/*fd*/){return false;}, false);
+        time_base.set_current_time(now);
+        ++now.tv_sec;
     }
     RED_CHECK(events.queue.empty());
-    RED_CHECK(tasks.empty());
 }

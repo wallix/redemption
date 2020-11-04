@@ -23,6 +23,7 @@
 
 #include "core/channel_list.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
+#include "mod/rdp/channels/asynchronous_task_container.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
@@ -31,15 +32,6 @@
 #include <fcntl.h>
 #include <cerrno>
 
-#include "core/events.hpp"
-#include "utils/timebase.hpp"
-
-class AsynchronousTask : noncopyable
-{
-public:
-    virtual ~AsynchronousTask() = default;
-    virtual Event * configure_event(timeval now, void * lifespan) = 0;
-};
 
 inline void rdpdr_in_file_seek(int fd, int64_t offset, int whence)
 {
@@ -103,33 +95,28 @@ public:
     , verbose(verbose)
     {}
 
-    Event * configure_event(timeval now, void * lifespan) override
+    AsyncEventData configure_event(timeval now) override
     {
-        Event * pevent = new Event("RdpdrDriveReadTask", lifespan);
-        Event & event = *pevent;
-        event.alarm.set_timeout(now+std::chrono::seconds{1});
-        event.alarm.set_fd(this->file_descriptor, std::chrono::milliseconds{100});
-        event.actions.set_action_function(
-            [this](Event&event)
-            {
-                try {
+        return AsyncEventData{
+            "RdpdrDriveReadTask",
+            AsyncEventData::TimerEvent{
+                now+std::chrono::seconds{1},
+                [this](Event& event){
+                    LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
+                    event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
+                },
+            },
+            AsyncEventData::FdEvent{
+                this->file_descriptor,
+                std::chrono::milliseconds{100},
+                [this](Event& event){
+                    event.garbage = true; // true when terminate or throw exception
                     if (this->run()){
-                        return;
+                        event.garbage = false;
                     }
                 }
-                catch(...){
-                    event.teardown = true;
-                    throw;
-                }
-                event.teardown = true;
-            });
-        event.actions.set_timeout_function(
-            [this](Event&event)
-            {
-                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-                event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
-            });
-        return pevent;
+            }
+        };
     }
 
     bool run()
@@ -221,27 +208,21 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    Event * configure_event(timeval now, void * lifespan) override
+    AsyncEventData configure_event(timeval now) override
     {
-        Event * pevent = new Event("RdpdrSendDriveIOResponseTask", lifespan);
-        Event & event = *pevent;
-        event.alarm.set_timeout(now+std::chrono::milliseconds{1});
-        event.actions.set_timeout_function(
-            [this](Event&event)
-            {
-                try {
+        return AsyncEventData{
+            "RdpdrSendDriveIOResponseTask",
+            AsyncEventData::TimerEvent{
+                now+std::chrono::milliseconds{1},
+                [this](Event&event) {
+                    event.garbage = true; // true when terminate or throw exception
                     if (this->run()){
                         event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
-                        return;
+                        event.garbage = false;
                     }
-                }
-                catch(...){
-                    event.teardown = true;
-                    throw;
-                }
-                event.teardown = true;
-            });
-        return pevent;
+                },
+            },
+        };
     }
 
     bool run()
@@ -307,24 +288,18 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    Event * configure_event(timeval now, void * lifespan) override
+    AsyncEventData configure_event(timeval now) override
     {
-        Event * pevent = new Event("RdpdrSendClientMessageTask", lifespan);
-        Event & event = *pevent;
-        event.alarm.set_timeout(now+std::chrono::milliseconds{1});
-        event.actions.set_timeout_function(
-            [this](Event&event)
-            {
-                try {
+        return AsyncEventData{
+            "RdpdrSendClientMessageTask",
+            AsyncEventData::TimerEvent{
+                now+std::chrono::milliseconds{1},
+                [this](Event& event){
+                    event.garbage = true;
                     this->run();
                 }
-                catch(...){
-                    event.teardown = true;
-                    throw;
-                }
-                event.teardown = true;
-            });
-        return pevent;
+            }
+        };
     }
 
     bool run()
