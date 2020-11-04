@@ -300,25 +300,24 @@ public:
     }
 };
 
-#define TRANSLATIONCONF Translation::getInstance()
 
 inline zstring_view TR(trkeys::TrKey_password k, Translation::language_t lang)
 {
-    TRANSLATIONCONF.set_lang(lang);
-    return TRANSLATIONCONF.translate(k);
+    Translation::getInstance().set_lang(lang);
+    return Translation::getInstance().translate(k);
 }
 
 inline zstring_view TR(trkeys::TrKey k, Translation::language_t lang)
 {
-    TRANSLATIONCONF.set_lang(lang);
-    return TRANSLATIONCONF.translate(k);
+    Translation::getInstance().set_lang(lang);
+    return Translation::getInstance().translate(k);
 }
 
 template<class T, class... Ts>
 int TR_fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Translation::language_t lang, Ts const&... xs)
 {
-    TRANSLATIONCONF.set_lang(lang);
-    return TRANSLATIONCONF.translate_fmt(s, n, k, xs...);
+    Translation::getInstance().set_lang(lang);
+    return Translation::getInstance().translate_fmt(s, n, k, xs...);
 }
 
 // implementation in config.cpp
