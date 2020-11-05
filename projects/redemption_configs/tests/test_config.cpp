@@ -265,9 +265,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::rejected>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::context::authenticated>());
-
-
     RED_CHECK_EQUAL(false,                            ini.is_asked<cfg::context::keepalive>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::context::keepalive>());
