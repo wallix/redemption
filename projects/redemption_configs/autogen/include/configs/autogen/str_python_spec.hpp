@@ -746,6 +746,10 @@ enable_ipv6 = boolean(default=False)
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
 
+# Forward the build number advertised by the client to the server. If forwarding is disabled a default (static) build number will be sent to the server.
+#_hidden
+forward_client_build_number = boolean(default=True)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
