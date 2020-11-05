@@ -50,6 +50,7 @@ using namespace std::chrono_literals;
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
     ClientInfo info;
+    info.build                 = 2600;
     info.keylayout             = 0x040C;
     info.console_session       = false;
     info.brush_cache_code      = 0;
@@ -173,6 +174,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
     ClientInfo info;
+    info.build                 = 2600;
     info.keylayout             = 0x040C;
     info.console_session       = false;
     info.brush_cache_code      = 0;

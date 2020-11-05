@@ -186,6 +186,17 @@ private:
     LicenseApi& license_store;
     const bool use_license_store;
 
+    /// Client build number.
+    /// Represents the 'clientBuild' field of Client Core Data (TS_UD_CS_CORE)
+    /// as specified in [MS-RDPBCGR] §2.2.1.3.2.
+    /// Note: must be forwarded from client to server 
+    /// for correct smartcard support; see issue #27767.
+    const uint32_t build_number;
+
+    /// Indicates whether to forward the client build number to the server.
+    /// If set to 'false' the default (static) build number will be used.
+    const bool forward_build_number;
+
 public:
     RdpNegociation(
         const ChannelsAuthorizations channels_authorizations,

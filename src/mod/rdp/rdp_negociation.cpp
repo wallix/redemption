@@ -262,6 +262,8 @@ RdpNegociation::RdpNegociation(
     , license_client_name(info.hostname)
     , license_store(license_store)
     , use_license_store(mod_rdp_params.use_license_store)
+    , build_number(info.build)
+    , forward_build_number(mod_rdp_params.forward_client_build_number)
 {
     this->negociation_result.front_width = info.screen_info.width;
     this->negociation_result.front_width -= this->negociation_result.front_width % 4;
@@ -852,6 +854,11 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 cs_core.clientName[i] = byte_ptr(hostname)[i];
             }
             memset(&(cs_core.clientName[maxhostlen]), 0, (16 - maxhostlen) * sizeof(uint16_t));
+
+            /// Note: forwarding may be required for correct smartcard support; see issue #27767.
+            if (this->forward_build_number) {
+                cs_core.clientBuild = this->build_number;
+            }
 
             if (this->nego.tls){
                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
