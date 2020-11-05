@@ -1521,11 +1521,6 @@ test-run tests/core/RDP/capabilities/test_drawgdiplus :
 :
   <covfile>src/core/RDP/capabilities/drawgdiplus.hpp
 ;
-test-run tests/core/RDP/capabilities/test_drawninegridcache :
-  $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawninegridcache.cpp
-:
-  <covfile>src/core/RDP/capabilities/drawninegridcache.hpp
-;
 test-run tests/core/RDP/capabilities/test_frameacknowledge :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_frameacknowledge.cpp
 :
@@ -2050,16 +2045,6 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/bitmapupdate.hpp
-;
-test-run tests/core/RDP/test_capabilities :
-  $(REDEMPTION_TEST_PATH)/core/RDP/test_capabilities.cpp
-:
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/core/RDP/capabilities.hpp
 ;
 test-run tests/core/RDP/test_clipboard :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_clipboard.cpp
@@ -4746,20 +4731,10 @@ test-run tests/regex/test_regex_parser :
 :
   <covfile>src/regex/regex_parser.hpp
 ;
-test-run tests/regex/test_regex_st_automaton :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_st_automaton.cpp
-:
-  <covfile>src/regex/regex_st_automaton.hpp
-;
 test-run tests/regex/test_regex_state :
   $(REDEMPTION_TEST_PATH)/regex/test_regex_state.cpp
 :
   <covfile>src/regex/regex_state.hpp
-;
-test-run tests/regex/test_regex_states_value :
-  $(REDEMPTION_TEST_PATH)/regex/test_regex_states_value.cpp
-:
-  <covfile>src/regex/regex_states_value.hpp
 ;
 test-run tests/regex/test_regex_utils :
   $(REDEMPTION_TEST_PATH)/regex/test_regex_utils.cpp
@@ -5635,11 +5610,6 @@ test-run tests/utils/test_png :
   <covfile>src/utils/png.cpp
   <covfile>src/utils/png.hpp
 ;
-test-run tests/utils/test_rdtsc :
-  $(REDEMPTION_TEST_PATH)/utils/test_rdtsc.cpp
-:
-  <covfile>src/utils/rdtsc.hpp
-;
 test-run tests/utils/test_recording_progress :
   $(REDEMPTION_TEST_PATH)/utils/test_recording_progress.cpp
 :
@@ -5968,7 +5938,6 @@ alias test_common : tests/core/RDP/capabilities/test_common ;
 alias test_compdesk : tests/core/RDP/capabilities/test_compdesk ;
 alias test_control : tests/core/RDP/capabilities/test_control ;
 alias test_drawgdiplus : tests/core/RDP/capabilities/test_drawgdiplus ;
-alias test_drawninegridcache : tests/core/RDP/capabilities/test_drawninegridcache ;
 alias test_frameacknowledge : tests/core/RDP/capabilities/test_frameacknowledge ;
 alias test_general : tests/core/RDP/capabilities/test_general ;
 alias test_input : tests/core/RDP/capabilities/test_input ;
@@ -6034,7 +6003,6 @@ alias test_SaveSessionInfoPDU : tests/core/RDP/test_SaveSessionInfoPDU ;
 alias test_ServerRedirection : tests/core/RDP/test_ServerRedirection ;
 alias test_autoreconnect : tests/core/RDP/test_autoreconnect ;
 alias test_bitmapupdate : tests/core/RDP/test_bitmapupdate ;
-alias test_capabilities : tests/core/RDP/test_capabilities ;
 alias test_clipboard : tests/core/RDP/test_clipboard ;
 alias test_fastpath : tests/core/RDP/test_fastpath ;
 alias test_gcc : tests/core/RDP/test_gcc ;
@@ -6154,9 +6122,7 @@ alias test_regex : tests/regex/test_regex ;
 alias test_regex_automaton : tests/regex/test_regex_automaton ;
 alias test_regex_consumer : tests/regex/test_regex_consumer ;
 alias test_regex_parser : tests/regex/test_regex_parser ;
-alias test_regex_st_automaton : tests/regex/test_regex_st_automaton ;
 alias test_regex_state : tests/regex/test_regex_state ;
-alias test_regex_states_value : tests/regex/test_regex_states_value ;
 alias test_regex_utils : tests/regex/test_regex_utils ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
 alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
@@ -6245,7 +6211,6 @@ alias test_parse : tests/utils/test_parse ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
 alias test_pattutils : tests/utils/test_pattutils ;
 alias test_png : tests/utils/test_png ;
-alias test_rdtsc : tests/utils/test_rdtsc ;
 alias test_recording_progress : tests/utils/test_recording_progress ;
 alias test_rect : tests/utils/test_rect ;
 alias test_redirection_info : tests/utils/test_redirection_info ;
@@ -6307,7 +6272,6 @@ alias test_common.coverage : tests/core/RDP/capabilities/test_common.coverage ;
 alias test_compdesk.coverage : tests/core/RDP/capabilities/test_compdesk.coverage ;
 alias test_control.coverage : tests/core/RDP/capabilities/test_control.coverage ;
 alias test_drawgdiplus.coverage : tests/core/RDP/capabilities/test_drawgdiplus.coverage ;
-alias test_drawninegridcache.coverage : tests/core/RDP/capabilities/test_drawninegridcache.coverage ;
 alias test_frameacknowledge.coverage : tests/core/RDP/capabilities/test_frameacknowledge.coverage ;
 alias test_general.coverage : tests/core/RDP/capabilities/test_general.coverage ;
 alias test_input.coverage : tests/core/RDP/capabilities/test_input.coverage ;
@@ -6370,7 +6334,6 @@ alias test_SaveSessionInfoPDU.coverage : tests/core/RDP/test_SaveSessionInfoPDU.
 alias test_ServerRedirection.coverage : tests/core/RDP/test_ServerRedirection.coverage ;
 alias test_autoreconnect.coverage : tests/core/RDP/test_autoreconnect.coverage ;
 alias test_bitmapupdate.coverage : tests/core/RDP/test_bitmapupdate.coverage ;
-alias test_capabilities.coverage : tests/core/RDP/test_capabilities.coverage ;
 alias test_clipboard.coverage : tests/core/RDP/test_clipboard.coverage ;
 alias test_fastpath.coverage : tests/core/RDP/test_fastpath.coverage ;
 alias test_gcc.coverage : tests/core/RDP/test_gcc.coverage ;
@@ -6486,9 +6449,7 @@ alias test_regex.coverage : tests/regex/test_regex.coverage ;
 alias test_regex_automaton.coverage : tests/regex/test_regex_automaton.coverage ;
 alias test_regex_consumer.coverage : tests/regex/test_regex_consumer.coverage ;
 alias test_regex_parser.coverage : tests/regex/test_regex_parser.coverage ;
-alias test_regex_st_automaton.coverage : tests/regex/test_regex_st_automaton.coverage ;
 alias test_regex_state.coverage : tests/regex/test_regex_state.coverage ;
-alias test_regex_states_value.coverage : tests/regex/test_regex_states_value.coverage ;
 alias test_regex_utils.coverage : tests/regex/test_regex_utils.coverage ;
 alias test_ssl_aes.coverage : tests/system/linux/system/test_ssl_aes.coverage ;
 alias test_ssl_md4.coverage : tests/system/linux/system/test_ssl_md4.coverage ;
@@ -6571,7 +6532,6 @@ alias test_parse.coverage : tests/utils/test_parse.coverage ;
 alias test_parse_server_message.coverage : tests/utils/test_parse_server_message.coverage ;
 alias test_pattutils.coverage : tests/utils/test_pattutils.coverage ;
 alias test_png.coverage : tests/utils/test_png.coverage ;
-alias test_rdtsc.coverage : tests/utils/test_rdtsc.coverage ;
 alias test_recording_progress.coverage : tests/utils/test_recording_progress.coverage ;
 alias test_rect.coverage : tests/utils/test_rect.coverage ;
 alias test_redirection_info.coverage : tests/utils/test_redirection_info.coverage ;
@@ -6664,7 +6624,6 @@ alias tests/core/RDP/capabilities.norec :
   tests/core/RDP/capabilities/test_compdesk
   tests/core/RDP/capabilities/test_control
   tests/core/RDP/capabilities/test_drawgdiplus
-  tests/core/RDP/capabilities/test_drawninegridcache
   tests/core/RDP/capabilities/test_frameacknowledge
   tests/core/RDP/capabilities/test_general
   tests/core/RDP/capabilities/test_input
@@ -6746,7 +6705,6 @@ alias tests/core/RDP.norec :
   tests/core/RDP/test_ServerRedirection
   tests/core/RDP/test_autoreconnect
   tests/core/RDP/test_bitmapupdate
-  tests/core/RDP/test_capabilities
   tests/core/RDP/test_clipboard
   tests/core/RDP/test_fastpath
   tests/core/RDP/test_gcc
@@ -6902,9 +6860,7 @@ alias tests/regex.norec :
   tests/regex/test_regex_automaton
   tests/regex/test_regex_consumer
   tests/regex/test_regex_parser
-  tests/regex/test_regex_st_automaton
   tests/regex/test_regex_state
-  tests/regex/test_regex_states_value
   tests/regex/test_regex_utils
 ;
 alias tests/server.norec :
@@ -7011,7 +6967,6 @@ alias tests/utils.norec :
   tests/utils/test_parse_server_message
   tests/utils/test_pattutils
   tests/utils/test_png
-  tests/utils/test_rdtsc
   tests/utils/test_recording_progress
   tests/utils/test_rect
   tests/utils/test_redirection_info

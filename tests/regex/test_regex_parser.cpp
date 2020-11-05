@@ -25,20 +25,22 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "regex/regex_parser.hpp"
-#include "regex/regex_states_value.hpp"
+
+#include <vector>
+
 
 using namespace re;
 
-inline void st_to_string(const state_list_t & states, StatesValue & stval, const State * st,
+inline void st_to_string(const state_list_t & states, std::vector<unsigned> & nums, const State * st,
                          std::ostream& os, unsigned depth = 0) /*NOLINT*/
 {
     size_t n = std::find(states.begin(), states.end(), st) - states.begin() + 1;
     os << std::string(depth, '\t') << n;
-    if (st && stval.get_num_at(st) != -30u) {
+    if (st && nums[st->num] != -30u) {
         os << "\t" << *st << "\n";
-        stval.set_num_at(st, -30u);
-        st_to_string(states, stval, st->out1, os, depth+1);
-        st_to_string(states, stval, st->out2, os, depth+1);
+        nums[st->num] = -30u;
+        st_to_string(states, nums, st->out1, os, depth+1);
+        st_to_string(states, nums, st->out2, os, depth+1);
     }
     else {
         os << "\n";
@@ -56,8 +58,8 @@ inline std::string st_to_string(State * st)
     for (unsigned i = 0; i < states.size(); ++i) {
         states[i]->num = i;
     }
-    StatesValue stval(states, 0);
-    st_to_string(states, stval, st, os);
+    std::vector<unsigned> nums(states.size(), 0);
+    st_to_string(states, nums, st, os);
     return os.str();
 }
 
