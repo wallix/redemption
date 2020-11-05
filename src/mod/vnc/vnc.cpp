@@ -99,19 +99,23 @@ mod_vnc::mod_vnc( Transport & t
     this->events_guard.create_event_timeout(
         "VNC Init Event",
         this->time_base.get_current_time(),
-        [this](Event&event)
+        [this](Event& event)
         {
             // First Timeout Clear Screen
             gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
+            event.garbage = true;
+
             // Following fd timeouts
-            event.rename("VNC Fd Event");
-            event.alarm.set_fd(this->t.get_fd(), std::chrono::seconds{300});
-            event.alarm.set_timeout(this->time_base.get_current_time()+std::chrono::seconds{300});
-            event.actions.set_timeout_function([](Event&/*event*/){});
-            event.actions.set_action_function([this](Event&/*ebent*/)
-            {
-                this->draw_event(this->gd_provider.get_graphics());
-            });
+            this->events_guard.create_event_fd_timeout(
+                "VNC Fd Event",
+                this->t.get_fd(), std::chrono::seconds{300},
+                this->time_base.get_current_time()+std::chrono::seconds{300},
+                [this](Event& /*event*/)
+                {
+                    this->draw_event(this->gd_provider.get_graphics());
+                },
+                [](Event& /*event*/){}
+            );
         });
 }
 

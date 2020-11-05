@@ -2155,7 +2155,7 @@ public:
             "RDP Negociation",
             this->trans.get_fd(), std::chrono::seconds{3600},
             this->time_base.get_current_time()+ this->private_rdp_negociation->open_session_timeout,
-            [this](Event&event)
+            [this](Event& event)
             {
                 try {
                     bool const negotiation_finished = this->private_rdp_negociation->rdp_negociation.recv_data(this->buf);
@@ -2173,20 +2173,17 @@ public:
                             this->draw_event(this->gd_provider.get_graphics());
                         }
 
-                        event.alarm.set_timeout(this->time_base.get_current_time()
-                            // trigger timeout after 1 hour inactivity
-                            + std::chrono::seconds{3600});
-                        // Timeout Does nothing anyway
-                        event.actions.set_timeout_function([](Event&/*event*/) {});
-                        // Replace event by Normal RDP fd event
+                        event.garbage = true;
 
-                        event.rename("First Incoming RDP PDU Event");
-                        event.actions.set_action_function(
+                        this->events_guard.create_event_fd_timeout(
+                            "First Incoming RDP PDU Event",
+                            event.alarm.fd, event.alarm.grace_delay,
+                            event.alarm.trigger_time + std::chrono::seconds{3600},
                             [this](Event&event)
                             {
                                 auto & gd = this->gd_provider.get_graphics();
                                 if (this->buf.remaining()){
-                                    this->draw_event(this->gd_provider.get_graphics());
+                                    this->draw_event(gd);
                                 }
                                 this->private_rdp_negociation.reset();
                                 #ifndef __EMSCRIPTEN__
@@ -2197,9 +2194,13 @@ public:
                                 this->buf.load_data(this->trans);
                                 this->draw_event(gd);
 
-                                event.rename("Incoming RDP PDU Event");
-                                event.actions.set_action_function(
-                                    [this](Event&/*event*/)
+                                event.garbage = true;
+
+                                this->events_guard.create_event_fd_timeout(
+                                    "Incoming RDP PDU Event",
+                                    event.alarm.fd, event.alarm.grace_delay,
+                                    event.alarm.trigger_time,
+                                    [this](Event& /*event*/)
                                     {
                                         auto & gd = this->gd_provider.get_graphics();
                                         #ifndef __EMSCRIPTEN__
@@ -2209,8 +2210,12 @@ public:
                                         #endif
                                         this->buf.load_data(this->trans);
                                         this->draw_event(gd);
-                                    });
-                            });
+                                    },
+                                    [](Event& /*event*/){}
+                                );
+                            },
+                            [](Event& /*event*/){}
+                        );
                     }
                 }
                 catch (Error & error) {

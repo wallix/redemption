@@ -457,11 +457,14 @@ public:
     {
         this->time_base.set_current_time(time);
 
-        assert(this->events.queue.size() == 1);
-        Event& event = *this->events.queue[0];
-        if (event.alarm.trigger(time)){
-            event.actions.exec_timeout(event);
-            event.actions.update_on_action();
+        size_t iend = this->events.queue.size();
+        // ignore events created in the loop
+        for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
+            assert(iend <= this->events.queue.size());
+            Event& event = *this->events.queue[i];
+            if (!event.garbage && event.alarm.trigger(time)){
+                event.actions.exec_timeout(event);
+            }
         }
     }
 
@@ -470,10 +473,20 @@ public:
     {
         this->trans.push_input_buffer(std::move(data));
 
-        assert(this->events.queue.size() == 1);
-        Event& event = *this->events.queue[0];
-        event.actions.exec_action(event);
-        event.actions.update_on_action();
+        auto time = this->time_base.get_current_time();
+
+        size_t iend = this->events.queue.size();
+        // ignore events created in the loop
+        for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
+            assert(iend <= this->events.queue.size());
+            Event& event = *this->events.queue[i];
+            if (!event.garbage && event.alarm.fd != -1){
+                event.alarm.set_timeout(time + event.alarm.grace_delay);
+                event.actions.exec_action(event);
+            }
+        }
+
+        this->events.garbage_collector();
     }
 
     bytes_view get_output_buffer() const

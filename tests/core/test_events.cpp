@@ -34,26 +34,29 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
 
-    // the second parameter of event is the event context
-    // it should be an object whose lifecycle match event functions lifecycle
-    Event e("Event", nullptr);
-    e.alarm.set_timeout(wakeup);
-    e.actions.set_timeout_function([&counter](Event&){ ++counter; });
+    EventContainer events;
+    events.create_event_timeout("test", nullptr, wakeup, [&counter](Event&){ ++counter; });
+
+    RED_REQUIRE(events.queue.size() == 1u);
+    Event& e = *events.queue[0];
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
     // when it's time of above alarm is triggered
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
     RED_CHECK(counter == 0);
+    RED_REQUIRE(events.queue.size() == 1u);
     // but only once
     RED_CHECK(!e.alarm.trigger(wakeup+std::chrono::seconds(2)));
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 1);
+    RED_REQUIRE(events.queue.size() == 1u);
 
     // If I set an alarm in the past it will be triggered immediately
     e.alarm.set_timeout(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
     RED_CHECK(counter == 1);
+    RED_REQUIRE(events.queue.size() == 1u);
 }
 
 RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
@@ -63,14 +66,12 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     timeval origin{79, 0};
     timeval wakeup = origin+std::chrono::seconds(2);
 
-    // the second parameter of event is the event context
-    // it should be an object whose lifecycle match event functions lifecycle
-    Event e("Event", nullptr);
-    e.alarm.set_timeout(wakeup);
-    e.actions.set_timeout_function([&counter](Event&event){
+    EventContainer events;
+    events.create_event_timeout("test", nullptr, wakeup, [&counter](Event& event){
         event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
         ++counter;
     });
+    Event& e = *events.queue[0];
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
@@ -84,63 +85,21 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     RED_CHECK(counter == 1);
 }
 
-
-RED_AUTO_TEST_CASE(TestEventContainer)
-{
-    int counter = 0;
-
-    EventContainer events;
-    timeval origin{79, 0};
-    timeval wakeup = origin+std::chrono::seconds(2);
-    // the second parameter of event is the event context
-    // it should be an object whose lifecycle match event functions lifecycle
-    Event * pevent = new Event("Event", nullptr);
-    Event & event = * pevent;
-    event.actions.set_timeout_function([&counter](Event&){ ++counter; });
-    event.alarm.set_timeout(wakeup);
-    events.add(pevent);
-
-    auto t = origin;
-    for (auto & pevent: events.queue){
-        Event & event = *pevent;
-        RED_CHECK(!event.alarm.trigger(t));
-    }
-    t += std::chrono::seconds(1);
-    for (auto & pevent: events.queue){
-        Event & event = *pevent;
-        RED_CHECK(!event.alarm.trigger(t));
-    }
-    t += std::chrono::seconds(1);
-    for (auto & pevent: events.queue){
-        Event & event = *pevent;
-        RED_CHECK(event.alarm.trigger(t));
-        event.actions.exec_timeout(event);
-        RED_CHECK(counter == 1);
-    }
-
-    t += std::chrono::seconds(1);
-    for (auto & pevent: events.queue){
-        Event & event = *pevent;
-        RED_CHECK(!event.alarm.trigger(t));
-    }
-}
-
-
 // on each call to sequencer the curent method is called
 // then the sequencer is positionned to the next one
 // The sequencer position can also be explicitely reset
 // to some arbitrary method in the sequence.
 
-
 RED_AUTO_TEST_CASE(TestNewEmptySequencer)
 {
-    Sequencer chain = {false, 0, true, {}};
-    Event e("Chain", nullptr);
-    e.actions.set_timeout_function(chain);
+    timeval origin{79, 0};
+
+    EventContainer events;
+    events.create_event_timeout("test", nullptr, origin, Sequencer{false, 0, true, {}});
+    Event& e = *events.queue[0];
     e.actions.exec_timeout(e);
     RED_CHECK(e.garbage == true);
 }
-
 
 RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
 {
@@ -176,8 +135,13 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
             }
         }
     }};
-    Event e("Chain", nullptr);
-    e.actions.set_timeout_function(chain);
+
+    timeval origin{79, 0};
+
+    EventContainer events;
+    events.create_event_timeout("test", nullptr, origin, chain);
+    Event& e = *events.queue[0];
+
     RED_CHECK(counter == 0);
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 1);
@@ -233,8 +197,13 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
             }
         }
     }};
-    Event e("Chain", nullptr);
-    e.actions.set_timeout_function(chain);
+
+    timeval origin{79, 0};
+
+    EventContainer events;
+    events.create_event_timeout("test", nullptr, origin, chain);
+    Event& e = *events.queue[0];
+
     RED_CHECK(counter == 0);
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 1);
@@ -253,29 +222,29 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
 RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
 {
     struct Context {
-        EventContainer & events;
+        EventsGuard events_guard;
         TimeBase & time_base;
         int counter1 = 0;
         int counter2 = 0;
 
-        Context(EventContainer & events, TimeBase & time_base) : events(events), time_base(time_base)
+        Context(EventContainer & events, TimeBase & time_base)
+            : events_guard(events)
+            , time_base(time_base)
         {
-            this->events.create_event_timeout(
-                "Init Event", this,
+            this->events_guard.create_event_timeout(
+                "Init Event",
                 this->time_base.get_current_time(),
-                [this](Event&event)
+                [this](Event&/*event*/)
                 {
-                    // Following fd timeouts
-                    event.rename("VNC Fd Event");
-                    event.alarm.set_fd(1, std::chrono::seconds{300});
-                    event.alarm.set_timeout(this->time_base.get_current_time());
-                    event.actions.set_timeout_function([this](Event&/*event*/){ ++this->counter2; });
-                    event.actions.set_action_function([this](Event&/*event*/){ ++this->counter1; });
-                });
-        }
-
-        ~Context() {
-            this->events.end_of_lifespan(this);
+                    this->events_guard.create_event_fd_timeout(
+                        "Fd Event",
+                        1, std::chrono::seconds{300},
+                        this->time_base.get_current_time(),
+                        [this](Event&/*event*/){ ++this->counter1; },
+                        [this](Event&/*event*/){ ++this->counter2; }
+                    );
+                }
+            );
         }
     };
 

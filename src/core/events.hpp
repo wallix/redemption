@@ -30,6 +30,8 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 
+class EventContainer;
+
 struct Event {
     // TODO: the management of this counter may be moved to EventContainer later
     // no need to use a static lifespan, EventContainer lifespan would be fine
@@ -43,7 +45,8 @@ struct Event {
     void const* lifespan_handle = nullptr;
     bool garbage = false;
 
-    struct Trigger {
+    struct Trigger
+    {
         int fd = -1;
         bool active = false;
         timeval now;
@@ -86,67 +89,21 @@ struct Event {
         }
     } alarm;
 
-    struct Actions {
+    struct Actions
+    {
+        friend class EventContainer;
+
     private:
-        bool on_timeout_running = false;
-        bool on_timeout_changed = false;
         std::function<void(Event &)> on_timeout = [](Event &){};
-        std::function<void(Event &)> future_on_timeout = [](Event &){};
+        std::function<void(Event &)> on_action = [](Event &){};
 
     public:
-        void set_timeout_function(std::function<void(Event &)> fn) {
-            if (this->on_timeout_running){
-                this->future_on_timeout = std::move(fn);
-                this->on_timeout_changed = true;
-                return;
-            }
-            this->on_timeout_changed = false;
-            this->on_timeout = std::move(fn);
-        }
-
         void exec_timeout(Event & event) {
-            this->on_timeout_running = true;
             this->on_timeout(event);
         }
 
-        void update_on_timeout()
-        {
-            this->on_timeout_running = false;
-            if (this->on_timeout_changed){
-                this->on_timeout = std::move(this->future_on_timeout);
-                this->on_timeout_changed = false;
-            }
-        }
-
-    private:
-        bool on_action_running = false;
-        bool on_action_changed = false;
-        std::function<void(Event &)> on_action = [](Event &){};
-        std::function<void(Event &)> future_on_action = [](Event &){};
-
-    public:
-        void set_action_function(std::function<void(Event &)> fn) {
-            if (this->on_action_running){
-                this->future_on_action = std::move(fn);
-                this->on_action_changed = true;
-                return;
-            }
-            this->on_action_changed = false;
-            this->on_action = std::move(fn);
-        }
-
         void exec_action(Event & event) {
-            this->on_action_running = true;
             this->on_action(event);
-        }
-
-        void update_on_action()
-        {
-            this->on_action_running = false;
-            if (this->on_action_changed){
-                this->on_action = std::move(this->future_on_action);
-                this->on_action_changed = false;
-            }
         }
     } actions;
 
@@ -258,20 +215,11 @@ struct EventContainer : noncopyable
 
     void execute_events(const timeval tv, std::function<bool(int fd)> const& fn, bool verbose)
     {
-        for (size_t i = 0 ; i < this->queue.size(); ++i){ /*NOLINT*/
+        size_t iend = this->queue.size();
+        // ignore events created in the loop
+        for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
+            assert(iend <= this->queue.size());
             auto & event = *this->queue[i];
-            // These are needed to change the event method running
-            // from inside an event method. In the large majority
-            // of cases this code will do nothing (and it's good)
-            // This is done at the top of execute event in the
-            // also unlikely case we would exit event code through
-            // some exception, thus not being able to guarantee
-            // that the code following execute of action event
-            // will be called
-            if (not event.garbage){
-                event.actions.update_on_timeout();
-                event.actions.update_on_action();
-            }
             if (event.garbage) {
                 LOG_IF(verbose, LOG_INFO, "GARBAGE EVENT '%s' (%d) timeout=%d now=%d =========",
                     event.name, event.id, int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
@@ -286,6 +234,7 @@ struct EventContainer : noncopyable
                     continue;
                 }
             }
+
             if (not event.garbage) {
                 if (!event.alarm.active){
                     LOG_IF(verbose & 0x20, LOG_INFO, "EXPIRED TIMEOUT EVENT '%s' (%d) timeout=%d now=%d",
@@ -385,7 +334,7 @@ struct EventContainer : noncopyable
         Event * pevent = new Event(name, lifespan);
         Event & event = *pevent;
         event.alarm.set_timeout(trigger_time);
-        event.actions.set_timeout_function(std::move(timeout));
+        event.actions.on_timeout = std::move(timeout);
         int event_id = event.id;
         this->queue.push_back(pevent);
         return event_id;
@@ -401,8 +350,8 @@ struct EventContainer : noncopyable
         Event & event = *pevent;
         event.alarm.set_fd(fd, grace_delay);
         event.alarm.set_timeout(trigger_time);
-        event.actions.set_action_function(std::move(on_fd));
-        event.actions.set_timeout_function(std::move(on_timeout));
+        event.actions.on_action = std::move(on_fd);
+        event.actions.on_timeout = std::move(on_timeout);
         int event_id = event.id;
         this->queue.push_back(pevent);
         return event_id;
