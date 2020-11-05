@@ -30,7 +30,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "utils/sugar/update_lock.hpp"
 #include "utils/sugar/algostring.hpp"
 
 
@@ -70,7 +69,7 @@ void TestCardMod::rdp_input_scancode(
 
 void TestCardMod::draw_event(gdi::GraphicApi & gd)
 {
-    update_lock<gdi::GraphicApi> lock(gd);
+    gd.begin_update();
 
     const Rect clip = this->get_screen_rect();
 
@@ -211,4 +210,6 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
 
         gd.set_pointer(9, pointer, gdi::GraphicApi::SetPointerMode::New);
     }
+
+    gd.end_update();
 }

@@ -27,7 +27,7 @@ h
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/update_lock.hpp"
+
 
 // 7.6.2   CopyRect Encoding
 // =========================
@@ -69,7 +69,6 @@ namespace
 
             buf.advance(sz);
 
-            update_lock<gdi::GraphicApi> lock(drawable);
             drawable.draw(
                 RDPScrBlt(this->rect, 0xCC, srcx, srcy),
                 Rect(0, 0, this->width, this->height)

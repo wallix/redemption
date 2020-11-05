@@ -26,7 +26,6 @@ h
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/bitmap.hpp"
-#include "utils/sugar/update_lock.hpp"
 
 
 // 7.6.1   Raw Encoding
@@ -70,7 +69,6 @@ namespace
 
             Rect rect(this->rect.x, this->rect.y, this->rect.cx, cy);
 
-            update_lock<gdi::GraphicApi> lock(drawable);
             this->draw_tile(rect, new_av.data(), drawable);
 
             this->rect.y += cy;

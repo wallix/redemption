@@ -28,7 +28,6 @@ h
 #include "utils/bitmap.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/update_lock.hpp"
 
 #include <vector>
 
@@ -131,7 +130,6 @@ namespace
                     // TODO: why are we sending the tiles that way
                     // TODO: using MultiDstBlt should be better
                     // TODO use MultiRect
-                    update_lock<gdi::GraphicApi> lock(drawable);
                     this->draw_tile(rect, this->rre_raw.data(), drawable);
                     this->rre_raw.clear();
                     this->state = RREState::Header;

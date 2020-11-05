@@ -31,7 +31,6 @@ h
 #include "utils/hexdump.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/update_lock.hpp"
 
 
 //    7.6.5   Hextile Encoding
@@ -336,7 +335,6 @@ namespace
 
         void draw_tile(const uint8_t * raw, gdi::GraphicApi & drawable)
         {
-            update_lock<gdi::GraphicApi> lock(drawable);
             const Bitmap bmp(raw, this->tile.cx, this->tile.cy, this->bpp, Rect(0, 0, this->tile.cx, this->tile.cy));
             const RDPMemBlt cmd(0, this->tile, 0xCC, 0, 0, 0);
             drawable.draw(cmd, this->tile, bmp);

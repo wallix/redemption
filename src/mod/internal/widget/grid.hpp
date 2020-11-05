@@ -25,7 +25,6 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/widget/widget.hpp"
 #include "utils/difftimeval.hpp"
-#include "utils/sugar/update_lock.hpp"
 
 #include <vector>
 
@@ -164,10 +163,11 @@ public:
         Rect const rect_intersect = clip.intersect(this->get_rect());
 
         if (!rect_intersect.isempty()) {
-            update_lock lock{this->drawable};
+            this->drawable.begin_update();
             for (uint16_t row_index = 0; row_index < this->widgets.nb_rows; ++row_index) {
                 this->draw_row(row_index, rect_intersect);
             }
+            this->drawable.end_update();
         }
     }
 
@@ -313,21 +313,23 @@ public:
             uint16_t previous_selection_y = this->selection_y;
             this->selection_y = row_index;
 
-            update_lock lock{this->drawable};
+            this->drawable.begin_update();
             if (previous_selection_y < this->widgets.nb_rows) {
                 this->draw_row(previous_selection_y, this->get_rect());
             }
             if (this->selection_y < this->widgets.nb_rows) {
                 this->draw_row(this->selection_y, this->get_rect());
             }
+            this->drawable.end_update();
         }
     }
 
     void refresh_selected()
     {
         if (this->selection_y < this->widgets.nb_rows) {
-            update_lock lock{this->drawable};
+            this->drawable.begin_update();
             this->draw_row(this->selection_y, this->get_rect());
+            this->drawable.end_update();
         }
     }
 

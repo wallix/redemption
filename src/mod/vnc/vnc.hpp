@@ -53,7 +53,6 @@
 #include "utils/d3des.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/update_lock.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
@@ -1184,7 +1183,6 @@ private:
 
         bool run(Buf64k & buf, mod_vnc & vnc, gdi::GraphicApi & drawable)
         {
-            update_lock<gdi::GraphicApi> lock(drawable);
             Result r = Result::fail();
 
             for (;;) {
@@ -1293,7 +1291,6 @@ private:
                 break;
                 case State::Data:
                     {
-                        update_lock<gdi::GraphicApi> lock(drawable);
                         if (this->last == VNC::Encoder::EncoderState::NeedMoreData){
                             if (this->last_avail == buf.remaining()){
                                 LOG(LOG_ERR, "new call to vnc::mod without new data");
@@ -1325,11 +1322,13 @@ private:
                         }
                     }
                 }
+
                 if (!r) {
                     return false;
                 }
                 this->state = r;
             }
+
             return true;
         }
 
@@ -1352,13 +1351,15 @@ private:
         Zdecompressor<> & zd;
 
         VNCVerbose verbose;
-
     };
     FrameBufferUpdateCtx frame_buffer_update_ctx;
 
     bool lib_frame_buffer_update(gdi::GraphicApi & drawable, Buf64k & buf)
     {
-        if (!this->frame_buffer_update_ctx.run(buf, *this, drawable)) {
+        drawable.begin_update();
+        const bool ok = this->frame_buffer_update_ctx.run(buf, *this, drawable);
+        drawable.end_update();
+        if (!ok) {
             return false;
         }
 

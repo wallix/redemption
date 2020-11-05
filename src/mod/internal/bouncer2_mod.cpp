@@ -25,8 +25,8 @@
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
-#include "utils/sugar/update_lock.hpp"
 #include "core/front_api.hpp"
+
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
@@ -123,7 +123,6 @@ void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
     auto const red = encode_color24()(RED);
 
     if (this->draw_green_carpet) {
-        update_lock lock{gd};
         gd.draw(RDPOpaqueRect(this->get_screen_rect(), green), this->get_screen_rect(), color_ctx);
         this->draw_green_carpet = false;
     }

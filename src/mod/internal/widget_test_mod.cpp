@@ -30,7 +30,6 @@
 #include "keyboard/keymap2.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_private_data.hpp"
-#include "utils/sugar/update_lock.hpp"
 
 #include <cstring>
 
@@ -48,7 +47,8 @@ struct WidgetTestMod::WidgetTestModPrivate
             this->time_base.get_current_time(),
             [this](Event&)
             {
-                update_lock update_lock{this->gd_provider.get_graphics()};
+                auto& gd = this->gd_provider.get_graphics();
+                gd.begin_update();
                 int y = 10;
                 for (auto s : {
                     // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
@@ -79,11 +79,14 @@ struct WidgetTestMod::WidgetTestModPrivate
                     Font font(s);
                     auto * text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`!@#$%^&*()_=[]'\",./<>?|:{}¹²³ cl◀◂▸▶▲▼▤▥➜¤€’¥×\\æœúíàéèçùµÉÀð.";
                     gdi::server_draw_text(
-                        this->gd_provider.get_graphics(), font, 10, y, text,
-                        encode_color24()(BGRColor(0xeeb6c1)), encode_color24()(BGRColor(0x747132)),
-                        gdi::ColorCtx::depth24(), Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
+                        gd, font, 10, y, text,
+                        encode_color24()(BGRColor(0xeeb6c1)),
+                        encode_color24()(BGRColor(0x747132)),
+                        gdi::ColorCtx::depth24(),
+                        Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
                     y += font.max_height() + 10;
                 }
+                gd.end_update();
             });
     }
 

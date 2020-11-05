@@ -25,7 +25,6 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/widget/flat_login.hpp"
 #include "utils/theme.hpp"
-#include "utils/sugar/update_lock.hpp"
 
 
 enum {
@@ -52,7 +51,7 @@ FlatLogin::ScrollableMessage::ScrollableMessage(
 
 void FlatLogin::ScrollableMessage::notify(Widget * /*sender*/, notify_event_t /*event*/)
 {
-    update_lock gd_lock{this->drawable};
+    this->drawable.begin_update();
 
     auto const new_y = -this->scroll_bar.get_current_value() * this->step;
     this->message.set_xy(this->message.x(), this->y() + new_y);
@@ -77,6 +76,8 @@ void FlatLogin::ScrollableMessage::notify(Widget * /*sender*/, notify_event_t /*
         Rect const message_rect(this->x(), this->y(), this->message.cx(), this->cy());
         this->message.rdp_input_invalidate(message_rect);
     }
+
+    this->drawable.end_update();
 }
 
 FlatLogin::FlatLogin(
