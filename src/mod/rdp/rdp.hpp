@@ -5158,31 +5158,6 @@ public:
                         this->on_remoteapp_redirect_user_screen(lei.ErrorNotificationData);
                     }
                     else {
-                        Sequencer chain = {false, 0, false,
-                        {
-                            { "one",
-                                [this](Event&event,Sequencer&/*sequencer*/)
-                                {
-                                    LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
-                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
-                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
-
-                                    if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
-                                        event.alarm.set_timeout(this->time_base.get_current_time()
-                                            + this->channels.remote_app.bypass_legal_notice_timeout);
-                                        return;
-                                    }
-                                    event.garbage = true;
-                                }
-                            },
-                            { "two",
-                                [this](Event&event,Sequencer&/*sequencer*/)
-                                {
-                                    this->on_remoteapp_redirect_user_screen(RDP::LOGON_FAILED_OTHER);
-                                    event.garbage = true;
-                                }
-                            }
-                        }};
                         this->remoteapp_one_shot_bypass_window_legalnotice
                           = this->events_guard.event_container().erase_event(
                               this->remoteapp_one_shot_bypass_window_legalnotice);
@@ -5190,8 +5165,29 @@ public:
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->events_guard.create_event_timeout(
                             "Bypass Legal Notice Timer",
                             this->time_base.get_current_time()
-                                +this->channels.remote_app.bypass_legal_notice_delay,
-                                chain);
+                                + this->channels.remote_app.bypass_legal_notice_delay,
+                            [this, failed = false](Event&event) mutable
+                            {
+                                if (!failed) {
+                                    LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
+                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
+                                    this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
+
+                                    if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
+                                        event.alarm.set_timeout(
+                                            this->time_base.get_current_time()
+                                            + this->channels.remote_app.bypass_legal_notice_timeout);
+                                        failed = true;
+                                    }
+                                    else {
+                                        event.garbage = true;
+                                    }
+                                }
+                                else {
+                                    event.garbage = true;
+                                    this->on_remoteapp_redirect_user_screen(RDP::LOGON_FAILED_OTHER);
+                                }
+                            });
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
