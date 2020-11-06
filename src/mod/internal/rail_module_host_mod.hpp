@@ -94,7 +94,7 @@ private:
     bool alt_key_pressed = false;
 
     MouseState mouse_state;
-    int disconnection_reconnection_timer = 0;
+    EventId disconnection_reconnection_timer;
 
     const bool rail_enabled;
 

@@ -1857,7 +1857,7 @@ class mod_rdp : public mod_api, public rdp_api
     AuthApi & sesman;
 
 #ifndef __EMSCRIPTEN__
-    int remoteapp_one_shot_bypass_window_legalnotice = 0;
+    EventId remoteapp_one_shot_bypass_window_legalnotice;
 #endif
 
     bool deactivation_reactivation_in_progress = false;

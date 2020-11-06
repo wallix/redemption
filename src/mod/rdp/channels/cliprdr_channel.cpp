@@ -144,16 +144,12 @@ struct ClipboardVirtualChannel::OSD::D
 
         if (self.osd.enable_osd) {
             self.osd.msg_type = OSD::MsgType::WaitValidator;
-            // TODO: this is a common pattern appearing at several places in code, we could define a create_event of reset timeout method in EventContainer
             if (self.osd.id_event) {
-                for (Event* pevent : self.osd.events_guard.event_container().queue) {
-                    Event & event = *pevent;
-                    if (event.id == self.osd.id_event) {
-                        event.alarm.set_timeout(self.time_base.get_current_time() + self.osd.delay);
-                        return;
-                    }
-                }
-                LOG(LOG_ERR, "OSD Event %d Not Found in events queue", self.osd.id_event);
+                self.osd.events_guard.event_container().reset_timeout(
+                    self.time_base.get_current_time() + self.osd.delay,
+                    self.osd.id_event);
+                LOG(LOG_ERR, "OSD Event %" PRIXPTR " Not Found in events queue",
+                    self.osd.id_event.id());
                 assert(false);
             }
             else {
@@ -163,7 +159,7 @@ struct ClipboardVirtualChannel::OSD::D
                     [&self, &filename](Event& event){
                         self.osd.gd_provider.display_osd_message(str_concat(
                         TR(trkeys::file_verification_wait, self.osd.lang), filename));
-                        self.osd.id_event = 0;
+                        self.osd.id_event = EventId();
                         event.garbage = true;
                     });
             }

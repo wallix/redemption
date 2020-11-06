@@ -373,7 +373,7 @@ private:
 
         enum class MsgType : bool { Nothing, WaitValidator };
 
-        int id_event = 0;
+        EventId id_event {};
         MsgType msg_type = MsgType::Nothing;
 
         class D;

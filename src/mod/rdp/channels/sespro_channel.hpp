@@ -129,7 +129,7 @@ private:
     AuthApi & sesman;
 
     RDPVerbose verbose;
-    int session_probe_timer = 0;
+    EventId session_probe_timer;
     bool launch_aborted = false;
 
     uint32_t options = 0;

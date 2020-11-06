@@ -611,9 +611,9 @@ private:
 
     TimeBase& time_base;
     EventsGuard events_guard;
-    int handshake_timeout = 0;
-    int capture_timer = 0;
-    int flow_control_timer = 0;
+    EventId handshake_timeout;
+    EventId capture_timer;
+    EventId flow_control_timer;
 
 public:
     bool front_must_notify_resize = false;

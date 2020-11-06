@@ -62,7 +62,7 @@ public:
 
     bool format_data_requested = false;
 
-    int event_id = 0;
+    EventId event_id;
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;

@@ -94,7 +94,7 @@ struct WidgetTestMod::WidgetTestModPrivate
 
     TimeBase& time_base;
     GdProvider & gd_provider;
-    int timer;
+    EventId timer;
     EventsGuard events_guard;
 };
 

@@ -13,7 +13,6 @@ add_obj src/client_redemption/client_input_output_api/rdp_disk_config.o : $(REDE
 add_obj src/core/channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 add_obj src/core/dynamic_channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/dynamic_channels_authorizations.cpp ;
 add_obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
-add_obj src/core/events.o : $(REDEMPTION_SRC_PATH)/core/events.cpp ;
 add_obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 add_obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 add_obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
@@ -100,7 +99,6 @@ requirement_list += <library>src/client_redemption/client_input_output_api/rdp_d
 requirement_list += <library>src/core/channels_authorizations.o ;
 requirement_list += <library>src/core/dynamic_channels_authorizations.o ;
 requirement_list += <library>src/core/error.o ;
-requirement_list += <library>src/core/events.o ;
 requirement_list += <library>src/core/font.o ;
 requirement_list += <library>src/core/RDP/dwt.o ;
 requirement_list += <library>src/core/RDP/mppc.o ;

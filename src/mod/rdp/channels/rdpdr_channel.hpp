@@ -857,7 +857,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     TimeBase& time_base;
     EventsGuard events_guard;
-    int initialization_timeout_event = 0;
+    EventId initialization_timeout_event;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
     {

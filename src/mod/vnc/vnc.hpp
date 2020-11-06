@@ -317,7 +317,7 @@ private:
     TimeBase& time_base;
     GdProvider & gd_provider;
     EventsGuard events_guard;
-    int clipboard_timeout_timer = 0;
+    EventId clipboard_timeout_timer;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;

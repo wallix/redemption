@@ -38,7 +38,7 @@ struct MouseState {
         SecondClickDown,
     };
 
-    int first_click_down_timer = 0;
+    EventId first_click_down_timer;
     DCState dc_state = MouseState::DCState::Wait;
     TimeBase & time_base;
     EventContainer & events;
