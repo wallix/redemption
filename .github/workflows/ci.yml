@@ -28,13 +28,13 @@ jobs:
       uses: actions/cache@v2
       id: cache-apt
       with:
-        path: ~/dpkg_cache
-        key: ${{ runner.os }}-apt_deps5
+        path: ~/dpkg_cache2
+        key: ${{ runner.os }}-apt_deps6
     - name: Install packages
       env:
         CACHE_HIT: ${{steps.cache-apt.outputs.cache-hit}}
       run: |
-        DPKG_CACHE=~/dpkg_cache
+        DPKG_CACHE=~/dpkg_cache2
         if [[ "$CACHE_HIT" == 'true' ]]; then
           sudo cp --force --recursive "$DPKG_CACHE"/* /
         else
