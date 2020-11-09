@@ -21,6 +21,7 @@
 
 #pragma once
 #include "utils/sugar/algostring.hpp"
+#include "utils/translation.hpp"
 
 inline std::string time_before_closing(uint32_t elapsed_time, Translator tr)
 {

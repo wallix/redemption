@@ -29,8 +29,11 @@
 #include "utils/sugar/unique_fd.hpp"
 
 #include "mod/vnc/vnc.hpp"
+#include "transport/socket_transport.hpp"
 #include "acl/mod_pack.hpp"
+#include "acl/mod_wrapper.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
+#include "acl/module_manager/create_module_rail.hpp"
 #include "acl/connect_to_target_host.hpp"
 
 
@@ -385,29 +388,20 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         return ModPack{mod, nullptr, nullptr, nullptr, false, false, tmp_psocket_transport};
     }
 
-    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
-    Rect adjusted_client_execute_rect = rail_client_execute.adjust_rect(client_info.get_widget_rect());
-
-    std::string target_info = str_concat(ini.get<cfg::context::target_str>(),':', ini.get<cfg::globals::primary_user_id>());
-
-    rail_client_execute.set_target_info(target_info);
-
-    auto* host_mod = new RailModuleHostMod(
+    auto* host_mod = create_mod_rail(
         ini,
         time_base,
         events,
         drawable,
         front,
-        client_info.screen_info.width,
-        client_info.screen_info.height,
-        adjusted_client_execute_rect,
+        client_info,
+        rail_client_execute.adjust_rect(client_info.get_widget_rect()),
         std::move(new_mod),
         rail_client_execute,
         glyphs,
         theme,
-        client_info.cs_monitor,
         false
     );
-    host_mod->init();
+
     return ModPack{host_mod, nullptr, nullptr, host_mod, false, false, tmp_psocket_transport};
 }

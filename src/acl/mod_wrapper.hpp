@@ -25,20 +25,20 @@
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "acl/time_before_closing.hpp"
+#include "keyboard/keymap2.hpp"
 #include "configs/config.hpp"
 #include "core/callback_forwarder.hpp"
 #include "gdi/clip_from_cmd.hpp"
-#include "gdi/graphic_api.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/subrect4.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/null/null.hpp"
-#include "mod/rdp/windowing_api.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/translation.hpp"
+#include "core/client_info.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
 
 class SocketTransport;
@@ -46,7 +46,7 @@ class rdp_api;
 
 class ModWrapper final : public GdProvider
 {
-    struct CallbackForwarder<ModWrapper> callback;
+    CallbackForwarder<ModWrapper> callback;
 
     class GFilter
     {

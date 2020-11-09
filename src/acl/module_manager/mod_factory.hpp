@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "acl/module_manager/enums.hpp"
+#include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
 
 #include "utils/timebase.hpp"
@@ -182,12 +184,12 @@ private:
     auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(
-                            this->time_base,
-                            this->mod_wrapper,
-                            this->events,
-                            this->front,
-                            this->client_info.screen_info.width,
-                            this->client_info.screen_info.height);
+            this->time_base,
+            this->mod_wrapper,
+            this->events,
+            this->front,
+            this->client_info.screen_info.width,
+            this->client_info.screen_info.height);
         return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
     }
 

@@ -35,6 +35,7 @@
 #include "utils/timebase.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/rdp/rdp_api.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/ws_transport.hpp"
 #include "utils/genfstat.hpp"

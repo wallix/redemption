@@ -24,18 +24,32 @@
 
 #pragma once
 
-#include "core/client_info.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/timebase.hpp"
-#include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
 
+#include <array>
+
+class ModWrapper;
+class RedirectionInfo;
+class Inifile;
+class FrontAPI;
+class ClientInfo;
+class ClientExecute;
+class Font;
+class Theme;
+class TimeBase;
+class EventContainer;
 class AuthApi;
+class LicenseApi;
 class Random;
 class CryptoContext;
-class RedirectionInfo;
 
-extern ModPack create_mod_rdp(
+namespace gdi
+{
+    class GraphicApi;
+}
+
+ModPack create_mod_rdp(
     ModWrapper & mod_wrapper,
     RedirectionInfo & redir_info,
     Inifile & ini,

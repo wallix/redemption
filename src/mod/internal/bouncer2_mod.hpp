@@ -24,7 +24,6 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "utils/colors.hpp"
 #include "acl/gd_provider.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"

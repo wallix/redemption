@@ -133,7 +133,6 @@ namespace configs
         "fdx_path"_zv,
         "encryption_key"_zv,
         "sign_key"_zv,
-        "allow_resize_hosted_desktop"_zv,
         "language"_zv,
         "login_language"_zv,
         "psid"_zv,

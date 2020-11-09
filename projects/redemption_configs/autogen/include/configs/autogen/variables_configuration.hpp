@@ -28,11 +28,11 @@ namespace configs
         inline constexpr int section14 = 121; /* crypto */
         // inline constexpr int section15 = 123; /* websocket */
         // inline constexpr int section16 = 123; /* debug */
-        inline constexpr int section17 = 123; /* remote_program */
-        inline constexpr int section18 = 124; /* translation */
-        // inline constexpr int section19 = 126; /* internal_mod */
-        inline constexpr int section20 = 126; /* context */
-        // inline constexpr int section21 = 206; /* theme */
+        // inline constexpr int section17 = 123; /* remote_program */
+        inline constexpr int section18 = 123; /* translation */
+        // inline constexpr int section19 = 125; /* internal_mod */
+        inline constexpr int section20 = 125; /* context */
+        // inline constexpr int section21 = 205; /* theme */
     }
 }
 
@@ -3829,14 +3829,10 @@ namespace cfg
     };
 
     /// type: bool <br/>
-    /// sesman ⇒ proxy <br/>
     /// default: {true} <br/>
     struct remote_program::allow_resize_hosted_desktop {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section17 + 0};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -5947,7 +5943,6 @@ using VariablesAclPack = Pack<
 , cfg::capture::fdx_path
 , cfg::crypto::key0
 , cfg::crypto::key1
-, cfg::remote_program::allow_resize_hosted_desktop
 , cfg::translation::language
 , cfg::translation::login_language
 , cfg::context::psid
@@ -6041,13 +6036,13 @@ struct BitFlags {
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111101111111111111
 , 0b1111100111111111111111111111111111111111111111111111111111111111
-, 0b1101111111111111111111111111111111111111111110110111110111111111
-, 0b0000000000000000000000000000000000000000000000000011111111111111
+, 0b1110111111111111111111111111111111111111111111011011111011111111
+, 0b0000000000000000000000000000000000000000000000000001111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000001000000000000000000
+, 0b0000000000000000000000000000000000000000000000100000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs

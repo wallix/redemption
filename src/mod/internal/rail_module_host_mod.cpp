@@ -69,7 +69,6 @@ void RailModuleHostMod::refresh(Rect r)
 }
 
 RailModuleHostMod::RailModuleHostMod(
-    RailModuleHostModVariables vars,
     TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
@@ -90,15 +89,18 @@ RailModuleHostMod::RailModuleHostMod(
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
                        font, cs_monitor, width, height)
-    , vars(vars)
     , can_resize_hosted_desktop(can_resize_hosted_desktop)
 {
     this->screen.set_wh(width, height);
     this->screen.move_xy(widget_rect.x, widget_rect.y);
     this->screen.add_widget(&this->rail_module_host);
     this->screen.set_widget_focus(&this->rail_module_host, Widget::focus_reason_tabkey);
+}
 
-    this->vars.set<cfg::context::rail_module_host_mod_is_active>(true);
+RailModuleHostMod::~RailModuleHostMod()
+{
+    this->rail_client_execute.reset(true);
+    this->screen.clear();
 }
 
 void RailModuleHostMod::init()
@@ -276,8 +278,7 @@ Dimension RailModuleHostMod::get_dim() const
 
 bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 {
-    return (vars.get<cfg::remote_program::allow_resize_hosted_desktop>() &&
-        this->can_resize_hosted_desktop);
+    return this->can_resize_hosted_desktop;
 }
 
 gdi::GraphicApi & RailModuleHostMod::proxy_gd(gdi::GraphicApi& gd)

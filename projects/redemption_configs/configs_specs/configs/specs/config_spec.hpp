@@ -744,7 +744,7 @@ void config_spec_definition(Writer && W)
 
     W.section("remote_program", [&]
     {
-        W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), "allow_resize_hosted_desktop", set(true));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), "allow_resize_hosted_desktop", set(true));
     });
 
     W.section("translation", [&]

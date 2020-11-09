@@ -24,6 +24,7 @@
 
 #include "capture/fdx_capture.hpp"
 #include "acl/connect_to_target_host.hpp"
+#include "acl/mod_wrapper.hpp"
 #include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -35,11 +36,14 @@
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
+#include "mod/internal/rail_module_host_mod.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
+#include "acl/module_manager/create_module_rail.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/genfstat.hpp"
 #include "acl/mod_pack.hpp"
 #include "transport/failure_simulation_socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 
 
 namespace
@@ -1026,39 +1030,23 @@ ModPack create_mod_rdp(
 
     if (!host_mod_in_widget) {
         auto mod = new_mod.release();
-        ModPack mod_pack{mod, &(mod->mod), mod->mod.get_windowing_api(), nullptr, false, false, tmp_psocket_transport};
-        return mod_pack;
+        return ModPack{mod, &mod->mod, mod->mod.get_windowing_api(), nullptr, false, false, tmp_psocket_transport};
     }
 
-    // TODO: this should be external, not in mod_factory
-    // Host Mod In Widget
-    LOG(LOG_INFO, "Creation of internal module 'RailModuleHostMod'");
-
-    std::string target_info = str_concat(
-        ini.get<cfg::context::target_str>(),
-        ':',
-        ini.get<cfg::globals::primary_user_id>());
-
-    rail_client_execute.set_target_info(target_info);
-
-    auto* host_mod = new RailModuleHostMod(
+    auto* host_mod = create_mod_rail(
         ini,
         time_base,
         events,
         drawable,
         front,
-        client_info.screen_info.width,
-        client_info.screen_info.height,
-        adjusted_client_execute_rect,
+        client_info,
+        rail_client_execute.adjust_rect(client_info.get_widget_rect()),
         std::move(new_mod),
         rail_client_execute,
         glyphs,
         theme,
-        client_info.cs_monitor,
-        !ini.get<cfg::globals::is_rec>()
+        true
     );
-    host_mod->init();
 
-    ModPack mod_pack{host_mod, nullptr, &rail_client_execute, host_mod, false, false, tmp_psocket_transport};
-    return mod_pack;
+    return ModPack{host_mod, nullptr, &rail_client_execute, host_mod, false, false, tmp_psocket_transport};
 }

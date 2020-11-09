@@ -23,12 +23,13 @@
 
 #pragma once
 
-#include "mod/rdp/windowing_api.hpp"
-#include "mod/rdp/rdp_api.hpp"
-#include "mod/mod_api.hpp"
-#include "mod/internal/rail_module_host_mod.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
-#include "transport/socket_transport.hpp"
+
+class mod_api;
+class rdp_api;
+class windowing_api;
+class RailModuleHostMod;
+class SocketTransport;
 
 struct ModPack
 {
@@ -38,6 +39,5 @@ struct ModPack
     RailModuleHostMod* rail_module_host_ptr;
     bool enable_osd;
     bool connected;
-    SocketTransport * psocket_transport;
+    SocketTransport* psocket_transport;
 };
-

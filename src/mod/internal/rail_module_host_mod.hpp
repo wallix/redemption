@@ -22,23 +22,14 @@
 
 #include "mod/internal/widget/rail_module_host.hpp"
 
-#include "configs/config.hpp"
-#include "configs/config_access.hpp"
 #include "mod/mod_api.hpp"
+#include "mod/internal/mouse_state.hpp"
 #include "mod/internal/dvc_manager.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "RAIL/client_execute.hpp"
 
-#include <memory>
 
 class ClientExecute;
 class TimeBase;
-
-using RailModuleHostModVariables = vcfg::variables<
-    vcfg::var<cfg::remote_program::allow_resize_hosted_desktop,  vcfg::accessmode::get>,
-    vcfg::var<cfg::context::rail_module_host_mod_is_active,      vcfg::accessmode::set>
->;
-
 
 class RailModuleHostMod : public mod_api, public NotifyApi
 {
@@ -103,7 +94,6 @@ private:
 
 public:
     RailModuleHostMod(
-        RailModuleHostModVariables vars,
         TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
@@ -111,12 +101,7 @@ public:
         ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
         const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);
 
-    ~RailModuleHostMod() override
-    {
-        this->rail_client_execute.reset(true);
-        this->screen.clear();
-        this->vars.set<cfg::context::rail_module_host_mod_is_active>(false);
-    }
+    ~RailModuleHostMod();
 
     void init() override;
 
@@ -172,8 +157,6 @@ public:
 
 private:
     RailModuleHost rail_module_host;
-
-    RailModuleHostModVariables vars;
 
     bool can_resize_hosted_desktop = false;
 };

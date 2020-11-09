@@ -24,17 +24,33 @@
 
 #pragma once
 
-#include "core/client_info.hpp"
-#include "acl/mod_wrapper.hpp"
+#include "keyboard/keymap2.hpp"
 #include "acl/mod_pack.hpp"
-#include "utils/timebase.hpp"
-#include "core/events.hpp"
 
+class ModWrapper;
+class Inifile;
+class FrontAPI;
+class ClientInfo;
+class ClientExecute;
+class Font;
+class Theme;
+class TimeBase;
+class EventContainer;
 class AuthApi;
 
-extern ModPack create_mod_vnc(ModWrapper & mod_wrapper,
-    Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
-    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
+namespace gdi
+{
+    class GraphicApi;
+}
+
+ModPack create_mod_vnc(
+    ModWrapper & mod_wrapper,
+    Inifile& ini,
+    gdi::GraphicApi & drawable,
+    FrontAPI& front,
+    ClientInfo const& client_info,
+    ClientExecute& rail_client_execute,
+    Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
     TimeBase & time_base,
