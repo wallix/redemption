@@ -22,7 +22,8 @@
 
 #include "utils/rect.hpp"
 
-struct windowing_api {
+struct windowing_api
+{
     virtual void create_auxiliary_window(Rect window_rect) = 0;
 
     virtual void destroy_auxiliary_window() = 0;

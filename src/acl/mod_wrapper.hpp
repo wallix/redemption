@@ -265,17 +265,6 @@ public:
         return true;
     }
 
-    // FIXME: we should always be able to use graphic_wrapper directly
-    // finding out the actual internal graphics interface should never be necessary
-    gdi::GraphicApi & get_graphic_wrapper()
-    {
-        gdi::GraphicApi& gd = this->get_graphics();
-        if (this->rail_module_host_mod_ptr) {
-            return this->rail_module_host_mod_ptr->proxy_gd(gd);
-        }
-        return gd;
-    }
-
     void display_osd_message(const std::string& message) override
     {
         if (message != this->osd_message) {

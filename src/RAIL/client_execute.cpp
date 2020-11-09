@@ -39,7 +39,9 @@
 #include "utils/region.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
-#include "keyboard/mouse.hpp"
+#include "mod/rdp/channels/rail_window_id_manager.hpp"      // TODO only for RemoteProgramsWindowIdManager::INVALID_WINDOW_ID
+#include "mod/internal/mouse_state.hpp"
+
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
 #define INTERNAL_MODULE_WINDOW_TITLE "Wallix AdminBastion"
@@ -60,6 +62,7 @@ ClientExecute::ClientExecute(
 , drawable_(drawable)
 , verbose(verbose)
 , wallix_icon_min(bitmap_from_file(app_path(AppPath::WallixIconMin), BLACK))
+, auxiliary_window_id(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID)
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
 , time_base(time_base)
@@ -92,8 +95,8 @@ Rect ClientExecute::adjust_rect(Rect rect)
                                  rect.y + rect.cy * 10 / 100,
                                  rect.cx * 80 / 100,
                                  rect.cy * 80 / 100);
-        this->window_offset_x = (-rect.x);
-        this->window_offset_y = (-rect.y);
+        this->window_offset_x = -rect.x;
+        this->window_offset_y = -rect.y;
 
         this->update_rects(this->allow_resize_hosted_desktop_);
     }
@@ -332,11 +335,11 @@ void ClientExecute::input_invalidate(const Rect r)
     if (!this->channel_) return;
 
     auto const depth = gdi::ColorCtx::depth24();
+    bool is_updated = false;
 
-    if (!r.has_intersection(this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect))) return;
-
+    if (auto icon_rect = this->zone.get_zone(Zone::ZONE_ICON, this->window_rect)
+      ; r.has_intersection(icon_rect))
     {
-        auto icon_rect = this->zone.get_zone(Zone::ZONE_ICON, this->window_rect);
         RDPOpaqueRect order(icon_rect, encode_color24()(WHITE));
 
         this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
@@ -353,10 +356,13 @@ void ClientExecute::input_invalidate(const Rect r)
             r,
             this->wallix_icon_min
         );
+
+        is_updated = true;
     }
 
+    if (auto title_rect = this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect)
+      ; r.has_intersection(title_rect))
     {
-        auto title_rect = this->zone.get_zone(Zone::ZONE_TITLE, this->window_rect);
         RDPOpaqueRect order(title_rect, encode_color24()(WHITE));
 
         this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
@@ -373,14 +379,17 @@ void ClientExecute::input_invalidate(const Rect r)
                                     r
                                     );
         }
+
+        is_updated = true;
     }
 
     if (this->allow_resize_hosted_desktop_) {
         this->draw_resize_hosted_desktop_box(false, r);
     }
 
+    if (auto rect_minimize = this->zone.get_zone(Zone::ZONE_MINI, this->window_rect)
+      ; r.has_intersection(rect_minimize))
     {
-        auto rect_minimize = this->zone.get_zone(Zone::ZONE_MINI, this->window_rect);
         RDPOpaqueRect order(rect_minimize, encode_color24()(WHITE));
 
         this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
@@ -397,12 +406,15 @@ void ClientExecute::input_invalidate(const Rect r)
                                     r
                                     );
         }
+
+        is_updated = true;
     }
 
     this->draw_maximize_box(false, r);
 
+    if (auto rect_close = this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect)
+      ; r.has_intersection(rect_close))
     {
-        auto rect_close = this->zone.get_zone(Zone::ZONE_CLOSE, this->window_rect);
         RDPOpaqueRect order(rect_close, encode_color24()(WHITE));
 
         this->drawable_.draw(order, r, gdi::ColorCtx::depth24());
@@ -419,9 +431,13 @@ void ClientExecute::input_invalidate(const Rect r)
                                     r
                                     );
         }
+
+        is_updated = true;
     }
 
-    this->drawable_.sync();
+    if (is_updated) {
+        this->drawable_.sync();
+    }
 }   // input_invalidate
 
 void ClientExecute::adjust_window_to_mod() {
@@ -1152,8 +1168,7 @@ void ClientExecute::initialize_move_size(uint16_t xPos, uint16_t yPos, const int
 }   // initialize_move_size
 
 
-// Return true if event is consumed.
-bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, Keymap2 * /*keymap*/, bool& mouse_captured_ref)
+bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos)
 {
     const bool allow_resize_hosted_desktop = this->allow_resize_hosted_desktop_;
 
@@ -1161,11 +1176,12 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         "ClientExecute::input_mouse: pointerFlags=0x%X xPos=%u yPos=%u pressed_mouse_button=%d",
         pointerFlags, xPos, yPos, this->pressed_mouse_button);
 
+    bool zone_found = false;
+
     // Mouse pointer managment
     if (!this->move_size_initialized) {
-        bool zone_found = false;
         using SetPointerMode = gdi::GraphicApi::SetPointerMode;
-        for (int i = Zone::ZONE_N ; i < Zone::NUMBER_OF_ZONES ; i++){
+        for (int i = 0; i < Zone::NUMBER_OF_ZONES; i++){
             if (this->zone.get_zone(i, this->window_rect).contains_pt(xPos, yPos)){
                 auto pointer_type = this->zone.get_pointer_type(i);
                 if (pointer_type != this->current_mouse_pointer_type){
@@ -1177,11 +1193,12 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 break;
             }
         }
+
         if (!zone_found){
             this->current_mouse_pointer_type = Pointer::POINTER_NULL;
-            mouse_captured_ref = false;
         }
     }
+
     // Mouse action management
     if ((SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1) == pointerFlags) {
         if (MOUSE_BUTTON_PRESSED_NONE == this->pressed_mouse_button) {
@@ -1844,7 +1861,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }   // else if (this->zone.get_zone(Zone::ZONE_ICON, this->window_rect).contains_pt(xPos, yPos))
     }   // else if (PTRFLAGS_EX_DOUBLE_CLICK == pointerFlags)
 
-    return false;
+    return zone_found;
 }   // input_mouse
 
 void ClientExecute::update_rects(const bool /*allow_resize_hosted_desktop*/)
@@ -1852,9 +1869,7 @@ void ClientExecute::update_rects(const bool /*allow_resize_hosted_desktop*/)
     if ((this->window_rect.cx - 2) % 4) {
         this->window_rect.cx -= ((this->window_rect.cx - 2) % 4);
     }
-
 }   // update_rects
-
 
 Rect ClientExecute::get_window_rect() const
 {

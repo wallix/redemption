@@ -42,8 +42,6 @@ public:
 
     Font const & font;
 
-    bool allow_mouse_pointer_change_ = true;
-
     WidgetScreen(gdi::GraphicApi & drawable, uint16_t width, uint16_t height, Font const & font,
                  NotifyApi * notifier, Theme theme);
 
@@ -64,4 +62,7 @@ public:
     void allow_mouse_pointer_change(bool allow);
 
     void redo_mouse_pointer_change(int x, int y);
+
+private:
+    bool allow_mouse_pointer_change_ = true;
 };

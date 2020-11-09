@@ -94,6 +94,61 @@ RED_AUTO_TEST_CASE(ClientSystemParametersUpdatePDU)
 }
 */
 
+RED_AUTO_TEST_CASE(TestProcessClientExecutePdu)
+{
+// (..........F
+    uint8_t buf[] = {0x08, 0x00, // flags 8
+                     0x1c, 0x00, // ExeOrFile Length 8
+                     0x00, 0x00, // WorkingDirLength 28
+                     0x00, 0x00, // Arguments Length 0
+                     // |.|.W.A.B.R.e.m.o.t.e.A.p.p.
+                     0x7c, 0x00, 0x7c, 0x00, 0x57, 0x00, 0x41, 0x00,
+                     0x42, 0x00, 0x52, 0x00, 0x65, 0x00, 0x6d, 0x00,
+                     0x6f, 0x00, 0x74, 0x00, 0x65, 0x00, 0x41, 0x00,
+                     0x70, 0x00, 0x70, 0x00
+                    };
+
+    InStream chunk{buf};
+
+    ClientExecutePDU cepdu;
+    cepdu.receive(chunk);
+    RED_CHECK(chunk.in_remain() == 0);
+
+    WindowsExecuteShellParams params = cepdu.get_windows_execute_shell_params();
+    RED_CHECK(params.flags == 8);
+    RED_CHECK(params.exe_or_file == "||WABRemoteApp");
+    RED_CHECK(params.working_dir == "");
+    RED_CHECK(params.arguments == "");
+
+    StaticOutStream<64> out;
+    cepdu.emit(out);
+    RED_CHECK(out.get_produced_bytes() == chunk.get_consumed_bytes());
+}
+
+RED_AUTO_TEST_CASE(TestProcessClientInformationPdu)
+{
+    uint8_t buf[] = {0xe5, 0x01,
+                     0x00, 0x00, // order Flags 0x1e5
+                     };
+
+    InStream chunk{buf};
+    ClientInformationPDU cipdu;
+    cipdu.receive(chunk);
+    RED_CHECK(chunk.in_remain() == 0);
+
+    RED_CHECK(cipdu.get_flags() == (0x100
+                                  | TS_RAIL_CLIENTSTATUS_HIGH_DPI_ICONS_SUPPORTED
+                                  | TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED
+                                  | TS_RAIL_CLIENTSTATUS_POWER_DISPLAY_REQUEST_SUPPORTED
+                                  | TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE
+                                  // | TS_RAIL_CLIENTSTATUS_AUTORECONNECT
+                                  | TS_RAIL_CLIENTSTATUS_ZORDER_SYNC));
+
+    StaticOutStream<16> out;
+    cipdu.emit(out);
+    RED_CHECK(out.get_produced_bytes() == chunk.get_consumed_bytes());
+}
+
 RED_AUTO_TEST_CASE(TestHighContrastSystemInformationStructure)
 {
     StaticOutStream<2048> out_stream;

@@ -84,7 +84,6 @@ RailModuleHostMod::RailModuleHostMod(
     , dvc_manager(false)
     , mouse_state(time_base, events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
-    , current_mouse_owner(MouseOwner::WidgetModule)
     , time_base(time_base)
     , events_guard(events)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
@@ -98,7 +97,6 @@ RailModuleHostMod::RailModuleHostMod(
     this->screen.move_xy(widget_rect.x, widget_rect.y);
     this->screen.add_widget(&this->rail_module_host);
     this->screen.set_widget_focus(&this->rail_module_host, Widget::focus_reason_tabkey);
-    this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->vars.set<cfg::context::rail_module_host_mod_is_active>(true);
 }
@@ -107,8 +105,8 @@ void RailModuleHostMod::init()
 {
     if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
         this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height,
-                    this->font(), this->is_resizing_hosted_desktop_allowed());
+            *this, this->front_width, this->front_height,
+            this->font(), this->is_resizing_hosted_desktop_allowed());
         this->dvc_manager.ready(this->front);
     }
 }
@@ -130,8 +128,9 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
 {
     Rect client_execute_auxiliary_window_rect = this->rail_client_execute.get_auxiliary_window_rect();
 
-    if (!client_execute_auxiliary_window_rect.isempty() &&
-        client_execute_auxiliary_window_rect.contains_pt(x, y)) {
+    if (!client_execute_auxiliary_window_rect.isempty()
+     && client_execute_auxiliary_window_rect.contains_pt(x, y)
+    ) {
         mod_api& mod = this->rail_module_host.get_managed_mod();
 
         mod.rdp_input_mouse(device_flags, x, y, keymap);
@@ -151,30 +150,29 @@ void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2*
             return;
         }
 
-        bool out_mouse_captured = false;
-        if (!this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured)) {
-            this->mouse_state.chained_input_mouse = [this] (int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured){
-                return this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
-            };
-            this->mouse_state.input_mouse(device_flags, x, y, keymap);
+        bool mouse_is_captured
+          = this->rail_client_execute.input_mouse(device_flags, x, y);
 
-            if (out_mouse_captured) {
-                this->allow_mouse_pointer_change(false);
-                this->current_mouse_owner = MouseOwner::ClientExecute;
-            }
-            else {
-                if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                    this->redo_mouse_pointer_change(x, y);
-                }
+        if (this->mouse_state.next_event_is_double_click(device_flags)) {
+            this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y);
+        }
 
-                this->current_mouse_owner = MouseOwner::WidgetModule;
+        if (mouse_is_captured) {
+            this->screen.allow_mouse_pointer_change(false);
+            this->current_mouse_owner = MouseOwner::ClientExecute;
+        }
+        else {
+            if (MouseOwner::WidgetModule != this->current_mouse_owner) {
+                this->screen.redo_mouse_pointer_change(x, y);
             }
+
+            this->current_mouse_owner = MouseOwner::WidgetModule;
         }
 
         this->screen.rdp_input_mouse(device_flags, x, y, keymap);
 
-        if (out_mouse_captured) {
-            this->allow_mouse_pointer_change(true);
+        if (mouse_is_captured) {
+            this->screen.allow_mouse_pointer_change(true);
         }
     }
 }

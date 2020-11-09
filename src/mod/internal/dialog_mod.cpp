@@ -22,11 +22,8 @@
 #include "configs/config.hpp"
 #include "mod/internal/dialog_mod.hpp"
 #include "mod/internal/widget/edit.hpp"
-#include "core/front_api.hpp"
 #include "utils/translation.hpp"
-#include "core/RDP/slowpath.hpp"
-#include "RAIL/client_execute.hpp"
-#include "keyboard/mouse.hpp"
+
 
 DialogMod::DialogMod(
     DialogModVariables vars,
@@ -37,15 +34,9 @@ DialogMod::DialogMod(
     const char * cancel_text, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, ChallengeOpt has_challenge
 )
-    : front_width(width)
-    , front_height(height)
-    , front(front)
-    , screen(drawable, width, height, font, nullptr, theme)
-    , rail_client_execute(rail_client_execute)
-    , dvc_manager(false)
-    , mouse_state(time_base, events)
-    , rail_enabled(rail_client_execute.is_rail_enabled())
-    , current_mouse_owner(MouseOwner::WidgetModule)
+    : RailModBase(
+        time_base, events, drawable, front,
+        width, height, rail_client_execute, font, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         drawable, front, font, theme)
@@ -57,8 +48,6 @@ DialogMod::DialogMod(
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
-    this->screen.set_wh(front_width, front_height);
-
     this->screen.add_widget(&this->dialog_widget);
     this->dialog_widget.set_widget_focus(&this->dialog_widget.ok, Widget::focus_reason_tabkey);
     this->screen.set_widget_focus(&this->dialog_widget, Widget::focus_reason_tabkey);
@@ -69,117 +58,13 @@ DialogMod::DialogMod(
     }
 }
 
+DialogMod::~DialogMod() = default;
 
 void DialogMod::init()
 {
-    if (this->rail_enabled && !this->rail_client_execute.is_ready()) {
-        this->rail_client_execute.ready(
-                    *this, this->front_width, this->front_height,
-                    this->font(), this->is_resizing_hosted_desktop_allowed());
-        this->dvc_manager.ready(this->front);
-    }
+    RailModBase::init();
     this->copy_paste.ready(this->front);
 }
-
-
-void DialogMod::rdp_input_invalidate(Rect r)
-{
-    this->screen.rdp_input_invalidate(r);
-
-    if (this->rail_enabled) {
-        this->rail_client_execute.input_invalidate(r);
-    }
-}
-
-void DialogMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
-{
-    if (device_flags & (MOUSE_FLAG_WHEEL | MOUSE_FLAG_HWHEEL)) {
-        x = this->old_mouse_x;
-        y = this->old_mouse_y;
-    }
-    else {
-        this->old_mouse_x = x;
-        this->old_mouse_y = y;
-    }
-
-    if (!this->rail_enabled) {
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-        return;
-    }
-    bool out_mouse_captured = false;
-    if (!this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured)) {
-        this->mouse_state.chained_input_mouse = [this] (int device_flags, int x, int y, Keymap2 * keymap, bool & out_mouse_captured){
-            return this->rail_client_execute.input_mouse(device_flags, x, y, keymap, out_mouse_captured);
-        };
-        this->mouse_state.input_mouse(device_flags, x, y, keymap);
-
-        if (out_mouse_captured) {
-            this->allow_mouse_pointer_change(false);
-            this->current_mouse_owner = MouseOwner::ClientExecute;
-        }
-        else {
-            if (MouseOwner::WidgetModule != this->current_mouse_owner) {
-                this->redo_mouse_pointer_change(x, y);
-            }
-
-            this->current_mouse_owner = MouseOwner::WidgetModule;
-        }
-    }
-
-    this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-
-    if (out_mouse_captured) {
-        this->allow_mouse_pointer_change(true);
-    }
-}
-
-void DialogMod::rdp_input_scancode(
-    long param1, long param2, long param3, long param4, Keymap2 * keymap)
-{
-    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
-
-    if (this->rail_enabled) {
-        if (!this->alt_key_pressed) {
-            if ((param1 == 56) && !(param3 & SlowPath::KBDFLAGS_RELEASE)) {
-                this->alt_key_pressed = true;
-            }
-        }
-        else {
-//            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
-            if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
-                this->alt_key_pressed = false;
-            }
-            else if ((param1 == 62) && !param3) {
-                LOG(LOG_INFO, "DialogMod::rdp_input_scancode: Close by user (Alt+F4)");
-                throw Error(ERR_WIDGET);    // F4 key pressed
-            }
-        }
-    }
-}
-
-void DialogMod::refresh(Rect r)
-{
-    this->screen.refresh(r);
-
-    if (this->rail_enabled) {
-        this->rail_client_execute.input_invalidate(r);
-    }
-}
-
-bool DialogMod::is_resizing_hosted_desktop_allowed() const
-{
-    assert(this->rail_enabled);
-
-    return false;
-}
-
-
-DialogMod::~DialogMod()
-{
-    this->screen.clear();
-    this->rail_client_execute.reset(true);
-}
-
 
 void DialogMod::notify(Widget* sender, notify_event_t event)
 {
@@ -229,14 +114,7 @@ void DialogMod::refused()
 
 void DialogMod::send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->rail_client_execute.is_ready()){
-        if (front_channel_name == CHANNELS::channel_names::rail) {
-            this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
-        }
-        else if (front_channel_name == CHANNELS::channel_names::drdynvc) {
-            this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
-        }
-    }
+    RailModBase::send_to_mod_channel(front_channel_name, chunk, length, flags);
 
     if (this->copy_paste && front_channel_name == CHANNELS::channel_names::cliprdr) {
         this->copy_paste.send_to_mod_channel(chunk, flags);

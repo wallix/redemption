@@ -38,6 +38,12 @@ const CHANNELS::ChannelDefArray & FakeFront::get_channel_list() const
     return d->cl;
 }
 
+void FakeFront::add_channel(CHANNELS::ChannelNameId name_id, uint32_t flags, int chanid)
+{
+    this->d->cl.push_back({name_id, flags, chanid});
+
+}
+
 FakeFront::ResizeResult FakeFront::server_resize(ScreenInfo screen_server)
 {
     this->d->gd.resize(screen_server.width, screen_server.height);

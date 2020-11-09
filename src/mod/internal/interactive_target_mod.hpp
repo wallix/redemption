@@ -23,14 +23,9 @@
 
 #include "configs/config_access.hpp"
 #include "mod/internal/copy_paste.hpp"
-#include "mod/internal/widget/notify_api.hpp"
+#include "mod/internal/rail_mod_base.hpp"
 #include "mod/internal/widget/language_button.hpp"
 #include "mod/internal/widget/flat_interactive_target.hpp"
-#include "mod/mod_api.hpp"
-#include "mod/internal/dvc_manager.hpp"
-#include "mod/internal/widget/screen.hpp"
-#include "keyboard/mouse.hpp"
-#include "utils/timebase.hpp"
 
 
 using InteractiveTargetModVariables = vcfg::variables<
@@ -44,114 +39,9 @@ using InteractiveTargetModVariables = vcfg::variables<
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
-class ClientExecute;
-class TimeBase;
 
-class InteractiveTargetMod : public mod_api, public NotifyApi
+class InteractiveTargetMod : public RailModBase, public NotifyApi
 {
-public:
-    [[nodiscard]] Font const & font() const
-    {
-        return this->screen.font;
-    }
-
-    [[nodiscard]] Theme const & theme() const
-    {
-        return this->screen.theme;
-    }
-
-    [[nodiscard]] Rect get_screen_rect() const
-    {
-        return this->screen.get_rect();
-    }
-
-    void rdp_gdi_up_and_running() override {}
-
-    void rdp_gdi_down() override {}
-
-    void rdp_input_invalidate(Rect r) override;
-
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override;
-
-    void rdp_input_scancode(long param1, long param2, long param3, long param4,
-            Keymap2 * keymap) override;
-
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
-    {
-        this->screen.rdp_input_unicode(unicode, flag);
-    }
-
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
-    {
-        (void)time;
-        (void)device_flags;
-        (void)param1;
-        (void)param2;
-    }
-
-    void refresh(Rect r) override;
-
-    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
-    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
-    void send_auth_channel_data(const char * /*data*/) override {}
-    void send_checkout_channel_data(const char * /*data*/) override {}
-
-    [[nodiscard]] Dimension get_dim() const override
-    {
-        return Dimension(this->front_width, this->front_height);
-    }
-
-    void allow_mouse_pointer_change(bool allow)
-    {
-        this->screen.allow_mouse_pointer_change(allow);
-    }
-
-    void redo_mouse_pointer_change(int x, int y)
-    {
-        this->screen.redo_mouse_pointer_change(x, y);
-    }
-
-private:
-    [[nodiscard]] virtual bool is_resizing_hosted_desktop_allowed() const;
-
-    uint16_t front_width;
-    uint16_t front_height;
-
-    FrontAPI & front;
-
-    WidgetScreen screen;
-
-    ClientExecute & rail_client_execute;
-    DVCManager dvc_manager;
-
-    bool alt_key_pressed = false;
-
-    MouseState mouse_state;
-
-    const bool rail_enabled;
-
-    enum class MouseOwner
-    {
-        ClientExecute,
-        WidgetModule,
-    };
-
-    MouseOwner current_mouse_owner;
-
-    int old_mouse_x = 0;
-    int old_mouse_y = 0;
-
-    bool ask_device;
-    bool ask_login;
-    bool ask_password;
-
-    LanguageButton language_button;
-    FlatInteractiveTarget challenge;
-
-    CopyPaste copy_paste;
-
-    InteractiveTargetModVariables vars;
-
 public:
     InteractiveTargetMod(
         InteractiveTargetModVariables vars,
@@ -169,18 +59,26 @@ public:
 
     void notify(Widget* sender, notify_event_t event) override;
 
-    [[nodiscard]] bool is_up_and_running() const override
-    { return true; }
-
-    bool server_error_encountered() const override { return false; }
-
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         this->challenge.move_size_widget(left, top, width, height);
     }
 
 private:
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
+
     void accepted();
 
     void refused();
+
+    bool ask_device;
+    bool ask_login;
+    bool ask_password;
+
+    LanguageButton language_button;
+    FlatInteractiveTarget challenge;
+
+    CopyPaste copy_paste;
+
+    InteractiveTargetModVariables vars;
 };

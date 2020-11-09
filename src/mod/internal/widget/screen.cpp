@@ -132,6 +132,7 @@ bool WidgetScreen::previous_focus()
 void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
 {
     this->redo_mouse_pointer_change(x, y);
+
     if (this->tooltip) {
         if (device_flags & MOUSE_FLAG_MOVE) {
             if (this->last_widget_at_pos(x, y) != this->tooltip->notifier) {
@@ -142,6 +143,7 @@ void WidgetScreen::rdp_input_mouse(int device_flags, int x, int y, Keymap2 * key
             this->hide_tooltip();
         }
     }
+
     WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
 }
 
@@ -172,15 +174,19 @@ void WidgetScreen::redo_mouse_pointer_change(int x, int y)
     if (this->current_over != w){
         if (this->allow_mouse_pointer_change_) {
             using SetPointerMode = gdi::GraphicApi::SetPointerMode;
-            switch ( !w                                          ? (Pointer::POINTER_NULL)
-                    :(w->pointer_flag == Pointer::POINTER_CUSTOM ? (w->get_pointer() ? Pointer::POINTER_CUSTOM:Pointer::POINTER_NORMAL)
-                    : w->pointer_flag) ){
+            switch (w ? w->pointer_flag : Pointer::POINTER_NULL) {
             case Pointer::POINTER_EDIT:
                 this->drawable.set_pointer(0, ::edit_pointer(), SetPointerMode::Insert);
             break;
-            case Pointer::POINTER_CUSTOM:
-                this->drawable.set_pointer(0, *w->get_pointer(), SetPointerMode::Insert);
-            break;
+            case Pointer::POINTER_CUSTOM: {
+                if (Pointer const* custom_pointer = w->get_pointer()) {
+                    this->drawable.set_pointer(0, *custom_pointer, SetPointerMode::Insert);
+                    break;
+                }
+                else {
+                    [[fallthrough]];
+                }
+            }
             default:
                 this->drawable.set_pointer(0, ::normal_pointer(), SetPointerMode::Insert);
             }

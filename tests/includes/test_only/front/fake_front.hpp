@@ -23,6 +23,7 @@
 #pragma once
 
 #include "core/front_api.hpp"
+#include "core/channel_names.hpp"
 #include "utils/image_view.hpp"
 
 #include <memory>
@@ -43,6 +44,7 @@ public:
     bool is_capture_in_progress() const override { return false; }
 
     const CHANNELS::ChannelDefArray & get_channel_list() const override;
+    void add_channel(CHANNELS::ChannelNameId name_id, uint32_t flags, int chanid);
 
     void send_to_channel( const CHANNELS::ChannelDef & /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, int /*flags*/) override {}

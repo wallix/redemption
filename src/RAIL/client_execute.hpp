@@ -20,20 +20,16 @@
 
 #pragma once
 
-#include "utils/timebase.hpp"
 #include "core/RDP/rdp_pointer.hpp"
-#include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/events.hpp"
-#include "keyboard/keymap2.hpp"
-#include "keyboard/mouse.hpp"
 
 #include <string>
 
-
+class TimeBase;
 class FrontAPI;
 class mod_api;
 class Font;
@@ -117,10 +113,8 @@ private:
     void update_rects(const bool allow_resize_hosted_desktop);
 
 public:
-
-
-    struct Zone {
-
+    struct Zone
+    {
         //                 title_bar_rect
         //                       |
         // +---------------------|---------------------------------------------------+
@@ -158,16 +152,25 @@ public:
         //    +--SWS--\-----S-----|--SES--+      °
         //        5         6         7
 
-        uint16_t corner = 24; // TITLE_BAR_HEIGHT
-        uint16_t thickness = 3; // BORDER_WIDTH_HEIGHT
-        uint16_t button_width = 37; // TITLE_BAR_BUTTON_WIDTH
-        bool allow_resize = false;
+        static const uint16_t corner = 24; // TITLE_BAR_HEIGHT
+        static const uint16_t thickness = 3; // BORDER_WIDTH_HEIGHT
+        static const uint16_t button_width = 37; // TITLE_BAR_BUTTON_WIDTH
 
-        enum { ZONE_N, ZONE_NWN, ZONE_NWW, ZONE_W, ZONE_SWW, ZONE_SWS, ZONE_S, ZONE_SES, ZONE_SEE, ZONE_E, ZONE_NEE, ZONE_NEN, ZONE_ICON, ZONE_TITLE, ZONE_CLOSE, ZONE_MAXI, ZONE_MINI, ZONE_RESIZE, NUMBER_OF_ZONES};
+        enum {
+            ZONE_N, ZONE_NWN, ZONE_NWW,
+            ZONE_W, ZONE_SWW, ZONE_SWS,
+            ZONE_S, ZONE_SES, ZONE_SEE,
+            ZONE_E, ZONE_NEE, ZONE_NEN,
 
-        inline Rect get_zone(size_t zone, Rect w)
+            ZONE_ICON, ZONE_TITLE, ZONE_CLOSE,
+            ZONE_MAXI, ZONE_MINI, ZONE_RESIZE,
+
+            NUMBER_OF_ZONES
+        };
+
+        static inline Rect get_zone(size_t zone, Rect w)
         {
-//            if (allow_resize_hosted_desktop)
+            // if (allow_resize_hosted_desktop)
             if (zone >= ZONE_CLOSE && zone <= ZONE_RESIZE){
                 return Rect(w.x + w.cx-1-button_width*(zone-ZONE_CLOSE+1), w.y + 1, button_width, corner-1);
             }
@@ -175,22 +178,22 @@ public:
                 return Rect(w.x+22, w.y+1, w.cx-23-button_width*3, corner-1);
             }
             if (zone == ZONE_ICON){
-                return Rect(w.x+1, w.y+1,21, corner-1);
+                return Rect(w.x+1, w.y+1, 21, corner-1);
             }
             if (zone >= ZONE_N && zone <= ZONE_NEN){
-                uint8_t data[12][4] ={
-                { 1, 0, 0}, // North
-                { 0, 0, 0}, // North West North
-                { 0, 0, 1}, // North West West
-                { 0, 1, 1}, // West
-                { 0, 2, 1}, // South West West
-                { 0, 2, 0}, // South West South
-                { 1, 2, 0}, // South
-                { 2, 2, 0}, // South East South
-                { 2, 2, 1}, // South East East
-                { 2, 1, 1}, // East
-                { 2, 0, 1}, // North East East
-                { 2, 0, 0}, // North East North
+                static constexpr uint8_t data[12][4] ={
+                    { 1, 0, 0}, // North
+                    { 0, 0, 0}, // North West North
+                    { 0, 0, 1}, // North West West
+                    { 0, 1, 1}, // West
+                    { 0, 2, 1}, // South West West
+                    { 0, 2, 0}, // South West South
+                    { 1, 2, 0}, // South
+                    { 2, 2, 0}, // South East South
+                    { 2, 2, 1}, // South East East
+                    { 2, 1, 1}, // East
+                    { 2, 0, 1}, // North East East
+                    { 2, 0, 0}, // North East North
                 };
 
                 // d[0] 0=left or 1=middle, 2=right
@@ -252,6 +255,8 @@ public:
             switch (zone){
             case ZONE_N  :
             case ZONE_S  : return size_NS_pointer();
+            case ZONE_E  :
+            case ZONE_W  : return size_WE_pointer();
             case ZONE_NWN:
             case ZONE_NWW:
             case ZONE_SWW:
@@ -260,15 +265,13 @@ public:
             case ZONE_SEE:
             case ZONE_NEE:
             case ZONE_NEN: return size_NESW_pointer();
-            case ZONE_E  :
-            case ZONE_W  : return size_WE_pointer();
             }
             return normal_pointer();
         }
     } zone;
 
-    // Return true if event is consumed.
-    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, Keymap2 * keymap, bool& mouse_captured_ref);
+    /// \return true when \c xPos and \c yPos are captured
+    bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos);
 
 private:
 
@@ -279,7 +282,7 @@ private:
     bool internal_module_window_created = false;
     bool maximized = false;
     Bitmap wallix_icon_min;
-    uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
+    uint32_t auxiliary_window_id;
     Rect auxiliary_window_rect;
     const static unsigned int max_work_area   = 32;
                  unsigned int work_area_count = 0;
@@ -347,6 +350,8 @@ public:
 
     [[nodiscard]] bool is_resizing_hosted_desktop_enabled() const;
 
+    void adjust_window_to_mod();
+
 private:
     void update_widget();
 
@@ -356,10 +361,6 @@ private:
 
     void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message);
 
-public:
-    void adjust_window_to_mod();
-
-private:
     void maximize_restore_window();
 
     void process_client_system_command_pdu(InStream& chunk);

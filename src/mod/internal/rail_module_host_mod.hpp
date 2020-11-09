@@ -70,16 +70,6 @@ public:
 
     void refresh(Rect r) override;
 
-    void allow_mouse_pointer_change(bool allow)
-    {
-        this->screen.allow_mouse_pointer_change(allow);
-    }
-
-    void redo_mouse_pointer_change(int x, int y)
-    {
-        this->screen.redo_mouse_pointer_change(x, y);
-    }
-
 private:
     uint16_t front_width;
     uint16_t front_height;
@@ -91,14 +81,13 @@ private:
 
     DVCManager dvc_manager;
 
-    bool alt_key_pressed = false;
-
     MouseState mouse_state;
     EventId disconnection_reconnection_timer;
 
+    bool alt_key_pressed = false;
     const bool rail_enabled;
 
-    enum class MouseOwner
+    enum class MouseOwner : bool
     {
         ClientExecute,
         WidgetModule,
