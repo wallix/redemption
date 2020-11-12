@@ -185,7 +185,7 @@ private:
     {
         auto new_mod = new Bouncer2Mod(
             this->time_base,
-            this->mod_wrapper,
+            this->graphics,
             this->events,
             this->front,
             this->client_info.screen_info.width,
@@ -220,7 +220,7 @@ private:
     {
         auto new_mod = new WidgetTestMod(
             this->time_base,
-            this->mod_wrapper,
+            this->graphics,
             this->events,
             this->front,
             this->client_info.screen_info.width,
@@ -233,7 +233,7 @@ private:
     auto create_test_card_mod() -> ModPack
     {
         auto new_mod = new TestCardMod(
-            this->mod_wrapper,
+            this->graphics,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->glyphs,
@@ -290,7 +290,7 @@ private:
             this->ini,
             this->time_base,
             this->events,
-            this->mod_wrapper, this->front,
+            this->mod_wrapper.get_graphics(), this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -461,7 +461,6 @@ public:
             this->mod_wrapper,
             this->redir_info,
             this->ini,
-            this->mod_wrapper.get_graphics(),
             this->front,
             this->client_info,
             this->rail_client_execute,
@@ -479,8 +478,9 @@ public:
 
     auto create_vnc_mod() -> ModPack
     {
-        auto new_mod_pack = create_mod_vnc(this->mod_wrapper, this->ini,
-            mod_wrapper.get_graphics(), this->front, this->client_info,
+        auto new_mod_pack = create_mod_vnc(
+            this->mod_wrapper, this->ini,
+            this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,

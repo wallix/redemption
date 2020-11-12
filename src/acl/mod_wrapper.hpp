@@ -21,7 +21,6 @@
 #pragma once
 
 #include "RAIL/client_execute.hpp"
-#include "acl/gd_provider.hpp"
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "acl/time_before_closing.hpp"
@@ -45,7 +44,7 @@
 class SocketTransport;
 class rdp_api;
 
-class ModWrapper final : public GdProvider, public gdi::OsdApi
+class ModWrapper final : public gdi::OsdApi
 {
     CallbackForwarder<ModWrapper> callback;
 
@@ -184,7 +183,9 @@ class ModWrapper final : public GdProvider, public gdi::OsdApi
     bool connected = false;
 
 public:
+    // TODO should be private
     ModuleIndex current_mod = MODULE_UNKNOWN;
+    // TODO should be private
     bool target_info_is_shown = false;
 
 private:
@@ -256,7 +257,7 @@ public:
         return this->rdpapi;
     }
 
-    gdi::GraphicApi & get_graphics() override
+    gdi::GraphicApi & get_graphics()
     {
         return this->g;
     }

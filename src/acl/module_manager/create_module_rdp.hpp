@@ -53,7 +53,6 @@ ModPack create_mod_rdp(
     ModWrapper & mod_wrapper,
     RedirectionInfo & redir_info,
     Inifile & ini,
-    gdi::GraphicApi & drawable,
     FrontAPI & front,
     ClientInfo client_info /* /!\ modified */,
     ClientExecute & rail_client_execute,

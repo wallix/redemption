@@ -72,7 +72,7 @@ public:
 
     ModVNCWithMetrics(Transport & t
            , TimeBase& time_base
-           , GdProvider & gd_provider
+           , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username
            , const char * password
@@ -94,11 +94,12 @@ public:
            , VNCVerbose verbose
            , VNCMetrics * metrics
            , AuthApi & sesman)
-    : mod_vnc(t, time_base, gd_provider, events, username, password, front, front_width, front_height,
-          keylayout, key_flags, clipboard_up, clipboard_down, encodings,
-          clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
-          server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
-          rail_client_execute, verbose, metrics, sesman)
+    : mod_vnc(
+        t, time_base, gd, events, username, password, front, front_width, front_height,
+        keylayout, key_flags, clipboard_up, clipboard_down, encodings,
+        clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
+        server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
+        rail_client_execute, verbose, metrics, sesman)
     , events_guard(events)
     , time_base(time_base)
     {
@@ -134,7 +135,8 @@ private:
     Inifile & ini;
 
 public:
-    ModWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
+    ModWithSocketAndMetrics(
+        ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, SocketTransport::Verbose verbose,
         std::string * error_message,
         TimeBase& time_base,
@@ -164,7 +166,9 @@ public:
                       , ini.get<cfg::context::target_port>()
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
-    , mod(this->socket_transport, time_base, mod_wrapper, events, username, password, front, front_width, front_height,
+    , mod(
+          this->socket_transport, time_base, mod_wrapper.get_graphics(),
+          events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
@@ -291,8 +295,9 @@ public:
 
 }
 
-ModPack create_mod_vnc(ModWrapper & mod_wrapper,
-    Inifile& ini, gdi::GraphicApi & drawable, FrontAPI& front, ClientInfo const& client_info,
+ModPack create_mod_vnc(
+    ModWrapper & mod_wrapper,
+    Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
@@ -381,6 +386,8 @@ ModPack create_mod_vnc(ModWrapper & mod_wrapper,
         auto mod = new_mod.release();
         return ModPack{mod, nullptr, nullptr, nullptr, false, false, tmp_psocket_transport};
     }
+
+    gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
 
     auto* host_mod = create_mod_rail(
         ini,

@@ -33,18 +33,18 @@
 #include "utils/sugar/algostring.hpp"
 
 
-TestCardMod::TestCardMod(GdProvider & gd_provider, uint16_t width, uint16_t height, Font const & font, bool unit_test)
+TestCardMod::TestCardMod(gdi::GraphicApi & gd, uint16_t width, uint16_t height, Font const & font, bool unit_test)
 : front_width(width)
 , front_height(height)
 , font(font)
 , unit_test(unit_test)
-, gd_provider(gd_provider)
+, gd(gd)
 {
 }
 
 void TestCardMod::init()
 {
-    this->draw_event(this->gd_provider.get_graphics());
+    this->draw_event(this->gd);
 }
 
 Rect TestCardMod::get_screen_rect() const

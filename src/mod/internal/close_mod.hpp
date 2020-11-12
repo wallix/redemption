@@ -27,7 +27,10 @@
 #include "configs/config_access.hpp"
 #include "core/events.hpp"
 
-class GdProvider;
+namespace gdi
+{
+    class GraphicApi;
+}
 
 using CloseModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user, vcfg::accessmode::get | vcfg::accessmode::is_asked>,
@@ -53,7 +56,7 @@ public:
         CloseModVariables vars,
         TimeBase& time_base,
         EventContainer& events,
-        GdProvider & gd_provider, FrontAPI & front, uint16_t width, uint16_t height,
+        gdi::GraphicApi & gd, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute, Font const& font,
         Theme const& theme, bool back_selector);
 

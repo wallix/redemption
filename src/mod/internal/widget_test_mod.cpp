@@ -37,9 +37,9 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(TimeBase& time_base, GdProvider & gd_provider, EventContainer & events, WidgetTestMod& /*mod*/)
+    WidgetTestModPrivate(TimeBase& time_base, gdi::GraphicApi & gd, EventContainer & events, WidgetTestMod& /*mod*/)
       : time_base(time_base)
-      , gd_provider(gd_provider)
+      , gd(gd)
       , events_guard(events)
     {
         this->timer = this->events_guard.create_event_timeout(
@@ -47,8 +47,7 @@ struct WidgetTestMod::WidgetTestModPrivate
             this->time_base.get_current_time(),
             [this](Event&)
             {
-                auto& gd = this->gd_provider.get_graphics();
-                gd.begin_update();
+                this->gd.begin_update();
                 int y = 10;
                 for (auto s : {
                     // "/home/jpoelen/rawdisk2/Laksaman_14.rbf",
@@ -79,32 +78,32 @@ struct WidgetTestMod::WidgetTestModPrivate
                     Font font(s);
                     auto * text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`!@#$%^&*()_=[]'\",./<>?|:{}¹²³ cl◀◂▸▶▲▼▤▥➜¤€’¥×\\æœúíàéèçùµÉÀð.";
                     gdi::server_draw_text(
-                        gd, font, 10, y, text,
+                        this->gd, font, 10, y, text,
                         encode_color24()(BGRColor(0xeeb6c1)),
                         encode_color24()(BGRColor(0x747132)),
                         gdi::ColorCtx::depth24(),
                         Rect(10, y-10, gdi::TextMetrics(font, text).width, 600));
                     y += font.max_height() + 10;
                 }
-                gd.end_update();
+                this->gd.end_update();
             });
     }
 
     ~WidgetTestModPrivate() = default;
 
     TimeBase& time_base;
-    GdProvider & gd_provider;
+    gdi::GraphicApi & gd;
     EventId timer;
     EventsGuard events_guard;
 };
 
 WidgetTestMod::WidgetTestMod(
     TimeBase& time_base,
-    GdProvider & gd_provider,
+    gdi::GraphicApi & gd,
     EventContainer & events,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & /*font*/)
-: d(std::make_unique<WidgetTestModPrivate>(time_base, gd_provider, events, *this))
+: d(std::make_unique<WidgetTestModPrivate>(time_base, gd, events, *this))
 {
     front.server_resize({width, height, BitsPerPixel{8}});
 }

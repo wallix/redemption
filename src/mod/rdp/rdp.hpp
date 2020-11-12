@@ -140,7 +140,6 @@ struct FileValidatorService;
 #include "utils/sugar/splitter.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 #include "acl/auth_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "configs/config.hpp"
 
 #include <cstdlib>
@@ -1857,7 +1856,7 @@ class mod_rdp : public mod_api, public rdp_api
     std::string * error_message;
 
     TimeBase& time_base;
-    GdProvider & gd_provider;
+    gdi::GraphicApi & gd;
     EventsGuard events_guard;
     AuthApi & sesman;
 
@@ -1954,11 +1953,10 @@ public:
     explicit mod_rdp(
         Transport & trans
       , TimeBase& time_base
-      , GdProvider & gd_provider
-      , gdi::OsdApi & osd
+      , gdi::GraphicApi & gd
+      , [[maybe_unused]] gdi::OsdApi & osd
       , EventContainer & events
       , AuthApi & sesman
-      , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
       , RedirectionInfo & redir_info
@@ -2032,7 +2030,7 @@ public:
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
         , time_base(time_base)
-        , gd_provider(gd_provider)
+        , gd(gd)
         , events_guard(events)
         , sesman(sesman)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
@@ -2175,7 +2173,7 @@ public:
                         this->negociation_result = this->private_rdp_negociation->rdp_negociation.get_result();
 
                         if (this->buf.remaining()){
-                            this->draw_event(this->gd_provider.get_graphics());
+                            this->draw_event();
                         }
 
                         event.garbage = true;
@@ -2186,18 +2184,17 @@ public:
                             event.alarm.trigger_time + std::chrono::seconds{3600},
                             [this](Event&event)
                             {
-                                auto & gd = this->gd_provider.get_graphics();
                                 if (this->buf.remaining()){
-                                    this->draw_event(gd);
+                                    this->draw_event();
                                 }
                                 this->private_rdp_negociation.reset();
                                 #ifndef __EMSCRIPTEN__
                                 if (this->channels.remote_programs_session_manager) {
-                                    this->channels.remote_programs_session_manager->set_drawable(&gd);
+                                    this->channels.remote_programs_session_manager->set_drawable(&this->gd);
                                 }
                                 #endif
                                 this->buf.load_data(this->trans);
-                                this->draw_event(gd);
+                                this->draw_event();
 
                                 event.garbage = true;
 
@@ -2207,14 +2204,13 @@ public:
                                     event.alarm.trigger_time,
                                     [this](Event& /*event*/)
                                     {
-                                        auto & gd = this->gd_provider.get_graphics();
                                         #ifndef __EMSCRIPTEN__
                                         if (this->channels.remote_programs_session_manager) {
-                                            this->channels.remote_programs_session_manager->set_drawable(&gd);
+                                            this->channels.remote_programs_session_manager->set_drawable(&this->gd);
                                         }
                                         #endif
                                         this->buf.load_data(this->trans);
-                                        this->draw_event(gd);
+                                        this->draw_event();
                                     },
                                     [](Event& /*event*/){}
                                 );
@@ -2361,7 +2357,7 @@ public:
                 this->negociation_result =
                     this->private_rdp_negociation->rdp_negociation.get_result();
                 if (this->buf.remaining()) {
-                    this->draw_event(this->gd_provider.get_graphics());
+                    this->draw_event();
                 }
             }
         }
@@ -3421,7 +3417,7 @@ public:
 
     TpduBuffer buf;
 
-    void draw_event(gdi::GraphicApi & gd)
+    void draw_event()
     {
         while (this->buf.next(TpduBuffer::PDU)) {
             InStream x224_data(this->buf.current_pdu_buffer());
@@ -6087,10 +6083,9 @@ public:
         RDPPatBlt cmd(r, 0xA0, color_encode(BLACK, BitsPerPixel{24}), color_encode(WHITE, BitsPerPixel{24}),
             RDPBrush(0, 0, 3, 0xaa, byte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
         );
-        auto & drawable = this->gd_provider.get_graphics();
-        drawable.begin_update();
-        drawable.draw(cmd, r, gdi::ColorCtx::depth24());
-        drawable.end_update();
+        this->gd.begin_update();
+        this->gd.draw(cmd, r, gdi::ColorCtx::depth24());
+        this->gd.end_update();
     }
 
 public:

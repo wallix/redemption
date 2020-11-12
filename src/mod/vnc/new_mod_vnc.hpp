@@ -33,12 +33,16 @@ class TimeBase;
 class Transport;
 class VNCMetrics;
 class AuthApi;
-class GdProvider;
+
+namespace gdi
+{
+    class GraphicApi;
+}
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
     TimeBase& time_base,
-    GdProvider & gd_provider,
+    gdi::GraphicApi & gd,
     EventContainer & events,
     AuthApi & sesman,
     const char* username,

@@ -35,7 +35,6 @@ public:
     RailModBase(
         TimeBase& time_base,
         EventContainer& events,
-        // TODO should be GdProvider
         gdi::GraphicApi & gd,
         FrontAPI & front,
         uint16_t width, uint16_t height,

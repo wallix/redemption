@@ -43,7 +43,6 @@
 #include "utils/cli.hpp"
 #include "utils/cli_chrono.hpp"
 #include "acl/sesman.hpp"
-#include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
 #include "gdi/osd_api.hpp"
@@ -230,14 +229,13 @@ int main(int argc, char** argv)
     FixedRandom lcg_gen;
     NullLicenseStore licensestore;
     RedirectionInfo redir_info;
-    GdForwarder gd_forwarder(gdi::null_gd());
 
     if (is_vnc) {
         return run([&](Transport& trans){
             return new_mod_vnc(
                 trans
               , time_base
-              , gd_forwarder
+              , gdi::null_gd()
               , events
               , sesman
               , username.c_str()
@@ -307,11 +305,11 @@ int main(int argc, char** argv)
             return new_mod_rdp(
                 trans,
                 time_base,
-                gd_forwarder,
+                gdi::null_gd(),
                 osd,
                 events,
                 sesman,
-                gdi::null_gd(), front, client_info, redir_info,
+                front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, licensestore,
                 ini, nullptr, nullptr, mod_rdp_factory);

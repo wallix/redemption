@@ -31,7 +31,6 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "core/client_info.hpp"
 #include "utils/timebase.hpp"
 #include "acl/auth_api.hpp"
@@ -134,7 +133,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     LCGRandom gen;
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
-    GdForwarder gd_provider(front.gd());
     gdi::NullOsd osd;
     EventContainer events;
     Inifile ini;
@@ -146,8 +144,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, osd, events, auth,
-        front.gd(), front, info, redir_info, gen,
+    auto mod = new_mod_rdp(
+        t, time_base, front.gd(), osd, events, auth, front, info, redir_info, gen,
         channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, nullptr, nullptr, mod_rdp_factory);
 

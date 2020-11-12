@@ -40,7 +40,6 @@ class ModRDPParams;
 class FileValidatorService;
 class TLSClientParams;
 class ModRdpFactory;
-class GdProvider;
 class ChannelsAuthorizations;
 
 namespace gdi {
@@ -51,11 +50,10 @@ namespace gdi {
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     TimeBase& time_base,
-    GdProvider & gd_provider,
+    gdi::GraphicApi& gd,
     gdi::OsdApi & osd,
     EventContainer & events,
     AuthApi & sesman,
-    gdi::GraphicApi& gd,
     FrontAPI& front,
     const ClientInfo& info,
     RedirectionInfo& redir_info,

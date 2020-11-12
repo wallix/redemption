@@ -23,7 +23,6 @@
 
 #include "mod/vnc/vnc.hpp"
 #include <openssl/tls1.h>
-#include "acl/gd_provider.hpp"
 #include <openssl/tls1.h>
 
 
@@ -36,7 +35,7 @@
 
 mod_vnc::mod_vnc( Transport & t
            , TimeBase& time_base
-           , GdProvider & gd_provider
+           , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username
            , const char * password
@@ -74,7 +73,7 @@ mod_vnc::mod_vnc( Transport & t
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , rail_client_execute(rail_client_execute)
     , time_base(time_base)
-    , gd_provider(gd_provider)
+    , gd(gd)
     , events_guard(events)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
@@ -102,7 +101,7 @@ mod_vnc::mod_vnc( Transport & t
         [this](Event& event)
         {
             // First Timeout Clear Screen
-            gdi_clear_screen(this->gd_provider.get_graphics(), this->get_dim());
+            gdi_clear_screen(this->gd, this->get_dim());
             event.garbage = true;
 
             // Following fd timeouts
@@ -112,7 +111,7 @@ mod_vnc::mod_vnc( Transport & t
                 this->time_base.get_current_time()+std::chrono::seconds{300},
                 [this](Event& /*event*/)
                 {
-                    this->draw_event(this->gd_provider.get_graphics());
+                    this->draw_event(this->gd);
                 },
                 [](Event& /*event*/){}
             );
@@ -2065,7 +2064,7 @@ void mod_vnc::init()
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->initial_clear_screen(this->gd_provider.get_graphics());
+        this->initial_clear_screen(this->gd);
     }
 }
 
@@ -2074,7 +2073,7 @@ void mod_vnc::rdp_gdi_up_and_running()
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->initial_clear_screen(this->gd_provider.get_graphics());
+        this->initial_clear_screen(this->gd);
     }
 }
 

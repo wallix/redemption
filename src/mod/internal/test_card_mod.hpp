@@ -23,11 +23,15 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "acl/gd_provider.hpp"
 
 class BGRPalette;
 class Font;
 class FrontAPI;
+
+namespace gdi
+{
+    class GraphicApi;
+}
 
 class TestCardMod : public mod_api
 {
@@ -38,13 +42,13 @@ class TestCardMod : public mod_api
 
     bool unit_test;
 
-    GdProvider & gd_provider;
+    gdi::GraphicApi & gd;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     TestCardMod(
-        GdProvider & gd_provider,
+        gdi::GraphicApi & gd,
         uint16_t width, uint16_t height,
         Font const & font, bool unit_test = true); /*NOLINT*/
 

@@ -294,8 +294,8 @@ public:
          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
          , verbose, error_message))
     , sesman(sesman)
-    , mod(*this->socket_transport_ptr, time_base, mod_wrapper, mod_wrapper
-        , events, sesman, gd, front, info, redir_info, gen
+    , mod(*this->socket_transport_ptr, time_base, gd
+        , mod_wrapper , events, sesman, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -518,7 +518,6 @@ ModPack create_mod_rdp(
     ModWrapper & mod_wrapper,
     RedirectionInfo & redir_info,
     Inifile & ini,
-    gdi::GraphicApi & drawable,
     FrontAPI& front,
     ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute,
@@ -965,6 +964,8 @@ ModPack create_mod_rdp(
             mod_rdp_params.client_address = local_ip_address.ip_addr;
             break;
     }
+
+    gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
 
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
         mod_wrapper,

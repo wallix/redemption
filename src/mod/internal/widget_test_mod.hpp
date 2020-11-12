@@ -21,7 +21,6 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "core/events.hpp"
 #include <memory>
 
@@ -29,11 +28,16 @@ class TimeBase;
 class FrontAPI;
 class Font;
 
+namespace gdi
+{
+    class GraphicApi;
+}
+
 class WidgetTestMod : public mod_api
 {
 public:
     WidgetTestMod(TimeBase& time_base,
-        GdProvider & gd_provider,
+        gdi::GraphicApi & gd,
         EventContainer & events,
         FrontAPI & front, uint16_t width, uint16_t height,
         Font const & font);

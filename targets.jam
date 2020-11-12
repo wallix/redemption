@@ -4201,8 +4201,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o

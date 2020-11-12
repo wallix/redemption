@@ -21,12 +21,7 @@
 
 #include "configs/config.hpp"
 #include "mod/internal/close_mod.hpp"
-#include "core/front_api.hpp"
-#include "gdi/graphic_api.hpp"
-#include "core/RDP/slowpath.hpp"
-#include "RAIL/client_execute.hpp"
 #include "utils/timebase.hpp"
-#include "acl/gd_provider.hpp"
 
 static FlatWabClose build_close_widget(
     gdi::GraphicApi & drawable,
@@ -83,15 +78,15 @@ CloseMod::CloseMod(
     CloseModVariables vars,
     TimeBase& time_base,
     EventContainer& events,
-    GdProvider & gd_provider,
+    gdi::GraphicApi & gd,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool back_selector)
     : RailModBase(
-        time_base, events, gd_provider.get_graphics(), front,
+        time_base, events, gd, front,
         width, height, rail_client_execute, font, theme)
     , close_widget(
-        build_close_widget(gd_provider.get_graphics(), widget_rect, *this, this->screen, auth_error_message, vars, font, theme, back_selector))
+        build_close_widget(gd, widget_rect, *this, this->screen, auth_error_message, vars, font, theme, back_selector))
     , vars(vars)
     , events_guard(events)
 {

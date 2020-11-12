@@ -29,7 +29,6 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "configs/config.hpp"
 #include "utils/timebase.hpp"
 #include "core/client_info.hpp"
@@ -276,7 +275,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 #endif
 
-            GdForwarder gd_provider(front.gd());
             gdi::NullOsd osd;
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -284,10 +282,10 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(trans, time_base, gd_provider, osd, events, auth, front.gd(), front, info,
-                redir_info, gen,
-                channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
-                nullptr, nullptr, mod_rdp_factory);
+            auto mod = new_mod_rdp(
+                trans, time_base, front.gd(), osd, events, auth, front, info, redir_info, gen,
+                channels_authorizations, mod_rdp_params, tls_client_params,
+                license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
             RED_CHECK_EQUAL(info.screen_info.width, 1024);
             RED_CHECK_EQUAL(info.screen_info.height, 768);
@@ -531,7 +529,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             } license_store(license_client_name, license_version, license_scope, license_company_name,
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 
-            GdForwarder gd_provider(front.gd());
             gdi::NullOsd osd;
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -539,8 +536,8 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, time_base, gd_provider, osd, events, auth, front.gd(), front, info,
-                redir_info, gen,
+            auto mod = new_mod_rdp(
+                t, time_base, front.gd(), osd, events, auth, front, info, redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 

@@ -33,9 +33,8 @@ int main()
 
 
     TimeBase time_base({0,0});
-    GdForwarder gd_provider(front.gd());
     EventContainer events;
-    WidgetTestMod d(time_base, gd_provider, events, front, screen_info.width, screen_info.height, global_font());
+    WidgetTestMod d(time_base, front.gd(), events, front, screen_info.width, screen_info.height, global_font());
 
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

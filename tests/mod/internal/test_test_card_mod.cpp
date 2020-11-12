@@ -34,8 +34,7 @@ RED_AUTO_TEST_CASE(TestTestCardMod)
     uint16_t width = 800;
     uint16_t height = 600;
     TestGraphic gd(width, height);
-    GdForwarder gd_forwarder(gd);
-    TestCardMod mod(gd_forwarder, width, height, global_font());
+    TestCardMod mod(gd, width, height, global_font());
     RED_CHECK_NO_THROW(mod.init());
     RED_CHECK_IMG(gd, IMG_TEST_PATH "card_mod_1.png");
 }

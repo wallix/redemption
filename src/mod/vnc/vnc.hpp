@@ -80,7 +80,6 @@ class VNCMetrics;
 
 class UltraDSM;
 class mod_vnc;
-class GdProvider;
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -315,7 +314,7 @@ private:
     Zdecompressor<> zd;
 
     TimeBase& time_base;
-    GdProvider & gd_provider;
+    gdi::GraphicApi & gd;
     EventsGuard events_guard;
     EventId clipboard_timeout_timer;
 
@@ -352,7 +351,7 @@ private:
 public:
     mod_vnc( Transport & t
            , TimeBase& time_base
-           , GdProvider & gd_provider
+           , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username
            , const char * password

@@ -24,7 +24,6 @@
 #include "RAIL/client_execute.hpp"
 #include "core/events.hpp"
 #include "core/RDP/capabilities/window.hpp"
-#include "acl/gd_provider.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 
 #include "test_only/front/fake_front.hpp"

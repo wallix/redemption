@@ -30,7 +30,6 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
-#include "acl/gd_provider.hpp"
 #include "utils/timebase.hpp"
 #include "utils/redirection_info.hpp"
 #include "core/channels_authorizations.hpp"
@@ -156,15 +155,13 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     NullAuthentifier auth;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
-    GdForwarder gd_provider(front.gd());
     gdi::NullOsd osd;
 
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, osd, events, auth,
-        front.gd(), front, info, redir_info,
-        gen, channels_authorizations,
+        t, time_base, front.gd(), osd, events, auth,
+        front, info, redir_info, gen, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);
 

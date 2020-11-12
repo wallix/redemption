@@ -24,11 +24,14 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 
 class FrontAPI;
+namespace gdi
+{
+    class GraphicApi;
+}
 
 class Bouncer2Mod : public mod_api
 {
@@ -49,14 +52,14 @@ class Bouncer2Mod : public mod_api
     int mouse_y = 0;
 
     EventsGuard events_guard;
-    GdProvider & gd_provider;
+    gdi::GraphicApi & gd;
 
     [[nodiscard]] Rect get_screen_rect() const;
 
 public:
     Bouncer2Mod(
          TimeBase& time_base,
-         GdProvider & gd_provider,
+         gdi::GraphicApi & gd,
          EventContainer & events,
          FrontAPI & front,
          uint16_t width, uint16_t height);

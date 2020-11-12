@@ -30,7 +30,6 @@
 #include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "acl/gd_provider.hpp"
 
 #include "core/channels_authorizations.hpp"
 #include "core/RDP/RDPDrawable.hpp"
@@ -239,7 +238,6 @@ private:
 
     std::string       local_IP;
     bool wab_diag_channel_on = false;
-    GdForwarder gd_forwarder;
     gdi::NullOsd osd;
 
 public:
@@ -262,7 +260,6 @@ public:
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , local_IP("unknown_local_IP")
-        , gd_forwarder(*this)
     {}
 
    ~ClientRedemption() = default;
@@ -408,11 +405,10 @@ public:
                 this->unique_mod = new_mod_rdp(
                     *this->socket
                   , this->time_base
-                  , this->gd_forwarder
+                  , *this
                   , this->osd
                   , this->events
                   , this->sesman
-                  , *this
                   , *this
                   , this->config.info
                   , this->redir_info
@@ -442,7 +438,7 @@ public:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , this->time_base
-                  , this->gd_forwarder
+                  , *this
                   , this->events
                   , this->sesman
                   , this->config.user_name.c_str()

@@ -30,7 +30,7 @@
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
-    GdProvider & gd_provider,
+    gdi::GraphicApi & gd,
     EventContainer & events,
     FrontAPI & front,
     uint16_t width, uint16_t height)
@@ -39,7 +39,7 @@ Bouncer2Mod::Bouncer2Mod(
 , front(front)
 , dancing_rect(0,0,100,100)
 , events_guard(events)
-, gd_provider(gd_provider)
+, gd(gd)
 {
     this->events_guard.create_event_timeout(
         "Bouncer Periodic Timer",
@@ -48,7 +48,7 @@ Bouncer2Mod::Bouncer2Mod(
         {
             auto delay = std::chrono::milliseconds(33);
             event.alarm.reset_timeout(event.alarm.now+delay);
-            this->draw_event(this->gd_provider.get_graphics());
+            this->draw_event(this->gd);
         });
 }
 

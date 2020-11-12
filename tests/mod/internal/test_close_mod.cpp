@@ -32,7 +32,6 @@
 #include "keyboard/keymap2.hpp"
 #include "configs/config.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
-#include "acl/gd_provider.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/close_mod/"
@@ -41,7 +40,6 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    GdForwarder gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     EventContainer events;
@@ -56,7 +54,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     Inifile ini;
 
     {
-        CloseMod d("message", ini, time_base, events, gd_forwarder, front,
+        CloseMod d("message", ini, time_base, events, front.gd(), front,
             screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
             global_font_deja_vu_14(), theme, false);
         d.init();
@@ -87,7 +85,6 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
-    GdForwarder gd_forwarder(front.gd());
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     EventContainer events;
@@ -100,7 +97,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
     Inifile ini;
-    CloseMod d("message", ini, time_base, events, gd_forwarder, front,
+    CloseMod d("message", ini, time_base, events, front.gd(), front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         global_font_deja_vu_14(), theme, true);
     d.init();
@@ -130,7 +127,6 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     TestGd gd(front.gd());
-    GdForwarder gd_forwarder(gd);
     WindowListCaps window_list_caps;
     TimeBase time_base({0,0});
     EventContainer events;
@@ -149,7 +145,7 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
         Rect(0, 0, screen_info.width-1u, screen_info.height-1u));
 
     Inifile ini;
-    CloseMod d("message", ini, time_base, events, gd_forwarder, front,
+    CloseMod d("message", ini, time_base, events, gd, front,
         screen_info.width, screen_info.height, widget_rect, client_execute,
         global_font_deja_vu_14(), theme, true);
     d.init();

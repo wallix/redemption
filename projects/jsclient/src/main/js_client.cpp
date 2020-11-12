@@ -23,7 +23,6 @@ Author(s): Jonathan Poelen
 #endif
 
 #include "acl/auth_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
@@ -36,6 +35,7 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/zstring_view.hpp"
 #include "utils/theme.hpp"
 #include "utils/timebase.hpp"
+#include "gdi/osd_api.hpp"
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
@@ -257,7 +257,7 @@ class RdpClient
 
     redjs::Front front;
     gdi::GraphicApi& gd;
-    GdForwarder gd_forwarder{gd};
+    gdi::NullOsd osd;
 
     Inifile ini;
 
@@ -442,7 +442,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd_forwarder, events, authentifier, gd, front, client_info,
+            trans, time_base, gd, osd, events, authentifier, front, client_info,
             redir_info, js_rand, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);

@@ -46,7 +46,6 @@ namespace gdi
 ModPack create_mod_vnc(
     ModWrapper & mod_wrapper,
     Inifile& ini,
-    gdi::GraphicApi & drawable,
     FrontAPI& front,
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
