@@ -40,6 +40,7 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/core/font.hpp"
 #include "configs/config.hpp"
+#include "gdi/osd_api.hpp"
 
 
 #include <chrono>
@@ -156,11 +157,12 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
     GdForwarder gd_provider(front.gd());
+    gdi::NullOsd osd;
 
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, auth,
+        t, time_base, gd_provider, osd, events, auth,
         front.gd(), front, info, redir_info,
         gen, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,

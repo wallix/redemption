@@ -39,6 +39,7 @@
 #include "core/RDP/gcc/userdata/cs_net.hpp"
 
 #include "gdi/graphic_api.hpp"
+#include "gdi/osd_api.hpp"
 
 #include "mod/internal/replay_mod.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
@@ -239,6 +240,7 @@ private:
     std::string       local_IP;
     bool wab_diag_channel_on = false;
     GdForwarder gd_forwarder;
+    gdi::NullOsd osd;
 
 public:
     ClientRedemption(TimeBase& time_base,
@@ -407,6 +409,7 @@ public:
                     *this->socket
                   , this->time_base
                   , this->gd_forwarder
+                  , this->osd
                   , this->events
                   , this->sesman
                   , *this

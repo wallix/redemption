@@ -43,12 +43,16 @@ class ModRdpFactory;
 class GdProvider;
 class ChannelsAuthorizations;
 
-namespace gdi { class GraphicApi; }
+namespace gdi {
+    class GraphicApi;
+    class OsdApi;
+}
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
     TimeBase& time_base,
     GdProvider & gd_provider,
+    gdi::OsdApi & osd,
     EventContainer & events,
     AuthApi & sesman,
     gdi::GraphicApi& gd,

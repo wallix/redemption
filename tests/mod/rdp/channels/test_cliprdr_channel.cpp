@@ -34,8 +34,8 @@
 #include "core/log_id.hpp"
 #include "capture/fdx_capture.hpp"
 #include "mod/file_validator_service.hpp"
-#include "acl/gd_provider.hpp"
 #include "acl/auth_api.hpp"
+#include "gdi/osd_api.hpp"
 
 #include "./test_channel.hpp"
 
@@ -102,7 +102,7 @@ namespace
         = CHANNELS::CHANNEL_FLAG_LAST
         | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
-    GdForwarder gd_provider{gdi::null_gd()};
+    gdi::NullOsd osd;
 } // anonymous namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToServerSender to_server_sender(t);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, time_base, events, gd_provider,
+            &to_client_sender, &to_server_sender, time_base, events, osd,
             d.cb_params, ipca_service, {nullptr, false},
             auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base, events, gd_provider, clipboard_virtual_channel_params, ipca_service, {nullptr, false},
+        &to_client_sender, &to_server_sender, time_base, events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false},
         auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -206,7 +206,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base, events, gd_provider,
+        &to_client_sender, &to_server_sender, time_base, events, osd,
         clipboard_virtual_channel_params, ipca_service, {nullptr, false},
         auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -860,7 +860,7 @@ namespace
             , to_server_sender(msg_comparator)
             , clipboard_virtual_channel(
                 &to_client_sender, &to_server_sender,
-                time_base, events, gd_provider,
+                time_base, events, osd,
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
                 ClipboardVirtualChannel::FileStorage{

@@ -39,9 +39,8 @@
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
 #include "utils/redirection_info.hpp"
-
 #include "configs/config.hpp"
-
+#include "gdi/osd_api.hpp"
 
 #include <chrono>
 
@@ -139,6 +138,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
+    gdi::NullOsd osd;
     EventContainer events;
     Inifile ini;
     NullAuthentifier auth;
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
+    auto mod = new_mod_rdp(t, time_base, gd_provider, osd, events, auth,
         front.gd(), front, info, redir_info, gen,
         channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, nullptr, nullptr, mod_rdp_factory);
@@ -266,6 +266,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullLicenseStore license_store;
     TimeBase time_base({0,0});
     GdForwarder gd_provider(front.gd());
+    gdi::NullOsd osd;
     EventContainer events;
     Inifile ini;
     NullAuthentifier auth;
@@ -276,7 +277,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     TLSClientParams tls_client_params;
 
-    auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth,
+    auto mod = new_mod_rdp(t, time_base, gd_provider, osd, events, auth,
         front.gd(), front, info,
         redir_info, gen,
         channels_authorizations, mod_rdp_params,

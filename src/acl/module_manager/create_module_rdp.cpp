@@ -243,8 +243,12 @@ public:
         return this->rdp_factory;
     }
 
-    ModRDPWithSocketAndMetrics(ModWrapper & mod_wrapper, Inifile & ini,
-        const char * name, unique_fd sck, SocketTransport::Verbose verbose
+    ModRDPWithSocketAndMetrics(
+        ModWrapper & mod_wrapper
+      , Inifile & ini
+      , const char * name
+      , unique_fd sck
+      , SocketTransport::Verbose verbose
       , std::string * error_message
       , TimeBase& time_base
       , EventContainer & events
@@ -290,8 +294,8 @@ public:
          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
          , verbose, error_message))
     , sesman(sesman)
-    , mod(*this->socket_transport_ptr, time_base, mod_wrapper, events
-        , sesman, gd, front, info, redir_info, gen
+    , mod(*this->socket_transport_ptr, time_base, mod_wrapper, mod_wrapper
+        , events, sesman, gd, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())

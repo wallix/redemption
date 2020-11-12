@@ -86,6 +86,7 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "gdi/screen_functions.hpp"
+#include "gdi/osd_api.hpp"
 
 #ifndef __EMSCRIPTEN__
 // TODO: annoying as it introduces a dependency on openssl in rdp mod
@@ -365,7 +366,7 @@ private:
     const RDPVerbose verbose;
 
     TimeBase & time_base;
-    GdProvider & gd_provider;
+    gdi::OsdApi & osd;
     EventContainer & events;
     AuthApi & sesman;
     FileValidatorService * file_validator_service;
@@ -377,7 +378,7 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, GdProvider & gd_provider,
+        TimeBase & time_base, gdi::OsdApi & osd,
         EventContainer & events,
         AuthApi & sesman,
         FileValidatorService * file_validator_service,
@@ -408,7 +409,7 @@ public:
     , mod_rdp_factory(mod_rdp_factory)
     , verbose(verbose)
     , time_base(time_base)
-    , gd_provider(gd_provider)
+    , osd(osd)
     , events(events)
     , sesman(sesman)
     , file_validator_service(file_validator_service)
@@ -566,7 +567,7 @@ private:
             this->clipboard_to_server_sender.get(),
             this->time_base,
             this->events,
-            this->gd_provider,
+            this->osd,
             std::move(cvc_params),
             file_validator_service,
             ClipboardVirtualChannel::FileStorage{
@@ -1758,13 +1759,14 @@ class mod_rdp : public mod_api, public rdp_api
     struct SessionProbeChannelCallbacks : public SessionProbeVirtualChannel::Callbacks
     {
         mod_rdp & mod;
-        SessionProbeChannelCallbacks(mod_rdp & mod) : mod(mod) {}
+        gdi::OsdApi& osd;
+        SessionProbeChannelCallbacks(mod_rdp & mod, gdi::OsdApi& osd) : mod(mod), osd(osd) {}
         void freeze_screen() override { mod.freeze_screen(); }
         void disable_input_event() override { mod.disable_input_event(); }
         void enable_input_event() override { mod.enable_input_event(); }
         void enable_graphics_update() override { mod.enable_graphics_update(); }
         void disable_graphics_update() override { mod.disable_graphics_update(); }
-        void display_osd_message(std::string const & message) override  { mod.gd_provider.display_osd_message(message); }
+        void display_osd_message(std::string_view message) override  { osd.display_osd_message(message); }
     } spvc_callbacks;
 #endif
 
@@ -1953,6 +1955,7 @@ public:
         Transport & trans
       , TimeBase& time_base
       , GdProvider & gd_provider
+      , gdi::OsdApi & osd
       , EventContainer & events
       , AuthApi & sesman
       , gdi::GraphicApi & gd
@@ -1970,11 +1973,10 @@ public:
       , ModRdpFactory& mod_rdp_factory
     )
 #ifndef __EMSCRIPTEN__
-        : spvc_callbacks(*this)
+        : spvc_callbacks(*this, osd)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            gen, metrics, time_base, gd_provider, events,
-            sesman,
+            gen, metrics, time_base, osd, events, sesman,
             file_validator_service,
             mod_rdp_factory,
             spvc_callbacks

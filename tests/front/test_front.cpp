@@ -49,6 +49,7 @@
 #include "utils/timebase.hpp"
 #include "core/channels_authorizations.hpp"
 #include "acl/gd_provider.hpp"
+#include "gdi/osd_api.hpp"
 
 
 namespace dump2008 {
@@ -165,6 +166,7 @@ RED_AUTO_TEST_CASE(TestFront)
     null_mod no_mod;
 
     GdForwarder gd_provider(front.gd());
+    gdi::NullOsd osd;
 
     while (!front.is_up_and_running()) {
         front.incoming(no_mod);
@@ -233,7 +235,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, gd_provider, events, auth,
+        t, time_base, gd_provider, osd, events, auth,
         front, front, info, redir_info,
         gen2, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, metrics,

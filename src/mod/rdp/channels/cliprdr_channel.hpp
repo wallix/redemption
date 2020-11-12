@@ -32,7 +32,10 @@
 #include <string>
 
 
-class GdProvider;
+namespace gdi
+{
+    class OsdApi;
+}
 class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
@@ -52,7 +55,7 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         TimeBase& time_base,
         EventContainer& events,
-        GdProvider& gd_provider,
+        gdi::OsdApi& osd_api,
         const ClipboardVirtualChannelParams & params,
         FileValidatorService * file_validator_service,
         FileStorage file_storage,
@@ -366,7 +369,7 @@ private:
     struct OSD
     {
         EventsGuard events_guard;
-        GdProvider& gd_provider;
+        gdi::OsdApi& osd_api;
         const std::chrono::seconds delay;
         const bool enable_osd;
         Language lang;

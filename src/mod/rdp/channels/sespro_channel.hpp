@@ -73,7 +73,7 @@ public:
         virtual void enable_graphics_update() = 0;
         virtual void disable_input_event() = 0;
         virtual void enable_input_event() = 0;
-        virtual void display_osd_message(std::string const & message) = 0;
+        virtual void display_osd_message(std::string_view message) = 0;
         virtual ~Callbacks() = default;
     };
 

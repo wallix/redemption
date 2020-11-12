@@ -31,6 +31,7 @@
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/subrect4.hpp"
+#include "gdi/osd_api.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/null/null.hpp"
 #include "utils/translation.hpp"
@@ -44,7 +45,7 @@
 class SocketTransport;
 class rdp_api;
 
-class ModWrapper final : public GdProvider
+class ModWrapper final : public GdProvider, public gdi::OsdApi
 {
     CallbackForwarder<ModWrapper> callback;
 
@@ -260,7 +261,7 @@ public:
         return this->g;
     }
 
-    void display_osd_message(const std::string& message) override
+    void display_osd_message(std::string_view message) override
     {
         if (message != this->osd_message) {
             this->clear_osd_message();

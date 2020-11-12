@@ -19,7 +19,6 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 */
 
 #include "acl/auth_api.hpp"
-#include "acl/gd_provider.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
@@ -34,6 +33,7 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/timeval_ops.hpp"
 #include "utils/translation.hpp"
+#include "gdi/osd_api.hpp"
 
 #include <cassert>
 #include <cinttypes>
@@ -157,7 +157,7 @@ struct ClipboardVirtualChannel::OSD::D
                     "FileVerifOSD",
                     self.time_base.get_current_time() + self.osd.delay,
                     [&self, &filename](Event& event){
-                        self.osd.gd_provider.display_osd_message(str_concat(
+                        self.osd.osd_api.display_osd_message(str_concat(
                         TR(trkeys::file_verification_wait, self.osd.lang), filename));
                         self.osd.id_event = EventId();
                         event.garbage = true;
@@ -177,11 +177,11 @@ struct ClipboardVirtualChannel::OSD::D
     {
         if (self.osd.msg_type == OSD::MsgType::WaitValidator) {
             if (not is_accepted) {
-                self.osd.gd_provider.display_osd_message(str_concat(
+                self.osd.osd_api.display_osd_message(str_concat(
                     TR(trkeys::file_verification_rejected, self.osd.lang), filename));
             }
             else if (!self.osd.id_event) {
-                self.osd.gd_provider.display_osd_message(str_concat(
+                self.osd.osd_api.display_osd_message(str_concat(
                     TR(trkeys::file_verification_accepted, self.osd.lang), filename));
             }
             self.osd.id_event = self.osd.events_guard.event_container().erase_event(self.osd.id_event);
@@ -2376,7 +2376,7 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     VirtualChannelDataSender* to_server_sender_,
     TimeBase& time_base,
     EventContainer& events,
-    GdProvider& gd_provider,
+    gdi::OsdApi& osd_api,
     const ClipboardVirtualChannelParams & params,
     FileValidatorService * file_validator_service,
     FileStorage file_storage,
@@ -2417,7 +2417,7 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     this->params.validator_params.max_file_size_rejected)
 , osd{
     events,
-    gd_provider,
+    osd_api,
     this->params.validator_params.osd_delay,
     (this->params.validator_params.osd_delay.count()
         && (this->params.validator_params.block_invalid_file_down

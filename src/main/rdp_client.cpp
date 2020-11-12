@@ -46,12 +46,11 @@
 #include "acl/gd_provider.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
+#include "gdi/osd_api.hpp"
 
 #include <iostream>
 #include <string>
 #include <optional>
-
-#include <openssl/ssl.h>
 
 
 int main(int argc, char** argv)
@@ -299,6 +298,7 @@ int main(int argc, char** argv)
     bool const use_system_obj = record_output.empty() && !use_LCGRandom;
 
     const ChannelsAuthorizations channels_authorizations("*", std::string{});
+    gdi::NullOsd osd;
 
     auto run_rdp = [&]{
         ModRdpFactory mod_rdp_factory;
@@ -308,6 +308,7 @@ int main(int argc, char** argv)
                 trans,
                 time_base,
                 gd_forwarder,
+                osd,
                 events,
                 sesman,
                 gdi::null_gd(), front, client_info, redir_info,

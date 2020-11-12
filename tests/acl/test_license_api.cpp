@@ -43,6 +43,7 @@
 #include "utils/redirection_info.hpp"
 #include "system/linux/system/tls_context.hpp"
 #include "configs/config.hpp"
+#include "gdi/osd_api.hpp"
 
 #include <chrono>
 
@@ -276,13 +277,14 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 #endif
 
             GdForwarder gd_provider(front.gd());
+            gdi::NullOsd osd;
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
             ModRdpFactory mod_rdp_factory;
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(trans, time_base, gd_provider, events, auth, front.gd(), front, info,
+            auto mod = new_mod_rdp(trans, time_base, gd_provider, osd, events, auth, front.gd(), front, info,
                 redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
@@ -530,14 +532,14 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
                   license_product_id, bytes_view(license_data, sizeof(license_data)));
 
             GdForwarder gd_provider(front.gd());
-
+            gdi::NullOsd osd;
 
             const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
             ModRdpFactory mod_rdp_factory;
 
             TLSClientParams tls_client_params;
 
-            auto mod = new_mod_rdp(t, time_base, gd_provider, events, auth, front.gd(), front, info,
+            auto mod = new_mod_rdp(t, time_base, gd_provider, osd, events, auth, front.gd(), front, info,
                 redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
