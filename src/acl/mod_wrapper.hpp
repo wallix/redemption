@@ -178,7 +178,7 @@ class ModWrapper final : public GdProvider
 
     GFilter gfilter;
 
-    struct gdi::GraphicApiForwarder<GFilter> g;
+    gdi::GraphicApiForwarder<GFilter> g;
 
     bool connected = false;
 

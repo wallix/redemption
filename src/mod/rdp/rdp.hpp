@@ -1761,7 +1761,7 @@ class mod_rdp : public mod_api, public rdp_api
         void enable_input_event() override { mod.enable_input_event(); }
         void enable_graphics_update() override { mod.enable_graphics_update(); }
         void disable_graphics_update() override { mod.disable_graphics_update(); }
-        void display_osd_message(std::string const & message) override  { mod.display_osd_message(message); }
+        void display_osd_message(std::string const & message) override  { mod.gd_provider.display_osd_message(message); }
     } spvc_callbacks;
 #endif
 
@@ -6086,11 +6086,6 @@ public:
         drawable.begin_update();
         drawable.draw(cmd, r, gdi::ColorCtx::depth24());
         drawable.end_update();
-    }
-
-    void display_osd_message(std::string const & message) override
-    {
-        this->gd_provider.display_osd_message(message);
     }
 
 public:

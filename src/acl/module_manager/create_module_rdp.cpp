@@ -371,12 +371,6 @@ public:
     }
 
     // from mod_api
-    void display_osd_message(std::string const & message) override
-    {
-        this->mod_wrapper.display_osd_message(message);
-    }
-
-    // from mod_api
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override
     {
         return this->mod.move_size_widget(left, top, width, height);

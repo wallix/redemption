@@ -57,8 +57,6 @@ public:
 
     virtual void disconnect() {}
 
-    virtual void display_osd_message(std::string const & /*unused*/) {}
-
     virtual void move_size_widget(int16_t/* left*/, int16_t/* top*/, uint16_t/* width*/, uint16_t/* height*/) {}
 
     virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
