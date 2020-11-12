@@ -56,12 +56,6 @@ WidgetModuleHost::ModuleHolder::ModuleHolder(std::unique_ptr<mod_api>&& managed_
     assert(this->managed_mod);
 }
 
-gdi::GraphicApi & WidgetModuleHost::proxy_gd(gdi::GraphicApi& gd)
-{
-    this->drawable_ptr = &gd;
-    return *this;
-}
-
 // Callback
 void WidgetModuleHost::ModuleHolder::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name,
@@ -159,7 +153,7 @@ struct WidgetModuleHost::Impl
 {
     inline static gdi::GraphicApi& get_drawable(WidgetModuleHost const& wmh) noexcept
     {
-        return *wmh.drawable_ptr;
+        return wmh.drawable;
     }
 
     template<class Cmd>
@@ -336,7 +330,7 @@ WidgetModuleHost::WidgetModuleHost(
     int group_id)
 : WidgetParent(drawable, parent, notifier, group_id)
 , module_holder(std::move(managed_mod))
-, drawable_ptr(&drawable)
+, drawable(drawable)
 , hscroll(drawable, *this, this, true, BLACK,
     BGRColor(0x606060), BGRColor(0xF0F0F0), BGRColor(0xCDCDCD), font, true)
 , vscroll(drawable, *this, this, false, BLACK,

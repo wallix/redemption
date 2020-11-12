@@ -153,8 +153,6 @@ public:
 
     [[nodiscard]] bool is_resizing_hosted_desktop_allowed() const;
 
-    gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
-
 private:
     RailModuleHost rail_module_host;
 

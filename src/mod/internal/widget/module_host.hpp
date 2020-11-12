@@ -40,8 +40,6 @@ public:
         uint16_t front_width, uint16_t front_height,
         int group_id = 0); /*NOLINT*/
 
-    gdi::GraphicApi& proxy_gd(gdi::GraphicApi& gd);
-
     void draw(RDP::FrameMarker    const & cmd) override;
     void draw(RDPDstBlt          const & cmd, Rect clip) override;
     void draw(RDPMultiDstBlt      const & cmd, Rect clip) override;
@@ -180,7 +178,7 @@ private:
 
     CompositeArray composite_array;
 
-    not_null_ptr<gdi::GraphicApi> drawable_ptr;
+    gdi::GraphicApi& drawable;
 
     WidgetScrollBar hscroll;
     WidgetScrollBar vscroll;

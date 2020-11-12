@@ -280,8 +280,3 @@ bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 {
     return this->can_resize_hosted_desktop;
 }
-
-gdi::GraphicApi & RailModuleHostMod::proxy_gd(gdi::GraphicApi& gd)
-{
-    return this->rail_module_host.proxy_gd(gd);
-}
