@@ -26,7 +26,6 @@
 struct GdProvider : private noncopyable
 {
     virtual gdi::GraphicApi & get_graphics() = 0;
-    virtual bool is_ready_to_draw() = 0;
     virtual void display_osd_message(std::string const & message) = 0;
     virtual ~GdProvider() = default;
 };
@@ -38,7 +37,6 @@ class GdForwarder : public GdProvider
 public:
     GdForwarder(gdi::GraphicApi & gd) : gd(gd) {}
     gdi::GraphicApi & get_graphics() override { return this->gd; }
-    bool is_ready_to_draw() override { return true; }
     void display_osd_message(std::string const & message) override { (void)message; }
 };
 

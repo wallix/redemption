@@ -2063,8 +2063,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 
 void mod_vnc::init()
 {
-    if (this->gd_provider.is_ready_to_draw()
-    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
+    if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
         this->initial_clear_screen(this->gd_provider.get_graphics());
     }
@@ -2073,8 +2072,7 @@ void mod_vnc::init()
 
 void mod_vnc::rdp_gdi_up_and_running()
 {
-    if (this->gd_provider.is_ready_to_draw()
-    && this->state == WAIT_CLIENT_UP_AND_RUNNING){
+    if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
         this->state = DO_INITIAL_CLEAR_SCREEN;
         this->initial_clear_screen(this->gd_provider.get_graphics());
     }

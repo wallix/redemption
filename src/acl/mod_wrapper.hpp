@@ -260,11 +260,6 @@ public:
         return this->g;
     }
 
-    bool is_ready_to_draw() override
-    {
-        return true;
-    }
-
     void display_osd_message(const std::string& message) override
     {
         if (message != this->osd_message) {
