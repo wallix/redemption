@@ -394,12 +394,6 @@ public:
         return this->mod.log_metrics();
     }
 
-    // from mod_api
-    void DLP_antivirus_check_channels_files() override
-    {
-        return this->mod.DLP_antivirus_check_channels_files();
-    }
-
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);

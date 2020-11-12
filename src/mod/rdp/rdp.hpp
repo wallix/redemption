@@ -416,11 +416,14 @@ public:
     , callbacks(callbacks)
     {}
 
-    void DLP_antivirus_check_channels_files() {
+#ifndef __EMSCRIPTEN__
+    void DLP_antivirus_check_channels_files()
+    {
         if (this->clipboard_virtual_channel) {
             this->clipboard_virtual_channel->DLP_antivirus_check_channels_files();
         }
     }
+#endif
 
     void init_remote_program_and_session_probe(
         gdi::GraphicApi& gd,
@@ -6089,11 +6092,12 @@ public:
     }
 
 public:
-    void DLP_antivirus_check_channels_files() override {
 #ifndef __EMSCRIPTEN__
+    void DLP_antivirus_check_channels_files()
+    {
         this->channels.DLP_antivirus_check_channels_files();
-#endif
     }
+#endif
 
     [[nodiscard]] windowing_api* get_windowing_api() const {
 #ifndef __EMSCRIPTEN__
