@@ -29,6 +29,7 @@
 #include "utils/drawable_pointer.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/timestamp_tracer.hpp"
+#include "utils/stream.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/utils/drawable/"

@@ -861,7 +861,7 @@ protected:
 
         if (this->send_new_pointer) {
             StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-            NewPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
+            emit_new_pointer_update(stream.get_data_stream(), cache_idx, cursor);
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid
@@ -870,7 +870,7 @@ protected:
         }
         else {
             StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-            ColorPointerUpdate(cache_idx, cursor).emit(stream.get_data_stream());
+            emit_color_pointer_update(stream.get_data_stream(), cache_idx, cursor);
             ::send_server_update( this->trans, this->fastpath_support, this->compression
                                 , this->mppc_enc, this->shareid, this->encryptionLevel
                                 , this->encrypt, this->userid

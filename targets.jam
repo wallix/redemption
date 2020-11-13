@@ -33,6 +33,7 @@ exe headlessclient :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -134,6 +135,7 @@ exe rdpproxy :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/check_files.o
@@ -336,6 +338,7 @@ exe rdpclient :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -412,9 +415,9 @@ exe ppocr_extract_text :
   <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -442,6 +445,7 @@ lib libredrec :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -525,6 +529,7 @@ test-run tests/RAIL/test_client_execute :
   <library>png
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -597,6 +602,7 @@ test-run tests/acl/test_license_api :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -712,6 +718,7 @@ test-run tests/capture/test_capture :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -785,12 +792,12 @@ test-run tests/capture/test_ocr :
   <library>crypto
   <library>png
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -805,12 +812,12 @@ test-run tests/capture/test_ppocr :
   <library>ppocr
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
@@ -832,6 +839,7 @@ test-run tests/capture/test_video_capture :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -862,6 +870,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -915,6 +924,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -967,6 +977,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -1004,6 +1015,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -1067,6 +1079,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -1130,6 +1143,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -1172,6 +1186,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -1214,6 +1229,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -1256,6 +1272,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/client_redemption/client_input_output_api/rdp_clipboard_config.o
   <library>src/client_redemption/client_input_output_api/rdp_disk_config.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -1312,8 +1329,8 @@ test-run tests/client_redemption/test_pointer_to_rgba888 :
   $(REDEMPTION_TEST_PATH)/client_redemption/test_pointer_to_rgba888.cpp
 :
   <library>src/client_redemption/pointer_to_rgba8888.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
-  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
 ;
@@ -1378,8 +1395,8 @@ test-run tests/core/RDP/caches/test_glyphcache :
 test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
 :
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
-  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/RDP/caches/pointercache.hpp
@@ -1883,6 +1900,7 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
 :
   <library>crypto
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -1909,6 +1927,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -1932,6 +1951,7 @@ test-run tests/core/RDP/test_RDPSerializer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_RDPSerializer.cpp
 :
   <library>crypto
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -1990,6 +2010,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2122,11 +2143,12 @@ test-run tests/core/RDP/test_rdp_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp
 :
   <library>crypto
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
-  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>tests/includes/test_only/test_framework/sig.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/core/RDP/rdp_pointer.cpp
   <covfile>src/core/RDP/rdp_pointer.hpp
 ;
 test-run tests/core/RDP/test_remote_programs :
@@ -2376,6 +2398,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -2524,6 +2547,7 @@ test-run tests/core/test_session :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -2656,6 +2680,7 @@ test-run tests/front/test_front :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -2729,6 +2754,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2784,6 +2810,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2849,6 +2876,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>crypto
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2879,6 +2907,7 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2925,6 +2954,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -2965,6 +2995,7 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3015,6 +3046,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3065,6 +3097,7 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3116,6 +3149,7 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3163,6 +3197,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/capture/file_to_graphic.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3205,6 +3240,7 @@ test-run tests/mod/internal/test_selector_mod :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3246,6 +3282,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3277,6 +3314,7 @@ test-run tests/mod/internal/test_wait_mod :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3317,6 +3355,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>crypto
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3344,6 +3383,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3372,6 +3412,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3405,6 +3446,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3441,6 +3483,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3475,6 +3518,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3514,6 +3558,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3552,6 +3597,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3591,6 +3637,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3634,6 +3681,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3674,6 +3722,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3715,6 +3764,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3747,6 +3797,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3782,6 +3833,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3814,6 +3866,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3846,6 +3899,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3879,6 +3933,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
 test-run tests/mod/internal/widget/test_language_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_language_button.cpp
 :
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -3886,7 +3941,6 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
-  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -3899,6 +3953,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3935,6 +3990,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -3969,6 +4025,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4003,6 +4060,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4036,6 +4094,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4067,6 +4126,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4107,6 +4167,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4136,8 +4197,8 @@ test-run tests/mod/internal/widget/test_tooltip :
 test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
 :
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
-  <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/widget.hpp
@@ -4148,6 +4209,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4302,6 +4364,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4409,6 +4472,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/channels_authorizations.o
   <library>src/core/dynamic_channels_authorizations.o
@@ -4585,6 +4649,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4628,6 +4693,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>png
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -4757,6 +4823,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4817,6 +4884,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4877,6 +4945,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -5345,6 +5414,7 @@ test-run tests/utils/test_bitmap :
 :
   <library>crypto
   <library>png
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -5352,7 +5422,6 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -5464,6 +5533,7 @@ test-run tests/utils/test_drawable :
 :
   <library>crypto
   <library>png
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
@@ -5471,7 +5541,6 @@ test-run tests/utils/test_drawable :
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
-  <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
@@ -5682,6 +5751,7 @@ test-run tests/utils/test_video_cropper :
   <library>crypto
   <library>png
   <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -5749,6 +5819,7 @@ obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
+obj src/core/RDP/rdp_pointer.o : $(REDEMPTION_SRC_PATH)/core/RDP/rdp_pointer.cpp ;
 obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
 obj src/core/channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;

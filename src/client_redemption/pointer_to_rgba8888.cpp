@@ -70,8 +70,8 @@ redclient::RGBA8888Image redclient::pointer_to_rgba8888(Pointer const& pointer)
     auto const av_and_1byte = pointer.get_monochrome_and_mask();
     auto const av_xor_mask = pointer.get_24bits_xor_mask();
     bool const is_empty_mask = ::is_empty_mask(av_and_1byte);
-    auto const width = dimensions.width + is_empty_mask * 2;
-    auto const height = dimensions.height + is_empty_mask * 2;
+    auto const width = dimensions.width + is_empty_mask * 2u;
+    auto const height = dimensions.height + is_empty_mask * 2u;
     auto const d3 = dimensions.width * 3;
     auto const w4 = width * 4;
     auto const decrement_next_line = w4 * 2 - is_empty_mask * 8;

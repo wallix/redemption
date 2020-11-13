@@ -22,6 +22,8 @@ Author(s): Jonathan Poelen
 
 #include "client_redemption/pointer_to_rgba8888.hpp"
 #include "core/RDP/rdp_pointer.hpp"
+#include "utils/colors.hpp"
+#include "utils/stream.hpp"
 
 struct ReadableCursor
 {

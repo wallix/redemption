@@ -23,6 +23,8 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/sig.hpp"
 
+#include "utils/stream.hpp"
+#include "utils/colors.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
 // static ImageView xor_mask_to_img(u8_array_view av, uint16_t w, uint16_t h)
