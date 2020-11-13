@@ -54,8 +54,6 @@ public:
 
     void init() override;
 
-    std::string module_name() override {return "Test Card Mod";}
-
     void rdp_input_invalidate(Rect /*rect*/) override
     {}
 

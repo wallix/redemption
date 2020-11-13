@@ -63,8 +63,6 @@ public:
 
     ~LoginMod();
 
-    std::string module_name() override {return "LoginMod";}
-
     void init() override;
 
     void notify(Widget* sender, notify_event_t event) override;

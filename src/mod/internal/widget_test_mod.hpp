@@ -44,8 +44,6 @@ public:
 
     ~WidgetTestMod() override;
 
-    std::string module_name() override {return "Widget Test Mod";}
-
     void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}

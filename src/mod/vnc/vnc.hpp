@@ -374,8 +374,6 @@ public:
            , [[maybe_unused]] VNCMetrics * metrics
            , AuthApi & sesman);
 
-    std::string module_name() override {return "VNC Mod";}
-
     ~mod_vnc();
 
     void init() override;

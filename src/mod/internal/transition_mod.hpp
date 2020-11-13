@@ -41,8 +41,6 @@ public:
 
     ~TransitionMod() override;
 
-    std::string module_name() override {return "Transition Mod";}
-
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                             long int param4, Keymap2* keymap) override;
 

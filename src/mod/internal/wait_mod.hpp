@@ -56,8 +56,6 @@ public:
 
     ~WaitMod() override;
 
-    std::string module_name() override {return "WaitMod";}
-
     void init() override;
 
     void notify(Widget * sender, notify_event_t event) override;

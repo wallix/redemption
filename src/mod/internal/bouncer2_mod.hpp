@@ -66,8 +66,6 @@ public:
 
     ~Bouncer2Mod();
 
-    std::string module_name() override {return "Bouncer2 Mod";}
-
     void rdp_gdi_up_and_running() override {}
 
     void rdp_gdi_down() override {}

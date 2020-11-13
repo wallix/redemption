@@ -55,8 +55,6 @@ public:
 
     void init() override;
 
-    std::string module_name() override {return "Interactive Target";}
-
     void notify(Widget* sender, notify_event_t event) override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height) override

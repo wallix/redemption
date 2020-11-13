@@ -105,8 +105,6 @@ public:
 
     void init() override;
 
-    std::string module_name() override {return "Rail Module Host Mod";}
-
     void notify(Widget* /*sender*/, notify_event_t /*event*/) override
     {}
 

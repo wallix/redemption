@@ -52,12 +52,6 @@ template<class ForwardTo> class CallbackForwarder : public Callback
     {
         this->wrap.send_checkout_channel_data(data);
     }
-    
-    // RdpInput
-    std::string module_name() override
-    {
-        return "WrappedMod" + this->wrap.module_name();
-    }
 
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {

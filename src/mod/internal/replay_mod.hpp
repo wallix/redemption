@@ -57,8 +57,6 @@ public:
 
     ~ReplayMod();
 
-    std::string module_name() override { return "Replay Mod"; }
-
     void rdp_input_invalidate(Rect /*rect*/) override {}
 
     void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}

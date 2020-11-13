@@ -25,8 +25,6 @@
 #include "utils/log.hpp"
 #include "acl/acl_api.hpp"
 
-#include <string>
-
 
 class mod_api : public Callback, public AclApi
 {

@@ -242,11 +242,6 @@ public:
         return this->callback;
     }
 
-    std::string module_name() const
-    {
-        return this->modi->module_name();
-    }
-
     bool is_connected() const
     {
         return this->connected;

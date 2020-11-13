@@ -307,8 +307,6 @@ public:
         this->sesman.begin_dispatch_to_capture();
     }
 
-    std::string module_name() override {return "RDP Mod With Socket And Metrics";}
-
     ~ModRDPWithSocketAndMetrics()
     {
         log_proxy::target_disconnection(

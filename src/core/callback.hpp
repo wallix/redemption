@@ -115,10 +115,6 @@ struct WidgetApi : private noncopyable
 
 struct RdpInput : private noncopyable
 {
-    virtual std::string module_name(){
-        return "AnonymousMod";
-    }
-
     virtual ~RdpInput() = default;
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
     virtual void rdp_input_unicode(uint16_t unicode, uint16_t flag) { (void)unicode; (void)flag; }

@@ -135,8 +135,6 @@ private:
     public:
         ModuleHolder(/*TODO not_null_ptr<>*/ std::unique_ptr<mod_api>&& managed_mod);
 
-        std::string module_name() override {return "Module Holder []";}
-
         // Callback
         void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name,
                                  InStream& chunk, size_t length,

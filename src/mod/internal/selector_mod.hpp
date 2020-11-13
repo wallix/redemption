@@ -58,8 +58,6 @@ public:
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);
 
-    std::string module_name() override {return "Selector Mod";}
-
     void init() override;
 
     void acl_update() override;
