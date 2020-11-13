@@ -217,7 +217,7 @@ void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer cons
 
     // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
     //     contained in the colorPtrAttr field.
-    stream.out_uint16_le(cursor.is_only_black_white() ? 1 : 32);
+    stream.out_uint16_le(32);
 
     stream.out_uint16_le(cache_idx);
 
@@ -250,7 +250,7 @@ void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer cons
 
     const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
     const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
-    const unsigned int xor_padded_line_length_in_byte = (cursor.is_only_black_white() ? and_padded_line_length_in_byte : dimensions.width * 4);
+    const unsigned int xor_padded_line_length_in_byte = dimensions.width * 4;
 
 
     // lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
@@ -273,93 +273,45 @@ void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer cons
     const unsigned int source_xor_line_length_in_byte = dimensions.width * 3;
     const unsigned int source_xor_padded_line_length_in_byte = ::even_pad_length(source_xor_line_length_in_byte);
 
-    if (cursor.is_only_black_white()) {
-        uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 1 / 8] = { 0 };
-        auto av_xor = cursor.get_24bits_xor_mask();
+    auto av_and = cursor.get_monochrome_and_mask();
 
-        for (unsigned int h = 0; h < dimensions.height; ++h) {
-            const uint8_t * psource = av_xor.data()
-                + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
-            uint8_t * pdest   = xorMaskData + h * xor_padded_line_length_in_byte;
-            uint8_t xor_bit_mask_generation = 7;
-            uint8_t xor_byte = 0;
+    uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
+    auto av_xor = cursor.get_24bits_xor_mask();
 
-            for (unsigned int w = 0; w < dimensions.width; ++w) {
-                if ((*psource) || (*(psource + 1)) || (*(psource + 2))) {
-                    xor_byte |= (1 << xor_bit_mask_generation);
-                }
+    for (unsigned int h = 0; h < dimensions.height; ++h) {
+        const uint8_t* psource = av_xor.data() + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
+                uint8_t* pdest   = xorMaskData + (dimensions.height - h - 1) * xor_padded_line_length_in_byte;
+        const uint8_t* andMask = &(av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte]);
+        unsigned char and_bit_extraction_mask = 7;
 
-                if (!xor_bit_mask_generation) {
-                    xor_bit_mask_generation = 8;
-                    *pdest = xor_byte;
-                    xor_byte = 0;
-                    pdest++;
-                }
-                xor_bit_mask_generation--;
-                psource += 3;
+
+        for (unsigned int w = 0; w < dimensions.width; ++w) {
+            * pdest      = * psource;
+            *(pdest + 1) = *(psource + 1);
+            *(pdest + 2) = *(psource + 2);
+            if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                *(pdest + 3) = 0x00;
             }
-            if (xor_bit_mask_generation != 7) {
-                *pdest = xor_byte;
+            else {
+                *(pdest + 3) = 0xFF;
+            }
+
+            pdest   += 4;
+            psource += 3;
+
+            if (and_bit_extraction_mask) {
+                and_bit_extraction_mask--;
+            }
+            else {
+                and_bit_extraction_mask = 7;
+                andMask++;
             }
         }
-
-        stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
-
-
-        auto av_and = cursor.get_monochrome_and_mask();
-        uint8_t andMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8] = { 0 };
-
-        for (unsigned int h = 0; h < dimensions.height; ++h) {
-            const uint8_t* psource = &av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte];
-                    uint8_t* pdest   = andMaskData + h * and_padded_line_length_in_byte;
-
-            memcpy(pdest, psource, and_padded_line_length_in_byte);
-        }
-
-        stream.out_copy_bytes(andMaskData, and_padded_line_length_in_byte * dimensions.height); /* mask */
-
     }
-    else {
-        auto av_and = cursor.get_monochrome_and_mask();
 
-        uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
-        auto av_xor = cursor.get_24bits_xor_mask();
+    stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
 
-        for (unsigned int h = 0; h < dimensions.height; ++h) {
-            const uint8_t* psource = av_xor.data() + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
-                    uint8_t* pdest   = xorMaskData + (dimensions.height - h - 1) * xor_padded_line_length_in_byte;
-            const uint8_t* andMask = &(av_and.data()[(dimensions.height - h - 1) * and_padded_line_length_in_byte]);
-            unsigned char and_bit_extraction_mask = 7;
-
-
-            for (unsigned int w = 0; w < dimensions.width; ++w) {
-                * pdest      = * psource;
-                *(pdest + 1) = *(psource + 1);
-                *(pdest + 2) = *(psource + 2);
-                if ((*andMask) & (1 << and_bit_extraction_mask)) {
-                    *(pdest + 3) = 0x00;
-                }
-                else {
-                    *(pdest + 3) = 0xFF;
-                }
-
-                pdest   += 4;
-                psource += 3;
-
-                if (and_bit_extraction_mask) {
-                    and_bit_extraction_mask--;
-                }
-                else {
-                    and_bit_extraction_mask = 7;
-                    andMask++;
-                }
-            }
-        }
-
-        stream.out_copy_bytes(xorMaskData, xor_padded_line_length_in_byte * dimensions.height);
-
-        stream.out_copy_bytes(cursor.get_monochrome_and_mask()); /* mask */
-    }
+    stream.out_copy_bytes(cursor.get_monochrome_and_mask()); /* mask */
 
     // andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
     //     bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte

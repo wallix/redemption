@@ -77,8 +77,6 @@ private:
     uint8_t data[DATA_SIZE] {};
     uint8_t mask[MASK_SIZE] {};
 
-    bool only_black_white = false;
-
     CursorSize dimensions {32,32};
     Hotspot hotspot {0, 0};
 
@@ -96,11 +94,6 @@ public:
     }
 
     bool operator==(const Pointer & other) const;
-
-    [[nodiscard]] bool is_only_black_white() const
-    {
-        return this->only_black_white;
-    }
 
     [[nodiscard]] CursorSize get_dimensions() const
     {
