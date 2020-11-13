@@ -1183,10 +1183,9 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         using SetPointerMode = gdi::GraphicApi::SetPointerMode;
         for (int i = 0; i < Zone::NUMBER_OF_ZONES; i++){
             if (this->zone.get_zone(i, this->window_rect).contains_pt(xPos, yPos)){
-                auto pointer_type = this->zone.get_pointer_type(i);
-                if (pointer_type != this->current_mouse_pointer_type){
-                    this->current_mouse_pointer_type = pointer_type;
-                    auto pointer = this->zone.get_pointer(i);
+                auto& pointer = this->zone.get_pointer(i);
+                if (&pointer != this->current_mouse_pointer){
+                    this->current_mouse_pointer = &pointer;
                     this->drawable_.set_pointer(0, pointer, SetPointerMode::Insert);
                 }
                 zone_found = true;
@@ -1195,7 +1194,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         }
 
         if (!zone_found){
-            this->current_mouse_pointer_type = Pointer::POINTER_NULL;
+            this->current_mouse_pointer = &null_pointer();
         }
     }
 

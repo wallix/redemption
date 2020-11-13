@@ -212,7 +212,7 @@ public:
             return Rect(0,0,0,0);
         }
 
-        static inline int get_button(size_t zone)
+        static inline int get_button(int zone)
         {
             switch (zone){
             case ZONE_N  : return MOUSE_BUTTON_PRESSED_NORTH;
@@ -231,26 +231,7 @@ public:
             return MOUSE_BUTTON_PRESSED_NONE;
         }
 
-        static inline int get_pointer_type(size_t zone)
-        {
-            switch (zone){
-            case ZONE_N  :
-            case ZONE_S  : return Pointer::POINTER_SIZENS;
-            case ZONE_E  :
-            case ZONE_W  : return Pointer::POINTER_SIZEWE;
-            case ZONE_NWN:
-            case ZONE_NWW:
-            case ZONE_SES:
-            case ZONE_SEE: return Pointer::POINTER_SIZENWSE;
-            case ZONE_SWW:
-            case ZONE_SWS:
-            case ZONE_NEE:
-            case ZONE_NEN: return Pointer::POINTER_SIZENESW;
-            }
-            return Pointer::POINTER_NORMAL;
-        }
-
-        static inline Pointer get_pointer(size_t zone)
+        static inline Pointer const& get_pointer(int zone)
         {
             switch (zone){
             case ZONE_N  :
@@ -291,7 +272,7 @@ private:
     bool const window_level_supported_ex;
     bool allow_resize_hosted_desktop_    = false;
     bool enable_resizing_hosted_desktop_ = false;
-    int current_mouse_pointer_type = Pointer::POINTER_NULL;
+    Pointer const* current_mouse_pointer = nullptr;
     bool rail_enabled = false;
 
     TimeBase& time_base;
