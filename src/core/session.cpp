@@ -368,19 +368,17 @@ private:
         }
     }
 
-    static void rt_display(Inifile & ini, ModWrapper & mod_wrapper, Front & front)
+    static void rt_display(Inifile& ini, ModWrapper& mod_wrapper, Front& front)
     {
-        auto const rt_status = front.set_rt_display(ini.get<cfg::video::rt_display>());
+        const Capture::RTDisplayResult rt_status =
+            front.set_rt_display(ini.get<cfg::video::rt_display>());
 
-        if (ini.get<cfg::client::enable_osd_4_eyes>()) {
-            Translator tr(language(ini));
-            if (rt_status != Capture::RTDisplayResult::Unchanged) {
-                std::string message = tr((rt_status==Capture::RTDisplayResult::Enabled)
-                    ?trkeys::enable_rt_display
-                    :trkeys::disable_rt_display
-                        ).to_string();
-                mod_wrapper.display_osd_message(message);
-            }
+        if (ini.get<cfg::client::enable_osd_4_eyes>()
+            && rt_status == Capture::RTDisplayResult::Enabled)
+        {
+            zstring_view msg = TR(trkeys::enable_rt_display, language(ini));
+
+            mod_wrapper.display_osd_message(msg.to_sv());
         }
     }
 

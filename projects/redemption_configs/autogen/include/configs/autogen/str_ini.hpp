@@ -320,9 +320,9 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #recv_timeout = 1000
 
+# Enables display of message informing user that his/her session is being audited.
 # value: 0 or 1
-#_advanced
-#enable_osd_4_eyes = 0
+#enable_osd_4_eyes = 1
 
 # Enable front remoteFx
 # value: 0 or 1
