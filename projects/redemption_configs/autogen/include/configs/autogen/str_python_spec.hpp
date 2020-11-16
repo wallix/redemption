@@ -267,8 +267,8 @@ bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)
 #_advanced
 recv_timeout = integer(min=100, max=10000, default=1000)
 
-#_advanced
-enable_osd_4_eyes = boolean(default=False)
+# Enables display of message informing user that his/her session is being audited.
+enable_osd_4_eyes = boolean(default=True)
 
 # Enable front remoteFx
 #_advanced

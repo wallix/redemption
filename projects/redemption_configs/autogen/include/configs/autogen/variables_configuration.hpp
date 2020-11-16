@@ -997,15 +997,16 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 1000 };
     };
+    /// Enables display of message informing user that his/her session is being audited. <br/>
     /// type: bool <br/>
-    /// default: false <br/>
+    /// default: true <br/>
     struct client::enable_osd_4_eyes {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value { false };
+        type value { true };
     };
     /// Enable front remoteFx <br/>
     /// type: bool <br/>

@@ -266,7 +266,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, names{"recv_timeout"}, set(1000));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, names{"enable_osd_4_eyes"}, set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>{}, names{"enable_osd_4_eyes"}, desc{"Enables display of message informing user that his/her session is being audited."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, names{"enable_remotefx"}, desc{"Enable front remoteFx"}, set(true));
 

@@ -84,8 +84,7 @@ namespace trkeys
     TR_KV(minute, "minute");
     TR_KV(hour, "hour");
     TR_KV(before_closing, "before closing");
-    TR_KV(enable_rt_display, "Your session is observed by an administrator");
-    TR_KV(disable_rt_display, "Your session is no longer observed by an administrator.");
+    TR_KV(enable_rt_display, "Your session is currently being audited.");
     TR_KV(manager_close_cnx, "Connection closed by manager.");
     TR_KV(end_connection, "End of connection");
     TR_KV(help_message,
@@ -127,7 +126,7 @@ namespace trkeys
     TR_KV(authentication_required,  "Authentication Required");
     TR_KV(target_info_required, "Target Information Required");
     TR_KV(device, "Device");
-    TR_KV(disable_osd, "(insert key or left click to hide)");
+    TR_KV(disable_osd, "Press \"Insert\" key or left-click to hide this message.");
     TR_KV(disconnected_by_otherconnection, "Another user connected to the resource, so your connection was lost.");
     TR_KV_FMT(process_interrupted_security_policies, "The process '%s' was interrupted in accordance with security policies.");
     TR_KV_FMT(account_manipulation_blocked_security_policies, "The account manipulation initiated by process '%s' was rejected in accordance with security policies.");
