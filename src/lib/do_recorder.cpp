@@ -1442,7 +1442,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                             MetaParams::LogOnlyRelevantClipboardActivities(ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>())
                         };
 
-                        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+                        KbdLogParams kbd_log_params = kbd_log_params_video_from_ini(ini);
                         kbd_log_params.session_log_enabled = false;
 
                         PatternParams const pattern_params = pattern_params_from_ini(ini);

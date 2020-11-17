@@ -479,7 +479,6 @@ session_probe_enable_log = boolean(default=False)
 #_hidden
 session_probe_enable_log_rotation = boolean(default=True)
 
-#   0: Off
 #   1: Fatal
 #   2: Error
 #   3: Info
@@ -487,7 +486,7 @@ session_probe_enable_log_rotation = boolean(default=True)
 #   5: Debug
 #   6: Detail
 #_hidden
-session_probe_log_level = option(0, 1, 2, 3, 4, 5, 6, default=5)
+session_probe_log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
@@ -990,7 +989,7 @@ record_tmp_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPat
 record_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(')
 
 # Disable keyboard log:
-# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
+# (Please see also "Keyboard input masking level" in "session_log".)
 #   0x0: none
 #   0x1: disable keyboard log in syslog
 #   0x2: disable keyboard log in recorded sessions

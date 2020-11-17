@@ -1085,7 +1085,7 @@ public:
 
         MetaParams const meta_params = meta_params_from_ini(ini);
 
-        KbdLogParams const kbd_log_params = kbd_log_params_from_ini(ini);
+        KbdLogParams const kbd_log_params = kbd_log_params_capture_from_ini(ini);
 
         PatternParams const pattern_params = pattern_params_from_ini(ini);
 

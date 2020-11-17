@@ -74,8 +74,8 @@ RED_AUTO_TEST_CASE(TestEnumParser)
 
     // increment
     {
-        RED_CHECK( is_valid_enum_value(ServerCertCheck(3)));
-        RED_CHECK(!is_valid_enum_value(ServerCertCheck(4)));
+        RED_CHECK( is_valid_enum_value<ServerCertCheck>::is_valid(3));
+        RED_CHECK(!is_valid_enum_value<ServerCertCheck>::is_valid(4));
 
         configs::spec_type<ServerCertCheck> spec{};
 
@@ -87,12 +87,49 @@ RED_AUTO_TEST_CASE(TestEnumParser)
 
         RED_CHECK("2"_av ==
             assign_zbuf_from_cfg(zbuf_av, cfg_s_type<ServerCertCheck>{}, ServerCertCheck(2)));
+
+        configs::spec_type<std::string> sspec{};
+
+        RED_CHECK(v != ServerCertCheck::succeed_if_exists_and_fails_if_missing);
+        RED_CHECK(no_parse_error == parse_from_cfg(v, sspec, "sucCEED_IF_EXISTS_ANd_fails_if_MISSING"_zv));
+        RED_CHECK(v == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
+        RED_CHECK(no_parse_error != parse_from_cfg(v, sspec, "blablabla"_zv));
+        RED_CHECK(v == ServerCertCheck::succeed_if_exists_and_fails_if_missing);
+
+        RED_CHECK("succeed_if_exists_and_fails_if_missing"_av ==
+            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<std::string>{}, ServerCertCheck(2)));
+    }
+
+    // set
+    {
+        RED_CHECK( is_valid_enum_value<ColorDepth>::is_valid(15));
+        RED_CHECK(!is_valid_enum_value<ColorDepth>::is_valid(20));
+
+        configs::spec_type<ColorDepth> spec{};
+
+        ColorDepth v{};
+        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "15"_zv));
+        RED_CHECK(v == ColorDepth::depth15);
+        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "20"_zv));
+
+        RED_CHECK("15"_av ==
+            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<ColorDepth>{}, ColorDepth::depth15));
+
+        configs::spec_type<std::string> sspec{};
+
+        RED_CHECK(v != ColorDepth::depth32);
+        RED_CHECK(no_parse_error == parse_from_cfg(v, sspec, "depth32"_zv));
+        RED_CHECK(v == ColorDepth::depth32);
+        RED_CHECK(no_parse_error != parse_from_cfg(v, sspec, "depth20"_zv));
+
+        RED_CHECK("depth15"_av ==
+            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<std::string>{}, ColorDepth::depth15));
     }
 
     // flags
     {
-        RED_CHECK( is_valid_enum_value(CaptureFlags(15)));
-        RED_CHECK(!is_valid_enum_value(CaptureFlags(16)));
+        RED_CHECK( is_valid_enum_value<CaptureFlags>::is_valid(15));
+        RED_CHECK(!is_valid_enum_value<CaptureFlags>::is_valid(16));
 
         configs::spec_type<CaptureFlags> spec{};
 
@@ -103,27 +140,6 @@ RED_AUTO_TEST_CASE(TestEnumParser)
 
         RED_CHECK("15"_av ==
             assign_zbuf_from_cfg(zbuf_av, cfg_s_type<CaptureFlags>{}, CaptureFlags(15)));
-    }
-
-    // str
-    {
-        RED_CHECK( is_valid_enum_value(RdpModeConsole(2)));
-        RED_CHECK(!is_valid_enum_value(RdpModeConsole(3)));
-
-        configs::spec_type<RdpModeConsole> spec{};
-
-        RdpModeConsole v{};
-        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "forbid"_zv));
-        RED_CHECK(v == RdpModeConsole::forbid);
-        RED_CHECK(no_parse_error == parse_from_cfg(v, spec, "aLloW"_zv));
-        RED_CHECK(v == RdpModeConsole::allow);
-        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "foRbI"_zv));
-        RED_CHECK(v == RdpModeConsole::allow);
-        RED_CHECK(no_parse_error != parse_from_cfg(v, spec, "foRbIdden"_zv));
-        RED_CHECK(v == RdpModeConsole::allow);
-
-        RED_CHECK("forbid"_av ==
-            assign_zbuf_from_cfg(zbuf_av, cfg_s_type<RdpModeConsole>{}, RdpModeConsole(2)));
     }
 }
 

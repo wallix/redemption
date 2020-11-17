@@ -45,46 +45,10 @@ using python_spec_writer::end_raw_string;
 
 using namespace cfg_attributes;
 
-namespace impl
-{
-    inline void write_enum_info(std::ostream& out, type_enumeration const & e)
-    {
-        if (e.is_string_parser) {
-            out << "values: ";
-            char const* comma = "";
-            for (type_enumeration::Value const & v : e.values) {
-                out << comma << "'" << (v.alias ? v.alias : v.name) << "'";
-                comma = ", ";
-            }
-            out << "\n";
-        }
-        else {
-            out << "min = 0, max = " << ((e.flag == type_enumeration::autoincrement)
-                ? e.count()-1u
-                : (1ull << (e.count()-1u)) - 1
-            ) << "\n";
-        }
-    }
-
-    inline void write_enum_info(std::ostream& /*out*/, type_enumeration_set const & /*e*/)
-    {
-        // out << "values: ";
-        // for (type_enumeration_set::Value const & v : e.values) {
-        //     out << v.val << ", ";
-        // }
-        // out << "\n";
-    }
-}
-
 template<class T>
-void write_type_info(std::ostream& out, type_enumerations& enums, type_<T>)
+void write_type_info(std::ostream& out, type_<T>)
 {
-    if constexpr (std::is_enum_v<T>) {
-        apply_enumeration_for<T>(enums, [&](auto const & e) {
-            impl::write_enum_info(out, e);
-        });
-    }
-    else if constexpr (traits::is_unsigned_v<T>) {
+    if constexpr (traits::is_unsigned_v<T>) {
         out << "min = 0";
     }
     else if constexpr (traits::is_signed_v<T>) {
@@ -96,37 +60,37 @@ void write_type_info(std::ostream& out, type_enumerations& enums, type_<T>)
 
 //@{
 template<class T>
-void write_type_info(std::ostream&, type_enumerations&, type_<types::list<T>>) {}
-inline void write_type_info(std::ostream&, type_enumerations&, type_<std::string>) {}
-inline void write_type_info(std::ostream&, type_enumerations&, type_<types::ip_string>) {}
+void write_type_info(std::ostream&, type_<types::list<T>>) {}
+inline void write_type_info(std::ostream&, type_<std::string>) {}
+inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
 //@}
 
 template<class T, class Ratio>
-void write_type_info(std::ostream& out, type_enumerations&, type_<std::chrono::duration<T, Ratio>> t)
+void write_type_info(std::ostream& out, type_<std::chrono::duration<T, Ratio>> t)
 { python_spec_writer::write_type_info(out, t); }
 
-inline void write_type_info(std::ostream& out, type_enumerations&, type_<bool>)
+inline void write_type_info(std::ostream& out, type_<bool>)
 { out << "value: 0 or 1"; }
 
 template<class Int, long min, long max>
-void write_type_info(std::ostream& out, type_enumerations& enums, type_<types::range<Int, min, max>>)
+void write_type_info(std::ostream& out, type_<types::range<Int, min, max>>)
 {
     out << "min = " << min << ", max = " << max << "\n";
-    write_type_info(out, enums, type_<Int>{});
+    write_type_info(out, type_<Int>{});
 }
 
 template<unsigned N>
-void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_binary<N>>)
+void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
 { out << "(hexadecimal string of length " << N*2 << ")"; }
 
 template<unsigned N>
-void write_type_info(std::ostream& out, type_enumerations&, type_<types::fixed_string<N>>)
+void write_type_info(std::ostream& out, type_<types::fixed_string<N>>)
 { out << "maxlen = " << N << "\n"; }
 
-inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::dirpath>)
+inline void write_type_info(std::ostream& out, type_<types::dirpath>)
 { out << "maxlen = " << globals::path_max; }
 
-inline void write_type_info(std::ostream& out, type_enumerations&, type_<types::file_permission>)
+inline void write_type_info(std::ostream& out, type_<types::file_permission>)
 { out << "(is in octal or symbolic mode format (as chmod Linux command))\nmax = 777, min = 0"; }
 
 
@@ -202,43 +166,9 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::file_permiss
     out << octal;
 }
 
-namespace impl
-{
-    template<class T>
-    void write_enum_value(std::ostream& out, type_enumeration const & e, T default_value)
-    {
-        if (e.flag == type_enumeration::flags) {
-            out << default_value;
-        }
-        else if (e.is_string_parser) {
-            out << e.values[default_value].name;
-        }
-        else {
-            out << default_value;
-        }
-    }
-
-    template<class T>
-    void write_enum_value(std::ostream& out, type_enumeration_set const &, T default_value)
-    { out << default_value; }
-}
-
-template<class T, class E>
-std::enable_if_t<std::is_enum_v<T>>
-write_type(std::ostream& out, type_enumerations& enums, type_<T>, E const & x)
-{
-    using ll = long long;
-    static_assert(std::is_same<T, E>::value, "");
-    apply_enumeration_for<T>(enums, [&](auto const & e) {
-        impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<E>>(x)});
-    });
-}
-
 
 struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
 {
-    using attribute_name_type = spec::name;
-
     using IniPythonSpecWriterBase::IniPythonSpecWriterBase;
 
     void do_init()
@@ -251,29 +181,90 @@ struct IniWriterBase : python_spec_writer::IniPythonSpecWriterBase
     }
 
     template<class Pack>
-    void evaluate_member(Names const& /*names*/, std::string const & /*section_name*/, Pack const & infos, type_enumerations& enums)
+    void evaluate_member(Names const& /*section_names*/, Pack const & infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
-            std::string const& member_name = get_name<spec::name>(infos);
+            std::string const& member_name = names.ini_name();
+
+            bool is_enum_parser = false;
+            auto semantic_type = python_spec_writer::get_semantic_type(type, infos, &is_enum_parser);
 
             std::stringstream comments;
 
-            python_spec_writer::write_description(comments, enums, type, infos);
-            write_type_info(comments, enums, type);
-            python_spec_writer::write_enumeration_value_description(comments, enums, type, infos);
+            using etype = typename decltype(semantic_type)::type;
+            constexpr auto is_semantic_enum = std::is_enum_v<etype>;
+
+            python_spec_writer::write_description(comments, enums, semantic_type, get_desc(infos));
+            if constexpr (is_semantic_enum) {
+                type_enumeration const& e = enums.get_enum<etype>();
+
+                if (!is_enum_parser && e.cat != type_enumeration::Category::set) {
+                    comments << "min = " << e.min() << ", max = " << e.max() << "\n";
+                }
+
+                if (!python_spec_writer::impl::write_desc_value(comments, e, value_or<prefix_value>(infos, prefix_value{}).value, is_enum_parser)) {
+                    char const* prefix = "values: ";
+                    switch (e.cat) {
+                    case type_enumeration::Category::flags:
+                        break;
+                    case type_enumeration::Category::autoincrement:
+                    case type_enumeration::Category::set:
+                        for (type_enumeration::value_type const & v : e.values) {
+                            if (!v.exclude) {
+                                comments << prefix;
+                                if (is_enum_parser) {
+                                    comments << v.get_name();
+                                }
+                                else {
+                                    comments << v.val;
+                                }
+                                prefix = ", ";
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (e.info) {
+                    comments << e.info;
+                }
+            }
+            else {
+                write_type_info(comments, type);
+            }
 
             this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
             python_spec_writer::write_spec_attr(comments,
-                get_elem<spec_attr_t>(infos).value
-              | python_spec_writer::attr_hex_if_enum_flag(type, enums));
+                spec_attr_t(infos).value
+              | python_spec_writer::attr_hex_if_enum_flag(semantic_type, enums));
 
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             python_spec_writer::write_member(this->out(), "#" + member_name);
-            write_type(this->out(), enums, type, get_default(type, infos));
+            const auto& default_value = get_default(type, infos);
+            if constexpr (is_semantic_enum) {
+                if constexpr (std::is_same_v<etype, typename decltype(type)::type>) {
+                    this->out() << +std::underlying_type_t<etype>(default_value);
+                }
+                else {
+                    type_enumeration const& e = enums.get_enum<etype>();
+                    switch (e.cat) {
+                    case type_enumeration::Category::flags:
+                        throw std::runtime_error("logical error");
+                    case type_enumeration::Category::autoincrement:
+                    case type_enumeration::Category::set:
+                        this->out() << python_spec_writer::get_value_name(e, default_value);
+                        break;
+                    }
+                }
+            }
+            else {
+                write_type(this->out(), enums, type, default_value);
+            }
+
             this->out() << "\n\n";
         }
     }

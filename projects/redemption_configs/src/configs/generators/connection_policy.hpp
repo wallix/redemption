@@ -50,8 +50,6 @@ using namespace cfg_attributes;
 
 struct ConnectionPolicyWriterBase
 {
-    using attribute_name_type = connpolicy::name;
-
     using categories_t = std::array<std::string, 2>;
 
     struct PythonSpec
@@ -72,24 +70,28 @@ struct ConnectionPolicyWriterBase
     {}
 
     template<class Pack>
-    void evaluate_member(Names const& names, std::string const & section_name, Pack const& infos, type_enumerations& enums)
+    void evaluate_member(Names const& section_names, Pack const& infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-            auto type = get_type<connpolicy::type_>(infos);
+            Names const& names = infos;
+            auto type = get_type<spec::type_>(infos);
             auto& default_value = get_default<connpolicy::default_>(type, infos);
 
-            std::string const& member_name = get_name<connpolicy::name>(infos);
+            std::string const& member_name = names.connpolicy_name();
+
+            bool is_enum_parser = false;
+            auto semantic_type = python_spec_writer::get_semantic_type(type, infos, &is_enum_parser);
 
             std::stringstream comments;
 
-            python_spec_writer::write_description(comments, enums, type, infos);
+            python_spec_writer::write_description(comments, enums, semantic_type, get_desc(infos));
             python_spec_writer::write_type_info(comments, type);
-            python_spec_writer::write_enumeration_value_description(comments, enums, type, infos);
+            python_spec_writer::write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
             this->python_spec.out << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
-            auto& connpolicy = get_elem<connection_policy_t>(infos);
+            auto connpolicy = connection_policy_t(infos);
 
             using attr1_t = spec::internal::attr;
             using attr2_t = connpolicy::internal::attr;
@@ -103,7 +105,7 @@ struct ConnectionPolicyWriterBase
             }
             if (bool(attr1 & attr1_t::hex_in_gui)
              || bool(attr2 & attr2_t::hex_in_connpolicy)
-             || bool(python_spec_writer::attr_hex_if_enum_flag(type, enums))
+             || bool(python_spec_writer::attr_hex_if_enum_flag(semantic_type, enums))
             ) {
                 comments << "_hex\n";
             }
@@ -111,12 +113,12 @@ struct ConnectionPolicyWriterBase
             this->python_spec.out << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             this->python_spec.out << member_name << " = ";
-            python_spec_writer::write_type(python_spec.out, enums, type, default_value);
+            python_spec_writer::write_type2(python_spec.out, enums, type, semantic_type, default_value);
             this->python_spec.out << "\n\n";
 
             auto&& sections = this->file_map[connpolicy.file];
             auto const& section = value_or<connpolicy::section>(
-                infos, connpolicy::section{section_name.c_str()});
+                infos, connpolicy::section{section_names.connpolicy_name().c_str()});
 
             if (this->section_names.emplace(section.name).second) {
                 this->ordered_section.emplace_back(section.name);
@@ -124,22 +126,16 @@ struct ConnectionPolicyWriterBase
 
             Section& sec = sections[section.name];
 
-            auto sesman_name = sesman_network_name(infos, names);
+            auto sesman_name = sesman_network_name(infos, section_names);
 
             sec.python_contains += this->python_spec.out.str();
 
             this->python_spec.out.str("");
 
             auto& buf = this->python_spec.out;
-            auto sesman_type = get_type<sesman::type_>(infos);
-            sesman_default_map::python::write_type(buf, sesman_type, get_default(sesman_type, infos));
+            sesman_default_map::python::write_type2(buf, enums, type, semantic_type, default_value);
             update_sesman_contains(sec.sesman_contains, sesman_name, member_name, buf.str());
 
-            if constexpr (is_convertible_v<Pack, sesman::deprecated_names>) {
-                for (auto&& old_name : get_elem<sesman::deprecated_names>(infos).names) {
-                    update_sesman_contains(sec.sesman_contains, old_name, member_name, "None", "  # Deprecated, for compatibility only.");
-                }
-            }
             buf.str("");
         }
     }
@@ -157,11 +153,11 @@ struct ConnectionPolicyWriterBase
                    "        ),", extra, '\n');
     }
 
-    void do_start_section(Names const& /*names*/, std::string const & /*section_name*/)
+    void do_start_section(Names const& /*names*/)
     {
     }
 
-    void do_stop_section(Names const& /*names*/, std::string const & /*section_name*/)
+    void do_stop_section(Names const& /*names*/)
     {
     }
 
@@ -175,7 +171,7 @@ struct ConnectionPolicyWriterBase
         out_sesman <<
           "#!/usr/bin/python -O\n"
           "# -*- coding: utf-8 -*-\n\n"
-          "# DO NOT EDIT THIS FILE BY HAND -- YOUR CHANGES WILL BE OVERWRITTEN\n\n"
+          << python_comment(do_not_edit, 0) << "\n"
           "cp_spec = {\n"
         ;
 

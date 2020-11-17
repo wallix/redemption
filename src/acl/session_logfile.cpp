@@ -75,8 +75,8 @@ void SessionLogFile::open_session_log()
 {
     assert(!this->ct.is_open());
 
-    this->cctx.set_master_key(this->ini.get<cfg::crypto::key0>());
-    this->cctx.set_hmac_key(this->ini.get<cfg::crypto::key1>());
+    this->cctx.set_master_key(this->ini.get<cfg::crypto::encryption_key>());
+    this->cctx.set_hmac_key(this->ini.get<cfg::crypto::sign_key>());
     this->cctx.set_trace_type(this->ini.get<cfg::globals::trace_type>());
 
     const int groupid = this->ini.get<cfg::video::capture_groupid>();

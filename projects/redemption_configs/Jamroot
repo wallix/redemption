@@ -76,7 +76,16 @@ rule create_generator ( name : file : libraries * : requirements * )
 {
     make $(file) : make_$(name) : @generate_$(name) : <location>. ;
     alias generate_$(name) : $(file) ;
-    obj src/configs/write_$(name).cpp.o : src/configs/write_$(name).cpp : $(requirements) ;
+    obj src/configs/write_$(name).cpp.o : src/configs/write_$(name).cpp :
+        $(requirements)
+        <cxxflags>-std=c++2a
+        # bug of clang
+        # zstring_view.hpp:187:24: warning: zero as null pointer constant [-Wzero-as-null-pointer-constant]
+        # return lhs.to_sv() >= std::string_view(rhs);
+        #                    ^~
+        #                    nullptr
+        <toolset>clang:<cxxflags>-Wno-zero-as-null-pointer-constant
+    ;
     exe make_$(name) : src/configs/write_$(name).cpp.o : $(libraries) ;
 }
 

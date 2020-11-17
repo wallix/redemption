@@ -137,12 +137,12 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::key0>().data(),
+    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::encryption_key>().data(),
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
                                                                "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
-    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::key1>().data(),
+    RED_CHECK_EQUAL(0,                                memcmp(ini.get<cfg::crypto::sign_key>().data(),
                                                                "\x00\x01\x02\x03\x04\x05\x06\x07"
                                                                "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -422,10 +422,10 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK(ini.get<cfg::crypto::key0>() ==
+    RED_CHECK(ini.get<cfg::crypto::encryption_key>() ==
         "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
         "\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"_av);
-    RED_CHECK(ini.get<cfg::crypto::key1>() ==
+    RED_CHECK(ini.get<cfg::crypto::sign_key>() ==
         "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"
         "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88\x77\x66\x55\x44\x33\x22\x11\x00"_av);
 
@@ -616,10 +616,10 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK(ini.get<cfg::crypto::key0>() ==
+    RED_CHECK(ini.get<cfg::crypto::encryption_key>() ==
         "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"_av);
-    RED_CHECK(ini.get<cfg::crypto::key1>() ==
+    RED_CHECK(ini.get<cfg::crypto::sign_key>() ==
         "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"_av);
 
@@ -1840,22 +1840,22 @@ RED_AUTO_TEST_CASE(TestConfigSet)
 {
     Inifile             ini;
 
-    cfg::crypto::key0::type akey{{}};
-    RED_CHECK(ini.get<cfg::crypto::key0>() != akey);
+    cfg::crypto::encryption_key::type akey{{}};
+    RED_CHECK(ini.get<cfg::crypto::encryption_key>() != akey);
 
     unsigned char ckey[32]{1};
-    ini.set<cfg::crypto::key0>(ckey);
+    ini.set<cfg::crypto::encryption_key>(ckey);
     akey[0] = 1;
-    RED_CHECK(ini.get<cfg::crypto::key0>() == akey);
+    RED_CHECK(ini.get<cfg::crypto::encryption_key>() == akey);
 
     unsigned char const cckey[32]{1, 1};
-    ini.set<cfg::crypto::key0>(cckey);
+    ini.set<cfg::crypto::encryption_key>(cckey);
     akey[1] = 1;
-    RED_CHECK(ini.get<cfg::crypto::key0>() == akey);
+    RED_CHECK(ini.get<cfg::crypto::encryption_key>() == akey);
 
     akey[2] = 1;
-    ini.set<cfg::crypto::key0>(akey);
-    RED_CHECK(ini.get<cfg::crypto::key0>() == akey);
+    ini.set<cfg::crypto::encryption_key>(akey);
+    RED_CHECK(ini.get<cfg::crypto::encryption_key>() == akey);
 }
 
 

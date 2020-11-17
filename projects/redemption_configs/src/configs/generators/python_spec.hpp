@@ -103,19 +103,17 @@ void write_type_info(std::ostream& out, type_<types::list<T>>)
 { out << "(values are comma-separated)\n"; }
 
 
-template<class T, class Pack>
-void write_description(std::ostream& out, type_enumerations& enums, type_<T>, Pack const & pack)
+template<class T>
+void write_description(std::ostream& out, type_enumerations& enums, type_<T>, std::string const& d)
 {
-    auto& d = get_desc(pack);
     if (!d.empty()) {
-        out << d.c_str() << "\n";
+        out << d << "\n";
     }
     else if constexpr (std::is_enum_v<T>) {
-        apply_enumeration_for<T>(enums, [&out](auto const & e) {
-            if (e.desc) {
-                out << e.desc << "\n";
-            }
-        });
+        type_enumeration const& e = enums.get_enum<T>();
+        if (e.desc) {
+            out << e.desc << "\n";
+        }
     }
 }
 
@@ -127,13 +125,10 @@ spec_internal_attr attr_hex_if_enum_flag(type_<T>, type_enumerations& enums)
     spec_internal_attr attr{};
     if constexpr (std::is_enum_v<T>)
     {
-        apply_enumeration_for<T>(enums, [&](auto const & e) {
-            if constexpr (std::is_same_v<decltype(e), type_enumeration const &>) {
-                if (type_enumeration::flags == e.flag) {
-                    attr = spec_internal_attr::hex_in_gui;
-                }
-            }
-        });
+        type_enumeration const& e = enums.get_enum<T>();
+        if (type_enumeration::Category::flags == e.cat) {
+            attr = spec_internal_attr::hex_in_gui;
+        }
     }
     return attr;
 }
@@ -207,18 +202,18 @@ namespace impl
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations&, type_<bool>, T x)
+void write_type(std::ostream& out, type_<bool>, T x)
 { out << "boolean(default=" << impl::stringize_bool(x) << ")"; }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations&, type_<std::string>, T const & s)
+void write_type(std::ostream& out, type_<std::string>, T const & s)
 { out << "string(default='" << impl::quoted2(s) << "')"; }
 
 template<class Int, class T>
 std::enable_if_t<
     traits::is_integer_v<Int>
 >
-write_type(std::ostream& out, type_enumerations&, type_<Int>, T i)
+write_type(std::ostream& out, type_<Int>, T i)
 {
     out << "integer(";
     if (traits::is_unsigned_v<Int>) {
@@ -228,48 +223,48 @@ write_type(std::ostream& out, type_enumerations&, type_<Int>, T i)
 }
 
 template<class Int, long min, long max, class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::range<Int, min, max>>, T i)
+void write_type(std::ostream& out, type_<types::range<Int, min, max>>, T i)
 { out << "integer(min=" << min << ", max=" << max << ", default=" << impl::stringize_integral(i) << ")"; }
 
 
 template<class T, class Ratio, class U>
-void write_type(std::ostream& out, type_enumerations&, type_<std::chrono::duration<T, Ratio>>, U i)
+void write_type(std::ostream& out, type_<std::chrono::duration<T, Ratio>>, U i)
 { out << "integer(min=0, default=" << impl::stringize_integral(i) << ")"; }
 
 template<unsigned N, class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_binary<N>>, T const & s)
+void write_type(std::ostream& out, type_<types::fixed_binary<N>>, T const & s)
 {
     out << "string(min=" << N*2 << ", max=" << N*2 << ", default='"
         << io_hexkey{s.c_str(), N} << "')";
 }
 
 template<unsigned N, class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_string<N>>, T const & x)
+void write_type(std::ostream& out, type_<types::fixed_string<N>>, T const & x)
 {
     out << "string(max=" << N <<  ", default='" << impl::quoted2(x) << "')";
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::dirpath>, T const & x)
+void write_type(std::ostream& out, type_<types::dirpath>, T const & x)
 {
     namespace globals = cfg_attributes::globals;
     out << "string(max=" << globals::path_max <<  ", default='" << impl::quoted2(x) << "')";
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::ip_string>, T const & x)
+void write_type(std::ostream& out, type_<types::ip_string>, T const & x)
 {
     out << "ip_addr(default='" << impl::quoted2(x) << "')";
 }
 
 template<class T, class L>
-void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L const & s)
+void write_type(std::ostream& out, type_<types::list<T>>, L const & s)
 {
     out << "string(default='" << impl::quoted2(s) << "')";
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::file_permission>, T const & x)
+void write_type(std::ostream& out, type_<types::file_permission>, T const & x)
 {
     char octal[32]{};
     (void)std::to_chars(std::begin(octal), std::end(octal), x, 8);
@@ -287,7 +282,7 @@ namespace impl
     inline std::ostream& operator<<(std::ostream& out, HexFlag const& h)
     {
         return out << "0x"
-            << std::setfill('0') << std::setw((h.max_element+3)/4)
+            << std::setfill('0') << std::setw(int((h.max_element+3)/4))
             << std::hex << h.v << std::dec;
     }
 
@@ -298,7 +293,7 @@ namespace impl
         out << "  " << name;
         if (v.desc) {
             out << ": ";
-            unsigned pad = out.tellp() - pos;
+            int pad = int(out.tellp() - pos);
             if (prefix) {
                 out << prefix << " ";
             }
@@ -318,30 +313,31 @@ namespace impl
         out << "\n";
     }
 
-    inline void write_desc_value(std::ostream& out, type_enumeration const & e, char const * prefix)
+    inline bool write_desc_value(std::ostream& out, type_enumeration const & e, char const * prefix, bool is_enum_parser)
     {
-        if (e.is_string_parser) {
-            if (std::none_of(begin(e.values), end(e.values), [](type_enumeration::Value const & v) {
-                return v.desc;
-            })) {
-                return ;
-            }
+        if (is_enum_parser
+         && std::none_of(begin(e.values), end(e.values),
+            [](type_enumeration::value_type const & v) { return v.desc; })
+        ) {
+            return false;
         }
 
-        unsigned d = 0;
-        bool const is_autoinc = e.flag == type_enumeration::autoincrement;
         unsigned long long total = 0;
         std::ostringstream oss;
-        for (type_enumeration::Value const & v : e.values) {
-            if (e.is_string_parser) {
-                write_value_(out, (v.alias ? v.alias : v.name), v, prefix);
+        for (type_enumeration::value_type const & v : e.values) {
+            if (v.exclude) {
             }
-            else if (is_autoinc) {
-                write_value_(out, d, v, prefix);
+            else if (is_enum_parser) {
+                write_value_(out, v.get_name(), v, prefix);
             }
-            else {
-                auto f = type_enumeration::mask_of(int(d));
-                if (!(f & e.exclude_flag)) {
+            else switch (e.cat) {
+                case type_enumeration::Category::set:
+                case type_enumeration::Category::autoincrement:
+                    write_value_(out, v.val, v, prefix);
+                    break;
+
+                case type_enumeration::Category::flags:{
+                    auto f = v.val;
                     write_value_(out, HexFlag{f, e.values.size()}, v, prefix);
                     if (f) {
                         total |= f;
@@ -349,88 +345,115 @@ namespace impl
                     }
                 }
             }
-            ++d;
         }
 
-        if (type_enumeration::flags == e.flag) {
+        if (type_enumeration::Category::flags == e.cat) {
             auto s = oss.str();
             s[s.size() - 2] = '=';
             out << "Note: values can be added ("
                 << (prefix ? prefix : "enable")
                 << " all: " << s << HexFlag{total, e.values.size()} << ")";
         }
-    }
 
-    inline void write_desc_value(std::ostream& out, type_enumeration_set const & e, char const * prefix)
-    {
-        for (type_enumeration_set::Value const & v : e.values) {
-            write_value_(out, v.val, v, prefix);
-        }
+        return true;
     }
 }
 
 template<class T, class Pack>
-void write_enumeration_value_description(std::ostream& out, type_enumerations& enums, type_<T>, Pack const & pack)
+void write_enumeration_value_description(std::ostream& out, type_enumerations& enums, type_<T>, Pack const & pack, bool is_enum_parser)
 {
     using cfg_attributes::prefix_value;
 
     if constexpr (std::is_enum_v<T>) {
-        apply_enumeration_for<T>(enums, [&](auto const & e) {
-            impl::write_desc_value(out, e, value_or<prefix_value>(pack, prefix_value{}).value);
-            if (e.info) {
-                out << e.info;
-            }
-        });
+        type_enumeration const& e = enums.get_enum<T>();
+        impl::write_desc_value(out, e, value_or<prefix_value>(pack, prefix_value{}).value, is_enum_parser);
+        if (e.info) {
+            out << e.info;
+        }
     }
     else {
         static_assert(!is_convertible_v<Pack, prefix_value>, "prefix_value only with enums type");
     }
 }
 
-namespace impl
+template<class D>
+char const * get_value_name(type_enumeration const & e, D const& x)
 {
-    template<class T>
-    void write_enum_value(std::ostream& out, type_enumeration const & e, T default_value)
-    {
-        if (e.flag == type_enumeration::flags) {
-            out << "integer(min=0, max=" << e.max() << ", default=" << default_value << ")";
-        }
-        else if (e.is_string_parser) {
-            out << "option(";
-            for (type_enumeration::Value const & v : e.values) {
-                out << "'" << (v.alias ? v.alias : v.name) << "', ";
+    if constexpr (std::is_enum_v<D>) {
+        for (auto& v : e.values) {
+            if (D(v.val) == x) {
+                return v.get_name();
             }
-            out << "default='" << e.values[default_value].name << "')";
         }
-        else {
-            out << "option(";
-            for (unsigned i = 0; i < e.count(); ++i) {
-                out << i << ", ";
-            }
-            out << "default=" << default_value << ")";
-        }
+        throw std::runtime_error("unknown value");
     }
-
-    template<class T>
-    void write_enum_value(std::ostream& out, type_enumeration_set const & e, T default_value)
-    {
-        out << "option(";
-        for (type_enumeration_set::Value const & v : e.values) {
-            out << v.val << ", ";
+    else {
+        if (!x.empty()) {
+            throw std::runtime_error("is not a enum value");
         }
-        out << "default=" << default_value << ")";
+        auto& v = e.values[0];
+        if (v.val) {
+            throw std::runtime_error("add a default value");
+        }
+        return v.get_name();
     }
 }
 
-template<class T, class E>
-std::enable_if_t<std::is_enum_v<E>>
-write_type(std::ostream& out, type_enumerations& enums, type_<T>, E const & x)
+template<class T, class U, class D>
+void write_type2(std::ostream& out, type_enumerations& enums, type_<T>, type_<U>, D const & x)
 {
-    static_assert(std::is_same<T, E>::value, "");
-    using ll = long long;
-    apply_enumeration_for<T>(enums, [&](auto const & e) {
-        impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<E>>(x)});
-    });
+    if constexpr (std::is_enum_v<U>) {
+        type_enumeration const& e = enums.get_enum<U>();
+        auto default_value = +std::underlying_type_t<U>(x);
+        switch (e.cat) {
+        case type_enumeration::Category::flags:
+            if constexpr (!std::is_enum_v<T>) {
+                throw std::runtime_error("is not a enum value");
+            }
+            out << "integer(min=0, max=" << e.max() << ", default=" << default_value << ")";
+            break;
+
+        case type_enumeration::Category::autoincrement:
+        case type_enumeration::Category::set:
+            if constexpr (std::is_same_v<T, std::string>) {
+                out << "option(";
+                for (type_enumeration::value_type const & v : e.values) {
+                    if (v.exclude) continue;
+                    out << "'" << v.get_name() << "', ";
+                }
+                out << "default='" << get_value_name(e, x) << "')";
+            }
+            else {
+                out << "option(";
+                for (type_enumeration::value_type const & v : e.values) {
+                    if (v.exclude) continue;
+                    out << v.val << ", ";
+                }
+                out << "default=" << default_value << ")";
+            }
+            break;
+        }
+    }
+    else {
+        write_type(out, type_<T>(), x);
+    }
+}
+
+template<class T, class U>
+auto get_semantic_type(type_<T>, type_<U>, bool * is_enum_parser)
+{
+    if constexpr (std::is_same_v<T, std::string>) {
+        if constexpr (std::is_enum_v<U>) {
+            *is_enum_parser = true;
+            return type_<U>();
+        }
+        else {
+            return type_<T>();
+        }
+    }
+    else {
+        return type_<T>();
+    }
 }
 
 
@@ -468,14 +491,14 @@ struct IniPythonSpecWriterBase
         return 0;
     }
 
-    void do_start_section(Names const& /*names*/, std::string const & /*section_name*/)
+    void do_start_section(Names const& /*section_names*/)
     {}
 
-    void do_stop_section(Names const& /*names*/, std::string const & section_name)
+    void do_stop_section(Names const& section_names)
     {
         auto str = this->out_member_.str();
         if (!str.empty()) {
-            write_section(this->out_file_, section_name);
+            write_section(this->out_file_, section_names.ini_name());
             this->out_file_ << str;
             this->out_member_.str("");
         }
@@ -484,34 +507,36 @@ struct IniPythonSpecWriterBase
 
 struct PythonSpecWriterBase : IniPythonSpecWriterBase
 {
-    using attribute_name_type = spec::name;
-
     using IniPythonSpecWriterBase::IniPythonSpecWriterBase;
 
     template<class Pack>
-    void evaluate_member(Names const& /*names*/, std::string const & /*section_name*/, Pack const & infos, type_enumerations& enums)
+    void evaluate_member(Names const& /*section_names*/, Pack const & infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            Names const& names = infos;
             auto type = get_type<spec::type_>(infos);
-            std::string const& member_name = get_name<spec::name>(infos);
+            std::string const& member_name = names.ini_name();
+
+            bool is_enum_parser = false;
+            auto semantic_type = get_semantic_type(type, infos, &is_enum_parser);
 
             std::stringstream comments;
 
-            write_description(comments, enums, type, infos);
+            write_description(comments, enums, semantic_type, get_desc(infos));
             write_type_info(comments, type);
-            write_enumeration_value_description(comments, enums, type, infos);
+            write_enumeration_value_description(comments, enums, semantic_type, infos, is_enum_parser);
 
             this->out() << io_prefix_lines{comments.str().c_str(), "# ", "", 0};
             comments.str("");
 
             write_spec_attr(comments,
-                get_elem<spec_attr_t>(infos).value
-              | attr_hex_if_enum_flag(type, enums));
+                spec_attr_t(infos).value
+              | attr_hex_if_enum_flag(semantic_type, enums));
 
             this->out() << io_prefix_lines{comments.str().c_str(), "#", "", 0};
 
             write_member(this->out(), member_name);
-            write_type(this->out(), enums, type, get_default(type, infos));
+            write_type2(this->out(), enums, type, semantic_type, get_default(type, infos));
             this->out() << "\n\n";
         }
     }

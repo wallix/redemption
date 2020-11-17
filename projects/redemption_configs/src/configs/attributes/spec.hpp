@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 
+#include <cassert>
+
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h>
 namespace cfg_attributes {
@@ -44,8 +46,6 @@ namespace globals {
 
 namespace cfg_attributes
 {
-
-struct name_ { std::string name; };
 
 #define TYPE_REQUIEREMENT(T)                                                   \
     static_assert(!std::is_integral<T>::value || std::is_same<T, bool>::value, \
@@ -67,11 +67,6 @@ struct default_
     T value;
 };
 
-class novalue {};
-
-using nodefault = default_<novalue>;
-
-
 template<class T>
 default_<T> set(T const & x)
 { return {x}; }
@@ -84,9 +79,18 @@ struct desc { std::string value; };
 
 struct prefix_value { char const * value; };
 
+struct names
+{
+    std::string cpp;
+    std::string ini {};
+    std::string sesman {};
+    std::string connpolicy {};
 
-template<template<class> class>
-struct tpl_t {};
+    std::string const& cpp_name() const { assert(!cpp.empty()); return cpp; }
+    std::string const& ini_name() const { return ini.empty() ? cpp : ini; }
+    std::string const& sesman_name() const { return sesman.empty() ? cpp : sesman; }
+    std::string const& connpolicy_name() const { return connpolicy.empty() ? cpp : connpolicy; }
+};
 
 
 namespace types
@@ -144,19 +148,6 @@ namespace traits
 
 namespace cpp
 {
-    struct name { std::string name; };
-
-    template<class T>
-    struct type_
-    {
-        TYPE_REQUIEREMENT(T);
-
-        ::cfg_attributes::type_<T> to_type() const
-        {
-            return {};
-        }
-    };
-
     struct expr { char const * value; };
     #define CPP_EXPR(expression) ::cfg_attributes::cpp::expr{#expression}
 }
@@ -164,8 +155,6 @@ namespace cpp
 
 namespace spec
 {
-    struct name { std::string name; };
-
     template<class T>
     struct type_
     {
@@ -248,19 +237,6 @@ namespace spec
 
 namespace connpolicy
 {
-    struct name { std::string name; };
-
-    template<class T>
-    struct type_
-    {
-        TYPE_REQUIEREMENT(T);
-
-        ::cfg_attributes::type_<T> to_type() const
-        {
-            return {};
-        }
-    };
-
     struct section { char const* name; };
 
     template<class T>
@@ -277,8 +253,6 @@ namespace connpolicy
     template<std::size_t N>
     default_<std::string> set(char const (&x)[N])
     { return {{std::string(x+0, x+N-1)}}; }
-
-    constexpr struct allow_connpolicy_and_gui_t {} allow_connpolicy_and_gui {};
 
     namespace internal
     {
@@ -309,20 +283,6 @@ namespace connpolicy
 
 namespace sesman
 {
-    struct name { std::string name; };
-
-
-    template<class T>
-    struct type_
-    {
-        TYPE_REQUIEREMENT(T);
-
-        ::cfg_attributes::type_<T> to_type() const
-        {
-            return {};
-        }
-    };
-
     namespace internal
     {
         enum class io {
@@ -368,15 +328,6 @@ namespace sesman
         return connection_policy{x.file, x.spec | y};
     }
 
-    struct deprecated_names
-    {
-        std::vector<std::string> names;
-
-        deprecated_names(std::initializer_list<char const*> l)
-        : names(l.begin(), l.end())
-        {}
-    };
-
     namespace internal
     {
         enum class is_target_context : bool;
@@ -391,25 +342,6 @@ namespace sesman
         inline constexpr internal::is_target_context_t<internal::is_target_context(false)> not_target_ctx{};
     }
 }
-
-
-namespace detail
-{
-    template<class... Ts>
-    struct names
-    {
-        template<template<class...> class F>
-        using f = F<Ts...>;
-    };
-}
-
-using names = detail::names<
-    name_,
-    cpp::name,
-    spec::name,
-    sesman::name,
-    connpolicy::name
->;
 
 }
 

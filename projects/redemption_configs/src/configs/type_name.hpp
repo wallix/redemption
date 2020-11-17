@@ -20,8 +20,8 @@
 
 #pragma once
 
-#include <iosfwd>
 #include <type_traits>
+#include <string_view>
 
 #include <cstddef>
 #include <cstring>
@@ -35,15 +35,10 @@ struct string_type_name
     char const * first;
     char const * last;
 
-    char const * begin() const noexcept { return this->first; }
-    char const * end() const noexcept { return this->last; }
-    char const * data() const noexcept { return this->first; }
-
-    std::size_t size() const noexcept { return this->last - this->first; }
-
-    template<class Ch, class Tr>
-    friend std::basic_ostream<Ch, Tr> & operator<<(std::basic_ostream<Ch, Tr> & out, string_type_name const & s)
-    { return out.write(s.data(), s.size()); }
+    std::string_view to_sv() const
+    {
+        return std::string_view{first, std::size_t(last - first)};
+    }
 };
 
 namespace detail
@@ -93,8 +88,8 @@ namespace detail
 }
 
 template<class T>
-string_type_name type_name(T const * = nullptr)
-{ return detail::type_name_impl<T>::impl(); }
+std::string_view type_name(T const * = nullptr)
+{ return detail::type_name_impl<T>::impl().to_sv(); }
 
 #define CONFIG_DEFINE_TYPE_NAME(type, name)               \
     namespace detail {                                    \

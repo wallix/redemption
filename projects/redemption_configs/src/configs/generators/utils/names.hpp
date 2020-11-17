@@ -25,13 +25,14 @@ Author(s): Jonathan Poelen
 namespace cfg_generators
 {
     template<class Pack>
-    std::string sesman_network_name(Pack const& infos, Names const& names)
+    std::string sesman_network_name(Pack const& infos, Names const& section_names)
     {
+        Names const& names = infos;
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-            return str_concat(names.names[0], ':', get_elem<cfg_attributes::name_>(infos).name);
+            return str_concat(section_names.cpp, ':', names.cpp);
         }
         else {
-            return get_name<cfg_attributes::sesman::name>(infos);
+            return names.sesman_name();
         }
     }
 }

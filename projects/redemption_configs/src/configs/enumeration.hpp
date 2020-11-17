@@ -21,209 +21,182 @@
 #pragma once
 
 #include "configs/type_name.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <vector>
-#include <iostream>
-#include <iomanip>
 #include <algorithm>
-#include <iterator>
 #include <stdexcept>
 
-#include <cstring>
-#include <cerrno>
+#include <cassert>
 
-using std::begin;
-using std::end;
 
-template<class Inherit>
-struct type_enumeration_base
+struct type_enumeration
 {
-    type_enumeration_base(char const * name, char const * desc, char const * info)
-    : name(name)
-    , desc(desc)
-    , info(info)
-    {}
+    enum class Category { autoincrement, flags, set };
 
-    type_enumeration_base(type_enumeration_base const &) = delete;
-    type_enumeration_base(type_enumeration_base &&) = default;
+    struct value_type
+    {
+        char const * name;
+        char const * desc;
+        char const * alias;
+        uint64_t val;
+        // bool is_negative;
+        bool exclude = false;
 
-    type_enumeration_base & operator=(type_enumeration_base const &) = delete;
-    type_enumeration_base & operator=(type_enumeration_base &&) = default;
+        char const * get_name() const { return alias ? alias : name; }
+    };
 
-    Inherit & set_string_parser() { this->is_string_parser = true; return this->inherit(); }
-
-    Inherit & alias(char const * s) {
-        if (this->inherit().values.back().alias) {
-            throw std::runtime_error("'alias' is already defined");
-        }
-        this->inherit().values.back().alias = s;
-        return this->inherit();
-    }
-
-protected:
-    using base_type = type_enumeration_base;
-
-    Inherit & inherit() { return static_cast<Inherit&>(*this); }
-
-public:
     char const * name;
     char const * desc;
     char const * info;
 
-    bool is_string_parser = false;
-};
+    Category cat;
 
+    std::vector<value_type> values;
 
-struct type_enumeration : type_enumeration_base<type_enumeration>
-{
-    enum flag_type { autoincrement, flags };
-
-    type_enumeration(char const * name, flag_type flag, char const * desc, char const * info)
-    : base_type(name, desc, info)
-    , flag(flag)
+    type_enumeration(char const * name, char const * desc, char const * info, Category cat)
+    : name(name)
+    , desc(desc)
+    , info(info)
+    , cat(cat)
     {}
 
-    type_enumeration(type_enumeration &&) = default;
-    type_enumeration & operator=(type_enumeration &&) = default;
-
-    type_enumeration & value(char const * name, char const * desc = nullptr)
+    uint64_t min() const
     {
-        this->values.push_back({name, desc, nullptr});
-        return *this;
+        assert(this->values.size());
+
+        switch (cat)
+        {
+            case Category::autoincrement:
+            case Category::flags:
+                return 0;
+            case Category::set:
+                return std::min_element(
+                    this->values.begin(), this->values.end(),
+                    [](auto& a, auto& b){ return a.val < b.val; }
+                )->val;
+        }
+
+        REDEMPTION_UNREACHABLE();
     }
 
-    type_enumeration & exclude()
+    uint64_t max() const
     {
-        this->exclude_flag |= mask_of(int(this->values.size()) - 1);
-        return *this;
+        assert(this->values.size());
+
+        switch (cat)
+        {
+            case Category::autoincrement:
+                return this->values.size() - 1u;
+            case Category::flags:
+                return ~uint64_t() >> (64u - (this->values.size() - 1u));
+            case Category::set:
+                return std::min_element(
+                    this->values.begin(), this->values.end(),
+                    [](auto& a, auto& b){ return a.val > b.val; }
+                )->val;
+        }
+
+        REDEMPTION_UNREACHABLE();
     }
 
-    unsigned long count() const
+protected:
+    void _alias(char const * s)
     {
-        return this->values.size();
+        if (this->values.back().alias) {
+            throw std::runtime_error("'alias' is already defined");
+        }
+        this->values.back().alias = s;
     }
-
-    unsigned long min() const
-    {
-        return 0;
-    }
-
-    unsigned long max() const
-    {
-        return this->flag == autoincrement
-            ? this->count() - 1u
-            : (1u << (this->values.size() - 1u)) - 1u;
-    }
-
-    static uint64_t mask_of(int i)
-    {
-        return i ? (1ull << (i-1)) : 0;
-    }
-
-    flag_type flag;
-
-    friend base_type;
-
-    struct Value
-    {
-        char const * name;
-        char const * desc;
-        const char * alias;
-    };
-    std::vector<Value> values;
-    uint64_t exclude_flag = 0;
 };
 
-struct type_enumeration_set : type_enumeration_base<type_enumeration_set>
+struct type_enumeration_inc : type_enumeration
 {
-    using base_type::base_type;
+    using type_enumeration::type_enumeration;
 
-    type_enumeration_set(type_enumeration_set &&) = default;
-    type_enumeration_set & operator=(type_enumeration_set &&) = default;
+    type_enumeration_inc & value(char const * name, char const * desc = nullptr)
+    {
+        uint64_t value = this->values.size();
+        if (cat == Category::flags && value) {
+            value = 1ull << (value - 1u);
+        }
+        this->values.push_back({name, desc, nullptr, value});
+        return *this;
+    }
 
-    type_enumeration_set & value(char const * name, long long val, char const * desc = nullptr)
+    type_enumeration_inc & exclude()
+    {
+        this->values.back().exclude = true;
+        return *this;
+    }
+
+    type_enumeration_inc & alias(char const * s)
+    {
+        this->_alias(s);
+        return *this;
+    }
+};
+
+struct type_enumeration_set : type_enumeration
+{
+    type_enumeration_set & value(char const * name, unsigned long long val, char const * desc = nullptr)
     {
         this->values.push_back({name, desc, nullptr, val});
         return *this;
     }
 
-    long long min() const
+    type_enumeration_set & alias(char const * s)
     {
-        return std::min_element(this->values.begin(), this->values.end(), [](auto& a, auto& b){
-            return a.val < b.val;
-        })->val;
+        this->_alias(s);
+        return *this;
     }
-
-    long long max() const
-    {
-        return std::max_element(this->values.begin(), this->values.end(), [](auto& a, auto& b){
-            return a.val > b.val;
-        })->val;
-    }
-
-    struct Value
-    {
-        char const * name;
-        char const * desc;
-        const char * alias;
-        long long val;
-    };
-    std::vector<Value> values;
 };
 
 
 struct type_enumerations
 {
     std::vector<type_enumeration> enumerations_;
-    std::vector<type_enumeration_set> enumerations_set_;
 
-    type_enumeration & enumeration_flags(
+    type_enumeration_inc & enumeration_flags(
         char const * name, char const * desc = nullptr, char const * info = nullptr
     ) {
-        this->enumerations_.push_back({name, type_enumeration::flags, desc, info});
-        return this->enumerations_.back();
+        this->enumerations_.push_back({name, desc, info, type_enumeration::Category::flags});
+        return static_cast<type_enumeration_inc&>(this->enumerations_.back());
     }
 
-    type_enumeration & enumeration_list(
+    type_enumeration_inc & enumeration_list(
         char const * name, char const * desc = nullptr, char const * info = nullptr
     ) {
-        this->enumerations_.push_back({name, type_enumeration::autoincrement, desc, info});
-        return this->enumerations_.back();
+        this->enumerations_.push_back({name, desc, info, type_enumeration::Category::autoincrement});
+        return static_cast<type_enumeration_inc&>(this->enumerations_.back());
     }
 
     type_enumeration_set & enumeration_set(
         char const * name, char const * desc = nullptr, char const * info = nullptr
     ) {
-        this->enumerations_set_.push_back({name, desc, info});
-        return this->enumerations_set_.back();
+        this->enumerations_.push_back({name, desc, info, type_enumeration::Category::set});
+        return static_cast<type_enumeration_set&>(this->enumerations_.back());
     }
 
-    template<class T, class Fn>
-    void apply_for(Fn fn) const
+    template<class T>
+    type_enumeration const & get_enum() const
     {
-        auto tname = type_name<T>();
-        std::string str_tname(tname.begin(), tname.end());
-        if ( ! apply_enum(str_tname, fn, this->enumerations_)
-         &&  ! apply_enum(str_tname, fn, this->enumerations_set_)) {
-            throw std::runtime_error("unknown enum '" + str_tname + "'");
-        }
+        return this->_get_enum(type_name<T>());
     }
 
 private:
-    template<class E, class Fn>
-    static bool apply_enum(std::string const & str_tname, Fn fn, std::vector<E> const & values)
+    type_enumeration const & _get_enum(std::string_view str_tname) const
     {
-        auto p = std::find_if(begin(values), end(values), [&str_tname](auto & value){
-            return str_tname == value.name;
-        });
-        if (p != end(values)) {
-            fn(*p);
-            return true;
+        auto p = std::find_if(
+            enumerations_.begin(),
+            enumerations_.end(),
+            [&str_tname](auto & value){ return str_tname == value.name; }
+        );
+
+        if (p != enumerations_.end()) {
+            return *p;
         }
-        return false;
+
+        throw std::runtime_error(str_concat("unknown enum '", str_tname, "'"));
     }
 };
-
-template<class T, class Fn>
-void apply_enumeration_for(type_enumerations const & enums, Fn fn)
-{ enums.template apply_for<T>(fn); }

@@ -159,15 +159,17 @@ struct WrmMetaChunk
             this->cache_4_size         = stream.in_uint16_le();
             this->cache_4_persistent   = bool(stream.in_uint8());
 
-            this->compression_algorithm = static_cast<WrmCompressionAlgorithm>(stream.in_uint8());
+            auto const compression_algorithm = stream.in_uint8();
+            bool const is_valid_compression_algorithm
+              = is_valid_enum_value<WrmCompressionAlgorithm>::is_valid(compression_algorithm);
+            assert(is_valid_compression_algorithm);
+            this->compression_algorithm
+              = is_valid_compression_algorithm
+              ? static_cast<WrmCompressionAlgorithm>(compression_algorithm)
+              : WrmCompressionAlgorithm::no_compression;
 
             if (this->version > 4) {
                 this->remote_app       = bool(stream.in_uint8());
-            }
-
-            assert(is_valid_enum_value(this->compression_algorithm));
-            if (!is_valid_enum_value(this->compression_algorithm)) {
-                this->compression_algorithm = WrmCompressionAlgorithm::no_compression;
             }
         }
     }

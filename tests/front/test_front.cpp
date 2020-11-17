@@ -1,4 +1,3 @@
-
 /*
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -110,13 +109,13 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
-    ini.set<cfg::crypto::key0>(
+    ini.set<cfg::crypto::encryption_key>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     );
-    ini.set<cfg::crypto::key1>(
+    ini.set<cfg::crypto::sign_key>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -280,13 +279,13 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
-    ini.set<cfg::crypto::key0>(
+    ini.set<cfg::crypto::encryption_key>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     );
-    ini.set<cfg::crypto::key1>(
+    ini.set<cfg::crypto::sign_key>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
@@ -447,13 +446,13 @@ RED_AUTO_TEST_CASE(TestFront3)
     ini.set<cfg::video::wrm_color_depth_selection_strategy>(ColorDepthSelectionStrategy::depth24);
     ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
 
-    ini.set<cfg::crypto::key0>(
+    ini.set<cfg::crypto::encryption_key>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"
         "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
     );
-    ini.set<cfg::crypto::key1>(
+    ini.set<cfg::crypto::sign_key>(
         "\x00\x01\x02\x03\x04\x05\x06\x07"
         "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
         "\x10\x11\x12\x13\x14\x15\x16\x17"

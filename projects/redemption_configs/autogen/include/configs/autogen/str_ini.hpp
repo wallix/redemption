@@ -20,7 +20,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #nomouse = 0
 
-# values: 'low', 'medium', 'high'
+# values: low, medium, high
 #_advanced
 #encryptionLevel = low
 
@@ -562,7 +562,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #session_probe_enable_log_rotation = 1
 
 # min = 0, max = 6
-#   0: Off
 #   1: Fatal
 #   2: Error
 #   3: Info
@@ -909,7 +908,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #encodings = 
 
 # VNC server clipboard data encoding type.
-# values: 'utf-8', 'latin1'
+# values: utf-8, latin1
 #_advanced
 #server_clipboard_encoding_type = latin1
 
@@ -1015,7 +1014,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).
-# values: 'never', 'always', 'on_invalid_verification'
 #   never: Never store transferred files.
 #   always: Always store transferred files.
 #   on_invalid_verification: Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).
@@ -1092,7 +1090,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #   2: v2
 #version = 2
 
-# values: 'latin', 'cyrillic'
+# values: latin, cyrillic
 #locale = latin
 
 # (is in 1/100 second)
@@ -1166,7 +1164,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #record_path = )gen_config_ini" << (app_path(AppPath::Record)) << R"gen_config_ini(
 
 # Disable keyboard log:
-# (Please see also "Keyboard input masking level" in "session_log" section of "Connection Policy".)
+# (Please see also "Keyboard input masking level" in "session_log".)
 # min = 0, max = 7
 #   0x0: none
 #   0x1: disable keyboard log in syslog
@@ -1486,11 +1484,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 [translation]
 
-# values: 'en', 'fr'
+# values: en, fr
 #_hidden
 #language = en
 
-# values: 'Auto', 'EN', 'FR'
+# values: Auto, EN, FR
 #_advanced
 #login_language = Auto
 

@@ -111,9 +111,9 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::authentication_challenge>(true);
     ini.set_acl<cfg::context::comment>(cs);
     ini.set_acl<cfg::context::comment>(s);
-    ini.set<cfg::crypto::key0>(key);
-    // ini.set<cfg::crypto::key0>("12\x00#:\x55", 6u);
-    //ini.set<cfg::crypto::key0>("12\x00#:\x55");
+    ini.set<cfg::crypto::encryption_key>(key);
+    // ini.set<cfg::crypto::encryption_key>("12\x00#:\x55", 6u);
+    //ini.set<cfg::crypto::encryption_key>("12\x00#:\x55");
     ini.set_acl<cfg::context::display_message>(true);
     ini.set_acl<cfg::context::display_message>(false);
     ini.set_acl<cfg::context::duration>(cs);
@@ -172,11 +172,11 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::waitinforeturn>(cs);
     ini.set_acl<cfg::context::waitinforeturn>(s);
 
-    // ini.set<cfg::crypto::key0>("12\x00#:\x55", 6u);
-    //ini.set<cfg::crypto::key0>("12\x00#:\x55");
-    ini.set<cfg::crypto::key0>(key);
+    // ini.set<cfg::crypto::encryption_key>("12\x00#:\x55", 6u);
+    //ini.set<cfg::crypto::encryption_key>("12\x00#:\x55");
+    ini.set<cfg::crypto::encryption_key>(key);
     // is_same<key0:type, key1:type>
-    [](cfg::crypto::key0::type *){}(static_cast<cfg::crypto::key1::type *>(nullptr));
+    [](cfg::crypto::encryption_key::type *){}(static_cast<cfg::crypto::sign_key::type *>(nullptr));
 
     ini.set_acl<cfg::globals::auth_user>(cs);
     ini.set_acl<cfg::globals::auth_user>(s);

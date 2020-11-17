@@ -40,7 +40,8 @@ OcrParams ocr_params_from_ini(const Inifile & ini);
 
 MetaParams meta_params_from_ini(const Inifile & ini);
 
-KbdLogParams kbd_log_params_from_ini(const Inifile & ini);
+KbdLogParams kbd_log_params_capture_from_ini(const Inifile & ini);
+KbdLogParams kbd_log_params_video_from_ini(const Inifile & ini);
 
 PatternParams pattern_params_from_ini(const Inifile & ini);
 

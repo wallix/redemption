@@ -10,7 +10,7 @@
     4. [Cpp (cpp::*)](#cpp-cpp)
     5. [type](#type)
         1. [special cpp_type](#special-cpp_type)
-    6. [name](#name)
+    6. [names](#names)
     7. [desc](#desc)
     8. [default_value](#default_value)
     9. [prefix](#prefix)
@@ -23,16 +23,16 @@
 Edit `configs_specs/configs/specs/config_spec.hpp`
 
 - `CONFIG_DEFINE_TYPE` macro: declare a redemption type (forward declaration)
-- `W.section(section_name, [&]{ /* members... */ })`
-- `W.section(W.names(section_name, *::name{section_name}), [&]{ /* members... */ })`
-- `W.member(spec_attr, sesman_io | connpolicy[, back_to_selector_policy], log_policy, type, name[, desc][, default_value][, ...])`. Ordering value is not significant.
+- `W.section(names{section_name}, [&]{ /* members... */ })`
+- `W.section(names{.cpp=name, .ini=name, .sesman=name, .connpolicy=name}, [&]{ /* members... */ })`
+- `W.section(names, [&]{ /* members... */ })`
+- `W.member(spec_attr, sesman_io | connpolicy[, back_to_selector_policy], log_policy, type, names[, desc][, default_value][, ...])`. Ordering value is not significant.
 - `W.sep()`: empty line (human readable)
 
 
 
 ## Ini (spec::*)
 
-- `spec::name{"variable name"}`
 - `spec::type_<cpp_type>{}`
 
 
@@ -53,16 +53,12 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 - `iptables_in_gui`
 - `password_in_gui`
 
-Note: special parameter: `connpolicy::allow_connpolicy_and_gui`.
-
 
 
 ## Sesman (sesman::*)
 
-- `sesman::name{"variable name"}`
 - `sesman::type_<cpp_type>{}`
-- `sesman::connection_policy{name[, connpolicy_attr]}` enable connpolicy. Combinable with `connpolicy_attr`
-- `sesman::deprecated_names{"name1", ...}` (sesman -> proxy for connpolicy only)
+- `sesman::connection_policy{filetype[, connpolicy_attr]}` enable connpolicy. Combinable with `connpolicy_attr`
 
 
 ### sesman_io (sesman::constants::*)
@@ -84,7 +80,6 @@ Only with `proxy_to_sesman`, `sesman_to_proxy` and `sesman_rw`. Sesman should se
 
 ## Connection Policy (connpolicy::*)
 
-- `connpolicy::name{"variable name"}`
 - `connpolicy::section{"name"}` overwrite section name
 
 
@@ -131,15 +126,21 @@ Note: `W.member(type_<int>(), sesman::type_<bool>(), ...)` is ok.
 
 
 
-## name
+## names
 
-- `char *`: ini, sesman, connpolicy and cpp name
-- `spec::name`: ini name
-- `sesman::name`: sesman name
-- `cpp::name`: cpp name
-- `connpolicy::name`: connection policy name
+```cpp
+struct names
+{
+    std::string cpp; // cpp name and default value for ini, sesman and connpolicy
+    std::string ini {};
+    std::string sesman {};
+    std::string connpolicy {};
+};
+```
 
-Note: `W.member("fish", sesman::name{"netfish"}, ini::name{"superfish"}, ...)` is ok.
+```cpp
+W.member(names{.cpp="fish", .ini="superfish", .sesman="netfish"}, ...);
+```
 
 
 
@@ -169,25 +170,21 @@ Edit `configs_specs/configs/specs/config_type.hpp`
 
 ```cpp
 // enum { a = 1, b = 2, c = 4, ... }
-e.enumeration_flags(enum_name[, enum_desc][, enum_info])
-    [.set_string_parser()]
-    .value(value_name[, value_desc])[.alias(alias_name)...]
+e.enumeration_flags(enum_name[, enum_desc[, enum_info]])
+    .value(value_name[, value_desc])[.alias(alias_name)...][.exclude()...]
     ...
 
 // enum { a, b, c, ... }
-e.enumeration_list(enum_name[, enum_desc][, enum_info])
-    [.set_string_parser()]
-    .value(value_name[, value_desc])[.alias(alias_name)...]
+e.enumeration_list(enum_name[, enum_desc[, enum_info]])
+    .value(value_name[, value_desc])[.alias(alias_name)...][.exclude()...]
     ...
 
 // enum { a = v1, b = v2, c = v3, ... }
-e.enumeration_set(enum_name[, enum_desc][, enum_info])
-    [.set_string_parser()]
-    .value(value_name, integer_val[, value_desc])[.alias(alias_name)...]
+e.enumeration_set(enum_name[, enum_desc[, enum_info]])
+    .value(value_name, uint_val[, value_desc])[.alias(alias_name)...]
     ...
 
 // enum_info: description after values
-// set_string_parser(): use a name parser instead of a value parser
 ```
 
 

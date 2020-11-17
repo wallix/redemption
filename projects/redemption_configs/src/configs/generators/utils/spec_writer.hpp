@@ -73,12 +73,6 @@ using is_t_convertible = decltype(detail::is_t_convertible_impl<To>(*static_cast
 template<class From, template<class...> class To>
 constexpr bool is_t_convertible_v = is_t_convertible<From, To>::value;
 
-template<class T>
-T const& get_elem(T const& x)
-{
-    return x;
-}
-
 template<template<class...> class T, class... Ts>
 T<Ts...> const& get_t_elem(T<Ts...> const& x)
 {
@@ -117,21 +111,10 @@ template<class T, class Pack, class D>
 decltype(auto) value_or(Pack const& pack, D&& default_)
 {
     if constexpr (is_convertible_v<Pack, T>) {
-        return get_elem<T>(pack);
+        return static_cast<T const&>(pack);
     }
     else {
         return D(static_cast<D&&>(default_));
-    }
-}
-
-template<class T, class Pack>
-std::string const& get_name(Pack const & pack)
-{
-    if constexpr (is_convertible_v<Pack, T>) {
-        return get_elem<T>(pack).name;
-    }
-    else {
-        return get_elem<cfg_attributes::name_>(pack).name;
     }
 }
 
@@ -203,63 +186,33 @@ namespace detail_
                 x.spec
             };
         }
-        else if constexpr (is_convertible_v<T, char const*>) {
-            return cfg_attributes::name_{x};
-        }
         else {
             return T(x);
         }
     }
 
-    template<class... Ts>
-    struct check_name_type
+    inline void check_names(
+        cfg_attributes::names const& names,
+        bool has_ini, bool has_sesman, bool has_connpolicy)
     {
-        template<class T>
-        static constexpr bool is_name = (std::is_same_v<Ts, T> || ...);
-    };
+        if (!has_ini && !names.ini.empty())
+            throw std::runtime_error("names.ini without ini for " + names.cpp);
 
-    using name_type_checker = cfg_attributes::names::f<check_name_type>;
+        if (!has_sesman && !names.sesman.empty())
+            throw std::runtime_error("names.sesman without sesman for " + names.cpp);
 
-    template<class T>
-    auto normalize_name(T const& x)
-    {
-        if constexpr (is_convertible_v<T, char const*>) {
-            return cfg_attributes::name_{x};
-        }
-        else {
-            static_assert(name_type_checker::template is_name<T>, "not a name type");
-            return T(x);
-        }
+        if (has_sesman && !names.connpolicy.empty())
+            throw std::runtime_error("names.connpolicy with sesman for " + names.cpp);
+
+        if (!has_connpolicy && !names.connpolicy.empty())
+            throw std::runtime_error("names.connpolicy without connection_policy for " + names.cpp);
+
+        if (has_connpolicy && !names.sesman.empty())
+            throw std::runtime_error("names.sesman with connection_policy for " + names.cpp);
     }
-
-    template<class BaseName, class... Name>
-    struct Names_
-    {
-        template<class Pack>
-        explicit Names_(Pack const& pack)
-        : names{
-            static_cast<BaseName const&>(pack).name,
-            value_or<Name>(pack, Name{}).name...
-        }
-        {}
-
-        template<class T>
-        std::string const& name() const
-        {
-            std::string const* p = &names[0];
-            std::size_t i = 1;
-            (void)(((std::is_same_v<T, Name> && ((void)(
-                !names[i].empty() && ((void)(p = &names[i]), true)
-            ), true)) || !++i) || ...);
-            return *p;
-        }
-
-        std::array<std::string, 1+sizeof...(Name)> names;
-    };
 }
 
-using Names = cfg_attributes::names::f<detail_::Names_>;
-
+using Names = cfg_attributes::names;
 
 template<class Dispatch>
 struct ConfigSpecWrapper
@@ -272,45 +225,30 @@ struct ConfigSpecWrapper
     {}
 
 private:
-    Names current_names {pack_type<cfg_attributes::name_>{{""}}};
-
-    template<class... Ts>
-    static Names names_impl(Ts&&... s)
-    {
-        return Names{pack_type<Ts...>{static_cast<Ts&&>(s)...}};
-    }
+    Names current_section_names {};
 
 public:
-    template<class... Ts>
-    static Names names(Ts const&... s)
-    {
-        return names_impl(detail_::normalize_name(s)...);
-    }
-
     template<class Fn>
     void section(Names&& names, Fn fn)
     {
-        current_names = std::move(names);
+        current_section_names = std::move(names);
+        assert(current_section_names.sesman.empty());
 
         dispatch([&](auto&... writer){
-            (..., writer.do_start_section(current_names, current_names.template name<
-                typename std::remove_reference_t<decltype(writer)>::attribute_name_type>()
-            ));
+            (..., writer.do_start_section(current_section_names));
         });
 
         fn();
 
         dispatch([&](auto&... writer){
-            (..., writer.do_stop_section(current_names, current_names.template name<
-                typename std::remove_reference_t<decltype(writer)>::attribute_name_type>()
-            ));
+            (..., writer.do_stop_section(current_section_names));
         });
     }
 
     template<class Fn>
     void section(char const* name, Fn fn)
     {
-        section(names(name), fn);
+        section(Names{name}, fn);
     }
 
     template<class... Ts>
@@ -324,18 +262,12 @@ public:
             "sesman::io or connection_policy are missing");
         static_assert(!(has_conn_policy && has_sesman_io),
             "has sesman::io with connection_policy");
-        static_assert(
-            !(has_conn_policy && (
-             (is_convertible_v<Ts, cfg_attributes::sesman::name> || ...)
-            )),
-            "sesman::name with connection_policy");
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
         static_assert(
             !has_conn_policy || ((
                 is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>
              || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::hidden_in_gui)>
-             || is_convertible_v<Ts, decltype(cfg_attributes::connpolicy::allow_connpolicy_and_gui)>
             ) || ...),
             "sesman::connection_policy only with:\n- spec::constants::no_ini_no_gui\n- spec::constants::hidden_in_gui\n- connpolicy::allow_connpolicy_and_gui");
         constexpr bool is_target_context = (is_convertible_v<Ts, cfg_attributes::sesman::internal::is_target_context> || ...);
@@ -346,38 +278,18 @@ public:
         using infos_type = pack_type<decltype(detail_::normalize_info_arg(args))...>;
         const infos_type infos{detail_::normalize_info_arg(args)...};
 
+        detail_::check_names(infos,
+            !(... || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>),
+            has_sesman_io, has_conn_policy);
+
         dispatch([&](auto&... writer){
             (..., writer.evaluate_member(
-                current_names,
-                current_names.template name<
-                    typename std::remove_reference_t<decltype(writer)>::attribute_name_type
-                >(),
+                current_section_names,
                 infos,
                 this->enums
             ));
         });
     }
-};
-
-
-template<class Inherit>
-struct EvaluatorBase
-{
-    Inherit & inherit() { return static_cast<Inherit&>(*this); }
-
-
-    template<class T>
-    void write(T const & x) { this->inherit().do_write(x); }
-
-    template<class T, class... Ts>
-    void write(T const & x, pack_type<Ts...> const & pack)
-    { this->inherit().do_write(x, pack); }
-
-private:
-    void do_start_section(std::string const & section_name) { (void)section_name; }
-    void do_stop_section(std::string const & section_name) { (void)section_name; }
-    void do_init() {}
-    void do_finish() {}
 };
 
 }

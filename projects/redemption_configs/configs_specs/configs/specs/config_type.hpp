@@ -26,7 +26,26 @@ namespace cfg_specs {
 
 inline void config_type_definition(type_enumerations & e)
 {
-    // TODO add enumeration underlying type
+    // e.enumeration_list("ModuleType")
+    //   .value("login")
+    //   .value("selector")
+    //   .value("confirm")
+    //   .value("challenge")
+    //   .value("valid")
+    //   .value("transitory")
+    //   .value("close")
+    //   .value("close_back")
+    //   .value("interactive_target")
+    //   .value("RDP")
+    //   .value("VNC")
+    //   .value("INTERNAL")
+    //   .value("waitinfo")
+    //   .value("bouncer2")
+    //   .value("autotest")
+    //   .value("widget_message")
+    //   .value("widget_test")
+    //   .value("card")
+    // ;
 
     e.enumeration_flags("CaptureFlags", "Specifies the type of data to be captured:")
       .value("none")
@@ -40,19 +59,16 @@ inline void config_type_definition(type_enumerations & e)
       .value("low")
       .value("medium")
       .value("high")
-      .set_string_parser()
     ;
 
     e.enumeration_list("Language")
       .value("en")
       .value("fr")
-      .set_string_parser()
     ;
 
     e.enumeration_list("ClipboardEncodingType")
       .value("utf8").alias("utf-8")
       .value("latin1")
-      .set_string_parser()
     ;
 
     // KeyboardLogFlags - "meta"
@@ -125,7 +141,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("retry_without_session_probe", "reconnect without Session Probe.")
     ;
 
-    // TODO enum name value
     e.enumeration_list("VncBogusClipboardInfiniteLoop")
       .value("delayed")
       .value("duplicated")
@@ -159,7 +174,6 @@ inline void config_type_definition(type_enumerations & e)
     e.enumeration_list("OcrLocale")
       .value("latin")
       .value("cyrillic")
-      .set_string_parser()
     ;
 
     e.enumeration_list("BogusNumberOfFastpathInputEvent")
@@ -184,7 +198,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("allow", "Forward Console mode request from client to the target.")
       .value("force", "Force Console mode on target regardless of client request.")
       .value("forbid", "Block Console mode request from client.")
-      .set_string_parser()
     ;
 
     e.enumeration_flags("SessionProbeDisabledFeature")
@@ -204,7 +217,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("never", "Never store transferred files.")
       .value("always", "Always store transferred files.")
       .value("on_invalid_verification", "Transferred files are stored only if file verification is invalid. File verification by ICAP service must be enabled (in section file_verification).")
-      .set_string_parser()
     ;
 
     e.enumeration_list("SessionProbeOnAccountManipulation", "For targets running WALLIX BestSafe only.")
@@ -239,7 +251,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("Auto")
       .value("EN")
       .value("FR")
-      .set_string_parser()
     ;
 }
 

@@ -64,7 +64,22 @@ MetaParams meta_params_from_ini(const Inifile & ini)
     };
 }
 
-KbdLogParams kbd_log_params_from_ini(const Inifile & ini)
+KbdLogParams kbd_log_params_capture_from_ini(const Inifile & ini)
+{
+    auto const disable_keyboard_log = ini.get<cfg::capture::disable_keyboard_log>();
+    auto const keyboard_input_fully_masked = (
+            ini.get<cfg::session_log::keyboard_input_masking_level>() ==
+            ::KeyboardInputMaskingLevel::fully_masked
+        );
+    return KbdLogParams{
+          !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlagsCP::wrm)
+        , !keyboard_input_fully_masked && !bool(disable_keyboard_log & KeyboardLogFlagsCP::syslog)
+        , !keyboard_input_fully_masked && ini.get<cfg::session_log::enable_session_log>()
+        , !keyboard_input_fully_masked
+    };
+}
+
+KbdLogParams kbd_log_params_video_from_ini(const Inifile & ini)
 {
     auto const disable_keyboard_log = ini.get<cfg::video::disable_keyboard_log>();
     auto const keyboard_input_fully_masked = (
