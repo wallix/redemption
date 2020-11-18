@@ -49,71 +49,71 @@ namespace cpp_config_writer
 
 using namespace cfg_attributes;
 
-template<class T>
-void write_value(std::ostream& out, T const & x)
-{
-    if constexpr (std::is_enum_v<T>) {
-        using ll = long long;
-        out << " = static_cast<type>(" << ll{static_cast<std::underlying_type_t<T>>(x)} << ")";
-    }
-    else if constexpr (std::is_same_v<T, bool>) {
-        out << '{' << (x ? "true" : "false") << '}';
-    }
-    else {
-        out << '{' << x << '}';
-    }
-}
-
-inline void write_value(std::ostream& out, const char * s)
-{ out << " = \"" << io_quoted2{s} << '"';  }
-
-inline void write_value(std::ostream& out, std::string const & str)
-{ write_value(out, str.c_str()); }
-
-inline void write_value(std::ostream& out, cpp::expr x)
-{ out << " = " << x.value; }
-
-template<class T, class Ratio>
-void write_value(std::ostream& out, std::chrono::duration<T, Ratio> x) { out << '{' << x.count() << '}'; }
-
-
 namespace impl
 {
-    template<class T, class U>
-    void write_assignable_default(std::ostream& out, type_<T>, default_<U> const& d)
-    { write_value(out, d.value); }
 
-    template<unsigned N, class U>
-    void write_assignable_default(std::ostream& out, type_<types::fixed_binary<N>>, default_<U> const& d)
-    {
-        if (d.value.size() != N) {
-            throw std::runtime_error("invalide keys size");
+template<class T>
+void write_value(std::ostream& out, [[maybe_unused]] type_enumerations& enums, T const & x)
+{
+    if constexpr (std::is_enum_v<T>) {
+        out << type_name<T>();
+        type_enumeration const& e = enums.get_enum<T>();
+        auto ull = static_cast<unsigned long long>(x);
+        for (type_enumeration::value_type const& v : e.values) {
+            if (v.val == ull) {
+                out << "::" << v.name;
+                return ;
+            }
         }
-        out << "{{" << io_hexkey{d.value.c_str(), N, "0x", ", "} << "}}";
+        // probably an enum flag
+        out << "(" << +static_cast<std::underlying_type_t<T>>(x) << ")";
     }
-
-    template<class U>
-    void write_assignable_default(std::ostream& out, type_<types::file_permission>, default_<U> const& d)
-    {
-        char octal[32]{};
-        auto r = std::to_chars(std::begin(octal), std::end(octal), d.value, 8);
-        if (r.ec != std::errc()) {
-            throw std::runtime_error(str_concat(
-                "invalide file_permission value: ", std::make_error_code(r.ec).message()));
-        }
-        out << "{0" << octal << "}";
+    else if constexpr (std::is_same_v<T, bool>) {
+        out << (x ? "true" : "false");
+    }
+    else {
+        out << x;
     }
 }
 
-template<class Pack>
-void write_assignable_default(std::ostream& out, Pack& infos)
+inline void write_value(std::ostream& out, type_enumerations& /*enums*/, const char * s)
+{ out << "\"" << io_quoted2{s} << "\"";  }
+
+inline void write_value(std::ostream& out, type_enumerations& enums, std::string const & str)
+{ write_value(out, enums, str.c_str()); }
+
+inline void write_value(std::ostream& out, type_enumerations& /*enums*/, cpp::expr x)
+{ out << x.value; }
+
+template<class T, class Ratio>
+void write_value(std::ostream& out, type_enumerations& /*enums*/, std::chrono::duration<T, Ratio> x)
+{ out << x.count(); }
+
+}
+
+template<class T, class U>
+void write_assignable_default(std::ostream& out, type_enumerations& enums, type_<T>, default_<U> const& d)
+{ impl::write_value(out, enums, d.value); }
+
+template<unsigned N, class U>
+void write_assignable_default(std::ostream& out, type_enumerations& /*enums*/, type_<types::fixed_binary<N>>, default_<U> const& d)
 {
-    if constexpr (is_t_convertible_v<Pack, default_>) {
-        impl::write_assignable_default(out, infos, infos);
+    if (d.value.size() != N) {
+        throw std::runtime_error("invalide keys size");
     }
-    else {
-        out << "{}";
+    out << "{" << io_hexkey{d.value.c_str(), N, "0x", ", "} << "}";
+}
+
+template<class U>
+void write_assignable_default(std::ostream& out, type_enumerations& /*enums*/, type_<types::file_permission>, default_<U> const& d)
+{
+    char octal[32]{};
+    auto r = std::to_chars(std::begin(octal), std::end(octal), d.value, 8);
+    if (r.ec != std::errc()) {
+        throw std::runtime_error(str_concat(
+            "invalide file_permission value: ", std::make_error_code(r.ec).message()));
     }
+    out << "0" << octal;
 }
 
 
@@ -330,13 +330,14 @@ struct CppConfigWriterBase
     }
 
     template<class Pack>
-    void evaluate_member(Names const& section_names, Pack const & infos, type_enumerations& /*enums*/)
+    void evaluate_member(Names const& section_names, Pack const & infos, type_enumerations& enums)
     {
         Names const& names = infos;
         std::string const& varname = names.cpp;
 
         auto type = get_t_elem<cfg_attributes::type_>(infos);
-        this->members.push_back({varname, alignof(typename decltype(type)::type)});
+        using cpp_type_t = typename decltype(type)::type;
+        this->members.push_back({varname, alignof(cpp_type_t)});
 
         std::string const & varname_with_section = section_names.cpp.empty()
             ? varname
@@ -389,7 +390,18 @@ struct CppConfigWriterBase
             this->out_member_ << "    /// sesmanName: " << sesman_name << " <br/>\n";
         }
 
-        this->out_member_ << "    /// default: "; write_assignable_default(this->out_member_, infos); this->out_member_ << " <br/>\n";
+        constexpr bool has_default = is_t_convertible_v<Pack, default_>;
+        this->out_member_ << "    /// default: ";
+        if constexpr (has_default) {
+            write_assignable_default(this->out_member_, enums, type, infos);
+        }
+        else if constexpr (std::is_same_v<cpp_type_t, bool>) {
+            this->out_member_ << "false";
+        }
+        else {
+            this->out_member_ << (is_convertible_v<cpp_type_t, types::integer_base> ? "0" : "{}");
+        }
+        this->out_member_ << " <br/>\n";
         this->out_member_ << "    struct " << varname_with_section << " {\n";
         this->out_member_ << "        static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";
         this->out_member_ << "        static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman_io::proxy_to_sesman) ? "true" : "false") << ";\n";
@@ -420,9 +432,11 @@ struct CppConfigWriterBase
         }
 
         // write value
-        this->out_member_ << "        type value";
-        write_assignable_default(this->out_member_, infos);
-        this->out_member_ << ";\n";
+        this->out_member_ << "        type value { ";
+        if constexpr (has_default) {
+            write_assignable_default(this->out_member_, enums, type, infos);
+        }
+        this->out_member_ << " };\n";
 
         this->out_member_ << "    };\n";
 
