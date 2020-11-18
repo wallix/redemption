@@ -121,53 +121,53 @@ public:
     }
 
 
-    auto create_mod(ModuleIndex target_module) -> ModPack
+    auto create_mod(ModuleName target_module) -> ModPack
     {
         LOG(LOG_INFO, "New Module: %s", get_module_name(target_module));
 
         switch (target_module)
         {
-        case MODULE_INTERNAL_BOUNCER2:
+        case ModuleName::bouncer2:
         {
             auto mod_pack = this->create_mod_bouncer();
             mod_pack.enable_osd = true;
             return mod_pack;
         }
-        case MODULE_INTERNAL_TEST:
+        case ModuleName::autotest:
             return this->create_mod_replay();
-        case MODULE_INTERNAL_WIDGETTEST:
+        case ModuleName::widgettest:
             return this->create_widget_test_mod();
-        case MODULE_INTERNAL_CARD:
+        case ModuleName::card:
             return this->create_test_card_mod();
-        case MODULE_INTERNAL_SELECTOR:
+        case ModuleName::selector:
             return this->create_selector_mod();
-        case MODULE_INTERNAL_CLOSE:
+        case ModuleName::close:
             return this->create_close_mod();
-        case MODULE_INTERNAL_CLOSE_BACK:
+        case ModuleName::close_back:
             return this->create_close_mod_back_to_selector();
-        case MODULE_INTERNAL_TARGET:
+        case ModuleName::interactive_target:
             return this->create_interactive_target_mod();
-        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
+        case ModuleName::valid:
             return this->create_valid_message_mod();
-        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
+        case ModuleName::confirm:
             return this->create_display_message_mod();
-        case MODULE_INTERNAL_DIALOG_CHALLENGE:
+        case ModuleName::challenge:
             return this->create_dialog_challenge_mod();
-        case MODULE_INTERNAL_WAIT_INFO:
+        case ModuleName::waitinfo:
             return this->create_wait_info_mod();
-        case MODULE_TRANSITORY:
-        case MODULE_INTERNAL_TRANSITION:
+        case ModuleName::transitory:
+        case ModuleName::INTERNAL_TRANSITION:
             return this->create_transition_mod();
-        case MODULE_INTERNAL_LOGIN:
+        case ModuleName::login:
             return this->create_login_mod();
-        case MODULE_RDP:
+        case ModuleName::RDP:
         {
             auto mod_pack = this->create_rdp_mod();
             mod_pack.enable_osd = true;
             mod_pack.connected = true;
             return mod_pack;
         }
-        case MODULE_VNC:
+        case ModuleName::VNC:
         {
             auto mod_pack = this->create_vnc_mod();
             mod_pack.enable_osd = true;

@@ -322,7 +322,7 @@ public:
                 close_log();
                 this->session_log_is_open = false;
             }
-            this->ini.set_acl<cfg::context::module>("close");
+            this->ini.set_acl<cfg::context::module>(ModuleName::close);
             this->disconnect_target_sent = true;
         }
     }

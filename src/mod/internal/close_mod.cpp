@@ -38,7 +38,7 @@ static FlatWabClose build_close_widget(
 
         explicit temporary_text(CloseModVariables vars)
         {
-            if (vars.get<cfg::context::module>() == "selector") {
+            if (vars.get<cfg::context::module>() == ModuleName::selector) {
                 snprintf(text, sizeof(text), "%s", TR(trkeys::selector, language(vars)).c_str());
             }
             else {

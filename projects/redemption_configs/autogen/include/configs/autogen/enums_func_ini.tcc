@@ -4,6 +4,119 @@
 namespace
 {
 
+inline constexpr zstring_view enum_zstr_ModuleName[] {
+    "UNKNOWN"_zv,
+    "INTERNAL_TRANSITION"_zv,
+    "exit"_zv,
+    "login"_zv,
+    "selector"_zv,
+    "confirm"_zv,
+    "challenge"_zv,
+    "valid"_zv,
+    "transitory"_zv,
+    "close"_zv,
+    "close_back"_zv,
+    "interactive_target"_zv,
+    "RDP"_zv,
+    "VNC"_zv,
+    "INTERNAL"_zv,
+    "waitinfo"_zv,
+    "bouncer2"_zv,
+    "autotest"_zv,
+    "widgettest"_zv,
+    "card"_zv,
+};
+
+inline constexpr zstring_view enum_zint_ModuleName[] {
+    "0"_zv,
+    "1"_zv,
+    "2"_zv,
+    "3"_zv,
+    "4"_zv,
+    "5"_zv,
+    "6"_zv,
+    "7"_zv,
+    "8"_zv,
+    "9"_zv,
+    "10"_zv,
+    "11"_zv,
+    "12"_zv,
+    "13"_zv,
+    "14"_zv,
+    "15"_zv,
+    "16"_zv,
+    "17"_zv,
+    "18"_zv,
+    "19"_zv,
+};
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<ModuleName> /*type*/,
+    ModuleName x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<ModuleName>::is_valid(uint8_t(x)));
+    return enum_zint_ModuleName[uint8_t(x)];
+}
+
+zstring_view assign_zbuf_from_cfg(
+    writable_chars_view zbuf,
+    cfg_s_type<std::string> /*type*/,
+    ModuleName x
+){
+    (void)zbuf;
+    assert(is_valid_enum_value<ModuleName>::is_valid(uint8_t(x)));
+    return enum_zstr_ModuleName[uint8_t(x)];
+}
+
+parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<ModuleName> /*type*/, bytes_view value)
+{
+    using ul = uint8_t;
+
+    ul xi = 0;
+    if (parse_error err = parse_integral(
+        xi, value,
+        zero_integral<ul>(),
+        std::integral_constant<ul, 19>()
+    )) {
+        return err;
+    }
+
+    x = static_cast<ModuleName>(xi);
+    return no_parse_error;
+}
+
+
+inline constexpr std::pair<chars_view, ModuleName> enum_str_value_ModuleName[] {
+    {"UNKNOWN"_av, ModuleName::UNKNOWN},
+    {"INTERNAL_TRANSITION"_av, ModuleName::INTERNAL_TRANSITION},
+    {"EXIT"_av, ModuleName::exit},
+    {"LOGIN"_av, ModuleName::login},
+    {"SELECTOR"_av, ModuleName::selector},
+    {"CONFIRM"_av, ModuleName::confirm},
+    {"CHALLENGE"_av, ModuleName::challenge},
+    {"VALID"_av, ModuleName::valid},
+    {"TRANSITORY"_av, ModuleName::transitory},
+    {"CLOSE"_av, ModuleName::close},
+    {"CLOSE_BACK"_av, ModuleName::close_back},
+    {"INTERACTIVE_TARGET"_av, ModuleName::interactive_target},
+    {"RDP"_av, ModuleName::RDP},
+    {"VNC"_av, ModuleName::VNC},
+    {"INTERNAL"_av, ModuleName::INTERNAL},
+    {"WAITINFO"_av, ModuleName::waitinfo},
+    {"BOUNCER2"_av, ModuleName::bouncer2},
+    {"AUTOTEST"_av, ModuleName::autotest},
+    {"WIDGETTEST"_av, ModuleName::widgettest},
+    {"CARD"_av, ModuleName::card},
+};
+
+parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
+{
+    return parse_str_value_pairs<enum_str_value_ModuleName>(
+        x, value, "bad value, expected: UNKNOWN, INTERNAL_TRANSITION, exit, login, selector, confirm, challenge, valid, transitory, close, close_back, interactive_target, RDP, VNC, INTERNAL, waitinfo, bouncer2, autotest, widgettest, card");
+}
+
 zstring_view assign_zbuf_from_cfg(
     writable_chars_view zbuf,
     cfg_s_type<CaptureFlags> /*type*/,

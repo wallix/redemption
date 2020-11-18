@@ -11,6 +11,12 @@ namespace configs
 {
 
 template<>
+struct str_buffer_size<ModuleName>
+{
+    static const std::size_t value = 0;
+};
+
+template<>
 struct str_buffer_size<Level>
 {
     static const std::size_t value = 0;

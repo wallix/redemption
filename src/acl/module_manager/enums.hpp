@@ -24,122 +24,42 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include <string_view>
 
-enum ModuleIndex : int
+inline ModuleName get_internal_module_id_from_target(std::string_view target_name)
 {
-    MODULE_EXIT,
-    MODULE_VNC,
-    MODULE_RDP,
-    MODULE_INTERNAL,
-    MODULE_INTERNAL_CLOSE,
-    MODULE_INTERNAL_CLOSE_BACK,
-    MODULE_INTERNAL_LOGIN,
-    MODULE_INTERNAL_CARD,
-    MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
-    MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
-    MODULE_INTERNAL_DIALOG_CHALLENGE,
-    MODULE_INTERNAL_TARGET,
-    MODULE_INTERNAL_BOUNCER2,
-    MODULE_INTERNAL_TEST,
-    MODULE_INTERNAL_SELECTOR,
-    MODULE_INTERNAL_WIDGETTEST,
-    MODULE_INTERNAL_WAIT_INFO,
-    MODULE_INTERNAL_TRANSITION,
-    MODULE_TRANSITORY,
-    MODULE_AUTH,
-
-    MODULE_UNKNOWN
-};
-
-inline ModuleIndex get_internal_module_id_from_target(std::string_view target_name)
-{
-    struct {
-        std::string_view name;
-        ModuleIndex id;
-    } names_id[5] = {
-            {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
-            {"autotest",           MODULE_INTERNAL_TEST},
-            {"widget_message",     MODULE_INTERNAL_SELECTOR},
-            {"widgettest",         MODULE_INTERNAL_WIDGETTEST},
-            {"card",               MODULE_INTERNAL_CARD},
-    };
-    ModuleIndex mi = MODULE_EXIT;
-    for (auto f: names_id){
-        if (f.name == target_name){
-            mi = f.id;
-            break;
-        }
-    }
-    return mi;
+    if (target_name == "bouncer2") return ModuleName::bouncer2;
+    if (target_name == "autotest") return ModuleName::autotest;
+    if (target_name == "widget_message") return ModuleName::selector;
+    if (target_name == "widgettest") return ModuleName::widgettest;
+    if (target_name == "card") return ModuleName::card;
+    return ModuleName::exit;
 }
 
-
-inline ModuleIndex get_module_id(std::string_view module_name)
-{
-    struct {
-        std::string_view name;
-        ModuleIndex id;
-    } names_id[20] = {
-            {"login",              MODULE_INTERNAL_LOGIN},
-            {"selector",           MODULE_INTERNAL_SELECTOR},
-            {"selector_legacy",    MODULE_INTERNAL_SELECTOR},
-            {"confirm",            MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE},
-            {"challenge",          MODULE_INTERNAL_DIALOG_CHALLENGE},
-            {"valid",              MODULE_INTERNAL_DIALOG_VALID_MESSAGE},
-            {"transitory",         MODULE_TRANSITORY},
-            {"close",              MODULE_INTERNAL_CLOSE},
-            {"close_back",         MODULE_INTERNAL_CLOSE_BACK},
-            {"interactive_target", MODULE_INTERNAL_TARGET},
-            {"RDP",                MODULE_RDP},
-            {"VNC",                MODULE_VNC},
-            {"INTERNAL",           MODULE_INTERNAL},
-            {"waitinfo",           MODULE_INTERNAL_WAIT_INFO},
-            {"bouncer2",           MODULE_INTERNAL_BOUNCER2},
-            {"autotest",           MODULE_INTERNAL_TEST},
-            {"widget_message",     MODULE_INTERNAL_SELECTOR},
-            {"widget_test",        MODULE_INTERNAL_WIDGETTEST},
-            {"card",               MODULE_INTERNAL_CARD},
-            {"exit",               MODULE_INTERNAL_CARD}
-    };
-
-    ModuleIndex mi = MODULE_UNKNOWN;
-    for (auto f: names_id){
-        if (f.name == module_name){
-            mi = f.id;
-            break;
-        }
-    }
-    return mi;
-}
-
-inline const char * get_module_name(ModuleIndex module_id) noexcept
+inline const char * get_module_name(ModuleName module_id) noexcept
 {
     switch (module_id) {
-        case MODULE_EXIT:                            return "MODULE_EXIT";
-        case MODULE_VNC:                             return "MODULE_VNC";
-        case MODULE_RDP:                             return "MODULE_RDP";
-        case MODULE_INTERNAL:                        return "MODULE_INTERNAL";
-        case MODULE_INTERNAL_CLOSE:                  return "MODULE_INTERNAL_CLOSE";
-        case MODULE_INTERNAL_CLOSE_BACK:             return "MODULE_INTERNAL_CLOSE_BACK";
-        case MODULE_INTERNAL_LOGIN:                  return "MODULE_INTERNAL_LOGIN";
-        case MODULE_INTERNAL_CARD:                   return "MODULE_INTERNAL_CARD";
-        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE: return "MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE";
-        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:   return "MODULE_INTERNAL_DIALOG_VALID_MESSAGE";
-        case MODULE_INTERNAL_DIALOG_CHALLENGE:       return "MODULE_INTERNAL_DIALOG_CHALLENGE";
-        case MODULE_INTERNAL_TARGET:                 return "MODULE_INTERNAL_TARGET";
-        case MODULE_INTERNAL_BOUNCER2:               return "MODULE_INTERNAL_BOUNCER2";
-        case MODULE_INTERNAL_TEST:                   return "MODULE_INTERNAL_TEST";
-        case MODULE_INTERNAL_SELECTOR:               return "MODULE_INTERNAL_SELECTOR";
-        case MODULE_INTERNAL_WIDGETTEST:             return "MODULE_INTERNAL_WIDGETTEST";
-        case MODULE_INTERNAL_WAIT_INFO:              return "MODULE_INTERNAL_WAIT_INFO";
-        case MODULE_INTERNAL_TRANSITION:             return "MODULE_INTERNAL_TRANSITION";
-        case MODULE_TRANSITORY:                      return "MODULE_TRANSITORY";
-        case MODULE_AUTH:                            return "MODULE_AUTH";
-        case MODULE_UNKNOWN: break;
+        case ModuleName::INTERNAL_TRANSITION:   return "MODULE_INTERNAL_TRANSITION";
+        case ModuleName::exit:                  return "MODULE_EXIT";
+        case ModuleName::VNC:                   return "MODULE_VNC";
+        case ModuleName::RDP:                   return "MODULE_RDP";
+        case ModuleName::INTERNAL:              return "MODULE_INTERNAL";
+        case ModuleName::close:                 return "MODULE_INTERNAL_CLOSE";
+        case ModuleName::close_back:            return "MODULE_INTERNAL_CLOSE_BACK";
+        case ModuleName::login:                 return "MODULE_INTERNAL_LOGIN";
+        case ModuleName::card:                  return "MODULE_INTERNAL_CARD";
+        case ModuleName::confirm:               return "MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE";
+        case ModuleName::valid:                 return "MODULE_INTERNAL_DIALOG_VALID_MESSAGE";
+        case ModuleName::challenge:             return "MODULE_INTERNAL_DIALOG_CHALLENGE";
+        case ModuleName::interactive_target:    return "MODULE_INTERNAL_TARGET";
+        case ModuleName::bouncer2:              return "MODULE_INTERNAL_BOUNCER2";
+        case ModuleName::autotest:              return "MODULE_INTERNAL_TEST";
+        case ModuleName::selector:              return "MODULE_INTERNAL_SELECTOR";
+        case ModuleName::widgettest:            return "MODULE_INTERNAL_WIDGETTEST";
+        case ModuleName::waitinfo:              return "MODULE_INTERNAL_WAIT_INFO";
+        case ModuleName::transitory:            return "MODULE_TRANSITORY";
+        case ModuleName::UNKNOWN: break;
     }
 
     return "<unknown>";
 }
-

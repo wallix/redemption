@@ -184,7 +184,7 @@ class ModWrapper final : public gdi::OsdApi
 
 public:
     // TODO should be private
-    ModuleIndex current_mod = MODULE_UNKNOWN;
+    ModuleName current_mod = ModuleName::UNKNOWN;
     // TODO should be private
     bool target_info_is_shown = false;
 
@@ -295,13 +295,14 @@ public:
         return (this->modi != &this->no_mod) && this->get_mod()->is_up_and_running();
     }
 
-    void set_mod(ModuleIndex next_state, ModPack mod_pack)
+    void set_mod(ModuleName next_state, ModPack mod_pack)
     {
         // The end of session is done when existing RDP or VNC connected module
         // The open counterpart is done before opening socket
         if (next_state != this->current_mod){
-            if ((this->current_mod == MODULE_RDP)
-            ||  (this->current_mod == MODULE_VNC)){
+            if (this->current_mod == ModuleName::RDP
+             || this->current_mod == ModuleName::VNC
+            ) {
                 sesman.set_disconnect_target();
             }
         }

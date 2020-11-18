@@ -218,7 +218,7 @@ class Session
         }
     };
 
-    ModuleIndex last_state = MODULE_UNKNOWN;
+    ModuleName last_state = ModuleName::UNKNOWN;
     Inifile & ini;
 
     static const time_t select_timeout_tv_sec = 3;
@@ -385,9 +385,9 @@ private:
     }
 
 
-    void new_mod(ModuleIndex next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Front & front)
+    void new_mod(ModuleName next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Front & front)
     {
-        if (mod_wrapper.current_mod != MODULE_INTERNAL_TRANSITION){
+        if (mod_wrapper.current_mod != ModuleName::INTERNAL_TRANSITION){
             this->last_state = mod_wrapper.current_mod;
             LOG_IF(VerboseSession::has_verbose_trace(ini),
                 LOG_INFO, "new_mod::changed state Current Mod is %s Previous %s next %s",
@@ -398,15 +398,15 @@ private:
         }
 
         if (mod_wrapper.current_mod != next_state) {
-            if ((mod_wrapper.current_mod == MODULE_RDP) ||
-                (mod_wrapper.current_mod == MODULE_VNC)) {
+            if ((mod_wrapper.current_mod == ModuleName::RDP) ||
+                (mod_wrapper.current_mod == ModuleName::VNC)) {
                 front.must_be_stop_capture();
             }
         }
 
         switch (next_state) {
-            case MODULE_RDP:
-            case MODULE_VNC:
+            case ModuleName::RDP:
+            case ModuleName::VNC:
                 this->target_connection_start_time = tvtime();
                 break;
             default:
@@ -423,18 +423,19 @@ private:
                              Sesman & sesman,
                              ClientExecute & rail_client_execute)
     {
-        auto next_state = get_module_id(ini.get<cfg::context::module>());
+        auto next_state = ini.get<cfg::context::module>();
 
         switch (next_state){
-        case MODULE_TRANSITORY: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
+        case ModuleName::transitory: // NO MODULE CHANGE INFO YET, ASK MORE FROM ACL
         {
             // In case of transitory we are still expecting spontaneous data
             this->remote_answer = true;
-            auto next_state = MODULE_INTERNAL_TRANSITION;
+            auto next_state = ModuleName::INTERNAL_TRANSITION;
             this->new_mod(next_state, mod_wrapper, mod_factory, front);
-        } // case next_state == MODULE_TRANSITORY  in switch (next_state)
+        }
         break;
-        case MODULE_RDP:
+
+        case ModuleName::RDP:
         {
             if (mod_wrapper.is_connected()) {
                 if (ini.get<cfg::context::auth_error_message>().empty()) {
@@ -470,7 +471,8 @@ private:
             }
         } // case next_state == MODULE_RDP  in switch (next_state)
         break;
-        case MODULE_VNC:
+
+        case ModuleName::VNC:
         {
             if (mod_wrapper.is_connected()) {
                 if (ini.get<cfg::context::auth_error_message>().empty()) {
@@ -498,7 +500,8 @@ private:
 
         } // case next_state == MODULE_VNC  in switch (next_state)
         break;
-        case MODULE_INTERNAL:
+
+        case ModuleName::INTERNAL:
         {
             next_state = get_internal_module_id_from_target(ini.get<cfg::context::target_host>());
             if (next_state != last_state){
@@ -509,36 +512,41 @@ private:
         } // case next_state == MODULE_INTERNAL  in switch (next_state)
         break;
 
-        case MODULE_UNKNOWN:
-        case MODULE_INTERNAL_CLOSE:
-        case MODULE_INTERNAL_CLOSE_BACK:
+        case ModuleName::UNKNOWN:
+        case ModuleName::close:
+        case ModuleName::close_back:
             throw Error(ERR_SESSION_CLOSE_MODULE_NEXT);
 
-        case MODULE_INTERNAL_LOGIN:
+        case ModuleName::login:
                 log_proxy::set_user("");
                 rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
-        case MODULE_INTERNAL_WAIT_INFO:
+
+        case ModuleName::waitinfo:
                 log_proxy::set_user("");
                 rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
-        case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
+
+        case ModuleName::confirm:
                 log_proxy::set_user("");
                 rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
-        case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
+
+        case ModuleName::valid:
                 log_proxy::set_user("");
                 rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
-        case MODULE_INTERNAL_DIALOG_CHALLENGE:
+
+        case ModuleName::challenge:
                 log_proxy::set_user("");
                 rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
+
         default:
             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
             this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -606,7 +614,7 @@ private:
         rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
         log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
 
-        auto next_state = MODULE_RDP;
+        auto next_state = ModuleName::RDP;
         try {
             this->new_mod(next_state, mod_wrapper, mod_factory, front);
 
@@ -878,10 +886,12 @@ public:
                     if (ioswitch.is_set_for_reading(auth_trans->get_sck())) {
                         try {
                             acl_serial.incoming();
-                            if (ini.get<cfg::context::module>() == "RDP"
-                             || ini.get<cfg::context::module>() == "VNC"
+                            if (ini.get<cfg::context::module>() == ModuleName::RDP
+                             || ini.get<cfg::context::module>() == ModuleName::VNC
                             ) {
-                                session_type = ini.get<cfg::context::module>();
+                                session_type = ini.get<cfg::context::module>() == ModuleName::RDP
+                                  ? "RDP"
+                                  : "VNC";
 
                                 auto const& inactivity_timeout
                                     = ini.get<cfg::globals::inactivity_timeout>();
@@ -915,12 +925,11 @@ public:
 
                     /* On target disconnection, condition will be only executed
                        after received packet containing module=close_back
-                       from Sesman, but also when user can 
+                       from Sesman, but also when user can
                        access several targets on selector */
-                    if (ModuleIndex next_state = 
-                        get_module_id(ini.get<cfg::context::module>());
-                        next_state == MODULE_INTERNAL_CLOSE_BACK
-                        && mod_wrapper.current_mod == MODULE_INTERNAL_CLOSE)
+                    if (ModuleName next_state = ini.get<cfg::context::module>();
+                        next_state == ModuleName::close_back
+                        && mod_wrapper.current_mod == ModuleName::close)
                     {
                         new_mod(next_state, mod_wrapper, mod_factory, front);
                         mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
@@ -947,7 +956,7 @@ public:
                         log_file.close_session_log();
                     });
                 }
-                else if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE && mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE_BACK) {
+                else if (mod_wrapper.current_mod != ModuleName::close && mod_wrapper.current_mod != ModuleName::close_back) {
                     if (acl_serial.is_after_connexion()) {
                         this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
                         mod_wrapper.disconnect();
@@ -957,7 +966,7 @@ public:
                                 ? "closed by authentifier"
                                 : "closed by proxy");
                         if (ini.get<cfg::globals::enable_close_box>()) {
-                            auto next_state = MODULE_INTERNAL_CLOSE;
+                            auto next_state = ModuleName::close;
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                             run_session = true;
                         }
@@ -978,7 +987,7 @@ public:
                                 run_session = false;
                                 LOG(LOG_INFO, "Start of acl failed : no authentifier available");
                                 if (ini.get<cfg::globals::enable_close_box>()) {
-                                    auto next_state = MODULE_INTERNAL_CLOSE;
+                                    auto next_state = ModuleName::close;
                                     this->new_mod(next_state, mod_wrapper, mod_factory, front);
                                     run_session = true;
                                 }
@@ -1023,7 +1032,7 @@ public:
                         if (keepalive.check(time_base.get_current_time().tv_sec, this->ini)) {
                             throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
                         }
-                        if (mod_wrapper.current_mod != MODULE_INTERNAL_CLOSE_BACK
+                        if (mod_wrapper.current_mod != ModuleName::close_back
                             && !inactivity.activity(time_base.get_current_time().tv_sec,
                                                      front.has_user_activity)
                         ) {
@@ -1071,7 +1080,7 @@ public:
                         ) {
                             LOG(LOG_INFO, "Exited from target connection");
                             mod_wrapper.disconnect();
-                            auto next_state = MODULE_INTERNAL_CLOSE_BACK;
+                            auto next_state = ModuleName::close_back;
                             if (acl_serial.is_connected()){
                                 for (auto field : this->ini.get_acl_fields_changed()) {
                                         zstring_view key = field.get_acl_name();
@@ -1085,7 +1094,7 @@ public:
                                 acl_serial.send_acl_data();
                             }
                             else {
-                                next_state = MODULE_INTERNAL_CLOSE;
+                                next_state = ModuleName::close;
                             }
                             if (ini.get<cfg::globals::enable_close_box>()) {
                                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
@@ -1101,7 +1110,7 @@ public:
                             LOG_INFO, " Current Mod is %s Previous %s Acl_mod %s",
                             get_module_name(mod_wrapper.current_mod),
                             get_module_name(this->last_state),
-                            ini.get<cfg::context::module>()
+                            get_module_name(ini.get<cfg::context::module>())
                             );
 
                         if (mod_wrapper.get_mod_signal() == BACK_EVENT_STOP){
@@ -1112,7 +1121,7 @@ public:
                             rail_client_execute.enable_remote_program(
                                 front.get_client_info().remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
-                            auto next_state = MODULE_INTERNAL_TRANSITION;
+                            auto next_state = ModuleName::INTERNAL_TRANSITION;
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                         }
 
@@ -1120,10 +1129,10 @@ public:
                         if (acl_serial.is_connected() && this->remote_answer){
                             this->remote_answer = false;
 
-                            auto next_state = get_module_id(ini.get<cfg::context::module>());
+                            auto next_state = ini.get<cfg::context::module>();
 
-                            if ((mod_wrapper.current_mod == MODULE_INTERNAL_TRANSITION)
-                             != (next_state == MODULE_TRANSITORY)
+                            if ((mod_wrapper.current_mod == ModuleName::INTERNAL_TRANSITION)
+                             != (next_state == ModuleName::transitory)
                             ) {
                                 run_session = this->next_backend_module(
                                     log_file, ini, mod_factory, mod_wrapper,
@@ -1132,7 +1141,7 @@ public:
                         }
 
                         if (mod_wrapper.is_connected()
-                         && mod_wrapper.current_mod == MODULE_RDP
+                         && mod_wrapper.current_mod == ModuleName::RDP
                         ) {
                             auto mod = mod_wrapper.get_mod();
                             // AuthCHANNEL CHECK
@@ -1223,7 +1232,7 @@ public:
                             }
                         }
 
-                        if (mod_wrapper.current_mod == MODULE_INTERNAL_SELECTOR)
+                        if (mod_wrapper.current_mod == ModuleName::selector)
                         {
                             inactivity.start_timer(ini.get<cfg::globals::session_timeout>(),
                                                    time_base.get_current_time().tv_sec);
@@ -1242,7 +1251,7 @@ public:
                                 is_first_looping_on_mod_selector = false;
                             }
                         }
-                        else if (mod_wrapper.current_mod == MODULE_INTERNAL_LOGIN)
+                        else if (mod_wrapper.current_mod == ModuleName::login)
                         {
                             inactivity.stop_timer();
                         }
@@ -1270,7 +1279,7 @@ public:
                             rail_client_execute
                                 .enable_remote_program(front.get_client_info()
                                                        .remote_program);
-                            new_mod(MODULE_INTERNAL_CLOSE,
+                            new_mod(ModuleName::close,
                                     mod_wrapper,
                                     mod_factory,
                                     front);
