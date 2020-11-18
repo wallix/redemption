@@ -93,6 +93,17 @@ def is_device_in_subnet(device, subnet):
     return result
 
 
+def resolve_reverse_dns(ip_str):
+    found_fqdn = None
+    try:
+        found_fqdn = socket.gethostbyaddr(ip_str)[0]
+    except Exception:
+        Logger().debug("Unable to reverse dns %s" % ip_str)
+    else:
+        Logger().debug("Found fqdn %s for %s" % (found_fqdn, ip_str))
+    return found_fqdn
+
+
 def read_config_file(modulename="sesman",
                      confdir=DEFAULT_CONF_DIR,
                      specdir=DEFAULT_SPEC_DIR):
@@ -526,7 +537,11 @@ class Engine(object):
         if real_target_device:
             # Transparent proxy
             if not target_context or not target_context.host:
-                target_context = TargetContext(host=real_target_device)
+                dnsname = resolve_reverse_dns(real_target_device)
+                target_context = TargetContext(
+                    host=real_target_device,
+                    dnsname=dnsname
+                )
                 target_context.strict_transparent = True
         elif target_device:
             # This allow proxy to check if target_device is a device_name
