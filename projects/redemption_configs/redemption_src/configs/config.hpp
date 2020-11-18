@@ -435,7 +435,7 @@ private:
 
     void initialize();
 
-    template<class T, class Spec, class = void>
+    template<class T, class Spec>
     struct set_value_impl
     {
         template<class U>
@@ -451,8 +451,26 @@ private:
         }
     };
 
-    template<class Void>
-    struct set_value_impl<std::array<unsigned char, 32>, configs::spec_types::fixed_binary, Void>
+    template<class T>
+    struct set_value_impl<T, std::string>
+    {
+        template<class U>
+        static void impl(T & x, U && new_value)
+        {
+            using Decay = std::remove_cv_t<std::remove_reference_t<U>>;
+            static_assert(!std::is_integral_v<Decay> || std::is_same_v<Decay, char>, "expected a string type or char, not an int");
+            x = static_cast<U&&>(new_value);
+        }
+
+        template<class U, class... Ts>
+        static void impl(T & x, U && param1, Ts && ... other_params)
+        {
+            x = {static_cast<U&&>(param1), static_cast<Ts&&>(other_params)...};
+        }
+    };
+
+    template<>
+    struct set_value_impl<std::array<unsigned char, 32>, configs::spec_types::fixed_binary>
     {
         static constexpr std::size_t N = 32;
         using T = std::array<unsigned char, N>;
