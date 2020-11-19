@@ -223,13 +223,10 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 // ClipboardVirtualChannel::process_server_clipboard_capabilities_pdu: General Capability Set
 // RDPECLIP::GeneralCapabilitySet: capabilitySetType=CB_CAPSTYPE_GENERAL(1) lengthCapability=12 version=CB_CAPS_VERSION_2(0x00000002) generalFlags=0x0000001E
 
-    std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
     clipboard_virtual_channel.process_server_message(28, first_last_flags,
         /* 0000 */ "\x07\x00\x00\x00\x10\x00\x00\x00\x01\x00\x00\x00\x01\x00\x0c\x00" // ................
         /* 0010 */ "\x02\x00\x00\x00\x1e\x00\x00\x00\x00\x00\x00\x00"                 // ............
-                ""_av,
-            out_asynchronous_task);
+                ""_av);
 
 // ClipboardVirtualChannel::process_client_message: total_length=24 flags=0x00000013 chunk_data_length=24
 // Recv done on channel (24) n bytes
@@ -297,8 +294,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     clipboard_virtual_channel.process_server_message(
             16, first_last_flags,
-        /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"_av,
-            out_asynchronous_task);
+        /* 0000 */ "\x04\x00\x00\x00\x04\x00\x00\x00\x6e\xc0\x00\x00\x00\x00\x00\x00"_av);
 
 // ClipboardVirtualChannel::process_client_message: total_length=8 flags=0x00000013 chunk_data_length=8
 // Recv done on channel (8) n bytes
@@ -894,10 +890,6 @@ namespace
                 return this->validator_transport.buf_reader.empty();
             }
 
-        private:
-            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        public:
             void process_server_message(
                 bytes_view av,
                 uint32_t total_len = -1u,
@@ -907,9 +899,7 @@ namespace
                     total_len = uint32_t(av.size());
                 }
                 flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-                this->clipboard_virtual_channel.process_server_message(
-                    total_len, flags, av, this->out_asynchronous_task);
-                // RED_TEST(!this->out_asynchronous_task);
+                this->clipboard_virtual_channel.process_server_message(total_len, flags, av);
             }
 
             void process_client_message(

@@ -2254,8 +2254,7 @@ public:
     }   // process_server_create_drive_request
 
     bool process_server_drive_io_request(uint32_t total_length,
-        uint32_t flags, InStream& chunk,
-        std::unique_ptr<AsynchronousTask>& out_asynchronous_task)
+        uint32_t flags, InStream& chunk)
     {
         size_t const chunk_offset = chunk.get_offset();
 
@@ -2274,7 +2273,6 @@ public:
                 (flags & CHANNELS::CHANNEL_FLAG_FIRST),
                 chunk,
                 this->to_server_sender,
-                out_asynchronous_task,
                 this->verbose);
 
             return false;
@@ -2687,9 +2685,7 @@ public:
     }   // process_server_drive_io_request
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
-            override
+        uint32_t flags, bytes_view chunk_data) override
     {
         LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
             "FileSystemVirtualChannel::process_server_message: "
@@ -2761,8 +2757,7 @@ public:
                         "Server Drive I/O Request");
 
                 send_message_to_client =
-                    this->process_server_drive_io_request(total_length,
-                        flags, chunk, out_asynchronous_task);
+                    this->process_server_drive_io_request(total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY:

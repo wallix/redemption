@@ -444,11 +444,8 @@ private:
 
 public:
     void process_server_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask>& out_asynchronous_task) override
+        uint32_t flags, bytes_view chunk_data) override
     {
-        (void)out_asynchronous_task;
-
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::process_server_message: "
                 "total_length=%u flags=0x%08X chunk_data_length=%zu",

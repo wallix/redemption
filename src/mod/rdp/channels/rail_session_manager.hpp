@@ -38,6 +38,7 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
+#include "utils/timebase.hpp"
 #include "utils/translation.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 

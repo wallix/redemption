@@ -166,7 +166,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         EventContainer events;
         NullAuthentifier auth;
 
-        FileSystemDriveManager file_system_drive_manager;
+        AsynchronousTaskContainer async_task_container(time_base, events);
+        FileSystemDriveManager file_system_drive_manager(async_task_container);
 
         if (d.enable_drive)
         {

@@ -2522,11 +2522,8 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
 }
 
 void ClipboardVirtualChannel::process_server_message(uint32_t total_length,
-    uint32_t flags, bytes_view chunk_data,
-    std::unique_ptr<AsynchronousTask> & out_asynchronous_task)
+    uint32_t flags, bytes_view chunk_data)
 {
-    (void)out_asynchronous_task;
-
     if (flags && !(flags &~ (CHANNELS::CHANNEL_FLAG_SUSPEND | CHANNELS::CHANNEL_FLAG_RESUME))) {
         this->send_message_to_client(total_length, flags, chunk_data);
         return;

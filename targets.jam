@@ -4244,14 +4244,7 @@ test-run tests/mod/null/test_null :
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
 :
-  <library>crypto
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/hexdump.o
-  <library>src/utils/stacktrace.o
-  <library>src/utils/utf.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :

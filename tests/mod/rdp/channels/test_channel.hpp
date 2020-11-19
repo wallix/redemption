@@ -94,20 +94,11 @@ inline bool test_channel(Transport& t, BaseVirtualChannel& virtual_channel)
         }
         else
         {
-            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-            virtual_channel.process_server_message(
-                total_length, flags, chunk_data, out_asynchronous_task);
-
-            if (out_asynchronous_task) {
-                return false;
-            }
+            virtual_channel.process_server_message(total_length, flags, chunk_data);
         }
 
         virtual_channel_stream.rewind();
     }
-
-    return true;
 }
 
 #define CHECK_CHANNEL(t, virtual_channel) RED_CHECK(tu::test_channel(t, virtual_channel));

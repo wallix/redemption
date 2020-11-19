@@ -21,9 +21,7 @@
 #pragma once
 
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
-#include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 
-#include <memory>
 
 class BaseVirtualChannel
 {
@@ -73,8 +71,8 @@ public:
     }
 
     virtual void process_server_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
+        uint32_t flags, bytes_view chunk_data
+    ) = 0;
 
 public:
     void send_message_to_client(uint32_t total_length,

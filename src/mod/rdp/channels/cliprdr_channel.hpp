@@ -22,6 +22,7 @@
 
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "mod/file_validator_service.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
 #include "core/events.hpp"
@@ -40,6 +41,7 @@ class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
 class AuthApi;
+class TimeBase;
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
@@ -72,8 +74,7 @@ public:
         uint32_t flags, bytes_view chunk_data) override;
 
     void process_server_message(uint32_t total_length,
-        uint32_t flags, bytes_view chunk_data,
-        std::unique_ptr<AsynchronousTask> & out_asynchronous_task) override;
+        uint32_t flags, bytes_view chunk_data) override;
 
     void set_session_probe_launcher(SessionProbeLauncher* launcher) {
         this->clipboard_monitor_ready_notifier = launcher;

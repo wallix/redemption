@@ -294,11 +294,13 @@ public:
         Drive(
             ApplicationParams const& application_params,
             ModRDPParams::DriveParams const& drive_params,
+            AsynchronousTaskContainer& asynchronous_tasks,
             RDPVerbose verbose)
         : use_application_driver(
             application_params.alternate_shell
          && !::strncasecmp(application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
         , proxy_managed_prefix(drive_params.proxy_managed_prefix)
+        , file_system_drive_manager(asynchronous_tasks)
         {
             if (drive_params.proxy_managed_drives && *drive_params.proxy_managed_drives) {
                 if (bool(verbose & RDPVerbose::connection)) {
@@ -382,7 +384,8 @@ public:
         AuthApi & sesman,
         FileValidatorService * file_validator_service,
         ModRdpFactory& mod_rdp_factory,
-        SessionProbeVirtualChannel::Callbacks & callbacks
+        SessionProbeVirtualChannel::Callbacks & callbacks,
+        AsynchronousTaskContainer& asynchronous_tasks
         )
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
@@ -404,7 +407,7 @@ public:
     , clipboard(mod_rdp_params.clipboard_params)
     , dynamic_channels(mod_rdp_params.dynamic_channels_params)
     , file_system(mod_rdp_params.file_system_params)
-    , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, verbose)
+    , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, asynchronous_tasks, verbose)
     , mod_rdp_factory(mod_rdp_factory)
     , verbose(verbose)
     , time_base(time_base)
@@ -876,9 +879,7 @@ public:
             RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);// FIX
         }
 
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
-        assert(!out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }   // process_cliprdr_event
 
 
@@ -974,11 +975,7 @@ public:
     void process_session_probe_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size)
     {
         SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
-
-        assert(!out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }
 
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
@@ -995,12 +992,7 @@ public:
         }
 
         RemoteProgramsVirtualChannel& channel = *this->remote_programs_virtual_channel;
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
-
-        assert(!out_asynchronous_task);
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }
 
     void send_to_mod_rail_channel(InStream & chunk, size_t length, uint32_t flags,
@@ -1044,9 +1036,7 @@ public:
     }
 
     void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
-                                FrontAPI& front,
-                                ServerTransportContext & stc,
-                                AsynchronousTaskContainer & asynchronous_tasks)
+                                FrontAPI& front, ServerTransportContext & stc)
     {
 
         if (!this->dynamic_channel_virtual_channel) {
@@ -1054,14 +1044,7 @@ public:
         }
 
         DynamicChannelVirtualChannel& channel = *this->dynamic_channel_virtual_channel;
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
-
-        if (out_asynchronous_task) {
-            asynchronous_tasks.add(std::move(out_asynchronous_task));
-        }
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }
 
     void process_unknown_channel_event(const CHANNELS::ChannelDef & channel,
@@ -1113,12 +1096,7 @@ public:
         }
 
         FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-        channel.process_server_message(length, flags, {stream.get_current(), chunk_size}, out_asynchronous_task);
-        if (out_asynchronous_task) {
-            asynchronous_tasks.add(std::move(out_asynchronous_task));
-        }
+        channel.process_server_message(length, flags, {stream.get_current(), chunk_size});
     }
 
     // TODO free function
@@ -1977,7 +1955,8 @@ public:
             gen, metrics, time_base, osd, events, sesman,
             file_validator_service,
             mod_rdp_factory,
-            spvc_callbacks
+            spvc_callbacks,
+            asynchronous_tasks
         )
 #else
         : channels(channels_authorizations)
@@ -2995,7 +2974,7 @@ public:
                 IF_ENABLE_METRICS(server_other_channel_data(length));
                 ServerTransportContext stc{
                     this->trans, this->encrypt, this->negociation_result};
-                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks);
+                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc);
             }
             else {
                 LOG_IF(bool(this->verbose & RDPVerbose::basic_trace),
