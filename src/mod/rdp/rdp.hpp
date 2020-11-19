@@ -114,6 +114,7 @@ struct FileValidatorService;
 # include "mod/rdp/channels/clipboard_virtual_channels_params.hpp"
 # include "mod/rdp/channels/drdynvc_channel.hpp"
 # include "mod/rdp/channels/rdpdr_channel.hpp"
+# include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 # include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 # include "mod/rdp/channels/asynchronous_task_container.hpp"
 # include "core/RDP/channels/rdpdr.hpp"
@@ -141,9 +142,6 @@ struct FileValidatorService;
 #include "mod/rdp/rdp_negociation.hpp"
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
-
-#include <cstdlib>
-#include <deque>
 
 
 class mod_rdp_channels
@@ -302,7 +300,7 @@ public:
             application_params.alternate_shell
          && !::strncasecmp(application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
         , proxy_managed_prefix(drive_params.proxy_managed_prefix)
-        , file_system_drive_manager(asynchronous_tasks)
+        , file_system_drive_manager(asynchronous_tasks, verbose)
         {
             if (drive_params.proxy_managed_drives && *drive_params.proxy_managed_drives) {
                 if (bool(verbose & RDPVerbose::connection)) {
@@ -323,7 +321,7 @@ public:
                     this->file_system_drive_manager.enable_drive(
                         FileSystemDriveManager::DriveName(
                             std::string_view{trimmed_range.begin(), trimmed_range.size()}),
-                        this->proxy_managed_prefix, verbose);
+                        this->proxy_managed_prefix);
                 }
             }
         }

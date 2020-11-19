@@ -50,6 +50,7 @@ exe headlessclient :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -191,6 +192,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -354,6 +356,7 @@ exe rdpclient :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -617,6 +620,7 @@ test-run tests/acl/test_license_api :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -939,6 +943,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -1030,6 +1035,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -1094,6 +1100,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -2453,6 +2460,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -2601,6 +2609,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -2695,6 +2704,7 @@ test-run tests/front/test_front :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -4315,12 +4325,11 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
 test-run tests/mod/rdp/channels/test_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_channel.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4334,18 +4343,18 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
 test-run tests/mod/rdp/channels/test_rdpdr_file_system_drive_manager :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_file_system_drive_manager.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/rdp/channels/rdpdr_file_system_drive_manager.cpp
   <covfile>src/mod/rdp/channels/rdpdr_file_system_drive_manager.hpp
 ;
 test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
@@ -4367,10 +4376,10 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -4394,10 +4403,10 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/transport/file_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4419,6 +4428,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -4480,6 +4490,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
+  <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp_negociation.o
@@ -5878,6 +5889,7 @@ obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
 obj src/mod/rdp/channels/cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/cliprdr_channel.cpp ;
+obj src/mod/rdp/channels/rdpdr_file_system_drive_manager.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/rdpdr_file_system_drive_manager.cpp ;
 obj src/mod/rdp/channels/sespro_channel_params.o : $(REDEMPTION_SRC_PATH)/mod/rdp/channels/sespro_channel_params.cpp ;
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;

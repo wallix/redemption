@@ -302,11 +302,9 @@ public:
         };
     }
 
-    bool run()
+    void run()
     {
         this->to_server_sender(this->total_length, this->flags,
             {this->chunked_data.get(), this->chunked_data_length});
-
-        return false;
     }
 };

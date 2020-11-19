@@ -26,6 +26,7 @@
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
+#include "mod/rdp/channels/asynchronous_task_container.hpp"
 
 #include "./test_channel.hpp"
 #include "acl/auth_api.hpp"
@@ -167,15 +168,15 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         NullAuthentifier auth;
 
         AsynchronousTaskContainer async_task_container(time_base, events);
-        FileSystemDriveManager file_system_drive_manager(async_task_container);
+        FileSystemDriveManager file_system_drive_manager(async_task_container, verbose);
 
         if (d.enable_drive)
         {
             auto exportdir = wd.create_subdirectory("export");
             auto sharedir = wd.create_subdirectory("share");
 
-            file_system_drive_manager.enable_drive("export"_av, wd.dirname(), verbose);
-            file_system_drive_manager.enable_drive("share"_av, wd.dirname(), verbose);
+            file_system_drive_manager.enable_drive("export"_av, wd.dirname().string());
+            file_system_drive_manager.enable_drive("share"_av, wd.dirname().string());
         }
 
         TestTransport t(d.indata, d.outdata);

@@ -22,8 +22,11 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
+#include "core/events.hpp"
 #include "core/log_id.hpp"
 #include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
+#include "core/channel_list.hpp"
 #include "utils/timebase.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
@@ -31,6 +34,7 @@
 #include "system/ssl_sha256.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
+#include "utils/timebase.hpp"
 #include "core/file_system_virtual_channel_params.hpp"
 #include "core/stream_throw_helpers.hpp"
 #include <deque>
@@ -276,8 +280,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     public:
         void DisableSessionProbeDrive() {
             if (!this->user_logged_on) {
-                this->file_system_drive_manager.remove_session_probe_drive(
-                    this->verbose);
+                this->file_system_drive_manager.remove_session_probe_drive();
 
                 return;
             }
@@ -293,7 +296,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 this->device_announces.empty() &&
                 this->session_probe_drive_should_be_disable) {
                 this->file_system_drive_manager.disable_session_probe_drive(
-                    (*this->to_server_sender), this->verbose);
+                    *this->to_server_sender);
 
                 this->session_probe_drive_should_be_disable = false;
             }
@@ -979,7 +982,7 @@ public:
 
         if (1 == this->enable_session_probe_drive_count) {
             this->file_system_drive_manager.enable_session_probe_drive(
-                this->param_proxy_managed_drive_prefix, this->verbose);
+                this->param_proxy_managed_drive_prefix);
         }
     }
 
@@ -2272,8 +2275,7 @@ public:
                 this->server_device_io_request,
                 (flags & CHANNELS::CHANNEL_FLAG_FIRST),
                 chunk,
-                this->to_server_sender,
-                this->verbose);
+                this->to_server_sender);
 
             return false;
         }
@@ -2780,8 +2782,7 @@ public:
                 if (!this->user_logged_on) {
                     this->file_system_drive_manager.announce_drive(
                         this->device_capability_version_02_supported,
-                        this->device_redirection_manager.to_device_announce_collection_sender,
-                        this->verbose);
+                        this->device_redirection_manager.to_device_announce_collection_sender);
                 }
 
                 this->user_logged_on = true;
