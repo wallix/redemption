@@ -197,7 +197,7 @@ private:
 public:
     rdp_api * rdpapi = nullptr;
     RailModuleHostMod * rail_module_host_mod_ptr = nullptr;
-    windowing_api *& winapi;
+    windowing_api * winapi = nullptr;
 
 private:
     Inifile & ini;
@@ -218,13 +218,12 @@ private:
 
 
 public:
-    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini, AuthApi & sesman)
+    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini, AuthApi & sesman)
     : callback(*this)
     , gfilter(graphics, callback, palette, Rect{})
     , g(gfilter)
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
-    , winapi(winapi)
     , ini(ini)
     , sesman(sesman)
     , bogus_refresh_rect_ex(false)

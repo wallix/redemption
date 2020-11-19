@@ -729,10 +729,9 @@ public:
                 time_base, events, front, front, front.get_client_info().window_list_caps,
                 ini.get<cfg::debug::mod_internal>() & 1);
 
-            windowing_api* winapi = nullptr;
             ModWrapper mod_wrapper(
                 front.get_palette(), front, front.keymap, front.get_client_info(), glyphs,
-                rail_client_execute, winapi, this->ini, sesman);
+                rail_client_execute, this->ini, sesman);
             ModFactory mod_factory(
                 mod_wrapper, time_base, sesman, events, front.get_client_info(), front, front,
                 redir_info, ini, glyphs, theme, rail_client_execute, front.keymap, rnd,
