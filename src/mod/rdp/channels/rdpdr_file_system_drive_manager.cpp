@@ -1565,7 +1565,16 @@ public:
 struct FileSystemDriveManager::managed_drive_type
 {
     uint32_t device_id;
-    std::string name;
+    // copy from Drive::upper_name() and is zero-terminated
+    struct Name
+    {
+        std::array<char, 8> array_;
+        std::size_t len_;
+
+        char const* c_str() const { return this->array_.data(); }
+        std::size_t length() const { return this->len_; }
+    };
+    Name name;
     std::string path;
     int access_mode;
 };
@@ -1631,6 +1640,12 @@ FileSystemDriveManager::DriveName::DriveName(std::string_view name, bool reserve
 : DriveName(chars_view{name}, reserved)
 {}
 
+namespace
+{
+    constexpr std::array<char, 8> SESPRO_name{{'S', 'E', 'S', 'P', 'R', 'O'}};
+    constexpr std::array<char, 8> WABLNCH_name{{'W', 'A', 'B', 'L', 'N', 'C', 'H'}};
+}
+
 FileSystemDriveManager::DriveName::DriveName(chars_view name, bool reserved) noexcept
 : read_only_(false)
 {
@@ -1657,10 +1672,11 @@ FileSystemDriveManager::DriveName::DriveName(chars_view name, bool reserved) noe
     }
     this->name_[name.size()] = 0;
     this->upper_name_[name.size()] = 0;
+    this->len_ = uint8_t(name.size());
 
     if (!reserved
-        && (!strcmp("SESPRO", this->upper_name_)
-        || !strcmp("WABLNCH", this->upper_name_))
+        && (SESPRO_name == this->upper_name_
+        || WABLNCH_name == this->upper_name_)
     ){
         LOG(LOG_WARNING,
             "FileSystemDriveManager::enable_drive: "
@@ -1692,7 +1708,10 @@ uint32_t FileSystemDriveManager::enable_drive(
         drive_id = this->next_managed_drive_id++;
 
         this->managed_drives.push_back({
-            drive_id, drive_name.upper_name(), std::move(directory_drive_path), (read_only ? O_RDONLY : O_RDWR)
+            drive_id,
+            managed_drive_type::Name{drive_name.upper_name(), drive_name.name().size()},
+            std::move(directory_drive_path),
+            read_only ? O_RDONLY : O_RDWR
         });
     }
     else {

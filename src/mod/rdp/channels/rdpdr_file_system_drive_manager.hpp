@@ -21,10 +21,12 @@
 #pragma once
 
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
 #include <memory>
 #include <vector>
+#include <array>
 #include <string>
 #include <string_view>
 
@@ -62,14 +64,14 @@ public:
         DriveName(chars_view name, bool reserved = false) noexcept;
         DriveName(std::string_view name, bool reserved = false) noexcept;
 
-        [[nodiscard]] char const* upper_name() const noexcept
+        [[nodiscard]] std::array<char, 8> const& upper_name() const noexcept
         {
             return this->upper_name_;
         }
 
-        [[nodiscard]] char const* name() const noexcept
+        [[nodiscard]] zstring_view name() const noexcept
         {
-            return this->name_;
+            return zstring_view(zstring_view::is_zero_terminated(), this->name_, this->len_);
         }
 
         [[nodiscard]] bool is_valid() const noexcept
@@ -84,7 +86,8 @@ public:
 
     private:
         char name_[8];
-        char upper_name_[8];
+        std::array<char, 8> upper_name_ {};
+        uint8_t len_ = 0;
         bool read_only_;
     };
 
