@@ -304,9 +304,6 @@ public:
 
     bool run()
     {
-        assert(this->chunked_data_length <=
-            CHANNELS::CHANNEL_CHUNK_LENGTH);
-
         this->to_server_sender(this->total_length, this->flags,
             {this->chunked_data.get(), this->chunked_data_length});
 
