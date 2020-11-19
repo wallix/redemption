@@ -435,7 +435,7 @@ private:
 
     void initialize();
 
-    template<class T, class Spec>
+    template<class T, class Spec, class = void>
     struct set_value_impl
     {
         template<class U>
@@ -451,8 +451,8 @@ private:
         }
     };
 
-    template<class T>
-    struct set_value_impl<T, std::string>
+    template<class T, class Void>
+    struct set_value_impl<T, std::string, Void>
     {
         template<class U>
         static void impl(T & x, U && new_value)
@@ -469,8 +469,8 @@ private:
         }
     };
 
-    template<>
-    struct set_value_impl<std::array<unsigned char, 32>, configs::spec_types::fixed_binary>
+    template<class Void>
+    struct set_value_impl<std::array<unsigned char, 32>, configs::spec_types::fixed_binary, Void>
     {
         static constexpr std::size_t N = 32;
         using T = std::array<unsigned char, N>;
@@ -499,8 +499,8 @@ private:
         // }
     };
 
-    template<std::size_t N>
-    struct set_value_impl<char[N], char[N]>
+    template<std::size_t N, class Void>
+    struct set_value_impl<char[N], char[N], Void>
     {
         using T = char[N];
 
@@ -523,8 +523,8 @@ private:
         }
     };
 
-    template<std::size_t N>
-    struct set_value_impl<char[N], configs::spec_types::fixed_string>
+    template<std::size_t N, class Void>
+    struct set_value_impl<char[N], configs::spec_types::fixed_string, Void>
     {
         using T = char[N];
 
@@ -549,8 +549,9 @@ private:
 
     template<class T,
         configs::spec_types::underlying_type_for_range_t<T> min,
-        configs::spec_types::underlying_type_for_range_t<T> max>
-    struct set_value_impl<T, configs::spec_types::range<T, min, max>>
+        configs::spec_types::underlying_type_for_range_t<T> max,
+        class Void>
+    struct set_value_impl<T, configs::spec_types::range<T, min, max>, Void>
     {
         static void impl(T & x, T new_value)
         {
