@@ -142,6 +142,7 @@ namespace trkeys
     TR_KV(err_transport_tls_certificate_inaccessible, "TLS certificate  is inaccessible!");
     TR_KV(err_vnc_connection_error, "VNC connection error!");
     TR_KV(err_rdp_unsupported_monitor_layout, "Unsupported client display monitor layout!");
+    TR_KV(err_rdp_negotiation, "RDP negotiation phase failure.");
     TR_KV(err_lic, "An error occurred during the licensing protocol!");
     TR_KV(err_rail_client_execute, "The RemoteApp program did not start on the remote computer!");
     TR_KV(err_rail_starting_program, "Cannot start the RemoteApp program!");
@@ -185,7 +186,7 @@ namespace trkeys
     TR_KV(err_tls_required, "Enable TLS is probably required.");
     TR_KV(err_server_denied_connection, "Please check provided Load Balance Info.");
     TR_KV(err_mod_rdp_nego, "Fail during TLS security exchange.");
-    TR_KV(err_mod_rdp_basic_settings_exchange, "Fail during basic setting exchange.");
+    TR_KV(err_mod_rdp_basic_settings_exchange, "Remote access may be denied for the user account.");
     TR_KV(err_mod_rdp_channel_connection_attach_user, "Fail during channels connection.");
     TR_KV(mod_rdp_channel_join_confirme, "Fail during channels connection.");
     TR_KV(mod_rdp_get_license, "Failed while trying to get licence.");

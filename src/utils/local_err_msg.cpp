@@ -49,6 +49,9 @@ zstring_view local_err_msg(Error const& error, Language lang, bool with_id) noex
     case ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT:
         return TR(trkeys::err_rdp_unsupported_monitor_layout, lang);
 
+    case ERR_RDP_NEGOTIATION:
+        return TR(trkeys::err_rdp_negotiation, lang);
+
     case ERR_LIC:
         return TR(trkeys::err_lic, lang);
 
