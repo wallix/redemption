@@ -265,4 +265,51 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
     events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
+    time_base.set_current_time({303,0});
+    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
+    RED_CHECK(context.counter1 == 1);
+    RED_CHECK(context.counter2 == 2);
+}
+
+RED_AUTO_TEST_CASE(TestNontrivialEvent)
+{
+    struct Context {
+        EventsGuard events_guard;
+        int counter1 = 0;
+        int counter2 = 0;
+
+        struct Ref
+        {
+            int& i;
+            Ref(int& i) : i(i) {}
+            ~Ref() { i |= 0x10; }
+        };
+
+        Context(EventContainer & events)
+            : events_guard(events)
+        {
+            this->events_guard.create_event_fd_timeout(
+                "Fd Event",
+                1, std::chrono::seconds{300},
+                {0, 0},
+                [this, r = std::make_unique<Ref>(counter1)](Event&/*event*/){
+                    ++this->counter1;
+                },
+                [this, r = std::make_unique<Ref>(counter2)](Event&/*event*/){
+                    ++this->counter2;
+                }
+            );
+        }
+    };
+
+    EventContainer events;
+
+    Context context(events);
+    events.execute_events({300,0}, [](int /*fd*/){ return false; }, false);
+    RED_CHECK(context.counter1 == 0);
+    RED_CHECK(context.counter2 == 1);
+    context.events_guard.end_of_lifespan();
+    events.garbage_collector();
+    RED_CHECK(context.counter1 == 0x10);
+    RED_CHECK(context.counter2 == 0x11);
 }
