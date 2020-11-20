@@ -1,3 +1,9 @@
+redemption (1.1.197%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * fix Connection time metrics typo
+
+ -- WALLIX Dev Team <dev at wallix.com>  Fri, 20 Nov 2020 19:05:49 +0200
+
 redemption (1.1.195%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Support Virtual Channel traffic suspending/resuming.
