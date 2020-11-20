@@ -67,13 +67,13 @@ struct Event
         void set_timeout(timeval trigger_time)
         {
             this->active = true;
-            this->trigger_time = this->start_time = this->now = trigger_time;
+            this->trigger_time = this->start_time = trigger_time;
         }
 
         void reset_timeout(timeval trigger_time)
         {
             this->active = true;
-            this->trigger_time = this->now = trigger_time;
+            this->trigger_time = trigger_time;
         }
 
         // void stop_alarm()
@@ -82,9 +82,9 @@ struct Event
         // }
 
         bool trigger(timeval now) {
-            this->now = now;
-            if (not this->active) { return false; }
-            if (this->now >= this->trigger_time) {
+            if (!this->active) { return false; }
+            if (now >= this->trigger_time) {
+                this->now = now;
                 this->active = false;
                 return true;
             }

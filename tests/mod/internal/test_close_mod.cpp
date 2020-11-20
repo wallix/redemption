@@ -65,7 +65,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_1.png");
 
         RED_CHECK(events.queue.size() == 2);
-        events.execute_events(timeval{580, 0},[](int){return false;}, false);
+        events.execute_events(timeval{581, 0},[](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_2.png");
 
         RED_CHECK(events.queue.size() == 2);
