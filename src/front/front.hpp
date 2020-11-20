@@ -1183,7 +1183,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            this->capture_timer = this->events_guard.event_container().erase_event(this->capture_timer);
+            this->capture_timer.erase_from(this->events_guard);
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -4304,7 +4304,7 @@ private:
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
-                this->handshake_timeout = this->events_guard.event_container().erase_event(this->handshake_timeout);
+                this->handshake_timeout.erase_from(this->events_guard);
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API

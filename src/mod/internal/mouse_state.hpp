@@ -113,7 +113,6 @@ public:
 private:
     void cancel_double_click_detection()
     {
-        this->first_click_down_timer = this->events_guard.event_container().erase_event(
-            this->first_click_down_timer);
+        this->first_click_down_timer.erase_from(this->events_guard);
     }
 };

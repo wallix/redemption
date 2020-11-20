@@ -184,7 +184,7 @@ struct ClipboardVirtualChannel::OSD::D
                 self.osd.osd_api.display_osd_message(str_concat(
                     TR(trkeys::file_verification_accepted, self.osd.lang), filename));
             }
-            self.osd.id_event = self.osd.events_guard.event_container().erase_event(self.osd.id_event);
+            self.osd.id_event.erase_from(self.osd.events_guard);
             self.osd.msg_type = OSD::MsgType::Nothing;
         }
     }

@@ -41,13 +41,21 @@ class EventContainer;
 
 struct Event
 {
-    void const* lifespan_handle;
+    Event(void const* lifespan_handle) noexcept
+    : lifespan_handle(lifespan_handle)
+    {}
+
     bool garbage = false;
 
     struct Trigger
     {
+    private:
+        friend class EventContainer;
+
+        bool active_timer = false;
+
+    public:
         int fd = INVALID_SOCKET;
-        bool active = false;
         timeval now;
         timeval trigger_time;
         timeval start_time;
@@ -66,31 +74,31 @@ struct Event
         // if we want to call the alarm again
         void set_timeout(timeval trigger_time)
         {
-            this->active = true;
+            this->active_timer = true;
             this->trigger_time = this->start_time = trigger_time;
         }
 
         void reset_timeout(timeval trigger_time)
         {
-            this->active = true;
+            this->active_timer = true;
             this->trigger_time = trigger_time;
         }
 
         // void stop_alarm()
         // {
-        //     this->active = false;
+        //     this->active_timer = false;
         // }
 
-        bool trigger(timeval now) {
-            if (!this->active) { return false; }
-            if (now >= this->trigger_time) {
+        bool trigger(timeval now)
+        {
+            if (this->active_timer && now >= this->trigger_time) {
                 this->now = now;
-                this->active = false;
+                this->active_timer = false;
                 return true;
             }
             return false;
         }
-    } alarm {};
+    } alarm;
 
     struct Actions
     {
@@ -106,7 +114,9 @@ struct Event
         Sig* on_timeout = [](Event &){};
         Sig* on_action = [](Event &){};
         SigNothrow* on_delete = nullptr;
-    } actions {};
+    } actions;
+
+    void const* const lifespan_handle;
 
     char const* name = "No name";
 };
@@ -144,7 +154,7 @@ struct Sequencer {
             event.garbage = true;
             throw;
         }
-        if (not this->reset){
+        if (!this->reset){
             this->current++;
             if (this->current >= this->sequence.size()){
                 LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence Terminated On Last Item",
@@ -170,6 +180,7 @@ struct Sequencer {
     }
 };
 
+class EventsGuard;
 
 // event id, 0 means no event
 // used to identify some event in event queue.
@@ -186,6 +197,9 @@ struct EventId /*: noncopyable_but_movable*/
     bool operator == (EventId const& other) const { return id_ == other.id_; }
     bool operator != (EventId const& other) const { return id_ != other.id_; }
 
+    bool erase_from(EventContainer& events);
+    bool erase_from(EventsGuard& event_guard);
+
 private:
     std::uintptr_t id_ = 0;
 };
@@ -193,15 +207,16 @@ private:
 
 struct EventContainer : noncopyable
 {
+    friend class EventId;
+
     std::vector<Event*> queue;
 
     template<class Fn>
     void get_fds(Fn&& fn)
     {
-        for (auto & pevent: this->queue){
-            Event & event = *pevent;
-            if (not event.garbage and event.alarm.fd != INVALID_SOCKET){
-                fn(event.alarm.fd);
+        for (auto* pevent: this->queue){
+            if (pevent->alarm.fd != INVALID_SOCKET && !pevent->garbage){
+                fn(pevent->alarm.fd);
             }
         }
     }
@@ -209,10 +224,9 @@ struct EventContainer : noncopyable
     template<class Fn>
     void get_fds_timeouts(Fn&& fn)
     {
-        for (auto & pevent: this->queue){
-            Event & event = *pevent;
-            if (not event.garbage and event.alarm.fd != INVALID_SOCKET){
-                fn(event.alarm.trigger_time);
+        for (auto* pevent : this->queue){
+            if (pevent->alarm.fd != INVALID_SOCKET && !pevent->garbage){
+                fn(pevent->alarm.trigger_time);
             }
         }
     }
@@ -240,12 +254,11 @@ struct EventContainer : noncopyable
                     event.actions.on_action(event);
                 }
                 else {
-                    if (!event.alarm.active){
-                        LOG_IF(verbose & 0x20, LOG_INFO,
-                            "EXPIRED TIMEOUT EVENT '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d",
-                            event.name, EventId(&event).id(),
-                            int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-                    }
+                    LOG_IF(event.alarm.active_timer && verbose, LOG_INFO,
+                        "EXPIRED TIMEOUT EVENT '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d",
+                        event.name, EventId(&event).id(),
+                        int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
+
                     if (event.alarm.trigger(tv)){
                         LOG_IF(verbose, LOG_INFO,
                             "TIMEOUT EVENT TRIGGER '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d",
@@ -281,7 +294,7 @@ struct EventContainer : noncopyable
 
     void end_of_lifespan(void const* lifespan)
     {
-        for (auto & pevent: this->queue){
+        for (auto* pevent: this->queue){
             if (pevent->lifespan_handle == lifespan){
                 pevent->garbage = true;
             }
@@ -296,7 +309,7 @@ struct EventContainer : noncopyable
         auto last = this->queue.end();
         for (; first != last; ++first){
             Event const& event = **first;
-            if (not event.garbage and event.alarm.active){
+            if (event.alarm.active_timer && !event.garbage){
                 ultimatum = event.alarm.trigger_time;
                 break;
             }
@@ -304,27 +317,12 @@ struct EventContainer : noncopyable
 
         for (; first != last; ++first){
             Event const& event = **first;
-            if (not event.garbage and event.alarm.active){
+            if (event.alarm.active_timer && !event.garbage){
                 ultimatum = std::min(event.alarm.trigger_time, ultimatum);
             }
         }
 
         return ultimatum;
-    }
-
-
-    EventId erase_event(EventId & event_id)
-    {
-        if (event_id) {
-            for(auto & pevent: this->queue){
-                if (EventId(pevent) == event_id){
-                    pevent->garbage = true;
-                    event_id = EventId();
-                    return event_id;
-                }
-            }
-        }
-        return event_id;
     }
 
     void reset_timeout(const timeval trigger_time, const EventId event_id)
@@ -527,9 +525,25 @@ private:
         if (e->actions.on_delete) {
             e->actions.on_delete(*e);
         }
+        static_assert(std::is_trivially_destructible_v<Event>);
         ::operator delete(e);
     }
 };
+
+inline bool EventId::erase_from(EventContainer& events)
+{
+    if (id_) {
+        for(auto* pevent : events.queue){
+            if (EventId(pevent).id_ == id_){
+                pevent->garbage = true;
+                id_ = 0;
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 /**
  * EventContainer wrapper that provides a convenient RAII-style mechanism
@@ -598,3 +612,8 @@ struct EventsGuard : private noncopyable
 private:
     EventContainer& events;
 };
+
+inline bool EventId::erase_from(EventsGuard& event_guard)
+{
+    return this->erase_from(event_guard.event_container());
+}

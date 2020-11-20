@@ -1850,8 +1850,8 @@ public:
                     client_announce_reply.receive(chunk);
                     client_announce_reply.log(LOG_INFO);
                 }
-                this->initialization_timeout_event = this->events_guard.event_container().erase_event(
-                    this->initialization_timeout_event);
+
+                this->initialization_timeout_event.erase_from(this->events_guard);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -2834,8 +2834,7 @@ public:
 
 private:
     void process_event() {
-        this->initialization_timeout_event = this->events_guard.event_container().erase_event(
-            this->initialization_timeout_event);
+        this->initialization_timeout_event.erase_from(this->events_guard);
         uint8_t message_buffer[1024];
 
         {

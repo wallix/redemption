@@ -5035,9 +5035,7 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice
-              = this->events_guard.event_container().erase_event(
-                  this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
 #endif
         }
         break;
@@ -5051,9 +5049,7 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice
-              = this->events_guard.event_container().erase_event(
-                  this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
 #endif
         }
         break;
@@ -5102,9 +5098,7 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice
-              = this->events_guard.event_container().erase_event(
-                  this->remoteapp_one_shot_bypass_window_legalnotice);
+            this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
 #endif
             }
 
@@ -5125,9 +5119,7 @@ public:
                         this->on_remoteapp_redirect_user_screen(lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice
-                          = this->events_guard.event_container().erase_event(
-                              this->remoteapp_one_shot_bypass_window_legalnotice);
+                        this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
 
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->events_guard.create_event_timeout(
                             "Bypass Legal Notice Timer",
@@ -5158,9 +5150,7 @@ public:
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    this->remoteapp_one_shot_bypass_window_legalnotice
-                      = this->events_guard.event_container().erase_event(
-                          this->remoteapp_one_shot_bypass_window_legalnotice);
+                    this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
                 }
 #endif
             }

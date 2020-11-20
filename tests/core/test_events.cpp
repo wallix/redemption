@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestNewEmptySequencer)
     events.create_event_timeout("test", nullptr, origin, Sequencer{false, 0, true, {}});
     Event& e = *events.queue[0];
     e.actions.exec_timeout(e);
-    RED_CHECK(e.garbage == true);
+    RED_CHECK(e.garbage);
 }
 
 RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
@@ -151,7 +151,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencer)
     RED_CHECK(counter == 3);
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 4);
-    RED_CHECK(e.garbage == true);
+    RED_CHECK(e.garbage);
 }
 
 RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
@@ -215,7 +215,7 @@ RED_AUTO_TEST_CASE(TestNewSimpleSequencerNonLinear)
     RED_CHECK(counter == 10);
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 4);
-    RED_CHECK(e.garbage == true);
+    RED_CHECK(e.garbage);
 }
 
 
