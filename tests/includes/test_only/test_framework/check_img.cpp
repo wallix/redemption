@@ -98,29 +98,28 @@ namespace
         assert(img1.bits_per_pixel() == BitsPerPixel(24));
         assert(img1.bits_per_pixel() == img2.bits_per_pixel());
 
-        const int w1 = img1.width();
-        const int h1 = img1.height();
-        const int rowsize1 = img1.line_size();
+        const uint16_t w1 = img1.width();
+        const uint16_t h1 = img1.height();
+        const size_t rowsize1 = img1.line_size();
         uint8_t const* p1 = img1.data();
 
-        const int w2 = img2.width();
-        const int h2 = img2.height();
-        const int rowsize2 = img2.line_size();
+        const uint16_t w2 = img2.width();
+        const uint16_t h2 = img2.height();
+        const size_t rowsize2 = img2.line_size();
         uint8_t const* p2 = img2.data();
 
-        const int w = std::max(w1, w2);
-        const int h = std::max(h1, h2);
+        const uint16_t w = std::max(w1, w2);
+        const uint16_t h = std::max(h1, h2);
 
-        const int minw = std::min(w1, w2);
-        const int minh = std::min(h1, h2);
+        const uint16_t minw = std::min(w1, w2);
+        const uint16_t minh = std::min(h1, h2);
 
         Bitmap imgr;
         Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize_png(imgr, w, h);
 
-        const int rowsize = imgr.line_size();
-        const int remaining = rowsize - minw * 3;
+        const size_t rowsize = imgr.line_size();
+        const size_t remaining = rowsize - minw * 3;
         uint8_t* p = data.get();
-        uint8_t* endp = p + minh * rowsize;
 
         auto set_pixline = [minw, remaining](uint8_t* p, uint8_t const* p1, uint8_t const* p2){
             for (auto* e = p + minw * 3; p != e; p += 3, p1 += 3, p2 += 3) {
@@ -130,20 +129,29 @@ namespace
             std::memset(p, 0, remaining);
         };
 
+        uint8_t* endp = p + minh * rowsize;
+
         if (img1.storage_type() == img2.storage_type()) {
             for (; p != endp; p += rowsize, p1 += rowsize1, p2 += rowsize2){
                 set_pixline(p, p1, p2);
             }
-            std::memset(p, 0xff, (h - minh) * rowsize);
+        }
+        else if (img1.storage_type() == ImageView::Storage::BottomToTop) {
+            p1 += h1 * rowsize1;
+            for (; p != endp; p += rowsize, p2 += rowsize2){
+                p1 -= rowsize1;
+                set_pixline(p, p1, p2);
+            }
         }
         else {
-            std::memset(endp, 0xff, (h - minh) * rowsize);
-            for (; p != endp; p1 += rowsize1, p2 += rowsize2){
-                endp -= rowsize;
-                set_pixline(endp, p1, p2);
+            p2 += h2 * rowsize2;
+            for (; p != endp; p += rowsize, p1 += rowsize1){
+                p2 -= rowsize2;
+                set_pixline(p, p2, p1);
             }
         }
 
+        std::memset(p, 0xff, (h - minh) * rowsize);
 
         return imgr;
     }

@@ -114,7 +114,8 @@ Bitmap bitmap_from_file(const char *filename, BGRColor bg_color)
 
 namespace
 {
-    Bitmap bitmap_from_png_without_sig(int fd, BGRColor bg_color)
+
+Bitmap bitmap_from_png_without_sig(int fd, BGRColor bg_color)
 {
     Bitmap bitmap;
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
