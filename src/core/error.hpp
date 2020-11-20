@@ -109,6 +109,7 @@
     f(ERR_RDP_HANDSHAKE_TIMEOUT)                             \
     f(ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT)                    \
     f(ERR_RDP_INTERNAL)                                      \
+    f(ERR_RDP_NEGOTIATION)                                   \
                                                              \
     fv(ERR_VNC, 10000)                                       \
     f(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER)       \

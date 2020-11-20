@@ -35,6 +35,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cinttypes>
+#include <utility>
 
 class EventContainer;
 class EventRef;

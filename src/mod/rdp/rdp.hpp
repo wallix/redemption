@@ -2272,7 +2272,10 @@ public:
 
         const char * statestr = "UNKNOWN_STATE";
         const char * statedescr = "Unknown state.";
-        switch (this->private_rdp_negociation->rdp_negociation.get_state()) {
+        RdpNegociation::State rdp_nego_state =
+            this->private_rdp_negociation->rdp_negociation.get_state();
+        
+        switch (rdp_nego_state) {
             case RdpNegociation::State::NEGO_INITIATE:
                 statestr = "RDP_NEGO_INITIATE";
                 statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
@@ -2302,11 +2305,14 @@ public:
                 statedescr = TR(trkeys::err_mod_rdp_nego, this->lang);
             break;
         }
-        str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
-
+        str_append(this->close_box_extra_message_ref, " ", statedescr);
+        if (rdp_nego_state != RdpNegociation::State::BASIC_SETTINGS_EXCHANGE)
+        {
+            str_append(this->close_box_extra_message_ref, " (", statestr, ')');
+        }
         LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
             statestr, statedescr);
-        throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+        throw Error(ERR_RDP_NEGOTIATION);
     }
 
 
