@@ -5159,8 +5159,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
 
-//         InStream stream_to_log = stream.clone();
-//           ::hexdump(stream.get_data(), stream.in_remain());
+        //::hexdump_d(stream.get_current(), stream.in_remain());
 
         unsigned pointer_idx = stream.in_uint16_le();
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
