@@ -1102,9 +1102,6 @@ class Engine(object):
 
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
-        if self.is_shadow_session(auth):
-            from datetime import datetime
-            return "shadow_sid", datetime.now()
         try:
             self.session_id, self.start_time = self.wabengine.start_session(
                 auth,
