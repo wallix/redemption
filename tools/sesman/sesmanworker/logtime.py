@@ -13,7 +13,7 @@ import time
 
 STEPS = {
     "PRIMARY_CONN": "primary_connection",
-    "PRIMARY_AUTH": "primay_authentication",
+    "PRIMARY_AUTH": "primary_authentication",
     "FETCH_RIGHTS": "fetch_rights",
     "CHECKOUT_TARGET": "checkout_target",
     "TARGET_CONN": "target_connection",
