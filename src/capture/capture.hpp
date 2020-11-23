@@ -32,7 +32,6 @@
 #include "gdi/resize_api.hpp"
 #include "capture/notify_next_video.hpp"
 
-#include <functional> // std::reference_wrapper
 #include <vector>
 #include <memory>
 
@@ -248,12 +247,25 @@ private:
 
     MouseTrace mouse_info;
 
-    std::vector<std::reference_wrapper<gdi::GraphicApi>> gds;
+    template<class T>
+    struct Ref
+    {
+        Ref(T& ref) noexcept : _p(&ref) {}
+        Ref(T&& ref) = delete;
+
+        operator T& () const noexcept { return *_p; }
+        T& get() const noexcept { return *_p; }
+
+    private:
+        T* _p;
+    };
+
+    std::vector<Ref<gdi::GraphicApi>> gds;
     // Objects willing to be warned of FrameMarker Events
-    std::vector<std::reference_wrapper<gdi::CaptureApi>> caps;
-    std::vector<std::reference_wrapper<gdi::KbdInputApi>> kbds;
-    std::vector<std::reference_wrapper<gdi::CaptureProbeApi>> probes;
-    std::vector<std::reference_wrapper<gdi::ExternalCaptureApi>> ext_caps;
+    std::vector<Ref<gdi::CaptureApi>> caps;
+    std::vector<Ref<gdi::KbdInputApi>> kbds;
+    std::vector<Ref<gdi::CaptureProbeApi>> probes;
+    std::vector<Ref<gdi::ExternalCaptureApi>> ext_caps;
 
     bool const capture_drawable;
 

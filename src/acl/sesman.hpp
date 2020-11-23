@@ -38,8 +38,6 @@
 #include "utils/sugar/algostring.hpp"
 #include "capture/session_update_buffer.hpp"
 
-#include <functional>
-
 
 class Sesman : public AuthApi
 {
@@ -304,7 +302,8 @@ public:
         this->flush_acl_login_language(verbose);
     }
 
-    void flush_acl_report(std::function<void(zstring_view reason, zstring_view msg)> const& fn)
+    template<class Fn>
+    void flush_acl_report(Fn&& fn)
     {
         if (!this->reports.empty()) {
             for(auto & report: this->reports){
@@ -314,7 +313,8 @@ public:
         }
     }
 
-    void flush_acl_disconnect_target(std::function<void(void)> const& close_log)
+    template<class Fn>
+    void flush_acl_disconnect_target(Fn&& close_log)
     {
         if (!this->disconnect_target_sent)
         {
@@ -327,8 +327,8 @@ public:
         }
     }
 
-
-    void flush_acl_log6(std::function<void(LogId id, KVLogList kv_list)> const& log6)
+    template<class Fn>
+    void flush_acl_log6(Fn&& log6)
     {
         if (!this->buffered_log_params.empty()) {
             for (auto&& kv_event : this->buffered_log_params) {

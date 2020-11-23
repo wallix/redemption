@@ -24,6 +24,7 @@ Author(s): Jonathan Poelen
 
 class FdxCapture;
 
+// TODO RdpChannelFactory ?
 struct ModRdpFactory
 {
     std::function<FdxCapture*()> get_fdx_capture = []{ return static_cast<FdxCapture*>(nullptr); };

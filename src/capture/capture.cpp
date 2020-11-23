@@ -1256,7 +1256,7 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
     OcrTitleExtractorBuilder ocr_title_extractor_builder;
     AgentTitleExtractor agent_title_extractor;
 
-    std::reference_wrapper<TitleExtractorApi> title_extractor;
+    Ref<TitleExtractorApi> title_extractor;
 
     timeval  last_ocr;
     std::chrono::microseconds usec_ocr_interval;
@@ -1398,13 +1398,13 @@ public:
 
 public:
     MouseTrace const & mouse;
-    const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds;
-    const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps;
+    const std::vector<Ref<gdi::GraphicApi>> & gds;
+    const std::vector<Ref<gdi::CaptureApi>> & caps;
 
     explicit Graphic(
         MouseTrace const & mouse,
-        const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
-        const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps) noexcept
+        const std::vector<Ref<gdi::GraphicApi>> & gds,
+        const std::vector<Ref<gdi::CaptureApi>> & caps) noexcept
     : mouse(mouse)
     , gds(gds)
     , caps(caps)
@@ -1555,7 +1555,7 @@ Capture::Capture(
 
 #ifndef REDEMPTION_NO_FFMPEG
         if (capture_video) {
-            std::reference_wrapper<NotifyNextVideo> notifier = this->null_notifier_next_video;
+            Ref<NotifyNextVideo> notifier = this->null_notifier_next_video;
             if (video_params.capture_chunk && this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
                 notifier = this->notifier_next_video;

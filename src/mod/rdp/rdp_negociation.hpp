@@ -39,7 +39,6 @@
 #include "utils/crypto/ssl_lib.hpp"
 #include "acl/auth_api.hpp"
 
-#include <functional> // std::reference_wrapper
 #include <memory>
 #include <array>
 
@@ -189,7 +188,7 @@ private:
     /// Client build number.
     /// Represents the 'clientBuild' field of Client Core Data (TS_UD_CS_CORE)
     /// as specified in [MS-RDPBCGR] §2.2.1.3.2.
-    /// Note: must be forwarded from client to server 
+    /// Note: must be forwarded from client to server
     /// for correct smartcard support; see issue #27767.
     const uint32_t build_number;
 
