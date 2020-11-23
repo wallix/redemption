@@ -22,11 +22,39 @@ Author(s): Jonathan Poelen
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
-
-char* SessionUpdateBuffer::Event::keys_values()
+struct SessionUpdateBuffer::Event::Access
 {
-    return reinterpret_cast<char*>(this) + sizeof(*this);
-}
+    static KVLog* kv_logs(SessionUpdateBuffer::Event* ev)
+    {
+        return reinterpret_cast<KVLog*>(ptr_kv_logs(ev));
+    }
+
+    static int* string_sizes(SessionUpdateBuffer::Event* ev)
+    {
+        return reinterpret_cast<int*>(ptr_sizes(ev));
+    }
+
+    static char* keys_values(SessionUpdateBuffer::Event* ev)
+    {
+        return ptr_values(ev);
+    }
+
+private:
+    static char* ptr_kv_logs(SessionUpdateBuffer::Event* ev)
+    {
+        return reinterpret_cast<char*>(ev) + sizeof(*ev) + sizeof(Event) % sizeof(KVLog);
+    }
+
+    static char* ptr_sizes(SessionUpdateBuffer::Event* ev)
+    {
+        return ptr_kv_logs(ev) + sizeof(KVLog) * ev->kv_list.size();
+    }
+
+    static char* ptr_values(SessionUpdateBuffer::Event* ev)
+    {
+        return ptr_sizes(ev) + 2 * sizeof(int) * ev->kv_list.size();
+    }
+};
 
 SessionUpdateBuffer::SessionUpdateBuffer()
 {
@@ -35,28 +63,40 @@ SessionUpdateBuffer::SessionUpdateBuffer()
 
 void SessionUpdateBuffer::append(timeval time, LogId id, KVLogList kv_list)
 {
-    assert(kv_list.size() <= maximal_nb_key_value);
-
     int n = 0;
-    std::array<int, maximal_nb_key_value*2> string_sizes;
-    auto p = string_sizes.begin();
     for (auto const& kv : kv_list) {
         n += int(kv.key.size()) + int(kv.value.size());
-        *p++ = int(kv.key.size());
-        *p++ = int(kv.value.size());
     }
 
-    void* data = ::operator new(sizeof(Event) + n); /*NOLINT*/
-    Event* event = new(data) Event{id, checked_int{kv_list.size()}, time, string_sizes}; /*NOLINT*/
+    static_assert(alignof(Event) >= alignof(int));
 
-    char* s = event->keys_values();
+    void* data = ::operator new( /*NOLINT*/
+        sizeof(Event)
+      + sizeof(Event) % sizeof(KVLog)    // padding
+      + sizeof(KVLog) * kv_list.size()   // kv_logs
+      + 2 * sizeof(int) * kv_list.size() // string_sizes
+      + size_t(n));                      // key/value buffers
+    Event* event = new(data) Event{id, time, kv_list}; /*NOLINT*/
+
+    KVLog* logs = Event::Access::kv_logs(event);
+    char* s = Event::Access::keys_values(event);
+    int* sizes = Event::Access::string_sizes(event);
+
+    event->kv_list = KVLogList{{logs, kv_list.size()}};
+
     auto push_s = [&s](chars_view chars) {
+        auto r = s;
         memcpy(s, chars.data(), chars.size());
         s += chars.size();
+        return chars_view{r, chars.size()};
     };
+
     for (auto const& kv : kv_list) {
-        push_s(kv.key);
-        push_s(kv.value);
+        *sizes++ = int(kv.key.size());
+        *sizes++ = int(kv.value.size());
+        auto k = push_s(kv.key);
+        auto v = push_s(kv.value);
+        *logs++ = {k, v};
     }
 
     events_.push_back(std::unique_ptr<Event, EventDeleter>(event));
@@ -88,44 +128,27 @@ SessionUpdateBuffer::DataIterator SessionUpdateBuffer::end() const
     return {events_.end()};
 }
 
-SessionUpdateBuffer::DataIterator::DataIterator(const EventContainer::const_iterator& iterator)
+SessionUpdateBuffer::DataIterator::DataIterator(const EventContainer::const_iterator& iterator) noexcept
 : iterator_(iterator)
 {}
 
-SessionUpdateBuffer::DataIterator & SessionUpdateBuffer::DataIterator::operator++()
+SessionUpdateBuffer::DataIterator & SessionUpdateBuffer::DataIterator::operator++() noexcept
 {
     ++iterator_;
     return *this;
 }
 
-bool SessionUpdateBuffer::DataIterator::operator==(const SessionUpdateBuffer::DataIterator& other)
+bool SessionUpdateBuffer::DataIterator::operator==(const SessionUpdateBuffer::DataIterator& other) noexcept
 {
     return iterator_ == other.iterator_;
 }
 
-bool SessionUpdateBuffer::DataIterator::operator!=(const SessionUpdateBuffer::DataIterator& other)
+bool SessionUpdateBuffer::DataIterator::operator!=(const SessionUpdateBuffer::DataIterator& other) noexcept
 {
     return !(*this == other);
 }
 
-SessionUpdateBuffer::Data SessionUpdateBuffer::DataIterator::operator*()
+SessionUpdateBuffer::Data const& SessionUpdateBuffer::DataIterator::operator*() noexcept
 {
-    auto& event = *iterator_->get();
-    auto* p = kv_logs;
-    auto* s = event.keys_values();
-    auto* n = event.string_sizes.data();
-    auto extract_chars = [&s, &n]{
-        chars_view chars {s, s + *n};
-        s += *n;
-        ++n;
-        return chars;
-    };
-    for (int i = 0; i < event.nb_kv_log; ++i) {
-        chars_view key = extract_chars();
-        chars_view value = extract_chars();
-        *p = {key, value};
-        ++p;
-    }
-
-    return {event.id, event.time, array_view{kv_logs, p}};
+    return *iterator_->get();
 }

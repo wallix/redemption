@@ -66,4 +66,41 @@ RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
 
     buffer.clear();
     RED_REQUIRE((buffer.begin() == buffer.end()));
+
+    buffer.append(timeval{1, 3}, LogId::TITLE_BAR, KVLogList{
+        KVLog{"k0"_av, "v0"_av},
+        KVLog{"k1"_av, "v1"_av},
+        KVLog{"k2"_av, "v2"_av},
+        KVLog{"k3"_av, "v3"_av},
+        KVLog{"k4"_av, "v4"_av},
+        KVLog{"k5"_av, "v5"_av},
+        KVLog{"k6"_av, "v6"_av},
+        KVLog{"k7"_av, "v7"_av},
+        KVLog{"k8"_av, "v8"_av},
+        KVLog{"k9"_av, "v9"_av},
+        KVLog{"k10"_av, "v10"_av},
+        KVLog{"k11"_av, "v11"_av},
+        KVLog{"k12"_av, "v12"_av},
+        KVLog{"k13"_av, "v13"_av},
+        KVLog{"k14"_av, "v14"_av},
+        KVLog{"k15"_av, "v15"_av},
+        KVLog{"k16"_av, "v16"_av},
+        KVLog{"k17"_av, "v17"_av},
+        KVLog{"k18"_av, "v18"_av},
+        KVLog{"k19"_av, "v19"_av},
+        KVLog{"k20"_av, "v20"_av},
+        KVLog{"k21"_av, "v21"_av},
+    });
+
+    it = buffer.begin();
+    RED_REQUIRE((it != buffer.end()));
+    kv_event = *it;
+    RED_CHECK(kv_event.id == LogId::TITLE_BAR);
+    RED_CHECK(kv_event.time.tv_sec == 1);
+    RED_CHECK(kv_event.time.tv_usec == 3);
+    RED_REQUIRE(kv_event.kv_list.size() == 22);
+    RED_CHECK(kv_event.kv_list[0].key == "k0"_av);
+    RED_CHECK(kv_event.kv_list[0].value == "v0"_av);
+    RED_CHECK(kv_event.kv_list[21].key == "k21"_av);
+    RED_CHECK(kv_event.kv_list[21].value == "v21"_av);
 }

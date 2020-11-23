@@ -32,19 +32,13 @@ Author(s): Jonathan Poelen
 
 class SessionUpdateBuffer
 {
-    static const std::size_t maximal_nb_key_value = 8;
-
     struct Event
     {
         LogId id;
-        int nb_kv_log;
         timeval time;
+        KVLogList kv_list;
 
-        // lenght of each key/value
-        std::array<int, maximal_nb_key_value*2> string_sizes;
-        // all key/value in KVLogList
-
-        char* keys_values();
+        class Access;
     };
 
     struct EventDeleter
@@ -56,27 +50,20 @@ class SessionUpdateBuffer
     EventContainer events_;
 
 public:
-    struct Data
-    {
-        LogId id;
-        timeval time;
-        KVLogList kv_list;
-    };
+    using Data = Event;
 
     struct DataIterator
     {
-        DataIterator& operator++();
-        Data operator*();
-        bool operator==(DataIterator const& other);
-        bool operator!=(DataIterator const& other);
+        DataIterator& operator++() noexcept;
+        Data const& operator*() noexcept;
+        bool operator==(DataIterator const& other) noexcept;
+        bool operator!=(DataIterator const& other) noexcept;
 
     private:
         EventContainer::const_iterator iterator_;
 
         friend class SessionUpdateBuffer;
-        DataIterator(EventContainer::const_iterator const& iterator);
-
-        KVLog kv_logs[maximal_nb_key_value];
+        DataIterator(EventContainer::const_iterator const& iterator) noexcept;
     };
 
     SessionUpdateBuffer();
