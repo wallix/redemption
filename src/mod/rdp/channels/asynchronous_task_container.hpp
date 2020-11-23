@@ -24,7 +24,6 @@
 #include "core/events.hpp"
 
 #include <memory>
-#include <deque>
 
 
 class AsynchronousTaskContainer;
@@ -32,28 +31,43 @@ class AsynchronousTaskContainer;
 class AsynchronousTask : noncopyable
 {
 public:
-    struct AsyncEventData
+    struct AsynchronousEventContainer
     {
-        struct TimerEvent
-        {
-            timeval trigger_time;
-            std::function<void(Event&)> on_timeout;
-        };
+        template<class TimeoutAction>
+        void create_event_timeout(
+            std::string_view name,
+            timeval trigger_time, TimeoutAction&& on_timeout);
 
-        struct FdEvent
-        {
-            int fd;
-            std::chrono::microseconds grace_delay;
-            std::function<void(Event&)> on_fd;
-        };
+        template<class FdAction>
+        void create_event_fd_without_timeout(
+            std::string_view name,
+            int fd, FdAction&& on_fd);
 
-        std::string name;
-        TimerEvent timer_event;
-        FdEvent fd_event{-1, {}, {}};
+        template<class FdAction, class TimeoutAction>
+        void create_event_fd_timeout(
+            std::string_view name,
+            int fd,
+            std::chrono::microseconds grace_delay,
+            timeval trigger_time,
+            FdAction&& on_fd,
+            TimeoutAction&& on_timeout);
+
+    private:
+        AsynchronousEventContainer(AsynchronousTaskContainer& async_cont) noexcept
+        : async_cont(async_cont)
+        {}
+
+        friend class AsynchronousTaskContainer;
+        AsynchronousTaskContainer& async_cont;
     };
 
     virtual ~AsynchronousTask() = default;
-    virtual AsyncEventData configure_event(timeval now) = 0;
+
+    virtual void configure_event(timeval now, AsynchronousEventContainer async_event_container) = 0;
+
+private:
+    friend class AsynchronousTaskContainer;
+    AsynchronousTask* p_next_task_ = nullptr;
 };
 
 
@@ -68,49 +82,103 @@ public:
 
     void add(std::unique_ptr<AsynchronousTask>&& task)
     {
-        this->tasks.emplace_back(std::move(task));
+        if (this->first_task) {
+            this->last_task->p_next_task_ = task.release();
+            this->last_task = this->last_task->p_next_task_;
+        }
+        else {
+            this->first_task = task.release();
+            this->last_task = this->first_task;
+            this->first_task->configure_event(
+                this->time_base.get_current_time(),
+                AsynchronousTask::AsynchronousEventContainer{*this}
+            );
+        }
+    }
 
-        if (this->tasks.size() == 1u) {
-            this->next();
+    ~AsynchronousTaskContainer()
+    {
+        auto* task = this->first_task;
+        while (task) {
+            delete std::exchange(task, task->p_next_task_);
         }
     }
 
 private:
-    std::function<void(Event&)> to_sync_func(std::function<void(Event&)>& f)
-    {
-        return [f = std::move(f), this](Event & e){
-            f(e);
-            if (e.garbage) {
-                this->tasks.pop_front();
-                this->next();
-            }
-        };
-    }
-
     void next()
     {
-        if (!this->tasks.empty()) {
-            auto async_ev = this->tasks.front()->configure_event(this->time_base.get_current_time());
-            if (async_ev.fd_event.fd == -1) {
-                this->events_guard.create_event_timeout(
-                    std::move(async_ev.name),
-                    async_ev.timer_event.trigger_time,
-                    this->to_sync_func(async_ev.timer_event.on_timeout));
-            }
-            else {
-                this->events_guard.create_event_fd_timeout(
-                    std::move(async_ev.name),
-                    async_ev.fd_event.fd,
-                    async_ev.fd_event.grace_delay,
-                    async_ev.timer_event.trigger_time,
-                    this->to_sync_func(async_ev.fd_event.on_fd),
-                    this->to_sync_func(async_ev.timer_event.on_timeout));
-            }
+        delete std::exchange(this->first_task, this->first_task->p_next_task_);
+        if (this->first_task) {
+            this->first_task->configure_event(
+                this->time_base.get_current_time(),
+                AsynchronousTask::AsynchronousEventContainer{*this}
+            );
+        }
+        else {
+            this->last_task = nullptr;
         }
     }
 
-    std::deque<std::unique_ptr<AsynchronousTask>> tasks;
+    AsynchronousTask* first_task = nullptr;
+    AsynchronousTask* last_task = nullptr;
 
+    friend class AsynchronousTask::AsynchronousEventContainer;
     TimeBase& time_base;
     EventsGuard events_guard;
 };
+
+template<class TimeoutAction>
+inline void AsynchronousTask::AsynchronousEventContainer
+::create_event_timeout(
+    std::string_view name,
+    timeval trigger_time, TimeoutAction&& on_timeout)
+{
+    auto& async_cont = this->async_cont;
+    async_cont.events_guard.create_event_timeout(
+        name, trigger_time,
+        [on_timeout = static_cast<TimeoutAction&&>(on_timeout), &async_cont](Event& e){
+            on_timeout(e);
+            if (e.garbage) { async_cont.next(); }
+        }
+    );
+}
+
+template<class FdAction>
+inline void AsynchronousTask::AsynchronousEventContainer
+::create_event_fd_without_timeout(
+    std::string_view name,
+    int fd, FdAction&& on_fd)
+{
+    auto& async_cont = this->async_cont;
+    async_cont.events_guard.create_event_fd_without_timeout(
+        name, fd,
+        [on_fd = static_cast<FdAction&&>(on_fd), &async_cont](Event& e){
+            on_fd(e);
+            if (e.garbage) { async_cont.next(); }
+        }
+    );
+}
+
+template<class FdAction, class TimeoutAction>
+inline void AsynchronousTask::AsynchronousEventContainer
+::create_event_fd_timeout(
+    std::string_view name,
+    int fd,
+    std::chrono::microseconds grace_delay,
+    timeval trigger_time,
+    FdAction&& on_fd,
+    TimeoutAction&& on_timeout)
+{
+    auto& async_cont = this->async_cont;
+    async_cont.events_guard.create_event_fd_timeout(
+        name, fd, grace_delay, trigger_time,
+        [on_fd = static_cast<FdAction&&>(on_fd), &async_cont](Event& e){
+            on_fd(e);
+            if (e.garbage) { async_cont.next(); }
+        },
+        [on_timeout = static_cast<TimeoutAction&&>(on_timeout), &async_cont](Event& e){
+            on_timeout(e);
+            if (e.garbage) { async_cont.next(); }
+        }
+    );
+}

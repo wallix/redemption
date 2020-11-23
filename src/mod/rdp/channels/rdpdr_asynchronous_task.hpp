@@ -95,28 +95,24 @@ public:
     , verbose(verbose)
     {}
 
-    AsyncEventData configure_event(timeval now) override
+    void configure_event(timeval now, AsynchronousEventContainer async_event_container) override
     {
-        return AsyncEventData{
+        async_event_container.create_event_fd_timeout(
             "RdpdrDriveReadTask",
-            AsyncEventData::TimerEvent{
-                now+std::chrono::seconds{1},
-                [this](Event& event){
-                    LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-                    event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
-                },
-            },
-            AsyncEventData::FdEvent{
-                this->file_descriptor,
-                std::chrono::milliseconds{100},
-                [this](Event& event){
-                    event.garbage = true; // true when terminate or throw exception
-                    if (this->run()){
-                        event.garbage = false;
-                    }
+            this->file_descriptor,
+            std::chrono::milliseconds{100},
+            now+std::chrono::seconds{1},
+            [this](Event& event){
+                event.garbage = true; // true when terminate or throw exception
+                if (this->run()){
+                    event.garbage = false;
                 }
+            },
+            [this](Event& event){
+                LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
+                event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
             }
-        };
+        );
     }
 
     bool run()
@@ -208,21 +204,19 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    AsyncEventData configure_event(timeval now) override
+    void configure_event(timeval now, AsynchronousEventContainer async_event_container) override
     {
-        return AsyncEventData{
+        async_event_container.create_event_timeout(
             "RdpdrSendDriveIOResponseTask",
-            AsyncEventData::TimerEvent{
-                now+std::chrono::milliseconds{1},
-                [this](Event&event) {
-                    event.garbage = true; // true when terminate or throw exception
-                    if (this->run()){
-                        event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
-                        event.garbage = false;
-                    }
-                },
-            },
-        };
+            now+std::chrono::milliseconds{1},
+            [this](Event&event) {
+                event.garbage = true; // true when terminate or throw exception
+                if (this->run()){
+                    event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                    event.garbage = false;
+                }
+            }
+        );
     }
 
     bool run()
@@ -288,18 +282,16 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    AsyncEventData configure_event(timeval now) override
+    void configure_event(timeval now, AsynchronousEventContainer async_event_container) override
     {
-        return AsyncEventData{
+        async_event_container.create_event_timeout(
             "RdpdrSendClientMessageTask",
-            AsyncEventData::TimerEvent{
-                now+std::chrono::milliseconds{1},
-                [this](Event& event){
-                    event.garbage = true;
-                    this->run();
-                }
+            now+std::chrono::milliseconds{1},
+            [this](Event& event){
+                event.garbage = true;
+                this->run();
             }
-        };
+        );
     }
 
     void run()

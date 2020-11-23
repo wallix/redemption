@@ -119,3 +119,23 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     }
     RED_CHECK(events.queue.empty());
 }
+
+RED_AUTO_TEST_CASE(TestAsynchronousRemoved)
+{
+    CheckTransport check_transport(""_av);
+
+    TestToServerSender test_to_server_sender(check_transport);
+
+    TimeBase time_base({0,0});
+    EventContainer events;
+
+    AsynchronousTaskContainer tasks(time_base, events);
+    tasks.add(std::make_unique<RdpdrSendDriveIOResponseTask>(
+        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+        byte_ptr_cast("abc"), 3, test_to_server_sender,
+        RDPVerbose(0)));
+
+    RED_CHECK(!events.queue.empty());
+
+    // event is removed
+}
