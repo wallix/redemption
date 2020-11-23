@@ -30,7 +30,6 @@
 
 #include <vector>
 #include <chrono>
-#include <functional>
 #include <string_view>
 #include <type_traits>
 
@@ -119,65 +118,6 @@ struct Event
     void const* const lifespan_handle;
 
     char const* name = "No name";
-};
-
-struct Sequencer {
-    struct Item {
-        std::string label;
-        std::function<void(Event&event,Sequencer&sequencer)> action;
-    };
-    bool reset = false;
-    size_t current = 0;
-    int verbose = true;
-    std::vector<Item> sequence;
-    void operator()(Event & event){
-        this->reset = false;
-        if (this->current >= this->sequence.size()){
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence Terminated",
-                event.name);
-            event.garbage = true;
-            return;
-        }
-        try {
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: %s", event.name, sequence[this->current].label);
-            sequence[this->current].action(event,*this);
-        }
-        catch(Error & error){
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence terminated on Exception %s",
-                event.name, error.errmsg());
-            event.garbage = true;
-            throw;
-        }
-        catch(...){
-            LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence terminated on Exception",
-                event.name);
-            event.garbage = true;
-            throw;
-        }
-        if (!this->reset){
-            this->current++;
-            if (this->current >= this->sequence.size()){
-                LOG_IF(this->verbose, LOG_INFO, "%s :=> sequencer_event: Sequence Terminated On Last Item",
-                    event.name);
-                    event.garbage = true;
-                return;
-            }
-        }
-        this->reset = false;
-    }
-
-    void next_state(std::string_view label){
-        for(size_t i = 0 ; i < this->sequence.size() ; i++){
-            if (this->sequence[i].label == label){
-                this->reset = true;
-                this->current = i;
-                return;
-            }
-        }
-        LOG(LOG_ERR, "Sequence item %.*s not found : ending sequencer", int(label.size()), label.data());
-        assert(false);
-        this->current = this->sequence.size();
-    }
 };
 
 class EventsGuard;
