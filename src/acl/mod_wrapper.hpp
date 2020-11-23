@@ -21,6 +21,7 @@
 #pragma once
 
 #include "RAIL/client_execute.hpp"
+#include "acl/auth_api.hpp"
 #include "acl/mod_pack.hpp"
 #include "acl/module_manager/enums.hpp"
 #include "acl/time_before_closing.hpp"
@@ -30,11 +31,12 @@
 #include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/subrect4.hpp"
 #include "gdi/osd_api.hpp"
-#include "mod/internal/rail_module_host_mod.hpp"
 #include "mod/null/null.hpp"
 #include "utils/translation.hpp"
+#include "core/callback.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/slowpath.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
@@ -194,12 +196,9 @@ private:
     ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
 
-public:
     rdp_api * rdpapi = nullptr;
-    RailModuleHostMod * rail_module_host_mod_ptr = nullptr;
     windowing_api * winapi = nullptr;
 
-private:
     Inifile & ini;
     AuthApi & sesman;
 
@@ -334,7 +333,6 @@ public:
         this->remove_mod();
         this->modi = mod_pack.mod.get();
 
-        this->rail_module_host_mod_ptr = mod_pack.rail_module_host_ptr;
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
         this->connected = mod_pack.connected;
@@ -597,7 +595,6 @@ private:
             this->modi = &this->no_mod;
             this->rdpapi = nullptr;
             this->winapi = nullptr;
-            this->rail_module_host_mod_ptr = nullptr;
         }
     }
 

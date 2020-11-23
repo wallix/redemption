@@ -23,13 +23,13 @@
 */
 
 #include "capture/fdx_capture.hpp"
-#include "acl/connect_to_target_host.hpp"
-#include "acl/mod_wrapper.hpp"
-#include "mod/file_validator_service.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/netutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
+#include "utils/genfstat.hpp"
+#include "mod/file_validator_service.hpp"
 #include "mod/rdp/params/rdp_session_probe_params.hpp"
 #include "mod/rdp/params/rdp_application_params.hpp"
 #include "mod/metrics_hmac.hpp"
@@ -37,10 +37,11 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
+#include "mod/internal/rail_module_host_mod.hpp"
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
-#include "utils/sugar/bytes_view.hpp"
-#include "utils/genfstat.hpp"
+#include "acl/connect_to_target_host.hpp"
+#include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
 #include "transport/failure_simulation_socket_transport.hpp"
 #include "transport/socket_transport.hpp"
@@ -1021,7 +1022,7 @@ ModPack create_mod_rdp(
 
     if (!host_mod_in_widget) {
         auto mod = new_mod.release();
-        return ModPack{mod, &mod->mod, mod->mod.get_windowing_api(), nullptr, false, false, tmp_psocket_transport};
+        return ModPack{mod, &mod->mod, mod->mod.get_windowing_api(), false, false, tmp_psocket_transport};
     }
 
     auto* host_mod = create_mod_rail(
@@ -1039,5 +1040,5 @@ ModPack create_mod_rdp(
         true
     );
 
-    return ModPack{host_mod, nullptr, &rail_client_execute, host_mod, false, false, tmp_psocket_transport};
+    return ModPack{host_mod, nullptr, &rail_client_execute, false, false, tmp_psocket_transport};
 }

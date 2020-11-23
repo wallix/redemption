@@ -36,7 +36,6 @@ struct ModPack
     not_null_ptr<mod_api> mod;
     rdp_api* rdpapi;
     windowing_api* winapi;
-    RailModuleHostMod* rail_module_host_ptr;
     bool enable_osd;
     bool connected;
     SocketTransport* psocket_transport;

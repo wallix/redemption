@@ -26,15 +26,15 @@
 #include "core/client_info.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "mod/metrics_hmac.hpp"
-#include "utils/sugar/unique_fd.hpp"
-
 #include "mod/vnc/vnc.hpp"
+#include "mod/internal/rail_module_host_mod.hpp"
 #include "transport/socket_transport.hpp"
 #include "acl/mod_pack.hpp"
 #include "acl/mod_wrapper.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
 #include "acl/connect_to_target_host.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 
 namespace
@@ -384,7 +384,7 @@ ModPack create_mod_vnc(
 
     if (!client_info.remote_program) {
         auto mod = new_mod.release();
-        return ModPack{mod, nullptr, nullptr, nullptr, false, false, tmp_psocket_transport};
+        return ModPack{mod, nullptr, nullptr, false, false, tmp_psocket_transport};
     }
 
     gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
@@ -404,5 +404,5 @@ ModPack create_mod_vnc(
         false
     );
 
-    return ModPack{host_mod, nullptr, nullptr, host_mod, false, false, tmp_psocket_transport};
+    return ModPack{host_mod, nullptr, nullptr, false, false, tmp_psocket_transport};
 }

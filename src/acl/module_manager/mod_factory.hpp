@@ -190,7 +190,7 @@ private:
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height);
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_mod_replay() -> ModPack
@@ -213,7 +213,7 @@ private:
             this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
             safe_cast<FileToGraphic::Verbose>(this->ini.get<cfg::debug::capture>())
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_widget_test_mod() -> ModPack
@@ -227,7 +227,7 @@ private:
             this->client_info.screen_info.height,
             this->glyphs
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_test_card_mod() -> ModPack
@@ -239,7 +239,7 @@ private:
             this->glyphs,
             false
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_selector_mod() -> ModPack
@@ -258,7 +258,7 @@ private:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_close_mod() -> ModPack
@@ -299,7 +299,7 @@ private:
             this->theme,
             back_to_selector
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
 public:
@@ -317,7 +317,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_valid_message_mod() -> ModPack
@@ -365,7 +365,7 @@ private:
             this->theme,
             challenge
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
 public:
@@ -391,7 +391,7 @@ public:
             showform,
             flag
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_transition_mod() -> ModPack
@@ -408,7 +408,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_login_mod() -> ModPack
@@ -452,7 +452,7 @@ public:
             this->glyphs,
             this->theme
         );
-        return {new_mod, nullptr, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
     auto create_rdp_mod() -> ModPack
