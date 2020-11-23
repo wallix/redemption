@@ -28,10 +28,14 @@ namespace gdi
 template<class ForwardTo>
 class GraphicApiForwarder : public gdi::GraphicApi
 {
-    ForwardTo & sink;
+protected:
+    ForwardTo sink;
 
 public:
-    GraphicApiForwarder(ForwardTo & sink) : sink(sink){}
+    template<class... Ts>
+    GraphicApiForwarder(Ts&&... xs)
+    : sink(static_cast<Ts&&>(xs)...)
+    {}
 
     void draw(RDP::FrameMarker const & cmd)
             override { this->sink.draw(cmd); }

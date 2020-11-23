@@ -26,7 +26,6 @@
 #include "acl/time_before_closing.hpp"
 #include "keyboard/keymap2.hpp"
 #include "configs/config.hpp"
-#include "core/callback_forwarder.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/subrect4.hpp"
@@ -44,10 +43,8 @@
 class SocketTransport;
 class rdp_api;
 
-class ModWrapper final : public gdi::OsdApi
+class ModWrapper final : public gdi::OsdApi, private Callback
 {
-    CallbackForwarder<ModWrapper> callback;
-
     class GFilter
     {
         gdi::GraphicApi & sink;
@@ -176,9 +173,12 @@ class ModWrapper final : public gdi::OsdApi
         void end_update() { this->sink.end_update(); }
     };
 
-    GFilter gfilter;
+    struct Graphics final : gdi::GraphicApiForwarder<GFilter>
+    {
+        using gdi::GraphicApiForwarder<GFilter>::GraphicApiForwarder;
 
-    gdi::GraphicApiForwarder<GFilter> g;
+        using gdi::GraphicApiForwarder<GFilter>::sink;
+    } gfilter;
 
     bool connected = false;
 
@@ -219,9 +219,7 @@ private:
 
 public:
     explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini, AuthApi & sesman)
-    : callback(*this)
-    , gfilter(graphics, callback, palette, Rect{})
-    , g(gfilter)
+    : gfilter(graphics, static_cast<Callback&>(*this), palette, Rect{})
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
     , ini(ini)
@@ -236,9 +234,21 @@ public:
         this->remove_mod();
     }
 
+    void disconnect()
+    {
+        if (this->modi != &this->no_mod) {
+            try {
+                this->get_mod()->disconnect();
+            }
+            catch (Error const& e) {
+                LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
+            }
+        }
+    }
+
     Callback & get_callback() noexcept
     {
-        return this->callback;
+        return static_cast<Callback&>(*this);
     }
 
     bool is_connected() const
@@ -253,7 +263,7 @@ public:
 
     gdi::GraphicApi & get_graphics()
     {
-        return this->g;
+        return this->gfilter;
     }
 
     void display_osd_message(std::string_view message) override
@@ -338,7 +348,8 @@ public:
         return this->psocket_transport;
     }
 
-    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+private:
+    void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
         if (this->is_disable_by_input && keymap->nb_kevent_available() > 0
             && keymap->top_kevent() == Keymap2::KEVENT_INSERT
@@ -406,12 +417,12 @@ public:
         }
     }
 
-    void rdp_input_unicode(uint16_t unicode, uint16_t flag)
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
     {
         this->get_mod()->rdp_input_unicode(unicode, flag);
     }
 
-    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
     {
         if (!this->try_input_mouse(device_flags, x, y, keymap)) {
             if (this->enable_osd) {
@@ -424,7 +435,7 @@ public:
         }
     }
 
-    void rdp_input_invalidate(Rect r)
+    void rdp_input_invalidate(Rect r) override
     {
         if (this->get_protected_rect().isempty() || !r.has_intersection(this->get_protected_rect())) {
             this->get_mod()->rdp_input_invalidate(r);
@@ -434,32 +445,32 @@ public:
         this->get_mod()->rdp_input_invalidate2({std::begin(rects), std::end(rects)});
     }
 
-    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
     {
         this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2);
     }
 
-    void rdp_gdi_up_and_running()
+    void rdp_gdi_up_and_running() override
     {
         this->get_mod()->rdp_gdi_up_and_running();
     }
 
-    void rdp_gdi_down()
+    void rdp_gdi_down() override
     {
         this->get_mod()->rdp_gdi_down();
     }
 
-    void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
+    void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
     {
         this->get_mod()->rdp_allow_display_updates(left, top, right, bottom);
     }
 
-    void rdp_suppress_display_updates()
+    void rdp_suppress_display_updates() override
     {
         this->get_mod()->rdp_suppress_display_updates();
     }
 
-    void refresh(Rect r)
+    void refresh(Rect r) override
     {
         LOG(LOG_INFO, "ModWrapper::refresh");
         this->get_mod()->refresh(r);
@@ -467,47 +478,34 @@ public:
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
-        std::size_t length, uint32_t flags)
+        std::size_t length, uint32_t flags) override
     {
         this->get_mod()->send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
-    void send_auth_channel_data(const char * data)
+    void send_auth_channel_data(const char * data) override
     {
         this->get_mod()->send_auth_channel_data(data);
     }
 
-    void send_checkout_channel_data(const char * data)
+    void send_checkout_channel_data(const char * data) override
     {
         this->get_mod()->send_checkout_channel_data(data);
     }
 
-    void create_shadow_session(const char * userdata, const char * type)
+    void create_shadow_session(const char * userdata, const char * type) override
     {
         this->get_mod()->create_shadow_session(userdata, type);
     }
 
-    void disconnect()
-    {
-        if (this->modi != &this->no_mod) {
-            try {
-                this->get_mod()->disconnect();
-            }
-            catch (Error const& e) {
-                LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
-            }
-        }
-    }
-
-private:
     [[nodiscard]] Rect get_protected_rect() const
     {
-        return this->gfilter.protected_rect;
+        return this->gfilter.sink.protected_rect;
     }
 
     void set_protected_rect(Rect const rect)
     {
-        this->gfilter.protected_rect = rect;
+        this->gfilter.sink.protected_rect = rect;
     }
 
     static constexpr int padw = 16;
@@ -563,7 +561,7 @@ private:
             return ;
         }
 
-        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->gfilter.palette);
+        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->gfilter.sink.palette);
 
         drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 

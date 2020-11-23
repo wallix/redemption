@@ -70,9 +70,9 @@ struct TestRectMod : null_mod
     }
 };
 
-struct TestGd : gdi::GraphicApiForwarder<gdi::GraphicApi>
+struct TestGd : gdi::GraphicApiForwarder<gdi::GraphicApi&>
 {
-    using gdi::GraphicApiForwarder<gdi::GraphicApi>::GraphicApiForwarder;
+    using gdi::GraphicApiForwarder<gdi::GraphicApi&>::GraphicApiForwarder;
 
     void set_pointer(uint16_t cache_idx, const Pointer & cursor, gdi::GraphicApi::SetPointerMode mode) override
     {
