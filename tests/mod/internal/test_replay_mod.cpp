@@ -29,10 +29,7 @@ Author(s): Wallix Team
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/front/fake_front.hpp"
 
-static std::ostream& operator<<(std::ostream& out, timeval const& t)
-{
-    return out << "{" << t.tv_sec << ", " << t.tv_usec << "}";
-}
+RED_TEST_DELEGATE_OSTREAM(timeval, "{" << _.tv_sec << ", " << _.tv_usec << "}")
 
 RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
 {
@@ -100,7 +97,6 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
         timeval{52, 609606},
         timeval{53, 151448},
         timeval{53, 151448},
-
     }) {
         RED_REQUIRE(!ev.garbage);
         ev.actions.exec_timeout(ev);

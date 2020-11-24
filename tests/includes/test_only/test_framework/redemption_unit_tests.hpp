@@ -118,6 +118,14 @@ namespace redemption_unit_test__
 # define REDEMPTION_UNIT_TEST_FAST_CHECK 0
 #endif
 
+#if defined(IN_IDE_PARSER)
+# define REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) ::redemption_unit_test__::Stream{}
+# define REDEMPTION_UT_UNUSED_STREAM [[maybe_unused]]
+#else
+# define REDEMPTION_UT_OSTREAM_PLACEHOLDER(out) out
+# define REDEMPTION_UT_UNUSED_STREAM
+#endif
+
 #if defined(IN_IDE_PARSER) && !defined(REDEMPTION_UNIT_TEST_CPP)
 
 namespace redemption_unit_test__
@@ -390,7 +398,6 @@ namespace redemption_unit_test__
     struct OStreamFunc
     {
         F f;
-
     };
 
     template<class FF>
@@ -469,22 +476,38 @@ namespace redemption_unit_test__
 # define RED_TEST_DELEGATE_PRINT_I(type, stream_expr) \
     RED_TEST_DELEGATE_PRINT_II(a, b)
 # define RED_TEST_DELEGATE_PRINT(type, stream_expr) \
-    RED_TEST_DELEGATE_PRINT_II(delegate_print_unused_, __LINE__)
+    RED_TEST_DELEGATE_PRINT_II(TU_delegate_print_unused_, __LINE__)
+# define RED_TEST_DELEGATE_OSTREAM(type, stream_expr) \
+    RED_TEST_DELEGATE_PRINT_II(TU_delegate_print_unused_, __LINE__)
 #else
-#define RED_TEST_DELEGATE_PRINT(type, stream_expr)          \
-  template<>                                                \
-  struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>              \
-  {                                                         \
-    void operator()(std::ostream& out,type const & x) const \
-    {                                                       \
-      out << stream_expr; /* NOLINT */                      \
-    }                                                       \
-  }
+#define RED_TEST_DELEGATE_PRINT(type, stream_expr)         \
+    template<>                                             \
+    struct RED_TEST_PRINT_TYPE_STRUCT_NAME<type>           \
+    {                                                      \
+        void operator()(                                   \
+            REDEMPTION_UT_UNUSED_STREAM std::ostream& out, \
+            type const& _                                  \
+        ) const                                            \
+        {                                                  \
+            REDEMPTION_UT_OSTREAM_PLACEHOLDER(out)         \
+            << stream_expr; /* NOLINT */                   \
+        }                                                  \
+    }
+# define RED_TEST_DELEGATE_OSTREAM(type, stream_expr)  \
+    inline std::ostream& operator<<(                   \
+        REDEMPTION_UT_UNUSED_STREAM std::ostream& out, \
+        type const& _                                  \
+    )                                                  \
+    {                                                  \
+        REDEMPTION_UT_OSTREAM_PLACEHOLDER(out)         \
+        << stream_expr; /* NOLINT */                   \
+        return out;                                    \
+    }
 #endif
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \
-  RED_TEST_DELEGATE_PRINT(type,            \
-    #type << "{" << +::std::underlying_type_t<type>(x) << "}")
+    RED_TEST_DELEGATE_PRINT(type,          \
+        #type << "{" << +::std::underlying_type_t<type>(_) << "}")
 
 
 #if defined(IN_IDE_PARSER) || REDEMPTION_UNIT_TEST_FAST_CHECK

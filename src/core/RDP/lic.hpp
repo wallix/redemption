@@ -3055,11 +3055,11 @@ namespace LIC
 
         size_t str(char * buffer, size_t sz) const
         {
-            uint8_t CompanyNameU8[4096] {};
-            ::UTF16toUTF8_buf(bytes_view(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName), writable_bytes_view{CompanyNameU8, sizeof(CompanyNameU8)});
+            uint8_t CompanyNameU8[512] {};
+            ::UTF16toUTF8_buf(bytes_view(this->licenseInfo.pbCompanyName, this->licenseInfo.cbCompanyName), make_writable_array_view(CompanyNameU8));
 
-            uint8_t ProductIdU8[4096] {};
-            ::UTF16toUTF8_buf(bytes_view(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId), writable_bytes_view{ProductIdU8, sizeof(ProductIdU8)});
+            uint8_t ProductIdU8[512] {};
+            ::UTF16toUTF8_buf(bytes_view(this->licenseInfo.pbProductId, this->licenseInfo.cbProductId), make_writable_array_view(ProductIdU8));
 
             size_t lg = snprintf(
                 buffer,

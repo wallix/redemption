@@ -9,8 +9,9 @@ RED_TEST_DONT_PRINT_LOG_VALUE(my_not_printable_type);
 RED_TEST_DELEGATE_PRINT_ENUM(my_enum_type);
 
 struct MyType { int x, y; };
-RED_TEST_DELEGATE_PRINT(MyType, "MyType{" << x.x << ", " << x.y << "}");
+RED_TEST_DELEGATE_PRINT(MyType, "MyType{" << _.x << ", " << _.y << "}");
 
+RED_TEST_DELEGATE_OSTREAM(MyType, "MyType{" << _.x << ", " << _.y << "}");
 
 RED_AUTO_TEST_CASE(test_name)
 {

@@ -26,7 +26,7 @@
 #include "capture/mwrm3.hpp"
 
 
-RED_TEST_DELEGATE_PRINT(std::chrono::seconds, x.count() << "s");
+RED_TEST_DELEGATE_PRINT(std::chrono::seconds, _.count() << "s");
 
 
 RED_AUTO_TEST_CASE(serialize_unserialize)
