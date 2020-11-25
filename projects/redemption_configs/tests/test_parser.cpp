@@ -30,8 +30,8 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 #include "configs/autogen/enums_func_ini.tcc"
 REDEMPTION_DIAGNOSTIC_POP
 
-RED_TEST_DELEGATE_PRINT(parse_error, (x ? x.c_str() : "no error"));
-RED_TEST_DELEGATE_PRINT(std::chrono::seconds, x.count());
+RED_TEST_DELEGATE_PRINT(parse_error, (_ ? _.c_str() : "no error"));
+RED_TEST_DELEGATE_PRINT(std::chrono::seconds, _.count());
 
 
 #include <ostream>
