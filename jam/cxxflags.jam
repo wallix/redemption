@@ -22,12 +22,13 @@ REDEMPTION_CXXFLAGS +=
     <conditional>@flags
 ;
 
-# ./compiler-options.lua -f -stl_fix,exceptions,sanitizers_extra,pie,rtti,coverage generators/bjam.lua cxx- >> cxxflags.jam
+# ./compiler-options.lua -f -stl_fix,microsoft-abi-compatibility-warning,msvc-isystem,msvc-isystem-with-template-from-non-external,exceptions,sanitizers_extra,pie,rtti,coverage generators/bjam.lua cxx- >> cxxflags.jam
 # remove:
 #   reference to msvc and clang-cl
 # replace:
 #   jln_flags by flags
 #
+
 # File generated with https://github.com/jonathanpoelen/cpp-compiler-options
 
 # jam reference: https://boostorg.github.io/build/manual/develop/index.html
@@ -418,6 +419,12 @@ rule flags ( properties * )
                   flags +=
                     <cxxflags>"-Wno-ctad-maybe-unsupported"
                   ;
+                  if ! (  $(version) < "11.00"  )
+                  {
+                    flags +=
+                      <cxxflags>"-Wno-suggest-destructor-override"
+                    ;
+                  }
                 }
               }
             }
@@ -977,7 +984,7 @@ rule flags ( properties * )
         {
           flags +=
             <cxxflags>"-DNDEBUG"
-            <linkflags>"-Wl,-01"
+            <linkflags>"-Wl,-O1"
           ;
           if ( $(x_optimization) = "size" )
           {
