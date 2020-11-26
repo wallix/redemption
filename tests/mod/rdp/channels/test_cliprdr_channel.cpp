@@ -140,7 +140,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 
         ClipboardVirtualChannel clipboard_virtual_channel(
             &to_client_sender, &to_server_sender, time_base, events, osd,
-            d.cb_params, ipca_service, {nullptr, false},
+            d.cb_params, ipca_service, {nullptr, false, std::string()},
             auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
         RED_CHECK_EXCEPTION_ERROR_ID(
@@ -173,7 +173,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base, events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false},
+        &to_client_sender, &to_server_sender, time_base, events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
         auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -207,7 +207,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, time_base, events, osd,
-        clipboard_virtual_channel_params, ipca_service, {nullptr, false},
+        clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
         auth, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
@@ -861,7 +861,8 @@ namespace
                 d.with_validator ? &file_validator_service : nullptr,
                 ClipboardVirtualChannel::FileStorage{
                     fdx_ctx ? &fdx_ctx->fdx : nullptr,
-                    d.always_file_storage
+                    d.always_file_storage,
+                    fdx_ctx ? fdx_ctx->wd.dirname().string() : std::string()
                 },
                 report_message,
                 verbose

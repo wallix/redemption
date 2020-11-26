@@ -51,6 +51,7 @@ public:
     {
         FdxCapture * fdx_capture;
         bool always_file_storage;
+        std::string tmp_dir;
     };
 
     ClipboardVirtualChannel(
@@ -105,6 +106,7 @@ private:
     FileValidatorService * file_validator;
 
     FdxCapture * fdx_capture;
+    std::string tmp_dir;
 
     AuthApi & sesman;
 
@@ -233,6 +235,8 @@ private:
                     void set_offset(uint64_t offset);
                     void set_read_mode();
 
+                    char const* tmp_dir;
+
                 private:
                     struct Buffer
                     {
@@ -358,7 +362,8 @@ private:
         ClipCtx(
             std::string const& target_name,
             bool verify_before_transfer,
-            uint64_t max_file_size_rejected);
+            uint64_t max_file_size_rejected,
+            char const* tmp_dir);
 
         uint16_t message_type = 0;
 

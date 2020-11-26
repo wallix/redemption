@@ -30,4 +30,5 @@ struct ModRdpFactory
     std::function<FdxCapture*()> get_fdx_capture = []{ return static_cast<FdxCapture*>(nullptr); };
     // should be within get_clipboard_channel()
     bool always_file_storage = false;
+    std::string tmp_dir;
 };

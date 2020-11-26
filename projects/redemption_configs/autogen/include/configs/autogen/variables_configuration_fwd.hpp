@@ -242,6 +242,7 @@ namespace cfg
         struct block_invalid_file_down;
         struct log_if_accepted;
         struct max_file_size_rejected;
+        struct tmpdir;
     };
 
     struct file_storage {

@@ -1009,9 +1009,10 @@ ModPack create_mod_rdp(
         new_mod->rdp_data.set_metrics(std::move(metrics), ini.get<cfg::metrics::log_interval>());
     }
 
-    if (new_mod) {
-        assert(&ini == &ini);
-        new_mod->get_rdp_factory().always_file_storage  = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
+    {
+        auto& factory = new_mod->get_rdp_factory();
+        factory.always_file_storage = (ini.get<cfg::file_storage::store_file>() == RdpStoreFile::always);
+        factory.tmp_dir = ini.get<cfg::file_verification::tmpdir>().as_string();
         switch (ini.get<cfg::file_storage::store_file>())
         {
             case RdpStoreFile::never:
@@ -1022,7 +1023,7 @@ ModPack create_mod_rdp(
                 }
                 [[fallthrough]];
             case RdpStoreFile::always:
-                new_mod->get_rdp_factory().get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{
+                factory.get_fdx_capture = [mod = new_mod.get(), &gen, &ini, &cctx]{
                     return mod->get_fdx_capture(gen, ini, cctx);
                 };
         }

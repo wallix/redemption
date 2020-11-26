@@ -48,6 +48,17 @@ namespace python
         out << "u'" << io_quoted2{x} << "'";
     }
 
+    template<class T>
+    void write_type(std::ostream& out, type_<types::dirpath>, T const& x)
+    {
+        if (std::is_same_v<T, types::dirpath>) {
+            write_type(out, type_<std::string>(), std::string());
+        }
+        else {
+            write_type(out, type_<std::string>(), x);
+        }
+    }
+
     template<class T, unsigned n>
     void write_type(std::ostream& out, type_<types::fixed_string<n>>, T const& x)
     {

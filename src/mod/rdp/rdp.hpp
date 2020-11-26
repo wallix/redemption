@@ -573,7 +573,8 @@ private:
             file_validator_service,
             ClipboardVirtualChannel::FileStorage{
                 this->mod_rdp_factory.get_fdx_capture(),
-                this->mod_rdp_factory.always_file_storage
+                this->mod_rdp_factory.always_file_storage,
+                this->mod_rdp_factory.tmp_dir,
             },
             this->sesman,
             this->verbose

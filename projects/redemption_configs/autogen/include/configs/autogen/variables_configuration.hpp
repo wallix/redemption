@@ -17,21 +17,21 @@ namespace configs
         inline constexpr int section4 = 95; /* mod_vnc */
         // inline constexpr int section5 = 103; /* metrics */
         inline constexpr int section6 = 103; /* file_verification */
-        inline constexpr int section7 = 111; /* file_storage */
-        // inline constexpr int section8 = 112; /* icap_server_down */
-        // inline constexpr int section9 = 112; /* icap_server_up */
-        inline constexpr int section10 = 112; /* mod_replay */
-        // inline constexpr int section11 = 113; /* ocr */
-        inline constexpr int section12 = 113; /* video */
-        inline constexpr int section13 = 117; /* capture */
-        inline constexpr int section14 = 121; /* crypto */
-        // inline constexpr int section15 = 123; /* websocket */
-        // inline constexpr int section16 = 123; /* debug */
-        // inline constexpr int section17 = 123; /* remote_program */
-        inline constexpr int section18 = 123; /* translation */
-        // inline constexpr int section19 = 125; /* internal_mod */
-        inline constexpr int section20 = 125; /* context */
-        // inline constexpr int section21 = 205; /* theme */
+        inline constexpr int section7 = 112; /* file_storage */
+        // inline constexpr int section8 = 113; /* icap_server_down */
+        // inline constexpr int section9 = 113; /* icap_server_up */
+        inline constexpr int section10 = 113; /* mod_replay */
+        // inline constexpr int section11 = 114; /* ocr */
+        inline constexpr int section12 = 114; /* video */
+        inline constexpr int section13 = 118; /* capture */
+        inline constexpr int section14 = 122; /* crypto */
+        // inline constexpr int section15 = 124; /* websocket */
+        // inline constexpr int section16 = 124; /* debug */
+        // inline constexpr int section17 = 124; /* remote_program */
+        inline constexpr int section18 = 124; /* translation */
+        // inline constexpr int section19 = 126; /* internal_mod */
+        inline constexpr int section20 = 126; /* context */
+        // inline constexpr int section21 = 206; /* theme */
     }
 }
 
@@ -2903,7 +2903,7 @@ namespace cfg
     /// type: uint32_t <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_verification:max_file_size_rejected <br/>
-    /// default: 50 <br/>
+    /// default: 256 <br/>
     struct file_verification::max_file_size_rejected {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2913,7 +2913,23 @@ namespace cfg
         using type = uint32_t;
         using sesman_and_spec_type = uint32_t;
         using mapped_type = sesman_and_spec_type;
-        type value { 50 };
+        type value { 256 };
+    };
+    /// Temporary path used when files take up too much memory. <br/>
+    /// type: ::configs::spec_types::directory_path <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: file_verification:tmpdir <br/>
+    /// default: "/tmp/" <br/>
+    struct file_verification::tmpdir {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section6 + 8};
+        using type = ::configs::spec_types::directory_path;
+        using sesman_and_spec_type = ::configs::spec_types::directory_path;
+        using mapped_type = sesman_and_spec_type;
+        type value { "/tmp/" };
     };
 
     /// Enable storage of transferred files (via RDP Clipboard). <br/>
@@ -5570,6 +5586,7 @@ struct file_verification
 , cfg::file_verification::block_invalid_file_down
 , cfg::file_verification::log_if_accepted
 , cfg::file_verification::max_file_size_rejected
+, cfg::file_verification::tmpdir
 { static constexpr bool is_section = true; };
 
 struct file_storage
@@ -5943,6 +5960,7 @@ using VariablesAclPack = Pack<
 , cfg::file_verification::block_invalid_file_down
 , cfg::file_verification::log_if_accepted
 , cfg::file_verification::max_file_size_rejected
+, cfg::file_verification::tmpdir
 , cfg::file_storage::store_file
 , cfg::mod_replay::replay_on_loop
 , cfg::video::hash_path
@@ -6047,14 +6065,14 @@ struct BitFlags {
 
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111101111111111111
-, 0b1111100111111111111111111111111111111111111111111111111111111111
-, 0b1110111111111111111111111111111111111111111111011011111011111111
-, 0b0000000000000000000000000000000000000000000000000001111111111111
+, 0b1111001111111111111111111111111111111111111111111111111111111111
+, 0b1101111111111111111111111111111111111111111110110111110111111111
+, 0b0000000000000000000000000000000000000000000000000011111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000000100000000000000000
+, 0b0000000000000000000000000000000000000000000001000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs

@@ -1009,7 +1009,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Warning: This value affects the RAM used by the session.
 # min = 0
 #_hidden
-#max_file_size_rejected = 50
+#max_file_size_rejected = 256
+
+# Temporary path used when files take up too much memory.
+# maxlen = 4096
+#_hidden
+#tmpdir = /tmp/
 
 [file_storage]
 

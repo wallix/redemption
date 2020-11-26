@@ -349,8 +349,7 @@ void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
         };
 
         if (!this->fd) {
-            // TODO directory option
-            this->fd.reset(::open("/tmp/", O_EXCL | O_RDWR | O_TMPFILE, 0600));
+            this->fd.reset(::open(this->tmp_dir, O_EXCL | O_RDWR | O_TMPFILE, 0600));
             if (!this->fd) {
                 const int errnum = errno;
                 LOG(LOG_ERR,
@@ -641,13 +640,15 @@ ClipboardVirtualChannel::ClipCtx::OptionalLockId::lock_id() const
 ClipboardVirtualChannel::ClipCtx::ClipCtx(
     std::string const& target_name,
     bool verify_before_transfer,
-    uint64_t max_file_size_rejected)
+    uint64_t max_file_size_rejected,
+    char const* tmp_dir)
 : verify_before_transfer(verify_before_transfer && not target_name.empty())
 , max_file_size_rejected(max_file_size_rejected)
 , validator_target_name(target_name)
 {
     static_assert(RDPECLIP::FileDescriptor::size()
         == decltype(this->file_descriptor_stream)::original_capacity());
+    this->nolock_data.data.file_content.tmp_dir = tmp_dir;
 }
 
 void ClipboardVirtualChannel::ClipCtx::clear()
@@ -2559,6 +2560,7 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , time_base(time_base)
 , file_validator(file_validator_service)
 , fdx_capture(file_storage.fdx_capture)
+, tmp_dir(std::move(file_storage.tmp_dir))
 , sesman(sesman)
 , verbose(verbose)
 , always_file_storage(file_storage.always_file_storage)
@@ -2566,11 +2568,13 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
 , client_ctx(
     this->params.validator_params.up_target_name,
     this->params.validator_params.block_invalid_file_up,
-    this->params.validator_params.max_file_size_rejected)
+    this->params.validator_params.max_file_size_rejected,
+    this->tmp_dir.empty() ? "/tmp/" : this->tmp_dir.c_str())
 , server_ctx(
     this->params.validator_params.down_target_name,
     this->params.validator_params.block_invalid_file_down,
-    this->params.validator_params.max_file_size_rejected)
+    this->params.validator_params.max_file_size_rejected,
+    this->tmp_dir.empty() ? "/tmp/" : this->tmp_dir.c_str())
 , osd{
     events,
     osd_api,
