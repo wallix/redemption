@@ -922,6 +922,36 @@ struct OutReservedStreamHelper
         return this->stream;
     }
 
+    /** returns an OutReservedStreamHelper that will start at offset with size len
+     * @param offset starts the sub stream at this offset
+     * @param len take only len bytes
+     * @return the corresponding substream
+     */
+    OutReservedStreamHelper get_sub_stream(size_t offset, size_t len = 0) noexcept /*NOLINT*/ {
+        // this object is like:
+        //    reserved_leading_space
+        //  <----->
+        //        v  buf
+        //  |-----------+-------------------------|
+        //              ^  stream
+        //  <------------------------------------->
+
+        // and we wanna return:
+        //        |<--- offset -->|<-- len -->|
+        //                        v buf
+        //  |---------------------+-----------|
+        //                        ^ stream
+
+        if (len == 0) {
+            len = (this->stream.get_offset() - offset);
+        }
+        uint8_t *originalBuf = this->buf - this->reserved_leading_space;
+
+        OutReservedStreamHelper ret(originalBuf, this->reserved_leading_space + offset, this->reserved_leading_space + offset + len);
+        ret.stream.rewind(len);
+        return ret;
+    }
+
     Packet copy_to_head(OutStream const & stream) {
         assert(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();

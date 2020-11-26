@@ -166,8 +166,18 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
     assert(!compression_support || mppc_enc);
 
     if (fastpath_support) {
-        uint8_t compressionFlags = 0;
-        FastPath::UpdateType updateCode       = FastPath::UpdateType::ORDERS;
+        uint8_t compression = 0;
+        uint32_t fragmentId;
+        uint32_t fragmentMax = 0x3fff - 20; /* taken in FreeRDP */
+        uint32_t startAt = 0;
+
+        if (compression_support) {
+            fragmentMax = std::min(fragmentMax, mppc_enc->get_max_data_block_size() - 20);
+        }
+
+        fragmentId = 0;
+
+        FastPath::UpdateType updateCode = FastPath::UpdateType::ORDERS;
 
         switch (type) {
             case SERVER_UPDATE_GRAPHICS_ORDERS:
@@ -212,52 +222,76 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 break;
         }
 
-        uint8_t compression = 0;
+        OutReservedStreamHelper::Packet packet_ = data_common.get_packet();
+        bytes_view fullPacket { packet_.data(), packet_.size() };
+        uint32_t remaining = fullPacket.size();
+        uint32_t payloadSize = remaining;
+        do {
+            uint8_t compressionFlags = 0;
+            uint32_t fragmentSize = (remaining > fragmentMax) ? fragmentMax : remaining;
+            OutReservedStreamHelper packetFragment = data_common.get_sub_stream(startAt, fragmentSize);
 
-        StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
-        std::reference_wrapper<StaticOutReservedStreamHelper<1024, 65536-1024> > data_common_(data_common);
+            StaticOutReservedStreamHelper<1024, 65536-1024> data_common_compressed;
+            OutReservedStreamHelper * fragmentPayload = &packetFragment;
 
-        if (compression_support) {
-            uint16_t compressed_data_size;
+            if (compression_support) {
+                uint16_t compressed_data_size;
 
-            mppc_enc->compress( data_common.get_packet().data()
-                              , data_common.get_packet().size()
-                              , compressionFlags, compressed_data_size
-                              , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
-                              );
+                mppc_enc->compress( packetFragment.get_data_stream().get_data()
+                                  , fragmentSize
+                                  , compressionFlags, compressed_data_size
+                                  , rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED
+                                  );
 
-            if (compressionFlags & PACKET_COMPRESSED) {
-                compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
+                if (compressionFlags & PACKET_COMPRESSED) {
+                    compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
 
-                mppc_enc->get_compressed_data(data_common_compressed.get_data_stream());
-                data_common_ = std::ref(data_common_compressed);
+                    mppc_enc->get_compressed_data(data_common_compressed.get_data_stream());
+                    fragmentPayload = &data_common_compressed;
+                }
             }
-        }
 
-        StaticOutStream<8> update_header;
-        // Fast-Path Update (TS_FP_UPDATE)
-        FastPath::Update_Send Upd( update_header
-                                 , data_common_.get().get_packet().size()
-                                 , static_cast<uint8_t>(updateCode)
-                                 , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                 , compression
-                                 , compressionFlags
-                                 );
-        data_common_.get().copy_to_head(update_header);
+            //LOG(LOG_INFO, "fastPdu fragment id=%d startAt=%d(%u) fragmentSize=%lu(%d)",
+            //    fragmentId, startAt, payloadSize, fragmentPayload->get_packet().size(), fragmentSize);
 
-        StaticOutStream<256> server_update_header;
-         // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-        FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
-                                                , data_common_.get().get_packet().data()
-                                                , data_common_.get().get_packet().size()
-                                                , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                                                , encrypt
-                                                );
-        data_common_.get().copy_to_head(server_update_header);
+            startAt += fragmentSize;
 
-        auto packet = data_common_.get().get_packet();
+            StaticOutStream<8> update_header;
+            uint8_t fragFlags = (fragmentId != 0)
+                ? ((startAt == payloadSize)
+                    ? FastPath::FASTPATH_FRAGMENT_LAST
+                    : FastPath::FASTPATH_FRAGMENT_NEXT)
+                : ((startAt == payloadSize)
+                    ? FastPath::FASTPATH_FRAGMENT_SINGLE
+                    : FastPath::FASTPATH_FRAGMENT_FIRST);
 
-        trans.send(packet.data(), packet.size());
+            // Fast-Path Update (TS_FP_UPDATE)
+            FastPath::Update_Send Upd( update_header
+                                     , fragmentPayload->get_packet().size()
+                                     , static_cast<uint8_t>(updateCode)
+                                     , fragFlags
+                                     , compression
+                                     , compressionFlags
+                                     );
+            fragmentPayload->copy_to_head(update_header);
+
+            StaticOutStream<256> server_update_header;
+             // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            FastPath::ServerUpdatePDU_Send SvrUpdPDU( server_update_header
+                                                    , fragmentPayload->get_packet().data()
+                                                    , fragmentPayload->get_packet().size()
+                                                    , ((encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                                                    , encrypt
+                                                    );
+            fragmentPayload->copy_to_head(server_update_header);
+
+            auto packet = fragmentPayload->get_packet();
+
+            trans.send(packet);
+
+            fragmentId++;
+            remaining -= fragmentSize;
+        } while(remaining);
     }
     else {
         uint8_t pduType2 = 0;
