@@ -242,7 +242,7 @@ int main()
             for (uint16_t ucs : layout.klayout) {
                 if (ucs
                  && !is_numpad(scancode)
-                 // filter stange values
+                 // filter out strange values
                  && (!is_ascii(ucs) || is_standard_scancode(scancode))
                 ) {
                     keycodes[ucs].push_back(KeyInfo{scancode, layout.mods});

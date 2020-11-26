@@ -457,38 +457,44 @@ public:
     {
         this->time_base.set_current_time(time);
 
-        size_t iend = this->events.queue.size();
-        // ignore events created in the loop
-        for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
-            assert(iend <= this->events.queue.size());
-            Event& event = *this->events.queue[i];
-            if (!event.garbage && event.alarm.trigger(time)){
+        event_loop(this->events.queue, [time](Event& event){
+            if (event.alarm.trigger(time)) {
                 event.actions.exec_timeout(event);
             }
-        }
+        });
     }
 
-    // TODO u8 view
     void process_input_data(std::string data)
     {
         this->trans.push_input_buffer(std::move(data));
 
         auto time = this->time_base.get_current_time();
-
-        size_t iend = this->events.queue.size();
-        // ignore events created in the loop
-        for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
-            assert(iend <= this->events.queue.size());
-            Event& event = *this->events.queue[i];
-            if (!event.garbage && event.alarm.fd != -1){
+        event_loop(this->events.queue, [time](Event& event){
+            /*if (event.alarm.fd != -1)*/ {
                 event.alarm.set_timeout(time + event.alarm.grace_delay);
                 event.actions.exec_action(event);
             }
-        }
+        });
 
         this->events.garbage_collector();
     }
 
+private:
+    template<class Fn>
+    static void event_loop(std::vector<Event*> events, Fn&& fn)
+    {
+        size_t iend = events.size();
+        // ignore events created in the loop
+        for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
+            assert(iend <= events.size());
+            Event& event = *events[i];
+            if (!event.garbage){
+                fn(event);
+            }
+        }
+    }
+
+public:
     bytes_view get_output_buffer() const
     {
         return this->trans.get_output_buffer();
