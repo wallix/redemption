@@ -258,7 +258,7 @@ private:
         nolock_data.data.file_size_requested = uint32_t(std::min(
             uint64_t(nolock_data.data.first_file_size_requested), nolock_data.data.file_size));
         nolock_data.data.tfl_file_ptr = std::move(tfl);
-        nolock_data.data.file_contents.clear();
+        nolock_data.data.file_content.clear();
         nolock_data.data.sig.reset();
         nolock_data.data.validator_state = FileContentsRange::ValidatorState::Wait;
     }
@@ -318,6 +318,175 @@ public:
         nolock_data.transfer_state = TransferState::Range;
     }
 };
+
+namespace
+{
+    constexpr std::size_t file_content_memory_max = 64*1024;
+    constexpr std::size_t requested_len_max = 512*1024;
+}
+
+void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
+::append(bytes_view data)
+{
+    assert(0 == this->data_pos);
+
+    if (this->data_len + data.size() <= file_content_memory_max) {
+        if (!this->memory_buffer) {
+            this->memory_buffer.reset(new uint8_t[file_content_memory_max]); /* NOLINT */
+        }
+        memcpy(this->memory_buffer.get() + this->data_len, data.data(), data.size());
+    }
+    else {
+        auto write = [this](bytes_view d){
+            if (ssize_t(d.size()) != ::write(this->fd.fd(), d.data(), d.size())) {
+                const int errnum = errno;
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::FileContent::append: error on temporary file: %s",
+                    strerror(errnum));
+                this->fd.close();
+                throw Error(ERR_UNEXPECTED, errnum);
+            }
+        };
+
+        if (!this->fd) {
+            // TODO directory option
+            this->fd.reset(::open("/tmp/", O_EXCL | O_RDWR | O_TMPFILE, 0600));
+            if (!this->fd) {
+                const int errnum = errno;
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::FileContent::append: error on temporary file: %s",
+                    strerror(errnum));
+                throw Error(ERR_UNEXPECTED, errnum);
+            }
+
+            write({this->memory_buffer.get(), this->data_len});
+        }
+
+        write(data);
+    }
+
+    this->data_len += data.size();
+}
+
+uint8_t* ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent::Buffer
+::current() const
+{
+    return this->buf.get() + this->pos;
+}
+
+size_t ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent::Buffer
+::remaining() const
+{
+    return this->capacity - this->pos;
+}
+
+bytes_view ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
+::read(std::size_t n)
+{
+    if (REDEMPTION_UNLIKELY(this->data_pos + n > this->data_len || n > requested_len_max)) {
+        LOG(LOG_ERR,
+            "ClipboardVirtualChannel::FileContent::read: request too large: %zu", n);
+        throw Error(ERR_RDP_DATA_TRUNCATED);
+    }
+
+    bytes_view r;
+
+    if (this->data_len <= file_content_memory_max) {
+        r = {this->memory_buffer.get() + this->data_pos, n};
+    }
+    else {
+        if (!this->requested_buffer.buf) {
+            this->requested_buffer.buf.reset(new uint8_t[requested_len_max]);
+        }
+
+        if (this->requested_buffer.remaining() >= n) {
+            r = {this->requested_buffer.current(), n};
+        }
+        else {
+            memmove(
+                this->requested_buffer.buf.get(),
+                this->requested_buffer.current(),
+                this->requested_buffer.remaining());
+            const auto pos = this->requested_buffer.pos;
+            const auto len = std::min(requested_len_max - pos, this->data_len - this->data_pos);
+            this->requested_buffer.capacity = pos + len;
+            this->requested_buffer.pos = 0;
+
+            if (ssize_t(len) != ::read(this->fd.fd(), this->requested_buffer.current() + pos, len)) {
+                const int errnum = errno;
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::FileContent::read: error on temporary file: %s",
+                    strerror(errnum));
+                this->fd.close();
+                throw Error(ERR_UNEXPECTED, errnum);
+            }
+
+            r = {this->requested_buffer.current(), n};
+        }
+        this->requested_buffer.pos += n;
+    }
+
+    this->data_pos += n;
+    return r;
+}
+
+namespace
+{
+    void seek(unique_fd& fd, uint64_t offset)
+    {
+        if (-1 == lseek64(fd.fd(), offset, SEEK_SET)) {
+            const int errnum = errno;
+            LOG(LOG_ERR,
+                "ClipboardVirtualChannel::FileContent::set_offset: error on temporary file: %s",
+                strerror(errnum));
+            fd.close();
+            throw Error(ERR_UNEXPECTED, errnum);
+        }
+    }
+}
+
+void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
+::set_offset(uint64_t offset)
+{
+    if (offset == this->data_pos) {
+        return ;
+    }
+
+    assert(offset < this->data_pos);
+
+    this->data_pos = offset;
+
+    if (this->data_len > file_content_memory_max) {
+        this->requested_buffer.pos = 0;
+        this->requested_buffer.capacity = 0;
+        seek(this->fd, offset);
+    }
+}
+
+void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
+::set_read_mode()
+{
+    assert(0 == this->data_pos);
+
+    if (this->data_len <= file_content_memory_max) {
+        return ;
+    }
+
+    this->data_pos = 0;
+    this->requested_buffer.pos = 0;
+    this->requested_buffer.capacity = 0;
+    seek(this->fd, 0);
+}
+
+void ClipboardVirtualChannel::ClipCtx::NoLockData::FileData::FileContent
+::clear()
+{
+    this->data_len = 0;
+    this->data_pos = 0;
+    this->requested_buffer.capacity = 0;
+    this->requested_buffer.pos = 0;
+    this->fd.close();
+}
 
 void ClipboardVirtualChannel::ClipCtx::LockedData::clear()
 {
@@ -545,11 +714,6 @@ void ClipboardVirtualChannel::remove_text_validator(TextValidatorDataList* p)
 
 namespace
 {
-    void append(std::vector<uint8_t>& vec, bytes_view av)
-    {
-        vec.insert(vec.end(), av.begin(), av.end());
-    }
-
     chars_view to_dlpav_str_direction(Direction direction)
     {
         return (direction == Direction::FileFromClient)
@@ -673,26 +837,27 @@ namespace
         }
         sender(response_size, send_last_flags, bytes_view(zeros_buf, remaining));
     }
-
-    void filecontents_response_data(
-        VirtualChannelDataSender& sender, uint32_t response_size, bytes_view file_contents)
-    {
-        assert(response_size - size_of_cliprdr_header_with_stream_id
-            <= file_contents.size());
-
-        uint32_t offset = 0;
-        uint32_t remaining = response_size - size_of_cliprdr_header_with_stream_id;
-        constexpr auto max_len = channel_chunk_length;
-        for (; remaining > max_len; remaining -= max_len, offset += max_len) {
-            sender(response_size, 0, file_contents.subarray(offset, max_len));
-        }
-        sender(response_size, send_last_flags, file_contents.subarray(offset, remaining));
-    }
 }
 
 struct ClipboardVirtualChannel::ClipCtx::D
 {
     using Self = D;
+
+    static void filecontents_response_data(
+        VirtualChannelDataSender& sender,
+        uint32_t response_size,
+        NoLockData::FileData::FileContent& file_content)
+    {
+        assert(response_size - size_of_cliprdr_header_with_stream_id
+            <= file_content.size());
+
+        uint32_t remaining = response_size - size_of_cliprdr_header_with_stream_id;
+        constexpr auto max_len = channel_chunk_length;
+        for (; remaining > max_len; remaining -= max_len) {
+            sender(response_size, 0, file_content.read(max_len));
+        }
+        sender(response_size, send_last_flags, file_content.read(remaining));
+    }
 
     template<std::size_t N>
     static uint32_t send_response_datas_with_lengths_and_last_flag(
@@ -1493,63 +1658,57 @@ struct ClipboardVirtualChannel::ClipCtx::D
                             return init_contents_range();
                         }
 
-                        bytes_view file_contents = file_rng.file_contents;
+                        auto& file_contents = file_rng.file_content;
 
                         assert(file_rng.file_offset == file_contents.size());
+                        assert(file_rng.file_offset >= file_contents.offset());
 
-                        // file_contents contains requested range or file is finalised
-                        if (file_rng.is_finalized()
-                         || file_contents_request_pdu.position()
-                          + file_contents_request_pdu.cbRequested()
-                          <= file_contents.size()
-                        ) {
-                            auto offset = std::min<uint64_t>(
-                                file_contents_request_pdu.position(),
-                                file_contents.size());
-                            auto len = std::min<uint64_t>(
-                                file_contents.size() - offset,
-                                file_contents_request_pdu.cbRequested());
+                        const uint64_t req_offset = file_contents_request_pdu.position();
+                        const uint64_t req_len = file_contents_request_pdu.cbRequested();
+                        const uint64_t req_end_offset = req_offset + req_len;
 
-                            using Views = bytes_view[];
-                            send_response_datas(
-                                sender, stream_id,
-                                Views{ file_contents.subarray(offset, len) });
+                        if (req_offset <= file_contents.offset()) {
+                            file_contents.set_offset(req_offset);
 
-                            return false;
-                        }
+                            // has the requested buffer
+                            if (file_rng.is_finalized() || req_end_offset < file_contents.size()) {
+                                auto len = std::min(file_contents.size() - req_offset, req_len);
+                                using Views = bytes_view[];
+                                send_response_datas(
+                                    sender, stream_id,
+                                    Views{ file_contents.read(len) });
 
-                        // no data and file is not finalised and position == last offset
-                        if (file_contents_request_pdu.position() == file_contents.size()) {
-                            update_continuation_range(file_rng);
-                            NoLockData::D::set_range(clip.nolock_data);
+                                return false;
+                            }
 
-                            return true;
-                        }
+                            // request after buffer (validator ok before receiving the whole file)
+                            if (req_offset == file_contents.size()) {
+                                update_continuation_range(file_rng);
+                                NoLockData::D::set_range(clip.nolock_data);
+                                return true;
+                            }
 
-                        // no data and file is not finalised and position < last offset
-                        if (file_contents_request_pdu.position() < file_contents.size()) {
-                            auto already_known
-                                = file_contents.size() - file_contents_request_pdu.position();
-                            uint64_t offset
-                                = file_contents_request_pdu.position() + already_known;
-                            uint32_t requested_len = checked_int(
-                                file_contents_request_pdu.cbRequested() - already_known);
+                            // insufficient data, synchronize buffer
+                            if (req_offset < file_contents.size()) {
+                                auto already_known = file_contents.size() - req_offset;
+                                uint64_t offset = req_offset + already_known;
+                                uint32_t requested_len = checked_int(req_len - already_known);
 
-                            send_filecontents_range(
-                                receiver,
-                                file_rng.stream_id,
-                                file_rng.lindex,
-                                offset,
-                                requested_len);
+                                send_filecontents_range(
+                                    receiver,
+                                    file_rng.stream_id,
+                                    file_rng.lindex,
+                                    offset,
+                                    requested_len);
 
-                            file_rng.stream_id = stream_id;
-                            file_rng.file_size_requested = requested_len;
-                            file_rng.first_file_size_requested
-                                = file_contents_request_pdu.cbRequested();
+                                file_rng.stream_id = stream_id;
+                                file_rng.file_size_requested = requested_len;
+                                file_rng.first_file_size_requested = req_len;
 
-                            NoLockData::D::set_requested_sync_range(clip.nolock_data);
+                                NoLockData::D::set_requested_sync_range(clip.nolock_data);
 
-                            return false;
+                                return false;
+                            }
                         }
 
                         Self::stop_valid_transfer(self, clip, file_rng);
@@ -1559,10 +1718,11 @@ struct ClipboardVirtualChannel::ClipCtx::D
                                 " Unsupported random access for a FILECONTENTS_RANGE (2)");
                         return send_error();
                     }
-
-                    Self::stop_valid_transfer(self, clip, file_rng);
-                    NoLockData::D::init_empty(clip.nolock_data, self);
-                    return init_contents_size();
+                    else {
+                        Self::stop_valid_transfer(self, clip, file_rng);
+                        NoLockData::D::init_empty(clip.nolock_data, self);
+                        return init_contents_size();
+                    }
                 }
 
                 case ClipCtx::TransferState::WaitingContinuationRange:
@@ -1572,7 +1732,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         ) {
                             update_continuation_range(file_rng);
                             NoLockData::D::set_range(clip.nolock_data);
-                            break;
+                            return true;
                         }
                         else {
                             Self::broken_file_transfer(self, clip, file_rng);
@@ -1874,7 +2034,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
                         auto contents = update_file_range_data(
                             file_rng, in_stream.remaining_bytes());
-                        append(file_rng.file_contents, contents);
+                        file_rng.file_content.append(contents);
 
                         uint32_t data_len;
 
@@ -1887,7 +2047,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                                 return false;
                             }
 
-                            data_len = file_rng.file_contents.size();
+                            data_len = file_rng.file_content.size();
                         }
                         else {
                             data_len = std::min(
@@ -1954,8 +2114,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     update_file_range_data(file_rng, in_stream.remaining_bytes());
 
                     if (file_rng.first_file_size_requested) {
-                        auto file_contents = bytes_view(file_rng.file_contents)
-                            .last(known_data_len);
+                        auto file_contents = file_rng.file_content.read(known_data_len);
 
                         using Views = bytes_view[];
                         file_rng.response_size = send_response_datas_with_lengths_and_last_flag(
@@ -2002,14 +2161,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     send_message_is_ok = false;
                 };
 
-                auto send_file_data = [&]{
-                    LOG_IF(bool(self.verbose & RDPVerbose::cliprdr), LOG_INFO,
-                        "ClipboardVirtualChannel::process_filecontents_response:"
-                        " Send first data");
-                    filecontents_response_data(
-                        receiver, file_rng.response_size, file_rng.file_contents);
-                };
-
                 if (is_ok) {
                     check_stream_id(clip.nolock_data.data.stream_id);
 
@@ -2017,7 +2168,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
 
                     auto contents = update_file_range_data(
                         file_rng, in_stream.remaining_bytes());
-                    append(file_rng.file_contents, contents);
+                    file_rng.file_content.append(contents);
 
                     if (bool(flags & CHANNELS::CHANNEL_FLAG_LAST)) {
                         bool is_finalized = set_finalize_file_transfer(file_rng);
@@ -2051,7 +2202,12 @@ struct ClipboardVirtualChannel::ClipCtx::D
                                     Self::_close_file_rng_tfl(
                                         self, file_rng, Mwrm3::TransferedStatus::Completed);
                                 }
-                                send_file_data();
+                                LOG_IF(bool(self.verbose & RDPVerbose::cliprdr), LOG_INFO,
+                                    "ClipboardVirtualChannel::process_filecontents_response:"
+                                    " Send first data");
+                                file_rng.file_content.set_read_mode();
+                                filecontents_response_data(
+                                    receiver, file_rng.response_size, file_rng.file_content);
                                 NoLockData::D::set_sync_range(clip.nolock_data);
                                 break;
 
@@ -2898,8 +3054,9 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
                         ClipCtx::D::_close_file_rng_tfl(
                             *this, file_rng, Mwrm3::TransferedStatus::Completed);
                         if (is_accepted) {
-                            filecontents_response_data(
-                                sender, file_rng.response_size, file_rng.file_contents);
+                            file_rng.file_content.set_read_mode();
+                            ClipCtx::D::filecontents_response_data(
+                                sender, file_rng.response_size, file_rng.file_content);
                             ClipCtx::NoLockData::D::set_sync_range(clip.nolock_data);
                         }
                         else {

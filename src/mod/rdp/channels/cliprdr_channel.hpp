@@ -26,6 +26,7 @@
 #include "mod/file_validator_service.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
 #include "core/events.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include <vector>
@@ -219,7 +220,38 @@ private:
             // TextData, FileContentsSize, FileContentsRequestedRange, FileContentsRange
             struct FileData : FileContentsRange
             {
-                std::vector<uint8_t> file_contents;
+                struct FileContent
+                {
+                    void append(bytes_view data);
+
+                    bytes_view read(std::size_t n);
+
+                    void clear();
+
+                    uint64_t size() const noexcept { return this->data_len; }
+                    uint64_t offset() const noexcept { return this->data_pos; }
+                    void set_offset(uint64_t offset);
+                    void set_read_mode();
+
+                private:
+                    struct Buffer
+                    {
+                        std::unique_ptr<uint8_t[]> buf;
+                        std::size_t pos = 0;
+                        std::size_t capacity = 0;
+
+                        uint8_t* current() const;
+                        std::size_t remaining() const;
+                    };
+
+                    std::unique_ptr<uint8_t[]> memory_buffer;
+                    Buffer requested_buffer;
+                    unique_fd fd = invalid_fd();
+                    uint64_t data_len = 0;
+                    uint64_t data_pos = 0;
+                };
+
+                FileContent file_content;
             };
             FileData data;
 
