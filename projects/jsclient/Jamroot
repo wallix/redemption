@@ -126,8 +126,8 @@ project redjs
     # <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
     <variant>debug:<cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
     <variant>release:<cxxflags>"-s DISABLE_EXCEPTION_CATCHING=2"
-    <variant>release:<cxxflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
-    <variant>release:<linkflags>"-s EXCEPTION_CATCHING_WHITELIST=['Error']"
+    <variant>release:<cxxflags>"-s EXCEPTION_CATCHING_ALLOWED=['Error']"
+    <variant>release:<linkflags>"-s EXCEPTION_CATCHING_ALLOWED=['Error']"
     # <linkflags>"-s SIMD=1"
     # <cxxflags>"-s FS_LOG=1"
 

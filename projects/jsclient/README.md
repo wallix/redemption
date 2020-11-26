@@ -8,7 +8,7 @@ cd emsdk &&
 ./emsdk install latest &&
 ./emsdk activate latest
 ```
-<!-- version: 12.9.1 -->
+<!-- version: 2.0.9 -->
 
 ## Test
 
