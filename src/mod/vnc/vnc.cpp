@@ -22,6 +22,7 @@
 */
 
 #include "mod/vnc/vnc.hpp"
+#include "keyboard/scancode/unicode_to_scancode.hpp"
 #include <openssl/tls1.h>
 #include <openssl/tls1.h>
 
@@ -283,6 +284,8 @@ void mod_vnc::rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keyma
 void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/,
         Keymap2 * /*keymap*/)
 {
+    LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
+    
     if (this->state != UP_AND_RUNNING) {
         return;
     }
@@ -307,8 +310,32 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
     }
 }
 
-void mod_vnc::rdp_input_unicode(uint16_t /*unicode*/, uint16_t /*flag*/)  {
-    LOG(LOG_WARNING, "mod_vnc::rdp_input_unicode: Unicode Keyboard Event is not yet supported");
+void mod_vnc::rdp_input_unicode(uint16_t unicode, uint16_t flag)
+{
+    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack),
+           LOG_INFO,
+           "mod_vnc::rdp_input_unicode(unicode=%d, flag=%d)",
+           unicode,
+           flag);
+
+    
+    using namespace scancode;
+ 
+    ScancodeSeq scancode_seq =
+        unicode_to_scancode(this->keymapSym.get_keylayout(), unicode);
+    array_view<Scancode16bits> scancodes =
+        scancode_seq.scancodes();
+
+    if (scancodes.empty())
+    {
+        LOG(LOG_ERR, "mod_vnc::rdp_input_unicode: No scancode sequence for unicode=%d", unicode);
+        return;
+    }
+
+    for (auto scancode : scancodes)
+    {   
+        rdp_input_scancode(scancode, 0, flag, 0, nullptr);
+    }
 }
 
 void mod_vnc::send_keyevent(uint8_t down_flag, uint32_t key) {
