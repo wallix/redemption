@@ -79,9 +79,15 @@ show_duration jsclient
 # ln -s /usr/lib/gcc/x86_64-linux-gnu/$libstdcxx_compact_version libstdc++-compact/lib/gcc/x86_64-unknown-linux-gnu
 
 # BJAM Build Test
-echo -e "using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;\nusing clang : 9.0 : clang++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
+echo -e "
+using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using clang : 9.0 : clang++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+" > project-config.jam
 valgrind_compiler=gcc-9
 toolset_gcc=toolset=gcc-9
+toolset_wab=toolset=gcc-8
+gcovbin=gcov-9
 toolset_clang=toolset=clang-9.0
 
 export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
@@ -126,7 +132,7 @@ mkdir -p bin
 beforerun=$(rootlist)
 
 # release for -Warray-bounds and not assert
-# build $toolset_gcc cxxflags=-g
+# build $toolset_wab cxxflags=-g
 # multi-thread
 big_mem='exe libs
   tests/capture
@@ -136,11 +142,11 @@ big_mem='exe libs
   tests/client_redemption/client_channels
   tests/mod/rdp.norec
   tests/mod/vnc.norec'
-build $toolset_gcc cxxflags=-g -j2 ocr_tools
-build $toolset_gcc cxxflags=-g $big_mem
-build $toolset_gcc cxxflags=-g -j2
+build $toolset_wab cxxflags=-g -j2 ocr_tools
+build $toolset_wab cxxflags=-g $big_mem
+build $toolset_wab cxxflags=-g -j2
 
-show_duration $toolset_gcc
+show_duration $toolset_wab
 
 
 # Warn new files created by tests.
@@ -165,7 +171,7 @@ show_duration $toolset_clang
 
 if [[ $fast -eq 0 ]]; then
     # debug with coverage
-    build $toolset_gcc debug -scoverage=on covbin=gcov-9 -s FAST_CHECK=1
+    build $toolset_gcc debug -scoverage=on covbin=$gcovbin -s FAST_CHECK=1
 
     show_duration $toolset_gcc coverage
 
