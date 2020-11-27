@@ -837,4 +837,9 @@ bool KeymapSym::is_altgr_pressed() const
     return ((this->is_ctrl_pressed() && this->is_left_alt_pressed()) || (this->is_right_alt_pressed()));
 }
 
+int KeymapSym::get_keylayout() const noexcept
+{
+    return this->keylayout;
+}
+
 #include "keyboard/keymapsymlayouts.hpp"

@@ -147,6 +147,10 @@ void KeymapSym::init_layout_sym(int keyb)
         keylayout_WORK_shiftcapslock_sym[i] = DEFAULT_shiftcapslock_sym[i] ;
     }
 
+    // US keyboard by default
+    this->keylayout = 0x0409;
+        
+
     switch (keyb){
 
         case 0x0407: // GERMAN
@@ -260,6 +264,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0407;
             break;
 
         case 0x0409: // United States
@@ -373,6 +378,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0409;
             break;
 
         case 0x040c: // French
@@ -487,6 +493,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x040c;
             break;
 
         case 0x0410: // Italian
@@ -600,6 +607,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0410;
             break;
 
         case 0x0419: // Russian
@@ -713,6 +721,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0419;
             break;
 
         case 0x041d: // Swedish
@@ -826,6 +835,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x041d; 
             break;
 
         case 0x046e: // Luxemburgish
@@ -939,6 +949,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x046e;
             break;
 
         case 0x0807: // German Swizerland
@@ -1052,6 +1063,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0807;
             break;
 
         case 0x0809: // English UK
@@ -1165,6 +1177,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0809;
             break;
 
         case 0x080c: // French Belgium
@@ -1278,6 +1291,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x080c;
             break;
 
         case 0x0813: // Dutch Belgium
@@ -1391,6 +1405,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x0813;
             break;
 
         case 0x100c: // French Swizerland
@@ -1504,6 +1519,7 @@ void KeymapSym::init_layout_sym(int keyb)
                     }
                 }
             }
+            this->keylayout = 0x100c;
             break;
 
         default:

@@ -1179,6 +1179,8 @@ public:
 
     [[nodiscard]] bool is_alt_pressed() const;
 
+    [[nodiscard]] int get_keylayout() const noexcept;
+
 private:
     void init_layout_sym(int keyb);
 
