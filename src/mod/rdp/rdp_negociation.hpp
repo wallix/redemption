@@ -39,6 +39,7 @@
 #include "utils/crypto/ssl_lib.hpp"
 #include "acl/auth_api.hpp"
 
+#include <functional> // std::reference_wrapper
 #include <memory>
 #include <array>
 
