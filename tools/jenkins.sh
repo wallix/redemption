@@ -48,7 +48,8 @@ source ~/emsdk/emsdk_env.sh
 if [[ $fast -eq 0 ]]; then
     rm -rf bin
 fi
-version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
+#version=$(clang++ --version | sed -E 's/^.*clang version ([0-9]+\.[0-9]+).*/\1/;q')
+version=11
 echo "using clang : $version : clang++ -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;" > project-config.jam
 if [[ ! -d system_include/boost ]]; then
     mkdir -p system_include
