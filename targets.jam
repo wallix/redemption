@@ -4319,7 +4319,9 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
   <library>src/acl/kvlist_buffer.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4329,14 +4331,21 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
+  <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/log_siem.o
+  <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/test_framework/working_directory.o
+  <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/rdp/channels/sespro_channel.hpp
 ;

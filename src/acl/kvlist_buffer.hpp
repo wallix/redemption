@@ -32,7 +32,7 @@ Author(s): Jonathan Poelen
 
 class KVListBuffer
 {
-    static const std::size_t maximal_nb_key_value = 8;
+    static const std::size_t maximal_nb_key_value = 256;
 
     struct Event
     {
