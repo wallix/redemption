@@ -24,34 +24,34 @@ encryptionLevel = option('low', 'medium', 'high', default='low')
 authfile = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(')
 
 # Time out during RDP handshake stage.
-# (is in second)
+# (in seconds)
 handshake_timeout = integer(min=0, default=10)
 
 # No automatic disconnection due to inactivity, timer is set on primary authentication.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then session timeout value is unlimited.
-# (is in second)
+# (in seconds)
 session_timeout = integer(min=0, default=900)
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.
-# (is in second)
+# (in seconds)
 #_hidden
 inactivity_timeout = integer(min=0, default=0)
 
 # Keepalive.
-# (is in second)
+# (in seconds)
 #_advanced
 keepalive_grace_delay = integer(min=0, default=30)
 
 # Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
-# (is in second)
+# (in seconds)
 #_advanced
 authentication_timeout = integer(min=0, default=120)
 
 # Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-# (is in second)
+# (in seconds)
 #_advanced
 close_timeout = integer(min=0, default=600)
 
@@ -104,7 +104,7 @@ large_pointer_support = boolean(default=True)
 
 unicode_keyboard_event_support = boolean(default=True)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 mod_recv_timeout = integer(min=100, max=10000, default=1000)
 
@@ -123,7 +123,7 @@ support_connection_redirection_during_recording = boolean(default=True)
 # Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
 # Set to 0 to disable this feature.
-# (is in millisecond)
+# (in milliseconds)
 rdp_keepalive_connection_interval = integer(min=0, default=0)
 
 # Enable primary connection on ipv6
@@ -265,7 +265,7 @@ transform_glyph_to_bitmap = boolean(default=False)
 #   2: all input events
 bogus_number_of_fastpath_input_event = option(0, 1, 2, default=1)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 recv_timeout = integer(min=100, max=10000, default=1000)
 
@@ -315,7 +315,7 @@ rdp_compression = option(0, 1, 2, 3, 4, default=4)
 #_advanced
 disconnect_on_logon_user_change = boolean(default=False)
 
-# (is in second)
+# (in seconds)
 #_advanced
 open_session_timeout = integer(min=0, default=0)
 
@@ -443,13 +443,13 @@ session_probe_on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_launch_timeout = integer(min=0, max=300000, default=40000)
 
 # This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_launch_fallback_timeout = integer(min=0, max=300000, default=10000)
 
@@ -457,7 +457,7 @@ session_probe_launch_fallback_timeout = integer(min=0, max=300000, default=10000
 #_hidden
 session_probe_start_launch_timeout_timer_only_after_logon = boolean(default=True)
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_keepalive_timeout = integer(min=0, max=60000, default=5000)
 
@@ -492,19 +492,19 @@ session_probe_log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_disconnected_application_limit = integer(min=0, max=172800000, default=0)
 
 # This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_disconnected_session_limit = integer(min=0, max=172800000, default=0)
 
 # This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_idle_session_limit = integer(min=0, max=172800000, default=0)
 
@@ -514,23 +514,23 @@ session_probe_exe_or_file = string(max=511, default='||CMD')
 #_hidden
 session_probe_arguments = string(max=511, default=')gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(')
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_clipboard_based_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_clipboard_based_launcher_start_delay = integer(min=0, default=0)
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_clipboard_based_launcher_long_delay = integer(min=0, default=500)
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_clipboard_based_launcher_short_delay = integer(min=0, default=50)
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_launcher_abort_delay = integer(min=0, max=300000, default=2000)
 
@@ -546,7 +546,7 @@ session_probe_handle_usage_limit = integer(min=0, max=1000, default=0)
 #_hidden
 session_probe_memory_usage_limit = integer(min=0, max=200000000, default=0)
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 
@@ -689,13 +689,13 @@ enable_rdpdr_data_analysis = boolean(default=True)
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)
 
 # Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)
 
@@ -806,11 +806,11 @@ enable_vnc_metrics = boolean(default=False)
 #_hidden
 log_dir_path = string(max=4096, default=')gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(')
 
-# (is in second)
+# (in seconds)
 #_advanced
 log_interval = integer(min=0, default=5)
 
-# (is in hour)
+# (in hours)
 #_advanced
 log_file_turnover_interval = integer(min=0, default=24)
 
@@ -934,7 +934,7 @@ version = option(1, 2, default=2)
 
 locale = option('latin', 'cyrillic', default='latin')
 
-# (is in 1/100 second)
+# (in 1/100 seconds)
 #_advanced
 interval = integer(min=0, default=100)
 
@@ -964,17 +964,17 @@ capture_groupid = integer(min=0, default=33)
 capture_flags = integer(min=0, max=15, default=11)
 
 # Frame interval.
-# (is in 1/10 second)
+# (in 1/10 seconds)
 #_advanced
 png_interval = integer(min=0, default=10)
 
 # Frame interval.
-# (is in 1/100 second)
+# (in 1/100 seconds)
 #_advanced
 frame_interval = integer(min=0, default=40)
 
 # Time between 2 wrm movies.
-# (is in second)
+# (in seconds)
 #_advanced
 break_interval = integer(min=0, default=600)
 
@@ -1074,7 +1074,7 @@ play_video_with_corrupted_bitmap = boolean(default=False)
 allow_rt_without_recording = boolean(default=False)
 
 # Allow to control permissions on recorded files with octal number
-# (is in octal or symbolic mode format (as chmod Linux command))
+# (in octal or symbolic mode format (as chmod Linux command))
 #_hidden
 file_permissions = string(default='440')
 
@@ -1084,11 +1084,11 @@ rt_basename_only_sid = boolean(default=False)
 
 [crypto]
 
-# (is in hexadecimal format)
+# (in hexadecimal format)
 #_hidden
 encryption_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
 
-# (is in hexadecimal format)
+# (in hexadecimal format)
 #_hidden
 sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')
 

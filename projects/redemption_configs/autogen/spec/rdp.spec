@@ -24,7 +24,7 @@ vault_transformation_rule = string(default='')
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.
-# (is in second)
+# (in seconds)
 inactivity_timeout = integer(min=0, default=0)
 
 [session_log]
@@ -132,7 +132,7 @@ auto_reconnection_on_losing_target_link = boolean(default=False)
 forward_client_build_number = boolean(default=True)
 
 # Delay before showing disconnect message after the last RemoteApp window is closed.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 remote_programs_disconnect_message_delay = integer(min=3000, max=120000, default=3000)
 
@@ -158,20 +158,20 @@ on_launch_failure = option(0, 1, 2, default=1)
 
 # This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 launch_timeout = integer(min=0, max=300000, default=40000)
 
 # This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 launch_fallback_timeout = integer(min=0, max=300000, default=10000)
 
 # Minimum supported server : Windows Server 2008.
 start_launch_timeout_timer_only_after_logon = boolean(default=True)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 keepalive_timeout = integer(min=0, max=60000, default=5000)
 
@@ -201,39 +201,39 @@ log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 disconnected_application_limit = integer(min=0, max=172800000, default=0)
 
 # This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 disconnected_session_limit = integer(min=0, max=172800000, default=0)
 
 # This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
 # 0 to disable timeout.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 idle_session_limit = integer(min=0, max=172800000, default=0)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 smart_launcher_start_delay = integer(min=0, default=0)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 smart_launcher_long_delay = integer(min=0, default=500)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 smart_launcher_short_delay = integer(min=0, default=50)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 launcher_abort_delay = integer(min=0, max=300000, default=2000)
 
@@ -246,7 +246,7 @@ handle_usage_limit = integer(min=0, max=1000, default=0)
 #_advanced
 memory_usage_limit = integer(min=0, max=200000000, default=0)
 
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 

@@ -28,34 +28,34 @@ R"gen_config_ini(## Config file for RDP proxy.
 #authfile = )gen_config_ini" << (REDEMPTION_CONFIG_AUTHFILE) << R"gen_config_ini(
 
 # Time out during RDP handshake stage.
-# (is in second)
+# (in seconds)
 #handshake_timeout = 10
 
 # No automatic disconnection due to inactivity, timer is set on primary authentication.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then session timeout value is unlimited.
-# (is in second)
+# (in seconds)
 #session_timeout = 900
 
 # No automatic disconnection due to inactivity, timer is set on target session.
 # If value is between 1 and 30, then 30 is used.
 # If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.
-# (is in second)
+# (in seconds)
 #_hidden
 #inactivity_timeout = 0
 
 # Keepalive.
-# (is in second)
+# (in seconds)
 #_advanced
 #keepalive_grace_delay = 30
 
 # Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate).
-# (is in second)
+# (in seconds)
 #_advanced
 #authentication_timeout = 120
 
 # Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate).
-# (is in second)
+# (in seconds)
 #_advanced
 #close_timeout = 600
 
@@ -122,7 +122,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #unicode_keyboard_event_support = 1
 
 # min = 100, max = 10000
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 #mod_recv_timeout = 1000
 
@@ -145,7 +145,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.
 # !!!May cause FreeRDP-based client to CRASH!!!
 # Set to 0 to disable this feature.
-# (is in millisecond)
+# (in milliseconds)
 #rdp_keepalive_connection_interval = 0
 
 # Enable primary connection on ipv6
@@ -318,7 +318,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #bogus_number_of_fastpath_input_event = 1
 
 # min = 100, max = 10000
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 #recv_timeout = 1000
 
@@ -373,7 +373,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #disconnect_on_logon_user_change = 0
 
-# (is in second)
+# (in seconds)
 #_advanced
 #open_session_timeout = 0
 
@@ -517,14 +517,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).
 # 0 to disable timeout.
 # min = 0, max = 300000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_launch_timeout = 40000
 
 # This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).
 # 0 to disable timeout.
 # min = 0, max = 300000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_launch_fallback_timeout = 10000
 
@@ -534,7 +534,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #session_probe_start_launch_timeout_timer_only_after_logon = 1
 
 # min = 0, max = 60000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_keepalive_timeout = 5000
 
@@ -576,21 +576,21 @@ R"gen_config_ini(## Config file for RDP proxy.
 # This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_disconnected_application_limit = 0
 
 # This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_disconnected_session_limit = 0
 
 # This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.
 # 0 to disable timeout.
 # min = 0, max = 172800000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_idle_session_limit = 0
 
@@ -602,24 +602,24 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_arguments = )gen_config_ini" << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << R"gen_config_ini(
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_clipboard_based_launcher_clipboard_initialization_delay = 2000
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_clipboard_based_launcher_start_delay = 0
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_clipboard_based_launcher_long_delay = 500
 
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_clipboard_based_launcher_short_delay = 50
 
 # min = 0, max = 300000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_launcher_abort_delay = 2000
 
@@ -642,7 +642,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #session_probe_memory_usage_limit = 0
 
 # min = 0, max = 60000
-# (is in millisecond)
+# (in milliseconds)
 #_hidden
 #session_probe_end_of_session_check_delay_time = 0
 
@@ -811,13 +811,13 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 #remoteapp_bypass_legal_notice_delay = 0
 
 # Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.
 # Set to 0 to disable this feature.
-# (is in millisecond)
+# (in milliseconds)
 #_advanced
 #remoteapp_bypass_legal_notice_timeout = 20000
 
@@ -952,11 +952,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #log_dir_path = )gen_config_ini" << (app_path(AppPath::Metrics)) << R"gen_config_ini(
 
-# (is in second)
+# (in seconds)
 #_advanced
 #log_interval = 5
 
-# (is in hour)
+# (in hours)
 #_advanced
 #log_file_turnover_interval = 24
 
@@ -1100,7 +1100,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # values: latin, cyrillic
 #locale = latin
 
-# (is in 1/100 second)
+# (in 1/100 seconds)
 #_advanced
 #interval = 100
 
@@ -1135,17 +1135,17 @@ R"gen_config_ini(## Config file for RDP proxy.
 #capture_flags = 11
 
 # Frame interval.
-# (is in 1/10 second)
+# (in 1/10 seconds)
 #_advanced
 #png_interval = 10
 
 # Frame interval.
-# (is in 1/100 second)
+# (in 1/100 seconds)
 #_advanced
 #frame_interval = 40
 
 # Time between 2 wrm movies.
-# (is in second)
+# (in seconds)
 #_advanced
 #break_interval = 600
 

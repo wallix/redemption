@@ -72,27 +72,27 @@ inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
 //@}
 
 inline void write_type_info(std::ostream& out, type_<types::file_permission>)
-{ out << "(is in octal or symbolic mode format (as chmod Linux command))\n"; }
+{ out << "(in octal or symbolic mode format (as chmod Linux command))\n"; }
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
-{ out << "(is in hexadecimal format)\n"; }
+{ out << "(in hexadecimal format)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::hours>)
-{ out << "(is in hour)\n"; }
+{ out << "(in hours)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::minutes>)
-{ out << "(is in minute)\n"; }
+{ out << "(in minutes)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::seconds>)
-{ out << "(is in second)\n"; }
+{ out << "(in seconds)\n"; }
 
 inline void write_type_info(std::ostream& out, type_<std::chrono::milliseconds>)
-{ out << "(is in millisecond)\n"; }
+{ out << "(in milliseconds)\n"; }
 
 template<class T, class Ratio>
 void write_type_info(std::ostream& out, type_<std::chrono::duration<T, Ratio>>)
-{ out << "(is in " << Ratio::num << "/" << Ratio::den << " second)\n"; }
+{ out << "(in " << Ratio::num << "/" << Ratio::den << " seconds)\n"; }
 
 template<class T, long min, long max>
 void write_type_info(std::ostream& out, type_<types::range<T, min, max>>)
