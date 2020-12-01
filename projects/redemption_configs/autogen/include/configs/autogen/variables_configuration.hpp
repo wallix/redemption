@@ -303,8 +303,9 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 10 };
     };
-    /// No traffic auto disconnection, timer is set after authentication on primary session. <br/>
-    /// If value is smaller than 30, 30 is used by default (except 0 which unlimited value is used). <br/>
+    /// No automatic disconnection due to inactivity, timer is set on primary authentication. <br/>
+    /// If value is between 1 and 30, then 30 is used. <br/>
+    /// If value is set to 0, then session timeout value is unlimited. <br/>
     /// type: std::chrono::seconds <br/>
     /// default: 900 <br/>
     struct globals::session_timeout {
@@ -315,8 +316,9 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 900 };
     };
-    /// No traffic auto disconnection, timer is set on secondary session. <br/>
-    /// If value is smaller than 30, 30 is used by default (except 0 which global value "session_timeout" is used instead). <br/>
+    /// No automatic disconnection due to inactivity, timer is set on target session. <br/>
+    /// If value is between 1 and 30, then 30 is used. <br/>
+    /// If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used. <br/>
     /// type: std::chrono::seconds <br/>
     /// connpolicy -> proxy    [name: session::inactivity_timeout] <br/>
     /// sesmanName: globals:inactivity_timeout <br/>

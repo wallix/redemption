@@ -25,8 +25,9 @@ vault_transformation_rule = string(default='')
 
 [session]
 
-# No traffic auto disconnection, timer is set on secondary session.
-# If value is smaller than 30, 30 is used by default (except 0 which global value "session_timeout" is used instead).
+# No automatic disconnection due to inactivity, timer is set on target session.
+# If value is between 1 and 30, then 30 is used.
+# If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.
 # (is in second)
 inactivity_timeout = integer(min=0, default=0)
 

@@ -31,13 +31,15 @@ R"gen_config_ini(## Config file for RDP proxy.
 # (is in second)
 #handshake_timeout = 10
 
-# No traffic auto disconnection, timer is set after authentication on primary session.
-# If value is smaller than 30, 30 is used by default (except 0 which unlimited value is used).
+# No automatic disconnection due to inactivity, timer is set on primary authentication.
+# If value is between 1 and 30, then 30 is used.
+# If value is set to 0, then session timeout value is unlimited.
 # (is in second)
 #session_timeout = 900
 
-# No traffic auto disconnection, timer is set on secondary session.
-# If value is smaller than 30, 30 is used by default (except 0 which global value "session_timeout" is used instead).
+# No automatic disconnection due to inactivity, timer is set on target session.
+# If value is between 1 and 30, then 30 is used.
+# If value is set to 0, then value set in "Session timeout" (in "RDP Proxy" configuration option) is used.
 # (is in second)
 #_hidden
 #inactivity_timeout = 0
