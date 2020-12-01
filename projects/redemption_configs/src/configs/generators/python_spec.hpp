@@ -372,6 +372,7 @@ void write_enumeration_value_description(std::ostream& out, type_enumerations& e
         }
     }
     else {
+        (void)is_enum_parser;
         static_assert(!is_convertible_v<Pack, prefix_value>, "prefix_value only with enums type");
     }
 }
@@ -448,10 +449,12 @@ auto get_semantic_type(type_<T>, type_<U>, bool * is_enum_parser)
             return type_<U>();
         }
         else {
+            (void)is_enum_parser;
             return type_<T>();
         }
     }
     else {
+        (void)is_enum_parser;
         return type_<T>();
     }
 }
