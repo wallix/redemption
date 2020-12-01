@@ -266,7 +266,7 @@ private:
 
         if (e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) {
             LOG(LOG_INFO, "Retry Session Probe Disconnection Reconnection");
-            return EndSessionResult::close_box;
+            return EndSessionResult::retry;
         }
 
         if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
