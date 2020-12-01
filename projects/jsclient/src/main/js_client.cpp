@@ -302,6 +302,7 @@ public:
         using namespace std::chrono_literals;
 
         client_info.screen_info = screen_info;
+        client_info.build = get_or(config, "build", 420);
 
         const auto disabled_orders
             = get_or(config, "disabledGraphicOrders", PrimaryDrawingOrdersSupport());
