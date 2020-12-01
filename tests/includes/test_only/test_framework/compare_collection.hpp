@@ -95,7 +95,8 @@ namespace ut
         oss.str({});
         f(oss, y);
 
-        put_message_with_diff(out, s1, op, oss.str(), nocolor);
+        auto s2 = oss.str(); chars_view av1 = s1; chars_view av2 = s2;
+        put_message_with_diff(out, av1, op, av2, nocolor);
     }
 
 
