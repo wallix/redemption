@@ -1297,74 +1297,52 @@ enable_target_field = boolean(default=True)
 [theme]
 
 # Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)
-#_advanced
 enable_theme = boolean(default=False)
 
-#_advanced
-bgcolor = string(default='dark_blue_bis')
-
-#_advanced
-fgcolor = string(default='white')
-
-#_advanced
-separator_color = string(default='light_blue')
-
-#_advanced
-focus_color = string(default='winblue')
-
-#_advanced
-error_color = string(default='yellow')
-
-# File path for upload logo
+# Logo displayed when theme is enabled
 #_image=/var/wab/images/rdp-oem-logo.png
 logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
 
-#_advanced
+bgcolor = string(default='dark_blue_bis')
+
+fgcolor = string(default='white')
+
+separator_color = string(default='light_blue')
+
+focus_color = string(default='winblue')
+
+error_color = string(default='yellow')
+
 edit_bgcolor = string(default='white')
 
-#_advanced
 edit_fgcolor = string(default='black')
 
-#_advanced
 edit_focus_color = string(default='winblue')
 
-#_advanced
 tooltip_bgcolor = string(default='black')
 
-#_advanced
 tooltip_fgcolor = string(default='light_yellow')
 
-#_advanced
 tooltip_border_color = string(default='black')
 
-#_advanced
 selector_line1_bgcolor = string(default='pale_blue')
 
-#_advanced
 selector_line1_fgcolor = string(default='black')
 
-#_advanced
 selector_line2_bgcolor = string(default='light_blue')
 
-#_advanced
 selector_line2_fgcolor = string(default='black')
 
-#_advanced
 selector_selected_bgcolor = string(default='medium_blue')
 
-#_advanced
 selector_selected_fgcolor = string(default='white')
 
-#_advanced
 selector_focus_bgcolor = string(default='winblue')
 
-#_advanced
 selector_focus_fgcolor = string(default='white')
 
-#_advanced
 selector_label_bgcolor = string(default='medium_blue')
 
-#_advanced
 selector_label_fgcolor = string(default='white')
 
 )gen_config_ini"

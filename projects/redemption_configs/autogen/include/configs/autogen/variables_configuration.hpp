@@ -5127,6 +5127,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
+    /// Logo displayed when theme is enabled <br/>
+    /// type: std::string <br/>
+    /// default: REDEMPTION_CONFIG_THEME_LOGO <br/>
+    struct theme::logo_path {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value { REDEMPTION_CONFIG_THEME_LOGO };
+    };
     /// type: std::string <br/>
     /// default: "dark_blue_bis" <br/>
     struct theme::bgcolor {
@@ -5176,17 +5187,6 @@ namespace cfg
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value { "yellow" };
-    };
-    /// File path for upload logo <br/>
-    /// type: std::string <br/>
-    /// default: REDEMPTION_CONFIG_THEME_LOGO <br/>
-    struct theme::logo_path {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
-        using mapped_type = sesman_and_spec_type;
-        type value { REDEMPTION_CONFIG_THEME_LOGO };
     };
     /// type: std::string <br/>
     /// default: "white" <br/>
@@ -5798,12 +5798,12 @@ struct context
 { static constexpr bool is_section = true; };
 
 struct theme
-: cfg::theme::bgcolor
+: cfg::theme::logo_path
+, cfg::theme::bgcolor
 , cfg::theme::fgcolor
 , cfg::theme::separator_color
 , cfg::theme::focus_color
 , cfg::theme::error_color
-, cfg::theme::logo_path
 , cfg::theme::edit_bgcolor
 , cfg::theme::edit_fgcolor
 , cfg::theme::edit_focus_color

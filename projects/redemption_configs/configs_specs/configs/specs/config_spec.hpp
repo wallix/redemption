@@ -915,38 +915,38 @@ void config_spec_definition(Writer && W)
 
     W.section("theme", [&]
     {
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"enable_theme"}, desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"}, set(false));
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_theme"}, desc{"Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc)"}, set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"bgcolor"}, set("dark_blue_bis"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"fgcolor"}, set("white"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"separator_color"}, set("light_blue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"focus_color"}, set("winblue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"error_color"}, set("yellow"));
         W.member(image_in_gui, no_sesman, L, type_<std::string>(), names{.cpp="logo_path", .ini="logo"},
-        desc{"File path for upload logo"}, set(CPP_EXPR(REDEMPTION_CONFIG_THEME_LOGO)));
+        desc{"Logo displayed when theme is enabled"}, set(CPP_EXPR(REDEMPTION_CONFIG_THEME_LOGO)));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"edit_bgcolor"}, set("white"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"edit_fgcolor"}, set("black"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"edit_focus_color"}, set("winblue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"bgcolor"}, set("dark_blue_bis"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"separator_color"}, set("light_blue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"focus_color"}, set("winblue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"error_color"}, set("yellow"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"edit_bgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"edit_fgcolor"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"edit_focus_color"}, set("winblue"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"tooltip_bgcolor"}, set("black"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"tooltip_fgcolor"}, set("light_yellow"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"tooltip_border_color"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"tooltip_bgcolor"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"tooltip_fgcolor"}, set("light_yellow"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"tooltip_border_color"}, set("black"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_line1_bgcolor"}, set("pale_blue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_line1_fgcolor"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line1_bgcolor"}, set("pale_blue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line1_fgcolor"}, set("black"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_line2_bgcolor"}, set("light_blue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_line2_fgcolor"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line2_bgcolor"}, set("light_blue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line2_fgcolor"}, set("black"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_selected_bgcolor"}, set("medium_blue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_selected_fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_selected_bgcolor"}, set("medium_blue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_selected_fgcolor"}, set("white"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_focus_bgcolor"}, set("winblue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_focus_fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_focus_bgcolor"}, set("winblue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_focus_fgcolor"}, set("white"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_label_bgcolor"}, set("medium_blue"));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"selector_label_fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_label_bgcolor"}, set("medium_blue"));
+        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_label_fgcolor"}, set("white"));
     });
 
     REDEMPTION_DIAGNOSTIC_POP

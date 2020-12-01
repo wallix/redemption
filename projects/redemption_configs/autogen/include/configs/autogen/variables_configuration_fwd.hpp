@@ -452,12 +452,12 @@ namespace cfg
 
     struct theme {
         struct enable_theme;
+        struct logo_path;
         struct bgcolor;
         struct fgcolor;
         struct separator_color;
         struct focus_color;
         struct error_color;
-        struct logo_path;
         struct edit_bgcolor;
         struct edit_fgcolor;
         struct edit_focus_color;
