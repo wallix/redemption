@@ -144,6 +144,9 @@ div, section, canvas{
             <button id="disconnect" type="button" disabled="disabled">Disconnect</button>
             <a id="permalink" href="#">Permalink</a>
         </p>
+        <p>
+            <button id="ctrlAltDel" type="button" disabled="disabled">Ctrl+Alt+Del</button>
+        </p>
     </form>
 
     <div id="clip">
@@ -216,6 +219,7 @@ const cbFmts = document.getElementById('cbFmts');
 const cbFiles = document.getElementById('cbFiles');
 const cbDownload = document.getElementById('cbDownload');
 const permalink = document.getElementById('permalink');
+const ctrlAltDel = document.getElementById('ctrlAltDel');
 
 // init kbdlayout_input
 let defaultLayoutId;
@@ -753,7 +757,7 @@ function run(openCb, closeCb)
         rdpclient.writeFirstPacket();
         sendData();
 
-        openCb();
+        openCb(sendScancodes);
     }
 
     return () => {
@@ -861,14 +865,25 @@ function openClient()
     }
 
     disconnectButton.disabled = true;
+    ctrlAltDel.disabled = true;
 
+    previousConnCtx.ctrlAltDel = {};
     previousConnCtx.disconnectButton = {};
-    const connCtx = {disconnectButton};
+    const connCtx = { disconnectButton, ctrlAltDel, };
     previousConnCtx = connCtx;
     closeClient();
     closeClient = run(
-        () => { connCtx.disconnectButton.disabled = false; },
-        () => { connCtx.disconnectButton.disabled = true; },
+        (sendScancodes) => {
+            connCtx.ctrlAltDel.disabled = false;
+            connCtx.disconnectButton.disabled = false;
+            ctrlAltDel.onclick = (evt) => {
+                sendScancodes([0x1d, 0x38, 0x153, 0x801d, 0x8038, 0x8153, ], evt);
+            };
+        },
+        () => {
+            connCtx.ctrlAltDel.disabled = true;
+            connCtx.disconnectButton.disabled = true;
+        },
     );
 };
 
