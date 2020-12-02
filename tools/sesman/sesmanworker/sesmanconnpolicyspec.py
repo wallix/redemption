@@ -247,9 +247,6 @@ cp_spec = {
         u'file_verification:max_file_size_rejected': (
             'max_file_size_rejected', 256
         ),
-        u'file_verification:tmpdir': (
-            'tmpdir', u'/tmp/'
-        ),
     },
     'file_storage': {
         u'file_storage:store_file': (

@@ -390,10 +390,6 @@ log_if_accepted = boolean(default=True)
 #_advanced
 max_file_size_rejected = integer(min=0, default=256)
 
-# Temporary path used when files take up too much memory.
-#_advanced
-tmpdir = string(max=4096, default='/tmp/')
-
 [file_storage]
 
 # Enable storage of transferred files (via RDP Clipboard).

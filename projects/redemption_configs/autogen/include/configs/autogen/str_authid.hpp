@@ -120,7 +120,6 @@ namespace configs
         "file_verification:block_invalid_file_down"_zv,
         "file_verification:log_if_accepted"_zv,
         "file_verification:max_file_size_rejected"_zv,
-        "file_verification:tmpdir"_zv,
         "file_storage:store_file"_zv,
         "replay_on_loop"_zv,
         "hash_path"_zv,

@@ -278,8 +278,6 @@ cfg::file_verification::log_if_accepted ⇐ file_verification:log_if_accepted   
 cfg::file_verification::max_file_size_rejected ⇐ file_verification:max_file_size_rejected   [uint32_t]
     If option Block invalid file (up or down) is enabled, automatically reject file with greater filesize (in megabytes).
     Warning: This value affects the RAM used by the session.
-cfg::file_verification::tmpdir ⇐ file_verification:tmpdir   [::configs::spec_types::directory_path]
-    Temporary path used when files take up too much memory.
 
 cfg::file_storage::store_file ⇐ file_storage:store_file   [RdpStoreFile ⇐ std::string]
     Enable storage of transferred files (via RDP Clipboard).
