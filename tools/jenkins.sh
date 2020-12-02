@@ -84,7 +84,7 @@ using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using clang : 9.0 : clang++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 " > project-config.jam
-valgrind_compiler=gcc-9
+valgrind_compiler=gcc-8
 toolset_gcc=toolset=gcc-9
 toolset_wab=toolset=gcc-8
 gcovbin=gcov-9
