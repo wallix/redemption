@@ -844,7 +844,7 @@ public:
         image_view.width(),
         image_view.height(),
         capture_params.groupid,
-        capture_params.sesman,
+        capture_params.session_log,
         wrm_params.file_permissions)
     , graphic_to_file(
         capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,

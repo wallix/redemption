@@ -35,11 +35,8 @@ namespace gdi
 
 class Bouncer2Mod : public mod_api
 {
-    bool capture_started = false;
-
     uint16_t front_width;
     uint16_t front_height;
-    FrontAPI & front;
 
     int speedx = 2;
     int speedy = 2;
@@ -61,7 +58,6 @@ public:
          TimeBase& time_base,
          gdi::GraphicApi & gd,
          EventContainer & events,
-         FrontAPI & front,
          uint16_t width, uint16_t height);
 
     ~Bouncer2Mod();
@@ -107,9 +103,6 @@ public:
     bool server_error_encountered() const override { return false; }
 
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
-    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
-    void send_auth_channel_data(const char * /*data*/) override {}
-    void send_checkout_channel_data(const char * /*data*/) override {}
 
 private:
     int interaction();

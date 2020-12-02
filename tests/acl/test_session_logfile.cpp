@@ -26,7 +26,6 @@
 
 #include "acl/session_logfile.hpp"
 #include "core/log_id.hpp"
-#include "utils/timebase.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"
 #include "utils/genfstat.hpp"
@@ -62,7 +61,6 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     LCGRandom rnd;
     Fstat fstat;
     CryptoContext cctx;
-    TimeBase timebase({0, 0});
 
     ini.set_acl<cfg::globals::auth_user>("admin");
     ini.set_acl<cfg::globals::target_user>("user1");
@@ -84,7 +82,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
-    SessionLogFile log_file(ini, timebase, cctx, rnd, fstat, notify_error);
+    SessionLogFile log_file(ini, cctx, rnd, fstat, notify_error);
     SiemLogger siem_logger;
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime
@@ -93,8 +91,9 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     {
         tu::log_buffered logbuf;
+        const time_t now = 0;
 
-        log_file.log6(LogId::INPUT_LANGUAGE, {
+        log_file.log6(now, LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),
         });
@@ -104,8 +103,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
             KVLog("display_name"_av, "name"_av),
         }, ini, session_type);
 
-        auto now = timebase.get_current_time();
-        siem_logger.log_arcsight_format(now.tv_sec,
+        siem_logger.log_arcsight_format(now,
             LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av,   "ident"_av),
             KVLog("display_name"_av, "name"_av),
@@ -118,12 +116,11 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
         RED_CHECK(logbuf.buf() == expected6);
     }
 
-    timebase.increment_sec(10);
-
     {
         tu::log_buffered logbuf;
+        const time_t now = 10;
 
-        log_file.log6(LogId::CONNECTION_FAILED, {
+        log_file.log6(now, LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog("msg2"_av, "vnc"_av),
         });
@@ -133,8 +130,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
             KVLog("msg2"_av, "vnc"_av),
         }, ini, session_type);
 
-        auto now = timebase.get_current_time();
-        siem_logger.log_arcsight_format(now.tv_sec,LogId::CONNECTION_FAILED, {
+        siem_logger.log_arcsight_format(now, LogId::CONNECTION_FAILED, {
             KVLog("msg"_av, "long long\nmessage=|x\\y\"z"_av),
             KVLog("msg2"_av, "vnc"_av),
         }, ini, session_type);
@@ -147,10 +143,9 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
         RED_CHECK(logbuf.buf() == expected6);
     }
 
-    timebase.increment_sec(3023);
-
     {
         tu::log_buffered logbuf;
+        const time_t now = 3033;
 
         siem_logger.log_syslog_format(LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),
@@ -158,14 +153,13 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
         }, ini, session_type);
 
-        auto now = timebase.get_current_time();
-        siem_logger.log_arcsight_format(now.tv_sec, LogId::DRIVE_REDIRECTION_RENAME, {
+        siem_logger.log_arcsight_format(now, LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),
         }, ini, session_type);
 
-        log_file.log6(LogId::DRIVE_REDIRECTION_RENAME, {
+        log_file.log6(now, LogId::DRIVE_REDIRECTION_RENAME, {
             KVLog("app"_av, "rdp"_av),
             KVLog("oldFilePath"_av, "/dir/old_file.ext"_av),
             KVLog("filePath"_av, "/dir/new_file.ext"_av),

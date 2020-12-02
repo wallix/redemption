@@ -140,7 +140,19 @@ public:
     bool has_user_activity = true;
 
 private:
-    std::unique_ptr<Capture> capture;
+    struct PrivCapture
+    {
+        explicit operator bool () const { return bool(this->_capture); }
+
+        Capture * operator->() const { return this->_capture.operator->(); }
+        Capture * get() const { return this->_capture.get(); }
+
+        void reset() { this->_capture.reset(); }
+
+        std::unique_ptr<Capture> _capture;
+        SessionLogApi* _session_log;
+    };
+    PrivCapture capture;
     SessionUpdateBuffer session_update_buffer;
 
 public:
@@ -554,6 +566,7 @@ private:
 
     int order_level = 0;
 
+    // TODO vcfg::variables
     Inifile & ini;
     CryptoContext & cctx;
 
@@ -592,7 +605,7 @@ private:
 
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
-    AuthApi & sesman;
+    AclReportApi & acl_report;
 
     uint16_t rail_channel_id = 0;
 
@@ -750,7 +763,7 @@ public:
 public:
     Front( TimeBase& time_base
          , EventContainer& events
-         , AuthApi & sesman
+         , AclReportApi & acl_report
          , Transport & trans
          , Random & gen
          , Inifile & ini
@@ -771,7 +784,7 @@ public:
     , server_fastpath_update_support(false)
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
-    , sesman(sesman)
+    , acl_report(acl_report)
     , time_base(time_base)
     , events_guard(events)
     , rdp_keepalive_connection_interval(
@@ -889,7 +902,7 @@ public:
                         }
                         else {
                             this->must_be_stop_capture();
-                            this->can_be_start_capture(false);
+                            this->can_be_start_capture(false, *this->capture._session_log);
                         }
                     }
 
@@ -989,7 +1002,7 @@ public:
     }
 
     // ===========================================================================
-    bool can_be_start_capture(bool force_capture) override
+    bool can_be_start_capture(bool force_capture, SessionLogApi & session_log) override
     {
         // Recording is enabled.
         // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types for set_auth_info set_screen_info
@@ -1109,27 +1122,32 @@ public:
             record_tmp_path,
             record_path.c_str(),
             groupid,
-            &this->sesman,
+            &session_log,
             ini.get<cfg::video::smart_video_cropping>(),
             ini.get<cfg::debug::capture>()
         };
 
-        this->capture = std::make_unique<Capture>(
-            capture_params
-          , drawable_params
-          , capture_wrm, wrm_params
-          , capture_png, png_params
-          , capture_pattern_checker, pattern_params
-          , capture_ocr, ocr_params
-          , capture_video, sequenced_video_params
-          , capture_video_full, full_video_params
-          , capture_meta, meta_params
-          , capture_kbd, kbd_log_params
-          , video_params
-          , nullptr
-          , ((this->client_info.remote_program && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable)) ?
-              Rect(0, 0, 640, 480) : Rect())
-        );
+        this->capture = {
+            std::make_unique<Capture>(
+                capture_params
+              , drawable_params
+              , capture_wrm, wrm_params
+              , capture_png, png_params
+              , capture_pattern_checker, pattern_params
+              , capture_ocr, ocr_params
+              , capture_video, sequenced_video_params
+              , capture_video_full, full_video_params
+              , capture_meta, meta_params
+              , capture_kbd, kbd_log_params
+              , video_params
+              , nullptr
+              , (this->client_info.remote_program
+                && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable))
+                ? Rect(0, 0, 640, 480)
+                : Rect()
+            ),
+            &session_log
+        };
 
         if (this->nomouse) {
             this->capture->set_pointer_display();
@@ -1164,11 +1182,11 @@ public:
         this->update_keyboard_input_mask_state();
 
         if (capture_wrm) {
-            this->sesman.set_recording_started();
+            this->ini.set_acl<cfg::context::recording_started>(true);
         }
 
-        if (capture_png){
-            this->sesman.set_rt_ready();
+        if (capture_png && !this->ini.get<cfg::context::rt_ready>()){
+            this->ini.set_acl<cfg::context::rt_ready>(true);
         }
 
         for (auto&& kv_event : this->session_update_buffer) {
@@ -1242,7 +1260,7 @@ public:
             [this](const Error & error){
                 if (error.errnum == ENOSPC) {
                     // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                    this->sesman.report("FILESYSTEM_FULL", "100|unknown");
+                    this->acl_report.report("FILESYSTEM_FULL", "100|unknown");
                 }
             },
             safe_cast<BmpCachePersister::Verbose>(this->verbose)
@@ -2101,7 +2119,7 @@ public:
 
         this->keymap.init_layout(this->client_info.keylayout);
         LOG(LOG_INFO, "Front::incoming: Keyboard Layout = 0x%x", this->client_info.keylayout);
-        this->sesman.set_keyboard_layout(this->client_info.keylayout);
+        this->ini.set_acl<cfg::client::keyboard_layout>(this->client_info.keylayout);
 
         if (bool(this->verbose & Verbose::channel)) {
             LOG(LOG_INFO, "Front::incoming: licencing send_lic_initial");
@@ -4322,8 +4340,32 @@ private:
                     this->force_using_cache_bitmap_r2();
                 }
                 cb.rdp_gdi_up_and_running();
-                this->sesman.set_screen_info(this->client_info.screen_info);
-                this->sesman.set_auth_info(this->client_info.username, this->client_info.domain, this->client_info.password);
+
+                this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
+                this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
+                this->ini.set_acl<cfg::context::opt_bpp>(safe_int(client_info.screen_info.bpp));
+
+                std::string username = this->client_info.username;
+                std::string_view domain = this->client_info.domain;
+                std::string_view password = this->client_info.password;
+                if (not domain.empty()
+                 && username.find('@') == std::string::npos
+                 && username.find('\\') == std::string::npos
+                ) {
+                    str_append(username, '@', domain);
+                }
+
+                LOG_IF(bool(this->verbose & Verbose::basic_trace4), LOG_INFO,
+                    "Front::flush_acl_auth_info(auth_user=%s)", username);
+
+                this->ini.set_acl<cfg::globals::auth_user>(username);
+                this->ini.ask<cfg::context::selector>();
+                this->ini.ask<cfg::globals::target_user>();
+                this->ini.ask<cfg::globals::target_device>();
+                this->ini.ask<cfg::context::target_protocol>();
+                if (!password.empty()) {
+                    this->ini.set_acl<cfg::context::password>(password);
+                }
 
                 if (BitsPerPixel{8} != this->mod_bpp) {
                     this->send_palette();

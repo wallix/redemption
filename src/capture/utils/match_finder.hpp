@@ -83,7 +83,7 @@ struct MatchFinder
         WithCapture is_capturing);
 
     static void report(
-        AuthApi & sesman, bool is_pattern_kill,
+        SessionLogApi& session_log, bool is_pattern_kill,
         ConfigureRegexes conf_regex, const char * pattern, const char * data);
 };
 

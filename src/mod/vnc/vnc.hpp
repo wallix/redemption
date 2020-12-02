@@ -60,11 +60,7 @@
 #include "utils/timebase.hpp"
 #include "core/events.hpp"
 
-#ifndef __EMSCRIPTEN__
-# include "mod/vnc/vnc_metrics.hpp"
-#else
-class VNCMetrics;
-#endif
+#include "mod/vnc/vnc_metrics.hpp"
 
 #include "mod/vnc/dsm.hpp"
 #include "mod/vnc/encoder/copyrect.hpp"
@@ -318,10 +314,8 @@ private:
     EventsGuard events_guard;
     EventRef clipboard_timeout_timer;
 
-#ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;
-    AuthApi & sesman;
-#endif
+    SessionLogApi& session_log;
     /** @brief type of VNC authentication */
     enum VncAuthType : int32_t {
         VNC_AUTH_INVALID     = 0,
@@ -372,11 +366,9 @@ public:
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
-           , AuthApi & sesman);
+           , SessionLogApi& session_log);
 
     ~mod_vnc();
-
-    void init() override;
 
     template<std::size_t MaxLen>
     class MessageCtx
@@ -1720,9 +1712,6 @@ private:
             size_t length, size_t chunk_size, int flags);
 public:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, size_t length, uint32_t flags) override;
-    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override {}
-    void send_auth_channel_data(const char * /*data*/) override { LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");}
-    void send_checkout_channel_data(const char * /*data*/) override { LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");}
 
 private:
     void send_clipboard_pdu_to_front(const OutStream & out_stream);
@@ -1742,7 +1731,6 @@ private:
     void draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawable);
 
 public:
-
     bool server_error_encountered() const override { return false; }
 
     void disconnect() override;

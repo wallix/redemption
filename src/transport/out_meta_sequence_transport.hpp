@@ -37,7 +37,7 @@ struct OutMetaSequenceTransport : Transport
         uint16_t width,
         uint16_t height,
         const int groupid,
-        AuthApi * sesman,
+        AclReportApi * acl_report,
         uint32_t file_permissions);
 
     ~OutMetaSequenceTransport();

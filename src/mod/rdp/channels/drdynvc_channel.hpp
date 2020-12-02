@@ -36,7 +36,7 @@ struct DynamicChannelVirtualChannelParam
 class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
     DynamicChannelsAuthorizations dynamic_channels_authorizations;
-    AuthApi & sesman;
+    SessionLogApi& session_log;
     RDPVerbose verbose;
 
 public:
@@ -44,11 +44,11 @@ public:
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         const DynamicChannelVirtualChannelParam & params,
-        AuthApi & sesman,
+        SessionLogApi& session_log,
         RDPVerbose verbose)
     : BaseVirtualChannel(to_client_sender_, to_server_sender_)
     , dynamic_channels_authorizations(params.allowed_channels, params.denied_channels)
-    , sesman(sesman)
+    , session_log(session_log)
     , verbose(verbose)
     {}
 
@@ -192,7 +192,7 @@ public:
                             out_stream.get_produced_bytes());
                     }
 
-                    this->sesman.log6((is_authorized
+                    this->session_log.log6((is_authorized
                             ? LogId::DYNAMIC_CHANNEL_CREATION_ALLOWED
                             : LogId::DYNAMIC_CHANNEL_CREATION_REJECTED),
                         {KVLog("channel_name"_av, { channel_name, strlen(channel_name)})});

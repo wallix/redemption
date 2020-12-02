@@ -99,6 +99,10 @@ CloseMod::CloseMod(
     this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget::focus_reason_tabkey);
     this->screen.set_widget_focus(&this->close_widget, Widget::focus_reason_tabkey);
 
+    if (vars.get<cfg::globals::close_timeout>().count()) {
+        this->close_widget.refresh_timeleft(vars.get<cfg::globals::close_timeout>().count());
+    }
+
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->events_guard.create_event_timeout(

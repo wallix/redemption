@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     TimeBase time_base({0,0});
     EventContainer events;
     Inifile ini;
-    NullAuthentifier auth;
+    NullSessionLog session_log;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
     ModRdpFactory mod_rdp_factory;
     gdi::NullOsd osd;
@@ -160,7 +160,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, front.gd(), osd, events, auth,
+        t, time_base, front.gd(), osd, events, session_log,
         front, info, redir_info, gen, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);

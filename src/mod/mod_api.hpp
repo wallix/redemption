@@ -22,11 +22,10 @@
 
 #include "core/callback.hpp"
 #include "core/back_event_t.hpp"
-#include "utils/log.hpp"
-#include "acl/acl_api.hpp"
+#include "acl/acl_field_mask.hpp"
 
 
-class mod_api : public Callback, public AclApi
+class mod_api : public Callback
 {
 public:
     enum : bool {
@@ -63,7 +62,7 @@ public:
 
     virtual void log_metrics() {}
 
-    void acl_update() override {}
+    virtual void acl_update(AclFieldMask const& acl_fields) { (void)acl_fields; }
 
     virtual void reset_keyboard_status() {}
 };

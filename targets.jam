@@ -20,7 +20,6 @@ exe headlessclient :
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/fdx_capture.o
   <library>src/capture/file_to_graphic.o
-  <library>src/capture/session_update_buffer.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
@@ -144,6 +143,7 @@ exe rdpproxy :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
+  <library>src/core/pid_file.o
   <library>src/core/session.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -334,7 +334,6 @@ exe rdpclient :
   <library>snappy
   <library>src/RAIL/client_execute.o
   <library>src/capture/fdx_capture.o
-  <library>src/capture/session_update_buffer.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
@@ -548,24 +547,22 @@ test-run tests/RAIL/test_client_execute :
   <covfile>src/RAIL/client_execute.cpp
   <covfile>src/RAIL/client_execute.hpp
 ;
+test-run tests/acl/test_acl_field_mask :
+  $(REDEMPTION_TEST_PATH)/acl/test_acl_field_mask.cpp
+:
+  <covfile>src/acl/acl_field_mask.hpp
+;
 test-run tests/acl/test_acl_serializer :
   $(REDEMPTION_TEST_PATH)/acl/test_acl_serializer.cpp
 :
   <library>app_path_test.o
-  <library>crypto
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
   <library>src/acl/acl_serializer.o
-  <library>src/acl/session_logfile.o
   <library>src/core/error.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/file_transport.o
-  <library>src/transport/mwrm_reader.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/log_siem.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
@@ -577,15 +574,6 @@ test-run tests/acl/test_auth_api :
   $(REDEMPTION_TEST_PATH)/acl/test_auth_api.cpp
 :
   <covfile>src/acl/auth_api.hpp
-;
-test-run tests/acl/test_end_session_warning :
-  $(REDEMPTION_TEST_PATH)/acl/test_end_session_warning.cpp
-:
-  <library>app_path_test.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/strutils.o
-  <covfile>src/acl/end_session_warning.hpp
 ;
 test-run tests/acl/test_license_api :
   $(REDEMPTION_TEST_PATH)/acl/test_license_api.cpp
@@ -652,18 +640,6 @@ test-run tests/acl/test_license_api :
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/license_api.hpp
-;
-test-run tests/acl/test_sesman :
-  $(REDEMPTION_TEST_PATH)/acl/test_sesman.cpp
-:
-  <library>app_path_test.o
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/capture/session_update_buffer.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/strutils.o
-  <covfile>src/acl/sesman.hpp
 ;
 test-run tests/acl/test_session_inactivity :
   $(REDEMPTION_TEST_PATH)/acl/test_session_inactivity.cpp
@@ -2409,6 +2385,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/mainloop.o
+  <library>src/core/pid_file.o
   <library>src/core/session.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2510,6 +2487,16 @@ test-run tests/core/test_mainloop :
   <covfile>src/core/mainloop.cpp
   <covfile>src/core/mainloop.hpp
 ;
+test-run tests/core/test_pid_file :
+  $(REDEMPTION_TEST_PATH)/core/test_pid_file.cpp
+:
+  <library>app_path_test.o
+  <library>src/core/pid_file.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/strutils.o
+  <covfile>src/core/pid_file.cpp
+  <covfile>src/core/pid_file.hpp
+;
 test-run tests/core/test_server_notifier_api :
   $(REDEMPTION_TEST_PATH)/core/test_server_notifier_api.cpp
 :
@@ -2558,6 +2545,7 @@ test-run tests/core/test_session :
   <library>src/core/dynamic_channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/core/pid_file.o
   <library>src/core/session.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
@@ -2657,6 +2645,20 @@ test-run tests/core/test_session :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session.cpp
   <covfile>src/core/session.hpp
+;
+test-run tests/core/test_session_events :
+  $(REDEMPTION_TEST_PATH)/core/test_session_events.cpp
+:
+  <library>app_path_test.o
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/core/error.o
+  <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/core/session_events.hpp
 ;
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
@@ -2882,7 +2884,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
 :
   <library>crypto
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2890,7 +2891,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/drawable.o
@@ -2898,7 +2898,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/utf.o
-  <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/bouncer2_mod.cpp
@@ -4395,6 +4394,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4404,6 +4404,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/mod/rdp/channels/sespro_channel_params.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
+  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -4417,6 +4418,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
 :
   <library>app_path_test.o
   <library>crypto
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
@@ -4432,6 +4434,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
@@ -5828,6 +5831,7 @@ obj src/core/dynamic_channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/dyn
 obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
+obj src/core/pid_file.o : $(REDEMPTION_SRC_PATH)/core/pid_file.cpp ;
 obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
@@ -5951,11 +5955,10 @@ obj tests/includes/test_only/test_framework/working_directory.o : $(REDEMPTION_T
 obj tests/includes/test_only/transport/test_transport.o : $(REDEMPTION_TEST_PATH)/includes/test_only/transport/test_transport.cpp : $(CXXFLAGS_TEST) ;
 
 alias test_client_execute : tests/RAIL/test_client_execute ;
+alias test_acl_field_mask : tests/acl/test_acl_field_mask ;
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_auth_api : tests/acl/test_auth_api ;
-alias test_end_session_warning : tests/acl/test_end_session_warning ;
 alias test_license_api : tests/acl/test_license_api ;
-alias test_sesman : tests/acl/test_sesman ;
 alias test_session_inactivity : tests/acl/test_session_inactivity ;
 alias test_session_logfile : tests/acl/test_session_logfile ;
 alias test_latin_to_cyrillic : tests/capture/ocr/locale/test_latin_to_cyrillic ;
@@ -6105,8 +6108,10 @@ alias test_glyph_to_24_bitmap : tests/core/test_glyph_to_24_bitmap ;
 alias test_listen : tests/core/test_listen ;
 alias test_log_id : tests/core/test_log_id ;
 alias test_mainloop : tests/core/test_mainloop ;
+alias test_pid_file : tests/core/test_pid_file ;
 alias test_server_notifier_api : tests/core/test_server_notifier_api ;
 alias test_session : tests/core/test_session ;
+alias test_session_events : tests/core/test_session_events ;
 alias test_front : tests/front/test_front ;
 alias test_graphic_api : tests/gdi/test_graphic_api ;
 alias test_graphic_cmd_color : tests/gdi/test_graphic_cmd_color ;
@@ -6293,11 +6298,10 @@ alias test_pattern : tests/utils/winpr/test_pattern ;
 if $(ENABLE_COVERAGE) = "on"
 {
 alias test_client_execute.coverage : tests/RAIL/test_client_execute.coverage ;
+alias test_acl_field_mask.coverage : tests/acl/test_acl_field_mask.coverage ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
 alias test_auth_api.coverage : tests/acl/test_auth_api.coverage ;
-alias test_end_session_warning.coverage : tests/acl/test_end_session_warning.coverage ;
 alias test_license_api.coverage : tests/acl/test_license_api.coverage ;
-alias test_sesman.coverage : tests/acl/test_sesman.coverage ;
 alias test_session_inactivity.coverage : tests/acl/test_session_inactivity.coverage ;
 alias test_session_logfile.coverage : tests/acl/test_session_logfile.coverage ;
 alias test_latin_to_cyrillic.coverage : tests/capture/ocr/locale/test_latin_to_cyrillic.coverage ;
@@ -6436,8 +6440,10 @@ alias test_glyph_to_24_bitmap.coverage : tests/core/test_glyph_to_24_bitmap.cove
 alias test_listen.coverage : tests/core/test_listen.coverage ;
 alias test_log_id.coverage : tests/core/test_log_id.coverage ;
 alias test_mainloop.coverage : tests/core/test_mainloop.coverage ;
+alias test_pid_file.coverage : tests/core/test_pid_file.coverage ;
 alias test_server_notifier_api.coverage : tests/core/test_server_notifier_api.coverage ;
 alias test_session.coverage : tests/core/test_session.coverage ;
+alias test_session_events.coverage : tests/core/test_session_events.coverage ;
 alias test_front.coverage : tests/front/test_front.coverage ;
 alias test_graphic_api.coverage : tests/gdi/test_graphic_api.coverage ;
 alias test_graphic_cmd_color.coverage : tests/gdi/test_graphic_cmd_color.coverage ;
@@ -6617,11 +6623,10 @@ alias tests/RAIL.norec :
   tests/RAIL/test_client_execute
 ;
 alias tests/acl.norec :
+  tests/acl/test_acl_field_mask
   tests/acl/test_acl_serializer
   tests/acl/test_auth_api
-  tests/acl/test_end_session_warning
   tests/acl/test_license_api
-  tests/acl/test_sesman
   tests/acl/test_session_inactivity
   tests/acl/test_session_logfile
 ;
@@ -6817,8 +6822,10 @@ alias tests/core.norec :
   tests/core/test_listen
   tests/core/test_log_id
   tests/core/test_mainloop
+  tests/core/test_pid_file
   tests/core/test_server_notifier_api
   tests/core/test_session
+  tests/core/test_session_events
 ;
 alias tests/front.norec :
   tests/front/test_front

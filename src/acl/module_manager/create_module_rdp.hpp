@@ -61,7 +61,7 @@ ModPack create_mod_rdp(
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    AuthApi & sesman,
+    SessionLogApi& session_log,
     LicenseApi & file_system_license_store,
     Random & gen,
     CryptoContext & cctx,

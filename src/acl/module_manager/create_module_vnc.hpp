@@ -37,6 +37,7 @@ class Theme;
 class TimeBase;
 class EventContainer;
 class AuthApi;
+class SessionLogApi;
 
 namespace gdi
 {
@@ -54,4 +55,4 @@ ModPack create_mod_vnc(
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    AuthApi & sesman);
+    SessionLogApi& session_log);

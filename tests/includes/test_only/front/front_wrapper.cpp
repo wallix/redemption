@@ -138,7 +138,7 @@ gdi::GraphicApi& FrontWrapper::gd() noexcept
 FrontWrapper::FrontWrapper(
     TimeBase& time_base,
     EventContainer& events,
-    AuthApi & auth,
+    AclReportApi& acl_report,
     Transport & trans,
     Random & gen,
     Inifile & ini,
@@ -148,7 +148,7 @@ FrontWrapper::FrontWrapper(
 : d(new D{FrontWrapper::D::MyFront{
     time_base,
     events,
-    auth,
+    acl_report,
     trans, gen, ini, cctx,
     fp_support
 }, trans})

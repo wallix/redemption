@@ -2,7 +2,6 @@ add_obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTI
 add_obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
 add_obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 add_obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
-add_obj src/capture/session_update_buffer.o : $(REDEMPTION_SRC_PATH)/capture/session_update_buffer.cpp ;
 add_obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 add_obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
 add_obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
@@ -90,7 +89,6 @@ requirement_list += <library>snappy ;
 requirement_list += <library>src/capture/agent_data_extractor.o ;
 requirement_list += <library>src/capture/fdx_capture.o ;
 requirement_list += <library>src/capture/file_to_graphic.o ;
-requirement_list += <library>src/capture/session_update_buffer.o ;
 requirement_list += <library>src/client_redemption/client_channels/client_cliprdr_channel.o ;
 requirement_list += <library>src/client_redemption/client_channels/client_rdpdr_channel.o ;
 requirement_list += <library>src/client_redemption/client_channels/client_rdpsnd_channel.o ;

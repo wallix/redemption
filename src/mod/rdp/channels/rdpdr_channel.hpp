@@ -42,7 +42,7 @@
 
 class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
-    AuthApi & sesman;
+    SessionLogApi& session_log;
     const RDPVerbose verbose;
 
     VirtualChannelDataSender& to_server_sender;
@@ -887,10 +887,10 @@ public:
         uint32_t random_number,
         const char * proxy_managed_drive_prefix,
         const FileSystemVirtualChannelParams& params,
-        AuthApi & sesman,
+        SessionLogApi& session_log,
         RDPVerbose verbose)
     : BaseVirtualChannel(to_client_sender_, to_server_sender_)
-    , sesman(sesman)
+    , session_log(session_log)
     , verbose(verbose)
     , to_server_sender(to_server_sender_ ? *to_server_sender_  : null_virtual_channel_data_sender)
     , serverVersionMinor(0xC)
@@ -1485,7 +1485,7 @@ public:
                             auto device_name = (p_device_name) ? *p_device_name : ""_av;
                             auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
 
-                            this->sesman.log6(
+                            this->session_log.log6(
                                 LogId::DRIVE_REDIRECTION_USE, {
                                 KVLog("device_name"_av, device_name),
                                 KVLog("device_type"_av, device_type_name),
@@ -1568,7 +1568,7 @@ public:
                                         target_iter->end_of_file, digest_s);
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
-                                    this->sesman.log6(
+                                    this->session_log.log6(
                                         LogId::DRIVE_REDIRECTION_READ_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
@@ -1581,7 +1581,7 @@ public:
                                         file_path, file_size_str, digest_s);
                                 }
                                 else {
-                                    this->sesman.log6(
+                                    this->session_log.log6(
                                         LogId::DRIVE_REDIRECTION_READ, {
                                         KVLog("file_name"_av, file_path),
                                     });
@@ -1607,7 +1607,7 @@ public:
 
                                     auto const file_size_str = std::to_string(target_iter->end_of_file);
 
-                                    this->sesman.log6(
+                                    this->session_log.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
@@ -1620,7 +1620,7 @@ public:
                                         file_path, file_size_str, digest_s);
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                                    this->sesman.log6(
+                                    this->session_log.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE, {
                                         KVLog("file_name"_av, file_path),
                                     });
@@ -1732,7 +1732,7 @@ public:
                         case rdpdr::FileDispositionInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                this->sesman.log6(
+                                this->session_log.log6(
                                     LogId::DRIVE_REDIRECTION_DELETE, {
                                     KVLog("file_name"_av, file_path),
                                 });
@@ -1752,7 +1752,7 @@ public:
                         case rdpdr::FileRenameInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-                                this->sesman.log6(
+                                this->session_log.log6(
                                     LogId::DRIVE_REDIRECTION_RENAME, {
                                     KVLog("old_file_name"_av, target_iter->file_path),
                                     KVLog("new_file_name"_av, file_path),

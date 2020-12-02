@@ -59,13 +59,13 @@ namespace
 // VideoTransportBase
 //@{
 
-VideoTransportBase::VideoTransportBase(const int groupid, AuthApi * sesman)
-: out_file(invalid_fd(), [sesman](const Error & error){
+VideoTransportBase::VideoTransportBase(const int groupid, AclReportApi * acl_report)
+: out_file(invalid_fd(), [acl_report](const Error & error){
         video_transport_log_error(error);
         if (error.errnum == ENOSPC) {
             // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            if (sesman){
-                sesman->report("FILESYSTEM_FULL", "100|unknown");
+            if (acl_report){
+                acl_report->report("FILESYSTEM_FULL", "100|unknown");
             }
             else {
                 LOG(LOG_ERR, "FILESYSTEM_FULL:100|unknown");
@@ -315,8 +315,8 @@ FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
     const char * const filename,
     const char * const extension,
     const int groupid,
-    AuthApi * sesman)
-: VideoTransportBase(groupid, sesman)
+    AclReportApi * acl_report)
+: VideoTransportBase(groupid, acl_report)
 {
     int const len = std::snprintf(
         this->final_filename,
@@ -416,7 +416,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : trans_tmp_file(
     capture_params.record_path, capture_params.basename, video_params.codec.c_str(),
-    capture_params.groupid, capture_params.sesman)
+    capture_params.groupid, capture_params.session_log)
 , video_cap_ctx(capture_params.now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
@@ -480,8 +480,8 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
     const char * const filename,
     const char * const extension,
     const int groupid,
-    AuthApi * sesman)
-: VideoTransportBase(groupid, sesman)
+    AclReportApi * acl_report)
+: VideoTransportBase(groupid, acl_report)
 {
     if (!utils::strbcpy(this->filegen.path, prefix)
      || !utils::strbcpy(this->filegen.base, filename)
@@ -739,11 +739,11 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 : first_image(capture_params.now, *this)
 , vc_trans(
     capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
-    capture_params.groupid, capture_params.sesman)
+    capture_params.groupid, capture_params.session_log)
 , vc(capture_params.now, this->vc_trans, drawable, imageFrameApi, video_params)
 , ic_trans(
     capture_params.record_path, capture_params.basename, ".png",
-    capture_params.groupid, capture_params.sesman)
+    capture_params.groupid, capture_params.session_log)
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_drawable(drawable)
 , image_frame_api(imageFrameApi)

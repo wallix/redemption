@@ -81,7 +81,8 @@ public:
 
 private:
     void do_send(const uint8_t * data, size_t len) override;
-/// \return 0 if success
+
+    /// \return 0 if success
     int do_next();
     void open_filename(const char * filename);
 

@@ -153,11 +153,13 @@ RED_AUTO_TEST_CASE(search)
 
 RED_AUTO_TEST_CASE(report_notify)
 {
-    struct : NullAuthentifier {
+    struct : SessionLogApi
+    {
         bool has_log = false;
         bool has_report = false;
 
-        void log6(LogId id, KVLogList kv_list) override {
+        void log6(LogId id, KVLogList kv_list) override
+        {
             RED_CHECK(id == LogId::NOTIFY_PATTERN_DETECTED);
             RED_REQUIRE(kv_list.size() > 0);
             RED_CHECK(kv_list[0].key == "pattern"_av);
@@ -165,7 +167,8 @@ RED_AUTO_TEST_CASE(report_notify)
             this->has_log = true;
         }
 
-        void report(const char* reason, const char* message) override {
+        void report(const char* reason, const char* message) override
+        {
             RED_CHECK(reason == "FINDPATTERN_NOTIFY"sv);
             RED_CHECK(message == "$kbd:c| cacao"sv);
             this->has_report = true;
@@ -178,11 +181,13 @@ RED_AUTO_TEST_CASE(report_notify)
 
 RED_AUTO_TEST_CASE(report_kill)
 {
-    struct : NullAuthentifier {
+    struct : SessionLogApi
+    {
         bool has_log = false;
         bool has_report = false;
 
-        void log6(LogId id, KVLogList kv_list) override {
+        void log6(LogId id, KVLogList kv_list) override
+        {
             RED_CHECK(id == LogId::KILL_PATTERN_DETECTED);
             RED_REQUIRE(kv_list.size() > 0);
             RED_CHECK(kv_list[0].key == "pattern"_av);
@@ -190,7 +195,8 @@ RED_AUTO_TEST_CASE(report_kill)
             this->has_log = true;
         }
 
-        void report(const char* reason, const char* message) override {
+        void report(const char* reason, const char* message) override
+        {
             RED_CHECK(reason == "FINDPATTERN_KILL"sv);
             RED_CHECK(message == "$ocr:c| cacao"sv);
             this->has_report = true;

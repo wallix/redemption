@@ -202,6 +202,8 @@ struct EventRef
     bool has_event() const { return event_ && !event_->garbage; }
     explicit operator bool() const { return has_event(); }
 
+    Event* get_optional_event() { return has_event() ? event_ : nullptr; }
+
     bool operator == (EventRef const& other) const { return event_ == other.event_; }
     bool operator != (EventRef const& other) const { return event_ != other.event_; }
 

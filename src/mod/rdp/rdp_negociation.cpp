@@ -60,7 +60,7 @@
 
 
 RdpNegociation::RDPServerNotifier::RDPServerNotifier(
-    AuthApi& sesman,
+    SessionLogApi& session_log,
     bool server_cert_store,
     ServerCertCheck server_cert_check,
     std::unique_ptr<char[]>&& certif_path,
@@ -84,7 +84,7 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
     return a;
 }())
 , verbose(verbose)
-, sesman(sesman)
+, session_log(session_log)
 {}
 
 void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::string_view error_msg)
@@ -92,7 +92,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::s
     auto notification_type = this->server_status_messages[underlying_cast(status)];
     if (bool(notification_type & ServerNotification::syslog)) {
         auto log6 = [&](LogId id, zstring_view message){
-            this->sesman.log6(id, {KVLog("description"_av, message),});
+            this->session_log.log6(id, {KVLog("description"_av, message),});
             LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO, "%s", message);
         };
 
@@ -163,7 +163,7 @@ RdpNegociation::RdpNegociation(
     Random& gen,
     TimeBase& time_base,
     const ModRDPParams& mod_rdp_params,
-    AuthApi& sesman,
+    SessionLogApi& session_log,
     LicenseApi& license_store,
     bool has_managed_drive,
     bool convert_remoteapp_to_desktop,
@@ -194,7 +194,7 @@ RdpNegociation::RdpNegociation(
     , gen(gen)
     , verbose(mod_rdp_params.verbose /*| (RDPVerbose::security|RDPVerbose::basic_trace)*/)
     , server_notifier(
-        sesman,
+        session_log,
         mod_rdp_params.server_cert_store,
         mod_rdp_params.server_cert_check,
         [](const char* device_id){

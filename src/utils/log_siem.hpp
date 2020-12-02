@@ -24,6 +24,7 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include <string_view>
 
 
 #ifdef IN_IDE_PARSER
@@ -56,7 +57,7 @@
 namespace log_proxy
 {
     void init(char const* psid, char const* source_ip, int source_port) noexcept;
-    void set_user(char const* username) noexcept;
+    void set_user(std::string_view username) noexcept;
     void target_disconnection(char const* reason) noexcept;
     void disconnection(char const* reason) noexcept;
 

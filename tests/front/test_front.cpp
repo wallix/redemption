@@ -62,7 +62,7 @@ namespace dump2008 {
 class MyFront : public FrontWrapper
 {
 public:
-    bool can_be_start_capture(bool /*force_capture*/) override { return false; }
+    bool can_be_start_capture(bool /*force_capture*/, SessionLogApi& /*session_log*/) override { return false; }
     bool must_be_stop_capture() override { return false; }
     void must_flush_capture() override {}
 
@@ -155,12 +155,12 @@ RED_AUTO_TEST_CASE(TestFront)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    NullAuthentifier auth;
+    NullSessionLog session_log;
 
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        time_base, events, auth, front_trans, gen1, ini , cctx,
+        time_base, events, session_log, front_trans, gen1, ini , cctx,
         fastpath_support);
     null_mod no_mod;
 
@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, front.gd(), osd, events, auth, front, info, redir_info,
+        t, time_base, front.gd(), osd, events, session_log, front, info, redir_info,
         gen2, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, metrics,
         file_validator_service, mod_rdp_factory);
@@ -326,8 +326,8 @@ RED_AUTO_TEST_CASE(TestFront2)
     EventContainer events;
 
     RED_TEST_PASSPOINT();
-    NullAuthentifier auth;
-    MyFront front(time_base, events, auth, front_trans, gen1, ini
+    NullSessionLog session_log;
+    MyFront front(time_base, events, session_log, front_trans, gen1, ini
                  , cctx, fastpath_support);
     null_mod no_mod;
 

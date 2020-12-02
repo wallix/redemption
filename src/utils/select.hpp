@@ -53,11 +53,11 @@ inline int io_fd_isset(int const fd, fd_set const & rfds)
 }
 REDEMPTION_DIAGNOSTIC_POP
 
-inline unsigned prepare_fds(int const fd, unsigned max, fd_set & rfds)
+inline int prepare_fds(int const fd, int max, fd_set & rfds)
 {
     if (fd > INVALID_SOCKET) {
         io_fd_set(fd, rfds);
-        max = std::max(static_cast<unsigned>(fd), max);
+        max = std::max(fd, max);
     }
     return max;
 }

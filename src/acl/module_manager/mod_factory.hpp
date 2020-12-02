@@ -27,12 +27,7 @@
 #include "acl/mod_wrapper.hpp"
 #include "acl/mod_pack.hpp"
 
-#include "utils/timebase.hpp"
-#include "core/client_info.hpp"     // for ClientInfo
-#include "core/front_api.hpp"       // for FrontAPI
-#include "gdi/graphic_api.hpp"      // for GraphicApi
-#include "core/font.hpp"            // for Font
-#include "configs/config.hpp"       // for Inifile
+#include "configs/config.hpp"
 #include "RAIL/client_execute.hpp"
 #include "utils/strutils.hpp"
 
@@ -48,7 +43,6 @@
 #include "mod/internal/wait_mod.hpp"
 #include "mod/internal/transition_mod.hpp"
 #include "mod/internal/login_mod.hpp"
-#include "core/events.hpp"
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "utils/translation.hpp"
@@ -61,7 +55,6 @@ class ModFactory
 {
     ModWrapper & mod_wrapper;
     TimeBase & time_base;
-    AuthApi & sesman;
     EventContainer & events;
     ClientInfo const& client_info;
     FrontAPI & front;
@@ -88,7 +81,6 @@ public:
 
     ModFactory(ModWrapper & mod_wrapper,
                TimeBase & time_base,
-               AuthApi & sesman,
                EventContainer & events,
                ClientInfoRef client_info_ref,
                FrontAPI & front,
@@ -104,7 +96,6 @@ public:
         )
         : mod_wrapper(mod_wrapper)
         , time_base(time_base)
-        , sesman(sesman)
         , events(events)
         , client_info(client_info_ref.ref)
         , front(front)
@@ -120,77 +111,15 @@ public:
     {
     }
 
-
-    auto create_mod(ModuleName target_module) -> ModPack
-    {
-        LOG(LOG_INFO, "New Module: %s", get_module_name(target_module));
-
-        switch (target_module)
-        {
-        case ModuleName::bouncer2:
-        {
-            auto mod_pack = this->create_mod_bouncer();
-            mod_pack.enable_osd = true;
-            return mod_pack;
-        }
-        case ModuleName::autotest:
-            return this->create_mod_replay();
-        case ModuleName::widgettest:
-            return this->create_widget_test_mod();
-        case ModuleName::card:
-            return this->create_test_card_mod();
-        case ModuleName::selector:
-            return this->create_selector_mod();
-        case ModuleName::close:
-            return this->create_close_mod();
-        case ModuleName::close_back:
-            return this->create_close_mod_back_to_selector();
-        case ModuleName::interactive_target:
-            return this->create_interactive_target_mod();
-        case ModuleName::valid:
-            return this->create_valid_message_mod();
-        case ModuleName::confirm:
-            return this->create_display_message_mod();
-        case ModuleName::challenge:
-            return this->create_dialog_challenge_mod();
-        case ModuleName::waitinfo:
-            return this->create_wait_info_mod();
-        case ModuleName::transitory:
-        case ModuleName::INTERNAL_TRANSITION:
-            return this->create_transition_mod();
-        case ModuleName::login:
-            return this->create_login_mod();
-        case ModuleName::RDP:
-        {
-            auto mod_pack = this->create_rdp_mod();
-            mod_pack.enable_osd = true;
-            mod_pack.connected = true;
-            return mod_pack;
-        }
-        case ModuleName::VNC:
-        {
-            auto mod_pack = this->create_vnc_mod();
-            mod_pack.enable_osd = true;
-            mod_pack.connected = true;
-            return mod_pack;
-        }
-        default:
-            LOG(LOG_INFO, "ModuleManager::Unknown backend exception %u", unsigned(target_module));
-            throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-        }
-    }
-
-private:
     auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(
             this->time_base,
             this->graphics,
             this->events,
-            this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height);
-        return {new_mod, nullptr, nullptr, false, false, nullptr};
+        return {new_mod, nullptr, nullptr, true, false, nullptr};
     }
 
     auto create_mod_replay() -> ModPack
@@ -246,10 +175,8 @@ private:
     {
         auto new_mod = new SelectorMod(
             this->ini,
-            this->ini,
             this->time_base,
             this->events,
-            this->sesman,
             this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
@@ -263,7 +190,7 @@ private:
 
     auto create_close_mod() -> ModPack
     {
-        LOG(LOG_INFO, "----------------------- create_close_mod() -> ModPack -----------------");
+        LOG(LOG_INFO, "----------------------- create_close_mod() -----------------");
 
         bool back_to_selector = false;
         return this->_create_close_mod(back_to_selector);
@@ -271,7 +198,7 @@ private:
 
     auto create_close_mod_back_to_selector() -> ModPack
     {
-        LOG(LOG_INFO, "----------------------- create_close_mod_back_to_selector() -> ModPack -----------------");
+        LOG(LOG_INFO, "----------------------- create_close_mod_back_to_selector() -----------------");
 
         bool back_to_selector = true;
         return this->_create_close_mod(back_to_selector);
@@ -453,9 +380,9 @@ public:
         return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
-    auto create_rdp_mod() -> ModPack
+    auto create_rdp_mod(SessionLogApi& session_log) -> ModPack
     {
-        auto new_mod_pack = create_mod_rdp(
+        auto mod_pack = create_mod_rdp(
             this->mod_wrapper,
             this->redir_info,
             this->ini,
@@ -466,25 +393,28 @@ public:
             this->glyphs, this->theme,
             this->time_base,
             this->events,
-            this->sesman,
+            session_log,
             this->file_system_license_store,
             this->gen,
             this->cctx,
             this->server_auto_reconnect_packet);
-        return new_mod_pack;
+        mod_pack.enable_osd = true;
+        mod_pack.connected = true;
+        return mod_pack;
     }
 
-    auto create_vnc_mod() -> ModPack
+    auto create_vnc_mod(SessionLogApi& session_log) -> ModPack
     {
-        auto new_mod_pack = create_mod_vnc(
+        auto mod_pack = create_mod_vnc(
             this->mod_wrapper, this->ini,
             this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
             this->time_base,
             this->events,
-            this->sesman
-            );
-        return new_mod_pack;
+            session_log);
+        mod_pack.enable_osd = true;
+        mod_pack.connected = true;
+        return mod_pack;
     }
 };

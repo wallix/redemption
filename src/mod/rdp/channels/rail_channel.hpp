@@ -82,7 +82,7 @@ private:
 
     SessionProbeLauncher* session_probe_stop_launch_sequence_notifier = nullptr;
 
-    AuthApi & sesman;
+    SessionLogApi& session_log;
     RDPVerbose verbose;
 
     bool exe_or_file_exec_ok = false;
@@ -136,7 +136,7 @@ public:
         uint16_t desktop_height,
         ModRdpVariables vars,
         const RemoteProgramsVirtualChannelParams& params,
-        AuthApi & sesman,
+        SessionLogApi& session_log,
         RDPVerbose verbose)
     : BaseVirtualChannel(to_client_sender_, to_server_sender_)
     , windows_execute_shell_params(params.windows_execute_shell_params)
@@ -146,7 +146,7 @@ public:
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
     //, param_client_supports_handshakeex_pdu(params.client_supports_handshakeex_pdu)
     //, param_client_supports_enhanced_remoteapp(params.client_supports_enhanced_remoteapp)
-    , sesman(sesman)
+    , session_log(session_log)
     , verbose(verbose)
     , vars(vars)
     , proxy_managed(proxy_managed)
@@ -740,7 +740,7 @@ public:
             if (!this->session_probe_channel
              || this->windows_execute_shell_params.exe_or_file != serpdu.ExeOrFile()
             ) {
-                this->sesman.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
+                this->session_log.log6(LogId::CLIENT_EXECUTE_REMOTEAPP, {
                     KVLog("exe_or_file"_av, serpdu.ExeOrFile()),
                 });
             }

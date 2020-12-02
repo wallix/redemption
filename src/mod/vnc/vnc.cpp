@@ -56,7 +56,7 @@ mod_vnc::mod_vnc( Transport & t
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
-           , AuthApi & sesman
+           , SessionLogApi& session_log
            )
     : front(front)
     , t(VncTransport(*this, t))
@@ -77,7 +77,7 @@ mod_vnc::mod_vnc( Transport & t
     , events_guard(events)
 #ifndef __EMSCRIPTEN__
     , metrics(metrics)
-    , sesman(sesman)
+    , session_log(session_log)
 #endif
     , choosenAuth(VNC_AUTH_INVALID)
     , cursor_pseudo_encoding_supported(cursor_pseudo_encoding_supported)
@@ -171,7 +171,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
     // set almost null cursor, this is the little dot cursor
     drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-    this->sesman.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
+    this->session_log.log6(LogId::SESSION_ESTABLISHED_SUCCESSFULLY, {});
 
     Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -181,7 +181,7 @@ void mod_vnc::initial_clear_screen(gdi::GraphicApi & drawable)
     drawable.end_update();
 
     this->state = UP_AND_RUNNING;
-    this->front.can_be_start_capture(false);
+    this->front.can_be_start_capture(false, this->session_log);
 
     this->update_screen(screen_rect, 1);
     this->lib_open_clip_channel();
@@ -2060,15 +2060,6 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
 }
 
 
-void mod_vnc::init()
-{
-    if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
-        this->state = DO_INITIAL_CLEAR_SCREEN;
-        this->initial_clear_screen(this->gd);
-    }
-}
-
-
 void mod_vnc::rdp_gdi_up_and_running()
 {
     if (this->state == WAIT_CLIENT_UP_AND_RUNNING){
@@ -2109,7 +2100,7 @@ void mod_vnc::disconnect()
         int((seconds % 3600) / 60),
         int(seconds % 60));
 
-    this->sesman.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
+    this->session_log.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
 
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
         "type=SESSION_DISCONNECTION duration=%s", duration_str);

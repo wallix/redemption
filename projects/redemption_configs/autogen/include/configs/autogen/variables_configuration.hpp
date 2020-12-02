@@ -3655,9 +3655,9 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    ///     Event   = 0x02, <br/>
-    ///     Acl     = 0x04, <br/>
-    ///     Trace   = 0x08, <br/>
+    /// - Event   = 0x02 <br/>
+    /// - Acl     = 0x04 <br/>
+    /// - Trace   = 0x08 <br/>
     /// type: uint32_t <br/>
     /// default: 0 <br/>
     struct debug::session {

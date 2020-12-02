@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    NullAuthentifier auth;
+    NullSessionLog session_log;
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
@@ -283,7 +283,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(
-                trans, time_base, front.gd(), osd, events, auth, front, info, redir_info, gen,
+                trans, time_base, front.gd(), osd, events, session_log, front, info, redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params,
                 license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
@@ -403,7 +403,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
     TimeBase time_base({0,0});
     EventContainer events;
-    NullAuthentifier auth;
+    NullSessionLog session_log;
 
     for (bool do_work = true; do_work; ) {
         do_work = false;
@@ -537,7 +537,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(
-                t, time_base, front.gd(), osd, events, auth, front, info, redir_info, gen,
+                t, time_base, front.gd(), osd, events, session_log, front, info, redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 

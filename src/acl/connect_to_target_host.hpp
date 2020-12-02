@@ -40,10 +40,10 @@
 
 
 inline unique_fd connect_to_target_host(
-    Inifile & ini, AuthApi& sesman,
+    Inifile & ini, SessionLogApi& session_log,
     trkeys::TrKey const& authentification_fail, bool enable_ipv6)
 {
-    auto throw_error = [&ini, &sesman](char const* error_message, int id) {
+    auto throw_error = [&ini, &session_log](char const* error_message, int id) {
         LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
             R"(target="%s" host="%s" port="%u" reason="%s")",
             ini.get<cfg::globals::target_user>(),
@@ -51,7 +51,7 @@ inline unique_fd connect_to_target_host(
             ini.get<cfg::context::target_port>(),
             error_message);
 
-        sesman.log6(LogId::CONNECTION_FAILED, {});
+        session_log.log6(LogId::CONNECTION_FAILED, {});
 
        ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(ini)));
 

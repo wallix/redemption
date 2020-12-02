@@ -53,7 +53,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     gdi::GraphicApi& gd,
     gdi::OsdApi & osd,
     EventContainer & events,
-    AuthApi & sesman,
+    SessionLogApi& session_log,
     FrontAPI& front,
     const ClientInfo& info,
     RedirectionInfo& redir_info,

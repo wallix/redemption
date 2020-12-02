@@ -24,23 +24,22 @@
 
 #pragma once
 
+#include "configs/autogen/enums.hpp"
 #include <string_view>
 
 inline ModuleName get_internal_module_id_from_target(std::string_view target_name)
 {
     if (target_name == "bouncer2") return ModuleName::bouncer2;
     if (target_name == "autotest") return ModuleName::autotest;
-    if (target_name == "widget_message") return ModuleName::selector;
+    if (target_name == "widget2_message") return ModuleName::selector;
     if (target_name == "widgettest") return ModuleName::widgettest;
     if (target_name == "card") return ModuleName::card;
-    return ModuleName::exit;
+    return ModuleName::UNKNOWN;
 }
 
 inline const char * get_module_name(ModuleName module_id) noexcept
 {
     switch (module_id) {
-        case ModuleName::INTERNAL_TRANSITION:   return "MODULE_INTERNAL_TRANSITION";
-        case ModuleName::exit:                  return "MODULE_EXIT";
         case ModuleName::VNC:                   return "MODULE_VNC";
         case ModuleName::RDP:                   return "MODULE_RDP";
         case ModuleName::INTERNAL:              return "MODULE_INTERNAL";

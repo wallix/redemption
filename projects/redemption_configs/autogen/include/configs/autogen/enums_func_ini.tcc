@@ -6,8 +6,6 @@ namespace
 
 inline constexpr zstring_view enum_zstr_ModuleName[] {
     "UNKNOWN"_zv,
-    "INTERNAL_TRANSITION"_zv,
-    "exit"_zv,
     "login"_zv,
     "selector"_zv,
     "confirm"_zv,
@@ -46,8 +44,6 @@ inline constexpr zstring_view enum_zint_ModuleName[] {
     "15"_zv,
     "16"_zv,
     "17"_zv,
-    "18"_zv,
-    "19"_zv,
 };
 
 zstring_view assign_zbuf_from_cfg(
@@ -78,7 +74,7 @@ parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<ModuleName> /*ty
     if (parse_error err = parse_integral(
         xi, value,
         zero_integral<ul>(),
-        std::integral_constant<ul, 19>()
+        std::integral_constant<ul, 17>()
     )) {
         return err;
     }
@@ -90,8 +86,6 @@ parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<ModuleName> /*ty
 
 inline constexpr std::pair<chars_view, ModuleName> enum_str_value_ModuleName[] {
     {"UNKNOWN"_av, ModuleName::UNKNOWN},
-    {"INTERNAL_TRANSITION"_av, ModuleName::INTERNAL_TRANSITION},
-    {"EXIT"_av, ModuleName::exit},
     {"LOGIN"_av, ModuleName::login},
     {"SELECTOR"_av, ModuleName::selector},
     {"CONFIRM"_av, ModuleName::confirm},
@@ -114,7 +108,7 @@ inline constexpr std::pair<chars_view, ModuleName> enum_str_value_ModuleName[] {
 parse_error parse_from_cfg(ModuleName & x, ::configs::spec_type<std::string> /*type*/, bytes_view value)
 {
     return parse_str_value_pairs<enum_str_value_ModuleName>(
-        x, value, "bad value, expected: UNKNOWN, INTERNAL_TRANSITION, exit, login, selector, confirm, challenge, valid, transitory, close, close_back, interactive_target, RDP, VNC, INTERNAL, waitinfo, bouncer2, autotest, widgettest, card");
+        x, value, "bad value, expected: UNKNOWN, login, selector, confirm, challenge, valid, transitory, close, close_back, interactive_target, RDP, VNC, INTERNAL, waitinfo, bouncer2, autotest, widgettest, card");
 }
 
 zstring_view assign_zbuf_from_cfg(

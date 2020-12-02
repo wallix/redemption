@@ -27,7 +27,6 @@
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
 
-#include "acl/sesman.hpp"
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 
@@ -109,7 +108,7 @@ private:
     std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
-    Sesman sesman;
+    NullSessionLog session_log;
     Theme theme;
     Font font;
     RedirectionInfo redir_info;
@@ -249,7 +248,6 @@ public:
         , _callback(this)
         , time_base(time_base)
         , events(events)
-        , sesman(ini, time_base)
         , close_box_extra_message_ref("Close")
         , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps,
             bool((RDPVerbose::rail | RDPVerbose::rail_dump) & this->config.verbose))
@@ -408,7 +406,7 @@ public:
                   , *this
                   , this->osd
                   , this->events
-                  , this->sesman
+                  , this->session_log
                   , *this
                   , this->config.info
                   , this->redir_info
@@ -440,7 +438,7 @@ public:
                   , this->time_base
                   , *this
                   , this->events
-                  , this->sesman
+                  , this->session_log
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
                   , *this
@@ -699,7 +697,7 @@ public:
         captureParams.record_tmp_path = record_path.c_str();
         captureParams.record_path = record_path.c_str();
         captureParams.groupid = 0;
-        captureParams.sesman = nullptr;
+        captureParams.session_log = nullptr;
 
         this->capture = std::make_unique<Capture>(
             this->config.info.screen_info.width, this->config.info.screen_info.height,

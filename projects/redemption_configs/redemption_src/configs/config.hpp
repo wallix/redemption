@@ -270,11 +270,6 @@ public:
 
     FieldReference get_acl_field_by_name(chars_view name);
 
-    bool check_from_acl()
-    {
-        return std::exchange(this->new_from_acl, false);
-    }
-
     void clear_acl_fields_changed()
     {
         this->to_send_index.clear();
@@ -424,7 +419,6 @@ private:
     ToSendIndexList to_send_index;
     configs::VariablesConfiguration variables;
     ConfigurationHolder conf_holder {variables};
-    bool new_from_acl = false;
 
     template<class T>
     void push_to_send_index()

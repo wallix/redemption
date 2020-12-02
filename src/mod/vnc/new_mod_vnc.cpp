@@ -27,7 +27,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     TimeBase& time_base,
     gdi::GraphicApi & gd,
     EventContainer & events,
-    AuthApi & sesman,
+    SessionLogApi& session_log,
     const char* username,
     const char* password,
     FrontAPI& front,
@@ -51,5 +51,5 @@ std::unique_ptr<mod_api> new_mod_vnc(
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, server_is_macos, send_alt_ksym,
-        cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics, sesman);
+        cursor_pseudo_encoding_supported, rail_client_execute, verbose, metrics, session_log);
 }

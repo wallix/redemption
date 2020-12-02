@@ -31,7 +31,7 @@ constexpr char const* CONFIG_DESC_CAPTURE = R\"(- kbd / ocr when != 0
 (Wrm)
 $rdp_serializer)\";
 
-constexpr char const* CONFIG_DESC_SESSION = R\"($(sed -E '/^enum class SessionVerbose/,/^};/!d;/=/!d' src/core/session.cpp))\";
+constexpr char const* CONFIG_DESC_SESSION = R\"($(sed -E '/^enum class SessionVerbose/,/^};/!d;/=/!d;s/^ *([^ =]+ *= *[^,]+).*/- \1/' src/core/session.cpp))\";
 
 constexpr char const* CONFIG_DESC_MOD_INTERNAL = R\"(- copy_paste != 0
 - client_execute = 0x01)\";

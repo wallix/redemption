@@ -25,18 +25,15 @@
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
-#include "core/front_api.hpp"
 
 
 Bouncer2Mod::Bouncer2Mod(
     TimeBase& time_base,
     gdi::GraphicApi & gd,
     EventContainer & events,
-    FrontAPI & front,
     uint16_t width, uint16_t height)
 : front_width(width)
 , front_height(height)
-, front(front)
 , dancing_rect(0,0,100,100)
 , events_guard(events)
 , gd(gd)
@@ -112,11 +109,6 @@ int Bouncer2Mod::interaction()
 // This should come from BACK!
 void Bouncer2Mod::draw_event(gdi::GraphicApi & gd)
 {
-    if (!this->capture_started && this->front.can_be_start_capture(true)){
-        this->capture_started = true;
-        LOG(LOG_INFO, "Bouncer Mod : capture started (forced)");
-    }
-
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     auto const green = encode_color24()(GREEN);

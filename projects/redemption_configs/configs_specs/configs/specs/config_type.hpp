@@ -28,8 +28,6 @@ inline void config_type_definition(type_enumerations & e)
 {
     e.enumeration_list("ModuleName")
       .value("UNKNOWN")
-      .value("INTERNAL_TRANSITION")
-      .value("exit")
       .value("login")
       .value("selector")
       .value("confirm")

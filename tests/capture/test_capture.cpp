@@ -398,7 +398,8 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 RED_AUTO_TEST_CASE(TestPattern)
 {
     for (int i = 0; i < 2; ++i) {
-        struct : NullAuthentifier {
+        struct : NullSessionLog
+        {
             std::string reason;
             std::string message;
 
@@ -1924,7 +1925,7 @@ RED_AUTO_TEST_CASE(TestReload)
     }
 }
 
-struct ReportMessage : NullAuthentifier
+struct ReportMessage : NullSessionLog
 {
     std::string s;
 
@@ -2014,7 +2015,8 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 {
-    struct : NullAuthentifier {
+    struct : NullSessionLog
+    {
         std::string s;
 
         void report(const char* reason, const char* message) override
@@ -2046,7 +2048,8 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
 RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
 {
-    struct : NullAuthentifier {
+    struct : NullSessionLog
+    {
         bool is_killed = false;
 
         void report(const char*  /*reason*/, const char*  /*message*/) override {

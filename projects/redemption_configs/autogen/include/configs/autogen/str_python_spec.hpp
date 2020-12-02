@@ -1144,9 +1144,9 @@ capture = integer(min=0, default=0)
 #_hex
 auth = integer(min=0, default=0)
 
-#     Event   = 0x02,
-#     Acl     = 0x04,
-#     Trace   = 0x08,
+# - Event   = 0x02
+# - Acl     = 0x04
+# - Trace   = 0x08
 #_advanced
 #_hex
 session = integer(min=0, default=0)

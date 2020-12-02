@@ -24,28 +24,18 @@
 #include "acl/acl_serializer.hpp"
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
-#include "core/log_id.hpp"
-#include "main/version.hpp"
-#include "mod/rdp/rdp_api.hpp"
-#include "utils/fileutils.hpp"
+#include "core/error.hpp"
+#include "transport/transport.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/log.hpp"
-#include "utils/log_siem.hpp"
 #include "utils/stream.hpp"
-#include "utils/string_c.hpp"
-#include "utils/sugar/algostring.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/translation.hpp"
 
-#include <string>
-#include <algorithm>
+#include <memory>
 
 #include <ctime>
 #include <cstdio>
 #include <cassert>
-
-#include "acl/session_logfile.hpp"
 
 
 namespace
@@ -56,10 +46,10 @@ namespace
 }
 
 
-AclSerializer::AclSerializer(Inifile & ini)
+AclSerializer::AclSerializer(Inifile & ini, Transport & trans)
 : verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
 , ini(ini)
-, auth_trans(nullptr)
+, auth_trans(trans)
 , session_id{}
 {
     std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
@@ -215,9 +205,11 @@ namespace
 
     using Verbose = AclSerializer::Verbose;
 
-    void read_acl_fields(Inifile& ini, Transport& auth_trans, Verbose verbose)
+    AclFieldMask read_acl_fields(Inifile& ini, Transport& auth_trans, Verbose verbose)
     {
         Reader reader(auth_trans, verbose);
+
+        AclFieldMask flags {};
 
         do {
             reader.read_nfield();
@@ -232,15 +224,18 @@ namespace
                     }
                     else {
                         auto zkey = field.get_acl_name();
-                        if (field.set(reader.read_value(zkey)) && bool(verbose & Verbose::variable)) {
-                            Inifile::ZStringBuffer zstring_buffer;
-                            zstring_view val = field.to_zstring_view(zstring_buffer);
+                        if (bool is_ok = field.set(reader.read_value(zkey))) {
+                            flags.set(field.authid());
+                            if (bool(verbose & Verbose::variable)) {
+                                Inifile::ZStringBuffer zstring_buffer;
+                                zstring_view val = field.to_zstring_view(zstring_buffer);
 
-                            chars_view display_val = get_loggable_value(
-                                val, field.loggable_category(), ini.get<cfg::debug::password>());
+                                chars_view display_val = get_loggable_value(
+                                    val, field.loggable_category(), ini.get<cfg::debug::password>());
 
-                            LOG(LOG_INFO, "receiving '%s'='%.*s'",
-                                zkey, int(display_val.size()), display_val.data());
+                                LOG(LOG_INFO, "receiving '%s'='%.*s'",
+                                    zkey, int(display_val.size()), display_val.data());
+                            }
                         }
                     }
                 }
@@ -256,28 +251,15 @@ namespace
                 }
             }
         } while (reader.has_data());
+
+        return flags;
     }
 
 } // anonymous namespace
 
-void AclSerializer::incoming()
+AclFieldMask AclSerializer::incoming()
 {
-    bool flag = this->ini.get<cfg::context::session_id>().empty();
-    read_acl_fields(this->ini, *this->auth_trans, this->verbose);
-    if (flag && !this->ini.get<cfg::context::session_id>().empty()) {
-        char old_session_file[2048];
-        std::snprintf(old_session_file, sizeof(old_session_file), "%s/session_%s.pid",
-                      app_path(AppPath::LockDir).c_str(), this->session_id);
-        char new_session_file[2048];
-        std::snprintf(new_session_file, sizeof(new_session_file), "%s/session_%s.pid",
-                      app_path(AppPath::LockDir).c_str(),
-                      this->ini.get<cfg::context::session_id>().c_str());
-        std::rename(old_session_file, new_session_file);
-        std::snprintf(this->session_id, sizeof(this->session_id), "%s",
-                      this->ini.get<cfg::context::session_id>().c_str());
-    }
-    LOG_IF(bool(this->verbose & Verbose::buffer),
-        LOG_INFO, "SESSION_ID = %s", this->ini.get<cfg::context::session_id>());
+    return read_acl_fields(this->ini, this->auth_trans, this->verbose);
 }
 
 namespace
@@ -367,41 +349,36 @@ std::size_t AclSerializer::send_acl_data()
     const auto nfield = fields.size();
 
     if (REDEMPTION_UNLIKELY(nfield)) {
-        LOG_IF(bool(this->verbose & Verbose::variable),
-            LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %zu", nfield);
+        const bool enable_verbose = bool(this->verbose & Verbose::variable);
+
+        LOG_IF(enable_verbose,
+            LOG_INFO, "Sending data to ACL: numbers of changed fields = %zu", nfield);
 
         const auto password_printing_mode = this->ini.get<cfg::debug::password>();
 
-        try {
-            Writer writer(*this->auth_trans, this->verbose, nfield);
+        Writer writer(this->auth_trans, this->verbose, checked_int{nfield});
 
-            for (auto field : fields) {
-                const zstring_view key = field.get_acl_name();
-                if (field.is_asked()) {
-                    writer.push_ask(key);
-                    LOG_IF(bool(this->verbose & Verbose::variable),
-                        LOG_INFO, "sending %s=ASK", key);
-                }
-                else {
-                    Inifile::ZStringBuffer zstring_buffer;
-                    const auto val = field.to_zstring_view(zstring_buffer);
-                    writer.push_value(key, val);
+        for (auto field : fields) {
+            const zstring_view key = field.get_acl_name();
+            if (field.is_asked()) {
+                writer.push_ask(key);
+                LOG_IF(enable_verbose, LOG_INFO, "sending %s=ASK", key);
+            }
+            else {
+                Inifile::ZStringBuffer zstring_buffer;
+                const auto val = field.to_zstring_view(zstring_buffer);
+                writer.push_value(key, val);
 
-                    if (bool(this->verbose & Verbose::variable)) {
-                        const chars_view display_val = get_loggable_value(
-                            val, field.loggable_category(), password_printing_mode);
-                        LOG(LOG_INFO, "sending %s=%.*s", key,
-                            int(display_val.size()), display_val.data());
-                    }
+                if (enable_verbose) {
+                    const chars_view display_val = get_loggable_value(
+                        val, field.loggable_category(), password_printing_mode);
+                    LOG(LOG_INFO, "sending %s=%.*s", key,
+                        int(display_val.size()), display_val.data());
                 }
             }
+        }
 
-            writer.send_buffer();
-        }
-        catch (Error const & e) {
-            LOG(LOG_ERR, "ACL SERIALIZER : %s", e.errmsg());
-            this->ini.set<cfg::context::rejected>(TR(trkeys::acl_fail, language(this->ini)));
-        }
+        writer.send_buffer();
 
         this->ini.clear_acl_fields_changed();
     }

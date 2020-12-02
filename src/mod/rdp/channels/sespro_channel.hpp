@@ -21,6 +21,9 @@
 
 #pragma once
 
+#include "configs/config_access.hpp"
+#include "configs/config.hpp"
+
 #include "acl/auth_api.hpp"
 #include "gdi/screen_functions.hpp"
 #include "core/error.hpp"
@@ -67,6 +70,16 @@ enum {
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
 public:
+    using AclVariables = vcfg::variables<
+        vcfg::var<cfg::context::rd_shadow_invitation_error_code,    vcfg::accessmode::set>,
+        vcfg::var<cfg::context::rd_shadow_invitation_error_message, vcfg::accessmode::set>,
+        vcfg::var<cfg::context::rd_shadow_userdata,                 vcfg::accessmode::set>,
+        vcfg::var<cfg::context::rd_shadow_invitation_id,            vcfg::accessmode::set>,
+        vcfg::var<cfg::context::rd_shadow_invitation_addr,          vcfg::accessmode::set>,
+        vcfg::var<cfg::context::rd_shadow_invitation_port,          vcfg::accessmode::set>,
+        vcfg::var<cfg::context::rd_shadow_available,                vcfg::accessmode::set>
+    >;
+
     struct Callbacks {
         virtual void freeze_screen() = 0;
         virtual void disable_graphics_update() = 0;
@@ -82,9 +95,9 @@ private:
     bool session_probe_keep_alive_received = true;
     bool session_probe_ready               = false;
 
-    const SessionProbeVirtualChannelParams sespro_params;
-
     bool session_probe_launch_timeout_timer_started = false;
+
+    const SessionProbeVirtualChannelParams sespro_params;
 
     std::string param_target_informations;
 
@@ -126,7 +139,8 @@ private:
     TimeBase& time_base;
     EventsGuard events_guard;
     Callbacks & callbacks;
-    AuthApi & sesman;
+    SessionLogApi& session_log;
+    AclVariables vars;
 
     RDPVerbose verbose;
     EventRef session_probe_timer;
@@ -141,7 +155,7 @@ private:
 
     void log6(LogId id, KVLogList kv_list)
     {
-        this->sesman.log6(id, kv_list);
+        this->session_log.log6(id, kv_list);
 
         if (REDEMPTION_UNLIKELY(bool(this->verbose & RDPVerbose::sesprobe))) {
             std::string msg;
@@ -180,7 +194,8 @@ public:
     explicit SessionProbeVirtualChannel(
         TimeBase& time_base,
         EventContainer& events,
-        AuthApi & sesman,
+        SessionLogApi& session_log,
+        AclVariables vars,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,
@@ -207,7 +222,8 @@ public:
     , time_base(time_base)
     , events_guard(events)
     , callbacks(callbacks)
-    , sesman(sesman)
+    , session_log(session_log)
+    , vars(vars)
     , verbose(verbose)
     {
         LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
@@ -382,7 +398,7 @@ private:
 
                 if (SessionProbeOnKeepaliveTimeout::disconnect_user ==
                     this->sespro_params.on_keepalive_timeout) {
-                    this->sesman.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
+                    this->session_log.report("SESSION_PROBE_KEEPALIVE_MISSED", "");
                 }
                 else if (SessionProbeOnKeepaliveTimeout::freeze_connection_and_wait ==
                             this->sespro_params.on_keepalive_timeout) {
@@ -521,7 +537,7 @@ public:
 
                     if (!this->sespro_params.allow_multiple_handshake &&
                         (this->reconnection_cookie != remote_reconnection_cookie)) {
-                        this->sesman.report("SESSION_PROBE_RECONNECTION", "");
+                        this->session_log.report("SESSION_PROBE_RECONNECTION", "");
                     }
                 }
                 else {
@@ -1207,7 +1223,7 @@ public:
                             "app_name=%s  raw_result=%s",
                             parameters_[0], parameters_[1]);
 
-                        this->sesman.report(
+                        this->session_log.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
                     else {
@@ -1228,7 +1244,7 @@ public:
                             "app_name=%s  raw_result=%s  raw_result_message=%s",
                             parameters_[0], parameters_[1], parameters_[2]);
 
-                        this->sesman.report(
+                        this->session_log.report(
                             "SESSION_PROBE_RUN_STARTUP_APPLICATION_FAILED", "");
                     }
                     else {
@@ -1303,7 +1319,7 @@ public:
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
                                     parameters_[3].c_str(), parameters_[4].c_str());
 
-                                this->sesman.report(
+                                this->session_log.report(
                                     (deny ? "FINDCONNECTION_DENY" : "FINDCONNECTION_NOTIFY"),
                                     message);
                             }
@@ -1312,7 +1328,7 @@ public:
                                 if (::strtoul(parameters_[5].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block outbound connection!");
-                                    this->sesman.report(
+                                    this->session_log.report(
                                         "SESSION_PROBE_OUTBOUND_CONNECTION_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1361,7 +1377,7 @@ public:
                                 snprintf(message, sizeof(message), "%s|%s|%s",
                                     description.c_str(), parameters_[1].c_str(), parameters_[2].c_str());
 
-                                this->sesman.report(
+                                this->session_log.report(
                                     (deny ? "FINDPROCESS_DENY" : "FINDPROCESS_NOTIFY"),
                                     message);
                             }
@@ -1370,7 +1386,7 @@ public:
                                 if (::strtoul(parameters_[3].c_str(), nullptr, 10)) {
                                     LOG(LOG_ERR,
                                         "Session Probe failed to block process!");
-                                    this->sesman.report(
+                                    this->session_log.report(
                                         "SESSION_PROBE_PROCESS_BLOCKING_FAILED", "");
                                 }
                                 else {
@@ -1412,7 +1428,7 @@ public:
                                 parameters_[0].c_str(), parameters_[1].c_str(), parameters_[2].c_str(),
                                 parameters_[3].c_str(), parameters_[4].c_str(), parameters_[5].c_str());
 
-                            this->sesman.report(
+                            this->session_log.report(
                                 (deny ? "ACCOUNTMANIPULATION_DENY" : "ACCOUNTMANIPULATION_NOTIFY"),
                                 message);
                         }
@@ -1590,8 +1606,9 @@ public:
                 else if (!::strcasecmp(order_.c_str(), "SHADOW_SESSION_SUPPORTED")) {
                     if (parameters_.size() == 1) {
                         if ((!::strcasecmp(parameters_[0].c_str(), "yes"))
-                        && this->sespro_params.session_shadowing_support) {
-                            this->sesman.set_rd_shadow_available();
+                         && this->sespro_params.session_shadowing_support
+                        ) {
+                            this->vars.set_acl<cfg::context::rd_shadow_available>(true);
                         }
                     }
                     else {
@@ -1603,17 +1620,17 @@ public:
                     if (parameters_.size() >= 3)
                     {
                         const uint32_t shadow_errcode = ::strtoul(parameters_[0].c_str(), nullptr, 16);
-                        const char *   shadow_errmsg  = parameters_[1].c_str();
-                        const char *   shadow_userdata = parameters_[2].c_str();
+                        const auto&    shadow_errmsg  = parameters_[1];
+                        const auto&    shadow_userdata = parameters_[2];
                         if (parameters_.size() >= 6) {
-                            const char *   shadow_id   = parameters_[3].c_str();
-                            const char *   shadow_addr = parameters_[4].c_str();
+                            const auto&    shadow_id   = parameters_[3];
+                            const auto&    shadow_addr = parameters_[4];
                             const uint16_t shadow_port = ::strtoul(parameters_[5].c_str(), nullptr, 10);
 
-                            this->sesman.set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
+                            this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, shadow_id, shadow_addr, shadow_port);
                         }
                         else {
-                            this->sesman.set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
+                            this->set_rd_shadow_invitation(shadow_errcode, shadow_errmsg, shadow_userdata, "", "", 0);
                         }
                     }
                     else {
@@ -1747,7 +1764,7 @@ public:
                     "Invalid shadow session type! Operation canceled. Type=%s",
                 type);
 
-            this->sesman.set_rd_shadow_invitation(
+            this->set_rd_shadow_invitation(
                     0x80004005, // E_FAIL
                     "The shadow session type specified is invalid!",
                     userdata,
@@ -1783,5 +1800,19 @@ public:
             out_s.out_copy_bytes(userdata, ::strlen(userdata));
 
         });
+    }
+
+private:
+    void set_rd_shadow_invitation(
+        uint32_t error_code, std::string_view error_message,
+        std::string_view userdata, std::string_view id,
+        std::string_view addr, uint16_t port
+    ) {
+        this->vars.set_acl<cfg::context::rd_shadow_invitation_error_code>(error_code);
+        this->vars.set_acl<cfg::context::rd_shadow_invitation_error_message>(error_message);
+        this->vars.set_acl<cfg::context::rd_shadow_userdata>(userdata);
+        this->vars.set_acl<cfg::context::rd_shadow_invitation_id>(id);
+        this->vars.set_acl<cfg::context::rd_shadow_invitation_addr>(addr);
+        this->vars.set_acl<cfg::context::rd_shadow_invitation_port>(port);
     }
 };  // class SessionProbeVirtualChannel

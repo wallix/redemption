@@ -24,7 +24,8 @@
 
 #include <cstdint>
 #include <sys/time.h>
-#include "acl/auth_api.hpp"
+
+class SessionLogApi;
 
 struct CaptureParams
 {
@@ -34,7 +35,7 @@ struct CaptureParams
     char const * record_tmp_path;
     char const * record_path;
     int groupid;
-    AuthApi * sesman;
+    SessionLogApi * session_log;
 
     SmartVideoCropping smart_video_cropping;
 

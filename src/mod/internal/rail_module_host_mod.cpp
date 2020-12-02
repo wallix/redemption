@@ -205,24 +205,6 @@ void RailModuleHostMod::send_to_mod_channel(
     mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
 }
 
-void RailModuleHostMod::create_shadow_session(const char * userdata, const char * type)
-{
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-    mod.create_shadow_session(userdata, type);
-}
-
-void RailModuleHostMod::send_auth_channel_data(const char * data)
-{
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-    mod.send_auth_channel_data(data);
-}
-
-void RailModuleHostMod::send_checkout_channel_data(const char * data)
-{
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-    mod.send_checkout_channel_data(data);
-}
-
 // mod_api
 
 bool RailModuleHostMod::is_up_and_running() const

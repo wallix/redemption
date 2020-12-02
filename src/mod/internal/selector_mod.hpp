@@ -27,9 +27,6 @@
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/language_button.hpp"
 
-// cfg::context::selector_device_filter used by SesmanInterface
-// cfg::context::selector_group_filter used by SesmanInterface
-// cfg::context::selector_proto_filter used by SesmanInterface
 using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,                  vcfg::accessmode::ask | vcfg::accessmode::set | vcfg::accessmode::get>,
     vcfg::var<cfg::context::selector,                   vcfg::accessmode::ask | vcfg::accessmode::set>,
@@ -40,6 +37,9 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::context::selector_current_page,      vcfg::accessmode::is_asked | vcfg::accessmode::get | vcfg::accessmode::set>,
     vcfg::var<cfg::context::selector_number_of_pages,   vcfg::accessmode::is_asked | vcfg::accessmode::get>,
     vcfg::var<cfg::context::selector_lines_per_page,    vcfg::accessmode::get | vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_group_filter,      vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_device_filter,     vcfg::accessmode::set>,
+    vcfg::var<cfg::context::selector_proto_filter,      vcfg::accessmode::set>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
@@ -51,16 +51,15 @@ class SelectorMod : public RailModBase, public NotifyApi
 {
 public:
     SelectorMod(
-        Inifile & ini, SelectorModVariables vars, TimeBase& time_base,
+        SelectorModVariables ini, TimeBase& time_base,
         EventContainer& events,
-        AuthApi & sesman,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, ClientExecute & rail_client_execute,
         Font const& font, Theme const& theme);
 
     void init() override;
 
-    void acl_update() override;
+    void acl_update(AclFieldMask const& acl_fields) override;
 
     void notify(Widget* widget, notify_event_t event) override;
 
@@ -75,7 +74,7 @@ private:
     void refresh_device();
     void ask_page();
 
-    AuthApi & sesman;
+    SelectorModVariables ini;
 
     LanguageButton language_button;
 
@@ -84,9 +83,6 @@ private:
 
     int current_page;
     int number_page;
-
-    Inifile & ini;
-    SelectorModVariables vars;
 
     CopyPaste copy_paste;
 

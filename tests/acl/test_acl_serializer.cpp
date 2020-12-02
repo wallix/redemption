@@ -38,13 +38,27 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
     Inifile ini;
 
-    BufTransport trans;
+    struct TestTransport : Transport
+    {
+        BufTransport trans;
+        bool excep = false;
 
-    AclSerializer acl(ini);
-    acl.set_auth_trans(&trans);
+        void do_send(const uint8_t* buffer, size_t len) override
+        {
+            if (excep) {
+                throw Error(ERR_TRANSPORT_WRITE_FAILED);
+            }
+            else {
+                trans.send(buffer, len);
+            }
+        }
+    };
+    TestTransport trans;
+
+    AclSerializer acl(ini, trans);
 
     acl.send_acl_data();
-    RED_CHECK(trans.buf ==
+    RED_CHECK(trans.trans.buf ==
         "\x00\x16"
         "!\x03""bpp\x00\x00\x00\x02""24"
         "!\x05width\x00\x00\x00\x03""800"
@@ -69,56 +83,46 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         "?\x0dtarget_device"
         "?\x0ctarget_login"_av);
 
-    trans.buf.clear();
-
-    struct ThrowTransport : Transport
-    {
-        void do_send(const uint8_t* /*buffer*/, size_t /*len*/) override
-        {
-            throw Error(ERR_TRANSPORT_WRITE_FAILED);
-        }
-    };
-    ThrowTransport transexcpt;
-
-    acl.set_auth_trans(&transexcpt);
+    trans.trans.buf.clear();
+    trans.excep = true;
 
     ini.set_acl<cfg::globals::auth_user>("Newuser");
 
-    acl.send_acl_data();
-    RED_CHECK(trans.buf == ""_av);
-    trans.buf.clear();
-
-    RED_CHECK_EQUAL(ini.get<cfg::context::rejected>(), "Authentifier service failed");
+    RED_CHECK_EXCEPTION_ERROR_ID(acl.send_acl_data(),
+        ERR_TRANSPORT_WRITE_FAILED);
 }
 
 RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
 {
     Inifile ini;
-    AclSerializer acl(ini);
-
     GeneratorTransport trans(
         "\x00\x03"
         "?\x05login"
         "?\x08password"
         "!\x0asession_id\x00\x00\x00\x04""6455"
         ""_av);
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
     RED_CHECK(ini.get<cfg::context::session_id>().empty());
     RED_CHECK(!ini.is_asked<cfg::globals::auth_user>());
 
-    RED_CHECK_NO_THROW(acl.incoming());
+    AclFieldMask acl_fields;
+    RED_CHECK_NO_THROW(acl_fields = acl.incoming());
     RED_CHECK(ini.is_asked<cfg::globals::auth_user>());
     RED_CHECK(ini.get<cfg::context::session_id>() == "6455");
+
+    RED_TEST(acl_fields.has<cfg::context::session_id>());
+    RED_TEST(!acl_fields.has<cfg::globals::auth_user>());
+
+    acl_fields.clear(cfg::context::session_id::index);
+    RED_TEST(acl_fields.is_empty());
 }
 
 RED_AUTO_TEST_CASE(TestAclSerializeIncomingMulti)
 {
     Inifile ini;
-    AclSerializer acl(ini);
-
     GeneratorTransport trans(
         "\x00\x03"
         "?\x05login"
@@ -127,7 +131,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncomingMulti)
         "\x00\x01"
         "!\x0asession_id\x00\x00\x00\x04""1234"
         ""_av);
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     ini.set<cfg::context::session_id>("");
     ini.set_acl<cfg::globals::auth_user>("testuser");
@@ -142,7 +146,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncomingMulti)
 RED_AUTO_TEST_CASE(TestAclSerializeTooBigMessage)
 {
     Inifile ini;
-    AclSerializer acl(ini);
 
     auto prefix =
         "\x00\x01"
@@ -153,7 +156,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeTooBigMessage)
 
     GeneratorTransport trans(message);
     trans.disable_remaining_error();
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_MESSAGE_TOO_BIG);
 }
@@ -171,9 +174,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     std::string message(1024*66 + prefix.size(), 'a');
     memcpy(message.data(), prefix.data(), prefix.size());
 
-    AclSerializer acl(ini);
     BufTransport trans;
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     ini.set_acl<cfg::context::password>(std::string(sz_string, 'a'));
 
@@ -186,7 +188,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
 RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
 {
     Inifile ini;
-    AclSerializer acl(ini);
 
     size_t const sz_string = 1024*66;
     auto prefix =
@@ -197,7 +198,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     memcpy(message.data(), prefix.data(), prefix.size());
 
     GeneratorTransport trans(message);
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     std::string result(sz_string, 'a');
     RED_REQUIRE_NE(ini.get<cfg::context::rejected>(), result);
@@ -222,8 +223,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeTruncateKeyInternal)
     message += "!\x07message\x00\x00\x00\x02xy"sv;
 
     GeneratorTransport trans(message);
-    AclSerializer acl(ini);
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     acl.incoming();
 
@@ -240,9 +240,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
         "!\x04""abcd\x00\x00\x00\x09""something"
         "!\x03""efg\x00\x00\x00\x0f""other something"
         ""_av);
-    AclSerializer acl(ini);
-
-    acl.set_auth_trans(&trans);
+    AclSerializer acl(ini, trans);
 
     {
         tu::log_buffered logbuf;

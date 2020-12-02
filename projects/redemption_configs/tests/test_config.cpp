@@ -1863,28 +1863,25 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
 {
     Inifile             ini;
 
-    // nothing has been changed initialy
-    RED_CHECK(!ini.check_from_acl());
+    ini.clear_acl_fields_changed();
+    RED_CHECK(ini.get_acl_fields_changed().size() == 0);
 
     // auth_user has been changed, so check_from_acl() method will notify that something changed
-    get_acl_field(ini, cfg::globals::auth_user::index).set("someoneelse"_zv);
-    RED_CHECK(ini.check_from_acl());
+    RED_CHECK(get_acl_field(ini, cfg::globals::auth_user::index).set("someoneelse"_zv));
     RED_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 
     ini.clear_acl_fields_changed();
-    RED_CHECK(!ini.check_from_acl());
+    RED_CHECK(ini.get_acl_fields_changed().size() == 0);
 
     // setting a field without changing it should not notify that something changed
     ini.set_acl<cfg::globals::auth_user>("someoneelse");
-    RED_CHECK(!ini.check_from_acl());
-
+    RED_CHECK(ini.get_acl_fields_changed().size() == 1);
 
     // Using the list of changed fields:
     ini.set_acl<cfg::globals::auth_user>("someuser");
     ini.set_acl<cfg::globals::host>("35.53.0.1");
-    ini.set_acl<cfg::context::opt_height>(602);
+    ini.set_acl<cfg::context::opt_height>(602u);
     ini.set_acl<cfg::globals::target>("35.53.0.2");
-    RED_CHECK(!ini.check_from_acl());
 
     auto list = ini.get_acl_fields_changed();
     RED_CHECK_EQUAL(4, list.size());
@@ -1898,6 +1895,5 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
         ));
     }
     ini.clear_acl_fields_changed();
-    RED_CHECK(!ini.check_from_acl());
     RED_CHECK(ini.get_acl_fields_changed().size() == 0);
 }

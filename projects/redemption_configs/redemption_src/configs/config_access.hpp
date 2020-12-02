@@ -50,6 +50,43 @@ template<class T, accessmode Mode>
 struct var
 {};
 
+namespace detail
+{
+    template<class T, accessmode Mode>
+    constexpr bool has_vcfg_access(var<T, Mode> /*unused*/, accessmode amode)
+    {
+        return ((Mode & amode) == amode);
+    }
+
+    struct GetPrivate
+    {
+        template<class V>
+        static Inifile& ini(V const& vars)
+        {
+            return vars.ini;
+        }
+
+        template<class V>
+        static typename V::Pack pack()
+        {
+            return typename V::Pack();
+        }
+    };
+
+    template<class Cfg>
+    struct CheckCompatibility;
+
+    template<class T, accessmode Mode>
+    struct CheckCompatibility<var<T, Mode>>
+    {
+        template<accessmode Mode2>
+        static void check(var<T, Mode2> /*unused*/)
+        {
+            static_assert((Mode & Mode2) == Mode, "incompatible restriction");
+        }
+    };
+}
+
 // fix for gcc-7
 template<class...> using LazyInifile = Inifile;
 
@@ -60,54 +97,62 @@ class variables
 
     struct Pack : Cfg... {};
 
-    template<class T, accessmode Mode>
-    static constexpr accessmode mode(var<T, Mode> /*unused*/) {
-        return Mode;
-    }
-
-    template<class T>
-    static constexpr bool has_access(accessmode amode) {
-        return ((mode<T>(Pack()) & amode) == amode);
-    }
+    friend class detail::GetPrivate;
 
 public:
     variables(Inifile & ini)
     : ini(ini)
     {}
 
+    variables(variables const& other) = default;
+
+    template<class... CfgOther>
+    variables(variables<CfgOther...> const& other)
+    : ini(detail::GetPrivate::ini(other))
+    {
+        auto pack2 = detail::GetPrivate::pack<variables<CfgOther...>>();
+        (..., detail::CheckCompatibility<Cfg>::check(pack2));
+    }
+
     template<class T>
-    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] typename T::type const & get() const noexcept {
-        static_assert(has_access<T>(accessmode::get), "T isn't gettable");
+    [[nodiscard]] typename T::type const & get() const noexcept
+    {
+        static_assert(detail::has_vcfg_access<T>(Pack(), accessmode::get), "T isn't gettable");
         return this->ini.template get<T>();
     }
 
     template<class T>
-    [[nodiscard]] typename T::type& get_mutable_ref() const noexcept {
-        static_assert(has_access<T>(accessmode::get_mutable_ref), "get_ref isn't enabled");
+    [[nodiscard]] typename T::type& get_mutable_ref() const noexcept
+    {
+        static_assert(detail::has_vcfg_access<T>(Pack(), accessmode::get_mutable_ref), "get_ref isn't enabled");
         return this->ini.template get_mutable_ref<T>();
     }
 
     template<class T, class U>
-    void set(U && new_value) {
-        static_assert(has_access<T>(accessmode::set), "T isn't settable");
+    void set(U && new_value)
+    {
+        static_assert(detail::has_vcfg_access<T>(Pack(), accessmode::set), "T isn't settable");
         return this->ini.template set<T>(static_cast<U&&>(new_value));
     }
 
     template<class T, class U>
-    void set_acl(U && new_value) {
-        static_assert(has_access<T>(accessmode::set), "T isn't settable");
+    void set_acl(U && new_value)
+    {
+        static_assert(detail::has_vcfg_access<T>(Pack(), accessmode::set), "T isn't settable");
         return this->ini.template set_acl<T>(static_cast<U&&>(new_value));
     }
 
     template<class T>
-    void ask() {
-        static_assert(has_access<T>(accessmode::ask), "T isn't askable");
+    void ask()
+    {
+        static_assert(detail::has_vcfg_access<T>(Pack(), accessmode::ask), "T isn't askable");
         return this->ini.template ask<T>();
     }
 
     template<class T>
-    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] bool is_asked() const {
-        static_assert(has_access<T>(accessmode::is_asked), "T isn't is_askable");
+    [[nodiscard]] bool is_asked() const
+    {
+        static_assert(detail::has_vcfg_access<T>(Pack(), accessmode::is_asked), "T isn't is_askable");
         return this->ini.template is_asked<T>();
     }
 };

@@ -44,7 +44,7 @@ namespace log_proxy
         }
     }
 
-    void set_user(char const* username) noexcept
+    void set_user(std::string_view username) noexcept
     {
         utils::strlcpy(g_username, username);
     }

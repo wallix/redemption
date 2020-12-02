@@ -23,7 +23,6 @@
 
 #include "acl/session_logfile.hpp"
 
-#include "utils/timebase.hpp"
 #include "configs/config.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/key_qvalue_pairs.hpp"
@@ -33,11 +32,9 @@
 
 
 SessionLogFile::SessionLogFile(
-    Inifile& ini, TimeBase& time_base,
-    CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    Inifile const& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
     std::function<void (const Error &)> notify_error)
 : ini(ini)
-, time_base(time_base)
 , cctx(cctx)
 , ct(cctx, rnd, fstat, std::move(notify_error))
 {
@@ -54,15 +51,14 @@ SessionLogFile::~SessionLogFile()
     }
 }
 
-void SessionLogFile::log6(LogId id, KVLogList kv_list)
+void SessionLogFile::log6(time_t time_now, LogId id, KVLogList kv_list)
 {
     assert(this->ct.is_open());
 
-    const timeval time = this->time_base.get_current_time();
     chars_view av = log_format_set_info(this->log6_buffer, id, kv_list);
 
     char mbstr[100];
-    auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&time.tv_sec));
+    auto const len = std::strftime(mbstr, sizeof(mbstr), "%F %T ", std::localtime(&time_now));
     if (len) {
         this->ct.send(mbstr, len);
     }
@@ -275,6 +271,11 @@ namespace
         );
         kv_list_to_string(buffer, kv_list, '=', "", table_formats::arcsight_table);
     }
+}
+
+SiemLogger::SiemLogger()
+{
+    buffer_.reserve(512);
 }
 
 void SiemLogger::log_syslog_format(

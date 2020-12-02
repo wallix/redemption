@@ -192,7 +192,7 @@ void MatchFinder::configure_regexes(
 }
 
 void MatchFinder::report(
-    AuthApi & sesman, bool is_pattern_kill,
+    SessionLogApi& session_log, bool is_pattern_kill,
     ConfigureRegexes conf_regex, const char * pattern, const char * data)
 {
     char message[4096];
@@ -201,10 +201,10 @@ void MatchFinder::report(
         ((conf_regex == ConfigureRegexes::OCR) ? "ocr" : "kbd" ), pattern, data);
     utils::back(message) = '\0';
 
-    sesman.log6(is_pattern_kill ? LogId::KILL_PATTERN_DETECTED : LogId::NOTIFY_PATTERN_DETECTED
-                        ,{ KVLog("pattern"_av, std::string_view{message}),});
+    session_log.log6(is_pattern_kill ? LogId::KILL_PATTERN_DETECTED : LogId::NOTIFY_PATTERN_DETECTED,
+                     { KVLog("pattern"_av, std::string_view{message}),});
 
-    sesman.report(
+    session_log.report(
         (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),
         message);
 }

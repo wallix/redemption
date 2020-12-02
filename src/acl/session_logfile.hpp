@@ -33,7 +33,6 @@
 
 class Random;
 class Fstat;
-class TimeBase;
 class Inifile;
 
 
@@ -41,21 +40,19 @@ class SessionLogFile
 {
 public:
     SessionLogFile(
-        Inifile & ini, TimeBase & time_base,
-        CryptoContext & cctx, Random & rnd, Fstat & fstat,
+        const Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();
 
-    void log6(LogId id, KVLogList kv_list);
+    void log6(std::time_t time_now, LogId id, KVLogList kv_list);
 
     void open_session_log();
 
     void close_session_log();
 
 private:
-    Inifile & ini;
-    TimeBase & time_base;
+    const Inifile & ini;
     CryptoContext & cctx;
     OutCryptoTransport ct;
     std::string log6_buffer;
@@ -64,10 +61,7 @@ private:
 
 struct SiemLogger
 {
-    explicit SiemLogger()
-    {
-        buffer_.reserve(512);
-    }
+    explicit SiemLogger();
 
     void log_syslog_format(
         LogId id, KVLogList kv_list, const Inifile & ini, chars_view session_type);

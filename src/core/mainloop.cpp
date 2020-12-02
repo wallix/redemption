@@ -23,6 +23,7 @@
 #include "core/listen.hpp"
 #include "core/mainloop.hpp"
 #include "core/session.hpp"
+#include "core/pid_file.hpp"
 #include "main/version.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
@@ -357,21 +358,11 @@ namespace
             int nodelay = 1;
             if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))) {
                 // Create session file
-                int child_pid = getpid();
-                char session_file[256];
-                sprintf(session_file, "%s/session_%d.pid", app_path(AppPath::LockDir).c_str(), child_pid);
-                int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
-                if (fd == -1) {
-                    LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%s", errno, strerror(errno));
+                int const child_pid = getpid();
+                PidFile pid_file(child_pid);
+                if (!pid_file.is_open()) {
                     _exit(1);
                 }
-                char text[256];
-                const size_t lg = snprintf(text, 255, "%d", child_pid);
-                if (write(fd, text, lg) == -1) {
-                    LOG(LOG_ERR, "Couldn't write pid to %s/session_<pid>.pid: %s", app_path(AppPath::LockDir).c_str(), strerror(errno));
-                    _exit(1);
-                }
-                close(fd);
 
                 // Launch session
                 if (!source_is_localhost){
@@ -380,30 +371,29 @@ namespace
                         "New session on %d (pid=%d) from %s to %s",
                         sck, child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                 }
+
                 ini.set_acl<cfg::globals::host>(source_ip);
                 ini.set_acl<cfg::globals::target>(target_ip);
                 if (ini.get<cfg::globals::enable_transparent_mode>()
-                    && 0 != strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
+                 && 0 != strncmp(target_ip, real_target_ip, strlen(real_target_ip))
+                ) {
                     ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                 }
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, start_time, ini);
+                        session_start_ws(unique_fd{sck}, start_time, ini, pid_file);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, start_time, ini);
+                        session_start_wss(unique_fd{sck}, start_time, ini, pid_file);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, start_time, ini);
+                        session_start_tls(unique_fd{sck}, start_time, ini, pid_file);
                         break;
                 }
-
-                // Suppress session file
-                unlink(session_file);
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Session::end of Session(%d)", sck);

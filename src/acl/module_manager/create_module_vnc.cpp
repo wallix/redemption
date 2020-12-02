@@ -93,34 +93,19 @@ public:
            , ClientExecute* rail_client_execute
            , VNCVerbose verbose
            , VNCMetrics * metrics
-           , AuthApi & sesman)
+           , SessionLogApi& session_log)
     : mod_vnc(
         t, time_base, gd, events, username, password, front, front_width, front_height,
         keylayout, key_flags, clipboard_up, clipboard_down, encodings,
         clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
         server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
-        rail_client_execute, verbose, metrics, sesman)
+        rail_client_execute, verbose, metrics, session_log)
     , events_guard(events)
     , time_base(time_base)
     {
     }
 
     ~ModVNCWithMetrics() = default;
-
-    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override
-    {
-        LOG(LOG_ERR, "VNC Doesn't support RDP shadow sessions");
-    }
-
-    void send_auth_channel_data(const char * /*data*/) override
-    {
-        LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");
-    }
-
-    void send_checkout_channel_data(const char * /*data*/) override
-    {
-        LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");
-    }
 };
 
 
@@ -141,7 +126,7 @@ public:
         std::string * error_message,
         TimeBase& time_base,
         EventContainer& events,
-        AuthApi & sesman,
+        SessionLogApi& session_log,
         const char* username,
         const char* password,
         FrontAPI& front,
@@ -172,7 +157,7 @@ public:
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
-          rail_client_execute, vnc_verbose, metrics, sesman)
+          rail_client_execute, vnc_verbose, metrics, session_log)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
@@ -276,21 +261,6 @@ public:
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
-
-    void create_shadow_session(const char * /*userdata*/, const char * /*type*/) override
-    {
-        LOG(LOG_ERR, "VNC Doesn't support RDP shadow sessions");
-    }
-
-    void send_auth_channel_data(const char * /*data*/) override
-    {
-        LOG(LOG_ERR, "VNC Doesn't Auth Channel Data");
-    }
-
-    void send_checkout_channel_data(const char * /*data*/) override
-    {
-        LOG(LOG_ERR, "VNC Doesn't Checkout Channel Data");
-    }
 };
 
 }
@@ -303,13 +273,13 @@ ModPack create_mod_vnc(
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    AuthApi & sesman
+    SessionLogApi& session_log
     )
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'");
 
     unique_fd client_sck =
-        connect_to_target_host(ini, sesman, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
+        connect_to_target_host(ini, session_log, trkeys::authentification_vnc_fail, ini.get<cfg::mod_vnc::enable_ipv6>());
 
     const char * const name = "VNC Target";
 
@@ -352,7 +322,7 @@ ModPack create_mod_vnc(
         nullptr,
         time_base,
         events,
-        sesman,
+        session_log,
         ini.get<cfg::globals::target_user>().c_str(),
         ini.get<cfg::context::target_password>().c_str(),
         front,

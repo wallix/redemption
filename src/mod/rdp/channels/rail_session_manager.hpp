@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "acl/auth_api.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/channel_list.hpp"
@@ -79,8 +78,6 @@ class RemoteProgramsSessionManager final
     Rect disconnect_now_button_rect;
     bool disconnect_now_button_clicked = false;
 
-    AuthApi& authentifier;
-
     bool has_previous_window = false;
 
     std::string session_probe_window_title;
@@ -135,7 +132,7 @@ public:
         TimeBase& time_base,
         EventContainer & events,
         gdi::GraphicApi& front, mod_api& mod, Language lang,
-        Font const & font, Theme const & theme, AuthApi & authentifier,
+        Font const & font, Theme const & theme,
         char const * session_probe_window_title,
         not_null_ptr<ClientExecute> rail_client_execute,
         std::chrono::milliseconds rail_disconnect_message_delay,
@@ -146,7 +143,6 @@ public:
     , font(font)
     , theme(theme)
     , verbose(verbose)
-    , authentifier(authentifier)
     , session_probe_window_title(session_probe_window_title)
     , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
@@ -215,10 +211,10 @@ public:
 
             this->waiting_screen_draw(this->disconnect_now_button_clicked ? 1 : 0);
 
-            if (!(device_flags & SlowPath::PTRFLAGS_DOWN) &&
-                (this->disconnect_now_button_rect.contains_pt(x, y))) {
+            if (!(device_flags & SlowPath::PTRFLAGS_DOWN)
+             && this->disconnect_now_button_rect.contains_pt(x, y)
+            ) {
                 LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-                this->authentifier.set_disconnect_target();
                 throw Error(ERR_DISCONNECT_BY_USER);
             }
         }
@@ -233,7 +229,6 @@ public:
         // 28 for escape key
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
-            this->authentifier.set_disconnect_target();
             throw Error(ERR_DISCONNECT_BY_USER);
         }
     }

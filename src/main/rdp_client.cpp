@@ -20,7 +20,6 @@
  *
  */
 
-#include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
@@ -42,7 +41,6 @@
 #include "utils/theme.hpp"
 #include "utils/cli.hpp"
 #include "utils/cli_chrono.hpp"
-#include "acl/sesman.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
 #include "gdi/osd_api.hpp"
@@ -223,7 +221,7 @@ int main(int argc, char** argv)
         configuration_load(ini.configuration_holder(), ini_file.c_str());
     }
 
-    Sesman sesman(ini, time_base);
+    NullSessionLog session_log;
 
     UdevRandom system_gen;
     FixedRandom lcg_gen;
@@ -237,7 +235,7 @@ int main(int argc, char** argv)
               , time_base
               , gdi::null_gd()
               , events
-              , sesman
+              , session_log
               , username.c_str()
               , password.c_str()
               , front
@@ -308,7 +306,7 @@ int main(int argc, char** argv)
                 gdi::null_gd(),
                 osd,
                 events,
-                sesman,
+                session_log,
                 front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, licensestore,
@@ -339,8 +337,8 @@ int main(int argc, char** argv)
         }
         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
         ini.set_acl<cfg::context::target_host>(host);
-        auto message = str_concat(change_user, '@', host);
-        sesman.report("SERVER_REDIRECTION", message.c_str());
+        // auto message = str_concat(change_user, '@', host);
+        // session_log.report("SERVER_REDIRECTION", message.c_str());
     }
 
     return run_rdp() ? 2 : 0;

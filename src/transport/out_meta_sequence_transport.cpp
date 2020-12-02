@@ -74,6 +74,18 @@ OutMetaSequenceTransport::MetaFilename::MetaFilename(const char * path, const ch
     }
 }
 
+namespace
+{
+    auto make_notify_error(AclReportApi * acl_report)
+    {
+        return [acl_report](const Error & error){
+            if (acl_report && error.errnum == ENOSPC) {
+                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                acl_report->report("FILESYSTEM_FULL", "100|unknown");
+            }
+        };
+    }
+}
 
 OutMetaSequenceTransport::OutMetaSequenceTransport(
     CryptoContext & cctx,
@@ -86,22 +98,10 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     uint16_t width,
     uint16_t height,
     const int groupid,
-    AuthApi * sesman,
+    AclReportApi * acl_report,
     uint32_t file_permissions)
-: meta_buf_encrypt_transport(cctx, rnd, fstat,
-    [&sesman](const Error & error){
-        if (sesman && error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            sesman->report("FILESYSTEM_FULL", "100|unknown");
-        }
-    })
-, wrm_filter_encrypt_transport(cctx, rnd, fstat,
-    [&sesman](const Error & error){
-        if (sesman && error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-            sesman->report("FILESYSTEM_FULL", "100|unknown");
-        }
-    })
+: meta_buf_encrypt_transport(cctx, rnd, fstat, make_notify_error(acl_report))
+, wrm_filter_encrypt_transport(cctx, rnd, fstat, make_notify_error(acl_report))
 , fstat(fstat)
 , filegen_(path, hash_path, basename, ".wrm")
 , groupid_(groupid)

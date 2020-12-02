@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     gdi::NullOsd osd;
     EventContainer events;
     Inifile ini;
-    NullAuthentifier auth;
+    NullSessionLog session_log;
     RedirectionInfo redir_info;
 
 
@@ -149,7 +149,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, time_base, front.gd(), osd, events, auth, front, info, redir_info, gen,
+        t, time_base, front.gd(), osd, events, session_log, front, info, redir_info, gen,
         channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
@@ -266,7 +266,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     gdi::NullOsd osd;
     EventContainer events;
     Inifile ini;
-    NullAuthentifier auth;
+    NullSessionLog session_log;
     RedirectionInfo redir_info;
 
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -275,7 +275,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     TLSClientParams tls_client_params;
 
     auto mod = new_mod_rdp(
-        t, time_base, front.gd(), osd, events, auth, front, info,
+        t, time_base, front.gd(), osd, events, session_log, front, info,
         redir_info, gen, channels_authorizations, mod_rdp_params,
         tls_client_params, license_store, ini,
         nullptr, nullptr, mod_rdp_factory);

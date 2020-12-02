@@ -31,13 +31,14 @@ namespace
     {
         char buffer[256];
 
-        explicit temporary_login(SelectorModVariables vars) {
+        explicit temporary_login(SelectorModVariables ini)
+        {
             this->buffer[0] = 0;
             snprintf(
                 this->buffer, sizeof(this->buffer),
                 "%s@%s",
-                vars.get<cfg::globals::auth_user>().c_str(),
-                vars.get<cfg::globals::host>().c_str()
+                ini.get<cfg::globals::auth_user>().c_str(),
+                ini.get<cfg::globals::host>().c_str()
             );
         }
     };
@@ -75,11 +76,9 @@ namespace
 
 
 SelectorMod::SelectorMod(
-    Inifile & ini,
-    SelectorModVariables vars,
+    SelectorModVariables ini,
     TimeBase& time_base,
     EventContainer& events,
-    AuthApi & sesman,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
@@ -87,9 +86,9 @@ SelectorMod::SelectorMod(
     : RailModBase(
         time_base, events, drawable, front,
         width, height, rail_client_execute, font, theme)
-    , sesman(sesman)
+    , ini(ini)
     , language_button(
-        vars.get<cfg::client::keyboard_layout_proposals>(),
+        ini.get<cfg::client::keyboard_layout_proposals>(),
         this->selector, drawable, front, font, theme)
 
     , selector_params([&]() {
@@ -100,7 +99,7 @@ SelectorMod::SelectorMod(
         params.weight[1] = 70;
         params.weight[2] = 10;
 
-        Translator tr(vars.get<cfg::translation::language>());
+        Translator tr(ini.get<cfg::translation::language>());
         params.label[0] = tr(trkeys::authorization);
         params.label[1] = tr(trkeys::target);
         params.label[2] = tr(trkeys::protocol);
@@ -108,22 +107,20 @@ SelectorMod::SelectorMod(
         return params;
     }())
     , selector(
-        drawable, temporary_login(vars).buffer,
+        drawable, temporary_login(ini).buffer,
         widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this,
-        vars.is_asked<cfg::context::selector_current_page>()
+        ini.is_asked<cfg::context::selector_current_page>()
             ? ""
-            : lexical_string(vars.get<cfg::context::selector_current_page>()).c_str(),
-        vars.is_asked<cfg::context::selector_number_of_pages>()
+            : lexical_string(ini.get<cfg::context::selector_current_page>()).c_str(),
+        ini.is_asked<cfg::context::selector_number_of_pages>()
             ? ""
-            : lexical_string(vars.get<cfg::context::selector_number_of_pages>()).c_str(),
-        &this->language_button, this->selector_params, font, theme, language(vars))
+            : lexical_string(ini.get<cfg::context::selector_number_of_pages>()).c_str(),
+        &this->language_button, this->selector_params, font, theme, language(ini))
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
     , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
-    , ini(ini)
-    , vars(vars)
-    , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
+    , copy_paste(ini.get<cfg::debug::mod_internal>() != 0)
 {
     this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     this->screen.add_widget(&this->selector);
@@ -136,7 +133,7 @@ SelectorMod::SelectorMod(
                             +  this->selector.selector_lines.y_padding_label);
 
     this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, nb_max_row);
-    this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
+    this->ini.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->selector.rdp_input_invalidate(this->selector.get_rect());
     this->ask_page();
 }
@@ -147,7 +144,7 @@ void SelectorMod::init()
     this->copy_paste.ready(this->front);
 }
 
-void SelectorMod::acl_update()
+void SelectorMod::acl_update(AclFieldMask const& /*acl_fields*/)
 {
     char buffer[16];
 
@@ -171,19 +168,24 @@ void SelectorMod::acl_update()
 
 void SelectorMod::ask_page()
 {
-    this->sesman.set_selector_page(this->current_page,
-        this->selector.edit_filters[0].get_text(),
-        this->selector.edit_filters[1].get_text(),
-        this->selector.edit_filters[2].get_text());
+    this->ini.set_acl<cfg::context::selector_current_page>(this->current_page);
+
+    this->ini.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filters[1].get_text());
+    this->ini.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filters[0].get_text());
+    this->ini.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filters[2].get_text());
+
+    this->ini.ask<cfg::globals::target_user>();
+    this->ini.ask<cfg::globals::target_device>();
+    this->ini.ask<cfg::context::selector>();
 }
 
 void SelectorMod::notify(Widget* widget, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_CANCEL: {
-        this->vars.ask<cfg::globals::auth_user>();
-        this->vars.ask<cfg::context::password>();
-        this->vars.set<cfg::context::selector>(false);
+        this->ini.ask<cfg::globals::auth_user>();
+        this->ini.ask<cfg::context::password>();
+        this->ini.set<cfg::context::selector>(false);
         this->set_mod_signal(BACK_EVENT_NEXT);
         // throw Error(ERR_BACK_EVENT_NEXT);
         break;
@@ -199,11 +201,11 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 const char * target = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGET);
                 const char * groups = this->selector.selector_lines.get_cell_text(row_index, WidgetSelector::IDX_TARGETGROUP);
                 snprintf(buffer, sizeof(buffer), "%s:%s:%s",
-                            target, groups, this->vars.get<cfg::globals::auth_user>().c_str());
-                this->vars.set_acl<cfg::globals::auth_user>(buffer);
-                this->vars.ask<cfg::globals::target_user>();
-                this->vars.ask<cfg::globals::target_device>();
-                this->vars.ask<cfg::context::target_protocol>();
+                            target, groups, this->ini.get<cfg::globals::auth_user>().c_str());
+                this->ini.set_acl<cfg::globals::auth_user>(buffer);
+                this->ini.ask<cfg::globals::target_user>();
+                this->ini.ask<cfg::globals::target_device>();
+                this->ini.ask<cfg::context::target_protocol>();
 
                 this->set_mod_signal(BACK_EVENT_NEXT);
                 // throw Error(ERR_BACK_EVENT_NEXT);
@@ -255,10 +257,10 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
 
 void SelectorMod::refresh_device()
 {
-    char const* groups    = this->vars.get<cfg::globals::target_user>().c_str();
-    char const* targets   = this->vars.get<cfg::globals::target_device>().c_str();
-    char const* protocols = this->vars.get<cfg::context::target_protocol>().c_str();
-    for (unsigned index = 0; index < this->vars.get<cfg::context::selector_lines_per_page>(); index++) {
+    char const* groups    = this->ini.get<cfg::globals::target_user>().c_str();
+    char const* targets   = this->ini.get<cfg::globals::target_device>().c_str();
+    char const* protocols = this->ini.get<cfg::context::target_protocol>().c_str();
+    for (unsigned index = 0; index < this->ini.get<cfg::context::selector_lines_per_page>(); index++) {
         size_t size_groups = proceed_item(groups);
         if (!size_groups) {
             break;
@@ -289,7 +291,7 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
-        auto no_result = TR(trkeys::no_results, language(this->vars));
+        auto no_result = TR(trkeys::no_results, language(this->ini));
         chars_view const texts[] {{}, no_result, {}};
         this->selector.add_device(texts);
     }
@@ -375,7 +377,7 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
     LOG(LOG_INFO, "selector lines per page = %d (%d)", selector_lines_per_page, this->selector_lines_per_page_saved);
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
-        this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
+        this->ini.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
         this->selector.rdp_input_invalidate(this->selector.get_rect());
         this->ask_page();
     }

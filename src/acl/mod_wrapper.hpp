@@ -200,7 +200,6 @@ private:
     windowing_api * winapi = nullptr;
 
     Inifile & ini;
-    AuthApi & sesman;
 
     std::string osd_message;
     Rect clip;
@@ -213,16 +212,15 @@ private:
 
     SocketTransport * psocket_transport = nullptr;
     null_mod no_mod;
-    mod_api* modi = &no_mod;
+    not_null_ptr<mod_api> modi = &no_mod;
 
 
 public:
-    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini, AuthApi & sesman)
+    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini)
     : gfilter(graphics, static_cast<Callback&>(*this), palette, Rect{})
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
     , ini(ini)
-    , sesman(sesman)
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
     , keymap(keymap)
@@ -230,18 +228,28 @@ public:
 
     ~ModWrapper()
     {
-        this->remove_mod();
+        if (this->modi != &this->no_mod){
+            delete this->modi;
+        }
     }
 
     void disconnect()
     {
         if (this->modi != &this->no_mod) {
             try {
-                this->get_mod()->disconnect();
+                this->get_mod().disconnect();
             }
             catch (Error const& e) {
                 LOG(LOG_ERR, "disconnect raised exception %d", static_cast<int>(e.id));
             }
+
+            delete this->modi;
+            this->modi = &this->no_mod;
+            this->rdpapi = nullptr;
+            this->winapi = nullptr;
+            this->connected = false;
+            this->psocket_transport = nullptr;
+            this->current_mod = ModuleName::UNKNOWN;
         }
     }
 
@@ -281,43 +289,33 @@ public:
         }
     }
 
-    void acl_update()
+    void acl_update(AclFieldMask const& acl_fields)
     {
-        this->get_mod()->acl_update();
+        this->get_mod().acl_update(acl_fields);
     }
 
-    mod_api* get_mod()
+    mod_api& get_mod()
     {
-        return this->modi;
+        return *this->modi;
     }
 
-    [[nodiscard]] mod_api const* get_mod() const
+    [[nodiscard]] mod_api const& get_mod() const
     {
-        return this->modi;
+        return *this->modi;
     }
 
     BackEvent_t get_mod_signal()
     {
-        return this->get_mod()->get_mod_signal();
+        return this->get_mod().get_mod_signal();
     }
 
     bool is_up_and_running() const
     {
-        return (this->modi != &this->no_mod) && this->get_mod()->is_up_and_running();
+        return (this->modi != &this->no_mod) && this->get_mod().is_up_and_running();
     }
 
     void set_mod(ModuleName next_state, ModPack mod_pack)
     {
-        // The end of session is done when existing RDP or VNC connected module
-        // The open counterpart is done before opening socket
-        if (next_state != this->current_mod){
-            if (this->current_mod == ModuleName::RDP
-             || this->current_mod == ModuleName::VNC
-            ) {
-                sesman.set_disconnect_target();
-            }
-        }
-
        // LOG(LOG_INFO, "=================== Setting new mod %s (was %s)  psocket_transport = %p",
        //     get_module_name(next_state),
        //     get_module_name(this->current_mod),
@@ -330,17 +328,22 @@ public:
             this->keymap.get_kevent();
         }
 
-        this->current_mod = next_state;
         this->clear_osd_message();
 
-        this->remove_mod();
-        this->modi = mod_pack.mod.get();
+        if (this->modi != &this->no_mod) {
+            delete this->modi;
+        }
+
+        this->current_mod = next_state;
+
+        this->modi = mod_pack.mod;
 
         this->rdpapi = mod_pack.rdpapi;
         this->winapi = mod_pack.winapi;
         this->connected = mod_pack.connected;
         this->psocket_transport = mod_pack.psocket_transport;
         this->enable_osd = mod_pack.enable_osd;
+
         this->modi->init();
     }
 
@@ -370,7 +373,7 @@ private:
             }
         }
 
-        this->get_mod()->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        this->get_mod().rdp_input_scancode(param1, param2, param3, param4, keymap);
 
         if (this->enable_osd) {
             Inifile const& ini = this->ini;
@@ -420,7 +423,7 @@ private:
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override
     {
-        this->get_mod()->rdp_input_unicode(unicode, flag);
+        this->get_mod().rdp_input_unicode(unicode, flag);
     }
 
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) override
@@ -432,71 +435,56 @@ private:
                     return ;
                 }
             }
-            this->get_mod()->rdp_input_mouse(device_flags, x, y, keymap);
+            this->get_mod().rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
     void rdp_input_invalidate(Rect r) override
     {
         if (this->get_protected_rect().isempty() || !r.has_intersection(this->get_protected_rect())) {
-            this->get_mod()->rdp_input_invalidate(r);
+            this->get_mod().rdp_input_invalidate(r);
             return;
         }
         auto rects = gdi::subrect4(r, this->get_protected_rect());
-        this->get_mod()->rdp_input_invalidate2({std::begin(rects), std::end(rects)});
+        this->get_mod().rdp_input_invalidate2({std::begin(rects), std::end(rects)});
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
     {
-        this->get_mod()->rdp_input_synchronize(time, device_flags, param1, param2);
+        this->get_mod().rdp_input_synchronize(time, device_flags, param1, param2);
     }
 
     void rdp_gdi_up_and_running() override
     {
-        this->get_mod()->rdp_gdi_up_and_running();
+        this->get_mod().rdp_gdi_up_and_running();
     }
 
     void rdp_gdi_down() override
     {
-        this->get_mod()->rdp_gdi_down();
+        this->get_mod().rdp_gdi_down();
     }
 
     void rdp_allow_display_updates(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) override
     {
-        this->get_mod()->rdp_allow_display_updates(left, top, right, bottom);
+        this->get_mod().rdp_allow_display_updates(left, top, right, bottom);
     }
 
     void rdp_suppress_display_updates() override
     {
-        this->get_mod()->rdp_suppress_display_updates();
+        this->get_mod().rdp_suppress_display_updates();
     }
 
     void refresh(Rect r) override
     {
         LOG(LOG_INFO, "ModWrapper::refresh");
-        this->get_mod()->refresh(r);
+        this->get_mod().refresh(r);
     }
 
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name, InStream & chunk,
         std::size_t length, uint32_t flags) override
     {
-        this->get_mod()->send_to_mod_channel(front_channel_name, chunk, length, flags);
-    }
-
-    void send_auth_channel_data(const char * data) override
-    {
-        this->get_mod()->send_auth_channel_data(data);
-    }
-
-    void send_checkout_channel_data(const char * data) override
-    {
-        this->get_mod()->send_checkout_channel_data(data);
-    }
-
-    void create_shadow_session(const char * userdata, const char * type) override
-    {
-        this->get_mod()->create_shadow_session(userdata, type);
+        this->get_mod().send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
 
     [[nodiscard]] Rect get_protected_rect() const
@@ -590,17 +578,6 @@ private:
         this->clip = Rect();
     }
 
-    void remove_mod()
-    {
-        if (this->modi != &this->no_mod){
-            this->clear_osd_message();
-            delete this->modi;
-            this->modi = &this->no_mod;
-            this->rdpapi = nullptr;
-            this->winapi = nullptr;
-        }
-    }
-
     void disable_osd()
     {
         this->is_disable_by_input = false;
@@ -608,8 +585,8 @@ private:
         this->set_protected_rect(Rect{});
 
         if (this->bogus_refresh_rect_ex) {
-            this->get_mod()->rdp_suppress_display_updates();
-            this->get_mod()->rdp_allow_display_updates(0, 0,
+            this->get_mod().rdp_suppress_display_updates();
+            this->get_mod().rdp_allow_display_updates(0, 0,
                 this->client_info.screen_info.width,
                 this->client_info.screen_info.height);
         }
@@ -618,7 +595,7 @@ private:
             this->winapi->destroy_auxiliary_window();
         }
 
-        this->get_mod()->rdp_input_invalidate(protected_rect);
+        this->get_mod().rdp_input_invalidate(protected_rect);
     }
 
     void clear_osd_message()

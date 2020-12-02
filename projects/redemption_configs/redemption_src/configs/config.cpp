@@ -137,7 +137,6 @@ bool Inifile::FieldReference::set(bytes_view value)
     bool const ok = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
     if (ok) {
         this->ini->asked_table.clear(this->id);
-        this->ini->new_from_acl = true;
     }
     return ok;
 }

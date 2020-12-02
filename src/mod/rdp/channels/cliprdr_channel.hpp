@@ -43,6 +43,7 @@ class CliprdFileInfo;
 class SessionProbeLauncher;
 class AuthApi;
 class TimeBase;
+class SessionLogApi;
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
@@ -60,10 +61,10 @@ public:
         TimeBase& time_base,
         EventContainer& events,
         gdi::OsdApi& osd_api,
-        const ClipboardVirtualChannelParams & params,
-        FileValidatorService * file_validator_service,
+        const ClipboardVirtualChannelParams& params,
+        FileValidatorService* file_validator_service,
         FileStorage file_storage,
-        AuthApi & sesman,
+        SessionLogApi& session_log,
         RDPVerbose verbose);
 
     ~ClipboardVirtualChannel();
@@ -108,7 +109,7 @@ private:
     FdxCapture * fdx_capture;
     std::string tmp_dir;
 
-    AuthApi & sesman;
+    SessionLogApi & session_log;
 
     const RDPVerbose verbose;
 

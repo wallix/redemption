@@ -28,7 +28,8 @@ class Inifile;
 class CryptoContext;
 class Random;
 class Fstat;
+class PidFile;
 
-void session_start_tls(unique_fd sck, timeval sck_start_time, Inifile& ini);
-void session_start_ws(unique_fd sck, timeval sck_start_time, Inifile& ini);
-void session_start_wss(unique_fd sck, timeval sck_start_time, Inifile& ini);
+void session_start_tls(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file);
+void session_start_ws(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file);
+void session_start_wss(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file);

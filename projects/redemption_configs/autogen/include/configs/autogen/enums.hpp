@@ -11,30 +11,28 @@ template<class E> struct is_valid_enum_value {};
 enum class ModuleName : uint8_t
 {
     UNKNOWN = 0,
-    INTERNAL_TRANSITION = 1,
-    exit = 2,
-    login = 3,
-    selector = 4,
-    confirm = 5,
-    challenge = 6,
-    valid = 7,
-    transitory = 8,
-    close = 9,
-    close_back = 10,
-    interactive_target = 11,
-    RDP = 12,
-    VNC = 13,
-    INTERNAL = 14,
-    waitinfo = 15,
-    bouncer2 = 16,
-    autotest = 17,
-    widgettest = 18,
-    card = 19,
+    login = 1,
+    selector = 2,
+    confirm = 3,
+    challenge = 4,
+    valid = 5,
+    transitory = 6,
+    close = 7,
+    close_back = 8,
+    interactive_target = 9,
+    RDP = 10,
+    VNC = 11,
+    INTERNAL = 12,
+    waitinfo = 13,
+    bouncer2 = 14,
+    autotest = 15,
+    widgettest = 16,
+    card = 17,
 };
 
 template<> struct is_valid_enum_value<ModuleName>
 {
-    constexpr static bool is_valid(uint64_t n) { return n <= 19; }
+    constexpr static bool is_valid(uint64_t n) { return n <= 17; }
 };
 
 // Specifies the type of data to be captured:

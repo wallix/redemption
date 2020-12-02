@@ -31,7 +31,6 @@
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
-#include "acl/auth_api.hpp"
 
 #pragma GCC diagnostic pop
 

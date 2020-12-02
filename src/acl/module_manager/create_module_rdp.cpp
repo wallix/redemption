@@ -50,20 +50,20 @@
 namespace
 {
 void file_verification_error(
-    AuthApi & sesman,
+    SessionLogApi& session_log,
     std::string_view up_target_name,
     std::string_view down_target_name,
     chars_view msg)
 {
     if (!up_target_name.empty()) {
-        sesman.log6(LogId::FILE_VERIFICATION_ERROR, KVLogList{
+        session_log.log6(LogId::FILE_VERIFICATION_ERROR, KVLogList{
             KVLog("icap_service"_av, up_target_name),
             KVLog("status"_av, msg),
         });
     }
 
     if (!down_target_name.empty() && down_target_name != up_target_name) {
-        sesman.log6(LogId::FILE_VERIFICATION_ERROR, KVLogList{
+        session_log.log6(LogId::FILE_VERIFICATION_ERROR, KVLogList{
             KVLog("icap_service"_av, down_target_name),
             KVLog("status"_av, msg),
         });
@@ -81,7 +81,8 @@ struct RdpData
 
     struct FileValidator
     {
-        struct CtxError { AuthApi & sesman;
+        struct CtxError {
+            SessionLogApi& session_log;
             std::string up_target_name;
             std::string down_target_name;
         };
@@ -115,7 +116,7 @@ struct RdpData
         : ctx_error(std::move(ctx_error))
         , trans(std::move(fd), [this](const Error & err){
             file_verification_error(
-                this->ctx_error.sesman,
+                this->ctx_error.session_log,
                 this->ctx_error.up_target_name,
                 this->ctx_error.down_target_name,
                 err.errmsg()
@@ -195,7 +196,6 @@ class ModRDPWithSocketAndMetrics final : public mod_api
 {
     std::unique_ptr<SocketTransport> socket_transport_ptr;
     ModRdpFactory rdp_factory;
-    AuthApi & sesman;
     Fstat fstat;
 
 public:
@@ -253,7 +253,7 @@ public:
       , std::string * error_message
       , TimeBase& time_base
       , EventContainer & events
-      , AuthApi & sesman
+      , SessionLogApi& session_log
       , gdi::GraphicApi & gd
       , FrontAPI & front
       , const ClientInfo & info
@@ -294,9 +294,8 @@ public:
          , ini.get<cfg::context::target_port>()
          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
          , verbose, error_message))
-    , sesman(sesman)
     , mod(*this->socket_transport_ptr, time_base, gd
-        , mod_wrapper , events, sesman, front, info, redir_info, gen
+        , mod_wrapper , events, session_log, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
@@ -305,14 +304,12 @@ public:
     , ini(ini)
     {
         this->mod_wrapper.target_info_is_shown = false;
-        this->sesman.begin_dispatch_to_capture();
     }
 
     ~ModRDPWithSocketAndMetrics()
     {
         log_proxy::target_disconnection(
             this->ini.template get<cfg::context::auth_error_message>().c_str());
-        this->sesman.end_dispatch_to_capture();
     }
 
     // from RdpInput
@@ -400,21 +397,6 @@ public:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
-    }
-
-    void create_shadow_session(const char * userdata, const char * type) override
-    {
-        this->mod.create_shadow_session(userdata, type);
-    }
-
-    void send_auth_channel_data(const char * data) override
-    {
-        this->mod.send_auth_channel_data(data);
-    }
-
-    void send_checkout_channel_data(const char * data) override
-    {
-        this->mod.send_checkout_channel_data(data);
     }
 };
 
@@ -525,7 +507,7 @@ ModPack create_mod_rdp(
     Theme & theme,
     TimeBase & time_base,
     EventContainer& events,
-    AuthApi & sesman,
+    SessionLogApi& session_log,
     LicenseApi & file_system_license_store,
     Random & gen,
     CryptoContext & cctx,
@@ -798,7 +780,7 @@ ModPack create_mod_rdp(
             file_validator = std::make_unique<RdpData::FileValidator>(
                 std::move(ufd),
                 RdpData::FileValidator::CtxError{
-                    sesman,
+                    session_log,
                     mod_rdp_params.validator_params.up_target_name,
                     mod_rdp_params.validator_params.down_target_name,
                 });
@@ -811,7 +793,7 @@ ModPack create_mod_rdp(
         else {
             LOG(LOG_ERR, "Error, can't connect to validator, file validation disable");
             file_verification_error(
-                sesman,
+                session_log,
                 mod_rdp_params.validator_params.up_target_name,
                 mod_rdp_params.validator_params.down_target_name,
                 "Unable to connect to FileValidator service"_av
@@ -955,7 +937,7 @@ ModPack create_mod_rdp(
 
 
     unique_fd client_sck =
-        connect_to_target_host(ini, sesman, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>());
+        connect_to_target_host(ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>());
     IpAddress local_ip_address;
 
     switch (ini.get<cfg::mod_rdp::client_address_sent>())
@@ -986,7 +968,7 @@ ModPack create_mod_rdp(
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
         time_base,
         events,
-        sesman,
+        session_log,
         drawable,
         front,
         client_info,

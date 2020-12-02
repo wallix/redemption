@@ -21,13 +21,12 @@
 
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
-#include "test_only/front/fake_front.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 
 // TEST missing
 int main()
 {
-    ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
-    FakeFront front(screen_info);
+    ScreenInfo screen_info{1, 1, BitsPerPixel{24}};
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -35,6 +34,7 @@ int main()
 
     TimeBase time_base({0,0});
     EventContainer events;
-    Bouncer2Mod d(time_base, front.gd(), events, front, screen_info.width, screen_info.height);
+    TestGraphic gd(screen_info.width, screen_info.height);
+    Bouncer2Mod d(time_base, gd, events, screen_info.width, screen_info.height);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

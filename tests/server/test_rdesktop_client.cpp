@@ -103,8 +103,8 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     const bool fastpath_support = false;
     TimeBase time_base({0,0});
     EventContainer events;
-    NullAuthentifier auth;
-    FrontWrapper front(time_base, events, auth, front_trans, gen, ini, cctx, fastpath_support);
+    NullSessionLog session_log;
+    FrontWrapper front(time_base, events, session_log, front_trans, gen, ini, cctx, fastpath_support);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {

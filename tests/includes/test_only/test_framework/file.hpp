@@ -41,6 +41,20 @@ namespace redemption_unit_test__
             return filesize(s.c_str());
         }
     };
+
+    struct fexists_impl
+    {
+        int operator()(char const* s) const noexcept
+        {
+            return file_exist(s);
+        }
+
+        template<class T>
+        int operator()(T const& s) const noexcept
+        {
+            return file_exist(s.c_str());
+        }
+    };
 } // namespace redemption_unit_test__
 
 namespace tu
@@ -55,6 +69,9 @@ namespace tu
 
     constexpr auto fsize = redemption_unit_test__::fn_invoker("filesize", /* NOLINT */
         redemption_unit_test__::fsize_impl{});
+
+    constexpr auto fexists = redemption_unit_test__::fn_invoker("file_exists", /* NOLINT */
+        redemption_unit_test__::fexists_impl{});
 
     inline int int_(int n) { return n; }
     inline redemption_unit_test__::int_variation int_(redemption_unit_test__::int_variation n) { return n; }

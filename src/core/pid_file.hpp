@@ -14,41 +14,26 @@
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
   Product name: redemption, a FLOSS RDP proxy
-  Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Meng Tauth_rail_exec_an, Jennifer Inthavong
-
-  Protocol layer for communication with ACL
-  Updating context dictionnary from incoming acl traffic
+  Copyright (C) Wallix 2020
+  Author(s): Proxy Team
 */
-
 
 #pragma once
 
-#include "acl/acl_field_mask.hpp"
-#include "utils/verbose_flags.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
-class Inifile;
-class Transport;
+#include <string>
 
-class AclSerializer final
+
+struct PidFile : noncopyable
 {
-public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
-    {
-        none,
-        variable = 0x0002,
-        buffer   = 0x0040,
-        dump     = 0x1000,
-    };
+    PidFile(int pid);
+    ~PidFile();
 
-    AclSerializer(Inifile & ini, Transport & auth_trans);
-    ~AclSerializer();
-
-    AclFieldMask incoming();
-    std::size_t send_acl_data();
+    bool is_open() const;
+    void rename(chars_view id);
 
 private:
-    Inifile & ini;
-    Transport & auth_trans;
-    char session_id[256];
+    std::string filename;
 };

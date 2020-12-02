@@ -330,20 +330,20 @@ REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
 class Capture::PatternKbd final : public gdi::KbdInputApi
 {
-    AuthApi * sesman;
+    SessionLogApi * session_log;
     PatternSearcher pattern_kill;
     PatternSearcher pattern_notify;
 
 public:
     explicit PatternKbd(
-        AuthApi * sesman,
+        SessionLogApi * session_log,
         char const * str_pattern_kill, char const * str_pattern_notify,
         bool verbose)
-    : sesman(sesman)
+    : session_log(session_log)
     , pattern_kill(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                   str_pattern_kill && sesman ? str_pattern_kill : nullptr, verbose)
+                   str_pattern_kill && session_log ? str_pattern_kill : nullptr, verbose)
     , pattern_notify(utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
-                     str_pattern_notify && sesman ? str_pattern_notify : nullptr, verbose)
+                     str_pattern_notify && session_log ? str_pattern_notify : nullptr, verbose)
     {}
 
     [[nodiscard]] bool contains_pattern() const {
@@ -388,9 +388,9 @@ private:
         return searcher.test_uchar(
             utf8_char,
             [&, this](std::string const & pattern, char const * str) {
-                assert(this->sesman);
+                assert(this->session_log);
                 utils::MatchFinder::report(
-                    *this->sesman,
+                    *this->session_log,
                     is_pattern_kill,
                     utils::MatchFinder::ConfigureRegexes::KBD_INPUT,
                     pattern.c_str(),
@@ -515,7 +515,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
     static const std::size_t buffer_size = 64;
     uint8_t buffer[buffer_size + session_log_prefix().size() + session_log_suffix().size() + 1];
     bool is_probe_enabled_session = false;
-    AuthApi & sesman;
+    SessionLogApi& session_log;
 
     int hidden_masked_char_count = 0;
 
@@ -550,9 +550,9 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
     }
 
 public:
-    explicit SessionLogKbd(AuthApi & sesman)
+    explicit SessionLogKbd(SessionLogApi& session_log)
     : kbd_stream{{this->buffer + session_log_prefix().size(), buffer_size}}
-    , sesman(sesman)
+    , session_log(session_log)
     {
         memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
     }
@@ -587,7 +587,7 @@ public:
             }
             this->hidden_masked_char_count = 0;
 
-            this->sesman.log6(LogId::KBD_INPUT, {
+            this->session_log.log6(LogId::KBD_INPUT, {
                 KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
 
@@ -609,11 +609,11 @@ class Capture::PatternsChecker : ::noncopyable
 {
     utils::MatchFinder::NamedRegexArray regexes_filter_kill;
     utils::MatchFinder::NamedRegexArray regexes_filter_notify;
-    AuthApi & sesman;
+    SessionLogApi& session_log;
 
 public:
-    explicit PatternsChecker(AuthApi & sesman, PatternParams const & params)
-    : sesman(sesman)
+    explicit PatternsChecker(SessionLogApi& session_log, PatternParams const & params)
+    : session_log(session_log)
     {
         auto without_capture = utils::MatchFinder::WithCapture(false);
         utils::MatchFinder::configure_regexes(utils::MatchFinder::ConfigureRegexes::OCR,
@@ -640,7 +640,7 @@ private:
             utils::MatchFinder::NamedRegexArray::iterator last = regexes_filter.end();
             for (; first != last; ++first) {
                 if (first->search(str)) {
-                    utils::MatchFinder::report(this->sesman,
+                    utils::MatchFinder::report(this->session_log,
                         &regexes_filter == &this->regexes_filter_kill, // pattern_kill = FINDPATTERN_KILL
                         utils::MatchFinder::ConfigureRegexes::OCR,
                         first->name.c_str(), str);
@@ -682,10 +682,10 @@ protected:
         png_params.real_basename,
         ".png",
         capture_params.groupid,
-        [sesman = capture_params.sesman](const Error & error){
-            if (sesman && error.errnum == ENOSPC) {
+        [session_log = capture_params.session_log](const Error & error){
+            if (session_log && error.errnum == ENOSPC) {
                 // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                sesman->report("FILESYSTEM_FULL", "100|unknown");
+                session_log->report("FILESYSTEM_FULL", "100|unknown");
             }
         })
     , drawable(drawable)
@@ -1219,21 +1219,19 @@ public:
                 LOG(LOG_ERR, "can't change mod of meta file %s: %s [%d]", filename, strerror(errnum), errnum);
             }
             Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-            if (capture_params.sesman) {
-               if (error.errnum == ENOSPC) {
-                   error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                   // ReportMessageReporter
-                   capture_params.sesman->report("FILESYSTEM_FULL", "100|unknown");
-                }
+            if (capture_params.session_log && error.errnum == ENOSPC) {
+                error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+                // ReportMessageReporter
+                capture_params.session_log->report("FILESYSTEM_FULL", "100|unknown");
             }
             throw error; /* NOLINT */
         }
         return fd;
         }()},
-        [sesman = capture_params.sesman](const Error & error){
-            if (sesman && error.errnum == ENOSPC) {
+        [session_log = capture_params.session_log](const Error & error){
+            if (session_log && error.errnum == ENOSPC) {
                 // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                sesman->report("FILESYSTEM_FULL", "100|unknown");
+                session_log->report("FILESYSTEM_FULL", "100|unknown");
             }
         })
     , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
@@ -1261,14 +1259,14 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
 
     NotifyTitleChanged & notify_title_changed;
 
-    AuthApi * sesman;
+    SessionLogApi * session_log;
 public:
     explicit TitleCaptureImpl(
         const timeval & now,
         RDPDrawable & drawable,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed,
-        AuthApi * sesman)
+        SessionLogApi * session_log)
     : ocr_title_extractor_builder(
         drawable.impl(),
         ocr_params.verbosity,
@@ -1280,7 +1278,7 @@ public:
     , last_ocr(now)
     , usec_ocr_interval(ocr_params.interval)
     , notify_title_changed(notify_title_changed)
-    , sesman(sesman)
+    , session_log(session_log)
     {
     }
 
@@ -1298,9 +1296,9 @@ public:
             if (title.data()/* && title.size()*/) {
                 notify_title_changed.notify_title_changed(now, title);
                 if (&this->title_extractor.get() != &this->agent_title_extractor
-                 && this->sesman)
+                 && this->session_log)
                 {
-                    this->sesman->log6(LogId::TITLE_BAR, {
+                    this->session_log->log6(LogId::TITLE_BAR, {
                         KVLog("source"_av, "OCR"_av),
                         KVLog("window"_av, title),
                     });
@@ -1452,7 +1450,7 @@ Capture::Capture(
     const VideoParams& video_params,
     UpdateProgressData * update_progress_data,
     Rect const & crop_rect)
-: is_replay_mod(!capture_params.sesman)
+: is_replay_mod(!capture_params.session_log)
 , update_progress_data(update_progress_data)
 , mouse_info{
     capture_params.now,
@@ -1462,8 +1460,6 @@ Capture::Capture(
 , smart_video_cropping(capture_params.smart_video_cropping)
 , verbose(capture_params.verbose)
 {
-   //assert(sesman ? order_bpp == capture_bpp : true);
-
     LOG(LOG_INFO,
         "Enable capture:  wrm=%s  png=%s  kbd=%s  video=%s  video_full=%s  pattern=%s  ocr=%s  meta=%s",
         capture_wrm ? "yes" : "no",
@@ -1476,7 +1472,7 @@ Capture::Capture(
         capture_meta ? "yes" : "no"
     );
 
-    if (capture_png || (capture_params.sesman && (capture_video || capture_ocr))) {
+    if (capture_png || (capture_params.session_log && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
                 S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP, -1) != 0) {
             LOG(LOG_INFO, "Failed to create directory: \"%s\"", capture_params.record_tmp_path);
@@ -1578,7 +1574,7 @@ Capture::Capture(
 
         if (capture_pattern_checker) {
             this->patterns_checker = std::make_unique<PatternsChecker>(
-                *capture_params.sesman, pattern_params);
+                *capture_params.session_log, pattern_params);
             if (!this->patterns_checker->contains_pattern()) {
                 LOG(LOG_WARNING, "Disable pattern_checker");
                 this->patterns_checker.reset();
@@ -1589,7 +1585,7 @@ Capture::Capture(
             if (this->patterns_checker || this->meta_capture_obj || this->sequenced_video_capture_obj) {
                 this->title_capture_obj = std::make_unique<TitleCaptureImpl>(
                     capture_params.now, *this->gd_drawable, ocr_params,
-                    this->notifier_title_changed, capture_params.sesman
+                    this->notifier_title_changed, capture_params.session_log
                 );
             }
             else {
@@ -1635,13 +1631,13 @@ Capture::Capture(
 
         if (kbd_log_params.session_log_enabled) {
             this->session_log_kbd_capture_obj = std::make_unique<SessionLogKbd>(
-                *capture_params.sesman);
+                *capture_params.session_log);
             this->kbds.emplace_back(*this->session_log_kbd_capture_obj);
             this->probes.emplace_back(*this->session_log_kbd_capture_obj);
         }
 
         this->pattern_kbd_capture_obj = std::make_unique<PatternKbd>(
-            capture_params.sesman,
+            capture_params.session_log,
             pattern_params.pattern_kill,
             pattern_params.pattern_notify,
             pattern_params.verbose);
