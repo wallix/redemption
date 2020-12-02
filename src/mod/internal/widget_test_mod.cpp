@@ -93,7 +93,7 @@ struct WidgetTestMod::WidgetTestModPrivate
 
     TimeBase& time_base;
     gdi::GraphicApi & gd;
-    EventId timer;
+    EventRef timer;
     EventsGuard events_guard;
 };
 

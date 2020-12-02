@@ -414,7 +414,7 @@ private:
 
         enum class MsgType : bool { Nothing, WaitValidator };
 
-        EventId id_event {};
+        EventRef event_ref {};
         MsgType msg_type = MsgType::Nothing;
 
         class D;

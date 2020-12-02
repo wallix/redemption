@@ -316,7 +316,7 @@ private:
     TimeBase& time_base;
     gdi::GraphicApi & gd;
     EventsGuard events_guard;
-    EventId clipboard_timeout_timer;
+    EventRef clipboard_timeout_timer;
 
 #ifndef __EMSCRIPTEN__
     VNCMetrics * metrics;

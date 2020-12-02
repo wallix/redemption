@@ -2333,12 +2333,9 @@ test-run tests/core/test_error :
 test-run tests/core/test_events :
   $(REDEMPTION_TEST_PATH)/core/test_events.cpp
 :
-  <library>src/core/error.o
   <library>src/utils/fileutils.o
-  <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/working_directory.o
-  $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/events.hpp
 ;
 test-run tests/core/test_font :

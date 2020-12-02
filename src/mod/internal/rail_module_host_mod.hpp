@@ -73,7 +73,7 @@ private:
     DVCManager dvc_manager;
 
     MouseState mouse_state;
-    EventId disconnection_reconnection_timer;
+    EventRef disconnection_reconnection_timer;
 
     bool alt_key_pressed = false;
     const bool rail_enabled;

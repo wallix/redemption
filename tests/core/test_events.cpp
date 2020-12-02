@@ -26,6 +26,7 @@
 #include "utils/timebase.hpp"
 #include "core/events.hpp"
 
+const auto nofd_fn = [](int /*fd*/) { return false; };
 
 RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
 {
@@ -35,7 +36,7 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     timeval wakeup = origin+std::chrono::seconds(2);
 
     EventContainer events;
-    events.create_event_timeout("test", nullptr, wakeup, [&counter](Event&){ ++counter; });
+    (void)events.create_event_timeout("test", nullptr, wakeup, [&counter](Event&){ ++counter; });
 
     RED_REQUIRE(events.queue.size() == 1u);
     Event& e = *events.queue[0];
@@ -67,7 +68,7 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     timeval wakeup = origin+std::chrono::seconds(2);
 
     EventContainer events;
-    events.create_event_timeout("test", nullptr, wakeup, [&counter](Event& event){
+    (void)events.create_event_timeout("test", nullptr, wakeup, [&counter](Event& event){
         event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
         ++counter;
     });
@@ -83,6 +84,87 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     // and again after period, because event reset alarm
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(2)));
     RED_CHECK(counter == 1);
+}
+
+RED_AUTO_TEST_CASE(TestEventGuard)
+{
+    EventContainer events;
+    {
+        EventsGuard events_guard(events);
+        events_guard.create_event_timeout("Init Event", {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(events.queue.size() == 1);
+        RED_CHECK(!events.queue[0]->garbage);
+    }
+    RED_CHECK(events.queue.size() == 1);
+    RED_CHECK(events.queue[0]->garbage);
+
+    events.garbage_collector();
+    RED_CHECK(events.queue.size() == 0);
+}
+
+RED_AUTO_TEST_CASE(TestEventRef)
+{
+    EventContainer events;
+    {
+        EventRef ref = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(events.queue.size() == 1);
+        RED_CHECK(!events.queue[0]->garbage);
+    }
+    RED_CHECK(events.queue.size() == 1);
+    RED_CHECK(events.queue[0]->garbage);
+
+    events.garbage_collector();
+    RED_CHECK(events.queue.size() == 0);
+
+    {
+        EventRef ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(ref1.has_event());
+        RED_CHECK(events.queue.size() == 1);
+        RED_CHECK(!events.queue[0]->garbage);
+
+        ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(events.queue.size() == 2);
+        RED_CHECK(events.queue[0]->garbage);
+        RED_CHECK(!events.queue[1]->garbage);
+
+        EventRef ref2 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(events.queue.size() == 3);
+        RED_CHECK(events.queue[0]->garbage);
+        RED_CHECK(!events.queue[1]->garbage);
+        RED_CHECK(!events.queue[2]->garbage);
+
+        ref2 = std::move(ref1);
+        RED_CHECK(ref2.has_event());
+        RED_CHECK(!ref1.has_event());
+        RED_CHECK(events.queue.size() == 3);
+        RED_CHECK(events.queue[0]->garbage);
+        RED_CHECK(!events.queue[1]->garbage);
+        RED_CHECK(events.queue[2]->garbage);
+
+        EventRef ref3 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(ref3.has_event());
+        RED_CHECK(!events.queue[3]->garbage);
+        ref3.garbage();
+        RED_CHECK(!ref3.has_event());
+        RED_CHECK(events.queue[3]->garbage);
+    }
+    RED_CHECK(events.queue.size() == 4);
+    RED_CHECK(events.queue[0]->garbage);
+    RED_CHECK(events.queue[1]->garbage);
+    RED_CHECK(events.queue[2]->garbage);
+    RED_CHECK(events.queue[3]->garbage);
+
+    events.garbage_collector();
+    RED_CHECK(events.queue.size() == 0);
+
+    {
+        EventRef ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event& e) { e.garbage = true; });
+
+        RED_CHECK(ref1.has_event());
+        events.execute_events({}, nofd_fn, false);
+        RED_CHECK(!ref1.has_event());
+        RED_CHECK(events.queue.size() == 0);
+    }
 }
 
 RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
@@ -118,21 +200,21 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
     EventContainer events;
 
     Context context(events, time_base);
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
+    events.execute_events(time_base.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 0);
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
+    events.execute_events(time_base.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     time_base.set_current_time({3,0});
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
+    events.execute_events(time_base.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
     time_base.set_current_time({303,0});
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return false; }, false);
+    events.execute_events(time_base.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 2);
 }
@@ -171,7 +253,7 @@ RED_AUTO_TEST_CASE(TestNontrivialEvent)
     EventContainer events;
 
     Context context(events);
-    events.execute_events({300,0}, [](int /*fd*/){ return false; }, false);
+    events.execute_events({300,0}, nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     context.events_guard.end_of_lifespan();

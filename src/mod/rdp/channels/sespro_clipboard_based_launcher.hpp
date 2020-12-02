@@ -62,7 +62,7 @@ public:
 
     bool format_data_requested = false;
 
-    EventId event_id;
+    EventRef event_ref;
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
@@ -144,8 +144,7 @@ public:
         this->clipboard_monitor_ready = true;
 
         if (this->state == State::START) {
-            this->event_id.erase_from(this->events_guard);
-            this->event_id = this->events_guard.create_event_timeout(
+            this->event_ref = this->events_guard.create_event_timeout(
                 "SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready",
                 this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms,
                 [this](Event&event)
@@ -504,8 +503,7 @@ public:
             }
         };
 
-        this->event_id.erase_from(this->events_guard);
-        this->event_id = this->events_guard.create_event_timeout(
+        this->event_ref = this->events_guard.create_event_timeout(
             "SessionProbeClipboardBasedLauncher Event",
             this->time_base.get_current_time()+this->params.short_delay_ms,
             action);
@@ -627,8 +625,7 @@ public:
             }
         };
 
-        this->event_id.erase_from(this->events_guard);
-        this->event_id = this->events_guard.create_event_timeout(
+        this->event_ref = this->events_guard.create_event_timeout(
             "SessionProbeClipboardBasedLauncher Event",
             this->time_base.get_current_time()+this->params.short_delay_ms,
             action);
@@ -751,7 +748,7 @@ public:
             "SessionProbeClipboardBasedLauncher :=> stop");
 
         this->state = State::STOP;
-        this->event_id.erase_from(this->events_guard);
+        this->event_ref.garbage();
 
         if (!bLaunchSuccessful) {
             if (!this->drive_redirection_initialized) {

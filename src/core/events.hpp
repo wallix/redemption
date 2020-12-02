@@ -26,7 +26,6 @@
 #include "utils/sugar/noncopyable.hpp"
 
 #include "utils/log.hpp"
-#include "core/error.hpp"
 
 #include <vector>
 #include <chrono>
@@ -34,16 +33,14 @@
 #include <type_traits>
 
 #include <cstdint>
+#include <cstring>
 #include <cinttypes>
 
 class EventContainer;
+class EventRef;
 
 struct Event
 {
-    Event(void const* lifespan_handle) noexcept
-    : lifespan_handle(lifespan_handle)
-    {}
-
     bool garbage = false;
 
     struct Trigger
@@ -118,37 +115,135 @@ struct Event
     void const* const lifespan_handle;
 
     char const* name = "No name";
+
+private:
+    friend class EventContainer;
+
+    Event(void const* lifespan_handle) noexcept
+    : lifespan_handle(lifespan_handle)
+    {}
+
+    ~Event();
+
+    Event(Event const&) = delete;
+    Event& operator=(Event const&) = delete;
+
+    friend class EventRef;
+    EventRef* event_ref = nullptr;
 };
 
 class EventsGuard;
 
 // event id, 0 means no event
 // used to identify some event in event queue.
-struct EventId /*: noncopyable_but_movable*/
+struct EventRef
 {
-    EventId() = default;
+    EventRef() = default;
 
-    explicit EventId(Event* p) : id_(reinterpret_cast<std::uintptr_t>(p)) {}
+    EventRef(Event& event) noexcept
+    : event_(&event)
+    {
+        assert(event_);
+        event_->event_ref = this;
+    }
 
-    std::uintptr_t id() const { return id_; }
+    EventRef(EventRef&& other) noexcept
+    : event_(std::exchange(other.event_, nullptr))
+    {
+        if (event_) {
+            event_->event_ref = this;
+        }
+    }
 
-    explicit operator bool () const { return id_; }
+    EventRef(EventRef const&) = delete;
+    EventRef& operator = (EventRef const&) = delete;
 
-    bool operator == (EventId const& other) const { return id_ == other.id_; }
-    bool operator != (EventId const& other) const { return id_ != other.id_; }
+    EventRef& operator = (Event& event) noexcept
+    {
+        assert(&event != event_);
 
-    bool erase_from(EventContainer& events);
-    bool erase_from(EventsGuard& event_guard);
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+        }
+        event_ = &event;
+        if (event_) {
+            event_->event_ref = this;
+        }
+
+        return *this;
+    }
+
+    EventRef& operator = (EventRef&& other) noexcept
+    {
+        assert(other.event_ != event_);
+
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+        }
+        event_ = std::exchange(other.event_, nullptr);
+        if (event_) {
+            event_->event_ref = this;
+        }
+
+        return *this;
+    }
+
+    ~EventRef()
+    {
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+        }
+    }
+
+    bool has_event() const { return event_ && !event_->garbage; }
+    explicit operator bool() const { return has_event(); }
+
+    bool operator == (EventRef const& other) const { return event_ == other.event_; }
+    bool operator != (EventRef const& other) const { return event_ != other.event_; }
+
+    bool operator == (Event const& event) const { return event_ == &event; }
+    bool operator != (Event const& event) const { return event_ != &event; }
+
+    void garbage()
+    {
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+            event_ = nullptr;
+        }
+    }
+
+    bool reset_timeout(timeval trigger_time)
+    {
+        if (has_event()) {
+            event_->alarm.set_timeout(trigger_time);
+            return true;
+        }
+        return false;
+    }
+
+    char const* name() const
+    {
+        return has_event() ? event_->name : nullptr;
+    }
 
 private:
-    std::uintptr_t id_ = 0;
+    friend class Event;
+    Event* event_ = nullptr;
 };
 
+inline Event::~Event()
+{
+    if (event_ref) {
+        event_ref->event_ = nullptr;
+    }
+}
 
 struct EventContainer : noncopyable
 {
-    friend class EventId;
-
     std::vector<Event*> queue;
 
     template<class Fn>
@@ -179,30 +274,26 @@ struct EventContainer : noncopyable
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
             assert(iend <= this->queue.size());
             auto & event = *this->queue[i];
-#ifdef __EMSCRIPTEN__
-# define EVENT_ID_FORMAT "lX"
-#else
-# define EVENT_ID_FORMAT PRIXPTR
-#endif
+            using VoidP = void const*;
             if (!event.garbage) {
                 if (event.alarm.fd != INVALID_SOCKET && fn(event.alarm.fd)) {
                     LOG_IF(verbose, LOG_INFO,
-                        "FD EVENT TRIGGER '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d",
-                        event.name, EventId(&event).id(),
+                        "FD EVENT TRIGGER '%s' (%p) timeout=%d now=%d",
+                        event.name, VoidP(&event),
                         int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                     event.alarm.set_timeout(tv+event.alarm.grace_delay);
                     event.actions.on_action(event);
                 }
                 else {
                     LOG_IF(event.alarm.active_timer && verbose, LOG_INFO,
-                        "EXPIRED TIMEOUT EVENT '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d",
-                        event.name, EventId(&event).id(),
+                        "EXPIRED TIMEOUT EVENT '%s' (%p) timeout=%d now=%d",
+                        event.name, VoidP(&event),
                         int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
 
                     if (event.alarm.trigger(tv)){
                         LOG_IF(verbose, LOG_INFO,
-                            "TIMEOUT EVENT TRIGGER '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d",
-                            event.name, EventId(&event).id(),
+                            "TIMEOUT EVENT TRIGGER '%s' (%p) timeout=%d now=%d",
+                            event.name, VoidP(&event),
                             int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                         event.actions.on_timeout(event);
                     }
@@ -210,12 +301,12 @@ struct EventContainer : noncopyable
             }
             else {
                 LOG_IF(verbose, LOG_INFO,
-                    "GARBAGE EVENT '%s' (%" EVENT_ID_FORMAT ") timeout=%d now=%d =========",
-                    event.name, EventId(&event).id(),
+                    "GARBAGE EVENT '%s' (%p) timeout=%d now=%d =========",
+                    event.name, VoidP(&event),
                     int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
             }
-#undef EVENT_ID_FORMAT
         }
+
         this->garbage_collector();
     }
 
@@ -265,18 +356,8 @@ struct EventContainer : noncopyable
         return ultimatum;
     }
 
-    void reset_timeout(const timeval trigger_time, const EventId event_id)
-    {
-        for(auto & pevent: this->queue){
-            if (EventId(pevent) == event_id){
-                pevent->alarm.set_timeout(trigger_time);
-                return ;
-            }
-        }
-    }
-
     template<class TimeoutAction>
-    EventId create_event_timeout(
+    [[nodiscard]] Event& create_event_timeout(
         std::string_view name, void const* lifespan,
         timeval trigger_time, TimeoutAction&& on_timeout)
     {
@@ -297,11 +378,11 @@ struct EventContainer : noncopyable
 
         pevent->alarm.set_timeout(trigger_time);
         this->queue.push_back(pevent);
-        return EventId(pevent);
+        return *pevent;
     }
 
     template<class FdAction>
-    EventId create_event_fd_without_timeout(
+    [[nodiscard]] Event& create_event_fd_without_timeout(
         std::string_view name, void const* lifespan,
         int fd, FdAction&& on_fd)
     {
@@ -322,11 +403,11 @@ struct EventContainer : noncopyable
 
         pevent->alarm.fd = fd;
         this->queue.push_back(pevent);
-        return EventId(pevent);
+        return *pevent;
     }
 
     template<class FdAction, class TimeoutAction>
-    EventId create_event_fd_timeout(
+    [[nodiscard]] Event& create_event_fd_timeout(
         std::string_view name, void const* lifespan,
         int fd,
         std::chrono::microseconds grace_delay,
@@ -374,7 +455,7 @@ struct EventContainer : noncopyable
 
             auto* event = make_event<FdTimeoutEvent>(
                 name,
-                Event{lifespan},
+                lifespan,
                 static_cast<UnrefFdAction&&>(on_fd),
                 static_cast<UnrefTimeoutAction&&>(on_timeout)
             );
@@ -415,7 +496,7 @@ struct EventContainer : noncopyable
         pevent->alarm.set_fd(fd, grace_delay);
         pevent->alarm.set_timeout(trigger_time);
         this->queue.push_back(pevent);
-        return EventId(pevent);
+        return *pevent;
     }
 
     ~EventContainer()
@@ -437,7 +518,7 @@ private:
             UnrefAction event_action;
         };
 
-        auto* event = make_event<ActionEvent>(name, Event{lifespan}, static_cast<Action&&>(act));
+        auto* event = make_event<ActionEvent>(name, lifespan, static_cast<Action&&>(act));
 
         if constexpr (!std::is_trivially_destructible_v<UnrefAction>) {
             static_assert(std::is_nothrow_destructible_v<UnrefAction>);
@@ -465,25 +546,10 @@ private:
         if (e->actions.on_delete) {
             e->actions.on_delete(*e);
         }
-        static_assert(std::is_trivially_destructible_v<Event>);
+        e->~Event();
         ::operator delete(e);
     }
 };
-
-inline bool EventId::erase_from(EventContainer& events)
-{
-    if (id_) {
-        for(auto* pevent : events.queue){
-            if (EventId(pevent).id_ == id_){
-                pevent->garbage = true;
-                id_ = 0;
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
 
 /**
  * EventContainer wrapper that provides a convenient RAII-style mechanism
@@ -496,7 +562,7 @@ struct EventsGuard : private noncopyable
     {}
 
     template<class TimeoutAction>
-    EventId create_event_timeout(
+    Event& create_event_timeout(
         std::string_view name,
         timeval trigger_time, TimeoutAction&& on_timeout)
     {
@@ -507,7 +573,7 @@ struct EventsGuard : private noncopyable
     }
 
     template<class FdAction>
-    EventId create_event_fd_without_timeout(
+    Event& create_event_fd_without_timeout(
         std::string_view name,
         int fd, FdAction&& on_fd)
     {
@@ -518,7 +584,7 @@ struct EventsGuard : private noncopyable
     }
 
     template<class FdAction, class TimeoutAction>
-    EventId create_event_fd_timeout(
+    Event& create_event_fd_timeout(
         std::string_view name,
         int fd,
         std::chrono::microseconds grace_delay,
@@ -552,8 +618,3 @@ struct EventsGuard : private noncopyable
 private:
     EventContainer& events;
 };
-
-inline bool EventId::erase_from(EventsGuard& event_guard)
-{
-    return this->erase_from(event_guard.event_container());
-}

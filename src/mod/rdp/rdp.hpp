@@ -1841,7 +1841,7 @@ class mod_rdp : public mod_api, public rdp_api
     AuthApi & sesman;
 
 #ifndef __EMSCRIPTEN__
-    EventId remoteapp_one_shot_bypass_window_legalnotice;
+    EventRef remoteapp_one_shot_bypass_window_legalnotice;
 #endif
 
     bool deactivation_reactivation_in_progress = false;
@@ -5036,7 +5036,7 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
+            this->remoteapp_one_shot_bypass_window_legalnotice.garbage();
 #endif
         }
         break;
@@ -5050,7 +5050,7 @@ public:
             this->front.send_savesessioninfo();
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
+            this->remoteapp_one_shot_bypass_window_legalnotice.garbage();
 #endif
         }
         break;
@@ -5099,7 +5099,7 @@ public:
                 this->is_server_auto_reconnec_packet_received = true;
 
 #ifndef __EMSCRIPTEN__
-            this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
+            this->remoteapp_one_shot_bypass_window_legalnotice.garbage();
 #endif
             }
 
@@ -5120,8 +5120,6 @@ public:
                         this->on_remoteapp_redirect_user_screen(lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
-
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->events_guard.create_event_timeout(
                             "Bypass Legal Notice Timer",
                             this->time_base.get_current_time()
@@ -5151,7 +5149,7 @@ public:
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    this->remoteapp_one_shot_bypass_window_legalnotice.erase_from(this->events_guard);
+                    this->remoteapp_one_shot_bypass_window_legalnotice.garbage();
                 }
 #endif
             }

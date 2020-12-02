@@ -250,15 +250,11 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
 
-        if (this->disconnection_reconnection_timer) {
-            this->events_guard.event_container().reset_timeout(
-                this->time_base.get_current_time() + std::chrono::seconds{1},
-                this->disconnection_reconnection_timer);
-        }
-        else {
+        auto const timer = this->time_base.get_current_time() + std::chrono::seconds{1};
+        if (!this->disconnection_reconnection_timer.reset_timeout(timer)) {
             this->disconnection_reconnection_timer = this->events_guard.create_event_timeout(
                 "RAIL Module Host Disconnection Reconnection Timeout",
-                this->time_base.get_current_time()+std::chrono::seconds(1),
+                timer,
                 [this](Event&)
                 {
                     if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){

@@ -37,7 +37,7 @@ class MouseState
         SecondClickDown,
     };
 
-    EventId first_click_down_timer;
+    EventRef first_click_down_timer;
     DCState dc_state = MouseState::DCState::Wait;
     TimeBase & time_base;
     EventsGuard events_guard;
@@ -56,20 +56,16 @@ public:
             case MouseState::DCState::Wait:
                 if (flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = MouseState::DCState::FirstClickDown;
-
-                    if (this->first_click_down_timer) {
-                        this->events_guard.event_container().reset_timeout(
-                            this->time_base.get_current_time() + std::chrono::seconds{1},
-                            this->first_click_down_timer);
-                    }
-                    else {
+                    auto const timer = this->time_base.get_current_time() + std::chrono::seconds{1};
+                    if (!this->first_click_down_timer.reset_timeout(timer)) {
                         this->first_click_down_timer = this->events_guard.create_event_timeout(
                             "Mouse::DC Event",
-                            this->time_base.get_current_time() + std::chrono::seconds{1},
+                            timer,
                             [this](Event&)
                             {
                                 this->dc_state = MouseState::DCState::Wait;
-                            });
+                            }
+                        );
                     }
                 }
             break;
@@ -80,7 +76,7 @@ public:
                 }
                 else if (flags != (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = MouseState::DCState::Wait;
-                    this->cancel_double_click_detection();
+                    this->first_click_down_timer.garbage();
                 }
             break;
 
@@ -90,29 +86,23 @@ public:
                 }
                 else {
                     this->dc_state = MouseState::DCState::Wait;
-                    this->cancel_double_click_detection();
+                    this->first_click_down_timer.garbage();
                 }
             break;
 
             case MouseState::DCState::SecondClickDown:
                 if (flags == SlowPath::PTRFLAGS_BUTTON1) {
                     this->dc_state = MouseState::DCState::Wait;
-                    this->cancel_double_click_detection();
+                    this->first_click_down_timer.garbage();
                     return true;
                 }
                 else if (flags != (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = MouseState::DCState::Wait;
-                    this->cancel_double_click_detection();
+                    this->first_click_down_timer.garbage();
                 }
             break;
         }
 
         return false;
-    }
-
-private:
-    void cancel_double_click_detection()
-    {
-        this->first_click_down_timer.erase_from(this->events_guard);
     }
 };

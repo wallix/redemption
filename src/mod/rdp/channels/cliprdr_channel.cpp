@@ -144,22 +144,14 @@ struct ClipboardVirtualChannel::OSD::D
 
         if (self.osd.enable_osd) {
             self.osd.msg_type = OSD::MsgType::WaitValidator;
-            if (self.osd.id_event) {
-                self.osd.events_guard.event_container().reset_timeout(
-                    self.time_base.get_current_time() + self.osd.delay,
-                    self.osd.id_event);
-                LOG(LOG_ERR, "OSD Event %" PRIXPTR " Not Found in events queue",
-                    self.osd.id_event.id());
-                assert(false);
-            }
-            else {
-                self.osd.id_event = self.osd.events_guard.create_event_timeout(
+            auto const timer = self.time_base.get_current_time() + self.osd.delay;
+            if (!self.osd.event_ref.reset_timeout(timer)) {
+                self.osd.event_ref = self.osd.events_guard.create_event_timeout(
                     "FileVerifOSD",
-                    self.time_base.get_current_time() + self.osd.delay,
+                    timer,
                     [&self, &filename](Event& event){
                         self.osd.osd_api.display_osd_message(str_concat(
                         TR(trkeys::file_verification_wait, self.osd.lang), filename));
-                        self.osd.id_event = EventId();
                         event.garbage = true;
                     });
             }
@@ -180,11 +172,11 @@ struct ClipboardVirtualChannel::OSD::D
                 self.osd.osd_api.display_osd_message(str_concat(
                     TR(trkeys::file_verification_rejected, self.osd.lang), filename));
             }
-            else if (!self.osd.id_event) {
+            else if (!self.osd.event_ref.has_event()) {
                 self.osd.osd_api.display_osd_message(str_concat(
                     TR(trkeys::file_verification_accepted, self.osd.lang), filename));
             }
-            self.osd.id_event.erase_from(self.osd.events_guard);
+            self.osd.event_ref.garbage();
             self.osd.msg_type = OSD::MsgType::Nothing;
         }
     }

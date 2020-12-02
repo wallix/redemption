@@ -611,9 +611,8 @@ private:
 
     TimeBase& time_base;
     EventsGuard events_guard;
-    EventId handshake_timeout;
-    EventId capture_timer;
-    EventId flow_control_timer;
+    EventRef handshake_timeout;
+    EventRef capture_timer;
 
 public:
     bool front_must_notify_resize = false;
@@ -821,8 +820,7 @@ public:
         }
 
         if (this->rdp_keepalive_connection_interval.count()) {
-
-            this->flow_control_timer = this->events_guard.create_event_timeout(
+            this->events_guard.create_event_timeout(
                 "Front Flow Control Timer",
                 this->time_base.get_current_time(),
                 [this](Event& event)
@@ -1183,7 +1181,7 @@ public:
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
             this->capture.reset();
-            this->capture_timer.erase_from(this->events_guard);
+            this->capture_timer.garbage();
             this->set_gd(this->orders.graphics_update_pdu());
             return true;
         }
@@ -4304,7 +4302,7 @@ private:
                 }
 
                 this->state = FRONT_UP_AND_RUNNING;
-                this->handshake_timeout.erase_from(this->events_guard);
+                this->handshake_timeout.garbage();
 
                 // TODO: see if we should not rather use a specific callback API for ACL
                 // this is mixed up with RDP input API

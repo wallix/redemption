@@ -860,7 +860,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
     TimeBase& time_base;
     EventsGuard events_guard;
-    EventId initialization_timeout_event;
+    EventRef initialization_timeout_event;
 
     struct NullVirtualChannelDataSender : VirtualChannelDataSender
     {
@@ -1851,7 +1851,7 @@ public:
                     client_announce_reply.log(LOG_INFO);
                 }
 
-                this->initialization_timeout_event.erase_from(this->events_guard);
+                this->initialization_timeout_event.garbage();
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_NAME:
@@ -2834,7 +2834,7 @@ public:
 
 private:
     void process_event() {
-        this->initialization_timeout_event.erase_from(this->events_guard);
+        this->initialization_timeout_event.garbage();
         uint8_t message_buffer[1024];
 
         {
