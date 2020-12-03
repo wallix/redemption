@@ -134,12 +134,12 @@ zstring_view Inifile::FieldConstReference::get_acl_name() const
 
 bool Inifile::FieldReference::set(bytes_view value)
 {
-    bool const err = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
-    if (err) {
+    bool const ok = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
+    if (ok) {
         this->ini->asked_table.clear(this->id);
         this->ini->new_from_acl = true;
     }
-    return err;
+    return ok;
 }
 
 Inifile::FieldReference Inifile::get_acl_field_by_name(chars_view name)
