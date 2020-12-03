@@ -296,6 +296,7 @@ private:
         if (e.id == ERR_SESSION_CLOSE_ENDDATE_REACHED){
             LOG(LOG_INFO, "Close because disconnection time reached");
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::session_out_time, language(this->ini)));
+            this->ini.set<cfg::context::end_date_cnx>(0);
             return EndSessionResult::close_box;
         }
 
