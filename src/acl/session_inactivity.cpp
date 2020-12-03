@@ -50,10 +50,12 @@ void SessionInactivity::update_inactivity_timeout(std::chrono::seconds timeout)
         _inactivity_timeout = 0s;
         LOG(LOG_INFO, "Inactivity timeout is larger than one week : timeout disabled");
     }
-
-    LOG(LOG_INFO,
-        "User session inactivity : set to %ld seconds",
-        _inactivity_timeout.count());
+    else
+    {
+        LOG(LOG_INFO,
+            "User session inactivity : set to %ld seconds",
+            _inactivity_timeout.count());
+    }
 }
 
 void SessionInactivity::start_timer(std::chrono::seconds timeout, time_t start)

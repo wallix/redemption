@@ -884,22 +884,6 @@ public:
                     if (ioswitch.is_set_for_reading(auth_trans->get_sck())) {
                         try {
                             acl_serial.incoming();
-                            if (ini.get<cfg::context::module>() == ModuleName::RDP
-                             || ini.get<cfg::context::module>() == ModuleName::VNC
-                            ) {
-                                session_type = ini.get<cfg::context::module>() == ModuleName::RDP
-                                  ? "RDP"
-                                  : "VNC";
-
-                                auto const& inactivity_timeout
-                                    = ini.get<cfg::globals::inactivity_timeout>();
-
-                                auto timeout = (inactivity_timeout == inactivity_timeout.zero())
-                                    ? inactivity_timeout
-                                    : ini.get<cfg::globals::session_timeout>();
-
-                                inactivity.update_inactivity_timeout(timeout);
-                            }
                             this->remote_answer = true;
                         }
                         catch (...) {
@@ -1031,8 +1015,9 @@ public:
                             throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
                         }
                         if (mod_wrapper.current_mod != ModuleName::close_back
+                            && mod_wrapper.current_mod != ModuleName::close
                             && !inactivity.activity(time_base.get_current_time().tv_sec,
-                                                     front.has_user_activity)
+                                                    front.has_user_activity)
                         ) {
                             throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
                         }
