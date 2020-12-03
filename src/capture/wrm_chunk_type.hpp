@@ -32,6 +32,7 @@ enum class WrmChunkType : uint16_t
     TIMESTAMP           = 0x3F0,    // 1008
     POINTER             = 0x3F1,    // 1009
     POINTER2            = 0x3F2,    // 1010
+    POINTER_NATIVE      = 0x3F3,    // 1011
 
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097

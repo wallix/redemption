@@ -100,7 +100,12 @@ allow_scale_factor = boolean(default=False)
 bogus_refresh_rect = boolean(default=True)
 
 #_advanced
+use_native_pointer = boolean(default=False)
+
+#_advanced
 large_pointer_support = boolean(default=True)
+
+new_pointer_update_support = boolean(default=True)
 
 unicode_keyboard_event_support = boolean(default=True)
 
@@ -252,8 +257,6 @@ enable_suppress_output = boolean(default=True)
 ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')
 
 show_target_user_in_f12_message = boolean(default=False)
-
-enable_new_pointer_update = boolean(default=True)
 
 bogus_ios_glyph_support_level = boolean(default=True)
 

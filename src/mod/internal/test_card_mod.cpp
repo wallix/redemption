@@ -206,7 +206,7 @@ void TestCardMod::draw_event(gdi::GraphicApi & gd)
 /* 0070 */ "\x88\x00\x00\x00\x00\x00\x00\x00\x88\x00"                         // ..........
             ;
         InStream pointer_stream({pointer_data, 122});
-        Pointer pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream, BGRPalette::classic_332(), false);
+        Pointer pointer = pointer_loader_new(BitsPerPixel{32}, pointer_stream, BGRPalette::classic_332(), false, false);
 
         gd.set_pointer(9, pointer, gdi::GraphicApi::SetPointerMode::New);
     }

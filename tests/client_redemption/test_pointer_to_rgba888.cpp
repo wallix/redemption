@@ -319,7 +319,7 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
         BitsPerPixel(24), BGRPalette::classic_332(),
         32, 32, 0, 0,
         sizeof(xor_mask), xor_mask,
-        sizeof(and_mask), and_mask, false
+        sizeof(and_mask), and_mask, false, false
     ));
 
     RED_REQUIRE(34u == img.width);

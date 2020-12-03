@@ -1808,6 +1808,7 @@ class mod_rdp : public mod_api, public rdp_api
     const bool enable_fastpath;                    // choice of programmer
     const bool enable_fastpath_server_update;      // choice of programmer
     const bool enable_glyph_cache;
+    const bool use_native_pointer;
     const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
@@ -1985,6 +1986,7 @@ public:
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
+        , use_native_pointer(mod_rdp_params.use_native_pointer)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
@@ -3888,6 +3890,9 @@ public:
                 }
 
                 if (sendLargePointer) {
+                    // Not yet supported
+                    large_pointer_caps.largePointerSupportFlags &= ~LARGE_POINTER_FLAG_384x384;
+
                     confirm_active_pdu.emit_capability_set(large_pointer_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         large_pointer_caps.log("Sending to server");
@@ -3969,7 +3974,6 @@ public:
         // Color Pointer Update (section 2.2.9.1.1.4.4)
         case RDP_POINTER_COLOR:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color");
-//             this->process_color_pointer_pdu(stream, drawable);
             this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
                 LOG_INFO, "Process pointer color done");
@@ -3977,9 +3981,12 @@ public:
         // New Pointer Update (section 2.2.9.1.1.4.5)
         case RDP_POINTER_NEW:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new");
-            if (enable_new_pointer) {
+            if (this->enable_new_pointer) {
                 BitsPerPixel data_bpp = checked_int{stream.in_uint16_le()}; /* data bpp */
                 this->process_new_pointer_pdu(data_bpp, stream, drawable);
+            }
+            else {
+                LOG(LOG_ERR, "mod_rdp::process_pointer_pdu: New Pointer Updated is disabled!");
             }
             LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer new done");
             break;
@@ -5726,7 +5733,7 @@ public:
         }
 
         Pointer& cursor = this->cursors[pointer_idx];
-        cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor);
+        cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->use_native_pointer);
         drawable.set_pointer(pointer_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
     }   // process_new_pointer_pdu
 

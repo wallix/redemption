@@ -44,7 +44,9 @@ namespace cfg
         struct allow_using_multiple_monitors;
         struct allow_scale_factor;
         struct bogus_refresh_rect;
+        struct use_native_pointer;
         struct large_pointer_support;
+        struct new_pointer_update_support;
         struct unicode_keyboard_event_support;
         struct mod_recv_timeout;
         struct spark_view_specific_glyph_width;
@@ -89,7 +91,6 @@ namespace cfg
         struct enable_suppress_output;
         struct ssl_cipher_list;
         struct show_target_user_in_f12_message;
-        struct enable_new_pointer_update;
         struct bogus_ios_glyph_support_level;
         struct transform_glyph_to_bitmap;
         struct bogus_number_of_fastpath_input_event;

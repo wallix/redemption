@@ -592,7 +592,8 @@ ModPack create_mod_rdp(
     }
     mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
     mod_rdp_params.enable_fastpath                     = ini.get<cfg::mod_rdp::fast_path>();
-    //mod_rdp_params.enable_new_pointer                  = true;
+    mod_rdp_params.use_native_pointer                  = ini.get<cfg::globals::use_native_pointer>();
+    mod_rdp_params.enable_new_pointer                  = (client_info.supported_new_pointer_update && ini.get<cfg::globals::new_pointer_update_support>());
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
 
     mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);

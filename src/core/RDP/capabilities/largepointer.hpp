@@ -18,9 +18,7 @@
    Author(s): Christophe Grosjean
 
    RDP Capabilities : Large Pointer Capability Set ([MS-RDPBCGR] section 2.2.7.2.7)
-
 */
-
 
 #pragma once
 
@@ -33,10 +31,15 @@
 
 // The TS_LARGE_POINTER_CAPABILITYSET structure is used to specify capabilities related to large
 // mouse pointer shape support. This capability is sent by both client and server.
+
 // To support large pointer shapes, the client and server MUST support multifragment updates and
 // indicate this support by exchanging the Multifragment Update Capability Set (section 2.2.7.2.6). The
-// MaxRequestSize field of the Multifragment Update Capability Set MUST be set to at least 38,055
-// bytes (so that a 96 x 96 pixel 32bpp pointer can be transported).
+// MaxRequestSize field of the Multifragment Update Capability Set MUST be set based on the flags
+// included in the largePointerSupportFlags field. If only the LARGE_POINTER_FLAG_96x96
+// (0x00000001) flag is specified, then the MaxRequestSize field MUST be set to at least 38,055 bytes
+// (so that a 96 x 96 pixel 32bpp pointer can be transported). If the LARGE_POINTER_FLAG_384x384
+// (0x00000002) flag is included, then the MaxRequestSize MUST be set to at least 608,299 bytes (so
+// that a 384 x 384 pixel 32bpp pointer can be transported).
 
 // capabilitySetType (2 bytes): A 16-bit, unsigned integer. Type of the capability set. This field
 //    MUST be set to CAPSETTYPE_LARGE_POINTER (27).
@@ -45,21 +48,33 @@
 //    data, including the size of the capabilitySetType and lengthCapability fields.
 
 // largePointerSupportFlags (2 bytes): Support for large pointer shapes.
-//    +--------------------------+----------------------------------------------------------+
-//    | LARGE_POINTER_FLAG_96x96 | 96-pixel by 96-pixel mouse pointer shapes are supported. |
-//    | 0x00000001               |                                                          |
-//    +--------------------------+----------------------------------------------------------+
-//    Mouse pointer shapes are used by the following pointer updates:
-//    * Color Pointer Update (see section 2.2.9.1.1.4.4)
-//    * New Pointer Update (see section 2.2.9.1.1.4.5)
-//    * Fast-Path Color Pointer Update (see section 2.2.9.1.2.1.7)
-//    * Fast-Path New Pointer Update (see section 2.2.9.1.2.1.8)
-//    The pointer shape data is contained within the Color Pointer Update structure (see section
-//    2.2.9.1.1.4.4) encapsulated by each of these updates.
+//    +----------------------------+-------------------------------------------------------------------------+
+//    | LARGE_POINTER_FLAG_96x96   | 96-pixel by 96-pixel mouse pointer shapes are supported.                |
+//    | 0x00000001                 |                                                                         |
+//    +----------------------------+-------------------------------------------------------------------------+
+//    | LARGE_POINTER_FLAG_384x384 | Mouse pointer shapes of up to 384x384 pixels in size, and the Fast-Path |
+//    | 0x00000002                 | Large Pointer Update (section 2.2.9.1.2.1.11), are supported.           |
+//    +----------------------------+-------------------------------------------------------------------------+
 
-enum  {
-        LARGE_POINTER_FLAG_96x96 = 0x00000001
-      };
+//    Mouse pointer shapes are used by the following pointer updates:
+
+//    * Color Pointer Update (see section 2.2.9.1.1.4.4)
+
+//    * New Pointer Update (see section 2.2.9.1.1.4.5)
+
+//    * Fast-Path Color Pointer Update (see section 2.2.9.1.2.1.7)
+
+//    * Fast-Path New Pointer Update (see section 2.2.9.1.2.1.8)
+
+//    * Fast-Path Large Pointer Update (section 2.2.9.1.2.1.11)
+
+//    The pointer shape data is contained within the AND and XOR masks encapsulated in each of these
+//    updates.
+
+enum {
+      LARGE_POINTER_FLAG_96x96   = 0x00000001
+    , LARGE_POINTER_FLAG_384x384 = 0x00000002
+};
 
 enum {
     CAPLEN_LARGE_POINTER = 6
@@ -70,7 +85,6 @@ struct LargePointerCaps : public Capability {
 
     LargePointerCaps()
     : Capability(CAPSETTYPE_LARGE_POINTER, CAPLEN_LARGE_POINTER)
-
     {
     }
 

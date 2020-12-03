@@ -23,6 +23,7 @@
 
 #include "gdi/screen_info.hpp"
 #include "utils/bitfu.hpp"
+#include "utils/log.hpp"
 #include "utils/sugar/bytes_view.hpp"
 
 class InStream;
@@ -80,6 +81,11 @@ private:
     CursorSize dimensions {32,32};
     Hotspot hotspot {0, 0};
 
+    BitsPerPixel native_xor_bpp { BitsPerPixel{0} };
+
+    uint16_t native_length_and_mask { 0 };
+    uint16_t native_length_xor_mask { 0 };
+
 public:
     constexpr explicit Pointer() = default;
 
@@ -89,7 +95,21 @@ public:
         Pointer pointer;
         pointer.dimensions = d;
         pointer.hotspot = hs;
+        pointer.native_xor_bpp = BitsPerPixel{0};
         builder(pointer.data, pointer.mask);
+        return pointer;
+    }
+
+    /*constexpr*/ static Pointer build_from_native(CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask)
+    {
+        Pointer pointer;
+        pointer.dimensions = d;
+        pointer.hotspot = hs;
+        pointer.native_xor_bpp = xor_bpp;
+        ::memcpy(pointer.data, xor_mask.data(), xor_mask.size());
+        pointer.native_length_xor_mask = xor_mask.size();
+        ::memcpy(pointer.mask, and_mask.data(), and_mask.size());
+        pointer.native_length_and_mask = and_mask.size();
         return pointer;
     }
 
@@ -132,6 +152,13 @@ public:
         return (this->dimensions.width != 0 && this->dimensions.height != 0/* && this->bpp*/);
     }
 
+    BitsPerPixel get_native_xor_bpp() const { return native_xor_bpp; }
+
+    [[nodiscard]] bytes_view get_native_xor_mask() const
+    {
+        return {this->data, this->native_length_xor_mask};
+    }
+
     // TODO move in wrm_capture.hpp
     void emit_pointer32x32(OutStream & result) const;
     void emit_pointer2(OutStream & result) const;
@@ -153,9 +180,12 @@ void emit_color_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer co
 void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer const& cursor);
 
 
+bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& cursor);
+
+
 Pointer pointer_loader_new(
     BitsPerPixel data_bpp, InStream & stream,
-    BGRPalette const& palette, bool clean_up_32_bpp_cursor);
+    BGRPalette const& palette, bool clean_up_32_bpp_cursor, bool use_native_pointer);
 
 Pointer pointer_loader_vnc(
     BytesPerPixel Bpp, uint16_t width, uint16_t height,
@@ -170,7 +200,7 @@ Pointer decode_pointer(
     uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
     uint16_t dlen, const uint8_t * data,
     uint16_t mlen, const uint8_t * mask,
-    bool clean_up_32_bpp_cursor);
+    bool clean_up_32_bpp_cursor, bool use_native_pointer);
 
 Pointer pointer_loader_2(InStream & stream);
 

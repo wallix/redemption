@@ -301,7 +301,7 @@ private:
                 out_s.get_produced_bytes());
         }
 
-        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
+        LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
             "SessionProbeVirtualChannel::request_keep_alive: "
                 "Session Probe keep alive requested");
 
@@ -554,7 +554,7 @@ public:
                         out_s.out_copy_bytes("Request=Keep-Alive"_av);
                     });
 
-                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe_repetitive), LOG_INFO,
+                    LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                         "SessionProbeVirtualChannel::process_server_message: "
                             "Session Probe keep alive requested");
 

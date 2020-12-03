@@ -511,8 +511,28 @@ namespace cfg
         type value { true };
     };
     /// type: bool <br/>
+    /// default: false <br/>
+    struct globals::use_native_pointer {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { false };
+    };
+    /// type: bool <br/>
     /// default: true <br/>
     struct globals::large_pointer_support {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { true };
+    };
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct globals::new_pointer_update_support {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
@@ -948,16 +968,6 @@ namespace cfg
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value { false };
-    };
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct client::enable_new_pointer_update {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
     };
     /// type: bool <br/>
     /// default: true <br/>
@@ -5387,7 +5397,9 @@ struct globals
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::allow_scale_factor
 , cfg::globals::bogus_refresh_rect
+, cfg::globals::use_native_pointer
 , cfg::globals::large_pointer_support
+, cfg::globals::new_pointer_update_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
 , cfg::globals::spark_view_specific_glyph_width
@@ -5431,7 +5443,6 @@ struct client
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
 , cfg::client::show_target_user_in_f12_message
-, cfg::client::enable_new_pointer_update
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
 , cfg::client::bogus_number_of_fastpath_input_event

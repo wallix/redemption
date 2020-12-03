@@ -116,7 +116,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_advanced
+#use_native_pointer = 0
+
+# value: 0 or 1
+#_advanced
 #large_pointer_support = 1
+
+# value: 0 or 1
+#new_pointer_update_support = 1
 
 # value: 0 or 1
 #unicode_keyboard_event_support = 1
@@ -300,9 +307,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #show_target_user_in_f12_message = 0
-
-# value: 0 or 1
-#enable_new_pointer_update = 1
 
 # value: 0 or 1
 #bogus_ios_glyph_support_level = 1

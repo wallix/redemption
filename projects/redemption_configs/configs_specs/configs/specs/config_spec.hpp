@@ -166,7 +166,11 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_refresh_rect"}, desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
 
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_native_pointer"}, set(false));
+
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"large_pointer_support"}, set(true));
+
+        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"new_pointer_update_support"}, set(true));
 
         W.member(ini_and_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"unicode_keyboard_event_support"}, set(true));
 
@@ -255,8 +259,6 @@ void config_spec_definition(Writer && W)
         }, set("HIGH:!ADH:!3DES:!SHA"));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"show_target_user_in_f12_message"}, set(false));
-
-        W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"enable_new_pointer_update"}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"bogus_ios_glyph_support_level"}, set(true));
 

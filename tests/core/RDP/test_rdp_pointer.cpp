@@ -951,7 +951,7 @@ Mask For Cursor
     };
 
     InStream in_stream_cursor(buffer);
-    Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor, BGRPalette::classic_332(), true);
+    Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor, BGRPalette::classic_332(), true, false);
 
     RED_CHECK_EQ(cursor.get_hotspot().x, 8);
     RED_CHECK_EQ(cursor.get_hotspot().y, 9);
@@ -1240,7 +1240,7 @@ RED_AUTO_TEST_CASE(TestLinux32bppPointer)
     };
 
     InStream stream(new_pointer_32bpp);
-    Pointer cursor = pointer_loader_new(BitsPerPixel{32}, stream, BGRPalette::classic_332(), false);
+    Pointer cursor = pointer_loader_new(BitsPerPixel{32}, stream, BGRPalette::classic_332(), false, false);
 
     RED_CHECK_EQ(cursor.get_hotspot().x, 15);
     RED_CHECK_EQ(cursor.get_hotspot().y, 10);

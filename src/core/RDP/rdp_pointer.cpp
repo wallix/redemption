@@ -326,6 +326,101 @@ void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer cons
     // TODO: why isn't this padding byte sent ?
 }
 
+bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& cursor)
+{
+    const auto dimensions = cursor.get_dimensions();
+    const auto hotspot = cursor.get_hotspot();
+
+    const bool new_pointer_update_used = (cursor.get_native_xor_bpp() != BitsPerPixel{24});
+
+    if (new_pointer_update_used)
+    {
+        // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel of the XOR mask
+        //     contained in the colorPtrAttr field.
+        stream.out_uint16_le(static_cast<uint16_t>(cursor.get_native_xor_bpp()));
+    }
+
+    // cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
+    //   entry in the pointer cache in which to store the pointer image. The
+    //   number of cache entries is negotiated using the Pointer Capability Set
+    //   (section 2.2.7.1.5).
+
+    stream.out_uint16_le(cache_idx);
+
+    // hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1) structure containing the
+    //   x-coordinates and y-coordinates of the pointer hotspot.
+    //         2.2.9.1.1.4.1  Point (TS_POINT16)
+    //         ---------------------------------
+    //         The TS_POINT16 structure specifies a point relative to the
+    //         top-left corner of the server's desktop.
+    //
+    //         xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
+    //           relative to the top-left corner of the server's desktop.
+
+    //LOG(LOG_INFO, "hotspot.x=%u", hotspot.x);
+    stream.out_uint16_le(hotspot.x);
+
+    // yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
+    //     relative to the top-left corner of the server's desktop.
+
+    //LOG(LOG_INFO, "hotspot.y=%u", hotspot.y);
+    stream.out_uint16_le(hotspot.y);
+
+    // width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
+    //     pixels (the maximum allowed pointer width is 32 pixels).
+
+    //LOG(LOG_INFO, "dimensions.width=%u", dimensions.width);
+    stream.out_uint16_le(dimensions.width);
+
+    // height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
+    //     in pixels (the maximum allowed pointer height is 32 pixels).
+
+    //LOG(LOG_INFO, "dimensions.height=%u", dimensions.height);
+    stream.out_uint16_le(dimensions.height);
+
+    // lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+    //     the andMaskData field.
+
+    auto av_and_mask = cursor.get_monochrome_and_mask();
+    auto av_xor_mask = cursor.get_native_xor_mask();
+
+    stream.out_uint16_le(av_and_mask.size());
+
+    // lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
+    //     the xorMaskData field.
+
+    stream.out_uint16_le(av_xor_mask.size());
+
+    // xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
+    //     bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
+    //     boundary for each encoded scan-line. For example, if a 3x3 pixel cursor
+    //     is being sent, then each scan-line will consume 10 bytes (3 pixels per
+    //     scan-line multiplied by 3 bpp, rounded up to the next even number of
+    //     bytes).
+    //LOG(LOG_INFO, "xorMaskData=%zu", av_data.size());
+    //hexdump(av_data);
+    stream.out_copy_bytes(av_xor_mask);
+
+    // andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
+    //     bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
+    //     boundary for each encoded scan-line. For example, if a 7x7 pixel cursor
+    //     is being sent, then each scan-line will consume 2 bytes (7 pixels per
+    //     scan-line multiplied by 1 bpp, rounded up to the next even number of
+    //     bytes).
+    //LOG(LOG_INFO, "andMaskData=%zu", av_mask.size());
+    //hexdump(av_mask);
+    stream.out_copy_bytes(av_and_mask); /* mask */
+
+    // colorPointerData (1 byte): Single byte representing unused padding.
+    //     The contents of this byte should be ignored.
+    if (stream.get_offset() % 2 != 0)
+    {
+        stream.out_clear_bytes(1);
+    }
+
+    return new_pointer_update_used;
+}
+
 // static void debug_show_raw_pointer(
 //     BitsPerPixel data_bpp, const BGRPalette & palette,
 //     uint16_t width, uint16_t height,
@@ -465,12 +560,24 @@ Pointer decode_pointer(
     uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
     uint16_t dlen, const uint8_t * data,
     uint16_t mlen, const uint8_t * mask,
-    bool clean_up_32_bpp_cursor)
+    bool clean_up_32_bpp_cursor,
+    bool use_native_pointer)
 {
     //debug_show_raw_pointer(
     //    data_bpp, palette,
     //    width, height,
     //    data, mask);
+
+    if (use_native_pointer)
+    {
+        return Pointer::build_from_native(
+                  CursorSize(width, height)
+                , Hotspot(hsx, hsy)
+                , data_bpp
+                , bytes_view(data, dlen)
+                , bytes_view(mask, mlen)
+            );
+    }
 
     CursorSize dimensions(width, height);
 
@@ -629,7 +736,7 @@ Pointer decode_pointer(
 
 Pointer pointer_loader_new(
     BitsPerPixel data_bpp, InStream & stream,
-    const BGRPalette & palette, bool clean_up_32_bpp_cursor)
+    const BGRPalette & palette, bool clean_up_32_bpp_cursor, bool use_native_pointer)
 {
     auto hsx      = stream.in_uint16_le();
     auto hsy      = stream.in_uint16_le();
@@ -651,7 +758,7 @@ Pointer pointer_loader_new(
     const uint8_t * data = stream.in_uint8p(dlen);
     const uint8_t * mask = stream.in_uint8p(mlen);
 
-    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
+    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor, use_native_pointer);
 }
 
 Pointer pointer_loader_vnc(
@@ -752,7 +859,7 @@ Pointer pointer_loader_2(InStream & stream)
     auto data = stream.in_uint8p(dlen);
     auto mask = stream.in_uint8p(mlen);
     const BGRPalette palette = BGRPalette::classic_332();
-    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true);
+    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true, false);
 }
 
 Pointer pointer_loader_32x32(InStream & stream)
@@ -771,7 +878,7 @@ Pointer pointer_loader_32x32(InStream & stream)
     auto data = stream.in_uint8p(dlen);
     auto mask = stream.in_uint8p(mlen);
     const BGRPalette palette = BGRPalette::classic_332();
-    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true);
+    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true, false);
 }
 
 Pointer harmonize_pointer(Pointer const& src_ptr)

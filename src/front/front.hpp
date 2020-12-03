@@ -403,7 +403,7 @@ private:
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
-          , bool(ini.get<cfg::client::enable_new_pointer_update>()) ? client_info.supported_new_pointer_update : false
+          , client_info.supported_new_pointer_update
           , safe_cast<RDPSerializerVerbose>(underlying_cast(verbose) >> 16)
         )
         {}

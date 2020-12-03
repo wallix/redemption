@@ -728,6 +728,35 @@ void FileToGraphic::interpret_order()
         this->statistics.CachePointer.count++;
     }
     break;
+
+    case WrmChunkType::POINTER_NATIVE:
+    {
+        LOG_IF(bool(this->verbose & Verbose::rdp_orders), LOG_INFO, "POINTER_NATIVE");
+
+        const size_t start_offset = this->stream.get_offset();
+
+        const BitsPerPixel data_bpp = checked_int{this->stream.in_uint16_le()}; /* data bpp */
+
+        const uint8_t cache_idx = this->stream.in_uint16_le();
+
+        const Pointer cursor = pointer_loader_new(data_bpp, this->stream, palette, false, false);
+
+/*
+        this->mouse_x = this->stream.in_uint16_le();
+        this->mouse_y = this->stream.in_uint16_le();
+        uint8_t cache_idx     = this->stream.in_uint8();
+        const Pointer cursor = pointer_loader_2(this->stream);
+*/
+
+        this->ptr_cache.add_pointer_static(cursor, cache_idx);
+        for (gdi::GraphicApi * gd : this->graphic_consumers){
+            gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
+        }
+        this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
+        this->statistics.CachePointer.count++;
+    }
+    break;
+
     case WrmChunkType::RESET_CHUNK:
         this->info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
 

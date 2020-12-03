@@ -259,10 +259,26 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "use_native_pointer"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::globals::use_native_pointer&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "large_pointer_support"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::globals::large_pointer_support&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "new_pointer_update_support"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::globals::new_pointer_update_support&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -575,14 +591,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "enable_new_pointer_update"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::enable_new_pointer_update&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );

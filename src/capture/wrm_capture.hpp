@@ -415,6 +415,44 @@ public:
 
 protected:
     void send_pointer(int cache_idx, const Pointer & cursor) override {
+        if (cursor.get_native_xor_bpp() != BitsPerPixel{0})
+        {
+            StaticOutStream<32+Pointer::MAX_WIDTH*Pointer::MAX_HEIGHT*::nbbytes(Pointer::MAX_BPP)> payload;
+
+            payload.out_uint16_le(static_cast<uint16_t>(cursor.get_native_xor_bpp()));
+
+            payload.out_uint16_le(cache_idx);
+
+            const auto hotspot = cursor.get_hotspot();
+
+            payload.out_uint16_le(hotspot.x);
+            payload.out_uint16_le(hotspot.y);
+
+            auto const dimensions = cursor.get_dimensions();
+
+            payload.out_uint16_le(dimensions.width);
+            payload.out_uint16_le(dimensions.height);
+
+            auto av_and_mask = cursor.get_monochrome_and_mask();
+            auto av_xor_mask = cursor.get_native_xor_mask();
+
+            payload.out_uint16_le(av_and_mask.size());
+            payload.out_uint16_le(av_xor_mask.size());
+
+            payload.out_copy_bytes(av_xor_mask);
+            payload.out_copy_bytes(av_and_mask); /* mask */
+
+            if (payload.get_offset() % 2 != 0)
+            {
+                payload.out_clear_bytes(1);
+            }
+
+            send_wrm_chunk(this->trans, WrmChunkType::POINTER_NATIVE, payload.get_offset(), 0);
+            this->trans.send(payload.get_produced_bytes());
+
+            return;
+        }
+
         auto const dimensions = cursor.get_dimensions();
         StaticOutStream<32+96*96*4> payload;
         bool pointer32x32 = ((dimensions.width == 32) && (dimensions.height == 32));
