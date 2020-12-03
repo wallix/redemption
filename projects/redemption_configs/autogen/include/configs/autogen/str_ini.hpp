@@ -116,7 +116,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_advanced
-#use_native_pointer = 0
+#use_native_pointer = 1
 
 # value: 0 or 1
 #_advanced

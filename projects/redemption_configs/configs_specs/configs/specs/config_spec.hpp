@@ -166,7 +166,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_refresh_rect"}, desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_native_pointer"}, set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_native_pointer"}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"large_pointer_support"}, set(true));
 

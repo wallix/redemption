@@ -100,7 +100,7 @@ allow_scale_factor = boolean(default=False)
 bogus_refresh_rect = boolean(default=True)
 
 #_advanced
-use_native_pointer = boolean(default=False)
+use_native_pointer = boolean(default=True)
 
 #_advanced
 large_pointer_support = boolean(default=True)
