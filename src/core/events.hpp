@@ -220,6 +220,15 @@ struct EventRef
     bool reset_timeout(timeval trigger_time)
     {
         if (has_event()) {
+            event_->alarm.reset_timeout(trigger_time);
+            return true;
+        }
+        return false;
+    }
+
+    bool set_timeout(timeval trigger_time)
+    {
+        if (has_event()) {
             event_->alarm.set_timeout(trigger_time);
             return true;
         }
