@@ -910,6 +910,7 @@ namespace detail
             }
         }
         else {
+            (void)has_long_name;
             out << "--" << opt._long_name;
         }
 
