@@ -938,7 +938,8 @@ public:
                         log_file.close_session_log();
                     });
                 }
-                else if (mod_wrapper.current_mod != ModuleName::close && mod_wrapper.current_mod != ModuleName::close_back) {
+                else if (mod_wrapper.current_mod != ModuleName::close
+                         && mod_wrapper.current_mod != ModuleName::close_back) {
                     if (acl_serial.is_after_connexion()) {
                         this->ini.set<cfg::context::auth_error_message>("Authentifier closed connexion");
                         mod_wrapper.disconnect();
@@ -1045,8 +1046,10 @@ public:
                         {
                             if (ini.get<cfg::globals::inactivity_timeout>().count() != 0)
                             {
-                                inactivity.update_inactivity_timeout
-                                    (ini.get<cfg::globals::inactivity_timeout>());
+                                inactivity.restart_timer(
+                                    ini.get<cfg::globals::inactivity_timeout>(),
+                                    time_base.get_current_time().tv_sec
+                                );
                             }
                             keepalive.start(time_base.get_current_time().tv_sec);
                         }

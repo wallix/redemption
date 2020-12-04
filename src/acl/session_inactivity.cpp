@@ -77,3 +77,9 @@ void SessionInactivity::stop_timer()
         LOG(LOG_INFO, "User session inactivity : timer is stopped !");
     }
 }
+
+void SessionInactivity::restart_timer(std::chrono::seconds timeout, time_t start)
+{
+    stop_timer();
+    start_timer(timeout, start);
+}

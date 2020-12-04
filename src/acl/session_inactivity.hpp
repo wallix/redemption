@@ -41,6 +41,7 @@ public:
     void update_inactivity_timeout(std::chrono::seconds timeout);
     void start_timer(std::chrono::seconds timeout, time_t start);
     void stop_timer();
+    void restart_timer(std::chrono::seconds timeout, time_t start);
 
 private:
     // Inactivity management
