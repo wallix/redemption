@@ -100,13 +100,14 @@ void DialogMod::accepted()
 // TODO ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod
 void DialogMod::refused()
 {
-    if (!this->dialog_widget.challenge) {
-        if (this->dialog_widget.cancel) {
-            this->vars.set_acl<cfg::context::accept_message>(false);
-        }
-        else {
-            this->vars.set_acl<cfg::context::display_message>(false);
-        }
+    if (this->dialog_widget.challenge) {
+        this->vars.set_acl<cfg::context::password>("");
+    }
+    else if (this->dialog_widget.cancel) {
+        this->vars.set_acl<cfg::context::accept_message>(false);
+    }
+    else {
+        this->vars.set_acl<cfg::context::display_message>(false);
     }
     this->set_mod_signal(BACK_EVENT_NEXT);
     // throw Error(ERR_BACK_EVENT_NEXT);

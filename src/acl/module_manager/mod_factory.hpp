@@ -341,8 +341,6 @@ public:
         const ChallengeOpt challenge = this->ini.get<cfg::context::authentication_challenge>()
             ? CHALLENGE_ECHO
             : CHALLENGE_HIDE;
-        this->ini.ask<cfg::context::authentication_challenge>();
-        this->ini.ask<cfg::context::password>();
         return this->_create_dialog(button, caption, challenge);
     }
 
