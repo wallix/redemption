@@ -28,20 +28,20 @@ jobs:
       uses: actions/cache@v2
       id: cache-apt
       with:
-        path: ~/dpkg_cache2
-        key: ${{ runner.os }}-apt_deps6
+        path: ~/dpkg_cache3
+        key: ${{ runner.os }}-apt_deps7
     - name: Install packages
       env:
         CACHE_HIT: ${{steps.cache-apt.outputs.cache-hit}}
       run: |
-        DPKG_CACHE=~/dpkg_cache2
+        DPKG_CACHE=~/dpkg_cache3
         if [[ "$CACHE_HIT" == 'true' ]]; then
           sudo cp --force --recursive "$DPKG_CACHE"/* /
         else
           # libbz2-dev libpng-dev libssl-dev already installed and freeze restoration
           deps=(
             libboost-test-dev
-            libboost-tools-dev
+            # libboost-tools-dev
             libkrb5-dev
             libsnappy-dev
             # libavcodec-dev
@@ -61,11 +61,13 @@ jobs:
             /usr/include/snappy-stubs-public.h
 
           mkdir -p "$DPKG_CACHE"
-          for dep in ${deps[@]}; do
-            dpkg -L $dep | while IFS= read -r f; do
-              if [[ -f $f ]]; then echo $f; fi;
-            done | xargs cp --parents --target-directory "$DPKG_CACHE"
-          done
+          {
+            dpkg -L ${deps[@]} | while IFS= read -r f; do
+              if [[ -f $f ]]; then echo "$f"; fi
+            done
+            echo /usr/include/boost/
+            find /usr/lib* -type f -name 'libboost_*'
+          } | xargs cp --recursive --parents --target-directory "$DPKG_CACHE"
         fi
 
 
