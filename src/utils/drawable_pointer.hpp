@@ -211,8 +211,8 @@ struct DrawablePointer {
                 ConstImageDataView::Storage::BottomToTop
             );
 
-        for (unsigned int y = 0; y < width_; ++y) {
-            for (unsigned int x = 0; x < height_; ++x) {
+        for (unsigned int y = 0; y < height_; ++y) {
+            for (unsigned int x = 0; x < width_; ++x) {
                 ::put_pixel_24bpp(this->mask24, line_bytes_, x, y, (::get_pixel_1bpp(pointer_mask, mask_line_bytes_, x, y) ? 0xFFFFFF : 0));
             }
         }
