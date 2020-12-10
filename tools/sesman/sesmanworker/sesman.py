@@ -427,6 +427,9 @@ class Sesman():
         )
 
     def reset_session_var(self):
+        """
+        Proxy Session Vars reset
+        """
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
         self.target_group = None
@@ -435,6 +438,9 @@ class Sesman():
         self.target_context = TargetContext()
 
     def reset_target_session_vars(self):
+        """
+        Target Session Disconnection
+        """
         self._full_user_device_account = u'Unknown'
         self.target_service_name = None
         self.target_group = None
@@ -1736,6 +1742,7 @@ class Sesman():
                         self.engine.release_all_target()
                         self.engine.stop_session()
                     self.reset_target_session_vars()
+                self.engine.proxy_session_logout()
                 self.rdplog.log("LOGOUT")
 
         if tries <= 0:

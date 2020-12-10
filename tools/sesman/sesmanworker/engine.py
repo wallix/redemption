@@ -646,13 +646,19 @@ class Engine(object):
         return targets, item_filtered
 
     def reset_proxy_rights(self):
+        """
+        Clean current fetched rights
+        """
         self.proxy_rights = None
         self.rights = None
         self.target_right = None
         self.release_all_target()
-        self.reset_session()
+        self.reset_target_session()
 
-    def reset_session(self):
+    def reset_target_session(self):
+        """
+        Clean Target session (if exist) rights and infos
+        """
         self.target_right = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
@@ -670,6 +676,12 @@ class Engine(object):
 
         self.checktarget_cache = None
         self.checktarget_infos_cache = None
+
+    def proxy_session_logout(self):
+        """
+        Clean all information of current authenticated proxy session
+        """
+        self.reset_proxy_rights()
         self.authenticator.reset()
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
