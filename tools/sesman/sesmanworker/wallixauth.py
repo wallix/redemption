@@ -21,7 +21,8 @@ except Exception as e:
     import traceback
     tracelog = traceback.format_exc()
     try:
-        from fake.const import (
+        from .fake.proxyengine import *
+        from .fake.const import (
             IDENTIFICATION_TYPES as IDENT,
             AUTHENTICATION_TYPES as AUTH,
         )
@@ -77,6 +78,11 @@ CHALLENGE_AUTH_STATE = {
     AUTH.PASSWORD: AuthState.PASSWORD,
     AUTH.PINGID: AuthState.PINGID,
 }
+
+
+def get_auth_priority(auth_state):
+    expected = EXPECTED_FIRST_COMPAT.get(auth_state)
+    return expected[0] if expected else None
 
 
 class Authenticator(object):
@@ -175,7 +181,8 @@ class Authenticator(object):
                            compatibility)
             self.auth_challenge = self.client.wa_compatibility(
                 key=self.auth_key,
-                compatibility=compatibility
+                compatibility=compatibility,
+                priority=get_auth_priority(auth_state)
             )
             Logger().debug("Call END wa_compatibility %s" %
                            self.auth_challenge)
@@ -429,21 +436,19 @@ class Authenticator(object):
         return False
 
 
-def compare_pubkeys_str(pubkeystr1, pubkey2):
+def compare_pubkeys_str(pubkey1, pubkey2):
     return compare_pubkeys(
-        extract_pubkey(pubkeystr1),
-        pubkey2
+        extract_pubkey(pubkey1),
+        extract_pubkey(pubkey2)
     )
 
 
 def extract_pubkey(pubkeystr):
-    pubkey = ''
+    pubkey = pubkeystr
     if pubkeystr and ' ' in pubkeystr:
         splitted_pubkey = pubkeystr.split()
         # Fetch the longuest element (== the key)
-        for e in splitted_pubkey:
-            if len(e) > len(pubkey):
-                pubkey = e
+        pubkey = max(splitted_pubkey, key=len)
     return pubkey
 
 
@@ -471,5 +476,5 @@ def compare_pubkeys(pubkey1, pubkey2):
                 return 0
             return -1
 
-    return ((pubkey1 == pubkey2) or
-            (SshPublicKey(pubkey1) == SshPublicKey(pubkey2)))
+    return ((pubkey1 == pubkey2)
+            or (SshPublicKey(pubkey1) == SshPublicKey(pubkey2)))
