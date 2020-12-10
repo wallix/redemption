@@ -35,8 +35,11 @@ except Exception:
     tracelog = traceback.format_exc()
     try:
         from .fake.proxyengine import *
+        try:
+            from .wallixauth import Authenticator
+        except:
+            from .legacyauth import LegacyAuthenticator as Authenticator
         LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
-        from .legacyauth import LegacyAuthenticator as Authenticator
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
