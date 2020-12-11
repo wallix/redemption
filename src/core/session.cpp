@@ -438,6 +438,7 @@ private:
             // In case of transitory we are still expecting spontaneous data
             this->remote_answer = true;
             auto next_state = ModuleName::INTERNAL_TRANSITION;
+            rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
             this->new_mod(next_state, mod_wrapper, mod_factory, front);
         }
         break;
@@ -556,6 +557,7 @@ private:
 
         default:
             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
             this->new_mod(next_state, mod_wrapper, mod_factory, front);
             break;
         } // switch (next_state)
@@ -923,6 +925,7 @@ public:
                         next_state == ModuleName::close_back
                         && mod_wrapper.current_mod == ModuleName::close)
                     {
+                        rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                         new_mod(next_state, mod_wrapper, mod_factory, front);
                         mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                     }
@@ -960,6 +963,7 @@ public:
                                 : "closed by proxy");
                         if (ini.get<cfg::globals::enable_close_box>()) {
                             auto next_state = ModuleName::close;
+                            rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                             run_session = true;
                         }
@@ -981,6 +985,7 @@ public:
                                 LOG(LOG_INFO, "Start of acl failed : no authentifier available");
                                 if (ini.get<cfg::globals::enable_close_box>()) {
                                     auto next_state = ModuleName::close;
+                                    rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                                     this->new_mod(next_state, mod_wrapper, mod_factory, front);
                                     run_session = true;
                                 }
@@ -1093,6 +1098,7 @@ public:
                                 next_state = ModuleName::close;
                             }
                             if (ini.get<cfg::globals::enable_close_box>()) {
+                                rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                                 this->new_mod(next_state, mod_wrapper, mod_factory, front);
                                 mod_wrapper.get_mod()->set_mod_signal(BACK_EVENT_NONE);
                                 continue;
@@ -1118,6 +1124,7 @@ public:
                                 front.get_client_info().remote_program);
                             log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
                             auto next_state = ModuleName::INTERNAL_TRANSITION;
+                            rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
                             this->new_mod(next_state, mod_wrapper, mod_factory, front);
                         }
 
