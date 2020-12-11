@@ -383,7 +383,6 @@ private:
         }
     }
 
-
     void new_mod(ModuleName next_state, ModWrapper & mod_wrapper, ModFactory & mod_factory, Front & front)
     {
         if (mod_wrapper.current_mod != ModuleName::INTERNAL_TRANSITION){
@@ -414,6 +413,15 @@ private:
 
         auto mod_pack = mod_factory.create_mod(next_state);
         mod_wrapper.set_mod(next_state, mod_pack);
+        if (mod_wrapper.current_mod == ModuleName::RDP) {
+            this->session_type = "RDP";
+        }
+        else if (mod_wrapper.current_mod == ModuleName::VNC) {
+            this->session_type = "VNC";
+        }
+        else {
+            this->session_type.clear();
+        }
     }
 
     bool next_backend_module(SessionLogFile & log_file, Inifile& ini,
@@ -642,6 +650,8 @@ private:
 
     std::string acl_manager_disconnect_reason;
 
+    std::string session_type;
+
 public:
     Session(SocketTransport&& front_trans, timeval sck_start_time, Inifile& ini)
     : ini(ini)
@@ -692,7 +702,6 @@ public:
 
         AclSerializer acl_serial(ini);
 
-        std::string session_type;
         SessionLogFile log_file(ini, time_base, cctx, rnd, fstat,
                         [&sesman](const Error & error){
                             if (error.errnum == ENOSPC) {
@@ -704,13 +713,14 @@ public:
         std::unique_ptr<Transport> auth_trans;
 
         SiemLogger siem_logger;
-        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type,&siem_logger](
+        auto& session_type_ref = session_type;
+        auto write_acl_log6_fn = [&ini,&log_file,&time_base,&session_type_ref,&siem_logger](
             LogId id, KVLogList kv_list)
         {
             /* Log to SIEM (redirected syslog) */
-            siem_logger.log_syslog_format(id, kv_list, ini, session_type);
+            siem_logger.log_syslog_format(id, kv_list, ini, session_type_ref);
             auto const now = time_base.get_current_time().tv_sec;
-            siem_logger.log_arcsight_format(now, id, kv_list, ini, session_type);
+            siem_logger.log_arcsight_format(now, id, kv_list, ini, session_type_ref);
             log_file.log6(id, kv_list);
         };
 
