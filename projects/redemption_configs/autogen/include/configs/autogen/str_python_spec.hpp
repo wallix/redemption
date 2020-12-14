@@ -1085,6 +1085,11 @@ file_permissions = string(default='440')
 #_hidden
 rt_basename_only_sid = boolean(default=False)
 
+#   0: Off
+#   1: v1
+#_advanced
+enhanced_mode = option(0, 1, default=1)
+
 [crypto]
 
 # (in hexadecimal format)

@@ -684,6 +684,8 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::file_permission>(), names{"file_permissions"}, desc { "Allow to control permissions on recorded files with octal number" }, set(0440));
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"rt_basename_only_sid"}, desc{"Use only session id for basename"}, set(false));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<VideoEnhancedMode>(), names{"enhanced_mode"}, set(VideoEnhancedMode::v1));
     });
 
     W.section("capture", [&]

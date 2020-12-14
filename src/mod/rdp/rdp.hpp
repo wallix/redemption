@@ -2274,7 +2274,7 @@ public:
         const char * statedescr = "Unknown state.";
         RdpNegociation::State rdp_nego_state =
             this->private_rdp_negociation->rdp_negociation.get_state();
-        
+
         switch (rdp_nego_state) {
             case RdpNegociation::State::NEGO_INITIATE:
                 statestr = "RDP_NEGO_INITIATE";
@@ -3413,6 +3413,7 @@ public:
                 else {
                     this->connected_slow_path(drawable, x224_data);
                 }
+                this->front.must_flush_capture();
             }
             catch(Error const & e){
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());

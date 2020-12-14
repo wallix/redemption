@@ -795,11 +795,13 @@ public:
             const timeval & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
         ) override {
             (void)ignore_frame_in_timeval;
+
+            this->recorder.mouse(x, y);
+
             if (difftimeval(now, this->start_native_capture)
                     >= this->inter_frame_interval_native_capture) {
                 this->recorder.timestamp(now);
                 this->time_to_wait = this->inter_frame_interval_native_capture;
-                this->recorder.mouse(x, y);
                 this->start_native_capture = now;
                 if ((difftimeval(now, this->start_break_capture) >=
                      this->inter_frame_interval_start_break_capture)) {
@@ -882,6 +884,10 @@ public:
     void send_timestamp_chunk(timeval const & now) {
         this->graphic_to_file.timestamp(now);
         this->graphic_to_file.send_timestamp_chunk();
+    }
+
+    void update_mouse_position(uint16_t x, uint16_t y) {
+        this->graphic_to_file.mouse(x, y);
     }
 
     Microseconds periodic_snapshot(

@@ -1276,6 +1276,12 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #rt_basename_only_sid = 0
 
+# min = 0, max = 1
+#   0: Off
+#   1: v1
+#_advanced
+#enhanced_mode = 1
+
 [crypto]
 
 # (hexadecimal string of length 64)

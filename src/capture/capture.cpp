@@ -1720,6 +1720,20 @@ void Capture::relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
     }
 }
 
+void Capture::force_flush(timeval const & now, uint16_t cursor_x, uint16_t cursor_y)
+{
+    if (this->gd_drawable) {
+        this->gd_drawable->mouse_cursor_pos_x = cursor_x;
+        this->gd_drawable->mouse_cursor_pos_y = cursor_y;
+    }
+    this->mouse_info = {now, cursor_x, cursor_y};
+
+    if (this->wrm_capture_obj) {
+        this->wrm_capture_obj->update_mouse_position(cursor_x, cursor_y);
+        this->wrm_capture_obj->send_timestamp_chunk(now);
+    }
+}
+
 void Capture::resize(uint16_t width, uint16_t height)
 {
     if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {

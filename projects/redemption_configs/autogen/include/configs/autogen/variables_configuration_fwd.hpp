@@ -308,6 +308,7 @@ namespace cfg
         struct allow_rt_without_recording;
         struct file_permissions;
         struct rt_basename_only_sid;
+        struct enhanced_mode;
     };
 
     struct capture {

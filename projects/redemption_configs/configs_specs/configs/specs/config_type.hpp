@@ -254,6 +254,11 @@ inline void config_type_definition(type_enumerations & e)
       .value("EN")
       .value("FR")
     ;
+
+    e.enumeration_list("VideoEnhancedMode")
+      .value("Off")
+      .value("v1")
+    ;
 }
 
 }

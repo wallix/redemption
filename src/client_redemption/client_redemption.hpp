@@ -1169,6 +1169,8 @@ public:
         return false;
     }
 
+    void must_flush_capture() override {}
+
 private:
     using no_log = std::false_type;
     using with_log = std::true_type;
