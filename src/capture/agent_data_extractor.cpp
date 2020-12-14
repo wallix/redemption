@@ -442,9 +442,8 @@ bool AgentDataExtractor::is_relevant_log_id(LogId id) noexcept
         case LogId::CONNECTION_FAILED:
         case LogId::SESSION_CREATION_FAILED:
         case LogId::SESSION_ENDING_IN_PROGRESS:
-        case LogId::SESSION_ESTABLISHED_SUCCESSFULLY:
             return false;
-
+        case LogId::SESSION_ESTABLISHED_SUCCESSFULLY:
         case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
         case LogId::UAC_PROMPT_BECOME_VISIBLE:
         case LogId::SESSION_LOCKED:
