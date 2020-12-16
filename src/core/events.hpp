@@ -543,9 +543,10 @@ private:
     template<class Event, class... Ts>
     static Event* make_event(std::string_view name, Ts&&... xs)
     {
-        void* raw = ::operator new(sizeof(Event) + name.size()); /* NOLINT */
+        void* raw = ::operator new(sizeof(Event) + name.size() + 1u); /* NOLINT */
         auto* data_name = static_cast<char*>(raw) + sizeof(Event);
         memcpy(data_name, name.data(), name.size());
+        data_name[name.size()] = 0;
         Event* event = new (raw) Event{static_cast<Ts&&>(xs)...};
         event->name = data_name;
         return event;
