@@ -3413,7 +3413,6 @@ public:
                 else {
                     this->connected_slow_path(drawable, x224_data);
                 }
-                this->front.must_flush_capture();
             }
             catch(Error const & e){
                 LOG(LOG_INFO, "mod_rdp::draw_event() state switch raised exception = %s", e.errmsg());
@@ -3508,6 +3507,7 @@ public:
 //                throw Error(ERR_BACK_EVENT_NEXT);
             }
         }
+        this->front.must_flush_capture();
     }   // draw_event
 
     // 1.3.1.3 Deactivation-Reactivation Sequence
