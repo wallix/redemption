@@ -100,6 +100,7 @@ namespace cfg
         struct bogus_pointer_xormask_padding;
         struct disabled_orders;
         struct force_bitmap_cache_v2_with_am;
+        struct disable_native_pointer_with_am;
     };
 
     struct mod_rdp {

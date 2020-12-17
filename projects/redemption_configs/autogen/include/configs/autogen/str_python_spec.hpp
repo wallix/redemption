@@ -304,6 +304,10 @@ disabled_orders = string(default='25')
 #_advanced
 force_bitmap_cache_v2_with_am = boolean(default=True)
 
+# Disable native pointer for compatibility with WALLIX Access Manager.
+#_advanced
+disable_native_pointer_with_am = boolean(default=True)
+
 [mod_rdp]
 
 # Specifies the highest compression package support available on the front side
