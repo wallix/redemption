@@ -1397,6 +1397,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
                         ini.set<cfg::video::codec_id>(video_params.codec);
+                        ini.set<cfg::video::framerate>(video_params.frame_rate);
                         video_params = video_params_from_ini(video_break_interval, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -1640,7 +1641,7 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, nullptr};
-    VideoParams video_params;
+    VideoParams video_params {5};
     FullVideoParams full_video_params;
 
     // video output options
@@ -1741,6 +1742,9 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         cli::option('n', "png-interval").help("time interval between png captures, default=60 seconds")
             .parser(cli::arg_location(recorder.png_params.png_interval)),
+
+        cli::option("frame-rate").help("frame per second, default=5 frames ")
+            .parser(cli::arg_location(recorder.video_params.frame_rate)),
 
         cli::option('r', "frameinterval").help("time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second")
             .parser(cli::arg_location(recorder.wrm_frame_interval)),
