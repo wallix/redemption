@@ -685,7 +685,8 @@ class Engine(object):
         Clean all information of current authenticated proxy session
         """
         self.reset_proxy_rights()
-        self.authenticator.reset()
+        if self.authenticator is not None:
+            self.authenticator.reset()
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
         Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s"
@@ -1113,7 +1114,8 @@ class Engine(object):
         return True
 
     def release_all_target(self):
-        self.checkout.release_all()
+        if self.checkout is not None:
+            self.checkout.release_all()
 
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
