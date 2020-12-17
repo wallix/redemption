@@ -319,7 +319,13 @@ public:
                         return mm.get_graphic_wrapper();
                     });
                 } catch (Error const& e) {
-                    check_exception(e);
+                    if (ERR_RDP_HANDSHAKE_TIMEOUT == e.id) {
+                        run_session = false;
+                        continue;
+                    }
+                    else {
+                        check_exception(e);
+                    }
                 }
 
                 session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
