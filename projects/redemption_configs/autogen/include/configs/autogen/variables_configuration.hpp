@@ -1076,6 +1076,17 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { true };
     };
+    /// Disable native pointer for compatibility with WALLIX Access Manager. <br/>
+    /// type: bool <br/>
+    /// default: true <br/>
+    struct client::disable_native_pointer_with_am {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { true };
+    };
 
     /// type: RdpCompression <br/>
     /// default: RdpCompression::rdp6_1 <br/>
@@ -5462,6 +5473,7 @@ struct client
 , cfg::client::bogus_pointer_xormask_padding
 , cfg::client::disabled_orders
 , cfg::client::force_bitmap_cache_v2_with_am
+, cfg::client::disable_native_pointer_with_am
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

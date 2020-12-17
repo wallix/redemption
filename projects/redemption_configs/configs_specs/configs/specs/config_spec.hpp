@@ -281,6 +281,11 @@ void config_spec_definition(Writer && W)
                  desc{"Force usage of bitmap cache V2 for compatibility "
                          "with WALLIX Access Manager."},
                  set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
+                 names{"disable_native_pointer_with_am"},
+                 desc{"Disable native pointer for compatibility "
+                         "with WALLIX Access Manager."},
+                 set(true));
     });
 
     W.section(names{.cpp="mod_rdp", .connpolicy="rdp"}, [&]
