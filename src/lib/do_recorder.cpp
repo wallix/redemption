@@ -1397,7 +1397,6 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
                         ini.set<cfg::video::codec_id>(video_params.codec);
-                        ini.set<cfg::video::framerate>(video_params.frame_rate);
                         video_params = video_params_from_ini(video_break_interval, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
@@ -1699,6 +1698,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     int bogus_vlc = 2; /* 0 = explicitly disabled, 1 = explicitly enabled */
     std::string_view msg_error;
     std::string_view codec_options;
+    unsigned video_frame_rate = 0;
 
     auto const options = cli::options(
         cli::option('h', "help").help("produce help message")
@@ -1744,7 +1744,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::arg_location(recorder.png_params.png_interval)),
 
         cli::option("frame-rate").help("frame per second, default=5 frames ")
-            .parser(cli::arg_location(recorder.video_params.frame_rate)),
+            .parser(cli::arg_location(video_frame_rate)),
 
         cli::option('r', "frameinterval").help("time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second")
             .parser(cli::arg_location(recorder.wrm_frame_interval)),
@@ -1947,6 +1947,9 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     configuration_load(ini.configuration_holder(), recorder.config_filename.c_str());
 
+    if (0 != video_frame_rate) {
+        ini.set<cfg::video::framerate>(video_frame_rate);
+    }
 
     recorder.full_video_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
     recorder.video_params.bogus_vlc_frame_rate = false;
