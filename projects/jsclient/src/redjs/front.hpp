@@ -77,8 +77,8 @@ public:
         (void)kv_list;
     }
 
-    void possible_active_window_change() override
-    {}
+    void possible_active_window_change() override {}
+    void must_flush_capture() override {}
 
 private:
     Graphics gd;
