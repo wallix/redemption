@@ -21,6 +21,7 @@
 */
 
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "core/app_path.hpp"

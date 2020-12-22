@@ -20,6 +20,7 @@
 
 #include "mod/internal/selector_mod.hpp"
 #include "configs/config.hpp"
+#include "gdi/text_metrics.hpp"
 
 #include <charconv>
 #include <cassert>

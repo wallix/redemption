@@ -31,6 +31,7 @@
 #include "gdi/graphic_api_forwarder.hpp"
 #include "gdi/subrect4.hpp"
 #include "gdi/osd_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "mod/null/null.hpp"
 #include "utils/translation.hpp"
 #include "core/callback.hpp"

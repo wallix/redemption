@@ -32,6 +32,7 @@
 #include "core/RDP/remote_programs.hpp"
 #include "core/stream_throw_helpers.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/bitmap_from_file.hpp"

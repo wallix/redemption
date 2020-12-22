@@ -25,6 +25,7 @@
 #include "utils/theme.hpp"
 #include "utils/sugar/buf_maker.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 
 WidgetSelector::temporary_number_of_page::temporary_number_of_page(const char * s)
 {

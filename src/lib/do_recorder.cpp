@@ -2335,7 +2335,7 @@ extern "C" {
                             in_t.open(rp.full_path.c_str());
                         }
 
-                        char mem[4096];
+                        char mem[128*1024];
                         while ((res = in_t.partial_read(mem, sizeof(mem)))) {
                             out_t.send(mem, res);
                         }

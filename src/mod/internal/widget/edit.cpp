@@ -22,6 +22,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "utils/colors.hpp"

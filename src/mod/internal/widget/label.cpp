@@ -23,6 +23,7 @@
 #include "core/font.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
 

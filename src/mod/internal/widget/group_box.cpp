@@ -21,6 +21,7 @@
 #include "mod/internal/widget/group_box.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
 
