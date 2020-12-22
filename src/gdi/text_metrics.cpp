@@ -349,7 +349,7 @@ void server_draw_text(
 
         drawable.draw(glyphindex, clip, color_ctx, mod_glyph_cache);
 
-        if (x+total_width <= endx) {
+        if (x+total_width > endx) {
             break;
         }
         x += total_width - 1;
