@@ -470,15 +470,16 @@ namespace redemption_unit_test__
 #define RED_TEST_DATAS(datas) ::redemption_unit_test__ \
     ::make_datas_ctx([](auto f) { return f datas; })
 
-#if REDEMPTION_UNIT_TEST_FAST_CHECK
-# define RED_TEST_DELEGATE_PRINT_II(a, b) \
+# define RED_TEST_UNUSED_IDENT2_II(a, b) \
     [[maybe_unused]] inline int a##b = 0
-# define RED_TEST_DELEGATE_PRINT_I(type, stream_expr) \
-    RED_TEST_DELEGATE_PRINT_II(a, b)
+# define RED_TEST_UNUSED_IDENT2_I(a, b) \
+    RED_TEST_UNUSED_IDENT2_II(a, b)
+
+#if REDEMPTION_UNIT_TEST_FAST_CHECK
 # define RED_TEST_DELEGATE_PRINT(type, stream_expr) \
-    RED_TEST_DELEGATE_PRINT_II(TU_delegate_print_unused_, __LINE__)
+    RED_TEST_UNUSED_IDENT2_II(TU_delegate_print_unused_, __LINE__)
 # define RED_TEST_DELEGATE_OSTREAM(type, stream_expr) \
-    RED_TEST_DELEGATE_PRINT_II(TU_delegate_print_unused_, __LINE__)
+    RED_TEST_UNUSED_IDENT2_II(TU_delegate_stream_unused_, __LINE__)
 #else
 #define RED_TEST_DELEGATE_PRINT(type, stream_expr)         \
     template<>                                             \
@@ -493,6 +494,10 @@ namespace redemption_unit_test__
             << stream_expr; /* NOLINT */                   \
         }                                                  \
     }
+# define RED_TEST_DELEGATE_OSTREAM_II(a, b) \
+    [[maybe_unused]] inline int a##b = 0
+# define RED_TEST_DELEGATE_OSTREAM_I(type, stream_expr) \
+    RED_TEST_DELEGATE_OSTREAM_II(a, b)
 # define RED_TEST_DELEGATE_OSTREAM(type, stream_expr)  \
     inline std::ostream& operator<<(                   \
         REDEMPTION_UT_UNUSED_STREAM std::ostream& out, \
@@ -502,7 +507,9 @@ namespace redemption_unit_test__
         REDEMPTION_UT_OSTREAM_PLACEHOLDER(out)         \
         << stream_expr; /* NOLINT */                   \
         return out;                                    \
-    }
+    }                                                  \
+    /* for ; */                                        \
+    RED_TEST_UNUSED_IDENT2_II(TU_delegate_stream_unused_, __LINE__)
 #endif
 
 #define RED_TEST_DELEGATE_PRINT_ENUM(type) \

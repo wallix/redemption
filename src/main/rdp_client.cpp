@@ -337,8 +337,8 @@ int main(int argc, char** argv)
         }
         LOG(LOG_INFO, "SrvRedir: Change target host to '%s'", host);
         ini.set_acl<cfg::context::target_host>(host);
-        // auto message = str_concat(change_user, '@', host);
-        // session_log.report("SERVER_REDIRECTION", message.c_str());
+        auto message = str_concat(change_user, '@', host);
+        session_log.report("SERVER_REDIRECTION", message.c_str());
     }
 
     return run_rdp() ? 2 : 0;
