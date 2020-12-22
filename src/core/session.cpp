@@ -850,9 +850,13 @@ private:
                         }
                     }
 
-                    if (has_field(cfg::context::is_wabam())) {
+                    if (has_field(cfg::context::is_wabam())
+                        && ini.get<cfg::context::is_wabam>()) {
                         if (ini.get<cfg::client::force_bitmap_cache_v2_with_am>()) {
                             front.force_using_cache_bitmap_r2();
+                        }
+                        if (ini.get<cfg::client::disable_native_pointer_with_am>()) {
+                            ini.set<cfg::globals::use_native_pointer>(false);
                         }
                     }
 
