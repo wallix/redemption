@@ -23,10 +23,12 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/compare_collection.hpp"
 
-#include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "test_only/core/font.hpp"
 
+#if !REDEMPTION_UNIT_TEST_FAST_CHECK
 #include <iomanip>
+#endif
 
 
 RED_AUTO_TEST_CASE(TextMetrics)

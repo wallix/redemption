@@ -18,7 +18,7 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
@@ -306,7 +306,7 @@ void server_draw_text(
         const auto data_end = std::end(data)-2;
 
         const int cacheId = 7;
-        while (data_begin != data_end && *unicode_iter && x+total_width <= endx) {
+        while (data_begin < data_end && *unicode_iter && x+total_width <= endx) {
             const uint32_t charnum = *unicode_iter;
             ++unicode_iter;
 

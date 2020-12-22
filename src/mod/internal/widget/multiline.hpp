@@ -22,9 +22,7 @@
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
-#include "gdi/graphic_api.hpp"
-
-class Font;
+#include "gdi/text_metrics.hpp"
 
 class WidgetMultiLine : public Widget
 {

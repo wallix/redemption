@@ -22,6 +22,7 @@
 #include "mod/internal/widget/password.hpp"
 #include "keyboard/keymap2.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "utils/utf.hpp"
 
 WidgetPassword::WidgetPassword(

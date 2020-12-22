@@ -28,9 +28,6 @@
 #include "cxx/cxx.hpp"
 
 #include <cassert>
-#include <memory>
-
-class Font;
 
 class RDPDstBlt;
 class RDPMultiDstBlt;
@@ -387,48 +384,5 @@ public:
 };
 
 gdi::GraphicApi& null_gd() noexcept;
-
-
-struct TextMetrics
-{
-    int width = 0;
-    int height = 0;
-
-    TextMetrics(const Font & font, const char * unicode_text);
-};
-
-struct MultiLineTextMetrics
-{
-    struct Line
-    {
-        char const* str;
-        int width;
-    };
-
-    array_view<Line> lines() const noexcept
-    {
-        return {this->lines_.get(), this->size_};
-    }
-
-    MultiLineTextMetrics() = default;
-    MultiLineTextMetrics(const Font& font, const char* unicode_text, unsigned max_width);
-
-    uint16_t max_width() const noexcept;
-
-private:
-    std::unique_ptr<Line[]> lines_;
-    std::size_t size_ = 0;
-};
-
-
-// TODO implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)
-// TODO: is it still used ? If yes move it somewhere else. Method from internal mods ?
-void server_draw_text(
-    GraphicApi & drawable, Font const & font,
-    int16_t x, int16_t y, const char * text,
-    RDPColor fgcolor, RDPColor bgcolor,
-    ColorCtx color_ctx,
-    Rect clip
-);
 
 }  // namespace gdi

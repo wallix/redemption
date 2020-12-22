@@ -22,6 +22,8 @@
 
 #include "mod/internal/widget/grid.hpp"
 
+class Font;
+
 struct WidgetLabelGrid : public WidgetGrid
 {
     static constexpr unsigned x_padding_label = 3;

@@ -26,6 +26,7 @@
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
 #include "gdi/graphic_api.hpp"
+#include "gdi/text_metrics.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/bitmap.hpp"

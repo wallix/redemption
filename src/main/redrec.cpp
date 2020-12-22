@@ -19,7 +19,7 @@ namespace
 
     void usage()
     {
-        std::cerr << "Usage [{rec|ver|dec}] [hex-hmac_key hex-key] lib-args";
+        std::cerr << "Usage [{rec|ver|dec}] [hex-hmac_key hex-key] lib-args" << std::endl;
     }
 }
 
