@@ -229,22 +229,6 @@ class RdpClient
         emscripten::val crypto;
     };
 
-    struct JsAuthentitifier : NullAuthentifier
-    {
-        void set_auth_error_message(const char * error_message) override
-        {
-            LOG(LOG_ERR, "RdpClient: %s", error_message);
-        }
-
-        void report(const char * reason, const char * message) override
-        {
-            LOG(LOG_NOTICE, "RdpClient: %s: %s", reason, message);
-        }
-
-        // void log6(LogId /*id*/, KVList /*kv_list*/) override
-        // {}
-    };
-
     TimeBase time_base;
     EventContainer events;
 
@@ -262,7 +246,7 @@ class RdpClient
     Inifile ini;
 
     JsRandom js_rand;
-    JsAuthentitifier authentifier;
+    NullSessionLog session_log;
     NullLicenseStore license_store;
     RedirectionInfo redir_info;
 
@@ -443,7 +427,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd, osd, events, authentifier, front, client_info,
+            trans, time_base, gd, osd, events, session_log, front, client_info,
             redir_info, js_rand, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);

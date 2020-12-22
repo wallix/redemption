@@ -49,7 +49,7 @@ void Front::add_channel_receiver(ChannelReceiver channel_receiver)
     this->channels.emplace_back(Channel{channel_receiver.ctx, channel_receiver.do_receive});
 }
 
-bool Front::can_be_start_capture(bool /*force_capture*/)
+bool Front::can_be_start_capture(bool /*force_capture*/, SessionLogApi& /*session_log*/)
 {
     return false;
 }
