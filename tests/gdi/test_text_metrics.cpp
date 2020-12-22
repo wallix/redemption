@@ -22,13 +22,17 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/compare_collection.hpp"
+#include "test_only/test_framework/check_img.hpp"
 
 #include "gdi/text_metrics.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 
 #if !REDEMPTION_UNIT_TEST_FAST_CHECK
 #include <iomanip>
 #endif
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/gdi/text_metrics/"
 
 
 RED_AUTO_TEST_CASE(TextMetrics)
@@ -268,4 +272,30 @@ RED_AUTO_TEST_CASE(MultiLineTextMetrics)
         {"that your actions may be monitored if", 285},
         {"unauthorized usage is suspected.", 250},
     );
+}
+
+
+RED_AUTO_TEST_CASE(TestServerDrawText)
+{
+    auto& font = global_font_deja_vu_14();
+
+    const uint16_t w = 1800;
+    const uint16_t h = 30;
+    TestGraphic gd(w, h);
+
+    char const * text = ""
+        "Unauthorized access to this system is forbidden and will be prosecuted"
+        " by law. By accessing this system, you agree that your actions may be"
+        " monitored if unauthorized usage is suspected."
+    ;
+
+    using color_encoder = encode_color24;
+    gdi::server_draw_text(
+        gd, font, 0, 0, text,
+        color_encoder()(NamedBGRColor::CYAN),
+        color_encoder()(NamedBGRColor::BLUE),
+        gdi::ColorCtx::from_bpp(color_encoder::bpp, nullptr),
+        Rect(0, 0, w, h));
+
+    RED_CHECK_IMG(gd, IMG_TEST_PATH "server_draw_text1.png");
 }
