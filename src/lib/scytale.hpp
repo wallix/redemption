@@ -18,6 +18,8 @@
    Author(s): Christophe Grosjean, Jonathan Poelen
 */
 
+#pragma once
+
 #include "cxx/cxx.hpp"
 #include "capture/cryptofile.hpp"
 
