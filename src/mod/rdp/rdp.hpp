@@ -763,7 +763,7 @@ private:
 
 public:
     void create_session_probe_virtual_channel(
-        SessionProbeVirtualChannel::AclVariables vars,
+        SessionProbeVariables vars,
         FrontAPI& front,
         ServerTransportContext stc,
         rdp_api& rdp, const Language & lang,

@@ -24,7 +24,7 @@ local types, contents = {}, {}, {}
 function file(content, filename)
     local type = patternVarFile:match(content)
     if type then
-        types[type] = {filename, match_and_setk(patternVar, content, false)}
+        types[type] = {filename=filename, values=match_and_setk(patternVar, content, false)}
     end
 
     contents[filename] = content
@@ -33,10 +33,9 @@ function file(content, filename)
 end
 
 function terminate()
-    local r = 0
     for type,t in pairs(types) do
-        local filename = t[1]
-        local values = t[2]
+        local filename = t.filename
+        local values = t.values
 
         local datas = {}
 
@@ -64,8 +63,13 @@ function terminate()
                 values['cfg::translation::login_language'] = true
             end
         end
+    end
 
-        r = r + utils.count_error(values, filename .. ": %s not used with " .. type)
+    utils.copy_setk(types['SessionProbeVariables'].values, types['ModRdpVariables'].values)
+
+    local r = 0
+    for type,t in pairs(types) do
+        r = r + utils.count_error(t.values, t.filename .. ": %s not used with " .. type)
     end
 
     return r

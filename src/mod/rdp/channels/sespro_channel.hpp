@@ -67,19 +67,19 @@ enum {
     OPTION_DISCONNECT_SESSION_INSTEAD_OF_LOGOFF_SESSION         = 0x00000010
 };
 
+using SessionProbeVariables = vcfg::variables<
+    vcfg::var<cfg::context::rd_shadow_invitation_error_code,    vcfg::accessmode::set>,
+    vcfg::var<cfg::context::rd_shadow_invitation_error_message, vcfg::accessmode::set>,
+    vcfg::var<cfg::context::rd_shadow_userdata,                 vcfg::accessmode::set>,
+    vcfg::var<cfg::context::rd_shadow_invitation_id,            vcfg::accessmode::set>,
+    vcfg::var<cfg::context::rd_shadow_invitation_addr,          vcfg::accessmode::set>,
+    vcfg::var<cfg::context::rd_shadow_invitation_port,          vcfg::accessmode::set>,
+    vcfg::var<cfg::context::rd_shadow_available,                vcfg::accessmode::set>
+>;
+
 class SessionProbeVirtualChannel final : public BaseVirtualChannel
 {
 public:
-    using AclVariables = vcfg::variables<
-        vcfg::var<cfg::context::rd_shadow_invitation_error_code,    vcfg::accessmode::set>,
-        vcfg::var<cfg::context::rd_shadow_invitation_error_message, vcfg::accessmode::set>,
-        vcfg::var<cfg::context::rd_shadow_userdata,                 vcfg::accessmode::set>,
-        vcfg::var<cfg::context::rd_shadow_invitation_id,            vcfg::accessmode::set>,
-        vcfg::var<cfg::context::rd_shadow_invitation_addr,          vcfg::accessmode::set>,
-        vcfg::var<cfg::context::rd_shadow_invitation_port,          vcfg::accessmode::set>,
-        vcfg::var<cfg::context::rd_shadow_available,                vcfg::accessmode::set>
-    >;
-
     struct Callbacks {
         virtual void freeze_screen() = 0;
         virtual void disable_graphics_update() = 0;
@@ -140,7 +140,7 @@ private:
     EventsGuard events_guard;
     Callbacks & callbacks;
     SessionLogApi& session_log;
-    AclVariables vars;
+    SessionProbeVariables vars;
 
     RDPVerbose verbose;
     EventRef session_probe_timer;
@@ -195,7 +195,7 @@ public:
         TimeBase& time_base,
         EventContainer& events,
         SessionLogApi& session_log,
-        AclVariables vars,
+        SessionProbeVariables vars,
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         rdp_api& rdp,

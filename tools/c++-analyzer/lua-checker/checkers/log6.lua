@@ -1,3 +1,5 @@
+local utils = require'utils'
+
 local Log6, LogIds, NewLinePos
 
 do
