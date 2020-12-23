@@ -436,7 +436,7 @@ void set_rows_from_image_chunk(
     // TODO check png row_size is identical to drawable rowsize
 
     uint8_t tmp[8192*4];
-    assert(sizeof(tmp) / sizeof(tmp[0]) >= width);
+    assert(sizeof(tmp) / sizeof(tmp[0]) / 4 >= width);
     for (size_t k = 0; k < height; ++k) {
         png_read_row(png.ppng, tmp, nullptr);
 

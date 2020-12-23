@@ -29,7 +29,6 @@
 #include "transport/crypto_transport.hpp"
 #include "test_only/ostream_buffered.hpp"
 
-#include <fstream>
 #include <iostream>
 
 namespace
@@ -209,108 +208,11 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
         "--mwrm-path",
             FIXTURES_PATH "/verifier/recorded/",
         "--verbose",
-            "10",
-        "--ignore-stat-info"
+            "10"
     };
 
     TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
         "No error detected during the data verification.\n\nverify ok\n"_av, ""_av);
-}
-
-RED_AUTO_TEST_CASE_WD(TestVerifierUpdateData, wd)
-{
-#define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" /*NOLINT*/ \
-    ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
-#define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" /*NOLINT*/ \
-    ",20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"
-
-    auto recorded_wd = wd.create_subdirectory("recorded");
-    auto hash_wd = wd.create_subdirectory("hash");
-
-    auto tmp_recorded_mwrm = recorded_wd.add_file(MWRM_FILENAME).string();
-    auto tmp_recorded_wrm = recorded_wd.add_file(WRM_FILENAME).string();
-    auto tmp_hash_mwrm = hash_wd.add_file(MWRM_FILENAME).string();
-
-    std::ofstream(tmp_hash_mwrm, std::ios::trunc)
-      << std::ifstream(FIXTURES_PATH "/verifier/hash/" MWRM_FILENAME).rdbuf();
-    std::ofstream(tmp_recorded_mwrm, std::ios::trunc)
-      << std::ifstream(FIXTURES_PATH "/verifier/recorded/" MWRM_FILENAME).rdbuf();
-    std::ofstream(tmp_recorded_wrm, std::ios::trunc | std::ios::binary)
-      << std::ifstream(FIXTURES_PATH "/verifier/recorded/" WRM_FILENAME).rdbuf();
-
-    auto str_stat = [](std::string const& filename){
-        struct stat64 stat;
-        ::stat64(filename.c_str(), &stat);
-        return str_concat(
-            std::to_string(stat.st_size), ' ',
-            std::to_string(stat.st_mode), ' ',
-            std::to_string(stat.st_uid), ' ',
-            std::to_string(stat.st_gid), ' ',
-            std::to_string(stat.st_dev), ' ',
-            std::to_string(stat.st_ino), ' ',
-            std::to_string(stat.st_mtime), ' ',
-            std::to_string(stat.st_ctime)
-        );
-    };
-
-    std::string mwrm_hash_contents_before = str_concat(
-        "v2\n\n\n" MWRM_FILENAME " ", str_stat(tmp_recorded_mwrm), "\n");
-    std::string mwrm_recorded_contents = str_concat(
-        "v2\n800 600\nnochecksum\n\n\n/var/wab/recorded/rdp/"
-        WRM_FILENAME " ", str_stat(tmp_recorded_wrm), " 1455815820 1455816422\n");
-
-    RED_CHECK_NE(RED_CHECK_GET_FILE_CONTENTS(tmp_hash_mwrm), mwrm_hash_contents_before);
-    RED_CHECK_NE(RED_CHECK_GET_FILE_CONTENTS(tmp_recorded_mwrm), mwrm_recorded_contents);
-
-    char const * argv[] {
-        "verifier.py",
-        "redver",
-        "-i",
-            MWRM_FILENAME,
-        "--hash-path",
-            hash_wd.dirname(),
-        "--mwrm-path",
-            recorded_wd.dirname(),
-        "--verbose",
-            "10",
-        "--update-stat-info"
-    };
-
-    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
-        "No error detected during the data verification.\n\nverify ok\n"_av, ""_av);
-
-    std::string mwrm_hash_contents_after = str_concat(
-        "v2\n\n\n" MWRM_FILENAME " ", str_stat(tmp_recorded_mwrm), "\n");
-
-    RED_CHECK_NE(mwrm_hash_contents_before, mwrm_hash_contents_after);
-    RED_CHECK_FILE_CONTENTS(tmp_hash_mwrm, mwrm_hash_contents_after);
-    RED_CHECK_FILE_CONTENTS(tmp_recorded_mwrm, mwrm_recorded_contents);
-
-#undef WRM_FILENAME
-#undef MWRM_FILENAME
-}
-
-RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
-{
-    char const * argv[] {
-        "verifier.py",
-        "redver",
-        "-i",
-            "toto@10.10.43.13,Administrateur@QA@cible"
-            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-        "--hash-path",
-            FIXTURES_PATH "/verifier/hash/",
-        "--mwrm-path",
-            FIXTURES_PATH "/verifier/recorded/",
-        "--verbose",
-            "10",
-    };
-
-    TEST_DO_MAIN(argv, 1, hmac_key, trace_fn, "verify failed\n"_av,
-        "File \"" FIXTURES_PATH "/verifier/recorded/"
-            "toto@10.10.43.13,Administrateur@QA@cible"
-            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
-            "\" is invalid! (metafile changed)\n\n"_av);
 }
 
 namespace
@@ -534,39 +436,13 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, 0, hmac_key_2016, trace_20161025_fn,
-        "No error detected during the data verification.\n\nverify ok\n"_av,
+    TEST_DO_MAIN(argv, 1, hmac_key_2016, trace_20161025_fn,
+        "verify failed\n"_av,
             "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash/"
             "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025"
             "-164758,wab-4-2-4.yourdomain,7192.mwrm"
             "\"\n\n"_av);
 }
-
-
-//python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm
-//Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm".
-//Input file is unencrypted (no hash).
-//verify ok (1)
-
-RED_AUTO_TEST_CASE(TestVerifier2510)
-{
-    char const * argv[] {
-        "verifier.py", "redver",
-        "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
-            "-165619,wab-4-2-4.yourdomain,2510.mwrm",
-        "--hash-path", FIXTURES_PATH "/verifier/hash/",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "--verbose", "10",
-    };
-
-    TEST_DO_MAIN(argv, 0, hmac_key_2016, trace_20161025_fn,
-        "No error detected during the data verification.\n\nverify ok\n"_av,
-            "Cannot read hash file: \"" FIXTURES_PATH "/verifier/hash/"
-            "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
-            "-165619,wab-4-2-4.yourdomain,2510.mwrm"
-            "\"\n\n"_av);
-}
-
 
 //python -O /opt/wab/bin/verifier.py -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm
 //Input file is "/var/wab/recorded/rdp/cgrosjean@10.10.43.13,proxyuser@win2008,20161025-181703,wab-4-2-4.yourdomain,6759.mwrm".
@@ -848,11 +724,9 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
         "--verbose", "10",
     };
 
-    TEST_DO_MAIN(argv, 1, hmac_key_2016, trace_20161025_fn, "verify failed\n"_av,
-        "File \"" FIXTURES_PATH "/verifier/recorded/"
-            "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026"
-            "-132156,wab-4-2-4.yourdomain,9904.mwrm\""
-            " is invalid! (metafile changed)\n\n"_av);
+    TEST_DO_MAIN(argv, 0, hmac_key_2016, trace_20161025_fn,
+        "No error detected during the data verification.\n\nverify ok\n"_av,
+        ""_av);
 }
 
 #ifndef REDEMPTION_NO_FFMPEG
@@ -1026,7 +900,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
         "-i",
             FIXTURES_PATH "/kpd_input.mwrm",
         "--config-file",
-            FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
+            FIXTURES_PATH "/disable_kbd_input_in_meta.ini",
         "--mwrm-path", FIXTURES_PATH,
         "-o",
             output.c_str(),
@@ -1061,6 +935,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
+        "--ignore-file-size",
         "-D", mp4_options,
     };
 
@@ -1087,6 +962,7 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
         "--chunk",
         "--video-codec", "mp4",
         "--json-pgs",
+        "--ignore-file-size",
         "-D", mp4_options,
     };
 
@@ -1097,5 +973,71 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.meta"),       0);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.pgs"),        37);
+}
+
+RED_AUTO_TEST_CASE_WD(TestMetaCapture, wd)
+{
+    auto output = wd.dirname().string() + "test_capture.mwrm";
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/meta_message.mwrm",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded/",
+        "-o", output.c_str(),
+        "--chunk",
+        "--video-codec", "mp4",
+        "--json-pgs",
+        "-D", "profile=baseline preset=ultrafast flags=+qscale b=80000",
+    };
+
+    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
+        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
+
+    RED_CHECK_FILE_CONTENTS(wd.add_file("test_capture.meta"),
+        "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
+        "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
+        "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n"_av);
+
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 244);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture.pgs"), 37);
+}
+
+// same as previous test, but without KBD_INPUT
+RED_AUTO_TEST_CASE_WD(TestMetaCaptureDisableKbdInput, wd)
+{
+    auto output = wd.dirname().string() + "test_capture.mwrm";
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/verifier/recorded/meta_message.mwrm",
+        "--mwrm-path",
+            FIXTURES_PATH "/verifier/recorded/",
+        "--config-file",
+            FIXTURES_PATH "/disable_kbd_input_in_meta.ini",
+        "-o", output.c_str(),
+        "--chunk",
+        "--video-codec", "mp4",
+        "--json-pgs",
+        "-D", "profile=baseline preset=ultrafast flags=+qscale b=80000",
+    };
+
+    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
+        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
+
+    RED_CHECK_FILE_CONTENTS(wd.add_file("test_capture.meta"),
+        "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
+        "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
+        "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+        "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"_av);
+
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 244);
+    RED_TEST_FILE_SIZE(wd.add_file("test_capture.pgs"), 37);
 }
 #endif

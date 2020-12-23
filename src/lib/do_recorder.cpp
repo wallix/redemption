@@ -52,6 +52,7 @@
 #include "utils/sugar/iter.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/strutils.hpp"
 
 
 #include <string>
@@ -69,6 +70,8 @@
 
 #include <csignal>
 
+namespace
+{
 
 enum {
     USE_ORIGINAL_COMPRESSION_ALGORITHM = 0xFFFFFFFF
@@ -77,65 +80,6 @@ enum {
 enum {
     USE_ORIGINAL_COLOR_DEPTH           = 0xFFFFFFFF
 };
-
-
-void clear_files_flv_meta_png(const char * path, const char * prefix)
-{
-    DIR * d{opendir(path)};
-    if (!d){
-        LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
-        return;
-    }
-    SCOPE_EXIT(closedir(d));
-
-    char buffer[8192];
-    size_t path_len = strlen(path);
-    size_t prefix_len = strlen(prefix);
-    size_t file_len = 1024;
-    if (file_len + path_len + 1 > sizeof(buffer)) {
-        LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
-        return;
-    }
-    strncpy(buffer, path, file_len + path_len + 1);
-    if (buffer[path_len] != '/'){
-        buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
-    }
-
-    while (struct dirent * result = readdir(d)) {
-        if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
-            continue;
-        }
-
-        if (0 != strncmp(result->d_name, prefix, prefix_len)){
-            continue;
-        }
-
-        strncpy(buffer + path_len, result->d_name, file_len);
-        size_t const name_len = strlen(result->d_name);
-        const char * eob = buffer + path_len + name_len;
-        const bool extension = ((name_len > 4) && (eob[-4] == '.')
-            && ( ((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
-                || ((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
-                || ((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's')) ))
-            || ((name_len > 5) && (eob[-5] == '.')
-                && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
-            ;
-
-        if (!extension){
-            continue;
-        }
-
-        struct stat st;
-        if (stat(buffer, &st) < 0){
-            LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
-            continue;
-        }
-        if (unlink(buffer) < 0){
-            LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
-        }
-    }
-}
-
 
 class ChunkToFile
 {
@@ -240,18 +184,18 @@ class FileToChunk
 
     ChunkToFile * consumer = nullptr;
 
-    timeval record_now;
-
     bool meta_ok = false;
 
     WrmMetaChunk info;
 
 public:
-    REDEMPTION_VERBOSE_FLAGS(private, verbose)
+    enum class Verbose : uint32_t
     {
         none,
         end_of_transport = 1,
     };
+
+    Verbose verbose;
 
     FileToChunk(Transport * trans, Verbose verbose)
         : stream(this->stream_buf)
@@ -269,7 +213,6 @@ public:
     }
 
     WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
-    timeval get_current_time() const noexcept { return this->record_now; }
 
     void set_consumer(ChunkToFile & chunk_device) {
         assert(!this->consumer);
@@ -315,7 +258,7 @@ private:
                 throw;
             }
 
-            LOG_IF(bool(this->verbose & Verbose::end_of_transport), LOG_INFO,
+            LOG_IF(this->verbose == Verbose::end_of_transport, LOG_INFO,
                 "receive error %u : end of transport", e.id);
             return false;
         }
@@ -362,9 +305,6 @@ static int do_recompress(
         std::cerr << "Failed to create directory: \"" << outfile.directory << "\"" << std::endl;
     }
 
-//    if (ini.get<cfg::video::wrm_compression_algorithm>() == USE_ORIGINAL_COMPRESSION_ALGORITHM) {
-//        ini.set<cfg::video::wrm_compression_algorithm>(player.info_compression_algorithm);
-//    }
     ini.set<cfg::video::wrm_compression_algorithm>(
         (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
         ? player.get_wrm_info().compression_algorithm
@@ -397,10 +337,6 @@ static int do_recompress(
 
             player.play(program_requested_to_shutdown);
         }
-
-        //if (program_requested_to_shutdown) {
-        //    trans.request_full_cleaning();
-        //}
     }
     catch (...) {
         return_code = -1;
@@ -412,67 +348,25 @@ static int do_recompress(
 
 using EncryptionMode = InCryptoTransport::EncryptionMode;
 
-inline void load_hash(
-    MetaLine & hash_line,
-    const std::string & full_hash_path, const std::string & input_filename,
-    WrmVersion infile_version, bool infile_is_checksumed,
-    CryptoContext & cctx, Fstat & fstat, bool infile_is_encrypted, int verbose
-) {
-    InCryptoTransport in_hash_fb(cctx, infile_is_encrypted ? EncryptionMode::Encrypted : EncryptionMode::NotEncrypted, fstat);
-
-    try {
-        in_hash_fb.open(full_hash_path.c_str());
-    }
-    catch (Error const &) {
-        LOG(LOG_ERR, "Open load_hash failed");
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
-
-    LOG_IF(verbose, LOG_INFO, "%s", infile_version == WrmVersion::v1 ? "Hash data v1" : "Hash data v2 or higher");
-    MwrmReader reader(in_hash_fb);
-    reader.set_header({infile_version, infile_is_checksumed});
-    reader.read_meta_hash_line(hash_line);
-    if (input_filename != hash_line.filename) {
-        throw Error(ERR_TRANSPORT_READ_FAILED);
-    }
-}
-
-static inline bool meta_line_stat_equal_stat(MetaLine const & metadata, struct stat64 const & sb)
+static inline bool check_file(
+    const std::string & filename, const MetaLine & metadata,
+    bool quick, MetaHeader const& meta_header, uint8_t const (&hmac_key)[HMAC_KEY_LENGTH])
 {
-    return
-//           metadata.dev == sb.st_dev
-//        && metadata.ino == sb.st_ino
-//        &&
-           metadata.mode == sb.st_mode
-        && metadata.uid == sb.st_uid
-        && metadata.gid == sb.st_gid
-        && metadata.mtime == sb.st_mtime
-//        && metadata.ctime == sb.st_ctime
-        && metadata.size == sb.st_size;
-}
-
-struct out_is_mismatch
-{
-    bool & is_mismatch;
-};
-
-static inline int check_file(const std::string & filename, const MetaLine & metadata,
-                      bool quick, bool has_checksum, bool ignore_stat_info,
-                      uint8_t const (&hmac_key)[HMAC_KEY_LENGTH], bool update_stat_info, out_is_mismatch has_mismatch_stat)
-{
-    has_mismatch_stat.is_mismatch = false;
-    struct stat64 sb {};
-    if (lstat64(filename.c_str(), &sb) < 0){
-        std::cerr << "File \"" << filename << "\" is invalid! (can't stat file)\n" << std::endl;
-        return false;
-    }
-
-    if (has_checksum){
-        if (sb.st_size != metadata.size){
-            std::cerr << "File \"" << filename << "\" is invalid! (size mismatch)\n" << std::endl;
+    if (meta_header.version != WrmVersion::v1) {
+        struct stat64 sb {};
+        if (lstat64(filename.c_str(), &sb) < 0){
+            std::cerr << "File \"" << filename << "\" is invalid! (can't stat file)\n" << std::endl;
             return false;
         }
 
+        if (sb.st_size != metadata.size){
+            std::cerr << "File \"" << filename << "\" is invalid! (size mismatch "
+                << sb.st_size << " != " << metadata.size << ")\n" << std::endl;
+            return false;
+        }
+    }
+
+    if (meta_header.has_checksum){
         InCryptoTransport::HASH hash;
         bool read_is_ok = quick
             ? InCryptoTransport::read_qhash(filename.c_str(), hmac_key, hash)
@@ -482,68 +376,20 @@ static inline int check_file(const std::string & filename, const MetaLine & meta
             return false;
         }
 
-        if (0 != memcmp(hash.hash, quick?metadata.hash1:metadata.hash2, MD_HASH::DIGEST_LENGTH)){
+        if (0 != memcmp(hash.hash, quick ? metadata.hash1 : metadata.hash2, MD_HASH::DIGEST_LENGTH)){
             std::cerr << "Error checking file \"" << filename << "\" (invalid checksum)\n" << std::endl;
             return false;
         }
     }
-    else if ((!ignore_stat_info || update_stat_info) && !meta_line_stat_equal_stat(metadata, sb)) {
-        if (update_stat_info) {
-            has_mismatch_stat.is_mismatch = true;
-        }
-        if (!ignore_stat_info) {
-            std::cerr << "File \"" << filename << "\" is invalid! (metafile changed)\n" << std::endl;
-        }
-        return false;
-    }
+
     return true;
 }
-
-class OutFilenameCp
-{
-    OutFileTransport file;
-    char const * filename;
-
-public:
-    OutFilenameCp(const char * filename, mode_t mode)
-      : file(unique_fd{::open(filename, O_WRONLY | O_CREAT, mode)})
-      , filename(filename)
-    {}
-
-    bool rename_to(const char * new_filename) noexcept
-    {
-        if (!rename(this->filename, new_filename)) {
-            this->filename = nullptr;
-            return true;
-        }
-        return false;
-    }
-
-    ~OutFilenameCp()
-    {
-        if (this->filename) {
-            remove(this->filename);
-        }
-    }
-
-    void write(chars_view data)
-    {
-        this->file.send(data);
-    }
-
-    [[nodiscard]] bool is_open() const noexcept
-    {
-        return -1 != this->file.get_fd();
-    }
-};
 
 static inline int check_encrypted_or_checksumed(
     std::string const & input_filename,
     std::string const & mwrm_path,
     std::string const & hash_path,
     bool quick_check,
-    bool ignore_stat_info,
-    bool update_stat_info,
     CryptoContext & cctx,
     Fstat & fstat,
     uint32_t verbose
@@ -566,12 +412,6 @@ static inline int check_encrypted_or_checksumed(
     MwrmReader reader(ibuf);
     reader.read_meta_headers();
 
-    // if we have version 1 header, ignore stat info
-    ignore_stat_info |= (reader.get_header().version == WrmVersion::v1);
-    // if we have version >1 header and not checksum, update stat info
-    update_stat_info &= (int(reader.get_header().version) > int(WrmVersion::v1)) & !reader.get_header().has_checksum & !ibuf.is_encrypted();
-    ignore_stat_info |= update_stat_info;
-
     /*****************
     * Load file hash *
     *****************/
@@ -582,244 +422,108 @@ static inline int check_encrypted_or_checksumed(
     std::string const full_hash_path = hash_path + input_filename;
 
     // if reading hash fails
+    bool hash_file_is_open = false;
     try {
-        load_hash(hash_line, full_hash_path, input_filename, reader.get_header().version, reader.get_header().has_checksum, cctx, fstat, infile_is_encrypted, verbose);
-    }
-    catch (...) {
-        std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"\n" << std::endl;
-        // this is an error because checksum comes from hash file
-        // and extended stat info also comes from hash file
-        // if we can't read hash files we are in troubles
-        if (reader.get_header().has_checksum || !ignore_stat_info){
-            return 1;
+        auto const encryption_mode = infile_is_encrypted
+            ? EncryptionMode::Encrypted
+            : EncryptionMode::NotEncrypted;
+        InCryptoTransport hash_file(cctx, encryption_mode, fstat);
+
+        hash_file.open(full_hash_path.c_str());
+        hash_file_is_open = true;
+
+        auto const infile_version = reader.get_header().version;
+        LOG_IF(verbose, LOG_INFO, "%s", infile_version == WrmVersion::v1
+            ? "Hash data v1"
+            : "Hash data v2 or higher");
+
+        MwrmReader hash_reader(hash_file);
+        hash_reader.set_header({infile_version, reader.get_header().has_checksum});
+        hash_reader.read_meta_hash_line(hash_line);
+        if (input_filename != hash_line.filename) {
+            throw Error(ERR_TRANSPORT_READ_FAILED);
         }
     }
-
-    bool has_mismatch_stat_hash = false;
+    catch (...) {
+        if (!hash_file_is_open) {
+            LOG(LOG_ERR, "Open load_hash failed");
+        }
+        std::cerr << "Cannot read hash file: \"" << full_hash_path << "\"\n" << std::endl;
+        return 1;
+    }
 
     /******************
     * Check mwrm file *
     ******************/
     if (!check_file(
-        full_mwrm_filename, hash_line, quick_check, reader.get_header().has_checksum,
-        ignore_stat_info, cctx.get_hmac_key(),
-        update_stat_info, out_is_mismatch{has_mismatch_stat_hash}
+        full_mwrm_filename, hash_line, quick_check, reader.get_header(),
+        cctx.get_hmac_key()
     )){
-        if (!has_mismatch_stat_hash) {
-            return 1;
-        }
+        return 1;
     }
-
-    struct MetaLine2CtxForRewriteStat
-    {
-        std::string wrm_filename;
-        std::string filename;
-        time_t start_time;
-        time_t stop_time;
-    };
-    std::vector<MetaLine2CtxForRewriteStat> meta_line_ctx_list;
-    bool wrm_stat_is_ok = true;
-
 
     MetaLine meta_line_wrm;
 
     while (Transport::Read::Ok == reader.read_meta_line(meta_line_wrm)) {
         size_t tmp_wrm_filename_len = 0;
-        const char * tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
-        std::string const meta_line_wrm_filename = std::string(tmp_wrm_filename, tmp_wrm_filename_len);
-        std::string const full_part_filename = mwrm_path + meta_line_wrm_filename;
+        char const* tmp_wrm_filename = basename_len(meta_line_wrm.filename, tmp_wrm_filename_len);
+        auto const meta_line_wrm_filename = std::string_view(tmp_wrm_filename, tmp_wrm_filename_len);
+        auto const full_part_filename = str_concat(mwrm_path, meta_line_wrm_filename);
         // LOG(LOG_INFO, "checking part %s", full_part_filename);
 
-        bool has_mismatch_stat_mwrm = false;
         if (!check_file(
-            full_part_filename, meta_line_wrm, quick_check, reader.get_header().has_checksum,
-            ignore_stat_info, cctx.get_hmac_key(),
-            update_stat_info, out_is_mismatch{has_mismatch_stat_mwrm})
+            full_part_filename, meta_line_wrm, quick_check, reader.get_header(),
+            cctx.get_hmac_key())
         ){
-            if (has_mismatch_stat_mwrm) {
-                wrm_stat_is_ok = false;
-            }
-            else {
-                return 1;
-            }
-        }
-
-        if (update_stat_info) {
-            meta_line_ctx_list.push_back({
-                full_part_filename,
-                meta_line_wrm.filename,
-                meta_line_wrm.start_time,
-                meta_line_wrm.stop_time
-            });
-        }
-    }
-
-    ibuf.close();
-
-
-    /*******************
-    * Rewite stat info *
-    ********************/
-    if (!wrm_stat_is_ok) {
-        LOG_IF(verbose, LOG_INFO, "%s", "Update mwrm file");
-
-        has_mismatch_stat_hash = true;
-
-        auto const str_full_mwrm_filename_tmp = full_mwrm_filename + ".tmp";
-        auto * const full_mwrm_filename_tmp = str_full_mwrm_filename_tmp.c_str();
-
-        OutFilenameCp mwrm_file_cp(
-            full_mwrm_filename_tmp, S_IRUSR | S_IRGRP | S_IWUSR);
-        if (not mwrm_file_cp.is_open()) {
-            LOG(LOG_ERR, "Failed to open meta file %s", full_mwrm_filename_tmp);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-        }
-
-        if (chmod(full_mwrm_filename_tmp, S_IRUSR | S_IRGRP) == -1) {
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
-                , full_mwrm_filename_tmp
-                , "u+r, g+r"
-                , strerror(errno), errno);
             return 1;
         }
-
-        // copy mwrm headers
-        {
-            MwrmWriterBuf mwrm_file_buf;
-            mwrm_file_buf.write_header(reader.get_header());
-            mwrm_file_cp.write(mwrm_file_buf.buffer());
-        }
-
-        for (MetaLine2CtxForRewriteStat & ctx : meta_line_ctx_list) {
-            struct stat sb;
-            if (lstat(ctx.wrm_filename.c_str(), &sb) < 0) {
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0);
-            }
-
-            MwrmWriterBuf mwrm_file_buf;
-            MwrmWriterBuf::HashArray dummy_hash;
-            mwrm_file_buf.write_line(
-                ctx.filename.c_str(), sb,
-                ctx.start_time, ctx.stop_time,
-                false, dummy_hash, dummy_hash);
-            mwrm_file_cp.write(mwrm_file_buf.buffer());
-        }
-
-        if (not mwrm_file_cp.rename_to(full_mwrm_filename.c_str())) {
-            std::cerr << strerror(errno) << std::endl;
-            return 1;
-        }
-
-        LOG_IF(verbose, LOG_INFO, "%s", "Update mwrm file, done");
-    }
-
-    if (has_mismatch_stat_hash) {
-        LOG_IF(verbose, LOG_INFO, "%s", "Update hash file");
-
-        auto const full_hash_path_tmp = full_hash_path + ".tmp";
-        auto * const hash_filename = full_hash_path_tmp.c_str();
-        auto * const meta_filename = full_mwrm_filename.c_str();
-
-        char filename[2048] = {};
-
-        auto meta_output = ParsePath(meta_filename);
-
-        snprintf(filename, sizeof(filename), "%s%s", meta_output.basename.c_str(), meta_output.extension.c_str());
-
-        OutFilenameCp hash_file_cp(hash_filename, S_IRUSR | S_IRGRP);
-        if (hash_file_cp.is_open()) {
-            struct stat stat;
-            int err = ::stat(meta_filename, &stat);
-            if (!err) {
-                MwrmWriterBuf mwrm_file_buf;
-                MwrmWriterBuf::HashArray dummy_hash;
-                mwrm_file_buf.write_hash_file(
-                    filename, stat,
-                    false, dummy_hash, dummy_hash);
-
-                try {
-                    hash_file_cp.write(mwrm_file_buf.buffer());
-                }
-                catch (Error const&) {
-                    err = -1;
-                }
-            }
-            if (err) {
-                LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]", hash_filename, err);
-                return 1;
-            }
-        }
-        else {
-            int e = errno;
-            LOG(LOG_ERR, "Open to transport failed: code=%d", e);
-            errno = e;
-            return 1;
-        }
-
-        if (not hash_file_cp.rename_to(full_hash_path.c_str())) {
-            std::cerr << strerror(errno) << std::endl;
-            return 1;
-        }
-
-        LOG_IF(verbose, LOG_INFO, "%s", "Update hash file, done");
     }
 
     std::cout << "No error detected during the data verification.\n" << std::endl;
+
     return 0;
 }
 
+struct MwrmInfos
+{
+    MetaHeader header {};
+    EncryptionMode encryption_mode;
+    std::vector<MetaLine> wrms;
+};
 
-inline unsigned get_file_count(
-    InMetaSequenceTransport & in_wrm_trans,
-    int64_t & begin_cap, int64_t & end_cap,
-    timeval & begin_record, timeval & end_record,
-    Fstat & fstat, uint64_t & total_wrm_file_len, unsigned & count_wrm_file
-) {
-    auto next_wrm = [&]{
-        struct stat stat {};
-        in_wrm_trans.next();
-        fstat.stat(in_wrm_trans.path(), stat);
-        total_wrm_file_len += stat.st_size;
-        ++count_wrm_file;
-    };
+static inline MwrmInfos load_mwrm_infos(
+    char const* mwrm_filename,
+    EncryptionMode encryption_mode,
+    CryptoContext & cctx, Fstat & fstat)
+{
+    MwrmInfos mwrm_infos;
 
-    next_wrm();
-    begin_record.tv_sec = in_wrm_trans.begin_chunk_time();
-    // less than 1 year means we are given a time relatve to beginning of movie
-    if (begin_cap && (begin_cap < 31536000)) {  // less than 1 year, it is relative not absolute timestamp
-        // begin_capture.tv_usec is 0
-        begin_cap += in_wrm_trans.begin_chunk_time();
+    mwrm_infos.encryption_mode = encryption_mode;
+
+    std::vector<MetaLine>& wrms = mwrm_infos.wrms;
+    wrms.reserve(32);
+
+    InCryptoTransport mwrm_file(cctx, encryption_mode, fstat);
+    MwrmReader mwrm_reader(mwrm_file);
+
+    mwrm_file.open(mwrm_filename);
+    mwrm_reader.read_meta_headers();
+    mwrm_infos.header = mwrm_reader.get_header();
+
+    while (Transport::Read::Ok == mwrm_reader.read_meta_line(wrms.emplace_back())) {
     }
-    if (end_cap && (end_cap < 31536000)) { // less than 1 year, it is relative not absolute timestamp
-        // begin_capture.tv_usec is 0
-        end_cap += in_wrm_trans.begin_chunk_time();
-    }
-    while (begin_cap >= in_wrm_trans.end_chunk_time()) {
-        next_wrm();
-    }
-    unsigned const result = in_wrm_trans.get_seqno(); /*NOLINT(clang-analyzer-deadcode.DeadStores)*/
-    try {
-        do {
-            end_record.tv_sec = in_wrm_trans.end_chunk_time();
-            next_wrm();
-        }
-        while (true);
-    }
-    catch (const Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            throw;
-        }
-    }
-    return result;
+    wrms.pop_back();
+
+    return mwrm_infos;
 }
 
 inline void remove_file(
     InMetaSequenceTransport & in_wrm_trans, const char * hash_path, const char * infile_path
-  , const char * input_filename, const char * infile_extension, bool is_encrypted
+  , const char * input_filename, const char * infile_extension, EncryptionMode encryption_mode
 ) {
     std::vector<std::string> files;
 
-    if (is_encrypted) {
+    if (encryption_mode == EncryptionMode::Encrypted) {
         files.emplace_back(str_concat(hash_path, input_filename, infile_extension));
     }
     files.emplace_back(str_concat(infile_path, input_filename, infile_extension));
@@ -844,7 +548,6 @@ inline void remove_file(
     }
 }
 
-inline
 static void raise_error(
     UpdateProgressData::Format pgs_format,
     std::string const& output_filename,
@@ -865,6 +568,64 @@ static void raise_error(
 
     update_progress_data.raise_error(code, message);
 }
+
+static int raise_error_and_log(
+    UpdateProgressData::Format pgs_format,
+    std::string const& output_filename,
+    int code, zstring_view message)
+{
+    std::cerr << message << std::endl;
+    raise_error(pgs_format, output_filename, -1, message.c_str());
+    return code;
+}
+
+
+static inline int update_filename_and_check_size(
+    UpdateProgressData::Format pgs_format,
+    std::string const& output_filename,
+    std::vector<MetaLine>& wrms,
+    std::string const& other_wrm_durectory,
+    Fstat& fstat,
+    bool ignore_file_size)
+{
+    struct stat st;
+    std::string new_filename = (other_wrm_durectory.empty() || other_wrm_durectory.back() != '/')
+        ? other_wrm_durectory
+        : str_concat(other_wrm_durectory, '/');
+    size_t const new_filename_base_len = new_filename.size();
+
+    for (auto& wrm : wrms) {
+        if (fstat.stat(wrm.filename, st)) {
+            bool has_error = true;
+            if (errno == ENOENT && !other_wrm_durectory.empty()) {
+                size_t len = 0;
+                char const* basename = basename_len(wrm.filename, len);
+                new_filename.resize(new_filename_base_len);
+                new_filename += std::string_view{basename, len};
+                if (utils::strbcpy(wrm.filename, new_filename)) {
+                    has_error = fstat.stat(wrm.filename, st);
+                }
+            }
+
+            if (has_error) {
+                LOG(LOG_INFO, "Wrm file not found: %s", wrm.filename);
+                return raise_error_and_log(pgs_format, output_filename, -1,
+                    "wrm file not fount"_zv);
+            }
+        }
+
+        if (!ignore_file_size && wrm.size != st.st_size) {
+            using ull = unsigned long long;
+            LOG(LOG_INFO, "Wrm file size mismatch (%llu != %llu): %s",
+                ull(wrm.size), ull(st.st_size), wrm.filename);
+            return raise_error_and_log(pgs_format, output_filename, -1,
+                "wrm file size mismatch"_zv);
+        }
+    }
+
+    return 0;
+}
+
 
 static void show_metadata(FileToGraphic const & player) {
     auto& info = player.get_wrm_info();
@@ -1101,58 +862,26 @@ inline void get_join_visibility_rect(
     Rect & out_max_image_frame_rect,
     Rect & out_min_image_frame_rect,
     Dimension & out_max_screen_dim,
-    std::string const& infile_path,
-    std::string const& input_basename,
-    std::string const& infile_extension,
-    std::string const& hash_path,
-    bool infile_is_encrypted,
-    Inifile & ini, CryptoContext & cctx,
+    char const* infile_prefix,
+    char const* infile_extension,
+    EncryptionMode encryption_mode,
+    bool play_video_with_corrupted_bitmap,
+    CryptoContext & cctx,
     Fstat & fstat, uint32_t verbose)
 {
-    char infile_prefix[4096];
-    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
-    ini.set<cfg::video::hash_path>(hash_path);
-
-    auto const encryption_mode = infile_is_encrypted
-      ? InMetaSequenceTransport::EncryptionMode::Encrypted
-      : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
-
-    unsigned file_count = 0;
-    {
-        InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
-        MwrmReader mwrm_reader(buf_meta);
-        MetaLine meta_line;
-
-        buf_meta.open((infile_prefix + infile_extension).c_str());
-        mwrm_reader.read_meta_headers();
-
-        meta_line.start_time = 0;
-        meta_line.stop_time = 0;
-
-        if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
-            while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
-                file_count++;
-            }
-        }
-    }
-
     InMetaSequenceTransport in_wrm_trans(
-        cctx, infile_prefix,
-        infile_extension.c_str(),
+        cctx,
+        infile_prefix,
+        infile_extension,
         encryption_mode,
-        fstat
-    );
+        fstat);
 
     timeval begin_capture = {0, 0};
     timeval end_capture = {0, 0};
 
-    for (unsigned i = 1; i < file_count ; i++) {
-        in_wrm_trans.next();
-    }
-
     FileToGraphic player(
         in_wrm_trans, begin_capture, end_capture,
-        ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+        play_video_with_corrupted_bitmap,
         safe_cast<FileToGraphic::Verbose>(verbose));
 
     player.play(program_requested_to_shutdown);
@@ -1166,7 +895,7 @@ inline void get_join_visibility_rect(
                 out_max_image_frame_rect.cx += 1;
             }
             else if (out_max_image_frame_rect.x > 0) {
-                out_max_image_frame_rect.x  -=1;
+                out_max_image_frame_rect.x  -= 1;
                 out_max_image_frame_rect.cx += 1;
             }
         }
@@ -1187,37 +916,45 @@ inline void get_join_visibility_rect(
     out_max_screen_dim = player.max_screen_dim;
 }
 
-inline int replay(std::string & infile_path, std::string & input_basename, std::string & infile_extension,
-                  std::string const& hash_path,
-                  CaptureFlags const& capture_flags,
-                  UpdateProgressData::Format pgs_format,
-                  bool chunk,
-                  unsigned ocr_version,
-                  std::string const& output_filename,
-                  int64_t begin_cap,
-                  int64_t end_cap,
-                  PngParams & png_params,
-                  VideoParams & video_params,
-                  FullVideoParams const& full_video_params,
-                  int wrm_color_depth,
-                  uint32_t wrm_frame_interval,
-                  std::chrono::seconds wrm_break_interval,
-                  bool infile_is_encrypted,
-                  uint32_t order_count,
-                  bool show_file_metadata,
-                  bool show_statistics,
-                  bool clear,
-                  bool full_video,
-                  bool remove_input_file,
-                  int wrm_compression_algorithm,
-                  std::chrono::seconds video_break_interval,
-                  TraceType encryption_type,
-                  Inifile & ini, CryptoContext & cctx,
-                  Rect const & crop_rect,
-                  Dimension const & max_screen_dim,
-                  Random & rnd, Fstat & fstat,
-                  uint32_t verbose)
+static inline int replay(
+    MwrmInfos const& mwrm_infos,
+    std::string & infile_path,
+    std::string & input_basename,
+    std::string & infile_extension,
+    std::string const& hash_path,
+    CaptureFlags const& capture_flags,
+    UpdateProgressData::Format pgs_format,
+    bool chunk,
+    unsigned ocr_version,
+    std::string const& output_filename,
+    int64_t begin_cap,
+    int64_t end_cap,
+    PngParams & png_params,
+    VideoParams & video_params,
+    FullVideoParams const& full_video_params,
+    int wrm_color_depth,
+    uint32_t wrm_frame_interval,
+    std::chrono::seconds wrm_break_interval,
+    uint32_t order_count,
+    bool show_file_metadata,
+    bool show_statistics,
+    bool clear,
+    bool full_video,
+    bool remove_input_file,
+    int wrm_compression_algorithm,
+    std::chrono::seconds video_break_interval,
+    TraceType encryption_type,
+    Inifile & ini, CryptoContext & cctx,
+    Rect const & crop_rect,
+    Dimension const & max_screen_dim,
+    Random & rnd, Fstat & fstat,
+    uint32_t verbose)
 {
+    if (mwrm_infos.wrms.empty()) {
+        return raise_error_and_log(pgs_format, output_filename, -1,
+            "wrm file not foudn in mwrm file"_zv);
+    }
+
     char infile_prefix[4096];
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
@@ -1233,67 +970,61 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
         ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
     }
 
-    auto const encryption_mode = infile_is_encrypted
-      ? InMetaSequenceTransport::EncryptionMode::Encrypted
-      : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
+    // begin or end relative to end of trace
+    {
+        int64_t const duration = mwrm_infos.wrms.front().stop_time
+                               - mwrm_infos.wrms.back().start_time;
 
-    timeval  begin_record = { 0, 0 };
-    timeval  end_record   = { 0, 0 };
-    unsigned file_count   = 0;
+        if (begin_cap < 0) {
+            begin_cap = std::max(begin_cap + duration, int64_t(0));
+        }
+
+        if (end_cap < 0) {
+            end_cap = std::max(end_cap + duration, int64_t(0));
+        }
+    }
+
+    // begin or end relative to start of trace
+    {
+        // less than 1 year, it is relative not absolute timestamp
+        int64_t relative_time_barrier = 31536000;
+
+        if (begin_cap && begin_cap < relative_time_barrier) {
+            begin_cap += mwrm_infos.wrms.front().start_time;
+        }
+
+        if (end_cap && end_cap < relative_time_barrier) {
+            end_cap += mwrm_infos.wrms.front().start_time;
+        }
+    }
+
+    int file_count = 0;
+
+    // number of file up to begin_cap
+    if (begin_cap)
+    {
+        auto first = mwrm_infos.wrms.begin();
+        auto last = mwrm_infos.wrms.end();
+
+        while (first < last && begin_cap >= first->stop_time) {
+            ++first;
+        }
+
+        if (first == last) {
+            return raise_error_and_log(pgs_format, output_filename, -1,
+                "Asked time not found in mwrm file"_zv);
+        }
+
+        file_count = checked_int{first - mwrm_infos.wrms.begin() + 1};
+    }
+
+    EncryptionMode const encryption_mode = mwrm_infos.encryption_mode;
+
+    timeval  begin_record = { mwrm_infos.wrms.front().start_time, 0 };
+    timeval  end_record   = { mwrm_infos.wrms.back().stop_time, 0 };
+    unsigned count_wrm_file = mwrm_infos.wrms.size();
+    // TODO
     uint64_t total_wrm_file_len = 0;
-    unsigned count_wrm_file = 0;
-    try {
-        // begin or end relative to end of trace
-        if (begin_cap < 0 || end_cap < 0) {
-            InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
-            MwrmReader mwrm_reader(buf_meta);
-            MetaLine meta_line;
-
-            buf_meta.open((infile_prefix + infile_extension).c_str());
-            mwrm_reader.read_meta_headers();
-
-            meta_line.start_time = 0;
-            meta_line.stop_time = 0;
-
-            if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
-                time_t const start_time = meta_line.start_time;
-                while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
-                }
-
-                auto const duration = meta_line.stop_time - start_time;
-
-                if (begin_cap < 0) {
-                    begin_cap = std::max<decltype(begin_cap)>(begin_cap + duration, 0);
-                }
-
-                if (end_cap < 0) {
-                    end_cap = std::max<decltype(end_cap)>(end_cap + duration, 0);
-                }
-            }
-        }
-        InMetaSequenceTransport in_wrm_trans_tmp(
-            cctx,
-            infile_prefix,
-            infile_extension.c_str(),
-            encryption_mode,
-            fstat);
-        file_count = get_file_count(
-            in_wrm_trans_tmp,
-            begin_cap, end_cap,
-            begin_record, end_record,
-            fstat, total_wrm_file_len, count_wrm_file);
-    }
-    catch (const Error & e) {
-        if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
-            std::cerr << "Asked time not found in mwrm file\n";
-        }
-        else {
-            std::cerr << "Error: " << e.errmsg() << std::endl;
-        }
-        const bool msg_with_error_id = false;
-        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
-        return -1;
-    }
 
     InMetaSequenceTransport in_wrm_trans(
         cctx, infile_prefix,
@@ -1321,7 +1052,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             || end_cap != begin_cap);
 
         if (test){
-            for (unsigned i = 1; i < file_count; i++) {
+            for (int i = 1; i < file_count; i++) {
                 in_wrm_trans.next();
             }
 
@@ -1604,7 +1335,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
         remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
                     , input_basename.c_str(), infile_extension.c_str()
-                    , infile_is_encrypted);
+                    , encryption_mode);
     }
 
     std::cout << std::endl;
@@ -1640,8 +1371,8 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, nullptr};
-    VideoParams video_params {5};
-    FullVideoParams full_video_params;
+    VideoParams video_params {5, {}, {}, {}, {}, {}, {}, {}};
+    FullVideoParams full_video_params {};
 
     // video output options
     bool full_video = false; // create full video
@@ -1666,9 +1397,8 @@ struct RecorderParams {
     bool chunk = false;
 
     // verifier options
-    bool        quick_check    = false;
-    bool      ignore_stat_info = false;
-    bool      update_stat_info = false;
+    bool quick_check      = false;
+    bool ignore_file_size = false;
 
     bool json_pgs = false;
 };
@@ -1727,12 +1457,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         cli::option('Q', "quick").help("quick check only")
             .parser(cli::on_off_location(recorder.quick_check)),
 
-        cli::option('S', "ignore-stat-info").help("ignore stat info data mismatch")
-            .parser(cli::on_off_location(recorder.ignore_stat_info)),
-
-        cli::option('U', "update-stat-info").help("update stat info data mismatch  (only if not checksum and no encrypted)")
-            .parser(cli::on_off_location(recorder.update_stat_info)),
-
+        cli::option('S', "ignore-file-size").help("ignore file size mismatch")
+            .parser(cli::on_off_location(recorder.ignore_file_size)),
 
         cli::option('b', "begin").help("begin capture time (in seconds)")
             .parser(cli::arg_location(recorder.begin_cap)).argname("<seconds>"),
@@ -2077,6 +1803,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     return ClRes::Ok;
 }
 
+} // anonymous namespace
 
 extern "C" {
     REDEMPTION_LIB_EXPORT
@@ -2213,28 +1940,54 @@ extern "C" {
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
+            auto const pgs_format = rp.json_pgs ? UpdateProgressData::JSON_FORMAT
+                                                : UpdateProgressData::OLD_FORMAT;
+            auto const encryption_mode = rp.infile_is_encrypted ? EncryptionMode::Encrypted
+                                                                : EncryptionMode::NotEncrypted;
+            auto const mwrm_prefix = str_concat(rp.mwrm_path, rp.input_basename);
+            auto const mwrm_filename = str_concat(mwrm_prefix, rp.infile_extension);
+
+            auto mwrm_infos = load_mwrm_infos(mwrm_filename.c_str(),
+                                              encryption_mode, cctx, fstat);
+
+            if (int r = update_filename_and_check_size(pgs_format, rp.output_filename,
+                                                       mwrm_infos.wrms, rp.mwrm_path,
+                                                       fstat, rp.ignore_file_size)
+            ) {
+                return r;
+            }
+
+            ini.set<cfg::video::hash_path>(rp.hash_path);
+
             Rect      crop_rect;
             Dimension max_screen_dim;
+            if (!mwrm_infos.wrms.empty())
             {
-                Rect      max_joint_visibility_rect;
-                Rect      min_joint_visibility_rect;
+                Rect max_joint_visibility_rect;
+                Rect min_joint_visibility_rect;
                 try {
                     get_join_visibility_rect(
                         max_joint_visibility_rect,
                         min_joint_visibility_rect,
                         max_screen_dim,
-                        rp.mwrm_path, rp.input_basename, rp.infile_extension,
-                        rp.hash_path,
-                        rp.infile_is_encrypted,
-                        ini, cctx, fstat,
+                        mwrm_prefix.c_str(),
+                        rp.infile_extension.c_str(),
+                        encryption_mode,
+                        ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+                        cctx, fstat,
                         verbose
                     );
 
-                    if (ini.get<cfg::video::smart_video_cropping>() == SmartVideoCropping::v2) {
-                        crop_rect = min_joint_visibility_rect;
-                    }
-                    else if (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable) {
-                        crop_rect = max_joint_visibility_rect;
+                    switch (ini.get<cfg::video::smart_video_cropping>())
+                    {
+                        case SmartVideoCropping::v1:
+                            break;
+                        case SmartVideoCropping::v2:
+                            crop_rect = min_joint_visibility_rect;
+                            break;
+                        case SmartVideoCropping::disable:
+                            crop_rect = max_joint_visibility_rect;
+                            break;
                     }
                 }
                 catch (Error const&) {
@@ -2242,10 +1995,13 @@ extern "C" {
                 }
             }
 
-            res = replay(rp.mwrm_path, rp.input_basename, rp.infile_extension,
+            res = replay(mwrm_infos,
+                         rp.mwrm_path,
+                         rp.input_basename,
+                         rp.infile_extension,
                          rp.hash_path,
                          rp.capture_flags,
-                         rp.json_pgs ? UpdateProgressData::JSON_FORMAT : UpdateProgressData::OLD_FORMAT,
+                         pgs_format,
                          rp.chunk,
                          rp.ocr_version,
                          rp.output_filename,
@@ -2257,7 +2013,6 @@ extern "C" {
                          rp.wrm_color_depth,
                          rp.wrm_frame_interval,
                          rp.wrm_break_interval,
-                         rp.infile_is_encrypted,
                          rp.order_count,
                          rp.show_file_metadata,
                          rp.show_statistics,
@@ -2274,31 +2029,29 @@ extern "C" {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;
             }
         break;
-        case 1: // VERifier
-            ini.set<cfg::debug::config>(false);
-            try {
-                Error out_error{NO_ERROR};
-                switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), bytes_view{}, &out_error))
-                {
-                    case EncryptionSchemeTypeResult::Error:
-                        throw out_error; /* NOLINT(misc-throw-by-value-catch-by-reference) */
-                    case EncryptionSchemeTypeResult::OldScheme:
-                        cctx.old_encryption_scheme = true;
-                        break;
-                    default:
-                        break;
-                }
 
-                res = check_encrypted_or_checksumed(
-                    rp.input_filename, rp.mwrm_path, rp.hash_path,
-                    rp.quick_check, rp.ignore_stat_info, rp.update_stat_info,
-                    cctx, fstat, verbose
-                );
-                std::cout << "verify " << (res == 0 ? "ok" : "failed") << std::endl;
-            } catch (const Error & e) {
-                std::cout << "verify failed: with id=" << e.id << std::endl;
+        case 1: { // VERifier
+            Error out_error{NO_ERROR};
+            switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), bytes_view{}, &out_error))
+            {
+                case EncryptionSchemeTypeResult::OldScheme:
+                    cctx.old_encryption_scheme = true;
+                    [[fallthrough]];
+                case EncryptionSchemeTypeResult::NewScheme:
+                case EncryptionSchemeTypeResult::NoEncrypted:
+                    res = check_encrypted_or_checksumed(
+                        rp.input_filename, rp.mwrm_path, rp.hash_path,
+                        rp.quick_check, cctx, fstat, verbose
+                    );
+                    break;
+                case EncryptionSchemeTypeResult::Error:
+                    break;
             }
+
+            std::cout << "verify " << (res == 0 ? "ok" : "failed") << std::endl;
+        }
         break;
+
         default: // DECrypter
             try {
                 Fstat fstat;
@@ -2363,5 +2116,62 @@ extern "C" {
         }
 
         return res;
+    }
+
+    void clear_files_flv_meta_png(const char * path, const char * prefix)
+    {
+        DIR * d{opendir(path)};
+        if (!d){
+            LOG(LOG_WARNING, "Failed to open directory %s [%d: %s]", path, errno, strerror(errno));
+            return;
+        }
+        SCOPE_EXIT(closedir(d));
+
+        char buffer[8192];
+        size_t path_len = strlen(path);
+        size_t prefix_len = strlen(prefix);
+        size_t file_len = 1024;
+        if (file_len + path_len + 1 > sizeof(buffer)) {
+            LOG(LOG_WARNING, "Path len %zu > %zu", file_len + path_len + 1, sizeof(buffer));
+            return;
+        }
+        strncpy(buffer, path, file_len + path_len + 1);
+        if (buffer[path_len] != '/'){
+            buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
+        }
+
+        while (struct dirent * result = readdir(d)) {
+            if ((0 == strcmp(result->d_name, ".")) || (0 == strcmp(result->d_name, ".."))){
+                continue;
+            }
+
+            if (0 != strncmp(result->d_name, prefix, prefix_len)){
+                continue;
+            }
+
+            strncpy(buffer + path_len, result->d_name, file_len);
+            size_t const name_len = strlen(result->d_name);
+            const char * eob = buffer + path_len + name_len;
+            const bool extension = ((name_len > 4) && (eob[-4] == '.')
+                && ( ((eob[-3] == 'f') && (eob[-2] == 'l') && (eob[-1] == 'v'))
+                  || ((eob[-3] == 'p') && (eob[-2] == 'n') && (eob[-1] == 'g'))
+                  || ((eob[-3] == 'p') && (eob[-2] == 'g') && (eob[-1] == 's')) ))
+                || ((name_len > 5) && (eob[-5] == '.')
+                   && (eob[-4] == 'm') && (eob[-3] == 'e') && (eob[-2] == 't') && (eob[-1] == 'a'))
+                ;
+
+            if (!extension){
+                continue;
+            }
+
+            struct stat st;
+            if (stat(buffer, &st) < 0){
+                LOG(LOG_WARNING, "Failed to read file %s [%d: %s]", buffer, errno, strerror(errno));
+                continue;
+            }
+            if (unlink(buffer) < 0){
+                LOG(LOG_WARNING, "Failed to remove file %s [%d: %s]", buffer, errno, strerror(errno));
+            }
+        }
     }
 }

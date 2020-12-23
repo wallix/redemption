@@ -692,12 +692,10 @@ test-run tests/capture/test_capture :
   <library>ffmpeg
   <library>png
   <library>ppocr
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/agent_data_extractor.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/utils/match_finder.o
   <library>src/capture/video_capture.o
@@ -708,12 +706,9 @@ test-run tests/capture/test_capture :
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
-  <library>src/lib/do_recorder.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -721,7 +716,6 @@ test-run tests/capture/test_capture :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
