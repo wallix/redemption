@@ -98,7 +98,8 @@ struct FdxCapture
 
     explicit FdxCapture(
         std::string_view record_path, std::string_view hash_path,
-        std::string fdx_filebase, std::string_view sid, int groupid,
+        std::string fdx_filebase, std::string_view sid,
+        int groupid, uint32_t file_permissions,
         CryptoContext& cctx, Random& rnd, Fstat& fstat,
         std::function<void(const Error & error)> notify_error);
 
@@ -127,6 +128,7 @@ private:
     Fstat& fstat;
     std::function<void(const Error & error)> notify_error;
     int groupid;
+    uint32_t file_permissions;
 
     OutCryptoTransport out_crypto_transport;
 };

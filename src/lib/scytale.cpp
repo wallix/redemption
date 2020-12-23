@@ -647,7 +647,7 @@ struct ScytaleFdxWriterHandle
         int groupid, char const * sid)
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
-    , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid,
+    , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid, -1,
         this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat, [](const Error &/*error*/){})
     {
         this->qhashhex[0] = 0;

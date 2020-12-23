@@ -116,7 +116,9 @@ namespace
 FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
     std::string fdx_filebase, std::string_view sid,
-    int groupid, CryptoContext& cctx, Random& rnd, Fstat& fstat, std::function<void(const Error & error)> notify_error)
+    int groupid, uint32_t file_permissions,
+    CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    std::function<void(const Error & error)> notify_error)
 : name_generator(
     record_path = remove_end_slash(record_path),
     hash_path = remove_end_slash(hash_path),
@@ -126,6 +128,7 @@ FdxCapture::FdxCapture(
 , fstat(fstat)
 , notify_error(notify_error)
 , groupid(groupid)
+, file_permissions(file_permissions)
 , out_crypto_transport(this->cctx, this->rnd, this->fstat, this->notify_error)
 {
     // create directory
@@ -146,7 +149,7 @@ FdxCapture::FdxCapture(
         str_concat(record_path, '/', fdx_filebase).c_str(),
         str_concat(hash_path, '/', fdx_filebase).c_str(),
         this->groupid,
-        -1,
+        this->file_permissions,
         /*derivator=*/fdx_filebase);
 
     this->out_crypto_transport.send(Mwrm3::header_compatibility_packet);
@@ -162,7 +165,7 @@ FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
         fdx.name_generator.get_current_record_path().c_str(),
         fdx.name_generator.get_current_hash_path().c_str(),
         fdx.groupid,
-        -1,
+        fdx.file_permissions,
         derivator);
 }
 
