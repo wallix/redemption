@@ -184,8 +184,7 @@
     f(ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)           \
                                                              \
     fv(ERR_SESSION_CLOSE_USER_INACTIVITY, 24500)             \
-    f(ERR_SESSION_CLOSE_REJECTED_BY_ACL_MESSAGE)             \
-    f(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED)                \
+    fv(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED, 24502)        \
     f(ERR_SESSION_CLOSE_ENDDATE_REACHED)                     \
     f(ERR_SESSION_CLOSE_MODULE_NEXT)                         \
                                                              \
