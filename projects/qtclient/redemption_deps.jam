@@ -22,6 +22,7 @@ add_obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable
 add_obj src/core/RDP/rdp_pointer.o : $(REDEMPTION_SRC_PATH)/core/RDP/rdp_pointer.cpp ;
 add_obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
 add_obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
+add_obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 add_obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 add_obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 add_obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
@@ -110,6 +111,7 @@ requirement_list += <library>src/core/RDP/RDPDrawable.o ;
 requirement_list += <library>src/core/RDP/rdp_pointer.o ;
 requirement_list += <library>src/core/RDP/rlgr.o ;
 requirement_list += <library>src/gdi/clip_from_cmd.o ;
+requirement_list += <library>src/gdi/graphic_api.o ;
 requirement_list += <library>src/gdi/protected_graphics.o ;
 requirement_list += <library>src/gdi/screen_functions.o ;
 requirement_list += <library>src/gdi/text_metrics.o ;
