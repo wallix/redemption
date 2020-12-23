@@ -1319,12 +1319,12 @@ public:
              && front.is_up_and_running()
              && ini.get<cfg::globals::enable_close_box>()
             ) {
-                const bool is_already_close = (mod_wrapper.current_mod == ModuleName::close);
-                auto mod_ptr = is_already_close
+                const bool is_already_close_mod = (mod_wrapper.current_mod == ModuleName::close);
+                auto mod_ptr = is_already_close_mod
                     ? not_null_ptr<mod_api>(&mod_wrapper.get_mod())
                     : mod_factory.create_close_mod().mod;
                 auto& mod = *mod_ptr;
-                std::unique_ptr<mod_api> unique_mod{is_already_close ? nullptr : &mod};
+                std::unique_ptr<mod_api> unique_mod{is_already_close_mod ? nullptr : &mod};
                 this->internal_front_loop(
                     front, front_trans, rbuf, events, time_base, mod,
                     [&]{
