@@ -120,15 +120,15 @@ bool InCryptoTransport::read_qhash(
         return false;
     }
 
-    SslHMAC_Sha256 hm4k(make_array_view(hmac_key));
-
     constexpr std::size_t buffer_size = 4096;
     uint8_t buffer[buffer_size];
     size_t total_length = 0;
+
+    uint8_t* p = buffer;
     do {
         size_t const remaining_size = buffer_size - total_length;
-        ssize_t res = ::read(file.fd(), buffer, remaining_size);
-        if (res <= 0) {
+        ssize_t res = ::read(file.fd(), p, remaining_size);
+        if (REDEMPTION_UNLIKELY(res <= 0)) {
             if (res == 0) {
                 break;
             }
@@ -137,10 +137,12 @@ bool InCryptoTransport::read_qhash(
             }
             return false;
         }
-        hm4k.update({buffer, size_t(res)});
         total_length += res;
+        p += res;
     } while (total_length != buffer_size);
 
+    SslHMAC_Sha256 hm4k(make_array_view(hmac_key));
+    hm4k.update({buffer, total_length});
     hm4k.final(result_hash.hash);
     return true;
 }
@@ -156,11 +158,11 @@ bool InCryptoTransport::read_fhash(
 
     SslHMAC_Sha256 hm4k(make_array_view(hmac_key));
 
-    constexpr std::size_t buffer_size = 4096;
+    constexpr std::size_t buffer_size = 128*1024;
     uint8_t buffer[buffer_size];
     do {
-        ssize_t res = ::read(file.fd(), &buffer[0], sizeof(buffer));
-        if (res <= 0) {
+        ssize_t res = ::read(file.fd(), buffer, sizeof(buffer));
+        if (REDEMPTION_UNLIKELY(res <= 0)) {
             if (res == 0) {
                 break;
             }
