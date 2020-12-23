@@ -193,17 +193,10 @@ namespace
             }
         }
     }
-
-    gdi::NullGraphic gd;
 } // namespace
 
 namespace gdi
 {
-
-gdi::GraphicApi & null_gd() noexcept
-{
-    return gd;
-}
 
 TextMetrics::TextMetrics(const Font & font, const char * unicode_text)
 {

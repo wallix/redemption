@@ -39,6 +39,7 @@ exe headlessclient :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -146,6 +147,7 @@ exe rdpproxy :
   <library>src/core/pid_file.o
   <library>src/core/session.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -346,6 +348,7 @@ exe rdpclient :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -451,6 +454,7 @@ lib libredrec :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
@@ -533,6 +537,7 @@ test-run tests/RAIL/test_client_execute :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/bitmap.o
@@ -599,6 +604,7 @@ test-run tests/acl/test_license_api :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -701,6 +707,7 @@ test-run tests/capture/test_capture :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
@@ -821,6 +828,7 @@ test-run tests/capture/test_video_capture :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -850,6 +858,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -906,6 +915,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -957,6 +967,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -998,6 +1009,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -1063,6 +1075,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -1124,6 +1137,7 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1166,6 +1180,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1208,6 +1223,7 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1250,6 +1266,7 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -1877,6 +1894,7 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/hexdump.o
@@ -1904,6 +1922,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -1925,6 +1944,7 @@ test-run tests/core/RDP/test_RDPSerializer :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/hexdump.o
@@ -1984,6 +2004,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -2136,6 +2157,7 @@ test-run tests/core/RDP/test_remotefx :
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/hexdump.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
@@ -2370,6 +2392,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/pid_file.o
   <library>src/core/session.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -2530,6 +2553,7 @@ test-run tests/core/test_session :
   <library>src/core/pid_file.o
   <library>src/core/session.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -2677,6 +2701,7 @@ test-run tests/front/test_front :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -2739,6 +2764,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -2765,6 +2791,7 @@ test-run tests/gdi/test_text_metrics :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -2820,6 +2847,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
@@ -2884,6 +2912,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/bouncer2_mod.o
   <library>src/utils/bitmap.o
@@ -2911,6 +2940,7 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/close_mod.o
@@ -2958,6 +2988,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -2999,6 +3030,7 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3050,6 +3082,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3101,6 +3134,7 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3153,6 +3187,7 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/rail_module_host_mod.o
@@ -3201,6 +3236,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/rdp/rdp_negociation_data.o
@@ -3242,6 +3278,7 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3285,6 +3322,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -3316,6 +3354,7 @@ test-run tests/mod/internal/test_wait_mod :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/copy_paste.o
@@ -3358,6 +3397,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget_test_mod.o
@@ -3386,6 +3426,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/widget_rect.o
@@ -3413,6 +3454,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3447,6 +3489,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3484,6 +3527,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3519,6 +3563,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3559,6 +3604,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3598,6 +3644,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3638,6 +3685,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3682,6 +3730,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3723,6 +3772,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3765,6 +3815,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3798,6 +3849,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3834,6 +3886,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3867,6 +3920,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3900,6 +3954,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3933,6 +3988,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3954,6 +4010,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -3991,6 +4048,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4026,6 +4084,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4061,6 +4120,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4095,6 +4155,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/flat_button.o
@@ -4127,6 +4188,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4168,6 +4230,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4210,6 +4273,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
@@ -4297,6 +4361,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>crypto
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -4355,6 +4420,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -4386,6 +4452,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
   <library>src/mod/rdp/channels/sespro_channel_params.o
@@ -4410,6 +4477,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/capture/fdx_capture.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/channels/cliprdr_channel.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -4467,6 +4535,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
@@ -4563,6 +4632,7 @@ test-run tests/mod/rdp/test_rdp_orders :
   <library>crypto
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -4619,6 +4689,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
 :
   <library>crypto
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/hexdump.o
@@ -4638,6 +4709,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -4679,6 +4751,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
@@ -4810,6 +4883,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -4871,6 +4945,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -4932,6 +5007,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/test_card_mod.o
@@ -5399,6 +5475,7 @@ test-run tests/utils/test_bitmap :
   <library>png
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -5515,6 +5592,7 @@ test-run tests/utils/test_drawable :
   <library>png
   <library>src/core/RDP/rdp_pointer.o
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -5634,6 +5712,7 @@ test-run tests/utils/test_png :
 :
   <library>png
   <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/fileutils.o
   <library>src/utils/png.o
   <library>src/utils/stacktrace.o
@@ -5729,6 +5808,7 @@ test-run tests/utils/test_video_cropper :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
@@ -5802,6 +5882,7 @@ obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/core/pid_file.o : $(REDEMPTION_SRC_PATH)/core/pid_file.cpp ;
 obj src/core/session.o : $(REDEMPTION_SRC_PATH)/core/session.cpp : <define>ZLIB_CONST ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
+obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;

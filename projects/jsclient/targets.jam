@@ -37,6 +37,7 @@ exe-js js_client :
   src/core/error.bc
   src/core/font.bc
   src/gdi/clip_from_cmd.bc
+  src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp_negociation.bc
@@ -65,6 +66,7 @@ exe-js js_player :
   src/core/error.bc
   src/core/font.bc
   src/gdi/clip_from_cmd.bc
+  src/gdi/graphic_api.bc
   src/transport/mwrm_reader.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
@@ -118,6 +120,7 @@ test-run-js tests/redjs/test_front :
   src/core/error.bc
   src/core/font.bc
   src/gdi/clip_from_cmd.bc
+  src/gdi/graphic_api.bc
   src/mod/rdp/rdp_negociation_data.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
@@ -136,6 +139,7 @@ test-run-js tests/redjs/test_graphics :
   src/core/error.bc
   src/core/font.bc
   src/gdi/clip_from_cmd.bc
+  src/gdi/graphic_api.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
   src/utils/rle.bc
@@ -189,6 +193,7 @@ objjs src/core/channels_authorizations.bc : $(REDEMPTION_SRC_PATH)/core/channels
 objjs src/core/error.bc : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 objjs src/gdi/clip_from_cmd.bc : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
+objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
