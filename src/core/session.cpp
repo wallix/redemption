@@ -1177,13 +1177,13 @@ private:
         try { acl_serial.send_acl_data(); }
         catch (...) {}
 
-        const auto previous_mod = mod_wrapper.current_mod;
-
-        mod_wrapper.disconnect();
+        const bool show_close_box = auth_trans.get_sck() == INVALID_SOCKET;
+        if (!show_close_box || mod_wrapper.current_mod != ModuleName::close) {
+            mod_wrapper.disconnect();
+        }
         front.must_be_stop_capture();
 
-        return auth_trans.get_sck() == INVALID_SOCKET
-            && !is_close_module(previous_mod)
+        return show_close_box && mod_wrapper.get_mod_signal() == BACK_EVENT_NONE
              ? EndLoopState::ShowCloseBox
              : EndLoopState::ImmediateDisconnection;
     }
@@ -1319,9 +1319,12 @@ public:
              && front.is_up_and_running()
              && ini.get<cfg::globals::enable_close_box>()
             ) {
-                auto mod_pack = mod_factory.create_close_mod();
-                std::unique_ptr<mod_api> unique_mod{mod_pack.mod};
-                auto& mod = *mod_pack.mod;
+                const bool is_already_close = (mod_wrapper.current_mod == ModuleName::close);
+                auto mod_ptr = is_already_close
+                    ? not_null_ptr<mod_api>(&mod_wrapper.get_mod())
+                    : mod_factory.create_close_mod().mod;
+                auto& mod = *mod_ptr;
+                std::unique_ptr<mod_api> unique_mod{is_already_close ? nullptr : &mod};
                 this->internal_front_loop(
                     front, front_trans, rbuf, events, time_base, mod,
                     [&]{
