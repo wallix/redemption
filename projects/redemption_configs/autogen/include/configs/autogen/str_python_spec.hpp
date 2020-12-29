@@ -861,6 +861,16 @@ block_invalid_file_up = boolean(default=False)
 #_hidden
 block_invalid_file_down = boolean(default=False)
 
+# Block text transfer from client to server on invalid text verification.
+# Text verification on upload must be enabled via option Clipboard text up.
+#_hidden
+block_invalid_clipboard_text_up = boolean(default=False)
+
+# Block text transfer from server to client on invalid text verification.
+# Text verification on download must be enabled via option Clipboard text down.
+#_hidden
+block_invalid_clipboard_text_down = boolean(default=False)
+
 #_hidden
 log_if_accepted = boolean(default=True)
 

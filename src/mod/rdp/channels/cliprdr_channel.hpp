@@ -201,12 +201,6 @@ private:
             }
         };
 
-        struct TextData
-        {
-            FileValidatorId file_validator_id;
-            bool is_unicode;
-        };
-
         enum class TransferState : uint8_t;
         struct NoLockData
         {
@@ -216,9 +210,6 @@ private:
             {
                 return this->transfer_state;
             }
-
-            // TextData
-            bool is_unicode;
 
             // TextData, FileContentsSize, FileContentsRequestedRange, FileContentsRange
             struct FileData : FileContentsRange
@@ -362,7 +353,8 @@ private:
 
         ClipCtx(
             std::string const& target_name,
-            bool verify_before_transfer,
+            bool verify_file_before_transfer,
+            bool verify_text_before_transfer,
             uint64_t max_file_size_rejected,
             char const* tmp_dir);
 
@@ -370,7 +362,8 @@ private:
 
         bool use_long_format_names = false;
         bool has_current_file_contents_stream_id = false;
-        const bool verify_before_transfer;
+        const bool verify_file_before_transfer;
+        const bool verify_text_before_transfer;
         uint64_t max_file_size_rejected;
         StreamId current_file_contents_stream_id;
         uint32_t current_file_list_format_id;

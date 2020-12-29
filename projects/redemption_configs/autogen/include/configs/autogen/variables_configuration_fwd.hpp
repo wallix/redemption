@@ -243,6 +243,8 @@ namespace cfg
         struct clipboard_text_down;
         struct block_invalid_file_up;
         struct block_invalid_file_down;
+        struct block_invalid_clipboard_text_up;
+        struct block_invalid_clipboard_text_down;
         struct log_if_accepted;
         struct max_file_size_rejected;
         struct tmpdir;

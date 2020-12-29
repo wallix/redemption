@@ -146,7 +146,7 @@ struct FileValidatorResultHeader
     // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
     // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    // |    Result     |                local_File_id                  |
+    // |    Result     |                  file_id                      |
     // +---------------+-----------------------------------------------+
     // |               |               content_length                  |
     // +---------------+-----------------------------------------------+
@@ -171,8 +171,8 @@ struct FileValidatorResultHeader
     //   | 0x02               |                                              |
     //   +--------------------+----------------------------------------------+
 
-    // local_File_id: An unsigned, 32-bit integer that contains client local file
-    //                id sent to the validator.
+    // file_id: An unsigned, 32-bit integer that contains client file id sent
+    //          to the validator.
 
     // content_length: An unsigned, 32-bit integer that contains result content
     //                 length.
@@ -387,6 +387,11 @@ struct FileValidatorService
         unsigned n = std::sprintf(buf, "%" PRIu32, locale_identifier);
         return this->open_raw_data(target_name,
             data_map_array("microsoft_locale_id"_av, bytes_view{buf, n}));
+    }
+
+    FileValidatorId open_unicode(std::string_view target_name)
+    {
+        return this->open_raw_data(target_name, data_map_array("format_id"_av, "13"_av));
     }
 
     using DataMap = array_view<bytes_view>;

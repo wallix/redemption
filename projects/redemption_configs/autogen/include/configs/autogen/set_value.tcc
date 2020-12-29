@@ -1659,6 +1659,22 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "block_invalid_clipboard_text_up"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::block_invalid_clipboard_text_up&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "block_invalid_clipboard_text_down"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::file_verification::block_invalid_clipboard_text_down&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
         else if (key == "log_if_accepted"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

@@ -761,6 +761,8 @@ ModPack create_mod_rdp(
     ) * 1024u * 1024u;
     vp.enable_clipboard_text_up = ini.get<cfg::file_verification::clipboard_text_up>();
     vp.enable_clipboard_text_down = ini.get<cfg::file_verification::clipboard_text_down>();
+    vp.block_invalid_text_up = ini.get<cfg::file_verification::block_invalid_clipboard_text_up>();
+    vp.block_invalid_text_down = ini.get<cfg::file_verification::block_invalid_clipboard_text_down>();
     vp.up_target_name = ini.get<cfg::file_verification::enable_up>() ? "up" : "";
     vp.down_target_name = ini.get<cfg::file_verification::enable_down>() ? "down" : "";
     vp.lang = language(ini);

@@ -2917,6 +2917,30 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
+    /// Block text transfer from client to server on invalid text verification. <br/>
+    /// Text verification on upload must be enabled via option Clipboard text up. <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct file_verification::block_invalid_clipboard_text_up {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { false };
+    };
+    /// Block text transfer from server to client on invalid text verification. <br/>
+    /// Text verification on download must be enabled via option Clipboard text down. <br/>
+    /// type: bool <br/>
+    /// default: false <br/>
+    struct file_verification::block_invalid_clipboard_text_down {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value { false };
+    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: file_verification:log_if_accepted <br/>
@@ -5626,6 +5650,8 @@ struct file_verification
 , cfg::file_verification::clipboard_text_down
 , cfg::file_verification::block_invalid_file_up
 , cfg::file_verification::block_invalid_file_down
+, cfg::file_verification::block_invalid_clipboard_text_up
+, cfg::file_verification::block_invalid_clipboard_text_down
 , cfg::file_verification::log_if_accepted
 , cfg::file_verification::max_file_size_rejected
 , cfg::file_verification::tmpdir

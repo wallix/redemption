@@ -686,16 +686,11 @@ namespace
         template<class F>
         bytes_view build_ok(uint16_t msgType, F f) &
         {
-            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
-            f(this->out);
-            uint32_t data_len = uint32_t(out.get_offset() - av.size());
-            OutStream stream_header(av);
-            RDPECLIP::CliprdrHeader(msgType, RDPECLIP::CB_RESPONSE_OK, data_len).emit(stream_header);
-            return out.get_produced_bytes();
+            return this->build(msgType, RDPECLIP::CB_RESPONSE_OK, f);
         }
 
         template<class F>
-        bytes_view build_ok(uint16_t msgType, F f, uint32_t data_len) &
+        bytes_view build_ok(uint16_t msgType, uint32_t data_len, F f) &
         {
             auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
             f(this->out);
@@ -707,12 +702,7 @@ namespace
         template<class F>
         bytes_view build_fail(uint16_t msgType, F f) &
         {
-            auto av = out.out_skip_bytes(RDPECLIP::CliprdrHeader::size());
-            f(this->out);
-            uint32_t data_len = uint32_t(out.get_offset() - av.size());
-            OutStream stream_header(av);
-            RDPECLIP::CliprdrHeader(msgType, RDPECLIP::CB_RESPONSE_FAIL, data_len).emit(stream_header);
-            return out.get_produced_bytes();
+            return this->build(msgType, RDPECLIP::CB_RESPONSE_FAIL, f);
         }
 
         bytes_view build_format_list(Cliprdr::FormatNameRef format_name) &
@@ -831,6 +821,7 @@ namespace
 
         class ChannelCtx
         {
+            TimeBase time_base {{0,0}};
             ReportMessageTest report_message;
             ValidatorTransportTest validator_transport;
             FileValidatorService file_validator_service{validator_transport};
@@ -846,7 +837,6 @@ namespace
             ChannelCtx(
                 MsgComparator& msg_comparator,
                 FdxTestCtx* fdx_ctx,
-                TimeBase & time_base,
                 ClipboardVirtualChannelParams clipboard_virtual_channel_params,
                 ClipDataTest const& d, RDPVerbose verbose)
             : report_message(msg_comparator)
@@ -982,7 +972,7 @@ namespace
 } // anonymous namespace
 
 RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest const& d, d, {
-    //icap  fdx  storage verify
+    //           icap  fdx  storage verify
     ClipDataTest{true, false, true, false},
     ClipDataTest{true, true, false, false},
     ClipDataTest{true, true, true, false},
@@ -992,14 +982,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
     ClipDataTest{false, true, true, false}
 })
 {
-    TimeBase time_base({0,0});
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        time_base,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1131,17 +1119,17 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
             channel_ctx->process_client_message(temp_av);
         },
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
-            "\x07\x00\x00\x00\"\x00\x00\x00\x02\x00\x02up"
-            "\x00\x01\x00\x13microsoft_locale_id\x00\x01""0"_av
+            "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up"
+            "\x00\x01\x00\x09""format_id\x00\x02""13"_av
         }),
         TEST_BUF(Msg::Log6{
             "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
             " format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av
         }),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
-            "\x01\x00\x00\x00\x07\x00\x00\x00\x02"_av
+            "\x01\x00\x00\x00\x0a\x00\x00\x00\x02"_av
         }),
-        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"abc"_av}),
+        TEST_BUF_IF(d.with_validator, Msg::ToValidator{"a\0b\0c\0"_av}),
         TEST_BUF_IF(d.with_validator, Msg::ToValidator{
             "\x03\x00\x00\x00\x04\x00\x00\x00\x02"_av
         }),
@@ -1194,14 +1182,12 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     ClipDataTest{false, true, true},
 })
 {
-    TimeBase time_base({0,0});
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        time_base,
         d.default_channel_params(),
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -1647,7 +1633,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
 {
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
-    TimeBase time_base({0,0});
 
     bytes_view temp_av;
     MsgComparator msg_comparator;
@@ -1659,7 +1644,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        time_base,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -2119,10 +2103,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, 16, [&](OutStream& out){
                 out.out_uint32_le(1);
                 // no data
-            }, 16);
+            });
             channel_ctx->process_server_message(temp_av, 24, first_flags);
         },
         TEST_BUF(Msg::ToValidator{
@@ -2185,10 +2169,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, 11, [&](OutStream& out){
                 out.out_uint32_le(1);
                 // no data
-            }, 11);
+            });
             channel_ctx->process_server_message(temp_av, 19, first_flags);
         },
         TEST_BUF(Msg::ToValidator{
@@ -2273,10 +2257,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, 11, [&](OutStream& out){
                 out.out_uint32_le(1);
                 // no data
-            }, 11);
+            });
             channel_ctx->process_server_message(temp_av, 19, first_flags);
         },
         TEST_BUF(Msg::ToValidator{
@@ -2363,10 +2347,10 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
         TEST_PROCESS {
             using namespace Cliprdr;
             Buffer buf;
-            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, [&](OutStream& out){
+            temp_av = buf.build_ok(RDPECLIP::CB_FILECONTENTS_RESPONSE, 11, [&](OutStream& out){
                 out.out_uint32_le(1);
                 // no data
-            }, 11);
+            });
             channel_ctx->process_server_message(temp_av, 19, first_flags);
         },
         TEST_BUF(Msg::ToValidator{
@@ -2742,7 +2726,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
-    TimeBase time_base({0,0});
 
     auto cliprdr_params = d.default_channel_params();
     cliprdr_params.validator_params.max_file_size_rejected = 10;
@@ -2750,7 +2733,6 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
         msg_comparator,
         fdx_ctx.get(),
-        time_base,
         cliprdr_params,
         d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -2840,4 +2822,170 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
             RED_CHECK_FILE_CONTENTS(fdx_path, "v3\n"_av);
         }
     }
+}
+
+
+RED_AUTO_TEST_CLIPRDR(TestCliprdrTextValidationBeforeTransfer, ClipDataTest const& d, d, {
+    //                       always
+    //           icap  fdx  storage verify
+    ClipDataTest{true, false, false, true, ValidationResult::IsAccepted},
+    ClipDataTest{true, false, false, true, ValidationResult::IsRejected},
+})
+{
+    RED_TEST(d.with_validator);
+    RED_TEST(d.verify_before_transfer);
+
+    bytes_view temp_av;
+    MsgComparator msg_comparator;
+
+    auto cliprdr_params = d.default_channel_params();
+    cliprdr_params.validator_params.block_invalid_text_up = true;
+    // cliprdr_params.validator_params.block_invalid_text_down = true;
+    cliprdr_params.validator_params.max_file_size_rejected = 30;
+
+    auto channel_ctx = std::make_unique<ClipDataTest::ChannelCtx>(
+        msg_comparator,
+        nullptr,
+        cliprdr_params,
+        d, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
+
+    initialize_channel(msg_comparator, *channel_ctx, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
+    const bool is_accepted = d.validation_result == ValidationResult::IsAccepted;
+    const bool is_rejected = d.validation_result == ValidationResult::IsRejected;
+    const auto response_error = Msg::ToMod{
+        8, first_last_flags, "\x05\x00\x02\x00\x00\x00\x00\x00"_av};
+
+
+    // small data (3 bytes)
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            Buffer buf;
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+                out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+                out.out_copy_bytes("a\0b\0c\0"_av);
+            });
+            channel_ctx->process_client_message(temp_av);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x19\x00\x00\x00\x01\x00\x02up"
+            "\x00\x01\x00\x09""format_id\x00\x02""13"_av
+        }),
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            " format=CF_UNICODETEXT(13) size=6 partial_data=abc"_av
+        }),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x0a\x00\x00\x00\x01"_av}),
+        TEST_BUF(Msg::ToValidator{"a\0b\0c\0"_av}),
+        TEST_BUF(Msg::ToValidator{"\x03\x00\x00\x00\x04\x00\x00\x00\x01"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(1)));
+        },
+        TEST_BUF_IF(is_accepted, Msg::Log6{"TEXT_VERIFICATION direction=UP copy_id=1 status=ok"_av}),
+        TEST_BUF_IF(is_rejected, Msg::Log6{"TEXT_VERIFICATION direction=UP copy_id=1 status=fail"_av}),
+        TEST_BUF_IF(is_accepted, Msg::ToMod{14, first_last_flags,
+            "\x05\x00\x01\x00\x06\x00\x00\x00""a\x00""b\x00""c\x00"_av}),
+        TEST_BUF_IF(is_rejected, response_error)
+    );
+    //@}
+
+
+    // small data (3 bytes, 2 packets)
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            Buffer buf;
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+                out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, 6, [&](OutStream& out){
+                out.out_copy_bytes("x\0"_av);
+            });
+            channel_ctx->process_client_message(temp_av, 14, first_flags);
+        },
+        TEST_BUF(Msg::ToValidator{
+            "\x07\x00\x00\x00\x19\x00\x00\x00\x02\x00\x02up"
+            "\x00\x01\x00\x09""format_id\x00\x02""13"_av
+        }),
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            " format=CF_UNICODETEXT(13) size=6 partial_data=x"_av
+        }),
+        TEST_BUF(Msg::ToValidator{"\x01\x00\x00\x00\x06\x00\x00\x00\x02"_av}),
+        TEST_BUF(Msg::ToValidator{"x\0"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            RED_TEST(channel_ctx->dlp_message(d.validation_result, FileValidatorId(2)));
+        },
+        TEST_BUF_IF(is_accepted, Msg::Log6{"TEXT_VERIFICATION direction=UP copy_id=2 status=ok"_av}),
+        TEST_BUF_IF(is_rejected, Msg::Log6{"TEXT_VERIFICATION direction=UP copy_id=2 status=fail"_av}),
+        TEST_BUF_IF(is_accepted, Msg::ToMod{14, first_flags,
+            "\x05\x00\x01\x00\x06\x00\x00\x00x\x00"_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            channel_ctx->process_client_message("y\0z\0"_av, 14, last_flags);
+        },
+        TEST_BUF_IF(is_accepted, Msg::ToMod{14, last_flags, "y\x00z\x00"_av}),
+        TEST_BUF_IF(is_rejected, response_error)
+    );
+    //@}
+
+
+    // too big
+    //@{
+    msg_comparator.run(
+        TEST_PROCESS {
+            Buffer buf;
+            temp_av = buf.build(RDPECLIP::CB_FORMAT_DATA_REQUEST, 0, [&](OutStream& out){
+                out.out_uint32_le(RDPECLIP::CF_UNICODETEXT);
+            });
+            channel_ctx->process_server_message(temp_av);
+        },
+        TEST_BUF(Msg::ToFront{12, first_last_flags, temp_av})
+    );
+
+    msg_comparator.run(
+        TEST_PROCESS {
+            using namespace Cliprdr;
+            Buffer buf;
+            temp_av = buf.build_ok(RDPECLIP::CB_FORMAT_DATA_RESPONSE, [&](OutStream& out){
+                out.out_copy_bytes("a\0b\0c\0d\0e\0f\0g\0h\0i\0j\0k\0l\0m\0n\0o\0p\0q\0"_av);
+            });
+            channel_ctx->process_client_message(temp_av);
+        },
+        TEST_BUF(Msg::Log6{
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX"
+            " format=CF_UNICODETEXT(13) size=34 partial_data=abcdefghijklmnopq"_av
+        }),
+        TEST_BUF(response_error)
+    );
+    //@}
 }

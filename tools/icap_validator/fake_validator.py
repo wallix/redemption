@@ -6,6 +6,7 @@ import select
 import sys
 import os
 import struct
+import time # sleep
 
 def read_session_socket(session_socket, size_to_read):
     """
@@ -44,6 +45,12 @@ def read_session_msg(client_socket):
 ACCEPTED = 0x00
 REJECTED = 0x01
 
+IS_UNICODE_DATA = 0
+ACCEPTED_ON_EOF = 1
+REJECTED_ON_EOF = 2
+ACCEPTED_WITH_DELAY = 3
+REJECTED_WITH_DELAY = 4
+
 def send_response_message(socket, file_id, result, content):
     """
     Send a Response message
@@ -57,13 +64,16 @@ def send_response_message(socket, file_id, result, content):
 
 def process_new_data(message, client_socket, data):
     """
-    Parse a NewFile message and prepare send a response
-    or wait a eof type message. If filename contains
+    Parse a NewFile message and send a response or
+    wait a eof type message. If filename contains
     - norep: no response
     - virus0: send REJECTED immediately
     - ok0: send ACCEPTED immediately
     - virus1: send REJECTED on eof or abort
-    - otherwise, send ACCEPTED on eof or abort
+    - ok1: send ACCEPTED on eof or abort
+    - virus2: send REJECTED 7 seconds after eof or abort
+    - ok2: send ACCEPTED 7 seconds after eof or abort
+    - otherwise, same as ok1
     """
 
     # file id, u16, target, *(u16, key, u16, data)
@@ -77,20 +87,75 @@ def process_new_data(message, client_socket, data):
         send_response_message(client_socket, file_id, REJECTED, b'virus0')
     elif b'ok0' in msg_data:
         send_response_message(client_socket, file_id, ACCEPTED, b'ok0')
+    elif b'virus2' in msg_data:
+        data[file_id] = REJECTED_WITH_DELAY
+    elif b'ok2' in msg_data:
+        data[file_id] = ACCEPTED_WITH_DELAY
+    # unicode text
+    elif b'format_id\x00\x0213' in msg_data:
+        data[file_id] = IS_UNICODE_DATA
     elif b'norep' not in msg_data:
-        data[file_id] = b'virus1' in msg_data
+        data[file_id] = REJECTED_ON_EOF if b'virus1' in msg_data else ACCEPTED_ON_EOF
+
+state_to_msg_table = [
+    (ACCEPTED, b'ok'),
+    (ACCEPTED, b'ok1'),
+    (REJECTED, b'virus1'),
+    (ACCEPTED, b'ok2'),
+    (REJECTED, b'virus2'),
+]
 
 def process_eol(message, client_socket, data):
+    """
+    Parse a Eol message and send a ACCEPTED or REJECTED response
+    """
+
     file_id, = struct.unpack_from(">I", message)
 
-    is_a_virus = data.get(file_id)
-    if is_a_virus is not None:
-        print(f'file_id={file_id} is_virus={is_a_virus}')
-        p = (REJECTED, b'virus1') if is_a_virus else (ACCEPTED, b'ok1')
+    state = data.get(file_id)
+    if state is not None:
+        print(f'file_id={file_id} state={state}')
+        if state >= 3:
+            print('7 seconds delay')
+            time.sleep(7)
+        p = state_to_msg_table[state]
         send_response_message(client_socket, file_id, p[0], p[1])
         del data[file_id]
 
 process_abort_file = process_eol
+
+
+def process_file_data(message, client_socket, data):
+    """
+    Parse a FileData message and send response or
+    wait a eof type message when file_id is a text
+    data.
+    """
+
+    file_id, = struct.unpack_from(">I", message)
+
+    is_a_virus = data.get(file_id)
+    if is_a_virus is IS_UNICODE_DATA:
+        msg_data = message[4:]
+
+        print(f'file_id={file_id} message={msg_data}')
+
+        if b'v\0i\0r\0u\0s\x000\0' in msg_data:
+            send_response_message(client_socket, file_id, REJECTED, b'virus0')
+            del data[file_id]
+        elif b'o\0k\x000\0' in msg_data:
+            send_response_message(client_socket, file_id, ACCEPTED, b'ok0')
+            del data[file_id]
+        elif b'v\0i\0r\0u\0s\x002\0' in msg_data:
+            data[file_id] = REJECTED_WITH_DELAY
+        elif b'o\0k\x002\0' in msg_data:
+            data[file_id] = ACCEPTED_WITH_DELAY
+        elif b'v\0i\0r\0u\0s\x001\0' in msg_data:
+            data[file_id] = REJECTED_ON_EOF
+        elif b'o\0k\x001\0' in msg_data:
+            data[file_id] = ACCEPTED_ON_EOF
+        elif b'n\0o\0r\0e\0p\0' in msg_data:
+            del data[file_id]
 
 def parse_message(type, message, client_socket, data):
     """
@@ -98,6 +163,7 @@ def parse_message(type, message, client_socket, data):
     """
     if type == 0x01: # File Data Flag
         print('parse_message: file data')
+        process_file_data(message, client_socket, data)
 
     elif type == 0x07: # New Data Flag
         print('parse_message: new data')
@@ -126,11 +192,15 @@ def parse_message(type, message, client_socket, data):
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print(f'{sys.argv[0]} socket_path\n\n'
-              'If filename contains:\n'
+              'If filename or text data contain:\n'
+              '- norep: never send a response\n'
               '- virus0: send REJECTED immediately\n'
               '- ok0: send ACCEPTED immediately\n'
               '- virus1: send REJECTED on eof or abort\n'
-              '- otherwise, send ACCEPTED on eof or abort')
+              '- ok1: send ACCEPTED on eof or abort\n'
+              '- virus2: send REJECTED 7 seconds after eof or abort\n'
+              '- ok2: send ACCEPTED 7 seconds after eof or abort\n'
+              '- otherwise, same as ok1')
         exit(1)
 
     socket_path = sys.argv[1]

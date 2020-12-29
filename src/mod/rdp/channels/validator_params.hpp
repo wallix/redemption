@@ -36,6 +36,10 @@ struct ValidatorParams
 
     bool block_invalid_file_up = false;
     bool block_invalid_file_down = false;
+
+    bool block_invalid_text_up = false;
+    bool block_invalid_text_down = false;
+
     uint64_t max_file_size_rejected = 1024*1024*1024;
     std::chrono::seconds osd_delay = std::chrono::seconds(5);
     Language lang = Language::en;

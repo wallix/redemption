@@ -1016,6 +1016,18 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #block_invalid_file_down = 0
 
+# Block text transfer from client to server on invalid text verification.
+# Text verification on upload must be enabled via option Clipboard text up.
+# value: 0 or 1
+#_hidden
+#block_invalid_clipboard_text_up = 0
+
+# Block text transfer from server to client on invalid text verification.
+# Text verification on download must be enabled via option Clipboard text down.
+# value: 0 or 1
+#_hidden
+#block_invalid_clipboard_text_down = 0
+
 # value: 0 or 1
 #_hidden
 #log_if_accepted = 1

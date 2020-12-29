@@ -219,7 +219,6 @@ class Session
         void set_read_sck(int fd)
         {
             assert(fd != INVALID_SOCKET);
-            assert(!this->want_write);
             io_fd_set(fd, this->rfds);
             this->max = std::max(this->max, fd);
         }

@@ -80,6 +80,27 @@ RED_AUTO_TEST_CASE(file_validatorSendText)
     RED_CHECK(file_validator.open_file("filename", "clamav") == FileValidatorId(2));
 }
 
+RED_AUTO_TEST_CASE(file_validatorSendUnicode)
+{
+    BufTransport trans;
+    FileValidatorService file_validator{trans};
+
+    FileValidatorId id = file_validator.open_unicode("clamav");
+    RED_CHECK(id == FileValidatorId(1));
+
+    file_validator.send_data(id, "a\0b\0c\0\0\0"_av);
+    file_validator.send_eof(id);
+
+    const auto data_ref =
+        "\x07\x00\x00\x00\x1d\x00\x00\x00\x01\x00\x06""clamav\x00\x01\x00\x09"
+        "format_id\x00\x02\x31\x33\x01\x00\x00\x00\x0c\x00\x00\x00\x01\x61\x00"
+        "\x62\x00\x63\x00\x00\x00\x03\x00\x00\x00\x04\x00\x00\x00\x01"
+        ""_av;
+    RED_CHECK(trans.data() == data_ref);
+
+    RED_CHECK(file_validator.open_file("filename", "clamav") == FileValidatorId(2));
+}
+
 RED_AUTO_TEST_CASE(file_validatorSendInfos)
 {
     BufTransport trans;
