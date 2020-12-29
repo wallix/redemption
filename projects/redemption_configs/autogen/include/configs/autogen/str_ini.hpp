@@ -727,6 +727,10 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # maxlen = 256
 #_hidden
+#application_driver_chrome_dt_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT) << R"gen_config_ini(
+
+# maxlen = 256
+#_hidden
 #application_driver_chrome_uia_script = )gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(
 
 # maxlen = 256

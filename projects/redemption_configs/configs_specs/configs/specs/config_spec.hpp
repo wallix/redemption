@@ -444,6 +444,7 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_exe_or_file"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_EXE_OR_FILE)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_script_argument"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT)));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_chrome_dt_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_chrome_uia_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT)));
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<256>>(), names{"application_driver_ie_script"}, set(CPP_EXPR(REDEMPTION_CONFIG_APPLICATION_DRIVER_IE_SCRIPT)));
 

@@ -843,9 +843,18 @@ ModPack create_mod_rdp(
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_ie_script>();
     }
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_CHROME_DT__")) {
+        application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_dt_script>();
+    }
     else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_CHROME_UIA__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
+    }
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_DT__")) {
+        application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
+        application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_dt_script>();
+        application_driver_script_argument_extra = "/e:UseEdgeChromium=Yes";
     }
     else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_UIA__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();

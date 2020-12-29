@@ -615,6 +615,9 @@ application_driver_exe_or_file = string(max=256, default=')gen_config_ini" << (R
 application_driver_script_argument = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_SCRIPT_ARGUMENT) << R"gen_config_ini(')
 
 #_hidden
+application_driver_chrome_dt_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_DT_SCRIPT) << R"gen_config_ini(')
+
+#_hidden
 application_driver_chrome_uia_script = string(max=256, default=')gen_config_ini" << (REDEMPTION_CONFIG_APPLICATION_DRIVER_CHROME_UIA_SCRIPT) << R"gen_config_ini(')
 
 #_hidden
