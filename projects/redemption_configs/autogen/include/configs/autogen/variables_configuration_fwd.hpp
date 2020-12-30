@@ -293,6 +293,7 @@ namespace cfg {
         struct notimestamp;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
+        struct enhanced_mode;
     };
 
     struct capture {

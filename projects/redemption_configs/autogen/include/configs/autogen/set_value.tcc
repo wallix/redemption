@@ -1859,6 +1859,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "enhanced_mode")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::enhanced_mode&>(this->variables).value,
+                ::configs::spec_type<VideoEnhancedMode>{},
+                av
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

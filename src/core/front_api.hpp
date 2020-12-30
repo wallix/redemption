@@ -42,6 +42,7 @@ public:
     virtual bool can_be_start_capture() = 0;
     virtual bool must_be_stop_capture() = 0;
     [[nodiscard]] virtual bool is_capture_in_progress() const = 0;
+    virtual void must_flush_capture() = 0;
 
     [[nodiscard]] virtual const CHANNELS::ChannelDefArray & get_channel_list() const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, bytes_view chunk_data

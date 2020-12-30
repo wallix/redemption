@@ -1690,6 +1690,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     std::string color_depth;
     uint32_t png_interval = 0;
     std::string ignored_value;
+    unsigned video_frame_rate = 0;
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -1711,6 +1712,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {"count", &recorder.order_count, "Number of orders to execute before stopping, default=0 execute all orders"},
 
         {'n', "png_interval", &png_interval, "time interval between png captures, default=60 seconds"},
+
+        {"frame-rate", &video_frame_rate, "frame per second, default=5 frames"},
 
         {'r', "frameinterval", &recorder.wrm_frame_interval, "time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second"},
 
@@ -1795,6 +1798,10 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     if (options.count("json-pgs") > 0) {
         recorder.json_pgs = true;
+    }
+
+    if (0 != video_frame_rate) {
+        ini.set<cfg::video::framerate>(video_frame_rate);
     }
 
     recorder.full_video_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();

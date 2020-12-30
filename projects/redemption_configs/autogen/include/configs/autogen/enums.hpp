@@ -607,6 +607,21 @@ operator << (std::basic_ostream<Ch, Tr> & os, ModRdpUseFailureSimulationSocketTr
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class VideoEnhancedMode : unsigned char
+{
+    Off = 0,
+    v1 = 1,
+};
+
+inline bool is_valid_enum_value(VideoEnhancedMode e)
+{ return static_cast<unsigned long>(e) <= 1; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, VideoEnhancedMode e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 // Specifies the maximum color resolution (color depth) for client session:
 enum class ColorDepth : unsigned char
 {

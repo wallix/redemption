@@ -63,6 +63,8 @@ bool BrowserFront::is_capture_in_progress() const
     return false;
 }
 
+void BriwserFront::must_flush_capture() {}
+
 
 BrowserFront::ResizeResult BrowserFront::server_resize(ScreenInfo screen_server)
 {

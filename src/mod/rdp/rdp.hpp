@@ -3328,6 +3328,7 @@ public:
                 }
             }
         }
+        this->front.must_flush_capture();
         //LOG(LOG_INFO, "mod_rdp::draw_event() done");
     }   // draw_event
 

@@ -1004,6 +1004,11 @@ smart_video_cropping = option(0, 1, 2, default=0)
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
+#   0: Off
+#   1: v1
+#_advanced
+enhanced_mode = option(0, 1, default=1)
+
 [crypto]
 
 #_hidden

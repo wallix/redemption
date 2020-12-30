@@ -302,6 +302,17 @@ array_view_const_char assign_zbuf_from_cfg(
 parse_error parse(ModRdpUseFailureSimulationSocketTransport & x, spec_type<ModRdpUseFailureSimulationSocketTransport> /*type*/, array_view_const_char value)
 ;
 
+template<> struct zstr_buffer_traits<VideoEnhancedMode> : zstr_buffer_traits<unsigned long> {};
+
+array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<VideoEnhancedMode> & buf,
+    cfg_s_type<VideoEnhancedMode> /*type*/,
+    VideoEnhancedMode x
+);
+
+parse_error parse(VideoEnhancedMode & x, spec_type<VideoEnhancedMode> /*type*/, array_view_const_char value)
+;
+
 template<> struct zstr_buffer_traits<ColorDepth> : zstr_buffer_traits<unsigned long> {};
 
 array_view_const_char assign_zbuf_from_cfg(

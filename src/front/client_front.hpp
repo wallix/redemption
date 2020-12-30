@@ -65,6 +65,8 @@ public:
         return false;
     }
 
+    void must_flush_capture() {}
+
     ResizeResult server_resize(ScreenInfo screen_server) override
     {
         this->screen_info = screen_server;

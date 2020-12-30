@@ -3719,6 +3719,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// type: VideoEnhancedMode <br/>
+    /// value = static_cast<type>(1) <br/>
+    struct video::enhanced_mode {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "video";
+        static constexpr char const * name = "enhanced_mode";
+        using type = VideoEnhancedMode;
+        using sesman_and_spec_type = VideoEnhancedMode;
+        using mapped_type = sesman_and_spec_type;
+        type value = static_cast<type>(1);
+    };
 
     /// basename without extension <br/>
     /// type: std::string <br/>
@@ -5855,6 +5867,7 @@ struct video
 , cfg::video::notimestamp
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
+, cfg::video::enhanced_mode
 { static constexpr bool is_section = true; };
 
 struct capture

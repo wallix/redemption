@@ -531,6 +531,8 @@ private:
     int share_id = 65538;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
 
+    VideoEnhancedMode video_enhanced_mode = VideoEnhancedMode::Off;
+
 public:
     ClientInfo client_info;
 
@@ -729,6 +731,7 @@ public:
     , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(bool(this->verbose & Verbose::keymap) ? 1 : 0)
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
+    , video_enhanced_mode(ini.get<cfg::video::enhanced_mode>())
     , trans(trans)
     , ini(ini)
     , cctx(cctx)
@@ -1127,6 +1130,13 @@ public:
             return true;
         }
         return false;
+    }
+
+    void must_flush_capture() override
+    {
+        if (this->capture && this->video_enhanced_mode >= VideoEnhancedMode::v1) {
+            this->capture->force_flush(this->session_reactor.get_current_time(), this->mouse_x, this->mouse_y);
+        }
     }
 
     [[nodiscard]] bool is_capture_in_progress() const override

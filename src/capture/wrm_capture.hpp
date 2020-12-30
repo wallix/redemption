@@ -694,7 +694,7 @@ public:
             bitmap_data.dest_right = cmd.destRect.x + rect.eright()-1;
             bitmap_data.dest_top = cmd.destRect.y + rect.itop();
             bitmap_data.dest_bottom = cmd.destRect.y + rect.ebottom()-1;
-            
+
             bitmap_data.width = bitmap.cx();
             bitmap_data.height = bitmap.cy();
             bitmap_data.bits_per_pixel = 32;
@@ -755,11 +755,13 @@ public:
             const timeval & now, int x, int y, bool ignore_frame_in_timeval
         ) override {
             (void)ignore_frame_in_timeval;
+
+            this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
+
             if (difftimeval(now, this->start_native_capture)
                     >= this->inter_frame_interval_native_capture) {
                 this->recorder.timestamp(now);
                 this->time_to_wait = this->inter_frame_interval_native_capture;
-                this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
                 this->start_native_capture = now;
                 if ((difftimeval(now, this->start_break_capture) >=
                      this->inter_frame_interval_start_break_capture)) {
@@ -836,6 +838,10 @@ public:
         this->kbd_input_mask_enabled = enable;
 
         this->graphic_to_file.enable_kbd_input_mask(enable);
+    }
+
+    void update_mouse_position(uint16_t x, uint16_t y) {
+        this->graphic_to_file.mouse(x, y);
     }
 
     void send_timestamp_chunk(timeval const & now) {
