@@ -987,9 +987,10 @@ codec_id = string(default='mp4')
 #_advanced
 framerate = integer(min=0, default=5)
 
-# FFmpeg options for video codec.
+# FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264
+# /!\ Some browsers and video decoders don't support crf=0
 #_advanced
-ffmpeg_options = string(default='profile=baseline preset=ultrafast flags=+qscale b=80000')
+ffmpeg_options = string(default='crf=35 preset=superfast')
 
 #_advanced
 notimestamp = boolean(default=False)

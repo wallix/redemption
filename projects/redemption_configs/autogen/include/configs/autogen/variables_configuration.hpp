@@ -3668,9 +3668,10 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// FFmpeg options for video codec. <br/>
+    /// FFmpeg options for video codec. See https://trac.ffmpeg.org/wiki/Encode/H.264 <br/>
+    /// /!\ Some browsers and video decoders don't support crf=0 <br/>
     /// type: std::string <br/>
-    /// value = "profile=baseline preset=ultrafast flags=+qscale b=80000" <br/>
+    /// value = "crf=35 preset=superfast" <br/>
     struct video::ffmpeg_options {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -3679,7 +3680,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "profile=baseline preset=ultrafast flags=+qscale b=80000";
+        type value = "crf=35 preset=superfast";
     };
     /// type: bool <br/>
     /// value{false} <br/>

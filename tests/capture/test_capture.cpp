@@ -2403,6 +2403,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "--chunk",
             "--video-codec", "mp4",
             "--json-pgs",
+            "--video-codec-options", "profile=baseline preset=ultrafast flags=+qscale b=80000",
         };
 
         TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
@@ -2436,6 +2437,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "--chunk",
             "--video-codec", "mp4",
             "--json-pgs",
+            "--video-codec-options", "profile=baseline preset=ultrafast flags=+qscale b=80000",
         };
 
         TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
