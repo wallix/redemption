@@ -138,6 +138,7 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::stri
         this->rdpdr_restriction_.fill(true);
         this->cliprdr_restriction_.fill(true);
         this->rdpsnd_restriction_.fill(true);
+        this->rdpcap_restriction_.fill(true);
     }
 
     auto normalize = [this](
@@ -148,6 +149,7 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::stri
         ::normalize(ids, large_ids, channel_names::cliprdr, set, this->cliprdr_restriction_, cliprde_list());
         ::normalize(ids, large_ids, channel_names::rdpdr, set, this->rdpdr_restriction_, rdpdr_list());
         ::normalize(ids, large_ids, channel_names::rdpsnd, set, this->rdpsnd_restriction_, rdpsnd_list());
+        ::normalize(ids, large_ids, CHANNELS::ChannelNameId(), set, this->rdpcap_restriction_, rdpcap_list());
     };
 
     normalize(true, allow_ids, allow_large_ids);
@@ -167,7 +169,7 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string_view allow, std::stri
         cliprdr_up_is_authorized() || cliprdr_down_is_authorized());
     bool const is_allowed = (
         contains_true(this->rdpdr_restriction_)
-        || contains_true(this->rdpsnd_restriction_));
+     || contains_true(this->rdpsnd_restriction_));
     normalize_channel(channel_names::rdpdr, is_allowed);
     normalize_channel(channel_names::rdpsnd, is_allowed);
 
@@ -262,45 +264,9 @@ bool ChannelsAuthorizations::rdpsnd_audio_output_is_authorized() const noexcept
     return this->rdpsnd_restriction_[0];
 }
 
-REDEMPTION_OSTREAM(out, ChannelsAuthorizations const & auth)
+bool ChannelsAuthorizations::rdpsnd_audio_input_is_authorized() const noexcept
 {
-    auto p = [&](
-        std::vector<CHANNELS::ChannelNameId> const & ids,
-        bool all, bool val_ok, const char * name
-    ) {
-        if (all) {
-            out << name << "=*\n";
-        }
-        else {
-            out << name << '=';
-            for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
-                if (auth.cliprdr_restriction_[i] == val_ok) {
-                    out << ChannelsAuthorizations::cliprde_list()[i].data();
-                }
-            }
-            for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
-                if (auth.rdpdr_restriction_[i] == val_ok) {
-                    out << ChannelsAuthorizations::rdpdr_list()[i].data();
-                }
-            }
-            for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
-                if (auth.rdpsnd_restriction_[i] == val_ok) {
-                    out << ChannelsAuthorizations::rdpsnd_list()[i].data();
-                }
-            }
-
-            for (auto && id : ids) {
-                out << id << ',';
-            }
-            out << '\n';
-        }
-    };
-    auto rng_allow = array_view<CHANNELS::ChannelNameId>{auth.allow_and_deny_.data(), auth.allow_and_deny_.data() + auth.allow_and_deny_pivot_};
-    auto rng_deny = array_view<CHANNELS::ChannelNameId>{auth.allow_and_deny_.data() + auth.allow_and_deny_pivot_, auth.allow_and_deny_.data() + auth.allow_and_deny_.size()};
-
-    p(rng_allow, auth.all_allow_, true, "allow");
-    p(rng_deny, auth.all_deny_, false, "deny");
-    return out;
+    return this->rdpcap_restriction_[0];
 }
 
 std::pair<std::string,std::string>
@@ -344,6 +310,7 @@ update_authorized_channels(std::string allow, std::string deny, std::string prox
         remove(s, "cliprdr,");
         remove(s, "rdpdr,");
         remove(s, "rdpsnd,");
+        // not name for audio capture because not a static channel
         for (auto str : ChannelsAuthorizations::cliprde_list()) {
             remove(s, {str.data(), str.size()});
         }
@@ -358,9 +325,9 @@ update_authorized_channels(std::string allow, std::string deny, std::string prox
         }
     }
 
-    constexpr struct {
-        const char * opt;
-        const char * channel;
+    static constexpr struct {
+        std::string_view opt;
+        std::string_view channel;
     } opts_channels[] {
         {"RDP_CLIPBOARD_UP",   ",cliprdr_up"          },
         {"RDP_CLIPBOARD_DOWN", ",cliprdr_down"        },
@@ -372,13 +339,16 @@ update_authorized_channels(std::string allow, std::string deny, std::string prox
         {"RDP_DRIVE_WRITE",    ",rdpdr_drive_write"   },
         {"RDP_SMARTCARD",      ",rdpdr_smartcard"     },
 
-        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" }
+        {"RDP_AUDIO_OUTPUT",   ",rdpsnd_audio_output" },
+
+        {"RDP_AUDIO_INPUT",    ",rdpcap_audio_input" },
     };
 
     static_assert(
         decltype(ChannelsAuthorizations::cliprde_list())().size()
-        + decltype(ChannelsAuthorizations::rdpdr_list())().size()
-        + decltype(ChannelsAuthorizations::rdpsnd_list())().size()
+      + decltype(ChannelsAuthorizations::rdpdr_list())().size()
+      + decltype(ChannelsAuthorizations::rdpsnd_list())().size()
+      + decltype(ChannelsAuthorizations::rdpcap_list())().size()
     == std::extent<decltype(opts_channels)>::value
     , "opts_channels.size() error");
 
@@ -391,5 +361,6 @@ update_authorized_channels(std::string allow, std::string deny, std::string prox
             s.erase(0,1);
         }
     }
+
     return {allow, deny};
 }

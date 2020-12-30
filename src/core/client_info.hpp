@@ -96,6 +96,7 @@ struct ClientInfo
     int rdp_autologin = 0;
     int encryptionLevel = 3; /* 1, 2, 3 = low, medium, high */
     bool has_sound_code = false; /* 1 = leave sound at server */
+    bool has_sound_capture_code = false;
     uint32_t rdp5_performanceflags = 0;
     int brush_cache_code = 0; /* 0 = no cache 1 = 8x8 standard cache
                            2 = arbitrary dimensions */
@@ -214,6 +215,9 @@ struct ClientInfo
         }
         if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
             this->has_sound_code = true;
+        }
+        if (infoPacket.flags & INFO_AUDIOCAPTURE) {
+            this->has_sound_capture_code = true;
         }
         if (infoPacket.flags & INFO_AUTOLOGON){
             this->rdp_autologin = 1;

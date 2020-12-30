@@ -330,6 +330,7 @@ public:
 
         client_info.bitmap_codec_caps.haveRemoteFxCodec = enable_remotefx;
         client_info.has_sound_code = get_or(config, "enableSound", false);
+        client_info.has_sound_capture_code = get_or(config, "enableSoundCapture", false);
 
         uint32_t maxRequestSize = client_info.multi_fragment_update_caps.MaxRequestSize;
         set_if(config, "fragmentUpdateMaxRequestSize", maxRequestSize);

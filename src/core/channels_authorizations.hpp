@@ -22,7 +22,6 @@
 
 #include "core/channel_names.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/std_stream_proto.hpp"
 
 #include <vector>
 #include <string>
@@ -49,8 +48,7 @@ public:
     [[nodiscard]] bool rdpdr_drive_write_is_authorized() const noexcept;
 
     [[nodiscard]] bool rdpsnd_audio_output_is_authorized() const noexcept;
-
-    REDEMPTION_FRIEND_OSTREAM(out, ChannelsAuthorizations const & auth);
+    [[nodiscard]] bool rdpsnd_audio_input_is_authorized() const noexcept;
 
     [[nodiscard]] bool cliprdr_up_is_authorized() const noexcept;
     [[nodiscard]] bool cliprdr_down_is_authorized() const noexcept;
@@ -65,6 +63,7 @@ public:
             cstr_array_view("cliprdr_file,"),
         }};
     }
+
     static constexpr std::array<chars_view, 5> rdpdr_list()
     {
         return {{
@@ -75,10 +74,18 @@ public:
             cstr_array_view("rdpdr_smartcard,"),
         }};
     }
+
     static constexpr std::array<chars_view, 1> rdpsnd_list()
     {
         return {{
             cstr_array_view("rdpsnd_audio_output,"),
+        }};
+    }
+
+    static constexpr std::array<chars_view, 1> rdpcap_list()
+    {
+        return {{
+            cstr_array_view("rdpcap_audio_input,"),
         }};
     }
 
@@ -116,6 +123,7 @@ private:
     std::array<bool, decltype(rdpdr_list())().size()> rdpdr_restriction_ {{}};
     std::array<bool, decltype(cliprde_list())().size()> cliprdr_restriction_ {{}};
     std::array<bool, decltype(rdpsnd_list())().size()> rdpsnd_restriction_ {{}};
+    std::array<bool, decltype(rdpcap_list())().size()> rdpcap_restriction_ {{}};
 };
 
 std::pair<std::string,std::string>
