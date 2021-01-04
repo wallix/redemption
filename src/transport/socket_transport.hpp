@@ -42,9 +42,9 @@ class SocketTransport
     size_t total_sent = 0;
     size_t total_received = 0;
 
-public:
     int sck;
 
+public:
     int get_sck() override { return sck; }
 
 protected:

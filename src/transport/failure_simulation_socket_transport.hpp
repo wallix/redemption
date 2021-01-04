@@ -42,7 +42,7 @@ private:
             if (this->current_successful_operations >= this->max_successful_read_operations)
             {
                 LOG(LOG_ERR, "FailureSimulationSocketTransport::do_partial_read: Simulates read error");
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->get_sck());
             }
 
             this->current_successful_operations++;
@@ -58,7 +58,7 @@ private:
             if (this->current_successful_operations >= this->max_successful_read_operations)
             {
                 LOG(LOG_ERR, "FailureSimulationSocketTransport::do_atomic_read: Simulates read error");
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->sck);
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0, this->get_sck());
             }
 
             this->current_successful_operations++;
@@ -74,7 +74,7 @@ private:
             if (this->current_successful_operations >= this->max_successful_write_operations)
             {
                 LOG(LOG_ERR, "FailureSimulationSocketTransport::do_send: Simulates write error");
-                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->sck);
+                throw Error(ERR_TRANSPORT_WRITE_FAILED, 0, this->get_sck());
             }
 
             this->current_successful_operations++;

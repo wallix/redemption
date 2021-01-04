@@ -56,7 +56,7 @@ public:
 
     [[nodiscard]] int get_fd() const override
     {
-        return this->strans.sck;
+        return this->strans.get_sck();
     }
 
     [[nodiscard]] u8_array_view get_public_key() const override

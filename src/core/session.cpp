@@ -342,7 +342,7 @@ private:
 
         if ((e.id == ERR_TRANSPORT_WRITE_FAILED || e.id == ERR_TRANSPORT_NO_MORE_DATA)
          && mod_wrapper.get_mod_transport()
-         && static_cast<uintptr_t>(mod_wrapper.get_mod_transport()->sck) == e.data
+         && static_cast<uintptr_t>(mod_wrapper.get_mod_transport()->get_sck()) == e.data
          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
          && mod_wrapper.get_mod().is_auto_reconnectable()
          && !mod_wrapper.get_mod().server_error_encountered()
@@ -358,7 +358,7 @@ private:
         LOG(LOG_INFO,
             "ModTrans=<%p> Sock=%d AutoReconnection=%s AutoReconnectable=%s ErrorEncountered=%s",
             mod_wrapper.get_mod_transport(),
-            (mod_wrapper.get_mod_transport() ? mod_wrapper.get_mod_transport()->sck : -1),
+            (mod_wrapper.get_mod_transport() ? mod_wrapper.get_mod_transport()->get_sck() : -1),
             (ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>() ? "Yes" : "No"),
             (mod_wrapper.get_mod().is_auto_reconnectable() ? "Yes" : "No"),
             (mod_wrapper.get_mod().server_error_encountered() ? "Yes" : "No")
@@ -664,7 +664,7 @@ private:
         Callback& callback,
         Fn&& stop_event)
     {
-        const int sck = front_trans.sck;
+        const int sck = front_trans.get_sck();
         const int max = sck;
 
         fd_set fds;
@@ -782,25 +782,25 @@ private:
                 const bool front_has_tls_pending_data = front_trans.has_tls_pending_data();
                 const bool mod_has_data_to_write      = pmod_trans
                                                      && pmod_trans->has_data_to_write()
-                                                     && pmod_trans->sck != INVALID_SOCKET;
+                                                     && pmod_trans->get_sck() != INVALID_SOCKET;
                 const bool mod_has_tls_pending_data   = pmod_trans
                                                      && pmod_trans->has_tls_pending_data()
-                                                     && pmod_trans->sck != INVALID_SOCKET;
+                                                     && pmod_trans->get_sck() != INVALID_SOCKET;
 
                 Select ioswitch;
 
                 // writing pending, do not read anymore (excepted acl)
                 if (mod_has_data_to_write || front_has_data_to_write) {
                     if (front_has_data_to_write) {
-                        ioswitch.set_write_sck(front_trans.sck);
+                        ioswitch.set_write_sck(front_trans.get_sck());
                     }
 
                     if (mod_has_data_to_write) {
-                        ioswitch.set_write_sck(pmod_trans->sck);
+                        ioswitch.set_write_sck(pmod_trans->get_sck());
                     }
                 }
                 else {
-                    ioswitch.set_read_sck(front_trans.sck);
+                    ioswitch.set_read_sck(front_trans.get_sck());
                     events.get_fds([&](int fd){ ioswitch.set_read_sck(fd); });
                 }
                 ioswitch.set_read_sck(auth_sck);
@@ -826,21 +826,21 @@ private:
                 time_base.set_current_time(tvtime());
 
                 if (front_has_tls_pending_data) {
-                    ioswitch.set_read_sck(front_trans.sck);
+                    ioswitch.set_read_sck(front_trans.get_sck());
                 }
 
                 if (mod_has_tls_pending_data) {
-                    ioswitch.set_read_sck(pmod_trans->sck);
+                    ioswitch.set_read_sck(pmod_trans->get_sck());
                 }
 
                 loop_state = LoopState::Front;
 
                 if (REDEMPTION_UNLIKELY(front_has_data_to_write)) {
-                    if (ioswitch.is_set_for_writing(front_trans.sck)) {
+                    if (ioswitch.is_set_for_writing(front_trans.get_sck())) {
                         front_trans.send_waiting_data();
                     }
                 }
-                else if (ioswitch.is_set_for_reading(front_trans.sck)) {
+                else if (ioswitch.is_set_for_reading(front_trans.get_sck())) {
                     auto& callback = mod_wrapper.get_callback();
                     front_process(rbuf, front, front_trans, callback);
 
@@ -952,7 +952,7 @@ private:
                 if (!back_event) {
                     if (REDEMPTION_UNLIKELY(mod_has_data_to_write)) {
                         pmod_trans = mod_wrapper.get_mod_transport();
-                        if (pmod_trans && ioswitch.is_set_for_writing(pmod_trans->sck)) {
+                        if (pmod_trans && ioswitch.is_set_for_writing(pmod_trans->get_sck())) {
                             pmod_trans->send_waiting_data();
                         }
                     }
@@ -1062,7 +1062,7 @@ private:
                         SocketTransport* socket_transport_ptr = mod_wrapper.get_mod_transport();
 
                         if (socket_transport_ptr
-                         && e.data == static_cast<uintptr_t>(socket_transport_ptr->sck)
+                         && e.data == static_cast<uintptr_t>(socket_transport_ptr->get_sck())
                          && ini.get<cfg::mod_rdp::auto_reconnection_on_losing_target_link>()
                          && mod_wrapper.get_mod().is_auto_reconnectable()
                          && !mod_wrapper.get_mod().server_error_encountered())
