@@ -612,20 +612,34 @@ private:
 
     timeval target_connection_start_time {};
 
-    static timeval* next_delay(timeval&& timeout)
+    struct NextDelay
     {
-        // timeout {0,0} means no timeout to trigger
-        if (timeout != timeval{0, 0}) {
-            auto now = tvtime();
-            timeout = (now < timeout)
-                ? to_timeval(timeout - now)
-                // no delay
-                : timeval{};
-            return &timeout;
+        NextDelay(bool nodelay, EventContainer const& events)
+        {
+            if (!nodelay) {
+                auto timeout = events.next_timeout();
+                // timeout {0,0} means no timeout to trigger
+                if (timeout != timeval{0, 0}) {
+                    auto now = tvtime();
+                    this->tv = (now < timeout)
+                        ? to_timeval(timeout - now)
+                        // no delay
+                        : timeval{};
+                    this->r = &this->tv;
+                }
+            }
+            else {
+                this->tv = {0, 0};
+                this->r = &this->tv;
+            }
         }
 
-        return nullptr;
-    }
+        timeval* timeout() const { return this->r; }
+
+    private:
+        timeval tv;
+        timeval* r = nullptr;
+    };
 
     static inline void front_process(
         TpduBuffer& buffer, Front& front, InTransport front_trans,
@@ -657,14 +671,15 @@ private:
         io_fd_zero(fds);
 
         for (;;) {
+            bool const has_data_to_write = front_trans.has_data_to_write();
             bool const has_tls_pending_data = front_trans.has_tls_pending_data();
 
             io_fd_set(sck, fds);
 
             int const num = ::select(max+1,
-                has_tls_pending_data ? nullptr : &fds,
-                has_tls_pending_data ? &fds : nullptr,
-                nullptr, next_delay(events.next_timeout()));
+                has_data_to_write ? nullptr : &fds,
+                has_data_to_write ? &fds : nullptr,
+                nullptr, NextDelay(has_tls_pending_data, events).timeout());
 
             if (num < 0) {
                 if (errno != EINTR) {
@@ -682,12 +697,15 @@ private:
             if (num) {
                 assert(io_fd_isset(sck, fds));
 
-                if (has_tls_pending_data) {
+                if (has_data_to_write) {
                     front_trans.send_waiting_data();
                 }
                 else {
                     front_process(rbuf, front, front_trans, callback);
                 }
+            }
+            else if (has_tls_pending_data) {
+                front_process(rbuf, front, front_trans, callback);
             }
 
             if (stop_event()) {
@@ -760,10 +778,14 @@ private:
                 loop_state = LoopState::Select;
 
                 auto* pmod_trans = mod_wrapper.get_mod_transport();
-                const bool front_has_data_to_write = front_trans.has_data_to_write();
-                const bool mod_has_data_to_write   = pmod_trans
-                                                  && pmod_trans->has_data_to_write()
-                                                  && pmod_trans->sck != INVALID_SOCKET;
+                const bool front_has_data_to_write    = front_trans.has_data_to_write();
+                const bool front_has_tls_pending_data = front_trans.has_tls_pending_data();
+                const bool mod_has_data_to_write      = pmod_trans
+                                                     && pmod_trans->has_data_to_write()
+                                                     && pmod_trans->sck != INVALID_SOCKET;
+                const bool mod_has_tls_pending_data   = pmod_trans
+                                                     && pmod_trans->has_tls_pending_data()
+                                                     && pmod_trans->sck != INVALID_SOCKET;
 
                 Select ioswitch;
 
@@ -785,9 +807,10 @@ private:
 
                 time_base.set_current_time(tvtime());
 
-                const int num = ioswitch.select(next_delay(events.next_timeout()));
-
-                if (num < 0) {
+                if (ioswitch.select(NextDelay(
+                    mod_has_tls_pending_data || front_has_tls_pending_data,
+                    events
+                ).timeout()) < 0) {
                     if (errno != EINTR) {
                         // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
                         // EBADF: means fd has been closed (by me) or as already returned an error on another call
@@ -802,6 +825,13 @@ private:
 
                 time_base.set_current_time(tvtime());
 
+                if (front_has_tls_pending_data) {
+                    ioswitch.set_read_sck(front_trans.sck);
+                }
+
+                if (mod_has_tls_pending_data) {
+                    ioswitch.set_read_sck(pmod_trans->sck);
+                }
 
                 loop_state = LoopState::Front;
 
