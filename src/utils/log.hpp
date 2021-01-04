@@ -121,8 +121,15 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 #  define REDEMPTION_LOG_VALUE_PARAM_0(elem)
 #  define REDEMPTION_LOG_VALUE_PARAM_1(elem) , log_value(elem).value()
 
-#  define REDEMPTION_LOG_VALUE_PARAM(r, data, elem) \
-    BOOST_PP_CAT(REDEMPTION_LOG_VALUE_PARAM_, BOOST_PP_BOOL(BOOST_PP_GREATER(r, 2)))(elem)
+// Boost.Preprocessor 1.75
+// The beginning 'r' and 'd' iteration numbers in the user-defined macros start at 1 and not 2
+#  ifdef BOOST_PP_IS_STANDARD
+#    define REDEMPTION_LOG_VALUE_PARAM(r, data, elem) \
+       BOOST_PP_CAT(REDEMPTION_LOG_VALUE_PARAM_, BOOST_PP_BOOL(BOOST_PP_GREATER(r, 1)))(elem)
+#  else
+#    define REDEMPTION_LOG_VALUE_PARAM(r, data, elem) \
+       BOOST_PP_CAT(REDEMPTION_LOG_VALUE_PARAM_, BOOST_PP_BOOL(BOOST_PP_GREATER(r, 2)))(elem)
+#  endif
 
 #  define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) \
     "" BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)            \
