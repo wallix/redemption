@@ -493,9 +493,12 @@ namespace test_tools {
 namespace assertion {
 namespace op {
 
+#define DEFINE_COLLECTION_COMPARISON_REV(rev, ...) " " #rev " "
 // BOOST_TEST_FOR_EACH_COMP_OP(action)
 // action( oper, name, rev )
-#define DEFINE_COLLECTION_COMPARISON(oper, name, rev)                     \
+// since Boost 1.75:
+// action( oper, name, rev, name_inverse )
+#define DEFINE_COLLECTION_COMPARISON(oper, name, ...)                     \
 template<class T, class U>                                                \
 struct name<T, U, std::enable_if_t<(                                      \
     ::redemption_unit_test__::is_array_view<T>::value                     \
@@ -561,11 +564,12 @@ struct name<T, U, std::enable_if_t<(                                      \
     {}                                                                    \
                                                                           \
     static char const* revert()                                           \
-    { return " " #rev " "; }                                              \
+    { return DEFINE_COLLECTION_COMPARISON_REV(__VA_ARGS__, 0); }          \
 };
 
 BOOST_TEST_FOR_EACH_COMP_OP(DEFINE_COLLECTION_COMPARISON)
 #undef DEFINE_COLLECTION_COMPARISON
+#undef DEFINE_COLLECTION_COMPARISON_REV
 
 } // namespace op
 } // namespace assertion
