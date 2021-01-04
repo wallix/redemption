@@ -96,3 +96,8 @@ size_t FileTransport::do_partial_read(uint8_t * buffer, size_t len)
 
     return static_cast<size_t>(res);
 }
+
+void FileTransport::notify_error(const Error & error)
+{
+    this->_notify_error(error);
+}

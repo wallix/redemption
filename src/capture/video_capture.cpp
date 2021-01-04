@@ -54,16 +54,10 @@ namespace
             LOG(LOG_ERR, "VideoTransport::send: %s [%d]", strerror(error.errnum), error.errnum);
         }
     }
-}
 
-// VideoTransportBase
-//@{
-
-VideoTransportBase::VideoTransportBase(const int groupid, AclReportApi * acl_report)
-: out_file(invalid_fd(), [acl_report](const Error & error){
-        video_transport_log_error(error);
-        if (error.errnum == ENOSPC) {
-            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+    void video_transport_acl_report(AclReportApi * acl_report, int errnum)
+    {
+        if (errnum == ENOSPC) {
             if (acl_report){
                 acl_report->report("FILESYSTEM_FULL", "100|unknown");
             }
@@ -71,8 +65,19 @@ VideoTransportBase::VideoTransportBase(const int groupid, AclReportApi * acl_rep
                 LOG(LOG_ERR, "FILESYSTEM_FULL:100|unknown");
             }
         }
-    })
+    }
+}
+
+// VideoTransportBase
+//@{
+
+VideoTransportBase::VideoTransportBase(const int groupid, AclReportApi * acl_report)
+: out_file(invalid_fd(), [acl_report](const Error & error){
+    video_transport_log_error(error);
+    video_transport_acl_report(acl_report, error.errnum);
+})
 , groupid(groupid)
+, acl_report(acl_report)
 {
     this->tmp_filename[0] = 0;
     this->final_filename[0] = 0;
@@ -108,9 +113,8 @@ void VideoTransportBase::force_open()
            , this->tmp_filename
            , strerror(errnum), errnum);
         this->status = false;
-        Error error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-        this->out_file.notify_error(error);
-        throw error;
+        video_transport_acl_report(this->acl_report, errnum);
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
     }
 
     if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {

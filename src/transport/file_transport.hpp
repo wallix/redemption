@@ -29,7 +29,7 @@ struct FileTransport : Transport
 {
     explicit FileTransport(unique_fd fd, std::function<void(const Error & error)> notify_error = [](const Error&){}) noexcept /*NOLINT*/
     : file(std::move(fd))
-    , notify_error(std::move(notify_error))
+    , _notify_error(std::move(notify_error))
     {}
 
     bool disconnect() override
@@ -66,10 +66,11 @@ protected:
     Read do_atomic_read(uint8_t * buffer, size_t len) override;
     size_t do_partial_read(uint8_t * buffer, size_t len) override;
 
+    void notify_error(const Error & error);
+
 private:
     unique_fd file;
-public:
-    std::function<void(const Error & error)> notify_error;
+    std::function<void(const Error & error)> _notify_error;
 };
 
 

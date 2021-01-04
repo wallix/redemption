@@ -59,6 +59,9 @@ private:
 protected:
     char final_filename[1024];
     bool status = true;
+
+private:
+    AclReportApi * acl_report;
 };
 
 
