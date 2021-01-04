@@ -35,7 +35,7 @@
 #include "core/RDP/RDPDrawable.hpp"
 
 #include "transport/crypto_transport.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
+#include "transport/mwrm_reader.hpp"
 #include "transport/file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
@@ -49,10 +49,10 @@
 #include "utils/recording_progress.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/iter.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/strutils.hpp"
+#include "utils/ref.hpp"
 
 
 #include <string>
@@ -329,14 +329,13 @@ static int do_recompress(
             nullptr,
             -1
         );
-        {
-            ChunkToFile recorder(
-                &trans, player.get_wrm_info(), ini.get<cfg::video::wrm_compression_algorithm>());
 
-            player.set_consumer(recorder);
+        ChunkToFile recorder(
+            &trans, player.get_wrm_info(), ini.get<cfg::video::wrm_compression_algorithm>());
 
-            player.play(program_requested_to_shutdown);
-        }
+        player.set_consumer(recorder);
+
+        player.play(program_requested_to_shutdown);
     }
     catch (...) {
         return_code = -1;
@@ -517,37 +516,6 @@ static inline MwrmInfos load_mwrm_infos(
     return mwrm_infos;
 }
 
-inline void remove_file(
-    InMetaSequenceTransport & in_wrm_trans, const char * hash_path, const char * infile_path
-  , const char * input_filename, const char * infile_extension, EncryptionMode encryption_mode
-) {
-    std::vector<std::string> files;
-
-    if (encryption_mode == EncryptionMode::Encrypted) {
-        files.emplace_back(str_concat(hash_path, input_filename, infile_extension));
-    }
-    files.emplace_back(str_concat(infile_path, input_filename, infile_extension));
-
-    try {
-        do {
-            in_wrm_trans.next();
-            files.emplace_back(in_wrm_trans.path());
-        }
-        while (true);
-    }
-    catch (const Error & e) {
-        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-            throw;
-        }
-    }
-
-    std::cout << std::endl;
-    for (auto & s : iter(files.rbegin(), files.rend())) {
-        unlink(s.c_str());
-        std::cout << "Removed : " << s << std::endl;
-    }
-}
-
 static void raise_error(
     UpdateProgressData::Format pgs_format,
     std::string const& output_filename,
@@ -579,25 +547,85 @@ static int raise_error_and_log(
     return code;
 }
 
+namespace
+{
+    struct WrmsTransport final : public Transport
+    {
+        using EncryptionMode = InCryptoTransport::EncryptionMode;
+
+        WrmsTransport(
+            Ref<const std::vector<MetaLine>> wrms,
+            CryptoContext & cctx,
+            EncryptionMode encryption,
+            Fstat & fstat)
+        : wrm(cctx, encryption, fstat)
+        , wrms(wrms)
+        {}
+
+        bool disconnect() override
+        {
+            if (this->wrm.is_open()) {
+                this->wrm.close();
+            }
+            return true;
+        }
+
+        bool next() override
+        {
+            if (this->pos >= this->wrms.size()) {
+                LOG(LOG_ERR, "WrmsTransport::next: No more line!");
+                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
+            }
+
+            this->wrm.open(this->wrms[this->pos].filename);
+            ++this->pos;
+            return true;
+        }
+
+    private:
+        Read do_atomic_read(uint8_t * data, size_t len) override
+        {
+            for (;;) {
+                if (!this->wrm.is_open()) {
+                    if (this->pos >= this->wrms.size()) {
+                        return Read::Eof;
+                    }
+                    this->wrm.open(this->wrms[this->pos].filename);
+                    ++this->pos;
+                }
+
+                if (Read::Ok == this->wrm.atomic_read(data, len)) {
+                    return Read::Ok;
+                }
+
+                this->wrm.close();
+            }
+        }
+
+        InCryptoTransport wrm;
+        std::vector<MetaLine> const& wrms;
+        std::size_t pos = 0;
+    };
+}
 
 static inline int update_filename_and_check_size(
     UpdateProgressData::Format pgs_format,
     std::string const& output_filename,
     std::vector<MetaLine>& wrms,
-    std::string const& other_wrm_durectory,
+    std::string const& other_wrm_directory,
     Fstat& fstat,
     bool ignore_file_size)
 {
     struct stat st;
-    std::string new_filename = (other_wrm_durectory.empty() || other_wrm_durectory.back() != '/')
-        ? other_wrm_durectory
-        : str_concat(other_wrm_durectory, '/');
+    std::string new_filename = (other_wrm_directory.empty() || other_wrm_directory.back() != '/')
+        ? other_wrm_directory
+        : str_concat(other_wrm_directory, '/');
     size_t const new_filename_base_len = new_filename.size();
 
     for (auto& wrm : wrms) {
         if (fstat.stat(wrm.filename, st)) {
             bool has_error = true;
-            if (errno == ENOENT && !other_wrm_durectory.empty()) {
+            if (errno == ENOENT && !other_wrm_directory.empty()) {
                 size_t len = 0;
                 char const* basename = basename_len(wrm.filename, len);
                 new_filename.resize(new_filename_base_len);
@@ -861,21 +889,11 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 inline void get_join_visibility_rect(
     Rect & out_max_image_frame_rect,
     Rect & out_min_image_frame_rect,
+    WrmsTransport && in_wrm_trans,
     Dimension & out_max_screen_dim,
-    char const* infile_prefix,
-    char const* infile_extension,
-    EncryptionMode encryption_mode,
     bool play_video_with_corrupted_bitmap,
-    CryptoContext & cctx,
-    Fstat & fstat, uint32_t verbose)
+    uint32_t verbose)
 {
-    InMetaSequenceTransport in_wrm_trans(
-        cctx,
-        infile_prefix,
-        infile_extension,
-        encryption_mode,
-        fstat);
-
     timeval begin_capture = {0, 0};
     timeval end_capture = {0, 0};
 
@@ -920,7 +938,6 @@ static inline int replay(
     MwrmInfos const& mwrm_infos,
     std::string & infile_path,
     std::string & input_basename,
-    std::string & infile_extension,
     std::string const& hash_path,
     CaptureFlags const& capture_flags,
     UpdateProgressData::Format pgs_format,
@@ -940,7 +957,6 @@ static inline int replay(
     bool show_statistics,
     bool clear,
     bool full_video,
-    bool remove_input_file,
     int wrm_compression_algorithm,
     std::chrono::seconds video_break_interval,
     TraceType encryption_type,
@@ -1026,12 +1042,7 @@ static inline int replay(
     // TODO
     uint64_t total_wrm_file_len = 0;
 
-    InMetaSequenceTransport in_wrm_trans(
-        cctx, infile_prefix,
-        infile_extension.c_str(),
-        encryption_mode,
-        fstat
-    );
+    WrmsTransport in_wrm_trans(mwrm_infos.wrms, cctx, encryption_mode, fstat);
 
     timeval begin_capture = {begin_cap, 0};
     timeval end_capture = {end_cap, 0};
@@ -1325,19 +1336,6 @@ static inline int replay(
         raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
     }
 
-    if (!result && remove_input_file) {
-        InMetaSequenceTransport in_wrm_trans_tmp(
-            cctx,
-            infile_prefix,
-            infile_extension.c_str(),
-            encryption_mode,
-            fstat);
-
-        remove_file( in_wrm_trans_tmp, ini.get<cfg::video::hash_path>().c_str(), infile_path.c_str()
-                    , input_basename.c_str(), infile_extension.c_str()
-                    , encryption_mode);
-    }
-
     std::cout << std::endl;
 
     return result;
@@ -1391,7 +1389,6 @@ struct RecorderParams {
     // miscellaneous options
     CaptureFlags capture_flags = CaptureFlags::none; // output control
     bool auto_output_file   = false;
-    bool remove_input_file  = false;
     bool clear              = true;
     bool infile_is_encrypted = false;
     bool chunk = false;
@@ -1605,9 +1602,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
                 return cli::Res::Ok;
             })),
-
-        cli::option("remove-input-file").help("remove input file")
-            .parser(cli::on_off_location(recorder.remove_input_file)),
 
         cli::option("config-file").help("use another ini file")
             .parser(cli::arg_location(recorder.config_filename)).argname("<path>"),
@@ -1969,12 +1963,9 @@ extern "C" {
                     get_join_visibility_rect(
                         max_joint_visibility_rect,
                         min_joint_visibility_rect,
+                        WrmsTransport(mwrm_infos.wrms, cctx, encryption_mode, fstat),
                         max_screen_dim,
-                        mwrm_prefix.c_str(),
-                        rp.infile_extension.c_str(),
-                        encryption_mode,
                         ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
-                        cctx, fstat,
                         verbose
                     );
 
@@ -1998,7 +1989,6 @@ extern "C" {
             res = replay(mwrm_infos,
                          rp.mwrm_path,
                          rp.input_basename,
-                         rp.infile_extension,
                          rp.hash_path,
                          rp.capture_flags,
                          pgs_format,
@@ -2018,7 +2008,6 @@ extern "C" {
                          rp.show_statistics,
                          rp.clear,
                          rp.full_video,
-                         rp.remove_input_file,
                          rp.wrm_compression_algorithm,
                          rp.video_break_interval,
                          rp.encryption_type,

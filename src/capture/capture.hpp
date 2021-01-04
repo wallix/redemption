@@ -31,6 +31,7 @@
 #include "gdi/relayout_api.hpp"
 #include "gdi/resize_api.hpp"
 #include "capture/notify_next_video.hpp"
+#include "utils/ref.hpp"
 
 #include <vector>
 #include <memory>
@@ -248,19 +249,6 @@ private:
     UpdateProgressData * update_progress_data;
 
     MouseTrace mouse_info;
-
-    template<class T>
-    struct Ref
-    {
-        Ref(T& ref) noexcept : _p(&ref) {}
-        Ref(T&& ref) = delete;
-
-        operator T& () const noexcept { return *_p; }
-        T& get() const noexcept { return *_p; }
-
-    private:
-        T* _p;
-    };
 
     std::vector<Ref<gdi::GraphicApi>> gds;
     // Objects willing to be warned of FrameMarker Events

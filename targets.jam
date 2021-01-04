@@ -459,7 +459,6 @@ lib libredrec :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -2847,7 +2846,6 @@ test-run tests/lib/test_do_recorder :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
