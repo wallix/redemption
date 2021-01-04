@@ -33,8 +33,6 @@
 
 #include <memory>
 
-#include <ctime>
-#include <cstdio>
 #include <cassert>
 
 
@@ -50,10 +48,7 @@ AclSerializer::AclSerializer(Inifile & ini, Transport & trans)
 : verbose(safe_cast<Verbose>(ini.get<cfg::debug::auth>()))
 , ini(ini)
 , auth_trans(trans)
-, session_id{}
-{
-    std::snprintf(this->session_id, sizeof(this->session_id), "%d", getpid());
-}
+{}
 
 AclSerializer::~AclSerializer() = default;
 

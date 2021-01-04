@@ -50,5 +50,4 @@ public:
 private:
     Inifile & ini;
     Transport & auth_trans;
-    char session_id[256];
 };
