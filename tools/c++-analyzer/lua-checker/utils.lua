@@ -23,6 +23,8 @@ peg.multiLineComment = '/*' * peg.After('*/')
 
 local format = string.format
 
+local print_error = function(s) io.stderr:write(s) end
+
 return {
     peg = peg,
 
@@ -31,9 +33,7 @@ return {
         print_error('\n')
     end,
 
-    print_error=function(s)
-        io.stderr:write(s)
-    end,
+    print_error=print_error,
 
     readall=function(fname)
         f,e = io.open(fname)
@@ -56,18 +56,18 @@ return {
         end
     end,
 
-    match_and_setk=function(pattern, content, value, t)
-        local t = t or {}
+    match_and_setk=function(pattern, content, value, kvalues)
+        local kvalues = kvalues or {}
         local r = pattern:match(content)
         if r then
             for _,v in ipairs(r) do
-                t[v] = value
+                kvalues[v] = value
             end
         end
-        return t
+        return kvalues
     end,
 
-    print_value=function(kvalues, name)
+    print_kvalues=function(kvalues, name)
         print_error(format('#%s = %d\n', name or 'values', #kvalues))
         for name,activated in pairs(kvalues) do
             print_error(format('%s = %s\n', name, activated))

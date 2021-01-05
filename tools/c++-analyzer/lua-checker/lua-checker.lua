@@ -73,7 +73,9 @@ if args.checks then
 end
 
 if args.list_checks then
-    print(table.concat(checkers, '\n'))
+    for name in pairs(list_checkers) do
+        print(name)
+    end
     return
 end
 
