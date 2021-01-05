@@ -88,14 +88,14 @@ public:
     }
 
     template<class T>
-    typename T::type const & get() const noexcept
+    [[nodiscard]] typename T::type const & get() const noexcept
     {
         //static_assert(T::is_sesman_to_proxy, "T isn't readable");
         return static_cast<T const &>(this->variables).value;
     }
 
     template<class T>
-    typename T::type & get_mutable_ref() noexcept
+    [[nodiscard]] typename T::type & get_mutable_ref() noexcept
     {
         static_assert(!T::is_proxy_to_sesman, "reference on write variable isn't safe");
         return static_cast<T&>(this->variables).value;
