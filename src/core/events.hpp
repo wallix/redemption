@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2020
-   Author(s): Christophe Grosjean
+   Copyright (C) Wallix 2021
+   Author(s): Proxy Team
 */
 
 #pragma once
@@ -373,21 +373,10 @@ struct EventContainer : noncopyable
         std::string_view name, void const* lifespan,
         timeval trigger_time, TimeoutAction&& on_timeout)
     {
-        Event * pevent;
-
-        if constexpr (std::is_convertible_v<TimeoutAction, Event::Actions::Sig*>) {
-            pevent = make_event<Event>(name, lifespan);
-            pevent->actions.on_timeout = on_timeout;
-        }
-        else {
-            auto* timer_event = this->create_nontrivial_event(
-                name, lifespan, static_cast<TimeoutAction&&>(on_timeout));
-            timer_event->actions.on_timeout = [](Event& e){
-                static_cast<decltype(*timer_event)&>(e).event_action(e);
-            };
-            pevent = timer_event;
-        }
-
+        Event* pevent = make_event(
+            name, lifespan,
+            NilFn(),
+            static_cast<TimeoutAction&&>(on_timeout));
         pevent->alarm.set_timeout(trigger_time);
         this->queue.push_back(pevent);
         return *pevent;
@@ -398,21 +387,10 @@ struct EventContainer : noncopyable
         std::string_view name, void const* lifespan,
         int fd, FdAction&& on_fd)
     {
-        Event * pevent;
-
-        if constexpr (std::is_convertible_v<FdAction, Event::Actions::Sig*>) {
-            pevent = make_event<Event>(name, lifespan);
-            pevent->actions.on_action = on_fd;
-        }
-        else {
-            auto* fd_event = this->create_nontrivial_event(
-                name, lifespan, static_cast<FdAction&&>(on_fd));
-            fd_event->actions.on_timeout = [](Event& e){
-                static_cast<decltype(*fd_event)&>(e).event_action(e);
-            };
-            pevent = fd_event;
-        }
-
+        Event* pevent = make_event(
+            name, lifespan,
+            static_cast<FdAction&&>(on_fd),
+            NilFn());
         pevent->alarm.fd = fd;
         this->queue.push_back(pevent);
         return *pevent;
@@ -427,84 +405,10 @@ struct EventContainer : noncopyable
         FdAction&& on_fd,
         TimeoutAction&& on_timeout)
     {
-        Event * pevent;
-
-        using is_on_fd_ptr = std::is_convertible<FdAction, Event::Actions::Sig*>;
-        using is_on_timeout_ptr = std::is_convertible<TimeoutAction, Event::Actions::Sig*>;
-
-        if constexpr (is_on_fd_ptr::value && is_on_timeout_ptr::value) {
-            pevent = make_event<Event>(name, lifespan);
-            pevent->actions.on_action = on_fd;
-            pevent->actions.on_timeout = on_timeout;
-        }
-        else if constexpr (is_on_fd_ptr::value) {
-            auto* event = this->create_nontrivial_event(
-                name, lifespan, static_cast<TimeoutAction&&>(on_timeout));
-            event->actions.on_timeout = [](Event& e){
-                static_cast<decltype(*event)&>(e).event_action(e);
-            };
-            pevent = event;
-            pevent->actions.on_action = on_fd;
-        }
-        else if constexpr (is_on_timeout_ptr::value) {
-            auto* event = this->create_nontrivial_event(
-                name, lifespan, static_cast<FdAction&&>(on_fd));
-            event->actions.on_action = [](Event& e){
-                static_cast<decltype(*event)&>(e).event_action(e);
-            };
-            pevent = event;
-            pevent->actions.on_timeout = on_timeout;
-        }
-        else {
-            using UnrefFdAction = std::remove_reference_t<FdAction>;
-            using UnrefTimeoutAction = std::remove_reference_t<TimeoutAction>;
-
-            struct FdTimeoutEvent : Event
-            {
-                UnrefFdAction fd_action;
-                UnrefTimeoutAction timeout_action;
-            };
-
-            auto* event = make_event<FdTimeoutEvent>(
-                name,
-                lifespan,
-                static_cast<UnrefFdAction&&>(on_fd),
-                static_cast<UnrefTimeoutAction&&>(on_timeout)
-            );
-
-            using ActEvent = decltype(*event);
-            event->actions.on_action = [](Event& e){
-                static_cast<ActEvent&>(e).fd_action(e);
-            };
-            event->actions.on_timeout = [](Event& e){
-                static_cast<ActEvent&>(e).timeout_action(e);
-            };
-
-            static_assert(std::is_nothrow_destructible_v<UnrefFdAction>);
-            static_assert(std::is_nothrow_destructible_v<UnrefTimeoutAction>);
-
-            if constexpr (std::is_trivially_destructible_v<UnrefFdAction>) {
-                if constexpr (!std::is_trivially_destructible_v<UnrefTimeoutAction>) {
-                    event->actions.on_delete = [](Event& e) noexcept {
-                        static_cast<ActEvent&>(e).timeout_action.~UnrefTimeoutAction();
-                    };
-                }
-            }
-            else if constexpr (std::is_trivially_destructible_v<UnrefTimeoutAction>) {
-                event->actions.on_delete = [](Event& e) noexcept {
-                    static_cast<ActEvent&>(e).fd_action.~UnrefFdAction();
-                };
-            }
-            else {
-                event->actions.on_delete = [](Event& e) noexcept {
-                    static_cast<ActEvent&>(e).fd_action.~UnrefFdAction();
-                    static_cast<ActEvent&>(e).timeout_action.~UnrefTimeoutAction();
-                };
-            }
-
-            pevent = event;
-        }
-
+        Event* pevent = make_event(
+            name, lifespan,
+            static_cast<FdAction&&>(on_fd),
+            static_cast<TimeoutAction&&>(on_timeout));
         pevent->alarm.set_fd(fd, grace_delay);
         pevent->alarm.set_timeout(trigger_time);
         this->queue.push_back(pevent);
@@ -520,37 +424,110 @@ struct EventContainer : noncopyable
     }
 
 private:
-    template<class Action>
-    auto* create_nontrivial_event(std::string_view name, void const* lifespan, Action&& act)
+    static const int action_tag = 0;
+    static const int timeout_tag = 1;
+
+    struct NilFn
     {
-        using UnrefAction = std::remove_reference_t<Action>;
+        operator Event::Actions::Sig* ();
+    };
 
-        struct ActionEvent : Event
+    template<int Tag, class Fn>
+    struct Function
+    {
+        Fn fn;
+
+        template<class RootEvent>
+        Event::Actions::Sig* to_ptr_func(Fn const& /*fn*/)
         {
-            UnrefAction event_action;
+            return [](Event& e){
+                static_cast<Function&>(static_cast<RootEvent&>(e)).fn(e);
+            };
+        }
+    };
+
+    template<int Tag>
+    struct Function<Tag, Event::Actions::Sig*>
+    {
+        Function(Event::Actions::Sig* /*fn*/) {}
+        Function(NilFn /*fn*/) {}
+
+        template<class RootEvent>
+        Event::Actions::Sig* to_ptr_func(Event::Actions::Sig* f)
+        {
+            assert(f);
+            return f;
+        }
+    };
+
+    template<class ActionFn, class TimeoutFn>
+    struct TupleFunctions
+    : Function<action_tag, ActionFn>
+    , Function<timeout_tag, TimeoutFn>
+    {};
+
+    template<class ActionFn, class TimeoutFn>
+    struct RootEvent : Event, TupleFunctions<ActionFn, TimeoutFn>
+    {};
+
+    template<class Fn>
+    using SimplifyFn = std::conditional_t<
+        std::is_convertible_v<Fn, Event::Actions::Sig*>,
+        Event::Actions::Sig*,
+        Fn
+    >;
+
+    template<class ActionFn, class TimeoutFn>
+    static Event* make_event(
+        std::string_view name, void const* lifespan,
+        ActionFn&& on_action, TimeoutFn&& on_timeout)
+    {
+        using DecayActionFn = SimplifyFn<std::decay_t<ActionFn>>;
+        using DecayTimeoutFn = SimplifyFn<std::decay_t<TimeoutFn>>;
+
+        using RealEvent = RootEvent<DecayActionFn, DecayTimeoutFn>;
+
+        void* raw = ::operator new( /* NOLINT */
+            sizeof(RealEvent) + name.size() + 1u,
+            std::align_val_t(alignof(RealEvent)));
+
+        auto* data_name = static_cast<char*>(raw) + sizeof(RealEvent);
+        memcpy(data_name, name.data(), name.size());
+        data_name[name.size()] = 0;
+
+        RealEvent* event = new (raw) RealEvent{
+            {lifespan},
+            {
+                {static_cast<ActionFn&&>(on_action)},
+                {static_cast<TimeoutFn&&>(on_timeout)},
+            }
         };
+        event->name = data_name;
 
-        auto* event = make_event<ActionEvent>(name, lifespan, static_cast<Action&&>(act));
+        if constexpr (!std::is_same_v<NilFn, ActionFn>) {
+            event->actions.on_action
+                = static_cast<Function<action_tag, DecayActionFn>&>(*event)
+                .template to_ptr_func<RealEvent>(on_action);
+        }
 
-        if constexpr (!std::is_trivially_destructible_v<UnrefAction>) {
-            static_assert(std::is_nothrow_destructible_v<UnrefAction>);
+        if constexpr (!std::is_same_v<NilFn, TimeoutFn>) {
+            event->actions.on_timeout
+                = static_cast<Function<timeout_tag, DecayTimeoutFn>&>(*event)
+                .template to_ptr_func<RealEvent>(on_timeout);
+        }
+
+        if constexpr (!(
+            std::is_trivially_destructible_v<DecayActionFn>
+         && std::is_trivially_destructible_v<DecayTimeoutFn>)
+        ) {
+            static_assert(std::is_nothrow_destructible_v<DecayActionFn>);
+            static_assert(std::is_nothrow_destructible_v<DecayTimeoutFn>);
             event->actions.on_delete = [](Event& e) noexcept {
-                static_cast<ActionEvent&>(e).event_action.~UnrefAction();
+                using Tuple = TupleFunctions<DecayActionFn, DecayTimeoutFn>;
+                static_cast<Tuple&>(static_cast<RealEvent&>(e)).~Tuple();
             };
         }
 
-        return event;
-    }
-
-    template<class Event, class... Ts>
-    static Event* make_event(std::string_view name, Ts&&... xs)
-    {
-        void* raw = ::operator new(sizeof(Event) + name.size() + 1u); /* NOLINT */
-        auto* data_name = static_cast<char*>(raw) + sizeof(Event);
-        memcpy(data_name, name.data(), name.size());
-        data_name[name.size()] = 0;
-        Event* event = new (raw) Event{static_cast<Ts&&>(xs)...};
-        event->name = data_name;
         return event;
     }
 
