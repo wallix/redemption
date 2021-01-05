@@ -2519,7 +2519,15 @@ namespace MCS
                 uint8_t first_byte = stream.in_uint8();
                 uint8_t tag = first_byte >> 2;
                 if (tag != MCS::MCSPDU_SendDataIndication){
-                    LOG(LOG_ERR, "SendDataIndication tag (%u) expected, got %u", MCS::MCSPDU_SendDataIndication, tag);
+                    if (tag == MCS::MCSPDU_DisconnectProviderUltimatum)
+                    {
+                        const t_reasons reason = static_cast<t_reasons>((((first_byte << 8) | stream.in_uint8()) & 0x0380) >> 7);
+                        LOG(LOG_ERR, "SendDataIndication tag MCSPDU_SendDataIndication(%u) expected, got MCSPDU_DisconnectProviderUltimatum(%u), reason=%s[%u]", MCS::MCSPDU_SendDataIndication, tag, get_reason(reason), reason);
+                    }
+                    else {
+                        LOG(LOG_ERR, "SendDataIndication tag MCSPDU_SendDataIndication(%u) expected, got (%u)", MCS::MCSPDU_SendDataIndication, tag);
+                    }
+
                     throw Error(ERR_MCS);
                 }
                 return MCS::MCSPDU_SendDataIndication;

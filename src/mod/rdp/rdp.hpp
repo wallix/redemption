@@ -2958,7 +2958,7 @@ public:
             x224.payload.rewind();
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
-            LOG(LOG_ERR, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
+            LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum: reason=%s [%u]", reason, mcs.reason);
 
             this->connection_finalization_state = DISCONNECTED;
             this->session_log.report("CLOSE_SESSION_SUCCESSFUL", "OK.");

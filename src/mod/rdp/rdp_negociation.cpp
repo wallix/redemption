@@ -1613,6 +1613,7 @@ void RdpNegociation::send_client_info_pdu()
     }
 
     if (this->enable_session_probe) {
+        // INFO_MAXIMIZESHELL is necessary for XRDP target.
         infoPacket.flags &= ~INFO_MAXIMIZESHELL;
     }
 
