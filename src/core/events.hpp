@@ -269,16 +269,6 @@ struct EventContainer : noncopyable
     }
 
     template<class Fn>
-    void get_fds_timeouts(Fn&& fn)
-    {
-        for (auto* pevent : this->queue){
-            if (pevent->alarm.fd != INVALID_SOCKET && !pevent->garbage){
-                fn(pevent->alarm.trigger_time);
-            }
-        }
-    }
-
-    template<class Fn>
     void execute_events(const timeval tv, Fn&& fn, bool verbose)
     {
         size_t iend = this->queue.size();

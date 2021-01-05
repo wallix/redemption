@@ -78,20 +78,22 @@ public:
     {
         timeval now = tvtime();
         int max = 0;
-        fd_set   rfds;
+        fd_set rfds;
         io_fd_zero(rfds);
 
-        timeval ultimatum =  now + timeout;
+        this->events.get_fds([&rfds,&max](int fd){
+            io_fd_set(fd, rfds);
+            max = std::max(max, fd);
+        });
 
-        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, fd);});
-        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum); });
-        if (ultimatum < now){
-            ultimatum = now;
-        }
-        std::chrono::microseconds difftime = ultimatum - now;
-        timeval timeoutastv = {difftime.count()/1000000u,difftime.count()%1000000u};
+        auto next_timeout = this->events.next_timeout();
+        timeval ultimatum = (next_timeout == timeval{})
+            ? now + timeout
+            : (now < next_timeout)
+            ? to_timeval(next_timeout - now)
+            : timeval{};
 
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
+        int num = select(max + 1, &rfds, nullptr, nullptr, &ultimatum);
 
         if (num < 0) {
             if (errno == EINTR) {
@@ -103,12 +105,10 @@ public:
             return 9;
         }
 
-        timeval now_after_select = tvtime();
+        this->events.execute_events(tvtime(), [&rfds](int fd){
+            return io_fd_isset(fd, rfds);
+        }, false);
 
-        this->events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
-        if (num) {
-            this->events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, false);
-        }
         return 0;
     }
 };

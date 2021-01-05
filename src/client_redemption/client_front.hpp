@@ -20,6 +20,8 @@
  *
  */
 
+#pragma once
+
 #include "utils/log.hpp"
 #include "utils/png.hpp"
 #include "utils/difftimeval.hpp"
@@ -30,6 +32,7 @@
 #include "core/front_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
+#include "mod/mod_api.hpp"
 #include "cxx/cxx.hpp"
 
 class ClientFront : public FrontAPI
@@ -83,7 +86,52 @@ public:
     void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override {}
 };
 
-#include "mod/mod_api.hpp"
+enum class ExecuteEventResult : char
+{
+    Ok,
+    Timeout,
+    Error,
+    Retry,
+};
+
+inline ExecuteEventResult execute_events(
+    char const* type,
+    EventContainer& events,
+    std::chrono::milliseconds timeout)
+{
+    timeval now = tvtime();
+    int max = 0;
+    fd_set rfds;
+    io_fd_zero(rfds);
+
+    events.get_fds([&rfds,&max](int fd){
+        io_fd_set(fd, rfds);
+        max = std::max(max, fd);
+    });
+
+    auto next_timeout = events.next_timeout();
+    timeval ultimatum = (next_timeout == timeval{})
+        ? now + timeout
+        : (now < next_timeout)
+        ? to_timeval(next_timeout - now)
+        : timeval{};
+
+    int num = select(max + 1, &rfds, nullptr, nullptr, &ultimatum);
+
+    if (num < 0) {
+        if (errno != EINTR) {
+            LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
+            return ExecuteEventResult::Retry;
+        }
+        return ExecuteEventResult::Error;
+    }
+
+    events.execute_events(tvtime(), [&rfds](int fd){
+        return io_fd_isset(fd, rfds);
+    }, false);
+
+    return num == 0 ? ExecuteEventResult::Timeout : ExecuteEventResult::Ok;
+}
 
 inline int run_connection_test(
     char const * type,
@@ -97,45 +145,23 @@ inline int run_connection_test(
     for (;;) {
         LOG(LOG_INFO, "run_connection_test");
 
-        timeval now = tvtime();
-        int max = 0;
-        fd_set   rfds;
-        io_fd_zero(rfds);
-
-        timeval ultimatum =  now + timeout;
-
-        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, fd);});
-        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
-        if (ultimatum < now){
-            ultimatum = now;
-        }
-        std::chrono::microseconds difftime = ultimatum - now;
-        timeval timeoutastv = timeval{difftime.count()/1000000u,difftime.count()%1000000};
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
-
-        if (num < 0) {
-            if (errno != EINTR) {
-                LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
-                return 1;
-            }
-            continue;
-        }
-
-        timeval now_after_select = tvtime();
-        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
-        if (num) {
-            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, false);
-            if (mod.is_up_and_running()) {
-                LOG(LOG_INFO, "%s CLIENT :: Done", type);
-                return 0;
-            }
-            continue;
-        }
-        ++timeout_counter;
-        LOG(LOG_INFO, "%s CLIENT :: Timeout (%d/%d)", type, timeout_counter, timeout_counter_max);
-        if (timeout_counter == timeout_counter_max) {
-            return 2;
+        switch (execute_events(type, events, timeout))
+        {
+            case ExecuteEventResult::Error: return 1;
+            case ExecuteEventResult::Retry: continue;
+            case ExecuteEventResult::Ok:
+                if (mod.is_up_and_running()) {
+                    LOG(LOG_INFO, "%s CLIENT :: Done", type);
+                    return 0;
+                }
+                continue;
+            case ExecuteEventResult::Timeout:
+                ++timeout_counter;
+                LOG(LOG_INFO, "%s CLIENT :: Timeout (%d/%d)",
+                    type, timeout_counter, timeout_counter_max);
+                if (timeout_counter == timeout_counter_max) {
+                    return 2;
+                }
         }
     }
 }
@@ -158,48 +184,25 @@ inline int wait_for_screenshot(
         }
 
         std::chrono::milliseconds timeout = std::min(max_time - elapsed, inactivity_time);
-
-        timeval now = tvtime();
-        unsigned max = 0;
-        fd_set   rfds;
-        io_fd_zero(rfds);
-
-        timeval ultimatum =  now + timeout;
-
-        events.get_fds([&rfds,&max](int fd){ io_fd_set(fd, rfds); max = std::max(max, unsigned(fd));});
-        events.get_fds_timeouts([&ultimatum](timeval tv){ultimatum = std::min(tv,ultimatum);});
-        if (ultimatum < now){
-            ultimatum = now;
-        }
-        std::chrono::microseconds difftime = ultimatum - now;
-        timeval timeoutastv = timeval{difftime.count()/1000000u,difftime.count()%1000000};
-
-        int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
-
-        if (num < 0) {
-            if (errno != EINTR) {
-                LOG(LOG_INFO, "%s CLIENT :: errno = %d", type, errno);
-                return 1;
-            }
-        }
-
-        timeval now_after_select = tvtime();
-        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
-        if (num > 0) {
-            events.execute_events(now_after_select, [&rfds](int fd){ return io_fd_isset(fd, rfds); }, true);
-            LOG(LOG_INFO, "%s CLIENT :: draw_event", type);
-        }
-        events.execute_events(now_after_select, [](int /*fd*/){ return false; }, false);
-        if (timeout == 0ms) {
-            return 0;
+        switch (execute_events(type, events, timeout))
+        {
+            case ExecuteEventResult::Error: return 1;
+            case ExecuteEventResult::Retry: return 0;
+            case ExecuteEventResult::Ok:
+            case ExecuteEventResult::Timeout:
+                if (timeout == 0ms) {
+                    return 0;
+                }
         }
     }
 }
 
 inline int run_test_client(
     char const* type,
-        EventContainer & events,
-        mod_api& mod, std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
+    EventContainer & events,
+    mod_api& mod,
+    std::chrono::milliseconds inactivity_time,
+    std::chrono::milliseconds max_time,
     std::string const& screen_output)
 {
     try {

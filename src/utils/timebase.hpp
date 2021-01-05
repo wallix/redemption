@@ -37,12 +37,4 @@ struct TimeBase
     {
         return this->current_time;
     }
-
-    // go forward in time by sec seconds (usefull for tests)
-    // TODO: use std::duration would be cleaner
-    void increment_sec(unsigned sec)
-    {
-        this->current_time.tv_sec += sec;
-    }
 };
-
