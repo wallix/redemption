@@ -65,6 +65,7 @@ int main()
             "autogen/include/configs/autogen/variables_configuration_fwd.hpp",
             "autogen/include/configs/autogen/variables_configuration.hpp",
             "autogen/include/configs/autogen/set_value.tcc",
+            "autogen/include/configs/autogen/cfg_ini_pack.hpp",
         }),
         ConnPolicy(
             "autogen/spec/", {"rdp", "vnc"},

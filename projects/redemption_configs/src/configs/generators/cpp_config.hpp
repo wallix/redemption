@@ -172,6 +172,7 @@ inline void write_type_spec(std::ostream& out, type_<types::file_permission>)
 
 struct CppConfigWriterBase;
 
+void write_ini_values(std::ostream & out, CppConfigWriterBase& writer);
 void write_config_set_value(std::ostream & out_set_value, CppConfigWriterBase& writer);
 void write_variables_configuration(std::ostream & out_varconf, CppConfigWriterBase& writer);
 void write_variables_configuration_fwd(std::ostream & out_varconf, CppConfigWriterBase& writer);
@@ -239,6 +240,8 @@ struct CppConfigWriterBase
     std::vector<log_policy_t> authid_policy;
     std::size_t start_section_index = 0;
     std::vector<std::size_t> start_indexes;
+    std::string cfg_values;
+    std::string cfg_str_values;
 
     struct Filenames
     {
@@ -247,6 +250,7 @@ struct CppConfigWriterBase
         std::string variable_configuration_fwd;
         std::string variable_configuration_hpp;
         std::string config_set_value;
+        std::string ini_values_hpp;
     };
     Filenames filenames;
 
@@ -298,6 +302,7 @@ struct CppConfigWriterBase
           .then(filenames.variable_configuration_fwd, &write_variables_configuration_fwd)
           .then(filenames.variable_configuration_hpp, &write_variables_configuration)
           .then(filenames.config_set_value, &write_config_set_value)
+          .then(filenames.ini_values_hpp, &write_ini_values)
         ;
         if (sw.err) {
             std::cerr << "CppConfigWriterBase: " << sw.filename << ": " << strerror(errno) << "\n";
@@ -454,6 +459,10 @@ struct CppConfigWriterBase
             "                value\n"
             "            );\n"
             "        }\n";
+            str_append(this->cfg_values, "cfg::"_av, varname_with_section, ",\n"_av);
+            str_append(this->cfg_str_values,
+                "{\""_av, section_names.ini_name(), "\"_zv, \""_av,
+                names.ini_name(), "\"_zv},\n"_av);
         }
     }
 };
@@ -690,9 +699,6 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
         "\n"
         "    this->section_name = section.c_str();\n"
         "}\n"
-    ;
-
-    out_set_value <<
         "\n"
         "void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view value) {\n"
         "    if (0) {}\n"
@@ -714,6 +720,29 @@ inline void write_config_set_value(std::ostream & out_set_value, CppConfigWriter
         "    else if (static_cast<cfg::debug::config>(this->variables).value) {\n"
         "        LOG(LOG_WARNING, \"unknown section [%s]\", this->section_name);\n"
         "    }\n"
+        "}\n"
+    ;
+}
+
+inline void write_ini_values(std::ostream& out, CppConfigWriterBase& writer)
+{
+    out << cpp_comment(do_not_edit, 0) <<
+        "\n"
+        "#pragma once\n"
+        "\n"
+        "#include \"configs/autogen/variables_configuration_fwd.hpp\"\n"
+        "#include \"utils/sugar/zstring_view.hpp\"\n"
+        "\n"
+        "namespace configs::cfg_ini_infos {\n"
+        "using IniPack = Pack<\n"
+        // remove trailing comma
+        << std::string_view(writer.cfg_values.data(), writer.cfg_values.size() - 2) <<
+        "\n>;\n"
+        "\n"
+        "struct SectionAndName { zstring_view section; zstring_view name; };\n"
+        "constexpr SectionAndName const ini_names[] = {\n"
+        << writer.cfg_str_values <<
+        "};\n"
         "}\n"
     ;
 }

@@ -483,7 +483,27 @@ ParseResult parse(Tuple const& t, int const ac, char const * const av[])
     pr.argv = av;
     pr.opti = 1;
     pr.str = nullptr;
-    pr.res = t([&pr](auto... opts) {
+    pr.res = t([&pr](auto const&... opts) {
+#ifndef IN_IDE_PARSER
+        return detail::parse_options(pr, opts...);
+#else
+        (void)pr;
+        (void(opts), ...);
+        return Res::Ok;
+#endif
+    });
+    return pr;
+}
+
+template<class Tuple>
+ParseResult parse(Tuple const& t, int const opti, int const ac, char const * const av[])
+{
+    ParseResult pr;
+    pr.argc = ac;
+    pr.argv = av;
+    pr.opti = opti;
+    pr.str = nullptr;
+    pr.res = t([&pr](auto const&... opts) {
 #ifndef IN_IDE_PARSER
         return detail::parse_options(pr, opts...);
 #else
