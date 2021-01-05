@@ -23,7 +23,6 @@
 
 #include "configs/config.hpp"
 #include "configs/io.hpp"
-#include "utils/translation.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 

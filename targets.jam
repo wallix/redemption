@@ -266,10 +266,7 @@ exe rdpinichecker :
 :
   <library>app_path_exe.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/strutils.o
   $(EXE_DEPENDENCIES_NO_SYSLOG)
 ;
 exe nla_server :
@@ -455,7 +452,6 @@ lib libredrec :
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -562,12 +558,9 @@ test-run tests/acl/test_acl_serializer :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/acl/acl_serializer.o
   <library>src/core/error.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>tests/includes/test_only/transport/test_transport.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/acl/acl_serializer.cpp
@@ -661,7 +654,6 @@ test-run tests/acl/test_session_logfile :
   <library>snappy
   <library>src/acl/session_logfile.o
   <library>src/core/error.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/mwrm_reader.o
@@ -2651,11 +2643,8 @@ test-run tests/core/test_session_events :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/error.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/core/session_events.hpp
 ;
@@ -2842,7 +2831,6 @@ test-run tests/lib/test_do_recorder :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/lib/do_recorder.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
@@ -3193,18 +3181,15 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/rdp/rdp_negociation_data.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
-  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -5651,11 +5636,8 @@ test-run tests/utils/test_load_theme :
 :
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/load_theme.o
-  <library>src/utils/strutils.o
   <covfile>src/utils/load_theme.cpp
   <covfile>src/utils/load_theme.hpp
 ;
