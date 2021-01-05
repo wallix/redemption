@@ -90,22 +90,26 @@ namespace detail
     }
 
 
-    inline void append_from_av_or_char(std::string& s, chars_view av)
+    inline char* append_from_av_or_char(char* s, chars_view av)
     {
-        s.append(av.data(), av.size());
+        memcpy(s, av.data(), av.size());
+        return s + av.size();
     }
 
-    inline void append_from_av_or_char(std::string& s, char c)
+    inline char* append_from_av_or_char(char* s, char c)
     {
-        s += c;
+        *s = c;
+        return s + 1;
     }
 
 
     template<class... StringsOrChars>
     void str_concat_view(std::string& str, StringsOrChars&&... strs)
     {
-        str.reserve(str.size() + (... + len_from_av_or_char(strs)));
-        (append_from_av_or_char(str, strs), ...);
+        auto ipos = str.size();
+        str.resize(str.size() + (... + len_from_av_or_char(strs)));
+        auto p = str.data() + ipos;
+        (..., void(p = append_from_av_or_char(p, strs)));
     }
 } // namespace detail
 
