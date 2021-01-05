@@ -366,7 +366,7 @@ private:
         const bool verify_text_before_transfer;
         uint64_t max_file_size_rejected;
         StreamId current_file_contents_stream_id;
-        uint32_t current_file_list_format_id;
+        uint32_t current_file_list_format_id = 0;
         uint32_t requested_format_id;
 
         uint32_t clip_text_locale_identifier = 0;
