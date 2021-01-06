@@ -4841,7 +4841,8 @@ public:
         this->fd_event->disable_timeout();
 
 #ifndef __EMSCRIPTEN__
-        if (this->channels.session_probe.enable_session_probe) {
+        if (this->channels.session_probe.enable_session_probe &&
+            (!this->channels.session_probe_virtual_channel || !this->channels.session_probe_virtual_channel->has_been_launched())) {
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
             this->disable_input_event_and_graphics_update(
@@ -4890,7 +4891,8 @@ public:
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
 #ifndef __EMSCRIPTEN__
-            if (this->channels.session_probe.enable_session_probe) {
+            if (this->channels.session_probe.enable_session_probe &&
+                (!this->channels.session_probe_virtual_channel || !this->channels.session_probe_virtual_channel->has_been_launched())) {
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->channels.session_probe.enable_launch_mask;
                 this->disable_input_event_and_graphics_update(
