@@ -114,11 +114,11 @@ ReplayMod::ReplayMod(
             const auto next_time = (replay_delay <= real_delay)
                 ? now
                 : now + (replay_delay - real_delay);
-            ev.alarm.set_timeout(next_time);
+            ev.alarm.reset_timeout(next_time);
         }
         else if (this->replay_on_loop) {
             this->init_reader();
-            ev.alarm.set_timeout(this->start_time);
+            ev.alarm.reset_timeout(this->start_time);
         }
         else if (!this->wait_for_escape) {
             ev.garbage = true;

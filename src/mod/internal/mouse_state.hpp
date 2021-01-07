@@ -37,13 +37,12 @@ class MouseState
         SecondClickDown,
     };
 
-    EventRef first_click_down_timer;
+    EventRef2 first_click_down_timer;
     DCState dc_state = MouseState::DCState::Wait;
-    EventsGuard events_guard;
 
 public:
     MouseState(EventContainer& events)
-        : events_guard(events)
+    : first_click_down_timer(events)
     {
     }
 
@@ -54,17 +53,12 @@ public:
             case MouseState::DCState::Wait:
                 if (flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = MouseState::DCState::FirstClickDown;
-                    auto const timer = this->events_guard.get_current_time() + 1s;
-                    if (!this->first_click_down_timer.reset_timeout(timer)) {
-                        this->first_click_down_timer = this->events_guard.create_event_timeout(
-                            "Mouse::DC Event",
-                            timer,
-                            [this](Event&)
-                            {
-                                this->dc_state = MouseState::DCState::Wait;
-                            }
-                        );
-                    }
+                    this->first_click_down_timer.reset_timeout_or_create_event(
+                        1s, "Mouse::DC Event",
+                        [this](Event&) {
+                            this->dc_state = MouseState::DCState::Wait;
+                        }
+                    );
                 }
             break;
 

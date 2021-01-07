@@ -176,7 +176,7 @@ public:
             },
             [](Event& event)
             {
-                event.alarm.set_timeout(event.alarm.now + 3600s);
+                event.alarm.reset_timeout(event.alarm.now + 3600s);
             });
     }
 

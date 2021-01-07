@@ -110,7 +110,7 @@ public:
             },
             [this](Event& event){
                 LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-                event.alarm.set_timeout(event.alarm.now + std::chrono::seconds{1});
+                event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
             }
         );
     }
@@ -212,7 +212,7 @@ public:
             [this](Event&event) {
                 event.garbage = true; // true when terminate or throw exception
                 if (this->run()){
-                    event.alarm.set_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                    event.alarm.reset_timeout(event.alarm.now+std::chrono::milliseconds(1));
                     event.garbage = false;
                 }
             }

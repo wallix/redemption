@@ -156,17 +156,14 @@ struct ClipboardVirtualChannel::OSD::D
 
         if (self.osd.enable_osd) {
             self.osd.msg_type = OSD::MsgType::WaitValidator;
-            auto const timer = self.osd.events_guard.get_current_time() + self.osd.delay;
-            if (!self.osd.event_ref.reset_timeout(timer)) {
-                self.osd.event_ref = self.osd.events_guard.create_event_timeout(
-                    "FileVerifOSD",
-                    timer,
-                    [&self, &filename](Event& event){
-                        self.osd.osd_api.display_osd_message(str_concat(
-                            TR(trkeys::file_verification_wait, self.osd.lang), filename));
-                        event.garbage = true;
-                    });
-            }
+            self.osd.event_ref.reset_timeout_or_create_event(
+                self.osd.delay, self.osd.events_container, "FileVerifOSD", &self.osd,
+                [&self, &filename](Event& event){
+                    self.osd.osd_api.display_osd_message(str_concat(
+                        TR(trkeys::file_verification_wait, self.osd.lang), filename));
+                    event.garbage = true;
+                }
+            );
         }
     }
 

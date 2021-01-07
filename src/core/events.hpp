@@ -56,7 +56,6 @@ struct Event
         int fd = INVALID_SOCKET;
         timeval now;
         timeval trigger_time;
-        timeval start_time;
         std::chrono::microseconds grace_delay = std::chrono::seconds{0};
 
         // fd is stored to enabled fd events detection
@@ -65,15 +64,6 @@ struct Event
         {
             this->fd = fd;
             this->grace_delay = grace_delay;
-        }
-
-        // timeout alarm will call on_timeout once when trigger_time is reached
-        // the trigger time must be reset with set_timeout
-        // if we want to call the alarm again
-        void set_timeout(timeval trigger_time)
-        {
-            this->active_timer = true;
-            this->trigger_time = this->start_time = trigger_time;
         }
 
         void reset_timeout(timeval trigger_time)
@@ -134,126 +124,6 @@ private:
     EventRef* event_ref = nullptr;
 };
 
-class EventsGuard;
-
-// event id, 0 means no event
-// used to identify some event in event queue.
-struct EventRef
-{
-    EventRef() = default;
-
-    EventRef(Event& event) noexcept
-    : event_(&event)
-    {
-        assert(event_);
-        event_->event_ref = this;
-    }
-
-    EventRef(EventRef&& other) noexcept
-    : event_(std::exchange(other.event_, nullptr))
-    {
-        if (event_) {
-            event_->event_ref = this;
-        }
-    }
-
-    EventRef(EventRef const&) = delete;
-    EventRef& operator = (EventRef const&) = delete;
-
-    EventRef& operator = (Event& event) noexcept
-    {
-        assert(&event != event_);
-
-        if (event_) {
-            event_->garbage = true;
-            event_->event_ref = nullptr;
-        }
-        event_ = &event;
-        if (event_) {
-            event_->event_ref = this;
-        }
-
-        return *this;
-    }
-
-    EventRef& operator = (EventRef&& other) noexcept
-    {
-        assert(other.event_ != event_);
-
-        if (event_) {
-            event_->garbage = true;
-            event_->event_ref = nullptr;
-        }
-        event_ = std::exchange(other.event_, nullptr);
-        if (event_) {
-            event_->event_ref = this;
-        }
-
-        return *this;
-    }
-
-    ~EventRef()
-    {
-        if (event_) {
-            event_->garbage = true;
-            event_->event_ref = nullptr;
-        }
-    }
-
-    bool has_event() const { return event_ && !event_->garbage; }
-    explicit operator bool() const { return has_event(); }
-
-    Event* get_optional_event() { return has_event() ? event_ : nullptr; }
-
-    bool operator == (EventRef const& other) const { return event_ == other.event_; }
-    bool operator != (EventRef const& other) const { return event_ != other.event_; }
-
-    bool operator == (Event const& event) const { return event_ == &event; }
-    bool operator != (Event const& event) const { return event_ != &event; }
-
-    void garbage()
-    {
-        if (event_) {
-            event_->garbage = true;
-            event_->event_ref = nullptr;
-            event_ = nullptr;
-        }
-    }
-
-    bool reset_timeout(timeval trigger_time)
-    {
-        if (has_event()) {
-            event_->alarm.reset_timeout(trigger_time);
-            return true;
-        }
-        return false;
-    }
-
-    bool set_timeout(timeval trigger_time)
-    {
-        if (has_event()) {
-            event_->alarm.set_timeout(trigger_time);
-            return true;
-        }
-        return false;
-    }
-
-    char const* name() const
-    {
-        return has_event() ? event_->name : nullptr;
-    }
-
-private:
-    friend class Event;
-    Event* event_ = nullptr;
-};
-
-inline Event::~Event()
-{
-    if (event_ref) {
-        event_ref->event_ = nullptr;
-    }
-}
 
 struct EventContainer : noncopyable
 {
@@ -296,7 +166,7 @@ struct EventContainer : noncopyable
                         "FD EVENT TRIGGER '%s' (%p) timeout=%d now=%d",
                         event.name, VoidP(&event),
                         int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-                    event.alarm.set_timeout(tv+event.alarm.grace_delay);
+                    event.alarm.reset_timeout(tv+event.alarm.grace_delay);
                     event.actions.on_action(event);
                 }
                 else {
@@ -391,7 +261,7 @@ struct EventContainer : noncopyable
             name, lifespan,
             NilFn(),
             static_cast<TimeoutAction&&>(on_timeout));
-        pevent->alarm.set_timeout(trigger_time);
+        pevent->alarm.reset_timeout(trigger_time);
         this->queue.push_back(pevent);
         return *pevent;
     }
@@ -439,7 +309,7 @@ struct EventContainer : noncopyable
             static_cast<FdAction&&>(on_fd),
             static_cast<TimeoutAction&&>(on_timeout));
         pevent->alarm.set_fd(fd, grace_delay);
-        pevent->alarm.set_timeout(trigger_time);
+        pevent->alarm.reset_timeout(trigger_time);
         this->queue.push_back(pevent);
         return *pevent;
     }
@@ -568,6 +438,7 @@ private:
     }
 };
 
+
 /**
  * EventContainer wrapper that provides a convenient RAII-style mechanism
  * to release events when control leave the scope.
@@ -663,7 +534,7 @@ struct EventsGuard : private noncopyable
         this->end_of_lifespan();
     }
 
-    EventContainer& event_container()
+    EventContainer& event_container() noexcept
     {
         return this->events;
     }
@@ -671,3 +542,292 @@ struct EventsGuard : private noncopyable
 private:
     EventContainer& events;
 };
+
+
+/**
+ * EventRef wrapper that provides a convenient RAII-style mechanism
+ * to release events when control leave the scope.
+ */
+struct EventRef
+{
+    EventRef() = default;
+
+    EventRef(Event& event) noexcept
+    : event_(&event)
+    {
+        assert(event_);
+        event_->event_ref = this;
+    }
+
+    EventRef(EventRef&& other) noexcept
+    : event_(std::exchange(other.event_, nullptr))
+    {
+        if (event_) {
+            event_->event_ref = this;
+        }
+    }
+
+    EventRef(EventRef const&) = delete;
+    EventRef& operator = (EventRef const&) = delete;
+
+    EventRef& operator = (Event& event) noexcept
+    {
+        assert(&event != event_);
+
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+        }
+        event_ = &event;
+        event_->event_ref = this;
+
+        return *this;
+    }
+
+    EventRef& operator = (EventRef&& other) noexcept
+    {
+        assert(other.event_ != event_);
+
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+        }
+        event_ = std::exchange(other.event_, nullptr);
+        if (event_) {
+            event_->event_ref = this;
+        }
+
+        return *this;
+    }
+
+    ~EventRef()
+    {
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+        }
+    }
+
+    bool has_event() const noexcept { return event_ && !event_->garbage; }
+    explicit operator bool() const noexcept { return has_event(); }
+
+    Event* get_optional_event() noexcept { return has_event() ? event_ : nullptr; }
+
+    bool operator == (EventRef const& other) const { return event_ == other.event_; }
+    bool operator != (EventRef const& other) const { return event_ != other.event_; }
+
+    bool operator == (Event const& event) const { return event_ == &event; }
+    bool operator != (Event const& event) const { return event_ != &event; }
+
+    void garbage() noexcept
+    {
+        if (event_) {
+            event_->garbage = true;
+            event_->event_ref = nullptr;
+            event_ = nullptr;
+        }
+    }
+
+    bool reset_timeout(timeval trigger_time) noexcept
+    {
+        if (has_event()) {
+            event_->alarm.reset_timeout(trigger_time);
+            return true;
+        }
+        return false;
+    }
+
+
+    template<class TimeoutFn>
+    void reset_timeout_or_create_event(
+        timeval trigger_time,
+        EventsGuard& events_guard,
+        std::string_view name,
+        TimeoutFn&& fn)
+    {
+        reset_timeout_or_create_event(
+            trigger_time,
+            events_guard.event_container(),
+            name,
+            &events_guard,
+            static_cast<TimeoutFn&&>(fn));
+    }
+
+    template<class TimeoutFn>
+    void reset_timeout_or_create_event(
+        std::chrono::microseconds delay,
+        EventsGuard& events_guard,
+        std::string_view name,
+        TimeoutFn&& fn)
+    {
+        reset_timeout_or_create_event(
+            events_guard.get_current_time() + delay,
+            events_guard.event_container(),
+            name,
+            &events_guard,
+            static_cast<TimeoutFn&&>(fn));
+    }
+
+    template<class TimeoutFn>
+    void reset_timeout_or_create_event(
+        std::chrono::microseconds delay,
+        EventContainer& event_container,
+        std::string_view name,
+        void const* lifespan,
+        TimeoutFn&& fn)
+    {
+        reset_timeout_or_create_event(
+            event_container.get_current_time() + delay,
+            event_container,
+            name,
+            lifespan,
+            static_cast<TimeoutFn&&>(fn));
+    }
+
+    template<class TimeoutFn>
+    void reset_timeout_or_create_event(
+        timeval trigger_time,
+        EventContainer& event_container,
+        std::string_view name,
+        void const* lifespan,
+        TimeoutFn&& fn)
+    {
+        if (has_event()) {
+            event_->alarm.reset_timeout(trigger_time);
+        }
+        else {
+            auto& new_event = event_container.create_event_timeout(
+                name,
+                lifespan,
+                trigger_time,
+                static_cast<TimeoutFn&&>(fn)
+            );
+            if (event_) {
+                event_->garbage = true;
+                event_->event_ref = nullptr;
+            }
+            event_ = &new_event;
+            event_->event_ref = this;
+        }
+    }
+
+    char const* name() const
+    {
+        return has_event() ? event_->name : nullptr;
+    }
+
+private:
+    friend class Event;
+    Event* event_ = nullptr;
+};
+
+
+/**
+ * EventRef2 is a EventRef which contains a EventContainer.
+ */
+struct EventRef2
+{
+    EventRef2(EventContainer& event_container) noexcept
+    : event_container_(event_container)
+    {}
+
+    EventRef2(EventContainer& event_container, Event& event) noexcept
+    : event_ref_(event)
+    , event_container_(event_container)
+    {}
+
+    EventRef2(EventRef2&& other) noexcept
+    : event_ref_(std::move(other.event_ref_))
+    , event_container_(other.event_container_)
+    {}
+
+    EventRef2(EventRef2 const&) = delete;
+    EventRef2& operator = (EventRef2 const&) = delete;
+
+    EventRef2& operator = (Event& event) noexcept
+    {
+        event_ref_ = event;
+        return *this;
+    }
+
+    EventRef2& operator = (EventRef&& other) noexcept
+    {
+        event_ref_ = std::move(other);
+        return *this;
+    }
+
+    bool has_event() const noexcept { return event_ref_.has_event(); }
+    explicit operator bool() const noexcept { return has_event(); }
+
+    Event* get_optional_event() noexcept { return event_ref_.get_optional_event(); }
+
+    bool operator == (EventRef2 const& other) const { return event_ref_ == other.event_ref_; }
+    bool operator != (EventRef2 const& other) const { return event_ref_ != other.event_ref_; }
+
+    bool operator == (Event const& event) const { return event_ref_ == event; }
+    bool operator != (Event const& event) const { return event_ref_ != event; }
+
+    void garbage() noexcept
+    {
+        event_ref_.garbage();
+    }
+
+    bool reset_timeout(timeval trigger_time) noexcept
+    {
+        return event_ref_.reset_timeout(trigger_time);
+    }
+
+    bool reset_timeout(std::chrono::microseconds delay) noexcept
+    {
+        return event_ref_.reset_timeout(event_container_.get_current_time() + delay);
+    }
+
+    template<class TimeoutFn>
+    void reset_timeout_or_create_event(
+        timeval trigger_time,
+        std::string_view name,
+        TimeoutFn&& fn)
+    {
+        event_ref_.reset_timeout_or_create_event(
+            trigger_time,
+            event_container_,
+            name,
+            this,
+            static_cast<TimeoutFn&&>(fn));
+    }
+
+    template<class TimeoutFn>
+    void reset_timeout_or_create_event(
+        std::chrono::microseconds delay,
+        std::string_view name,
+        TimeoutFn&& fn)
+    {
+        event_ref_.reset_timeout_or_create_event(
+            event_container_.get_current_time() + delay,
+            event_container_,
+            name,
+            this,
+            static_cast<TimeoutFn&&>(fn));
+    }
+
+    char const* name() const
+    {
+        return event_ref_.name();
+    }
+
+    EventContainer const& event_container() const noexcept
+    {
+        return this->event_container_;
+    }
+
+private:
+    EventRef event_ref_;
+    EventContainer& event_container_;
+};
+
+inline Event::~Event()
+{
+    if (event_ref) {
+        event_ref->event_ = nullptr;
+    }
+}

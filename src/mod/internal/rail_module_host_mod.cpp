@@ -81,8 +81,8 @@ RailModuleHostMod::RailModuleHostMod(
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
     , mouse_state(events)
+    , disconnection_reconnection_timer(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
-    , events_guard(events)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
                        this->screen, this, std::move(managed_mod),
@@ -228,20 +228,17 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     this->rail_module_host.move_size_widget(left, top, width, height);
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
-        this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
-
-        auto const timer = this->events_guard.get_current_time() + 1s;
-        if (!this->disconnection_reconnection_timer.reset_timeout(timer)) {
-            this->disconnection_reconnection_timer = this->events_guard.create_event_timeout(
-                "RAIL Module Host Disconnection Reconnection Timeout",
-                timer,
-                [this](Event&)
-                {
-                    if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
-                        throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
-                    }
-                });
-        }
+        this->rail_client_execute.is_resizing_hosted_desktop_enabled()
+    ) {
+        this->disconnection_reconnection_timer.reset_timeout_or_create_event(
+            1s, "RAIL Module Host Disconnection Reconnection Timeout",
+            [this](Event&)
+            {
+                if (this->rail_module_host.get_managed_mod().is_auto_reconnectable()){
+                    throw Error(ERR_AUTOMATIC_RECONNECTION_REQUIRED);
+                }
+            }
+        );
     }
 }
 

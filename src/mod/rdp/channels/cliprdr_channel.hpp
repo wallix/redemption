@@ -396,7 +396,7 @@ private:
 
     struct OSD
     {
-        EventsGuard events_guard;
+        EventContainer& events_container;
         gdi::OsdApi& osd_api;
         const std::chrono::seconds delay;
         const bool enable_osd;

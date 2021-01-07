@@ -399,7 +399,7 @@ public:
 
             auto next_state = [&](int flags, int key, timeval delay){
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, flags, key, 0/*param2*/);
-                event.alarm.set_timeout(delay);
+                event.alarm.reset_timeout(delay);
                 set_state(SeqEnum(i+1));
             };
 
@@ -485,7 +485,7 @@ public:
                                                   CHANNELS::CHANNEL_FLAG_FIRST
                                                 | CHANNELS::CHANNEL_FLAG_LAST
                                                 | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-                    event.alarm.set_timeout(this->get_long_delay_timeout());
+                    event.alarm.reset_timeout(this->get_long_delay_timeout());
                     set_state(Wait_format_list_response);
                     event.garbage = true;
                     return ;
@@ -539,7 +539,7 @@ public:
 
             auto next_state = [&](int flags, int key, timeval delay){
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, flags, key, 0/*param2*/);
-                event.alarm.set_timeout(delay);
+                event.alarm.reset_timeout(delay);
                 set_state(SeqEnum(i+1));
             };
 

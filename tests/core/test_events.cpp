@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     RED_REQUIRE(events.queue.size() == 1u);
 
     // If I set an alarm in the past it will be triggered immediately
-    e.alarm.set_timeout(origin);
+    e.alarm.reset_timeout(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
     RED_CHECK(counter == 1);
     RED_REQUIRE(events.queue.size() == 1u);

@@ -113,13 +113,14 @@ CloseMod::CloseMod(
             e.garbage = true;
         });
 
+    auto start_time = this->events_guard.get_current_time();
     this->events_guard.create_event_timeout(
         "Close Refresh Message Event",
-        this->events_guard.get_current_time(),
-        [this](Event& event)
+        start_time,
+        [this, tv_sec = start_time.tv_sec](Event& event)
         {
             event.alarm.reset_timeout(event.alarm.now+std::chrono::seconds{1});
-            auto elapsed = event.alarm.now.tv_sec - event.alarm.start_time.tv_sec;
+            auto elapsed = event.alarm.now.tv_sec - tv_sec;
             auto remaining = this->vars.get<cfg::globals::close_timeout>()
                            - std::chrono::seconds{elapsed};
             this->close_widget.refresh_timeleft(remaining.count());

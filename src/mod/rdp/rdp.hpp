@@ -5205,7 +5205,7 @@ public:
                                     this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
 
                                     if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
-                                        event.alarm.set_timeout(
+                                        event.alarm.reset_timeout(
                                             this->events_guard.get_current_time()
                                             + this->channels.remote_app.bypass_legal_notice_timeout);
                                         failed = true;

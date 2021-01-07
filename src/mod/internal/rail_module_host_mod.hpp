@@ -72,7 +72,7 @@ private:
     DVCManager dvc_manager;
 
     MouseState mouse_state;
-    EventRef disconnection_reconnection_timer;
+    EventRef2 disconnection_reconnection_timer;
 
     bool alt_key_pressed = false;
     const bool rail_enabled;
@@ -87,8 +87,6 @@ private:
 
     int old_mouse_x = 0;
     int old_mouse_y = 0;
-
-    EventsGuard events_guard;
 
 public:
     RailModuleHostMod(

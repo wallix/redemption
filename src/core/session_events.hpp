@@ -33,14 +33,14 @@ public:
         Inifile& ini,
         EventContainer& event_container,
         std::chrono::seconds grace_delay)
-    : ini(ini)
-    , event_container(event_container)
+    : timer_event(event_container)
+    , ini(ini)
     , grace_delay(grace_delay)
     {}
 
     void keep_alive()
     {
-        if (auto* event = this->event_ref.get_optional_event()) {
+        if (auto* event = this->timer_event.get_optional_event()) {
             this->wait_answer = false;
             event->alarm.reset_timeout(this->timeout());
         }
@@ -49,42 +49,39 @@ public:
     void start()
     {
         this->wait_answer = false;
-        if (!this->event_ref.reset_timeout(this->timeout())) {
-            this->event_ref = this->event_container.create_event_timeout(
-                "Keepalive", this, this->timeout(),
-                [this](Event& e) {
-                    if (!this->wait_answer) {
-                        this->ini.ask<cfg::context::keepalive>();
-                        this->wait_answer = true;
-                        e.alarm.reset_timeout(this->timeout());
-                    }
-                    else {
-                        e.garbage = true;
-                        LOG(LOG_INFO, "Close because of missed ACL keepalive");
-                        throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
-                    }
+        this->timer_event.reset_timeout_or_create_event(
+            this->timeout(), "Keepalive",
+            [this](Event& e) {
+                if (!this->wait_answer) {
+                    this->ini.ask<cfg::context::keepalive>();
+                    this->wait_answer = true;
+                    e.alarm.reset_timeout(this->timeout());
                 }
-            );
-        }
+                else {
+                    e.garbage = true;
+                    LOG(LOG_INFO, "Close because of missed ACL keepalive");
+                    throw Error(ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
+                }
+            }
+        );
     }
 
     void stop()
     {
-        this->event_ref.garbage();
+        this->timer_event.garbage();
     }
 
 private:
     timeval timeout() const
     {
-        return this->event_container.get_current_time() + this->grace_delay;
+        return this->timer_event.event_container().get_current_time() + this->grace_delay;
     }
 
     bool wait_answer = false;   // true when we are waiting for a positive response
                                 // false when positive response has been received and
                                 // timers have been set to new timers.
-    EventRef event_ref;
+    EventRef2 timer_event;
     Inifile& ini;
-    EventContainer& event_container;
     std::chrono::seconds grace_delay;
 };
 
@@ -95,19 +92,19 @@ class Inactivity
 
 public:
     Inactivity(EventContainer& event_container)
-    : event_container(event_container)
+    : timer_event(event_container)
     {}
 
     void activity()
     {
-        this->event_ref.reset_timeout(this->timeout());
+        this->timer_event.reset_timeout(this->grace_delay);
     }
 
     void start(std::chrono::seconds delay)
     {
         if (delay == delay.zero()) {
             LOG(LOG_INFO, "User session inactivity : unlimited");
-            this->event_ref.garbage();
+            this->timer_event.garbage();
             return ;
         }
 
@@ -121,34 +118,26 @@ public:
         LOG(LOG_INFO, "User session inactivity : set to %ld seconds", delay.count());
 
         this->grace_delay = delay;
-        if (!this->event_ref.reset_timeout(this->timeout())) {
-            this->event_ref = this->event_container.create_event_timeout(
-                "Inactivity", this, this->timeout(),
-                [](Event& e) {
-                    e.garbage = true;
-                    LOG(LOG_INFO, "Close because of user Inactivity");
-                    throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
-                }
-            );
-        }
+        this->timer_event.reset_timeout_or_create_event(
+            this->grace_delay, "Inactivity",
+            [](Event& e) {
+                e.garbage = true;
+                LOG(LOG_INFO, "Close because of user Inactivity");
+                throw Error(ERR_SESSION_CLOSE_USER_INACTIVITY);
+            }
+        );
     }
 
     void stop()
     {
-        if (this->event_ref) {
-            this->event_ref.garbage();
+        if (this->timer_event) {
+            this->timer_event.garbage();
             LOG(LOG_INFO, "User session inactivity : timer is stopped !");
         }
     }
 
 private:
-    timeval timeout() const
-    {
-        return this->event_container.get_current_time() + this->grace_delay;
-    }
-
-    EventRef event_ref;
-    EventContainer& event_container;
+    EventRef2 timer_event;
     std::chrono::seconds grace_delay;
 };
 
@@ -157,7 +146,7 @@ class EndSessionWarning
 {
 public:
     EndSessionWarning(EventContainer& event_container)
-    : event_container(event_container)
+    : timer_event(event_container)
     {}
 
     /// disable timer with 0 for \c end_date
@@ -166,7 +155,7 @@ public:
         if (end_date) {
             this->timer_close = end_date;
 
-            time_t now = this->event_container.get_current_time().tv_sec;
+            time_t now = this->timer_event.event_container().get_current_time().tv_sec;
             timeval timeout{now, 0};
             if (this->timer_close <= now) {
                 this->last_delay = 0;
@@ -179,25 +168,23 @@ public:
                 timeout.tv_sec = this->timer_close - timers.back();
             }
 
-            if (!this->event_ref.reset_timeout(timeout)) {
-                this->event_ref = this->event_container.create_event_timeout(
-                    "EndSessionWarning", this, timeout,
-                    [this](Event& event) {
-                        if (event.alarm.now.tv_sec >= this->timer_close) {
-                            event.garbage = true;
-                            throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
-                        }
-
-                        // now+1 for next timer
-                        time_t now = event.alarm.now.tv_sec + 1;
-
-                        event.alarm.reset_timeout({this->next_timeout(now), 0});
+            this->timer_event.reset_timeout_or_create_event(
+                timeout, "EndSessionWarning",
+                [this](Event& event) {
+                    if (event.alarm.now.tv_sec >= this->timer_close) {
+                        event.garbage = true;
+                        throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
                     }
-                );
-            }
+
+                    // now+1 for next timer
+                    time_t now = event.alarm.now.tv_sec + 1;
+
+                    event.alarm.reset_timeout({this->next_timeout(now), 0});
+                }
+            );
         }
         else {
-            this->event_ref.garbage();
+            this->timer_event.garbage();
             this->last_delay = 0;
         }
     }
@@ -235,6 +222,5 @@ private:
 
     time_t timer_close;
     time_t last_delay = 0;
-    EventRef event_ref;
-    EventContainer& event_container;
+    EventRef2 timer_event;
 };
