@@ -33,13 +33,12 @@
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
-#include "cxx/cxx.hpp"
 
 class ClientFront : public FrontAPI
 {
     bool verbose;
     ScreenInfo& screen_info;
-    CHANNELS::ChannelDefArray   cl;
+    CHANNELS::ChannelDefArray cl;
 
 public:
     ClientFront(ScreenInfo& screen_info, bool verbose)
@@ -169,9 +168,9 @@ inline int run_connection_test(
 // return 0 : do screenshot, don't do screenshot an error occurred
 inline int wait_for_screenshot(
     char const* type,
-        EventContainer & events,
-        std::chrono::milliseconds inactivity_time,
-        std::chrono::milliseconds max_time)
+    EventContainer & events,
+    std::chrono::milliseconds inactivity_time,
+    std::chrono::milliseconds max_time)
 {
     auto const time_start = ustime();
 
@@ -183,16 +182,13 @@ inline int wait_for_screenshot(
             return 0;
         }
 
-        std::chrono::milliseconds timeout = std::min(max_time - elapsed, inactivity_time);
-        switch (execute_events(type, events, timeout))
+        switch (execute_events(type, events, std::min(max_time - elapsed, inactivity_time)))
         {
             case ExecuteEventResult::Error: return 1;
             case ExecuteEventResult::Retry: return 0;
             case ExecuteEventResult::Ok:
             case ExecuteEventResult::Timeout:
-                if (timeout == 0ms) {
-                    return 0;
-                }
+                return 0;
         }
     }
 }
@@ -220,13 +216,12 @@ inline int run_test_client(
             return ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE;
         }
 
-        Dimension dim = mod.get_dim();
-        RDPDrawable gd(dim.w, dim.h);
-
         if (int err = wait_for_screenshot(type, events, inactivity_time, max_time)) {
             return err;
         }
 
+        Dimension dim = mod.get_dim();
+        RDPDrawable gd(dim.w, dim.h);
         dump_png24(f.get(), gd, true);
 
         return 0;

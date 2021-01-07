@@ -143,7 +143,7 @@ static int run_mod(
             }
 
             if (time_stop < tvtime() && !config.persist) {
-                std::cerr <<  " Exit timeout (timeout = " << config.time_out_disconnection.count() << " ms)" << std::endl;
+                std::cerr << " Exit timeout (timeout = " << config.time_out_disconnection.count() << " ms)" << std::endl;
                 front.disconnect("", false);
                 return 8;
             }

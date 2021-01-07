@@ -28,14 +28,14 @@
 #include "main/version.hpp"
 #include "utils/pp.hpp"
 
-#include <string_view>
+#include "utils/sugar/zstring_view.hpp"
 
-inline std::string_view redemption_info_copyright()
+inline zstring_view redemption_info_copyright() noexcept
 {
-    return "Copyright (C) Wallix 2010-2020";
+    return "Copyright (C) Wallix 2010-2020"_zv;
 }
 
-inline std::string_view redemption_info_version() noexcept
+inline zstring_view redemption_info_version() noexcept
 {
     return "ReDemPtion " VERSION
         " ("
@@ -52,5 +52,6 @@ inline std::string_view redemption_info_version() noexcept
         " (-fsanitize=address)"
         #  endif
     #endif
+        ""_zv
     ;
 }
