@@ -129,8 +129,7 @@ static int run_mod(
 
         while (true)
         {
-            if (mod.logged_on == mod_api::CLIENT_LOGGED && !logged) {
-                //mod.logged_on = mod_api::CLIENT_UNLOGGED;
+            if (!logged && mod.is_up_and_running()) {
                 logged = true;
 
                 std::cout << "RDP Session Log On.\n";

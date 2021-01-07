@@ -5106,8 +5106,6 @@ public:
     void process_save_session_info(InStream & stream) {
         RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
 
-        this->logged_on = CLIENT_LOGGED;
-
         switch (ssipdudata.infoType) {
         case RDP::INFOTYPE_LOGON:
         {

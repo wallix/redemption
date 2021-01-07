@@ -28,12 +28,6 @@
 class mod_api : public Callback
 {
 public:
-    enum : bool {
-        CLIENT_UNLOGGED,
-        CLIENT_LOGGED
-    };
-    bool logged_on = CLIENT_UNLOGGED; // TODO suspicious
-
     BackEvent_t mod_signal = BACK_EVENT_NONE;
 
     void set_mod_signal(BackEvent_t signal) { this->mod_signal = signal; }
