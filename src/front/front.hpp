@@ -837,7 +837,7 @@ public:
                 "Front Flow Control Timer",
                 0ms, [this](Event& event)
                 {
-                    event.alarm.reset_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
+                    event.alarm.reset_timeout(this->rdp_keepalive_connection_interval);
                     if (this->state == FRONT_UP_AND_RUNNING) {
                         this->send_data_indication_ex_impl(
                             GCC::MCS_GLOBAL_CHANNEL,
@@ -1166,7 +1166,7 @@ public:
                     event.garbage = true;
                 }
                 else {
-                    event.alarm.reset_timeout(event.alarm.now+capture_ms);
+                    event.alarm.reset_timeout(capture_ms);
                 }
            });
 

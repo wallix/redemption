@@ -100,8 +100,8 @@ public:
         async_event_container.create_event_fd_timeout(
             "RdpdrDriveReadTask",
             this->file_descriptor,
-            std::chrono::milliseconds{100},
-            now+std::chrono::seconds{1},
+            100ms,
+            now + 1s,
             [this](Event& event){
                 event.garbage = true; // true when terminate or throw exception
                 if (this->run()){
@@ -110,7 +110,7 @@ public:
             },
             [this](Event& event){
                 LOG(LOG_WARNING, "RdpdrDriveReadTask::run: File (%d) is not ready!", this->file_descriptor);
-                event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
+                event.alarm.reset_timeout(1s);
             }
         );
     }
@@ -208,11 +208,11 @@ public:
     {
         async_event_container.create_event_timeout(
             "RdpdrSendDriveIOResponseTask",
-            now+std::chrono::milliseconds{1},
+            now + 1ms,
             [this](Event&event) {
                 event.garbage = true; // true when terminate or throw exception
                 if (this->run()){
-                    event.alarm.reset_timeout(event.alarm.now+std::chrono::milliseconds(1));
+                    event.alarm.reset_timeout(1ms);
                     event.garbage = false;
                 }
             }

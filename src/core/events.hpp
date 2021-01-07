@@ -72,6 +72,11 @@ struct Event
             this->trigger_time = trigger_time;
         }
 
+        void reset_timeout(std::chrono::microseconds delay)
+        {
+            this->reset_timeout(this->now + delay);
+        }
+
         // void stop_alarm()
         // {
         //     this->active_timer = false;

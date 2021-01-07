@@ -577,7 +577,7 @@ public:
                         [this](Event&event)
                         {
                             this->process_event_ready();
-                            event.alarm.reset_timeout(event.alarm.now+this->sespro_params.keepalive_timeout);
+                            event.alarm.reset_timeout(this->sespro_params.keepalive_timeout);
                         });
                 }
 

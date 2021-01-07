@@ -157,7 +157,7 @@ public:
             log_interval,
             [this,log_interval](Event& event)
             {
-                event.alarm.reset_timeout(event.alarm.now + log_interval);
+                event.alarm.reset_timeout(log_interval);
                 this->metrics->log(event.alarm.now);
             });
     }
@@ -166,17 +166,12 @@ public:
     {
         assert(!this->file_validator);
         this->file_validator = std::move(file_validator);
-        this->events_guard.create_event_fd_timeout(
+        this->events_guard.create_event_fd_without_timeout(
             "File Validator Event",
             this->file_validator->get_fd(),
-            3600s,
             [&mod](Event& /*event*/)
             {
                 mod.DLP_antivirus_check_channels_files();
-            },
-            [](Event& event)
-            {
-                event.alarm.reset_timeout(event.alarm.now + 3600s);
             });
     }
 

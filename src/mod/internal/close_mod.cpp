@@ -119,7 +119,7 @@ CloseMod::CloseMod(
         start_time,
         [this, tv_sec = start_time.tv_sec](Event& event)
         {
-            event.alarm.reset_timeout(event.alarm.now+std::chrono::seconds{1});
+            event.alarm.reset_timeout(1s);
             auto elapsed = event.alarm.now.tv_sec - tv_sec;
             auto remaining = this->vars.get<cfg::globals::close_timeout>()
                            - std::chrono::seconds{elapsed};

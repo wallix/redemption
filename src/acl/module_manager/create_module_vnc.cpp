@@ -64,7 +64,7 @@ public:
             log_interval,
             [this,log_interval](Event& event)
             {
-                event.alarm.reset_timeout(event.alarm.now + log_interval);
+                event.alarm.reset_timeout(log_interval);
                 this->metrics->log(event.alarm.now);
             });
     }
