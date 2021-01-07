@@ -110,7 +110,7 @@ struct Event
 
         Sig* on_timeout = [](Event &){};
         Sig* on_action = [](Event &){};
-        SigNothrow* on_delete = nullptr;
+        SigNothrow* custom_destructor = nullptr;
     } actions;
 
     void const* const lifespan_handle;
@@ -417,7 +417,7 @@ private:
     static const int action_tag = 0;
     static const int timeout_tag = 1;
 
-    struct NilFn
+    struct NilFn : noncopyable
     {
         operator Event::Actions::Sig* ();
     };
@@ -440,7 +440,7 @@ private:
     struct Function<Tag, Event::Actions::Sig*>
     {
         Function(Event::Actions::Sig* /*fn*/) {}
-        Function(NilFn /*fn*/) {}
+        Function(NilFn const& /*fn*/) {}
 
         template<class RootEvent>
         Event::Actions::Sig* to_ptr_func(Event::Actions::Sig* f)
@@ -510,7 +510,7 @@ private:
         ) {
             static_assert(std::is_nothrow_destructible_v<DecayActionFn>);
             static_assert(std::is_nothrow_destructible_v<DecayTimeoutFn>);
-            event->actions.on_delete = [](Event& e) noexcept {
+            event->actions.custom_destructor = [](Event& e) noexcept {
                 using Tuple = TupleFunctions<DecayActionFn, DecayTimeoutFn>;
                 static_cast<Tuple&>(static_cast<RealEvent&>(e)).~Tuple();
             };
@@ -521,8 +521,8 @@ private:
 
     void delete_event(Event* e)
     {
-        if (e->actions.on_delete) {
-            e->actions.on_delete(*e);
+        if (e->actions.custom_destructor) {
+            e->actions.custom_destructor(*e);
         }
         e->~Event();
         ::operator delete(e);
