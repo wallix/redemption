@@ -477,9 +477,7 @@ private:
 
         using RealEvent = RootEvent<DecayActionFn, DecayTimeoutFn>;
 
-        void* raw = ::operator new( /* NOLINT */
-            sizeof(RealEvent) + name.size() + 1u,
-            std::align_val_t(alignof(RealEvent)));
+        void* raw = ::operator new(sizeof(RealEvent) + name.size() + 1u); /* NOLINT */
 
         auto* data_name = static_cast<char*>(raw) + sizeof(RealEvent);
         memcpy(data_name, name.data(), name.size());
