@@ -229,7 +229,6 @@ class RdpClient
         emscripten::val crypto;
     };
 
-    TimeBase time_base;
     EventContainer events;
 
     ModRdpFactory mod_rdp_factory;
@@ -270,20 +269,21 @@ public:
         emscripten::val const& config,
         ScreenInfo screen_info,
         RDPVerbose verbose)
-    : time_base([&]{
-        uint32_t seconds = 0;
-        uint32_t milliseconds = 0;
-        extract_if(config, "time", [&](emscripten::val const& time){
-            set_if(time, "second", seconds);
-            set_if(time, "millisecond", milliseconds);
-        });
-        return timeval{checked_int{seconds}, checked_int{milliseconds}};
-    }())
-    , front(std::move(graphics), screen_info.width, screen_info.height, verbose)
+    : front(std::move(graphics), screen_info.width, screen_info.height, verbose)
     , gd(front.graphic_api())
     , js_rand(config)
     {
         using namespace std::chrono_literals;
+
+        {
+            uint32_t seconds = 0;
+            uint32_t milliseconds = 0;
+            extract_if(config, "time", [&](emscripten::val const& time){
+                set_if(time, "second", seconds);
+                set_if(time, "millisecond", milliseconds);
+            });
+            events.set_current_time({checked_int{seconds}, checked_int{milliseconds}});
+        }
 
         client_info.screen_info = screen_info;
         client_info.build = get_or(config, "build", 420);
@@ -428,7 +428,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, time_base, gd, osd, events, session_log, front, client_info,
+            trans, gd, osd, events, session_log, front, client_info,
             redir_info, js_rand, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -436,12 +436,12 @@ public:
 
     void write_first_packet()
     {
-        this->set_time(this->time_base.get_current_time());
+        this->set_time(this->events.get_current_time());
     }
 
     void set_time(timeval time)
     {
-        this->time_base.set_current_time(time);
+        this->events.set_current_time(time);
 
         event_loop(this->events.queue, [time](Event& event){
             if (event.alarm.trigger(time)) {
@@ -454,10 +454,10 @@ public:
     {
         this->trans.push_input_buffer(std::move(data));
 
-        auto time = this->time_base.get_current_time();
+        auto time = this->events.get_current_time();
         event_loop(this->events.queue, [time](Event& event){
             /*if (event.alarm.fd != -1)*/ {
-                event.alarm.set_timeout(time + event.alarm.grace_delay);
+                event.alarm.reset_timeout(time + event.alarm.grace_delay);
                 event.actions.exec_action(event);
             }
         });
@@ -497,7 +497,7 @@ public:
         uint16_t flag = scancode & 0xFF00;
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            this->time_base.get_current_time().tv_sec,
+            this->events.get_current_time().tv_sec,
             nullptr);
     }
 
