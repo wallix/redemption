@@ -159,8 +159,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     int n = 72;
     int count = 0;
+    events.set_current_time({1, 0});
     for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, false);
+        events.execute_events([](int){return true;}, false);
     }
     RED_CHECK_EQ(count, n);
 
@@ -285,8 +286,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     int n = 42;
     int count = 0;
+    events.set_current_time({1, 0});
     for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, false);
+        events.execute_events([](int){return true;}, false);
     }
 
     RED_CHECK_EQ(count, n);

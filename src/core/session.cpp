@@ -688,8 +688,7 @@ private:
             }
 
             events.set_current_time(tvtime());
-
-            events.execute_events(events.get_current_time(),
+            events.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose() & SessionVerbose::Event));
 

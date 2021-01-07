@@ -104,7 +104,8 @@ public:
             return 9;
         }
 
-        this->events.execute_events(tvtime(), [&rfds](int fd){
+        this->events.set_current_time(tvtime());
+        this->events.execute_events([&rfds](int fd){
             return io_fd_isset(fd, rfds);
         }, false);
 

@@ -170,8 +170,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     int n = 74;
     int count = 0;
     events.queue[0]->alarm.fd = 0;
+    events.set_current_time({1, 0});
     for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, false);
+        events.execute_events([](int){return true;}, false);
     }
     RED_CHECK_EQ(count, n);
 
@@ -296,8 +297,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     int n = 74;
     int count = 0;
     events.queue[0]->alarm.fd = 0;
+    events.set_current_time({1, 0});
     for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, false);
+        events.execute_events([](int){return true;}, false);
     }
     RED_CHECK_EQ(count, n);
 

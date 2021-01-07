@@ -36,7 +36,6 @@ namespace
         void execute_timer_events()
         {
             events.execute_events(
-                events.get_current_time(),
                 [](int /*fd*/){ return false; },
                 false
             );

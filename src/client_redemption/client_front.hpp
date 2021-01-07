@@ -125,7 +125,8 @@ inline ExecuteEventResult execute_events(
         return ExecuteEventResult::Error;
     }
 
-    events.execute_events(tvtime(), [&rfds](int fd){
+    events.set_current_time(tvtime());
+    events.execute_events([&rfds](int fd){
         return io_fd_isset(fd, rfds);
     }, false);
 

@@ -167,11 +167,11 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
-    auto end_tv = events.get_current_time();
     events.queue[0]->alarm.fd = 0;
-    events.execute_events(end_tv,[](int /*fd*/){ return false; }, false);
+    events.execute_events([](int /*fd*/){ return false; }, false);
+    events.set_current_time({1, 0});
     for (int count=0; count < 100 && !events.queue.empty(); ++count) {
-        events.execute_events(timeval{1,0},[](int){return true;}, false);
+        events.execute_events([](int){return true;}, false);
     }
 }
 

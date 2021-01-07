@@ -283,12 +283,7 @@ struct EventContainer : noncopyable
     template<class Fn>
     void execute_events(Fn&& fn, bool verbose)
     {
-        this->execute_events(this->time_base.get_current_time(), static_cast<Fn&&>(fn), verbose);
-    }
-
-    template<class Fn>
-    void execute_events(const timeval tv, Fn&& fn, bool verbose)
-    {
+        auto const tv = this->time_base.get_current_time();
         size_t iend = this->queue.size();
         // ignore events created in the loop
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/

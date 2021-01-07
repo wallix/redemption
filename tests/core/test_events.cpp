@@ -161,7 +161,7 @@ RED_AUTO_TEST_CASE(TestEventRef)
         EventRef ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event& e) { e.garbage = true; });
 
         RED_CHECK(ref1.has_event());
-        events.execute_events({}, nofd_fn, false);
+        events.execute_events(nofd_fn, false);
         RED_CHECK(!ref1.has_event());
         RED_CHECK(events.queue.size() == 0);
     }
@@ -197,21 +197,21 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
     EventContainer events;
 
     Context context(events);
-    events.execute_events(events.get_current_time(), nofd_fn, false);
+    events.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 0);
-    events.execute_events(events.get_current_time(), nofd_fn, false);
+    events.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     events.set_current_time({3,0});
-    events.execute_events(events.get_current_time(), nofd_fn, false);
+    events.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    events.execute_events(events.get_current_time(), [](int /*fd*/){ return true; }, false);
+    events.execute_events([](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
     events.set_current_time({303,0});
-    events.execute_events(events.get_current_time(), nofd_fn, false);
+    events.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 2);
 }
@@ -250,7 +250,8 @@ RED_AUTO_TEST_CASE(TestNontrivialEvent)
     EventContainer events;
 
     Context context(events);
-    events.execute_events({300,0}, nofd_fn, false);
+    events.set_current_time({300, 0});
+    events.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     context.events_guard.end_of_lifespan();
