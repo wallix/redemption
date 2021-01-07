@@ -307,6 +307,38 @@ namespace ut
         #undef DEC_OP_PREDICATE
     }
 
+    namespace detail
+    {
+        struct lazy_ostream_create_decorator_result_59
+        {
+            using result_type = int;
+
+            static result_type result(::boost::unit_test::lazy_ostream const& /*out*/)
+            {
+                return 0;
+            }
+        };
+
+        struct lazy_ostream_create_decorator_result_73
+        {
+            using result_type = ::boost::unit_test::lazy_ostream const&;
+
+            static result_type result(::boost::unit_test::lazy_ostream const& out)
+            {
+                return out;
+            }
+        };
+
+        using lazy_ostream_create_decorator_result = std::conditional_t<
+            std::is_same_v<int, decltype(
+                *static_cast<::boost::unit_test::lazy_ostream const *>(nullptr)
+                << ::boost::test_tools::bitwise()
+            )>
+          , lazy_ostream_create_decorator_result_59
+          , lazy_ostream_create_decorator_result_73
+        >;
+    }
+
 #define RED_TEST_CREATE_DECORATOR(name, f)                                         \
     template<class T, class U, typename OP>                                        \
     inline assertion_result operator<<(                                            \
@@ -318,8 +350,11 @@ namespace ut
                  static_cast<OP*>(nullptr));                                       \
     }                                                                              \
                                                                                    \
-    inline int                                                                     \
-    operator<<(::boost::unit_test::lazy_ostream const&, name const&) { return 0; } \
+    inline ::ut::detail::lazy_ostream_create_decorator_result::result_type         \
+    operator<<(::boost::unit_test::lazy_ostream const& out, name const&)           \
+    {                                                                              \
+        return ::ut::detail::lazy_ostream_create_decorator_result::result(out);    \
+    }                                                                              \
                                                                                    \
     inline ::boost::test_tools::tt_detail::check_type                              \
     operator<<(::boost::test_tools::tt_detail::assertion_type const&, name const&) \
