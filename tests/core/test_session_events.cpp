@@ -26,13 +26,17 @@ namespace
 {
     struct DataEvents
     {
-        TimeBase time_base{{10000, 0}};
         EventContainer events;
+
+        DataEvents()
+        {
+            events.set_current_time({10000, 0});
+        }
 
         void execute_timer_events()
         {
             events.execute_events(
-                time_base.get_current_time(),
+                events.get_current_time(),
                 [](int /*fd*/){ return false; },
                 false
             );
@@ -46,12 +50,12 @@ namespace
 
         void set_time(time_t t)
         {
-            time_base.current_time.tv_sec = t;
+            events.time_base.current_time.tv_sec = t;
         }
 
         time_t time() const
         {
-            return time_base.current_time.tv_sec;
+            return events.time_base.current_time.tv_sec;
         }
     };
 }
@@ -66,7 +70,7 @@ RED_AUTO_TEST_CASE(TestKeepAlive)
     time_t t = d.time();
     Inifile ini;
 
-    KeepAlive keepalive(ini, d.time_base, d.events, 30s);
+    KeepAlive keepalive(ini, d.events, 30s);
 
     auto set_delay = [&](time_t delay){
         d.set_time_and_excute_timer_events(t + delay);
@@ -97,7 +101,7 @@ RED_AUTO_TEST_CASE(TestInactivity)
     DataEvents d;
     time_t t = d.time();
 
-    Inactivity inactivity(d.time_base, d.events);
+    Inactivity inactivity(d.events);
 
 
     // min is 30
@@ -150,7 +154,7 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning)
     };
 
 
-    EndSessionWarning end_session_warning(d.time_base, d.events);
+    EndSessionWarning end_session_warning(d.events);
 
     const auto uncalled = -1min .count();
     auto update_warning = [&]{

@@ -55,7 +55,6 @@
 #define INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT 480
 
 ClientExecute::ClientExecute(
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front,
     WindowListCaps const & window_list_caps, bool verbose)
@@ -66,7 +65,6 @@ ClientExecute::ClientExecute(
 , auxiliary_window_id(RemoteProgramsWindowIdManager::INVALID_WINDOW_ID)
 , window_title(INTERNAL_MODULE_WINDOW_TITLE)
 , window_level_supported_ex(window_list_caps.WndSupportLevel & TS_WINDOW_LEVEL_SUPPORTED_EX)
-, time_base(time_base)
 , events_guard(events)
 {
     LOG_IF(this->verbose, LOG_INFO, "ClientExecute::ClientExecute()");
@@ -1223,8 +1221,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     this->button_1_down = this->pressed_mouse_button;
 
                     this->events_guard.create_event_timeout("Double Click Down Timer",
-                        this->time_base.get_current_time()+std::chrono::milliseconds{400},
-                        [this](Event &/*e*/)
+                        400ms, [this](Event &/*e*/)
                         {
                             assert(this->is_ready());
                             this->initialize_move_size(

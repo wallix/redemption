@@ -35,7 +35,7 @@ public:
     NtlmServer credssp;
 
 public:
-    NegoServer(bytes_view key, TimeBase & time_base, uint64_t verbosity)
+    NegoServer(bytes_view key, const TimeBase & time_base, uint64_t verbosity)
     : credssp(false, true, "WIN7"_av, "WIN7"_av,"WIN7"_av,"win7"_av,"win7"_av, "win7"_av, key,
         {MsvAvNbDomainName,MsvAvNbComputerName,MsvAvDnsDomainName,MsvAvDnsComputerName,MsvAvTimestamp},
         rand, time_base, 6,

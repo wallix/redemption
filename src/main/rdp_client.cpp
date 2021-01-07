@@ -184,15 +184,15 @@ int main(int argc, char** argv)
     ScopedSslInit scoped_ssl;
 
     ClientFront front(client_info.screen_info, verbose & 0x8000'0000);
-    TimeBase time_base(tvtime());
     EventContainer events;
+    events.set_current_time(tvtime());
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
         Transport* trans = &mod_trans;
         if (!record_output.empty()) {
             RecorderTransport& recorder = recorder_trans.emplace(
-                mod_trans, time_base, record_output.c_str());
+                mod_trans, events.time_base, record_output.c_str());
             if (ini_file.empty()) {
                 recorder.add_info({});
             }
@@ -232,7 +232,6 @@ int main(int argc, char** argv)
         return run([&](Transport& trans){
             return new_mod_vnc(
                 trans
-              , time_base
               , gdi::null_gd()
               , events
               , session_log
@@ -302,7 +301,6 @@ int main(int argc, char** argv)
             using RandomRef = Random&;
             return new_mod_rdp(
                 trans,
-                time_base,
                 gdi::null_gd(),
                 osd,
                 events,

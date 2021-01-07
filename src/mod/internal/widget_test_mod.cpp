@@ -38,14 +38,13 @@
 // Pimpl
 struct WidgetTestMod::WidgetTestModPrivate
 {
-    WidgetTestModPrivate(TimeBase& time_base, gdi::GraphicApi & gd, EventContainer & events, WidgetTestMod& /*mod*/)
-      : time_base(time_base)
-      , gd(gd)
+    WidgetTestModPrivate(gdi::GraphicApi & gd, EventContainer & events, WidgetTestMod& /*mod*/)
+      : gd(gd)
       , events_guard(events)
     {
         this->timer = this->events_guard.create_event_timeout(
             "WidgetTestMod Timer",
-            this->time_base.get_current_time(),
+            this->events_guard.get_current_time(),
             [this](Event&)
             {
                 this->gd.begin_update();
@@ -92,19 +91,17 @@ struct WidgetTestMod::WidgetTestModPrivate
 
     ~WidgetTestModPrivate() = default;
 
-    TimeBase& time_base;
     gdi::GraphicApi & gd;
     EventRef timer;
     EventsGuard events_guard;
 };
 
 WidgetTestMod::WidgetTestMod(
-    TimeBase& time_base,
     gdi::GraphicApi & gd,
     EventContainer & events,
     FrontAPI & front, uint16_t width, uint16_t height,
     Font const & /*font*/)
-: d(std::make_unique<WidgetTestModPrivate>(time_base, gd, events, *this))
+: d(std::make_unique<WidgetTestModPrivate>(gd, events, *this))
 {
     front.server_resize({width, height, BitsPerPixel{8}});
 }

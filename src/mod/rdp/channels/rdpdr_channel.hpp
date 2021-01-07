@@ -858,7 +858,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         cont.pop_back();
     }
 
-    TimeBase& time_base;
     EventsGuard events_guard;
     EventRef initialization_timeout_event;
 
@@ -876,7 +875,6 @@ public:
     const std::string channel_files_directory;
 
     FileSystemVirtualChannel(
-        TimeBase& time_base,
         EventContainer & events,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
@@ -915,7 +913,6 @@ public:
           CHANNELS::CHANNEL_CHUNK_LENGTH,
           params.smartcard_passthrough,
           verbose)
-    , time_base(time_base)
     , events_guard(events)
     , channel_filter_on(channel_filter_on)
     , channel_files_directory(std::move(channel_files_directory))
@@ -1995,7 +1992,7 @@ public:
         if (this->has_valid_to_client_sender()) {
             this->initialization_timeout_event = this->events_guard.create_event_timeout(
                 "Initialisation timeout Event",
-                this->time_base.get_current_time()+this->initialization_timeout,
+                this->initialization_timeout,
                 [this](Event&)
                 {
                     this->process_event();

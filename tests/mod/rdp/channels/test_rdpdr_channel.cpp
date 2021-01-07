@@ -163,11 +163,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
 
         RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
-        TimeBase time_base({0,0});
         EventContainer events;
         NullSessionLog session_log;
 
-        AsynchronousTaskContainer async_task_container(time_base, events);
+        AsynchronousTaskContainer async_task_container(events);
         FileSystemDriveManager file_system_drive_manager(async_task_container, verbose);
 
         if (d.enable_drive)
@@ -189,7 +188,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         const char * proxy_managed_drive_prefix   = "";
 
         FileSystemVirtualChannel file_system_virtual_channel(
-            time_base, events, &to_client_sender, &to_server_sender,
+            events, &to_client_sender, &to_server_sender,
             file_system_drive_manager, false, "", client_name, random_number, proxy_managed_drive_prefix, d.file_system_virtual_channel_params,
             session_log, verbose);
 

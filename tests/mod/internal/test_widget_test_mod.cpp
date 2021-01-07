@@ -31,10 +31,8 @@ int main()
 
     FakeFront front(screen_info);
 
-
-    TimeBase time_base({0,0});
     EventContainer events;
-    WidgetTestMod d(time_base, front.gd(), events, front, screen_info.width, screen_info.height, global_font());
+    WidgetTestMod d(front.gd(), events, front, screen_info.width, screen_info.height, global_font());
 
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

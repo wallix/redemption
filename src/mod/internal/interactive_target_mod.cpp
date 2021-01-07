@@ -25,13 +25,12 @@
 
 InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
     ClientExecute & rail_client_execute, Font const& font, Theme const& theme)
     : RailModBase(
-        time_base, events, drawable, front,
+        events, drawable, front,
         width, height, rail_client_execute, font, theme)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())

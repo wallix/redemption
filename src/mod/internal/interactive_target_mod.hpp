@@ -45,7 +45,6 @@ class InteractiveTargetMod : public RailModBase, public NotifyApi
 public:
     InteractiveTargetMod(
         InteractiveTargetModVariables vars,
-        TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect,

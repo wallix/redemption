@@ -309,7 +309,6 @@ private:
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 
-    TimeBase& time_base;
     gdi::GraphicApi & gd;
     EventsGuard events_guard;
     EventRef clipboard_timeout_timer;
@@ -344,7 +343,6 @@ private:
 
 public:
     mod_vnc( Transport & t
-           , TimeBase& time_base
            , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username

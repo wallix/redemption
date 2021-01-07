@@ -136,7 +136,6 @@ private:
 
     uint32_t reconnection_cookie = INVALID_RECONNECTION_COOKIE;
 
-    TimeBase& time_base;
     EventsGuard events_guard;
     Callbacks & callbacks;
     SessionLogApi& session_log;
@@ -192,7 +191,6 @@ public:
     };
 
     explicit SessionProbeVirtualChannel(
-        TimeBase& time_base,
         EventContainer& events,
         SessionLogApi& session_log,
         SessionProbeVariables vars,
@@ -219,7 +217,6 @@ public:
     , rdp(rdp)
     , file_system_virtual_channel(file_system_virtual_channel)
     , gen(gen)
-    , time_base(time_base)
     , events_guard(events)
     , callbacks(callbacks)
     , session_log(session_log)
@@ -259,11 +256,11 @@ public:
             if (!this->session_probe_launch_timeout_timer_started) {
                 this->session_probe_timer = this->events_guard.create_event_timeout(
                     "Session Probe Timer",
-                    this->time_base.get_current_time()+this->sespro_params.effective_launch_timeout,
+                    this->sespro_params.effective_launch_timeout,
                     [this](Event&event)
                     {
                         this->process_event_launch();
-                        event.alarm.reset_timeout(this->time_base.get_current_time()
+                        event.alarm.reset_timeout(this->events_guard.get_current_time()
                             + this->sespro_params.effective_launch_timeout);
                     });
                 this->session_probe_launch_timeout_timer_started = true;
@@ -277,7 +274,7 @@ public:
 
         this->session_probe_timer = this->events_guard.create_event_timeout(
             "Session Probe Timer",
-            this->time_base.get_current_time()+this->sespro_params.launcher_abort_delay,
+            this->sespro_params.launcher_abort_delay,
             [this](Event&event){
                 this->process_event_launch();
                 event.garbage = true;
@@ -287,7 +284,7 @@ public:
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
             this->session_probe_timer.reset_timeout(
-                this->time_base.get_current_time() + this->sespro_params.effective_launch_timeout);
+                this->events_guard.get_current_time() + this->sespro_params.effective_launch_timeout);
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                 "SessionProbeVirtualChannel::give_additional_launch_time");
         }
@@ -322,7 +319,7 @@ private:
                 "Session Probe keep alive requested");
 
         this->session_probe_timer.reset_timeout(
-            this->time_base.get_current_time() + this->sespro_params.keepalive_timeout);
+            this->events_guard.get_current_time() + this->sespro_params.keepalive_timeout);
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;
@@ -576,7 +573,7 @@ public:
 
                     this->session_probe_timer = this->events_guard.create_event_timeout(
                         "Session Probe Keepalive Timer",
-                        this->time_base.get_current_time()+this->sespro_params.keepalive_timeout,
+                        this->sespro_params.keepalive_timeout,
                         [this](Event&event)
                         {
                             this->process_event_ready();

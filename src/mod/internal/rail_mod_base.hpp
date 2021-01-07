@@ -27,13 +27,11 @@ Author(s): Proxy Team
 
 class ClientExecute;
 class EventContainer;
-class TimeBase;
 
 class RailModBase : public mod_api
 {
 public:
     RailModBase(
-        TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & gd,
         FrontAPI & front,

@@ -24,7 +24,6 @@ Author(s): Proxy Team
 
 class RailModuleHostMod;
 class Inifile;
-class TimeBase;
 class EventContainer;
 class FrontAPI;
 class ClientInfo;
@@ -41,7 +40,6 @@ namespace gdi
 
 RailModuleHostMod* create_mod_rail(
     Inifile& ini,
-    TimeBase & time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable,
     FrontAPI& front,

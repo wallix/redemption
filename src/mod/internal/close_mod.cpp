@@ -76,14 +76,13 @@ static FlatWabClose build_close_widget(
 CloseMod::CloseMod(
     char const* auth_error_message,
     CloseModVariables vars,
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & gd,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme, bool back_selector)
     : RailModBase(
-        time_base, events, gd, front,
+        events, gd, front,
         width, height, rail_client_execute, font, theme)
     , close_widget(
         build_close_widget(gd, widget_rect, *this, this->screen, auth_error_message, vars, font, theme, back_selector))
@@ -107,7 +106,7 @@ CloseMod::CloseMod(
 
     this->events_guard.create_event_timeout(
         "Close Event",
-        time_base.get_current_time()+std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()},
+        this->vars.get<cfg::globals::close_timeout>(),
         [this](Event&e)
         {
             this->set_mod_signal(BACK_EVENT_STOP);
@@ -116,13 +115,13 @@ CloseMod::CloseMod(
 
     this->events_guard.create_event_timeout(
         "Close Refresh Message Event",
-        time_base.get_current_time(),
+        this->events_guard.get_current_time(),
         [this](Event& event)
         {
             event.alarm.reset_timeout(event.alarm.now+std::chrono::seconds{1});
-            auto elapsed = event.alarm.now.tv_sec-event.alarm.start_time.tv_sec;
-            auto remaining = std::chrono::seconds{this->vars.get<cfg::globals::close_timeout>()}
-                            - std::chrono::seconds{elapsed};
+            auto elapsed = event.alarm.now.tv_sec - event.alarm.start_time.tv_sec;
+            auto remaining = this->vars.get<cfg::globals::close_timeout>()
+                           - std::chrono::seconds{elapsed};
             this->close_widget.refresh_timeleft(remaining.count());
         });
 }

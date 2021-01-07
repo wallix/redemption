@@ -153,14 +153,13 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
-    TimeBase time_base({0,0});
     EventContainer events;
     NullSessionLog session_log;
 
     RED_TEST_PASSPOINT();
 
     MyFront front(
-        time_base, events, session_log, front_trans, gen1, ini , cctx,
+        events, session_log, front_trans, gen1, ini , cctx,
         fastpath_support);
     null_mod no_mod;
 
@@ -233,7 +232,7 @@ RED_AUTO_TEST_CASE(TestFront)
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, front.gd(), osd, events, session_log, front, info, redir_info,
+        t, front.gd(), osd, events, session_log, front, info, redir_info,
         gen2, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, ini, metrics,
         file_validator_service, mod_rdp_factory);
@@ -322,19 +321,18 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    TimeBase time_base({0,0});
     EventContainer events;
 
     RED_TEST_PASSPOINT();
     NullSessionLog session_log;
-    MyFront front(time_base, events, session_log, front_trans, gen1, ini
+    MyFront front(events, session_log, front_trans, gen1, ini
                  , cctx, fastpath_support);
     null_mod no_mod;
 
 //    RED_TEST_PASSPOINT();
 
 //    RED_REQUIRE(!events_.is_empty());
-//    time_base.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
+//    events.set_current_time({ini.get<cfg::globals::handshake_timeout>().count(), 0});
 
 //    RED_CHECK_EXCEPTION_ERROR_ID(fn(), ERR_RDP_HANDSHAKE_TIMEOUT);
 

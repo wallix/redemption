@@ -78,14 +78,13 @@ namespace
 
 SelectorMod::SelectorMod(
     SelectorModVariables ini,
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, ClientExecute & rail_client_execute,
     Font const& font, Theme const& theme
 )
     : RailModBase(
-        time_base, events, drawable, front,
+        events, drawable, front,
         width, height, rail_client_execute, font, theme)
     , ini(ini)
     , language_button(

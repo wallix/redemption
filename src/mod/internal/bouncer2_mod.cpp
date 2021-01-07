@@ -26,9 +26,12 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 
+namespace
+{
+    constexpr auto delay = 33ms;
+}
 
 Bouncer2Mod::Bouncer2Mod(
-    TimeBase& time_base,
     gdi::GraphicApi & gd,
     EventContainer & events,
     uint16_t width, uint16_t height)
@@ -40,10 +43,8 @@ Bouncer2Mod::Bouncer2Mod(
 {
     this->events_guard.create_event_timeout(
         "Bouncer Periodic Timer",
-        time_base.get_current_time() + std::chrono::milliseconds(33),
-        [this](Event&event)
+        delay, [this](Event&event)
         {
-            auto delay = std::chrono::milliseconds(33);
             event.alarm.reset_timeout(event.alarm.now+delay);
             this->draw_event(this->gd);
         });

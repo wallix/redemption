@@ -90,12 +90,11 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     const uint16_t h = 200;
 
     ScreenInfo screen_info{w, h, BitsPerPixel::BitsPP16};
-    TimeBase time_base({0, 0});
     EventContainer events;
     FakeFront front(screen_info);
     WindowListCaps win_caps;
     TestGd gd(front.gd());
-    ClientExecute client_execute(time_base, events, gd, front, win_caps, false);
+    ClientExecute client_execute(events, gd, front, win_caps, false);
     const Theme theme;
     const GCC::UserData::CSMonitor cs_monitor;
     Font const& font = global_font_deja_vu_14();
@@ -111,7 +110,7 @@ RED_AUTO_TEST_CASE(TestRailHostMod)
     const Rect widget_rect = client_execute.adjust_rect(cs_monitor.get_widget_rect(w, h));
 
     RailModuleHostMod host_mod(
-        time_base, events, gd, front, w, h, widget_rect, std::move(mod),
+        events, gd, front, w, h, widget_rect, std::move(mod),
         client_execute, font, theme, cs_monitor, false);
     host_mod.init();
 

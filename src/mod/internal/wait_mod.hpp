@@ -47,7 +47,6 @@ class WaitMod : public RailModBase, public NotifyApi
 public:
     WaitMod(
         WaitModVariables vars,
-        TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect, const char * caption,

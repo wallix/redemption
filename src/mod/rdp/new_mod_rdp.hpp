@@ -31,7 +31,6 @@ Author(s): Jonathan Poelen
 class ClientInfo;
 class FrontAPI;
 class LicenseApi;
-class TimeBase;
 class Transport;
 class RedirectionInfo;
 class Random;
@@ -49,7 +48,6 @@ namespace gdi {
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
-    TimeBase& time_base,
     gdi::GraphicApi& gd,
     gdi::OsdApi & osd,
     EventContainer & events,

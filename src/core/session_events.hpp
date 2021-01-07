@@ -31,11 +31,9 @@ class KeepAlive
 public:
     KeepAlive(
         Inifile& ini,
-        TimeBase const& time_base,
         EventContainer& event_container,
         std::chrono::seconds grace_delay)
     : ini(ini)
-    , time_base(time_base)
     , event_container(event_container)
     , grace_delay(grace_delay)
     {}
@@ -78,7 +76,7 @@ public:
 private:
     timeval timeout() const
     {
-        return this->time_base.get_current_time() + this->grace_delay;
+        return this->event_container.get_current_time() + this->grace_delay;
     }
 
     bool wait_answer = false;   // true when we are waiting for a positive response
@@ -86,7 +84,6 @@ private:
                                 // timers have been set to new timers.
     EventRef event_ref;
     Inifile& ini;
-    TimeBase const& time_base;
     EventContainer& event_container;
     std::chrono::seconds grace_delay;
 };
@@ -97,9 +94,8 @@ class Inactivity
     static constexpr std::chrono::seconds ACCEPTED_TIMEOUT_MIN = 30s;
 
 public:
-    Inactivity(TimeBase const& time_base, EventContainer& event_container)
-    : time_base(time_base)
-    , event_container(event_container)
+    Inactivity(EventContainer& event_container)
+    : event_container(event_container)
     {}
 
     void activity()
@@ -148,11 +144,10 @@ public:
 private:
     timeval timeout() const
     {
-        return this->time_base.get_current_time() + this->grace_delay;
+        return this->event_container.get_current_time() + this->grace_delay;
     }
 
     EventRef event_ref;
-    TimeBase const& time_base;
     EventContainer& event_container;
     std::chrono::seconds grace_delay;
 };
@@ -161,9 +156,8 @@ private:
 class EndSessionWarning
 {
 public:
-    EndSessionWarning(TimeBase const& time_base, EventContainer& event_container)
-    : time_base(time_base)
-    , event_container(event_container)
+    EndSessionWarning(EventContainer& event_container)
+    : event_container(event_container)
     {}
 
     /// disable timer with 0 for \c end_date
@@ -172,7 +166,7 @@ public:
         if (end_date) {
             this->timer_close = end_date;
 
-            time_t now = this->time_base.get_current_time().tv_sec;
+            time_t now = this->event_container.get_current_time().tv_sec;
             timeval timeout{now, 0};
             if (this->timer_close <= now) {
                 this->last_delay = 0;
@@ -188,9 +182,16 @@ public:
             if (!this->event_ref.reset_timeout(timeout)) {
                 this->event_ref = this->event_container.create_event_timeout(
                     "EndSessionWarning", this, timeout,
-                    [this](Event& e) {
+                    [this](Event& event) {
+                        if (event.alarm.now.tv_sec >= this->timer_close) {
+                            event.garbage = true;
+                            throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
+                        }
+
                         // now+1 for next timer
-                        this->process_event(e);
+                        time_t now = event.alarm.now.tv_sec + 1;
+
+                        event.alarm.reset_timeout({this->next_timeout(now), 0});
                     }
                 );
             }
@@ -214,18 +215,6 @@ public:
 private:
     static constexpr std::array<time_t, 4> timers{{ 1*60, 5*60, 10*60, 30*60, }};
 
-    void process_event(Event& event)
-    {
-        if (event.alarm.now.tv_sec >= this->timer_close) {
-            event.garbage = true;
-            throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
-        }
-
-        time_t now = event.alarm.now.tv_sec + 1;
-
-        event.alarm.reset_timeout({this->next_timeout(now), 0});
-    }
-
     time_t next_timeout(time_t now)
     {
         time_t elapsed = this->timer_close - now;
@@ -247,6 +236,5 @@ private:
     time_t timer_close;
     time_t last_delay = 0;
     EventRef event_ref;
-    TimeBase const& time_base;
     EventContainer& event_container;
 };

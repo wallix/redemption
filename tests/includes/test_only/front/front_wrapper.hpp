@@ -23,7 +23,6 @@ Author(s): Jonathan Poelen
 #include "core/front_api.hpp"
 #include "core/events.hpp"
 
-class TimeBase;
 class Transport;
 class Random;
 class CryptoContext;
@@ -39,7 +38,6 @@ class FrontWrapper : public FrontAPI
 {
 public:
     FrontWrapper(
-        TimeBase& time_base,
         EventContainer& events,
         AclReportApi& acl_report,
         Transport & trans,

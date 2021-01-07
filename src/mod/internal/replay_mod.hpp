@@ -29,11 +29,8 @@
 #include "mod/mod_api.hpp"
 #include "core/events.hpp"
 
-#include <sys/time.h>
-
 
 class FrontAPI;
-struct TimeBase;
 struct EventContainer;
 struct Event;
 
@@ -42,8 +39,7 @@ class ReplayMod : public mod_api
 public:
     using Verbose = FileToGraphic::Verbose;
 
-    ReplayMod( TimeBase & time_base
-             , EventContainer & events
+    ReplayMod( EventContainer & events
              , gdi::GraphicApi & drawable
              , FrontAPI & front
              , std::string replay_path
@@ -86,7 +82,6 @@ private:
 
     timeval start_time;
     timeval start_time_replay;
-    TimeBase& time_base;
 
     std::string& auth_error_message;
 

@@ -29,7 +29,6 @@
 
 #include <string>
 
-class TimeBase;
 class FrontAPI;
 class mod_api;
 class Font;
@@ -275,13 +274,12 @@ private:
     Pointer const* current_mouse_pointer = nullptr;
     bool rail_enabled = false;
 
-    TimeBase& time_base;
     EventsGuard events_guard;
     Rect protocol_window_rect;
 
 public:
     ClientExecute(
-        TimeBase& time_base, EventContainer& events,
+        EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front,
         WindowListCaps const & window_list_caps, bool verbose);
 

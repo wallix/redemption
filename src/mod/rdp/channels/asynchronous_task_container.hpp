@@ -74,9 +74,8 @@ private:
 struct AsynchronousTaskContainer
 {
 public:
-    explicit AsynchronousTaskContainer(TimeBase& time_base, EventContainer & events)
-        : time_base(time_base)
-        , events_guard(events)
+    explicit AsynchronousTaskContainer(EventContainer & events)
+        : events_guard(events)
     {
     }
 
@@ -90,7 +89,7 @@ public:
             this->first_task = task.release();
             this->last_task = this->first_task;
             this->first_task->configure_event(
-                this->time_base.get_current_time(),
+                this->events_guard.get_current_time(),
                 AsynchronousTask::AsynchronousEventContainer{*this}
             );
         }
@@ -110,7 +109,7 @@ private:
         delete std::exchange(this->first_task, this->first_task->p_next_task_);
         if (this->first_task) {
             this->first_task->configure_event(
-                this->time_base.get_current_time(),
+                this->events_guard.get_current_time(),
                 AsynchronousTask::AsynchronousEventContainer{*this}
             );
         }
@@ -123,7 +122,6 @@ private:
     AsynchronousTask* last_task = nullptr;
 
     friend class AsynchronousTask::AsynchronousEventContainer;
-    TimeBase& time_base;
     EventsGuard events_guard;
 };
 

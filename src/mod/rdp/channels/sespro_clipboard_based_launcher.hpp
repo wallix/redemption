@@ -76,7 +76,6 @@ public:
     bool    delay_format_list_received = false;
     bool    delay_wainting_clipboard_response = false;
 
-    TimeBase& time_base;
     EventsGuard events_guard;
 
     const RDPVerbose verbose;
@@ -92,7 +91,6 @@ public:
 
 public:
     SessionProbeClipboardBasedLauncher(
-        TimeBase& time_base,
         EventContainer& events,
         mod_api& mod,
         const char* alternate_shell,
@@ -101,7 +99,6 @@ public:
     : params(params)
     , mod(mod)
     , alternate_shell(alternate_shell)
-    , time_base(time_base)
     , events_guard(events)
     , verbose(verbose)
     {
@@ -146,7 +143,7 @@ public:
         if (this->state == State::START) {
             this->event_ref = this->events_guard.create_event_timeout(
                 "SessionProbeClipboardBasedLauncher::on_clipboard_monitor_ready",
-                this->time_base.get_current_time()+this->params.clipboard_initialization_delay_ms,
+                this->params.clipboard_initialization_delay_ms,
                 [this](Event&event)
                 {
                     this->on_event();
@@ -355,17 +352,17 @@ public:
         return std::chrono::milliseconds(static_cast<uint64_t>(delay.count() * coefficient));
     }
 
-    timeval get_short_delay_timeout()
+    timeval get_short_delay_timeout() const
     {
         std::chrono::milliseconds delay_ms = this->params.short_delay_ms;
-        return this->time_base.get_current_time()+
-            std::min(this->to_microseconds(delay_ms, this->delay_coefficient), std::chrono::milliseconds(1000));
+        return this->events_guard.get_current_time()
+             + std::min(this->to_microseconds(delay_ms, this->delay_coefficient), 1000ms);
     }
 
-    timeval get_long_delay_timeout()
+    timeval get_long_delay_timeout() const
     {
         std::chrono::milliseconds delay_ms = this->params.long_delay_ms;
-        return this->time_base.get_current_time()+this->to_microseconds(delay_ms, this->delay_coefficient);
+        return this->events_guard.get_current_time() + this->to_microseconds(delay_ms, this->delay_coefficient);
     }
 
     void make_delay_sequencer()
@@ -506,7 +503,7 @@ public:
 
         this->event_ref = this->events_guard.create_event_timeout(
             "SessionProbeClipboardBasedLauncher Event",
-            this->time_base.get_current_time()+this->params.short_delay_ms,
+            this->params.short_delay_ms,
             action);
     }
 
@@ -639,7 +636,7 @@ public:
 
         this->event_ref = this->events_guard.create_event_timeout(
             "SessionProbeClipboardBasedLauncher Event",
-            this->time_base.get_current_time()+this->params.short_delay_ms,
+            this->params.short_delay_ms,
             action);
     }
 

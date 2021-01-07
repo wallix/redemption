@@ -35,7 +35,6 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
 {
     uint16_t w = 1024;
     uint16_t h = 768;
-    TimeBase time_base({});
     EventContainer events;
     TestGraphic gd(w, h);
     ScreenInfo screen_info{w, h, BitsPerPixel::BitsPP16};
@@ -47,7 +46,6 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     ReplayMod::Verbose verbose {};
 
     ReplayMod replay_mod(
-        time_base,
         events,
         gd,
         front,

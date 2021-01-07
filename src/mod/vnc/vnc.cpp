@@ -34,7 +34,6 @@
 #endif
 
 mod_vnc::mod_vnc( Transport & t
-           , TimeBase& time_base
            , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username
@@ -72,7 +71,6 @@ mod_vnc::mod_vnc( Transport & t
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , rail_client_execute(rail_client_execute)
-    , time_base(time_base)
     , gd(gd)
     , events_guard(events)
 #ifndef __EMSCRIPTEN__
@@ -97,7 +95,7 @@ mod_vnc::mod_vnc( Transport & t
 
     this->events_guard.create_event_timeout(
         "VNC Init Event",
-        this->time_base.get_current_time(),
+        this->events_guard.get_current_time(),
         [this](Event& event)
         {
             // First Timeout Clear Screen
@@ -107,8 +105,8 @@ mod_vnc::mod_vnc( Transport & t
             // Following fd timeouts
             this->events_guard.create_event_fd_timeout(
                 "VNC Fd Event",
-                this->t.get_fd(), std::chrono::seconds{300},
-                this->time_base.get_current_time()+std::chrono::seconds{300},
+                this->t.get_fd(),
+                300s,
                 [this](Event& /*event*/)
                 {
                     this->draw_event(this->gd);
@@ -1703,7 +1701,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     ? RDPECLIP::CF_UNICODETEXT
                     : RDPECLIP::CF_TEXT;
 
-                const microseconds usnow        = ustime(this->time_base.get_current_time());
+                const microseconds usnow        = ustime(this->events_guard.get_current_time());
                 const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                 if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO,
@@ -1742,7 +1740,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                         // arms timeout
                         this->clipboard_timeout_timer = this->events_guard.create_event_timeout(
                             "VNC Clipboard Timeout Event",
-                            this->time_base.get_current_time()+(MINIMUM_TIMEVAL - timeval_diff),
+                            MINIMUM_TIMEVAL - timeval_diff,
                             [this](Event&){this->check_timeout();});
                     }
                     else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated)
@@ -2091,7 +2089,7 @@ void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawab
 
 void mod_vnc::disconnect()
 {
-    uint64_t seconds = this->time_base.get_current_time().tv_sec - this->beginning;
+    uint64_t seconds = this->events_guard.get_current_time().tv_sec - this->beginning;
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];

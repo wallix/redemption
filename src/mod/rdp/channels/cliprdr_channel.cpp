@@ -156,7 +156,7 @@ struct ClipboardVirtualChannel::OSD::D
 
         if (self.osd.enable_osd) {
             self.osd.msg_type = OSD::MsgType::WaitValidator;
-            auto const timer = self.time_base.get_current_time() + self.osd.delay;
+            auto const timer = self.osd.events_guard.get_current_time() + self.osd.delay;
             if (!self.osd.event_ref.reset_timeout(timer)) {
                 self.osd.event_ref = self.osd.events_guard.create_event_timeout(
                     "FileVerifOSD",
@@ -2612,7 +2612,6 @@ struct ClipboardVirtualChannel::ClipCtx::D
 ClipboardVirtualChannel::ClipboardVirtualChannel(
     VirtualChannelDataSender* to_client_sender_,
     VirtualChannelDataSender* to_server_sender_,
-    TimeBase& time_base,
     EventContainer& events,
     gdi::OsdApi& osd_api,
     const ClipboardVirtualChannelParams & params,
@@ -2638,7 +2637,6 @@ ClipboardVirtualChannel::ClipboardVirtualChannel(
     }
     return p;
 }())
-, time_base(time_base)
 , file_validator(file_validator_service)
 , fdx_capture(file_storage.fdx_capture)
 , tmp_dir(std::move(file_storage.tmp_dir))

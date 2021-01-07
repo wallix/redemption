@@ -36,9 +36,8 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base({0,0});
     EventContainer events;
-    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -50,7 +49,7 @@ RED_AUTO_TEST_CASE(TestLoginMod)
     RED_CHECK_NE(ini.get<cfg::globals::auth_user>(), "user");
     RED_CHECK_NE(ini.get<cfg::context::password>(), "pass");
 
-    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(0, 0, 799, 599), client_execute, global_font(), theme);
     d.init();
 
@@ -65,9 +64,8 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     ScreenInfo screen_info{2048, 1536, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base({0,0});
     EventContainer events;
-    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
     Theme theme;
@@ -78,7 +76,7 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
 
     ini.set<cfg::globals::authentication_timeout>(std::chrono::seconds(1));
 
-    LoginMod d(ini, time_base, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
+    LoginMod d(ini, events, "user", "pass", front.gd(), front, screen_info.width, screen_info.height,
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
     d.init();
 

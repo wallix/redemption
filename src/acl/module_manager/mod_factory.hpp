@@ -54,7 +54,6 @@
 class ModFactory
 {
     ModWrapper & mod_wrapper;
-    TimeBase & time_base;
     EventContainer & events;
     ClientInfo const& client_info;
     FrontAPI & front;
@@ -80,7 +79,6 @@ public:
     };
 
     ModFactory(ModWrapper & mod_wrapper,
-               TimeBase & time_base,
                EventContainer & events,
                ClientInfoRef client_info_ref,
                FrontAPI & front,
@@ -95,7 +93,6 @@ public:
                CryptoContext & cctx
         )
         : mod_wrapper(mod_wrapper)
-        , time_base(time_base)
         , events(events)
         , client_info(client_info_ref.ref)
         , front(front)
@@ -114,7 +111,6 @@ public:
     auto create_mod_bouncer() -> ModPack
     {
         auto new_mod = new Bouncer2Mod(
-            this->time_base,
             this->graphics,
             this->events,
             this->client_info.screen_info.width,
@@ -125,7 +121,6 @@ public:
     auto create_mod_replay() -> ModPack
     {
         auto new_mod = new ReplayMod(
-            this->time_base,
             this->events,
             this->graphics,
             this->front,
@@ -148,7 +143,6 @@ public:
     auto create_widget_test_mod() -> ModPack
     {
         auto new_mod = new WidgetTestMod(
-            this->time_base,
             this->graphics,
             this->events,
             this->front,
@@ -175,7 +169,6 @@ public:
     {
         auto new_mod = new SelectorMod(
             this->ini,
-            this->time_base,
             this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -215,7 +208,6 @@ private:
         auto new_mod = new CloseMod(
             auth_error_message.c_str(),
             this->ini,
-            this->time_base,
             this->events,
             this->mod_wrapper.get_graphics(), this->front,
             this->client_info.screen_info.width,
@@ -234,7 +226,6 @@ public:
     {
         auto new_mod = new InteractiveTargetMod(
             this->ini,
-            this->time_base,
             this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -276,7 +267,6 @@ private:
     {
         auto new_mod = new DialogMod(
             this->ini,
-            this->time_base,
             this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -302,7 +292,6 @@ public:
         uint flag = this->ini.get<cfg::context::formflag>();
         auto new_mod = new WaitMod(
             this->ini,
-            this->time_base,
             this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -323,7 +312,6 @@ public:
     {
         auto new_mod = new TransitionMod(
             TR(trkeys::wait_msg, language(this->ini)),
-            this->time_base,
             this->events,
             this->graphics, this->front,
             this->client_info.screen_info.width,
@@ -365,7 +353,6 @@ public:
 
         auto new_mod = new LoginMod(
             this->ini,
-            this->time_base,
             this->events,
             username,
             "", // password
@@ -391,7 +378,6 @@ public:
             this->rail_client_execute,
             this->keymap.key_flags,
             this->glyphs, this->theme,
-            this->time_base,
             this->events,
             session_log,
             this->file_system_license_store,
@@ -410,7 +396,6 @@ public:
             this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
-            this->time_base,
             this->events,
             session_log);
         mod_pack.enable_osd = true;

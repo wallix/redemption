@@ -65,7 +65,6 @@ namespace
 
 LoginMod::LoginMod(
     LoginModVariables vars,
-    TimeBase& time_base,
     EventContainer & events,
     char const * username, char const * password,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
@@ -73,7 +72,7 @@ LoginMod::LoginMod(
     Theme const& theme
 )
     : RailModBase(
-        time_base, events, drawable, front,
+        events, drawable, front,
         width, height, rail_client_execute, font, theme)
     , events_guard(events)
     , language_button(
@@ -123,7 +122,7 @@ LoginMod::LoginMod(
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         this->events_guard.create_event_timeout(
             "Log Box Timeout",
-            time_base.get_current_time()+std::chrono::seconds(vars.get<cfg::globals::authentication_timeout>()),
+            vars.get<cfg::globals::authentication_timeout>(),
             [this](Event&e)
             {
                 e.garbage = true;

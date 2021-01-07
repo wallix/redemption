@@ -92,7 +92,6 @@ public:
 private:
     ClientChannelMod channel_mod;
 public:
-    TimeBase& time_base;
     EventContainer& events;
 
 private:
@@ -240,16 +239,14 @@ private:
     gdi::NullOsd osd;
 
 public:
-    ClientRedemption(TimeBase& time_base,
-                     EventContainer& events,
+    ClientRedemption(EventContainer& events,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
-        , time_base(time_base)
         , events(events)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(time_base, events, *this, *this, this->config.info.window_list_caps,
+        , rail_client_execute(events, *this, *this, this->config.info.window_list_caps,
             bool((RDPVerbose::rail | RDPVerbose::rail_dump) & this->config.verbose))
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
@@ -402,7 +399,6 @@ public:
 
                 this->unique_mod = new_mod_rdp(
                     *this->socket
-                  , this->time_base
                   , *this
                   , this->osd
                   , this->events
@@ -435,7 +431,6 @@ public:
             case ClientRedemptionConfig::MOD_VNC:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
-                  , this->time_base
                   , *this
                   , this->events
                   , this->session_log
@@ -475,7 +470,7 @@ public:
             LOG(LOG_INFO, "Replay %s", this->config.full_capture_file_name);
             auto transport = std::make_unique<ReplayTransport>(
                 this->config.full_capture_file_name.c_str(), this->config.target_IP.c_str(), this->config.port,
-                this->time_base, ReplayTransport::FdType::Timer,
+                this->events.time_base, ReplayTransport::FdType::Timer,
                 ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
             this->client_sck = transport->get_fd();
@@ -505,8 +500,8 @@ public:
                 if (this->config.is_full_capturing) {
                     this->_socket_in_recorder = std::move(this->socket);
                     this->socket = std::make_unique<RecorderTransport>(
-                        *this->_socket_in_recorder, this->time_base,
-                                this->config.full_capture_file_name.c_str());
+                        *this->_socket_in_recorder, this->events.time_base,
+                        this->config.full_capture_file_name.c_str());
                 }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->config.target_IP);
@@ -711,9 +706,8 @@ public:
             (void)begin_read;
             (void)end_read;
             this->replay_mod = std::make_unique<ReplayMod>(
-                this->time_base
-            , this->events,
-                *this
+              this->events
+            , *this
             , *this
             , this->config._movie_full_path.c_str()
             // , 0             //this->config.info.width

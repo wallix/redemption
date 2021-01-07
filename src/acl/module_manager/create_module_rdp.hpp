@@ -37,7 +37,6 @@ class ClientInfo;
 class ClientExecute;
 class Font;
 class Theme;
-class TimeBase;
 class EventContainer;
 class AuthApi;
 class LicenseApi;
@@ -59,7 +58,6 @@ ModPack create_mod_rdp(
     Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    TimeBase & time_base,
     EventContainer& events,
     SessionLogApi& session_log,
     LicenseApi & file_system_license_store,

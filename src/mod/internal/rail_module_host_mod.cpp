@@ -69,7 +69,6 @@ void RailModuleHostMod::refresh(Rect r)
 }
 
 RailModuleHostMod::RailModuleHostMod(
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
@@ -81,9 +80,8 @@ RailModuleHostMod::RailModuleHostMod(
     , screen(drawable, width, height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
-    , mouse_state(time_base, events)
+    , mouse_state(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
-    , time_base(time_base)
     , events_guard(events)
     , rail_module_host(drawable, widget_rect.x, widget_rect.y,
                        widget_rect.cx, widget_rect.cy,
@@ -232,7 +230,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
         this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
 
-        auto const timer = this->time_base.get_current_time() + std::chrono::seconds{1};
+        auto const timer = this->events_guard.get_current_time() + 1s;
         if (!this->disconnection_reconnection_timer.reset_timeout(timer)) {
             this->disconnection_reconnection_timer = this->events_guard.create_event_timeout(
                 "RAIL Module Host Disconnection Reconnection Timeout",

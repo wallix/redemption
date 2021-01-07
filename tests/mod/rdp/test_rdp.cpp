@@ -149,7 +149,6 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     // To always get the same client random, in tests
     LCGRandom gen;
     NullLicenseStore license_store;
-    TimeBase time_base({0,0});
     EventContainer events;
     Inifile ini;
     NullSessionLog session_log;
@@ -160,7 +159,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RedirectionInfo redir_info;
 
     auto mod = new_mod_rdp(
-        t, time_base, front.gd(), osd, events, session_log,
+        t, front.gd(), osd, events, session_log,
         front, info, redir_info, gen, channels_authorizations,
         mod_rdp_params, tls_client_params, license_store,
         ini, nullptr, nullptr, mod_rdp_factory);
@@ -168,7 +167,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
-    auto end_tv = time_base.get_current_time();
+    auto end_tv = events.get_current_time();
     events.queue[0]->alarm.fd = 0;
     events.execute_events(end_tv,[](int /*fd*/){ return false; }, false);
     for (int count=0; count < 100 && !events.queue.empty(); ++count) {

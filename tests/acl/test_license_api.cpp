@@ -99,7 +99,6 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
     #include "fixtures/test_license_api_license.hpp"
 #endif
 
-    TimeBase time_base({0,0});
     EventContainer events;
     NullSessionLog session_log;
 
@@ -283,7 +282,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(
-                trans, time_base, front.gd(), osd, events, session_log, front, info, redir_info, gen,
+                trans, front.gd(), osd, events, session_log, front, info, redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params,
                 license_store, ini, nullptr, nullptr, mod_rdp_factory);
 
@@ -293,7 +292,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             LOG(LOG_INFO, "--- Looping 1");
 
 #ifdef GENERATE_TESTING_DATA
-            auto const end_tv = time_base.get_current_time();
+            auto const end_tv = events.get_current_time();
             events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, false);
 
             // TODO: fix that for actual TESTING DATA GENERATION
@@ -307,7 +306,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             });
 #else
             trans.disable_remaining_error();
-            auto end_tv = time_base.get_current_time();
+            auto end_tv = events.get_current_time();
             events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, false);
 
             int n = 0;
@@ -401,7 +400,6 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 #endif
     #include "fixtures/test_license_api_license.hpp"
 
-    TimeBase time_base({0,0});
     EventContainer events;
     NullSessionLog session_log;
 
@@ -537,7 +535,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             TLSClientParams tls_client_params;
 
             auto mod = new_mod_rdp(
-                t, time_base, front.gd(), osd, events, session_log, front, info, redir_info, gen,
+                t, front.gd(), osd, events, session_log, front, info, redir_info, gen,
                 channels_authorizations, mod_rdp_params, tls_client_params, license_store, ini,
                 nullptr, nullptr, mod_rdp_factory);
 
@@ -564,7 +562,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             // Comment the code block below to generate testing data.
             t.disable_remaining_error();
 
-            auto end_tv = time_base.get_current_time();
+            auto end_tv = events.get_current_time();
             events.execute_events(end_tv, [&](int /*sck*/)->bool {return true;}, false);
 
 

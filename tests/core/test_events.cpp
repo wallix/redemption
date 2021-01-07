@@ -171,23 +171,21 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
 {
     struct Context {
         EventsGuard events_guard;
-        TimeBase & time_base;
         int counter1 = 0;
         int counter2 = 0;
 
-        Context(EventContainer & events, TimeBase & time_base)
+        Context(EventContainer & events)
             : events_guard(events)
-            , time_base(time_base)
         {
             this->events_guard.create_event_timeout(
                 "Init Event",
-                this->time_base.get_current_time(),
+                this->events_guard.get_current_time(),
                 [this](Event&/*event*/)
                 {
                     this->events_guard.create_event_fd_timeout(
                         "Fd Event",
                         1, std::chrono::seconds{300},
-                        this->time_base.get_current_time(),
+                        this->events_guard.get_current_time(),
                         [this](Event&/*event*/){ ++this->counter1; },
                         [this](Event&/*event*/){ ++this->counter2; }
                     );
@@ -196,25 +194,24 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
         }
     };
 
-    TimeBase time_base({0,0});
     EventContainer events;
 
-    Context context(events, time_base);
-    events.execute_events(time_base.get_current_time(), nofd_fn, false);
+    Context context(events);
+    events.execute_events(events.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 0);
-    events.execute_events(time_base.get_current_time(), nofd_fn, false);
+    events.execute_events(events.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    time_base.set_current_time({3,0});
-    events.execute_events(time_base.get_current_time(), nofd_fn, false);
+    events.set_current_time({3,0});
+    events.execute_events(events.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    events.execute_events(time_base.get_current_time(), [](int /*fd*/){ return true; }, false);
+    events.execute_events(events.get_current_time(), [](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
-    time_base.set_current_time({303,0});
-    events.execute_events(time_base.get_current_time(), nofd_fn, false);
+    events.set_current_time({303,0});
+    events.execute_events(events.get_current_time(), nofd_fn, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 2);
 }

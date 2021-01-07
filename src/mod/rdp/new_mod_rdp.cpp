@@ -24,7 +24,6 @@ Author(s): Jonathan Poelen
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
-    TimeBase& time_base,
     gdi::GraphicApi& gd,
     gdi::OsdApi & osd,
     EventContainer & events,
@@ -44,7 +43,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
 )
 {
     return std::make_unique<mod_rdp>(
-        trans, time_base, gd, osd, events, session_log, front, info, redir_info,
+        trans, gd, osd, events, session_log, front, info, redir_info,
         gen, channels_authorizations, mod_rdp_params, tls_client_params,
         license_store, vars, metrics, file_validator_service, mod_rdp_factory);
 }

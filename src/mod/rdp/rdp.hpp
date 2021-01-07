@@ -366,7 +366,6 @@ private:
 
     const RDPVerbose verbose;
 
-    TimeBase & time_base;
     gdi::OsdApi & osd;
     EventContainer & events;
     SessionLogApi& session_log;
@@ -379,7 +378,7 @@ public:
         const ChannelsAuthorizations & channels_authorizations,
         const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
         Random & gen, RDPMetrics * metrics,
-        TimeBase & time_base, gdi::OsdApi & osd,
+        gdi::OsdApi & osd,
         EventContainer & events,
         SessionLogApi& session_log,
         FileValidatorService * file_validator_service,
@@ -405,11 +404,10 @@ public:
     , clipboard(mod_rdp_params.clipboard_params)
     , dynamic_channels(mod_rdp_params.dynamic_channels_params)
     , file_system(mod_rdp_params.file_system_params)
-    , asynchronous_tasks(time_base, events)
+    , asynchronous_tasks(events)
     , drive(mod_rdp_params.application_params, mod_rdp_params.drive_params, asynchronous_tasks, verbose)
     , mod_rdp_factory(mod_rdp_factory)
     , verbose(verbose)
-    , time_base(time_base)
     , osd(osd)
     , events(events)
     , session_log(session_log)
@@ -476,7 +474,7 @@ public:
             }
 
             this->remote_programs_session_manager = std::make_unique<RemoteProgramsSessionManager>(
-                this->time_base, this->events, gd, mod_rdp, mod_rdp_params.lang,
+                this->events, gd, mod_rdp, mod_rdp_params.lang,
                 mod_rdp_params.font, mod_rdp_params.theme, session_probe_window_title,
                 mod_rdp_params.remote_app_params.rail_client_execute,
                 mod_rdp_params.remote_app_params.rail_disconnect_message_delay,
@@ -565,7 +563,6 @@ private:
         this->clipboard_virtual_channel = std::make_unique<ClipboardVirtualChannel>(
             this->clipboard_to_client_sender.get(),
             this->clipboard_to_server_sender.get(),
-            this->time_base,
             this->events,
             this->osd,
             std::move(cvc_params),
@@ -741,7 +738,6 @@ private:
         fsvc_params.smartcard_passthrough = this->file_system.smartcard_passthrough;
 
         this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
-            this->time_base,
             this->events,
             this->file_system_to_client_sender.get(),
             this->file_system_to_server_sender.get(),
@@ -798,7 +794,6 @@ public:
         sp_vc_params.disconnect_session_instead_of_logoff_session = this->remote_app.enable_remote_program;
 
         this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-            this->time_base,
             this->events,
             this->session_log,
             vars,
@@ -1359,7 +1354,6 @@ public:
         else if (used_clipboard_based_launcher) {
             this->session_probe.session_probe_launcher =
                 std::make_unique<SessionProbeClipboardBasedLauncher>(
-                    this->time_base,
                     this->events,
                     mod_rdp, alternate_shell.c_str(),
                     session_probe_params.clipboard_based_launcher,
@@ -1832,7 +1826,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     std::string * error_message;
 
-    TimeBase& time_base;
     gdi::GraphicApi & gd;
     EventsGuard events_guard;
     SessionLogApi& session_log;
@@ -1925,7 +1918,6 @@ public:
 
     explicit mod_rdp(
         Transport & trans
-      , TimeBase& time_base
       , gdi::GraphicApi & gd
       , [[maybe_unused]] gdi::OsdApi & osd
       , EventContainer & events
@@ -1947,7 +1939,7 @@ public:
         : spvc_callbacks(*this, osd)
         , channels(
             channels_authorizations, mod_rdp_params, mod_rdp_params.verbose,
-            gen, metrics, time_base, osd, events, session_log,
+            gen, metrics, osd, events, session_log,
             file_validator_service,
             mod_rdp_factory,
             spvc_callbacks
@@ -2003,13 +1995,12 @@ public:
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , support_connection_redirection_during_recording(mod_rdp_params.support_connection_redirection_during_recording)
         , error_message(mod_rdp_params.error_message)
-        , time_base(time_base)
         , gd(gd)
         , events_guard(events)
         , session_log(session_log)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
-        , session_time_start(time_base.get_current_time().tv_sec)
+        , session_time_start(events.get_current_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
@@ -2083,7 +2074,8 @@ public:
             this->decrypt, this->encrypt, this->logon_info,
             this->channels.enable_auth_channel,
             this->trans, this->front, info, this->redir_info,
-            gen, time_base, mod_rdp_params, this->session_log, this->license_store,
+            gen, this->events_guard.time_base(), mod_rdp_params,
+            this->session_log, this->license_store,
     #ifndef __EMSCRIPTEN__
             this->channels.drive.file_system_drive_manager.has_managed_drive()
          || this->channels.session_probe.enable_session_probe,
@@ -2128,8 +2120,8 @@ public:
 
         this->events_guard.create_event_fd_timeout(
             "RDP Negociation",
-            this->trans.get_fd(), std::chrono::seconds{3600},
-            this->time_base.get_current_time()+ this->private_rdp_negociation->open_session_timeout,
+            this->trans.get_fd(),
+            this->private_rdp_negociation->open_session_timeout,
             [this](Event& event)
             {
                 try {
@@ -5204,8 +5196,7 @@ public:
                     else {
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->events_guard.create_event_timeout(
                             "Bypass Legal Notice Timer",
-                            this->time_base.get_current_time()
-                                + this->channels.remote_app.bypass_legal_notice_delay,
+                            this->channels.remote_app.bypass_legal_notice_delay,
                             [this, failed = false](Event&event) mutable
                             {
                                 if (!failed) {
@@ -5215,7 +5206,7 @@ public:
 
                                     if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
                                         event.alarm.set_timeout(
-                                            this->time_base.get_current_time()
+                                            this->events_guard.get_current_time()
                                             + this->channels.remote_app.bypass_legal_notice_timeout);
                                         failed = true;
                                     }
@@ -6025,7 +6016,7 @@ private:
     void log_disconnection(bool enable_verbose)
     {
         if (this->session_time_start.count()) {
-            uint64_t seconds = this->time_base.get_current_time().tv_sec - this->session_time_start.count();
+            uint64_t seconds = this->events_guard.get_current_time().tv_sec - this->session_time_start.count();
             this->session_time_start = std::chrono::seconds::zero();
 
             char duration_str[128];

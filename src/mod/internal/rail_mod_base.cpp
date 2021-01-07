@@ -24,7 +24,6 @@ Author(s): Proxy Team
 
 
 RailModBase::RailModBase(
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & gd,
     FrontAPI & front,
@@ -37,7 +36,7 @@ RailModBase::RailModBase(
     , screen(gd, front_width, front_height, font, nullptr, theme)
     , rail_client_execute(rail_client_execute)
     , dvc_manager(false)
-    , mouse_state(time_base, events)
+    , mouse_state(events)
     , rail_enabled(rail_client_execute.is_rail_enabled())
 {
     this->screen.set_wh(this->front_width, this->front_height);

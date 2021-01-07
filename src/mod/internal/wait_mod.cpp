@@ -25,7 +25,6 @@
 
 WaitMod::WaitMod(
     WaitModVariables vars,
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
@@ -33,7 +32,7 @@ WaitMod::WaitMod(
     bool showform, uint32_t flag
 )
     : RailModBase(
-        time_base, events, drawable, front,
+        events, drawable, front,
         width, height, rail_client_execute, font, theme)
     , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget,
         drawable, front, font, theme)
@@ -55,8 +54,7 @@ WaitMod::WaitMod(
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->events_guard.create_event_timeout("Wait Mod Timeout",
-        time_base.get_current_time()+std::chrono::seconds(600),
-        [this](Event&)
+        600s, [this](Event&)
         {
             this->refused();
         }

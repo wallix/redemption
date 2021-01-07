@@ -89,7 +89,7 @@ private:
     static const size_t CLIENT_NONCE_LENGTH = 32;
     ClientNonce SavedClientNonce;
 
-    TimeBase & time_base;
+    const TimeBase & time_base;
     Random & rand;
     const std::vector<uint8_t> public_key;
 
@@ -177,7 +177,7 @@ public:
                bytes_view key,
                const std::vector<enum NTLM_AV_ID> & avFieldsTags,
                Random & rand,
-               TimeBase & time_base,
+               const TimeBase & time_base,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
                bool ignore_bogus_nego_flags,
                const bool credssp_verbose,

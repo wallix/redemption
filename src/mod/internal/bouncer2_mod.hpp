@@ -55,7 +55,6 @@ class Bouncer2Mod : public mod_api
 
 public:
     Bouncer2Mod(
-         TimeBase& time_base,
          gdi::GraphicApi & gd,
          EventContainer & events,
          uint16_t width, uint16_t height);

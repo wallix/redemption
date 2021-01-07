@@ -142,9 +142,8 @@ struct RdpData
     };
 
 public:
-    RdpData(TimeBase & time_base, EventContainer & events)
-    : time_base(time_base)
-    , events_guard(events)
+    RdpData(EventContainer & events)
+    : events_guard(events)
     {}
 
     ~RdpData() = default;
@@ -155,7 +154,7 @@ public:
         this->metrics = std::move(metrics);
         this->events_guard.create_event_timeout(
             "RDP Metrics Timer",
-            this->time_base.get_current_time() + log_interval,
+            log_interval,
             [this,log_interval](Event& event)
             {
                 event.alarm.reset_timeout(event.alarm.now + log_interval);
@@ -171,7 +170,6 @@ public:
             "File Validator Event",
             this->file_validator->get_fd(),
             3600s,
-            this->time_base.get_current_time() + 3600s,
             [&mod](Event& /*event*/)
             {
                 mod.DLP_antivirus_check_channels_files();
@@ -185,7 +183,6 @@ public:
 private:
     std::unique_ptr<ModMetrics> metrics;
 
-    TimeBase & time_base;
     EventsGuard events_guard;
 
     std::unique_ptr<FileValidator> file_validator;
@@ -252,7 +249,6 @@ public:
       , unique_fd sck
       , SocketTransport::Verbose verbose
       , std::string * error_message
-      , TimeBase& time_base
       , EventContainer & events
       , SessionLogApi& session_log
       , gdi::GraphicApi & gd
@@ -295,12 +291,12 @@ public:
          , ini.get<cfg::context::target_port>()
          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
          , verbose, error_message))
-    , mod(*this->socket_transport_ptr, time_base, gd
+    , mod(*this->socket_transport_ptr, gd
         , mod_wrapper , events, session_log, front, info, redir_info, gen
         , channels_authorizations, mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
-    , rdp_data(time_base, events)
+    , rdp_data(events)
     , mod_wrapper(mod_wrapper)
     , ini(ini)
     {
@@ -506,7 +502,6 @@ ModPack create_mod_rdp(
     Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    TimeBase & time_base,
     EventContainer& events,
     SessionLogApi& session_log,
     LicenseApi & file_system_license_store,
@@ -831,7 +826,7 @@ ModPack create_mod_rdp(
                 ini.get<cfg::globals::host>(),
                 client_info.screen_info,
                 ini.get<cfg::metrics::sign_key>()),
-            time_base.get_current_time(),
+            events.get_current_time(),
             ini.get<cfg::metrics::log_file_turnover_interval>(),
             ini.get<cfg::metrics::log_interval>());
     }
@@ -978,7 +973,6 @@ ModPack create_mod_rdp(
         std::move(client_sck),
         safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
         &ini.get_mutable_ref<cfg::context::auth_error_message>(),
-        time_base,
         events,
         session_log,
         drawable,
@@ -1033,7 +1027,6 @@ ModPack create_mod_rdp(
 
     auto* host_mod = create_mod_rail(
         ini,
-        time_base,
         events,
         drawable,
         front,

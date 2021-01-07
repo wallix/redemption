@@ -29,7 +29,6 @@ Author(s): Jonathan Poelen
 
 class ClientExecute;
 class FrontAPI;
-class TimeBase;
 class Transport;
 class VNCMetrics;
 class AuthApi;
@@ -42,7 +41,6 @@ namespace gdi
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
-    TimeBase& time_base,
     gdi::GraphicApi & gd,
     EventContainer & events,
     SessionLogApi& session_log,

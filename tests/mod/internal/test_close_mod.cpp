@@ -41,9 +41,8 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base({0,0});
     EventContainer events;
-    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
 
     Theme theme;
 
@@ -54,7 +53,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     Inifile ini;
 
     {
-        CloseMod d("message", ini, time_base, events, front.gd(), front,
+        CloseMod d("message", ini, events, front.gd(), front,
             screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
             global_font_deja_vu_14(), theme, false);
         d.init();
@@ -86,9 +85,8 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    TimeBase time_base({0,0});
     EventContainer events;
-    ClientExecute client_execute(time_base, events, front.gd(), front, window_list_caps, false);
+    ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
 
     Theme theme;
 
@@ -97,7 +95,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
     Inifile ini;
-    CloseMod d("message", ini, time_base, events, front.gd(), front,
+    CloseMod d("message", ini, events, front.gd(), front,
         screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
         global_font_deja_vu_14(), theme, true);
     d.init();
@@ -128,9 +126,8 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     FakeFront front(screen_info);
     TestGd gd(front.gd());
     WindowListCaps window_list_caps;
-    TimeBase time_base({0,0});
     EventContainer events;
-    ClientExecute client_execute(time_base, events, gd, front, window_list_caps, false);
+    ClientExecute client_execute(events, gd, front, window_list_caps, false);
 
     Theme theme;
 
@@ -145,7 +142,7 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
         Rect(0, 0, screen_info.width-1u, screen_info.height-1u));
 
     Inifile ini;
-    CloseMod d("message", ini, time_base, events, gd, front,
+    CloseMod d("message", ini, events, gd, front,
         screen_info.width, screen_info.height, widget_rect, client_execute,
         global_font_deja_vu_14(), theme, true);
     d.init();

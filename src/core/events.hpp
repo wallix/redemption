@@ -21,6 +21,7 @@
 #pragma once
 
 #include "cxx/cxx.hpp"
+#include "utils/timebase.hpp"
 #include "utils/timeval_ops.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -257,6 +258,17 @@ inline Event::~Event()
 struct EventContainer : noncopyable
 {
     std::vector<Event*> queue;
+    TimeBase time_base{{0, 0}};
+
+    void set_current_time(timeval const& now)
+    {
+        this->time_base.set_current_time(now);
+    }
+
+    [[nodiscard]] timeval get_current_time() const noexcept
+    {
+        return this->time_base.get_current_time();
+    }
 
     template<class Fn>
     void get_fds(Fn&& fn)
@@ -266,6 +278,12 @@ struct EventContainer : noncopyable
                 fn(pevent->alarm.fd);
             }
         }
+    }
+
+    template<class Fn>
+    void execute_events(Fn&& fn, bool verbose)
+    {
+        this->execute_events(this->time_base.get_current_time(), static_cast<Fn&&>(fn), verbose);
     }
 
     template<class Fn>
@@ -361,6 +379,17 @@ struct EventContainer : noncopyable
     template<class TimeoutAction>
     [[nodiscard]] Event& create_event_timeout(
         std::string_view name, void const* lifespan,
+        std::chrono::microseconds delay, TimeoutAction&& on_timeout)
+    {
+        return this->create_event_timeout(
+            name, lifespan,
+            this->time_base.get_current_time() + delay,
+            static_cast<TimeoutAction&&>(on_timeout));
+    }
+
+    template<class TimeoutAction>
+    [[nodiscard]] Event& create_event_timeout(
+        std::string_view name, void const* lifespan,
         timeval trigger_time, TimeoutAction&& on_timeout)
     {
         Event* pevent = make_event(
@@ -384,6 +413,21 @@ struct EventContainer : noncopyable
         pevent->alarm.fd = fd;
         this->queue.push_back(pevent);
         return *pevent;
+    }
+
+    template<class FdAction, class TimeoutAction>
+    [[nodiscard]] Event& create_event_fd_timeout(
+        std::string_view name, void const* lifespan,
+        int fd,
+        std::chrono::microseconds delay,
+        FdAction&& on_fd,
+        TimeoutAction&& on_timeout)
+    {
+        return this->create_event_fd_timeout(
+            name, lifespan, fd, delay,
+            this->time_base.get_current_time() + delay,
+            static_cast<FdAction&&>(on_fd),
+            static_cast<TimeoutAction&&>(on_timeout));
     }
 
     template<class FdAction, class TimeoutAction>
@@ -539,6 +583,27 @@ struct EventsGuard : private noncopyable
     : events(events)
     {}
 
+    TimeBase const& time_base() const noexcept
+    {
+        return this->events.time_base;
+    }
+
+    [[nodiscard]] timeval get_current_time() const noexcept
+    {
+        return this->events.get_current_time();
+    }
+
+    template<class TimeoutAction>
+    Event& create_event_timeout(
+        std::string_view name,
+        std::chrono::microseconds delay, TimeoutAction&& on_timeout)
+    {
+        return this->events.create_event_timeout(
+            name, this, delay,
+            static_cast<TimeoutAction&&>(on_timeout)
+        );
+    }
+
     template<class TimeoutAction>
     Event& create_event_timeout(
         std::string_view name,
@@ -558,6 +623,21 @@ struct EventsGuard : private noncopyable
         return this->events.create_event_fd_without_timeout(
             name, this, fd,
             static_cast<FdAction&&>(on_fd)
+        );
+    }
+
+    template<class FdAction, class TimeoutAction>
+    Event& create_event_fd_timeout(
+        std::string_view name,
+        int fd,
+        std::chrono::microseconds delay,
+        FdAction&& on_fd,
+        TimeoutAction&& on_timeout)
+    {
+        return this->events.create_event_fd_timeout(
+            name, this, fd, delay,
+            static_cast<FdAction&&>(on_fd),
+            static_cast<TimeoutAction&&>(on_timeout)
         );
     }
 

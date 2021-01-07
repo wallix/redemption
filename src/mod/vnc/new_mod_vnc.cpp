@@ -24,7 +24,6 @@ Author(s): Jonathan Poelen
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
-    TimeBase& time_base,
     gdi::GraphicApi & gd,
     EventContainer & events,
     SessionLogApi& session_log,
@@ -47,7 +46,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
 )
 {
     return std::make_unique<mod_vnc>(
-        t, time_base, gd, events, username, password, front,
+        t, gd, events, username, password, front,
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, server_is_macos, send_alt_ksym,

@@ -42,10 +42,9 @@ using namespace std::chrono_literals;
 class ClientRedemptionHeadless : public ClientRedemption
 {
 public:
-    ClientRedemptionHeadless(TimeBase & time_base,
-                             EventContainer& events,
+    ClientRedemptionHeadless(EventContainer& events,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(time_base, events, config)
+        : ClientRedemption(events, config)
     {
         this->cmd_launch_conn();
     }
@@ -190,11 +189,11 @@ int main(int argc, char const** argv)
 
     ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
-    TimeBase time_base(tvtime());
     EventContainer events;
+    events.set_current_time(tvtime());
     ScopedSslInit scoped_ssl;
 
-    ClientRedemptionHeadless client(time_base, events, config);
+    ClientRedemptionHeadless client(events, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

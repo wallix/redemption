@@ -107,7 +107,6 @@ namespace
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
 {
-    TimeBase time_base({0,0});
     FileValidatorService * ipca_service = nullptr;
     NullSessionLog session_log;
     EventContainer events;
@@ -139,7 +138,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPAuthorisation)
         TestToServerSender to_server_sender(t);
 
         ClipboardVirtualChannel clipboard_virtual_channel(
-            &to_client_sender, &to_server_sender, time_base, events, osd,
+            &to_client_sender, &to_server_sender, events, osd,
             d.cb_params, ipca_service, {nullptr, false, std::string()},
             session_log, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -158,7 +157,6 @@ public:
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 {
-    TimeBase time_base({0,0});
     NullSessionLog session_log;
     FileValidatorService * ipca_service = nullptr;
 
@@ -173,7 +171,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     EventContainer events;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base, events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
+        &to_client_sender, &to_server_sender, events, osd, clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
         session_log, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -192,7 +190,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 {
-    TimeBase time_base({0,0});
     EventContainer events;
     NullSessionLog session_log;
     FileValidatorService * ipca_service = nullptr;
@@ -206,7 +203,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, time_base, events, osd,
+        &to_client_sender, &to_server_sender, events, osd,
         clipboard_virtual_channel_params, ipca_service, {nullptr, false, std::string()},
         session_log, RDPVerbose::cliprdr /*| RDPVerbose::cliprdr_dump*/);
 
@@ -821,7 +818,6 @@ namespace
 
         class ChannelCtx
         {
-            TimeBase time_base {{0,0}};
             ReportMessageTest report_message;
             ValidatorTransportTest validator_transport;
             FileValidatorService file_validator_service{validator_transport};
@@ -846,7 +842,7 @@ namespace
             , to_server_sender(msg_comparator)
             , clipboard_virtual_channel(
                 &to_client_sender, &to_server_sender,
-                time_base, events, osd,
+                events, osd,
                 clipboard_virtual_channel_params,
                 d.with_validator ? &file_validator_service : nullptr,
                 ClipboardVirtualChannel::FileStorage{

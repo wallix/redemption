@@ -93,7 +93,6 @@ class RemoteProgramsSessionManager final
 
     std::chrono::milliseconds rail_disconnect_message_delay {};
 
-    TimeBase& time_base;
     EventsGuard events_guard;
 
 public:
@@ -130,7 +129,6 @@ public:
     }
 
     explicit RemoteProgramsSessionManager(
-        TimeBase& time_base,
         EventContainer & events,
         gdi::GraphicApi& front, mod_api& mod, Language lang,
         Font const & font, Theme const & theme,
@@ -147,7 +145,6 @@ public:
     , session_probe_window_title(session_probe_window_title)
     , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
-    , time_base(time_base)
     , events_guard(events)
     {}
 
@@ -462,7 +459,7 @@ public:
             this->currently_without_window = true;
             this->events_guard.create_event_timeout(
                 "Rail Waiting Screen Event",
-                this->time_base.get_current_time()+this->rail_disconnect_message_delay,
+                this->rail_disconnect_message_delay,
                 [this](Event&event)
                 {
                     if (this->currently_without_window

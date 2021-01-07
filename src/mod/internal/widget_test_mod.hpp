@@ -24,7 +24,6 @@
 #include "core/events.hpp"
 #include <memory>
 
-class TimeBase;
 class FrontAPI;
 class Font;
 
@@ -36,7 +35,7 @@ namespace gdi
 class WidgetTestMod : public mod_api
 {
 public:
-    WidgetTestMod(TimeBase& time_base,
+    WidgetTestMod(
         gdi::GraphicApi & gd,
         EventContainer & events,
         FrontAPI & front, uint16_t width, uint16_t height,

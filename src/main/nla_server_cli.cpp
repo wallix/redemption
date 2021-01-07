@@ -118,7 +118,7 @@ class NLAServer
     writable_u8_array_view front_public_key_av;
 
 public:
-    NLAServer(std::string nla_username, std::string nla_password, bool forkable, TimeBase & time_base, uint64_t verbosity)
+    NLAServer(std::string nla_username, std::string nla_password, bool forkable, const TimeBase & time_base, uint64_t verbosity)
         : nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
         , forkable(forkable)
@@ -347,7 +347,7 @@ private:
     int connection_counter = 0;
 //    bool enable_kerberos;
     bool forkable;
-    TimeBase & time_base;
+    const TimeBase & time_base;
     uint64_t verbosity;
 };
 

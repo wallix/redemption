@@ -106,7 +106,7 @@ class Session
     {
         SessionLog(
             Inifile& ini,
-            TimeBase& time_base,
+            TimeBase const& time_base,
             CryptoContext& cctx,
             Random& rnd,
             Fstat& fstat,
@@ -179,7 +179,7 @@ class Session
         }
 
         Inifile& ini;
-        TimeBase& time_base;
+        TimeBase const& time_base;
         gdi::CaptureProbeApi& probe_api;
         std::string session_type;
         LogCategoryFlags dont_log {};
@@ -660,7 +660,6 @@ private:
         SocketTransport& front_trans,
         TpduBuffer& rbuf,
         EventContainer& events,
-        TimeBase& time_base,
         Callback& callback,
         Fn&& stop_event)
     {
@@ -688,9 +687,9 @@ private:
                 continue;
             }
 
-            time_base.set_current_time(tvtime());
+            events.set_current_time(tvtime());
 
-            events.execute_events(time_base.get_current_time(),
+            events.execute_events(events.get_current_time(),
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose() & SessionVerbose::Event));
 
@@ -721,7 +720,7 @@ private:
     };
 
     inline EndLoopState main_loop(
-        int auth_sck, TimeBase& time_base, EventContainer& events,
+        int auth_sck, EventContainer& events,
         CryptoContext& cctx, UdevRandom& rnd, Fstat& fstat,
         TpduBuffer& rbuf, SocketTransport& front_trans, Front& front,
         RedirectionInfo& redir_info, ClientExecute& rail_client_execute,
@@ -735,15 +734,14 @@ private:
             ini.get<cfg::globals::authfile>().c_str(), 0,
             std::chrono::seconds(1), SocketTransport::Verbose::none);
 
-        EndSessionWarning end_session_warning(time_base, events);
+        EndSessionWarning end_session_warning(events);
 
-        KeepAlive keepalive(ini, time_base, events,
-                            ini.get<cfg::globals::keepalive_grace_delay>());
-        Inactivity inactivity(time_base, events);
+        KeepAlive keepalive(ini, events, ini.get<cfg::globals::keepalive_grace_delay>());
+        Inactivity inactivity(events);
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SessionLog session_log(ini, time_base, cctx, rnd, fstat, front);
+        SessionLog session_log(ini, events.time_base, cctx, rnd, fstat, front);
 
         using namespace std::chrono_literals;
 
@@ -805,7 +803,7 @@ private:
                 }
                 ioswitch.set_read_sck(auth_sck);
 
-                time_base.set_current_time(tvtime());
+                events.set_current_time(tvtime());
 
                 if (ioswitch.select(NextDelay(
                     mod_has_tls_pending_data || front_has_tls_pending_data,
@@ -823,7 +821,7 @@ private:
                     continue;
                 }
 
-                time_base.set_current_time(tvtime());
+                events.set_current_time(tvtime());
 
                 if (front_has_tls_pending_data) {
                     ioswitch.set_read_sck(front_trans.get_sck());
@@ -957,14 +955,14 @@ private:
                         }
                     }
 
-                    events.execute_events(time_base.get_current_time(),
+                    events.execute_events(
                         [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd); },
                         bool(this->verbose() & SessionVerbose::Event));
 
                     back_event = mod_wrapper.get_mod_signal();
                 }
                 else {
-                    events.execute_events(time_base.get_current_time(),
+                    events.execute_events(
                         [](int /*fd*/){ return false; },
                         bool(this->verbose() & SessionVerbose::Event));
                 }
@@ -1226,8 +1224,8 @@ public:
         UdevRandom rnd;
         Fstat fstat;
 
-        TimeBase time_base(tvtime());
         EventContainer events;
+        events.set_current_time(tvtime());
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
@@ -1253,7 +1251,7 @@ public:
         };
 
         AclReport acl_report{ini};
-        SessionFront front(time_base, events, acl_report,
+        SessionFront front(events, acl_report,
             front_trans, rnd, ini, cctx, ini.get<cfg::client::fast_path>()
         );
         front.ini_ptr = &ini;
@@ -1265,7 +1263,7 @@ public:
         try {
             null_mod no_mod;
             bool is_connected = this->internal_front_loop(
-                front, front_trans, rbuf, events, time_base, no_mod,
+                front, front_trans, rbuf, events, no_mod,
                 [&]{
                     return front.is_up_and_running();
                 });
@@ -1325,14 +1323,14 @@ public:
             RedirectionInfo redir_info;
 
             ClientExecute rail_client_execute(
-                time_base, events, front, front, front.get_client_info().window_list_caps,
+                events, front, front, front.get_client_info().window_list_caps,
                 ini.get<cfg::debug::mod_internal>() & 1);
 
             ModWrapper mod_wrapper(
                 front.get_palette(), front, front.keymap, front.get_client_info(), glyphs,
                 rail_client_execute, this->ini);
             ModFactory mod_factory(
-                mod_wrapper, time_base, events, front.get_client_info(), front, front,
+                mod_wrapper, events, front.get_client_info(), front, front,
                 redir_info, ini, glyphs, theme, rail_client_execute, front.keymap, rnd,
                 cctx);
 
@@ -1340,7 +1338,7 @@ public:
 
             if (auth_sck != INVALID_SOCKET) {
                 end_loop = this->main_loop(
-                    auth_sck, time_base, events, cctx, rnd, fstat, rbuf, front_trans,
+                    auth_sck, events, cctx, rnd, fstat, rbuf, front_trans,
                     front, redir_info, rail_client_execute, mod_wrapper, mod_factory);
             }
 
@@ -1355,7 +1353,7 @@ public:
                 auto& mod = *mod_ptr;
                 std::unique_ptr<mod_api> unique_mod{is_already_close_mod ? nullptr : &mod};
                 this->internal_front_loop(
-                    front, front_trans, rbuf, events, time_base, mod,
+                    front, front_trans, rbuf, events, mod,
                     [&]{
                         return mod.get_mod_signal() != BACK_EVENT_NONE
                             || !front.is_up_and_running();

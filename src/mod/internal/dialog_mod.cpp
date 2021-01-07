@@ -27,7 +27,6 @@
 
 DialogMod::DialogMod(
     DialogModVariables vars,
-    TimeBase& time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
@@ -35,7 +34,7 @@ DialogMod::DialogMod(
     Font const& font, Theme const& theme, ChallengeOpt has_challenge
 )
     : RailModBase(
-        time_base, events, drawable, front,
+        events, drawable, front,
         width, height, rail_client_execute, font, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,

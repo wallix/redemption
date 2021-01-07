@@ -52,7 +52,7 @@ private:
     std::vector<uint8_t> utf16_domain;
     std::vector<uint8_t> identity_Password;
 
-    TimeBase & time_base;
+    const TimeBase & time_base;
     Random & rand;
 
     // NTLMContextClient
@@ -111,7 +111,7 @@ public:
                u8_array_view public_key,
                const bool restricted_admin_mode,
                Random & rand,
-               TimeBase & time_base,
+               const TimeBase & time_base,
                const bool credssp_verbose,
                const bool verbose)
         : PublicKey(public_key.data(), public_key.data()+public_key.size())

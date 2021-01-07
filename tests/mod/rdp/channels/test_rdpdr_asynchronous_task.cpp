@@ -67,19 +67,18 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    TimeBase time_base({0,0});
     EventContainer events;
 
-    AsynchronousTaskContainer tasks(time_base, events);
+    AsynchronousTaskContainer tasks(events);
     tasks.add(std::make_unique<RdpdrDriveReadTask>(
         fd, DeviceId, CompletionId, number_of_bytes_to_read, 1024 * 32,
         test_to_server_sender,
         RDPVerbose(0)));
 
     RED_CHECK(!events.queue.empty());
-    timeval now = time_base.get_current_time();
+    timeval now = events.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
-        time_base.set_current_time(now);
+        events.set_current_time(now);
         events.execute_events(now, [](int/*fd*/){ return true; }, false);
         ++now.tv_sec;
     }
@@ -99,10 +98,9 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     TestToServerSender test_to_server_sender(check_transport);
 
-    TimeBase time_base({0,0});
     EventContainer events;
 
-    AsynchronousTaskContainer tasks(time_base, events);
+    AsynchronousTaskContainer tasks(events);
     tasks.add(std::make_unique<RdpdrSendDriveIOResponseTask>(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
@@ -111,10 +109,10 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     RED_CHECK(!events.queue.empty());
 
-    timeval now = time_base.get_current_time();
+    timeval now = events.get_current_time();
     for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
         events.execute_events(now, [](int/*fd*/){return false;}, false);
-        time_base.set_current_time(now);
+        events.set_current_time(now);
         ++now.tv_sec;
     }
     RED_CHECK(events.queue.empty());
@@ -126,10 +124,9 @@ RED_AUTO_TEST_CASE(TestAsynchronousRemoved)
 
     TestToServerSender test_to_server_sender(check_transport);
 
-    TimeBase time_base({0,0});
     EventContainer events;
 
-    AsynchronousTaskContainer tasks(time_base, events);
+    AsynchronousTaskContainer tasks(events);
     tasks.add(std::make_unique<RdpdrSendDriveIOResponseTask>(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast("abc"), 3, test_to_server_sender,

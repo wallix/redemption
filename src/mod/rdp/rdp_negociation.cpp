@@ -161,7 +161,7 @@ RdpNegociation::RdpNegociation(
     const ClientInfo& info,
     RedirectionInfo& redir_info,
     Random& gen,
-    TimeBase& time_base,
+    const TimeBase& time_base,
     const ModRDPParams& mod_rdp_params,
     SessionLogApi& session_log,
     LicenseApi& license_store,

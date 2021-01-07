@@ -29,7 +29,6 @@
 
 
 class ClientExecute;
-class TimeBase;
 
 class RailModuleHostMod : public mod_api, public NotifyApi
 {
@@ -89,12 +88,10 @@ private:
     int old_mouse_x = 0;
     int old_mouse_y = 0;
 
-    TimeBase& time_base;
     EventsGuard events_guard;
 
 public:
     RailModuleHostMod(
-        TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,

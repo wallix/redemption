@@ -42,7 +42,6 @@ class FdxCapture;
 class CliprdFileInfo;
 class SessionProbeLauncher;
 class AuthApi;
-class TimeBase;
 class SessionLogApi;
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
@@ -58,7 +57,6 @@ public:
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        TimeBase& time_base,
         EventContainer& events,
         gdi::OsdApi& osd_api,
         const ClipboardVirtualChannelParams& params,
@@ -101,8 +99,6 @@ private:
     SessionProbeLauncher* format_list_notifier             = nullptr;
     SessionProbeLauncher* format_list_response_notifier    = nullptr;
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
-
-    TimeBase& time_base;
 
     FileValidatorService * file_validator;
 

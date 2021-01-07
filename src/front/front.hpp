@@ -624,7 +624,6 @@ private:
 
     bool is_first_memblt = true;
 
-    TimeBase& time_base;
     EventsGuard events_guard;
     EventRef handshake_timeout;
     EventRef capture_timer;
@@ -761,8 +760,7 @@ public:
     [[nodiscard]] BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
 public:
-    Front( TimeBase& time_base
-         , EventContainer& events
+    Front( EventContainer& events
          , AclReportApi & acl_report
          , Transport & trans
          , Random & gen
@@ -785,7 +783,6 @@ public:
     , tls_client_active(true)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , acl_report(acl_report)
-    , time_base(time_base)
     , events_guard(events)
     , rdp_keepalive_connection_interval(
             (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
@@ -798,7 +795,7 @@ public:
 
             this->handshake_timeout = this->events_guard.create_event_timeout(
                 "Front Handshake Timer",
-                time_base.get_current_time()+this->ini.get<cfg::globals::handshake_timeout>(),
+                this->ini.get<cfg::globals::handshake_timeout>(),
                 [](Event&)
                 {
                     LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
@@ -838,8 +835,7 @@ public:
         if (this->rdp_keepalive_connection_interval.count()) {
             this->events_guard.create_event_timeout(
                 "Front Flow Control Timer",
-                this->time_base.get_current_time(),
-                [this](Event& event)
+                0ms, [this](Event& event)
                 {
                     event.alarm.set_timeout(event.alarm.now+this->rdp_keepalive_connection_interval);
                     if (this->state == FRONT_UP_AND_RUNNING) {
@@ -1117,7 +1113,7 @@ public:
         );
 
         CaptureParams capture_params{
-            this->time_base.get_current_time(),
+            this->events_guard.get_current_time(),
             record_filebase,
             record_tmp_path,
             record_path.c_str(),
@@ -1159,8 +1155,7 @@ public:
 
         this->capture_timer = this->events_guard.create_event_timeout(
             "Front Capture Timer",
-            this->time_base.get_current_time(),
-            [this](Event& event)
+            0ms, [this](Event& event)
             {
                 auto const capture_ms = this->capture->periodic_snapshot(
                     event.alarm.now,
@@ -1212,7 +1207,7 @@ public:
     void must_flush_capture() override
     {
         if (this->capture && this->video_enhanced_mode >= VideoEnhancedMode::v1) {
-            this->capture->force_flush(this->time_base.get_current_time(), this->mouse_x, this->mouse_y);
+            this->capture->force_flush(this->events_guard.get_current_time(), this->mouse_x, this->mouse_y);
         }
     }
 
@@ -1482,7 +1477,8 @@ public:
                 this->ini.get<cfg::client::show_common_cipher_list>());
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
-                this->nego_server = std::make_unique<NegoServer>(this->trans.get_public_key(), this->time_base, true);
+                this->nego_server = std::make_unique<NegoServer>(
+                    this->trans.get_public_key(), this->events_guard.time_base(), true);
             }
         }
 
@@ -3051,7 +3047,7 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        this->session_update(this->time_base.get_current_time(),
+        this->session_update(this->events_guard.get_current_time(),
             LogId::PROBE_STATUS, {
                 KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
             });
@@ -5140,7 +5136,7 @@ private:
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                auto const timeval = this->time_base.get_current_time();
+                auto const timeval = this->events_guard.get_current_time();
                 bool const send_to_mod = !this->capture
                     || (0 == decoded_keys.count)
                     || (1 == decoded_keys.count

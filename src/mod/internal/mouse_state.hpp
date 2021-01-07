@@ -39,13 +39,11 @@ class MouseState
 
     EventRef first_click_down_timer;
     DCState dc_state = MouseState::DCState::Wait;
-    TimeBase & time_base;
     EventsGuard events_guard;
 
 public:
-    MouseState(TimeBase & time_base, EventContainer& events)
-        : time_base(time_base)
-        , events_guard(events)
+    MouseState(EventContainer& events)
+        : events_guard(events)
     {
     }
 
@@ -56,7 +54,7 @@ public:
             case MouseState::DCState::Wait:
                 if (flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
                     this->dc_state = MouseState::DCState::FirstClickDown;
-                    auto const timer = this->time_base.get_current_time() + std::chrono::seconds{1};
+                    auto const timer = this->events_guard.get_current_time() + 1s;
                     if (!this->first_click_down_timer.reset_timeout(timer)) {
                         this->first_click_down_timer = this->events_guard.create_event_timeout(
                             "Mouse::DC Event",

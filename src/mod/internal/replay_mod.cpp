@@ -76,7 +76,6 @@ struct ReplayMod::Reader
 };
 
 ReplayMod::ReplayMod(
-    TimeBase & time_base,
     EventContainer & events,
     gdi::GraphicApi & drawable,
     FrontAPI & front,
@@ -86,8 +85,7 @@ ReplayMod::ReplayMod(
     bool replay_on_loop,
     bool play_video_with_corrupted_bitmap,
     Verbose debug_capture)
-: time_base(time_base)
-, auth_error_message(auth_error_message)
+: auth_error_message(auth_error_message)
 , drawable(drawable)
 , front(front)
 , prefix_path([&]() -> std::string&& {
@@ -107,7 +105,7 @@ ReplayMod::ReplayMod(
 
     auto action = [this](Event& ev){
         if (this->next_timestamp()) {
-            const auto now = this->time_base.get_current_time();
+            const auto now = this->events_guards.get_current_time();
 
             const auto& reader = this->internal_reader->reader;
             const auto replay_delay = reader.get_current_time() - this->start_time_replay;
@@ -129,7 +127,7 @@ ReplayMod::ReplayMod(
         }
     };
 
-    this->events_guards.create_event_timeout("replay", this->time_base.get_current_time(), action);
+    this->events_guards.create_event_timeout("replay", this->events_guards.get_current_time(), action);
 }
 
 ReplayMod::~ReplayMod() = default;
@@ -172,7 +170,7 @@ void ReplayMod::init_reader()
         ".mwrm",
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
-    this->start_time = this->time_base.get_current_time();
+    this->start_time = this->events_guards.get_current_time();
     this->start_time_replay = this->internal_reader->reader.get_current_time();
     this->internal_reader->server_resize(this->drawable, this->front);
 }

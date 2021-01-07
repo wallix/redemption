@@ -53,7 +53,6 @@ private:
     std::unique_ptr<ModMetrics> metrics;
 
     EventsGuard events_guard;
-    TimeBase & time_base;
 
 public:
     void set_metrics(std::unique_ptr<ModMetrics> && metrics, std::chrono::seconds log_interval)
@@ -62,7 +61,7 @@ public:
         this->metrics = std::move(metrics);
         this->events_guard.create_event_timeout(
             "VNC Metrics Timer",
-            this->time_base.get_current_time() + log_interval,
+            log_interval,
             [this,log_interval](Event& event)
             {
                 event.alarm.reset_timeout(event.alarm.now + log_interval);
@@ -71,7 +70,6 @@ public:
     }
 
     ModVNCWithMetrics(Transport & t
-           , TimeBase& time_base
            , gdi::GraphicApi & gd
            , EventContainer & events
            , const char * username
@@ -95,13 +93,12 @@ public:
            , VNCMetrics * metrics
            , SessionLogApi& session_log)
     : mod_vnc(
-        t, time_base, gd, events, username, password, front, front_width, front_height,
+        t, gd, events, username, password, front, front_width, front_height,
         keylayout, key_flags, clipboard_up, clipboard_down, encodings,
         clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
         server_is_macos, server_is_unix, cursor_pseudo_encoding_supported,
         rail_client_execute, verbose, metrics, session_log)
     , events_guard(events)
-    , time_base(time_base)
     {
     }
 
@@ -124,7 +121,6 @@ public:
         ModWrapper & mod_wrapper, Inifile & ini,
         const char * name, unique_fd sck, SocketTransport::Verbose verbose,
         std::string * error_message,
-        TimeBase& time_base,
         EventContainer& events,
         SessionLogApi& session_log,
         const char* username,
@@ -152,7 +148,7 @@ public:
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
     , mod(
-          this->socket_transport, time_base, mod_wrapper.get_graphics(),
+          this->socket_transport, mod_wrapper.get_graphics(),
           events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
@@ -271,7 +267,6 @@ ModPack create_mod_vnc(
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
     Theme & theme,
-    TimeBase & time_base,
     EventContainer& events,
     SessionLogApi& session_log
     )
@@ -306,7 +301,7 @@ ModPack create_mod_vnc(
                 ini.get<cfg::globals::host>(),
                 client_info.screen_info,
                 ini.get<cfg::metrics::sign_key>()),
-            time_base.get_current_time(),
+            events.get_current_time(),
             ini.get<cfg::metrics::log_file_turnover_interval>(),
             ini.get<cfg::metrics::log_interval>());
     }
@@ -320,7 +315,6 @@ ModPack create_mod_vnc(
         std::move(client_sck),
         safe_cast<SocketTransport::Verbose>(ini.get<cfg::debug::sck_mod>()),
         nullptr,
-        time_base,
         events,
         session_log,
         ini.get<cfg::globals::target_user>().c_str(),
@@ -361,7 +355,6 @@ ModPack create_mod_vnc(
 
     auto* host_mod = create_mod_rail(
         ini,
-        time_base,
         events,
         drawable,
         front,

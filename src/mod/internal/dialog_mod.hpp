@@ -43,7 +43,6 @@ class DialogMod : public RailModBase, public NotifyApi
 public:
     DialogMod(
         DialogModVariables vars,
-        TimeBase& time_base,
         EventContainer& events,
         gdi::GraphicApi & drawable, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,

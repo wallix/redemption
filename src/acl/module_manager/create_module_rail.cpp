@@ -28,7 +28,6 @@ Author(s): Proxy Team
 
 RailModuleHostMod* create_mod_rail(
     Inifile& ini,
-    TimeBase & time_base,
     EventContainer& events,
     gdi::GraphicApi & drawable,
     FrontAPI& front,
@@ -71,7 +70,6 @@ RailModuleHostMod* create_mod_rail(
     };
 
     auto* host_mod = new RailMod(
-        time_base,
         events,
         drawable,
         front,

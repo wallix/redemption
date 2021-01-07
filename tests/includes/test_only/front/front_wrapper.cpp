@@ -136,7 +136,6 @@ gdi::GraphicApi& FrontWrapper::gd() noexcept
 }
 
 FrontWrapper::FrontWrapper(
-    TimeBase& time_base,
     EventContainer& events,
     AclReportApi& acl_report,
     Transport & trans,
@@ -146,7 +145,6 @@ FrontWrapper::FrontWrapper(
     bool fp_support // If true, fast-path must be supported
 )
 : d(new D{FrontWrapper::D::MyFront{
-    time_base,
     events,
     acl_report,
     trans, gen, ini, cctx,
