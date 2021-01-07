@@ -46,13 +46,12 @@ private:
 
 public:
     ClientRedemptionQt(
-        TimeBase & time_base,
         EventContainer& events,
         ClientRedemptionConfig & config)
-    : ClientRedemption(time_base, events, config)
+    : ClientRedemption(events, config)
     , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
-    , qt_socket_listener(this->qt_graphic.get_static_qwidget(), time_base, events)
+    , qt_socket_listener(this->qt_graphic.get_static_qwidget(), events)
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
         this->qt_graphic.get_static_qwidget())
     {
@@ -108,18 +107,17 @@ public:
             }
         }
 
-        this->time_base.set_current_time(tvtime());
+        this->events.set_current_time(tvtime());
 
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
             if (auto* mod = this->_callback.get_mod()) {
                 auto action = [this](bool is_timeout){
-                    this->time_base.set_current_time(tvtime());
+                    this->events.set_current_time(tvtime());
                     try {
-                        auto const end_tv = this->time_base.get_current_time();
                         auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
-                        this->events.execute_events(end_tv, fn, 0);
+                        this->events.execute_events(fn, 0);
                     } catch (const Error & e) {
                         const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
                         LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
@@ -342,7 +340,6 @@ int main(int argc, char** argv)
     set_exception_handler_pretty_message();
 
     Inifile ini;
-    TimeBase time_base({0,0});
     EventContainer events;
 
     QApplication app(argc, argv);
@@ -353,7 +350,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_init;
 
-    ClientRedemptionQt client_qt(time_base, events, config);
+    ClientRedemptionQt client_qt(events, config);
 
     app.exec();
 }
