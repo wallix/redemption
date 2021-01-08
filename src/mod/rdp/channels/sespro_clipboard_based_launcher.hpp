@@ -358,7 +358,8 @@ public:
     timeval get_short_delay_timeout()
     {
         std::chrono::milliseconds delay_ms = this->params.short_delay_ms;
-        return this->time_base.get_current_time()+this->to_microseconds(delay_ms, this->delay_coefficient);
+        return this->time_base.get_current_time()+
+            std::min(this->to_microseconds(delay_ms, this->delay_coefficient), std::chrono::milliseconds(1000));
     }
 
     timeval get_long_delay_timeout()
@@ -521,7 +522,8 @@ public:
             f(v_up) \
             f(Ctrl_up) \
             f(Enter_down) \
-            f(Enter_up)
+            f(Enter_up) \
+            f(Wait)
         #define enum_ident(ident) ident,
         #define name_ident(ident) #ident,
         enum SeqEnum : uint8_t { mk_seq(enum_ident) };
@@ -614,11 +616,21 @@ public:
                         this->get_short_delay_timeout());
 
                 case Enter_up:
-                    this->state = State::WAIT;
-                    event.garbage = true;
                     return next_state(
                         SlowPath::KBDFLAGS_RELEASE, 28,
-                        this->get_short_delay_timeout());
+                        this->get_long_delay_timeout());
+
+                case Wait:
+                    if (this->image_readed) {
+                        this->state = State::WAIT;
+                        event.garbage = true;
+                        return;
+                    }
+                    else {
+                        this->delay_coefficient += 0.5f;
+                        set_state(Windows_down);
+                        continue;
+                    }
                 }
 
                 assert(false);
