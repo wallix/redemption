@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #include "test_only/front/front_wrapper.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "front/front.hpp"
+#include "capture/cryptofile.hpp"
 
 
 struct FrontWrapper::D
@@ -31,6 +32,19 @@ struct FrontWrapper::D
         using Front::Front;
     };
 
+    D(
+        EventContainer& events,
+        AclReportApi& acl_report,
+        Transport & trans,
+        Random & gen,
+        Inifile & ini,
+        bool fp_support // If true, fast-path must be supported
+    )
+    : front(events, acl_report, trans, gen, ini, cctx, fp_support)
+    , trans(trans)
+    {}
+
+    CryptoContext cctx;
     MyFront front;
     Transport& trans;
     TpduBuffer rbuf {};
@@ -141,15 +155,9 @@ FrontWrapper::FrontWrapper(
     Transport & trans,
     Random & gen,
     Inifile & ini,
-    CryptoContext & cctx,
     bool fp_support // If true, fast-path must be supported
 )
-: d(new D{FrontWrapper::D::MyFront{
-    events,
-    acl_report,
-    trans, gen, ini, cctx,
-    fp_support
-}, trans})
+: d(new D{events, acl_report, trans, gen, ini, fp_support}) /* NOLINT */
 {}
 
 FrontWrapper::~FrontWrapper()

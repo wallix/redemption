@@ -78,8 +78,8 @@ class ReplayRandom : public Random
     std::vector<uint8_t> seed;
     uint32_t i = 0;
 public:
-    explicit ReplayRandom(bytes_view seed)
-    : seed(seed.data(), seed.data()+seed.size())
+    explicit ReplayRandom(std::vector<uint8_t> seed)
+    : seed(std::move(seed))
     {
     }
 

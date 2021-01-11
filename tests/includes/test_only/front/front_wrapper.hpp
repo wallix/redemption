@@ -25,7 +25,6 @@ Author(s): Jonathan Poelen
 
 class Transport;
 class Random;
-class CryptoContext;
 class Inifile;
 class Callback;
 
@@ -43,7 +42,6 @@ public:
         Transport & trans,
         Random & gen,
         Inifile & ini,
-        CryptoContext & cctx,
         bool fp_support // If true, fast-path must be supported
     );
 

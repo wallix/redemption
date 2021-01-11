@@ -27,7 +27,6 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/front/front_wrapper.hpp"
 #include "acl/auth_api.hpp"
-#include "capture/cryptofile.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"
@@ -99,11 +98,10 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
     ini.set<cfg::client::disabled_orders>("4,15,16,17,18");
 
     LCGRandom gen;
-    CryptoContext cctx;
     const bool fastpath_support = true;
     EventContainer events;
     NullSessionLog session_log;
-    FrontWrapper front(events, session_log, front_trans, gen, ini, cctx, fastpath_support);
+    FrontWrapper front(events, session_log, front_trans, gen, ini, fastpath_support);
     null_mod no_mod;
 
     while (!front.is_up_and_running()) {

@@ -30,7 +30,6 @@
 
 #include "acl/auth_api.hpp"
 #include "acl/license_api.hpp"
-#include "capture/cryptofile.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
@@ -120,7 +119,6 @@ RED_AUTO_TEST_CASE(TestFront)
     FrontTransport front_trans(cstr_array_view(indata));
 
     LCGRandom gen1;
-    CryptoContext cctx;
 
     const bool fastpath_support = false;
 
@@ -139,9 +137,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_TEST_PASSPOINT();
 
-    MyFront front(
-        events, session_log, front_trans, gen1, ini , cctx,
-        fastpath_support);
+    MyFront front(events, session_log, front_trans, gen1, ini , fastpath_support);
     null_mod no_mod;
 
     gdi::NullOsd osd;
