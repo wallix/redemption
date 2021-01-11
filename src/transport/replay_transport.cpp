@@ -85,8 +85,9 @@ namespace
 } // namespace
 
 ReplayTransport::ReplayTransport(
-    const char* fname, const char *ip_address, int port, TimeBase& time_base,
-    FdType fd_type, FirstPacket first_packet, UncheckedPacket unchecked_packet)
+    const char* fname, TimeBase& time_base,
+    FdType fd_type, FirstPacket first_packet,
+    UncheckedPacket unchecked_packet)
 : time_base(time_base)
 , start_time(to_ms(time_base.get_current_time()))
 , in_file(open_file(fname))
@@ -109,9 +110,6 @@ ReplayTransport::ReplayTransport(
 , data_in_pos(0)
 , data_out_pos(0)
 {
-    (void)ip_address;
-    (void)port;
-
     if (FdType::Timer == fd_type) {
         if (FirstPacket::EnableTimer == first_packet) {
             reschedule_timer();

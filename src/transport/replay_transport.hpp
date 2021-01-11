@@ -41,8 +41,8 @@ public:
     enum class FirstPacket : bool { DisableTimer, EnableTimer };
 
     ReplayTransport(
-        const char* fname, const char *ip_address, int port,
-        TimeBase& time_base, FdType fd_type = FdType::Timer,
+        const char* fname, TimeBase& time_base,
+        FdType fd_type = FdType::Timer,
         FirstPacket first_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 

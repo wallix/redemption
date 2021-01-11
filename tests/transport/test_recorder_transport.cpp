@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     {
         TimeBase time_base({0,0});
         ReplayTransport trans(
-            wf, "ip", 0/*port*/, time_base, ReplayTransport::FdType::AlwaysReady,
+            wf, time_base, ReplayTransport::FdType::AlwaysReady,
             ReplayTransport::FirstPacket::DisableTimer, ReplayTransport::UncheckedPacket::Send);
         RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
     }
@@ -132,7 +132,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     // Replay
     {
         TimeBase time_base({0,0});
-        ReplayTransport trans(wf, "", 0, time_base, ReplayTransport::FdType::AlwaysReady);
+        ReplayTransport trans(wf, time_base, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
         auto av = make_writable_array_view(buf);
         auto in = cstr_array_view("123456789");
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     // Replay real time
     {
         TimeBase time_base({0,0});
-        ReplayTransport trans(wf, "", 0, time_base, ReplayTransport::FdType::Timer);
+        ReplayTransport trans(wf, time_base, ReplayTransport::FdType::Timer);
         char buf[10];
         auto av = make_writable_array_view(buf);
         auto in = cstr_array_view("123456789");

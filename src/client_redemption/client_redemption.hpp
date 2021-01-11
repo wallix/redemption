@@ -469,8 +469,9 @@ public:
         if (this->config.is_full_replaying) {
             LOG(LOG_INFO, "Replay %s", this->config.full_capture_file_name);
             auto transport = std::make_unique<ReplayTransport>(
-                this->config.full_capture_file_name.c_str(), this->config.target_IP.c_str(), this->config.port,
-                this->events.time_base, ReplayTransport::FdType::Timer,
+                this->config.full_capture_file_name.c_str(),
+                this->events.time_base,
+                ReplayTransport::FdType::Timer,
                 ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
             this->client_sck = transport->get_fd();
