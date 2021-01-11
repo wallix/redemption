@@ -622,7 +622,6 @@ test-run tests/acl/test_license_api :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
   <library>src/utils/parse_primary_drawing_orders.o
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o

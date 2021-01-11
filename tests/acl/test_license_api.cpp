@@ -32,21 +32,20 @@
 #include "configs/config.hpp"
 #include "utils/timebase.hpp"
 #include "core/client_info.hpp"
-#include "core/listen.hpp"
 #include "core/channels_authorizations.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/mod_rdp_factory.hpp"
 #include "utils/theme.hpp"
-#include "utils/netutils.hpp"
 #include "utils/redirection_info.hpp"
-#include "system/linux/system/tls_context.hpp"
 #include "configs/config.hpp"
 #include "gdi/osd_api.hpp"
 
-#include <chrono>
-
 //#define GENERATE_TESTING_DATA
+// remove # otherwise bjam add the file as a dependency (even if it's a comment !!!)
+// include "core/listen.hpp"
+// include "utils/netutils.hpp"
+// include "system/linux/system/tls_context.hpp"
 // include "transport/socket_transport.hpp"
 
 

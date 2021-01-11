@@ -44,15 +44,17 @@
 
 #include <chrono>
 
-// Uncomment the code block below to generate testing data.
-//#include "core/listen.hpp"
-//#include "utils/netutils.hpp"
+// remove # otherwise bjam add the file as a dependency (even if it's a comment !!!)
 
 // Uncomment the code block below to generate testing data.
-//#include "transport/socket_transport.hpp"
+//include "core/listen.hpp"
+//include "utils/netutils.hpp"
 
 // Uncomment the code block below to generate testing data.
-//#include <openssl/ssl.h>
+//include "transport/socket_transport.hpp"
+
+// Uncomment the code block below to generate testing data.
+//include <openssl/ssl.h>
 
 using namespace std::chrono_literals;
 
