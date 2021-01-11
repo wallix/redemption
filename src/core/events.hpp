@@ -56,7 +56,7 @@ struct Event
         int fd = INVALID_SOCKET;
         timeval now;
         timeval trigger_time;
-        std::chrono::microseconds grace_delay = std::chrono::seconds{0};
+        std::chrono::microseconds grace_delay {};
 
         // fd is stored to enabled fd events detection
         // if fd event is triggered timeout is incremented by grace delay
@@ -81,6 +81,11 @@ struct Event
         // {
         //     this->active_timer = false;
         // }
+
+        bool is_active() const
+        {
+            return this->active_timer;
+        }
 
         bool trigger(timeval now)
         {
@@ -129,41 +134,343 @@ private:
     EventRef* event_ref = nullptr;
 };
 
-
-struct EventContainer : noncopyable
+namespace detail
 {
-    std::vector<Event*> queue;
-    TimeBase time_base{{0, 0}};
+    struct ProtectedEventContainer;
+}
 
-    void set_current_time(timeval const& now)
+class EventContainer : noncopyable
+{
+public:
+    class Creator;
+
+    [[nodiscard]] TimeBase const& get_time_base() const noexcept
     {
-        this->time_base.set_current_time(now);
+        return this->creator.time_base;
     }
 
     [[nodiscard]] timeval get_current_time() const noexcept
     {
-        return this->time_base.get_current_time();
+        return this->creator.time_base.get_current_time();
+    }
+
+    void end_of_lifespan(void const* lifespan)
+    {
+        for (auto* pevent: this->creator.queue){
+            if (pevent->lifespan_handle == lifespan){
+                pevent->garbage = true;
+            }
+        }
+    }
+
+    Creator& event_creator() noexcept
+    {
+        return this->creator;
+    }
+
+    /// expose create_event_* functions
+    struct Creator
+    {
+        template<class TimeoutAction>
+        [[nodiscard]] Event& create_event_timeout(
+            std::string_view name, void const* lifespan,
+            std::chrono::microseconds delay, TimeoutAction&& on_timeout)
+        {
+            return this->create_event_timeout(
+                name, lifespan,
+                this->time_base.get_current_time() + delay,
+                static_cast<TimeoutAction&&>(on_timeout));
+        }
+
+        template<class TimeoutAction>
+        [[nodiscard]] Event& create_event_timeout(
+            std::string_view name, void const* lifespan,
+            timeval trigger_time, TimeoutAction&& on_timeout)
+        {
+            Event* pevent = make_event(
+                name, lifespan,
+                NilFn(),
+                static_cast<TimeoutAction&&>(on_timeout));
+            pevent->alarm.reset_timeout(trigger_time);
+            this->queue.push_back(pevent);
+            return *pevent;
+        }
+
+        template<class FdAction>
+        [[nodiscard]] Event& create_event_fd_without_timeout(
+            std::string_view name, void const* lifespan,
+            int fd, FdAction&& on_fd)
+        {
+            Event* pevent = make_event(
+                name, lifespan,
+                static_cast<FdAction&&>(on_fd),
+                NilFn());
+            pevent->alarm.fd = fd;
+            this->queue.push_back(pevent);
+            return *pevent;
+        }
+
+        template<class FdAction, class TimeoutAction>
+        [[nodiscard]] Event& create_event_fd_timeout(
+            std::string_view name, void const* lifespan,
+            int fd,
+            std::chrono::microseconds delay,
+            FdAction&& on_fd,
+            TimeoutAction&& on_timeout)
+        {
+            return this->create_event_fd_timeout(
+                name, lifespan, fd, delay,
+                this->time_base.get_current_time() + delay,
+                static_cast<FdAction&&>(on_fd),
+                static_cast<TimeoutAction&&>(on_timeout));
+        }
+
+        template<class FdAction, class TimeoutAction>
+        [[nodiscard]] Event& create_event_fd_timeout(
+            std::string_view name, void const* lifespan,
+            int fd,
+            std::chrono::microseconds grace_delay,
+            timeval trigger_time,
+            FdAction&& on_fd,
+            TimeoutAction&& on_timeout)
+        {
+            Event* pevent = make_event(
+                name, lifespan,
+                static_cast<FdAction&&>(on_fd),
+                static_cast<TimeoutAction&&>(on_timeout));
+            pevent->alarm.set_fd(fd, grace_delay);
+            pevent->alarm.reset_timeout(trigger_time);
+            this->queue.push_back(pevent);
+            return *pevent;
+        }
+
+    private:
+        friend class EventContainer;
+        friend class detail::ProtectedEventContainer;
+
+        Creator() = default;
+
+        std::vector<Event*> queue;
+        TimeBase time_base{{0, 0}};
+
+        static const int action_tag = 0;
+        static const int timeout_tag = 1;
+
+        struct NilFn : noncopyable
+        {
+            operator Event::Actions::Sig* ();
+        };
+
+        template<int Tag, class Fn>
+        struct Function
+        {
+            Fn fn;
+
+            template<class RootEvent>
+            Event::Actions::Sig* to_ptr_func(Fn const& /*fn*/)
+            {
+                return [](Event& e){
+                    static_cast<Function&>(static_cast<RootEvent&>(e)).fn(e);
+                };
+            }
+        };
+
+        template<int Tag>
+        struct Function<Tag, Event::Actions::Sig*>
+        {
+            Function(Event::Actions::Sig* /*fn*/) {}
+            Function(NilFn const& /*fn*/) {}
+
+            template<class RootEvent>
+            Event::Actions::Sig* to_ptr_func(Event::Actions::Sig* f)
+            {
+                assert(f);
+                return f;
+            }
+        };
+
+        template<class ActionFn, class TimeoutFn>
+        struct TupleFunctions
+        : Function<action_tag, ActionFn>
+        , Function<timeout_tag, TimeoutFn>
+        {};
+
+        template<class ActionFn, class TimeoutFn>
+        struct RootEvent : Event, TupleFunctions<ActionFn, TimeoutFn>
+        {};
+
+        template<class Fn>
+        using SimplifyFn = std::conditional_t<
+            std::is_convertible_v<Fn, Event::Actions::Sig*>,
+            Event::Actions::Sig*,
+            Fn
+        >;
+
+        template<class ActionFn, class TimeoutFn>
+        static Event* make_event(
+            std::string_view name, void const* lifespan,
+            ActionFn&& on_action, TimeoutFn&& on_timeout)
+        {
+            using DecayActionFn = SimplifyFn<std::decay_t<ActionFn>>;
+            using DecayTimeoutFn = SimplifyFn<std::decay_t<TimeoutFn>>;
+
+            using RealEvent = RootEvent<DecayActionFn, DecayTimeoutFn>;
+
+            void* raw = ::operator new(sizeof(RealEvent) + name.size() + 1u); /* NOLINT */
+
+            auto* data_name = static_cast<char*>(raw) + sizeof(RealEvent);
+            memcpy(data_name, name.data(), name.size());
+            data_name[name.size()] = 0;
+
+            RealEvent* event = new (raw) RealEvent{
+                {lifespan},
+                {
+                    {static_cast<ActionFn&&>(on_action)},
+                    {static_cast<TimeoutFn&&>(on_timeout)},
+                }
+            };
+            event->name = data_name;
+
+            if constexpr (!std::is_same_v<NilFn, ActionFn>) {
+                event->actions.on_action
+                    = static_cast<Function<action_tag, DecayActionFn>&>(*event)
+                    .template to_ptr_func<RealEvent>(on_action);
+            }
+
+            if constexpr (!std::is_same_v<NilFn, TimeoutFn>) {
+                event->actions.on_timeout
+                    = static_cast<Function<timeout_tag, DecayTimeoutFn>&>(*event)
+                    .template to_ptr_func<RealEvent>(on_timeout);
+            }
+
+            if constexpr (!(
+                std::is_trivially_destructible_v<DecayActionFn>
+            && std::is_trivially_destructible_v<DecayTimeoutFn>)
+            ) {
+                static_assert(std::is_nothrow_destructible_v<DecayActionFn>);
+                static_assert(std::is_nothrow_destructible_v<DecayTimeoutFn>);
+                event->actions.custom_destructor = [](Event& e) noexcept {
+                    using Tuple = TupleFunctions<DecayActionFn, DecayTimeoutFn>;
+                    static_cast<Tuple&>(static_cast<RealEvent&>(e)).~Tuple();
+                };
+            }
+
+            return event;
+        }
+
+        static void delete_event(Event* e)
+        {
+            if (e->actions.custom_destructor) {
+                e->actions.custom_destructor(*e);
+            }
+            e->~Event();
+            ::operator delete(e);
+        }
+
+        void garbage_collector()
+        {
+            for (size_t i = 0; i < this->queue.size(); i++) {
+                if (REDEMPTION_UNLIKELY(this->queue[i]->garbage)) {
+                    do {
+                        this->delete_event(this->queue[i]);
+                        this->queue[i] = this->queue.back();
+                        this->queue.pop_back();
+                    } while (i < this->queue.size() && this->queue[i]->garbage);
+                }
+            }
+        }
+
+        ~Creator()
+        {
+            // clear every remaining event
+            for(auto* pevent: this->queue){
+                this->delete_event(pevent);
+            }
+        }
+    };
+
+private:
+    friend class detail::ProtectedEventContainer;
+
+    Creator creator;
+};
+
+namespace detail
+{
+    struct ProtectedEventContainer
+    {
+        static void garbage_collector(EventContainer& event_container) noexcept
+        {
+            event_container.creator.garbage_collector();
+        }
+
+        static std::vector<Event*> const& get_events(EventContainer const& event_container) noexcept
+        {
+            return event_container.creator.queue;
+        }
+
+        static void set_current_time(EventContainer& event_container, timeval const& now) noexcept
+        {
+            event_container.creator.time_base.set_current_time(now);
+        }
+    };
+}
+
+class EventManager
+{
+    EventContainer event_container;
+
+public:
+    [[nodiscard]] EventContainer& get_events() noexcept
+    {
+        return event_container;
+    }
+
+    void garbage_collector()
+    {
+        detail::ProtectedEventContainer::garbage_collector(this->event_container);
+    }
+
+    void set_current_time(timeval const& now) noexcept
+    {
+        detail::ProtectedEventContainer::set_current_time(this->event_container, now);
+    }
+
+    [[nodiscard]] TimeBase const& get_time_base() const noexcept
+    {
+        return this->event_container.get_time_base();
+    }
+
+    [[nodiscard]] timeval get_current_time() const noexcept
+    {
+        return this->event_container.get_current_time();
     }
 
     template<class Fn>
     void get_fds(Fn&& fn)
     {
-        for (auto* pevent: this->queue){
+        for (auto* pevent : detail::ProtectedEventContainer::get_events(this->event_container)) {
             if (pevent->alarm.fd != INVALID_SOCKET && !pevent->garbage){
                 fn(pevent->alarm.fd);
             }
         }
     }
 
+    bool is_empty() const noexcept
+    {
+        return detail::ProtectedEventContainer::get_events(this->event_container).empty();
+    }
+
     template<class Fn>
     void execute_events(Fn&& fn, bool verbose)
     {
-        auto const tv = this->time_base.get_current_time();
-        size_t iend = this->queue.size();
+        auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
+        auto const tv = this->get_current_time();
+        size_t iend = events.size();
         // ignore events created in the loop
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
-            assert(iend <= this->queue.size());
-            auto & event = *this->queue[i];
+            assert(iend <= events.size());
+            auto & event = *events[i];
             using VoidP = void const*;
             if (!event.garbage) {
                 if (event.alarm.fd != INVALID_SOCKET && fn(event.alarm.fd)) {
@@ -172,10 +479,10 @@ struct EventContainer : noncopyable
                         event.name, VoidP(&event),
                         int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
                     event.alarm.reset_timeout(tv+event.alarm.grace_delay);
-                    event.actions.on_action(event);
+                    event.actions.exec_action(event);
                 }
                 else {
-                    LOG_IF(event.alarm.active_timer && verbose, LOG_INFO,
+                    LOG_IF(event.alarm.is_active() && verbose, LOG_INFO,
                         "EXPIRED TIMEOUT EVENT '%s' (%p) timeout=%d now=%d",
                         event.name, VoidP(&event),
                         int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
@@ -185,7 +492,7 @@ struct EventContainer : noncopyable
                             "TIMEOUT EVENT TRIGGER '%s' (%p) timeout=%d now=%d",
                             event.name, VoidP(&event),
                             int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-                        event.actions.on_timeout(event);
+                        event.actions.exec_timeout(event);
                     }
                 }
             }
@@ -200,249 +507,30 @@ struct EventContainer : noncopyable
         this->garbage_collector();
     }
 
-    void garbage_collector()
-    {
-        for (size_t i = 0; i < this->queue.size(); i++){
-            if (REDEMPTION_UNLIKELY(this->queue[i]->garbage)) {
-                do {
-                    this->delete_event(this->queue[i]);
-                    this->queue[i] = this->queue.back();
-                    this->queue.pop_back();
-                } while (i < this->queue.size() && this->queue[i]->garbage);
-            }
-        }
-    }
-
-    void end_of_lifespan(void const* lifespan)
-    {
-        for (auto* pevent: this->queue){
-            if (pevent->lifespan_handle == lifespan){
-                pevent->garbage = true;
-            }
-        }
-    }
-
     // returns timeval{0, 0} if no alarm is set
     timeval next_timeout() const
     {
         timeval ultimatum = {0, 0};
-        auto first = this->queue.begin();
-        auto last = this->queue.end();
+        auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
+        auto first = events.begin();
+        auto last = events.end();
         for (; first != last; ++first){
             Event const& event = **first;
-            if (event.alarm.active_timer && !event.garbage){
+            if (event.alarm.is_active() && !event.garbage){
                 ultimatum = event.alarm.trigger_time;
+                while (++first != last){
+                    Event const& event = **first;
+                    if (event.alarm.is_active() && !event.garbage){
+                        ultimatum = std::min(event.alarm.trigger_time, ultimatum);
+                    }
+                }
                 break;
-            }
-        }
-
-        for (; first != last; ++first){
-            Event const& event = **first;
-            if (event.alarm.active_timer && !event.garbage){
-                ultimatum = std::min(event.alarm.trigger_time, ultimatum);
             }
         }
 
         return ultimatum;
     }
-
-    template<class TimeoutAction>
-    [[nodiscard]] Event& create_event_timeout(
-        std::string_view name, void const* lifespan,
-        std::chrono::microseconds delay, TimeoutAction&& on_timeout)
-    {
-        return this->create_event_timeout(
-            name, lifespan,
-            this->time_base.get_current_time() + delay,
-            static_cast<TimeoutAction&&>(on_timeout));
-    }
-
-    template<class TimeoutAction>
-    [[nodiscard]] Event& create_event_timeout(
-        std::string_view name, void const* lifespan,
-        timeval trigger_time, TimeoutAction&& on_timeout)
-    {
-        Event* pevent = make_event(
-            name, lifespan,
-            NilFn(),
-            static_cast<TimeoutAction&&>(on_timeout));
-        pevent->alarm.reset_timeout(trigger_time);
-        this->queue.push_back(pevent);
-        return *pevent;
-    }
-
-    template<class FdAction>
-    [[nodiscard]] Event& create_event_fd_without_timeout(
-        std::string_view name, void const* lifespan,
-        int fd, FdAction&& on_fd)
-    {
-        Event* pevent = make_event(
-            name, lifespan,
-            static_cast<FdAction&&>(on_fd),
-            NilFn());
-        pevent->alarm.fd = fd;
-        this->queue.push_back(pevent);
-        return *pevent;
-    }
-
-    template<class FdAction, class TimeoutAction>
-    [[nodiscard]] Event& create_event_fd_timeout(
-        std::string_view name, void const* lifespan,
-        int fd,
-        std::chrono::microseconds delay,
-        FdAction&& on_fd,
-        TimeoutAction&& on_timeout)
-    {
-        return this->create_event_fd_timeout(
-            name, lifespan, fd, delay,
-            this->time_base.get_current_time() + delay,
-            static_cast<FdAction&&>(on_fd),
-            static_cast<TimeoutAction&&>(on_timeout));
-    }
-
-    template<class FdAction, class TimeoutAction>
-    [[nodiscard]] Event& create_event_fd_timeout(
-        std::string_view name, void const* lifespan,
-        int fd,
-        std::chrono::microseconds grace_delay,
-        timeval trigger_time,
-        FdAction&& on_fd,
-        TimeoutAction&& on_timeout)
-    {
-        Event* pevent = make_event(
-            name, lifespan,
-            static_cast<FdAction&&>(on_fd),
-            static_cast<TimeoutAction&&>(on_timeout));
-        pevent->alarm.set_fd(fd, grace_delay);
-        pevent->alarm.reset_timeout(trigger_time);
-        this->queue.push_back(pevent);
-        return *pevent;
-    }
-
-    ~EventContainer()
-    {
-        // clear every remaining event
-        for(auto* pevent: this->queue){
-            this->delete_event(pevent);
-        }
-    }
-
-private:
-    static const int action_tag = 0;
-    static const int timeout_tag = 1;
-
-    struct NilFn : noncopyable
-    {
-        operator Event::Actions::Sig* ();
-    };
-
-    template<int Tag, class Fn>
-    struct Function
-    {
-        Fn fn;
-
-        template<class RootEvent>
-        Event::Actions::Sig* to_ptr_func(Fn const& /*fn*/)
-        {
-            return [](Event& e){
-                static_cast<Function&>(static_cast<RootEvent&>(e)).fn(e);
-            };
-        }
-    };
-
-    template<int Tag>
-    struct Function<Tag, Event::Actions::Sig*>
-    {
-        Function(Event::Actions::Sig* /*fn*/) {}
-        Function(NilFn const& /*fn*/) {}
-
-        template<class RootEvent>
-        Event::Actions::Sig* to_ptr_func(Event::Actions::Sig* f)
-        {
-            assert(f);
-            return f;
-        }
-    };
-
-    template<class ActionFn, class TimeoutFn>
-    struct TupleFunctions
-    : Function<action_tag, ActionFn>
-    , Function<timeout_tag, TimeoutFn>
-    {};
-
-    template<class ActionFn, class TimeoutFn>
-    struct RootEvent : Event, TupleFunctions<ActionFn, TimeoutFn>
-    {};
-
-    template<class Fn>
-    using SimplifyFn = std::conditional_t<
-        std::is_convertible_v<Fn, Event::Actions::Sig*>,
-        Event::Actions::Sig*,
-        Fn
-    >;
-
-    template<class ActionFn, class TimeoutFn>
-    static Event* make_event(
-        std::string_view name, void const* lifespan,
-        ActionFn&& on_action, TimeoutFn&& on_timeout)
-    {
-        using DecayActionFn = SimplifyFn<std::decay_t<ActionFn>>;
-        using DecayTimeoutFn = SimplifyFn<std::decay_t<TimeoutFn>>;
-
-        using RealEvent = RootEvent<DecayActionFn, DecayTimeoutFn>;
-
-        void* raw = ::operator new(sizeof(RealEvent) + name.size() + 1u); /* NOLINT */
-
-        auto* data_name = static_cast<char*>(raw) + sizeof(RealEvent);
-        memcpy(data_name, name.data(), name.size());
-        data_name[name.size()] = 0;
-
-        RealEvent* event = new (raw) RealEvent{
-            {lifespan},
-            {
-                {static_cast<ActionFn&&>(on_action)},
-                {static_cast<TimeoutFn&&>(on_timeout)},
-            }
-        };
-        event->name = data_name;
-
-        if constexpr (!std::is_same_v<NilFn, ActionFn>) {
-            event->actions.on_action
-                = static_cast<Function<action_tag, DecayActionFn>&>(*event)
-                .template to_ptr_func<RealEvent>(on_action);
-        }
-
-        if constexpr (!std::is_same_v<NilFn, TimeoutFn>) {
-            event->actions.on_timeout
-                = static_cast<Function<timeout_tag, DecayTimeoutFn>&>(*event)
-                .template to_ptr_func<RealEvent>(on_timeout);
-        }
-
-        if constexpr (!(
-            std::is_trivially_destructible_v<DecayActionFn>
-         && std::is_trivially_destructible_v<DecayTimeoutFn>)
-        ) {
-            static_assert(std::is_nothrow_destructible_v<DecayActionFn>);
-            static_assert(std::is_nothrow_destructible_v<DecayTimeoutFn>);
-            event->actions.custom_destructor = [](Event& e) noexcept {
-                using Tuple = TupleFunctions<DecayActionFn, DecayTimeoutFn>;
-                static_cast<Tuple&>(static_cast<RealEvent&>(e)).~Tuple();
-            };
-        }
-
-        return event;
-    }
-
-    void delete_event(Event* e)
-    {
-        if (e->actions.custom_destructor) {
-            e->actions.custom_destructor(*e);
-        }
-        e->~Event();
-        ::operator delete(e);
-    }
 };
-
 
 /**
  * EventContainer wrapper that provides a convenient RAII-style mechanism
@@ -454,9 +542,9 @@ struct EventsGuard : private noncopyable
     : events(events)
     {}
 
-    TimeBase const& time_base() const noexcept
+    TimeBase const& get_time_base() const noexcept
     {
-        return this->events.time_base;
+        return this->events.get_time_base();
     }
 
     [[nodiscard]] timeval get_current_time() const noexcept
@@ -469,7 +557,7 @@ struct EventsGuard : private noncopyable
         std::string_view name,
         std::chrono::microseconds delay, TimeoutAction&& on_timeout)
     {
-        return this->events.create_event_timeout(
+        return this->events.event_creator().create_event_timeout(
             name, this, delay,
             static_cast<TimeoutAction&&>(on_timeout)
         );
@@ -480,7 +568,7 @@ struct EventsGuard : private noncopyable
         std::string_view name,
         timeval trigger_time, TimeoutAction&& on_timeout)
     {
-        return this->events.create_event_timeout(
+        return this->events.event_creator().create_event_timeout(
             name, this, trigger_time,
             static_cast<TimeoutAction&&>(on_timeout)
         );
@@ -491,7 +579,7 @@ struct EventsGuard : private noncopyable
         std::string_view name,
         int fd, FdAction&& on_fd)
     {
-        return this->events.create_event_fd_without_timeout(
+        return this->events.event_creator().create_event_fd_without_timeout(
             name, this, fd,
             static_cast<FdAction&&>(on_fd)
         );
@@ -505,7 +593,7 @@ struct EventsGuard : private noncopyable
         FdAction&& on_fd,
         TimeoutAction&& on_timeout)
     {
-        return this->events.create_event_fd_timeout(
+        return this->events.event_creator().create_event_fd_timeout(
             name, this, fd, delay,
             static_cast<FdAction&&>(on_fd),
             static_cast<TimeoutAction&&>(on_timeout)
@@ -521,7 +609,7 @@ struct EventsGuard : private noncopyable
         FdAction&& on_fd,
         TimeoutAction&& on_timeout)
     {
-        return this->events.create_event_fd_timeout(
+        return this->events.event_creator().create_event_fd_timeout(
             name, this, fd,
             grace_delay, trigger_time,
             static_cast<FdAction&&>(on_fd),
@@ -701,7 +789,7 @@ struct EventRef
             event_->alarm.reset_timeout(trigger_time);
         }
         else {
-            auto& new_event = event_container.create_event_timeout(
+            auto& new_event = event_container.event_creator().create_event_timeout(
                 name,
                 lifespan,
                 trigger_time,

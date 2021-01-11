@@ -1478,7 +1478,7 @@ public:
 
             if (enable_nla && this->clientRequestedProtocols & X224::PROTOCOL_HYBRID) {
                 this->nego_server = std::make_unique<NegoServer>(
-                    this->trans.get_public_key(), this->events_guard.time_base(), true);
+                    this->trans.get_public_key(), this->events_guard.get_time_base(), true);
             }
         }
 

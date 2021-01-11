@@ -41,7 +41,8 @@ RED_AUTO_TEST_CASE(TestCloseMod)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
 
     Theme theme;
@@ -52,6 +53,7 @@ RED_AUTO_TEST_CASE(TestCloseMod)
 
     Inifile ini;
 
+    auto& event_cont = detail::ProtectedEventContainer::get_events(events);
     {
         CloseMod d("message", ini, events, front.gd(), front,
             screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute,
@@ -59,28 +61,28 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         d.init();
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-        RED_CHECK(events.queue.size() == 2);
-        events.set_current_time({62, 0});
-        events.execute_events([](int){return false;}, false);
+        RED_CHECK(event_cont.size() == 2);
+        event_manager.set_current_time({62, 0});
+        event_manager.execute_events([](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_1.png");
 
-        RED_CHECK(events.queue.size() == 2);
-        events.set_current_time({581, 0});
-        events.execute_events([](int){return false;}, false);
+        RED_CHECK(event_cont.size() == 2);
+        event_manager.set_current_time({581, 0});
+        event_manager.execute_events([](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_2.png");
 
-        RED_CHECK(events.queue.size() == 2);
-        events.set_current_time({600, 0});
-        events.execute_events([](int){return false;}, false);
-        RED_CHECK(events.queue.size() == 1);
+        RED_CHECK(event_cont.size() == 2);
+        event_manager.set_current_time({600, 0});
+        event_manager.execute_events([](int){return false;}, false);
+        RED_CHECK(event_cont.size() == 1);
 
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_3.png");
         RED_CHECK(d.get_mod_signal() == BACK_EVENT_STOP);
     }
     // When Close mod goes out of scope remaining events should be garbaged
-    RED_CHECK(events.queue.size() == 1);
-    events.execute_events([](int){return false;}, false);
-    RED_CHECK(events.queue.size() == 0);
+    RED_CHECK(event_cont.size() == 1);
+    event_manager.execute_events([](int){return false;}, false);
+    RED_CHECK(event_cont.size() == 0);
 }
 
 RED_AUTO_TEST_CASE(TestCloseModSelector)
@@ -88,9 +90,9 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
-
     Theme theme;
 
     Keymap2 keymap;
@@ -104,8 +106,8 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    events.set_current_time({1, 0});
-    events.execute_events([](int){return false;}, false);
+    event_manager.set_current_time({1, 0});
+    event_manager.execute_events([](int){return false;}, false);
 
     RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_selector_1.png");
 }
@@ -130,7 +132,8 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
     FakeFront front(screen_info);
     TestGd gd(front.gd());
     WindowListCaps window_list_caps;
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     ClientExecute client_execute(events, gd, front, window_list_caps, false);
 
     Theme theme;
@@ -154,8 +157,8 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
 
     d.rdp_input_invalidate(Rect{ 0, 0, screen_info.width, screen_info.height });
 
-    events.set_current_time({1, 0});
-    events.execute_events([](int){return false;}, false);
+    event_manager.set_current_time({1, 0});
+    event_manager.execute_events([](int){return false;}, false);
 
     RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_rail.png");
 

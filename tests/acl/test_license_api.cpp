@@ -99,7 +99,8 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
     #include "fixtures/test_license_api_license.hpp"
 #endif
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     NullSessionLog session_log;
 
     for (bool do_work = true; do_work; ) {
@@ -292,7 +293,7 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             LOG(LOG_INFO, "--- Looping 1");
 
 #ifdef GENERATE_TESTING_DATA
-            events.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
 
             // TODO: fix that for actual TESTING DATA GENERATION
             unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
@@ -305,11 +306,11 @@ RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
             });
 #else
             trans.disable_remaining_error();
-            events.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
 
             int n = 0;
-            while (!events.queue.empty() && (++n < 70)) {
-                events.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            while (!event_manager.is_empty() && (++n < 70)) {
+                event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
             }
 #endif
         }
@@ -398,7 +399,8 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 #endif
     #include "fixtures/test_license_api_license.hpp"
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     NullSessionLog session_log;
 
     for (bool do_work = true; do_work; ) {
@@ -542,7 +544,7 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
 
 #ifdef GENERATE_TESTING_DATA
             // Uncomment the code block below to generate testing data.
-            events.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
 
             // TODO: fix that for actual data generation
             unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
@@ -559,11 +561,11 @@ RED_AUTO_TEST_CASE(TestWithExistingLicense)
             // Comment the code block below to generate testing data.
             t.disable_remaining_error();
 
-            events.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
 
             int n = 0;
-            while (!events.queue.empty() && (++n < 70)) {
-                events.execute_events([&](int /*sck*/)->bool {return true;}, false);
+            while (!event_manager.is_empty() && (++n < 70)) {
+                event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
             }
 #endif
         }

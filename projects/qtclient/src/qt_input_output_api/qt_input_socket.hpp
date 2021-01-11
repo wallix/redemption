@@ -41,15 +41,15 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
-    EventContainer& events;
+    EventManager& event_manager;
 
     QSocketNotifier * _sckListener;
     QTimer timer;
 
 public:
-    QtInputSocket(QWidget * parent, EventContainer& events)
+    QtInputSocket(QWidget * parent, EventManager& event_manager)
     : QObject(parent)
-    , events(events)
+    , event_manager(event_manager)
     , _sckListener(nullptr)
     , timer(this)
     {
@@ -95,9 +95,9 @@ public:
 private:
     void prepare_timer_event()
     {
-        auto tv = this->events.next_timeout();
+        auto tv = this->event_manager.next_timeout();
         if (tv.tv_sec != 0 || tv.tv_usec != 0) {
-            auto delay = tv - this->events.get_current_time();
+            auto delay = tv - this->event_manager.get_current_time();
             this->timer.start(std::chrono::duration_cast<std::chrono::milliseconds>(delay));
         }
     }

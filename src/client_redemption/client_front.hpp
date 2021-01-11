@@ -95,7 +95,7 @@ enum class ExecuteEventResult : char
 
 inline ExecuteEventResult execute_events(
     char const* type,
-    EventContainer& events,
+    EventManager& event_manager,
     std::chrono::milliseconds timeout)
 {
     timeval now = tvtime();
@@ -103,12 +103,12 @@ inline ExecuteEventResult execute_events(
     fd_set rfds;
     io_fd_zero(rfds);
 
-    events.get_fds([&rfds,&max](int fd){
+    event_manager.get_fds([&rfds,&max](int fd){
         io_fd_set(fd, rfds);
         max = std::max(max, fd);
     });
 
-    auto next_timeout = events.next_timeout();
+    auto next_timeout = event_manager.next_timeout();
     timeval ultimatum = (next_timeout == timeval{})
         ? now + timeout
         : (now < next_timeout)
@@ -125,8 +125,8 @@ inline ExecuteEventResult execute_events(
         return ExecuteEventResult::Error;
     }
 
-    events.set_current_time(tvtime());
-    events.execute_events([&rfds](int fd){
+    event_manager.set_current_time(tvtime());
+    event_manager.execute_events([&rfds](int fd){
         return io_fd_isset(fd, rfds);
     }, false);
 
@@ -135,7 +135,7 @@ inline ExecuteEventResult execute_events(
 
 inline int run_connection_test(
     char const * type,
-    EventContainer & events,
+    EventManager& event_manager,
     mod_api& mod)
 {
     int       timeout_counter = 0;
@@ -145,7 +145,7 @@ inline int run_connection_test(
     for (;;) {
         LOG(LOG_INFO, "run_connection_test");
 
-        switch (execute_events(type, events, timeout))
+        switch (execute_events(type, event_manager, timeout))
         {
             case ExecuteEventResult::Error: return 1;
             case ExecuteEventResult::Retry: continue;
@@ -169,7 +169,7 @@ inline int run_connection_test(
 // return 0 : do screenshot, don't do screenshot an error occurred
 inline int wait_for_screenshot(
     char const* type,
-    EventContainer & events,
+    EventManager& event_manager,
     std::chrono::milliseconds inactivity_time,
     std::chrono::milliseconds max_time)
 {
@@ -183,7 +183,7 @@ inline int wait_for_screenshot(
             return 0;
         }
 
-        switch (execute_events(type, events, std::min(max_time - elapsed, inactivity_time)))
+        switch (execute_events(type, event_manager, std::min(max_time - elapsed, inactivity_time)))
         {
             case ExecuteEventResult::Error: return 1;
             case ExecuteEventResult::Retry: return 0;
@@ -196,14 +196,14 @@ inline int wait_for_screenshot(
 
 inline int run_test_client(
     char const* type,
-    EventContainer & events,
+    EventManager& event_manager,
     mod_api& mod,
     std::chrono::milliseconds inactivity_time,
     std::chrono::milliseconds max_time,
     std::string const& screen_output)
 {
     try {
-        if (int err = run_connection_test(type, events, mod)) {
+        if (int err = run_connection_test(type, event_manager, mod)) {
             return err;
         }
 
@@ -217,7 +217,7 @@ inline int run_test_client(
             return ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE;
         }
 
-        if (int err = wait_for_screenshot(type, events, inactivity_time, max_time)) {
+        if (int err = wait_for_screenshot(type, event_manager, inactivity_time, max_time)) {
             return err;
         }
 

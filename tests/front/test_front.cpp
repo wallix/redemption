@@ -153,7 +153,8 @@ RED_AUTO_TEST_CASE(TestFront)
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
     ini.set<cfg::globals::handshake_timeout>(std::chrono::seconds::zero());
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     NullSessionLog session_log;
 
     RED_TEST_PASSPOINT();
@@ -167,7 +168,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     while (!front.is_up_and_running()) {
         front.incoming(no_mod);
-        RED_CHECK(events.queue.empty());
+        RED_CHECK(event_manager.is_empty());
     }
 
     // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
@@ -248,10 +249,10 @@ RED_AUTO_TEST_CASE(TestFront)
 
     int count = 0;
     int n = 38;
-    events.queue[0]->alarm.fd = 0;
-    events.set_current_time({1, 0});
-    for (; count < n && !events.queue.empty(); ++count) {
-        events.execute_events([](int){return true;}, false);
+    detail::ProtectedEventContainer::get_events(events)[0]->alarm.fd = 0;
+    event_manager.set_current_time({1, 0});
+    for (; count < n && !event_manager.is_empty(); ++count) {
+        event_manager.execute_events([](int){return true;}, false);
     }
 
     RED_CHECK_EQ(count, n);
@@ -322,7 +323,8 @@ RED_AUTO_TEST_CASE(TestFront2)
     ini.set<cfg::globals::is_rec>(true);
     ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
 
     RED_TEST_PASSPOINT();
     NullSessionLog session_log;

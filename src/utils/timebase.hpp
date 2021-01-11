@@ -27,7 +27,7 @@ struct TimeBase
 
     TimeBase(timeval current_time) : current_time(current_time) {}
 
-    void set_current_time(timeval const& now)
+    void set_current_time(timeval const& now) noexcept
     {
         assert(now >= this->current_time);
         this->current_time = now;

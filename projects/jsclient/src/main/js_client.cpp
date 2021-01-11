@@ -229,7 +229,7 @@ class RdpClient
         emscripten::val crypto;
     };
 
-    EventContainer events;
+    EventContainer event_container;
 
     ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> mod;
@@ -282,7 +282,7 @@ public:
                 set_if(time, "second", seconds);
                 set_if(time, "millisecond", milliseconds);
             });
-            events.set_current_time({checked_int{seconds}, checked_int{milliseconds}});
+            this->set_current_time({checked_int{seconds}, checked_int{milliseconds}});
         }
 
         client_info.screen_info = screen_info;
@@ -428,7 +428,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, gd, osd, events, session_log, front, client_info,
+            trans, gd, osd, event_container, session_log, front, client_info,
             redir_info, js_rand, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -436,14 +436,14 @@ public:
 
     void write_first_packet()
     {
-        this->set_time(this->events.get_current_time());
+        this->set_time(this->event_container.get_current_time());
     }
 
     void set_time(timeval time)
     {
-        this->events.set_current_time(time);
+        this->set_current_time(time);
 
-        event_loop(this->events.queue, [time](Event& event){
+        event_loop([time](Event& event){
             if (event.alarm.trigger(time)) {
                 event.actions.exec_timeout(event);
             }
@@ -454,21 +454,27 @@ public:
     {
         this->trans.push_input_buffer(std::move(data));
 
-        auto time = this->events.get_current_time();
-        event_loop(this->events.queue, [time](Event& event){
+        auto time = this->event_container.get_current_time();
+        event_loop([time](Event& event){
             /*if (event.alarm.fd != -1)*/ {
                 event.alarm.reset_timeout(time + event.alarm.grace_delay);
                 event.actions.exec_action(event);
             }
         });
 
-        this->events.garbage_collector();
+        detail::ProtectedEventContainer::garbage_collector(this->event_container);
     }
 
 private:
-    template<class Fn>
-    static void event_loop(std::vector<Event*> events, Fn&& fn)
+    void set_current_time(timeval const& now)
     {
+        detail::ProtectedEventContainer::set_current_time(this->event_container, now);
+    }
+
+    template<class Fn>
+    void event_loop(Fn&& fn)
+    {
+        auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
         size_t iend = events.size();
         // ignore events created in the loop
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
@@ -497,7 +503,7 @@ public:
         uint16_t flag = scancode & 0xFF00;
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            this->events.get_current_time().tv_sec,
+            this->event_container.get_current_time().tv_sec,
             nullptr);
     }
 

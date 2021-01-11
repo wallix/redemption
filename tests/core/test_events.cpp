@@ -28,6 +28,16 @@
 
 const auto nofd_fn = [](int /*fd*/) { return false; };
 
+static std::vector<Event*> const& get_events(EventContainer const& event_container)
+{
+    return detail::ProtectedEventContainer::get_events(event_container);
+}
+
+static std::vector<Event*> const& get_events(EventManager& event_manager)
+{
+    return get_events(event_manager.get_events());
+}
+
 RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
 {
     int counter = 0;
@@ -36,28 +46,29 @@ RED_AUTO_TEST_CASE(TestOneShotTimerEvent)
     timeval wakeup = origin+std::chrono::seconds(2);
 
     EventContainer events;
-    (void)events.create_event_timeout("test", nullptr, wakeup, [&counter](Event&){ ++counter; });
+    (void)events.event_creator().create_event_timeout(
+        "test", nullptr, wakeup, [&counter](Event&){ ++counter; });
 
-    RED_REQUIRE(events.queue.size() == 1u);
-    Event& e = *events.queue[0];
+    RED_REQUIRE(get_events(events).size() == 1u);
+    Event& e = *get_events(events)[0];
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
     // when it's time of above alarm is triggered
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(1)));
     RED_CHECK(counter == 0);
-    RED_REQUIRE(events.queue.size() == 1u);
+    RED_REQUIRE(get_events(events).size() == 1u);
     // but only once
     RED_CHECK(!e.alarm.trigger(wakeup+std::chrono::seconds(2)));
     e.actions.exec_timeout(e);
     RED_CHECK(counter == 1);
-    RED_REQUIRE(events.queue.size() == 1u);
+    RED_REQUIRE(get_events(events).size() == 1u);
 
     // If I set an alarm in the past it will be triggered immediately
     e.alarm.reset_timeout(origin);
     RED_CHECK(e.alarm.trigger(wakeup+std::chrono::seconds(3)));
     RED_CHECK(counter == 1);
-    RED_REQUIRE(events.queue.size() == 1u);
+    RED_REQUIRE(get_events(events).size() == 1u);
 }
 
 RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
@@ -68,11 +79,12 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
     timeval wakeup = origin+std::chrono::seconds(2);
 
     EventContainer events;
-    (void)events.create_event_timeout("test", nullptr, wakeup, [&counter](Event& event){
-        event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
-        ++counter;
-    });
-    Event& e = *events.queue[0];
+    (void)events.event_creator().create_event_timeout(
+        "test", nullptr, wakeup, [&counter](Event& event){
+            event.alarm.reset_timeout(event.alarm.now + std::chrono::seconds{1});
+            ++counter;
+        });
+    Event& e = *get_events(events)[0];
 
     // before time: nothing happens
     RED_CHECK(!e.alarm.trigger(origin));
@@ -88,82 +100,90 @@ RED_AUTO_TEST_CASE(TestPeriodicTimerEvent)
 
 RED_AUTO_TEST_CASE(TestEventGuard)
 {
-    EventContainer events;
+    EventManager event_manager;
     {
-        EventsGuard events_guard(events);
+        EventsGuard events_guard(event_manager.get_events());
         events_guard.create_event_timeout("Init Event", {0, 0}, [](Event&/*event*/) {});
-        RED_CHECK(events.queue.size() == 1);
-        RED_CHECK(!events.queue[0]->garbage);
+        RED_CHECK(get_events(event_manager).size() == 1);
+        RED_CHECK(!get_events(event_manager)[0]->garbage);
     }
-    RED_CHECK(events.queue.size() == 1);
-    RED_CHECK(events.queue[0]->garbage);
+    RED_CHECK(get_events(event_manager).size() == 1);
+    RED_CHECK(get_events(event_manager)[0]->garbage);
 
-    events.garbage_collector();
-    RED_CHECK(events.queue.size() == 0);
+    event_manager.garbage_collector();
+    RED_CHECK(get_events(event_manager).size() == 0);
 }
 
 RED_AUTO_TEST_CASE(TestEventRef)
 {
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
+
     {
-        EventRef ref = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
-        RED_CHECK(events.queue.size() == 1);
-        RED_CHECK(!events.queue[0]->garbage);
+        EventRef ref = events.event_creator().create_event_timeout(
+            "Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(get_events(events).size() == 1);
+        RED_CHECK(!get_events(events)[0]->garbage);
     }
-    RED_CHECK(events.queue.size() == 1);
-    RED_CHECK(events.queue[0]->garbage);
+    RED_CHECK(get_events(events).size() == 1);
+    RED_CHECK(get_events(events)[0]->garbage);
 
-    events.garbage_collector();
-    RED_CHECK(events.queue.size() == 0);
+    event_manager.garbage_collector();
+    RED_CHECK(get_events(events).size() == 0);
 
     {
-        EventRef ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        EventRef ref1 = events.event_creator().create_event_timeout(
+            "Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
         RED_CHECK(ref1.has_event());
-        RED_CHECK(events.queue.size() == 1);
-        RED_CHECK(!events.queue[0]->garbage);
+        RED_CHECK(get_events(events).size() == 1);
+        RED_CHECK(!get_events(events)[0]->garbage);
 
-        ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
-        RED_CHECK(events.queue.size() == 2);
-        RED_CHECK(events.queue[0]->garbage);
-        RED_CHECK(!events.queue[1]->garbage);
+        ref1 = events.event_creator().create_event_timeout(
+            "Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(get_events(events).size() == 2);
+        RED_CHECK(get_events(events)[0]->garbage);
+        RED_CHECK(!get_events(events)[1]->garbage);
 
-        EventRef ref2 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
-        RED_CHECK(events.queue.size() == 3);
-        RED_CHECK(events.queue[0]->garbage);
-        RED_CHECK(!events.queue[1]->garbage);
-        RED_CHECK(!events.queue[2]->garbage);
+        EventRef ref2 = events.event_creator().create_event_timeout(
+            "Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        RED_CHECK(get_events(events).size() == 3);
+        RED_CHECK(get_events(events)[0]->garbage);
+        RED_CHECK(!get_events(events)[1]->garbage);
+        RED_CHECK(!get_events(events)[2]->garbage);
 
         ref2 = std::move(ref1);
         RED_CHECK(ref2.has_event());
         RED_CHECK(!ref1.has_event());
-        RED_CHECK(events.queue.size() == 3);
-        RED_CHECK(events.queue[0]->garbage);
-        RED_CHECK(!events.queue[1]->garbage);
-        RED_CHECK(events.queue[2]->garbage);
+        RED_CHECK(get_events(events).size() == 3);
+        RED_CHECK(get_events(events)[0]->garbage);
+        RED_CHECK(!get_events(events)[1]->garbage);
+        RED_CHECK(get_events(events)[2]->garbage);
 
-        EventRef ref3 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
+        EventRef ref3 = events.event_creator().create_event_timeout(
+            "Init Event", nullptr, {0, 0}, [](Event&/*event*/) {});
         RED_CHECK(ref3.has_event());
-        RED_CHECK(!events.queue[3]->garbage);
+        RED_CHECK(!get_events(events)[3]->garbage);
         ref3.garbage();
         RED_CHECK(!ref3.has_event());
-        RED_CHECK(events.queue[3]->garbage);
+        RED_CHECK(get_events(events)[3]->garbage);
     }
-    RED_CHECK(events.queue.size() == 4);
-    RED_CHECK(events.queue[0]->garbage);
-    RED_CHECK(events.queue[1]->garbage);
-    RED_CHECK(events.queue[2]->garbage);
-    RED_CHECK(events.queue[3]->garbage);
+    RED_CHECK(get_events(events).size() == 4);
+    RED_CHECK(get_events(events)[0]->garbage);
+    RED_CHECK(get_events(events)[1]->garbage);
+    RED_CHECK(get_events(events)[2]->garbage);
+    RED_CHECK(get_events(events)[3]->garbage);
 
-    events.garbage_collector();
-    RED_CHECK(events.queue.size() == 0);
+    event_manager.garbage_collector();
+    RED_CHECK(get_events(events).size() == 0);
 
     {
-        EventRef ref1 = events.create_event_timeout("Init Event", nullptr, {0, 0}, [](Event& e) { e.garbage = true; });
+        EventRef ref1 = events.event_creator().create_event_timeout(
+            "Init Event", nullptr, {0, 0}, [](Event& e) { e.garbage = true; });
 
         RED_CHECK(ref1.has_event());
-        events.execute_events(nofd_fn, false);
+        event_manager.execute_events(nofd_fn, false);
         RED_CHECK(!ref1.has_event());
-        RED_CHECK(events.queue.size() == 0);
+        RED_CHECK(get_events(events).size() == 0);
     }
 }
 
@@ -194,24 +214,25 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
         }
     };
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
 
     Context context(events);
-    events.execute_events(nofd_fn, false);
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 0);
-    events.execute_events(nofd_fn, false);
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    events.set_current_time({3,0});
-    events.execute_events(nofd_fn, false);
+    event_manager.set_current_time({3,0});
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    events.execute_events([](int /*fd*/){ return true; }, false);
+    event_manager.execute_events([](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
-    events.set_current_time({303,0});
-    events.execute_events(nofd_fn, false);
+    event_manager.set_current_time({303,0});
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 2);
 }
@@ -247,15 +268,16 @@ RED_AUTO_TEST_CASE(TestNontrivialEvent)
         }
     };
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
 
     Context context(events);
-    events.set_current_time({300, 0});
-    events.execute_events(nofd_fn, false);
+    event_manager.set_current_time({300, 0});
+    event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     context.events_guard.end_of_lifespan();
-    events.garbage_collector();
+    event_manager.garbage_collector();
     RED_CHECK(context.counter1 == 0x10);
     RED_CHECK(context.counter2 == 0x11);
 }

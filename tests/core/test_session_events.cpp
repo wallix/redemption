@@ -26,16 +26,17 @@ namespace
 {
     struct DataEvents
     {
-        EventContainer events;
+        EventManager event_manager;
+        EventContainer& events = event_manager.get_events();
 
         DataEvents()
         {
-            events.set_current_time({10000, 0});
+            event_manager.set_current_time({10000, 0});
         }
 
         void execute_timer_events()
         {
-            events.execute_events(
+            event_manager.execute_events(
                 [](int /*fd*/){ return false; },
                 false
             );
@@ -49,12 +50,12 @@ namespace
 
         void set_time(time_t t)
         {
-            events.time_base.current_time.tv_sec = t;
+            event_manager.set_current_time({t, 0});
         }
 
         time_t time() const
         {
-            return events.time_base.current_time.tv_sec;
+            return event_manager.get_current_time().tv_sec;
         }
     };
 }

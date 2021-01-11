@@ -614,10 +614,10 @@ private:
 
     struct NextDelay
     {
-        NextDelay(bool nodelay, EventContainer const& events)
+        NextDelay(bool nodelay, EventManager const& event_manager)
         {
             if (!nodelay) {
-                auto timeout = events.next_timeout();
+                auto timeout = event_manager.next_timeout();
                 // timeout {0,0} means no timeout to trigger
                 if (timeout != timeval{0, 0}) {
                     auto now = tvtime();
@@ -659,7 +659,7 @@ private:
         Front& front,
         SocketTransport& front_trans,
         TpduBuffer& rbuf,
-        EventContainer& events,
+        EventManager& event_manager,
         Callback& callback,
         Fn&& stop_event)
     {
@@ -678,7 +678,7 @@ private:
             int const num = ::select(max+1,
                 has_data_to_write ? nullptr : &fds,
                 has_data_to_write ? &fds : nullptr,
-                nullptr, NextDelay(has_tls_pending_data, events).timeout());
+                nullptr, NextDelay(has_tls_pending_data, event_manager).timeout());
 
             if (num < 0) {
                 if (errno != EINTR) {
@@ -687,8 +687,8 @@ private:
                 continue;
             }
 
-            events.set_current_time(tvtime());
-            events.execute_events(
+            event_manager.set_current_time(tvtime());
+            event_manager.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose() & SessionVerbose::Event));
 
@@ -719,7 +719,7 @@ private:
     };
 
     inline EndLoopState main_loop(
-        int auth_sck, EventContainer& events,
+        int auth_sck, EventManager& event_manager,
         CryptoContext& cctx, UdevRandom& rnd, Fstat& fstat,
         TpduBuffer& rbuf, SocketTransport& front_trans, Front& front,
         RedirectionInfo& redir_info, ClientExecute& rail_client_execute,
@@ -733,6 +733,7 @@ private:
             ini.get<cfg::globals::authfile>().c_str(), 0,
             std::chrono::seconds(1), SocketTransport::Verbose::none);
 
+        auto& events = event_manager.get_events();
         EndSessionWarning end_session_warning(events);
 
         KeepAlive keepalive(ini, events, ini.get<cfg::globals::keepalive_grace_delay>());
@@ -740,7 +741,7 @@ private:
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SessionLog session_log(ini, events.time_base, cctx, rnd, fstat, front);
+        SessionLog session_log(ini, event_manager.get_time_base(), cctx, rnd, fstat, front);
 
         using namespace std::chrono_literals;
 
@@ -798,15 +799,15 @@ private:
                 }
                 else {
                     ioswitch.set_read_sck(front_trans.get_sck());
-                    events.get_fds([&](int fd){ ioswitch.set_read_sck(fd); });
+                    event_manager.get_fds([&](int fd){ ioswitch.set_read_sck(fd); });
                 }
                 ioswitch.set_read_sck(auth_sck);
 
-                events.set_current_time(tvtime());
+                event_manager.set_current_time(tvtime());
 
                 if (ioswitch.select(NextDelay(
                     mod_has_tls_pending_data || front_has_tls_pending_data,
-                    events
+                    event_manager
                 ).timeout()) < 0) {
                     if (errno != EINTR) {
                         // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
@@ -820,7 +821,7 @@ private:
                     continue;
                 }
 
-                events.set_current_time(tvtime());
+                event_manager.set_current_time(tvtime());
 
                 if (front_has_tls_pending_data) {
                     ioswitch.set_read_sck(front_trans.get_sck());
@@ -954,14 +955,14 @@ private:
                         }
                     }
 
-                    events.execute_events(
+                    event_manager.execute_events(
                         [&ioswitch](int fd){ return ioswitch.is_set_for_reading(fd); },
                         bool(this->verbose() & SessionVerbose::Event));
 
                     back_event = mod_wrapper.get_mod_signal();
                 }
                 else {
-                    events.execute_events(
+                    event_manager.execute_events(
                         [](int /*fd*/){ return false; },
                         bool(this->verbose() & SessionVerbose::Event));
                 }
@@ -1223,8 +1224,8 @@ public:
         UdevRandom rnd;
         Fstat fstat;
 
-        EventContainer events;
-        events.set_current_time(tvtime());
+        EventManager event_manager;
+        event_manager.set_current_time(tvtime());
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
@@ -1250,7 +1251,7 @@ public:
         };
 
         AclReport acl_report{ini};
-        SessionFront front(events, acl_report,
+        SessionFront front(event_manager.get_events(), acl_report,
             front_trans, rnd, ini, cctx, ini.get<cfg::client::fast_path>()
         );
         front.ini_ptr = &ini;
@@ -1262,7 +1263,7 @@ public:
         try {
             null_mod no_mod;
             bool is_connected = this->internal_front_loop(
-                front, front_trans, rbuf, events, no_mod,
+                front, front_trans, rbuf, event_manager, no_mod,
                 [&]{
                     return front.is_up_and_running();
                 });
@@ -1322,22 +1323,23 @@ public:
             RedirectionInfo redir_info;
 
             ClientExecute rail_client_execute(
-                events, front, front, front.get_client_info().window_list_caps,
+                event_manager.get_events(), front, front,
+                front.get_client_info().window_list_caps,
                 ini.get<cfg::debug::mod_internal>() & 1);
 
             ModWrapper mod_wrapper(
                 front.get_palette(), front, front.keymap, front.get_client_info(), glyphs,
                 rail_client_execute, this->ini);
             ModFactory mod_factory(
-                mod_wrapper, events, front.get_client_info(), front, front,
-                redir_info, ini, glyphs, theme, rail_client_execute, front.keymap, rnd,
-                cctx);
+                mod_wrapper, event_manager.get_events(), front.get_client_info(), front,
+                front, redir_info, ini, glyphs, theme, rail_client_execute, front.keymap,
+                rnd, cctx);
 
             auto end_loop = EndLoopState::ShowCloseBox;
 
             if (auth_sck != INVALID_SOCKET) {
                 end_loop = this->main_loop(
-                    auth_sck, events, cctx, rnd, fstat, rbuf, front_trans,
+                    auth_sck, event_manager, cctx, rnd, fstat, rbuf, front_trans,
                     front, redir_info, rail_client_execute, mod_wrapper, mod_factory);
             }
 
@@ -1352,7 +1354,7 @@ public:
                 auto& mod = *mod_ptr;
                 std::unique_ptr<mod_api> unique_mod{is_already_close_mod ? nullptr : &mod};
                 this->internal_front_loop(
-                    front, front_trans, rbuf, events, mod,
+                    front, front_trans, rbuf, event_manager, mod,
                     [&]{
                         return mod.get_mod_signal() != BACK_EVENT_NONE
                             || !front.is_up_and_running();

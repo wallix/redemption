@@ -26,9 +26,9 @@
 #include "utils/stream.hpp"
 
 
-RecorderFile::RecorderFile(TimeBase& time_base, const char *filename)
+RecorderFile::RecorderFile(CRef<TimeBase> time_base, const char *filename)
     : time_base(time_base)
-    , start_time(to_ms(time_base.get_current_time()))
+    , start_time(to_ms(this->time_base.get_current_time()))
     , file(unique_fd(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))
 {
     if (!this->file.is_open()) {
@@ -58,7 +58,7 @@ void RecorderFile::write_packet(PacketType type, bytes_view buffer)
 }
 
 
-RecorderTransport::RecorderTransport(Transport& trans, TimeBase& time_base, char const* filename)
+RecorderTransport::RecorderTransport(Transport& trans, CRef<TimeBase> time_base, char const* filename)
     : trans(trans)
     , out(time_base, filename)
 {

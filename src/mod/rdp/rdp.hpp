@@ -2074,7 +2074,7 @@ public:
             this->decrypt, this->encrypt, this->logon_info,
             this->channels.enable_auth_channel,
             this->trans, this->front, info, this->redir_info,
-            gen, this->events_guard.time_base(), mod_rdp_params,
+            gen, this->events_guard.get_time_base(), mod_rdp_params,
             this->session_log, this->license_store,
     #ifndef __EMSCRIPTEN__
             this->channels.drive.file_system_drive_manager.has_managed_drive()

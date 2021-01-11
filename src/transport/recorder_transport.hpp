@@ -23,6 +23,7 @@
 
 #include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
+#include "utils/ref.hpp"
 
 #include <chrono>
 
@@ -52,14 +53,14 @@ public:
         NlaServerOut,
     };
 
-    explicit RecorderFile(TimeBase& time_base, char const* filename);
+    explicit RecorderFile(CRef<TimeBase> time_base, char const* filename);
 
     ~RecorderFile();
 
     void write_packet(PacketType type, bytes_view buffer);
 
 private:
-    TimeBase& time_base;
+    TimeBase const& time_base;
     std::chrono::milliseconds start_time;
     OutFileTransport file;
 };
@@ -71,7 +72,7 @@ private:
 class RecorderTransport : public Transport
 {
 public:
-    explicit RecorderTransport(Transport& trans, TimeBase& time_base, char const* filename);
+    explicit RecorderTransport(Transport& trans, CRef<TimeBase> time_base, char const* filename);
 
     void add_info(bytes_view info);
 

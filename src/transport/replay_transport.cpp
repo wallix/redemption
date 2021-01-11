@@ -85,11 +85,11 @@ namespace
 } // namespace
 
 ReplayTransport::ReplayTransport(
-    const char* fname, TimeBase& time_base,
+    const char* fname, CRef<TimeBase> time_base,
     FdType fd_type, FirstPacket first_packet,
     UncheckedPacket unchecked_packet)
 : time_base(time_base)
-, start_time(to_ms(time_base.get_current_time()))
+, start_time(to_ms(this->time_base.get_current_time()))
 , in_file(open_file(fname))
 , fd(FdType::Timer == fd_type
 ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)

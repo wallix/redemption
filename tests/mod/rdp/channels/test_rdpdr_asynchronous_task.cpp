@@ -67,7 +67,8 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
 
     const uint32_t number_of_bytes_to_read = 2 * 1024;
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
 
     AsynchronousTaskContainer tasks(events);
     tasks.add(std::make_unique<RdpdrDriveReadTask>(
@@ -75,14 +76,14 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         test_to_server_sender,
         RDPVerbose(0)));
 
-    RED_CHECK(!events.queue.empty());
+    RED_CHECK(!event_manager.is_empty());
     timeval now = events.get_current_time();
-    for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
-        events.set_current_time(now);
-        events.execute_events([](int/*fd*/){ return true; }, false);
+    for (int i = 0; i < 100 && !event_manager.is_empty(); ++i) {
+        event_manager.set_current_time(now);
+        event_manager.execute_events([](int/*fd*/){ return true; }, false);
         ++now.tv_sec;
     }
-    RED_CHECK(events.queue.empty());
+    RED_CHECK(event_manager.is_empty());
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
@@ -98,7 +99,8 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
 
     TestToServerSender test_to_server_sender(check_transport);
 
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
 
     AsynchronousTaskContainer tasks(events);
     tasks.add(std::make_unique<RdpdrSendDriveIOResponseTask>(
@@ -107,15 +109,14 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         contents.size(), test_to_server_sender,
         RDPVerbose(0)));
 
-    RED_CHECK(!events.queue.empty());
-
-    timeval now = events.get_current_time();
-    for (int i = 0; i < 100 && !events.queue.empty(); ++i) {
-        events.set_current_time(now);
-        events.execute_events([](int/*fd*/){return false;}, false);
+    RED_CHECK(!event_manager.is_empty());
+    timeval now = event_manager.get_current_time();
+    for (int i = 0; i < 100 && !event_manager.is_empty(); ++i) {
+        event_manager.set_current_time(now);
+        event_manager.execute_events([](int/*fd*/){ return false; }, false);
         ++now.tv_sec;
     }
-    RED_CHECK(events.queue.empty());
+    RED_CHECK(event_manager.is_empty());
 }
 
 RED_AUTO_TEST_CASE(TestAsynchronousRemoved)
@@ -124,15 +125,15 @@ RED_AUTO_TEST_CASE(TestAsynchronousRemoved)
 
     TestToServerSender test_to_server_sender(check_transport);
 
-    EventContainer events;
+    EventManager event_manager;
 
-    AsynchronousTaskContainer tasks(events);
+    AsynchronousTaskContainer tasks(event_manager.get_events());
     tasks.add(std::make_unique<RdpdrSendDriveIOResponseTask>(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast("abc"), 3, test_to_server_sender,
         RDPVerbose(0)));
 
-    RED_CHECK(!events.queue.empty());
+    RED_CHECK(!event_manager.is_empty());
 
     // event is removed
 }

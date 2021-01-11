@@ -57,8 +57,9 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
         verbose
     );
 
-    RED_REQUIRE(events.queue.size() == 1);
-    Event& ev = *events.queue[0];
+    auto& event_cont = detail::ProtectedEventContainer::get_events(events);
+    RED_REQUIRE(event_cont.size() == 1);
+    Event& ev = *event_cont[0];
     RED_TEST_CONTEXT_DATA(timeval t, t, {
         timeval{1, 308471},
         timeval{2, 910153},
@@ -103,7 +104,7 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
 
     RED_CHECK(replay_mod.get_mod_signal() == BackEvent_t::BACK_EVENT_STOP);
     RED_CHECK(ev.garbage);
-    RED_REQUIRE(events.queue.size() == 1);
+    RED_REQUIRE(event_cont.size() == 1);
 
     RED_CHECK_IMG(gd, FIXTURES_PATH "/img_ref/replay_mod.png");
 }

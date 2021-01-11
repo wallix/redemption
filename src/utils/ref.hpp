@@ -32,3 +32,6 @@ struct Ref
 private:
     T* _p;
 };
+
+template<class T>
+using CRef = Ref<const T>;

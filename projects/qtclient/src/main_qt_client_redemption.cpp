@@ -46,12 +46,12 @@ private:
 
 public:
     ClientRedemptionQt(
-        EventContainer& events,
+        EventManager& event_manager,
         ClientRedemptionConfig & config)
-    : ClientRedemption(events, config)
+    : ClientRedemption(event_manager, config)
     , qt_graphic(&this->_callback, &this->config)
     , qt_sound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget())
-    , qt_socket_listener(this->qt_graphic.get_static_qwidget(), events)
+    , qt_socket_listener(this->qt_graphic.get_static_qwidget(), event_manager)
     , qt_clipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR,
         this->qt_graphic.get_static_qwidget())
     {
@@ -107,17 +107,17 @@ public:
             }
         }
 
-        this->events.set_current_time(tvtime());
+        this->event_manager.set_current_time(tvtime());
 
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
             if (auto* mod = this->_callback.get_mod()) {
                 auto action = [this](bool is_timeout){
-                    this->events.set_current_time(tvtime());
+                    this->event_manager.set_current_time(tvtime());
                     try {
                         auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
-                        this->events.execute_events(fn, 0);
+                        this->event_manager.execute_events(fn, 0);
                     } catch (const Error & e) {
                         const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
                         LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
     set_exception_handler_pretty_message();
 
     Inifile ini;
-    EventContainer events;
+    EventManager event_manager;
 
     QApplication app(argc, argv);
 
@@ -350,7 +350,7 @@ int main(int argc, char** argv)
 
     ScopedSslInit scoped_init;
 
-    ClientRedemptionQt client_qt(events, config);
+    ClientRedemptionQt client_qt(event_manager, config);
 
     app.exec();
 }

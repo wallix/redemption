@@ -64,7 +64,8 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
     ScreenInfo screen_info{2048, 1536, BitsPerPixel{24}};
     FakeFront front(screen_info);
     WindowListCaps window_list_caps;
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     ClientExecute client_execute(events, front.gd(), front, window_list_caps, false);
 
     Inifile ini;
@@ -80,11 +81,11 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
     d.init();
 
-    events.set_current_time({0, 0});
-    events.execute_events([](int){return false;}, false);
+    event_manager.set_current_time({0, 0});
+    event_manager.execute_events([](int){return false;}, false);
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_mod_signal());
 
-    events.set_current_time({2, 1});
-    events.execute_events([](int){return false;}, false);
+    event_manager.set_current_time({2, 1});
+    event_manager.execute_events([](int){return false;}, false);
     RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_mod_signal());
 }

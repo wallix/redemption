@@ -92,7 +92,7 @@ public:
 private:
     ClientChannelMod channel_mod;
 public:
-    EventContainer& events;
+    EventManager& event_manager;
 
 private:
     std::unique_ptr<Transport> _socket_in_recorder;
@@ -239,14 +239,15 @@ private:
     gdi::NullOsd osd;
 
 public:
-    ClientRedemption(EventContainer& events,
+    ClientRedemption(EventManager& event_manager,
                      ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
-        , events(events)
+        , event_manager(event_manager)
         , close_box_extra_message_ref("Close")
-        , rail_client_execute(events, *this, *this, this->config.info.window_list_caps,
+        , rail_client_execute(event_manager.get_events(), *this, *this,
+            this->config.info.window_list_caps,
             bool((RDPVerbose::rail | RDPVerbose::rail_dump) & this->config.verbose))
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
@@ -401,7 +402,7 @@ public:
                     *this->socket
                   , *this
                   , this->osd
-                  , this->events
+                  , this->event_manager.get_events()
                   , this->session_log
                   , *this
                   , this->config.info
@@ -432,7 +433,7 @@ public:
                 this->unique_mod = new_mod_vnc(
                     *this->socket
                   , *this
-                  , this->events
+                  , this->event_manager.get_events()
                   , this->session_log
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
@@ -470,7 +471,7 @@ public:
             LOG(LOG_INFO, "Replay %s", this->config.full_capture_file_name);
             auto transport = std::make_unique<ReplayTransport>(
                 this->config.full_capture_file_name.c_str(),
-                this->events.time_base,
+                this->event_manager.get_time_base(),
                 ReplayTransport::FdType::Timer,
                 ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
@@ -501,7 +502,7 @@ public:
                 if (this->config.is_full_capturing) {
                     this->_socket_in_recorder = std::move(this->socket);
                     this->socket = std::make_unique<RecorderTransport>(
-                        *this->_socket_in_recorder, this->events.time_base,
+                        *this->_socket_in_recorder, this->event_manager.get_time_base(),
                         this->config.full_capture_file_name.c_str());
                 }
 
@@ -707,7 +708,7 @@ public:
             (void)begin_read;
             (void)end_read;
             this->replay_mod = std::make_unique<ReplayMod>(
-              this->events
+              this->event_manager.get_events()
             , *this
             , *this
             , this->config._movie_full_path.c_str()

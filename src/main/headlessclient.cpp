@@ -42,9 +42,9 @@ using namespace std::chrono_literals;
 class ClientRedemptionHeadless : public ClientRedemption
 {
 public:
-    ClientRedemptionHeadless(EventContainer& events,
+    ClientRedemptionHeadless(EventManager& event_manager,
                              ClientRedemptionConfig & config)
-        : ClientRedemption(events, config)
+        : ClientRedemption(event_manager, config)
     {
         this->cmd_launch_conn();
     }
@@ -80,12 +80,12 @@ public:
         fd_set rfds;
         io_fd_zero(rfds);
 
-        this->events.get_fds([&rfds,&max](int fd){
+        this->event_manager.get_fds([&rfds,&max](int fd){
             io_fd_set(fd, rfds);
             max = std::max(max, fd);
         });
 
-        auto next_timeout = this->events.next_timeout();
+        auto next_timeout = this->event_manager.next_timeout();
         timeval ultimatum = (next_timeout == timeval{})
             ? now + timeout
             : (now < next_timeout)
@@ -104,8 +104,8 @@ public:
             return 9;
         }
 
-        this->events.set_current_time(tvtime());
-        this->events.execute_events([&rfds](int fd){
+        this->event_manager.set_current_time(tvtime());
+        this->event_manager.execute_events([&rfds](int fd){
             return io_fd_isset(fd, rfds);
         }, false);
 
@@ -190,11 +190,11 @@ int main(int argc, char const** argv)
 
     ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
-    EventContainer events;
-    events.set_current_time(tvtime());
+    EventManager event_manager;
+    event_manager.set_current_time(tvtime());
     ScopedSslInit scoped_ssl;
 
-    ClientRedemptionHeadless client(events, config);
+    ClientRedemptionHeadless client(event_manager, config);
 
     return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }

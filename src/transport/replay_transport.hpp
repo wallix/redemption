@@ -41,7 +41,7 @@ public:
     enum class FirstPacket : bool { DisableTimer, EnableTimer };
 
     ReplayTransport(
-        const char* fname, TimeBase& time_base,
+        const char* fname, CRef<TimeBase> time_base,
         FdType fd_type = FdType::Timer,
         FirstPacket first_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
@@ -96,7 +96,7 @@ private:
 private:
     long long count_packet = 0;
 
-    TimeBase& time_base;
+    TimeBase const& time_base;
     std::chrono::milliseconds start_time;
 
     InFileTransport in_file;

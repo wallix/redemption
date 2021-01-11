@@ -184,15 +184,15 @@ int main(int argc, char** argv)
     ScopedSslInit scoped_ssl;
 
     ClientFront front(client_info.screen_info, verbose & 0x8000'0000);
-    EventContainer events;
-    events.set_current_time(tvtime());
+    EventManager event_manager;
+    event_manager.set_current_time(tvtime());
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
         Transport* trans = &mod_trans;
         if (!record_output.empty()) {
             RecorderTransport& recorder = recorder_trans.emplace(
-                mod_trans, events.time_base, record_output.c_str());
+                mod_trans, event_manager.get_time_base(), record_output.c_str());
             if (ini_file.empty()) {
                 recorder.add_info({});
             }
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
             trans = &recorder;
         }
         auto mod = create_mod(*trans);
-        return run_test_client(is_vnc ? "VNC" : "RDP", events, *mod,
+        return run_test_client(is_vnc ? "VNC" : "RDP", event_manager, *mod,
             inactivity_time_ms, max_time_ms, screen_output);
     };
 
@@ -233,7 +233,7 @@ int main(int argc, char** argv)
             return new_mod_vnc(
                 trans
               , gdi::null_gd()
-              , events
+              , event_manager.get_events()
               , session_log
               , username.c_str()
               , password.c_str()
@@ -303,7 +303,7 @@ int main(int argc, char** argv)
                 trans,
                 gdi::null_gd(),
                 osd,
-                events,
+                event_manager.get_events(),
                 session_log,
                 front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,

@@ -149,7 +149,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     // To always get the same client random, in tests
     LCGRandom gen;
     NullLicenseStore license_store;
-    EventContainer events;
+    EventManager event_manager;
+    auto& events = event_manager.get_events();
     Inifile ini;
     NullSessionLog session_log;
     const ChannelsAuthorizations channels_authorizations{"rdpsnd_audio_output", ""};
@@ -167,11 +168,11 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
-    events.queue[0]->alarm.fd = 0;
-    events.execute_events([](int /*fd*/){ return false; }, false);
-    events.set_current_time({1, 0});
-    for (int count=0; count < 100 && !events.queue.empty(); ++count) {
-        events.execute_events([](int){return true;}, false);
+    detail::ProtectedEventContainer::get_events(events)[0]->alarm.fd = 0;
+    event_manager.execute_events([](int /*fd*/){ return false; }, false);
+    event_manager.set_current_time({1, 0});
+    for (int count=0; count < 100 && !event_manager.is_empty(); ++count) {
+        event_manager.execute_events([](int){return true;}, false);
     }
 }
 
