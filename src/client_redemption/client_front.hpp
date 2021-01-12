@@ -96,7 +96,7 @@ enum class ExecuteEventResult : char
 inline ExecuteEventResult execute_events(
     char const* type,
     EventManager& event_manager,
-    std::chrono::milliseconds timeout)
+    std::chrono::microseconds timeout)
 {
     timeval now = tvtime();
     int max = 0;
@@ -170,14 +170,13 @@ inline int run_connection_test(
 inline int wait_for_screenshot(
     char const* type,
     EventManager& event_manager,
-    std::chrono::milliseconds inactivity_time,
-    std::chrono::milliseconds max_time)
+    std::chrono::microseconds inactivity_time,
+    std::chrono::microseconds max_time)
 {
-    auto const time_start = ustime();
+    auto const time_start = tvtime();
 
     for (;;) {
-        auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            ustime() - time_start);
+        auto const elapsed = tvtime() - time_start;
 
         if (elapsed >= max_time) {
             return 0;

@@ -488,7 +488,7 @@ private:
         (void)cursor_y;
         (void)ignore_frame_in_timeval;
         std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
-        std::chrono::microseconds const diff {difftimeval(now, this->last_snapshot)};
+        std::chrono::microseconds const diff {now - this->last_snapshot};
 
         if (diff < time_to_wait && this->kbd_stream.get_offset() < 8 * sizeof(uint32_t)) {
             return time_to_wait;
@@ -757,7 +757,7 @@ public:
         (void)x;
         (void)y;
         (void)ignore_frame_in_timeval;
-        std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
+        std::chrono::microseconds const duration = now - this->start_capture;
         std::chrono::microseconds const interval = this->frame_interval;
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
@@ -839,7 +839,7 @@ public:
         if (this->enable_rt_display) {
             return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
         }
-        std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
+        std::chrono::microseconds const duration = now - this->start_capture;
         std::chrono::microseconds const interval = this->frame_interval;
         return interval - duration % interval;
     }
@@ -1286,7 +1286,7 @@ public:
     Microseconds periodic_snapshot(
         const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
-        std::chrono::microseconds const diff {difftimeval(now, this->last_ocr)};
+        std::chrono::microseconds const diff {now - this->last_ocr};
 
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;

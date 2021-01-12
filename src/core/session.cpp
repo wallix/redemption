@@ -1240,7 +1240,7 @@ public:
             bool can_be_start_capture(bool force_capture, SessionLogApi& session_log) override
             {
                 if (*this->target_connection_start_time_ptr != timeval{}) {
-                    auto elapsed = difftimeval(tvtime(), *this->target_connection_start_time_ptr);
+                    auto elapsed = tvtime() - *this->target_connection_start_time_ptr;
                     this->ini_ptr->set_acl<cfg::globals::target_connection_time>(
                         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
                     *this->target_connection_start_time_ptr = {};
@@ -1277,7 +1277,7 @@ public:
 
                     this->ini.set_acl<cfg::globals::front_connection_time>(
                         std::chrono::duration_cast<std::chrono::milliseconds>(
-                            difftimeval(tvtime(), sck_start_time)));
+                            tvtime() - sck_start_time));
                 }
                 else {
                     this->ini.set<cfg::context::auth_error_message>("No authentifier available");

@@ -81,6 +81,23 @@ RED_AUTO_TEST_CASE(TestOps)
     RED_TEST((timeval{1, 6} - timeval{0, 2}) ==  1'000'004us);
     RED_TEST((timeval{5, 6} - timeval{2, 2}) ==  3'000'004us);
     RED_TEST((timeval{3, 0} - timeval{2, 999'999}) ==    1us);
+    RED_TEST((timeval{3, 0} - timeval{0, 1'999'999}) == 1'000'001us);
+    RED_TEST((timeval{3, 0} - timeval{0, 4'999'999}) == -1'999'999us);
+
+    RED_TEST((timeval{123, 456'789} + 1us) == (timeval{123, 456'790}));
+    RED_TEST((timeval{123, 456'789} + 600'000us) == (timeval{124, 56'789}));
+    RED_TEST((timeval{123, 456'789} + 1'900ms) == (timeval{125, 356'789}));
+    RED_TEST((timeval{123, 456'789} + 1'234'567us) == (timeval{124, 691'356}));
+    RED_TEST((timeval{123, 456'789} + 1'800'000us) == (timeval{125, 256'789}));
+    RED_TEST((timeval{123, 1'456'789} + 1'800'000us) == (timeval{126, 256'789}));
+
+    auto as_ref = [](timeval&& tv) -> timeval& { return tv; };
+    RED_TEST((as_ref(timeval{123, 456'789}) += 1us) == (timeval{123, 456'790}));
+    RED_TEST((as_ref(timeval{123, 456'789}) += 600'000us) == (timeval{124, 56'789}));
+    RED_TEST((as_ref(timeval{123, 456'789}) += 1'900ms) == (timeval{125, 356'789}));
+    RED_TEST((as_ref(timeval{123, 456'789}) += 1'234'567us) == (timeval{124, 691'356}));
+    RED_TEST((as_ref(timeval{123, 456'789}) += 1'800'000us) == (timeval{125, 256'789}));
+    RED_TEST((as_ref(timeval{123, 1'456'789}) += 1'800'000us) == (timeval{126, 256'789}));
 
     RED_TEST(to_timeval(10s) == (timeval{10, 0}));
     RED_TEST(to_timeval(10ms) == (timeval{0, 10'000}));
@@ -89,16 +106,9 @@ RED_AUTO_TEST_CASE(TestOps)
     RED_TEST(to_timeval(123'456'789us) == (timeval{123, 456'789}));
     RED_TEST(to_timeval(123'456'789us) == (timeval{123, 456'789}));
 
-    RED_TEST((timeval{123, 456'789} + 1us) == (timeval{123, 456'790}));
-    RED_TEST((timeval{123, 456'789} + 600'000us) == (timeval{124, 56'789}));
-    RED_TEST((timeval{123, 456'789} + 1'900ms) == (timeval{125, 356'789}));
-    RED_TEST((timeval{123, 456'789} + 1'234'567us) == (timeval{124, 691'356}));
-    RED_TEST((timeval{123, 456'789} + 1'800'000us) == (timeval{125, 256'789}));
+    RED_TEST(to_ms(timeval{2, 44}) == 2'000ms);
+    RED_TEST(to_ms(timeval{2, 1'005'000}) == 3'005ms);
 
-    auto temp = [](timeval&& tv) -> timeval& { return tv; };
-    RED_TEST((temp(timeval{123, 456'789}) += 1us) == (timeval{123, 456'790}));
-    RED_TEST((temp(timeval{123, 456'789}) += 600'000us) == (timeval{124, 56'789}));
-    RED_TEST((temp(timeval{123, 456'789}) += 1'900ms) == (timeval{125, 356'789}));
-    RED_TEST((temp(timeval{123, 456'789}) += 1'234'567us) == (timeval{124, 691'356}));
-    RED_TEST((temp(timeval{123, 456'789}) += 1'800'000us) == (timeval{125, 256'789}));
+    RED_TEST(ustime(timeval{2, 44}) == 2'000'044us);
+    RED_TEST(ustime(timeval{2, 1'005'000}) == 3'005'000us);
 }

@@ -257,7 +257,7 @@ Microseconds VideoCaptureCtx::snapshot(
     video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/
 )
 {
-    std::chrono::microseconds tick { difftimeval(now, this->start_video_capture) };
+    std::chrono::microseconds tick { now - this->start_video_capture };
     std::chrono::microseconds const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
         if (!this->has_frame_marker) {
@@ -558,7 +558,7 @@ Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
 {
     Microseconds ret;
 
-    auto const duration = difftimeval(now, this->first_image_start_capture);
+    auto const duration = now - this->first_image_start_capture;
     auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
     if (duration >= interval) {
         auto video_interval = first_image_impl.video_sequencer.get_interval();
@@ -718,7 +718,7 @@ Microseconds SequencedVideoCaptureImpl::VideoSequencer::periodic_snapshot(
     const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
     assert(this->break_interval.count());
-    auto const interval = difftimeval(now, this->start_break);
+    auto const interval = now - this->start_break;
     if (interval >= this->break_interval) {
         this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
         this->start_break = now;

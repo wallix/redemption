@@ -352,7 +352,7 @@ public:
 private:
     [[nodiscard]] std::chrono::microseconds elapsed_time() const
     {
-        return ustime(this->timer) - ustime(this->last_sent_timer);
+        return this->timer - this->last_sent_timer;
     }
 
 protected:
@@ -798,19 +798,19 @@ public:
 
             this->recorder.mouse(x, y);
 
-            if (difftimeval(now, this->start_native_capture)
-                    >= this->inter_frame_interval_native_capture) {
+            if (now - this->start_native_capture >= this->inter_frame_interval_native_capture) {
                 this->recorder.timestamp(now);
                 this->time_to_wait = this->inter_frame_interval_native_capture;
                 this->start_native_capture = now;
-                if ((difftimeval(now, this->start_break_capture) >=
-                     this->inter_frame_interval_start_break_capture)) {
+                if (now - this->start_break_capture
+                    >= this->inter_frame_interval_start_break_capture
+                ) {
                     this->recorder.breakpoint();
                     this->start_break_capture = now;
                 }
             }
             else {
-                this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
+                this->time_to_wait = this->inter_frame_interval_native_capture - (now - this->start_native_capture);
             }
             return std::chrono::microseconds{this->time_to_wait};
         }

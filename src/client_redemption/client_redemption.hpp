@@ -313,7 +313,7 @@ public:
             this->socket.reset();
         }
 
-        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+        std::chrono::microseconds duration = tvtime() - this->start_win_session_time;
         uint64_t movie_len = duration.count() / 1000;
 
         time_t now;
@@ -643,13 +643,13 @@ public:
         if (!this->secondary_connection_finished) {
             this->secondary_connection_finished = true;
 
-            std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
+            std::chrono::microseconds prim_duration = this->start_wab_session_time - this->start_connection_time;
             long prim_len = prim_duration.count() / 1000;
             LOG(LOG_INFO, "primary connection length = %ld ms", prim_len);
 
             this->start_win_session_time = tvtime();
 
-            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+            std::chrono::microseconds sec_duration = this->start_win_session_time - this->start_wab_session_time;
             long sec_len = sec_duration.count() / 1000;
             time_t now;
             time(&now);

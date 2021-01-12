@@ -120,14 +120,16 @@ private:
     struct difftimer {
         std::chrono::microseconds t = std::chrono::microseconds::zero();
 
-        std::chrono::microseconds tick() {
+        std::chrono::microseconds tick()
+        {
             std::chrono::microseconds ret = this->t;
-            this->t = ustime();
+            this->update();
             return this->t - ret;
         }
 
-        void update() {
-            this->t = ustime();
+        void update()
+        {
+            this->t = ustime(tvtime());
         }
     } click_interval {};
 

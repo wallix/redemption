@@ -493,7 +493,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
 
                 this->send_UnlockPDU(0);
 
-                std::chrono::microseconds time = difftimeval(tvtime(), this->paste_data_request_time);
+                std::chrono::microseconds time = tvtime() - this->paste_data_request_time;
                 long duration = time.count();
                 LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
             }
@@ -662,7 +662,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
                                 "CLIENT >> CB Channel: File Contents Request PDU SIZE ");
                         }
 
-                        std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
+                        std::chrono::microseconds time  = tvtime() - this->paste_data_request_time;
                         long duration = time.count();
                         LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len, duration);
 

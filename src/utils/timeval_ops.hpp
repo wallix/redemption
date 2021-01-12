@@ -31,44 +31,38 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 using namespace std::chrono_literals; // NOLINT
 REDEMPTION_DIAGNOSTIC_POP
 
-inline bool operator<(const timeval & a, const timeval & b) noexcept
+inline bool operator<(timeval const& a, timeval const& b) noexcept
 {
-    // return ustime(a) < ustime(b)
     return a.tv_sec < b.tv_sec
        || (a.tv_sec == b.tv_sec
         && a.tv_usec < b.tv_usec);
 }
 
-inline bool operator==(const timeval & a, const timeval & b) noexcept
+inline bool operator==(timeval const& a, timeval const& b) noexcept
 {
     return a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec;
 }
 
-inline bool operator!=(const timeval & a, const timeval & b) noexcept
+inline bool operator!=(timeval const& a, timeval const& b) noexcept
 {
     return !(a == b);
 }
 
-inline bool operator>(const timeval & a, const timeval & b) noexcept
+inline bool operator>(timeval const& a, timeval const& b) noexcept
 {
     return b < a;
 }
 
-inline bool operator<=(const timeval & a, const timeval & b) noexcept
+inline bool operator<=(timeval const& a, timeval const& b) noexcept
 {
     return !(b < a);
 }
 
-inline bool operator>=(const timeval & a, const timeval & b) noexcept
+inline bool operator>=(timeval const& a, timeval const& b) noexcept
 {
     return !(a < b);
 }
 
-inline std::chrono::microseconds operator-(timeval const & ultimatum, timeval const & starttime)
-{
-    return std::chrono::seconds(ultimatum.tv_sec - starttime.tv_sec)
-         + std::chrono::microseconds(ultimatum.tv_usec - starttime.tv_usec);
-}
 
 inline timeval to_timeval(std::chrono::seconds const& seconds)
 {
@@ -94,28 +88,17 @@ inline timeval to_timeval(std::chrono::microseconds const& usec)
     return tv;
 }
 
-inline timeval operator+(timeval const & a, std::chrono::seconds const& seconds)
+
+inline std::chrono::milliseconds to_ms(timeval const& tv)
 {
-    timeval result = a;
-    result.tv_sec += seconds.count();
-    return result;
+    return std::chrono::milliseconds(tv.tv_sec*1000LL + tv.tv_usec/1000L);
 }
 
-inline timeval operator+(timeval const & a, std::chrono::milliseconds const& ms)
+inline std::chrono::microseconds ustime(const timeval & now)
 {
-    std::chrono::microseconds usec = std::chrono::seconds(a.tv_sec)
-                                   + std::chrono::microseconds(a.tv_usec)
-                                   + ms;
-    return to_timeval(usec);
+    return std::chrono::microseconds(now.tv_sec*1000000LL + now.tv_usec);
 }
 
-inline timeval operator+(timeval const & a, std::chrono::microseconds const& us)
-{
-    std::chrono::microseconds usec = std::chrono::seconds(a.tv_sec)
-                                   + std::chrono::microseconds(a.tv_usec)
-                                   + us;
-    return to_timeval(usec);
-}
 
 inline timeval& operator+=(timeval& tv, std::chrono::seconds const& seconds)
 {
@@ -137,4 +120,29 @@ inline timeval& operator+=(timeval& tv, std::chrono::microseconds const& us)
     tv.tv_sec += usec / 1'000'000;
     tv.tv_usec = usec % 1'000'000;
     return tv;
+}
+
+inline timeval operator+(timeval tv, std::chrono::seconds const& seconds)
+{
+    tv += seconds;
+    return tv;
+}
+
+inline timeval operator+(timeval tv, std::chrono::milliseconds const& ms)
+{
+    tv += ms;
+    return tv;
+}
+
+inline timeval operator+(timeval tv, std::chrono::microseconds const& us)
+{
+    tv += us;
+    return tv;
+}
+
+
+inline std::chrono::microseconds operator-(timeval const& ultimatum, timeval const& starttime)
+{
+    return std::chrono::seconds(ultimatum.tv_sec - starttime.tv_sec)
+         + std::chrono::microseconds(ultimatum.tv_usec - starttime.tv_usec);
 }

@@ -394,7 +394,7 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
 
     this->clipboard_owned_by_client = true;
 
-    this->clipboard_last_client_data_timestamp = ustime();
+    this->clipboard_last_client_data_timestamp = ustime(this->events_guard.get_current_time());
 }
 
 

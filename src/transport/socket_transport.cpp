@@ -393,7 +393,7 @@ namespace
                     data += res;
                     if (remaining_len) {
                         fd_set fds;
-                        struct timeval time = addusectimeval(recv_timeout, {0, 0});
+                        struct timeval time = to_timeval(recv_timeout);
                         io_fd_zero(fds);
                         io_fd_set(sck, fds);
                         int ret = ::select(sck + 1, &fds, nullptr, nullptr, &time);

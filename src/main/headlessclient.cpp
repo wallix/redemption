@@ -119,7 +119,7 @@ static int run_mod(
     ClientCallback & callback,
     timeval start_win_session_time)
 {
-    const timeval time_stop = addusectimeval(config.time_out_disconnection, tvtime());
+    const timeval time_stop = tvtime() + config.time_out_disconnection;
     const auto time_mark = 50ms;
 
     if (callback.get_mod()) {
@@ -153,7 +153,7 @@ static int run_mod(
 
             // send key to keep alive
             if (config.keep_alive_freq) {
-                std::chrono::microseconds duration = difftimeval(tvtime(), start_win_session_time);
+                std::chrono::microseconds duration = tvtime() - start_win_session_time;
 
                 if ( ((duration.count() / 1000000) % config.keep_alive_freq) == 0) {
                     callback.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
