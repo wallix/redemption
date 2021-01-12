@@ -266,11 +266,11 @@ public:
         {
             Fn fn;
 
-            template<class RootEvent>
+            template<class RealEvent>
             Event::Actions::Sig* to_ptr_func(Fn const& /*fn*/)
             {
                 return [](Event& e){
-                    static_cast<Function&>(static_cast<RootEvent&>(e)).fn(e);
+                    static_cast<Function&>(static_cast<RealEvent&>(e)).fn(e);
                 };
             }
         };
