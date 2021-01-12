@@ -1,3 +1,9 @@
+redemption (8.0.26e%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Add parameter to enable/disable support Monitor Layout PDU.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 12 Jan 2021 20:58:20 +0200
+
 redemption (8.0.26d%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Process Server Save Session Info PDU in WAITING_SYNCHRONIZE state of mod_rdp.
