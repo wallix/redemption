@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-constexpr authid_t MAX_AUTHID = authid_t(200);
+constexpr authid_t MAX_AUTHID = authid_t(201);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -101,6 +101,7 @@ constexpr array_view_const_char const authstr[] = {
     "mod_rdp:enable_restricted_admin_mode"_av,
     "mod_rdp:force_smartcard_authentication"_av,
     "mod_rdp:mode_console"_av,
+    "mod_rdp:bogus_monitor_layout_treatment"_av,
     "clipboard_up"_av,
     "clipboard_down"_av,
     "vnc_server_clipboard_encoding_type"_av,

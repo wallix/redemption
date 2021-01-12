@@ -197,6 +197,7 @@ namespace cfg {
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
         struct mode_console;
+        struct bogus_monitor_layout_treatment;
     };
 
     struct mod_vnc {

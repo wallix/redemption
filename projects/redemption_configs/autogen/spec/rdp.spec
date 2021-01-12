@@ -120,6 +120,9 @@ force_smartcard_authentication = boolean(default=False)
 #   forbid: Block Console mode request from client.
 mode_console = option('allow', 'force', 'forbid', default='allow')
 
+# Experimental!
+bogus_monitor_layout_treatment = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced

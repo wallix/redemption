@@ -822,6 +822,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #force_smartcard_authentication = 0
 
+# Experimental!
+# value: 0 or 1
+#_hidden
+#bogus_monitor_layout_treatment = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).
