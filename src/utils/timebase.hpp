@@ -19,7 +19,10 @@ Author(s):Christophe Grosjean
 */
 
 #pragma once
+
 #include "utils/difftimeval.hpp"
+
+#include <cassert>
 
 struct TimeBase
 {

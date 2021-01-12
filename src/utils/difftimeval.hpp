@@ -107,42 +107,6 @@ static inline timeval how_long_to_wait(const timeval & alarm, const timeval & no
     }
     return res;
 }
-
-
-//static inline timeval absdifftimeval(const timeval & endtime, const timeval & starttime) {
-//    // return | endtime - starttime |
-//    timeval res;
-//    if (!lessthantimeval(endtime, starttime)) {
-//        bool carry = endtime.tv_usec < starttime.tv_usec;
-//        res.tv_usec = endtime.tv_usec - starttime.tv_usec + carry*1000000L;
-//        res.tv_sec  = endtime.tv_sec  - starttime.tv_sec  - carry;
-//    }
-//    else {
-//        //TODO infinite loop if endtime = starttime
-//        res = absdifftimeval(starttime, endtime);
-//    }
-//    return res;
-//}
-
-//static inline timeval multtimeval(uint64_t mult, const timeval & tv) {
-//    timeval res;
-//    uint64_t total_usec = tv.tv_usec * mult;
-//    res.tv_sec  = total_usec / 1000000L;
-//    res.tv_usec = total_usec - (res.tv_sec * 1000000L);
-//    res.tv_sec += tv.tv_sec * mult;
-//    return res;
-//}
-
-//static inline timeval mintimeval(const timeval & time1, const timeval & time2) {
-//    // return min(time1,time2)
-//    return lessthantimeval(time1, time2)?time1:time2;
-//}
 /**
  * @}
  */
-
-inline timeval & operator+=(timeval& a, std::chrono::microseconds const& usec) /*NOLINT*/
-{
-    a = addusectimeval(usec, a);
-    return a;
-}

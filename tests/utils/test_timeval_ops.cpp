@@ -20,8 +20,85 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
+#include "test_only/test_framework/redemption_unit_tests.hpp"
+
 #include "utils/timeval_ops.hpp"
 
-// TEST missing
-int main()
-{}
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator<<(std::basic_ostream<Ch, Tr> & out, timeval const & tv)
+{
+    return out << "{" << tv.tv_sec << ", " << tv.tv_usec << "}";
+}
+
+namespace std /*NOLINT*/
+{
+    // this is a hack...
+    template<class Ch, class Tr>
+    std::basic_ostream<Ch, Tr> &
+    operator<<(std::basic_ostream<Ch, Tr> & out, std::chrono::microseconds const & duration)
+    {
+        return out << duration.count();
+    }
+} // namespace std
+
+RED_AUTO_TEST_CASE(TestOps)
+{
+    RED_TEST(!(timeval{1, 6} == timeval{2, 6}));
+    RED_TEST((timeval{1, 6} == timeval{1, 6}));
+
+    RED_TEST((timeval{1, 6} != timeval{2, 6}));
+    RED_TEST(!(timeval{1, 6} != timeval{1, 6}));
+
+    RED_TEST((timeval{1, 6} < timeval{2, 6}));
+    RED_TEST((timeval{1, 6} < timeval{2, 0}));
+    RED_TEST(!(timeval{1, 6} < timeval{1, 6}));
+    RED_TEST(!(timeval{1, 6} < timeval{1, 0}));
+    RED_TEST(!(timeval{3, 0} < timeval{2, 999'999}));
+
+    RED_TEST((timeval{1, 6} <= timeval{2, 6}));
+    RED_TEST((timeval{1, 6} <= timeval{2, 0}));
+    RED_TEST((timeval{1, 6} <= timeval{1, 6}));
+    RED_TEST(!(timeval{1, 6} <= timeval{1, 0}));
+    RED_TEST(!(timeval{3, 0} <= timeval{2, 999'999}));
+
+    RED_TEST(!(timeval{1, 6} > timeval{2, 6}));
+    RED_TEST(!(timeval{1, 6} > timeval{2, 0}));
+    RED_TEST(!(timeval{1, 6} > timeval{1, 6}));
+    RED_TEST((timeval{1, 6} > timeval{1, 0}));
+    RED_TEST((timeval{3, 0} > timeval{2, 999'999}));
+
+    RED_TEST(!(timeval{1, 6} >= timeval{2, 6}));
+    RED_TEST(!(timeval{1, 6} >= timeval{2, 0}));
+    RED_TEST((timeval{1, 6} >= timeval{1, 6}));
+    RED_TEST((timeval{1, 6} >= timeval{1, 0}));
+    RED_TEST((timeval{3, 0} >= timeval{2, 999'999}));
+
+    RED_TEST((timeval{1, 6} - timeval{1, 8}) ==         -2us);
+    RED_TEST((timeval{1, 6} - timeval{2, 1}) ==   -999'995us);
+    RED_TEST((timeval{1, 6} - timeval{1, 6}) ==          0us);
+    RED_TEST((timeval{1, 6} - timeval{1, 2}) ==          4us);
+    RED_TEST((timeval{1, 6} - timeval{0, 2}) ==  1'000'004us);
+    RED_TEST((timeval{5, 6} - timeval{2, 2}) ==  3'000'004us);
+    RED_TEST((timeval{3, 0} - timeval{2, 999'999}) ==    1us);
+
+    RED_TEST(to_timeval(10s) == (timeval{10, 0}));
+    RED_TEST(to_timeval(10ms) == (timeval{0, 10'000}));
+    RED_TEST(to_timeval(123'456'789ms) == (timeval{123'456, 789'000}));
+    RED_TEST(to_timeval(123'456'789ms) == (timeval{123'456, 789'000}));
+    RED_TEST(to_timeval(123'456'789us) == (timeval{123, 456'789}));
+    RED_TEST(to_timeval(123'456'789us) == (timeval{123, 456'789}));
+
+    RED_TEST((timeval{123, 456'789} + 1us) == (timeval{123, 456'790}));
+    RED_TEST((timeval{123, 456'789} + 600'000us) == (timeval{124, 56'789}));
+    RED_TEST((timeval{123, 456'789} + 1'900ms) == (timeval{125, 356'789}));
+    RED_TEST((timeval{123, 456'789} + 1'234'567us) == (timeval{124, 691'356}));
+    RED_TEST((timeval{123, 456'789} + 1'800'000us) == (timeval{125, 256'789}));
+
+    auto temp = [](timeval&& tv) -> timeval& { return tv; };
+    RED_TEST((temp(timeval{123, 456'789}) += 1us) == (timeval{123, 456'790}));
+    RED_TEST((temp(timeval{123, 456'789}) += 600'000us) == (timeval{124, 56'789}));
+    RED_TEST((temp(timeval{123, 456'789}) += 1'900ms) == (timeval{125, 356'789}));
+    RED_TEST((temp(timeval{123, 456'789}) += 1'234'567us) == (timeval{124, 691'356}));
+    RED_TEST((temp(timeval{123, 456'789}) += 1'800'000us) == (timeval{125, 256'789}));
+}
