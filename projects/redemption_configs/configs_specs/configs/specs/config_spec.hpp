@@ -486,6 +486,8 @@ void config_spec_definition(Writer && W)
                          "Smartcard device must be available on client desktop.\n"
                          "Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."},
                  set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "bogus_monitor_layout_treatment", desc{"Experimental!"}, set(false));
     });
 
     W.section("metrics", [&]

@@ -105,6 +105,9 @@ enable_restricted_admin_mode = boolean(default=False)
 # Smartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service.
 force_smartcard_authentication = boolean(default=False)
 
+# Experimental!
+bogus_monitor_layout_treatment = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (is in millisecond)
 #_advanced

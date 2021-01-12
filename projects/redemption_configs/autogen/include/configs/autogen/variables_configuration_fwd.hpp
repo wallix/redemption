@@ -191,6 +191,7 @@ namespace cfg {
         struct accept_monitor_layout_change_if_capture_is_not_started;
         struct enable_restricted_admin_mode;
         struct force_smartcard_authentication;
+        struct bogus_monitor_layout_treatment;
     };
 
     struct mod_vnc {

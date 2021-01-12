@@ -689,6 +689,10 @@ enable_restricted_admin_mode = boolean(default=False)
 #_hidden
 force_smartcard_authentication = boolean(default=False)
 
+# Experimental!
+#_hidden
+bogus_monitor_layout_treatment = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

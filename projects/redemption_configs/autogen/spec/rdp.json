@@ -168,6 +168,12 @@
           "description": "NLA will be disabled.\nTarget must be set for interactive login, otherwise server connection may not be guaranteed.\nSmartcard device must be available on client desktop.\nSmartcard redirection (Proxy option RDP_SMARTCARD) must be enabled on service."
         },
         {
+          "name": "bogus_monitor_layout_treatment",
+          "type": "bool",
+          "default": false,
+          "description": "Experimental!"
+        },
+        {
           "name": "remote_programs_disconnect_message_delay",
           "type": "integer",
           "min": 3000,
