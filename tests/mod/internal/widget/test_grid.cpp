@@ -28,6 +28,7 @@
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/flat_button.hpp"
+#include "keyboard/keymap2.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/grid/"

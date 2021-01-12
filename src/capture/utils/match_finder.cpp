@@ -27,7 +27,6 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/splitter.hpp"
 #include "utils/pattutils.hpp"
-#include "utils/difftimeval.hpp"
 
 
 namespace utils

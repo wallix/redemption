@@ -22,6 +22,7 @@
 
 
 #include "utils/log.hpp"
+#include "utils/monotonic_clock.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
 #include <QtCore/QTimer>

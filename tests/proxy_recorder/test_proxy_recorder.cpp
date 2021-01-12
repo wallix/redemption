@@ -26,7 +26,6 @@
 #include "proxy_recorder/proxy_recorder.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"
 #include "utils/timebase.hpp"
-#include "utils/difftimeval.hpp"
 
 // TODO copy of test_transport::hexdump
 // struct xxhexdump

@@ -27,7 +27,6 @@
 #include "system/ssl_md4.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/timebase.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
 
 #include "core/RDP/nla/ntlm_message.hpp"

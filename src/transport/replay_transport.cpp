@@ -21,7 +21,6 @@
 
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/difftimeval.hpp"
 #include "replay_transport.hpp"
 #include "recorder_transport.hpp"
 #include "utils/timebase.hpp"

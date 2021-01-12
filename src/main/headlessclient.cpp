@@ -31,6 +31,7 @@
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #pragma GCC diagnostic pop
 

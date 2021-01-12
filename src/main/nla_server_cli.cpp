@@ -42,6 +42,7 @@
 #include "utils/redemption_info_version.hpp"
 #include "utils/utf.hpp"
 #include "system/scoped_ssl_init.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <vector>
 #include <chrono>

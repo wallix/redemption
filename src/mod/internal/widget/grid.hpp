@@ -101,21 +101,12 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    void draw_row(uint16_t row_index, Rect const clip);
-
     [[nodiscard]] uint16_t get_column_width(uint16_t column_index) const;
 
     void set_column_width(uint16_t column_index, uint16_t width);
 
-    [[nodiscard]] uint16_t get_nb_rows() const
-    {
-        return this->widgets.nb_rows;
-    }
-
-    [[nodiscard]] uint16_t get_nb_columns() const
-    {
-        return this->widgets.nb_columns;
-    }
+    [[nodiscard]] uint16_t get_nb_rows() const;
+    [[nodiscard]] uint16_t get_nb_columns() const;
 
     writable_array_view<std::unique_ptr<Widget>> add_line();
 
@@ -135,8 +126,6 @@ public:
 
     void set_selection(uint16_t row_index);
 
-    void refresh_selected();
-
     void focus(int reason) override;
 
     void blur() override;
@@ -144,6 +133,10 @@ public:
     void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override;
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) override;
+
+private:
+    void refresh_selected();
+    void draw_row(uint16_t row_index, Rect const clip);
 };
 
 struct ColumnWidthStrategy

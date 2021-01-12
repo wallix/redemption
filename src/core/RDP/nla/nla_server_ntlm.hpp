@@ -28,7 +28,6 @@
 #include "system/ssl_sha256.hpp"
 
 #include "utils/genrandom.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
 #include "utils/stream.hpp"
 #include "utils/timebase.hpp"

@@ -18,12 +18,11 @@
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#pragma once
-
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "mod/internal/widget/grid.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/difftimeval.hpp"
+#include "utils/monotonic_clock.hpp"
 
 
 #define COLUMN_WIDTH_CORRECTOR 6
@@ -92,7 +91,7 @@ std::chrono::microseconds WidgetGrid::difftimer::tick()
 
 void WidgetGrid::difftimer::update()
 {
-    this->t = ustime(tvtime());
+    this->t = get_monotonic_ms_clock();
 }
 
 WidgetGrid::WidgetGrid(

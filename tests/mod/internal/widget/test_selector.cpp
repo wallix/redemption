@@ -24,6 +24,7 @@
 
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/screen.hpp"
+#include "keyboard/keymap2.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"

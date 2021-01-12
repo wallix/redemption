@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "utils/difftimeval.hpp"
 #include "utils/fixed_random.hpp"
 #include "core/RDP/nego.hpp"
 #include "proxy_recorder/nla_tee_transport.hpp"

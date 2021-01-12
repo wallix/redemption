@@ -21,7 +21,6 @@
 */
 #pragma once
 
-#include "utils/difftimeval.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/utf.hpp"
 #include "core/RDP/nego.hpp"

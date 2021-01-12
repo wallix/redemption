@@ -39,25 +39,7 @@ WidgetLabelGrid::WidgetLabelGrid(
     , font(font)
 {}
 
-WidgetLabelGrid::~WidgetLabelGrid()
-{
-    this->clean_labels();
-}
-
-void WidgetLabelGrid::clear()
-{
-    this->clean_labels();
-    WidgetGrid::clear();
-}
-
-void WidgetLabelGrid::clean_labels()
-{
-    for (int i = 0; i < this->get_nb_columns(); i++) {
-        for (int j = 0; j < this->get_nb_rows(); j++) {
-            this->remove_widget(j, i);
-        }
-    }
-}
+WidgetLabelGrid::~WidgetLabelGrid() = default;
 
 void WidgetLabelGrid::add_line(array_view<chars_view> entries)
 {

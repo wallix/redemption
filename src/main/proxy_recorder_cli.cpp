@@ -30,6 +30,7 @@
 #include "utils/select.hpp"
 #include "utils/cli.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <iostream>
 #include <csignal>

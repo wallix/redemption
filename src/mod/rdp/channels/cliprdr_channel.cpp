@@ -31,7 +31,6 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/unordered_erase.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
-#include "utils/timeval_ops.hpp"
 #include "utils/translation.hpp"
 #include "gdi/osd_api.hpp"
 

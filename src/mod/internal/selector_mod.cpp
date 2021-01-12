@@ -21,6 +21,7 @@
 #include "mod/internal/selector_mod.hpp"
 #include "configs/config.hpp"
 #include "gdi/text_metrics.hpp"
+#include "keyboard/keymap2.hpp"
 
 #include <charconv>
 #include <cassert>

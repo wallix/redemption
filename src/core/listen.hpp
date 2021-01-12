@@ -38,7 +38,6 @@
 #include "utils/select.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
-#include "utils/timeval_ops.hpp"
 #include "cxx/diagnostic.hpp"
 
 #include <chrono>
@@ -159,7 +158,7 @@ create_ip_dual_stack_server(int port,
     noexcept
 {
     unique_fd sck(socket(AF_INET6, SOCK_STREAM, 0));
-    
+
     if (!sck)
     {
         LOG(LOG_ERR, "socket() failed : %s", strerror(errno));
@@ -201,9 +200,9 @@ create_ip_dual_stack_server(int port,
         sck.fd(),
         ip_address,
         port);
-    
+
     /* Turn off IPV6_V6ONLY option if
-       operating system has net.ipv6.bindv6only equal to 1 */ 
+       operating system has net.ipv6.bindv6only equal to 1 */
     if (int allow_ipv6_only = 0; setsockopt(sck.fd(),
                                             IPPROTO_IPV6,
                                             IPV6_V6ONLY,

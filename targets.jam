@@ -176,6 +176,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/flat_login.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
@@ -2405,6 +2406,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/flat_login.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
@@ -2566,6 +2568,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/flat_login.o
   <library>src/mod/internal/widget/flat_wab_close.o
   <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/group_box.o
   <library>src/mod/internal/widget/image.o
   <library>src/mod/internal/widget/label.o
@@ -3263,6 +3266,7 @@ test-run tests/mod/internal/test_selector_mod :
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
   <library>src/mod/internal/widget/language_button.o
@@ -3796,6 +3800,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
@@ -3813,6 +3818,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>tests/includes/test_only/gdi/test_graphic.o
   <library>tests/includes/test_only/test_framework/check_img.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/grid.cpp
   <covfile>src/mod/internal/widget/grid.hpp
 ;
 test-run tests/mod/internal/widget/test_group_box :
@@ -3934,6 +3940,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
   <library>src/mod/internal/widget/multiline.o
@@ -4170,6 +4177,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/labelgrid.o
   <library>src/mod/internal/widget/multiline.o
@@ -5556,11 +5564,6 @@ test-run tests/utils/test_diffiehellman :
 :
   <covfile>src/utils/diffiehellman.hpp
 ;
-test-run tests/utils/test_difftimeval :
-  $(REDEMPTION_TEST_PATH)/utils/test_difftimeval.cpp
-:
-  <covfile>src/utils/difftimeval.hpp
-;
 test-run tests/utils/test_drawable :
   $(REDEMPTION_TEST_PATH)/utils/test_drawable.cpp
 :
@@ -5652,6 +5655,11 @@ test-run tests/utils/test_log_siem :
   <library>src/utils/strutils.o
   <covfile>src/utils/log_siem.cpp
   <covfile>src/utils/log_siem.hpp
+;
+test-run tests/utils/test_monotonic_clock :
+  $(REDEMPTION_TEST_PATH)/utils/test_monotonic_clock.cpp
+:
+  <covfile>src/utils/monotonic_clock.hpp
 ;
 test-run tests/utils/test_netutils :
   $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
@@ -5894,6 +5902,7 @@ obj src/mod/internal/widget/flat_interactive_target.o : $(REDEMPTION_SRC_PATH)/m
 obj src/mod/internal/widget/flat_login.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_login.cpp ;
 obj src/mod/internal/widget/flat_wab_close.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wab_close.cpp ;
 obj src/mod/internal/widget/flat_wait.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_wait.cpp ;
+obj src/mod/internal/widget/grid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/grid.cpp ;
 obj src/mod/internal/widget/group_box.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/group_box.cpp ;
 obj src/mod/internal/widget/image.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/image.cpp ;
 obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
@@ -6285,7 +6294,6 @@ alias test_compression_transport_builder : tests/utils/test_compression_transpor
 alias test_contiguous_sub_rect_f : tests/utils/test_contiguous_sub_rect_f ;
 alias test_d3des : tests/utils/test_d3des ;
 alias test_diffiehellman : tests/utils/test_diffiehellman ;
-alias test_difftimeval : tests/utils/test_difftimeval ;
 alias test_drawable : tests/utils/test_drawable ;
 alias test_ellipse : tests/utils/test_ellipse ;
 alias test_fileutils : tests/utils/test_fileutils ;
@@ -6298,6 +6306,7 @@ alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
 alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
+alias test_monotonic_clock : tests/utils/test_monotonic_clock ;
 alias test_netutils : tests/utils/test_netutils ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
@@ -6608,7 +6617,6 @@ alias test_compression_transport_builder.coverage : tests/utils/test_compression
 alias test_contiguous_sub_rect_f.coverage : tests/utils/test_contiguous_sub_rect_f.coverage ;
 alias test_d3des.coverage : tests/utils/test_d3des.coverage ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
-alias test_difftimeval.coverage : tests/utils/test_difftimeval.coverage ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
 alias test_ellipse.coverage : tests/utils/test_ellipse.coverage ;
 alias test_fileutils.coverage : tests/utils/test_fileutils.coverage ;
@@ -6621,6 +6629,7 @@ alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverag
 alias test_load_theme.coverage : tests/utils/test_load_theme.coverage ;
 alias test_log.coverage : tests/utils/test_log.coverage ;
 alias test_log_siem.coverage : tests/utils/test_log_siem.coverage ;
+alias test_monotonic_clock.coverage : tests/utils/test_monotonic_clock.coverage ;
 alias test_netutils.coverage : tests/utils/test_netutils.coverage ;
 alias test_parse.coverage : tests/utils/test_parse.coverage ;
 alias test_parse_server_message.coverage : tests/utils/test_parse_server_message.coverage ;
@@ -7045,7 +7054,6 @@ alias tests/utils.norec :
   tests/utils/test_contiguous_sub_rect_f
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
-  tests/utils/test_difftimeval
   tests/utils/test_drawable
   tests/utils/test_ellipse
   tests/utils/test_fileutils
@@ -7058,6 +7066,7 @@ alias tests/utils.norec :
   tests/utils/test_load_theme
   tests/utils/test_log
   tests/utils/test_log_siem
+  tests/utils/test_monotonic_clock
   tests/utils/test_netutils
   tests/utils/test_parse
   tests/utils/test_parse_server_message

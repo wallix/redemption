@@ -38,6 +38,7 @@
 
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
+#include "utils/timeval_ops.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -49,13 +50,13 @@
 
 #include "utils/bitmap_shrink.hpp"
 #include "utils/colors.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
 #include "utils/timestamp_tracer.hpp"
+#include "utils/monotonic_clock.hpp" // TODO remove this
 
 #include "transport/file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"

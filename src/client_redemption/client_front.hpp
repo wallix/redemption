@@ -24,15 +24,14 @@
 
 #include "utils/log.hpp"
 #include "utils/png.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/file.hpp"
-#include "utils/timebase.hpp"
 #include "utils/select.hpp"
 #include "core/events.hpp"
 #include "core/front_api.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
+#include "utils/monotonic_clock.hpp"
 
 class ClientFront : public FrontAPI
 {

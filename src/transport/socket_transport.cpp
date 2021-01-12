@@ -24,8 +24,8 @@
 #include "utils/netutils.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/select.hpp"
-#include "utils/difftimeval.hpp"
 #include "system/tls_context.hpp"
+#include "utils/timeval_ops.hpp"
 
 #include <vector>
 #include <cstring>

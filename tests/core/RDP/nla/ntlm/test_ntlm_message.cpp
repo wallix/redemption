@@ -31,7 +31,6 @@
 #include "core/RDP/nla/nla_client_ntlm.hpp"
 #include "core/RDP/nla/nla_server_ntlm.hpp"
 #include "utils/sugar/byte_ptr.hpp"
-#include "utils/difftimeval.hpp"
 
 #include "test_only/test_framework/sig.hpp"
 

@@ -43,10 +43,10 @@
 #include "utils/select.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/load_theme.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/local_err_msg.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <cassert>
 #include <cerrno>

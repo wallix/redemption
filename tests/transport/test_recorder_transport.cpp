@@ -27,7 +27,6 @@
 #include "test_only/transport/test_transport.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/timebase.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/select.hpp"
 
 

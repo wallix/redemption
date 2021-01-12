@@ -21,7 +21,6 @@ Author(s): Wallix Team
 #include "mod/internal/replay_mod.hpp"
 
 #include "utils/timebase.hpp"
-#include "utils/timeval_ops.hpp"
 #include "core/events.hpp"
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"

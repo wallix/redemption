@@ -25,12 +25,12 @@
 #include "core/session.hpp"
 #include "core/pid_file.hpp"
 #include "main/version.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
 #include "utils/log_siem.hpp"
 #include "utils/netutils.hpp"
 #include "utils/strutils.hpp"
 #include "utils/ip.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include "configs/config.hpp"
 

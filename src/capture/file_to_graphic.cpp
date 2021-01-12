@@ -38,7 +38,6 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/utf.hpp"
 #include "utils/png.hpp"

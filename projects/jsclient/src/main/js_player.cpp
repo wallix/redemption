@@ -31,7 +31,6 @@ Author(s): Jonathan Poelen
 #include "transport/mwrm_reader.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/timeval_ops.hpp"
 #include "utils/log.hpp"
 

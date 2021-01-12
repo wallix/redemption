@@ -27,12 +27,7 @@
 #include "core/RDP/state_chunk.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/verbose_flags.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/timeval_ops.hpp"
-
-#include <chrono>
-
-#include <sys/time.h> // timeval
 
 
 class Transport;

@@ -41,7 +41,6 @@
 #include "transport/out_meta_sequence_transport.hpp"
 
 #include "utils/compression_transport_builder.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"

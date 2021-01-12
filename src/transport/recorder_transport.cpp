@@ -22,7 +22,6 @@
 
 #include "transport/recorder_transport.hpp"
 #include "utils/timebase.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/stream.hpp"
 
 

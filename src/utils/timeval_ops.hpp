@@ -18,7 +18,6 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-
 #pragma once
 
 #include "cxx/diagnostic.hpp"
@@ -91,12 +90,12 @@ inline timeval to_timeval(std::chrono::microseconds const& usec)
 
 inline std::chrono::milliseconds to_ms(timeval const& tv)
 {
-    return std::chrono::milliseconds(tv.tv_sec*1000LL + tv.tv_usec/1000L);
+    return std::chrono::milliseconds(tv.tv_sec*1000L + tv.tv_usec/1000L);
 }
 
 inline std::chrono::microseconds ustime(const timeval & now)
 {
-    return std::chrono::microseconds(now.tv_sec*1000000LL + now.tv_usec);
+    return std::chrono::microseconds(now.tv_sec*1000000L + now.tv_usec);
 }
 
 

@@ -41,9 +41,6 @@ struct WidgetLabelGrid : public WidgetGrid
 
     ~WidgetLabelGrid() override;
 
-    void clear() override;
-    void clean_labels();
-
     void add_line(array_view<chars_view> entries);
 
     const char * get_cell_text(uint16_t row_index, uint16_t column_index);
