@@ -452,6 +452,8 @@ private:
             }
         };
 
+        rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
+
         switch (next_state)
         {
         case ModuleName::RDP:
@@ -559,7 +561,6 @@ private:
             throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
 
-        rail_client_execute.enable_remote_program(front.get_client_info().remote_program);
         mod_wrapper.set_mod(next_state, mod_pack);
     }
 
