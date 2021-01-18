@@ -15,12 +15,6 @@ if [ "$1" = fast ]; then
     fast=1
 fi
 
-# Cleaning
-#rm -fr cmake_temp
-
-git clean -fd
-git submodule update --init
-
 if [ $fast -eq 0 ]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
