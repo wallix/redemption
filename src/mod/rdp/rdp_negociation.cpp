@@ -96,7 +96,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_status(Status status, std::s
         switch (status)
         {
             case Status::AccessAllowed:
-                log6(LogId::CERTIFICATE_CHECK_SUCCESS, "Connexion to server allowed"_zv);
+                log6(LogId::CERTIFICATE_CHECK_SUCCESS, "Connection to server allowed"_zv);
                 break;
             case Status::CertCreate:
                 log6(LogId::SERVER_CERTIFICATE_NEW, "New X.509 certificate created"_zv);

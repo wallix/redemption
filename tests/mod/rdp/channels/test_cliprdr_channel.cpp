@@ -1475,7 +1475,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     msg_comparator.run(
         TEST_PROCESS { channel_ctx.reset(); },
         TEST_BUF_IF(d.with_validator, Msg::Log6{
-            "FILE_VERIFICATION direction=UP file_name=def status=Connexion closed"_av})
+            "FILE_VERIFICATION direction=UP file_name=def status=Connection closed"_av})
     );
 
     if (fdx_ctx) {

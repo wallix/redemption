@@ -2667,7 +2667,7 @@ ClipboardVirtualChannel::~ClipboardVirtualChannel()
     try {
         using namespace std::string_view_literals;
 
-        auto status = "Connexion closed"sv;
+        auto status = "Connection closed"sv;
 
         for (auto& text_validator : this->text_validator_list) {
             dlpav_report_text(
