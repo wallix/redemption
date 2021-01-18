@@ -24,12 +24,6 @@ update: update targets.jam and others generated files";
     esac
 done
 
-# Cleaning
-#rm -fr cmake_temp
-
-git clean -fd
-git submodule update --init
-
 if [[ $fast -eq 0 ]]; then
     ./tools/c++-analyzer/redemption-analyzer.sh
 fi
