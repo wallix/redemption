@@ -25,6 +25,7 @@ fi
 
 # use libstdc++-8 with clang-8 because version 9 fails with -D_GLIBCXX_DEBUG (ok with clang-9)
 libstdcxx_compact_version=8
+rm -rf libstdc++-compact/
 mkdir -p \
     libstdc++-compact/include/c++ \
     libstdc++-compact/lib/gcc/x86_64-unknown-linux-gnu
