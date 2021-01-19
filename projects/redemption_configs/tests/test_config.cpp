@@ -272,7 +272,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::session_id>());
 
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>());
+    RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>().count());
 
     RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::mod_rdp::mode_console>());
 
@@ -1815,7 +1815,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     // end_date_cnx
     get_acl_field(ini, cfg::context::end_date_cnx::index).set("12345678"_zv);
 
-    RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>());
+    RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>().count());
 
     // mode_console
     get_acl_field(ini, cfg::mod_rdp::mode_console::index).set("forbid"_zv);

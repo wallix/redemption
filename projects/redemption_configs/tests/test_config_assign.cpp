@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::display_message>(false);
     ini.set_acl<cfg::context::duration>(cs);
     ini.set_acl<cfg::context::duration>(s);
-    ini.set<cfg::context::end_date_cnx>(1);
+    ini.set<cfg::context::end_date_cnx>(std::chrono::seconds{1});
     ini.set_acl<cfg::context::formflag>(1);
     ini.set<cfg::context::keepalive>(true);
     ini.set<cfg::context::message>(cs);

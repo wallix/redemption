@@ -4392,7 +4392,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// type: uint32_t <br/>
+    /// type: std::chrono::seconds <br/>
     /// sesman ⇒ proxy <br/>
     /// sesman::name: timeclose <br/>
     /// default: 0 <br/>
@@ -4402,8 +4402,8 @@ namespace cfg
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section20 + 28};
-        using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
+        using type = std::chrono::seconds;
+        using sesman_and_spec_type = std::chrono::seconds;
         using mapped_type = sesman_and_spec_type;
         type value { 0 };
     };
@@ -5809,6 +5809,7 @@ struct context
 , cfg::context::message
 , cfg::context::rejected
 , cfg::context::session_id
+, cfg::context::end_date_cnx
 , cfg::context::real_target_device
 , cfg::context::ticket
 , cfg::context::comment
@@ -5858,7 +5859,6 @@ struct context
 , cfg::context::accept_message
 , cfg::context::display_message
 , cfg::context::keepalive
-, cfg::context::end_date_cnx
 , cfg::context::authentication_challenge
 , cfg::context::showform
 , cfg::context::formflag

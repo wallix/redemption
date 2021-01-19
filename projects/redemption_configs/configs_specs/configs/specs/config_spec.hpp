@@ -836,7 +836,7 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::string>(), names{"session_id"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<types::u32>(), names{.cpp="end_date_cnx", .sesman="timeclose"}, set(0));
+        W.member(no_ini_no_gui, sesman_to_proxy, is_target_ctx, L, type_<std::chrono::seconds>(), names{.cpp="end_date_cnx", .sesman="timeclose"}, set(0));
 
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), names{"real_target_device"});
 
