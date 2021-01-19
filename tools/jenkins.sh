@@ -74,15 +74,15 @@ show_duration jsclient
 
 # BJAM Build Test
 echo -e "
-using gcc : 9.0 : g++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using gcc : 10.0 : g++-10 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 using gcc : 8.0 : g++-8 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
-using clang : 9.0 : clang++-9 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
+using clang : 12.0 : clang++-12 -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING ;
 " > project-config.jam
 valgrind_compiler=gcc-8
-toolset_gcc=toolset=gcc-9
+toolset_gcc=toolset=gcc-10
 toolset_wab=toolset=gcc-8
-gcovbin=gcov-9
-toolset_clang=toolset=clang-9.0
+gcovbin=gcov-10
+toolset_clang=toolset=clang-12.0
 
 export REDEMPTION_TEST_DO_NOT_SAVE_IMAGES=1
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
@@ -187,7 +187,7 @@ if [[ $fast -eq 0 ]]; then
     #set -o pipefail
 
     # clang analyzer
-    CLANG_TIDY=clang-tidy-10 /usr/bin/time --format="%Es - %MK" \
+    CLANG_TIDY=clang-tidy /usr/bin/time --format="%Es - %MK" \
       ./tools/c++-analyzer/clang-tidy | sed -E '/^(.+\/|)modules\//,/\^/d'
 
     show_duration clang-tidy

@@ -1,12 +1,17 @@
-TODO_Messages
+TODO Extractor
+todo
 
-^TODO:([^:]+):(\d+): *(.*)
+^TODO:([^:]+):(\d+): *(.*)$
 
-import hudson.plugins.warnings.parser.Warning
 
-String fileName = matcher.group(1)
-String lineNumber = matcher.group(2)
+import edu.hm.hafner.analysis.Severity
+
 String message = matcher.group(3)
+builder.setFileName(matcher.group(1))
+        .setLineStart(Integer.parseInt(matcher.group(2)))
+        .setSeverity(Severity.WARNING_NORMAL)
+        .setType("message")
+        .setMessage(message)
 
 for (String category : [
  "ALERT", "SECURITY", "DANGER", "HACK", "ATTENTION",
@@ -18,59 +23,52 @@ for (String category : [
  "TODO", "NOTE", "NOTICE"
 ]) {
   if (message.contains(category)) {
-    return new Warning(fileName, Integer.parseInt(lineNumber), "message", category, message)
+    builder.setCategory(category)
+    return builder.buildOptional();
   }
 }
-return new Warning(fileName, Integer.parseInt(lineNumber), "message", "TODO", message)
+builder.setCategory("TODO")
+return builder.buildOptional()
+
 
 TODO:core/RDP/x224.hpp:307: // BUG blah blah
-TODO:core/RDP/x224.hpp:307: /* BUG multi line * blah blah */
+
+
+-----------------------------------------------------------
+
+
+Coverage Warning
+coverage
+
+^WARNING[:]\s+(LOW COVERAGE|NO COVERAGE)\s+([^,]+),\d+[:](\d+)\s(.*)$
+
+
+import edu.hm.hafner.analysis.Severity
+
+builder.setFileName(matcher.group(2))
+        .setLineStart(Integer.parseInt(matcher.group(3)))
+        .setSeverity(Severity.WARNING_NORMAL)
+        .setCategory(matcher.group(1))
+        .setMessage(matcher.group(4))
+
+return builder.buildOptional();
+
+
+WARNING: NO COVERAGE src/core/RDP/RDPDrawable.hpp,3558:145 [void draw(RDPColCache   const & /*cmd*/) override;] 0/1
+
+
+-----------------------------------------------------------
 
 
 
-Coverage_Warnings
-
-^WARNING[:]\s+(LOW COVERAGE|NO COVERAGE)\s+([^:]+)[:](\d+)\s(.*)$
-
-import hudson.plugins.warnings.parser.Warning
-
-String fileName = matcher.group(2)
-Integer lineNumber = matcher.group(3).toInteger()
-String category = matcher.group(1)
-String message = matcher.group(4)
-
-return new Warning(fileName, lineNumber, "message", category, message)
-
-WARNING: LOW COVERAGE core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp:138 [RDPDestBlt::str] 5/11
-
-
-
-Cppcheck
-
-^cppcheck \[([^:]+):(\d+)\]: \(([^)]+)\) \[([^\]]+)\] (.*)$
-
-import hudson.plugins.warnings.parser.Warning
-
-String fileName = matcher.group(1)
-Integer lineNumber = matcher.group(2).toInteger()
-String category = matcher.group(3)
-String type = matcher.group(4)
-String message = matcher.group(5)
-
-return new Warning(fileName, lineNumber, type, category, message)
-
-cppcheck [src/capture/FileToGraphic.hpp:998]: (style) [unreadVariable] Variable 'last_sent_record_now' is assigned a value that is never used.
-
-
-
-Compiler warning
+Compiler Warnings
+warnings
 
 ^([^:]+):(\d+):\d+: (warning|runtime error): (?:(.*) \[([^\]]+)\]|(.*))$
 
-import hudson.plugins.warnings.parser.Warning
 
-String fileName = matcher.group(1)
-String lineNumber = matcher.group(2)
+import edu.hm.hafner.analysis.Severity
+
 String type = matcher.group(3)
 String message = matcher.group(4)
 String category = matcher.group(5)
@@ -85,38 +83,40 @@ if (!message) {
   }
 }
 
-return new Warning(fileName, Integer.parseInt(lineNumber), "gcc/clang warning", category, message)
+builder.setFileName(matcher.group(1))
+        .setLineStart(Integer.parseInt(matcher.group(2)))
+        .setSeverity(Severity.WARNING_NORMAL)
+        .setCategory(category)
+        .setType(type)
+        .setMessage(message)
+
+return builder.buildOptional();
+
 
 test.cpp:2:11: warning: ‘i’ is used uninitialized in this function [-Wuninitialized]
 
 
-
-Valgrind leak
-
-^valgrind leak: ([^ ]+): (.*)
-
-import hudson.plugins.warnings.parser.Warning
-
-String fileName = matcher.group(1) + ".exe"
-String category = "leak"
-String message = matcher.group(2)
-
-return new Warning(fileName, 0, "valgrind leak", category, message)
-
-valgrind leak: ./a.out: definitely lost: 4 bytes in 1 blocks
+-----------------------------------------------------------
 
 
+Valgrind Errors
+valgrind
 
-Valgrind error
+^valgrind error: ([^ ]+): (.*)$
 
-^valgrind error: ([^ ]+): (.*)
 
-import hudson.plugins.warnings.parser.Warning
+import edu.hm.hafner.analysis.Severity
 
 String fileName = matcher.group(1) + ".exe"
 String category = "valgrind-error"
 String message = matcher.group(2)
 
-return new Warning(fileName, 0, "valgrind error", category, message)
+builder.setFileName(fileName)
+        .setLineStart(0)
+        .setSeverity(Severity.WARNING_HIGH)
+        .setCategory(category)
+        .setMessage(message)
+
+return builder.buildOptional();
 
 valgrind error: ./a.out: ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
