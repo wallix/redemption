@@ -817,6 +817,7 @@ test-run tests/capture/test_video_capture :
   <library>src/transport/file_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -824,6 +825,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/rle.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
+  <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/capture/video_capture.cpp
@@ -5656,11 +5658,6 @@ test-run tests/utils/test_log_siem :
   <covfile>src/utils/log_siem.cpp
   <covfile>src/utils/log_siem.hpp
 ;
-test-run tests/utils/test_monotonic_clock :
-  $(REDEMPTION_TEST_PATH)/utils/test_monotonic_clock.cpp
-:
-  <covfile>src/utils/monotonic_clock.hpp
-;
 test-run tests/utils/test_netutils :
   $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
 :
@@ -5756,10 +5753,10 @@ test-run tests/utils/test_strutils :
   <covfile>src/utils/strutils.cpp
   <covfile>src/utils/strutils.hpp
 ;
-test-run tests/utils/test_timeval_ops :
-  $(REDEMPTION_TEST_PATH)/utils/test_timeval_ops.cpp
+test-run tests/utils/test_to_timeval :
+  $(REDEMPTION_TEST_PATH)/utils/test_to_timeval.cpp
 :
-  <covfile>src/utils/timeval_ops.hpp
+  <covfile>src/utils/to_timeval.hpp
 ;
 test-run tests/utils/test_translation :
   $(REDEMPTION_TEST_PATH)/utils/test_translation.cpp
@@ -6306,7 +6303,6 @@ alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
 alias test_load_theme : tests/utils/test_load_theme ;
 alias test_log : tests/utils/test_log ;
 alias test_log_siem : tests/utils/test_log_siem ;
-alias test_monotonic_clock : tests/utils/test_monotonic_clock ;
 alias test_netutils : tests/utils/test_netutils ;
 alias test_parse : tests/utils/test_parse ;
 alias test_parse_server_message : tests/utils/test_parse_server_message ;
@@ -6320,7 +6316,7 @@ alias test_rle : tests/utils/test_rle ;
 alias test_stream : tests/utils/test_stream ;
 alias test_string_c : tests/utils/test_string_c ;
 alias test_strutils : tests/utils/test_strutils ;
-alias test_timeval_ops : tests/utils/test_timeval_ops ;
+alias test_to_timeval : tests/utils/test_to_timeval ;
 alias test_translation : tests/utils/test_translation ;
 alias test_utf : tests/utils/test_utf ;
 alias test_video_cropper : tests/utils/test_video_cropper ;
@@ -6629,7 +6625,6 @@ alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverag
 alias test_load_theme.coverage : tests/utils/test_load_theme.coverage ;
 alias test_log.coverage : tests/utils/test_log.coverage ;
 alias test_log_siem.coverage : tests/utils/test_log_siem.coverage ;
-alias test_monotonic_clock.coverage : tests/utils/test_monotonic_clock.coverage ;
 alias test_netutils.coverage : tests/utils/test_netutils.coverage ;
 alias test_parse.coverage : tests/utils/test_parse.coverage ;
 alias test_parse_server_message.coverage : tests/utils/test_parse_server_message.coverage ;
@@ -6643,7 +6638,7 @@ alias test_rle.coverage : tests/utils/test_rle.coverage ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
 alias test_string_c.coverage : tests/utils/test_string_c.coverage ;
 alias test_strutils.coverage : tests/utils/test_strutils.coverage ;
-alias test_timeval_ops.coverage : tests/utils/test_timeval_ops.coverage ;
+alias test_to_timeval.coverage : tests/utils/test_to_timeval.coverage ;
 alias test_translation.coverage : tests/utils/test_translation.coverage ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
 alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
@@ -7066,7 +7061,6 @@ alias tests/utils.norec :
   tests/utils/test_load_theme
   tests/utils/test_log
   tests/utils/test_log_siem
-  tests/utils/test_monotonic_clock
   tests/utils/test_netutils
   tests/utils/test_parse
   tests/utils/test_parse_server_message
@@ -7080,7 +7074,7 @@ alias tests/utils.norec :
   tests/utils/test_stream
   tests/utils/test_string_c
   tests/utils/test_strutils
-  tests/utils/test_timeval_ops
+  tests/utils/test_to_timeval
   tests/utils/test_translation
   tests/utils/test_utf
   tests/utils/test_video_cropper

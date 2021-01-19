@@ -174,7 +174,7 @@ public:
                bytes_view DnsComputerName, bytes_view DnsDomainName,
                bytes_view DnsTreeName,
                bytes_view key,
-               const std::vector<enum NTLM_AV_ID> & avFieldsTags,
+               const std::vector<NTLM_AV_ID> & avFieldsTags,
                Random & rand,
                const TimeBase & time_base,
                uint32_t credssp_version, const NtlmVersion ntlm_version,
@@ -183,7 +183,7 @@ public:
                const bool verbose)
         : is_domain(is_domain)
         , is_server(is_server)
-        , avFieldsTags(avFieldsTags.data(),avFieldsTags.data()+avFieldsTags.size())
+        , avFieldsTags(avFieldsTags)
         , TargetName(TargetName.data(), TargetName.data()+TargetName.size())
         , netbiosComputerName(NetbiosComputerName.data(), NetbiosComputerName.data()+NetbiosComputerName.size())
         , netbiosDomainName(NetbiosDomainName.data(), NetbiosDomainName.data()+NetbiosDomainName.size())
@@ -227,6 +227,7 @@ public:
         this->password_hash = password_hash;
 //                    auto [res, password_hash] = get_password_hash_cb(authenticate.UserName.buffer, authenticate.DomainName.buffer);
     }
+
     std::vector<uint8_t> authenticate_next(bytes_view in_data)
     {
         LOG_IF(this->verbose, LOG_INFO, "NTLMServer::authenticate_next");
@@ -282,7 +283,7 @@ public:
                         this->UseMIC = true;
                     }
 
-                    if ((authenticate.UserName.buffer.size() == 0) && (authenticate.DomainName.buffer.size() == 0)){
+                    if (authenticate.UserName.buffer.empty() && authenticate.DomainName.buffer.empty()) {
                         LOG(LOG_ERR, "ANONYMOUS User not allowed");
                         LOG_IF(this->verbose, LOG_INFO, "++++++++++++++++++++++++++++++NTLM_SSPI::AcceptSecurityContext::NTLM_STATE_AUTHENTICATE::SEC_E_LOGON_DENIED");
                         // SEC_E_LOGON_DENIED;
@@ -602,10 +603,13 @@ public:
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         }
         else {
-            const timeval tv = time_base.get_current_time();
+            using std::chrono::duration_cast;
+            const auto duration = this->time_base.get_current_time().time_since_epoch();
+            const auto dur_miroseconds = duration_cast<std::chrono::microseconds>(duration);
+            const auto dur_seconds = duration_cast<std::chrono::seconds>(dur_miroseconds);
             OutStream out_stream(this->Timestamp);
-            out_stream.out_uint32_le(tv.tv_usec);
-            out_stream.out_uint32_le(tv.tv_sec);
+            out_stream.out_uint32_le(checked_int{(dur_miroseconds - dur_seconds).count()});
+            out_stream.out_uint32_le(checked_int{dur_seconds.count()});
         }
 
         uint32_t negoFlags = negotiate_message.negoFlags.flags;

@@ -80,8 +80,7 @@ public:
 private:
     void init_reader();
 
-    timeval start_time;
-    timeval start_time_replay;
+    MonotonicTimePoint start_time;
 
     std::string& auth_error_message;
 

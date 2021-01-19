@@ -31,7 +31,6 @@
 
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
-#include "utils/timebase.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_api.hpp"
@@ -47,6 +46,7 @@
 #include "utils/verbose_flags.hpp"
 #include "utils/local_err_msg.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/to_timeval.hpp"
 
 #include <cassert>
 #include <cerrno>
@@ -106,13 +106,11 @@ class Session
     {
         SessionLog(
             Inifile& ini,
-            TimeBase const& time_base,
             CryptoContext& cctx,
             Random& rnd,
             Fstat& fstat,
             gdi::CaptureProbeApi& probe_api)
         : ini(ini)
-        , time_base(time_base)
         , probe_api(probe_api)
         , log_file(ini, cctx, rnd, fstat, [&ini](Error const& error){
             if (error.errnum == ENOSPC) {
@@ -165,21 +163,21 @@ class Session
 
         void log6(LogId id, KVLogList kv_list) override
         {
-            auto const now = this->time_base.get_current_time();
-            this->log_file.log6(now.tv_sec, id, kv_list);
+            timeval tv;
+            gettimeofday(&tv, nullptr);
+            this->log_file.log6(tv.tv_sec, id, kv_list);
             /* Log to SIEM (redirected syslog) */
             this->siem_logger.log_syslog_format(id, kv_list, this->ini, this->session_type);
-            this->siem_logger.log_arcsight_format(now.tv_sec, id, kv_list, this->ini, this->session_type);
+            this->siem_logger.log_arcsight_format(tv.tv_sec, id, kv_list, this->ini, this->session_type);
 
             if (this->dont_log.test(detail::log_id_category_map[underlying_cast(id)])) {
                 return ;
             }
 
-            this->probe_api.session_update(now, id, kv_list);
+            this->probe_api.session_update(MonotonicTimePoint::clock::now(), id, kv_list);
         }
 
         Inifile& ini;
-        TimeBase const& time_base;
         gdi::CaptureProbeApi& probe_api;
         std::string session_type;
         LogCategoryFlags dont_log {};
@@ -385,10 +383,11 @@ private:
     std::string session_type;
 
     void next_backend_module(
-        ModuleName next_state, SessionLog & session_log,
-        ModFactory & mod_factory, ModWrapper & mod_wrapper,
+        ModuleName next_state, SessionLog& session_log,
+        ModFactory & mod_factory, ModWrapper& mod_wrapper,
         Inactivity& inactivity, KeepAlive& keepalive,
-        Front & front, ClientExecute & rail_client_execute)
+        Front& front, ClientExecute& rail_client_execute,
+        EventManager& event_manager)
     {
         LOG_IF(bool(this->verbose() & SessionVerbose::Trace),
             LOG_INFO, " Current Mod is %s Previous %s",
@@ -408,11 +407,12 @@ private:
 
         if (is_target_module(next_state)) {
             keepalive.start();
-            this->target_connection_start_time = tvtime();
+            event_manager.set_time_base(current_time_base());
+            this->target_connection_start_time = event_manager.get_current_time();
         }
         else {
             keepalive.stop();
-            this->target_connection_start_time = timeval();
+            this->target_connection_start_time = MonotonicTimePoint();
         }
 
         if (next_state == ModuleName::INTERNAL) {
@@ -591,7 +591,7 @@ private:
 
         SessionLogApi& session_log_api = session_log.already_session_log();
         try {
-            this->target_connection_start_time = tvtime();
+            this->target_connection_start_time = MonotonicTimePoint::clock::now();
             mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log_api));
             this->ini.set<cfg::context::auth_error_message>("");
             return true;
@@ -611,7 +611,7 @@ private:
         return false;
     }
 
-    timeval target_connection_start_time {};
+    MonotonicTimePoint target_connection_start_time {};
 
     struct NextDelay
     {
@@ -619,9 +619,9 @@ private:
         {
             if (!nodelay) {
                 auto timeout = event_manager.next_timeout();
-                // timeout {0,0} means no timeout to trigger
-                if (timeout != timeval{0, 0}) {
-                    auto now = tvtime();
+                // 0 means no timeout to trigger
+                if (timeout != MonotonicTimePoint{}) {
+                    auto now = MonotonicTimePoint::clock::now();
                     this->tv = (now < timeout)
                         ? to_timeval(timeout - now)
                         // no delay
@@ -688,7 +688,7 @@ private:
                 continue;
             }
 
-            event_manager.set_current_time(tvtime());
+            event_manager.set_current_time(MonotonicTimePoint::clock::now());
             event_manager.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose() & SessionVerbose::Event));
@@ -742,7 +742,7 @@ private:
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SessionLog session_log(ini, event_manager.get_time_base(), cctx, rnd, fstat, front);
+        SessionLog session_log(ini, cctx, rnd, fstat, front);
 
         using namespace std::chrono_literals;
 
@@ -804,7 +804,7 @@ private:
                 }
                 ioswitch.set_read_sck(auth_sck);
 
-                event_manager.set_current_time(tvtime());
+                event_manager.set_current_time(MonotonicTimePoint::clock::now());
 
                 if (ioswitch.select(NextDelay(
                     mod_has_tls_pending_data || front_has_tls_pending_data,
@@ -822,7 +822,7 @@ private:
                     continue;
                 }
 
-                event_manager.set_current_time(tvtime());
+                event_manager.set_current_time(MonotonicTimePoint::clock::now());
 
                 if (front_has_tls_pending_data) {
                     ioswitch.set_read_sck(front_trans.get_sck());
@@ -893,7 +893,15 @@ private:
                     }
 
                     if (has_field(cfg::context::end_date_cnx())) {
-                        end_session_warning.set_time(checked_int{ini.get<cfg::context::end_date_cnx>()});
+                        auto time_base = current_time_base();
+                        event_manager.set_time_base(time_base);
+                        const auto sys_date
+                            = time_base.get_current_time().time_since_epoch()
+                            + time_base.get_duration_from_monotonic_time_to_real_time().duration;
+                        auto const elapsed = ini.get<cfg::context::end_date_cnx>() - sys_date;
+                        auto const new_end_date = time_base.get_current_time() + elapsed;
+                        end_session_warning.set_time(new_end_date);
+                        mod_wrapper.set_time_close(new_end_date);
                     }
 
                     if (has_field(cfg::globals::inactivity_timeout())) {
@@ -1004,7 +1012,8 @@ private:
                     this->next_backend_module(
                         std::exchange(next_module, ModuleName::UNKNOWN),
                         session_log, mod_factory, mod_wrapper,
-                        inactivity, keepalive, front, rail_client_execute);
+                        inactivity, keepalive, front, rail_client_execute,
+                        event_manager);
                 }
 
 
@@ -1118,9 +1127,9 @@ private:
                                     this->ini.set_acl<cfg::context::module>(ModuleName::close);
                                 }
                                 this->next_backend_module(
-                                    ModuleName::close,
-                                    session_log, mod_factory, mod_wrapper,
-                                    inactivity, keepalive, front, rail_client_execute);
+                                    ModuleName::close, session_log, mod_factory,
+                                    mod_wrapper, inactivity, keepalive, front,
+                                    rail_client_execute, event_manager);
                                 run_session = true;
                             }
                         }
@@ -1216,8 +1225,20 @@ private:
              : EndLoopState::ImmediateDisconnection;
     }
 
+    static TimeBase current_time_base()
+    {
+        timespec tp;
+        clock_gettime(CLOCK_REALTIME, &tp);
+        auto monotonic = MonotonicTimePoint::clock::now();
+        auto sys_time = std::chrono::seconds(tp.tv_sec) + std::chrono::nanoseconds(tp.tv_nsec);
+        return TimeBase(
+            monotonic,
+            DurationFromMonotonicTimeToRealTime{sys_time - monotonic.time_since_epoch()}
+        );
+    }
+
 public:
-    Session(SocketTransport&& front_trans, timeval sck_start_time, Inifile& ini, PidFile& pid_file)
+    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
     : ini(ini)
     , pid_file(pid_file)
     {
@@ -1226,13 +1247,13 @@ public:
         Fstat fstat;
 
         EventManager event_manager;
-        event_manager.set_current_time(tvtime());
+        event_manager.set_time_base(current_time_base());
 
         const bool source_is_localhost = ini.get<cfg::globals::host>() == "127.0.0.1";
 
         struct SessionFront final : Front
         {
-            timeval* target_connection_start_time_ptr = nullptr;
+            MonotonicTimePoint* target_connection_start_time_ptr = nullptr;
             Inifile* ini_ptr = nullptr;
 
             using Front::Front;
@@ -1240,8 +1261,9 @@ public:
             // secondary session is ready, set target_connection_time
             bool can_be_start_capture(bool force_capture, SessionLogApi& session_log) override
             {
-                if (*this->target_connection_start_time_ptr != timeval{}) {
-                    auto elapsed = tvtime() - *this->target_connection_start_time_ptr;
+                if (*this->target_connection_start_time_ptr != MonotonicTimePoint{}) {
+                    auto elapsed = MonotonicTimePoint::clock::now()
+                                 - *this->target_connection_start_time_ptr;
                     this->ini_ptr->set_acl<cfg::globals::target_connection_time>(
                         std::chrono::duration_cast<std::chrono::milliseconds>(elapsed));
                     *this->target_connection_start_time_ptr = {};
@@ -1278,7 +1300,7 @@ public:
 
                     this->ini.set_acl<cfg::globals::front_connection_time>(
                         std::chrono::duration_cast<std::chrono::milliseconds>(
-                            tvtime() - sck_start_time));
+                            MonotonicTimePoint::clock::now() - sck_start_time));
                 }
                 else {
                     this->ini.set<cfg::context::auth_error_message>("No authentifier available");
@@ -1329,8 +1351,8 @@ public:
                 ini.get<cfg::debug::mod_internal>() & 1);
 
             ModWrapper mod_wrapper(
-                front.get_palette(), front, front.keymap, front.get_client_info(), glyphs,
-                rail_client_execute, this->ini);
+                event_manager.get_time_base(), front.get_palette(), front, front.keymap,
+                front.get_client_info(), glyphs, rail_client_execute, this->ini);
             ModFactory mod_factory(
                 mod_wrapper, event_manager.get_events(), front.get_client_info(), front,
                 front, redir_info, ini, glyphs, theme, rail_client_execute, front.keymap,
@@ -1392,7 +1414,7 @@ public:
 template<class SocketType, class... Args>
 void session_start_sck(
     char const* name, unique_fd&& sck,
-    timeval sck_start_time, Inifile& ini,
+    MonotonicTimePoint sck_start_time, Inifile& ini,
     PidFile& pid_file, Args&&... args)
 {
     auto const watchdog_verbosity = (ini.get<cfg::globals::host>() == "127.0.0.1")
@@ -1412,20 +1434,20 @@ void session_start_sck(
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file)
+void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
 {
     session_start_sck<SocketTransport>(
         "RDP Client", std::move(sck), sck_start_time, ini, pid_file);
 }
 
-void session_start_ws(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file)
+void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
 {
     session_start_sck<WsTransport>(
         "RDP Ws Client", std::move(sck), sck_start_time, ini, pid_file,
         WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file)
+void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
 {
     session_start_sck<WsTransport>(
         "RDP Wss Client", std::move(sck), sck_start_time, ini, pid_file,

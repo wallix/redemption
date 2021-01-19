@@ -20,25 +20,38 @@ Author(s):Christophe Grosjean
 
 #pragma once
 
-#include "utils/timeval_ops.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <cassert>
 
 
 struct TimeBase
 {
-    timeval current_time;
+    explicit TimeBase(
+        MonotonicTimePoint monotonic_time,
+        DurationFromMonotonicTimeToRealTime monotonic_to_real)
+    : monotonic_time(monotonic_time)
+    , monotonic_to_real(monotonic_to_real)
+    {}
 
-    TimeBase(timeval current_time) : current_time(current_time) {}
-
-    void set_current_time(timeval const& now) noexcept
+    void set_current_time(MonotonicTimePoint const& now)
     {
-        assert(now >= this->current_time);
-        this->current_time = now;
+        assert(now >= this->monotonic_time);
+        this->monotonic_time = now;
     }
 
-    [[nodiscard]] timeval get_current_time() const noexcept
+    [[nodiscard]] MonotonicTimePoint get_current_time() const
     {
-        return this->current_time;
+        return this->monotonic_time;
     }
+
+    [[nodiscard]] DurationFromMonotonicTimeToRealTime
+    get_duration_from_monotonic_time_to_real_time() const
+    {
+        return this->monotonic_to_real;
+    }
+
+private:
+    MonotonicTimePoint monotonic_time;
+    DurationFromMonotonicTimeToRealTime monotonic_to_real;
 };

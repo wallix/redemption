@@ -26,8 +26,8 @@
 #include "core/RDP/caches/pointercache.hpp"
 #include "core/RDP/state_chunk.hpp"
 #include "utils/compression_transport_builder.hpp"
+#include "utils/monotonic_clock.hpp"
 #include "utils/verbose_flags.hpp"
-#include "utils/timeval_ops.hpp"
 
 
 class Transport;
@@ -82,7 +82,7 @@ private:
     // (non orders chunks are counted as 1 order)
     uint32_t total_orders_count;
 
-    timeval record_now;
+    MonotonicTimePoint record_now;
 
     template<class T, std::size_t N>
     struct fixed_ptr_array
@@ -128,8 +128,8 @@ private:
     uint16_t mouse_x;
     uint16_t mouse_y;
 
-    const timeval begin_capture;
-    const timeval end_capture;
+    const MonotonicTimePoint begin_capture;
+    const MonotonicTimePoint end_capture;
 
 public:
     uint32_t max_order_count;
@@ -203,13 +203,16 @@ public:
     };
 
     FileToGraphic(
-        Transport & trans, const timeval begin_capture, const timeval end_capture,
-        bool play_video_with_corrupted_bitmap, Verbose verbose);
+        Transport & trans,
+        MonotonicTimePoint begin_capture,
+        MonotonicTimePoint end_capture,
+        bool play_video_with_corrupted_bitmap,
+        Verbose verbose);
 
     ~FileToGraphic();
 
     WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
-    timeval get_current_time() const noexcept { return this->record_now; }
+    MonotonicTimePoint get_current_time() const noexcept { return this->record_now; }
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
@@ -255,8 +258,8 @@ public:
     template<class CbUpdateProgress>
     void play(CbUpdateProgress update_progess, bool const & requested_to_stop)
     {
-        time_t last_sent_record_now = 0;
-        this->privplay([&](time_t record_now) {
+        MonotonicTimePoint last_sent_record_now {};
+        this->privplay([&](MonotonicTimePoint record_now) {
             if (last_sent_record_now != record_now) {
                 update_progess(record_now);
                 last_sent_record_now = record_now;
@@ -271,22 +274,25 @@ private:
     template<class CbUpdateProgress>
     void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop)
     {
+        const bool has_begin = this->begin_capture.time_since_epoch().count();
+        const bool has_end = this->begin_capture.time_since_epoch().count();
+
         while (!requested_to_stop && this->next_order()) {
             this->log_play();
 
             this->interpret_order();
 
-            if (this->begin_capture.tv_sec == 0 || this->begin_capture <= this->record_now) {
+            if (!has_begin || this->begin_capture <= this->record_now) {
                 this->snapshot_play();
                 this->ignore_frame_in_timeval = false;
-                update_progess(this->record_now.tv_sec);
+                update_progess(this->record_now);
             }
 
             if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
             }
 
-            if (this->end_capture.tv_sec && this->end_capture < this->record_now) {
+            if (has_end && this->end_capture < this->record_now) {
                 break;
             }
         }

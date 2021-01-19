@@ -24,6 +24,7 @@
 #include "transport/transport.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/ref.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <chrono>
 
@@ -61,7 +62,7 @@ public:
 
 private:
     TimeBase const& time_base;
-    std::chrono::milliseconds start_time;
+    MonotonicTimePoint start_time;
     OutFileTransport file;
 };
 

@@ -27,7 +27,7 @@
 
 RecorderFile::RecorderFile(CRef<TimeBase> time_base, const char *filename)
     : time_base(time_base)
-    , start_time(to_ms(this->time_base.get_current_time()))
+    , start_time(this->time_base.get_current_time())
     , file(unique_fd(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))
 {
     if (!this->file.is_open()) {
@@ -44,7 +44,8 @@ RecorderFile::~RecorderFile()
 
 void RecorderFile::write_packet(PacketType type, bytes_view buffer)
 {
-    auto delta = to_ms(this->time_base.get_current_time()) - this->start_time;
+    auto delta = std::chrono::duration_cast<std::chrono::microseconds>(
+        this->time_base.get_current_time() - this->start_time);
 
     StaticOutStream<13> headers_stream;
     headers_stream.out_uint8(uint8_t(type));

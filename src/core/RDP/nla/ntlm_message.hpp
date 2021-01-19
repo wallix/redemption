@@ -1137,14 +1137,10 @@ struct NTLMAuthenticateMessage {
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16]{};                      /* 16 Bytes */
     bool has_mic{true};
-    uint32_t PayloadOffset;
+    uint32_t PayloadOffset = 12+8+8+8+8+8+8+4+8;
     std::vector<uint8_t> message_bytes_dump;
 
-    NTLMAuthenticateMessage()
-        : PayloadOffset(12+8+8+8+8+8+8+4+8)
-    {
-        memset(this->MIC, 0x00, 16);
-    }
+    NTLMAuthenticateMessage() = default;
 
     std::vector<uint8_t> get_bytes()
     {
@@ -1419,13 +1415,13 @@ inline NTLMAuthenticateMessage recvNTLMAuthenticateMessage(bytes_view raw_messag
 
     if (self.has_mic){
         // Store message bytes for later reference
-        std::vector<uint8_t> v;
+        self.message_bytes_dump.clear();
+        std::vector<uint8_t> & v = self.message_bytes_dump;
         constexpr std::size_t null_data_sz = 16;
         uint8_t const null_data[null_data_sz]{0u};
         push_back_array(v, {raw_message.data(), 12+8+8+8+8+8+8+4+8});
         push_back_array(v, {null_data, 16});
         push_back_array(v, {raw_message.data() + 12+8+8+8+8+8+8+4+8 + 16, raw_message.size() - (12+8+8+8+8+8+8+4+8 + 16)});
-        self.message_bytes_dump = v;
     }
     return self;
 }

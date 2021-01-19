@@ -24,15 +24,23 @@
 
 #include "capture/session_update_buffer.hpp"
 
+namespace
+{
+    template<class Duration>
+    long to_int_us(Duration const& duration)
+    {
+        return std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+    }
+}
 
 RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
 {
     SessionUpdateBuffer buffer;
 
-    buffer.append(timeval{1, 0}, LogId::TITLE_BAR, KVLogList{
+    buffer.append(MonotonicTimePoint(1s), LogId::TITLE_BAR, KVLogList{
         KVLog{"title"_av, "bloc note"_av},
     });
-    buffer.append(timeval{2, 770}, LogId::BUTTON_CLICKED, KVLogList{
+    buffer.append(MonotonicTimePoint(2s + 770us), LogId::BUTTON_CLICKED, KVLogList{
         KVLog{"value1"_av, "button"_av},
         KVLog{"value2"_av, "bla"_av},
     });
@@ -43,8 +51,7 @@ RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
     RED_REQUIRE((it != buffer.end()));
     kv_event = *it;
     RED_CHECK(kv_event.id == LogId::TITLE_BAR);
-    RED_CHECK(kv_event.time.tv_sec == 1);
-    RED_CHECK(kv_event.time.tv_usec == 0);
+    RED_CHECK(to_int_us(kv_event.time.time_since_epoch()) == to_int_us(1s));
     RED_REQUIRE(kv_event.kv_list.size() == 1);
     RED_CHECK(kv_event.kv_list[0].key == "title"_av);
     RED_CHECK(kv_event.kv_list[0].value == "bloc note"_av);
@@ -53,8 +60,7 @@ RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
     RED_REQUIRE((it != buffer.end()));
     kv_event = *it;
     RED_CHECK(kv_event.id == LogId::BUTTON_CLICKED);
-    RED_CHECK(kv_event.time.tv_sec == 2);
-    RED_CHECK(kv_event.time.tv_usec == 770);
+    RED_CHECK(to_int_us(kv_event.time.time_since_epoch()) == to_int_us(2s + 770us));
     RED_REQUIRE(kv_event.kv_list.size() == 2);
     RED_CHECK(kv_event.kv_list[0].key == "value1"_av);
     RED_CHECK(kv_event.kv_list[0].value == "button"_av);
@@ -67,7 +73,7 @@ RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
     buffer.clear();
     RED_REQUIRE((buffer.begin() == buffer.end()));
 
-    buffer.append(timeval{1, 3}, LogId::TITLE_BAR, KVLogList{
+    buffer.append(MonotonicTimePoint(1s + 3us), LogId::TITLE_BAR, KVLogList{
         KVLog{"k0"_av, "v0"_av},
         KVLog{"k1"_av, "v1"_av},
         KVLog{"k2"_av, "v2"_av},
@@ -96,8 +102,7 @@ RED_AUTO_TEST_CASE(TestSessionUpdateBuffer)
     RED_REQUIRE((it != buffer.end()));
     kv_event = *it;
     RED_CHECK(kv_event.id == LogId::TITLE_BAR);
-    RED_CHECK(kv_event.time.tv_sec == 1);
-    RED_CHECK(kv_event.time.tv_usec == 3);
+    RED_CHECK(to_int_us(kv_event.time.time_since_epoch()) == to_int_us(1s + 3us));
     RED_REQUIRE(kv_event.kv_list.size() == 22);
     RED_CHECK(kv_event.kv_list[0].key == "k0"_av);
     RED_CHECK(kv_event.kv_list[0].value == "v0"_av);

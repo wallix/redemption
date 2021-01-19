@@ -22,7 +22,7 @@
 
 #include "cxx/cxx.hpp"
 #include "utils/timebase.hpp"
-#include "utils/timeval_ops.hpp"
+#include "utils/monotonic_clock.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/sugar/noncopyable.hpp"
 
@@ -54,25 +54,25 @@ struct Event
 
     public:
         int fd = INVALID_SOCKET;
-        timeval now;
-        timeval trigger_time;
-        std::chrono::microseconds grace_delay {};
+        MonotonicTimePoint now;
+        MonotonicTimePoint trigger_time;
+        MonotonicTimePoint::duration grace_delay {};
 
         // fd is stored to enabled fd events detection
         // if fd event is triggered timeout is incremented by grace delay
-        void set_fd(int fd, std::chrono::microseconds grace_delay)
+        void set_fd(int fd, MonotonicTimePoint::duration grace_delay)
         {
             this->fd = fd;
             this->grace_delay = grace_delay;
         }
 
-        void reset_timeout(timeval trigger_time)
+        void reset_timeout(MonotonicTimePoint trigger_time)
         {
             this->active_timer = true;
             this->trigger_time = trigger_time;
         }
 
-        void reset_timeout(std::chrono::microseconds delay)
+        void reset_timeout(MonotonicTimePoint::duration delay)
         {
             this->reset_timeout(this->now + delay);
         }
@@ -87,7 +87,7 @@ struct Event
             return this->active_timer;
         }
 
-        bool trigger(timeval now)
+        bool trigger(MonotonicTimePoint now)
         {
             if (this->active_timer && now >= this->trigger_time) {
                 this->now = now;
@@ -149,7 +149,7 @@ public:
         return this->creator.time_base;
     }
 
-    [[nodiscard]] timeval get_current_time() const noexcept
+    [[nodiscard]] MonotonicTimePoint get_current_time() const noexcept
     {
         return this->creator.time_base.get_current_time();
     }
@@ -174,7 +174,7 @@ public:
         template<class TimeoutAction>
         [[nodiscard]] Event& create_event_timeout(
             std::string_view name, void const* lifespan,
-            std::chrono::microseconds delay, TimeoutAction&& on_timeout)
+            MonotonicTimePoint::duration delay, TimeoutAction&& on_timeout)
         {
             return this->create_event_timeout(
                 name, lifespan,
@@ -185,7 +185,7 @@ public:
         template<class TimeoutAction>
         [[nodiscard]] Event& create_event_timeout(
             std::string_view name, void const* lifespan,
-            timeval trigger_time, TimeoutAction&& on_timeout)
+            MonotonicTimePoint trigger_time, TimeoutAction&& on_timeout)
         {
             Event* pevent = make_event(
                 name, lifespan,
@@ -214,7 +214,7 @@ public:
         [[nodiscard]] Event& create_event_fd_timeout(
             std::string_view name, void const* lifespan,
             int fd,
-            std::chrono::microseconds delay,
+            MonotonicTimePoint::duration delay,
             FdAction&& on_fd,
             TimeoutAction&& on_timeout)
         {
@@ -229,8 +229,8 @@ public:
         [[nodiscard]] Event& create_event_fd_timeout(
             std::string_view name, void const* lifespan,
             int fd,
-            std::chrono::microseconds grace_delay,
-            timeval trigger_time,
+            MonotonicTimePoint::duration grace_delay,
+            MonotonicTimePoint trigger_time,
             FdAction&& on_fd,
             TimeoutAction&& on_timeout)
         {
@@ -251,7 +251,7 @@ public:
         Creator() = default;
 
         std::vector<Event*> queue;
-        TimeBase time_base{{0, 0}};
+        TimeBase time_base{MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{}};
 
         static const int action_tag = 0;
         static const int timeout_tag = 1;
@@ -409,9 +409,9 @@ namespace detail
             return event_container.creator.queue;
         }
 
-        static void set_current_time(EventContainer& event_container, timeval const& now) noexcept
+        static TimeBase& get_writable_time_base(EventContainer& event_container) noexcept
         {
-            event_container.creator.time_base.set_current_time(now);
+            return event_container.creator.time_base;
         }
     };
 }
@@ -431,9 +431,16 @@ public:
         detail::ProtectedEventContainer::garbage_collector(this->event_container);
     }
 
-    void set_current_time(timeval const& now) noexcept
+    void set_time_base(TimeBase const& time_base) noexcept
     {
-        detail::ProtectedEventContainer::set_current_time(this->event_container, now);
+        detail::ProtectedEventContainer::get_writable_time_base(this->event_container)
+            = time_base;
+    }
+
+    void set_current_time(MonotonicTimePoint const& now) noexcept
+    {
+        detail::ProtectedEventContainer::get_writable_time_base(this->event_container)
+            .set_current_time(now);
     }
 
     [[nodiscard]] TimeBase const& get_time_base() const noexcept
@@ -441,7 +448,7 @@ public:
         return this->event_container.get_time_base();
     }
 
-    [[nodiscard]] timeval get_current_time() const noexcept
+    [[nodiscard]] MonotonicTimePoint get_current_time() const noexcept
     {
         return this->event_container.get_current_time();
     }
@@ -471,46 +478,51 @@ public:
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
             assert(iend <= events.size());
             auto & event = *events[i];
-            using VoidP = void const*;
-            if (!event.garbage) {
+
+            auto log = [&](char const* cat){
+                if (REDEMPTION_UNLIKELY(verbose)) {
+                    this->log_event(event, cat);
+                }
+            };
+
+            if (REDEMPTION_LIKELY(!event.garbage)) {
                 if (event.alarm.fd != INVALID_SOCKET && fn(event.alarm.fd)) {
-                    LOG_IF(verbose, LOG_INFO,
-                        "FD EVENT TRIGGER '%s' (%p) timeout=%d now=%d",
-                        event.name, VoidP(&event),
-                        int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
+                    log("FD EVENT TRIGGER");
                     event.alarm.reset_timeout(tv+event.alarm.grace_delay);
                     event.actions.exec_action(event);
                 }
-                else {
-                    LOG_IF(event.alarm.is_active() && verbose, LOG_INFO,
-                        "EXPIRED TIMEOUT EVENT '%s' (%p) timeout=%d now=%d",
-                        event.name, VoidP(&event),
-                        int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-
-                    if (event.alarm.trigger(tv)){
-                        LOG_IF(verbose, LOG_INFO,
-                            "TIMEOUT EVENT TRIGGER '%s' (%p) timeout=%d now=%d",
-                            event.name, VoidP(&event),
-                            int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
-                        event.actions.exec_timeout(event);
-                    }
+                else if (event.alarm.trigger(tv)){
+                    log("TIMEOUT EVENT TRIGGER");
+                    event.actions.exec_timeout(event);
                 }
             }
             else {
-                LOG_IF(verbose, LOG_INFO,
-                    "GARBAGE EVENT '%s' (%p) timeout=%d now=%d =========",
-                    event.name, VoidP(&event),
-                    int(event.alarm.trigger_time.tv_sec%1000), int(tv.tv_sec%1000));
+                log("GARBAGE EVENT");
             }
         }
 
         this->garbage_collector();
     }
 
-    // returns timeval{0, 0} if no alarm is set
-    timeval next_timeout() const
+private:
+    static void __attribute__((noinline)) log_event(Event const& event, char const* cat) noexcept
     {
-        timeval ultimatum = {0, 0};
+        using std::chrono::duration_cast;
+        const auto duration = event.alarm.trigger_time.time_since_epoch();
+        const auto milliseconds = duration_cast<std::chrono::milliseconds>(duration);
+        const auto seconds = duration_cast<std::chrono::seconds>(milliseconds);
+        const long long i_seconds = seconds.count();
+        const long long i_milliseconds = (milliseconds - seconds).count();
+        LOG(LOG_INFO, "%s '%s' (%p) timeout=%lld now=%lld",
+            cat, event.name, static_cast<void const*>(&event),
+            i_seconds, i_milliseconds);
+    }
+
+public:
+    // returns MonotonicTimePoint{0, 0} if no alarm is set
+    MonotonicTimePoint next_timeout() const
+    {
+        MonotonicTimePoint ultimatum {};
         auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
         auto first = events.begin();
         auto last = events.end();
@@ -547,7 +559,7 @@ struct EventsGuard : private noncopyable
         return this->events.get_time_base();
     }
 
-    [[nodiscard]] timeval get_current_time() const noexcept
+    [[nodiscard]] MonotonicTimePoint get_current_time() const noexcept
     {
         return this->events.get_current_time();
     }
@@ -555,7 +567,7 @@ struct EventsGuard : private noncopyable
     template<class TimeoutAction>
     Event& create_event_timeout(
         std::string_view name,
-        std::chrono::microseconds delay, TimeoutAction&& on_timeout)
+        MonotonicTimePoint::duration delay, TimeoutAction&& on_timeout)
     {
         return this->events.event_creator().create_event_timeout(
             name, this, delay,
@@ -566,7 +578,7 @@ struct EventsGuard : private noncopyable
     template<class TimeoutAction>
     Event& create_event_timeout(
         std::string_view name,
-        timeval trigger_time, TimeoutAction&& on_timeout)
+        MonotonicTimePoint trigger_time, TimeoutAction&& on_timeout)
     {
         return this->events.event_creator().create_event_timeout(
             name, this, trigger_time,
@@ -589,7 +601,7 @@ struct EventsGuard : private noncopyable
     Event& create_event_fd_timeout(
         std::string_view name,
         int fd,
-        std::chrono::microseconds delay,
+        MonotonicTimePoint::duration delay,
         FdAction&& on_fd,
         TimeoutAction&& on_timeout)
     {
@@ -604,8 +616,8 @@ struct EventsGuard : private noncopyable
     Event& create_event_fd_timeout(
         std::string_view name,
         int fd,
-        std::chrono::microseconds grace_delay,
-        timeval trigger_time,
+        MonotonicTimePoint::duration grace_delay,
+        MonotonicTimePoint trigger_time,
         FdAction&& on_fd,
         TimeoutAction&& on_timeout)
     {
@@ -721,7 +733,7 @@ struct EventRef
         }
     }
 
-    bool reset_timeout(timeval trigger_time) noexcept
+    bool reset_timeout(MonotonicTimePoint trigger_time) noexcept
     {
         if (has_event()) {
             event_->alarm.reset_timeout(trigger_time);
@@ -733,7 +745,7 @@ struct EventRef
 
     template<class TimeoutFn>
     void reset_timeout_or_create_event(
-        timeval trigger_time,
+        MonotonicTimePoint trigger_time,
         EventsGuard& events_guard,
         std::string_view name,
         TimeoutFn&& fn)
@@ -748,7 +760,7 @@ struct EventRef
 
     template<class TimeoutFn>
     void reset_timeout_or_create_event(
-        std::chrono::microseconds delay,
+        MonotonicTimePoint::duration delay,
         EventsGuard& events_guard,
         std::string_view name,
         TimeoutFn&& fn)
@@ -763,7 +775,7 @@ struct EventRef
 
     template<class TimeoutFn>
     void reset_timeout_or_create_event(
-        std::chrono::microseconds delay,
+        MonotonicTimePoint::duration delay,
         EventContainer& event_container,
         std::string_view name,
         void const* lifespan,
@@ -779,7 +791,7 @@ struct EventRef
 
     template<class TimeoutFn>
     void reset_timeout_or_create_event(
-        timeval trigger_time,
+        MonotonicTimePoint trigger_time,
         EventContainer& event_container,
         std::string_view name,
         void const* lifespan,
@@ -865,19 +877,19 @@ struct EventRef2
         event_ref_.garbage();
     }
 
-    bool reset_timeout(timeval trigger_time) noexcept
+    bool reset_timeout(MonotonicTimePoint trigger_time) noexcept
     {
         return event_ref_.reset_timeout(trigger_time);
     }
 
-    bool reset_timeout(std::chrono::microseconds delay) noexcept
+    bool reset_timeout(MonotonicTimePoint::duration delay) noexcept
     {
         return event_ref_.reset_timeout(event_container_.get_current_time() + delay);
     }
 
     template<class TimeoutFn>
     void reset_timeout_or_create_event(
-        timeval trigger_time,
+        MonotonicTimePoint trigger_time,
         std::string_view name,
         TimeoutFn&& fn)
     {
@@ -891,7 +903,7 @@ struct EventRef2
 
     template<class TimeoutFn>
     void reset_timeout_or_create_event(
-        std::chrono::microseconds delay,
+        MonotonicTimePoint::duration delay,
         std::string_view name,
         TimeoutFn&& fn)
     {

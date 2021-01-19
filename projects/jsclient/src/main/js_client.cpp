@@ -282,7 +282,8 @@ public:
                 set_if(time, "second", seconds);
                 set_if(time, "millisecond", milliseconds);
             });
-            this->set_current_time({checked_int{seconds}, checked_int{milliseconds}});
+            this->set_current_time(MonotonicTimePoint(std::chrono::seconds(seconds))
+                                 + std::chrono::milliseconds(milliseconds));
         }
 
         client_info.screen_info = screen_info;
@@ -439,7 +440,7 @@ public:
         this->set_time(this->event_container.get_current_time());
     }
 
-    void set_time(timeval time)
+    void set_time(MonotonicTimePoint time)
     {
         this->set_current_time(time);
 
@@ -466,9 +467,10 @@ public:
     }
 
 private:
-    void set_current_time(timeval const& now)
+    void set_current_time(MonotonicTimePoint now)
     {
-        detail::ProtectedEventContainer::set_current_time(this->event_container, now);
+        detail::ProtectedEventContainer::get_writable_time_base(this->event_container)
+            .set_current_time(now);
     }
 
     template<class Fn>
@@ -503,7 +505,8 @@ public:
         uint16_t flag = scancode & 0xFF00;
         this->mod->rdp_input_scancode(
             key, 0, flag,
-            this->event_container.get_current_time().tv_sec,
+            std::chrono::duration_cast<std::chrono::seconds>(
+                this->event_container.get_current_time().time_since_epoch()).count(),
             nullptr);
     }
 
@@ -543,7 +546,8 @@ EMSCRIPTEN_BINDINGS(client)
     redjs::class_<RdpClient>("RdpClient")
         .constructor<emscripten::val /*gd*/, emscripten::val /*config*/>()
         .function_ptr("setTime", [](RdpClient& client, uint32_t seconds, uint32_t milliseconds) {
-            client.set_time({checked_int(seconds), checked_int(milliseconds*1000u)});
+            client.set_time(MonotonicTimePoint(std::chrono::seconds(seconds))
+                          + std::chrono::milliseconds(milliseconds));
         })
         .function_ptr("getOutputData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_output_buffer());

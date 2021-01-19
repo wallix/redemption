@@ -82,16 +82,16 @@ void WidgetGrid::Widgets::clear()
     this->nb_rows = 0;
 }
 
-std::chrono::microseconds WidgetGrid::difftimer::tick()
+MonotonicTimePoint::duration WidgetGrid::difftimer::tick()
 {
-    std::chrono::microseconds ret = this->t;
+    auto tmp = this->t;
     this->update();
-    return this->t - ret;
+    return this->t - tmp;
 }
 
 void WidgetGrid::difftimer::update()
 {
-    this->t = get_monotonic_ms_clock();
+    this->t = MonotonicTimePoint::clock::now();
 }
 
 WidgetGrid::WidgetGrid(
@@ -331,7 +331,7 @@ void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Key
                     this->set_selection(row_index);
                 }
                 else {
-                    if (this->click_interval.tick() <= std::chrono::microseconds(700000L)) {
+                    if (this->click_interval.tick() <= MonotonicTimePoint::duration(700ms)) {
                         this->send_notify(NOTIFY_SUBMIT);
                         return;
                     }

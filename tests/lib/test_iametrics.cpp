@@ -82,7 +82,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
 
     // Should create rdp_metrics files if they do not exist
     time_t epoch = 0; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
-//     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
 
     Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 34
                       , wd.dirname().c_str()

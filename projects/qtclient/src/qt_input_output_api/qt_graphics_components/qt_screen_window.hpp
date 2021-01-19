@@ -23,6 +23,7 @@
 
 #include "utils/log.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/to_timeval.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
 #include <QtCore/QTimer>
@@ -507,7 +508,7 @@ public:
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+10, READING_BAR_H)
         , current_time_movie(current_time_movie)
-        , real_time_record(callback->get_real_time_movie_begin())
+        , real_time_record(0)
     {
         std::string title = "ReDemPtion Client " + movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -587,7 +588,7 @@ public:
 
     void show_video_real_time() {
 
-        struct timeval now = tvtime();
+        struct timeval now = to_timeval(MonotonicTimePoint::clock::now());
         time_t movie_time_tmp = this->current_time_movie;
         this->current_time_movie = now.tv_sec - this->movie_time_start.tv_sec + this->begin;
 
@@ -694,7 +695,6 @@ private:
 
             this->_timer_replay.stop();
 
-            timeval now_stop = tvtime();
             int bar_click = x - 44;
             double read_len_tmp = (bar_click * this->movie_time) / this->reading_bar_len;
             this->begin = int(read_len_tmp);
@@ -714,7 +714,9 @@ private:
             this->barRepaint(this->current_time_movie, QColor(Qt::green));
             this->slotRepainMatch();
 
-            this->movie_time_start = this->callback->reload_replay_mod(this->begin, now_stop);
+            // timeval now_stop = to_timeval(MonotonicTimePoint::clock::now());
+            // TODO this->movie_time_start = this->callback->reload_replay_mod(
+            //     std::chrono::seconds(this->begin), std::chrono::seconds(now_stop));
 
             this->_timer_replay.start(4);
         }
@@ -730,7 +732,7 @@ public Q_SLOTS:
 
     void playPressed() {
         if (this->_running) {
-            this->movie_time_pause = tvtime();
+            this->movie_time_pause = to_timeval(MonotonicTimePoint::clock::now());
             this->_running = false;
             this->is_paused = true;
             this->_buttonCtrlAltDel.setText("Play");
@@ -739,17 +741,17 @@ public Q_SLOTS:
         } else {
             this->_running = true;
             if (this->is_paused) {
-                timeval pause_duration = tvtime();
+                timeval pause_duration = to_timeval(MonotonicTimePoint::clock::now());
                 pause_duration = {pause_duration.tv_sec - this->movie_time_pause.tv_sec, pause_duration.tv_usec - this->movie_time_pause.tv_usec};
                 this->movie_time_start.tv_sec += pause_duration.tv_sec;
-                this->callback->set_pause(pause_duration);
+                // TODO this->callback->set_pause(pause_duration);
 
                 this->is_paused = false;
             } else {
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
-                this->movie_time_start = tvtime();
-                this->callback->set_sync();
+                this->movie_time_start = to_timeval(MonotonicTimePoint::clock::now());
+                // TODO this->callback->set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -761,12 +763,11 @@ public Q_SLOTS:
     void playReplay() {
         this->show_video_real_time();
 
-        if (this->callback->is_replay_on()) {
-            this->slotRepainMatch();
-        }
+        // if (this->callback->is_replay_on()) {
+        //     this->slotRepainMatch();
+        // }
 
         if (this->current_time_movie >= this->movie_time) {
-
             this->show_video_real_time();
             this->_timer_replay.stop();
             this->begin = 0;
@@ -777,7 +778,7 @@ public Q_SLOTS:
             this->movie_status.setText("  Stop ");
             this->_running = false;
             this->is_paused = false;
-            this->callback->load_replay_mod({0, 0}, {0, 0});
+            this->callback->load_replay_mod(MonotonicTimePoint{}, MonotonicTimePoint{});
         }
     }
 
@@ -801,7 +802,7 @@ public Q_SLOTS:
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
-        if (this->callback->load_replay_mod({0, 0}, {0, 0})) {
+        if (this->callback->load_replay_mod(MonotonicTimePoint{}, MonotonicTimePoint {})) {
             //this->slotRepainMatch();
         }
     }

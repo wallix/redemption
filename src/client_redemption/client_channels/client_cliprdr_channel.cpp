@@ -29,10 +29,7 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/timeval_ops.hpp"
 #include "utils/monotonic_clock.hpp"
-
-#include <chrono>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -47,6 +44,14 @@ namespace
     namespace custom_formats
     {
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(text_html, "text/html")
+    }
+
+    void log_time(char const* type, MonotonicTimePoint last_time, long data_len)
+    {
+        auto time = std::chrono::duration_cast<std::chrono::microseconds>(
+            MonotonicTimePoint::clock::now() - last_time);
+        long duration = time.count();
+        LOG(LOG_INFO, "RDPECLIP::%s size=%ld octets  duration=%ld us", type, data_len, duration);
     }
 } // anonymous namespace
 
@@ -494,9 +499,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
 
                 this->send_UnlockPDU(0);
 
-                std::chrono::microseconds time = tvtime() - this->paste_data_request_time;
-                long duration = time.count();
-                LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
+                ::log_time("METAFILEPICT", this->paste_data_request_time, this->paste_data_len);
             }
         break;
 
@@ -663,9 +666,7 @@ void ClientCLIPRDRChannel::process_server_clipboard_indata(int flags, InStream &
                                 "CLIENT >> CB Channel: File Contents Request PDU SIZE ");
                         }
 
-                        std::chrono::microseconds time  = tvtime() - this->paste_data_request_time;
-                        long duration = time.count();
-                        LOG(LOG_INFO, "RDPECLIP::FILE size=%ld octets  duration=%ld us", this->paste_data_len, duration);
+                        ::log_time("FILE", this->paste_data_request_time, this->paste_data_len);
 
                         this->empty_buffer();
                     }
@@ -923,7 +924,7 @@ void ClientCLIPRDRChannel::process_format_list(InStream & chunk, uint32_t msgFla
     LOG_IF(bool(this->verbose & RDPVerbose::cliprdr), LOG_INFO,
         "CLIENT >> CB Channel: Format Data Request PDU");
 
-    this->paste_data_request_time = tvtime();
+    this->paste_data_request_time = MonotonicTimePoint::clock::now();
 }
 
 void ClientCLIPRDRChannel::process_format_data_request(InStream & chunk) const

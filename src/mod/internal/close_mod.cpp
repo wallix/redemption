@@ -98,10 +98,6 @@ CloseMod::CloseMod(
     this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget::focus_reason_tabkey);
     this->screen.set_widget_focus(&this->close_widget, Widget::focus_reason_tabkey);
 
-    if (vars.get<cfg::globals::close_timeout>().count()) {
-        this->close_widget.refresh_timeleft(vars.get<cfg::globals::close_timeout>().count());
-    }
-
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
     this->events_guard.create_event_timeout(
@@ -113,17 +109,16 @@ CloseMod::CloseMod(
             e.garbage = true;
         });
 
-    auto start_time = this->events_guard.get_current_time();
+    const auto start_time = this->events_guard.get_current_time();
     this->events_guard.create_event_timeout(
         "Close Refresh Message Event",
         start_time,
-        [this, tv_sec = start_time.tv_sec](Event& event)
+        [this, start_time](Event& event)
         {
-            event.alarm.reset_timeout(1s);
-            auto elapsed = event.alarm.now.tv_sec - tv_sec;
-            auto remaining = this->vars.get<cfg::globals::close_timeout>()
-                           - std::chrono::seconds{elapsed};
-            this->close_widget.refresh_timeleft(remaining.count());
+            auto elapsed = event.alarm.now - start_time;
+            auto remaining = this->vars.get<cfg::globals::close_timeout>() - elapsed;
+            event.alarm.reset_timeout(this->close_widget.refresh_timeleft(
+                std::chrono::duration_cast<std::chrono::seconds>(remaining)));
         });
 }
 

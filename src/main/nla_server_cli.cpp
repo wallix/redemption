@@ -263,7 +263,7 @@ public:
 
             const auto sck_verbose = safe_cast<SocketTransport::Verbose>(uint32_t(verbosity >> 32));
 
-            TimeBase time_base(tvtime());
+            TimeBase time_base {MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{}};
 
             TpduBuffer buffer;
             buffer.trace_pdu = true;
@@ -279,7 +279,7 @@ public:
                     FD_ZERO(&rset);
                     FD_SET(front_fd, &rset);
                     int status = select(front_fd + 1, &rset, nullptr, nullptr, nullptr);
-                    time_base.set_current_time(tvtime());
+                    time_base.set_current_time(MonotonicTimePoint::clock::now());
                     if (status < 0) {
                         std::cerr << "Selected returned an error\n";
                         break;
@@ -357,7 +357,6 @@ int main(int argc, char *argv[])
     int listen_port = 8001;
     std::string nla_username;
     std::string nla_password;
-    TimeBase time_base(tvtime());
     bool no_forkable = false;
     bool enable_kerberos = false;
     uint64_t verbosity = 0;
@@ -399,13 +398,14 @@ int main(int argc, char *argv[])
 
     openlog("NLAServer", LOG_CONS | LOG_PERROR, LOG_USER);
 
+    TimeBase time_base(MonotonicTimePoint::clock::now(), DurationFromMonotonicTimeToRealTime{});
     NLAServer front(std::move(nla_username), std::move(nla_password), !no_forkable, time_base, verbosity);
     auto sck = create_server(inet_addr("0.0.0.0"), listen_port, EnableTransparentMode::No);
     if (!sck) {
         return 2;
     }
     return unique_server_loop(std::move(sck), [&](int sck){
-        time_base.set_current_time(tvtime());
+        time_base.set_current_time(MonotonicTimePoint::clock::now());
         return front.start(sck);
     });
 }

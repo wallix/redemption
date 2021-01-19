@@ -77,7 +77,7 @@ private:
 
     void cleanup_data(std::size_t len, PacketType type);
 
-    std::chrono::milliseconds prefetchForTimer();
+    MonotonicTimePoint prefetchForTimer();
 
     /** @brief a chunk of capture file */
     struct Data
@@ -85,7 +85,7 @@ private:
         std::unique_ptr<uint8_t[]> data;
         size_t size;
         PacketType type;
-        std::chrono::milliseconds time;
+        MonotonicTimePoint time;
 
         [[nodiscard]] u8_array_view av() const noexcept;
     };
@@ -97,7 +97,7 @@ private:
     long long count_packet = 0;
 
     TimeBase const& time_base;
-    std::chrono::milliseconds start_time;
+    MonotonicTimePoint start_time;
 
     InFileTransport in_file;
     const unique_fd fd;

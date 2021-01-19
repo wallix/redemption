@@ -30,6 +30,8 @@
 #include "core/RDP/x224.hpp"
 #include "core/RDP/fastpath.hpp"
 
+
+
 RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     CryptContext decrypt;
 
@@ -42,7 +44,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
 
     GeneratorTransport in_t(payload);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
@@ -129,7 +131,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
 
     GeneratorTransport in_t(payload);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
@@ -211,7 +213,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
 
     GeneratorTransport in_t(payload);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
@@ -270,7 +272,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
 
     GeneratorTransport in_t(payload);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
@@ -309,7 +311,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     StaticOutStream<65536> out_s;
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);

@@ -72,7 +72,7 @@ public:
     }
 
 private:
-    timeval timeout() const
+    MonotonicTimePoint timeout() const
     {
         return this->timer_event.event_container().get_current_time() + this->grace_delay;
     }
@@ -150,61 +150,61 @@ public:
     {}
 
     /// disable timer with 0 for \c end_date
-    void set_time(time_t end_date)
+    void set_time(MonotonicTimePoint end_date)
     {
-        if (end_date) {
-            this->timer_close = end_date;
+        this->timer_close = end_date;
 
-            time_t now = this->timer_event.event_container().get_current_time().tv_sec;
-            timeval timeout{now, 0};
-            if (this->timer_close <= now) {
-                this->last_delay = 0;
-            }
-            else if (this->timer_close - now <= timers.back()) {
-                timeout.tv_sec = this->next_timeout(now);
-            }
-            else {
-                this->last_delay = 0;
-                timeout.tv_sec = this->timer_close - timers.back();
-            }
-
-            this->timer_event.reset_timeout_or_create_event(
-                timeout, "EndSessionWarning",
-                [this](Event& event) {
-                    if (event.alarm.now.tv_sec >= this->timer_close) {
-                        event.garbage = true;
-                        throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
-                    }
-
-                    // now+1 for next timer
-                    time_t now = event.alarm.now.tv_sec + 1;
-
-                    event.alarm.reset_timeout({this->next_timeout(now), 0});
-                }
-            );
+        auto now = this->timer_event.event_container().get_current_time();
+        if (this->timer_close <= now) {
+            this->last_delay = this->last_delay.zero();
+        }
+        else if (this->timer_close - now <= timers.back()) {
+            now = this->next_timeout(now);
         }
         else {
-            this->timer_event.garbage();
-            this->last_delay = 0;
+            this->last_delay = this->last_delay.zero();
+            now = this->timer_close - timers.back();
         }
+
+        this->timer_event.reset_timeout_or_create_event(
+            now, "EndSessionWarning",
+            [this](Event& event) {
+                if (event.alarm.now >= this->timer_close) {
+                    event.garbage = true;
+                    throw Error(ERR_SESSION_CLOSE_ENDDATE_REACHED);
+                }
+
+                // now+1 for next timer
+                auto now = event.alarm.now + 1s;
+                event.alarm.reset_timeout(this->next_timeout(now));
+            }
+        );
     }
+
+    // void reset()
+    // {
+    //     this->timer_event.garbage();
+    //     this->last_delay = this->last_delay.zero();
+    // }
 
     template<class Fn>
     void update_warning(Fn&& fn)
     {
-        if (this->last_delay) {
+        if (this->last_delay.count()) {
             // ajust minutes
-            fn(std::chrono::minutes((this->last_delay + 30) / 60));
-            this->last_delay = 0;
+            fn(std::chrono::duration_cast<std::chrono::minutes>(this->last_delay + 30s));
+            this->last_delay = this->last_delay.zero();
         }
     }
 
 private:
-    static constexpr std::array<time_t, 4> timers{{ 1*60, 5*60, 10*60, 30*60, }};
+    static constexpr std::array<MonotonicTimePoint::duration, 4> timers{{
+        1min, 5min, 10min, 30min,
+    }};
 
-    time_t next_timeout(time_t now)
+    MonotonicTimePoint next_timeout(MonotonicTimePoint now)
     {
-        time_t elapsed = this->timer_close - now;
+        auto elapsed = this->timer_close - now;
         this->last_delay = elapsed;
 
         auto timepos = timers.begin();
@@ -220,7 +220,7 @@ private:
         return this->timer_close - *(timepos-1);
     }
 
-    time_t timer_close;
-    time_t last_delay = 0;
+    MonotonicTimePoint timer_close;
+    MonotonicTimePoint::duration last_delay;
     EventRef2 timer_event;
 };

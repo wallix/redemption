@@ -24,14 +24,14 @@
 
 #include <csignal>
 
-#include "utils/log.hpp"
-
-#include "utils/timebase.hpp"
 #include "client_redemption/client_redemption.hpp"
-#include "utils/set_exception_handler_pretty_message.hpp"
-#include "system/scoped_ssl_init.hpp"
 #include "core/events.hpp"
+#include "system/scoped_ssl_init.hpp"
+#include "utils/log.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/set_exception_handler_pretty_message.hpp"
+#include "utils/timebase.hpp"
+#include "utils/to_timeval.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -52,7 +52,7 @@ public:
 
     ~ClientRedemptionHeadless() = default;
 
-    void session_update(timeval /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
+    void session_update(MonotonicTimePoint /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
     void possible_active_window_change() override {}
 
     void close() override {}
@@ -70,13 +70,13 @@ public:
                 }
             }
 
-            this->start_wab_session_time = tvtime();
+            this->start_wab_session_time = MonotonicTimePoint::clock::now();
         }
     }
 
-    int wait_and_draw_event(std::chrono::milliseconds timeout)
+    int wait_and_draw_event(MonotonicTimePoint::duration timeout)
     {
-        timeval now = tvtime();
+        auto now = MonotonicTimePoint::clock::now();
         int max = 0;
         fd_set rfds;
         io_fd_zero(rfds);
@@ -87,8 +87,8 @@ public:
         });
 
         auto next_timeout = this->event_manager.next_timeout();
-        timeval ultimatum = (next_timeout == timeval{})
-            ? now + timeout
+        timeval ultimatum = (next_timeout == MonotonicTimePoint{})
+            ? to_timeval(timeout)
             : (now < next_timeout)
             ? to_timeval(next_timeout - now)
             : timeval{};
@@ -105,7 +105,7 @@ public:
             return 9;
         }
 
-        this->event_manager.set_current_time(tvtime());
+        this->event_manager.set_current_time(MonotonicTimePoint::clock::now());
         this->event_manager.execute_events([&rfds](int fd){
             return io_fd_isset(fd, rfds);
         }, false);
@@ -118,13 +118,13 @@ static int run_mod(
     ClientRedemptionHeadless& front,
     ClientRedemptionConfig & config,
     ClientCallback & callback,
-    timeval start_win_session_time)
+    MonotonicTimePoint start_win_session_time)
 {
-    const timeval time_stop = tvtime() + config.time_out_disconnection;
-    const auto time_mark = 50ms;
+    const auto time_stop = MonotonicTimePoint::clock::now() + config.time_out_disconnection;
+    const auto time_mark = MonotonicTimePoint::duration(50ms);
 
     if (callback.get_mod()) {
-        auto & mod = *(callback.get_mod());
+        auto & mod = *callback.get_mod();
 
         bool logged = false;
 
@@ -142,7 +142,7 @@ static int run_mod(
                 }
             }
 
-            if (time_stop < tvtime() && !config.persist) {
+            if (time_stop < MonotonicTimePoint::clock::now() && !config.persist) {
                 std::cerr << " Exit timeout (timeout = " << config.time_out_disconnection.count() << " ms)" << std::endl;
                 front.disconnect("", false);
                 return 8;
@@ -154,9 +154,10 @@ static int run_mod(
 
             // send key to keep alive
             if (config.keep_alive_freq) {
-                std::chrono::microseconds duration = tvtime() - start_win_session_time;
+                auto duration = std::chrono::duration_cast<std::chrono::seconds>(
+                    MonotonicTimePoint::clock::now() - start_win_session_time);
 
-                if ( ((duration.count() / 1000000) % config.keep_alive_freq) == 0) {
+                if (duration.count() % config.keep_alive_freq == 0) {
                     callback.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
                     callback.send_rdp_scanCode(0x1e, 0);
                 }
@@ -192,7 +193,7 @@ int main(int argc, char const** argv)
     ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
     EventManager event_manager;
-    event_manager.set_current_time(tvtime());
+    event_manager.set_current_time(MonotonicTimePoint::clock::now());
     ScopedSslInit scoped_ssl;
 
     ClientRedemptionHeadless client(event_manager, config);

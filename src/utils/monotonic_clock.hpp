@@ -22,38 +22,16 @@ Author(s): Proxy Team
 
 #include <chrono>
 
-#include <time.h>
+#include "cxx/diagnostic.hpp"
 
-// TODO
-#include <sys/time.h>
-inline timeval tvtime()
-{
-    timeval tv;
-    gettimeofday(&tv, nullptr);
-    return tv;
-}
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
+using namespace std::chrono_literals; // NOLINT
+REDEMPTION_DIAGNOSTIC_POP
 
-inline timespec get_monotonic_timespec_clock()
-{
-    timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-    return tp;
-}
+using MonotonicTimePoint = std::chrono::steady_clock::time_point;
 
-inline timeval get_monotonic_timeval_clock()
+struct DurationFromMonotonicTimeToRealTime
 {
-    auto tp = get_monotonic_timespec_clock();
-    return {tp.tv_sec, tp.tv_nsec / 1000};
-}
-
-inline std::chrono::milliseconds get_monotonic_ms_clock()
-{
-    auto tp = get_monotonic_timespec_clock();
-    return std::chrono::milliseconds(tp.tv_sec*1000 + tp.tv_nsec/1000000);
-}
-
-inline std::chrono::microseconds get_monotonic_us_clock()
-{
-    auto tp = get_monotonic_timespec_clock();
-    return std::chrono::microseconds(tp.tv_sec*1000000 + tp.tv_nsec/1000);
-}
+    std::chrono::steady_clock::duration duration;
+};

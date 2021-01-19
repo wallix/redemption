@@ -45,7 +45,7 @@ namespace
     struct TestCaptureContext
     {
         // Timestamps are applied only when flushing
-        timeval now{1000, 0};
+        MonotonicTimePoint now{1000s};
 
         LCGRandom rnd;
         FakeFstat fstat;
@@ -113,6 +113,7 @@ namespace
         }
         , capture_params{
             now,
+            DurationFromMonotonicTimeToRealTime{},
             basename,
             record_tmp_path,
             record_path,
@@ -156,43 +157,43 @@ namespace
           .run(f);
     }
 
-    void capture_draw_color1(timeval& now, Capture& capture, Rect scr, uint16_t cy)
+    void capture_draw_color1(MonotonicTimePoint& now, Capture& capture, Rect scr, uint16_t cy)
     {
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, cy, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, cy, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, cy, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     }
 
-    void capture_draw_color2(timeval& now, Capture& capture, Rect scr, uint16_t cy)
+    void capture_draw_color2(MonotonicTimePoint& now, Capture& capture, Rect scr, uint16_t cy)
     {
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, cy, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, cy, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, cy, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     }
 
@@ -210,7 +211,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
-        timeval now{1000, 0};
+        MonotonicTimePoint now{1000s};
 
         capture_draw_color1(now, capture, scr, 700);
         capture_draw_color2(now, capture, scr, 700);
@@ -247,7 +248,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         100, 100, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
-        timeval now{1000, 0};
+        MonotonicTimePoint now{1000s};
 
         auto const color_cxt = gdi::ColorCtx::depth16();
         capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
@@ -255,7 +256,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         bool ignore_frame_in_timeval = true;
 
         capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
     });
 
@@ -302,7 +303,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
         // Timestamps are applied only when flushing
-        timeval now{1000, 0};
+        MonotonicTimePoint now{1000s};
 
         capture_draw_color1(now, capture, scr, 1200);
 
@@ -317,7 +318,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
@@ -354,7 +355,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     test_capture_context("resizing-capture-1", CaptureFlags::wrm | CaptureFlags::png,
         800, 600, record_wd, hash_wd, KbdLogParams(), [](Capture& capture, Rect scr)
     {
-        timeval now{1000, 0};
+        MonotonicTimePoint now{1000s};
 
         capture_draw_color1(now, capture, scr, 700);
 
@@ -366,7 +367,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
@@ -445,9 +446,9 @@ namespace
         };
     }
 
-    Capture::SessionMeta make_session_meta(timeval now, Transport& trans, bool key_markers_hidden_state)
+    Capture::SessionMeta make_session_meta(MonotonicTimePoint const& now, Transport& trans, bool key_markers_hidden_state)
     {
-        return Capture::SessionMeta(now, trans, key_markers_hidden_state, make_meta_params());
+        return Capture::SessionMeta(now, DurationFromMonotonicTimeToRealTime{}, trans, key_markers_hidden_state, make_meta_params());
     }
 } // namespace
 
@@ -457,9 +458,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
@@ -467,7 +466,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
             meta.kbd_input(now, 'B');
             meta.kbd_input(now, 'C');
             meta.kbd_input(now, 'D');
-            now.tv_sec += 1;
+            now += 1s;
         };
 
         send_kbd();
@@ -481,16 +480,16 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         send_kbd();
         meta.periodic_snapshot(now, 0, 0, false);
         send_kbd();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1"));
-        now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah1"));
+        now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2"));
-        now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah2"));
+        now += 1s;
         send_kbd();
         send_kbd();
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3"));
-        now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah3"));
+        now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
     }
 
@@ -509,9 +508,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
@@ -519,20 +516,20 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
             meta.kbd_input(now, '\"');
             meta.kbd_input(now, 'C');
             meta.kbd_input(now, 'D');
-            now.tv_sec += 1;
+            now += 1s;
         };
         send_kbd();
         meta.periodic_snapshot(now, 0, 0, false);
         send_kbd();
-        meta.title_changed(now.tv_sec, cstr_array_view("Bl\"ah1"));
-        now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Bl\"ah1"));
+        now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah\\2"));
+        meta.title_changed(now, cstr_array_view("Blah\\2"));
         meta.session_update(now, LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av, "fr"_av),
             KVLog("display_name"_av, "xy\\z"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
     }
 
@@ -551,9 +548,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
@@ -563,15 +558,15 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
             meta.kbd_input(now, 'D');
         };
 
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        send_kbd(); now += 1s;
+        send_kbd(); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.next_video(now.tv_sec);
+        meta.next_video(now);
     }
 
     RED_CHECK_EQ(
@@ -590,9 +585,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
@@ -602,31 +595,31 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
             meta.kbd_input(now, 'D');
         };
 
-        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now += 1s;
 
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
 
         meta.session_update(now, LogId::BUTTON_CLICKED, {
             KVLog("windows"_av, ""_av),
             KVLog("button"_av, "Démarrer"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
 
         meta.session_update(now, LogId::CHECKBOX_CLICKED, {
             KVLog("windows"_av, "User Properties"_av),
             KVLog("checkbox"_av, "User cannot change password"_av),
             KVLog("state"_av, "checked"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
 
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        send_kbd(); now += 1s;
+        send_kbd(); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.next_video(now.tv_sec);
+        meta.next_video(now);
     }
 
     RED_CHECK_EQ(
@@ -647,9 +640,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
         auto send_kbd = [&]{
@@ -659,9 +650,9 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
             meta.kbd_input(now, 'D');
         };
 
-        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now += 1s;
 
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
 
         send_kbd();
 
@@ -669,18 +660,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
             KVLog("windows"_av, ""_av),
             KVLog("button"_av, "Démarrer"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
 
-        send_kbd(); now.tv_sec += 1;
+        send_kbd(); now += 1s;
 
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
-        send_kbd(); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        send_kbd(); now += 1s;
+        send_kbd(); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.next_video(now.tv_sec);
+        meta.next_video(now);
     }
 
     RED_CHECK_EQ(
@@ -700,14 +691,12 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
 
-        meta.kbd_input(now, 'A'); now.tv_sec += 1;
+        meta.kbd_input(now, 'A'); now += 1s;
 
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
 
         meta.kbd_input(now, 'B');
 
@@ -715,63 +704,63 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
             KVLog("windows"_av, ""_av),
             KVLog("button"_av, "Démarrer"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
 
-        meta.kbd_input(now, 'C'); now.tv_sec += 1;
+        meta.kbd_input(now, 'C'); now += 1s;
 
         meta.possible_active_window_change();
 
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
-        meta.kbd_input(now, 'D'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, 'E'); now.tv_sec += 1;
-        meta.kbd_input(now, 'F'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, 'G'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.kbd_input(now, 'D'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, 'E'); now += 1s;
+        meta.kbd_input(now, 'F'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, 'G'); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, '\t'); now.tv_sec += 1;
-        meta.kbd_input(now, 'H'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, '\t'); now += 1s;
+        meta.kbd_input(now, 'H'); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.next_video(now.tv_sec);
-        meta.kbd_input(now, 'I'); now.tv_sec += 1;
-        meta.kbd_input(now, 'J'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'K'); now.tv_sec += 1;
+        meta.next_video(now);
+        meta.kbd_input(now, 'I'); now += 1s;
+        meta.kbd_input(now, 'J'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'K'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah4")); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'a'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'L'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah4")); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'a'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'L'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah5")); now.tv_sec += 1;
-        meta.kbd_input(now, 'M'); now.tv_sec += 1;
-        meta.kbd_input(now, 'N'); now.tv_sec += 1;
-        meta.kbd_input(now, 'O'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'P'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah5")); now += 1s;
+        meta.kbd_input(now, 'M'); now += 1s;
+        meta.kbd_input(now, 'N'); now += 1s;
+        meta.kbd_input(now, 'O'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'P'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah6")); now.tv_sec += 1;
-        meta.kbd_input(now, 'Q'); now.tv_sec += 1;
-        meta.kbd_input(now, 'R'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x2191); now.tv_sec += 1; // UP
-        meta.kbd_input(now, 'S'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'T'); now.tv_sec += 1;
-        meta.kbd_input(now, '/'); now.tv_sec += 1;
-        meta.kbd_input(now, 'U'); now.tv_sec += 1;
-        meta.kbd_input(now, '/'); now.tv_sec += 1;
-        meta.kbd_input(now, '/'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'V'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah6")); now += 1s;
+        meta.kbd_input(now, 'Q'); now += 1s;
+        meta.kbd_input(now, 'R'); now += 1s;
+        meta.kbd_input(now, 0x2191); now += 1s; // UP
+        meta.kbd_input(now, 'S'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'T'); now += 1s;
+        meta.kbd_input(now, '/'); now += 1s;
+        meta.kbd_input(now, 'U'); now += 1s;
+        meta.kbd_input(now, '/'); now += 1s;
+        meta.kbd_input(now, '/'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'V'); now += 1s;
     }
 
     RED_CHECK_EQ(
@@ -801,22 +790,20 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, false);
         Capture::SessionLogAgent log_agent(meta, make_meta_params());
 
         meta.session_update(now, LogId::NEW_PROCESS, {
             KVLog("command_line"_av, "abc"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
 
         meta.session_update(now, LogId::BUTTON_CLICKED, {
             KVLog("windows"_av, "de"_av),
             KVLog("button"_av, "fg"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
     }
 
     RED_CHECK_EQ(
@@ -832,14 +819,12 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
     BufTransport trans;
 
     {
-        timeval now;
-        now.tv_sec  = 1000;
-        now.tv_usec = 0;
+        MonotonicTimePoint now{1000s};
         Capture::SessionMeta meta = make_session_meta(now, trans, true);
 
-        meta.kbd_input(now, 'A'); now.tv_sec += 1;
+        meta.kbd_input(now, 'A'); now += 1s;
 
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah1")); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
 
         meta.kbd_input(now, 'B');
 
@@ -847,69 +832,69 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
             KVLog("windows"_av, ""_av),
             KVLog("button"_av, "Démarrer"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
 
-        meta.kbd_input(now, 'C'); now.tv_sec += 1;
+        meta.kbd_input(now, 'C'); now += 1s;
 
         meta.possible_active_window_change();
 
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah2")); now.tv_sec += 1;
-        meta.kbd_input(now, 'D'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, 'E'); now.tv_sec += 1;
-        meta.kbd_input(now, 'F'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, 'G'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
+        meta.kbd_input(now, 'D'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, 'E'); now += 1s;
+        meta.kbd_input(now, 'F'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, 'G'); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah3")); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, '\r'); now.tv_sec += 1;
-        meta.kbd_input(now, '\t'); now.tv_sec += 1;
-        meta.kbd_input(now, 'H'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, '\r'); now += 1s;
+        meta.kbd_input(now, '\t'); now += 1s;
+        meta.kbd_input(now, 'H'); now += 1s;
         meta.periodic_snapshot(now, 0, 0, false);
-        meta.next_video(now.tv_sec);
-        meta.kbd_input(now, 'I'); now.tv_sec += 1;
-        meta.kbd_input(now, 'J'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'K'); now.tv_sec += 1;
+        meta.next_video(now);
+        meta.kbd_input(now, 'I'); now += 1s;
+        meta.kbd_input(now, 'J'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'K'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah4")); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'a'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'L'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah4")); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'a'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'L'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah5")); now.tv_sec += 1;
-        meta.kbd_input(now, 'M'); now.tv_sec += 1;
-        meta.kbd_input(now, 'N'); now.tv_sec += 1;
-        meta.kbd_input(now, 'O'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'P'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah5")); now += 1s;
+        meta.kbd_input(now, 'M'); now += 1s;
+        meta.kbd_input(now, 'N'); now += 1s;
+        meta.kbd_input(now, 'O'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'P'); now += 1s;
         meta.possible_active_window_change();
-        meta.title_changed(now.tv_sec, cstr_array_view("Blah6")); now.tv_sec += 1;
-        meta.kbd_input(now, 'Q'); now.tv_sec += 1;
-        meta.kbd_input(now, 'R'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x2191); now.tv_sec += 1; // UP
-        meta.kbd_input(now, 'S'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'T'); now.tv_sec += 1;
-        meta.kbd_input(now, '/'); now.tv_sec += 1;
-        meta.kbd_input(now, 'U'); now.tv_sec += 1;
-        meta.kbd_input(now, '/'); now.tv_sec += 1;
-        meta.kbd_input(now, '/'); now.tv_sec += 1;
-        meta.kbd_input(now, 0x08); now.tv_sec += 1;
-        meta.kbd_input(now, 'V'); now.tv_sec += 1;
+        meta.title_changed(now, cstr_array_view("Blah6")); now += 1s;
+        meta.kbd_input(now, 'Q'); now += 1s;
+        meta.kbd_input(now, 'R'); now += 1s;
+        meta.kbd_input(now, 0x2191); now += 1s; // UP
+        meta.kbd_input(now, 'S'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'T'); now += 1s;
+        meta.kbd_input(now, '/'); now += 1s;
+        meta.kbd_input(now, 'U'); now += 1s;
+        meta.kbd_input(now, '/'); now += 1s;
+        meta.kbd_input(now, '/'); now += 1s;
+        meta.kbd_input(now, 0x08); now += 1s;
+        meta.kbd_input(now, 'V'); now += 1s;
 
         meta.session_update(now, LogId::BUTTON_CLICKED, {
             KVLog("windows"_av, "\"Connexion Bureau à distance\""_av),
             KVLog("button"_av, "&Connexion"_av),
         });
-        now.tv_sec += 1;
+        now += 1s;
     }
 
     RED_CHECK(
@@ -939,7 +924,7 @@ namespace
 {
     struct TestGraphicToFile
     {
-        timeval now{1000, 0};
+        MonotonicTimePoint now{1000s};
 
         BmpCache bmp_cache;
         GlyphCache gly_cache;
@@ -958,14 +943,15 @@ namespace
             BmpCache::Verbose::none
         )
         , drawable(scr.cx, scr.cy)
-        , consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache,
+        , consumer(now, DurationFromMonotonicTimeToRealTime{},
+            trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache,
             drawable, WrmCompressionAlgorithm::no_compression,
             GraphicToFile::SendInput::NO, RDPSerializerVerbose::none)
         {}
 
         void next_second(int n = 1) /*NOLINT*/
         {
-            now.tv_sec += n;
+            now += std::chrono::seconds(n);
             consumer.timestamp(now);
         }
     };
@@ -1304,10 +1290,8 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     GeneratorTransport in_wrm_trans(trans.data());
 
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    MonotonicTimePoint begin_capture {};
+    MonotonicTimePoint end_capture {};
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
     RDPDrawable drawable1(player.get_wrm_info().width, player.get_wrm_info().height);
     player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
@@ -1905,10 +1889,8 @@ RED_AUTO_TEST_CASE(TestReload)
 
         {
             GeneratorTransport in_wrm_trans(test.data);
-            timeval begin_capture;
-            begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-            timeval end_capture;
-            end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+            MonotonicTimePoint begin_capture {};
+            MonotonicTimePoint end_capture {};
             FileToGraphic player(
                 in_wrm_trans, begin_capture, end_capture,
                 false, FileToGraphic::Verbose(0));
@@ -1918,7 +1900,7 @@ RED_AUTO_TEST_CASE(TestReload)
                 player.interpret_order();
             }
             ::dump_png24(trans, drawable, true);
-            RED_CHECK_EQUAL(test.time, player.get_current_time().tv_sec);
+            RED_CHECK(test.time == to_time_t(player.get_current_time()));
         }
 
         RED_TEST(trans.size() == test.file_len);
@@ -1942,7 +1924,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
 {
     ReportMessage report_message;
 
-    timeval const time = {0, 0};
+    MonotonicTimePoint const time {};
     Capture::SessionLogKbd kbd_capture(report_message);
 
     {
@@ -1988,7 +1970,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
 {
     ReportMessage report_message;
 
-    timeval const now = {0, 0};
+    MonotonicTimePoint now{};
     Capture::SessionLogKbd kbd_capture(report_message);
 
     {
@@ -2030,7 +2012,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
     char const str[] = "abcdaaaaaaaaaaaaaaaabcdeaabcdeaaaaaaaaaaaaabcde";
     unsigned pattern_count = 0;
     for (auto c : str) {
-        if (!kbd_capture.kbd_input({0, 0}, c)) {
+        if (!kbd_capture.kbd_input(MonotonicTimePoint{}, c)) {
             ++pattern_count;
         }
     }
@@ -2062,7 +2044,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
     char const str[] = "abcdab/cdaa";
     unsigned pattern_count = 0;
     for (auto c : str) {
-        if (!kbd_capture.kbd_input({0, 0}, c)) {
+        if (!kbd_capture.kbd_input(MonotonicTimePoint{}, c)) {
             ++pattern_count;
         }
     }
@@ -2079,10 +2061,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     RED_REQUIRE_NE(fd, -1);
 
     InFileTransport in_wrm_trans(unique_fd{fd});
-    timeval begin_capture;
-    begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
-    timeval end_capture;
-    end_capture.tv_sec = 0; end_capture.tv_usec = 0;
+    MonotonicTimePoint begin_capture {};
+    MonotonicTimePoint end_capture {};
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
 
     RDPDrawable drawable1(player.get_wrm_info().width, player.get_wrm_info().height);
@@ -2113,7 +2093,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     RDPDrawable drawable(info.width, info.height);
     GraphicToFile graphic_to_file(
-        player.get_current_time(), out_wrm_trans, BitsPerPixel{24}, false,
+        player.get_current_time(), DurationFromMonotonicTimeToRealTime{},
+        out_wrm_trans, BitsPerPixel{24}, false,
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
         GraphicToFile::SendInput::NO, RDPSerializerVerbose::none
     );
@@ -2124,14 +2105,14 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     bool requested_to_stop = false;
 
-    RED_CHECK_EQUAL(1352304810u, static_cast<unsigned>(player.get_current_time().tv_sec));
+    RED_CHECK(1352304810 == to_time_t(player.get_current_time()));
     player.play(requested_to_stop);
 
     BufTransport out_png_trans;
     ::dump_png24(out_png_trans, drawable, true);
     RED_TEST(out_png_trans.size() == 21280);
 
-    RED_CHECK_EQUAL(1352304870u, static_cast<unsigned>(player.get_current_time().tv_sec));
+    RED_CHECK(1352304870 == to_time_t(player.get_current_time()));
 
     graphic_to_file.sync();
 
@@ -2217,8 +2198,8 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
     ctx_cap.capture_ocr = true;
 
     ctx_cap.run([&](Capture& capture, Rect scr){
-        timeval now{1000, 0};
-        now.tv_sec += 100;
+        MonotonicTimePoint now{1000s};
+        now += 100s;
 
         auto draw_img = [&](char const* filename){
             Bitmap img;
@@ -2232,13 +2213,13 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         draw_img(FIXTURES_PATH "/m-21288-2.bmp");
         capture.periodic_snapshot(now, 0, 0, false);
 
-        now.tv_sec += 100;
+        now += 100s;
         capture.session_update(now, LogId::PROBE_STATUS, {
             KVLog("status"_av, "Unknown"_av),
         });
         capture.periodic_snapshot(now, 0, 0, false);
 
-        now.tv_sec += 100;
+        now += 100s;
         capture.session_update(now, LogId::PROBE_STATUS, {
             KVLog("status"_av, "Ready"_av),
         });
@@ -2251,7 +2232,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         // qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes
         draw_img(FIXTURES_PATH "/win2008capture10.bmp");
         capture.periodic_snapshot(now, 0, 0, false);
-        now.tv_sec += 100;
+        now += 100s;
         capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
             KVLog("windows"_av, "b"_av),
             KVLog("class"_av, "x"_av),
@@ -2259,7 +2240,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         });
         capture.periodic_snapshot(now, 0, 0, false);
 
-        now.tv_sec += 100;
+        now += 100s;
         // disable sespro
         capture.session_update(now, LogId::PROBE_STATUS, {
             KVLog("status"_av, "Unknown"_av),
@@ -2272,7 +2253,7 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
         });
         capture.periodic_snapshot(now, 0, 0, false);
 
-        now.tv_sec += 100;
+        now += 100s;
         // Gestionnaire de licences TS
         draw_img(FIXTURES_PATH "/win2008capture.bmp");
         capture.periodic_snapshot(now, 0, 0, false);

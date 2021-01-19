@@ -1114,6 +1114,7 @@ public:
 
         CaptureParams capture_params{
             this->events_guard.get_current_time(),
+            this->events_guard.get_time_base().get_duration_from_monotonic_time_to_real_time(),
             record_filebase,
             record_tmp_path,
             record_path.c_str(),
@@ -1161,12 +1162,12 @@ public:
                     event.alarm.now,
                     this->mouse_x, this->mouse_y,
                     false  // ignore frame in time interval
-                ).ms();
-                if (capture_ms == capture_ms.max()){
-                    event.garbage = true;
+                ).duration();
+                if (capture_ms != capture_ms.max()){
+                    event.alarm.reset_timeout(capture_ms);
                 }
                 else {
-                    event.alarm.reset_timeout(capture_ms);
+                    event.garbage = true;
                 }
            });
 
@@ -1196,6 +1197,7 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
+            this->capture->force_flush(this->events_guard.get_current_time(), this->mouse_x, this->mouse_y);
             this->capture.reset();
             this->capture_timer.garbage();
             this->set_gd(this->orders.graphics_update_pdu());
@@ -3085,7 +3087,7 @@ public:
         this->update_keyboard_input_mask_state();
     }
 
-    void session_update(timeval now, LogId id, KVLogList kv_list) override
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
     {
         if (this->capture) {
             this->capture->session_update(now, id, kv_list);
@@ -5136,14 +5138,14 @@ private:
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                auto const timeval = this->events_guard.get_current_time();
+                auto const now = this->events_guard.get_current_time();
                 bool const send_to_mod = !this->capture
                     || (0 == decoded_keys.count)
                     || (1 == decoded_keys.count
-                        && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
+                        && this->capture->kbd_input(now, decoded_keys.uchars[0]))
                     || (2 == decoded_keys.count
-                        && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
-                        && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
+                        && this->capture->kbd_input(now, decoded_keys.uchars[0])
+                        && this->capture->kbd_input(now, decoded_keys.uchars[1]));
                 if (send_to_mod) {
                     cb.rdp_input_scancode(ke.keyCode, 0, KeyboardFlags::get(ke), event_time, &this->keymap);
                 }

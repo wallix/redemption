@@ -300,12 +300,12 @@ private:
 
     bool     clipboard_requesting_for_data_is_delayed = false;
     uint32_t clipboard_requested_format_id            = 0;
-    std::chrono::microseconds clipboard_last_client_data_timestamp = std::chrono::microseconds{};
+    MonotonicTimePoint clipboard_last_client_data_timestamp {};
     ClipboardEncodingType clipboard_server_encoding_type;
     bool clipboard_owned_by_client = true;
     VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop = VncBogusClipboardInfiniteLoop::delayed;
     uint32_t clipboard_general_capability_flags = 0;
-    time_t beginning;
+    MonotonicTimePoint::duration beginning;
     ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 

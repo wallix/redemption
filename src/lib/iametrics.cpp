@@ -57,12 +57,11 @@ extern "C"
         auto av = [](char const* s){ return chars_view{s, strlen(s)}; };
         using std::chrono::seconds;
         using std::chrono::hours;
-        timeval now{static_cast<time_t>(now_seconds), 0};
         Metrics * metrics = new(std::nothrow) Metrics(
             path, session_id,
             av(primary_user_sig), av(account_sig), av(target_service_sig),
-            av(session_info_sig), now, hours(file_interval_hours),
-            seconds(log_delay_seconds));
+            av(session_info_sig), MonotonicTimePoint(seconds(now_seconds)),
+            DurationFromMonotonicTimeToRealTime{}, hours(file_interval_hours), seconds(log_delay_seconds));
         metrics->set_protocol(version, protocol_name, nbitems);
         return metrics;
     }
@@ -74,10 +73,7 @@ extern "C"
 
     void metrics_log(Metrics * metrics, uint64_t now_ms) noexcept
     {
-        timeval tv_now;
-        tv_now.tv_sec = now_ms / 1000;
-        tv_now.tv_usec = (now_ms % 1000) * 1000;
-        metrics->log(tv_now);
+        metrics->log(MonotonicTimePoint(std::chrono::milliseconds(now_ms)));
     }
 
     int metrics_add_to_current_data(Metrics * metrics, unsigned index, uint64_t value) noexcept

@@ -1,7 +1,7 @@
 #include "acl/session_inactivity.hpp"
-#include "utils/timeval_ops.hpp"
 #include "utils/log.hpp"
 
+using namespace std::chrono_literals;
 
 namespace
 {

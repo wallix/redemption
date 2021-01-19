@@ -217,7 +217,7 @@ namespace
         // (that means the select() on ressources could be managed by that layer)
             close(incoming_sck);
 
-            timeval start_time = tvtime();
+            const MonotonicTimePoint start_time = MonotonicTimePoint::clock::now();
 
             char source_ip[256] { };
             char source_port_buf[8] { };
@@ -247,7 +247,8 @@ namespace
             }
 
             {
-                long long const sec = tvtime().tv_sec;
+                long long const sec = std::chrono::duration_cast<std::chrono::seconds>(
+                    MonotonicTimePoint::clock::now().time_since_epoch()).count();
                 int const pid = getpid();
                 char psid[128];
                 std::sprintf(psid, "%lld%d", sec, pid);

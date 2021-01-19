@@ -371,16 +371,16 @@ video_recorder::~video_recorder() /*NOLINT*/
 
 void video_recorder::preparing_video_frame()
 {
-    /* stat */// LOG(LOG_INFO, "%s", "preparing_video_frame");
+    /* stat */// LOG(LOG_INFO, "preparing_video_frame");
     sws_scale(
         this->d->img_convert_ctx,
         this->d->original_picture->data, this->d->original_picture->linesize,
         0, this->d->original_height, this->d->picture->data, this->d->picture->linesize);
 }
 
-void video_recorder::encoding_video_frame(uint64_t frame_index)
+void video_recorder::encoding_video_frame(int64_t frame_index)
 {
-    /* stat */// LOG(LOG_INFO, "encoding_video_frame");
+    /* stat */// LOG(LOG_INFO, "encoding_video_frame %ld", frame_index);
 
     this->d->picture->pts = frame_index;
     auto [errnum, errmsg] = encode_frame(

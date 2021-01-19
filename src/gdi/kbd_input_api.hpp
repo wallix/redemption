@@ -18,22 +18,22 @@
 *   Author(s): Jonathan Poelen
 */
 
-
 #pragma once
 
-#include <sys/time.h> // timeval
+#include "utils/sugar/noncopyable.hpp"
+#include "utils/monotonic_clock.hpp"
+
 #include <cstdint>
 
-#include "utils/sugar/noncopyable.hpp"
 
-
-namespace gdi {
+namespace gdi
+{
 
 struct KbdInputApi : private noncopyable
 {
     virtual ~KbdInputApi() = default;
 
-    virtual bool kbd_input(timeval const & now, uint32_t uchar) = 0;
+    virtual bool kbd_input(MonotonicTimePoint now, uint32_t uchar) = 0;
     virtual void enable_kbd_input_mask(bool enable) = 0;
 };
 

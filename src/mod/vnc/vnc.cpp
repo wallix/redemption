@@ -70,6 +70,7 @@ mod_vnc::mod_vnc( Transport & t
     , encodings(encodings)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
+    , beginning(events.get_current_time().time_since_epoch())
     , rail_client_execute(rail_client_execute)
     , gd(gd)
     , events_guard(events)
@@ -85,8 +86,6 @@ mod_vnc::mod_vnc( Transport & t
     , clipboard_data_ctx(verbose)
 {
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Creation of new mod 'VNC'");
-
-    ::time(&this->beginning);
 
     // TODO init layout sym with macos layout
 
@@ -394,7 +393,7 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
 
     this->clipboard_owned_by_client = true;
 
-    this->clipboard_last_client_data_timestamp = ustime(this->events_guard.get_current_time());
+    this->clipboard_last_client_data_timestamp = this->events_guard.get_current_time();
 }
 
 
@@ -1691,8 +1690,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                                          | CHANNELS::CHANNEL_FLAG_LAST
                                        );
 
-            using std::chrono::microseconds;
-            constexpr microseconds MINIMUM_TIMEVAL(250000LL);
+            constexpr MonotonicTimePoint::duration MINIMUM_TIMEVAL(250000us);
 
             if (this->enable_clipboard_up
              && (contains_data_in_text_format || contains_data_in_unicodetext_format)
@@ -1701,8 +1699,8 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     ? RDPECLIP::CF_UNICODETEXT
                     : RDPECLIP::CF_TEXT;
 
-                const microseconds usnow        = ustime(this->events_guard.get_current_time());
-                const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
+                const auto usnow        = this->events_guard.get_current_time();
+                const auto timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                 if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO,
                         "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u)",
@@ -2089,16 +2087,20 @@ void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawab
 
 void mod_vnc::disconnect()
 {
-    uint64_t seconds = this->events_guard.get_current_time().tv_sec - this->beginning;
+    auto delay = this->events_guard.get_current_time().time_since_epoch()
+                - this->beginning;
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
+
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];
-    size_t len = snprintf(duration_str, sizeof(duration_str), "%02d:%02d:%02d",
-        int(seconds / 3600),
+    int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02d:%02d",
+        long(seconds / 3600),
         int((seconds % 3600) / 60),
         int(seconds % 60));
 
-    this->session_log.log6(LogId::SESSION_DISCONNECTION, {KVLog("duration"_av, {duration_str, len}),});
+    this->session_log.log6(LogId::SESSION_DISCONNECTION,
+        {KVLog("duration"_av, {duration_str, std::size_t(len)}),});
 
     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
         "type=SESSION_DISCONNECTION duration=%s", duration_str);

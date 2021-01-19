@@ -20,16 +20,20 @@
 */
 
 #pragma once
+
 #include "utils/sugar/algostring.hpp"
 #include "utils/translation.hpp"
 
-inline std::string time_before_closing(uint32_t elapsed_time, Translator tr)
+#include <chrono>
+
+
+inline std::string time_before_closing(std::chrono::seconds elapsed_time, Translator tr)
 {
     std::string msg;
 
-    const auto hours = elapsed_time / (60*60);
-    const auto minutes = elapsed_time / 60 - hours * 60;
-    const auto seconds = elapsed_time - hours * (60*60) - minutes * 60;
+    const auto hours = elapsed_time.count() / (60*60);
+    const auto minutes = elapsed_time.count() / 60 - hours * 60;
+    const auto seconds = elapsed_time.count() - hours * (60*60) - minutes * 60;
 
     if (hours) {
         str_append(

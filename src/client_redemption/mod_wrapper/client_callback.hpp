@@ -66,46 +66,13 @@ public:
         this->client->replay(movie_path);
     }
 
-    timeval reload_replay_mod(int begin, timeval now_stop) {
-        return this->client->reload_replay_mod(begin, now_stop);
-    }
-
-    bool load_replay_mod(timeval time_1, timeval time_2) {
-        return this->client->load_replay_mod(time_1, time_2);
+    bool load_replay_mod(MonotonicTimePoint begin, MonotonicTimePoint end) {
+        return this->client->load_replay_mod(begin, end);
     }
 
     void set_replay(ReplayMod * replay_mod) {
         this->replay_mod = replay_mod;
     }
-
-    void set_sync() {
-        // this->replay_mod->set_sync();
-    }
-
-    bool is_replay_on() {
-        // if (!this->replay_mod->get_break_privplay_client()) {
-        //     if (!this->replay_mod->play_client()) {
-        //         return true;
-        //     }
-        // }
-        return false;
-    }
-
-    time_t get_real_time_movie_begin() {
-        // return this->replay_mod->get_real_time_movie_begin();
-        return 0;
-    }
-
-    void set_pause(timeval time) {
-        // this->replay_mod->set_pause(time);
-        (void)time;
-    }
-
-    void instant_play_client(std::chrono::microseconds time) {
-        // this->replay_mod->instant_play_client(time);
-        (void)time;
-    }
-
 
     // Controller
     void init_layout(int lcid) {
@@ -134,7 +101,7 @@ public:
         this->client->disconnect("", false);
     }
 
-    void refreshPressed(const int width, const int height) {
+    void refreshPressed(const uint16_t width, const uint16_t height) {
         if (this->mod != nullptr) {
             Rect rect(0, 0, width, height);
             this->mod->rdp_input_invalidate(rect);

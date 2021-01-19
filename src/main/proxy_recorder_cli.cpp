@@ -292,7 +292,6 @@ int main(int argc, char *argv[])
     char const* target_host = nullptr;
     int target_port = 3389;
     int listen_port = 8001;
-    TimeBase time_base(tvtime());
     std::string nla_username;
     std::string nla_password;
     char const* capture_file = nullptr;
@@ -354,6 +353,7 @@ int main(int argc, char *argv[])
 
     openlog("ProxyRecorder", LOG_CONS | LOG_PERROR, LOG_USER);
 
+    TimeBase time_base(MonotonicTimePoint::clock::now(), DurationFromMonotonicTimeToRealTime{});
     FrontServer front(
         target_host, target_port, time_base, capture_file,
         std::move(nla_username), std::move(nla_password),

@@ -185,14 +185,14 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
                                 "abc\ndef", "tartempion", "caufield",
                                 true, extra_message, global_font_deja_vu_14(), Theme(), Language::en);
 
-    flat_wab_close.refresh_timeleft(183);
+    flat_wab_close.refresh_timeleft(std::chrono::seconds(183));
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_7.png");
 
-    flat_wab_close.refresh_timeleft(49);
+    flat_wab_close.refresh_timeleft(std::chrono::seconds(49));
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
@@ -233,7 +233,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose_transparent_png_with_theme_color)
 
     colors.global.enable_theme = true;
     colors.global.logo_path = FIXTURES_PATH"/wablogoblue-transparent.png";
-    
+
     FlatWabClose flat_wab_close(drawable,
                                 0,
                                 0,

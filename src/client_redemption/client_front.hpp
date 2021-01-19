@@ -32,6 +32,8 @@
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/to_timeval.hpp"
+
 
 class ClientFront : public FrontAPI
 {
@@ -45,7 +47,7 @@ public:
     , screen_info(screen_info)
     {}
 
-    void session_update(timeval /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
+    void session_update(MonotonicTimePoint /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
     void possible_active_window_change() override {}
 
     bool can_be_start_capture(bool /*force_capture*/, SessionLogApi& /*session_log*/) override
@@ -95,9 +97,9 @@ enum class ExecuteEventResult : char
 inline ExecuteEventResult execute_events(
     char const* type,
     EventManager& event_manager,
-    std::chrono::microseconds timeout)
+    MonotonicTimePoint::duration timeout)
 {
-    timeval now = tvtime();
+    const auto now = MonotonicTimePoint::clock::now();
     int max = 0;
     fd_set rfds;
     io_fd_zero(rfds);
@@ -108,8 +110,8 @@ inline ExecuteEventResult execute_events(
     });
 
     auto next_timeout = event_manager.next_timeout();
-    timeval ultimatum = (next_timeout == timeval{})
-        ? now + timeout
+    timeval ultimatum = (next_timeout == MonotonicTimePoint{})
+        ? to_timeval(timeout)
         : (now < next_timeout)
         ? to_timeval(next_timeout - now)
         : timeval{};
@@ -124,7 +126,7 @@ inline ExecuteEventResult execute_events(
         return ExecuteEventResult::Error;
     }
 
-    event_manager.set_current_time(tvtime());
+    event_manager.set_current_time(MonotonicTimePoint::clock::now());
     event_manager.execute_events([&rfds](int fd){
         return io_fd_isset(fd, rfds);
     }, false);
@@ -169,13 +171,13 @@ inline int run_connection_test(
 inline int wait_for_screenshot(
     char const* type,
     EventManager& event_manager,
-    std::chrono::microseconds inactivity_time,
-    std::chrono::microseconds max_time)
+    MonotonicTimePoint::duration inactivity_time,
+    MonotonicTimePoint::duration max_time)
 {
-    auto const time_start = tvtime();
+    auto const time_start = MonotonicTimePoint::clock::now();
 
     for (;;) {
-        auto const elapsed = tvtime() - time_start;
+        auto const elapsed = MonotonicTimePoint::clock::now() - time_start;
 
         if (elapsed >= max_time) {
             return 0;

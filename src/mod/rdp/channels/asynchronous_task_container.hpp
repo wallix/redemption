@@ -36,7 +36,7 @@ public:
         template<class TimeoutAction>
         void create_event_timeout(
             std::string_view name,
-            timeval trigger_time, TimeoutAction&& on_timeout);
+            MonotonicTimePoint trigger_time, TimeoutAction&& on_timeout);
 
         template<class FdAction>
         void create_event_fd_without_timeout(
@@ -48,7 +48,7 @@ public:
             std::string_view name,
             int fd,
             std::chrono::microseconds grace_delay,
-            timeval trigger_time,
+            MonotonicTimePoint trigger_time,
             FdAction&& on_fd,
             TimeoutAction&& on_timeout);
 
@@ -63,7 +63,7 @@ public:
 
     virtual ~AsynchronousTask() = default;
 
-    virtual void configure_event(timeval now, AsynchronousEventContainer async_event_container) = 0;
+    virtual void configure_event(MonotonicTimePoint now, AsynchronousEventContainer async_event_container) = 0;
 
 private:
     friend class AsynchronousTaskContainer;
@@ -129,7 +129,7 @@ template<class TimeoutAction>
 inline void AsynchronousTask::AsynchronousEventContainer
 ::create_event_timeout(
     std::string_view name,
-    timeval trigger_time, TimeoutAction&& on_timeout)
+    MonotonicTimePoint trigger_time, TimeoutAction&& on_timeout)
 {
     auto& async_cont = this->async_cont;
     async_cont.events_guard.create_event_timeout(
@@ -163,7 +163,7 @@ inline void AsynchronousTask::AsynchronousEventContainer
     std::string_view name,
     int fd,
     std::chrono::microseconds grace_delay,
-    timeval trigger_time,
+    MonotonicTimePoint trigger_time,
     FdAction&& on_fd,
     TimeoutAction&& on_timeout)
 {

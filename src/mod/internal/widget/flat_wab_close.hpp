@@ -30,6 +30,7 @@
 #include "utils/translation.hpp"
 
 #include <string>
+#include <chrono>
 
 class Theme;
 
@@ -83,7 +84,7 @@ public:
 
     [[nodiscard]] BGRColor get_bg_color() const override;
 
-    void refresh_timeleft(long tl);
+    std::chrono::seconds refresh_timeleft(std::chrono::seconds remaining);
 
     void notify(Widget * widget, NotifyApi::notify_event_t event) override;
 

@@ -14,10 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
-
-   Unit test to conversion of RDP drawing orders to PNG images
+   Copyright (C) Wallix 2021
+   Author(s): Proxies team
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
@@ -30,12 +28,15 @@
 
 RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 {
-    std::string contents;
-
-    time_t const start_time = 123456789;
-    time_t const end_time = start_time + 100;
+    auto const start_time = MonotonicTimePoint(123456789s);
+    auto const end_time = start_time + 100s;
     char const * filename = wf.c_str();
 
+    auto read_file = [=, contents = std::string()] () mutable -> std::string const& {
+        contents.clear(); (void)append_file_contents(filename, contents);
+        return contents;
+    };
+
     {
         unlink(filename);
         UpdateProgressData p(
@@ -43,30 +44,23 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             filename,
             start_time,
             end_time,
-            0, 0
+            MonotonicTimePoint(), MonotonicTimePoint()
         );
 
         RED_REQUIRE(p.is_valid());
 
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":0,"eta":-1,"videos":0})");
 
-        p(start_time + 10);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
-//         {"percentage":0,"eta":-1,"videos":0}
-//         {"percentage":10,"eta":0,"videos":0}
+        p(start_time + 10s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":10,"eta":0,"videos":0})");
 
-        p(start_time + 90);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":0})");
+        p(start_time + 90s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":90,"eta":0,"videos":0})");
 
-        p(start_time + 100);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":0})");
+        p(start_time + 100s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":99,"eta":0,"videos":0})");
     }
-    contents.clear(); (void)append_file_contents(filename, contents);
-    RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":1})");
+    RED_CHECK_EQUAL(read_file(), R"({"percentage":100,"eta":0,"videos":1})");
 
     {
         unlink(filename);
@@ -75,28 +69,23 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             filename,
             start_time,
             end_time,
-            0, 0
+            MonotonicTimePoint(), MonotonicTimePoint()
         );
 
         RED_REQUIRE(p.is_valid());
 
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":0,"eta":-1,"videos":0})");
 
-        p(start_time + 10);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+        p(start_time + 10s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":10,"eta":0,"videos":0})");
 
-        p.next_video(start_time + 90);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
+        p.next_video(start_time + 90s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":90,"eta":0,"videos":1})");
 
-        p(start_time + 100);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":1})");
+        p(start_time + 100s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":99,"eta":0,"videos":1})");
     }
-    contents.clear(); (void)append_file_contents(filename, contents);
-    RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":2})");
+    RED_CHECK_EQUAL(read_file(), R"({"percentage":100,"eta":0,"videos":2})");
 
     {
         unlink(filename);
@@ -105,29 +94,24 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             filename,
             start_time,
             end_time,
-            0, 0
+            MonotonicTimePoint(), MonotonicTimePoint()
         );
 
         RED_REQUIRE(p.is_valid());
 
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":0,"eta":-1,"videos":0})");
 
-        p(start_time + 10);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
+        p(start_time + 10s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":10,"eta":0,"videos":0})");
 
-        p.next_video(start_time + 90);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
+        p.next_video(start_time + 90s);
+        RED_CHECK_EQUAL(read_file(), R"({"percentage":90,"eta":0,"videos":1})");
 
         p.raise_error(2, "plouf");
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents,
+        RED_CHECK_EQUAL(read_file(),
             R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
     }
-    contents.clear(); (void)append_file_contents(filename, contents);
-    RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
+    RED_CHECK_EQUAL(read_file(), R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
 
     {
         unlink(filename);
@@ -136,28 +120,23 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             filename,
             start_time,
             end_time,
-            0, 0
+            MonotonicTimePoint(), MonotonicTimePoint()
         );
 
         RED_REQUIRE(p.is_valid());
 
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "0 -1");
+        RED_CHECK_EQUAL(read_file(), "0 -1");
 
-        p(start_time + 10);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "10 0");
+        p(start_time + 10s);
+        RED_CHECK_EQUAL(read_file(), "10 0");
 
-        p(start_time + 90);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "90 0");
+        p(start_time + 90s);
+        RED_CHECK_EQUAL(read_file(), "90 0");
 
-        p(start_time + 100);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "99 0");
+        p(start_time + 100s);
+        RED_CHECK_EQUAL(read_file(), "99 0");
     }
-    contents.clear(); (void)append_file_contents(filename, contents);
-    RED_CHECK_EQUAL(contents, "100 0");
+    RED_CHECK_EQUAL(read_file(), "100 0");
 
     {
         unlink(filename);
@@ -166,28 +145,23 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             filename,
             start_time,
             end_time,
-            0, 0
+            MonotonicTimePoint(), MonotonicTimePoint()
         );
 
         RED_REQUIRE(p.is_valid());
 
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "0 -1");
+        RED_CHECK_EQUAL(read_file(), "0 -1");
 
-        p(start_time + 10);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "10 0");
+        p(start_time + 10s);
+        RED_CHECK_EQUAL(read_file(), "10 0");
 
-        p.next_video(start_time + 90);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "90 0");
+        p.next_video(start_time + 90s);
+        RED_CHECK_EQUAL(read_file(), "90 0");
 
-        p(start_time + 100);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "99 0");
+        p(start_time + 100s);
+        RED_CHECK_EQUAL(read_file(), "99 0");
     }
-    contents.clear(); (void)append_file_contents(filename, contents);
-    RED_CHECK_EQUAL(contents, "100 0");
+    RED_CHECK_EQUAL(read_file(), "100 0");
 
     {
         unlink(filename);
@@ -196,26 +170,21 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             filename,
             start_time,
             end_time,
-            0, 0
+            MonotonicTimePoint(), MonotonicTimePoint()
         );
 
         RED_REQUIRE(p.is_valid());
 
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "0 -1");
+        RED_CHECK_EQUAL(read_file(), "0 -1");
 
-        p(start_time + 10);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "10 0");
+        p(start_time + 10s);
+        RED_CHECK_EQUAL(read_file(), "10 0");
 
-        p.next_video(start_time + 90);
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "90 0");
+        p.next_video(start_time + 90s);
+        RED_CHECK_EQUAL(read_file(), "90 0");
 
         p.raise_error(2, "plouf");
-        contents.clear(); (void)append_file_contents(filename, contents);
-        RED_CHECK_EQUAL(contents, "-1 plouf (2)");
+        RED_CHECK_EQUAL(read_file(), "-1 plouf (2)");
     }
-    contents.clear(); (void)append_file_contents(filename, contents);
-    RED_CHECK_EQUAL(contents, "-1 plouf (2)");
+    RED_CHECK_EQUAL(read_file(), "-1 plouf (2)");
 }

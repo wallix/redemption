@@ -20,8 +20,9 @@
 
 #pragma once
 
-#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/sugar/noncopyable.hpp"
+
+class MonitorLayoutPDU;
 
 namespace gdi {
 

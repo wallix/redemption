@@ -46,8 +46,6 @@ public:
 
     // Replay functions
     virtual void replay( const std::string & /*unused*/) {}
-    virtual bool load_replay_mod(timeval /*unused*/, timeval /*unused*/) { return false; }
-    virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
+    virtual bool load_replay_mod(MonotonicTimePoint begin, MonotonicTimePoint end) { (void)begin; (void)end; return false; }
     virtual void delete_replay_mod() {}
-    virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
 };

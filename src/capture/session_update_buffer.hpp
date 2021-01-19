@@ -22,12 +22,11 @@ Author(s): Jonathan Poelen
 
 #include "acl/auth_api.hpp"
 #include "core/log_id.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <vector>
 #include <memory>
 #include <array>
-
-#include <sys/time.h> // timeval
 
 
 class SessionUpdateBuffer
@@ -35,7 +34,7 @@ class SessionUpdateBuffer
     struct Event
     {
         LogId id;
-        timeval time;
+        MonotonicTimePoint time;
         KVLogList kv_list;
 
         class Access;
@@ -68,7 +67,7 @@ public:
 
     SessionUpdateBuffer();
 
-    void append(timeval time, LogId id, KVLogList kv_list);
+    void append(MonotonicTimePoint time, LogId id, KVLogList kv_list);
     void clear();
 
     std::size_t empty() const;

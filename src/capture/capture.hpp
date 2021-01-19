@@ -23,7 +23,6 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp"
-#include "utils/sugar/noncopyable.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
@@ -32,6 +31,7 @@
 #include "gdi/resize_api.hpp"
 #include "capture/notify_next_video.hpp"
 #include "utils/ref.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <vector>
 #include <memory>
@@ -83,7 +83,7 @@ public:
 
     ~Capture();
 
-    void force_flush(timeval const & now, uint16_t cursor_x, uint16_t cursor_y);
+    void force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y);
 
     void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override;
 
@@ -102,7 +102,7 @@ public:
 
     void sync() override;
 
-    bool kbd_input(timeval const & now, uint32_t uchar) override;
+    bool kbd_input(MonotonicTimePoint now, uint32_t uchar) override;
 
     void enable_kbd_input_mask(bool enable) override;
 
@@ -110,8 +110,8 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd);
 
-    Microseconds periodic_snapshot(
-        timeval const & now,
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now,
         uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     ) override;
@@ -126,9 +126,9 @@ public:
 
     void external_breakpoint() override;
 
-    void external_time(timeval const & now) override;
+    void external_time(MonotonicTimePoint now) override;
 
-    void session_update(timeval now, LogId id, KVLogList kv_list) override;
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override;
 
     void possible_active_window_change() override;
 
@@ -188,8 +188,6 @@ private:
 
     [[nodiscard]] Rect get_join_visibility_rect() const;
 
-    const bool is_replay_mod;
-
     // Title changed
     //@{
     struct NotifyTitleChanged final
@@ -198,7 +196,7 @@ private:
 
         explicit NotifyTitleChanged(Capture & capture) : capture(capture) {}
 
-        void notify_title_changed(timeval const & now, chars_view title);
+        void notify_title_changed(MonotonicTimePoint now, chars_view title);
     } notifier_title_changed{*this};
     //@}
 
@@ -208,11 +206,11 @@ private:
     {
         SessionMeta * session_meta = nullptr;
 
-        void notify_next_video(const timeval& now, NotifyNextVideo::reason reason) override;
+        void notify_next_video(MonotonicTimePoint now, Reason reason) override;
     } notifier_next_video;
     struct NullNotifyNextVideo final : NotifyNextVideo
     {
-        void notify_next_video(const timeval& /*now*/, NotifyNextVideo::reason /*unused*/) override {}
+        void notify_next_video(MonotonicTimePoint /*now*/, Reason /*unused*/) override {}
     } null_notifier_next_video;
     //@}
 
@@ -224,7 +222,7 @@ private:
 
     struct MouseTrace
     {
-        timeval  last_now;
+        MonotonicTimePoint last_now;
         uint16_t last_x;
         uint16_t last_y;
     };

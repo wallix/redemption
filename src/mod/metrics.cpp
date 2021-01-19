@@ -22,7 +22,6 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/timeval_ops.hpp"
 
 #include <cerrno>
 #include <cinttypes>
@@ -51,42 +50,40 @@ bool create_metrics_directory(const std::string & path)
 
 namespace
 {
-    // Returns the beginning of the timeslice of width seconds containing timeval
+    // Returns the beginning of the timeslice of width seconds containing timepoint
     // origin of intervals is midnight 1 jan 1970
-    timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
+    MonotonicTimePoint timeslice(MonotonicTimePoint tp, MonotonicTimePoint::duration seconds)
     {
-        timeval tv;
-        tv.tv_sec = a.tv_sec - a.tv_sec % seconds.count();
-        tv.tv_usec = 0;
-        return tv;
+        return tp - tp.time_since_epoch() % seconds;
     }
 
-    bool is_midnight(timeval a)
+    bool is_midnight(MonotonicTimePoint tp)
     {
-        return (a.tv_sec % std::chrono::seconds(24h).count()) == 0;
+        return (tp.time_since_epoch() % MonotonicTimePoint::duration(24h)).count() == 0;
     }
 
-    tm to_tm(timeval tv)
+    tm to_tm(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real)
     {
         struct tm tm;
-        time_t time = tv.tv_sec;
+        auto now = tp.time_since_epoch() + monotonic_to_real.duration;
+        time_t time = std::chrono::duration_cast<std::chrono::seconds>(now).count();
         gmtime_r(&time, &tm);
         return tm;
     }
 
     // yyyy-MM-dd
-    chars_view strftime_date(const timeval tv, char (&buf)[35])
+    chars_view strftime_date(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, char (&buf)[35])
     {
-        const auto tm = to_tm(tv);
+        const auto tm = to_tm(tp, monotonic_to_real);
         return {buf, buf + snprintf(buf, std::size(buf), "%04d-%02d-%02d",
             1900+tm.tm_year, 1+tm.tm_mon, tm.tm_mday)
         };
     }
 
     // yyyy-MM-dd_hh-mm-ss
-    chars_view strftime_filename(const timeval tv, char (&buf)[35])
+    chars_view strftime_filename(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, char (&buf)[35])
     {
-        const auto tm = to_tm(tv);
+        const auto tm = to_tm(tp, monotonic_to_real);
         return {buf, buf + snprintf(buf, std::size(buf),
             "%04d-%02d-%02d_%02d-%02d-%02d",
             1900+tm.tm_year, 1+tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec)
@@ -94,9 +91,9 @@ namespace
     }
 
     // yyyy-MM-dd hh:mm:ss
-    chars_view strftime_event(timeval tv, char (&buf)[35])
+    chars_view strftime_event(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, char (&buf)[35])
     {
-        const auto tm = to_tm(tv);
+        const auto tm = to_tm(tp, monotonic_to_real);
         return {buf, buf + snprintf(buf, std::size(buf),
             "%04d-%02d-%02d %02d:%02d:%02d",
             1900+tm.tm_year, 1+tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec)
@@ -111,12 +108,12 @@ namespace
 
 struct Metrics::Impl
 {
-    static void new_file(Metrics& m, timeval timeslice)
+    static void new_file(Metrics& m, MonotonicTimePoint timeslice, DurationFromMonotonicTimeToRealTime monotonic_to_real)
     {
         char buf[35];
         auto text_date = is_midnight(timeslice)
-            ? strftime_date(timeslice, buf)
-            : strftime_filename(timeslice, buf);
+            ? strftime_date(timeslice, monotonic_to_real, buf)
+            : strftime_filename(timeslice, monotonic_to_real, buf);
 
         auto metrics_path_suffix = ".logmetrics"_av;
         str_assign(m.complete_metrics_file_path,
@@ -134,13 +131,13 @@ struct Metrics::Impl
                 m.complete_metrics_file_path, strerror(errnum));
         }
 
-        write_event_to_logindex(m, m.connection_time, " connection "_av);
+        write_event_to_logindex(m, m.connection_time, monotonic_to_real, " connection "_av);
     }
 
-    static void write_event_to_logmetrics(Metrics& m, timeval now)
+    static void write_event_to_logmetrics(Metrics& m, MonotonicTimePoint now, DurationFromMonotonicTimeToRealTime monotonic_to_real)
     {
         char buf[35];
-        auto text_datetime = strftime_event(now, buf);
+        auto text_datetime = strftime_event(now, monotonic_to_real, buf);
 
         char sentence[4096];
         char * ptr = sentence;
@@ -164,7 +161,7 @@ struct Metrics::Impl
         }
     }
 
-    static void write_event_to_logindex(Metrics& m, timeval event_time, chars_view event_name)
+    static void write_event_to_logindex(Metrics& m, MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, chars_view event_name)
     {
         unique_fd fd_header(m.complete_index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!fd_header.is_open()) {
@@ -173,7 +170,7 @@ struct Metrics::Impl
         }
 
         char buf[35];
-        auto disconnect_time_str = strftime_event(event_time, buf);
+        auto disconnect_time_str = strftime_event(tp, monotonic_to_real, buf);
 
         iovec iov[] = {
             to_iov(disconnect_time_str),
@@ -200,7 +197,7 @@ void Metrics::set_protocol(std::string fields_version, std::string protocol_name
     LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%" PRIu64 " sec rotation=%" PRIu64 " hours",
         this->path.c_str(), static_cast<uint64_t>(this->log_delay.count()), static_cast<uint64_t>(this->file_interval.count()));
 
-    Impl::new_file(*this, this->current_file_date);
+    Impl::new_file(*this, this->current_file_date, this->monotonic_to_real);
 }
 
 Metrics::Metrics(
@@ -210,7 +207,8 @@ Metrics::Metrics(
     chars_view account_sig,        // hashed secondary account
     chars_view target_service_sig, // hashed (target service name + device name)
     chars_view session_info_sig,   // hashed (source_host + client info)
-    timeval now,                              // time at beginning of metrics
+    MonotonicTimePoint now,                   // time at beginning of metrics
+    DurationFromMonotonicTimeToRealTime monotonic_to_real,
     std::chrono::hours file_interval,         // daily rotation of filename
     std::chrono::seconds log_delay            // delay between 2 logs flush
 )
@@ -219,7 +217,8 @@ Metrics::Metrics(
 , protocol_name("none")
 , file_interval{file_interval}
 , current_file_date(timeslice(now, this->file_interval))
-, path((path.back() == '/')?path.substr(0,path.size()-1):path)
+, monotonic_to_real(monotonic_to_real)
+, path((path.back() == '/') ? path.substr(0,path.size()-1) : path)
 , session_id(std::move(session_id.insert(0, 1, ' ')))
 , connection_time(now)
 , log_delay(log_delay)
@@ -234,7 +233,7 @@ Metrics::Metrics(
         int(session_info_sig.size()), session_info_sig.data()));
 }
 
-void Metrics::log(timeval now)
+void Metrics::log(MonotonicTimePoint now)
 {
     if (this->next_log_time > now) {
         return ;
@@ -243,21 +242,20 @@ void Metrics::log(timeval now)
     this->next_log_time += this->log_delay;
 
     this->rotate(now);
-    Impl::write_event_to_logmetrics(*this, now);
+    Impl::write_event_to_logmetrics(*this, now, this->monotonic_to_real);
 }
 
 void Metrics::disconnect()
 {
     this->rotate(this->next_log_time);
-    Impl::write_event_to_logmetrics(*this, this->next_log_time);
-    Impl::write_event_to_logindex(*this, this->next_log_time, " disconnection "_av);
+    Impl::write_event_to_logmetrics(*this, this->next_log_time, this->monotonic_to_real);
+    Impl::write_event_to_logindex(*this, this->next_log_time, this->monotonic_to_real, " disconnection "_av);
 }
 
-void Metrics::rotate(const timeval now)
+void Metrics::rotate(MonotonicTimePoint now)
 {
-    const timeval next_file_date = timeslice(now, this->file_interval);
-    if (this->current_file_date != next_file_date) {
-        this->current_file_date = next_file_date;
-        Impl::new_file(*this, next_file_date);
+    if (this->current_file_date + this->file_interval <= now) {
+        this->current_file_date = timeslice(now, this->file_interval);
+        Impl::new_file(*this, this->current_file_date, this->monotonic_to_real);
     }
 }

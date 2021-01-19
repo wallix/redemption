@@ -33,6 +33,8 @@ struct ReplayMod::Reader
     CryptoContext cctx;
     Fstat         fstat;
 
+    MonotonicTimePoint start_time_replay;
+
     InMetaSequenceTransport in_trans;
     FileToGraphic reader;
 
@@ -50,11 +52,13 @@ struct ReplayMod::Reader
         this->fstat)
     , reader(
         this->in_trans,
-        timeval{0, 0},
-        timeval{0, 0},
+        MonotonicTimePoint{},
+        MonotonicTimePoint{},
         play_video_with_corrupted_bitmap,
         debug_capture)
-    {}
+    {
+        this->start_time_replay = this->reader.get_current_time();
+    }
 
     void server_resize(gdi::GraphicApi & drawable, FrontAPI & front)
     {
@@ -105,16 +109,9 @@ ReplayMod::ReplayMod(
 
     auto action = [this](Event& ev){
         if (this->next_timestamp()) {
-            const auto now = this->events_guards.get_current_time();
-
-            const auto& reader = this->internal_reader->reader;
-            const auto replay_delay = reader.get_current_time() - this->start_time_replay;
-            const auto real_delay = now - this->start_time;
-
-            const auto next_time = (replay_delay <= real_delay)
-                ? now
-                : now + (replay_delay - real_delay);
-            ev.alarm.reset_timeout(next_time);
+            const auto replay_delay = this->internal_reader->reader.get_current_time()
+                                    - this->internal_reader->start_time_replay;
+            ev.alarm.reset_timeout(replay_delay);
         }
         else if (this->replay_on_loop) {
             this->init_reader();
@@ -171,7 +168,6 @@ void ReplayMod::init_reader()
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
     this->start_time = this->events_guards.get_current_time();
-    this->start_time_replay = this->internal_reader->reader.get_current_time();
     this->internal_reader->server_resize(this->drawable, this->front);
 }
 

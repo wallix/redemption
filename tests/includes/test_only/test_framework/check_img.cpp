@@ -156,12 +156,10 @@ namespace
         return imgr;
     }
 #endif
-}
 
-namespace ut
-{
-    bool CheckImg::operator()(ImageView const& img, char const* filedata_path)
+    std::string check_img(ImageView const& img, char const* filedata_path, char const* img_path)
     {
+        std::string err;
         std::string_view prefix_error;
 
         Bitmap bmp = bitmap_from_file_impl(filedata_path, BGRColor());
@@ -199,7 +197,9 @@ namespace ut
             }
 
             path.erase(path.size() - 8, 5);
-            dump_png24(path.c_str(), img, true);
+            if (!img_path) {
+                dump_png24(path.c_str(), img, true);
+            }
 
             chars_view msgdiff2 = "(image ref not found)"_av;
             chars_view msgdiff3;
@@ -207,22 +207,40 @@ namespace ut
                 msgdiff2 = array_view(path).drop_back(4);
                 msgdiff3 = ".diff.png"_av;
             }
-            this->err = str_concat(
+            err = str_concat(
                 "  ", prefix_error,
-                "\n  Image path: ", path,
+                "\n  Image path: ", img_path ? std::string_view(img_path) : std::string_view(path),
                 "\n  Image diff: ", msgdiff2, msgdiff3,
                 "\n  Image ref: ", filedata_path,
                 "\n"
             );
-
-            return false;
         }
+        else
 #endif
 
         if (prefix_error.size()) {
-            this->err = prefix_error;
+            err = prefix_error;
         }
 
+        return err;
+    }
+}
+
+namespace ut
+{
+    bool CheckImg::operator()(char const* img_path, char const* filedata_path)
+    {
+        Bitmap img = bitmap_from_file_impl(img_path, BGRColor());
+        auto img_view = img.is_valid()
+            ? img
+            : ImageView{nullptr, 0, 0, 0, BitsPerPixel::BitsPP24, ImageView::Storage::BottomToTop, };
+        this->err = check_img(img_view, filedata_path, img_path);
+        return this->err.empty();
+    }
+
+    bool CheckImg::operator()(ImageView const& img, char const* filedata_path)
+    {
+        this->err = check_img(img, filedata_path, nullptr);
         return this->err.empty();
     }
 

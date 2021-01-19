@@ -412,7 +412,7 @@ public:
         long int movie_length = this->init_replay(movie_path, is_v2_wrm);
 
         while (endin_frame < movie_length) {
-            this->controller->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+            // TODO this->controller->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
             this->balises.push_back(this->graphics.get_pixmap());
             endin_frame += ClientRedemptionConfig::BALISED_FRAME;
             if (this->bar) {

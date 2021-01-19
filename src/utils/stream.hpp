@@ -26,24 +26,14 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/parse.hpp"
-#include "utils/log.hpp"
 #include "utils/sugar/buffer_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/buf_maker.hpp"
 
 #include <memory>
-#include <initializer_list>
 
 #include <cassert>
 #include <cstring> // for memcpy, memset
-
-#include <sys/time.h> // timeval
-
-
-// using a template for default size of stream would make sense instead of always using the large buffer below
-enum {
-    AUTOSIZE = 65536
-};
 
 
 class InStream
@@ -203,19 +193,6 @@ public:
 
     int64_t in_sint64_le() noexcept {
         return this->p.in_sint64_le();
-    }
-
-    // ---------------------------------------------------------------------------
-
-    timeval in_timeval_from_uint64le_usec() noexcept
-    {
-        const uint64_t movie_usec_lo = this->in_uint32_le();
-        const uint64_t movie_usec_hi = this->in_uint32_le();
-        const uint64_t movie_usec = (movie_usec_hi * 0x100000000LL + movie_usec_lo);
-        return timeval{
-            static_cast<time_t>(movie_usec / 1000000LL),
-            static_cast<suseconds_t>(movie_usec % 1000000LL)
-        };
     }
 
     uint64_t in_uint64_le() noexcept {
@@ -446,19 +423,6 @@ public:
     [[nodiscard]] size_t get_offset() const noexcept {
         return static_cast<size_t>(this->p - this->begin);
     }
-
-    // =========================================================================
-    // Generic binary Data access methods
-    // =========================================================================
-
-    void out_timeval_to_uint64le_usec(const timeval & tv) noexcept
-    {
-        uint64_t usec = tv.tv_sec * 1000000ULL + tv.tv_usec;
-        this->out_uint32_le(static_cast<uint32_t>(usec));
-        this->out_uint32_le(static_cast<uint32_t>(usec >> 32));
-    }
-
-    // ---------------------------------------------------------------------------
 
     void out_uint64_le(uint64_t v) noexcept {
         assert(this->has_room(8));
@@ -1116,9 +1080,7 @@ namespace details_ {
         data_writer(data_buf_sz, data_stream);
         auto * start = data_stream.get_data();
         std::size_t used_buf_sz = data_stream.get_offset();
-        (void)std::initializer_list<int>{((
-            details_::write_packet(start, used_buf_sz, details_::packet_size(header_writers), header_writers)
-        ), 1)...};
+        (..., details_::write_packet(start, used_buf_sz, details_::packet_size(header_writers), header_writers));
         trans.send(start, used_buf_sz);
     }
 

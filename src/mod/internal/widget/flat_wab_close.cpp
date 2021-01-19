@@ -280,9 +280,9 @@ BGRColor FlatWabClose::get_bg_color() const
     return this->bg_color;
 }
 
-// TODO std::chrono::seconds ?
-void FlatWabClose::refresh_timeleft(long tl)
+std::chrono::seconds FlatWabClose::refresh_timeleft(std::chrono::seconds remaining)
 {
+    long tl = remaining.count();
     bool seconds = true;
     if (tl > 60) {
         seconds = false;
@@ -314,6 +314,8 @@ void FlatWabClose::refresh_timeleft(long tl)
 
         this->prev_time = tl;
     }
+
+    return std::chrono::seconds(seconds ? 1 : 60);
 }
 
 void FlatWabClose::notify(Widget * widget, NotifyApi::notify_event_t event)

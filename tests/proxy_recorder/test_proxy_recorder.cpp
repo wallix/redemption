@@ -256,13 +256,7 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     bool enable_kerberos = false;
     uint64_t verbosity = 4096;
 
-    std::chrono::microseconds ustime = 1533211681s;
-    timeval tv;
-    tv.tv_sec = ustime.count()/1000000;
-    tv.tv_usec = ustime.count()%1000000;
-    TimeBase time_base(tv);
-
-
+    TimeBase time_base(MonotonicTimePoint{1533211681s}, DurationFromMonotonicTimeToRealTime{});
     RecorderFile outFile(time_base, wf.c_str());
 
     ReplayBackTransport backConn;
@@ -284,10 +278,10 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     // front public key ready from here
     conn.back_step1(front_public_key_av, backConn, nla_username, nla_password);
 
-    RED_TEST_PASSPOINT();
+    // RED_TEST_PASSPOINT();
     // Receiving data from Client: CredSSP
-//    conn.frontBuffer.load_data(frontConn);
-//    conn.front_nla(frontConn);
+    // conn.frontBuffer.load_data(frontConn);
+    // conn.front_nla(frontConn);
 
     // // Receiving data from Client: CredSSP
     // conn.frontBuffer.load_data(frontConn);

@@ -77,11 +77,11 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         RDPVerbose(0)));
 
     RED_CHECK(!event_manager.is_empty());
-    timeval now = events.get_current_time();
+    MonotonicTimePoint now = events.get_current_time();
     for (int i = 0; i < 100 && !event_manager.is_empty(); ++i) {
         event_manager.set_current_time(now);
         event_manager.execute_events([](int/*fd*/){ return true; }, false);
-        ++now.tv_sec;
+        now += 1s;
     }
     RED_CHECK(event_manager.is_empty());
 }
@@ -110,11 +110,11 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         RDPVerbose(0)));
 
     RED_CHECK(!event_manager.is_empty());
-    timeval now = event_manager.get_current_time();
+    MonotonicTimePoint now = event_manager.get_current_time();
     for (int i = 0; i < 100 && !event_manager.is_empty(); ++i) {
         event_manager.set_current_time(now);
         event_manager.execute_events([](int/*fd*/){ return false; }, false);
-        ++now.tv_sec;
+        now += 1s;
     }
     RED_CHECK(event_manager.is_empty());
 }

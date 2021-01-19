@@ -352,14 +352,14 @@ public:
         return std::chrono::milliseconds(static_cast<uint64_t>(delay.count() * coefficient));
     }
 
-    timeval get_short_delay_timeout() const
+    MonotonicTimePoint get_short_delay_timeout() const
     {
         std::chrono::milliseconds delay_ms = this->params.short_delay_ms;
         return this->events_guard.get_current_time()
              + std::min(this->to_microseconds(delay_ms, this->delay_coefficient), 1000ms);
     }
 
-    timeval get_long_delay_timeout() const
+    MonotonicTimePoint get_long_delay_timeout() const
     {
         std::chrono::milliseconds delay_ms = this->params.long_delay_ms;
         return this->events_guard.get_current_time() + this->to_microseconds(delay_ms, this->delay_coefficient);
@@ -397,9 +397,9 @@ public:
                 i = newi;
             };
 
-            auto next_state = [&](int flags, int key, timeval delay){
+            auto next_state = [&](int flags, int key, MonotonicTimePoint timeout){
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, flags, key, 0/*param2*/);
-                event.alarm.reset_timeout(delay);
+                event.alarm.reset_timeout(timeout);
                 set_state(SeqEnum(i+1));
             };
 
@@ -537,9 +537,9 @@ public:
                 i = newi;
             };
 
-            auto next_state = [&](int flags, int key, timeval delay){
+            auto next_state = [&](int flags, int key, MonotonicTimePoint timeout){
                 this->mod.send_input(0/*time*/, RDP_INPUT_SCANCODE, flags, key, 0/*param2*/);
-                event.alarm.reset_timeout(delay);
+                event.alarm.reset_timeout(timeout);
                 set_state(SeqEnum(i+1));
             };
 

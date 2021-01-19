@@ -24,6 +24,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <cassert>
 #include <ctime>
@@ -55,11 +56,10 @@ class UpdateProgressDataJSONFormat : noncopyable
 {
     unique_fd fd;
 
-    const time_t start_record;
-    const time_t stop_record;
+    const MonotonicTimePoint start_record;
+    const MonotonicTimePoint stop_record;
 
-    const time_t processing_start_time;
-
+    const MonotonicTimePoint processing_start_time;
 
     mutable bool error_raised = false;
 
@@ -71,11 +71,11 @@ class UpdateProgressDataJSONFormat : noncopyable
 public:
     UpdateProgressDataJSONFormat() = delete;
     UpdateProgressDataJSONFormat(
-        unique_fd fd, const time_t start_record, const time_t stop_record) noexcept
+        unique_fd fd, MonotonicTimePoint start_record, MonotonicTimePoint stop_record)
     : fd(std::move(fd))
     , start_record(start_record)
     , stop_record(stop_record)
-    , processing_start_time(::time(nullptr))
+    , processing_start_time(MonotonicTimePoint::clock::now())
     {
         this->write_datas();
     }
@@ -90,7 +90,7 @@ public:
         }
     }
 
-    void next_video(time_t record_now)
+    void next_video(MonotonicTimePoint record_now)
     {
         ++this->nb_videos;
         (*this)(record_now);
@@ -101,7 +101,7 @@ public:
         return this->fd.is_open();
     }
 
-    void operator()(time_t record_now)
+    void operator()(MonotonicTimePoint record_now)
     {
         if (record_now <= this->start_record) {
             this->time_percentage = 0;
@@ -117,8 +117,9 @@ public:
         assert(this->time_percentage < 100);
 
         if (this->time_percentage != this->last_written_time_percentage) {
-            long const elapsed_time = ::time(nullptr) - this->processing_start_time;
-            this->time_remaining = elapsed_time * 100 / this->time_percentage - elapsed_time;
+            auto const elapsed_time = MonotonicTimePoint::clock::now() - this->processing_start_time;
+            this->time_remaining = std::chrono::duration_cast<std::chrono::seconds>(
+                elapsed_time * 100 / this->time_percentage - elapsed_time).count();
             this->write_datas();
             this->last_written_time_percentage = this->time_percentage;
         }
@@ -186,10 +187,10 @@ class UpdateProgressDataOldFormat : noncopyable
 {
     unique_fd fd;
 
-    const time_t start_record;
-    const time_t stop_record;
+    const MonotonicTimePoint start_record;
+    const MonotonicTimePoint stop_record;
 
-    const time_t processing_start_time;
+    const MonotonicTimePoint processing_start_time;
 
     unsigned int last_written_time_percentage;
 
@@ -198,11 +199,11 @@ class UpdateProgressDataOldFormat : noncopyable
 public:
     UpdateProgressDataOldFormat() = delete;
     UpdateProgressDataOldFormat(
-        unique_fd fd, const time_t start_record, const time_t stop_record) noexcept
+        unique_fd fd, MonotonicTimePoint start_record, MonotonicTimePoint stop_record)
     : fd(std::move(fd))
     , start_record(start_record)
     , stop_record(stop_record)
-    , processing_start_time(::time(nullptr))
+    , processing_start_time(MonotonicTimePoint::clock::now())
     , last_written_time_percentage(0)
     {
         this->write("0 -1", 4);
@@ -220,7 +221,7 @@ public:
         return this->fd.is_open();
     }
 
-    void operator()(time_t record_now)
+    void operator()(MonotonicTimePoint record_now)
     {
         unsigned int time_percentage;
 
@@ -238,13 +239,15 @@ public:
         assert(time_percentage < 100);
 
         if (time_percentage != this->last_written_time_percentage) {
-            unsigned int elapsed_time = ::time(nullptr) - this->processing_start_time;
+            auto elapsed_time = MonotonicTimePoint::clock::now() - this->processing_start_time;
 
             char str_time_percentage[64];
 
+            unsigned time_remaining = std::chrono::duration_cast<std::chrono::seconds>(
+                elapsed_time * 100 / time_percentage - elapsed_time).count();
             std::size_t len = ::snprintf( str_time_percentage, sizeof(str_time_percentage), "%u %u"
                                         , time_percentage
-                                        , elapsed_time * 100 / time_percentage - elapsed_time);
+                                        , time_remaining);
 
             this->write(str_time_percentage, len);
             this->last_written_time_percentage = time_percentage;
@@ -296,9 +299,9 @@ public:
     UpdateProgressData() = delete;
     UpdateProgressData(
         Format format, const char * progress_filename,
-        const time_t begin_record, const time_t end_record,
-        const time_t begin_capture, const time_t end_capture
-    ) noexcept
+        const MonotonicTimePoint begin_record, const MonotonicTimePoint end_record,
+        const MonotonicTimePoint begin_capture, const MonotonicTimePoint end_capture
+    )
     : format(format)
     {
         int const file_mode = S_IRUSR | S_IRGRP;
@@ -311,8 +314,8 @@ public:
                 progress_filename, strerror(errno), errnum);
         }
 
-        auto const start_record = (begin_capture ? begin_capture : begin_record);
-        auto const stop_record = (end_capture ? end_capture : end_record);
+        auto const start_record = (begin_capture != MonotonicTimePoint()) ? begin_capture : begin_record;
+        auto const stop_record = (end_capture != MonotonicTimePoint()) ? end_capture : end_record;
 
         if (format == OLD_FORMAT) {
             new(&u.old_format) UpdateProgressDataOldFormat(
@@ -326,7 +329,7 @@ public:
         }
     }
 
-    void next_video(time_t record_now)
+    void next_video(MonotonicTimePoint record_now)
     {
         if (format == OLD_FORMAT) {
             u.old_format(record_now);
@@ -355,7 +358,7 @@ public:
     }
 
 
-    void operator()(time_t record_now)
+    void operator()(MonotonicTimePoint record_now)
     {
         if (format == OLD_FORMAT) {
             u.old_format(record_now);

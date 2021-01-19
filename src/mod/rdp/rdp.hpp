@@ -1853,7 +1853,7 @@ class mod_rdp : public mod_api, public rdp_api
     BmpCacheRev2_Cache_NumEntries()
     { return std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>{{ 120, 120, 2553, 0, 0 }}; }
 
-    std::chrono::seconds session_time_start;
+    MonotonicTimePoint::duration session_time_start;
 
     const bool clean_up_32_bpp_cursor;
     const bool large_pointer_support;
@@ -2000,7 +2000,7 @@ public:
         , session_log(session_log)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
-        , session_time_start(events.get_current_time().tv_sec)
+        , session_time_start(events.get_current_time().time_since_epoch())
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
@@ -6016,12 +6016,14 @@ private:
     void log_disconnection(bool enable_verbose)
     {
         if (this->session_time_start.count()) {
-            uint64_t seconds = this->events_guard.get_current_time().tv_sec - this->session_time_start.count();
-            this->session_time_start = std::chrono::seconds::zero();
+            auto delay = this->events_guard.get_current_time().time_since_epoch()
+                        - this->session_time_start;
+            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
+            this->session_time_start = MonotonicTimePoint::duration(0);
 
             char duration_str[128];
-            size_t len = snprintf(duration_str, sizeof(duration_str), "%d:%02d:%02d",
-                int(seconds / 3600),
+            int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02d:%02d",
+                long(seconds / 3600),
                 int((seconds % 3600) / 60),
                 int(seconds % 60));
 
@@ -6029,7 +6031,7 @@ private:
             this->front.possible_active_window_change();
 
             this->session_log.log6(LogId::SESSION_DISCONNECTION,
-                {KVLog("duration"_av, {duration_str, len}),});
+                {KVLog("duration"_av, {duration_str, std::size_t(len)}),});
 
             LOG_IF(enable_verbose, LOG_INFO,
                 "type=SESSION_DISCONNECTION duration=%s", duration_str);

@@ -30,6 +30,7 @@
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
 
 #include "gdi/image_frame_api.hpp"
 #include "gdi/capture_api.hpp"
@@ -113,11 +114,11 @@ class GraphicToFile
     StaticOutStream<65536> buffer_stream_orders;
     StaticOutStream<65536> buffer_stream_bitmaps;
 
-    const std::chrono::microseconds delta_time = std::chrono::seconds(1);
-    timeval timer;
-    timeval last_sent_timer;
-    uint16_t mouse_x;
-    uint16_t mouse_y;
+    MonotonicTimePoint timer;
+    MonotonicTimePoint last_sent_timer {};
+    const DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    uint16_t mouse_x = 0;
+    uint16_t mouse_y = 0;
     const bool send_input;
     gdi::ImageFrameApi & image_frame_api;
 
@@ -133,10 +134,11 @@ class GraphicToFile
 public:
     enum class SendInput { NO, YES };
 
-    GraphicToFile(const timeval & now
+    GraphicToFile(MonotonicTimePoint now
+                , DurationFromMonotonicTimeToRealTime monotonic_to_real
                 , Transport & trans
                 , const BitsPerPixel capture_bpp
-                // TOSO strong type
+                // TODO strong type
                 , const bool remote_app
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
@@ -151,9 +153,7 @@ public:
     , trans_target(trans)
     , trans(this->compression_bullder.get())
     , timer(now)
-    , last_sent_timer{0, 0}
-    , mouse_x(0)
-    , mouse_y(0)
+    , monotonic_to_real(monotonic_to_real)
     , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
@@ -177,23 +177,36 @@ public:
     }
 
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
-    void timestamp(const timeval& now)
+    void timestamp(MonotonicTimePoint now)
     {
         if (this->timer < now) {
             this->flush_orders();
             this->flush_bitmaps();
             this->timer = now;
-            this->trans.timestamp(now);
+            const auto us = this->real_time();
+            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(us);
+            timeval tv;
+            tv.tv_sec = seconds.count();
+            tv.tv_usec = (us - seconds).count();
+            this->trans.timestamp(tv);
         }
     }
 
+private:
+    std::chrono::microseconds real_time() const
+    {
+        const auto time_since_epoch = this->timer.time_since_epoch() + this->monotonic_to_real.duration;
+        return std::chrono::duration_cast<std::chrono::microseconds>(time_since_epoch);
+    }
+
+public:
     void mouse(uint16_t mouse_x, uint16_t mouse_y)
     {
         this->mouse_x = mouse_x;
         this->mouse_y = mouse_y;
     }
 
-    bool kbd_input(const timeval & now, uint32_t uchar) override {
+    bool kbd_input(MonotonicTimePoint now, uint32_t uchar) override {
         (void)now;
         if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
             keyboard_buffer_32.out_uint32_le(uchar);
@@ -266,7 +279,9 @@ public:
     void send_timestamp_chunk()
     {
         StaticOutStream<12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1> payload;
-        payload.out_timeval_to_uint64le_usec(this->timer);
+
+        payload.out_uint64_le(this->real_time().count());
+
         if (this->send_input) {
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
@@ -349,17 +364,17 @@ public:
     }
 
 private:
-    [[nodiscard]] std::chrono::microseconds elapsed_time() const
+    void send_elapsed_time()
     {
-        return this->timer - this->last_sent_timer;
+        if (this->timer >= this->last_sent_timer + 1s) {
+            this->send_timestamp_chunk();
+        }
     }
 
 protected:
     void flush_orders() override {
         if (this->order_count > 0) {
-            if (this->elapsed_time() >= delta_time) {
-                this->send_timestamp_chunk();
-            }
+            this->send_elapsed_time();
             this->send_orders_chunk();
         }
     }
@@ -376,9 +391,7 @@ public:
 protected:
     void flush_bitmaps() override {
         if (this->bitmap_count > 0) {
-            if (this->elapsed_time() >= delta_time) {
-                this->send_timestamp_chunk();
-            }
+            this->send_elapsed_time();
             this->send_bitmaps_chunk();
         }
     }
@@ -483,7 +496,8 @@ protected:
     }
 
 public:
-    void session_update(timeval now, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
+    {
         this->timer = now;
         this->last_sent_timer = this->timer;
 
@@ -492,7 +506,7 @@ public:
         }
 
         StaticOutStream<1024*16> out_stream;
-        out_stream.out_timeval_to_uint64le_usec(now);
+        out_stream.out_uint64_le(this->real_time().count());
         OutStream kvheader(out_stream.out_skip_bytes(2 + 4 + 1));
 
         uint8_t kv_len = checked_int(kv_list.size());
@@ -553,8 +567,10 @@ class WrmCaptureImpl :
 
     OutMetaSequenceTransport out;
 
-    struct Serializer final : GraphicToFile {
-        Serializer(const timeval & now
+    struct Serializer final : GraphicToFile
+    {
+        Serializer(MonotonicTimePoint now
+                , DurationFromMonotonicTimeToRealTime const & monotonic_to_real
                 , Transport & trans
                 , const BitsPerPixel capture_bpp
                 , const bool remote_app
@@ -565,14 +581,13 @@ class WrmCaptureImpl :
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input
                 , RDPSerializerVerbose verbose)
-            : GraphicToFile(now, trans, capture_bpp, remote_app,
+            : GraphicToFile(now, monotonic_to_real, trans, capture_bpp, remote_app,
                             bmp_cache, gly_cache, ptr_cache,
                             image_frame_api, wrm_compression_algorithm,
                             send_input, verbose)
         {}
 
         using GraphicToFile::draw;
-        using GraphicToFile::capture_bpp;
 
         void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
             auto compress_and_draw_bitmap_update = [&bitmap_data, this](const Bitmap & bmp) {
@@ -617,10 +632,6 @@ class WrmCaptureImpl :
             }
         }
 
-        bool kbd_input(const timeval & now, uint32_t uchar) override {
-            return this->GraphicToFile::kbd_input(now, uchar);
-        }
-
         ~Serializer() = default;
     } graphic_to_file;
 
@@ -631,12 +642,12 @@ public:
         this->nc.external_breakpoint();
     }
 
-    void external_time(timeval const & now) override {
+    void external_time(MonotonicTimePoint now) override {
         this->nc.external_time(now);
     }
 
     // CAPTURE PROBE API
-    void session_update(timeval now, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
         this->graphic_to_file.session_update(now, id, kv_list);
     }
     void possible_active_window_change() override { this->graphic_to_file.possible_active_window_change(); }
@@ -750,30 +761,26 @@ public:
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {
-        timeval start_native_capture;
-        std::chrono::microseconds inter_frame_interval_native_capture;
+        MonotonicTimePoint start_native_capture;
+        const std::chrono::microseconds inter_frame_interval_native_capture;
 
-        timeval start_break_capture;
-        std::chrono::microseconds inter_frame_interval_start_break_capture;
+        MonotonicTimePoint start_break_capture;
+        const std::chrono::seconds inter_frame_interval_start_break_capture;
 
         GraphicToFile & recorder;
-        std::chrono::microseconds time_to_wait;
 
     public:
         NativeCaptureLocal(
             GraphicToFile & recorder,
-            const timeval & now,
-            std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval,
+            MonotonicTimePoint now,
+            std::chrono::microseconds frame_interval,
             std::chrono::seconds break_interval
         )
         : start_native_capture(now)
-        , inter_frame_interval_native_capture(
-            std::chrono::duration_cast<std::chrono::microseconds>(frame_interval))
+        , inter_frame_interval_native_capture(frame_interval)
         , start_break_capture(now)
-        , inter_frame_interval_start_break_capture(
-            std::chrono::duration_cast<std::chrono::microseconds>(break_interval))
+        , inter_frame_interval_start_break_capture(break_interval)
         , recorder(recorder)
-        , time_to_wait(std::chrono::microseconds::zero())
         {}
 
         ~NativeCaptureLocal() override {
@@ -785,33 +792,32 @@ public:
             this->recorder.breakpoint();
         }
 
-        void external_time(const timeval & now) override {
+        void external_time(MonotonicTimePoint now) override {
             this->recorder.sync();
             this->recorder.timestamp(now);
         }
 
-        Microseconds periodic_snapshot(
-            const timeval & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
-        ) override {
-            (void)ignore_frame_in_timeval;
-
+        WaitingTimeBeforeNextSnapshot periodic_snapshot(
+            MonotonicTimePoint now, uint16_t x, uint16_t y, bool /*ignore_frame_in_timeval*/
+        ) override
+        {
             this->recorder.mouse(x, y);
 
-            if (now - this->start_native_capture >= this->inter_frame_interval_native_capture) {
+            if (now >= this->start_native_capture + this->inter_frame_interval_native_capture) {
                 this->recorder.timestamp(now);
-                this->time_to_wait = this->inter_frame_interval_native_capture;
                 this->start_native_capture = now;
-                if (now - this->start_break_capture
-                    >= this->inter_frame_interval_start_break_capture
+                if (now
+                    >= this->start_break_capture + this->inter_frame_interval_start_break_capture
                 ) {
                     this->recorder.breakpoint();
                     this->start_break_capture = now;
                 }
+                return WaitingTimeBeforeNextSnapshot(this->inter_frame_interval_native_capture);
             }
             else {
-                this->time_to_wait = this->inter_frame_interval_native_capture - (now - this->start_native_capture);
+                return WaitingTimeBeforeNextSnapshot(
+                    this->inter_frame_interval_native_capture - (now - this->start_native_capture));
             }
-            return std::chrono::microseconds{this->time_to_wait};
         }
     } nc;
 
@@ -839,14 +845,24 @@ public:
         capture_params.record_path,
         wrm_params.hash_path,
         capture_params.basename,
-        capture_params.now,
+        [&]{
+            const auto time_since_epoch = capture_params.now.time_since_epoch()
+                                        + capture_params.monotonic_to_real.duration;
+            const auto us = std::chrono::duration_cast<std::chrono::microseconds>(time_since_epoch);
+            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(us);
+            timeval tv;
+            tv.tv_sec = seconds.count();
+            tv.tv_usec = (us - seconds).count();
+            return tv;
+        }(),
         image_view.width(),
         image_view.height(),
         capture_params.groupid,
         capture_params.session_log,
         wrm_params.file_permissions)
     , graphic_to_file(
-        capture_params.now, this->out, wrm_params.capture_bpp, wrm_params.remote_app,
+        capture_params.now, capture_params.monotonic_to_real,
+        this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         wrm_params.wrm_verbose)
@@ -870,8 +886,8 @@ public:
     }
 
     // shadow text
-    bool kbd_input(const timeval& now, uint32_t uchar) override {
-        return this->graphic_to_file.kbd_input(now, this->kbd_input_mask_enabled?'*':uchar);
+    bool kbd_input(MonotonicTimePoint now, uint32_t uchar) override {
+        return this->graphic_to_file.kbd_input(now, this->kbd_input_mask_enabled ? '*' : uchar);
     }
 
     void enable_kbd_input_mask(bool enable) override {
@@ -880,7 +896,7 @@ public:
         this->graphic_to_file.enable_kbd_input_mask(enable);
     }
 
-    void send_timestamp_chunk(timeval const & now) {
+    void send_timestamp_chunk(MonotonicTimePoint now) {
         this->graphic_to_file.timestamp(now);
         this->graphic_to_file.send_timestamp_chunk();
     }
@@ -889,8 +905,8 @@ public:
         this->graphic_to_file.mouse(x, y);
     }
 
-    Microseconds periodic_snapshot(
-        const timeval & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
     ) override {
         return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
     }

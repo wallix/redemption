@@ -25,7 +25,7 @@
 #include "utils/hexdump.hpp"
 #include "utils/select.hpp"
 #include "system/tls_context.hpp"
-#include "utils/timeval_ops.hpp"
+#include "utils/to_timeval.hpp"
 
 #include <vector>
 #include <cstring>

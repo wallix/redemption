@@ -22,7 +22,6 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 
-#include "utils/timeval_ops.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
 #include "mod/rdp/rdp_metrics.hpp"
 #include "mod/metrics_hmac.hpp"
@@ -30,11 +29,10 @@
 
 using namespace std::literals::chrono_literals;
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCycle1, wd)
 {
-    WorkingDirectory wd("metrics_log_cycle1");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211671s);
+    DurationFromMonotonicTimeToRealTime delta_time{10s};
 
     Metrics m(wd.dirname()
           , "164d89c1a56957b752540093e178"
@@ -43,6 +41,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
           , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
           , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
           , epoch
+          , delta_time
           , 24h
           , 5s
           );
@@ -74,16 +73,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 
     m.log(epoch+10s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"_av);
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCycle2, wd)
 {
-   WorkingDirectory wd("metrics_log_cycle2");
-
     {
-        const auto epoch = to_timeval(1533211681s);
+        const MonotonicTimePoint epoch(1533211681s);
 
         Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
@@ -92,6 +87,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 3s
                 );
@@ -116,15 +112,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2)
         m.log(epoch+3s);
         RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n"_av);
     }
-
-   RED_CHECK_WORKSPACE(wd);
 }
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogBasicIncrement, wd)
 {
-    WorkingDirectory wd("metrics_log_basic_inc");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
 
     Metrics m(wd.dirname()
              , "164d89c1a56957b752540093e178"
@@ -133,6 +125,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
              , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
              , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
              , epoch
+             , DurationFromMonotonicTimeToRealTime{}
              , 24h
              , 5s
              );
@@ -209,15 +202,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
     metrics.server_other_channel_data(3);
     m.log(epoch);
     RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient, wd)
 {
-    WorkingDirectory wd("metrics_log_clipcopypaste");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -225,6 +214,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 5s
                 );
@@ -291,15 +281,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient, wd)
 {
-    WorkingDirectory wd("metrics_log_filecopy");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -307,6 +293,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 5s
                 );
@@ -392,16 +379,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient, wd)
 {
-    WorkingDirectory wd("metrics_log_textcopy");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -409,6 +392,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 5s
                 );
@@ -476,16 +460,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsRDPDRReadChunk, wd)
 {
-    WorkingDirectory wd("metrics_log_read_chunck");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -493,6 +473,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 5s
                 );
@@ -607,16 +588,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer, wd)
 {
-    WorkingDirectory wd("metrics_log_imgcopy");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -624,6 +601,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 5s
                 );
@@ -709,16 +687,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer, wd)
 {
-    WorkingDirectory wd("metrics_log_filecopy_paste_on_server");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
             , "164d89c1a56957b752540093e178"
             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -726,6 +700,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
             , epoch
+            , DurationFromMonotonicTimeToRealTime{}
             , 24h
             , 5s
             );
@@ -828,16 +803,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
+RED_AUTO_TEST_CASE_WD(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer, wd)
 {
-    WorkingDirectory wd("metrics_log_clienttextcopy");
-
-    auto epoch = to_timeval(1533211681s);
+    MonotonicTimePoint epoch(1533211681s);
     Metrics m(wd.dirname()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
@@ -845,6 +816,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
                 , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
                 , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
                 , epoch
+                , DurationFromMonotonicTimeToRealTime{}
                 , 24h
                 , 5s
                 );
@@ -930,6 +902,4 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
 
         RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
     }
-
-    RED_CHECK_WORKSPACE(wd);
 }

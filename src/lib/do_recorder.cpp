@@ -51,6 +51,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/to_timeval.hpp"
 #include "utils/strutils.hpp"
 #include "utils/ref.hpp"
 
@@ -152,8 +153,8 @@ public:
 
         case WrmChunkType::TIMESTAMP:
             {
-                timeval record_now = stream.in_timeval_from_uint64le_usec();
-                this->trans_target.timestamp(record_now);
+                auto us = std::chrono::microseconds(stream.in_uint64_le());
+                this->trans_target.timestamp(to_timeval(us));
             }
             REDEMPTION_CXX_FALLTHROUGH;
         default:
@@ -290,8 +291,8 @@ private:
 
 inline
 static int do_recompress(
-    CryptoContext & cctx, Random & rnd, Fstat & fstat, Transport & in_wrm_trans, const timeval begin_record,
-    bool & program_requested_to_shutdown,
+    CryptoContext & cctx, Random & rnd, Fstat & fstat, Transport & in_wrm_trans,
+    const std::chrono::seconds begin_record, bool & program_requested_to_shutdown,
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
     FileToChunk player(&in_wrm_trans, safe_cast<FileToChunk::Verbose>(verbose));
@@ -322,7 +323,7 @@ static int do_recompress(
             outfile.directory.c_str(),
             ini.get<cfg::video::hash_path>().c_str(),
             outfile.basename.c_str(),
-            begin_record,
+            timeval{begin_record.count(), 0},
             player.get_wrm_info().width,
             player.get_wrm_info().height,
             ini.get<cfg::video::capture_groupid>(),
@@ -532,7 +533,10 @@ static void raise_error(
             , outfile.directory.c_str(), outfile.basename.c_str());
 
     (void)unlink(progress_filename);
-    UpdateProgressData update_progress_data(pgs_format, progress_filename, 0, 0, 0, 0);
+    UpdateProgressData update_progress_data(
+        pgs_format, progress_filename,
+        MonotonicTimePoint(), MonotonicTimePoint(),
+        MonotonicTimePoint(), MonotonicTimePoint());
 
     update_progress_data.raise_error(code, message);
 }
@@ -894,8 +898,8 @@ inline void get_join_visibility_rect(
     bool play_video_with_corrupted_bitmap,
     uint32_t verbose)
 {
-    timeval begin_capture = {0, 0};
-    timeval end_capture = {0, 0};
+    MonotonicTimePoint begin_capture {};
+    MonotonicTimePoint end_capture {};
 
     FileToGraphic player(
         in_wrm_trans, begin_capture, end_capture,
@@ -944,8 +948,8 @@ static inline int replay(
     bool chunk,
     unsigned ocr_version,
     std::string const& output_filename,
-    int64_t begin_cap,
-    int64_t end_cap,
+    std::chrono::seconds begin_cap,
+    std::chrono::seconds end_cap,
     PngParams & png_params,
     VideoParams & video_params,
     FullVideoParams const& full_video_params,
@@ -983,46 +987,48 @@ static inline int replay(
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
     if (chunk){
-        ini.set<cfg::ocr::interval>(std::chrono::seconds{1});
+        ini.set<cfg::ocr::interval>(1s);
     }
+
+    using Seconds = std::chrono::seconds;
 
     // begin or end relative to end of trace
     {
-        int64_t const duration = mwrm_infos.wrms.front().stop_time
-                               - mwrm_infos.wrms.back().start_time;
+        Seconds const duration ( mwrm_infos.wrms.front().stop_time
+                               - mwrm_infos.wrms.back().start_time);
 
-        if (begin_cap < 0) {
-            begin_cap = std::max(begin_cap + duration, int64_t(0));
+        if (begin_cap.count() < 0) {
+            begin_cap = std::max(begin_cap + duration, Seconds(0));
         }
 
-        if (end_cap < 0) {
-            end_cap = std::max(end_cap + duration, int64_t(0));
+        if (end_cap.count() < 0) {
+            end_cap = std::max(end_cap + duration, Seconds(0));
         }
     }
 
     // begin or end relative to start of trace
     {
         // less than 1 year, it is relative not absolute timestamp
-        int64_t relative_time_barrier = 31536000;
+        auto relative_time_barrier = 31536000s;
 
-        if (begin_cap && begin_cap < relative_time_barrier) {
-            begin_cap += mwrm_infos.wrms.front().start_time;
+        if (begin_cap.count() && begin_cap < relative_time_barrier) {
+            begin_cap += Seconds(mwrm_infos.wrms.front().start_time);
         }
 
-        if (end_cap && end_cap < relative_time_barrier) {
-            end_cap += mwrm_infos.wrms.front().start_time;
+        if (end_cap.count() && end_cap < relative_time_barrier) {
+            end_cap += Seconds(mwrm_infos.wrms.front().start_time);
         }
     }
 
     int file_count = 0;
 
     // number of file up to begin_cap
-    if (begin_cap)
+    if (begin_cap.count())
     {
         auto first = mwrm_infos.wrms.begin();
         auto last = mwrm_infos.wrms.end();
 
-        while (first < last && begin_cap >= first->stop_time) {
+        while (first < last && begin_cap >= Seconds(first->stop_time)) {
             ++first;
         }
 
@@ -1036,16 +1042,13 @@ static inline int replay(
 
     EncryptionMode const encryption_mode = mwrm_infos.encryption_mode;
 
-    timeval  begin_record = { mwrm_infos.wrms.front().start_time, 0 };
-    timeval  end_record   = { mwrm_infos.wrms.back().stop_time, 0 };
+    std::chrono::seconds begin_record = Seconds(mwrm_infos.wrms.front().start_time);
+    std::chrono::seconds end_record   = Seconds(mwrm_infos.wrms.back().stop_time);
     unsigned count_wrm_file = mwrm_infos.wrms.size();
     // TODO
     uint64_t total_wrm_file_len = 0;
 
     WrmsTransport in_wrm_trans(mwrm_infos.wrms, cctx, encryption_mode, fstat);
-
-    timeval begin_capture = {begin_cap, 0};
-    timeval end_capture = {end_cap, 0};
 
     int result = -1;
     try {
@@ -1059,7 +1062,7 @@ static inline int replay(
             || show_statistics
             || file_count > 1
             || order_count
-            || begin_cap != begin_record.tv_sec
+            || begin_cap != begin_record
             || end_cap != begin_cap);
 
         if (test){
@@ -1067,15 +1070,15 @@ static inline int replay(
                 in_wrm_trans.next();
             }
 
-            LOG(LOG_INFO, "player begin_capture = %ld", begin_capture.tv_sec);
+            LOG(LOG_INFO, "player begin_capture = %ld", begin_cap.count());
             FileToGraphic player(
-                in_wrm_trans, begin_capture, end_capture,
+                in_wrm_trans, MonotonicTimePoint{begin_cap}, MonotonicTimePoint{end_cap},
                 ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 safe_cast<FileToGraphic::Verbose>(verbose));
 
             if (show_file_metadata) {
                 show_metadata(player);
-                std::cout << "Duration (in seconds) : " << (end_record.tv_sec - begin_record.tv_sec + 1) << std::endl;
+                std::cout << "Duration (in seconds) : " << ((end_record - begin_record).count() + 1) << std::endl;
             }
 
             if (show_file_metadata && !show_statistics && !output_filename.length()) {
@@ -1087,9 +1090,6 @@ static inline int replay(
                 int return_code = 0;
 
                 if (not output_filename.empty()) {
-            //        char outfile_pid[32];
-            //        std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", getpid());
-
                     auto outfile = ParsePath(output_filename);
 
                     if (verbose) {
@@ -1121,8 +1121,8 @@ static inline int replay(
                                 , outfile.directory.c_str(), outfile.basename.c_str());
                         UpdateProgressData update_progress_data(
                             pgs_format, progress_filename,
-                            begin_record.tv_sec, end_record.tv_sec,
-                            begin_capture.tv_sec, end_capture.tv_sec
+                            MonotonicTimePoint(begin_record), MonotonicTimePoint(end_record),
+                            MonotonicTimePoint(begin_cap), MonotonicTimePoint(end_cap)
                         );
 
                         if (png_params.png_width && png_params.png_height) {
@@ -1205,9 +1205,10 @@ static inline int replay(
 
                         auto set_capture_consumer = [
                             &, capture = std::optional<Capture>()
-                        ](timeval const & now) mutable {
+                        ](MonotonicTimePoint now) mutable {
                             CaptureParams capture_params{
                                 now,
+                                DurationFromMonotonicTimeToRealTime{},
                                 spath.basename.c_str(),
                                 record_tmp_path,
                                 record_path,
@@ -1236,8 +1237,10 @@ static inline int replay(
                             player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr, ptr);
                         };
 
-                        auto lazy_capture = [&](timeval const & now) {
-                            if (begin_capture.tv_sec > now.tv_sec) {
+                        auto lazy_capture = [&, begin_capture = MonotonicTimePoint(begin_cap)](
+                            MonotonicTimePoint now
+                        ) {
+                            if (begin_capture > now) {
                                 return;
                             }
                             set_capture_consumer(begin_capture);
@@ -1247,20 +1250,20 @@ static inline int replay(
                         {
                             void external_breakpoint() override {}
 
-                            void external_time(const timeval & now) override
+                            void external_time(MonotonicTimePoint now) override
                             {
                                 this->load_capture(now);
                             }
 
-                            explicit CaptureMaker(decltype(lazy_capture) & load_capture)
+                            explicit CaptureMaker(decltype(lazy_capture) load_capture)
                             : load_capture(load_capture)
                             {}
 
-                            decltype(lazy_capture) & load_capture;
+                            decltype(lazy_capture) load_capture;
                         };
                         CaptureMaker capture_maker(lazy_capture);
 
-                        if (begin_capture.tv_sec) {
+                        if (begin_cap.count()) {
                             player.add_consumer(
                                 &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
                         }
@@ -1357,10 +1360,10 @@ struct RecorderParams {
     // ==================
     // "begin capture time (in seconds), either absolute or relative to video start
     // (negative number means relative to video end), default=from start"
-    int64_t begin_cap = 0;
+    std::chrono::seconds begin_cap {};
     // "end capture time (in seconds), either absolute or relative to video start,
     // (nagative number means relative to video end), default=none"
-    int64_t end_cap = 0;
+    std::chrono::seconds end_cap {};
     // "Number of orders to execute before stopping, default=0 execute all orders"
     uint32_t order_count = 0;
 
@@ -1368,7 +1371,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, std::chrono::seconds{60}, 100, 0, false , false, false, nullptr};
+    PngParams png_params = {0, 0, 60s, 100, 0, false , false, false, nullptr};
     VideoParams video_params {5, {}, {}, {}, {}, {}, {}, {}};
     FullVideoParams full_video_params {};
 

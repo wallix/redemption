@@ -95,7 +95,7 @@ public:
     , verbose(verbose)
     {}
 
-    void configure_event(timeval now, AsynchronousEventContainer async_event_container) override
+    void configure_event(MonotonicTimePoint now, AsynchronousEventContainer async_event_container) override
     {
         async_event_container.create_event_fd_timeout(
             "RdpdrDriveReadTask",
@@ -204,7 +204,7 @@ public:
         ::memcpy(this->data.get(), data, data_length);
     }
 
-    void configure_event(timeval now, AsynchronousEventContainer async_event_container) override
+    void configure_event(MonotonicTimePoint now, AsynchronousEventContainer async_event_container) override
     {
         async_event_container.create_event_timeout(
             "RdpdrSendDriveIOResponseTask",
@@ -282,7 +282,7 @@ public:
         ::memcpy(this->chunked_data.get(), chunked_data.data(), this->chunked_data_length);
     }
 
-    void configure_event(timeval now, AsynchronousEventContainer async_event_container) override
+    void configure_event(MonotonicTimePoint now, AsynchronousEventContainer async_event_container) override
     {
         async_event_container.create_event_timeout(
             "RdpdrSendClientMessageTask",

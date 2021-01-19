@@ -95,7 +95,7 @@ private:
     void prepare_timer_event()
     {
         auto tv = this->event_manager.next_timeout();
-        if (tv.tv_sec != 0 || tv.tv_usec != 0) {
+        if (tv != MonotonicTimePoint()) {
             auto delay = tv - this->event_manager.get_current_time();
             this->timer.start(std::chrono::duration_cast<std::chrono::milliseconds>(delay));
         }

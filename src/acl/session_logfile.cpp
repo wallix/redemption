@@ -51,7 +51,7 @@ SessionLogFile::~SessionLogFile()
     }
 }
 
-void SessionLogFile::log6(time_t time_now, LogId id, KVLogList kv_list)
+void SessionLogFile::log6(std::time_t time_now, LogId id, KVLogList kv_list)
 {
     assert(this->ct.is_open());
 

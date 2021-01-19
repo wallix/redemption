@@ -128,7 +128,7 @@ private:
         CHANID_RAIL    = 1605
     };
 public:
-        //  RDP Channel managers
+    //  RDP Channel managers
     ClientRDPSNDChannel    clientRDPSNDChannel;
     ClientCLIPRDRChannel   clientCLIPRDRChannel;
     ClientRDPDRChannel     clientRDPDRChannel;
@@ -139,9 +139,9 @@ private:
     Fstat fstat;
 
 public:
-    timeval start_connection_time;                          // when socket is connected
-    timeval start_wab_session_time;                         // when the first resize is received
-    timeval start_win_session_time;                         // when the first memblt is received
+    MonotonicTimePoint start_connection_time;   // when socket is connected
+    MonotonicTimePoint start_wab_session_time;  // when the first resize is received
+    MonotonicTimePoint start_win_session_time;  // when the first memblt is received
 
 private:
     bool secondary_connection_finished;
@@ -254,7 +254,7 @@ public:
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
         , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod))
-        , start_win_session_time(tvtime())
+        , start_win_session_time(MonotonicTimePoint::clock::now())
         , secondary_connection_finished(false)
         , local_IP("unknown_local_IP")
     {}
@@ -314,29 +314,34 @@ public:
             this->socket.reset();
         }
 
-        std::chrono::microseconds duration = tvtime() - this->start_win_session_time;
-        uint64_t movie_len = duration.count() / 1000;
-
-        time_t now;
-        time(&now);
-
-        struct tm * timeinfo;
-        char buffer [80];
-        timeinfo = localtime (&now);
-        strftime (buffer,80,"%F_%r",timeinfo);
-        std::string date(buffer);
+        this->set_error_msg(error);
 
         if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
-            this->set_error_msg(error);
-            LOG(LOG_INFO, "Session duration = %" PRIu64 " ms %s ", movie_len, date);
-//             std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
+            this->log_duration(
+                "Session duration",
+                MonotonicTimePoint::clock::now() - this->start_win_session_time);
             LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP);
         } else {
             LOG(LOG_INFO, "Replay closed.");
-
         }
-//         this->config.set_icon_movie_data();
     }
+
+private:
+    void log_duration(char const* msg_prefix, MonotonicTimePoint::duration duration) const
+    {
+        time_t now = time(nullptr);
+        struct tm * timeinfo;
+        char date[80];
+        timeinfo = localtime(&now);
+        strftime(date, 80, "%F_%r", timeinfo);
+
+        auto const duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+        int64_t const movie_len = duration_ms.count();
+
+        LOG(LOG_INFO, "%s = %" PRIi64 " ms %s", msg_prefix, movie_len, date);
+    }
+
+public:
 
     virtual void set_error_msg(const std::string & error) {
         if (!error.empty()) {
@@ -644,24 +649,15 @@ public:
         if (!this->secondary_connection_finished) {
             this->secondary_connection_finished = true;
 
-            std::chrono::microseconds prim_duration = this->start_wab_session_time - this->start_connection_time;
-            long prim_len = prim_duration.count() / 1000;
-            LOG(LOG_INFO, "primary connection length = %ld ms", prim_len);
+            auto const prim_duration = this->start_wab_session_time - this->start_connection_time;
+            int64_t const prim_len
+                = std::chrono::duration_cast<std::chrono::milliseconds>(prim_duration).count();
+            LOG(LOG_INFO, "primary connection length = %" PRIi64 " ms", prim_len);
 
-            this->start_win_session_time = tvtime();
-
-            std::chrono::microseconds sec_duration = this->start_win_session_time - this->start_wab_session_time;
-            long sec_len = sec_duration.count() / 1000;
-            time_t now;
-            time(&now);
-
-            struct tm * timeinfo;
-            char buffer [80];
-            timeinfo = localtime (&now);
-            strftime (buffer,80,"%F_%r",timeinfo);
-            std::string date(buffer);
-
-            LOG(LOG_INFO, "secondary connection length = %ld ms %s", sec_len, date);
+            this->start_win_session_time = MonotonicTimePoint::clock::now();
+            this->log_duration(
+                "secondary connection length",
+                this->start_win_session_time - this->start_wab_session_time);
         }
     }
 
@@ -690,7 +686,7 @@ public:
         };
 
         CaptureParams captureParams;
-        captureParams.now = tvtime();
+        captureParams.now = MonotonicTimePoint::clock::now();
         captureParams.basename = movie_name.c_str();
         captureParams.record_tmp_path = record_path.c_str();
         captureParams.record_path = record_path.c_str();
@@ -703,7 +699,7 @@ public:
     }
 
 
-    bool load_replay_mod(timeval begin_read, timeval end_read) override
+    bool load_replay_mod(MonotonicTimePoint begin_read, MonotonicTimePoint end_read) override
     {
         try {
             (void)begin_read;
@@ -764,8 +760,7 @@ public:
         this->config.is_replaying = true;
         this->config.is_loading_replay_mod = true;
 
-        if (this->load_replay_mod({0, 0}, {0, 0})) {
-
+        if (this->load_replay_mod(MonotonicTimePoint{}, MonotonicTimePoint{})) {
             this->config.is_loading_replay_mod = false;
             this->wrmGraphicStat.reset();
             this->print_wrm_graphic_stat(movie_path);
@@ -788,58 +783,6 @@ public:
             LOG(LOG_INFO, "%s= %u %spixels = %lu", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
         }
     }
-
-    timeval reload_replay_mod(int begin, timeval now_stop) override
-    {
-        // timeval movie_time_start;
-        //
-        // switch (this->replay_mod->get_wrm_version()) {
-        //     case WrmVersion::v1:
-        //         if (this->load_replay_mod({0, 0}, {0, 0})) {
-        //             this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
-        //             movie_time_start = tvtime();
-        //             return movie_time_start;
-        //         }
-        //         break;
-        //
-        //     case WrmVersion::v2:
-        //     {
-        //         int last_balised = (begin / ClientRedemptionConfig::BALISED_FRAME);
-        //         this->config.is_loading_replay_mod = true;
-        //         if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
-        //
-        //             this->config.is_loading_replay_mod = false;
-        //
-        //             this->instant_replay_client(begin, last_balised);
-        //
-        //             movie_time_start = tvtime();
-        //             timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
-        //             timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
-        //             this->replay_mod->set_wait_after_load_client(wait_duration);
-        //         }
-        //         this->config.is_loading_replay_mod = false;
-        //
-        //         return movie_time_start;
-        //     }
-        // }
-        //
-        // return movie_time_start;
-
-        return {};
-        (void)begin;
-        (void)now_stop;
-    }
-
-    virtual void instant_replay_client(int begin, int /*last_balised*/) {
-        // this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
-        (void)begin;
-    }
-
-
-//     void instant_play_client(std::chrono::microseconds time) override {
-//         this->replay_mod->instant_play_client(time);
-//     }
-
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
     //--------------------------------
@@ -1143,7 +1086,7 @@ public:
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.begin_update();
                 this->capture->wrm_capture.begin_update();
-                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
             }
         }
     }
@@ -1155,7 +1098,7 @@ public:
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.end_update();
                 this->capture->wrm_capture.end_update();
-                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
             }
         }
     }
@@ -1181,7 +1124,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order);
             this->capture->wrm_capture.draw(order);
-            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }
 
@@ -1197,7 +1140,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip_or_bmp, others...);
             this->capture->wrm_capture.draw(order, clip_or_bmp, others...);
-            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }
 
@@ -1214,7 +1157,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.screen_info.bpp), &this->config.mod_palette), others...);
             this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.screen_info.bpp), &this->config.mod_palette), others...);
-            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }
 

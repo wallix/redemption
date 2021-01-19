@@ -38,7 +38,6 @@
 
 #include "utils/log.hpp"
 #include "utils/recording_progress.hpp"
-#include "utils/timeval_ops.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -288,43 +287,50 @@ bool update_enable_probe(bool& enable_probe, LogId id, KVLogList kv_list)
     return false;
 }
 
-} // anonymous namespace
-
-namespace
+enum class FilteringSlash{ No, Yes };
+using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
+using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
+template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
+void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
+                        NoPrintableFn no_printable_fn, FilterSlash filter_slash)
 {
-    enum class FilteringSlash{ No, Yes };
-    using filter_slash = std::integral_constant<FilteringSlash, FilteringSlash::Yes>;
-    using nofilter_slash = std::integral_constant<FilteringSlash, FilteringSlash::No>;
-    template<class Utf8CharFn, class NoPrintableFn, class FilterSlash>
-    void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
-                            NoPrintableFn no_printable_fn, FilterSlash filter_slash)
+    switch (uchar)
     {
-        switch (uchar)
-        {
-            case '/':
-                if (filter_slash == FilteringSlash::Yes) {
-                    no_printable_fn(cstr_array_view("//"));
-                }
-                else {
-                    utf32_char_fn(uchar);
-                }
-                break;
-            #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
-            Case(0x00000008, "/<backspace>");
-            Case(0x00000009, "/<tab>");
-            Case(0x0000000D, "/<enter>");
-            Case(0x0000001B, "/<escape>");
-            Case(0x0000007F, "/<delete>");
-            Case(0x00002190, "/<left>");
-            Case(0x00002191, "/<up>");
-            Case(0x00002192, "/<right>");
-            Case(0x00002193, "/<down>");
-            Case(0x00002196, "/<home>");
-            Case(0x00002198, "/<end>");
-            #undef Case
-            default: utf32_char_fn(uchar);
-        }
+        case '/':
+            if (filter_slash == FilteringSlash::Yes) {
+                no_printable_fn(cstr_array_view("//"));
+            }
+            else {
+                utf32_char_fn(uchar);
+            }
+            break;
+        #define Case(i, s) case i: no_printable_fn(cstr_array_view(s)); break
+        Case(0x00000008, "/<backspace>");
+        Case(0x00000009, "/<tab>");
+        Case(0x0000000D, "/<enter>");
+        Case(0x0000001B, "/<escape>");
+        Case(0x0000007F, "/<delete>");
+        Case(0x00002190, "/<left>");
+        Case(0x00002191, "/<up>");
+        Case(0x00002192, "/<right>");
+        Case(0x00002193, "/<down>");
+        Case(0x00002196, "/<home>");
+        Case(0x00002198, "/<end>");
+        #undef Case
+        default: utf32_char_fn(uchar);
     }
+}
+
+time_t to_time_t(MonotonicTimePoint::duration d)
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(d).count();
+}
+
+time_t to_time_t(MonotonicTimePoint t)
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count();
+}
+
 } // anonymous namespace
 
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -351,7 +357,7 @@ public:
         return !this->pattern_kill.is_empty() || !this->pattern_notify.is_empty();
     }
 
-    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override {
         bool can_be_sent_to_server = true;
 
         filtering_kbd_input(
@@ -407,7 +413,7 @@ class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
     StaticOutStream<1024> kbd_stream;
     bool keyboard_input_mask_enabled = false;
-    timeval last_snapshot;
+    MonotonicTimePoint last_snapshot;
 
     int hidden_masked_char_count = 0;
 
@@ -443,7 +449,7 @@ private:
     }
 
 public:
-    explicit SyslogKbd(timeval const & now)
+    explicit SyslogKbd(MonotonicTimePoint now)
     : last_snapshot(now)
     {}
 
@@ -458,7 +464,7 @@ public:
         }
     }
 
-    bool kbd_input(const timeval& /*now*/, uint32_t keys) override {
+    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t keys) override {
         if (this->keyboard_input_mask_enabled) {
             this->write_shadow_keys();
         }
@@ -482,30 +488,26 @@ public:
     }
 
 private:
-    Microseconds periodic_snapshot(
-        const timeval& now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/,
+        bool /*ignore_frame_in_timeval*/
     ) override {
-        (void)cursor_x;
-        (void)cursor_y;
-        (void)ignore_frame_in_timeval;
-        std::chrono::microseconds const time_to_wait = std::chrono::seconds{2};
-        std::chrono::microseconds const diff {now - this->last_snapshot};
+        MonotonicTimePoint::duration const time_to_wait = 2s;
 
-        if (diff < time_to_wait && this->kbd_stream.get_offset() < 8 * sizeof(uint32_t)) {
-            return time_to_wait;
+        if (this->last_snapshot + time_to_wait >= now || this->kbd_stream.get_offset() >= 8 * sizeof(uint32_t)) {
+            this->flush();
+            this->last_snapshot = now;
         }
 
-        this->flush();
-        this->last_snapshot = now;
-
-        return time_to_wait;
+        return WaitingTimeBeforeNextSnapshot(time_to_wait);
     }
 };
 
 
-namespace {
-    constexpr chars_view session_log_prefix() { return cstr_array_view("data='"); }
-    constexpr chars_view session_log_suffix() { return cstr_array_view("'"); }
+namespace
+{
+    inline constexpr chars_view session_log_prefix = "data='"_av;
+    inline constexpr chars_view session_log_suffix = "'"_av;
 }
 
 
@@ -514,7 +516,7 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
     OutStream kbd_stream;
     bool keyboard_input_mask_enabled = false;
     static const std::size_t buffer_size = 64;
-    uint8_t buffer[buffer_size + session_log_prefix().size() + session_log_suffix().size() + 1];
+    uint8_t buffer[buffer_size + session_log_prefix.size() + session_log_suffix.size() + 1];
     bool is_probe_enabled_session = false;
     SessionLogApi& session_log;
 
@@ -552,17 +554,17 @@ class Capture::SessionLogKbd final : public gdi::KbdInputApi, public gdi::Captur
 
 public:
     explicit SessionLogKbd(SessionLogApi& session_log)
-    : kbd_stream{{this->buffer + session_log_prefix().size(), buffer_size}}
+    : kbd_stream{{this->buffer + session_log_prefix.size(), buffer_size}}
     , session_log(session_log)
     {
-        memcpy(this->buffer, session_log_prefix().data(), session_log_prefix().size());
+        memcpy(this->buffer, session_log_prefix.data(), session_log_prefix.size());
     }
 
     ~SessionLogKbd() {
         this->flush();
     }
 
-    bool kbd_input(const timeval& /*now*/, uint32_t uchar) override {
+    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override {
         if (this->keyboard_input_mask_enabled) {
             if (this->is_probe_enabled_session) {
                 this->write_shadow_keys();
@@ -596,7 +598,7 @@ public:
         }
     }
 
-    void session_update(timeval /*now*/, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint /*now*/, LogId id, KVLogList kv_list) override {
         update_enable_probe(this->is_probe_enabled_session, id, kv_list);
     }
 
@@ -657,10 +659,11 @@ class Capture::PngCapture : public gdi::CaptureApi
 protected:
     OutFilenameSequenceTransport trans;
     RDPDrawable & drawable;
-    timeval start_capture;
-    std::chrono::microseconds frame_interval;
+    MonotonicTimePoint last_time_capture;
+    const std::chrono::microseconds frame_interval;
 
 private:
+    const DurationFromMonotonicTimeToRealTime monotonic_to_real;
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -690,8 +693,9 @@ protected:
             }
         })
     , drawable(drawable)
-    , start_capture(capture_params.now)
+    , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
+    , monotonic_to_real(capture_params.monotonic_to_real)
     , zoom_factor(png_params.zoom)
     , scaled_width{(((image_view.width() * this->zoom_factor) / 100)+3) & 0xFFC}
     , scaled_height{((image_view.height() * this->zoom_factor) / 100)}
@@ -752,20 +756,18 @@ public:
         }
      }
 
-    Microseconds periodic_snapshot(
-        timeval const & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/, bool /*ignore_frame_in_timeval*/
     ) override {
-        (void)x;
-        (void)y;
-        (void)ignore_frame_in_timeval;
-        std::chrono::microseconds const duration = now - this->start_capture;
+        auto const duration = now - this->last_time_capture;
         std::chrono::microseconds const interval = this->frame_interval;
         if (duration >= interval) {
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
             if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
-                localtime_r(&now.tv_sec, &ptm);
+                time_t t = to_time_t(now + this->monotonic_to_real.duration);
+                localtime_r(&t, &ptm);
                 this->image_frame_api.prepare_image_frame();
                 this->timestamp_tracer.trace(ptm);
 
@@ -774,15 +776,17 @@ public:
                 this->trans.next();
 
                 this->timestamp_tracer.clear();
-                this->start_capture = now;
+                this->last_time_capture = now;
                 this->drawable.clear_mouse();
 
-                return interval.count() ? interval - duration % interval : interval;
+                return WaitingTimeBeforeNextSnapshot(interval.count()
+                    ? interval - duration % interval
+                    : interval);
             }
             // Wait 0.3 x frame_interval.
-            return this->frame_interval / 3;
+            return WaitingTimeBeforeNextSnapshot(this->frame_interval / 3);
         }
-        return interval - duration;
+        return WaitingTimeBeforeNextSnapshot(interval - duration);
     }
 };
 
@@ -834,15 +838,14 @@ public:
         this->clear_png_interval(num_start, num_start + 1);
     }
 
-    Microseconds periodic_snapshot(
-        timeval const & now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
     ) override {
         if (this->enable_rt_display) {
             return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
         }
-        std::chrono::microseconds const duration = now - this->start_capture;
-        std::chrono::microseconds const interval = this->frame_interval;
-        return interval - duration % interval;
+        auto const duration = now - this->last_time_capture;
+        return WaitingTimeBeforeNextSnapshot(this->frame_interval - duration % this->frame_interval);
     }
 
     void visibility_rects_event(Rect rect) override {
@@ -968,7 +971,9 @@ class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureA
         sizeof(kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size();
     uint8_t kbd_chars_size[kbd_buffer_usable_char];
     std::ptrdiff_t kbd_char_pos = 0;
-    time_t last_time;
+    time_t monotonic_to_real;
+    time_t monotonic_start_time;
+    time_t monotonic_last_time;
     Transport & trans;
     bool is_probe_enabled_session = false;
     bool previous_char_is_event_flush = false;
@@ -978,9 +983,16 @@ class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureA
     int hidden_masked_char_count = 0;
 
 public:
-    explicit SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state, MetaParams meta_params)
+    explicit SessionMeta(
+        MonotonicTimePoint now,
+        DurationFromMonotonicTimeToRealTime monotonic_to_real,
+        Transport& trans,
+        bool key_markers_hidden_state,
+        MetaParams meta_params)
     : kbd_stream{{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}}
-    , last_time(now.tv_sec)
+    , monotonic_to_real(to_time_t(monotonic_to_real.duration))
+    , monotonic_start_time(to_time_t(now))
+    , monotonic_last_time(to_time_t(now))
     , trans(trans)
     , key_markers_hidden_state(key_markers_hidden_state)
     , meta_params(meta_params)
@@ -1002,7 +1014,7 @@ public:
         }
     }
 
-    bool kbd_input(const timeval& now, uint32_t uchar) override {
+    bool kbd_input(MonotonicTimePoint now, uint32_t uchar) override {
         if (this->keyboard_input_mask_enabled) {
             if (this->is_probe_enabled_session) {
                 this->write_shadow_keys();
@@ -1013,16 +1025,16 @@ public:
             this->write_keys(uchar);
             this->send_kbd_if_special_char(uchar);
         }
-        this->last_time = now.tv_sec;
+        this->monotonic_last_time = to_time_t(now);
         return true;
     }
 
-    void send_line(time_t rawtime, chars_view data) {
-        this->send_data(rawtime, data, '-');
+    void send_line(MonotonicTimePoint now, chars_view data) {
+        this->send_data(to_time_t(now), data, '-');
     }
 
-    void next_video(time_t rawtime) {
-        this->send_data(rawtime, cstr_array_view("(break)"), '+');
+    void next_video(MonotonicTimePoint now) {
+        this->send_data(to_time_t(now), cstr_array_view("(break)"), '+');
     }
 
 private:
@@ -1030,19 +1042,19 @@ private:
     std::string formatted_message;
 
 public:
-    void title_changed(time_t rawtime, chars_view title) {
+    void title_changed(MonotonicTimePoint now, chars_view title) {
         log_format_set_info(this->formatted_message, LogId::TITLE_BAR, {
             KVLog("data"_av, title),
         });
-        this->send_data(rawtime, this->formatted_message, '+');
+        this->send_data(to_time_t(now), this->formatted_message, '+');
     }
 
-    void session_update(timeval now, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
         if (!update_enable_probe(this->is_probe_enabled_session, id, kv_list)
           && is_logable_kvlist(id, kv_list, this->meta_params)
         ) {
             log_format_set_info(this->formatted_message, id, kv_list);
-            this->send_line(now.tv_sec, this->formatted_message);
+            this->send_line(now, this->formatted_message);
         }
     }
 
@@ -1051,11 +1063,11 @@ public:
         this->previous_char_is_event_flush = true;
     }
 
-    Microseconds periodic_snapshot(
-        const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
-        this->last_time = now.tv_sec;
-        return std::chrono::seconds{10};
+        this->monotonic_last_time = to_time_t(now);
+        return WaitingTimeBeforeNextSnapshot(10s);
     }
 
 private:
@@ -1121,10 +1133,12 @@ private:
         this->send_date(rawtime, sep);
         this->trans.send(data);
         this->trans.send("\n"_av);
-        this->last_time = rawtime;
+        this->monotonic_last_time = rawtime;
     }
 
     void send_date(time_t rawtime, char sep) {
+        rawtime += this->monotonic_to_real;
+
         tm ptm;
         localtime_r(&rawtime, &ptm);
 
@@ -1159,7 +1173,7 @@ private:
             log_format_set_info(this->formatted_message, LogId::KBD_INPUT, {
                 KVLog("data"_av, this->kbd_stream.get_produced_bytes().as_chars()),
             });
-            this->send_data(this->last_time, this->formatted_message, '-');
+            this->send_data(this->monotonic_last_time, this->formatted_message, '-');
             this->kbd_stream.rewind();
             this->previous_char_is_event_flush = true;
             this->kbd_char_pos = 0;
@@ -1181,10 +1195,10 @@ public:
     , meta_params(meta_params)
     {}
 
-    void session_update(timeval now, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
         if (id != LogId::PROBE_STATUS && is_logable_kvlist(id, kv_list, this->meta_params)) {
             log_format_set_info(this->formatted_message, id, kv_list);
-            this->session_meta.send_line(now.tv_sec, this->formatted_message);
+            this->session_meta.send_line(now, this->formatted_message);
         }
     }
 
@@ -1235,7 +1249,7 @@ public:
                 session_log->report("FILESYSTEM_FULL", "100|unknown");
             }
         })
-    , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
+    , meta(capture_params.now, capture_params.monotonic_to_real, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
     , session_log_agent(this->meta, meta_params)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
     {
@@ -1255,7 +1269,7 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
 
     Ref<TitleExtractorApi> title_extractor;
 
-    timeval  last_ocr;
+    MonotonicTimePoint last_ocr;
     std::chrono::microseconds usec_ocr_interval;
 
     NotifyTitleChanged & notify_title_changed;
@@ -1263,7 +1277,7 @@ class Capture::TitleCaptureImpl : public gdi::CaptureApi, public gdi::CapturePro
     SessionLogApi * session_log;
 public:
     explicit TitleCaptureImpl(
-        const timeval & now,
+        MonotonicTimePoint now,
         RDPDrawable & drawable,
         OcrParams ocr_params,
         NotifyTitleChanged & notify_title_changed,
@@ -1284,10 +1298,10 @@ public:
     }
 
 
-    Microseconds periodic_snapshot(
-        const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+    WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
-        std::chrono::microseconds const diff {now - this->last_ocr};
+        auto const diff {now - this->last_ocr};
 
         if (diff >= this->usec_ocr_interval) {
             this->last_ocr = now;
@@ -1306,13 +1320,13 @@ public:
                 }
             }
 
-            return this->usec_ocr_interval;
+            return WaitingTimeBeforeNextSnapshot(this->usec_ocr_interval);
         }
 
-        return this->usec_ocr_interval - diff;
+        return WaitingTimeBeforeNextSnapshot(this->usec_ocr_interval - diff);
     }
 
-    void session_update(timeval /*now*/, LogId id, KVLogList kv_list) override {
+    void session_update(MonotonicTimePoint /*now*/, LogId id, KVLogList kv_list) override {
         update_enable_probe(this->enable_probe, id, kv_list);
         if (enable_probe) {
             this->title_extractor = this->agent_title_extractor;
@@ -1410,13 +1424,13 @@ public:
 
 
 void Capture::NotifyTitleChanged::notify_title_changed(
-    timeval const & now, chars_view title
+    MonotonicTimePoint now, chars_view title
 ) {
     if (this->capture.patterns_checker) {
         this->capture.patterns_checker->operator()(title);
     }
     if (this->capture.meta_capture_obj) {
-        this->capture.meta_capture_obj->get_session_meta().title_changed(now.tv_sec, title);
+        this->capture.meta_capture_obj->get_session_meta().title_changed(now, title);
     }
 #ifndef REDEMPTION_NO_FFMPEG
     if (this->capture.sequenced_video_capture_obj) {
@@ -1424,16 +1438,16 @@ void Capture::NotifyTitleChanged::notify_title_changed(
     }
 #endif
     if (this->capture.update_progress_data) {
-        this->capture.update_progress_data->next_video(now.tv_sec);
+        this->capture.update_progress_data->next_video(now);
     }
 }
 
 void Capture::NotifyMetaIfNextVideo::notify_next_video(
-    const timeval& now, NotifyNextVideo::reason reason
+    MonotonicTimePoint now, NotifyNextVideo::Reason reason
 ) {
     assert(this->session_meta);
-    if (reason == NotifyNextVideo::reason::sequenced) {
-        this->session_meta->next_video(now.tv_sec);
+    if (reason == NotifyNextVideo::Reason::sequenced) {
+        this->session_meta->next_video(now);
     }
 }
 
@@ -1451,8 +1465,7 @@ Capture::Capture(
     const VideoParams& video_params,
     UpdateProgressData * update_progress_data,
     Rect const & crop_rect)
-: is_replay_mod(!capture_params.session_log)
-, update_progress_data(update_progress_data)
+: update_progress_data(update_progress_data)
 , mouse_info{
     capture_params.now,
     static_cast<uint16_t>(drawable_params.width / 2),
@@ -1671,40 +1684,28 @@ Capture::Capture(
 
 Capture::~Capture()
 {
-    if (this->is_replay_mod) {
-        this->png_capture_obj.reset();
-        if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
-        this->wrm_capture_obj.reset();
-        if (this->sequenced_video_capture_obj) {
-            try {
-                this->sequenced_video_capture_obj.reset();
-            }
-            catch (Error const & e) {
-                LOG(LOG_ERR, "Sequenced video: last encoding video frame error: %s", e.errmsg());
-            }
+    this->title_capture_obj.reset();
+    this->session_log_kbd_capture_obj.reset();
+    this->syslog_kbd_capture_obj.reset();
+    this->pattern_kbd_capture_obj.reset();
+    this->png_capture_obj.reset();
+    this->png_capture_real_time_obj.reset();
+    this->wrm_capture_obj.reset();
+
+    if (this->sequenced_video_capture_obj) {
+        try {
+            this->sequenced_video_capture_obj.reset();
         }
-        if (this->full_video_capture_obj) {
-            try {
-                this->full_video_capture_obj.reset();
-            }
-            catch (Error const & e) {
-                LOG(LOG_ERR, "Full video: last encoding video frame error: %s", e.errmsg());
-            }
+        catch (Error const & e) {
+            LOG(LOG_ERR, "Sequenced video: last encoding video frame error: %s", e.errmsg());
         }
     }
-    else {
-        this->title_capture_obj.reset();
-        this->session_log_kbd_capture_obj.reset();
-        this->syslog_kbd_capture_obj.reset();
-        this->pattern_kbd_capture_obj.reset();
-        this->sequenced_video_capture_obj.reset();
-        this->png_capture_obj.reset();
-        if (this->png_capture_real_time_obj) { this->png_capture_real_time_obj.reset(); }
-
-        if (this->wrm_capture_obj) {
-            timeval now = tvtime();
-            this->wrm_capture_obj->send_timestamp_chunk(now);
-            this->wrm_capture_obj.reset();
+    if (this->full_video_capture_obj) {
+        try {
+            this->full_video_capture_obj.reset();
+        }
+        catch (Error const & e) {
+            LOG(LOG_ERR, "Full video: last encoding video frame error: %s", e.errmsg());
         }
     }
 }
@@ -1715,7 +1716,7 @@ void Capture::relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
     }
 }
 
-void Capture::force_flush(timeval const & now, uint16_t cursor_x, uint16_t cursor_y)
+void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
 {
     if (this->gd_drawable) {
         this->gd_drawable->mouse_cursor_pos_x = cursor_x;
@@ -1803,7 +1804,7 @@ void Capture::sync()
     }
 }
 
-bool Capture::kbd_input(timeval const & now, uint32_t uchar)
+bool Capture::kbd_input(MonotonicTimePoint now, uint32_t uchar)
 {
     bool ret = true;
     for (gdi::KbdInputApi & kbd : this->kbds) {
@@ -1837,8 +1838,8 @@ void Capture::add_graphic(gdi::GraphicApi & gd)
     }
 }
 
-Capture::Microseconds Capture::periodic_snapshot(
-    timeval const & now,
+Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
+    MonotonicTimePoint now,
     uint16_t cursor_x, uint16_t cursor_y,
     bool ignore_frame_in_timeval
 ) {
@@ -1848,13 +1849,14 @@ Capture::Microseconds Capture::periodic_snapshot(
     }
     this->mouse_info = {now, cursor_x, cursor_y};
 
-    std::chrono::microseconds time = std::chrono::microseconds::max();
+    auto time = MonotonicTimePoint::duration::max();
     if (!this->caps.empty()) {
         for (gdi::CaptureApi & cap : this->caps) {
-            time = std::min(time, cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval).ms());
+            auto next_time = cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            time = std::min(time, next_time.duration());
         }
     }
-    return time;
+    return WaitingTimeBeforeNextSnapshot(time);
 }
 
 void Capture::visibility_rects_event(Rect rect) {
@@ -2191,14 +2193,14 @@ void Capture::external_breakpoint()
     }
 }
 
-void Capture::external_time(timeval const & now)
+void Capture::external_time(MonotonicTimePoint now)
 {
     for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
         obj.external_time(now);
     }
 }
 
-void Capture::session_update(timeval now, LogId id, KVLogList kv_list)
+void Capture::session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list)
 {
     for (gdi::CaptureProbeApi & cap_prob : this->probes) {
         cap_prob.session_update(now, id, kv_list);

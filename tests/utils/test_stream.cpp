@@ -371,8 +371,6 @@ RED_AUTO_TEST_CASE(TestStream_out_DEP)
 RED_AUTO_TEST_CASE(TestStream_in_out_DEP)
 {
     for (int i = -16384; i < 16383; i++) {
-        LOG(LOG_INFO, "TestStream_in_out_DEP: Value=%d", i);
-
         StaticOutStream<256> stream;
 
         stream.out_DEP(i);

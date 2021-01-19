@@ -67,9 +67,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
+        MonotonicTimePoint now {344535s + 23us};
 
         Rect scr(0, 0, 800, 600);
 
@@ -108,7 +106,9 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, "capture", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
+          CaptureParams{
+              now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture", tmp_wd.dirname(), record_wd.dirname(),
+              groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -116,41 +116,41 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
         gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
     }
@@ -177,9 +177,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
+        MonotonicTimePoint now {344535s + 23us};
 
         Rect scr(0, 0, 800, 600);
 
@@ -219,7 +217,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
-            CaptureParams{now, "capture", tmp_wd.dirname(), record_wd.dirname(), 1000, nullptr, SmartVideoCropping::disable, 0},
+            CaptureParams{now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture", tmp_wd.dirname(), record_wd.dirname(), 1000, nullptr, SmartVideoCropping::disable, 0},
             wrm_params/* authentifier */, gd_drawable);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -227,41 +225,41 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now.tv_sec++;
+        now += 1s;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
 
@@ -482,9 +480,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
+        MonotonicTimePoint now {344535s + 23us};
 
         Rect scr(0, 0, 800, 600);
 
@@ -523,7 +519,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         TestGraphic gd_drawable(4, 1);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, "capture_kbd_input", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::disable, 0},
+          CaptureParams{
+              now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture_kbd_input", tmp_wd.dirname(), record_wd.dirname(),
+              groupid, nullptr, SmartVideoCropping::disable, 0},
           wrm_params, gd_drawable);
 
         wrm.send_timestamp_chunk(now);
@@ -535,7 +533,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         wrm.kbd_input(now, 'n');
         wrm.kbd_input(now, 'f');
         wrm.kbd_input(now, 'i');
-        now.tv_sec++;
+        now += 1s;
         wrm.send_timestamp_chunk(now);
 
         wrm.kbd_input(now, 'g');
@@ -556,7 +554,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         }
 
-        bool kbd_input(timeval const & /*now*/, uint32_t uchar) override
+        bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override
         {
             this->output += char(uchar);
 
@@ -574,7 +572,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
         }
 
-        void session_update(timeval /*now*/, LogId id, KVLogList kv_list) override
+        void session_update(MonotonicTimePoint /*now*/, LogId id, KVLogList kv_list) override
         {
             std::string buf;
             log_format_set_info(buf, id, kv_list);
@@ -624,9 +622,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 
     {
         // Timestamps are applied only when flushing
-        timeval now;
-        now.tv_usec = 0;
-        now.tv_sec = 1000;
+        MonotonicTimePoint now {344535s + 23us};
 
         Rect scr(0, 0, 800, 600);
 
@@ -663,7 +659,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         TestGraphic gd_drawable(800, 600);
 
         WrmCaptureImpl wrm(
-          CaptureParams{now, "capture_remoteapp", tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
+          CaptureParams{
+              now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture_remoteapp",
+              tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
           wrm_params, gd_drawable);
 
         wrm.send_timestamp_chunk(now);
@@ -675,7 +673,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         wrm.visibility_rects_event(rect);
 
 
-        now.tv_sec++;
+        now += 1s;
         wrm.send_timestamp_chunk(now);
 
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);

@@ -40,6 +40,7 @@ namespace ut
         ~CheckImg();
         #endif
 
-        bool operator()(ImageView const& img, char const* filedata_path);
+        bool operator()(ImageView const& img_path, char const* filedata_path);
+        bool operator()(char const* img, char const* filedata_path);
     };
 }

@@ -21,8 +21,7 @@
 #pragma once
 
 #include "utils/sugar/unique_fd.hpp"
-
-#include <sys/time.h>
+#include "utils/monotonic_clock.hpp"
 
 class Inifile;
 class CryptoContext;
@@ -30,6 +29,6 @@ class Random;
 class Fstat;
 class PidFile;
 
-void session_start_tls(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file);
-void session_start_ws(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file);
-void session_start_wss(unique_fd sck, timeval sck_start_time, Inifile& ini, PidFile& pid_file);
+void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file);
+void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file);
+void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file);

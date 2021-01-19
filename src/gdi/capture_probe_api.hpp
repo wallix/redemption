@@ -22,29 +22,26 @@
 #pragma once
 
 #include "utils/sugar/noncopyable.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/monotonic_clock.hpp"
 #include "acl/auth_api.hpp"
 
-struct timeval;
-
-namespace gdi {
+namespace gdi
+{
 
 // TODO merge with CaptureApi ?
 struct CaptureProbeApi : private noncopyable
 {
     virtual ~CaptureProbeApi() = default;
 
-    virtual void session_update(timeval now, LogId id, KVLogList kv_list) = 0;
+    virtual void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) = 0;
     virtual void possible_active_window_change() = 0;
 };
 
 struct NullCaptureProbe : public CaptureProbeApi
 {
-    void session_update(timeval /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
+    void session_update(MonotonicTimePoint /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
     void possible_active_window_change() override {}
-
 };
-
 
 }  // namespace gdi
 

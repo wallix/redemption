@@ -207,7 +207,7 @@ namespace detail
 }
 #endif
 
-#define LOG_IF(cond, priority, ...) if (__builtin_expect(!!(cond), 0)) LOG(priority, __VA_ARGS__)
+#define LOG_IF(cond, priority, ...) if (REDEMPTION_UNLIKELY(cond)) LOG(priority, __VA_ARGS__)
 
 #if defined(LOG_UNCHECKED_FORMAT)
 namespace compiler_aux_

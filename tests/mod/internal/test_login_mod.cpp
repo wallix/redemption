@@ -81,11 +81,11 @@ RED_AUTO_TEST_CASE(TestLoginMod2)
         Rect(1024, 768, 1023, 767), client_execute, global_font(), theme);
     d.init();
 
-    event_manager.set_current_time({0, 0});
+    event_manager.set_current_time(MonotonicTimePoint{});
     event_manager.execute_events([](int){return false;}, false);
     RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_mod_signal());
 
-    event_manager.set_current_time({2, 1});
+    event_manager.set_current_time(MonotonicTimePoint{2s + 1us});
     event_manager.execute_events([](int){return false;}, false);
     RED_CHECK_EQUAL(BACK_EVENT_STOP, d.get_mod_signal());
 }

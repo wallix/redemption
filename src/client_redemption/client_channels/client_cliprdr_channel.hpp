@@ -26,6 +26,7 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/RDP/clipboard/format_name.hpp"
 #include "utils/image_view.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <unordered_map>
 #include <memory>
@@ -80,7 +81,7 @@ public:
     bool                 _waiting_for_data;
 
 private:
-    timeval paste_data_request_time;
+    MonotonicTimePoint paste_data_request_time;
 public:
     long paste_data_len = 0;
 

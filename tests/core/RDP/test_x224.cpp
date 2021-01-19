@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_Correlation_Info)
 /* 0050 */ "\x00\x00\x00\x00\x00" //.....
         ""_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Short_TPKT)
 {
     GeneratorTransport t("\x03\x00\x00\x02\x06\x10\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), ERR_X224);
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestReceive_RecvFactory_Unknown_TPDU)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x10\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory(t, &end, array_size), ERR_X224);
@@ -98,7 +98,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -210,7 +210,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -248,7 +248,7 @@ RED_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 /* 0030 */ "\x00\x08\x00\x01\x00\x00\x00"                                     //....... |
         ""_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -329,7 +329,7 @@ RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_wrong_opcode)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xC0\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), ERR_X224);
@@ -347,7 +347,7 @@ RED_AUTO_TEST_CASE(TestReceive_CC_TPDU_TLS_with_factory)
     size_t tpkt_len = 19;
     GeneratorTransport t("\x03\x00\x00\x13\x0e\xd0\x00\x00\x00\x00\x00\x02\x00\x08\x00\x01\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -385,7 +385,7 @@ RED_AUTO_TEST_CASE(TestReceive_DR_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\x80\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -409,7 +409,7 @@ RED_AUTO_TEST_CASE(TestReceive_DR_TPDU_wrong_opcode)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xC0\x00\x00\x00\x00\x00"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), ERR_X224);
@@ -426,7 +426,7 @@ RED_AUTO_TEST_CASE(TestReceive_ER_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0D\x08\x70\x00\x00\x02\xC1\x02\x06\x22"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -461,7 +461,7 @@ RED_AUTO_TEST_CASE(TestReceive_ER_TPDU_wrong_opcode)
 {
     GeneratorTransport t("\x03\x00\x00\x0D\x08\xC0\x00\x00\x02\xC1\x02\x06\x22"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), ERR_X224);
@@ -471,7 +471,7 @@ RED_AUTO_TEST_CASE(TestReceive_DT_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     X224::RecvFactory fac_x224(t, &end, array_size);
@@ -497,7 +497,7 @@ RED_AUTO_TEST_CASE(TestReceive_DT_TPDU_wrong_opcode)
 {
     GeneratorTransport t("\x03\x00\x00\x0C\x02\xC0\x80\x12\x34\x56\x78\x9A"_av);
 
-    constexpr size_t array_size = AUTOSIZE;
+    constexpr size_t array_size = 1024 * 64;
     uint8_t array[array_size];
     uint8_t * end = array;
     RED_CHECK_EXCEPTION_ERROR_ID(X224::RecvFactory fac_x224(t, &end, array_size), ERR_X224);

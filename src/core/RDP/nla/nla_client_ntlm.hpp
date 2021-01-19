@@ -107,7 +107,7 @@ public:
                bytes_view domain,
                uint8_t * pass,
                const char * hostname,
-               u8_array_view public_key,
+               bytes_view public_key,
                const bool restricted_admin_mode,
                Random & rand,
                const TimeBase & time_base,
@@ -116,7 +116,7 @@ public:
         : PublicKey(public_key.data(), public_key.data()+public_key.size())
         , utf16_user(::UTF8toUTF16(user))
         , utf16_domain(::UTF8toUTF16(domain))
-        , identity_Password(::UTF8toUTF16({pass,strlen(reinterpret_cast<char*>(pass))}))
+        , identity_Password(::UTF8toUTF16({pass, strlen(reinterpret_cast<char*>(pass))}))
         , time_base(time_base)
         , rand(rand)
         , Workstation(::UTF8toUTF16({hostname, strlen(hostname)}))
@@ -169,11 +169,16 @@ public:
                 array_md5 ResponseKeyNT = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->utf16_user), this->utf16_domain);
                 array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->utf16_user), this->utf16_domain);
 
-                const timeval tv = this->time_base.get_current_time(); // Timestamp
+                using std::chrono::duration_cast;
+                const auto duration = this->time_base.get_current_time().time_since_epoch();
+                const auto dur_miroseconds = duration_cast<std::chrono::microseconds>(duration);
+                const auto dur_seconds = duration_cast<std::chrono::seconds>(dur_miroseconds);
+                const uint32_t seconds = checked_int{dur_seconds.count()};
+                const uint32_t microseconds = checked_int{(dur_miroseconds - dur_seconds).count()};
                 array_challenge ClientChallenge; // Nonce(8)
                 this->rand.random(ClientChallenge.data(), 8);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Time Stamp (%ld, %ld)", tv.tv_sec, tv.tv_usec);
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Time Stamp (%u, %u)", seconds, microseconds);
                     LOG(LOG_INFO, "Client Random Challenge {0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x, 0x%.2x}",
                         ClientChallenge[0], ClientChallenge[1], ClientChallenge[2], ClientChallenge[3],
                         ClientChallenge[4], ClientChallenge[5], ClientChallenge[6], ClientChallenge[7]
@@ -184,7 +189,7 @@ public:
                 // ServerName = AvPairs received in Challenge message
                 auto NTLMv2_Client_Challenge = std::vector<uint8_t>{}
                      << std::array<uint8_t,8>{1, 1, 0, 0, 0, 0, 0, 0}
-                     << out_uint32_le(tv.tv_usec) << out_uint32_le(tv.tv_sec)
+                     << out_uint32_le(microseconds) << out_uint32_le(seconds)
                      << bytes_view({ClientChallenge.data(), 8})
                      << std::array<uint8_t,4>{0, 0, 0, 0}
                      << server_challenge.TargetInfo.buffer

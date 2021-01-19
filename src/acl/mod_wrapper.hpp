@@ -34,6 +34,8 @@
 #include "gdi/text_metrics.hpp"
 #include "mod/null/null.hpp"
 #include "utils/translation.hpp"
+#include "utils/timebase.hpp"
+#include "utils/ref.hpp"
 #include "core/callback.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/bitmapupdate.hpp"
@@ -215,9 +217,11 @@ private:
     null_mod no_mod;
     not_null_ptr<mod_api> modi = &no_mod;
 
+    MonotonicTimePoint end_time_session {};
+    TimeBase const& time_base;
 
 public:
-    explicit ModWrapper(BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini)
+    explicit ModWrapper(CRef<TimeBase> time_base, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini)
     : gfilter(graphics, static_cast<Callback&>(*this), palette, Rect{})
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
@@ -225,6 +229,7 @@ public:
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
     , keymap(keymap)
+    , time_base(time_base)
     {}
 
     ~ModWrapper()
@@ -353,6 +358,11 @@ public:
         return this->psocket_transport;
     }
 
+    void set_time_close(MonotonicTimePoint t)
+    {
+        this->end_time_session = t;
+    }
+
 private:
     void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) override
     {
@@ -394,15 +404,17 @@ private:
                         str_append(msg, ini.get<cfg::globals::target_user>(), '@');
                     }
                     msg += ini.get<cfg::globals::target_device>();
-                    const uint32_t enddate = ini.get<cfg::context::end_date_cnx>();
-                    if (enddate) {
-                        const auto now = time(nullptr);
-                        const auto elapsed_time = enddate - now;
+                    if (this->end_time_session.time_since_epoch().count()) {
+                        const auto elapsed_time
+                            = this->end_time_session
+                            - this->time_base.get_current_time();
                         // only if "reasonable" time
-                        if (elapsed_time < 60*60*24*366L) {
+                        if (elapsed_time < MonotonicTimePoint::duration(60s*60*24*366)) {
                             str_append(msg,
                                 "  [",
-                                time_before_closing(elapsed_time, Translator(language(ini))),
+                                time_before_closing(
+                                    std::chrono::duration_cast<std::chrono::seconds>(elapsed_time),
+                                    Translator(language(ini))),
                                 ']');
                         }
                     }

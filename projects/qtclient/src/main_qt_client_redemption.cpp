@@ -65,11 +65,11 @@ public:
         if (this->config.help_mode) {
             this->qt_graphic.close();
         } else {
-            this->cmd_launch_conn();
+            // TODO this->cmd_launch_conn();
         }
     }
 
-    void session_update(timeval /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
+    void session_update(MonotonicTimePoint /*now*/, LogId /*id*/, KVLogList /*kv_list*/) override {}
 
     void possible_active_window_change() override {}
 
@@ -107,14 +107,14 @@ public:
             }
         }
 
-        this->event_manager.set_current_time(tvtime());
+        this->event_manager.set_current_time(MonotonicTimePoint::clock::now());
 
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
             if (auto* mod = this->_callback.get_mod()) {
                 auto action = [this](bool is_timeout){
-                    this->event_manager.set_current_time(tvtime());
+                    this->event_manager.set_current_time(MonotonicTimePoint::clock::now());
                     try {
                         auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
                         this->event_manager.execute_events(fn, 0);
@@ -131,7 +131,7 @@ public:
                     [action]{ action(false); },
                     [action]{ action(true); });
 
-                this->start_wab_session_time = tvtime();
+                this->start_wab_session_time = MonotonicTimePoint::clock::now();
 
                 if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
                     this->qt_graphic.show_screen();
@@ -204,11 +204,11 @@ public:
         ClientRedemption::print_wrm_graphic_stat(movie_path);
     }
 
-    virtual void instant_replay_client(int begin, int last_balised) override {
-        this->qt_graphic.draw_frame(last_balised);
-        ClientRedemption::instant_replay_client(begin, last_balised);
-        this->qt_graphic.update_screen();
-    }
+    // virtual void instant_replay_client(int begin, int last_balised) override {
+    //     this->qt_graphic.draw_frame(last_balised);
+    //     ClientRedemption::instant_replay_client(begin, last_balised);
+    //     this->qt_graphic.update_screen();
+    // }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------

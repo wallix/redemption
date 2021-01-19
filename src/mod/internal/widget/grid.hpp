@@ -23,6 +23,7 @@
 #include "mod/internal/widget/widget.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/buf_maker.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <vector>
 #include <chrono>
@@ -81,9 +82,9 @@ private:
     // TODO: see why grid object need a difftimer ?
     struct difftimer
     {
-        std::chrono::microseconds t {};
+        MonotonicTimePoint t {};
 
-        std::chrono::microseconds tick();
+        MonotonicTimePoint::duration tick();
 
         void update();
     } click_interval {};

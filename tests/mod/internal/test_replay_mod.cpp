@@ -28,7 +28,10 @@ Author(s): Wallix Team
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/front/fake_front.hpp"
 
-RED_TEST_DELEGATE_OSTREAM(timeval, "{" << _.tv_sec << ", " << _.tv_usec << "}");
+namespace std
+{
+    RED_TEST_DELEGATE_OSTREAM(::MonotonicTimePoint, "{" << _.time_since_epoch().count() << "}");
+}
 
 RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
 {
@@ -59,42 +62,42 @@ RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
     auto& event_cont = detail::ProtectedEventContainer::get_events(events);
     RED_REQUIRE(event_cont.size() == 1);
     Event& ev = *event_cont[0];
-    RED_TEST_CONTEXT_DATA(timeval t, t, {
-        timeval{1, 308471},
-        timeval{2, 910153},
-        timeval{4, 111064},
-        timeval{5, 311743},
-        timeval{6, 516745},
-        timeval{9, 720549},
-        timeval{11, 723016},
-        timeval{13, 725721},
-        timeval{14, 965110},
-        timeval{17, 368991},
-        timeval{18, 970699},
-        timeval{20, 171903},
-        timeval{21, 774104},
-        timeval{22, 975249},
-        timeval{24, 176985},
-        timeval{25, 378462},
-        timeval{26, 579927},
-        timeval{27, 780921},
-        timeval{28, 983105},
-        timeval{34, 991458},
-        timeval{36, 592889},
-        timeval{37, 794320},
-        timeval{38, 995885},
-        timeval{40, 597508},
-        timeval{41, 799025},
-        timeval{43, 386},
-        timeval{44, 602224},
-        timeval{45, 802989},
-        timeval{47, 3974},
-        timeval{48, 605855},
-        timeval{49, 806837},
-        timeval{51, 7828},
-        timeval{52, 609606},
-        timeval{53, 151448},
-        timeval{53, 151448},
+    RED_TEST_CONTEXT_DATA(MonotonicTimePoint t, t, {
+        MonotonicTimePoint{1s + 308471us},
+        MonotonicTimePoint{2s + 910153us},
+        MonotonicTimePoint{4s + 111064us},
+        MonotonicTimePoint{5s + 311743us},
+        MonotonicTimePoint{6s + 516745us},
+        MonotonicTimePoint{9s + 720549us},
+        MonotonicTimePoint{11s + 723016us},
+        MonotonicTimePoint{13s + 725721us},
+        MonotonicTimePoint{14s + 965110us},
+        MonotonicTimePoint{17s + 368991us},
+        MonotonicTimePoint{18s + 970699us},
+        MonotonicTimePoint{20s + 171903us},
+        MonotonicTimePoint{21s + 774104us},
+        MonotonicTimePoint{22s + 975249us},
+        MonotonicTimePoint{24s + 176985us},
+        MonotonicTimePoint{25s + 378462us},
+        MonotonicTimePoint{26s + 579927us},
+        MonotonicTimePoint{27s + 780921us},
+        MonotonicTimePoint{28s + 983105us},
+        MonotonicTimePoint{34s + 991458us},
+        MonotonicTimePoint{36s + 592889us},
+        MonotonicTimePoint{37s + 794320us},
+        MonotonicTimePoint{38s + 995885us},
+        MonotonicTimePoint{40s + 597508us},
+        MonotonicTimePoint{41s + 799025us},
+        MonotonicTimePoint{43s + 386us},
+        MonotonicTimePoint{44s + 602224us},
+        MonotonicTimePoint{45s + 802989us},
+        MonotonicTimePoint{47s + 3974us},
+        MonotonicTimePoint{48s + 605855us},
+        MonotonicTimePoint{49s + 806837us},
+        MonotonicTimePoint{51s + 7828us},
+        MonotonicTimePoint{52s + 609606us},
+        MonotonicTimePoint{53s + 151448us},
+        MonotonicTimePoint{53s + 151448us},
     }) {
         RED_REQUIRE(!ev.garbage);
         ev.actions.exec_timeout(ev);

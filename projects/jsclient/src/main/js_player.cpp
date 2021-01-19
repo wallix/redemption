@@ -31,7 +31,7 @@ Author(s): Jonathan Poelen
 #include "transport/mwrm_reader.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/timeval_ops.hpp"
+#include "utils/monotonic_clock.hpp"
 #include "utils/log.hpp"
 
 #include "red_emscripten/bind.hpp"
@@ -164,7 +164,7 @@ struct WrmPlayer
 
             case WrmChunkType::TIMESTAMP:
             {
-                timeval now = this->in_stream.in_timeval_from_uint64le_usec();
+                auto now = std::chrono::microseconds(this->in_stream.in_uint64_le());
 
                 if (this->in_stream.in_remain() >= 4)
                 {
@@ -340,7 +340,7 @@ struct WrmPlayer
             case WrmChunkType::OLD_SESSION_UPDATE:
             case WrmChunkType::SESSION_UPDATE:
             {
-                timeval now = this->in_stream.in_timeval_from_uint64le_usec();
+                auto now = std::chrono::microseconds(this->in_stream.in_uint64_le());
                 this->in_stream.in_skip_bytes(this->in_stream.in_uint16_le());
                 this->_update_time(now);
                 break;
@@ -384,12 +384,11 @@ private:
             mouse_x, mouse_y);
     }
 
-    void _update_time(timeval const& now)
+    void _update_time(std::chrono::microseconds now)
     {
-        auto ms = to_ms(now);
-        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(ms);
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now);
         redjs::emval_call(this->callbacks, jsnames::set_time,
-            uint32_t(seconds.count()), uint32_t((ms - seconds).count()));
+            uint32_t(seconds.count()), uint32_t((now - seconds).count()));
     }
 
     struct Chunk

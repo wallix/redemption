@@ -61,7 +61,7 @@ SessionUpdateBuffer::SessionUpdateBuffer()
     events_.reserve(8);
 }
 
-void SessionUpdateBuffer::append(timeval time, LogId id, KVLogList kv_list)
+void SessionUpdateBuffer::append(MonotonicTimePoint time, LogId id, KVLogList kv_list)
 {
     int n = 0;
     for (auto const& kv : kv_list) {

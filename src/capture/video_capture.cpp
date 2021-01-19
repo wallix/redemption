@@ -28,7 +28,6 @@
 
 #include "gdi/capture_api.hpp"
 
-#include "utils/timeval_ops.hpp"
 #include "utils/png.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/log.hpp"
@@ -65,6 +64,25 @@ namespace
                 LOG(LOG_ERR, "FILESYSTEM_FULL:100|unknown");
             }
         }
+    }
+
+    inline time_t to_time_t(
+        MonotonicTimePoint t,
+        DurationFromMonotonicTimeToRealTime monotonic_to_real)
+    {
+        auto duration = t.time_since_epoch() + monotonic_to_real.duration;
+        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    }
+
+    inline time_t to_time_t(MonotonicTimePoint const& t)
+    {
+        auto duration = t.time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    }
+
+    inline std::chrono::microseconds to_us(MonotonicTimePoint::duration const& duration)
+    {
+        return std::chrono::duration_cast<std::chrono::microseconds>(duration);
     }
 }
 
@@ -163,28 +181,31 @@ void VideoTransportBase::do_send(const uint8_t * data, size_t len)
 
 //@}
 
-using Microseconds = gdi::CaptureApi::Microseconds;
+using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnapshot;
 
 // VideoCaptureCtx
 //@{
 
 VideoCaptureCtx::VideoCaptureCtx(
-    timeval const & now,
+    MonotonicTimePoint now,
+    DurationFromMonotonicTimeToRealTime monotonic_to_real,
     TraceTimestamp trace_timestamp,
     ImageByInterval image_by_interval,
     unsigned frame_rate,
     RDPDrawable & drawable,
-    gdi::ImageFrameApi & imageFrameApi
+    gdi::ImageFrameApi & image_frame
 )
 : drawable(drawable)
-, start_video_capture(now)
+, monotonic_last_time_capture(now)
+, monotonic_start_capture(now)
+, monotonic_to_real(monotonic_to_real)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
 , start_frame_index(0)
 , trace_timestamp(trace_timestamp)
 , image_by_interval(image_by_interval)
-, image_frame_api(imageFrameApi)
-, timestamp_tracer(imageFrameApi.get_writable_image_view())
+, image_frame_api(image_frame)
+, timestamp_tracer(image_frame.get_writable_image_view())
 {}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
@@ -192,13 +213,13 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
     this->drawable.trace_mouse();
     this->image_frame_api.prepare_image_frame();
     if (TraceTimestamp::Yes == this->trace_timestamp) {
-        time_t rawtime = this->start_video_capture.tv_sec;
         tm tm_result;
+        time_t rawtime = to_time_t(this->monotonic_last_time_capture, this->monotonic_to_real);
         localtime_r(&rawtime, &tm_result);
         this->timestamp_tracer.trace(tm_result);
     }
     recorder.preparing_video_frame();
-    this->previous_second = this->start_video_capture.tv_sec;
+    this->previous_second = to_time_t(this->monotonic_last_time_capture);
 
     if (TraceTimestamp::Yes == this->trace_timestamp) {
         this->timestamp_tracer.clear();
@@ -253,11 +274,11 @@ const uint8_t * VideoCaptureCtx::data() const noexcept
     return this->drawable.data();
 }
 
-Microseconds VideoCaptureCtx::snapshot(
-    video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/
+WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
+    video_recorder & recorder, MonotonicTimePoint now
 )
 {
-    std::chrono::microseconds tick { now - this->start_video_capture };
+    std::chrono::microseconds tick { to_us(now - this->monotonic_last_time_capture) };
     std::chrono::microseconds const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
         if (!this->has_frame_marker) {
@@ -279,11 +300,11 @@ Microseconds VideoCaptureCtx::snapshot(
                 auto frame_index = previous_video_time / frame_interval - this->start_frame_index;
 
                 while (count--) {
-                    if (this->start_video_capture.tv_sec != this->previous_second) {
+                    if (to_time_t(this->monotonic_last_time_capture) != this->previous_second) {
                         this->preparing_video_frame(recorder);
                     }
                     recorder.encoding_video_frame(frame_index++);
-                    this->start_video_capture += frame_interval;
+                    this->monotonic_last_time_capture += frame_interval;
                 }
             }
             break;
@@ -291,13 +312,13 @@ Microseconds VideoCaptureCtx::snapshot(
             {
                 std::chrono::microseconds count = this->current_video_time - previous_video_time;
                 while (count >= frame_interval) {
-                    if (this->start_video_capture.tv_sec != this->previous_second) {
+                    if (to_time_t(this->monotonic_last_time_capture) != this->previous_second) {
                         this->preparing_video_frame(recorder);
                     }
                     recorder.encoding_video_frame(
                         previous_video_time / frame_interval - this->start_frame_index);
                     auto elapsed = std::min(count, decltype(count)(std::chrono::seconds(1)));
-                    this->start_video_capture += elapsed;
+                    this->monotonic_last_time_capture += elapsed;
                     previous_video_time += elapsed;
                     count -= elapsed;
                 }
@@ -305,7 +326,7 @@ Microseconds VideoCaptureCtx::snapshot(
             break;
         }
     }
-    return frame_interval - tick;
+    return WaitingTimeBeforeNextSnapshot(frame_interval - tick);
 }
 
 //@}
@@ -416,20 +437,20 @@ using ImageByInterval = VideoCaptureCtx::ImageByInterval;
 
 FullVideoCaptureImpl::FullVideoCaptureImpl(
     CaptureParams const & capture_params,
-    RDPDrawable & drawable, gdi::ImageFrameApi & imageFrameApi,
+    RDPDrawable & drawable, gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : trans_tmp_file(
     capture_params.record_path, capture_params.basename, video_params.codec.c_str(),
     capture_params.groupid, capture_params.session_log)
-, video_cap_ctx(capture_params.now,
+, video_cap_ctx(capture_params.now, capture_params.monotonic_to_real,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
-    video_params.frame_rate, drawable, imageFrameApi)
+    video_params.frame_rate, drawable, image_frame)
 , recorder(
     IOVideoRecorderWithTransport<TmpFileTransport>::write,
     IOVideoRecorderWithTransport<TmpFileTransport>::seek,
     &this->trans_tmp_file,
-    imageFrameApi.get_image_view(),
+    image_frame.get_image_view(),
     checked_int{video_params.frame_rate},
     video_params.codec.c_str(),
     video_params.codec_options.c_str(),
@@ -445,15 +466,15 @@ FullVideoCaptureImpl::~FullVideoCaptureImpl()
 
 
 void FullVideoCaptureImpl::frame_marker_event(
-    const timeval& /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
     this->video_cap_ctx.frame_marker_event(this->recorder);
 }
 
-Microseconds FullVideoCaptureImpl::periodic_snapshot(
-    const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool ignore_frame_in_timeval)
+WaitingTimeBeforeNextSnapshot FullVideoCaptureImpl::periodic_snapshot(
+    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
-    return this->video_cap_ctx.snapshot(this->recorder, now, ignore_frame_in_timeval);
+    return this->video_cap_ctx.snapshot(this->recorder, now);
 }
 
 void FullVideoCaptureImpl::encoding_video_frame()
@@ -525,79 +546,76 @@ void SequencedVideoCaptureImpl::SequenceTransport::do_send(const uint8_t * data,
     this->VideoTransportBase::do_send(data, len);
 }
 
-Microseconds SequencedVideoCaptureImpl::periodic_snapshot(
-    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
+WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
+    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
-    this->vc.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    this->vc.periodic_snapshot(now);
     if (!this->ic_has_first_img) {
-        return this->first_image.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        return this->first_periodic_snapshot(now);
     }
-    return this->video_sequencer.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    return this->video_sequencer_periodic_snapshot(now);
 }
 
 void SequencedVideoCaptureImpl::frame_marker_event(
-    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
+    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
 {
-    this->vc.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    this->vc.frame_marker_event();
     if (!this->ic_has_first_img) {
-        this->first_image.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        this->first_periodic_snapshot(now);
     }
     else {
-        this->video_sequencer.frame_marker_event(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        this->video_sequencer_periodic_snapshot(now);
     }
 }
 
-void SequencedVideoCaptureImpl::FirstImage::frame_marker_event(
-    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
+WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot(MonotonicTimePoint now)
 {
-    this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-}
+    WaitingTimeBeforeNextSnapshot ret;
 
-Microseconds SequencedVideoCaptureImpl::FirstImage::periodic_snapshot(
-    const timeval& now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
-{
-    Microseconds ret;
-
-    auto const duration = now - this->first_image_start_capture;
-    auto const interval = std::chrono::microseconds(std::chrono::seconds(3))/2;
+    auto constexpr interval = std::chrono::microseconds(3s) / 2;
+    auto const duration = now - this->monotonic_start_capture;
     if (duration >= interval) {
-        auto video_interval = first_image_impl.video_sequencer.get_interval();
-        if (this->first_image_impl.ic_drawable.logical_frame_ended() || duration > std::chrono::seconds(2) || duration >= video_interval) {
+        auto video_interval = this->break_interval;
+        if (this->ic_drawable.logical_frame_ended()
+         || duration > 2s
+         || duration >= video_interval
+        ) {
             tm ptm;
-            localtime_r(&now.tv_sec, &ptm);
-            this->first_image_impl.vc.prepare_video_frame();
-            this->first_image_impl.vc.trace_timestamp(ptm);
-            this->first_image_impl.ic_flush();
-            this->first_image_impl.vc.clear_timestamp();
-            this->first_image_impl.ic_has_first_img = true;
-            this->first_image_impl.ic_trans.next();
-            ret = video_interval;
+            time_t t = to_time_t(now, this->monotonic_to_real);
+            localtime_r(&t, &ptm);
+            this->vc.prepare_video_frame();
+            this->vc.trace_timestamp(ptm);
+            this->ic_flush();
+            this->vc.clear_timestamp();
+            this->ic_trans.next();
+            this->ic_has_first_img = true;
+            ret = WaitingTimeBeforeNextSnapshot(video_interval);
         }
         else {
-            ret = interval / 3;
+            ret = WaitingTimeBeforeNextSnapshot(interval / 3);
         }
     }
     else {
-        ret = interval - duration;
+        ret = WaitingTimeBeforeNextSnapshot(interval - duration);
     }
 
-    return std::min(ret, this->first_image_impl.video_sequencer.periodic_snapshot(
-        now, cursor_x, cursor_y, ignore_frame_in_timeval));
+    return std::min(ret.duration(), this->video_sequencer_periodic_snapshot(now).duration());
 }
 
 SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
-    const timeval & now,
-    SequenceTransport & trans,
+    CaptureParams const & capture_params,
     RDPDrawable & drawable,
-    gdi::ImageFrameApi & imageFrameApi,
-    VideoParams const& video_params)
-: video_cap_ctx(now,
+    gdi::ImageFrameApi & image_frame,
+    VideoParams const & video_params)
+: video_cap_ctx(capture_params.now, capture_params.monotonic_to_real,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
-    video_params.frame_rate, drawable, imageFrameApi)
-, trans(trans)
+    video_params.frame_rate, drawable, image_frame)
+, trans(
+    capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
+    capture_params.groupid, capture_params.session_log)
 , video_params(video_params)
-, image_frame_api(imageFrameApi)
+, image_frame_api(image_frame)
 {
     log_video_params(video_params);
     this->next_video();
@@ -635,16 +653,15 @@ void SequencedVideoCaptureImpl::VideoCapture::encoding_video_frame()
     this->video_cap_ctx.encoding_video_frame(*this->recorder);
 }
 
-void SequencedVideoCaptureImpl::VideoCapture::frame_marker_event(
-    const timeval& /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+void SequencedVideoCaptureImpl::VideoCapture::frame_marker_event()
 {
     this->video_cap_ctx.frame_marker_event(*this->recorder);
 }
 
-Microseconds SequencedVideoCaptureImpl::VideoCapture::periodic_snapshot(
-    const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool ignore_frame_in_timeval)
+WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::VideoCapture::periodic_snapshot(
+    MonotonicTimePoint now)
 {
-    return this->video_cap_ctx.snapshot(*this->recorder, now, ignore_frame_in_timeval);
+    return this->video_cap_ctx.snapshot(*this->recorder, now);
 }
 
 void SequencedVideoCaptureImpl::VideoCapture::trace_timestamp(const tm & now)
@@ -708,28 +725,15 @@ void SequencedVideoCaptureImpl::scale_dump24()
         this->ic_scaled_width * 3, false);
 }
 
-
-void SequencedVideoCaptureImpl::VideoSequencer::reset_now(const timeval& now)
-{
-    this->start_break = now;
-}
-
-Microseconds SequencedVideoCaptureImpl::VideoSequencer::periodic_snapshot(
-    const timeval& now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::video_sequencer_periodic_snapshot(
+    MonotonicTimePoint now)
 {
     assert(this->break_interval.count());
     auto const interval = now - this->start_break;
     if (interval >= this->break_interval) {
-        this->impl.next_video_impl(now, NotifyNextVideo::reason::sequenced);
-        this->start_break = now;
+        this->next_video_impl(now, NotifyNextVideo::Reason::sequenced);
     }
-    return this->break_interval;
-}
-
-void SequencedVideoCaptureImpl::VideoSequencer::frame_marker_event(
-    timeval const & now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval)
-{
-    this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+    return WaitingTimeBeforeNextSnapshot(this->break_interval);
 }
 
 
@@ -737,30 +741,25 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     CaptureParams const & capture_params,
     unsigned image_zoom,
     /* const */RDPDrawable & drawable,
-    gdi::ImageFrameApi & imageFrameApi,
-    VideoParams const& video_params,
+    gdi::ImageFrameApi & image_frame,
+    VideoParams const & video_params,
     NotifyNextVideo & next_video_notifier)
-: first_image(capture_params.now, *this)
-, vc_trans(
-    capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
-    capture_params.groupid, capture_params.session_log)
-, vc(capture_params.now, this->vc_trans, drawable, imageFrameApi, video_params)
+: monotonic_start_capture(capture_params.now)
+, monotonic_to_real(capture_params.monotonic_to_real)
+, vc(capture_params, drawable, image_frame, video_params)
 , ic_trans(
     capture_params.record_path, capture_params.basename, ".png",
     capture_params.groupid, capture_params.session_log)
 , ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_drawable(drawable)
-, image_frame_api(imageFrameApi)
-, smart_video_cropping(capture_params.smart_video_cropping)
-, video_sequencer(
-    capture_params.now,
-    (video_params.video_interval > std::chrono::microseconds(0))
-        ? video_params.video_interval
-        : std::chrono::microseconds::max(),
-    *this)
+, image_frame_api(image_frame)
+, start_break(capture_params.now)
+, break_interval((video_params.video_interval > std::chrono::microseconds::zero())
+    ? video_params.video_interval
+    : std::chrono::microseconds::max())
 , next_video_notifier(next_video_notifier)
 {
-    auto const image_view = imageFrameApi.get_image_view();
+    auto const image_view = image_frame.get_image_view();
     const unsigned zoom_width = (image_view.width() * this->ic_zoom_factor) / 100;
     const unsigned zoom_height = (image_view.height() * this->ic_zoom_factor) / 100;
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
@@ -770,18 +769,21 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     }
 }
 
-void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVideo::reason reason) {
-    this->video_sequencer.reset_now(now);
+void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNextVideo::Reason reason)
+{
+    this->start_break = now;
+
+    time_t t = to_time_t(now, this->monotonic_to_real);
 
     tm ptm;
-    localtime_r(&now.tv_sec, &ptm);
+    localtime_r(&t, &ptm);
 
     if (!this->ic_has_first_img) {
+        this->ic_has_first_img = true;
         this->vc.prepare_video_frame();
         this->vc.trace_timestamp(ptm);
         this->ic_flush();
         this->vc.clear_timestamp();
-        this->ic_has_first_img = true;
         this->ic_trans.next();
     }
 
@@ -796,9 +798,9 @@ void SequencedVideoCaptureImpl::next_video_impl(const timeval& now, NotifyNextVi
     this->next_video_notifier.notify_next_video(now, reason);
 }
 
-void SequencedVideoCaptureImpl::next_video(const timeval& now)
+void SequencedVideoCaptureImpl::next_video(MonotonicTimePoint now)
 {
-    this->next_video_impl(now, NotifyNextVideo::reason::external);
+    this->next_video_impl(now, NotifyNextVideo::Reason::external);
 }
 
 void SequencedVideoCaptureImpl::encoding_video_frame()

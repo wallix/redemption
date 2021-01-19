@@ -22,15 +22,11 @@
 #pragma once
 
 #include "utils/sugar/noncopyable.hpp"
-
-#include <chrono>
-#include <vector>
+#include "utils/monotonic_clock.hpp"
 
 #include <cassert>
 
 #include "utils/rect.hpp"
-
-struct timeval;
 
 namespace RDP {
     namespace RAIL {
@@ -45,38 +41,30 @@ struct CaptureApi : private noncopyable
     virtual ~CaptureApi() = default;
 
     // non_negative<std::chrono::microseconds>
-    struct Microseconds
+    struct WaitingTimeBeforeNextSnapshot
     {
-        Microseconds() = default;
+        WaitingTimeBeforeNextSnapshot() = default;
 
-        Microseconds(std::chrono::microseconds const& ms)
-          : ms_(ms)
+        WaitingTimeBeforeNextSnapshot(MonotonicTimePoint::duration const& duration)
+          : duration_(duration)
         {
-            assert(ms_.count() >= 0);
+            assert(duration_.count() >= 0);
         }
 
-        template<class Rep, class Period>
-        Microseconds(std::chrono::duration<Rep, Period> const& duration)
-          : Microseconds(std::chrono::microseconds{duration})
-        {}
-
-        [[nodiscard]] std::chrono::microseconds::rep count() const noexcept { return this->ms_.count(); }
-
-        [[nodiscard]] std::chrono::microseconds const & ms() const noexcept { return this->ms_; }
-        operator std::chrono::microseconds const & () const noexcept { return this->ms_; }
+        MonotonicTimePoint::duration const& duration() const noexcept { return duration_; }
 
     private:
-        std::chrono::microseconds ms_;
+        MonotonicTimePoint::duration duration_;
     };
 
-    virtual Microseconds periodic_snapshot(
-        timeval const & now,
+    virtual WaitingTimeBeforeNextSnapshot periodic_snapshot(
+        MonotonicTimePoint now,
         uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     ) = 0;
 
     virtual void frame_marker_event(
-        timeval const & now,
+        MonotonicTimePoint now,
         uint16_t cursor_x, uint16_t cursor_y,
         bool ignore_frame_in_timeval
     )
@@ -91,42 +79,10 @@ struct CaptureApi : private noncopyable
 struct ExternalCaptureApi : private noncopyable
 {
     virtual void external_breakpoint() = 0;
-    // TODO removed const&
-    virtual void external_time(timeval const & now) = 0;
+    virtual void external_time(MonotonicTimePoint now) = 0;
 
     virtual ~ExternalCaptureApi() = default;
 };
-
-
-inline bool operator==(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
-{
-    return a.count() == b.count();
-}
-
-inline bool operator!=(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
-{
-    return a.count() != b.count();
-}
-
-inline bool operator<(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
-{
-    return a.count() < b.count();
-}
-
-inline bool operator>(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
-{
-    return a.count() > b.count();
-}
-
-inline bool operator<=(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
-{
-    return a.count() <= b.count();
-}
-
-inline bool operator>=(CaptureApi::Microseconds const & a, CaptureApi::Microseconds const & b) noexcept
-{
-    return a.count() >= b.count();
-}
 
 }  // namespace gdi
 

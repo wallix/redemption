@@ -21,15 +21,16 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <cstdint>
-#include <sys/time.h>
 
 class SessionLogApi;
 
 struct CaptureParams
 {
-    timeval now;
+    MonotonicTimePoint now;
+    DurationFromMonotonicTimeToRealTime monotonic_to_real;
     // TODO: basename, record_path and record_tmp_path should be copied, we have no control of these variable lifecycles
     char const * basename;
     char const * record_tmp_path;

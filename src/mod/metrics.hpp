@@ -22,11 +22,11 @@
 
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/monotonic_clock.hpp"
 
 #include <chrono>
 #include <string>
 #include <vector>
-#include <ctime>
 
 
 bool create_metrics_directory(const std::string & path);
@@ -40,7 +40,8 @@ public:
            , chars_view account_sig          // hashed secondary account
            , chars_view target_service_sig   // hashed (target service name + device name)
            , chars_view session_info_sig     // hashed (source_host + client info)
-           , timeval now                                // time at beginning of metrics
+           , MonotonicTimePoint now                     // time at beginning of metrics
+           , DurationFromMonotonicTimeToRealTime monotonic_to_real
            , std::chrono::hours file_interval           // daily rotation of filename
            , std::chrono::seconds log_delay             // delay between 2 logs flush
            );
@@ -62,11 +63,11 @@ public:
          this->disconnect();
     }
 
-    void log(timeval now);
+    void log(MonotonicTimePoint now);
 
     void disconnect();
 
-    void rotate(timeval now);
+    void rotate(MonotonicTimePoint now);
 
 private:
     std::vector<uint64_t> current_data;
@@ -75,8 +76,9 @@ private:
     std::string protocol_name;
 
     // output file info
-    const std::chrono::hours file_interval;
-    timeval current_file_date;
+    const MonotonicTimePoint::duration file_interval;
+    MonotonicTimePoint current_file_date;
+    DurationFromMonotonicTimeToRealTime monotonic_to_real;
     const std::string path;
     unique_fd fd = invalid_fd();
 
@@ -88,10 +90,10 @@ private:
     };
     Header header;
     const std::string session_id;
-    const timeval connection_time;
+    const MonotonicTimePoint connection_time;
 
-    const std::chrono::seconds log_delay;
-    timeval next_log_time;
+    const MonotonicTimePoint::duration log_delay;
+    MonotonicTimePoint next_log_time;
     std::string complete_metrics_file_path;
     std::string complete_index_file_path;
 

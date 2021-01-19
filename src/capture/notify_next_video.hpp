@@ -21,12 +21,11 @@
 #pragma once
 
 #include "utils/sugar/noncopyable.hpp"
-
-class timeval;
+#include "utils/monotonic_clock.hpp"
 
 struct NotifyNextVideo : private noncopyable
 {
-    enum class reason { sequenced, external };
-    virtual void notify_next_video(timeval const & now, reason) = 0;
+    enum class Reason { sequenced, external };
+    virtual void notify_next_video(MonotonicTimePoint now, Reason) = 0;
     virtual ~NotifyNextVideo() = default;
 };

@@ -37,13 +37,27 @@
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/MonitorLayoutPDU.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/utf.hpp"
 #include "utils/png.hpp"
 
+namespace
+{
+    inline MonotonicTimePoint monotomic_time_point_from_stream(InStream& in_stream)
+    {
+        return MonotonicTimePoint(std::chrono::microseconds(in_stream.in_uint64_le()));
+    }
+}
 
-FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool play_video_with_corrupted_bitmap, Verbose verbose)
+FileToGraphic::FileToGraphic(
+    Transport & trans,
+    MonotonicTimePoint begin_capture,
+    MonotonicTimePoint end_capture,
+    bool play_video_with_corrupted_bitmap,
+    Verbose verbose
+)
     : stream(stream_buf)
     , compression_builder(trans, WrmCompressionAlgorithm::no_compression)
     , trans_source(&trans)
@@ -449,7 +463,7 @@ void FileToGraphic::interpret_order()
     {
         auto * const p = this->stream.get_current();
 
-        this->record_now = this->stream.in_timeval_from_uint64le_usec();
+        this->record_now = monotomic_time_point_from_stream(this->stream);
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
             obj->external_time(this->record_now);
@@ -470,12 +484,16 @@ void FileToGraphic::interpret_order()
                 this->ignore_frame_in_timeval = true;
             }
 
-            LOG_IF(bool(this->verbose & Verbose::timestamp), LOG_INFO,
-                "TIMESTAMP %lu.%lu mouse (x=%" PRIu16 ", y=%" PRIu16 ")"
-                , static_cast<unsigned long>(this->record_now.tv_sec)
-                , static_cast<unsigned long>(this->record_now.tv_usec)
-                , this->mouse_x
-                , this->mouse_y);
+            if (REDEMPTION_UNLIKELY(bool(this->verbose & Verbose::timestamp))) {
+                using std::chrono::duration_cast;
+                const auto duration = this->record_now.time_since_epoch();
+                const auto milliseconds = duration_cast<std::chrono::milliseconds>(duration);
+                const auto seconds = duration_cast<std::chrono::seconds>(milliseconds);
+                const long long i_seconds = seconds.count();
+                const long long i_milliseconds = (milliseconds - seconds).count();
+                LOG(LOG_INFO, "TIMESTAMP %lld.%lld mouse (x=%" PRIu16 ", y=%" PRIu16 ")",
+                    i_seconds, i_milliseconds, this->mouse_x, this->mouse_y);
+            }
 
             auto input = this->stream.in_skip_bytes(this->stream.in_remain());
             for (gdi::KbdInputApi * kbd : this->kbd_input_consumers){
@@ -487,8 +505,8 @@ void FileToGraphic::interpret_order()
 
             if (bool(this->verbose & Verbose::timestamp)) {
                 for (auto data = input.data(), end = data + input.size()/4*4; data != end; data += 4) {
-                    uint8_t         key8[6];
-                    const size_t    len = UTF32toUTF8(data, 4/4, key8, sizeof(key8)-1);
+                    uint8_t      key8[6];
+                    const size_t len = UTF32toUTF8(data, 4/4, key8, sizeof(key8)-1);
                     key8[len] = 0;
 
                     LOG(LOG_INFO, "TIMESTAMP keyboard '%s'", key8);
@@ -763,7 +781,7 @@ void FileToGraphic::interpret_order()
     break;
     case WrmChunkType::OLD_SESSION_UPDATE:
     case WrmChunkType::SESSION_UPDATE: {
-        this->record_now = this->stream.in_timeval_from_uint64le_usec();
+        this->record_now = monotomic_time_point_from_stream(this->stream);
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
             obj->external_time(this->record_now);
@@ -797,7 +815,7 @@ void FileToGraphic::interpret_order()
                 KVLog kvlogs[255];
                 auto* pkv = kvlogs;
 
-                int nbkv = safe_int{in.in_uint8()};
+                int nbkv {in.in_uint8()};
 
                 for (int i = 0; i < nbkv; ++i) {
                     auto klen = in.in_uint8();
@@ -1021,7 +1039,7 @@ void FileToGraphic::process_desktop_information(
 
 void FileToGraphic::play(bool const & requested_to_stop)
 {
-    this->privplay([](time_t /*t*/){}, requested_to_stop);
+    this->privplay([](MonotonicTimePoint /*t*/){}, requested_to_stop);
 }
 
 void FileToGraphic::snapshot_play()
@@ -1036,7 +1054,11 @@ void FileToGraphic::snapshot_play()
 
 void FileToGraphic::log_play() const
 {
-    LOG_IF(bool(this->verbose & Verbose::play), LOG_INFO,
-        "replay TIMESTAMP (first timestamp) = %u order=%u",
-        unsigned(this->record_now.tv_sec), this->total_orders_count);
+    if (REDEMPTION_UNLIKELY(bool(this->verbose & Verbose::play))) {
+        const auto duration = this->record_now.time_since_epoch();
+        const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration);
+        long long i_seconds = seconds.count();
+        LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %lld order=%u",
+            i_seconds, this->total_orders_count);
+    }
 }

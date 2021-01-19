@@ -31,7 +31,7 @@ namespace
 
         DataEvents()
         {
-            event_manager.set_current_time({10000, 0});
+            event_manager.set_current_time(MonotonicTimePoint{10000s});
         }
 
         void execute_timer_events()
@@ -42,20 +42,20 @@ namespace
             );
         }
 
-        void set_time_and_excute_timer_events(time_t t)
+        void set_time_and_excute_timer_events(MonotonicTimePoint t)
         {
             set_time(t);
             execute_timer_events();
         }
 
-        void set_time(time_t t)
+        void set_time(MonotonicTimePoint t)
         {
-            event_manager.set_current_time({t, 0});
+            event_manager.set_current_time(t);
         }
 
-        time_t time() const
+        MonotonicTimePoint time() const
         {
-            return event_manager.get_current_time().tv_sec;
+            return event_manager.get_current_time();
         }
     };
 }
@@ -67,12 +67,12 @@ using namespace std::chrono_literals;
 RED_AUTO_TEST_CASE(TestKeepAlive)
 {
     DataEvents d;
-    time_t t = d.time();
+    auto t = d.time();
     Inifile ini;
 
     KeepAlive keepalive(ini, d.events, 30s);
 
-    auto set_delay = [&](time_t delay){
+    auto set_delay = [&](MonotonicTimePoint::duration delay){
         d.set_time_and_excute_timer_events(t + delay);
         return ini.is_asked<cfg::context::keepalive>();
     };
@@ -85,21 +85,21 @@ RED_AUTO_TEST_CASE(TestKeepAlive)
 
     keepalive.start();
     RED_TEST(!ini.is_asked<cfg::context::keepalive>());
-    RED_TEST(!set_delay(20));
-    RED_TEST(set_delay(30));
-    RED_TEST(set_delay(50));
+    RED_TEST(!set_delay(20s));
+    RED_TEST(set_delay(30s));
+    RED_TEST(set_delay(50s));
     receive_keepalive();
-    RED_TEST(!set_delay(70));
+    RED_TEST(!set_delay(70s));
     receive_keepalive();
-    RED_TEST(set_delay(100));
-    RED_CHECK_EXCEPTION_ERROR_ID(set_delay(130),
+    RED_TEST(set_delay(100s));
+    RED_CHECK_EXCEPTION_ERROR_ID(set_delay(130s),
         ERR_SESSION_CLOSE_ACL_KEEPALIVE_MISSED);
 }
 
 RED_AUTO_TEST_CASE(TestInactivity)
 {
     DataEvents d;
-    time_t t = d.time();
+    auto t = d.time();
 
     Inactivity inactivity(d.events);
 
@@ -108,48 +108,48 @@ RED_AUTO_TEST_CASE(TestInactivity)
     inactivity.start(20s);
     d.execute_timer_events();
 
-    d.set_time_and_excute_timer_events(t + 25);
-    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_excute_timer_events(t + 30),
+    d.set_time_and_excute_timer_events(t + 25s);
+    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_excute_timer_events(t + 30s),
         ERR_SESSION_CLOSE_USER_INACTIVITY);
 
 
     // activity, activity, event
     //@{
-    d.set_time(t + 10000);
+    d.set_time(t + 10000s);
     t = d.time();
     inactivity.start(40s);
 
-    d.set_time_and_excute_timer_events(t + 25);
+    d.set_time_and_excute_timer_events(t + 25s);
     inactivity.activity();
 
-    d.set_time_and_excute_timer_events(t + 50);
+    d.set_time_and_excute_timer_events(t + 50s);
     inactivity.activity();
 
-    d.set_time_and_excute_timer_events(t + 50);
+    d.set_time_and_excute_timer_events(t + 50s);
 
-    d.set_time_and_excute_timer_events(t + 75);
+    d.set_time_and_excute_timer_events(t + 75s);
 
-    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_excute_timer_events(t + 90),
+    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_excute_timer_events(t + 90s),
         ERR_SESSION_CLOSE_USER_INACTIVITY);
     //@}
 
 
     // start() then stop()
-    d.set_time(t + 10000);
+    d.set_time(t + 10000s);
     t = d.time();
     inactivity.start(40s);
     inactivity.stop();
-    d.set_time(t + 75);
+    d.set_time(t + 75s);
     d.execute_timer_events();
 }
 
 RED_AUTO_TEST_CASE(TestEndSessionWarning)
 {
     DataEvents d;
-    time_t t = d.time();
+    auto t = d.time();
 
     auto sync_time = [&]{
-        t += 10000;
+        t += 10000s;
         d.set_time(t);
     };
 
@@ -166,13 +166,13 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning)
         return m;
     };
 
-    auto set_time_and_update_warning = [&](time_t t){
+    auto set_time_and_update_warning = [&](MonotonicTimePoint t){
         end_session_warning.set_time(t);
         d.execute_timer_events();
         return update_warning();
     };
 
-    auto update_time_and_update_warning = [&](time_t t){
+    auto update_time_and_update_warning = [&](MonotonicTimePoint t){
         d.set_time_and_excute_timer_events(t);
         return update_warning();
     };
@@ -181,42 +181,39 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning)
     RED_TEST(update_warning() == uncalled);
 
     sync_time();
-    RED_TEST(set_time_and_update_warning(t + 30*60 + 2) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 2) == 30);
-    RED_TEST(update_time_and_update_warning(t + 3) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 1 + 20*60) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 2 + 20*60) == 10);
-    RED_TEST(update_time_and_update_warning(t + 1 + 25*60) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 2 + 25*60) == 5);
-    RED_TEST(update_time_and_update_warning(t + 1 + 29*60) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 2 + 29*60) == 1);
-    RED_TEST(update_time_and_update_warning(t + 1 + 30*60) == uncalled);
-    RED_CHECK_EXCEPTION_ERROR_ID(update_time_and_update_warning(t + 2 + 30*60),
+    RED_TEST(set_time_and_update_warning(t + 30min + 2s) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 2s) == 30);
+    RED_TEST(update_time_and_update_warning(t + 3s) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 1s + 20min) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 2s + 20min) == 10);
+    RED_TEST(update_time_and_update_warning(t + 1s + 25min) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 2s + 25min) == 5);
+    RED_TEST(update_time_and_update_warning(t + 1s + 29min) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 2s + 29min) == 1);
+    RED_TEST(update_time_and_update_warning(t + 1s + 30min) == uncalled);
+    RED_CHECK_EXCEPTION_ERROR_ID(update_time_and_update_warning(t + 2s + 30min),
         ERR_SESSION_CLOSE_ENDDATE_REACHED);
 
     sync_time();
-    RED_TEST(set_time_and_update_warning(t + 30*60) == 30);
-    RED_TEST(update_time_and_update_warning(t - 1 + 20*60) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 0 + 20*60) == 10);
-    RED_TEST(update_time_and_update_warning(t - 1 + 25*60) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 0 + 25*60) == 5);
-    RED_TEST(update_time_and_update_warning(t - 1 + 29*60) == uncalled);
-    RED_TEST(update_time_and_update_warning(t + 0 + 29*60) == 1);
-    RED_TEST(update_time_and_update_warning(t - 1 + 30*60) == uncalled);
-    RED_CHECK_EXCEPTION_ERROR_ID(update_time_and_update_warning(t + 0 + 30*60),
+    RED_TEST(set_time_and_update_warning(t + 30min) == 30);
+    RED_TEST(update_time_and_update_warning(t - 1s + 20min) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 0s + 20min) == 10);
+    RED_TEST(update_time_and_update_warning(t - 1s + 25min) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 0s + 25min) == 5);
+    RED_TEST(update_time_and_update_warning(t - 1s + 29min) == uncalled);
+    RED_TEST(update_time_and_update_warning(t + 0s + 29min) == 1);
+    RED_TEST(update_time_and_update_warning(t - 1s + 30min) == uncalled);
+    RED_CHECK_EXCEPTION_ERROR_ID(update_time_and_update_warning(t + 0s + 30min),
         ERR_SESSION_CLOSE_ENDDATE_REACHED);
 
     sync_time();
-    RED_TEST(set_time_and_update_warning(t + 20*60) == 20);
+    RED_TEST(set_time_and_update_warning(t + 20min) == 20);
 
     sync_time();
-    RED_TEST(set_time_and_update_warning(t + 10*60) == 10);
+    RED_TEST(set_time_and_update_warning(t + 10min) == 10);
 
     sync_time();
-    RED_TEST(set_time_and_update_warning(t + 20) == 0);
-
-    sync_time();
-    RED_TEST(set_time_and_update_warning(0) == uncalled);
+    RED_TEST(set_time_and_update_warning(t + 20s) == 0);
 
     RED_CHECK_EXCEPTION_ERROR_ID(set_time_and_update_warning(t),
         ERR_SESSION_CLOSE_ENDDATE_REACHED);
