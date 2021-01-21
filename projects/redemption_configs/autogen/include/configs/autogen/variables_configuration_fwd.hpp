@@ -212,6 +212,7 @@ namespace cfg
         struct mode_console;
         struct auto_reconnection_on_losing_target_link;
         struct forward_client_build_number;
+        struct bogus_monitor_layout_treatment;
     };
 
     struct mod_vnc {

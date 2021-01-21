@@ -82,6 +82,9 @@ cp_spec = {
         u'mod_rdp:forward_client_build_number': (
             'forward_client_build_number', True
         ),
+        u'mod_rdp:bogus_monitor_layout_treatment': (
+            'bogus_monitor_layout_treatment', False
+        ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
         ),

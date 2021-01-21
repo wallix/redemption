@@ -903,6 +903,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #forward_client_build_number = 1
 
+# To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
+# value: 0 or 1
+#_hidden
+#bogus_monitor_layout_treatment = 0
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

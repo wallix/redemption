@@ -141,6 +141,7 @@ struct ModRDPParams
     Language lang = Language::en;
 
     bool allow_using_multiple_monitors = false;
+    bool bogus_monitor_layout_treatment = false;
     bool allow_scale_factor = false;
 
     bool adjust_performance_flags_for_recording = false;
@@ -389,6 +390,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     to_lang,               lang);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             allow_using_multiple_monitors);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_monitor_layout_treatment);
         RDP_PARAMS_LOG("%s",     yes_or_no,             allow_scale_factor);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             adjust_performance_flags_for_recording);

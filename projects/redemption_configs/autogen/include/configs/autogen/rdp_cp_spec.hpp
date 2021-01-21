@@ -135,6 +135,9 @@ auto_reconnection_on_losing_target_link = boolean(default=False)
 #_advanced
 forward_client_build_number = boolean(default=True)
 
+# To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
+bogus_monitor_layout_treatment = boolean(default=False)
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (in milliseconds)
 #_advanced

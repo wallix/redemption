@@ -247,6 +247,7 @@ RdpNegociation::RdpNegociation(
     , remote_program(mod_rdp_params.remote_app_params.enable_remote_program)
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
+    , bogus_monitor_layout_treatment(mod_rdp_params.bogus_monitor_layout_treatment)
     , allow_scale_factor(mod_rdp_params.allow_scale_factor)
     , cs_monitor(info.cs_monitor)
     , cs_monitor_ex(info.cs_monitor_ex)
@@ -846,6 +847,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             if (!single_monitor) {
                 LOG(LOG_INFO, "not a single_monitor");
                 cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+            }
+            else if (this->bogus_monitor_layout_treatment) {
+                LOG(LOG_INFO, "RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest: bogus_monitor_layout_treatment");
+                cs_core.earlyCapabilityFlags &= ~GCC::UserData::RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
             }
 
             uint16_t hostlen = strlen(hostname);

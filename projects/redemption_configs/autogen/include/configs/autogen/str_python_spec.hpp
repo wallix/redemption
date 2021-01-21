@@ -764,6 +764,10 @@ auto_reconnection_on_losing_target_link = boolean(default=False)
 #_hidden
 forward_client_build_number = boolean(default=True)
 
+# To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
+#_hidden
+bogus_monitor_layout_treatment = boolean(default=False)
+
 [mod_vnc]
 
 # Enable or disable the clipboard from client (client to server).

@@ -104,6 +104,7 @@ namespace configs
         "mod_rdp:mode_console"_zv,
         "mod_rdp:auto_reconnection_on_losing_target_link"_zv,
         "mod_rdp:forward_client_build_number"_zv,
+        "mod_rdp:bogus_monitor_layout_treatment"_zv,
         "clipboard_up"_zv,
         "clipboard_down"_zv,
         "vnc_server_clipboard_encoding_type"_zv,
