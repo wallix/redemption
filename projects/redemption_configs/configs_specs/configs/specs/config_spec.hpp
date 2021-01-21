@@ -519,6 +519,11 @@ void config_spec_definition(Writer && W)
                 "If forwarding is disabled a default (static) build number will be sent to the server."
             },
             set(true));
+
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "bogus_monitor_layout_treatment",
+            desc{
+                "To resolve the session freeze issue with Windows 7/Windows Server 2008 target."
+            }, set(false));
     });
 
     W.section("metrics", [&]

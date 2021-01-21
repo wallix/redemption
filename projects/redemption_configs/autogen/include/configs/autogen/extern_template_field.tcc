@@ -92,6 +92,7 @@ template class Inifile::Field<cfg::mod_rdp::force_smartcard_authentication>;
 template class Inifile::Field<cfg::mod_rdp::mode_console>;
 template class Inifile::Field<cfg::mod_rdp::auto_reconnection_on_losing_target_link>;
 template class Inifile::Field<cfg::mod_rdp::forward_client_build_number>;
+template class Inifile::Field<cfg::mod_rdp::bogus_monitor_layout_treatment>;
 template class Inifile::Field<cfg::mod_vnc::clipboard_up>;
 template class Inifile::Field<cfg::mod_vnc::clipboard_down>;
 template class Inifile::Field<cfg::mod_vnc::server_clipboard_encoding_type>;
