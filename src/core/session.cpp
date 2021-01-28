@@ -156,10 +156,12 @@ class Session
         }
 
     private:
+        #ifndef NDEBUG
         bool is_open() const
         {
             return !this->session_type.empty();
         }
+        #endif
 
         void log6(LogId id, KVLogList kv_list) override
         {
