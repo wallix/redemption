@@ -498,6 +498,3 @@ static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, u8_arr
     v.insert(v.end(), a.begin(), a.end());
     return v;
 }
-
-
-
