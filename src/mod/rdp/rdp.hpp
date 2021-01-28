@@ -6018,14 +6018,12 @@ private:
         if (this->session_time_start.count()) {
             auto delay = this->events_guard.get_current_time().time_since_epoch()
                         - this->session_time_start;
-            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
+            long seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
             this->session_time_start = MonotonicTimePoint::duration(0);
 
             char duration_str[128];
-            int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02d:%02d",
-                long(seconds / 3600),
-                int((seconds % 3600) / 60),
-                int(seconds % 60));
+            int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
+                seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
             // force kbd flush before disconnect event
             this->front.possible_active_window_change();

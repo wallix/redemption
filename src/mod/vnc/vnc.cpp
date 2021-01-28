@@ -2089,15 +2089,13 @@ void mod_vnc::disconnect()
 {
     auto delay = this->events_guard.get_current_time().time_since_epoch()
                 - this->beginning;
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
+    long seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
 
     LOG(LOG_INFO, "Client disconnect from VNC module");
 
     char duration_str[128];
-    int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02d:%02d",
-        long(seconds / 3600),
-        int((seconds % 3600) / 60),
-        int(seconds % 60));
+    int len = snprintf(duration_str, sizeof(duration_str), "%02ld:%02ld:%02ld",
+        seconds / 3600, (seconds % 3600) / 60, seconds % 60);
 
     this->session_log.log6(LogId::SESSION_DISCONNECTION,
         {KVLog("duration"_av, {duration_str, std::size_t(len)}),});

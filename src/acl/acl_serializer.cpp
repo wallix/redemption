@@ -219,7 +219,7 @@ namespace
                     }
                     else {
                         auto zkey = field.get_acl_name();
-                        if (bool is_ok = field.set(reader.read_value(zkey))) {
+                        if (field.set(reader.read_value(zkey))) {
                             flags.set(field.authid());
                             if (bool(verbose & Verbose::variable)) {
                                 Inifile::ZStringBuffer zstring_buffer;
