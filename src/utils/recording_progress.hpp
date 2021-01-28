@@ -27,9 +27,13 @@
 #include "utils/monotonic_clock.hpp"
 
 #include <cassert>
-#include <ctime>
 #include <cerrno>
-#include <cstring>
+#include <cstdio>
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /**
  * Format (JSON):
@@ -52,7 +56,7 @@
  *   - an error code
  *   - a message
  */
-class UpdateProgressDataJSONFormat : noncopyable
+class UpdateProgressData : noncopyable
 {
     unique_fd fd;
 
@@ -69,10 +73,10 @@ class UpdateProgressDataJSONFormat : noncopyable
     unsigned nb_videos = 0;
 
 public:
-    UpdateProgressDataJSONFormat() = delete;
-    UpdateProgressDataJSONFormat(
-        unique_fd fd, MonotonicTimePoint start_record, MonotonicTimePoint stop_record)
-    : fd(std::move(fd))
+    UpdateProgressData(
+        const char * progress_filename,
+        MonotonicTimePoint start_record, MonotonicTimePoint stop_record)
+    : fd(create_progress_file(progress_filename))
     , start_record(start_record)
     , stop_record(stop_record)
     , processing_start_time(MonotonicTimePoint::clock::now())
@@ -80,7 +84,7 @@ public:
         this->write_datas();
     }
 
-    ~UpdateProgressDataJSONFormat()
+    ~UpdateProgressData()
     {
         if (!this->error_raised) {
             this->time_percentage = 100;
@@ -173,136 +177,8 @@ private:
             this->fd.close();
         }
     }
-};
 
-
-// Old format
-
-// format:
-// start: 0 -1
-// normal: $time_percentage $time_remaining
-// done: 100 0
-// error: -1 $error ($error_code)
-class UpdateProgressDataOldFormat : noncopyable
-{
-    unique_fd fd;
-
-    const MonotonicTimePoint start_record;
-    const MonotonicTimePoint stop_record;
-
-    const MonotonicTimePoint processing_start_time;
-
-    unsigned int last_written_time_percentage;
-
-    mutable bool error_raised = false;
-
-public:
-    UpdateProgressDataOldFormat() = delete;
-    UpdateProgressDataOldFormat(
-        unique_fd fd, MonotonicTimePoint start_record, MonotonicTimePoint stop_record)
-    : fd(std::move(fd))
-    , start_record(start_record)
-    , stop_record(stop_record)
-    , processing_start_time(MonotonicTimePoint::clock::now())
-    , last_written_time_percentage(0)
-    {
-        this->write("0 -1", 4);
-    }
-
-    ~UpdateProgressDataOldFormat()
-    {
-        if (!this->error_raised) {
-            this->write("100 0", 5);
-        }
-    }
-
-    bool is_valid() const
-    {
-        return this->fd.is_open();
-    }
-
-    void operator()(MonotonicTimePoint record_now)
-    {
-        unsigned int time_percentage;
-
-        if (record_now <= this->start_record) {
-            time_percentage = 0;
-        }
-        else if (record_now >= this->stop_record) {
-            time_percentage = 99;
-        }
-        else {
-            time_percentage = (record_now - this->start_record) * 100 /
-                (this->stop_record - this->start_record);
-        }
-
-        assert(time_percentage < 100);
-
-        if (time_percentage != this->last_written_time_percentage) {
-            auto elapsed_time = MonotonicTimePoint::clock::now() - this->processing_start_time;
-
-            char str_time_percentage[64];
-
-            unsigned time_remaining = std::chrono::duration_cast<std::chrono::seconds>(
-                elapsed_time * 100 / time_percentage - elapsed_time).count();
-            std::size_t len = ::snprintf( str_time_percentage, sizeof(str_time_percentage), "%u %u"
-                                        , time_percentage
-                                        , time_remaining);
-
-            this->write(str_time_percentage, len);
-            this->last_written_time_percentage = time_percentage;
-        }
-    }
-
-    void raise_error(int code, const char * message)
-    {
-        char str_error_message[1024];
-
-        std::size_t len = ::snprintf( str_error_message, sizeof(str_error_message), "-1 %s (%d)"
-                                    , (message ? message : "")
-                                    , code
-                                    );
-
-        this->write(str_error_message, len);
-        this->error_raised = true;
-    }
-
-private:
-    void write(void const * data, size_t len)
-    {
-        bool has_error = true;
-
-        off_t const seek_result = ::lseek(this->fd.fd(), 0, SEEK_SET);
-        if (seek_result != -1) {
-            ssize_t const write_result = ::write(this->fd.fd(), data, len);
-            if (write_result != -1) {
-                int const truncate_result = ::ftruncate(this->fd.fd(), write_result);
-                if (truncate_result !=  1) {
-                    has_error = false;
-                }
-            }
-        }
-
-        if (has_error && this->fd.is_open()) {
-            LOG(LOG_ERR, "Failed to write progress information file! %s", strerror(errno));
-            this->fd.close();
-        }
-    }
-};
-
-
-class UpdateProgressData : noncopyable
-{
-public:
-    enum Format { OLD_FORMAT, JSON_FORMAT };
-
-    UpdateProgressData() = delete;
-    UpdateProgressData(
-        Format format, const char * progress_filename,
-        const MonotonicTimePoint begin_record, const MonotonicTimePoint end_record,
-        const MonotonicTimePoint begin_capture, const MonotonicTimePoint end_capture
-    )
-    : format(format)
+    static unique_fd create_progress_file(const char * progress_filename)
     {
         int const file_mode = S_IRUSR | S_IRGRP;
         int const fd = ::open(progress_filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);
@@ -313,78 +189,6 @@ public:
                 (fd < 0) ? "Failed to create" : "Can't change mod of",
                 progress_filename, strerror(errno), errnum);
         }
-
-        auto const start_record = (begin_capture != MonotonicTimePoint()) ? begin_capture : begin_record;
-        auto const stop_record = (end_capture != MonotonicTimePoint()) ? end_capture : end_record;
-
-        if (format == OLD_FORMAT) {
-            new(&u.old_format) UpdateProgressDataOldFormat(
-                unique_fd{fd}, start_record, stop_record
-            );
-        }
-        else {
-            new(&u.json_format) UpdateProgressDataJSONFormat(
-                unique_fd{fd}, start_record, stop_record
-            );
-        }
+        return unique_fd{fd};
     }
-
-    void next_video(MonotonicTimePoint record_now)
-    {
-        if (format == OLD_FORMAT) {
-            u.old_format(record_now);
-        }
-        else {
-            u.json_format.next_video(record_now);
-        }
-    }
-
-    ~UpdateProgressData()
-    {
-        if (format == OLD_FORMAT) {
-            u.old_format.~UpdateProgressDataOldFormat();
-        }
-        else {
-            u.json_format.~UpdateProgressDataJSONFormat();
-        }
-    }
-
-
-    bool is_valid() const
-    {
-        return (format == OLD_FORMAT)
-            ? u.old_format.is_valid()
-            : u.json_format.is_valid();
-    }
-
-
-    void operator()(MonotonicTimePoint record_now)
-    {
-        if (format == OLD_FORMAT) {
-            u.old_format(record_now);
-        }
-        else {
-            u.json_format(record_now);
-        }
-    }
-
-    void raise_error(int code, const char * message)
-    {
-        if (format == OLD_FORMAT) {
-            u.old_format.raise_error(code, message);
-        }
-        else {
-            u.json_format.raise_error(code, message);
-        }
-    }
-
-private:
-    union U {
-        char dummy;
-        UpdateProgressDataOldFormat old_format;
-        UpdateProgressDataJSONFormat json_format;
-        U() : dummy() {}
-        ~U() {} /*NOLINT*/
-    } u;
-    Format format;
 };

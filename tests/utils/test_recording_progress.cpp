@@ -39,13 +39,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 
     {
         unlink(filename);
-        UpdateProgressData p(
-            UpdateProgressData::JSON_FORMAT,
-            filename,
-            start_time,
-            end_time,
-            MonotonicTimePoint(), MonotonicTimePoint()
-        );
+        UpdateProgressData p(filename, start_time, end_time);
 
         RED_REQUIRE(p.is_valid());
 
@@ -64,13 +58,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 
     {
         unlink(filename);
-        UpdateProgressData p(
-            UpdateProgressData::JSON_FORMAT,
-            filename,
-            start_time,
-            end_time,
-            MonotonicTimePoint(), MonotonicTimePoint()
-        );
+        UpdateProgressData p(filename, start_time, end_time);
 
         RED_REQUIRE(p.is_valid());
 
@@ -89,13 +77,7 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 
     {
         unlink(filename);
-        UpdateProgressData p(
-            UpdateProgressData::JSON_FORMAT,
-            filename,
-            start_time,
-            end_time,
-            MonotonicTimePoint(), MonotonicTimePoint()
-        );
+        UpdateProgressData p(filename, start_time, end_time);
 
         RED_REQUIRE(p.is_valid());
 
@@ -112,79 +94,4 @@ RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
             R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
     }
     RED_CHECK_EQUAL(read_file(), R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
-
-    {
-        unlink(filename);
-        UpdateProgressData p(
-            UpdateProgressData::OLD_FORMAT,
-            filename,
-            start_time,
-            end_time,
-            MonotonicTimePoint(), MonotonicTimePoint()
-        );
-
-        RED_REQUIRE(p.is_valid());
-
-        RED_CHECK_EQUAL(read_file(), "0 -1");
-
-        p(start_time + 10s);
-        RED_CHECK_EQUAL(read_file(), "10 0");
-
-        p(start_time + 90s);
-        RED_CHECK_EQUAL(read_file(), "90 0");
-
-        p(start_time + 100s);
-        RED_CHECK_EQUAL(read_file(), "99 0");
-    }
-    RED_CHECK_EQUAL(read_file(), "100 0");
-
-    {
-        unlink(filename);
-        UpdateProgressData p(
-            UpdateProgressData::OLD_FORMAT,
-            filename,
-            start_time,
-            end_time,
-            MonotonicTimePoint(), MonotonicTimePoint()
-        );
-
-        RED_REQUIRE(p.is_valid());
-
-        RED_CHECK_EQUAL(read_file(), "0 -1");
-
-        p(start_time + 10s);
-        RED_CHECK_EQUAL(read_file(), "10 0");
-
-        p.next_video(start_time + 90s);
-        RED_CHECK_EQUAL(read_file(), "90 0");
-
-        p(start_time + 100s);
-        RED_CHECK_EQUAL(read_file(), "99 0");
-    }
-    RED_CHECK_EQUAL(read_file(), "100 0");
-
-    {
-        unlink(filename);
-        UpdateProgressData p(
-            UpdateProgressData::OLD_FORMAT,
-            filename,
-            start_time,
-            end_time,
-            MonotonicTimePoint(), MonotonicTimePoint()
-        );
-
-        RED_REQUIRE(p.is_valid());
-
-        RED_CHECK_EQUAL(read_file(), "0 -1");
-
-        p(start_time + 10s);
-        RED_CHECK_EQUAL(read_file(), "10 0");
-
-        p.next_video(start_time + 90s);
-        RED_CHECK_EQUAL(read_file(), "90 0");
-
-        p.raise_error(2, "plouf");
-        RED_CHECK_EQUAL(read_file(), "-1 plouf (2)");
-    }
-    RED_CHECK_EQUAL(read_file(), "-1 plouf (2)");
 }

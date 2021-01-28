@@ -757,9 +757,10 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 13450874);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 1641583);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 14977057);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.pgs"), 5);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
+    RED_TEST_FILE_CONTENTS(wd.add_file("recorder.1.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }
 #endif
 
@@ -791,9 +792,10 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 62513357 +- 100_v);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 7555247);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 70069293 +- 100_v);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.pgs"), 5);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
     RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
+    RED_TEST_FILE_CONTENTS(wd.add_file("recorder.1.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }
 #endif
 
@@ -813,7 +815,6 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
             output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
-        "--json-pgs",
         "-D", mp4_options,
     };
 
@@ -906,7 +907,6 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
             output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
-        "--json-pgs",
         "-D", mp4_options,
     };
 
@@ -918,7 +918,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderChunkMeta, wd)
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000000.png"), 15353 /*+- 0_v*/);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.mp4"), 570000 +- 10_percent);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta-000001.png"), 40151 /*+- 0_v*/);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-chunk-meta.pgs"),        37 /*+- 0_v*/);
+    RED_TEST_FILE_CONTENTS(wd.add_file("recorder-chunk-meta.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":2}"_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
@@ -934,7 +935,6 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
             output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
-        "--json-pgs",
         "--ignore-file-size",
         "-D", mp4_options,
     };
@@ -945,7 +945,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize, wd)
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.mp4"), 24536 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0-000000.png"), 3972);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.meta"),       0);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-0.pgs"),        37);
+    RED_TEST_FILE_CONTENTS(wd.add_file("recorder-resize-0.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
@@ -961,7 +962,6 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
             output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
-        "--json-pgs",
         "--ignore-file-size",
         "-D", mp4_options,
     };
@@ -972,7 +972,8 @@ RED_AUTO_TEST_CASE_WD(TestAppRecorderResize1, wd)
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.mp4"), 21265 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1-000000.png"), 3080);
     RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.meta"),       0);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder-resize-1.pgs"),        37);
+    RED_TEST_FILE_CONTENTS(wd.add_file("recorder-resize-1.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestMetaCapture, wd)
@@ -988,7 +989,6 @@ RED_AUTO_TEST_CASE_WD(TestMetaCapture, wd)
         "-o", output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
-        "--json-pgs",
         "-D", "profile=baseline preset=ultrafast flags=+qscale b=80000",
     };
 
@@ -1004,7 +1004,8 @@ RED_AUTO_TEST_CASE_WD(TestMetaCapture, wd)
 
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 244);
-    RED_TEST_FILE_SIZE(wd.add_file("test_capture.pgs"), 37);
+    RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }
 
 // same as previous test, but without KBD_INPUT
@@ -1023,7 +1024,6 @@ RED_AUTO_TEST_CASE_WD(TestMetaCaptureDisableKbdInput, wd)
         "-o", output.c_str(),
         "--chunk",
         "--video-codec", "mp4",
-        "--json-pgs",
         "-D", "profile=baseline preset=ultrafast flags=+qscale b=80000",
     };
 
@@ -1038,6 +1038,7 @@ RED_AUTO_TEST_CASE_WD(TestMetaCaptureDisableKbdInput, wd)
 
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.mp4"), 5881 +- 200_v);
     RED_TEST_FILE_SIZE(wd.add_file("test_capture-000000.png"), 244);
-    RED_TEST_FILE_SIZE(wd.add_file("test_capture.pgs"), 37);
+    RED_TEST_FILE_CONTENTS(wd.add_file("test_capture.pgs"),
+        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
 }
 #endif

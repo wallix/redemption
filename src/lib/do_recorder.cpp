@@ -518,7 +518,6 @@ static inline MwrmInfos load_mwrm_infos(
 }
 
 static void raise_error(
-    UpdateProgressData::Format pgs_format,
     std::string const& output_filename,
     int code, const char * message)
 {
@@ -534,20 +533,17 @@ static void raise_error(
 
     (void)unlink(progress_filename);
     UpdateProgressData update_progress_data(
-        pgs_format, progress_filename,
-        MonotonicTimePoint(), MonotonicTimePoint(),
-        MonotonicTimePoint(), MonotonicTimePoint());
+        progress_filename, MonotonicTimePoint(), MonotonicTimePoint());
 
     update_progress_data.raise_error(code, message);
 }
 
 static int raise_error_and_log(
-    UpdateProgressData::Format pgs_format,
     std::string const& output_filename,
     int code, zstring_view message)
 {
     std::cerr << message << std::endl;
-    raise_error(pgs_format, output_filename, -1, message.c_str());
+    raise_error(output_filename, -1, message.c_str());
     return code;
 }
 
@@ -613,7 +609,6 @@ namespace
 }
 
 static inline int update_filename_and_check_size(
-    UpdateProgressData::Format pgs_format,
     std::string const& output_filename,
     std::vector<MetaLine>& wrms,
     std::string const& other_wrm_directory,
@@ -641,8 +636,7 @@ static inline int update_filename_and_check_size(
 
             if (has_error) {
                 LOG(LOG_INFO, "Wrm file not found: %s", wrm.filename);
-                return raise_error_and_log(pgs_format, output_filename, -1,
-                    "wrm file not fount"_zv);
+                return raise_error_and_log(output_filename, -1, "wrm file not fount"_zv);
             }
         }
 
@@ -650,8 +644,7 @@ static inline int update_filename_and_check_size(
             using ull = unsigned long long;
             LOG(LOG_INFO, "Wrm file size mismatch (%llu != %llu): %s",
                 ull(wrm.size), ull(st.st_size), wrm.filename);
-            return raise_error_and_log(pgs_format, output_filename, -1,
-                "wrm file size mismatch"_zv);
+            return raise_error_and_log(output_filename, -1, "wrm file size mismatch"_zv);
         }
     }
 
@@ -944,7 +937,6 @@ static inline int replay(
     std::string & input_basename,
     std::string const& hash_path,
     CaptureFlags const& capture_flags,
-    UpdateProgressData::Format pgs_format,
     bool chunk,
     unsigned ocr_version,
     std::string const& output_filename,
@@ -971,8 +963,7 @@ static inline int replay(
     uint32_t verbose)
 {
     if (mwrm_infos.wrms.empty()) {
-        return raise_error_and_log(pgs_format, output_filename, -1,
-            "wrm file not foudn in mwrm file"_zv);
+        return raise_error_and_log(output_filename, -1, "wrm file not foudn in mwrm file"_zv);
     }
 
     char infile_prefix[4096];
@@ -1033,8 +1024,7 @@ static inline int replay(
         }
 
         if (first == last) {
-            return raise_error_and_log(pgs_format, output_filename, -1,
-                "Asked time not found in mwrm file"_zv);
+            return raise_error_and_log(output_filename, -1, "Asked time not found in mwrm file"_zv);
         }
 
         file_count = checked_int{first - mwrm_infos.wrms.begin() + 1};
@@ -1118,12 +1108,11 @@ static inline int replay(
 
                         char progress_filename[4096];
                         std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
-                                , outfile.directory.c_str(), outfile.basename.c_str());
+                                     , outfile.directory.c_str(), outfile.basename.c_str());
                         UpdateProgressData update_progress_data(
-                            pgs_format, progress_filename,
-                            MonotonicTimePoint(begin_record), MonotonicTimePoint(end_record),
-                            MonotonicTimePoint(begin_cap), MonotonicTimePoint(end_cap)
-                        );
+                            progress_filename,
+                            MonotonicTimePoint(begin_cap != 0s ? begin_cap : begin_record),
+                            MonotonicTimePoint(end_cap != 0s ? end_cap : end_record));
 
                         if (png_params.png_width && png_params.png_height) {
                             auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
@@ -1336,7 +1325,7 @@ static inline int replay(
     }
     catch (const Error & e) {
         const bool msg_with_error_id = false;
-        raise_error(pgs_format, output_filename, e.id, e.errmsg(msg_with_error_id));
+        raise_error(output_filename, e.id, e.errmsg(msg_with_error_id));
     }
 
     std::cout << std::endl;
@@ -1399,8 +1388,6 @@ struct RecorderParams {
     // verifier options
     bool quick_check      = false;
     bool ignore_file_size = false;
-
-    bool json_pgs = false;
 };
 
 enum class ClRes
@@ -1628,17 +1615,12 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             .parser(cli::on_off_location(bogus_vlc)),
 
         cli::option("disable-bogus-vlc")
-            .parser(cli::on_off([&](bool x){ bogus_vlc = !x; })),
-
-        cli::option("json-pgs").help("use json format to .pgs file")
-            .parser(cli::on_off_location(recorder.json_pgs))
+            .parser(cli::on_off([&](bool x){ bogus_vlc = !x; }))
     );
 
     auto cl_error = [&recorder](char const* mes, int const errnum = 1) /*NOLINT*/ {
         std::cerr << mes << "\n";
-        if (recorder.json_pgs) {
-            raise_error(UpdateProgressData::JSON_FORMAT, recorder.output_filename, errnum, mes);
-        }
+        raise_error(recorder.output_filename, errnum, mes);
         return ClRes::Err;
     };
 
@@ -1937,8 +1919,6 @@ extern "C" {
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
-            auto const pgs_format = rp.json_pgs ? UpdateProgressData::JSON_FORMAT
-                                                : UpdateProgressData::OLD_FORMAT;
             auto const encryption_mode = rp.infile_is_encrypted ? EncryptionMode::Encrypted
                                                                 : EncryptionMode::NotEncrypted;
             auto const mwrm_prefix = str_concat(rp.mwrm_path, rp.input_basename);
@@ -1947,7 +1927,7 @@ extern "C" {
             auto mwrm_infos = load_mwrm_infos(mwrm_filename.c_str(),
                                               encryption_mode, cctx, fstat);
 
-            if (int r = update_filename_and_check_size(pgs_format, rp.output_filename,
+            if (int r = update_filename_and_check_size(rp.output_filename,
                                                        mwrm_infos.wrms, rp.mwrm_path,
                                                        fstat, rp.ignore_file_size)
             ) {
@@ -1994,7 +1974,6 @@ extern "C" {
                          rp.input_basename,
                          rp.hash_path,
                          rp.capture_flags,
-                         pgs_format,
                          rp.chunk,
                          rp.ocr_version,
                          rp.output_filename,
