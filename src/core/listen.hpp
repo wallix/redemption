@@ -262,9 +262,7 @@ int unique_server_loop(unique_fd sck, CbNewConn&& cb_new_conn)
 
     for (;;) {
         io_fd_set(sck.fd(), rfds);
-        timeval timeout{std::chrono::minutes(10).count(), 0};
-
-        int const r = select(max, &rfds, nullptr, nullptr, &timeout);
+        int const r = select(max, &rfds, nullptr, nullptr, nullptr);
 
         if (r < 0) {
             if (is_no_error_server_loop()) {
@@ -294,9 +292,7 @@ int two_server_loop(unique_fd sck1, unique_fd sck2, CbNewConn&& cb_new_conn)
     for (;;) {
         io_fd_set(sck1.fd(), rfds);
         io_fd_set(sck2.fd(), rfds);
-        timeval timeout{std::chrono::minutes(10).count(), 0};
-
-        int const r = select(max, &rfds, nullptr, nullptr, &timeout);
+        int const r = select(max, &rfds, nullptr, nullptr, nullptr);
 
         if (r < 0) {
             if (is_no_error_server_loop()) {
