@@ -221,6 +221,6 @@ private:
     }
 
     MonotonicTimePoint timer_close;
-    MonotonicTimePoint::duration last_delay;
+    MonotonicTimePoint::duration last_delay {};
     EventRef2 timer_event;
 };
