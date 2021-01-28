@@ -168,6 +168,12 @@ struct array_view
         assert(count <= this->size());
         return {this->data(), this->size() - count};
     }
+
+    template<class C>
+    C as() const
+    {
+        return C(this->begin(), this->end());
+    }
     //@}
 
 private:
@@ -337,6 +343,12 @@ struct writable_array_view
         assert(count <= this->size());
         return {this->data(), this->size() - count};
     }
+
+    template<class C>
+    C as() const
+    {
+        return C(this->begin(), this->end());
+    }
     //@}
 
 private:
@@ -435,66 +447,4 @@ using writable_chars_view = writable_array_view<char>;
 constexpr chars_view operator "" _av(char const * s, size_t len) noexcept
 {
     return {s, len};
-}
-
-//constexpr u8_array_view operator "" _av(unsigned char const * s, size_t len) noexcept
-//{
-//    return {s, len};
-//}
-
-/// TODO other file
-static inline void ap_integer_increment_le(writable_u8_array_view number)
-{
-    for (uint8_t& i : number) {
-        if (i < 0xFF) {
-            i++;
-            break;
-        }
-        i = 0;
-    }
-}
-
-/// TODO other file
-static inline void ap_integer_decrement_le(writable_u8_array_view number)
-{
-    for (uint8_t& i : number) {
-        if (i > 0) {
-            i--;
-            break;
-        }
-        i = 0xFF;
-    }
-}
-
-#include <cstring> // memcmp
-
-/// TODO other file
-static inline bool are_buffer_equal(u8_array_view a, u8_array_view b)
-{
-    return a.size() == b.size() && (0 == memcmp(a.data(), b.data(), a.size()));
-}
-
-#include <utility> // std::pair
-
-/// TODO other file
-static inline std::pair<u8_array_view, u8_array_view> get_bytes_slice(u8_array_view a, size_t n)
-{
-    return {{a.data(), n},{a.data()+n, a.size()-n}};
-}
-
-
-#include <vector>
-
-/// TODO other file
-static inline std::vector<uint8_t> && operator<<(std::vector<uint8_t>&& v, u8_array_view a)
-{
-    v.insert(v.end(), a.begin(), a.end());
-    return std::move(v);
-}
-
-/// TODO other file
-static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, u8_array_view a)
-{
-    v.insert(v.end(), a.begin(), a.end());
-    return v;
 }

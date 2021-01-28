@@ -67,6 +67,19 @@ void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t const * ma
 
 }
 
+Pointer Pointer::build_from_native(
+    CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask)
+{
+    Pointer pointer;
+    pointer.dimensions = d;
+    pointer.hotspot = hs;
+    pointer.native_xor_bpp = xor_bpp;
+    ::memcpy(pointer.data, xor_mask.data(), xor_mask.size());
+    pointer.native_length_xor_mask = xor_mask.size();
+    ::memcpy(pointer.mask, and_mask.data(), and_mask.size());
+    pointer.native_length_and_mask = and_mask.size();
+    return pointer;
+}
 
 bool Pointer::operator==(const Pointer & other) const
 {

@@ -18,12 +18,10 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-
 #pragma once
 
 #include "gdi/screen_info.hpp"
 #include "utils/bitfu.hpp"
-#include "utils/log.hpp"
 #include "utils/sugar/bytes_view.hpp"
 
 class InStream;
@@ -100,18 +98,7 @@ public:
         return pointer;
     }
 
-    /*constexpr*/ static Pointer build_from_native(CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask)
-    {
-        Pointer pointer;
-        pointer.dimensions = d;
-        pointer.hotspot = hs;
-        pointer.native_xor_bpp = xor_bpp;
-        ::memcpy(pointer.data, xor_mask.data(), xor_mask.size());
-        pointer.native_length_xor_mask = xor_mask.size();
-        ::memcpy(pointer.mask, and_mask.data(), and_mask.size());
-        pointer.native_length_and_mask = and_mask.size();
-        return pointer;
-    }
+    static Pointer build_from_native(CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask);
 
     bool operator==(const Pointer & other) const;
 

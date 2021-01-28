@@ -224,13 +224,6 @@ public:
         return this->in_copy_bytes({v, n});
     }
 
-    std::vector<uint8_t> in_copy_bytes_as_vector(size_t n) noexcept {
-        assert(this->in_check_rem(n));
-        std::vector<uint8_t> v(this->get_current(), this->get_current()+n);
-        this->p.in_skip_bytes(n);
-        return v;
-    }
-
     const uint8_t *in_uint8p(unsigned int n) noexcept {
         assert(this->in_check_rem(n));
         return this->p.in_uint8p(n);

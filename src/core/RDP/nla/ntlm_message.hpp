@@ -36,6 +36,47 @@
 #include "system/ssl_sha256.hpp"
 
 #include <numeric>
+#include <vector>
+#include <cstring> // memcmp
+
+static inline void ap_integer_increment_le(writable_u8_array_view number)
+{
+    for (uint8_t& i : number) {
+        if (i < 0xFF) {
+            i++;
+            break;
+        }
+        i = 0;
+    }
+}
+
+static inline void ap_integer_decrement_le(writable_u8_array_view number)
+{
+    for (uint8_t& i : number) {
+        if (i > 0) {
+            i--;
+            break;
+        }
+        i = 0xFF;
+    }
+}
+
+static inline bool are_buffer_equal(u8_array_view a, u8_array_view b)
+{
+    return a.size() == b.size() && (0 == memcmp(a.data(), b.data(), a.size()));
+}
+
+static inline std::vector<uint8_t> && operator<<(std::vector<uint8_t>&& v, u8_array_view a)
+{
+    v.insert(v.end(), a.begin(), a.end());
+    return std::move(v);
+}
+
+static inline std::vector<uint8_t> & operator<<(std::vector<uint8_t> & v, u8_array_view a)
+{
+    v.insert(v.end(), a.begin(), a.end());
+    return v;
+}
 
 static inline std::vector<uint8_t> UTF16_to_upper(u8_array_view name)
 {
@@ -1583,7 +1624,10 @@ inline void RecvNTLMv2_Client_Challenge(InStream & stream, NTLMv2_Client_Challen
             stream.in_skip_bytes(length);
             break;
         }
-        self.AvPairList.push_back({static_cast<NTLM_AV_ID>(id), stream.in_copy_bytes_as_vector(length)});
+        self.AvPairList.push_back({
+            static_cast<NTLM_AV_ID>(id),
+            stream.in_skip_bytes(length).as<std::vector<uint8_t>>()
+        });
     }
 
     stream.in_skip_bytes(4);
@@ -1938,8 +1982,10 @@ inline NTLMChallengeMessage recvNTLMChallengeMessage(bytes_view av)
             in_stream.in_skip_bytes(length);
             break;
         }
-        auto v = in_stream.in_copy_bytes_as_vector(length);
-        self.AvPairList.push_back({static_cast<NTLM_AV_ID>(id), v});
+        self.AvPairList.push_back({
+            static_cast<NTLM_AV_ID>(id),
+            in_stream.in_skip_bytes(length).as<std::vector<uint8_t>>()
+        });
     }
     return self;
 }

@@ -30,6 +30,8 @@
 #include <vector>
 #include <iterator>
 
+#include <cstring>
+
 
 namespace Cliprdr
 {

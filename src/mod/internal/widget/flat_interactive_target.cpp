@@ -23,6 +23,8 @@
 #include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
 
+#include <cstring>
+
 
 FlatInteractiveTarget::FlatInteractiveTarget(
     gdi::GraphicApi & drawable, int16_t left, int16_t top, uint16_t width, uint16_t height,

@@ -28,6 +28,9 @@
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
 
+#include <cstring>
+
+
 WidgetSelector::temporary_number_of_page::temporary_number_of_page(const char * s)
 {
     size_t len = std::min(sizeof(this->buffer) - 3, strlen(s));
