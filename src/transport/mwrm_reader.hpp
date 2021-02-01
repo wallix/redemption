@@ -32,6 +32,7 @@
 # define PATH_MAX 4096
 #endif
 
+#include <sys/stat.h>
 #include <sys/types.h>
 
 
@@ -72,6 +73,16 @@ struct MetaLine
 {
     char    filename[PATH_MAX + 1] {};
     off_t   size {};
+    // always 0 with header.version = 1
+    //@{
+    mode_t  mode {};
+    uid_t   uid {};
+    gid_t   gid {};
+    dev_t   dev {};
+    ino_t   ino {};
+    time_t  mtime {};
+    time_t  ctime {};
+    //@}
     time_t  start_time {};
     time_t  stop_time {};
     // always true with header.version = 2 and header.has_checksum = true
@@ -156,14 +167,14 @@ struct MwrmWriterBuf
 
     void write_hash_file(MetaLine const & meta_line) noexcept;
     void write_hash_file(
-        char const * filename, off_t file_size,
+        char const * filename, struct stat const & stat,
         bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
 
     // reset buf then write{filename, stat, start_and_stop, hashs};
     void write_line(MetaLine const & meta_line) noexcept;
     // reset buf then write{filename, stat, start_and_stop, hashs};
     void write_line(
-        char const * filename, off_t file_size, time_t start_time, time_t stop_time,
+        char const * filename, struct stat const & stat, time_t start_time, time_t stop_time,
         bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept;
 
     [[nodiscard]] chars_view buffer() const noexcept;

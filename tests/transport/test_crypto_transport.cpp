@@ -21,16 +21,25 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/file.hpp"
-
-#include "transport/crypto_transport.hpp"
-
 #include "test_only/lcg_random.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+
+#include "transport/crypto_transport.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <snappy.h> // for SNAPPY_VERSION
 #include <string_view>
 
 using namespace std::string_view_literals;
+
+
+static struct stat get_stat(char const* filename)
+{
+    class stat st;
+    stat(filename, &st);
+    return st;
+}
 
 
 namespace
@@ -894,10 +903,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         RED_CHECK(make_array_view(qh.hash) == expected_hash);
         RED_CHECK(make_array_view(fh.hash) == expected_hash);
 
-        RED_CHECK_FILE_CONTENTS(hash_finalname,
-            "v2\n\n\nclear.txt 31 0 0 0 0 0 0 0"
+        auto st = get_stat(finalname);
+        RED_CHECK_FILE_CONTENTS(hash_finalname, str_concat(
+            "v2\n\n\nclear.txt 31 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec),
             " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b"
-            " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n"_av);
+            " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n"));
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -968,10 +985,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         RED_CHECK(ct.is_encrypted());
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
-        RED_CHECK(hash_buf ==
-            "v2\n\n\nencrypted.txt 8260 0 0 0 0 0 0 0"
+        auto st = get_stat(finalname);
+        RED_CHECK(hash_buf == str_concat(
+            "v2\n\n\nencrypted.txt 8260 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec),
             " 04521650db48e670363c68a9cddbeb60f92583bc0d2e093ff2c9375da69d7af0"
-            " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n"sv);
+            " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n"));
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1037,10 +1062,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         ct.open(hash_finalname, cstr_array_view("encrypted.txt"));
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = '\0';
-        RED_CHECK(hash_buf ==
-            "v2\n\n\nencrypted.txt 100 0 0 0 0 0 0 0"
+        auto st = get_stat(finalname);
+        RED_CHECK(hash_buf == str_concat(
+            "v2\n\n\nencrypted.txt 100 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec),
             " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5"
-            " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n"sv);
+            " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n"));
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1112,10 +1145,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         RED_CHECK(make_array_view(qh.hash) == expected_qhash);
         RED_CHECK(make_array_view(fh.hash) == expected_fhash);
 
-        RED_CHECK_FILE_CONTENTS(hash_finalname,
-            "v2\n\n\nclear.txt 4047 0 0 0 0 0 0 0"
+        auto st = get_stat(finalname);
+        RED_CHECK_FILE_CONTENTS(hash_finalname, str_concat(
+            "v2\n\n\nclear.txt 4047 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec),
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
-            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"_av);
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"));
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1179,10 +1220,18 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         RED_CHECK(make_array_view(qh.hash) == expected_qhash);
         RED_CHECK(make_array_view(fh.hash) == expected_fhash);
 
-        RED_CHECK_FILE_CONTENTS(hash_finalname,
-            "v2\n\n\nclear.txt 4047 0 0 0 0 0 0 0"
+        auto st = get_stat(finalname);
+        RED_CHECK_FILE_CONTENTS(hash_finalname, str_concat(
+            "v2\n\n\nclear.txt 4047 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec),
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
-            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"_av);
+            " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"));
     }
 
     RED_CHECK_WORKSPACE(wd);
@@ -1230,7 +1279,16 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         auto len = ct.partial_read(hash_buf, sizeof(hash_buf));
         hash_buf[len] = 0;
         ct.close();
-        RED_CHECK(hash_buf == "v2\n\n\nencrypted_file.enc 4166665 0 0 0 0 0 0 0\n"sv);
+        auto st = get_stat(encrypted_file);
+        RED_CHECK(hash_buf == str_concat(
+            "v2\n\n\nencrypted_file.enc 4166665 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec), '\n'));
     }
     RED_CHECK(make_array_view(buffer) == original_contents);
 
@@ -1289,23 +1347,29 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         hash_buf[len] = 0;
         ct.close();
 
+        auto keys =
         #if SNAPPY_VERSION < (1<<16|1<<8|3)
-            RED_CHECK(hash_buf ==
-                "v2\n\n\nencrypted_file.enc 1143180 0 0 0 0 0 0 0"
-                " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
-                " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n"sv);
+            " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
+            " 91886e9e6df928de5de87658a40a21db4afc84f4bfb2f81cc83e42ed42b25960\n"_av
         #elif SNAPPY_VERSION < (1<<16|1<<8|4)
-            RED_CHECK(hash_buf ==
-                "v2\n\n\nencrypted_file.enc 1143180 0 0 0 0 0 0 0"
-                " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
-                " 27fa17cac1feda21f9b134d503e6292548a35925f0137474d896a3461b777b5a\n"sv);
+            " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
+            " 27fa17cac1feda21f9b134d503e6292548a35925f0137474d896a3461b777b5a\n"_av
         #else
-            RED_CHECK(hash_buf ==
-                "v2\n\n\nencrypted_file.enc 1143180 0 0 0 0 0 0 0"
-                " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
-                " f5b6a73d68ac7405d988bbb60a88afd59b72a47bab2e03068573e7510451e801"
-                "\n"sv);
+            " 95ac075e238b5a331242efce2852cff0d475ecdaf75d4b315488e298916820d6"
+            " f5b6a73d68ac7405d988bbb60a88afd59b72a47bab2e03068573e7510451e801\n"_av
         #endif
+        ;
+        auto st = get_stat(encrypted_file);
+        RED_CHECK(hash_buf == str_concat(
+            "v2\n\n\nencrypted_file.enc 1143180 ",
+            int_to_chars(st.st_mode), ' ',
+            int_to_chars(st.st_uid), ' ',
+            int_to_chars(st.st_gid), ' ',
+            int_to_chars(st.st_dev), ' ',
+            int_to_chars(st.st_ino), ' ',
+            int_to_chars(st.st_mtim.tv_sec), ' ',
+            int_to_chars(st.st_ctim.tv_sec), keys
+        ));
     }
 
     RED_CHECK(make_array_view(buffer, original_filesize) == original_contents);

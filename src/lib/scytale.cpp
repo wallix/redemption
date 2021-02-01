@@ -520,6 +520,13 @@ struct ScytaleMetaReaderHandle
         this->c_mwrm_line = {
             this->meta_line.filename,
             static_cast<uint64_t>(this->meta_line.size),
+            this->meta_line.mode,
+            this->meta_line.uid,
+            this->meta_line.gid,
+            this->meta_line.dev,
+            this->meta_line.ino,
+            static_cast<uint64_t>(this->meta_line.mtime),
+            static_cast<uint64_t>(this->meta_line.ctime),
             static_cast<uint64_t>(this->meta_line.start_time),
             static_cast<uint64_t>(this->meta_line.stop_time),
             this->meta_line.with_hash,

@@ -191,7 +191,7 @@ void OutMetaSequenceTransport::next_meta_file()
 
     MwrmWriterBuf mwrm_file_buf;
     mwrm_file_buf.write_line(
-        filename, stat.st_size,
+        filename, stat,
         this->start_sec_, this->stop_sec_ + 1,
         this->cctx.get_with_checksum(), qhash, fhash);
     this->meta_buf_encrypt_transport.send(mwrm_file_buf.buffer());

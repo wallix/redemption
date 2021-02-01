@@ -25,8 +25,17 @@
 
 #include "capture/fdx_capture.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "test_only/lcg_random.hpp"
 #include "transport/mwrm_reader.hpp"
+
+
+static struct stat get_stat(char const* filename)
+{
+    class stat st;
+    stat(filename, &st);
+    return st;
+}
 
 
 RED_AUTO_TEST_CASE(tfl_suffix_genarator)
@@ -176,6 +185,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     auto fdx_hash_path = hash_path.create_subdirectory(sid);
 
     auto fdx_filepath = record_path.add_file(fdx_basename);
+    auto st = get_stat(fdx_filepath);
     std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(fdx_filepath);
 
     RED_TEST(bytes_view(file_content) ==
@@ -196,25 +206,76 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 
     RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
         "v2\n\n\nsid,blabla.fdx "sv,
-        std::to_string(file_content.size()),
-        " 0 0 0 0 0 0 0\n"sv));
+        int_to_chars(file_content.size()), ' ',
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), '\n'));
 
-    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000001.tfl")), "ijkl"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000003.tfl")), "qr"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000004.tfl")), "stu"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000005.tfl")), "vwxyz"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000006.tfl")), "abcde"sv);
+    auto tfl1 = fdx_record_path.add_file(str_concat(sid, ",000001.tfl"));
+    auto tfl3 = fdx_record_path.add_file(str_concat(sid, ",000003.tfl"));
+    auto tfl4 = fdx_record_path.add_file(str_concat(sid, ",000004.tfl"));
+    auto tfl5 = fdx_record_path.add_file(str_concat(sid, ",000005.tfl"));
+    auto tfl6 = fdx_record_path.add_file(str_concat(sid, ",000006.tfl"));
+    auto st1 = get_stat(tfl1);
+    auto st3 = get_stat(tfl3);
+    auto st4 = get_stat(tfl4);
+    auto st5 = get_stat(tfl5);
+    auto st6 = get_stat(tfl6);
+    RED_CHECK_FILE_CONTENTS(tfl1, "ijkl"sv);
+    RED_CHECK_FILE_CONTENTS(tfl3, "qr"sv);
+    RED_CHECK_FILE_CONTENTS(tfl4, "stu"sv);
+    RED_CHECK_FILE_CONTENTS(tfl5, "vwxyz"sv);
+    RED_CHECK_FILE_CONTENTS(tfl6, "abcde"sv);
 
-    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000001.tfl")),
-        "v2\n\n\nmy_session_id,000001.tfl 4 0 0 0 0 0 0 0\n"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000003.tfl")),
-        "v2\n\n\nmy_session_id,000003.tfl 2 0 0 0 0 0 0 0\n"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000004.tfl")),
-        "v2\n\n\nmy_session_id,000004.tfl 3 0 0 0 0 0 0 0\n"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000005.tfl")),
-        "v2\n\n\nmy_session_id,000005.tfl 5 0 0 0 0 0 0 0\n"sv);
-    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000006.tfl")),
-        "v2\n\n\nmy_session_id,000006.tfl 5 0 0 0 0 0 0 0\n"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000001.tfl")), str_concat(
+        "v2\n\n\nmy_session_id,000001.tfl 4 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), '\n'));
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000003.tfl")), str_concat(
+        "v2\n\n\nmy_session_id,000003.tfl 2 ",
+        int_to_chars(st3.st_mode), ' ',
+        int_to_chars(st3.st_uid), ' ',
+        int_to_chars(st3.st_gid), ' ',
+        int_to_chars(st3.st_dev), ' ',
+        int_to_chars(st3.st_ino), ' ',
+        int_to_chars(st3.st_mtim.tv_sec), ' ',
+        int_to_chars(st3.st_ctim.tv_sec), '\n'));
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000004.tfl")), str_concat(
+        "v2\n\n\nmy_session_id,000004.tfl 3 ",
+        int_to_chars(st4.st_mode), ' ',
+        int_to_chars(st4.st_uid), ' ',
+        int_to_chars(st4.st_gid), ' ',
+        int_to_chars(st4.st_dev), ' ',
+        int_to_chars(st4.st_ino), ' ',
+        int_to_chars(st4.st_mtim.tv_sec), ' ',
+        int_to_chars(st4.st_ctim.tv_sec), '\n'));
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000005.tfl")), str_concat(
+        "v2\n\n\nmy_session_id,000005.tfl 5 ",
+        int_to_chars(st5.st_mode), ' ',
+        int_to_chars(st5.st_uid), ' ',
+        int_to_chars(st5.st_gid), ' ',
+        int_to_chars(st5.st_dev), ' ',
+        int_to_chars(st5.st_ino), ' ',
+        int_to_chars(st5.st_mtim.tv_sec), ' ',
+        int_to_chars(st5.st_ctim.tv_sec), '\n'));
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000006.tfl")), str_concat(
+        "v2\n\n\nmy_session_id,000006.tfl 5 ",
+        int_to_chars(st6.st_mode), ' ',
+        int_to_chars(st6.st_uid), ' ',
+        int_to_chars(st6.st_gid), ' ',
+        int_to_chars(st6.st_dev), ' ',
+        int_to_chars(st6.st_ino), ' ',
+        int_to_chars(st6.st_mtim.tv_sec), ' ',
+        int_to_chars(st6.st_ctim.tv_sec), '\n'));
 }
 
 RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)

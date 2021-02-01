@@ -854,7 +854,7 @@ void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray con
         utils::back(basename) = '\0';
 
         MwrmWriterBuf hash_file_buf;
-        hash_file_buf.write_hash_file(basename, stat.st_size, this->cctx.get_with_checksum(), qhash, fhash);
+        hash_file_buf.write_hash_file(basename, stat, this->cctx.get_with_checksum(), qhash, fhash);
         auto buf = hash_file_buf.buffer();
         send_data(buf.data(), buf.size(), hash_encrypter, hash_out_file);
     }

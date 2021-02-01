@@ -43,7 +43,8 @@ RED_AUTO_TEST_CASE(TestMwrmWriterBuf)
 
         FilenameWriter(char const* filename)
         {
-            this->mwrm_buf.write_line(filename, 0, 0, 0, false, dummy_hash, dummy_hash);
+            struct stat st{};
+            this->mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
         }
     };
 

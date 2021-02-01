@@ -79,10 +79,10 @@ namespace
                         "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
                     ));
                     cctx.set_hmac_key(cstr_array_view(
-                            "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-                            "\x49\x21\x57\x87\x47\x74\x08\x8a"
-                            "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-                            "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+                        "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+                        "\x49\x21\x57\x87\x47\x74\x08\x8a"
+                        "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+                        "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
                     ));
                     cctx.set_trace_type(trace_type);
                     return cctx;
@@ -156,6 +156,33 @@ static void gen_wrm1(
     // The destruction of capture object will finalize the metafile content
 }
 
+static struct stat get_stat(char const* filename)
+{
+    class stat st;
+    stat(filename, &st);
+    return st;
+}
+
+static std::size_t str_stat_size(struct stat const& st)
+{
+    return int_to_chars(st.st_size).size()
+         + int_to_chars(st.st_mode).size()
+         + int_to_chars(st.st_uid).size()
+         + int_to_chars(st.st_gid).size()
+         + int_to_chars(st.st_dev).size()
+         + int_to_chars(st.st_ino).size()
+         + int_to_chars(st.st_mtim.tv_sec).size()
+         + int_to_chars(st.st_ctim.tv_sec).size()
+         ;
+}
+
+static std::string prefix(std::string data, std::size_t n){
+    if (data.size() > n) {
+        data.resize(n);
+    }
+    return data;
+};
+
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
     WorkingDirectory record_wd("record");
@@ -164,24 +191,83 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
     gen_wrm1(TraceType::localfile, record_wd, hash_wd, tmp_wd);
 
+    auto mwrm = record_wd.add_file("capture.mwrm");
     auto wrm1 = record_wd.add_file("capture-000000.wrm");
     auto wrm2 = record_wd.add_file("capture-000001.wrm");
     auto wrm3 = record_wd.add_file("capture-000002.wrm");
-    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture.mwrm"), array_view{str_concat(
+    auto st = get_stat(mwrm);
+    auto st1 = get_stat(wrm1);
+    auto st2 = get_stat(wrm2);
+    auto st3 = get_stat(wrm3);
+    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n800 600\nnochecksum\n\n\n",
-        wrm1, " 1646 0 0 0 0 0 0 0 1000 1004\n",
-        wrm2, " 3508 0 0 0 0 0 0 0 1004 1007\n",
-        wrm3, " 3463 0 0 0 0 0 0 0 1007 1008\n")});
+        wrm1, " 1646 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), " 1000 1004\n",
+        wrm2, " 3508 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec), " 1004 1007\n",
+        wrm3, " 3463 ",
+        int_to_chars(st3.st_mode), ' ',
+        int_to_chars(st3.st_uid), ' ',
+        int_to_chars(st3.st_gid), ' ',
+        int_to_chars(st3.st_dev), ' ',
+        int_to_chars(st3.st_ino), ' ',
+        int_to_chars(st3.st_mtim.tv_sec), ' ',
+        int_to_chars(st3.st_ctim.tv_sec), " 1007 1008\n")});
     RED_TEST_FILE_SIZE(wrm1, 1646);
     RED_TEST_FILE_SIZE(wrm2, 3508);
     RED_TEST_FILE_SIZE(wrm3, 3463);
+
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"), array_view{str_concat(
         "v2\n\n\ncapture.mwrm ",
-        int_to_chars(wrm1.size() + wrm2.size() + wrm3.size() + 114),
-        " 0 0 0 0 0 0 0\n")});
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 43);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 43);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 43);
+        int_to_chars( wrm1.size() + wrm2.size() + wrm3.size()
+                    + str_stat_size(st1) + str_stat_size(st2) + str_stat_size(st3)
+                    + 81), ' ',
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), '\n')});
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000000.wrm"), array_view{str_concat(
+        "v2\n\n\ncapture-000000.wrm 1646 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), '\n')});
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000001.wrm"), array_view{str_concat(
+        "v2\n\n\ncapture-000001.wrm 3508 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec), '\n')});
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000002.wrm"), array_view{str_concat(
+        "v2\n\n\ncapture-000002.wrm 3463 ",
+        int_to_chars(st3.st_mode), ' ',
+        int_to_chars(st3.st_uid), ' ',
+        int_to_chars(st3.st_gid), ' ',
+        int_to_chars(st3.st_dev), ' ',
+        int_to_chars(st3.st_ino), ' ',
+        int_to_chars(st3.st_mtim.tv_sec), ' ',
+        int_to_chars(st3.st_ctim.tv_sec), '\n')});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -196,32 +282,98 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
     gen_wrm1(TraceType::localfile_hashed, record_wd, hash_wd, tmp_wd);
 
+    auto mwrm = record_wd.add_file("capture.mwrm");
     auto wrm1 = record_wd.add_file("capture-000000.wrm");
     auto wrm2 = record_wd.add_file("capture-000001.wrm");
     auto wrm3 = record_wd.add_file("capture-000002.wrm");
-    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture.mwrm"), array_view{str_concat(
+    auto st = get_stat(mwrm);
+    auto st1 = get_stat(wrm1);
+    auto st2 = get_stat(wrm2);
+    auto st3 = get_stat(wrm3);
+    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n800 600\nchecksum\n\n\n",
-        wrm1, " 1646 0 0 0 0 0 0 0 1000 1004"
+        wrm1, " 1646 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), " 1000 1004"
         " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0"
         " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0\n",
-        wrm2, " 3508 0 0 0 0 0 0 0 1004 1007"
+        wrm2, " 3508 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec), " 1004 1007"
         " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da"
         " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da\n",
-        wrm3, " 3463 0 0 0 0 0 0 0 1007 1008"
+        wrm3, " 3463 ",
+        int_to_chars(st3.st_mode), ' ',
+        int_to_chars(st3.st_uid), ' ',
+        int_to_chars(st3.st_gid), ' ',
+        int_to_chars(st3.st_dev), ' ',
+        int_to_chars(st3.st_ino), ' ',
+        int_to_chars(st3.st_mtim.tv_sec), ' ',
+        int_to_chars(st3.st_ctim.tv_sec), " 1007 1008"
         " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97"
         " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97\n")});
     RED_TEST_FILE_SIZE(wrm1, 1646);
     RED_TEST_FILE_SIZE(wrm2, 3508);
     RED_TEST_FILE_SIZE(wrm3, 3463);
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"), array_view{str_concat(
+
+    auto hash_content = RED_CHECK_GET_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"));
+    auto hash_expected = str_concat(
         "v2\n\n\ncapture.mwrm ",
-        int_to_chars(wrm1.size() + wrm2.size() + wrm3.size() + 502),
-        " 0 0 0 0 0 0 0"
-        " 02fdb3c1948feeff1159d06aaedfc858df3d680580ad0e36e13bf9f750047e85"
-        " 02fdb3c1948feeff1159d06aaedfc858df3d680580ad0e36e13bf9f750047e85\n")});
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 173);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 173);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 173);
+        int_to_chars( wrm1.size() + wrm2.size() + wrm3.size()
+                    + str_stat_size(st1) + str_stat_size(st2) + str_stat_size(st3)
+                    + 469), ' ',
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), ' ');
+    RED_TEST(hash_content.size() == hash_expected.size() + 65*2);
+    RED_TEST(prefix(hash_content, hash_expected.size()) == hash_expected);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000000.wrm"), array_view{str_concat(
+        "v2\n\n\ncapture-000000.wrm 1646 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec),
+        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0"
+        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0\n")});
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000001.wrm"), array_view{str_concat(
+        "v2\n\n\ncapture-000001.wrm 3508 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec),
+        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da"
+        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da\n")});
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000002.wrm"), array_view{str_concat(
+        "v2\n\n\ncapture-000002.wrm 3463 ",
+        int_to_chars(st3.st_mode), ' ',
+        int_to_chars(st3.st_uid), ' ',
+        int_to_chars(st3.st_gid), ' ',
+        int_to_chars(st3.st_dev), ' ',
+        int_to_chars(st3.st_ino), ' ',
+        int_to_chars(st3.st_mtim.tv_sec), ' ',
+        int_to_chars(st3.st_ctim.tv_sec),
+        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97"
+        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97\n")});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -320,17 +472,36 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
 
     RED_CHECK(output == "ipconfig\rtype=\"FOREGROUND_WINDOW_CHANGED\" windows=\"WINDOW\" class=\"CLASS\" command_line=\"COMMAND_LINE\""_av);
 
+    auto mwrm = record_wd.add_file("capture_kbd_input.mwrm");
+    auto st = get_stat(first_file);
+    auto mst = get_stat(mwrm);
     RED_TEST_FILE_SIZE(first_file, 303);
-    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture_kbd_input.mwrm"), array_view{str_concat(
+    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "4 1\n"
         "nochecksum\n"
         "\n"
         "\n",
-        first_file, " 303 0 0 0 0 0 0 0 1000 1002\n")});
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 52);
+        first_file, " 303 ",
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), " 1000 1002\n")});
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 84);
+
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_kbd_input.mwrm"), array_view{str_concat(
-        "v2\n\n\ncapture_kbd_input.mwrm ", int_to_chars(first_file.size() + 49), " 0 0 0 0 0 0 0\n")});
+        "v2\n\n\ncapture_kbd_input.mwrm ",
+        int_to_chars(first_file.size() + 81), ' ',
+        int_to_chars(mst.st_mode), ' ',
+        int_to_chars(mst.st_uid), ' ',
+        int_to_chars(mst.st_gid), ' ',
+        int_to_chars(mst.st_dev), ' ',
+        int_to_chars(mst.st_ino), ' ',
+        int_to_chars(mst.st_mtim.tv_sec), ' ',
+        int_to_chars(mst.st_ctim.tv_sec), '\n')});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -390,17 +561,35 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
     RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
     RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 
+    auto mwrm = record_wd.add_file("capture_remoteapp.mwrm");
+    auto st = get_stat(first_file);
+    auto mst = get_stat(mwrm);
     RED_TEST_FILE_SIZE(first_file, 1670);
-    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture_remoteapp.mwrm"), array_view{str_concat(
+    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        first_file, " 1670 0 0 0 0 0 0 0 1000 1002\n")});
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 53);
+        first_file, " 1670 ",
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), " 1000 1002\n")});
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 85);
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_remoteapp.mwrm"), array_view{str_concat(
-        "v2\n\n\ncapture_remoteapp.mwrm ", int_to_chars(first_file.size() + 54), " 0 0 0 0 0 0 0\n")});
+        "v2\n\n\ncapture_remoteapp.mwrm ",
+        int_to_chars(first_file.size() + 86), ' ',
+        int_to_chars(mst.st_mode), ' ',
+        int_to_chars(mst.st_uid), ' ',
+        int_to_chars(mst.st_gid), ' ',
+        int_to_chars(mst.st_dev), ' ',
+        int_to_chars(mst.st_ino), ' ',
+        int_to_chars(mst.st_mtim.tv_sec), ' ',
+        int_to_chars(mst.st_ctim.tv_sec), '\n')});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);

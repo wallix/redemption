@@ -58,6 +58,26 @@ static void gen_out_meta_seq(
     wrm_trans.send("CCCCX", 5);
 }
 
+static std::size_t str_stat_size(struct stat const& st)
+{
+    return int_to_chars(st.st_size).size()
+         + int_to_chars(st.st_mode).size()
+         + int_to_chars(st.st_uid).size()
+         + int_to_chars(st.st_gid).size()
+         + int_to_chars(st.st_dev).size()
+         + int_to_chars(st.st_ino).size()
+         + int_to_chars(st.st_mtim.tv_sec).size()
+         + int_to_chars(st.st_ctim.tv_sec).size()
+         ;
+}
+
+static struct stat get_stat(char const* filename)
+{
+    class stat st;
+    stat(filename, &st);
+    return st;
+}
+
 static std::string prefix(std::string data, std::size_t n){
     if (data.size() > n) {
         data.resize(n);
@@ -76,34 +96,81 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportLocal)
 
     gen_out_meta_seq(TraceType::localfile, record_wd, hash_wd);
 
+    auto mwrm = record_wd.add_file("xxx.mwrm");
     auto file1 = record_wd.add_file("xxx-000000.wrm");
     auto file2 = record_wd.add_file("xxx-000001.wrm");
+    auto st1 = get_stat(file1);
+    auto st2 = get_stat(file2);
+    auto mwrmst = get_stat(mwrm);
 
     RED_TEST_FILE_CONTENTS(file1, "AAAAXBBBBX"_av);
     RED_TEST_FILE_CONTENTS(file2, "CCCCX"_av);
-    RED_TEST_FILE_CONTENTS(record_wd.add_file("xxx.mwrm"), array_view{str_concat(
+    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        file1, " 10 0 0 0 0 0 0 0 1352304810 1352304811\n",
-        file2, " 5 0 0 0 0 0 0 0 1352304811 1352304811\n")});
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx-000000.wrm"),
+        file1, " 10 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), " 1352304810 1352304811\n",
+        file2, " 5 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec), " 1352304811 1352304811\n")});
+
+    auto hash1 = hash_wd.add_file("xxx-000000.wrm");
+    auto hash2 = hash_wd.add_file("xxx-000001.wrm");
+
+    RED_TEST_FILE_CONTENTS(hash1, str_concat(
         "v2\n"
         "\n"
         "\n"
-        "xxx-000000.wrm 10 0 0 0 0 0 0 0\n"_av);
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx-000001.wrm"),
+        "xxx-000000.wrm 10 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), '\n'));
+    RED_TEST_FILE_CONTENTS(hash2, str_concat(
         "v2\n"
         "\n"
         "\n"
-        "xxx-000001.wrm 5 0 0 0 0 0 0 0\n"_av);
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx.mwrm"), array_view{str_concat(
+        "xxx-000001.wrm 5 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec), '\n'));
+
+
+    auto mhash = hash_wd.add_file("xxx.mwrm");
+    RED_TEST_FILE_CONTENTS(mhash, array_view{str_concat(
         "v2\n"
         "\n"
         "\n"
-        "xxx.mwrm ", int_to_chars(file1.size() + file2.size() + 103), " 0 0 0 0 0 0 0\n")});
+        "xxx.mwrm ",
+        int_to_chars(file1.size() + file2.size() + str_stat_size(st1) + str_stat_size(st2) + 86), ' ',
+        int_to_chars(mwrmst.st_mode), ' ',
+        int_to_chars(mwrmst.st_uid), ' ',
+        int_to_chars(mwrmst.st_gid), ' ',
+        int_to_chars(mwrmst.st_dev), ' ',
+        int_to_chars(mwrmst.st_ino), ' ',
+        int_to_chars(mwrmst.st_mtim.tv_sec), ' ',
+        int_to_chars(mwrmst.st_ctim.tv_sec), '\n')});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -116,46 +183,91 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
 
     gen_out_meta_seq(TraceType::localfile_hashed, record_wd, hash_wd);
 
+    auto mwrm = record_wd.add_file("xxx.mwrm");
     auto file1 = record_wd.add_file("xxx-000000.wrm");
     auto file2 = record_wd.add_file("xxx-000001.wrm");
+    auto st1 = get_stat(file1);
+    auto st2 = get_stat(file2);
+    auto mwrmst = get_stat(mwrm);
 
     RED_TEST_FILE_CONTENTS(file1, "AAAAXBBBBX"_av);
     RED_TEST_FILE_CONTENTS(file2, "CCCCX"_av);
-    RED_TEST_FILE_CONTENTS(record_wd.add_file("xxx.mwrm"), array_view{str_concat(
+    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "checksum\n"
         "\n"
         "\n",
-        file1, " 10 0 0 0 0 0 0 0 1352304810 1352304811"
+        file1, " 10 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec), " 1352304810 1352304811"
         " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7"
         " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7\n",
-        file2, " 5 0 0 0 0 0 0 0 1352304811 1352304811"
+        file2, " 5 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec), " 1352304811 1352304811"
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36"
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36\n")});
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx-000000.wrm"),
-        "v2\n"
-        "\n"
-        "\n"
-        "xxx-000000.wrm 10 0 0 0 0 0 0 0"
-        " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7"
-        " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7\n"_av);
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx-000001.wrm"),
-        "v2\n"
-        "\n"
-        "\n"
-        "xxx-000001.wrm 5 0 0 0 0 0 0 0"
-        " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36"
-        " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36\n"_av);
 
+    auto hash1 = hash_wd.add_file("xxx-000000.wrm");
+    auto hash2 = hash_wd.add_file("xxx-000001.wrm");
+
+    RED_TEST_FILE_CONTENTS(hash1, str_concat(
+        "v2\n"
+        "\n"
+        "\n"
+        "xxx-000000.wrm 10 ",
+        int_to_chars(st1.st_mode), ' ',
+        int_to_chars(st1.st_uid), ' ',
+        int_to_chars(st1.st_gid), ' ',
+        int_to_chars(st1.st_dev), ' ',
+        int_to_chars(st1.st_ino), ' ',
+        int_to_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_chars(st1.st_ctim.tv_sec),
+        " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7"
+        " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7\n"));
+    RED_TEST_FILE_CONTENTS(hash2, str_concat(
+        "v2\n"
+        "\n"
+        "\n"
+        "xxx-000001.wrm 5 ",
+        int_to_chars(st2.st_mode), ' ',
+        int_to_chars(st2.st_uid), ' ',
+        int_to_chars(st2.st_gid), ' ',
+        int_to_chars(st2.st_dev), ' ',
+        int_to_chars(st2.st_ino), ' ',
+        int_to_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_chars(st2.st_ctim.tv_sec),
+        " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36"
+        " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36\n"));
+
+    auto mwrm_str_size = int_to_chars(file1.size() + file2.size() + str_stat_size(st1) + str_stat_size(st2) + 344);
     auto expected_prefix = str_concat(
         "v2\n"
         "\n"
         "\n"
-        "xxx.mwrm ", int_to_chars(file1.size() + file2.size() + 361), " 0 0 0 0 0 0 0");
+        "xxx.mwrm ",
+        mwrm_str_size, ' ',
+        int_to_chars(mwrmst.st_mode), ' ',
+        int_to_chars(mwrmst.st_uid), ' ',
+        int_to_chars(mwrmst.st_gid), ' ',
+        int_to_chars(mwrmst.st_dev), ' ',
+        int_to_chars(mwrmst.st_ino), ' ',
+        int_to_chars(mwrmst.st_mtim.tv_sec), ' ',
+        int_to_chars(mwrmst.st_ctim.tv_sec), ' ');
     auto hash_mwrm = RED_CHECK_GET_FILE_CONTENTS(hash_wd.add_file("xxx.mwrm"));
 
-    RED_TEST(hash_mwrm.size() == expected_prefix.size() + 131);
+    RED_TEST(hash_mwrm.size() == expected_prefix.size() + mwrm_str_size.size() + 127);
     RED_TEST(prefix(hash_mwrm, expected_prefix.size()) == expected_prefix);
 
     RED_CHECK_WORKSPACE(record_wd);
@@ -184,28 +296,8 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportCrypted)
         "\xda\xb6MFCW\x05\x00\x00\x00"_av_hex);
 
     RED_TEST(file_contents_prefix(record_wd.add_file("xxx.mwrm"), 4) == "WCFM"_av);
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx-000000.wrm"),
-        "\x57\x43\x46\x4d\x01\x00\x00\x00\x38\xa4\xf1\x4b\x70\xc6\x35\xa4\x28"
-        "\xfe\x8b\xed\x60\x43\xf8\x13\x18\x0e\x40\x5f\x50\x56\xa2\xe6\x08\x94"
-        "\x0f\xd2\x40\xbf\xe1\xe0\x70\x00\x00\x00\x49\x19\x3c\x53\x4e\x5a\x7b"
-        "\x51\x16\xf2\x89\x94\xb6\x03\x75\x58\xc8\xd5\x37\x81\x44\x4a\xd4\x4d"
-        "\xc4\x88\x7c\x79\xa1\x60\xa8\x85\xb5\x07\xfb\x41\x51\x56\x86\x99\x10"
-        "\x72\xe3\xc5\x79\xf8\xd1\x36\x4f\xfc\x3f\x79\xb9\x4a\xf9\xbe\x28\x67"
-        "\x08\x30\x7d\x22\xa8\x3e\x31\xcf\x3e\x39\xc5\x57\xf4\x95\x04\x1d\xac"
-        "\x78\xa1\x15\x72\xd9\xe2\x8a\x34\x7b\xd4\x71\xc8\xa3\x2f\xe4\x8d\xb1"
-        "\x4d\x12\xe0\xdf\xbc\x3e\xc5\x2f\xeb\x07\x89\xd9\x1e\xa2\xd0\x42\x26"
-        "\xa8\xc4\x1b\x4d\x46\x43\x57\xa7\x00\x00\x00"_av_hex);
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("xxx-000001.wrm"),
-        "\x57\x43\x46\x4d\x01\x00\x00\x00\xb8\x5b\x86\xac\xf0\x15\x30\x37\xa8"
-        "\x65\x5f\x12\xe0\x42\x70\xcc\x98\x25\x00\x5f\xd0\x05\xa6\xba\x88\x5b"
-        "\x2a\xa0\xc0\x1e\x3f\x3f\x70\x00\x00\x00\xd2\xb3\x84\x3e\xee\xf8\x75"
-        "\xea\xb5\x7d\x72\xd1\xe7\xaa\x88\xf0\x76\xbd\x13\x9a\xf8\x6b\x92\x95"
-        "\xe1\x15\x27\x34\xf2\xf6\xfc\xae\xf9\x05\x05\x21\x6c\xc2\xc7\x3a\x03"
-        "\x60\x8b\x3d\xae\x0a\x23\x9d\x4c\xc9\x63\x01\xd7\x54\xa1\x64\xa2\xa5"
-        "\x05\xf0\x11\xfb\xca\x79\xc0\x17\xf7\x2a\x50\x81\x11\x1d\x19\xa4\x54"
-        "\xaf\xd2\x7c\xec\x5e\xfd\x27\xf8\x46\x19\x7e\xcb\x53\x79\x97\x29\x72"
-        "\xf6\xe1\x3c\x8b\x5f\xe1\x90\xe0\x2e\x6d\x91\x4f\xde\x0b\x2d\x79\x46"
-        "\x49\x5f\x56\x4d\x46\x43\x57\xa7\x00\x00\x00"_av_hex);
+    RED_TEST(file_contents_prefix(hash_wd.add_file("xxx-000000.wrm"), 4) == "WCFM"_av);
+    RED_TEST(file_contents_prefix(hash_wd.add_file("xxx-000001.wrm"), 4) == "WCFM"_av);
     RED_TEST(file_contents_prefix(hash_wd.add_file("xxx.mwrm"), 4) == "WCFM"_av);
 
     RED_CHECK_WORKSPACE(record_wd);
