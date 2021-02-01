@@ -28,7 +28,6 @@
 #include "core/log_id.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"
-#include "utils/genfstat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/log_buffered.hpp"
 
@@ -59,7 +58,6 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
     ini.clear_acl_fields_changed();
 
     LCGRandom rnd;
-    Fstat fstat;
     CryptoContext cctx;
 
     ini.set_acl<cfg::globals::auth_user>("admin");
@@ -82,7 +80,7 @@ RED_AUTO_TEST_CASE_WD(TestSessionLogFileAndSiemLogger, wd)
 
     auto notify_error = [](const Error & /*error*/) { RED_REQUIRE(false); };
 
-    SessionLogFile log_file(ini, cctx, rnd, fstat, notify_error);
+    SessionLogFile log_file(ini, cctx, rnd, notify_error);
     SiemLogger siem_logger;
 
     setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);          // for localtime

@@ -171,13 +171,6 @@ extern "C"
     {
         char const * filename;
         uint64_t size;
-        uint64_t mode;
-        uint64_t uid;
-        uint64_t gid;
-        uint64_t dev;
-        uint64_t ino;
-        uint64_t mtime;
-        uint64_t ctime;
         uint64_t start_time;
         uint64_t stop_time;
         int with_hash;

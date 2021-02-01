@@ -23,7 +23,6 @@
 #include "utils/log.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/netutils.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/monotonic_clock.hpp"
@@ -134,11 +133,6 @@ public:
     ClientRDPDRChannel     clientRDPDRChannel;
     ClientRemoteAppChannel clientRemoteAppChannel;
 
-private:
-    // Recorder
-    Fstat fstat;
-
-public:
     MonotonicTimePoint start_connection_time;   // when socket is connected
     MonotonicTimePoint start_wab_session_time;  // when the first resize is received
     MonotonicTimePoint start_win_session_time;  // when the first memblt is received
@@ -676,7 +670,6 @@ public:
             , is_remoteapp
             , this->cctx
             , *this->gen
-            , this->fstat
             , hash_path.c_str()
             , std::chrono::duration<unsigned int, std::ratio<1, 100> >{60}
             , std::chrono::seconds(600) /* break_interval */

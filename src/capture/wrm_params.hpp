@@ -28,7 +28,6 @@
 
 class CryptoContext;
 class Random;
-class Fstat;
 
 struct WrmParams
 {
@@ -36,7 +35,6 @@ struct WrmParams
     bool remote_app;
     CryptoContext & cctx;
     Random & rnd;
-    Fstat & fstat;
     const char * hash_path;
     std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;

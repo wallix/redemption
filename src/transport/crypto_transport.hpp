@@ -36,7 +36,6 @@ constexpr uint32_t WABCRYPTOFILE_VERSION = 0x00000001;
 
 constexpr std::size_t CRYPTO_BUFFER_SIZE = 4096 * 4;
 
-class Fstat;
 class Random;
 
 class InCryptoTransport : public Transport //, public PartialIO
@@ -44,7 +43,7 @@ class InCryptoTransport : public Transport //, public PartialIO
 public:
     enum class EncryptionMode { Auto, Encrypted, NotEncrypted };
 
-    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode, Fstat & fstat) noexcept;
+    explicit InCryptoTransport(CryptoContext & cctx, EncryptionMode encryption_mode) noexcept;
 
     ~InCryptoTransport();
 
@@ -85,8 +84,8 @@ private:
 
     int fd;
     bool eof;
-    size_t file_len;
-    size_t current_len;
+    uint64_t file_len;
+    uint64_t current_len;
 
     CryptoContext & cctx;
     char clear_data[CRYPTO_BUFFER_SIZE];  // contains either raw data from unencrypted file
@@ -112,7 +111,6 @@ private:
         std::size_t size = 0;
     };
     EncryptedBufferHandle enc_buffer_handle;
-    Fstat & fstat;
 };
 
 
@@ -141,7 +139,7 @@ private:
     SslHMAC_Sha256_Delayed hm4k;             // quick hash context
     uint32_t       pos;                     // current position in buf
     uint32_t       raw_size;                // the unciphered/uncompressed file size
-    uint32_t       file_size;               // the current file size
+    uint64_t       file_size;               // the current file size
     uint8_t header_buf[40];
     uint8_t result_buffer[65536] = {};
     char           buf[CRYPTO_BUFFER_SIZE]; //
@@ -164,7 +162,7 @@ public:
     using HashArray = ocrypto::HashArray;
 
     explicit OutCryptoTransport(
-        CryptoContext & cctx, Random & rnd, Fstat & fstat,
+        CryptoContext & cctx, Random & rnd,
         std::function<void(const Error & error)> notify_error
     ) noexcept;
 
@@ -198,7 +196,6 @@ private:
     std::string hash_filename;
     CryptoContext & cctx;
     Random & rnd;
-    Fstat & fstat;
     int groupid;
     std::vector<uint8_t> derivator;
 };

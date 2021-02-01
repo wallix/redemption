@@ -24,7 +24,6 @@
 #include "test_only/test_framework/working_directory.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "test_only/lcg_random.hpp"
-#include "test_only/fake_stat.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
@@ -35,7 +34,8 @@
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "test_only/fake_stat.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/ostream_buffered.hpp"
 #include "test_only/transport/test_transport.hpp"
@@ -48,7 +48,6 @@ namespace
         MonotonicTimePoint now{1000s};
 
         LCGRandom rnd;
-        FakeFstat fstat;
         CryptoContext cctx;
         const int groupid = 0;
 
@@ -103,7 +102,6 @@ namespace
             false,
             cctx,
             rnd,
-            fstat,
             hash_path,
             std::chrono::seconds{1},
             std::chrono::seconds{3},
@@ -217,10 +215,21 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         capture_draw_color2(now, capture, scr, 700);
     });
 
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.wrm"), 1646);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.wrm"), 3508);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000002.wrm"), 3463);
-    RED_TEST_FILE_SIZE(record_wd.add_file("test_capture.mwrm"), 174 + record_wd.dirname().size() * 3);
+    auto wrm0 = record_wd.add_file("test_capture-000000.wrm");
+    auto wrm1 = record_wd.add_file("test_capture-000001.wrm");
+    auto wrm2 = record_wd.add_file("test_capture-000002.wrm");
+    RED_TEST_FILE_SIZE(wrm0, 1646);
+    RED_TEST_FILE_SIZE(wrm1, 3508);
+    RED_TEST_FILE_SIZE(wrm2, 3463);
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("test_capture.mwrm"), array_view{str_concat(
+        "v2\n"
+        "800 600\n"
+        "nochecksum\n"
+        "\n"
+        "\n",
+        wrm0, " 1646 0 0 0 0 0 0 0 1000 1004\n",
+        wrm1, " 3508 0 0 0 0 0 0 0 1004 1007\n",
+        wrm2, " 3463 0 0 0 0 0 0 0 1007 1008\n")});
 
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000000.png"), 3102);
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000001.png"), 3127);
@@ -230,10 +239,13 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000005.png"), 3201);
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000006.png"), 3225);
 
-    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000000.wrm"), 45);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000001.wrm"), 45);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000002.wrm"), 45);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture.mwrm"), 39);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000000.wrm"), 48);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000001.wrm"), 48);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("test_capture-000002.wrm"), 48);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture.mwrm"), array_view{str_concat(
+        "v2\n\n\ntest_capture.mwrm ",
+        int_to_chars(wrm0.size() + wrm1.size() + wrm2.size() + 114),
+        " 0 0 0 0 0 0 0\n")});
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -322,11 +334,24 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000000.wrm"), 1651);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000001.wrm"), 3428);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000002.wrm"), 4384);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000003.wrm"), 4388);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0.mwrm"), 248 + record_wd.dirname().size() * 4);
+    auto wrm0 = record_wd.add_file("resizing-capture-0-000000.wrm");
+    auto wrm1 = record_wd.add_file("resizing-capture-0-000001.wrm");
+    auto wrm2 = record_wd.add_file("resizing-capture-0-000002.wrm");
+    auto wrm3 = record_wd.add_file("resizing-capture-0-000003.wrm");
+    RED_TEST_FILE_SIZE(wrm0, 1651);
+    RED_TEST_FILE_SIZE(wrm1, 3428);
+    RED_TEST_FILE_SIZE(wrm2, 4384);
+    RED_TEST_FILE_SIZE(wrm3, 4388);
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("resizing-capture-0.mwrm"), array_view{str_concat(
+        "v2\n"
+        "800 600\n"
+        "nochecksum\n"
+        "\n"
+        "\n",
+        wrm0, " 1651 0 0 0 0 0 0 0 1000 1004\n",
+        wrm1, " 3428 0 0 0 0 0 0 0 1004 1005\n",
+        wrm2, " 4384 0 0 0 0 0 0 0 1005 1007\n",
+        wrm3, " 4388 0 0 0 0 0 0 0 1007 1009\n")});
 
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000000.png"), 3102 +- 100_v);
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000001.png"), 3121 +- 100_v);
@@ -337,11 +362,14 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000006.png"), 4122 +- 100_v);
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
 
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0.mwrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000000.wrm"), 54);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000001.wrm"), 54);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000002.wrm"), 54);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-0-000003.wrm"), 54);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0.mwrm"), array_view{str_concat(
+        "v2\n\n\nresizing-capture-0.mwrm ",
+        int_to_chars(wrm0.size() + wrm1.size() + wrm2.size() + wrm3.size() + 144),
+        " 0 0 0 0 0 0 0\n")});
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);
@@ -371,11 +399,24 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000000.wrm"), 1646);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000001.wrm"), 3439);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000002.wrm"), 2630);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000003.wrm"), 2630);
-    RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1.mwrm"), 248 + record_wd.dirname().size() * 4);
+    auto wrm0 = record_wd.add_file("resizing-capture-1-000000.wrm");
+    auto wrm1 = record_wd.add_file("resizing-capture-1-000001.wrm");
+    auto wrm2 = record_wd.add_file("resizing-capture-1-000002.wrm");
+    auto wrm3 = record_wd.add_file("resizing-capture-1-000003.wrm");
+    RED_TEST_FILE_SIZE(wrm0, 1646);
+    RED_TEST_FILE_SIZE(wrm1, 3439);
+    RED_TEST_FILE_SIZE(wrm2, 2630);
+    RED_TEST_FILE_SIZE(wrm3, 2630);
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("resizing-capture-1.mwrm"), array_view{str_concat(
+        "v2\n"
+        "800 600\n"
+        "nochecksum\n"
+        "\n"
+        "\n",
+        wrm0, " 1646 0 0 0 0 0 0 0 1000 1004\n",
+        wrm1, " 3439 0 0 0 0 0 0 0 1004 1005\n",
+        wrm2, " 2630 0 0 0 0 0 0 0 1005 1007\n",
+        wrm3, " 2630 0 0 0 0 0 0 0 1007 1009\n")});
 
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000000.png"), 3102 +- 100_v);
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000001.png"), 3127 +- 100_v);
@@ -386,11 +427,14 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000006.png"), 2334 +- 100_v);
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
 
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 51);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1.mwrm"), 45);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000000.wrm"), 54);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000001.wrm"), 54);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000002.wrm"), 54);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("resizing-capture-1-000003.wrm"), 54);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1.mwrm"), array_view{str_concat(
+        "v2\n\n\nresizing-capture-1.mwrm ",
+        int_to_chars(wrm0.size() + wrm1.size() + wrm2.size() + wrm3.size() + 144),
+        " 0 0 0 0 0 0 0\n")});
 
     RED_CHECK_WORKSPACE(hash_wd);
     RED_CHECK_WORKSPACE(record_wd);

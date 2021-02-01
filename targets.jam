@@ -834,7 +834,6 @@ test-run tests/capture/test_video_capture :
 test-run tests/capture/test_wrm_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_wrm_capture.cpp
 :
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>snappy
@@ -5600,11 +5599,6 @@ test-run tests/utils/test_fileutils :
   <covfile>src/utils/fileutils.cpp
   <covfile>src/utils/fileutils.hpp
 ;
-test-run tests/utils/test_genfstat :
-  $(REDEMPTION_TEST_PATH)/utils/test_genfstat.cpp
-:
-  <covfile>src/utils/genfstat.hpp
-;
 test-run tests/utils/test_genrandom :
   $(REDEMPTION_TEST_PATH)/utils/test_genrandom.cpp
 :
@@ -6294,7 +6288,6 @@ alias test_diffiehellman : tests/utils/test_diffiehellman ;
 alias test_drawable : tests/utils/test_drawable ;
 alias test_ellipse : tests/utils/test_ellipse ;
 alias test_fileutils : tests/utils/test_fileutils ;
-alias test_genfstat : tests/utils/test_genfstat ;
 alias test_genrandom : tests/utils/test_genrandom ;
 alias test_get_printable_password : tests/utils/test_get_printable_password ;
 alias test_id_manager : tests/utils/test_id_manager ;
@@ -6616,7 +6609,6 @@ alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
 alias test_ellipse.coverage : tests/utils/test_ellipse.coverage ;
 alias test_fileutils.coverage : tests/utils/test_fileutils.coverage ;
-alias test_genfstat.coverage : tests/utils/test_genfstat.coverage ;
 alias test_genrandom.coverage : tests/utils/test_genrandom.coverage ;
 alias test_get_printable_password.coverage : tests/utils/test_get_printable_password.coverage ;
 alias test_id_manager.coverage : tests/utils/test_id_manager.coverage ;
@@ -7052,7 +7044,6 @@ alias tests/utils.norec :
   tests/utils/test_drawable
   tests/utils/test_ellipse
   tests/utils/test_fileutils
-  tests/utils/test_genfstat
   tests/utils/test_genrandom
   tests/utils/test_get_printable_password
   tests/utils/test_id_manager

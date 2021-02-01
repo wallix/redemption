@@ -25,13 +25,11 @@ Author(s): Wallix Team
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
-#include "utils/genfstat.hpp"
 
 
 struct ReplayMod::Reader
 {
     CryptoContext cctx;
-    Fstat         fstat;
 
     MonotonicTimePoint start_time_replay;
 
@@ -48,8 +46,7 @@ struct ReplayMod::Reader
         this->cctx,
         prefix,
         extension,
-        InCryptoTransport::EncryptionMode::NotEncrypted,
-        this->fstat)
+        InCryptoTransport::EncryptionMode::NotEncrypted)
     , reader(
         this->in_trans,
         MonotonicTimePoint{},

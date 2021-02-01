@@ -29,7 +29,6 @@ struct OutMetaSequenceTransport : Transport
     OutMetaSequenceTransport(
         CryptoContext & cctx,
         Random & rnd,
-        Fstat & fstat,
         const char * path,
         const char * hash_path,
         const char * basename,
@@ -85,8 +84,6 @@ private:
 
     OutCryptoTransport meta_buf_encrypt_transport;
     OutCryptoTransport wrm_filter_encrypt_transport;
-
-    Fstat & fstat;
 
     char current_filename_[1024] {};
     WrmFGen filegen_;

@@ -26,7 +26,6 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/cli.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/fileutils.hpp"
@@ -49,8 +48,7 @@ time_t ClientConfig::get_movie_time_length(const char * mwrm_filename) {
     // TODO RZ: Support encrypted recorded file.
 
     CryptoContext cctx;
-    Fstat fsats;
-    InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
+    InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted);
     MwrmReader mwrm_reader(trans);
     MetaLine meta_line;
 

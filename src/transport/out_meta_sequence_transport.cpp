@@ -20,7 +20,6 @@
 
 #include "utils/log.hpp"
 
-#include "utils/genfstat.hpp"
 #include "utils/strutils.hpp"
 #include "core/error.hpp"
 
@@ -90,7 +89,6 @@ namespace
 OutMetaSequenceTransport::OutMetaSequenceTransport(
     CryptoContext & cctx,
     Random & rnd,
-    Fstat & fstat,
     const char * path,
     const char * hash_path,
     const char * basename,
@@ -100,9 +98,8 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     const int groupid,
     AclReportApi * acl_report,
     uint32_t file_permissions)
-: meta_buf_encrypt_transport(cctx, rnd, fstat, make_notify_error(acl_report))
-, wrm_filter_encrypt_transport(cctx, rnd, fstat, make_notify_error(acl_report))
-, fstat(fstat)
+: meta_buf_encrypt_transport(cctx, rnd, make_notify_error(acl_report))
+, wrm_filter_encrypt_transport(cctx, rnd, make_notify_error(acl_report))
 , filegen_(path, hash_path, basename, ".wrm")
 , groupid_(groupid)
 , mf_(path, basename)
@@ -188,13 +185,13 @@ void OutMetaSequenceTransport::next_meta_file()
     this->num_file_ ++;
 
     struct stat stat;
-    if (fstat.stat(filename, stat)){
+    if (::stat(filename, &stat)){
         throw Error(ERR_TRANSPORT_WRITE_FAILED);
     }
 
     MwrmWriterBuf mwrm_file_buf;
     mwrm_file_buf.write_line(
-        filename, stat,
+        filename, stat.st_size,
         this->start_sec_, this->stop_sec_ + 1,
         this->cctx.get_with_checksum(), qhash, fhash);
     this->meta_buf_encrypt_transport.send(mwrm_file_buf.buffer());

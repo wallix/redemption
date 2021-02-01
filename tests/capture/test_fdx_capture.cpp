@@ -25,7 +25,6 @@
 
 #include "capture/fdx_capture.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "transport/mwrm_reader.hpp"
 
@@ -90,12 +89,11 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_empty_fdx, wd)
 
     CryptoContext cctx;
     LCGRandom rnd;
-    Fstat fstat;
 
     FdxCapture fdx_capture(
         record_path.dirname().string(),
         hash_path.dirname().string(),
-        "sid,blabla", sid, -1, 0660, cctx, rnd, fstat,
+        "sid,blabla", sid, -1, 0660, cctx, rnd,
         [](const Error & /*error*/){});
 
     (void)record_path.create_subdirectory(sid);
@@ -121,26 +119,11 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 
     CryptoContext cctx;
     LCGRandom rnd;
-    struct : Fstat
-    {
-        int stat(const char * filename, struct stat & stat) override
-        {
-            int err = Fstat::stat(filename, stat);
-            stat.st_mode = 1;
-            stat.st_uid = 2;
-            stat.st_gid = 3;
-            stat.st_dev = 4;
-            stat.st_ino = 5;
-            stat.st_mtim.tv_sec = 12345678;
-            stat.st_ctim.tv_sec = 12345678;
-            return err;
-        }
-    } fstat;
 
     FdxCapture fdx_capture(
         record_path.dirname().string(),
         hash_path.dirname().string(),
-        "sid,blabla", sid, -1, 0660, cctx, rnd, fstat,
+        "sid,blabla", sid, -1, 0660, cctx, rnd,
         [](const Error & /*error*/){});
 
     auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};
@@ -214,7 +197,7 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
         "v2\n\n\nsid,blabla.fdx "sv,
         std::to_string(file_content.size()),
-        " 1 2 3 4 5 12345678 12345678\n"sv));
+        " 0 0 0 0 0 0 0\n"sv));
 
     RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000001.tfl")), "ijkl"sv);
     RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000003.tfl")), "qr"sv);
@@ -223,15 +206,15 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
     RED_CHECK_FILE_CONTENTS(fdx_record_path.add_file(str_concat(sid, ",000006.tfl")), "abcde"sv);
 
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000001.tfl")),
-        "v2\n\n\nmy_session_id,000001.tfl 4 1 2 3 4 5 12345678 12345678\n"sv);
+        "v2\n\n\nmy_session_id,000001.tfl 4 0 0 0 0 0 0 0\n"sv);
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000003.tfl")),
-        "v2\n\n\nmy_session_id,000003.tfl 2 1 2 3 4 5 12345678 12345678\n"sv);
+        "v2\n\n\nmy_session_id,000003.tfl 2 0 0 0 0 0 0 0\n"sv);
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000004.tfl")),
-        "v2\n\n\nmy_session_id,000004.tfl 3 1 2 3 4 5 12345678 12345678\n"sv);
+        "v2\n\n\nmy_session_id,000004.tfl 3 0 0 0 0 0 0 0\n"sv);
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000005.tfl")),
-        "v2\n\n\nmy_session_id,000005.tfl 5 1 2 3 4 5 12345678 12345678\n"sv);
+        "v2\n\n\nmy_session_id,000005.tfl 5 0 0 0 0 0 0 0\n"sv);
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000006.tfl")),
-        "v2\n\n\nmy_session_id,000006.tfl 5 1 2 3 4 5 12345678 12345678\n"sv);
+        "v2\n\n\nmy_session_id,000006.tfl 5 0 0 0 0 0 0 0\n"sv);
 }
 
 RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
@@ -261,12 +244,11 @@ RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
     cctx.set_trace_type(TraceType::cryptofile);
 
     LCGRandom rnd;
-    FakeFstat fstat;
 
     FdxCapture fdx_capture(
         record_path.dirname().string(),
         hash_path.dirname().string(),
-        "sid,blabla", sid, -1, 0660, cctx, rnd, fstat,
+        "sid,blabla", sid, -1, 0660, cctx, rnd,
         [](const Error & /*error*/){});
 
     auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};

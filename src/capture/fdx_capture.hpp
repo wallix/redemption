@@ -100,7 +100,7 @@ struct FdxCapture
         std::string_view record_path, std::string_view hash_path,
         std::string fdx_filebase, std::string_view sid,
         int groupid, uint32_t file_permissions,
-        CryptoContext& cctx, Random& rnd, Fstat& fstat,
+        CryptoContext& cctx, Random& rnd,
         std::function<void(const Error & error)> notify_error);
 
     TflFile new_tfl(Mwrm3::Direction direction);
@@ -125,7 +125,6 @@ private:
 
     CryptoContext& cctx;
     Random& rnd;
-    Fstat& fstat;
     std::function<void(const Error & error)> notify_error;
     int groupid;
     uint32_t file_permissions;

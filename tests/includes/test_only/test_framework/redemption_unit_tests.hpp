@@ -197,6 +197,10 @@ bool operator!=(bytes_view, ut::flagged_bytes_view);
     struct test_name { void operator()(); }; \
     void test_name::operator()()
 
+# define RED_FIXTURE_TEST_CASE(test_name, F)     \
+    struct test_name : F { void operator()(); }; \
+    void test_name::operator()()
+
 /// CHECK
 //@{
 # define RED_TEST(expr) RED_TEST_CHECK(expr)
@@ -542,8 +546,41 @@ namespace redemption_unit_test__
         type_value, iocontext, __VA_ARGS__)
 #endif
 
+#define RED_AUTO_TEST_CONTEXT_DATA(test_name, type_value, iocontext, ...) \
+    struct test_name##__case : ::redemption_unit_test__::MaxError         \
+    { void _exec(type_value); };                                          \
+    RED_FIXTURE_TEST_CASE(test_name, test_name##__case)                   \
+    {                                                                     \
+        auto l = __VA_ARGS__;                                             \
+        auto p = l.begin();                                               \
+        RED_TEST_CONTEXT_DATA(type_value, iocontext, l)                   \
+        {                                                                 \
+            auto const err_count = RED_ERROR_COUNT();                     \
+            _exec(*p);                                                    \
+            bool const stop_when_error = stop_after_error(false);         \
+            if (stop_when_error && err_count != RED_ERROR_COUNT()) {      \
+                break;                                                    \
+            }                                                             \
+            ++p;                                                          \
+        }                                                                 \
+    }                                                                     \
+    void test_name##__case::_exec(type_value)
+
 namespace redemption_unit_test__
 {
+
+struct MaxError
+{
+    bool stop_after_error(bool value = true)
+    {
+        auto old = m_stop_after_error;
+        m_stop_after_error = value;
+        return old;
+    }
+
+private:
+    bool m_stop_after_error = false;
+};
 
 template<class T>
 auto cont_size(T const& cont, int /*one*/) -> decltype(std::size_t(cont.size()))

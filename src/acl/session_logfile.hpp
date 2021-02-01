@@ -32,7 +32,6 @@
 
 
 class Random;
-class Fstat;
 class Inifile;
 
 
@@ -40,7 +39,7 @@ class SessionLogFile
 {
 public:
     SessionLogFile(
-        const Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat,
+        const Inifile & ini, CryptoContext & cctx, Random & rnd,
         std::function<void(const Error & error)> notify_error);
 
     ~SessionLogFile();

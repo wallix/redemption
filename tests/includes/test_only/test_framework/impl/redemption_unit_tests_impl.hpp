@@ -39,6 +39,7 @@ Author(s): Jonathan Poelen
 #endif
 
 #define RED_AUTO_TEST_CASE(...) BOOST_AUTO_TEST_CASE(__VA_ARGS__) /*NOLINT*/
+#define RED_FIXTURE_TEST_CASE(...) BOOST_FIXTURE_TEST_CASE(__VA_ARGS__) /*NOLINT*/
 
 #define RED_FAIL(...) BOOST_FAIL(__VA_ARGS__) /*NOLINT*/
 #define RED_ERROR(...) BOOST_ERROR(__VA_ARGS__) /*NOLINT*/

@@ -38,7 +38,6 @@
 #include "transport/file_transport.hpp"
 
 #include "utils/fileutils.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/log.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/sugar/algostring.hpp"

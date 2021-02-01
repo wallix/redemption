@@ -20,7 +20,6 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "utils/genfstat.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "transport/crypto_transport.hpp"
@@ -35,9 +34,40 @@ constexpr auto is_encrypted = InCryptoTransport::EncryptionMode::Encrypted;
 constexpr auto is_not_encrypted = InCryptoTransport::EncryptionMode::NotEncrypted;
 
 
+RED_AUTO_TEST_CASE(TestMwrmWriterBuf)
+{
+    struct FilenameWriter
+    {
+        MwrmWriterBuf mwrm_buf;
+        MwrmWriterBuf::HashArray dummy_hash;
+
+        FilenameWriter(char const* filename)
+        {
+            this->mwrm_buf.write_line(filename, 0, 0, 0, false, dummy_hash, dummy_hash);
+        }
+    };
+
+#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)   \
+    RED_TEST(FilenameWriter(origin_filename).mwrm_buf.buffer() \
+        == wrote_filename " 0 0 0 0 0 0 0 0 0 0\n"_av)
+
+    TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
+
+    TEST_WRITE_FILENAME(R"(\abcde.txt)", R"(\\abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc\de.txt)", R"(abc\\de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt\)", R"(abcde.txt\\)");
+    TEST_WRITE_FILENAME(R"(abc\\de.txt)", R"(abc\\\\de.txt)");
+    TEST_WRITE_FILENAME(R"(\\\\)", R"(\\\\\\\\)");
+
+    TEST_WRITE_FILENAME(R"( abcde.txt)", R"(\ abcde.txt)");
+    TEST_WRITE_FILENAME(R"(abc de.txt)", R"(abc\ de.txt)");
+    TEST_WRITE_FILENAME(R"(abcde.txt )", R"(abcde.txt\ )");
+    TEST_WRITE_FILENAME(R"(abc  de.txt)", R"(abc\ \ de.txt)");
+    TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
+}
+
 RED_AUTO_TEST_CASE(TestMwrmLineReader)
 {
-    Fstat fstat;
     CryptoContext cctx;
 
     using Read = Transport::Read;
@@ -83,9 +113,8 @@ RED_AUTO_TEST_CASE(TestMwrmLineReader)
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV1)
 {
-    Fstat fstat;
     CryptoContext cctx;
-    InCryptoTransport fd(cctx, is_not_encrypted, fstat);
+    InCryptoTransport fd(cctx, is_not_encrypted);
     fd.open(FIXTURES_PATH "/verifier/recorded/v1_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
@@ -100,13 +129,6 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
         "wab-5-0-0.yourdomain,7681-000000.wrm"sv);
     RED_CHECK_EQUAL(meta_line.size, 0);
-    RED_CHECK_EQUAL(meta_line.mode, 0);
-    RED_CHECK_EQUAL(meta_line.uid, 0);
-    RED_CHECK_EQUAL(meta_line.gid, 0);
-    RED_CHECK_EQUAL(meta_line.dev, 0);
-    RED_CHECK_EQUAL(meta_line.ino, 0);
-    RED_CHECK_EQUAL(meta_line.mtime, 0);
-    RED_CHECK_EQUAL(meta_line.ctime, 0);
     RED_CHECK_EQUAL(meta_line.start_time, 1455815820);
     RED_CHECK_EQUAL(meta_line.stop_time, 1455816422);
     RED_CHECK(not meta_line.with_hash);
@@ -114,9 +136,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV1)
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2)
 {
-    Fstat fstat;
     CryptoContext cctx;
-    InCryptoTransport fd(cctx, is_not_encrypted, fstat);
+    InCryptoTransport fd(cctx, is_not_encrypted);
     fd.open(FIXTURES_PATH "/verifier/recorded/v2_nochecksum_nocrypt.mwrm");
     MwrmReader reader(fd);
 
@@ -131,13 +152,6 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
         "toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,"
         "wab-5-0-0.yourdomain,7681-000000.wrm"sv);
     RED_CHECK(meta_line.size == 181826);
-    RED_CHECK(meta_line.mode == 33056);
-    RED_CHECK(meta_line.uid == 1001);
-    RED_CHECK(meta_line.gid == 1001);
-    RED_CHECK(meta_line.dev == 65030);
-    RED_CHECK(meta_line.ino == 81);
-    RED_CHECK(meta_line.mtime == 1455816421);
-    RED_CHECK(meta_line.ctime == 1455816421);
     RED_CHECK(meta_line.start_time == 1455815820);
     RED_CHECK(meta_line.stop_time == 1455816422);
     RED_CHECK(not meta_line.with_hash);
@@ -145,9 +159,8 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2)
 
 RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
 {
-    Fstat fstat;
     CryptoContext cctx;
-    InCryptoTransport fd(cctx, is_not_encrypted, fstat);
+    InCryptoTransport fd(cctx, is_not_encrypted);
     fd.open(FIXTURES_PATH "/sample_v2_checksum.mwrm");
     MwrmReader reader(fd);
 
@@ -159,13 +172,6 @@ RED_AUTO_TEST_CASE(ReadClearHeaderV2Checksum)
     RED_CHECK(reader.read_meta_line(meta_line) == Transport::Read::Ok);
     RED_CHECK(meta_line.filename == "./tests/fixtures/sample0.wrm"sv);
     RED_CHECK(meta_line.size == 1);
-    RED_CHECK(meta_line.mode == 2);
-    RED_CHECK(meta_line.uid == 3);
-    RED_CHECK(meta_line.gid == 4);
-    RED_CHECK(meta_line.dev == 5);
-    RED_CHECK(meta_line.ino == 6);
-    RED_CHECK(meta_line.mtime == 7);
-    RED_CHECK(meta_line.ctime == 8);
     RED_CHECK(meta_line.start_time == 1352304810);
     RED_CHECK(meta_line.stop_time == 1352304870);
     RED_CHECK(meta_line.with_hash);
@@ -203,13 +209,12 @@ inline int trace_20161025_fn(uint8_t const * /*base*/, int /*len*/, uint8_t * bu
 
 RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
 {
-    Fstat fstat;
     CryptoContext cctx;
     cctx.set_hmac_key(hmac_key_2016);
     cctx.set_get_trace_key_cb(trace_20161025_fn);
     cctx.old_encryption_scheme = true;
 
-    InCryptoTransport fd(cctx, is_encrypted, fstat);
+    InCryptoTransport fd(cctx, is_encrypted);
     RED_REQUIRE_NO_THROW(fd.open(FIXTURES_PATH
         "/verifier/recorded/"
         "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
@@ -229,13 +234,6 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV1Checksum)
         "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
         "-192304,wab-4-2-4.yourdomain,5560-000000.wrm"sv);
     RED_CHECK(meta_line.size == 0);
-    RED_CHECK(meta_line.mode == 0);
-    RED_CHECK(meta_line.uid == 0);
-    RED_CHECK(meta_line.gid == 0);
-    RED_CHECK(meta_line.dev == 0);
-    RED_CHECK(meta_line.ino == 0);
-    RED_CHECK(meta_line.mtime == 0);
-    RED_CHECK(meta_line.ctime == 0);
     RED_CHECK(meta_line.start_time == 1477416187);
     RED_CHECK(meta_line.stop_time == 1477416298);
     RED_CHECK(meta_line.with_hash);
@@ -285,8 +283,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
         "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
     ));
 
-    Fstat fstat;
-    InCryptoTransport fd(cctx, is_encrypted, fstat);
+    InCryptoTransport fd(cctx, is_encrypted);
     fd.open(FIXTURES_PATH
         "/verifier/recorded/"
         "toto@10.10.43.13,Administrateur@QA@cible,"
@@ -306,13 +303,6 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
         "/toto@10.10.43.13,Administrateur@QA@cible,"
         "20160218-183009,wab-5-0-0.yourdomain,7335-000000.wrm"sv);
     RED_CHECK(meta_line.size == 163032);
-    RED_CHECK(meta_line.mode == 33056);
-    RED_CHECK(meta_line.uid == 1001);
-    RED_CHECK(meta_line.gid == 1001);
-    RED_CHECK(meta_line.dev == 65030);
-    RED_CHECK(meta_line.ino == 89);
-    RED_CHECK(meta_line.mtime == 1455816632);
-    RED_CHECK(meta_line.ctime == 1455816632);
     RED_CHECK(meta_line.start_time == 1455816611);
     RED_CHECK(meta_line.stop_time == 1455816633);
     RED_CHECK(meta_line.with_hash);
@@ -328,7 +318,7 @@ RED_AUTO_TEST_CASE(ReadEncryptedHeaderV2Checksum)
 
 RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
 {
-    auto const data = "v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 33056 1001 1001 65030 28 1504107644 1504107644\n"_av;
+    auto const data = "v2\n\n\ncgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm 222 0 0 0 0 0 0 0\n"_av;
 
     GeneratorTransport transport(data);
 
@@ -340,13 +330,6 @@ RED_AUTO_TEST_CASE(ReadHashV2WithoutHash)
     RED_CHECK(meta_line.filename ==
         "cgrosjean@10.10.43.12,Administrateur@local@win2008,20170830-174010,wab-5-0-4.cgrtc,6916.mwrm"sv);
     RED_CHECK(meta_line.size == 222);
-    RED_CHECK(meta_line.mode == 33056);
-    RED_CHECK(meta_line.uid == 1001);
-    RED_CHECK(meta_line.gid == 1001);
-    RED_CHECK(meta_line.dev == 65030);
-    RED_CHECK(meta_line.ino == 28);
-    RED_CHECK(meta_line.mtime == 1504107644);
-    RED_CHECK(meta_line.ctime == 1504107644);
     RED_CHECK(not meta_line.with_hash);
 
     RED_CHECK_EQUAL(reader.read_meta_line(meta_line), Transport::Read::Eof);

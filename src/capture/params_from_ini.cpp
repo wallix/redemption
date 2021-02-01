@@ -104,7 +104,7 @@ PatternParams pattern_params_from_ini(const Inifile & ini)
 }
 
 WrmParams wrm_params_from_ini(
-    BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
+    BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd,
     const char * hash_path, const Inifile & ini)
 {
     return WrmParams{
@@ -112,7 +112,6 @@ WrmParams wrm_params_from_ini(
         remote_app,
         cctx,
         rnd,
-        fstat,
         hash_path,
         ini.get<cfg::video::frame_interval>(),
         ini.get<cfg::video::break_interval>(),

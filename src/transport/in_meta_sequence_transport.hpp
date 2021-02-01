@@ -33,8 +33,7 @@ public:
         CryptoContext & cctx,
         const char * filename,
         const char * extension,
-        EncryptionMode encryption,
-        Fstat & fstat);
+        EncryptionMode encryption);
 
     ~InMetaSequenceTransport();
 

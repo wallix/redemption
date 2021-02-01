@@ -109,7 +109,6 @@
 #include "utils/colors.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
 #include "utils/crypto/ssl_lib.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/log.hpp"
 #include "utils/pattutils.hpp"
@@ -593,7 +592,6 @@ private:
     } state = CONNECTION_INITIATION;
 
     Random & gen;
-    Fstat fstat;
 
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
@@ -1107,7 +1105,6 @@ public:
             this->client_info.remote_program,
             this->cctx,
             this->gen,
-            this->fstat,
             hash_path.c_str(),
             ini
         );

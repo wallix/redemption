@@ -21,7 +21,6 @@
 #include "capture/fdx_capture.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/fileutils.hpp"
 
 #include <array>
@@ -117,7 +116,7 @@ FdxCapture::FdxCapture(
     std::string_view record_path, std::string_view hash_path,
     std::string fdx_filebase, std::string_view sid,
     int groupid, uint32_t file_permissions,
-    CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    CryptoContext& cctx, Random& rnd,
     std::function<void(const Error & error)> notify_error)
 : name_generator(
     record_path = remove_end_slash(record_path),
@@ -125,11 +124,10 @@ FdxCapture::FdxCapture(
     sid)
 , cctx(cctx)
 , rnd(rnd)
-, fstat(fstat)
 , notify_error(notify_error)
 , groupid(groupid)
 , file_permissions(file_permissions)
-, out_crypto_transport(this->cctx, this->rnd, this->fstat, this->notify_error)
+, out_crypto_transport(this->cctx, this->rnd, this->notify_error)
 {
     // create directory
     std::string directory;
@@ -157,7 +155,7 @@ FdxCapture::FdxCapture(
 
 FdxCapture::TflFile::TflFile(FdxCapture const& fdx, Mwrm3::Direction direction)
 : file_id(fdx.name_generator.get_current_id())
-, trans(fdx.cctx, fdx.rnd, fdx.fstat, fdx.notify_error)
+, trans(fdx.cctx, fdx.rnd, fdx.notify_error)
 , direction(direction)
 {
     auto derivator = fdx.name_generator.get_current_basename();
@@ -202,7 +200,7 @@ void FdxCapture::close_tfl(
 
     char const* filename = tfl.trans.get_finalname();
     struct stat stat;
-    this->fstat.stat(filename, stat);
+    ::stat(filename, &stat);
 
     bool const with_checksum = this->cctx.get_with_checksum();
 

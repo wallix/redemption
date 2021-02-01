@@ -41,7 +41,6 @@
 
 #include "utils/compression_transport_builder.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/log.hpp"
 #include "utils/cli.hpp"
@@ -291,7 +290,7 @@ private:
 
 inline
 static int do_recompress(
-    CryptoContext & cctx, Random & rnd, Fstat & fstat, Transport & in_wrm_trans,
+    CryptoContext & cctx, Random & rnd, Transport & in_wrm_trans,
     const std::chrono::seconds begin_record, bool & program_requested_to_shutdown,
     int wrm_compression_algorithm_, std::string const & output_filename, Inifile & ini, uint32_t verbose
 ) {
@@ -319,7 +318,6 @@ static int do_recompress(
         OutMetaSequenceTransport trans(
             ini.get<cfg::globals::trace_type>() == TraceType::cryptofile ? cctx : cctx_no_crypto,
             rnd,
-            fstat,
             outfile.directory.c_str(),
             ini.get<cfg::video::hash_path>().c_str(),
             outfile.basename.c_str(),
@@ -391,12 +389,11 @@ static inline int check_encrypted_or_checksumed(
     std::string const & hash_path,
     bool quick_check,
     CryptoContext & cctx,
-    Fstat & fstat,
     uint32_t verbose
 ) {
     std::string const full_mwrm_filename = mwrm_path + input_filename;
 
-    InCryptoTransport ibuf(cctx, EncryptionMode::Auto, fstat);
+    InCryptoTransport ibuf(cctx, EncryptionMode::Auto);
 
     try {
         ibuf.open(full_mwrm_filename.c_str());
@@ -427,7 +424,7 @@ static inline int check_encrypted_or_checksumed(
         auto const encryption_mode = infile_is_encrypted
             ? EncryptionMode::Encrypted
             : EncryptionMode::NotEncrypted;
-        InCryptoTransport hash_file(cctx, encryption_mode, fstat);
+        InCryptoTransport hash_file(cctx, encryption_mode);
 
         hash_file.open(full_hash_path.c_str());
         hash_file_is_open = true;
@@ -494,7 +491,7 @@ struct MwrmInfos
 static inline MwrmInfos load_mwrm_infos(
     char const* mwrm_filename,
     EncryptionMode encryption_mode,
-    CryptoContext & cctx, Fstat & fstat)
+    CryptoContext & cctx)
 {
     MwrmInfos mwrm_infos;
 
@@ -503,7 +500,7 @@ static inline MwrmInfos load_mwrm_infos(
     std::vector<MetaLine>& wrms = mwrm_infos.wrms;
     wrms.reserve(32);
 
-    InCryptoTransport mwrm_file(cctx, encryption_mode, fstat);
+    InCryptoTransport mwrm_file(cctx, encryption_mode);
     MwrmReader mwrm_reader(mwrm_file);
 
     mwrm_file.open(mwrm_filename);
@@ -556,9 +553,8 @@ namespace
         WrmsTransport(
             Ref<const std::vector<MetaLine>> wrms,
             CryptoContext & cctx,
-            EncryptionMode encryption,
-            Fstat & fstat)
-        : wrm(cctx, encryption, fstat)
+            EncryptionMode encryption)
+        : wrm(cctx, encryption)
         , wrms(wrms)
         {}
 
@@ -612,7 +608,6 @@ static inline int update_filename_and_check_size(
     std::string const& output_filename,
     std::vector<MetaLine>& wrms,
     std::string const& other_wrm_directory,
-    Fstat& fstat,
     bool ignore_file_size)
 {
     struct stat st;
@@ -622,7 +617,7 @@ static inline int update_filename_and_check_size(
     size_t const new_filename_base_len = new_filename.size();
 
     for (auto& wrm : wrms) {
-        if (fstat.stat(wrm.filename, st)) {
+        if (::stat(wrm.filename, &st)) {
             bool has_error = true;
             if (errno == ENOENT && !other_wrm_directory.empty()) {
                 size_t len = 0;
@@ -630,7 +625,7 @@ static inline int update_filename_and_check_size(
                 new_filename.resize(new_filename_base_len);
                 new_filename += std::string_view{basename, len};
                 if (utils::strbcpy(wrm.filename, new_filename)) {
-                    has_error = fstat.stat(wrm.filename, st);
+                    has_error = ::stat(wrm.filename, &st);
                 }
             }
 
@@ -959,7 +954,7 @@ static inline int replay(
     Inifile & ini, CryptoContext & cctx,
     Rect const & crop_rect,
     Dimension const & max_screen_dim,
-    Random & rnd, Fstat & fstat,
+    Random & rnd,
     uint32_t verbose)
 {
     if (mwrm_infos.wrms.empty()) {
@@ -1038,7 +1033,7 @@ static inline int replay(
     // TODO
     uint64_t total_wrm_file_len = 0;
 
-    WrmsTransport in_wrm_trans(mwrm_infos.wrms, cctx, encryption_mode, fstat);
+    WrmsTransport in_wrm_trans(mwrm_infos.wrms, cctx, encryption_mode);
 
     int result = -1;
     try {
@@ -1187,7 +1182,6 @@ static inline int replay(
                             player.get_wrm_info().remote_app,
                             cctx,
                             rnd,
-                            fstat,
                             hash_path,
                             ini
                         );
@@ -1313,7 +1307,6 @@ static inline int replay(
             result = do_recompress(
                 cctx,
                 rnd,
-                fstat,
                 in_wrm_trans,
                 begin_record,
                 program_requested_to_shutdown,
@@ -1812,7 +1805,6 @@ extern "C" {
         ini.set<cfg::debug::config>(false);
 
         UdevRandom rnd;
-        Fstat fstat;
         CryptoContext cctx;
         if (hmac_key) {
             cctx.set_hmac_key(CryptoContext::key_data::from_ptr(hmac_key));
@@ -1924,12 +1916,11 @@ extern "C" {
             auto const mwrm_prefix = str_concat(rp.mwrm_path, rp.input_basename);
             auto const mwrm_filename = str_concat(mwrm_prefix, rp.infile_extension);
 
-            auto mwrm_infos = load_mwrm_infos(mwrm_filename.c_str(),
-                                              encryption_mode, cctx, fstat);
+            auto mwrm_infos = load_mwrm_infos(mwrm_filename.c_str(), encryption_mode, cctx);
 
             if (int r = update_filename_and_check_size(rp.output_filename,
                                                        mwrm_infos.wrms, rp.mwrm_path,
-                                                       fstat, rp.ignore_file_size)
+                                                       rp.ignore_file_size)
             ) {
                 return r;
             }
@@ -1946,7 +1937,7 @@ extern "C" {
                     get_join_visibility_rect(
                         max_joint_visibility_rect,
                         min_joint_visibility_rect,
-                        WrmsTransport(mwrm_infos.wrms, cctx, encryption_mode, fstat),
+                        WrmsTransport(mwrm_infos.wrms, cctx, encryption_mode),
                         max_screen_dim,
                         ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                         verbose
@@ -1994,7 +1985,7 @@ extern "C" {
                          rp.video_break_interval,
                          rp.encryption_type,
                          ini, cctx, crop_rect, max_screen_dim,
-                         rnd, fstat, verbose);
+                         rnd, verbose);
 
             } catch (const Error & e) {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;
@@ -2012,7 +2003,7 @@ extern "C" {
                 case EncryptionSchemeTypeResult::NoEncrypted:
                     res = check_encrypted_or_checksumed(
                         rp.input_filename, rp.mwrm_path, rp.hash_path,
-                        rp.quick_check, cctx, fstat, verbose
+                        rp.quick_check, cctx, verbose
                     );
                     break;
                 case EncryptionSchemeTypeResult::Error:
@@ -2025,8 +2016,7 @@ extern "C" {
 
         default: // DECrypter
             try {
-                Fstat fstat;
-                InCryptoTransport in_t(cctx, EncryptionMode::Auto, fstat);
+                InCryptoTransport in_t(cctx, EncryptionMode::Auto);
                 Error out_error{NO_ERROR};
                 switch (open_if_possible_and_get_encryption_scheme_type(
                     in_t, rp.full_path.c_str(), bytes_view{}, &out_error))

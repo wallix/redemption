@@ -75,13 +75,6 @@ namespace
     void init_stat_v1(MetaLine & meta_line)
     {
         meta_line.size = 0;
-        meta_line.mode = 0;
-        meta_line.uid = 0;
-        meta_line.gid = 0;
-        meta_line.dev = 0;
-        meta_line.ino = 0;
-        meta_line.mtime = 0;
-        meta_line.ctime = 0;
     }
 
     char * extract_hash(uint8_t (&hash)[MD_HASH::DIGEST_LENGTH], char * p, int & err)
@@ -336,14 +329,14 @@ Transport::Read MwrmReader::read_meta_line_v2(MetaLine & meta_line, FileType fil
     char * pline = buf_sread_filename(begin(meta_line.filename), end(meta_line.filename), line);
 
     int err = 0;
-    auto pend = pline;                   meta_line.size       = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.mode       = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.uid        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.gid        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.dev        = strtoull(pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.ino        = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.mtime      = strtoll (pline, &pend, 10);
-    err |= (*pend != ' '); pline = pend; meta_line.ctime      = strtoll (pline, &pend, 10);
+    auto pend = pline;                      meta_line.size  =    strtoll (pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.mode  = */ strtoull(pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.uid   = */ strtoll (pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.gid   = */ strtoll (pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.dev   = */ strtoull(pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.ino   = */ strtoll (pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.mtime = */ strtoll (pline, &pend, 10);
+    err |= (*pend != ' '); pline = pend; /* meta_line.ctime = */ strtoll (pline, &pend, 10);
 
     if (file_type == FileType::Mwrm) {
         err |= (*pend != ' '); pline = pend; meta_line.start_time = strtoll (pline, &pend, 10);
@@ -433,39 +426,23 @@ private:
         }
     }
 
-    void write_stat(struct stat const & stat) noexcept
+    void write_stat(off_t file_size) noexcept
     {
-        using ull = unsigned long long;
         using ll = long long;
         writer.len += std::sprintf(
             writer.mes + writer.len,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(stat.st_size),
-            ull(stat.st_mode),
-            ll(stat.st_uid),
-            ll(stat.st_gid),
-            ull(stat.st_dev),
-            ll(stat.st_ino),
-            ll(stat.st_mtim.tv_sec),
-            ll(stat.st_ctim.tv_sec)
+            " %lld 0 0 0 0 0 0 0",
+            ll(file_size)
         );
     }
 
     void write_stat(MetaLine const & meta_line) noexcept
     {
-        using ull = unsigned long long;
         using ll = long long;
         writer.len += std::sprintf(
             writer.mes + writer.len,
-            " %lld %llu %lld %lld %llu %lld %lld %lld",
-            ll(meta_line.size),
-            ull(meta_line.mode),
-            ll(meta_line.uid),
-            ll(meta_line.gid),
-            ull(meta_line.dev),
-            ll(meta_line.ino),
-            ll(meta_line.mtime),
-            ll(meta_line.ctime)
+            " %lld 0 0 0 0 0 0 0",
+            ll(meta_line.size)
         );
     }
 
@@ -514,13 +491,12 @@ void MwrmWriterBuf::write_line(MetaLine const & meta_line) noexcept
 }
 
 void MwrmWriterBuf::write_line(
-    char const * filename, struct stat const & stat,
-    time_t start_time, time_t stop_time,
+    char const * filename, off_t file_size, time_t start_time, time_t stop_time,
     bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept
 {
     this->reset_buf();
     PrivateMwrmWriterBuf{*this}.mwrm_write_line(
-        filename, stat,
+        filename, file_size,
         true, start_time, stop_time,
         with_hash, qhash, fhash);
 }
@@ -535,12 +511,12 @@ void MwrmWriterBuf::write_hash_file(MetaLine const & meta_line) noexcept
 }
 
 void MwrmWriterBuf::write_hash_file(
-    char const * filename, struct stat const & stat,
+    char const * filename, off_t file_size,
     bool with_hash, HashArray const & qhash, HashArray const & fhash) noexcept
 {
     PrivateMwrmWriterBuf{*this}.write_hash_header();
     PrivateMwrmWriterBuf{*this}.mwrm_write_line(
-        filename, stat,
+        filename, file_size,
         false, 0, 0,
         with_hash, qhash, fhash);
 }

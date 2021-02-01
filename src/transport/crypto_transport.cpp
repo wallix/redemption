@@ -25,7 +25,6 @@
 #include "transport/transport.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte_ptr.hpp"
 #include "utils/strutils.hpp"
@@ -39,17 +38,15 @@
 
 namespace
 {
-    std::size_t get_file_len(Fstat & fstat, char const * pathname)
+    std::size_t get_file_len(char const * pathname)
     {
         struct stat sb;
-        if (int err = fstat.stat(pathname, sb)) {
-            if (err == -1 && errno != 0) {
-                err = errno;
-            }
+        if (-1 == stat(pathname, &sb)) {
+            int err = errno;
             LOG(LOG_ERR, "crypto: stat error %d", err);
             throw Error(ERR_TRANSPORT_READ_FAILED, err);
         }
-        return sb.st_size;
+        return std::size_t(sb.st_size);
     }
 } // namespace
 
@@ -78,7 +75,7 @@ uint8_t* InCryptoTransport::EncryptedBufferHandle::decrypted_buffer(std::size_t 
 }
 
 InCryptoTransport::InCryptoTransport(
-    CryptoContext & cctx, EncryptionMode encryption_mode, Fstat & fstat) noexcept
+    CryptoContext & cctx, EncryptionMode encryption_mode) noexcept
 : fd(-1)
 , eof(true)
 , file_len(0)
@@ -90,7 +87,6 @@ InCryptoTransport::InCryptoTransport(
 , MAX_CIPHERED_SIZE(0)
 , encryption_mode(encryption_mode)
 , encrypted(false)
-, fstat(fstat)
 {
 }
 
@@ -226,7 +222,7 @@ void InCryptoTransport::open(const char * const pathname, bytes_view derivator)
             this->raw_size = avail;
             this->clear_pos = 0;
             ::memcpy(this->clear_data, data, avail);
-            this->file_len = get_file_len(this->fstat, pathname);
+            this->file_len = get_file_len(pathname);
 
             return;
         }
@@ -243,7 +239,7 @@ void InCryptoTransport::open(const char * const pathname, bytes_view derivator)
         this->raw_size = 40;
         this->clear_pos = 0;
         ::memcpy(this->clear_data, data, 40);
-        this->file_len = get_file_len(this->fstat, pathname);
+        this->file_len = get_file_len(pathname);
         return;
     }
 
@@ -270,7 +266,7 @@ void InCryptoTransport::open(const char * const pathname, bytes_view derivator)
             this->raw_size = 40;
             this->clear_pos = 0;
             ::memcpy(this->clear_data, data, 40);
-            this->file_len = get_file_len(this->fstat, pathname);
+            this->file_len = get_file_len(pathname);
             return;
         }
     }
@@ -660,14 +656,13 @@ ocrypto::Result ocrypto::write(bytes_view data)
 
 
 OutCryptoTransport::OutCryptoTransport(
-    CryptoContext & cctx, Random & rnd, Fstat & fstat,
+    CryptoContext & cctx, Random & rnd,
     std::function<void(const Error & error)> notify_error
 ) noexcept
 : encrypter(cctx, rnd)
 , out_file(invalid_fd(), std::move(notify_error))
 , cctx(cctx)
 , rnd(rnd)
-, fstat(fstat)
 {
     this->tmpname[0] = 0;
     this->finalname[0] = 0;
@@ -829,7 +824,7 @@ void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray con
     }
 
     struct stat stat;
-    if (0 != this->fstat.stat(this->finalname, stat)) {
+    if (-1 == ::stat(this->finalname, &stat)) {
         int const err = errno;
         LOG(LOG_ERR, "Failed writing signature to hash file %s [err %d]",
             this->hash_filename, err);
@@ -859,7 +854,7 @@ void OutCryptoTransport::create_hash_file(HashArray const & qhash, HashArray con
         utils::back(basename) = '\0';
 
         MwrmWriterBuf hash_file_buf;
-        hash_file_buf.write_hash_file(basename, stat, this->cctx.get_with_checksum(), qhash, fhash);
+        hash_file_buf.write_hash_file(basename, stat.st_size, this->cctx.get_with_checksum(), qhash, fhash);
         auto buf = hash_file_buf.buffer();
         send_data(buf.data(), buf.size(), hash_encrypter, hash_out_file);
     }
@@ -936,7 +931,6 @@ EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
 EncryptionSchemeTypeResult get_encryption_scheme_type(
     CryptoContext & cctx, const char * filename, bytes_view derivator, Error * err)
 {
-    Fstat fstat;
-    InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
+    InCryptoTransport in_test(cctx, InCryptoTransport::EncryptionMode::Auto);
     return open_if_possible_and_get_encryption_scheme_type(in_test, filename, derivator, err);
 }

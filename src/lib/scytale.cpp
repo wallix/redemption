@@ -26,7 +26,6 @@
 #include "capture/fdx_capture.hpp"
 #include "test_only/lcg_random.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/c_interface.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/string_c.hpp"
@@ -179,12 +178,11 @@ struct ScytaleWriterHandle
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum,
             old_encryption_scheme, one_shot_encryption_scheme,
             master_derivator)
-    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat, [](const Error & /*error*/){})
+    , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, [](const Error & /*error*/){})
     {}
 
 private:
     ScytaleRandomWrapper random_wrapper;
-    Fstat fstat;
 
     CryptoContextWrapper cctxw;
 
@@ -211,11 +209,10 @@ struct ScytaleReaderHandle
             false /* unused for reading */, false /* unused for reading */,
             old_encryption_scheme, one_shot_encryption_scheme,
             master_derivator)
-    , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
+    , in_crypto_transport(cctxw.cctx, encryption)
     {}
 
     CryptoContextWrapper cctxw;
-    Fstat fstat;
 
     InCryptoTransport in_crypto_transport;
     ScytaleErrorContext error_ctx;
@@ -523,13 +520,6 @@ struct ScytaleMetaReaderHandle
         this->c_mwrm_line = {
             this->meta_line.filename,
             static_cast<uint64_t>(this->meta_line.size),
-            this->meta_line.mode,
-            this->meta_line.uid,
-            this->meta_line.gid,
-            this->meta_line.dev,
-            this->meta_line.ino,
-            static_cast<uint64_t>(this->meta_line.mtime),
-            static_cast<uint64_t>(this->meta_line.ctime),
             static_cast<uint64_t>(this->meta_line.start_time),
             static_cast<uint64_t>(this->meta_line.stop_time),
             this->meta_line.with_hash,
@@ -648,7 +638,7 @@ struct ScytaleFdxWriterHandle
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
     , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid, -1,
-        this->cctxw.cctx, *this->random_wrapper.rnd, this->fstat, [](const Error &/*error*/){})
+        this->cctxw.cctx, *this->random_wrapper.rnd, [](const Error &/*error*/){})
     {
         this->qhashhex[0] = 0;
         this->fhashhex[0] = 0;
@@ -706,7 +696,6 @@ struct ScytaleFdxWriterHandle
 private:
     ScytaleRandomWrapper random_wrapper;
     CryptoContextWrapper cctxw;
-    Fstat fstat;
 
     FdxCapture fdx_capture;
 

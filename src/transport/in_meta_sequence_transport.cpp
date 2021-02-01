@@ -30,10 +30,9 @@ InMetaSequenceTransport::InMetaSequenceTransport(
     CryptoContext & cctx,
     const char * filename,
     const char * extension,
-    EncryptionMode encryption,
-    Fstat & fstat)
-: cfb(cctx, encryption, fstat)
-, buf_meta(cctx, encryption, fstat)
+    EncryptionMode encryption)
+: cfb(cctx, encryption)
+, buf_meta(cctx, encryption)
 , mwrm_reader(this->buf_meta)
 {
     char meta_filename[1024];

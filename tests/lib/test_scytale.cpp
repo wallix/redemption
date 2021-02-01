@@ -277,13 +277,6 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
         auto line = scytale_meta_reader_get_line(meta_handle);
         RED_CHECK_EQ(line->filename, "/var/wab/recorded/rdp/toto@10.10.43.13,Administrateur@QA@cible,20160218-181658,wab-5-0-0.yourdomain,7681-000000.wrm"sv);
         RED_CHECK_EQ(line->size, 181826);
-        RED_CHECK_EQ(line->mode, 33056);
-        RED_CHECK_EQ(line->uid, 1001);
-        RED_CHECK_EQ(line->gid, 1001);
-        RED_CHECK_EQ(line->dev, 65030);
-        RED_CHECK_EQ(line->ino, 81);
-        RED_CHECK_EQ(line->mtime, 1455816421);
-        RED_CHECK_EQ(line->ctime, 1455816421);
         RED_CHECK_EQ(line->start_time, 1455815820);
         RED_CHECK_EQ(line->stop_time, 1455816422);
         RED_CHECK(not line->with_hash);
@@ -328,13 +321,6 @@ RED_AUTO_TEST_CASE(TestscytaleMeta)
             auto line = scytale_meta_reader_get_line(meta_handle);
             RED_TEST(line->filename == data.filename);
             RED_TEST(line->size == 0);
-            RED_TEST(line->mode == 0);
-            RED_TEST(line->uid == 0);
-            RED_TEST(line->gid == 0);
-            RED_TEST(line->dev == 0);
-            RED_TEST(line->ino == 0);
-            RED_TEST(line->mtime == 0);
-            RED_TEST(line->ctime == 0);
             RED_TEST(line->start_time == data.start_time);
             RED_TEST(line->stop_time == data.stop_time);
             RED_TEST(not line->with_hash);

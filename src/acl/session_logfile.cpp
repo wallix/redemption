@@ -32,11 +32,11 @@
 
 
 SessionLogFile::SessionLogFile(
-    Inifile const& ini, CryptoContext& cctx, Random& rnd, Fstat& fstat,
+    Inifile const& ini, CryptoContext& cctx, Random& rnd,
     std::function<void (const Error &)> notify_error)
 : ini(ini)
 , cctx(cctx)
-, ct(cctx, rnd, fstat, std::move(notify_error))
+, ct(cctx, rnd, std::move(notify_error))
 {
     this->log6_buffer.reserve(512);
 }

@@ -21,43 +21,140 @@
 */
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
-#include "test_only/test_framework/file.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/file.hpp"
 
 #include "core/log_id.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"
-#include "core/app_path.hpp"
 #include "transport/file_transport.hpp"
-#include "transport/transport.hpp"
-#include "transport/mwrm_reader.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "utils/sugar/int_to_chars.hpp"
+#include "utils/sugar/algostring.hpp"
 
-#include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 
 #include <cstring>
 #include <string>
 
-
-template<class Writer>
-void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t height, bool has_checksum)
+namespace
 {
-    char header1[3 + ((std::numeric_limits<unsigned>::digits10 + 1) * 2 + 2) + (10 + 1) + 2 + 1];
-    const int len = sprintf(
-        header1,
-        "v2\n"
-        "%u %u\n"
-        "%s\n"
-        "\n\n",
-        unsigned(width),
-        unsigned(height),
-        has_checksum  ? "checksum" : "nochecksum"
-    );
-    RED_CHECK_EQ(writer.write({header1, size_t(len)}), len);
+    struct WrmForTest
+    {
+        // Timestamps are applied only when flushing
+        MonotonicTimePoint now {344535s + 23us};
+
+        Rect scr {0, 0, 800, 600};
+
+        LCGRandom rnd;
+        CryptoContext cctx;
+
+        TestGraphic gd_drawable {scr.cx, scr.cy};
+
+        WrmCaptureImpl wrm;
+
+        WrmForTest(
+            TraceType trace_type,
+            WorkingDirectory& record_wd,
+            WorkingDirectory& hash_wd,
+            WorkingDirectory& tmp_wd,
+            char const* filebase = "capture",
+            uint16_t cx = 0, uint16_t cy = 0,
+            bool remote_app = false)
+        : gd_drawable(cx ? cx : scr.cx, cy ? cy : scr.cy)
+        , wrm(
+            CaptureParams{
+                now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()},
+                filebase, tmp_wd.dirname(), record_wd.dirname(),
+                /*groupid=*/0, nullptr, SmartVideoCropping::disable, 0},
+            WrmParams{
+                BitsPerPixel{24},
+                remote_app,
+                [&]() -> CryptoContext& {
+                    cctx.set_master_key(cstr_array_view(
+                        "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
+                        "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
+                        "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
+                        "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
+                    ));
+                    cctx.set_hmac_key(cstr_array_view(
+                            "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
+                            "\x49\x21\x57\x87\x47\x74\x08\x8a"
+                            "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
+                            "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
+                    ));
+                    cctx.set_trace_type(trace_type);
+                    return cctx;
+                }(),
+                rnd,
+                hash_wd.dirname(),
+                /*wrm_frame_interval = */1s,
+                /*wrm_break_interval = */3s,
+                WrmCompressionAlgorithm::no_compression,
+                RDPSerializerVerbose::none,
+                -1u,
+            },
+            gd_drawable)
+        {}
+    };
 }
 
+static void gen_wrm1(
+    TraceType trace_type,
+    WorkingDirectory& record_wd,
+    WorkingDirectory& hash_wd,
+    WorkingDirectory& tmp_wd)
+{
+    WrmForTest wrm_test(trace_type, record_wd, hash_wd, tmp_wd);
+    const auto scr = wrm_test.scr;
+    auto& gd_drawable = wrm_test.gd_drawable;
+    auto& wrm = wrm_test.wrm;
+    auto now = wrm_test.now;
+
+    auto const color_cxt = gdi::ColorCtx::depth24();
+    bool ignore_frame_in_timeval = false;
+
+    gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+    gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+    gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+    // ------------------------------ BREAKPOINT ------------------------------
+
+    gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+    gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+    gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+    // ------------------------------ BREAKPOINT ------------------------------
+
+    gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+    wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+    now += 1s;
+    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    // The destruction of capture object will finalize the metafile content
+}
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {
@@ -65,104 +162,26 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
     WorkingDirectory hash_wd("hash");
     WorkingDirectory tmp_wd("tmp");
 
-    {
-        // Timestamps are applied only when flushing
-        MonotonicTimePoint now {344535s + 23us};
+    gen_wrm1(TraceType::localfile, record_wd, hash_wd, tmp_wd);
 
-        Rect scr(0, 0, 800, 600);
-
-        LCGRandom rnd;
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        RDPSerializerVerbose wrm_verbose = RDPSerializerVerbose::none
-        //     |RDPSerializerVerbose::primary_orders)
-        //     |RDPSerializerVerbose::secondary_orders)
-        //     |RDPSerializerVerbose::bitmap_update)
-        ;
-
-        WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-        std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
-        std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
-
-        const int groupid = 0; // www-data
-
-        cctx.set_trace_type(TraceType::localfile);
-
-        WrmParams wrm_params{
-            BitsPerPixel{24},
-            false,
-            cctx,
-            rnd,
-            fstat,
-            hash_wd.dirname(),
-            wrm_frame_interval,
-            wrm_break_interval,
-            wrm_compression_algorithm,
-            wrm_verbose,
-            -1u,
-        };
-
-        TestGraphic gd_drawable(scr.cx, scr.cy);
-
-        WrmCaptureImpl wrm(
-          CaptureParams{
-              now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture", tmp_wd.dirname(), record_wd.dirname(),
-              groupid, nullptr, SmartVideoCropping::disable, 0},
-          wrm_params, gd_drawable);
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-        // The destruction of capture object will finalize the metafile content
-    }
-
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000000.wrm"), 1646);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000001.wrm"), 3508);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000002.wrm"), 3463);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture.mwrm"), 165 + hash_wd.dirname().size() * 3);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 40);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 40);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 40);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture.mwrm"), 34);
+    auto wrm1 = record_wd.add_file("capture-000000.wrm");
+    auto wrm2 = record_wd.add_file("capture-000001.wrm");
+    auto wrm3 = record_wd.add_file("capture-000002.wrm");
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture.mwrm"), array_view{str_concat(
+        "v2\n800 600\nnochecksum\n\n\n",
+        wrm1, " 1646 0 0 0 0 0 0 0 1000 1004\n",
+        wrm2, " 3508 0 0 0 0 0 0 0 1004 1007\n",
+        wrm3, " 3463 0 0 0 0 0 0 0 1007 1008\n")});
+    RED_TEST_FILE_SIZE(wrm1, 1646);
+    RED_TEST_FILE_SIZE(wrm2, 3508);
+    RED_TEST_FILE_SIZE(wrm3, 3463);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"), array_view{str_concat(
+        "v2\n\n\ncapture.mwrm ",
+        int_to_chars(wrm1.size() + wrm2.size() + wrm3.size() + 114),
+        " 0 0 0 0 0 0 0\n")});
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 43);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 43);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 43);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -175,297 +194,34 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     WorkingDirectory hash_wd("hash");
     WorkingDirectory tmp_wd("tmp");
 
-    {
-        // Timestamps are applied only when flushing
-        MonotonicTimePoint now {344535s + 23us};
+    gen_wrm1(TraceType::localfile_hashed, record_wd, hash_wd, tmp_wd);
 
-        Rect scr(0, 0, 800, 600);
-
-        LCGRandom rnd;
-        FakeFstat fstat;
-
-        CryptoContext cctx;
-        cctx.set_master_key(cstr_array_view(
-            "\x61\x1f\xd4\xcd\xe5\x95\xb7\xfd"
-            "\xa6\x50\x38\xfc\xd8\x86\x51\x4f"
-            "\x59\x7e\x8e\x90\x81\xf6\xf4\x48"
-            "\x9c\x77\x41\x51\x0f\x53\x0e\xe8"
-        ));
-        cctx.set_hmac_key(cstr_array_view(
-             "\x86\x41\x05\x58\xc4\x95\xcc\x4e"
-             "\x49\x21\x57\x87\x47\x74\x08\x8a"
-             "\x33\xb0\x2a\xb8\x65\xcc\x38\x41"
-             "\x20\xfe\xc2\xc9\xb8\x72\xc8\x2c"
-        ));
-
-        cctx.set_trace_type(TraceType::localfile_hashed);
-
-        WrmParams wrm_params{
-            BitsPerPixel{24},
-            false,
-            cctx,
-            rnd,
-            fstat,
-            hash_wd.dirname(),
-            std::chrono::seconds{1},
-            std::chrono::seconds{3},
-            WrmCompressionAlgorithm::no_compression,
-            RDPSerializerVerbose::none, //0xFFFF VERBOSE
-            -1u,
-        };
-
-        TestGraphic gd_drawable(scr.cx, scr.cy);
-
-        WrmCaptureImpl wrm(
-            CaptureParams{now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture", tmp_wd.dirname(), record_wd.dirname(), 1000, nullptr, SmartVideoCropping::disable, 0},
-            wrm_params/* authentifier */, gd_drawable);
-
-        auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
-
-        gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-
-        // ------------------------------ BREAKPOINT ------------------------------
-
-        gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
-        now += 1s;
-        wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
-        // The destruction of capture object will finalize the metafile content
-
-        RED_TEST_PASSPOINT();
-    }
-
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000000.wrm"), 1646);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000001.wrm"), 3508);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture-000002.wrm"), 3463);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture.mwrm"), 553 + hash_wd.dirname().size() * 3);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 170);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 170);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 170);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture.mwrm"), 164);
-
-    RED_CHECK_WORKSPACE(record_wd);
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(tmp_wd);
-}
-
-
-template<class Writer>
-int wrmcapture_write_meta_file(
-    Writer & writer, Fstat & fstat, const char * filename,
-    time_t start_sec, time_t stop_sec
-) {
-    struct stat stat;
-    int err = fstat.stat(filename, stat);
-    if (err){
-        return err;
-    }
-
-    MwrmWriterBuf mwrm_buf;
-    MwrmWriterBuf::HashArray dummy_hash;
-    mwrm_buf.write_line(filename, stat, start_sec, stop_sec, false, dummy_hash, dummy_hash);
-
-    auto buf = mwrm_buf.buffer();
-    ssize_t res = writer.write(buf);
-    if (res < static_cast<ssize_t>(buf.size())) {
-        return res < 0 ? int(res) : 1;
-    }
-    return 0;
-}
-
-
-RED_AUTO_TEST_CASE(TestWriteFilename)
-{
-    struct FilenameWriter
-    {
-        MwrmWriterBuf mwrm_buf;
-        MwrmWriterBuf::HashArray dummy_hash;
-
-        FilenameWriter(char const* filename)
-        {
-            struct stat st;
-            FakeFstat().stat("", st);
-            this->mwrm_buf.write_line(filename, st, 0, 0, false, dummy_hash, dummy_hash);
-        }
-    };
-
-#define TEST_WRITE_FILENAME(origin_filename, wrote_filename)   \
-    RED_TEST(FilenameWriter(origin_filename).mwrm_buf.buffer() \
-        == wrote_filename " 0 0 0 0 0 0 0 0 0 0\n"_av)
-
-    TEST_WRITE_FILENAME("abcde.txt", "abcde.txt");
-
-    TEST_WRITE_FILENAME(R"(\abcde.txt)", R"(\\abcde.txt)");
-    TEST_WRITE_FILENAME(R"(abc\de.txt)", R"(abc\\de.txt)");
-    TEST_WRITE_FILENAME(R"(abcde.txt\)", R"(abcde.txt\\)");
-    TEST_WRITE_FILENAME(R"(abc\\de.txt)", R"(abc\\\\de.txt)");
-    TEST_WRITE_FILENAME(R"(\\\\)", R"(\\\\\\\\)");
-
-    TEST_WRITE_FILENAME(R"( abcde.txt)", R"(\ abcde.txt)");
-    TEST_WRITE_FILENAME(R"(abc de.txt)", R"(abc\ de.txt)");
-    TEST_WRITE_FILENAME(R"(abcde.txt )", R"(abcde.txt\ )");
-    TEST_WRITE_FILENAME(R"(abc  de.txt)", R"(abc\ \ de.txt)");
-    TEST_WRITE_FILENAME(R"(    )", R"(\ \ \ \ )");
-}
-
-RED_AUTO_TEST_CASE(TestOutmetaTransport)
-{
-    WorkingDirectory record_wd("record");
-    WorkingDirectory hash_wd("hash");
-    WorkingDirectory tmp_wd("tmp");
-
-    unsigned sec_start = 1352304810;
-    {
-        CryptoContext cctx;
-        cctx.set_master_key(cstr_array_view(
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-        ));
-        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-        LCGRandom rnd;
-        FakeFstat fstat;
-
-        timeval now;
-        now.tv_sec = sec_start;
-        now.tv_usec = 0;
-        const int groupid = 0;
-
-        cctx.set_trace_type(TraceType::localfile);
-
-        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
-            record_wd.dirname(), hash_wd.dirname(), "xxx",
-                                           now, 800, 600, groupid, nullptr, -1);
-        wrm_trans.send("AAAAX", 5);
-        wrm_trans.send("BBBBX", 5);
-        wrm_trans.next();
-        wrm_trans.send("CCCCX", 5);
-    } // brackets necessary to force closing sequence
-
-    const char * filename = "xxx.mwrm";
-
-    MwrmWriterBuf meta_file_buf;
-    MwrmWriterBuf::HashArray dummy_hash;
-    struct stat st {};
-    meta_file_buf.write_hash_file(filename, st, false, dummy_hash, dummy_hash);
-
-    struct {
-        size_t len = 0;
-        ssize_t write(chars_view d) {
-            this->len += d.size();
-            return len;
-        }
-    } meta_len_writer;
-
-    wrmcapture_write_meta_headers(meta_len_writer, 800, 600, false);
-
-    FakeFstat fstat;
-    auto file1 = record_wd.add_file("xxx-000000.wrm");
-    auto file2 = record_wd.add_file("xxx-000001.wrm");
-    RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1));
-    RED_CHECK(!wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1));
-
-    RED_TEST_FILE_SIZE(file1, 10);
-    RED_TEST_FILE_SIZE(file2, 5);
-    RED_TEST_FILE_SIZE(record_wd.add_file(filename), meta_len_writer.len);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000000.wrm"), 36);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000001.wrm"), 36);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx.mwrm"), meta_file_buf.buffer().size());
-
-    RED_CHECK_WORKSPACE(record_wd);
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(tmp_wd);
-}
-
-
-RED_AUTO_TEST_CASE(TestOutmetaTransportWithSum)
-{
-    WorkingDirectory record_wd("record");
-    WorkingDirectory hash_wd("hash");
-    WorkingDirectory tmp_wd("tmp");
-
-    unsigned sec_start = 1352304810;
-    {
-        CryptoContext cctx;
-        cctx.set_master_key(cstr_array_view(
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-        ));
-        cctx.set_hmac_key(cstr_array_view("12345678901234567890123456789012"));
-
-        LCGRandom rnd;
-        FakeFstat fstat;
-
-        timeval now;
-        now.tv_sec = sec_start;
-        now.tv_usec = 0;
-        const int groupid = 0;
-
-        cctx.set_trace_type(TraceType::localfile_hashed);
-
-        OutMetaSequenceTransport wrm_trans(cctx, rnd, fstat,
-            record_wd.dirname(), hash_wd.dirname(), "xxx",
-                                           now, 800, 600, groupid, nullptr, -1);
-        wrm_trans.send("AAAAX", 5);
-        wrm_trans.send("BBBBX", 5);
-        wrm_trans.next();
-        wrm_trans.send("CCCCX", 5);
-    } // brackets necessary to force closing sequence
-
-    struct {
-        size_t len = 0;
-        ssize_t write(chars_view d) {
-            this->len += d.size();
-            return len;
-        }
-    } meta_len_writer;
-    wrmcapture_write_meta_headers(meta_len_writer, 800, 600, true);
-
-    const unsigned hash_size = (1 + MD_HASH::DIGEST_LENGTH*2) * 2;
-
-    FakeFstat fstat;
-    auto file1 = record_wd.add_file("xxx-000000.wrm");
-    auto file2 = record_wd.add_file("xxx-000001.wrm");
-    wrmcapture_write_meta_file(meta_len_writer, fstat, file1, sec_start, sec_start+1);
-    wrmcapture_write_meta_file(meta_len_writer, fstat, file2, sec_start, sec_start+1);
-    meta_len_writer.len += hash_size * 2;
-
-    RED_TEST_FILE_SIZE(file1, 10);
-    RED_TEST_FILE_SIZE(file2, 5);
-    RED_TEST_FILE_SIZE(record_wd.add_file("xxx.mwrm"), meta_len_writer.len);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000000.wrm"), 166);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx-000001.wrm"), 166);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("xxx.mwrm"), 160);
+    auto wrm1 = record_wd.add_file("capture-000000.wrm");
+    auto wrm2 = record_wd.add_file("capture-000001.wrm");
+    auto wrm3 = record_wd.add_file("capture-000002.wrm");
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture.mwrm"), array_view{str_concat(
+        "v2\n800 600\nchecksum\n\n\n",
+        wrm1, " 1646 0 0 0 0 0 0 0 1000 1004"
+        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0"
+        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0\n",
+        wrm2, " 3508 0 0 0 0 0 0 0 1004 1007"
+        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da"
+        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da\n",
+        wrm3, " 3463 0 0 0 0 0 0 0 1007 1008"
+        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97"
+        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97\n")});
+    RED_TEST_FILE_SIZE(wrm1, 1646);
+    RED_TEST_FILE_SIZE(wrm2, 3508);
+    RED_TEST_FILE_SIZE(wrm3, 3463);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"), array_view{str_concat(
+        "v2\n\n\ncapture.mwrm ",
+        int_to_chars(wrm1.size() + wrm2.size() + wrm3.size() + 502),
+        " 0 0 0 0 0 0 0"
+        " 02fdb3c1948feeff1159d06aaedfc858df3d680580ad0e36e13bf9f750047e85"
+        " 02fdb3c1948feeff1159d06aaedfc858df3d680580ad0e36e13bf9f750047e85\n")});
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000000.wrm"), 173);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000001.wrm"), 173);
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture-000002.wrm"), 173);
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -479,50 +235,10 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
     WorkingDirectory tmp_wd("tmp");
 
     {
-        // Timestamps are applied only when flushing
-        MonotonicTimePoint now {344535s + 23us};
-
-        Rect scr(0, 0, 800, 600);
-
-        LCGRandom rnd;
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        RDPSerializerVerbose wrm_verbose {}
-        //     |RDPSerializerVerbose::primary_orders)
-        //     |RDPSerializerVerbose::secondary_orders)
-        //     |RDPSerializerVerbose::bitmap_update)
-        ;
-
-        WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-        std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
-        std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
-
-        const int groupid = 0; // www-data
-
-        cctx.set_trace_type(TraceType::localfile);
-
-        WrmParams wrm_params{
-            BitsPerPixel{24},
-            false,
-            cctx,
-            rnd,
-            fstat,
-            hash_wd.dirname(),
-            wrm_frame_interval,
-            wrm_break_interval,
-            wrm_compression_algorithm,
-            wrm_verbose,
-            -1u
-        };
-
-        TestGraphic gd_drawable(4, 1);
-
-        WrmCaptureImpl wrm(
-          CaptureParams{
-              now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture_kbd_input", tmp_wd.dirname(), record_wd.dirname(),
-              groupid, nullptr, SmartVideoCropping::disable, 0},
-          wrm_params, gd_drawable);
+        WrmForTest wrm_test(TraceType::localfile, record_wd, hash_wd, tmp_wd,
+            "capture_kbd_input", 4, 1);
+        auto& wrm = wrm_test.wrm;
+        auto now = wrm_test.now;
 
         wrm.send_timestamp_chunk(now);
 
@@ -605,9 +321,16 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
     RED_CHECK(output == "ipconfig\rtype=\"FOREGROUND_WINDOW_CHANGED\" windows=\"WINDOW\" class=\"CLASS\" command_line=\"COMMAND_LINE\""_av);
 
     RED_TEST_FILE_SIZE(first_file, 303);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture_kbd_input.mwrm"), 75 + record_wd.dirname().size());
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 50);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input.mwrm"), 44);
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture_kbd_input.mwrm"), array_view{str_concat(
+        "v2\n"
+        "4 1\n"
+        "nochecksum\n"
+        "\n"
+        "\n",
+        first_file, " 303 0 0 0 0 0 0 0 1000 1002\n")});
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 52);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_kbd_input.mwrm"), array_view{str_concat(
+        "v2\n\n\ncapture_kbd_input.mwrm ", int_to_chars(first_file.size() + 49), " 0 0 0 0 0 0 0\n")});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -621,48 +344,13 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
     WorkingDirectory tmp_wd("tmp");
 
     {
-        // Timestamps are applied only when flushing
-        MonotonicTimePoint now {344535s + 23us};
+        WrmForTest wrm_test(TraceType::localfile, record_wd, hash_wd, tmp_wd,
+            "capture_remoteapp", 0, 0, true);
+        auto& wrm = wrm_test.wrm;
+        auto now = wrm_test.now;
 
-        Rect scr(0, 0, 800, 600);
-
-        LCGRandom rnd;
-        FakeFstat fstat;
-        CryptoContext cctx;
-
-        RDPSerializerVerbose wrm_verbose {};
-
-        WrmCompressionAlgorithm wrm_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-        std::chrono::duration<unsigned int, std::ratio<1, 100> > wrm_frame_interval = std::chrono::seconds{1};
-        std::chrono::seconds wrm_break_interval = std::chrono::seconds{3};
-
-        const int groupid = 0; // www-data
-
-        cctx.set_trace_type(TraceType::localfile);
-
-        WrmParams wrm_params{
-            BitsPerPixel{24},
-            true,   // RemoteApp
-            cctx,
-            rnd,
-            fstat,
-            hash_wd.dirname(),
-            wrm_frame_interval,
-            wrm_break_interval,
-            wrm_compression_algorithm,
-            wrm_verbose,
-            -1u
-        };
-
+        const auto scr = wrm_test.scr;
         auto const color_cxt = gdi::ColorCtx::depth24();
-
-        TestGraphic gd_drawable(800, 600);
-
-        WrmCaptureImpl wrm(
-          CaptureParams{
-              now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()}, "capture_remoteapp",
-              tmp_wd.dirname(), record_wd.dirname(), groupid, nullptr, SmartVideoCropping::v1, 0},
-          wrm_params, gd_drawable);
 
         wrm.send_timestamp_chunk(now);
 
@@ -703,9 +391,16 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
     RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 
     RED_TEST_FILE_SIZE(first_file, 1670);
-    RED_TEST_FILE_SIZE(record_wd.add_file("capture_remoteapp.mwrm"), 79 + record_wd.dirname().size());
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 50);
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp.mwrm"), 44);
+    RED_TEST_FILE_CONTENTS(record_wd.add_file("capture_remoteapp.mwrm"), array_view{str_concat(
+        "v2\n"
+        "800 600\n"
+        "nochecksum\n"
+        "\n"
+        "\n",
+        first_file, " 1670 0 0 0 0 0 0 0 1000 1002\n")});
+    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 53);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_remoteapp.mwrm"), array_view{str_concat(
+        "v2\n\n\ncapture_remoteapp.mwrm ", int_to_chars(first_file.size() + 54), " 0 0 0 0 0 0 0\n")});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);

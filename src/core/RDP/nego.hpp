@@ -29,6 +29,7 @@
 #include "utils/translation.hpp"
 
 #include <memory>
+#include <vector>
 
 class rdpClientNTLM;
 #ifndef __EMSCRIPTEN__

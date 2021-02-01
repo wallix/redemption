@@ -20,7 +20,6 @@ Author(s): Jonathan Poelen
 
 #include "capture/mwrm3.hpp"
 #include "transport/crypto_transport.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/sugar/scope_exit.hpp"
 
 #include <iostream>
@@ -637,11 +636,10 @@ int main(int ac, char** av)
     }
 
     CryptoContext cctx;
-    Fstat fstat;
 
     try
     {
-        InCryptoTransport infile(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
+        InCryptoTransport infile(cctx, InCryptoTransport::EncryptionMode::Auto);
         infile.open(av[1]);
 
         Mwrm3FileReader reader{infile};

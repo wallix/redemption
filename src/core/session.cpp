@@ -36,7 +36,6 @@
 #include "mod/rdp/rdp_api.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/ws_transport.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/invalid_socket.hpp"
 #include "utils/netutils.hpp"
 #include "utils/select.hpp"
@@ -108,11 +107,10 @@ class Session
             Inifile& ini,
             CryptoContext& cctx,
             Random& rnd,
-            Fstat& fstat,
             gdi::CaptureProbeApi& probe_api)
         : ini(ini)
         , probe_api(probe_api)
-        , log_file(ini, cctx, rnd, fstat, [&ini](Error const& error){
+        , log_file(ini, cctx, rnd, [&ini](Error const& error){
             if (error.errnum == ENOSPC) {
                 // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
                 AclReport{ini}.report("FILESYSTEM_FULL", "100|unknown");
@@ -723,7 +721,7 @@ private:
 
     inline EndLoopState main_loop(
         int auth_sck, EventManager& event_manager,
-        CryptoContext& cctx, UdevRandom& rnd, Fstat& fstat,
+        CryptoContext& cctx, UdevRandom& rnd,
         TpduBuffer& rbuf, SocketTransport& front_trans, Front& front,
         RedirectionInfo& redir_info, ClientExecute& rail_client_execute,
         ModWrapper& mod_wrapper, ModFactory& mod_factory
@@ -744,7 +742,7 @@ private:
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SessionLog session_log(ini, cctx, rnd, fstat, front);
+        SessionLog session_log(ini, cctx, rnd, front);
 
         using namespace std::chrono_literals;
 
@@ -1246,7 +1244,6 @@ public:
     {
         CryptoContext cctx;
         UdevRandom rnd;
-        Fstat fstat;
 
         EventManager event_manager;
         event_manager.set_time_base(current_time_base());
@@ -1364,7 +1361,7 @@ public:
 
             if (auth_sck != INVALID_SOCKET) {
                 end_loop = this->main_loop(
-                    auth_sck, event_manager, cctx, rnd, fstat, rbuf, front_trans,
+                    auth_sck, event_manager, cctx, rnd, rbuf, front_trans,
                     front, redir_info, rail_client_execute, mod_wrapper, mod_factory);
             }
 

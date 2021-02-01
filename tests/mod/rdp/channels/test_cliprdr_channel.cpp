@@ -23,7 +23,6 @@
 #include "test_only/test_framework/file.hpp"
 
 #include "test_only/transport/test_transport.hpp"
-#include "test_only/fake_stat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "core/RDP/clipboard.hpp"
@@ -741,11 +740,10 @@ namespace
         WorkingDirectory::SubDirectory fdx_hash_path = hash_path.create_subdirectory(sid);
         CryptoContext cctx;
         LCGRandom rnd;
-        FakeFstat fstat;
         FdxCapture fdx = FdxCapture{
             record_path.dirname().string(),
             hash_path.dirname().string(),
-            "sid,blabla", sid, -1, 0660, cctx, rnd, fstat,
+            "sid,blabla", sid, -1, 0660, cctx, rnd,
             [](const Error & /*error*/){}};
     };
 
@@ -902,28 +900,7 @@ namespace
             }
         };
     };
-} // anonymous namespace
 
-// TODO move err count condition to RED_AUTO_TEST_CONTEXT_DATA
-#define RED_AUTO_TEST_CLIPRDR(test_name, type_value, iocontext, ...) \
-    void test_name##__case(type_value);                              \
-    RED_AUTO_TEST_CASE(test_name) {                                  \
-        auto l = __VA_ARGS__;                                        \
-        auto p = l.begin();                                          \
-        RED_TEST_CONTEXT_DATA(type_value, iocontext, l)              \
-        {                                                            \
-            auto const err_count = RED_ERROR_COUNT();                \
-            test_name##__case(*p);                                   \
-            if (err_count != RED_ERROR_COUNT()) {                    \
-                break;                                               \
-            };                                                       \
-            ++p;                                                     \
-        }                                                            \
-    }                                                                \
-    void test_name##__case(type_value)
-
-namespace
-{
     void initialize_channel(
         MsgComparator& msg_comparator,
         ClipDataTest::ChannelCtx& channel_ctx,
@@ -967,7 +944,7 @@ namespace
     }
 } // anonymous namespace
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest const& d, d, {
+RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest const& d, d, {
     //           icap  fdx  storage verify
     ClipDataTest{true, false, true, false},
     ClipDataTest{true, true, false, false},
@@ -978,6 +955,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
     ClipDataTest{false, true, true, false}
 })
 {
+    stop_after_error();
+
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
@@ -1156,7 +1135,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
 
         if (d.always_file_storage) {
             RED_CHECK_FILE_CONTENTS(fdx_path,
-                "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00"
                 "\x00\x00,\x03\x00\x26\x00""abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
                 "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0"
                 "\x7f,\x96.\x10x\xc0""5\x9f^"_av);
@@ -1167,7 +1146,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataFileWithoutLock, ClipDataTest 
     }
 }
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTest const& d, d, {
+RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTest const& d, d, {
     //                       always
     //           icap  fdx  storage verify=false
     ClipDataTest{true, false, true},
@@ -1178,6 +1157,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
     ClipDataTest{false, true, true},
 })
 {
+    stop_after_error();
+
     bytes_view temp_av;
     MsgComparator msg_comparator;
     auto fdx_ctx = d.make_optional_fdx_ctx();
@@ -1496,30 +1477,30 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrChannelFilterDataMultiFileWithLock, ClipDataTes
 
         if (d.with_validator && d.always_file_storage) {
             RED_CHECK_FILE_CONTENTS(fdx_path,
-                "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00"
                 "\x00\x00\x00\x00\x00,\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9"
                 "\xdb""E\\p\xb7\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98"
                 "\xf7\xf5\xe0\x7f,\x96.\x10x\xc0""5\x9f^\x04\x00\x02\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x0A\x00\x00\x00\x00\x00\x00\x00"
                 "L\x03\x00&\x00""defmy_session_id/my_session_id,000002.tfl"
                 "\xdd\xa0\x98\xfc(\x04\x92<\xee\xef\x1b""e\xf2kx\xbe\x87"
                 "\x89S[{\x9d\xdd\xb6\xfd\xa8\xdej-\xac\xf1\x90"_av);
         }
         else if (d.always_file_storage) {
             RED_CHECK_FILE_CONTENTS(fdx_path,
-                "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x0A\x00\x00\x00\x00\x00"
                 "\x00\x00,\x03\x00&\x00""defmy_session_id/my_session_id,000002.tfl"
                 "\xdd\xa0\x98\xfc(\x04\x92<\xee\xef\x1b""e\xf2kx\xbe\x87\x89S[{\x9d"
                 "\xdd\xb6\xfd\xa8\xdej-\xac\xf1\x90\x04\x00\x01\x00\x00\x00\x00\x00"
-                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00,\x03\x00&\x00"
+                "\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00,\x03\x00&\x00"
                 "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9\xdb""E\\p\xb7"
                 "\xc6\xa7\x02%\xa0\x0f\x85\x99""1\xe4\x98\xf7\xf5\xe0\x7f,\x96.\x10"
                 "x\xc0""5\x9f^"_av);
         }
         else if (d.with_validator && d.with_fdx_capture) {
             RED_CHECK_FILE_CONTENTS(fdx_path,
-                "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "v3\n\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x0A\x00\x00\x00\x00\x00\x00"
                 "\x00L\x03\x00&\x00""defmy_session_id/my_session_id,000002.tfl"
                 "\xdd\xa0\x98\xfc(\x04\x92<\xee\xef\x1b""e\xf2kx\xbe\x87\x89S[{"
                 "\x9d\xdd\xb6\xfd\xa8\xdej-\xac\xf1\x90"_av);
@@ -1615,7 +1596,7 @@ namespace
         = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"_av;
 }
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d, d, {
+RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d, d, {
     //                       always
     //           icap  fdx  storage verify
     ClipDataTest{true, false, true, true, ValidationResult::IsAccepted},
@@ -1627,6 +1608,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
     ClipDataTest{true, true, true, true, ValidationResult::IsRejected},
 })
 {
+    stop_after_error();
+
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
 
@@ -2601,39 +2584,39 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
             RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(str_concat(
                 "v3\n"
 
-                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000001.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
 
-                "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x02\x00\x00\x00\x00\x00\x00\x00\x0D\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000002.tflg\xf4\x06\x62"
                 "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
                 "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
 
-                "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x03\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000003.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"_av,
 
                 d.always_file_storage ?
-                    "\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x04\x00\x04\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                     "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                     "abcmy_session_id/my_session_id,000004.tfl\x04\x43\xb6\xdc"
                     "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
                     "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"_av
                 : ""_av,
 
-                "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x05\x00\x00\x00\x00\x00\x00\x00\x0D\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000005.tflg\xf4\x06\x62"
                 "\xfd\x7a\xae\x29\x42\xe0\x2a\x35\xa5\x19\xfa\x2c\xf6\x28"
                 "\x49\x8d\xf4\x98\xab\x3b\x9c\x3a\x74\xe6\x9f\x57\x2e\x4e"
 
-                "\x04\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x06\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000006.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
@@ -2642,13 +2625,13 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
                 ""_av,
 
                 is_rejected ?
-                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                 "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000007.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
                 "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
 
-                "\x04\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x08\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                 "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000008.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
@@ -2656,13 +2639,13 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
 
                 ""_av
                     :
-                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x07\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000007.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
                 "\x98\xf7\xf5\xe0\x7f\x2c\x96\x2e\x10\x78\xc0\x35\x9f\x5e"
 
-                "\x04\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x08\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00"
                 "\x00\x00\x00\x00\x34\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000008.tfl\xd1\xb9\xc9\xdb"
                 "\x45\x5c\x70\xb7\xc6\xa7\x02\x25\xa0\x0f\x85\x99\x31\xe4"
@@ -2671,20 +2654,20 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
                 ""_av
                 ,
 
-                "\x04\x00\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x09\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                 "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000009.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
                 "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"_av,
 
                 d.always_file_storage ?
-                    "\x04\x00\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x04\x00\x0a\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                     "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                     "abcmy_session_id/my_session_id,000010.tfl\x04\x43\xb6\xdc"
                     "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
                     "\xaa\x4a\x77\x8e\x4f\x80\x88\xe5\xcc\x03\xd0\x80\x2c\x4a"
 
-                    "\x04\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    "\x04\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
                     "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                     "abcmy_session_id/my_session_id,000011.tfl\x9e\xc5\x05\xa2"
                     "\xf4\x79\xac\xa4\x44\x65\xc9\xd2\x26\xbe\x14\xfd\xe2\xe8"
@@ -2693,7 +2676,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
                     ""_av
                 : ""_av,
 
-                "\x04\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                 "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000012.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
@@ -2708,7 +2691,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransfer, ClipDataTest const& d
 }
 
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTest const& d, d, {
+RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTest const& d, d, {
     //                       always
     //           icap  fdx  storage verify
     ClipDataTest{true, false, true, true},
@@ -2716,6 +2699,8 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
     ClipDataTest{true, true, true, true},
 })
 {
+    stop_after_error();
+
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
 
@@ -2806,7 +2791,7 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
             RED_CHECK_FILE_CONTENTS(fdx_path, ut::ascii(
                 "v3\n"
 
-                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
                 "\x00\x00\x00\x00\x54\x03\x00\x26\x00"
                 "abcmy_session_id/my_session_id,000001.tfl\x04\x43\xb6\xdc"
                 "\x17\xed\xff\xa5\x5f\xb5\x70\x59\x81\xb2\x8c\x6b\x07\x86"
@@ -2821,13 +2806,15 @@ RED_AUTO_TEST_CLIPRDR(TestCliprdrValidationBeforeTransferAndMaxSize, ClipDataTes
 }
 
 
-RED_AUTO_TEST_CLIPRDR(TestCliprdrTextValidationBeforeTransfer, ClipDataTest const& d, d, {
+RED_AUTO_TEST_CONTEXT_DATA(TestCliprdrTextValidationBeforeTransfer, ClipDataTest const& d, d, {
     //                       always
     //           icap  fdx  storage verify
     ClipDataTest{true, false, false, true, ValidationResult::IsAccepted},
     ClipDataTest{true, false, false, true, ValidationResult::IsRejected},
 })
 {
+    stop_after_error();
+
     RED_TEST(d.with_validator);
     RED_TEST(d.verify_before_transfer);
 

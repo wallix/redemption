@@ -28,7 +28,6 @@
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/netutils.hpp"
 #include "utils/parse_primary_drawing_orders.hpp"
-#include "utils/genfstat.hpp"
 #include "mod/file_validator_service.hpp"
 #include "mod/rdp/params/rdp_session_probe_params.hpp"
 #include "mod/rdp/params/rdp_application_params.hpp"
@@ -188,7 +187,6 @@ class ModRDPWithSocketAndMetrics final : public mod_api
 {
     std::unique_ptr<SocketTransport> socket_transport_ptr;
     ModRdpFactory rdp_factory;
-    Fstat fstat;
 
 public:
     mod_rdp mod;
@@ -222,7 +220,7 @@ public:
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
                 session_id, groupid, ini.get<cfg::video::file_permissions>(),
-                cctx, gen, this->fstat,
+                cctx, gen,
                 /* TODO should be a log (siem?)*/
                 [](const Error & /*error*/){});
 

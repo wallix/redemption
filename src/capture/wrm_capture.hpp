@@ -42,7 +42,6 @@
 #include "transport/out_meta_sequence_transport.hpp"
 
 #include "utils/compression_transport_builder.hpp"
-#include "utils/genfstat.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/png.hpp"
@@ -841,7 +840,6 @@ public:
     , out(
         wrm_params.cctx,
         wrm_params.rnd,
-        wrm_params.fstat,
         capture_params.record_path,
         wrm_params.hash_path,
         capture_params.basename,
