@@ -171,8 +171,8 @@ void SelectorMod::ask_page()
 {
     this->ini.set_acl<cfg::context::selector_current_page>(this->current_page);
 
-    this->ini.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filters[1].get_text());
-    this->ini.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filters[0].get_text());
+    this->ini.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filters[0].get_text());
+    this->ini.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filters[1].get_text());
     this->ini.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filters[2].get_text());
 
     this->ini.ask<cfg::globals::target_user>();
