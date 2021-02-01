@@ -743,6 +743,10 @@ force_smartcard_authentication = boolean(default=False)
 #_hidden
 enable_ipv6 = boolean(default=False)
 
+# Experimental!
+#_hidden
+bogus_monitor_layout_treatment = boolean(default=False)
+
 #_hidden
 auto_reconnection_on_losing_target_link = boolean(default=False)
 

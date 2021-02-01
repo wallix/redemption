@@ -123,6 +123,9 @@ enable_ipv6 = boolean(default=False)
 #   forbid: Block Console mode request from client.
 mode_console = option('allow', 'force', 'forbid', default='allow')
 
+# Experimental!
+bogus_monitor_layout_treatment = boolean(default=False)
+
 #_advanced
 auto_reconnection_on_losing_target_link = boolean(default=False)
 

@@ -207,6 +207,7 @@ namespace cfg
         struct force_smartcard_authentication;
         struct enable_ipv6;
         struct mode_console;
+        struct bogus_monitor_layout_treatment;
         struct auto_reconnection_on_losing_target_link;
         struct forward_client_build_number;
     };

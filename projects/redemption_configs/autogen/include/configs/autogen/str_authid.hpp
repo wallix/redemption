@@ -103,6 +103,7 @@ namespace configs
         "mod_rdp:force_smartcard_authentication"_zv,
         "mod_rdp:enable_ipv6"_zv,
         "mod_rdp:mode_console"_zv,
+        "mod_rdp:bogus_monitor_layout_treatment"_zv,
         "mod_rdp:auto_reconnection_on_losing_target_link"_zv,
         "mod_rdp:forward_client_build_number"_zv,
         "clipboard_up"_zv,

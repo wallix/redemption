@@ -876,6 +876,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #enable_ipv6 = 0
 
+# Experimental!
+# value: 0 or 1
+#_hidden
+#bogus_monitor_layout_treatment = 0
+
 # value: 0 or 1
 #_hidden
 #auto_reconnection_on_losing_target_link = 0

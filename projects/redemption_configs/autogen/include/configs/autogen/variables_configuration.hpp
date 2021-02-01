@@ -15,24 +15,24 @@ namespace configs
         inline constexpr int section1 = 19; /* session_log */
         inline constexpr int section2 = 20; /* client */
         inline constexpr int section3 = 22; /* mod_rdp */
-        inline constexpr int section4 = 95; /* mod_vnc */
-        // inline constexpr int section5 = 103; /* metrics */
-        inline constexpr int section6 = 103; /* file_verification */
-        inline constexpr int section7 = 111; /* file_storage */
-        // inline constexpr int section8 = 112; /* icap_server_down */
-        // inline constexpr int section9 = 112; /* icap_server_up */
-        inline constexpr int section10 = 112; /* mod_replay */
-        // inline constexpr int section11 = 113; /* ocr */
-        inline constexpr int section12 = 113; /* video */
-        inline constexpr int section13 = 118; /* capture */
-        inline constexpr int section14 = 121; /* crypto */
-        // inline constexpr int section15 = 123; /* websocket */
-        // inline constexpr int section16 = 123; /* debug */
-        inline constexpr int section17 = 123; /* remote_program */
-        inline constexpr int section18 = 124; /* translation */
-        // inline constexpr int section19 = 127; /* internal_mod */
-        inline constexpr int section20 = 127; /* context */
-        // inline constexpr int section21 = 207; /* theme */
+        inline constexpr int section4 = 96; /* mod_vnc */
+        // inline constexpr int section5 = 104; /* metrics */
+        inline constexpr int section6 = 104; /* file_verification */
+        inline constexpr int section7 = 112; /* file_storage */
+        // inline constexpr int section8 = 113; /* icap_server_down */
+        // inline constexpr int section9 = 113; /* icap_server_up */
+        inline constexpr int section10 = 113; /* mod_replay */
+        // inline constexpr int section11 = 114; /* ocr */
+        inline constexpr int section12 = 114; /* video */
+        inline constexpr int section13 = 119; /* capture */
+        inline constexpr int section14 = 122; /* crypto */
+        // inline constexpr int section15 = 124; /* websocket */
+        // inline constexpr int section16 = 124; /* debug */
+        inline constexpr int section17 = 124; /* remote_program */
+        inline constexpr int section18 = 125; /* translation */
+        // inline constexpr int section19 = 128; /* internal_mod */
+        inline constexpr int section20 = 128; /* context */
+        // inline constexpr int section21 = 208; /* theme */
     }
 }
 
@@ -2531,6 +2531,22 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
+    /// Experimental! <br/>
+    /// type: bool <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:bogus_monitor_layout_treatment <br/>
+    /// default: {false} <br/>
+    struct mod_rdp::bogus_monitor_layout_treatment {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 71};
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
     /// type: bool <br/>
     /// connpolicy -> proxy <br/>
     /// sesmanName: mod_rdp:auto_reconnection_on_losing_target_link <br/>
@@ -2540,7 +2556,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 71};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 72};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2556,7 +2572,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 72};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 73};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -5458,6 +5474,7 @@ struct mod_rdp
 , cfg::mod_rdp::force_smartcard_authentication
 , cfg::mod_rdp::enable_ipv6
 , cfg::mod_rdp::mode_console
+, cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_rdp::forward_client_build_number
 { static constexpr bool is_section = true; };
@@ -5851,6 +5868,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::force_smartcard_authentication
 , cfg::mod_rdp::enable_ipv6
 , cfg::mod_rdp::mode_console
+, cfg::mod_rdp::bogus_monitor_layout_treatment
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_rdp::forward_client_build_number
 , cfg::mod_vnc::clipboard_up
@@ -5975,14 +5993,14 @@ struct BitFlags {
 
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111101111111111111
-, 0b1111100111111111111111111111111111111111111111111111111111111111
-, 0b1011111111111111111111111111111111111111111101101111101111111111
-, 0b0000000000000000000000000000000000000000000000000111111111111111
+, 0b1111001111111111111111111111111111111111111111111111111111111111
+, 0b0111111111111111111111111111111111111111111011011111011111111111
+, 0b0000000000000000000000000000000000000000000000001111111111111111
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000010000000000000000000
+, 0b0000000000000000000000000000000000000000000100000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs

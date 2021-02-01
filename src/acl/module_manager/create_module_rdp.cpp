@@ -665,7 +665,8 @@ ModPack create_mod_rdp(
     mod_rdp_params.lang                                = language(ini);
 
     mod_rdp_params.allow_using_multiple_monitors       = ini.get<cfg::globals::allow_using_multiple_monitors>();
-    mod_rdp_params.allow_scale_factor                   = ini.get<cfg::globals::allow_scale_factor>();
+    mod_rdp_params.bogus_monitor_layout_treatment      = ini.get<cfg::mod_rdp::bogus_monitor_layout_treatment>();
+    mod_rdp_params.allow_scale_factor                  = ini.get<cfg::globals::allow_scale_factor>();
 
     mod_rdp_params.adjust_performance_flags_for_recording
             = (ini.get<cfg::globals::is_rec>()

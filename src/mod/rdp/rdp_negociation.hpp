@@ -156,6 +156,7 @@ private:
     const bool bogus_sc_net_size;
 
     const bool allow_using_multiple_monitors;
+    const bool bogus_monitor_layout_treatment;
     const bool allow_scale_factor;
     GCC::UserData::CSMonitor cs_monitor;
     GCC::UserData::CSMonitorEx cs_monitor_ex;
@@ -189,7 +190,7 @@ private:
     /// Client build number.
     /// Represents the 'clientBuild' field of Client Core Data (TS_UD_CS_CORE)
     /// as specified in [MS-RDPBCGR] §2.2.1.3.2.
-    /// Note: must be forwarded from client to server 
+    /// Note: must be forwarded from client to server
     /// for correct smartcard support; see issue #27767.
     const uint32_t build_number;
 

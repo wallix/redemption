@@ -523,6 +523,8 @@ void config_spec_definition(Writer && W)
 
         W.member(no_ini_no_gui, rdp_connpolicy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow), desc{"Console mode management for targets on Windows Server 2003 (requested with /console or /admin mstsc option)"});
 
+        W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "bogus_monitor_layout_treatment", desc{"Experimental!"}, set(false));
+
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "auto_reconnection_on_losing_target_link", set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, L, type_<bool>(), "forward_client_build_number",
