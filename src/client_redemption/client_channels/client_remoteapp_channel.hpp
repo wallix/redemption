@@ -26,6 +26,8 @@
 #include "gdi/graphic_api.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
+#include <vector>
+
 class ClientCallback;
 class ClientRedemptionConfig;
 class ClientRedemptionAPI;
