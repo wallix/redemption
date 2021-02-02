@@ -168,7 +168,7 @@ static std::string prefix(std::string data, std::size_t n){
         data.resize(n);
     }
     return data;
-};
+}
 
 RED_AUTO_TEST_CASE(TestWrmCapture)
 {

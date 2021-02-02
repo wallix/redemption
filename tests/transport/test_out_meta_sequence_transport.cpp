@@ -70,11 +70,11 @@ static std::string prefix(std::string data, std::size_t n){
         data.resize(n);
     }
     return data;
-};
+}
 
 static std::string file_contents_prefix(WorkingFileBase filename, std::size_t n){
     return prefix(RED_CHECK_GET_FILE_CONTENTS(filename), n);
-};
+}
 
 RED_AUTO_TEST_CASE(TestOutmetaTransportLocal)
 {
