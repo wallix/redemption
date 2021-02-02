@@ -4,6 +4,9 @@ REDEMPTION_CXXFLAGS +=
     <cxxflags>-std=c++17
     <cxxflags>-msse3
 
+    # clang-12 use -fbracket-depth as fold limit...
+    <toolset>clang:<cxxflags>-fbracket-depth=512
+
     # <cxx-linker-default>gold # add automatically by bjam
     <cxx-color-default>always
     <cxx-shadow-warnings-default>off
