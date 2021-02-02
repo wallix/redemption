@@ -41,19 +41,6 @@
 #include "test_only/transport/test_transport.hpp"
 
 
-static std::size_t str_stat_size(struct stat const& st)
-{
-    return int_to_chars(st.st_size).size()
-         + int_to_chars(st.st_mode).size()
-         + int_to_chars(st.st_uid).size()
-         + int_to_chars(st.st_gid).size()
-         + int_to_chars(st.st_dev).size()
-         + int_to_chars(st.st_ino).size()
-         + int_to_chars(st.st_mtim.tv_sec).size()
-         + int_to_chars(st.st_ctim.tv_sec).size()
-         ;
-}
-
 static struct stat get_stat(char const* filename)
 {
     class stat st;
@@ -317,9 +304,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture.mwrm"), array_view{str_concat(
         "v2\n\n\ntest_capture.mwrm ",
-        int_to_chars( wrm0.size() + wrm1.size() + wrm2.size() +
-                    + str_stat_size(st0) + str_stat_size(st1) + str_stat_size(st2)
-                    + 81), ' ',
+        int_to_chars(st.st_size), ' ',
         int_to_chars(st.st_mode), ' ',
         int_to_chars(st.st_uid), ' ',
         int_to_chars(st.st_gid), ' ',
@@ -515,9 +500,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st3.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0.mwrm"), array_view{str_concat(
         "v2\n\n\nresizing-capture-0.mwrm ",
-        int_to_chars( wrm0.size() + wrm1.size() + wrm2.size() + wrm3.size() +
-                    + str_stat_size(st0) + str_stat_size(st1) + str_stat_size(st2) + str_stat_size(st3)
-                    + 100), ' ',
+        int_to_chars(st.st_size), ' ',
         int_to_chars(st.st_mode), ' ',
         int_to_chars(st.st_uid), ' ',
         int_to_chars(st.st_gid), ' ',
@@ -654,9 +637,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st3.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1.mwrm"), array_view{str_concat(
         "v2\n\n\nresizing-capture-1.mwrm ",
-        int_to_chars( wrm0.size() + wrm1.size() + wrm2.size() + wrm3.size() +
-                    + str_stat_size(st0) + str_stat_size(st1) + str_stat_size(st2) + str_stat_size(st3)
-                    + 100), ' ',
+        int_to_chars(st.st_size), ' ',
         int_to_chars(st.st_mode), ' ',
         int_to_chars(st.st_uid), ' ',
         int_to_chars(st.st_gid), ' ',

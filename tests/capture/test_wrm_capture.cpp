@@ -163,19 +163,6 @@ static struct stat get_stat(char const* filename)
     return st;
 }
 
-static std::size_t str_stat_size(struct stat const& st)
-{
-    return int_to_chars(st.st_size).size()
-         + int_to_chars(st.st_mode).size()
-         + int_to_chars(st.st_uid).size()
-         + int_to_chars(st.st_gid).size()
-         + int_to_chars(st.st_dev).size()
-         + int_to_chars(st.st_ino).size()
-         + int_to_chars(st.st_mtim.tv_sec).size()
-         + int_to_chars(st.st_ctim.tv_sec).size()
-         ;
-}
-
 static std::string prefix(std::string data, std::size_t n){
     if (data.size() > n) {
         data.resize(n);
@@ -231,9 +218,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"), array_view{str_concat(
         "v2\n\n\ncapture.mwrm ",
-        int_to_chars( wrm1.size() + wrm2.size() + wrm3.size()
-                    + str_stat_size(st1) + str_stat_size(st2) + str_stat_size(st3)
-                    + 81), ' ',
+        int_to_chars(st.st_size), ' ',
         int_to_chars(st.st_mode), ' ',
         int_to_chars(st.st_uid), ' ',
         int_to_chars(st.st_gid), ' ',
@@ -329,9 +314,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     auto hash_content = RED_CHECK_GET_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"));
     auto hash_expected = str_concat(
         "v2\n\n\ncapture.mwrm ",
-        int_to_chars( wrm1.size() + wrm2.size() + wrm3.size()
-                    + str_stat_size(st1) + str_stat_size(st2) + str_stat_size(st3)
-                    + 469), ' ',
+        int_to_chars(st.st_size), ' ',
         int_to_chars(st.st_mode), ' ',
         int_to_chars(st.st_uid), ' ',
         int_to_chars(st.st_gid), ' ',
@@ -490,11 +473,22 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         int_to_chars(st.st_ino), ' ',
         int_to_chars(st.st_mtim.tv_sec), ' ',
         int_to_chars(st.st_ctim.tv_sec), " 1000 1002\n")});
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_kbd_input-000000.wrm"), 84);
 
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_kbd_input-000000.wrm"), array_view{str_concat(
+        "v2\n"
+        "\n"
+        "\n"
+        "capture_kbd_input-000000.wrm 303 ",
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_kbd_input.mwrm"), array_view{str_concat(
         "v2\n\n\ncapture_kbd_input.mwrm ",
-        int_to_chars(first_file.size() + 81), ' ',
+        int_to_chars(mst.st_size), ' ',
         int_to_chars(mst.st_mode), ' ',
         int_to_chars(mst.st_uid), ' ',
         int_to_chars(mst.st_gid), ' ',
@@ -579,10 +573,21 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         int_to_chars(st.st_ino), ' ',
         int_to_chars(st.st_mtim.tv_sec), ' ',
         int_to_chars(st.st_ctim.tv_sec), " 1000 1002\n")});
-    RED_TEST_FILE_SIZE(hash_wd.add_file("capture_remoteapp-000000.wrm"), 85);
+    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_remoteapp-000000.wrm"), array_view{str_concat(
+        "v2\n"
+        "\n"
+        "\n"
+        "capture_remoteapp-000000.wrm 1670 ",
+        int_to_chars(st.st_mode), ' ',
+        int_to_chars(st.st_uid), ' ',
+        int_to_chars(st.st_gid), ' ',
+        int_to_chars(st.st_dev), ' ',
+        int_to_chars(st.st_ino), ' ',
+        int_to_chars(st.st_mtim.tv_sec), ' ',
+        int_to_chars(st.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_remoteapp.mwrm"), array_view{str_concat(
         "v2\n\n\ncapture_remoteapp.mwrm ",
-        int_to_chars(first_file.size() + 86), ' ',
+        int_to_chars(mst.st_size), ' ',
         int_to_chars(mst.st_mode), ' ',
         int_to_chars(mst.st_uid), ' ',
         int_to_chars(mst.st_gid), ' ',

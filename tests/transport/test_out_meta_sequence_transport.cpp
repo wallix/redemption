@@ -58,19 +58,6 @@ static void gen_out_meta_seq(
     wrm_trans.send("CCCCX", 5);
 }
 
-static std::size_t str_stat_size(struct stat const& st)
-{
-    return int_to_chars(st.st_size).size()
-         + int_to_chars(st.st_mode).size()
-         + int_to_chars(st.st_uid).size()
-         + int_to_chars(st.st_gid).size()
-         + int_to_chars(st.st_dev).size()
-         + int_to_chars(st.st_ino).size()
-         + int_to_chars(st.st_mtim.tv_sec).size()
-         + int_to_chars(st.st_ctim.tv_sec).size()
-         ;
-}
-
 static struct stat get_stat(char const* filename)
 {
     class stat st;
@@ -163,7 +150,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportLocal)
         "\n"
         "\n"
         "xxx.mwrm ",
-        int_to_chars(file1.size() + file2.size() + str_stat_size(st1) + str_stat_size(st2) + 86), ' ',
+        int_to_chars(mwrmst.st_size), ' ',
         int_to_chars(mwrmst.st_mode), ' ',
         int_to_chars(mwrmst.st_uid), ' ',
         int_to_chars(mwrmst.st_gid), ' ',
@@ -251,13 +238,12 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36"
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36\n"));
 
-    auto mwrm_str_size = int_to_chars(file1.size() + file2.size() + str_stat_size(st1) + str_stat_size(st2) + 344);
     auto expected_prefix = str_concat(
         "v2\n"
         "\n"
         "\n"
         "xxx.mwrm ",
-        mwrm_str_size, ' ',
+        int_to_chars(mwrmst.st_size), ' ',
         int_to_chars(mwrmst.st_mode), ' ',
         int_to_chars(mwrmst.st_uid), ' ',
         int_to_chars(mwrmst.st_gid), ' ',
@@ -267,7 +253,7 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
         int_to_chars(mwrmst.st_ctim.tv_sec), ' ');
     auto hash_mwrm = RED_CHECK_GET_FILE_CONTENTS(hash_wd.add_file("xxx.mwrm"));
 
-    RED_TEST(hash_mwrm.size() == expected_prefix.size() + mwrm_str_size.size() + 127);
+    RED_TEST(hash_mwrm.size() == expected_prefix.size() + 65*2);
     RED_TEST(prefix(hash_mwrm, expected_prefix.size()) == expected_prefix);
 
     RED_CHECK_WORKSPACE(record_wd);
