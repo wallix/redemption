@@ -1592,9 +1592,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         cli::option('a', "video-break-interval").help("number of seconds between splitting video files (by default, one video every 10 minutes)")
             .parser(cli::arg_location(recorder.video_break_interval)),
 
-        cli::option('q', "video-quality").help("video quality (ignored, please use --video-codec-options)")
-            .parser(cli::raw([](char const* /*unused*/){})),
-
         cli::option('D', "video-codec-options").help("FFmpeg codec option, format: key1=value1 key2=value2")
             .parser(cli::arg_location(codec_options)).argname("<ffmpeg-option>"),
 
