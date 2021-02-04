@@ -314,18 +314,27 @@ namespace sesman
 
     struct connection_policy
     {
-        char const* file;
-        connpolicy::internal::attr spec;
+        std::vector<std::string_view> files;
+        connpolicy::internal::attr spec = {};
 
-        explicit connection_policy(char const* file, connpolicy::internal::attr spec = {})
-        : file(file)
-        , spec(spec)
+        explicit connection_policy(std::string_view file)
+        : files{file}
         {}
     };
 
     inline connection_policy operator | (connection_policy const& x, connpolicy::internal::attr y)
     {
-        return connection_policy{x.file, x.spec | y};
+        connection_policy conn{x};
+        conn.spec = conn.spec | y;
+        return conn;
+    }
+
+    inline connection_policy operator | (connection_policy const& x, connection_policy const& y)
+    {
+        assert(x.spec == y.spec);
+        connection_policy conn{x};
+        conn.files.insert(conn.files.end(), y.files.begin(), y.files.end());
+        return conn;
     }
 
     namespace internal

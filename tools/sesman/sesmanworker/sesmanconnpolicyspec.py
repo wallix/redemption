@@ -225,6 +225,20 @@ cp_spec = {
             'server_cert_failure_message', 1
         ),
     },
+    'vnc': {
+        u'mod_vnc:server_is_macos': (
+            'server_is_macos', False
+        ),
+        u'mod_vnc:server_unix_alt': (
+            'server_unix_alt', False
+        ),
+        u'mod_vnc:support_cursor_pseudo_encoding': (
+            'support_cursor_pseudo_encoding', True
+        ),
+        u'mod_vnc:enable_ipv6': (
+            'enable_ipv6', False
+        ),
+    },
     'file_verification': {
         u'file_verification:enable_up': (
             'enable_up', False
@@ -259,20 +273,6 @@ cp_spec = {
     'video': {
         u'capture:disable_keyboard_log': (
             'disable_keyboard_log', 1
-        ),
-    },
-    'vnc': {
-        u'mod_vnc:server_is_macos': (
-            'server_is_macos', False
-        ),
-        u'mod_vnc:server_unix_alt': (
-            'server_unix_alt', False
-        ),
-        u'mod_vnc:support_cursor_pseudo_encoding': (
-            'support_cursor_pseudo_encoding', True
-        ),
-        u'mod_vnc:enable_ipv6': (
-            'enable_ipv6', False
         ),
     },
 }

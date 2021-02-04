@@ -149,7 +149,7 @@ struct spec_attr_t { cfg_attributes::spec::internal::attr value; };
 struct sesman_io_t { cfg_attributes::sesman::internal::io value; };
 struct log_policy_t { cfg_attributes::spec::log_policy value; };
 struct connection_policy_t : sesman_io_t {
-    char const* file;
+    std::vector<std::string> files;
     cfg_attributes::connpolicy::internal::attr spec;
 };
 
@@ -182,7 +182,7 @@ namespace detail_
         else if constexpr (is_convertible_v<T, cfg_attributes::sesman::connection_policy>) {
             return connection_policy_t{
                 {cfg_attributes::sesman::internal::io::sesman_to_proxy},
-                x.file,
+                {x.files.begin(), x.files.end()},
                 x.spec
             };
         }

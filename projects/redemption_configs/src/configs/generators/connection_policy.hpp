@@ -116,7 +116,6 @@ struct ConnectionPolicyWriterBase
             python_spec_writer::write_type2(python_spec.out, enums, type, semantic_type, default_value);
             this->python_spec.out << "\n\n";
 
-            auto&& sections = this->file_map[connpolicy.file];
             auto const& section = value_or<connpolicy::section>(
                 infos, connpolicy::section{section_names.connpolicy_name().c_str()});
 
@@ -124,33 +123,26 @@ struct ConnectionPolicyWriterBase
                 this->ordered_section.emplace_back(section.name);
             }
 
-            Section& sec = sections[section.name];
-
             auto sesman_name = sesman_network_name(infos, section_names);
 
-            sec.python_contains += this->python_spec.out.str();
-
-            this->python_spec.out.str("");
+            auto s = this->python_spec.out.str();
+            for (auto const& file : connpolicy.files) {
+                this->file_map[file][section.name] += s;
+            }
 
             auto& buf = this->python_spec.out;
+            buf.str("");
+            auto sesman_mem_key = str_concat(section.name, '/', sesman_name, '/', member_name);
+            if (!this->sesman_mems.emplace(sesman_mem_key).second) {
+                throw std::runtime_error(str_concat("duplicate ", section.name, ' ', member_name));
+            }
             sesman_default_map::python::write_type2(buf, enums, type, semantic_type, default_value);
-            update_sesman_contains(sec.sesman_contains, sesman_name, member_name, buf.str());
-
+            str_append(this->sesman_file[section.name],
+                   "        u'", sesman_name, "': (\n"
+                   "            '", member_name, "', ", buf.str(), "\n"
+                   "        ),\n");
             buf.str("");
         }
-    }
-
-    static void update_sesman_contains(
-        std::string& s,
-        std::string const sesman_name,
-        std::string const connpolicy_name,
-        std::string const value,
-        char const* extra = "")
-    {
-        str_append(s,
-                   "        u'", sesman_name, "': (\n"
-                   "            '", connpolicy_name, "', ", value, "\n"
-                   "        ),", extra, '\n');
     }
 
     void do_start_section(Names const& /*names*/)
@@ -174,6 +166,24 @@ struct ConnectionPolicyWriterBase
           << python_comment(do_not_edit, 0) << "\n"
           "cp_spec = {\n"
         ;
+
+        for (auto& section_name : this->ordered_section) {
+            auto section_it = sesman_file.find(section_name);
+            if (section_it != sesman_file.end()) {
+                out_sesman
+                    << "    '" << section_name << "': {\n"
+                    << section_it->second << "    },\n"
+                ;
+            }
+        }
+
+        out_sesman << "}\n";
+
+        if (!out_sesman) {
+            std::cerr << "ConnectionPolicyWriterBase: " << this->python_spec.filename << ": " << strerror(errno) << "\n";
+            return 1;
+        }
+
 
         for (auto const& cat : this->categories) {
             auto file_it = file_map.find(cat);
@@ -215,11 +225,7 @@ vault_transformation_rule = string(default='')
                 if (section_it != section_map.end()) {
                     out_spec
                         << "[" << section_name << "]\n\n"
-                        << section_it->second.python_contains
-                    ;
-                    out_sesman
-                        << "    '" << section_name << "': {\n"
-                        << section_it->second.sesman_contains << "    },\n"
+                        << section_it->second
                     ;
                 }
             }
@@ -230,25 +236,16 @@ vault_transformation_rule = string(default='')
             }
         }
 
-        out_sesman << "}\n";
-
-        if (!out_sesman) {
-            std::cerr << "ConnectionPolicyWriterBase: " << this->python_spec.filename << ": " << strerror(errno) << "\n";
-            return 1;
-        }
         return 0;
     }
 
 private:
-    struct Section
-    {
-        std::string python_contains;
-        std::string sesman_contains;
-    };
-    using data_by_section_t = std::unordered_map<std::string, Section>;
+    using data_by_section_t = std::unordered_map<std::string, std::string>;
     std::unordered_map<std::string, data_by_section_t> file_map;
     std::vector<std::string> ordered_section;
     std::unordered_set<std::string> section_names;
+    std::unordered_map<std::string, std::string> sesman_file;
+    std::unordered_set<std::string> sesman_mems;
     categories_t categories;
     std::string directory_spec;
 };
