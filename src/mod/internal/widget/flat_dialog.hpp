@@ -25,7 +25,7 @@
 #include "mod/internal/widget/flat_button.hpp"
 #include "mod/internal/widget/image.hpp"
 #include "mod/internal/widget/label.hpp"
-#include "mod/internal/widget/multiline.hpp"
+#include "mod/internal/widget/vertical_scroll_text.hpp"
 #include "mod/internal/widget/widget_rect.hpp"
 
 enum ChallengeOpt
@@ -45,7 +45,7 @@ public:
 
     WidgetLabel        title;
     WidgetRect         separator;
-    WidgetMultiLine    dialog;
+    WidgetVerticalScrollText dialog;
     std::unique_ptr<WidgetEdit> challenge;
     WidgetFlatButton   ok;
     std::unique_ptr<WidgetFlatButton> cancel;
@@ -53,8 +53,6 @@ public:
     WidgetFlatButton * extra_button;
 
     Font const & font;
-
-    std::string dialog_string;
 
     BGRColor bg_color;
 

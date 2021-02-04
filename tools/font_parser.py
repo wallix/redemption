@@ -30,11 +30,11 @@
 #     * offsety (2 bytes)
 #     * abcA (left space)
 #     * abcB (glyph width)
-#     * abcC (roght space)
+#     * abcC (right space)
 #     * cx (2 bytes)
 #     * cy (2 bytes)
 #     * data (the bitmap representing the sketch of the glyph, one bit by pixel, 0 for
-#       background, 1 for foreground) (aligned of 4 btyes)
+#       background, 1 for foreground) (aligned of 4 bytes)
 #
 # TECHs :
 # - struct.pack formats are :

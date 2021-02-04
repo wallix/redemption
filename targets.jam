@@ -195,6 +195,7 @@ exe rdpproxy :
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
@@ -2436,6 +2437,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
@@ -2600,6 +2602,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/metrics.o
@@ -3054,6 +3057,7 @@ test-run tests/mod/internal/test_dialog_mod :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
@@ -3158,8 +3162,8 @@ test-run tests/mod/internal/test_login_mod :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/rdp/rdp_negociation_data.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
@@ -3581,6 +3585,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3703,8 +3708,8 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/password.o
   <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
   <library>src/system/linux/system/i18n/message_translator_gettext.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -4262,6 +4267,38 @@ test-run tests/mod/internal/widget/test_tooltip :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/tooltip.cpp
   <covfile>src/mod/internal/widget/tooltip.hpp
+;
+test-run tests/mod/internal/widget/test_vertical_scroll_text :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_vertical_scroll_text.cpp
+:
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/vertical_scroll_text.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/vertical_scroll_text.cpp
+  <covfile>src/mod/internal/widget/vertical_scroll_text.hpp
 ;
 test-run tests/mod/internal/widget/test_widget :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget.cpp
@@ -5937,6 +5974,7 @@ obj src/mod/internal/widget/screen.o : $(REDEMPTION_SRC_PATH)/mod/internal/widge
 obj src/mod/internal/widget/scroll.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/scroll.cpp ;
 obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/selector.cpp ;
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
+obj src/mod/internal/widget/vertical_scroll_text.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/vertical_scroll_text.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/metrics.o : $(REDEMPTION_SRC_PATH)/mod/metrics.cpp ;
@@ -6209,6 +6247,7 @@ alias test_screen : tests/mod/internal/widget/test_screen ;
 alias test_scroll : tests/mod/internal/widget/test_scroll ;
 alias test_selector : tests/mod/internal/widget/test_selector ;
 alias test_tooltip : tests/mod/internal/widget/test_tooltip ;
+alias test_vertical_scroll_text : tests/mod/internal/widget/test_vertical_scroll_text ;
 alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
@@ -6537,6 +6576,7 @@ alias test_screen.coverage : tests/mod/internal/widget/test_screen.coverage ;
 alias test_scroll.coverage : tests/mod/internal/widget/test_scroll.coverage ;
 alias test_selector.coverage : tests/mod/internal/widget/test_selector.coverage ;
 alias test_tooltip.coverage : tests/mod/internal/widget/test_tooltip.coverage ;
+alias test_vertical_scroll_text.coverage : tests/mod/internal/widget/test_vertical_scroll_text.coverage ;
 alias test_widget.coverage : tests/mod/internal/widget/test_widget.coverage ;
 alias test_widget_rect.coverage : tests/mod/internal/widget/test_widget_rect.coverage ;
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
@@ -6935,6 +6975,7 @@ alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_scroll
   tests/mod/internal/widget/test_selector
   tests/mod/internal/widget/test_tooltip
+  tests/mod/internal/widget/test_vertical_scroll_text
   tests/mod/internal/widget/test_widget
   tests/mod/internal/widget/test_widget_rect
 ;

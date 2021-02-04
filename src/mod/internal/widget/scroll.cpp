@@ -24,6 +24,18 @@
 #include "mod/internal/widget/scroll.hpp"
 #include "mod/internal/widget/flat_button.hpp"
 
+namespace
+{
+    Dimension get_optimal_button_dim(const Font& font, bool is_horizontal)
+    {
+        Dimension dim = WidgetFlatButton::get_optimal_dim(1, font, is_horizontal ? "▶" : "▲", 3, 2);
+
+        dim.w += 1;
+        dim.h += 2;
+
+        return dim;
+    }
+}
 
 WidgetScrollBar::WidgetScrollBar(
     gdi::GraphicApi & drawable, Widget& parent,
@@ -32,17 +44,17 @@ WidgetScrollBar::WidgetScrollBar(
     Font const & font, bool rail_style, int maxvalue)
 : Widget(drawable, parent, notifier, group_id)
 , horizontal(horizontal)
-, fg_color(fgcolor)
-, bg_color(bgcolor)
-, focus_color(focuscolor)
+, fg_color(encode_color24()(fgcolor))
+, bg_color(encode_color24()(bgcolor))
+, focus_color(encode_color24()(focuscolor))
 , font(font)
 , max_value(maxvalue)
 , event(horizontal ? NOTIFY_HSCROLL : NOTIFY_VSCROLL)
+, button_width_or_height(this->horizontal
+    ? get_optimal_button_dim(this->font, this->horizontal).w
+    : get_optimal_button_dim(this->font, this->horizontal).h)
 , rail_style(rail_style)
-{
-    Dimension dim = this->get_optimal_button_dim();
-    this->button_width_or_height = (this->horizontal ? dim.w : dim.h);
-}
+{}
 
 void WidgetScrollBar::compute_step_value()
 {
@@ -150,20 +162,20 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
         if (this->horizontal) {
             WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
                 false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)), "◀",
-                encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-                encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
+                this->fg_color, this->bg_color,
+                this->focus_color, gdi::ColorCtx::depth24(),
                 Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
             WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
                 false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)), "▶",
-                encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-                encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
+                this->fg_color, this->bg_color,
+                this->focus_color, gdi::ColorCtx::depth24(),
                 Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
             this->drawable.draw(
                 RDPOpaqueRect(
                     rect_intersect.intersect(this->scroll_bar_rect),
-                    encode_color24()(this->bg_color)
+                    this->bg_color
                 ),
                 this->get_rect(),
                 gdi::ColorCtx::depth24()
@@ -179,7 +191,7 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
                                 this->scroll_bar_rect.cx,
                                 1)
                         ),
-                        encode_color24()(this->fg_color)
+                        this->fg_color
                     ),
                     this->get_rect(),
                     gdi::ColorCtx::depth24()
@@ -194,48 +206,46 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
                                 this->scroll_bar_rect.cx,
                                 1)
                         ),
-                        encode_color24()(this->fg_color)
+                        this->fg_color
                     ),
                     this->get_rect(),
                     gdi::ColorCtx::depth24()
                 );
-            }
 
-            if (this->rail_style) {
+                WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)), "▤",
+                    this->fg_color, this->bg_color,
+                    this->focus_color, gdi::ColorCtx::depth24(),
+                    Rect(), 0, (this->rail_style ? 0 : 1), this->font, 0, -1);
+            }
+            else {
                 this->drawable.draw(
                     RDPOpaqueRect(
                         rect_intersect.intersect(this->cursor_button_rect),
-                        encode_color24()(this->fg_color)
+                        this->fg_color
                     ),
                     this->get_rect(),
                     gdi::ColorCtx::depth24()
                 );
-            }
-            else {
-                WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
-                    false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)), "▤",
-                    encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-                    encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
-                    Rect(), 0, (this->rail_style ? 0 : 1), this->font, 0, -1);
             }
         }
         else {
             WidgetFlatButton::draw(rect_intersect, this->left_or_top_button_rect, this->drawable,
                 false, (this->mouse_down && (this->selected_button == BUTTON_LEFT_OR_TOP)), "▲",
-                encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-                encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
+                this->fg_color, this->bg_color,
+                this->focus_color, gdi::ColorCtx::depth24(),
                 Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
             WidgetFlatButton::draw(rect_intersect, this->right_or_bottom_button_rect, this->drawable,
                 false, (this->mouse_down && (this->selected_button == BUTTON_RIGHT_OR_BOTTOM)), "▼",
-                encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-                encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
+                this->fg_color, this->bg_color,
+                this->focus_color, gdi::ColorCtx::depth24(),
                 Rect(), 0, (this->rail_style ? 0 : 2), this->font, (this->rail_style ? 2 : 0), (this->rail_style ? 1 : -1));
 
             this->drawable.draw(
                 RDPOpaqueRect(
                     rect_intersect.intersect(this->scroll_bar_rect),
-                    encode_color24()(this->bg_color)
+                    this->bg_color
                 ),
                 this->get_rect(),
                 gdi::ColorCtx::depth24()
@@ -251,7 +261,7 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
                                 1,
                                 this->scroll_bar_rect.cy)
                         ),
-                        encode_color24()(this->fg_color)
+                        this->fg_color
                     ),
                     this->get_rect(),
                     gdi::ColorCtx::depth24()
@@ -266,29 +276,27 @@ void WidgetScrollBar::rdp_input_invalidate(Rect clip)
                                 1,
                                 this->scroll_bar_rect.cy)
                         ),
-                        encode_color24()(this->fg_color)
+                        this->fg_color
                     ),
                     this->get_rect(),
                     gdi::ColorCtx::depth24()
                 );
-            }
 
-            if (this->rail_style) {
+                WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
+                    false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)), "▥",
+                    this->fg_color, this->bg_color,
+                    this->focus_color, gdi::ColorCtx::depth24(),
+                    Rect(), 0, (this->rail_style ? 0 : 1), this->font, -1, 0);
+            }
+            else {
                 this->drawable.draw(
                     RDPOpaqueRect(
                         rect_intersect.intersect(this->cursor_button_rect),
-                        encode_color24()(this->fg_color)
+                        this->fg_color
                     ),
                     this->get_rect(),
                     gdi::ColorCtx::depth24()
                 );
-            }
-            else {
-                WidgetFlatButton::draw(rect_intersect, this->cursor_button_rect, this->drawable,
-                    false, (this->mouse_down && (this->selected_button == BUTTON_CURSOR)), "▥",
-                    encode_color24()(this->fg_color), encode_color24()(this->bg_color),
-                    encode_color24()(this->focus_color), gdi::ColorCtx::depth24(),
-                    Rect(), 0, (this->rail_style ? 0 : 1), this->font, -1, 0);
             }
         }
 
@@ -308,20 +316,9 @@ void WidgetScrollBar::set_wh(uint16_t w, uint16_t h)
     this->update_rects();
 }
 
-Dimension WidgetScrollBar::get_optimal_button_dim()
-{
-    Dimension dim = WidgetFlatButton::get_optimal_dim(
-        1, this->font, this->horizontal ? "▶" : "▲", 3, 2);
-
-    dim.w += 1;
-    dim.h += 2;
-
-    return dim;
-}
-
 Dimension WidgetScrollBar::get_optimal_dim()
 {
-    return this->get_optimal_button_dim();
+    return get_optimal_button_dim(this->font, this->horizontal);
 }
 
 // RdpInput
@@ -386,7 +383,7 @@ void WidgetScrollBar::rdp_input_mouse(int device_flags, int x, int y, Keymap2* k
             const int old_value = this->current_value;
 
             const int min_button_x_or_y = (this->horizontal ? this->x() : this->y()) + this->button_width_or_height - 1;
-            const int max_button_x_or_y = (this->horizontal ? this->x() : this->y()) + this->button_width_or_height - 1 +
+            const int max_button_x_or_y = min_button_x_or_y +
                                             ((this->horizontal ? this->cx() : this->cy()) - this->button_width_or_height * 2 + 2 - this->button_width_or_height);
 
             const int min_x_or_y = min_button_x_or_y + (this->old_mouse_x_or_y - this->old_cursor_button_x_or_y);

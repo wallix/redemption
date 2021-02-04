@@ -257,10 +257,6 @@ struct Font
         return this->max_height_;
     }
 
-    [[nodiscard]] uint16_t style() const noexcept {
-        return this->style_;
-    }
-
     [[nodiscard]] char const * name() const noexcept {
         return this->name_;
     }
@@ -304,7 +300,6 @@ private:
     FontCharView unknown_item = default_unknown_glyph();
     uint16_t size_ = 0;
     uint16_t max_height_ = 0;
-    uint16_t style_ = 0;
     char name_[32] {};
 
     bool spark_view_specific_glyph_width_ = false;

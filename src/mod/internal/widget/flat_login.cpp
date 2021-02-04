@@ -32,54 +32,6 @@ enum {
     WIDGET_MULTILINE_BORDER_Y = 4
 };
 
-FlatLogin::ScrollableMessage::ScrollableMessage(
-    gdi::GraphicApi & drawable, Widget & parent,
-    Font const & font, Theme const & theme, Widget& message)
-: WidgetParent(drawable, parent, nullptr, 0)
-, message(message)
-, step(font.size())
-, scroll_bar(
-    drawable, *this, this, false, 0,
-    theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
-    font, false)
-{
-    this->impl = &this->composite_array;
-    this->set_bg_color(theme.global.bgcolor);
-    this->add_widget(&message);
-    this->add_widget(&this->scroll_bar);
-}
-
-void FlatLogin::ScrollableMessage::notify(Widget * /*sender*/, notify_event_t /*event*/)
-{
-    this->drawable.begin_update();
-
-    auto const new_y = -this->scroll_bar.get_current_value() * this->step;
-    this->message.set_xy(this->message.x(), this->y() + new_y);
-
-    if (this->message.ebottom() < this->scroll_bar.ebottom()) {
-        Rect const message_rect(
-            this->x(), this->y(),
-            this->cx(), this->message.ebottom() - this->y());
-        Rect const bottom_rect(
-            this->x(), message_rect.ebottom(),
-            this->cx(), this->ebottom() - message_rect.ebottom());
-
-        this->message.rdp_input_invalidate(message_rect);
-        if (!bottom_rect.isempty()) {
-            this->drawable.draw(
-                RDPOpaqueRect(bottom_rect, encode_color24()(this->get_bg_color())),
-                bottom_rect,
-                gdi::ColorCtx::depth24());
-        }
-    }
-    else {
-        Rect const message_rect(this->x(), this->y(), this->message.cx(), this->cy());
-        this->message.rdp_input_invalidate(message_rect);
-    }
-
-    this->drawable.end_update();
-}
-
 FlatLogin::FlatLogin(
     gdi::GraphicApi & drawable,
     int16_t left, int16_t top, uint16_t width, uint16_t height, Widget & parent,
@@ -89,7 +41,7 @@ FlatLogin::FlatLogin(
     const char * label_text_password,
     const char * label_text_target,
     const char * label_error_message,
-    const char * label_login_message,
+    const char * login_message,
     WidgetFlatButton * extra_button,
     bool enable_target_field,
     Font const & font, Translator tr, Theme const & theme
@@ -118,10 +70,10 @@ FlatLogin::FlatLogin(
                   target, -18, theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font,
                   label_text_target, (width <= 640), -1u, 1, 1, false)
-    , login_message_label(drawable, *this, nullptr, label_login_message, -10,
-             theme.global.fgcolor, theme.global.bgcolor, font,
-             WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
-    , scrollable_login_message_label(drawable, *this, font, theme, this->login_message_label)
+    , login_message_label(drawable, *this, nullptr, -19,
+        login_message ? std::string(login_message) : std::string(),
+        theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
+        font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , img(drawable,
           theme.global.enable_theme ? theme.global.logo_path.c_str() :
           app_path(AppPath::LoginWabBlue),
@@ -137,7 +89,6 @@ FlatLogin::FlatLogin(
                 theme.global.focus_color, 2, font, 6, 2)
     , extra_button(extra_button)
     , font(font)
-    , login_message(label_login_message)
     , tr(tr)
     , show_target(enable_target_field)
     , bg_color(theme.global.bgcolor)
@@ -157,7 +108,7 @@ FlatLogin::FlatLogin(
 
     this->add_widget(&this->error_message_label);
 
-    if (*label_login_message) {
+    if (*login_message) {
         this->add_widget(&this->login_message_label);
     }
 
@@ -242,17 +193,6 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
                   this->password_label.cx() + 10 + this->password_edit.cx(),
                   target_bloc_w});
 
-    gdi::MultiLineTextMetrics line_metrics(
-        this->font,
-        this->login_message.c_str(),
-        cbloc_w - WIDGET_MULTILINE_BORDER_X * 2);
-    this->login_message_label.set_wh(
-        line_metrics.max_width() + WIDGET_MULTILINE_BORDER_X * 2,
-        (this->font.max_height() + WIDGET_MULTILINE_BORDER_Y)
-        * line_metrics.lines().size() + WIDGET_MULTILINE_BORDER_Y * 2
-        - (line_metrics.lines().empty() ? 0 : WIDGET_MULTILINE_BORDER_Y));
-    this->login_message_label.set_text(std::move(line_metrics));
-
     dim = this->error_message_label.get_optimal_dim();
     this->error_message_label.set_wh(dim);
 
@@ -261,17 +201,6 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
         this->show_target
         ?  offset_y + this->target_label.cy()
         : 0;
-
-    const int cbloc_h
-        = this->login_message_label.cy() + 60
-        + this->login_label.cy()
-        + offset_y + this->login_label.cy()
-        + targetlabel_h
-        + offset_y + this->password_label.cy()
-        + 60;
-
-    const int cbloc_x = (width  - cbloc_w) / 2;
-    const int cbloc_y = (height - cbloc_h) / 2;
 
     const int targetedit_h =
         this->show_target
@@ -287,40 +216,31 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
       + (offset_y + 4) * 4
       + 60;
 
-    int login_message_bottom;
-
-    if (height - bottom_size < this->login_message_label.cy()) {
-        if (!this->scroll_added) {
-            this->add_widget(&this->scrollable_login_message_label);
-            this->remove_widget(&this->login_message_label);
-            this->scroll_added = true;
+    this->login_message_label.set_wh(
+        cbloc_w - WIDGET_MULTILINE_BORDER_X * 2,
+        height - bottom_size);
+    {
+        auto dim = this->login_message_label.get_optimal_dim();
+        if (dim.h < this->login_message_label.cy()) {
+            this->login_message_label.set_wh(this->login_message_label.cx(), dim.h);
         }
-        auto const h = height - bottom_size;
-        auto const scroll_dim = this->scrollable_login_message_label.scroll_bar.get_optimal_dim();
-        this->login_message_label.set_xy(
-            left + (width - this->login_message_label.cx()) / 2, top + offset_y);
-        this->scrollable_login_message_label.set_xy(
-            this->login_message_label.x(), this->login_message_label.y());
-        this->scrollable_login_message_label.scroll_bar.set_xy(
-            this->login_message_label.eright(), this->login_message_label.y());
-        this->scrollable_login_message_label.scroll_bar.set_wh(scroll_dim.w, h);
-        this->scrollable_login_message_label.set_wh(
-            this->login_message_label.cx() + scroll_dim.w, h);
-        this->scrollable_login_message_label.scroll_bar.set_max_value(
-            (this->login_message_label.cy() - h) / this->font.size() + 1);
-        login_message_bottom = this->scrollable_login_message_label.cy() + offset_y * 2 + 4;
-    }
-    else {
-        if (this->scroll_added) {
-            this->add_widget(&this->login_message_label);
-            this->remove_widget(&this->scrollable_login_message_label);
-            this->scroll_added = false;
-        }
-        this->login_message_label.set_xy(
-            left + (width - this->login_message_label.cx()) / 2, cbloc_y);
-        login_message_bottom = cbloc_y + this->login_message_label.cy() + 60;
     }
 
+    const int cbloc_h
+        = this->login_message_label.cy() + 60
+        + this->login_label.cy()
+        + offset_y + this->login_label.cy()
+        + targetlabel_h
+        + offset_y + this->password_label.cy()
+        + 60;
+
+    const int cbloc_x = (width  - cbloc_w) / 2;
+    const int cbloc_y = (height - cbloc_h) / 2;
+
+    this->login_message_label.set_xy(
+        left + (width - this->login_message_label.cx()) / 2, cbloc_y);
+
+    int login_message_bottom = cbloc_y + this->login_message_label.cy() + 60;
 
     this->error_message_label.set_xy(left + cbloc_x, top + login_message_bottom);
 
@@ -328,19 +248,16 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
 
     if (this->show_target) {
         this->target_label.set_xy(left + cbloc_x,
-                                  last_offset
-                                  + offset_y + 4);
+                                  last_offset + offset_y + 4);
         last_offset = this->target_label.y() + this->target_label.cy();
     }
 
     this->login_label.set_xy(left + cbloc_x,
-                             last_offset
-                             + offset_y + 4);
+                             last_offset + offset_y + 4);
     last_offset = this->login_label.y() + this->login_label.cy();
 
     this->password_label.set_xy(left + cbloc_x,
-                                last_offset
-                                + offset_y + 4);
+                                last_offset + offset_y + 4);
 
     const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
 
@@ -394,10 +311,12 @@ BGRColor FlatLogin::get_bg_color() const
 
 void FlatLogin::notify(Widget* widget, NotifyApi::notify_event_t event)
 {
-    if ((widget == &this->login_edit
-            || widget == &this->target_edit
-            || widget == &this->password_edit)
-            && event == NOTIFY_SUBMIT) {
+    if (event == NOTIFY_SUBMIT &&
+      ( widget == &this->login_edit
+     || widget == &this->target_edit
+     || widget == &this->password_edit
+      )
+    ) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {

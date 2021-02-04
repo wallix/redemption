@@ -27,6 +27,8 @@ add_obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions
 add_obj src/gdi/text_metrics.o : $(REDEMPTION_SRC_PATH)/gdi/text_metrics.cpp ;
 add_obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 add_obj src/keyboard/keymapsym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapsym.cpp ;
+add_obj src/keyboard/scancode/autogen/all_LCIDs_scancodes.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/autogen/all_LCIDs_scancodes.cpp ;
+add_obj src/keyboard/scancode/unicode_to_scancode.o : $(REDEMPTION_SRC_PATH)/keyboard/scancode/unicode_to_scancode.cpp ;
 add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
 add_obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
 add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
@@ -115,6 +117,8 @@ requirement_list += <library>src/gdi/screen_functions.o ;
 requirement_list += <library>src/gdi/text_metrics.o ;
 requirement_list += <library>src/keyboard/keymap2.o ;
 requirement_list += <library>src/keyboard/keymapsym.o ;
+requirement_list += <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o ;
+requirement_list += <library>src/keyboard/scancode/unicode_to_scancode.o ;
 requirement_list += <library>src/mod/internal/replay_mod.o ;
 requirement_list += <library>src/mod/internal/widget/flat_button.o ;
 requirement_list += <library>src/mod/internal/widget/label.o ;

@@ -28,11 +28,11 @@ class Font;
 
 class WidgetScrollBar : public Widget
 {
-    bool horizontal;
+    const bool horizontal;
 
-    BGRColor fg_color;
-    BGRColor bg_color;
-    BGRColor focus_color;
+    const RDPColor fg_color;
+    const RDPColor bg_color;
+    const RDPColor focus_color;
 
     Font const & font;
 
@@ -56,14 +56,14 @@ class WidgetScrollBar : public Widget
         BUTTON_RIGHT_OR_BOTTOM
     } selected_button = BUTTON_NONE;
 
-    notify_event_t event;
+    const notify_event_t event;
 
     int old_mouse_x_or_y         = 0;
     int old_cursor_button_x_or_y = 0;
 
-    uint16_t button_width_or_height = 0;
+    const uint16_t button_width_or_height = 0;
 
-    bool rail_style = false;
+    const bool rail_style;
 
 public:
     WidgetScrollBar(gdi::GraphicApi & drawable, Widget& parent,
@@ -98,6 +98,4 @@ private:
     void update_cursor_button_rects();
 
     void update_rects();
-
-    Dimension get_optimal_button_dim();
 };

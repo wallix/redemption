@@ -46,13 +46,13 @@ FlatDialog::FlatDialog(
             theme.global.fgcolor, theme.global.bgcolor, font, 5)
     , separator(drawable, *this, this, -12,
                 theme.global.separator_color)
-    , dialog(drawable, *this, nullptr, text, -10,
-                theme.global.fgcolor, theme.global.bgcolor, font,
-                WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
+    , dialog(drawable, *this, nullptr, -10, text,
+             theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
+             font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
     , challenge(nullptr)
     , ok(drawable, *this, this, ok_text ? ok_text : "Ok", -12,
-            theme.global.fgcolor, theme.global.bgcolor,
-            theme.global.focus_color, 2, font, 6, 2)
+         theme.global.fgcolor, theme.global.bgcolor,
+         theme.global.focus_color, 2, font, 6, 2)
     , cancel(cancel_text
         ? std::make_unique<WidgetFlatButton>(
             drawable, *this, this, cancel_text, -11,
@@ -68,7 +68,6 @@ FlatDialog::FlatDialog(
           -8)
     , extra_button(extra_button)
     , font(font)
-    , dialog_string(text)
     , bg_color(theme.global.bgcolor)
 {
     this->impl = &composite_array;
@@ -138,16 +137,13 @@ void FlatDialog::move_size_widget(int16_t left, int16_t top, uint16_t width, uin
     y            += this->title.cy();
     total_height += this->title.cy();
 
-    gdi::MultiLineTextMetrics line_metrics(
-        this->font,
-        this->dialog_string.c_str(),
-        width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2);
-    this->dialog.set_wh(
-        line_metrics.max_width() + WIDGET_MULTILINE_BORDER_X * 2,
-        (this->font.max_height() + WIDGET_MULTILINE_BORDER_Y)
-        * line_metrics.lines().size() + WIDGET_MULTILINE_BORDER_Y * 2
-        - (line_metrics.lines().empty() ? 0 : WIDGET_MULTILINE_BORDER_Y));
-    this->dialog.set_text(std::move(line_metrics));
+    this->dialog.set_wh(width * 4 / 5 - WIDGET_MULTILINE_BORDER_X * 2, height / 2);
+    {
+        auto dim = this->dialog.get_optimal_dim();
+        if (dim.h < this->dialog.cy()) {
+            this->dialog.set_wh(dim.w, dim.h);
+        }
+    }
 
     const int total_width = std::max(this->dialog.cx(), this->title.cx());
 

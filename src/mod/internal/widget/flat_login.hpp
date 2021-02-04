@@ -24,7 +24,7 @@
 #include "mod/internal/widget/label.hpp"
 #include "mod/internal/widget/edit_valid.hpp"
 #include "mod/internal/widget/image.hpp"
-#include "mod/internal/widget/scroll.hpp"
+#include "mod/internal/widget/vertical_scroll_text.hpp"
 #include "utils/translation.hpp"
 #include "mod/internal/widget/multiline.hpp"
 
@@ -32,24 +32,10 @@ class Theme;
 
 class FlatLogin : public WidgetParent
 {
-    class ScrollableMessage : public WidgetParent
-    {
-        CompositeArray composite_array;
-        Widget& message;
-        int step;
-
-    public:
-        WidgetScrollBar scroll_bar;
-
-        ScrollableMessage(
-            gdi::GraphicApi & drawable, Widget & parent,
-            Font const & font, Theme const & theme, Widget & message);
-
-        void notify(Widget * sender, notify_event_t event) override;
-    };
-public:
     CompositeArray composite_array;
 
+public:
+    // TODO private
     WidgetLabel        error_message_label;
     WidgetLabel        login_label;
     WidgetEditValid    login_edit;
@@ -57,8 +43,7 @@ public:
     WidgetEditValid    password_edit;
     WidgetLabel        target_label;
     WidgetEditValid    target_edit;
-    WidgetMultiLine    login_message_label;
-    ScrollableMessage  scrollable_login_message_label;
+    WidgetVerticalScrollText login_message_label;
     WidgetImage        img;
     WidgetLabel        version_label;
     WidgetFlatButton   helpicon;
@@ -66,13 +51,10 @@ public:
 
     Font const & font;
 
-    std::string login_message;
-
 private:
     Translator tr;
 
     bool labels_added = false;
-    bool scroll_added = false;
     bool show_target = false;
 
     BGRColor bg_color;
@@ -86,7 +68,7 @@ public:
               const char * label_text_password,
               const char * label_text_target,
               const char * label_error_message,
-              const char * label_login_message,
+              const char * login_message,
               WidgetFlatButton * extra_button,
               bool enable_target_field,
               Font const & font, Translator tr, Theme const & theme);

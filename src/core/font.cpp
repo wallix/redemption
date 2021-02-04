@@ -69,11 +69,11 @@ FontCharView Font::default_unknown_glyph() noexcept
     * offsety (2 bytes)
     * abcA (left space)
     * abcB (glyph width)
-    * abcC (roght space)
+    * abcC (right space)
     * cx (2 bytes)
     * cy (2 bytes)
     * data (the bitmap representing the sketch of the glyph, one bit by pixel, 0 for
-      background, 1 for foreground) (aligned of 4 btyes)
+      background, 1 for foreground) (aligned of 4 bytes)
 */
 
 void Font::load_from_file(char const * file_path)
@@ -157,7 +157,7 @@ void Font::load_from_file(char const * file_path)
         this->size_ = stream.in_uint16_le();
         // TODO temporary disabled to avoid warning in watchdog, see other TODO above to reenable later
         // LOG(LOG_INFO, "font name <%s> size <%u>", this->name, this->size);
-        this->style_ = stream.in_uint16_le();
+        /*this->style_ =*/ stream.in_uint16_le();
         this->max_height_ = stream.in_uint16_le();
         number_of_glyph = stream.in_uint32_le();
         total_data_len = stream.in_uint32_le();
