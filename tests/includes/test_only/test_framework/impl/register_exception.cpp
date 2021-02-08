@@ -40,6 +40,9 @@ namespace
             #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
                 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
             #endif
+            #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(9, 0, 0)
+                REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wused-but-marked-unused")
+            #endif
             boost::unit_test::unit_test_monitor.register_exception_translator<Error>(
                 +[](Error const & e){
                     const auto prefix_msg_error = "Exception of type 'Error': "_av;
