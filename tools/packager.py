@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import getopt
@@ -30,7 +30,7 @@ try:
                                    "debug", "force-target="])
 
 except getopt.GetoptError as err:
-    print(str(err))
+    print(err)
     usage()
     sys.exit(2)
 
@@ -188,7 +188,7 @@ def get_current_tag_from_version_file():
     found = False
     current_tag = None
     out = readall("include/main/version.hpp")
-    out = out.split('\n')
+    out = out.split(b'\n')
     for line in out:
         res = re.match(r'^[#]define\sVERSION\s"(.*)"\s*$', line)
         if res:
@@ -246,7 +246,7 @@ def update_changelog_template():
 # Check uncommited changes BEGIN
 def check_uncommited_changes():
     res = subprocess.Popen(
-        ["git", "diff", "--shortstat"],
+        [b"git", b"diff", b"--shortstat"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
     ).communicate()[0]
@@ -259,22 +259,22 @@ def check_uncommited_changes():
 # Check tag version BEGIN
 def check_new_tag_version_with_local_and_remote_tags(newtag):
     locale_tags = subprocess.Popen(
-        ["git", "tag", "--list"],
+        [b"git", b"tag", b"--list"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT
-    ).communicate()[0].split('\n')
+    ).communicate()[0].split(b'\n')
 
     if newtag in locale_tags:
         raise Exception('tag %s already exists (locale).' % newtag)
 
-    remote_tags = map(lambda x: x.split('/')[-1],
+    remote_tags = map(lambda x: x.split(b'/')[-1],
                       subprocess.Popen(
-                          ["git", "ls-remote", "--tags", "origin"],
+                          [b"git", b"ls-remote", b"--tags", b"origin"],
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT
-                      ).communicate()[0].split('\n'))
+                      ).communicate()[0].split(b'\n'))
 
-    if newtag in remote_tags:
+    if newtag.encode() in remote_tags:
         raise Exception('tag %s already exists (remote).' % newtag)
 # Check tag version END
 
@@ -283,7 +283,7 @@ def check_new_tag_version_with_local_and_remote_tags(newtag):
 def check_matching_version_changelog():
     found = False
     out = readall("include/main/version.hpp")
-    out = out.split('\n')
+    out = out.split(b'\n')
     for line in out:
         res = re.match(
             r'^[#]define\sVERSION\s"(([-a-zA-Z]*(\d+)[.](\d+)[.](\d+))(-?[a-z]*)*)"\s*$',
@@ -307,10 +307,10 @@ def check_matching_version_changelog():
 
 # Check last version tag commited match current version tag BEGIN
 def check_last_version_commited_match_current_version(version):
-    res = subprocess.Popen(["git", "describe", "--tags"],
+    res = subprocess.Popen([b"git", b"describe", b"--tags"],
                            stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT).communicate()[0]
-    tag_describe = res.split("\n")[0]
+    tag_describe = res.split(b"\n")[0]
     if version != tag_describe:
         raise Exception(
             'Repository head mismatch current version '
@@ -456,7 +456,7 @@ try:
 except Exception as e:
     if remove_diff:
         res = subprocess.Popen(
-            ["git", "diff", "--shortstat"],
+            [b"git", b"diff", b"--shortstat"],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         ).communicate()[0]
@@ -464,4 +464,7 @@ except Exception as e:
             os.system("git stash")
             os.system("git stash drop")
     print("Build failed: %s" % e)
+    print("---------")
+    import logging
+    logging.error(logging.traceback.format_exc())
     exit(status if status else -1)
