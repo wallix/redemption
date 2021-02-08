@@ -100,7 +100,8 @@ string_type_name type_name(T const * = nullptr)
     namespace detail {                                    \
         template<bool B> struct type_name_impl<type, B> { \
             static string_type_name impl() {              \
-                return {name, name + sizeof(name) - 1};   \
+                char const * s = name;                    \
+                return {s, s + (sizeof(name) - 1)};       \
             }                                             \
         };                                                \
     }

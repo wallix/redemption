@@ -31,6 +31,8 @@
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
+#include <set>
 
 #include <cerrno>
 #include <cstring>
@@ -89,22 +91,36 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
             this->inherit().write_type(type, get_default<connpolicy::default_>(type, infos));
             this->out() << "\n\n";
 
-            auto&& sections = file_map[connpolicy.file];
             auto const& section = value_or<connpolicy::section>(
                 infos, connpolicy::section{section_name.c_str()});
 
-            Section& sec = (section_name == section.name)
-             ? sections.section_map[section.name]
-             : sections.delayed_section_map[section.name];
-
             auto& sesman_name = get_name<sesman::name>(infos);
 
-            sec.contains += this->out_member_.str();
-            update_sesman_contains(sec.sesman_contains, sesman_name, member_name);
+            auto s = this->out_member_.str();
+            for (auto const& file : connpolicy.files) {
+                auto&& sections = file_map[file];
+                auto& sec = (section_name == section.name)
+                    ? sections.section_map[section.name]
+                    : sections.delayed_section_map[section.name];
+                sec += s;
+            }
+
+            std::string sesman_mem_key = section.name;
+            sesman_mem_key += '/';
+            sesman_mem_key += sesman_name;
+            sesman_mem_key += '/';
+            sesman_mem_key += member_name;
+            if (!this->sesman_mems.emplace(sesman_mem_key).second) {
+                throw std::runtime_error(std::string("duplicate ") + section.name + ' ' + member_name);
+            }
+
+            this->ordered_sesman_sections.emplace(section.name);
+            auto& file_content = this->sesman_file[section.name];
+            update_sesman_contains(file_content, sesman_name, member_name);
 
             if constexpr (is_convertible_v<Pack, sesman::deprecated_names>) {
                 for (auto&& old_name : get_elem<sesman::deprecated_names>(infos).names) {
-                    update_sesman_contains(sec.sesman_contains, old_name, member_name, " # Deprecated, for compatibility only.");
+                    update_sesman_contains(file_content, old_name, member_name, " # Deprecated, for compatibility only.");
                 }
             }
 
@@ -133,14 +149,6 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
 
     void do_finish()
     {
-        auto& out_sesman = this->out_file_;
-
-        out_sesman <<
-          "#!/usr/bin/python -O\n"
-          "# -*- coding: utf-8 -*-\n\n"
-          "cp_spec = {\n"
-        ;
-
         for (auto const& [cat, filename] : filename_map) {
             auto file_it = file_map.find(cat);
             if (file_it == file_map.end()) {
@@ -178,20 +186,16 @@ vault_transformation_rule = string(default='')
             auto& delayed_section_map = file_it->second.delayed_section_map;
 
             for (auto const& [section_name, section] : section_map) {
-                out_spec << "[" << section_name << "]\n\n" << section.contains;
-                out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains;
+                out_spec << "[" << section_name << "]\n\n" << section;
                 auto it = delayed_section_map.find(section_name);
                 if (it != delayed_section_map.end()) {
-                    out_spec << it->second.contains;
-                    out_sesman << it->second.sesman_contains;
+                    out_spec << it->second;
                     delayed_section_map.erase(it);
                 }
-                out_sesman << "  },\n";
             }
 
             for (auto const& [section_name, section] : delayed_section_map) {
-                out_spec << "[" << section_name << "]\n\n" << section.contains;
-                out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains << "},\n";
+                out_spec << "[" << section_name << "]\n\n" << section;
             }
 
             if (!out_spec) {
@@ -201,22 +205,37 @@ vault_transformation_rule = string(default='')
             out_spec.close();
         }
 
+
+        auto& out_sesman = this->out_file_;
+
+        out_sesman <<
+          "#!/usr/bin/python -O\n"
+          "# -*- coding: utf-8 -*-\n\n"
+          "cp_spec = {\n"
+        ;
+
+        for (auto const& section_name : this->ordered_sesman_sections) {
+            auto section_it = sesman_file.find(section_name);
+            out_sesman
+                << "  '" << section_name << "': {\n"
+                << section_it->second << "  },\n"
+            ;
+        }
+
         out_sesman << "}\n";
     }
 
 private:
-    struct Section
-    {
-        std::string contains;
-        std::string sesman_contains;
-    };
-    using data_by_section_t = std::unordered_map<std::string, Section>;
+    using data_by_section_t = std::unordered_map<std::string, std::string>;
     struct File
     {
         data_by_section_t section_map;
         data_by_section_t delayed_section_map;
     };
     std::unordered_map<std::string, File> file_map;
+    std::unordered_map<std::string, std::string> sesman_file;
+    std::unordered_set<std::string> sesman_mems;
+    std::set<std::string> ordered_sesman_sections;
     filename_map_t filename_map;
 
 public:

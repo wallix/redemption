@@ -25,3 +25,10 @@ server_is_apple = boolean(default=False)
 
 server_unix_alt = boolean(default=True)
 
+[session]
+
+# No traffic auto disconnection.
+# If value is 0, global value (session_timeout) is used.
+# (is in second)
+inactivity_timeout = integer(min=0, default=0)
+

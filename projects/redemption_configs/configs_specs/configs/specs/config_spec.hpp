@@ -132,7 +132,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
-        W.member(hidden_in_gui, rdp_connpolicy, connpolicy::section{"session"}, L, type_<std::chrono::seconds>(), "inactivity_timeout", desc{"No traffic auto disconnection.\nIf value is 0, global value (session_timeout) is used."}, set(0));
+        W.member(hidden_in_gui, rdp_connpolicy | vnc_connpolicy, connpolicy::section{"session"}, L, type_<std::chrono::seconds>(), "inactivity_timeout", desc{"No traffic auto disconnection.\nIf value is 0, global value (session_timeout) is used."}, set(0));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "keepalive_grace_delay", desc{"Keepalive."}, set(30));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
