@@ -387,15 +387,7 @@ public:
     : channels_authorizations(channels_authorizations)
     , enable_auth_channel(mod_rdp_params.application_params.alternate_shell[0]
                         && !mod_rdp_params.ignore_auth_channel)
-    , auth_channel([&]{
-        switch (mod_rdp_params.auth_channel) {
-            case CHANNELS::ChannelNameId():
-            case CHANNELS::ChannelNameId("*"):
-                return CHANNELS::ChannelNameId("wablnch");
-            default:
-                return mod_rdp_params.auth_channel;
-        }
-        }())
+    , auth_channel(mod_rdp_params.auth_channel)
     , checkout_channel(mod_rdp_params.checkout_channel)
     , metrics(metrics)
     , gen(gen)

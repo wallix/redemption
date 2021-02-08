@@ -22,6 +22,7 @@
   find out the next module to run from context reading
 */
 
+#include "core/auth_channel_name.hpp"
 #include "capture/fdx_capture.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -573,7 +574,7 @@ ModPack create_mod_rdp(
     mod_rdp_params.session_probe_params = get_session_probe_params(ini);
 
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
-    mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
+    mod_rdp_params.auth_channel                        = ::get_effective_auth_channel_name(CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>()));
     mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
     mod_rdp_params.application_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
     mod_rdp_params.application_params.shell_arguments                     = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
@@ -594,9 +595,6 @@ ModPack create_mod_rdp(
     mod_rdp_params.server_cert_failure_message         = ini.get<cfg::mod_rdp::server_cert_failure_message>();
     mod_rdp_params.server_cert_error_message           = ini.get<cfg::mod_rdp::server_cert_error_message>();
 
-    mod_rdp_params.ignore_auth_channel = ini.get<cfg::mod_rdp::ignore_auth_channel>();
-    mod_rdp_params.auth_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>());
-    mod_rdp_params.checkout_channel = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
 
     mod_rdp_params.application_params = get_rdp_application_params(ini);
 
@@ -831,7 +829,7 @@ ModPack create_mod_rdp(
     // ================== Application Driver =========================
     char const * application_driver_exe_or_file            = nullptr;
     char const * application_driver_script                 = nullptr;
-    char const * application_driver_script_argument_extra  = nullptr;
+    std::string  application_driver_script_argument_extra;
     if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_IE__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_ie_script>();
@@ -847,12 +845,16 @@ ModPack create_mod_rdp(
     else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_DT__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_dt_script>();
-        application_driver_script_argument_extra = "/e:UseEdgeChromium=Yes";
+        application_driver_script_argument_extra += " /e:UseEdgeChromium=Yes";
     }
     else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_UIA__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
-        application_driver_script_argument_extra = "/e:UseEdgeChromium=Yes";
+        application_driver_script_argument_extra  = " /e:UseEdgeChromium=Yes";
+    }
+    if (CHANNELS::ChannelNameId("wablnch") != mod_rdp_params.auth_channel) {
+        application_driver_script_argument_extra += " /v:";
+        application_driver_script_argument_extra += mod_rdp_params.auth_channel.c_str();
     }
     if (application_driver_exe_or_file) {
         char const * session_probe_dir_remote = "\\\\tsclient\\SESPRO\\";
@@ -922,8 +924,7 @@ ModPack create_mod_rdp(
         std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
 
         application_driver_shell_arguments  = ini.get<cfg::mod_rdp::application_driver_script_argument>();
-        if (application_driver_script_argument_extra) {
-            application_driver_shell_arguments += " ";
+        if (!application_driver_script_argument_extra.empty()) {
             application_driver_shell_arguments += application_driver_script_argument_extra;
         }
         application_driver_shell_arguments += " ";
