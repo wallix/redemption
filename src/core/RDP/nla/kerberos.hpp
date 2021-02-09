@@ -243,6 +243,10 @@ struct KERBEROSContext final {
     KERBEROSContext()
         : gss_ctx(GSS_C_NO_CONTEXT)
         , target_name(GSS_C_NO_NAME)
+        , actual_services(0)
+        , actual_time(0)
+        , actual_flag(0)
+        , actual_mech(GSS_C_NO_OID)
         , deleg_cred(GSS_C_NO_CREDENTIAL)
     {}
 
