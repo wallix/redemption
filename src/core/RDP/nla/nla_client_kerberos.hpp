@@ -40,7 +40,7 @@ private:
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
-        uint32_t error_code = 0;
+    uint32_t error_code = 0;
 
     ClientNonce SavedClientNonce;
 
@@ -147,9 +147,9 @@ private:
 
         void CopyAuthIdentity(bytes_view user_utf16_av, bytes_view domain_utf16_av, bytes_view password_utf16_av)
         {
-            this->User.assign(user_utf16_av.data(),user_utf16_av.data()+user_utf16_av.size());
-            this->Domain.assign(domain_utf16_av.data(),domain_utf16_av.data()+domain_utf16_av.size());
-            this->Password.assign(password_utf16_av.data(),password_utf16_av.data()+password_utf16_av.size());
+            this->User.assign(user_utf16_av.data(), user_utf16_av.data()+user_utf16_av.size());
+            this->Domain.assign(domain_utf16_av.data(), domain_utf16_av.data()+domain_utf16_av.size());
+            this->Password.assign(password_utf16_av.data(), password_utf16_av.data()+password_utf16_av.size());
         }
 
     } identity;
