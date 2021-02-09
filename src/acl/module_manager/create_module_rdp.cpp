@@ -833,19 +833,11 @@ ModPack create_mod_rdp(
         application_driver_script_argument_extra += mod_rdp_params.auth_channel.c_str();
     }
     if (application_driver_exe_or_file) {
-        char const * session_probe_dir_remote = "\\\\tsclient\\SESPRO\\";
+        auto session_probe_dir_remote = "\\\\tsclient\\SESPRO\\"_av;
 
-        struct FILE_INFO {
-            std::string size;
-            std::string hash;
-        };
-
-        auto get_file_info = [](const char * directory, const char * filename) -> FILE_INFO {
-            FILE_INFO file_info;
-
-            std::string file_path(directory);
-            file_path += filename;
-            file_path += ".hash";
+        auto append_file_info = [](std::string & str, std::string_view filename) {
+            std::string file_path = str_concat(
+                app_path(AppPath::DriveRedirection), "/sespro/", filename, ".hash");
 
             std::string file_contents;
             (void)append_file_contents(file_path.c_str(), file_contents, 8192);
@@ -853,44 +845,33 @@ ModPack create_mod_rdp(
             size_t pos = file_contents.find(' ');
 
             if (std::string::npos != pos) {
-                file_info.size.assign(file_contents.c_str(), pos);
-                file_info.hash.assign(file_contents, pos + 1, std::string::npos);
+                str_append(
+                    str,
+                    '\x02', chars_view{file_contents}.first(pos),
+                    '\x02', chars_view{file_contents}.drop_front(pos+1)
+                );
             }
-
-            return file_info;
+            else {
+                str += "\x02\x02";
+            }
         };
 
         std::string & application_driver_alternate_shell = ini.get_mutable_ref<cfg::context::application_driver_alternate_shell>();
-        application_driver_alternate_shell  = "\x02";
-        application_driver_alternate_shell += session_probe_dir_remote;
-        application_driver_alternate_shell += application_driver_exe_or_file;
+        application_driver_alternate_shell.reserve(512);
 
-        std::string session_probe_dir_local { app_path(AppPath::DriveRedirection) };
-        session_probe_dir_local += "/sespro/";
+        str_assign(application_driver_alternate_shell,
+            '\x02', session_probe_dir_remote, application_driver_exe_or_file);
 
-        {
-            FILE_INFO file_info = get_file_info(session_probe_dir_local.c_str(), application_driver_exe_or_file);
+        append_file_info(
+            application_driver_alternate_shell,
+            application_driver_exe_or_file);
 
-            application_driver_alternate_shell += "\x02";
-            application_driver_alternate_shell += file_info.size;
+        str_append(application_driver_alternate_shell,
+            '\x02', session_probe_dir_remote, application_driver_script);
 
-            application_driver_alternate_shell += "\x02";
-            application_driver_alternate_shell += file_info.hash;
-        }
-
-        application_driver_alternate_shell += "\x02";
-        application_driver_alternate_shell += session_probe_dir_remote;
-        application_driver_alternate_shell += application_driver_script;
-
-        {
-            FILE_INFO file_info = get_file_info(session_probe_dir_local.c_str(), application_driver_script);
-
-            application_driver_alternate_shell += "\x02";
-            application_driver_alternate_shell += file_info.size;
-
-            application_driver_alternate_shell += "\x02";
-            application_driver_alternate_shell += file_info.hash;
-        }
+        append_file_info(
+            application_driver_alternate_shell,
+            application_driver_script);
 
         application_driver_alternate_shell += "\x02";
 
@@ -898,13 +879,11 @@ ModPack create_mod_rdp(
 
 
         std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
-
-        application_driver_shell_arguments  = ini.get<cfg::mod_rdp::application_driver_script_argument>();
-        if (!application_driver_script_argument_extra.empty()) {
-            application_driver_shell_arguments += application_driver_script_argument_extra;
-        }
-        application_driver_shell_arguments += " ";
-        application_driver_shell_arguments += ini.get<cfg::mod_rdp::shell_arguments>();
+        str_assign(application_driver_shell_arguments,
+            application_driver_script_argument_extra,
+            ' ',
+            ini.get<cfg::mod_rdp::shell_arguments>()
+        );
 
         mod_rdp_params.application_params.shell_arguments = application_driver_shell_arguments.c_str();
 
