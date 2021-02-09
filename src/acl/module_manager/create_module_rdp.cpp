@@ -556,12 +556,8 @@ ModPack create_mod_rdp(
     tls_client_params.show_common_cipher_list             = ini.get<cfg::mod_rdp::show_common_cipher_list>();
     tls_client_params.cipher_string                       = ini.get<cfg::mod_rdp::cipher_string>();
 
-    if (!mod_rdp_params.target_password[0]) {
-        mod_rdp_params.enable_nla                      = false;
-    }
-    else {
-        mod_rdp_params.enable_nla                      = ini.get<cfg::mod_rdp::enable_nla>();
-    }
+    mod_rdp_params.enable_nla = mod_rdp_params.target_password[0]
+                             && ini.get<cfg::mod_rdp::enable_nla>();
     mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
     mod_rdp_params.enable_fastpath                     = ini.get<cfg::mod_rdp::fast_path>();
     mod_rdp_params.use_native_pointer                  = ini.get<cfg::globals::use_native_pointer>();
@@ -569,32 +565,12 @@ ModPack create_mod_rdp(
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
 
     mod_rdp_params.clipboard_params.disable_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
-    mod_rdp_params.file_system_params.disable_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
 
     mod_rdp_params.session_probe_params = get_session_probe_params(ini);
 
     mod_rdp_params.ignore_auth_channel                 = ini.get<cfg::mod_rdp::ignore_auth_channel>();
     mod_rdp_params.auth_channel                        = ::get_effective_auth_channel_name(CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::auth_channel>()));
     mod_rdp_params.checkout_channel                    = CHANNELS::ChannelNameId(ini.get<cfg::mod_rdp::checkout_channel>());
-    mod_rdp_params.application_params.alternate_shell                     = ini.get<cfg::mod_rdp::alternate_shell>().c_str();
-    mod_rdp_params.application_params.shell_arguments                     = ini.get<cfg::mod_rdp::shell_arguments>().c_str();
-    mod_rdp_params.application_params.shell_working_dir                   = ini.get<cfg::mod_rdp::shell_working_directory>().c_str();
-    mod_rdp_params.application_params.use_client_provided_alternate_shell = ini.get<cfg::mod_rdp::use_client_provided_alternate_shell>();
-    mod_rdp_params.application_params.target_application_account          = ini.get<cfg::globals::target_application_account>().c_str();
-    mod_rdp_params.application_params.target_application_password         = ini.get<cfg::globals::target_application_password>().c_str();
-    mod_rdp_params.rdp_compression                     = ini.get<cfg::mod_rdp::rdp_compression>();
-    mod_rdp_params.error_message                       = &ini.get_mutable_ref<cfg::context::auth_error_message>();
-    mod_rdp_params.disconnect_on_logon_user_change     = ini.get<cfg::mod_rdp::disconnect_on_logon_user_change>();
-    mod_rdp_params.open_session_timeout                = ini.get<cfg::mod_rdp::open_session_timeout>();
-
-    mod_rdp_params.server_cert_store                   = ini.get<cfg::mod_rdp::server_cert_store>();
-    mod_rdp_params.server_cert_check                   = ini.get<cfg::mod_rdp::server_cert_check>();
-    mod_rdp_params.server_access_allowed_message       = ini.get<cfg::mod_rdp::server_access_allowed_message>();
-    mod_rdp_params.server_cert_create_message          = ini.get<cfg::mod_rdp::server_cert_create_message>();
-    mod_rdp_params.server_cert_success_message         = ini.get<cfg::mod_rdp::server_cert_success_message>();
-    mod_rdp_params.server_cert_failure_message         = ini.get<cfg::mod_rdp::server_cert_failure_message>();
-    mod_rdp_params.server_cert_error_message           = ini.get<cfg::mod_rdp::server_cert_error_message>();
-
 
     mod_rdp_params.application_params = get_rdp_application_params(ini);
 
@@ -948,8 +924,7 @@ ModPack create_mod_rdp(
         case ClientAddressSent::no_address :
             break;
         case ClientAddressSent::front :
-            mod_rdp_params.client_address =
-                ini.get<cfg::globals::host>().c_str();
+            mod_rdp_params.client_address = ini.get<cfg::globals::host>().c_str();
             break;
         case ClientAddressSent::proxy :
             if (!get_local_ip_address(local_ip_address, client_sck.fd()))
