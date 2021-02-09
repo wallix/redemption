@@ -379,6 +379,20 @@ private:
             || mod == ModuleName::close_back;
     }
 
+    static void set_inactivity_timeout(Inactivity& inactivity, Inifile& ini)
+    {
+        if (is_target_module(ini.get<cfg::context::module>())) {
+            auto const& inactivity_timeout
+                = ini.get<cfg::globals::inactivity_timeout>();
+
+            auto timeout = (inactivity_timeout != inactivity_timeout.zero())
+                ? inactivity_timeout
+                : ini.get<cfg::globals::session_timeout>();
+
+            inactivity.start(timeout);
+        }
+    }
+
     bool is_first_looping_on_mod_selector = true;
     std::string session_type;
 
@@ -440,6 +454,7 @@ private:
                         break;
                 }
                 this->ini.set<cfg::context::auth_error_message>("");
+                set_inactivity_timeout(inactivity, ini);
                 return;
             }
             catch (Error const& /*error*/) {
@@ -905,16 +920,7 @@ private:
                     }
 
                     if (has_field(cfg::globals::inactivity_timeout())) {
-                        if (is_target_module(ini.get<cfg::context::module>())) {
-                            auto const& inactivity_timeout
-                                = ini.get<cfg::globals::inactivity_timeout>();
-
-                            auto timeout = (inactivity_timeout != inactivity_timeout.zero())
-                                ? inactivity_timeout
-                                : ini.get<cfg::globals::session_timeout>();
-
-                            inactivity.start(timeout);
-                        }
+                        set_inactivity_timeout(inactivity, ini);
                     }
 
                     if (has_field(cfg::video::rt_display())) {
