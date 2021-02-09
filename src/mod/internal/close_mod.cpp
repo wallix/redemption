@@ -89,37 +89,37 @@ CloseMod::CloseMod(
     , vars(vars)
     , events_guard(events)
 {
-    if (vars.get<cfg::globals::close_timeout>().count()) {
-        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
-            static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
-    }
-
     this->screen.add_widget(&this->close_widget);
     this->close_widget.set_widget_focus(&this->close_widget.cancel, Widget::focus_reason_tabkey);
     this->screen.set_widget_focus(&this->close_widget, Widget::focus_reason_tabkey);
 
     this->screen.rdp_input_invalidate(this->screen.get_rect());
 
-    this->events_guard.create_event_timeout(
-        "Close Event",
-        this->vars.get<cfg::globals::close_timeout>(),
-        [this](Event&e)
-        {
-            this->set_mod_signal(BACK_EVENT_STOP);
-            e.garbage = true;
-        });
+    if (vars.get<cfg::globals::close_timeout>().count()) {
+        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds",
+            static_cast<unsigned>(vars.get<cfg::globals::close_timeout>().count()));
 
-    const auto start_time = this->events_guard.get_current_time();
-    this->events_guard.create_event_timeout(
-        "Close Refresh Message Event",
-        start_time,
-        [this, start_time](Event& event)
-        {
-            auto elapsed = event.alarm.now - start_time;
-            auto remaining = this->vars.get<cfg::globals::close_timeout>() - elapsed;
-            event.alarm.reset_timeout(this->close_widget.refresh_timeleft(
-                std::chrono::duration_cast<std::chrono::seconds>(remaining)));
-        });
+        this->events_guard.create_event_timeout(
+            "Close Event",
+            this->vars.get<cfg::globals::close_timeout>(),
+            [this](Event&e)
+            {
+                this->set_mod_signal(BACK_EVENT_STOP);
+                e.garbage = true;
+            });
+
+        const auto start_time = this->events_guard.get_current_time();
+        this->events_guard.create_event_timeout(
+            "Close Refresh Message Event",
+            start_time,
+            [this, start_time](Event& event)
+            {
+                auto elapsed = event.alarm.now - start_time;
+                auto remaining = this->vars.get<cfg::globals::close_timeout>() - elapsed;
+                event.alarm.reset_timeout(this->close_widget.refresh_timeleft(
+                    std::chrono::duration_cast<std::chrono::seconds>(remaining)));
+            });
+    }
 }
 
 CloseMod::~CloseMod()
