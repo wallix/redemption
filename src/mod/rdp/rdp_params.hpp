@@ -243,8 +243,8 @@ struct ModRDPParams
         auto hidden_or_null = [](bool x) -> char const * { return x ? "<hidden>" : "<null>"; };
         auto s_or_null = [](char const * s) -> char const * { return s ? s : "<null>"; };
         auto s_or_none = [](char const * s) -> char const * { return s ? s : "<none>"; };
-        auto from_sec = [](std::chrono::seconds sec) -> unsigned { return sec.count(); };
-        auto from_millisec = [](std::chrono::milliseconds millisec) -> unsigned { return millisec.count(); };
+        auto from_sec = [](std::chrono::seconds sec) { return static_cast<unsigned>(sec.count()); };
+        auto from_millisec = [](std::chrono::milliseconds millisec) { return static_cast<unsigned>(millisec.count()); };
 
 #define RDP_PARAMS_LOG(format, get, member) \
     LOG(LOG_INFO, "ModRDPParams " #member "=" format, get (this->member))
@@ -328,7 +328,7 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%d",     static_cast<int>,      session_probe_params.vc_params.on_account_manipulation);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_params.alternate_directory_environment_variable.c_str());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    session_probe_params.alternate_directory_environment_variable);
 #endif
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             clipboard_params.disable_log_syslog);
@@ -340,9 +340,9 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%d",     RDP_PARAMS_LOG_GET,    key_flags);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    auth_channel);
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             checkout_channel.c_str());
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    checkout_channel);
 
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    application_params.alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    application_params.shell_arguments);
@@ -399,9 +399,9 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    remote_app_params.windows_execute_shell_params.flags);
 
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.exe_or_file.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.working_dir.c_str());
-        RDP_PARAMS_LOG("%s",     s_or_none,             remote_app_params.windows_execute_shell_params.arguments.c_str());
+        RDP_PARAMS_LOG("%s",     RDP_PARAMS_LOG_GET,    remote_app_params.windows_execute_shell_params.exe_or_file);
+        RDP_PARAMS_LOG("%s",     RDP_PARAMS_LOG_GET,    remote_app_params.windows_execute_shell_params.working_dir);
+        RDP_PARAMS_LOG("%s",     RDP_PARAMS_LOG_GET,    remote_app_params.windows_execute_shell_params.arguments);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             remote_app_params.use_client_provided_remoteapp);
 
