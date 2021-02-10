@@ -127,4 +127,6 @@ private:
 };
 
 std::pair<std::string,std::string>
-update_authorized_channels(std::string allow, std::string deny, std::string proxy_opt);
+compute_authorized_channels(
+    std::string_view original_allow, std::string_view original_deny,
+    std::string proxy_opt);

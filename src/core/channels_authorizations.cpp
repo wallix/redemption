@@ -24,6 +24,7 @@
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/ref.hpp"
 
 #include <algorithm>
 
@@ -270,7 +271,9 @@ bool ChannelsAuthorizations::rdpsnd_audio_input_is_authorized() const noexcept
 }
 
 std::pair<std::string,std::string>
-update_authorized_channels(std::string allow, std::string deny, std::string proxy_opt)
+compute_authorized_channels(
+    std::string_view original_allow, std::string_view original_deny,
+    std::string proxy_opt)
 {
     auto remove = [](std::string & str, std::string_view pattern) -> bool {
         bool removed = false;
@@ -283,28 +286,21 @@ update_authorized_channels(std::string allow, std::string deny, std::string prox
         return removed;
     };
 
-    std::string expanded_proxy_opt = proxy_opt;
-    while (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
-        expanded_proxy_opt.pop_back();
+    while (!proxy_opt.empty() && proxy_opt.back() == ',') {
+        proxy_opt.pop_back();
     }
-    expanded_proxy_opt += ',';
-    if (remove(expanded_proxy_opt, "RDP_DRIVE,")) {
-        expanded_proxy_opt += "RDP_DRIVE_READ,RDP_DRIVE_WRITE";
+    proxy_opt += ',';
+    if (remove(proxy_opt, "RDP_DRIVE,")) {
+        proxy_opt += "RDP_DRIVE_READ,RDP_DRIVE_WRITE";
     }
-    if (!expanded_proxy_opt.empty() && expanded_proxy_opt.back() == ',') {
-        expanded_proxy_opt.pop_back();
+    if (!proxy_opt.empty() && proxy_opt.back() == ',') {
+        proxy_opt.pop_back();
     }
 
-    allow += ',';
-    deny += ',';
+    auto allow = str_concat(original_allow, ',');
+    auto deny = str_concat(original_deny, ',');
 
-    struct ref_string {
-        std::string & s;
-        std::string & get() { return this->s; }
-        operator std::string & () { return this->s; }
-    };
-
-    std::array<ref_string, 2> ret{{{allow}, {deny}}};
+    std::array<Ref<std::string>, 2> ret{{{allow}, {deny}}};
 
     for (std::string & s : ret) {
         remove(s, "cliprdr,");
@@ -353,7 +349,7 @@ update_authorized_channels(std::string allow, std::string deny, std::string prox
     , "opts_channels.size() error");
 
     for (auto & x : opts_channels) {
-        ret[(expanded_proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
+        ret[(proxy_opt.find(x.opt) != std::string::npos) ? 0 : 1].get() += x.channel;
     }
 
     for (std::string & s : ret) {

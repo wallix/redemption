@@ -70,6 +70,19 @@ void file_verification_error(
     }
 }
 
+// READ PROXY_OPT
+ChannelsAuthorizations make_channels_authorizations(Inifile const& ini)
+{
+    auto const& allow = ini.get<cfg::mod_rdp::allow_channels>();
+    auto const& deny = ini.get<cfg::mod_rdp::deny_channels>();
+
+    if (ini.get<cfg::globals::enable_wab_integration>()) {
+        auto result = compute_authorized_channels(allow, deny, ini.get<cfg::context::proxy_opt>());
+        return ChannelsAuthorizations(result.first, result.second);
+    }
+    return ChannelsAuthorizations(allow, deny);
+}
+
 struct RdpData
 {
     struct ModMetrics : Metrics
@@ -250,7 +263,6 @@ public:
       , const ClientInfo & info
       , RedirectionInfo & redir_info
       , Random & gen
-      , const ChannelsAuthorizations channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , const TLSClientParams & tls_client_params
       , LicenseApi & license_store
@@ -287,7 +299,7 @@ public:
          , verbose, error_message))
     , mod(*this->socket_transport_ptr, gd
         , mod_wrapper , events, session_log, front, info, redir_info, gen
-        , channels_authorizations, mod_rdp_params, tls_client_params
+        , make_channels_authorizations(ini), mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
     , rdp_data(events)
@@ -516,18 +528,6 @@ ModPack create_mod_rdp(
         case RdpModeConsole::allow:
             break;
     }
-
-    // BEGIN READ PROXY_OPT
-    std::string allow = ini.get<cfg::mod_rdp::allow_channels>();
-    std::string deny = ini.get<cfg::mod_rdp::deny_channels>();
-
-    if (ini.get<cfg::globals::enable_wab_integration>()) {
-        auto result = update_authorized_channels(allow, deny, ini.get<cfg::context::proxy_opt>());
-        allow = result.first;
-        deny = result.second;
-    }
-    ChannelsAuthorizations channels_authorizations(allow, deny);
-    // END READ PROXY_OPT
 
     const bool smartcard_passthrough = ini.get<cfg::mod_rdp::force_smartcard_authentication>();
     const auto rdp_verbose = safe_cast<RDPVerbose>(ini.get<cfg::debug::mod_rdp>());
@@ -925,7 +925,6 @@ ModPack create_mod_rdp(
         client_info,
         redir_info,
         gen,
-        channels_authorizations,
         mod_rdp_params,
         tls_client_params,
         file_system_license_store,
