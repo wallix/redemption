@@ -248,6 +248,7 @@ private:
     {
         close_box,
         retry,
+        reconnection,
         redirection,
     };
 
@@ -287,8 +288,7 @@ private:
 
         if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
             LOG(LOG_INFO, "Retry Automatic Reconnection Required");
-            ini.set<cfg::context::perform_automatic_reconnection>(true);
-            return EndSessionResult::retry;
+            return EndSessionResult::reconnection;
         }
 
         if (e.id == ERR_RAIL_NOT_ENABLED) {
@@ -349,8 +349,7 @@ private:
                 ERR_TRANSPORT_WRITE_FAILED == e.id
                     ? "ERR_TRANSPORT_WRITE_FAILED"
                     : "ERR_TRANSPORT_NO_MORE_DATA");
-            ini.set<cfg::context::perform_automatic_reconnection>(true);
-            return EndSessionResult::retry;
+            return EndSessionResult::reconnection;
         }
 
         LOG(LOG_INFO,
@@ -447,10 +446,13 @@ private:
                 switch (secondary_session_type)
                 {
                     case SecondarySessionType::RDP:
-                        mod_pack = mod_factory.create_rdp_mod(session_log.open_session_log("RDP"));
+                        mod_pack = mod_factory.create_rdp_mod(
+                            session_log.open_session_log("RDP"),
+                            PerformAutomaticReconnection::No);
                         break;
                     case SecondarySessionType::VNC:
-                        mod_pack = mod_factory.create_vnc_mod(session_log.open_session_log("VNC"));
+                        mod_pack = mod_factory.create_vnc_mod(
+                            session_log.open_session_log("VNC"));
                         break;
                 }
                 this->ini.set<cfg::context::auth_error_message>("");
@@ -589,7 +591,8 @@ private:
     bool retry_rdp(
         SessionLog & session_log, ModFactory & mod_factory,
         ModWrapper & mod_wrapper, Front & front,
-        ClientExecute & rail_client_execute)
+        ClientExecute & rail_client_execute,
+        PerformAutomaticReconnection perform_automatic_reconnection)
     {
         LOG(LOG_INFO, "Retry RDP");
 
@@ -607,7 +610,7 @@ private:
         SessionLogApi& session_log_api = session_log.already_session_log();
         try {
             this->target_connection_start_time = MonotonicTimePoint::clock::now();
-            mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log_api));
+            mod_wrapper.set_mod(next_state, mod_factory.create_rdp_mod(session_log_api, perform_automatic_reconnection));
             this->ini.set<cfg::context::auth_error_message>("");
             return true;
         }
@@ -1087,11 +1090,10 @@ private:
                                     : "ERR_TRANSPORT_NO_MORE_DATA"
                             );
 
-                            ini.set<cfg::context::perform_automatic_reconnection>(true);
-
                             run_session = this->retry_rdp(
                                 session_log, mod_factory, mod_wrapper,
-                                front, rail_client_execute);
+                                front, rail_client_execute,
+                                PerformAutomaticReconnection::Yes);
                         }
                     }
                     else {
@@ -1170,7 +1172,17 @@ private:
                     case EndSessionResult::retry:
                         run_session = this->retry_rdp(
                             session_log, mod_factory, mod_wrapper,
-                            front, rail_client_execute);
+                            front, rail_client_execute,
+                            PerformAutomaticReconnection::No);
+                        break;
+
+                    // TODO: should we put some counter to avoid retrying indefinitely?
+                    case EndSessionResult::reconnection:
+                        run_session = this->retry_rdp(
+                            session_log, mod_factory, mod_wrapper,
+                            front, rail_client_execute,
+                            PerformAutomaticReconnection::Yes);
+                        break;
                     }
 
                     break;

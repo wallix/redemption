@@ -33,12 +33,10 @@ class ModWrapper;
 class RedirectionInfo;
 class Inifile;
 class FrontAPI;
-class ClientInfo;
 class ClientExecute;
 class Font;
 class Theme;
 class EventContainer;
-class AuthApi;
 class LicenseApi;
 class Random;
 class CryptoContext;
@@ -47,6 +45,8 @@ namespace gdi
 {
     class GraphicApi;
 }
+
+enum class PerformAutomaticReconnection : bool { No, Yes, };
 
 ModPack create_mod_rdp(
     ModWrapper & mod_wrapper,
@@ -63,5 +63,6 @@ ModPack create_mod_rdp(
     LicenseApi & file_system_license_store,
     Random & gen,
     CryptoContext & cctx,
-    std::array<uint8_t, 28>& server_auto_reconnect_packet
+    std::array<uint8_t, 28>& server_auto_reconnect_packet,
+    PerformAutomaticReconnection perform_automatic_reconnection
 );

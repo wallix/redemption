@@ -4750,15 +4750,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct context::perform_automatic_reconnection {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using mapped_type = type;
-        type value { false };
-    };
     /// type: std::string <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {} <br/>
@@ -5846,7 +5837,6 @@ struct context
 , cfg::context::disconnect_reason_ack
 , cfg::context::recording_started
 , cfg::context::rt_ready
-, cfg::context::perform_automatic_reconnection
 , cfg::context::auth_notify_rail_exec_flags
 , cfg::context::auth_command_rail_exec_exec_result
 , cfg::context::auth_command_rail_exec_flags

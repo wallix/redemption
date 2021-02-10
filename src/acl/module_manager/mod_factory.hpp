@@ -367,7 +367,10 @@ public:
         return {new_mod, nullptr, nullptr, false, false, nullptr};
     }
 
-    auto create_rdp_mod(SessionLogApi& session_log) -> ModPack
+    auto create_rdp_mod(
+        SessionLogApi& session_log,
+        PerformAutomaticReconnection perform_automatic_reconnection
+    ) -> ModPack
     {
         auto mod_pack = create_mod_rdp(
             this->mod_wrapper,
@@ -383,7 +386,8 @@ public:
             this->file_system_license_store,
             this->gen,
             this->cctx,
-            this->server_auto_reconnect_packet);
+            this->server_auto_reconnect_packet,
+            perform_automatic_reconnection);
         mod_pack.enable_osd = true;
         mod_pack.connected = true;
         return mod_pack;

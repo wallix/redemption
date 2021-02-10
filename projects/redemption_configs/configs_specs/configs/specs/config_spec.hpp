@@ -882,8 +882,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<bool>(), names{"recording_started"}, set(false));
         W.member(no_ini_no_gui, sesman_rw, is_target_ctx, L, type_<bool>(), names{"rt_ready"}, set(false));
 
-        W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), names{"perform_automatic_reconnection"}, set(false));
-
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"auth_command"});
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"auth_notify"});
 
