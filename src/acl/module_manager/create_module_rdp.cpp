@@ -880,6 +880,7 @@ ModPack create_mod_rdp(
 
         std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
         str_assign(application_driver_shell_arguments,
+            ini.get<cfg::mod_rdp::application_driver_script_argument>(),
             application_driver_script_argument_extra,
             ' ',
             ini.get<cfg::mod_rdp::shell_arguments>()
