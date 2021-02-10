@@ -297,8 +297,7 @@ public:
             AsynchronousTaskContainer& asynchronous_tasks,
             RDPVerbose verbose)
         : use_application_driver(
-            application_params.alternate_shell
-         && !::strncasecmp(application_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
+            !::strncasecmp(application_params.alternate_shell.c_str(), "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
         , proxy_managed_prefix(drive_params.proxy_managed_prefix)
         , file_system_drive_manager(asynchronous_tasks, verbose)
         {
@@ -1147,12 +1146,14 @@ public:
 
         if (has_target) {
             if (session_probe_params.used_to_launch_remote_program) {
-                this->session_probe.channel_params.real_alternate_shell = application_params.alternate_shell;
-
                 std::string shell_arguments = get_shell_arguments(application_params);
 
-                if (!shell_arguments.empty()) {
-                    str_append(this->session_probe.channel_params.real_alternate_shell, ' ', shell_arguments);
+                if (shell_arguments.empty()) {
+                    this->session_probe.channel_params.real_alternate_shell = application_params.alternate_shell;
+                }
+                else {
+                    str_assign(this->session_probe.channel_params.real_alternate_shell,
+                        application_params.alternate_shell, ' ', shell_arguments);
                 }
 
                 this->session_probe.channel_params.real_working_dir     = application_params.shell_working_dir;

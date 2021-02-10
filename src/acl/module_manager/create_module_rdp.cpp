@@ -806,24 +806,24 @@ ModPack create_mod_rdp(
     char const * application_driver_exe_or_file            = nullptr;
     char const * application_driver_script                 = nullptr;
     std::string  application_driver_script_argument_extra;
-    if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_IE__")) {
+    if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_IE__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_ie_script>();
     }
-    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_CHROME_DT__")) {
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_CHROME_DT__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_dt_script>();
     }
-    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_CHROME_UIA__")) {
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_CHROME_UIA__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
     }
-    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_DT__")) {
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_EDGE_CHROMIUM_DT__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_dt_script>();
         application_driver_script_argument_extra += " /e:UseEdgeChromium=Yes";
     }
-    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell, "__APP_DRIVER_EDGE_CHROMIUM_UIA__")) {
+    else if (!strcasecmp(mod_rdp_params.application_params.alternate_shell.c_str(), "__APP_DRIVER_EDGE_CHROMIUM_UIA__")) {
         application_driver_exe_or_file           = ini.get<cfg::mod_rdp::application_driver_exe_or_file>();
         application_driver_script                = ini.get<cfg::mod_rdp::application_driver_chrome_uia_script>();
         application_driver_script_argument_extra  = " /e:UseEdgeChromium=Yes";
@@ -856,7 +856,7 @@ ModPack create_mod_rdp(
             }
         };
 
-        std::string & application_driver_alternate_shell = ini.get_mutable_ref<cfg::context::application_driver_alternate_shell>();
+        std::string & application_driver_alternate_shell = mod_rdp_params.application_params.alternate_shell;
         application_driver_alternate_shell.reserve(512);
 
         str_assign(application_driver_alternate_shell,
@@ -875,18 +875,12 @@ ModPack create_mod_rdp(
 
         application_driver_alternate_shell += "\x02";
 
-        mod_rdp_params.application_params.alternate_shell = application_driver_alternate_shell.c_str();
-
-
-        std::string& application_driver_shell_arguments = ini.get_mutable_ref<cfg::context::application_driver_shell_arguments>();
-        str_assign(application_driver_shell_arguments,
+        str_assign(mod_rdp_params.application_params.shell_arguments,
             ini.get<cfg::mod_rdp::application_driver_script_argument>(),
             application_driver_script_argument_extra,
             ' ',
             ini.get<cfg::mod_rdp::shell_arguments>()
         );
-
-        mod_rdp_params.application_params.shell_arguments = application_driver_shell_arguments.c_str();
 
         mod_rdp_params.session_probe_params.enable_session_probe                               = true;
         mod_rdp_params.session_probe_params.vc_params.launch_application_driver                = true;

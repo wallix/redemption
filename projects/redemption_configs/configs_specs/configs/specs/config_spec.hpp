@@ -927,9 +927,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, no_sesman, L, type_<bool>(), names{"rail_module_host_mod_is_active"}, set(false));
 
         W.member(no_ini_no_gui, proxy_to_sesman, is_target_ctx, L, type_<std::string>(), names{"smartcard_login"});
-
-        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"application_driver_alternate_shell"});
-        W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), names{"application_driver_shell_arguments"});
     });
 
     W.section("theme", [&]

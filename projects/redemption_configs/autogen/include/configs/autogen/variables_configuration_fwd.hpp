@@ -453,8 +453,6 @@ namespace cfg
         struct rd_shadow_invitation_port;
         struct rail_module_host_mod_is_active;
         struct smartcard_login;
-        struct application_driver_alternate_shell;
-        struct application_driver_shell_arguments;
     };
 
     struct theme {

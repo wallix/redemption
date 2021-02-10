@@ -5173,24 +5173,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// type: std::string <br/>
-    /// default: {} <br/>
-    struct context::application_driver_alternate_shell {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using mapped_type = type;
-        type value {  };
-    };
-    /// type: std::string <br/>
-    /// default: {} <br/>
-    struct context::application_driver_shell_arguments {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using mapped_type = type;
-        type value {  };
-    };
 
     /// Enable custom theme color configuration. Each theme color can be defined as HTML color code (white: #FFFFFF, black: #000000, blue: #0000FF, etc) <br/>
     /// type: bool <br/>
@@ -5846,8 +5828,6 @@ struct context
 , cfg::context::rd_shadow_invitation_id
 , cfg::context::rd_shadow_invitation_addr
 , cfg::context::smartcard_login
-, cfg::context::application_driver_alternate_shell
-, cfg::context::application_driver_shell_arguments
 , cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width

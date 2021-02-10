@@ -344,8 +344,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             checkout_channel.c_str());
 
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.alternate_shell);
-        RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.shell_arguments);
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    application_params.alternate_shell);
+        RDP_PARAMS_LOG("\"%s\"", RDP_PARAMS_LOG_GET,    application_params.shell_arguments);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.shell_working_dir);
         RDP_PARAMS_LOG("%s",     yes_or_no,             application_params.use_client_provided_alternate_shell);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             application_params.target_application_account);

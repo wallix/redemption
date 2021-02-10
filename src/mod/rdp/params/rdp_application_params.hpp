@@ -31,8 +31,8 @@ struct ApplicationParams
     const char * target_application = "";
 
     // Application Bastion
-    const char * alternate_shell = "";
-    const char * shell_arguments = "";
+    std::string alternate_shell;
+    std::string shell_arguments;
     const char * shell_working_dir = "";
 
     bool use_client_provided_alternate_shell = false;
