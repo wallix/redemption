@@ -123,7 +123,6 @@ def decode_rawtext_data(data):
         break
     return data
 
-
 class Engine(object):
     def __init__(self, legacy_auth=False):
         self.wabengine = None
@@ -616,8 +615,21 @@ class Engine(object):
 
     def get_targets_list(self, group_filter, device_filter, protocol_filter,
                          case_sensitive):
+        def fc(string):
+            return string if case_sensitive else string.lower()
+
         targets = []
+        selector_filter_mode = taf.get_selector_filter_mode(device_filter)
+
+        if selector_filter_mode == taf.SelectorFilterMode.ADVANCED:
+            try:
+                filter_pattern_dict = (
+                    taf.get_filter_pattern_dict(fc(device_filter)))
+            except RuntimeError:
+                return targets, True
+
         item_filtered = False
+
         for target_info in self.displaytargets:
             temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
@@ -632,37 +644,37 @@ class Engine(object):
                         u':INTERNAL', 1)
                     temp_resource_service_protocol_cn = 'INTERNAL'
 
-            def fc(string):
-                return string if case_sensitive else string.lower()
-
             if (not fc(group_filter) in fc(target_info.group)
                 or not fc(protocol_filter) in fc(temp_resource_service_protocol_cn)):
                 item_filtered = True
                 continue
-            if not device_filter.startswith('$') : # apply target global filter mode
-                if not fc(device_filter) in fc(temp_service_login) :
+
+            if selector_filter_mode == taf.SelectorFilterMode.NORMAL:
+                # apply target global filter mode
+
+                if not fc(device_filter) in fc(temp_service_login):
                     item_filtered = True
                     continue
-            else : # apply target accurate filter mode
-                try :
-                    target_login_domain = target_info.target_login.split('@')
-                    target_login_real = target_login_domain[0]
-                    target_domain_real = (target_login_domain[1]
-                                          if len(target_login_domain) > 1
-                                          else "")
-                    target_device = target_info.target_name
-                    target_service = target_info.service_name
-                    target_field_dict = {
-                        "account" : fc(target_login_real),
-                        "domain" : fc(target_domain_real),
-                        "device" : fc(target_device),
-                        "service" : fc(target_service)}
-                    
-                    if not taf.is_filterable(fc(device_filter),
-                                             target_field_dict) :
-                        item_filtered = True
-                        continue
-                except (RuntimeError, ValueError) :
+            elif selector_filter_mode == taf.SelectorFilterMode.ADVANCED:
+                # apply target accurate filter mode
+
+                target_login_real, sep, target_domain_real = (
+                    target_info.target_login.rpartition('@'))
+
+                if not sep:
+                    target_login_real, target_domain_real = (
+                        target_domain_real, "")
+
+                target_device = target_info.target_name
+                target_service = target_info.service_name
+                target_field_dict = {
+                    "account" : fc(target_login_real),
+                    "domain" : fc(target_domain_real),
+                    "device" : fc(target_device),
+                    "service" : fc(target_service)}
+
+                if not taf.is_filterable(filter_pattern_dict,
+                                         target_field_dict):
                     item_filtered = True
                     continue
 
