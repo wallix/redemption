@@ -1005,10 +1005,6 @@ class Sesman():
 
             self.language = self.engine.get_language()
             self.load_login_message(self.language)
-            if self.engine.get_force_change_password():
-                self.send_data({u'rejected': TR(u'changepassword')})
-                self.rdplog.log("AUTHENTICATION_FAILURE", method=method)
-                return False, TR(u'changepassword')
 
             self.rdplog.log("AUTHENTICATION_SUCCESS", method=method)
             Logger().info(u'lang=%s' % self.language)

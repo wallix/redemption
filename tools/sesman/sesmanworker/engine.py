@@ -29,16 +29,11 @@ try:
     CRED_INDEX = "credentials"
     APPREQ_REQUIRED = 1
     APPREQ_OPTIONAL = 0
-    from .wallixauth import Authenticator
 except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
         from .fake.proxyengine import *
-        try:
-            from .wallixauth import Authenticator
-        except:
-            from .legacyauth import LegacyAuthenticator as Authenticator
         LOCAL_TRACE_PATH_RDP = u'/var/wab/recorded/rdp/'
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
@@ -48,10 +43,11 @@ except Exception:
         #               traceback.format_exc())
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
-        
+
 from .logtime import logtime_function_pause
 import time
 import socket
+from .wallixauth import Authenticator
 from .checkout import CheckoutEngine
 from .checkout import (
     APPROVAL_ACCEPTED,
@@ -132,7 +128,8 @@ class Engine(object):
     def __init__(self, legacy_auth=False):
         self.wabengine = None
         self.checkout = None
-        self.wabuser = None
+        self.user_cn = None
+        self.user_lang = None
         self.wabengine_conf = Config('wabengine')
         self.authenticator = Authenticator(
             self.wabengine_conf.get(
@@ -153,6 +150,7 @@ class Engine(object):
         self._trace_type = None                 # local ?
         self.challenge = None
         self.session_record = None
+        self.session_record_type = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
         self.start_time = None
@@ -179,8 +177,13 @@ class Engine(object):
         self.checktarget_infos_cache = None
 
     def _post_authentication(self):
-        self.wabuser = self.wabengine.who_am_i()
+        self.update_user()
         self.checkout = CheckoutEngine(self.wabengine)
+
+    def update_user(self):
+        userobj = self.wabengine.who_am_i()
+        self.user_cn = userobj.cn
+        self.user_lang = userobj.preferredLanguage
 
     def set_session_status(self, result=None, diag=None):
         # Logger().info("Engine set session status : result='%s', diag='%s'" %
@@ -192,19 +195,19 @@ class Engine(object):
 
     def get_language(self):
         try:
-            if self.wabuser:
-                return self.wabuser.preferredLanguage
-            return self.wabengine.who_am_i().preferredLanguage
+            if not self.user_lang:
+                self.update_user()
         except Exception:
-            return 'en'
+            pass
+        return self.user_lang or 'en'
 
     def get_username(self):
         try:
-            if not self.wabuser:
-                self.wabuser = self.wabengine.who_am_i()
-            return self.wabuser.cn
+            if not self.user_cn:
+                self.update_user()
         except Exception:
-            return self.wabuser.cn if self.wabuser else ""
+            pass
+        return self.user_cn or ""
 
     def get_otp_client(self):
         try:
@@ -218,12 +221,6 @@ class Engine(object):
             Logger().info("License Error: "
                           "Session management License is not available.")
         return res
-
-    def get_force_change_password(self):
-        try:
-            return self.wabuser.forceChangePwd
-        except Exception:
-            return False
 
     @staticmethod
     def format_terminal(message):
@@ -695,6 +692,7 @@ class Engine(object):
         self.start_time = None
 
         self.session_record = None
+        self.session_record_type = None
         self.session_id = None
         self.pidhandler = None
         self.session_result = True
@@ -763,9 +761,9 @@ class Engine(object):
             if account_domain and account_domain != AM_IL_DOMAIN:
                 account_namedom = "%s@%s" % (account_name, account_domain)
             try:
-                group_name = right['auth_cn']
+                auth_name = right['auth_cn']
             except Exception:
-                group_name = right['target_group']
+                auth_name = right['target_group']
             if right['application_cn']:
                 target_name = right['application_cn']
                 service_name = u"APP"
@@ -799,10 +797,10 @@ class Engine(object):
                     and service_name != target_context.service):
                     continue
                 if (target_context.group
-                    and target_context.group != group_name):
+                    and target_context.group != auth_name):
                     continue
 
-            target_value = (service_name, group_name, right)
+            target_value = (service_name, auth_name, right)
             # feed targets hashtable indexed on account_name and target_name
             # targets{(account, target)}{domain}[(service, group, right)]
             tuple_index = (account_name, target_name)
@@ -817,7 +815,7 @@ class Engine(object):
                                                    target_name,
                                                    service_name,
                                                    protocol,
-                                                   group_name,
+                                                   auth_name,
                                                    subprotocols,
                                                    host))
         if target_context and target_context.strict_transparent:
@@ -934,12 +932,6 @@ class Engine(object):
 
     def get_target_rights(self, target_login, target_device, target_service,
                           target_group, target_context=None):
-        if self.wabuser.forceChangePwd:
-            msg = "You must change your password to access your accounts"
-            if self.get_language() == "fr":
-                msg = ("Vous devez changer votre mot de passe pour accèder "
-                       "à vos comptes")
-            return None, msg
         try:
             self.get_proxy_rights([u'SSH', u'TELNET', u'RLOGIN', u'RAWTCPIP'],
                                   target_device=target_device,
@@ -950,7 +942,7 @@ class Engine(object):
                 return right, "OK"
 
             Logger().error("Bastion account %s couldn't log into %s@%s%s" % (
-                self.wabuser.cn,
+                self.user_cn,
                 target_login,
                 target_device,
                 ":%s" % target_service if target_service else ""
@@ -1166,8 +1158,7 @@ class Engine(object):
         return self.session_id, self.start_time
 
     def start_session_ssh(self, target, target_user, hname, host, client_addr,
-                          pid, subproto, kill_handler, effective_login=None,
-                          warning_count=None):
+                          pid, subproto, kill_handler, effective_login=None):
         """ Start session for new wabengine """
         self.hname = hname
         self.target_user = effective_login or target_user
@@ -1208,7 +1199,7 @@ class Engine(object):
         #     subproto = 'SSH'
         notif_data = {
             'protocol': subproto,
-            'user': self.wabuser.cn,
+            'user': self.user_cn,
             'source': socket.getfqdn(client_addr),
             'ip_source': client_addr,
             'login': self.get_account_login(target),
@@ -1397,7 +1388,7 @@ class Engine(object):
             "regexp": regex_found,
             "string": current_line,
             "host": self.host,
-            "user_login": self.wabuser.cn,
+            "user_login": self.user_cn,
             "user": self.target_user,
             "device": self.hname,
             "service": self.service,
@@ -1421,7 +1412,7 @@ class Engine(object):
             "regexp": u"filesize > %s" % filesize,
             "string": restrictstr,
             "host": self.host,
-            "user_login": self.wabuser.cn,
+            "user_login": self.user_cn,
             "user": self.target_user,
             "device": self.hname,
             "service": self.service,
@@ -1443,7 +1434,7 @@ class Engine(object):
             "regexp": "globalsize > %s" % globalsize,
             "string": "globalsize > %s" % limit_globalsize,
             "host": self.host,
-            "user_login": self.wabuser.cn,
+            "user_login": self.user_cn,
             "user": self.target_user,
             "device": self.hname,
             "service": self.service,
@@ -1472,6 +1463,7 @@ class Engine(object):
                     filename=filename,
                     trace_type=u'pcap'
                 )
+                self.session_record_type = "pcap"
                 self.session_record.initialize()
         except Exception:
             import traceback
@@ -1498,6 +1490,7 @@ class Engine(object):
                     filename=filename,
                     trace_type=u'ttyrec'
                 )
+                self.session_record_type = "ttyrec"
                 self.session_record.initialize()
         except Exception:
             import traceback
@@ -1515,11 +1508,14 @@ class Engine(object):
     def stop_record(self):
         if self.session_record:
             try:
+                if self.session_record_type == "ttyrec":
+                    # force last timestamp to match session duration
+                    self.session_record.writeframe(b"")
                 rec_hash = self.session_record.end()
                 self.session_record = None
                 return rec_hash
             except Exception as e:
-                Logger().info("Stop record failed: %s", e)
+                Logger().info("Stop record failed: %s" % e)
             self.session_record = None
         return None
 
@@ -1536,6 +1532,7 @@ class Engine(object):
                 trace.initialize()
                 trace.writeframe(b"%s.mwrm" % (video_path.encode('utf-8')))
                 self.trace_hash = trace.end()
+                self.session_record_type = "rdptrc"
         except Exception as e:
             Logger().info("Engine write_trace failed: %s" % e)
             _status, _error = False, u"Exception"
@@ -1675,6 +1672,8 @@ class Engine(object):
         service_port = target['service_port']
         service_name = target['service_cn']
         auth_name = target['auth_cn']
+        user_group_name = target['user_group_cn']
+        target_group_name = target['target_group_cn']
         conn_opts = target['connection_policy_data']
         return LoginInfo(account_login=account_login,
                          account_name=account_name,
@@ -1682,6 +1681,8 @@ class Engine(object):
                          target_name=target_name,
                          service_name=service_name,
                          auth_name=auth_name,
+                         user_group_name=user_group_name,
+                         target_group_name=target_group_name,
                          device_host=device_host,
                          service_port=service_port,
                          conn_opts=conn_opts)
@@ -1775,12 +1776,20 @@ class DisplayInfo(object):
 
 
 class ProtocolInfo(object):
+    __slots__ = (
+        "protocol", "subprotocols",
+    )
+
     def __init__(self, protocol, subprotocols=[]):
         self.protocol = protocol
         self.subprotocols = subprotocols
 
 
 class ExtraInfo(object):
+    __slots__ = (
+        "is_recorded", "is_critical", "has_approval",
+    )
+
     def __init__(self, is_recorded, is_critical, has_approval):
         self.is_recorded = is_recorded
         self.is_critical = is_critical
@@ -1788,6 +1797,10 @@ class ExtraInfo(object):
 
 
 class PhysicalTarget(object):
+    __slots__ = (
+        "device_host", "account_login", "service_port", "device_id",
+    )
+
     def __init__(self, device_host, account_login, service_port, device_id):
         self.device_host = device_host
         self.account_login = account_login
@@ -1796,15 +1809,23 @@ class PhysicalTarget(object):
 
 
 class LoginInfo(object):
+    __slots__ = (
+        "account_login", "account_name", "domain_name", "service_name",
+        "target_name", "auth_name", "user_group_name", "target_group_name",
+        "device_host", "service_port", "conn_opts",
+    )
+
     def __init__(self, account_login, account_name, domain_name, target_name,
-                 service_name, auth_name, device_host, service_port,
-                 conn_opts):
+                 service_name, auth_name, user_group_name, target_group_name,
+                 device_host, service_port, conn_opts):
         self.account_login = account_login
         self.account_name = account_name
         self.domain_name = domain_name
         self.target_name = target_name
         self.service_name = service_name
         self.auth_name = auth_name
+        self.user_group_name = user_group_name
+        self.target_group_name = target_group_name
         self.device_host = device_host
         self.service_port = service_port
         self.conn_opts = conn_opts
