@@ -344,7 +344,7 @@ class CheckoutEngine(object):
                 )
                 Logger().debug("** END get_user_rights_by_type")
                 if rights and (type(rights[0]) == str):
-                    rights = map(json.loads, rights)
+                    rights = list(map(json.loads, rights))
                 table_rights = rights
                 if account_type == 'scenario':
                     self.scenario_rights = rights
