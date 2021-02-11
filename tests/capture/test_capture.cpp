@@ -118,7 +118,6 @@ namespace
             cctx,
             rnd,
             hash_path,
-            std::chrono::seconds{1},
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
             RDPSerializerVerbose::none,
@@ -177,18 +176,22 @@ namespace
 
         capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, cy, 30), encode_color24()(BLUE)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, cy, 30), encode_color24()(WHITE)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, cy, 30), encode_color24()(RED)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     }
 
@@ -199,14 +202,17 @@ namespace
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, cy, 30), encode_color24()(BLACK)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, cy, 30), encode_color24()(PINK)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, cy, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     }
 
@@ -243,16 +249,16 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     auto st0 = get_stat(wrm0);
     auto st1 = get_stat(wrm1);
     auto st2 = get_stat(wrm2);
-    RED_TEST_FILE_SIZE(wrm0, 1646);
-    RED_TEST_FILE_SIZE(wrm1, 3508);
-    RED_TEST_FILE_SIZE(wrm2, 3463);
+    RED_TEST_FILE_SIZE(wrm0, 1667);
+    RED_TEST_FILE_SIZE(wrm1, 3529);
+    RED_TEST_FILE_SIZE(wrm2, 3484);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        wrm0, " 1646 ",
+        wrm0, " 1667 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -260,7 +266,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st0.st_ino), ' ',
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), " 1000 1004\n",
-        wrm1, " 3508 ",
+        wrm1, " 3529 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -268,7 +274,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1004 1007\n",
-        wrm2, " 3463 ",
+        wrm2, " 3484 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -286,7 +292,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000006.png"), 3225);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000000.wrm"), array_view{str_concat(
-        "v2\n\n\ntest_capture-000000.wrm 1646 ",
+        "v2\n\n\ntest_capture-000000.wrm 1667 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -295,7 +301,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000001.wrm"), array_view{str_concat(
-        "v2\n\n\ntest_capture-000001.wrm 3508 ",
+        "v2\n\n\ntest_capture-000001.wrm 3529 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -304,7 +310,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000002.wrm"), array_view{str_concat(
-        "v2\n\n\ntest_capture-000002.wrm 3463 ",
+        "v2\n\n\ntest_capture-000002.wrm 3484 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -346,6 +352,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
         capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
     });
 
@@ -408,6 +415,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
 
         capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
@@ -421,17 +429,17 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
     auto st1 = get_stat(wrm1);
     auto st2 = get_stat(wrm2);
     auto st3 = get_stat(wrm3);
-    RED_TEST_FILE_SIZE(wrm0, 1651);
-    RED_TEST_FILE_SIZE(wrm1, 3428);
-    RED_TEST_FILE_SIZE(wrm2, 4384);
-    RED_TEST_FILE_SIZE(wrm3, 4388);
+    RED_TEST_FILE_SIZE(wrm0, 1672);
+    RED_TEST_FILE_SIZE(wrm1, 3449);
+    RED_TEST_FILE_SIZE(wrm2, 4405);
+    RED_TEST_FILE_SIZE(wrm3, 4409);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        wrm0, " 1651 ",
+        wrm0, " 1672 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -439,7 +447,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st0.st_ino), ' ',
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), " 1000 1004\n",
-        wrm1, " 3428 ",
+        wrm1, " 3449 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -447,7 +455,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1004 1005\n",
-        wrm2, " 4384 ",
+        wrm2, " 4405 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -455,7 +463,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1005 1007\n",
-        wrm3, " 4388 ",
+        wrm3, " 4409 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -474,7 +482,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000000.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000000.wrm 1651 ",
+        "v2\n\n\nresizing-capture-0-000000.wrm 1672 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -483,7 +491,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000001.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000001.wrm 3428 ",
+        "v2\n\n\nresizing-capture-0-000001.wrm 3449 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -492,7 +500,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000002.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000002.wrm 4384 ",
+        "v2\n\n\nresizing-capture-0-000002.wrm 4405 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -501,7 +509,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000003.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000003.wrm 4388 ",
+        "v2\n\n\nresizing-capture-0-000003.wrm 4409 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -545,6 +553,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 
         capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
         now += 1s;
+        capture.force_flush(now, 0, 0);
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     });
 
@@ -558,17 +567,17 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     auto st1 = get_stat(wrm1);
     auto st2 = get_stat(wrm2);
     auto st3 = get_stat(wrm3);
-    RED_TEST_FILE_SIZE(wrm0, 1646);
-    RED_TEST_FILE_SIZE(wrm1, 3439);
-    RED_TEST_FILE_SIZE(wrm2, 2630);
-    RED_TEST_FILE_SIZE(wrm3, 2630);
+    RED_TEST_FILE_SIZE(wrm0, 1667);
+    RED_TEST_FILE_SIZE(wrm1, 3460);
+    RED_TEST_FILE_SIZE(wrm2, 2651);
+    RED_TEST_FILE_SIZE(wrm3, 2651);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        wrm0, " 1646 ",
+        wrm0, " 1667 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -576,7 +585,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st0.st_ino), ' ',
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), " 1000 1004\n",
-        wrm1, " 3439 ",
+        wrm1, " 3460 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -584,7 +593,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1004 1005\n",
-        wrm2, " 2630 ",
+        wrm2, " 2651 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -592,7 +601,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1005 1007\n",
-        wrm3, " 2630 ",
+        wrm3, " 2651 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -611,7 +620,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000000.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000000.wrm 1646 ",
+        "v2\n\n\nresizing-capture-1-000000.wrm 1667 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -620,7 +629,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000001.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000001.wrm 3439 ",
+        "v2\n\n\nresizing-capture-1-000001.wrm 3460 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -629,7 +638,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000002.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000002.wrm 2630 ",
+        "v2\n\n\nresizing-capture-1-000002.wrm 2651 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -638,7 +647,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000003.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000003.wrm 2630 ",
+        "v2\n\n\nresizing-capture-1-000003.wrm 2651 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -2365,7 +2374,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
         GraphicToFile::SendInput::NO, RDPSerializerVerbose::none
     );
-    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.get_monotonic_time(), std::chrono::seconds{1}, std::chrono::seconds{20});
+    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.get_monotonic_time(), std::chrono::seconds{20});
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
     player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr, nullptr);

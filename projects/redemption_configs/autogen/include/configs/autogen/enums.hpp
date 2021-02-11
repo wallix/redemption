@@ -613,14 +613,3 @@ template<> struct is_valid_enum_value<LoginLanguage>
     constexpr static bool is_valid(uint64_t n) { return n <= 2; }
 };
 
-enum class VideoEnhancedMode : uint8_t
-{
-    Off = 0,
-    v1 = 1,
-};
-
-template<> struct is_valid_enum_value<VideoEnhancedMode>
-{
-    constexpr static bool is_valid(uint64_t n) { return n <= 1; }
-};
-

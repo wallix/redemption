@@ -558,6 +558,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
 
     this->check_timeout();
 
+    this->front.must_flush_capture();
 }
 
 const char *mod_vnc::securityTypeString(int32_t t) {

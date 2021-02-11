@@ -160,10 +160,4 @@ struct str_buffer_size<LoginLanguage>
     static const std::size_t value = 0;
 };
 
-template<>
-struct str_buffer_size<VideoEnhancedMode>
-{
-    static const std::size_t value = 0;
-};
-
 } // namespace config

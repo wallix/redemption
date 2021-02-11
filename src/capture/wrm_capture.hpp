@@ -762,11 +762,8 @@ public:
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
     {
-        MonotonicTimePoint start_native_capture;
-        const std::chrono::microseconds inter_frame_interval_native_capture;
-
-        MonotonicTimePoint start_break_capture;
-        const std::chrono::seconds inter_frame_interval_start_break_capture;
+        MonotonicTimePoint next_break;
+        const std::chrono::seconds break_interval;
 
         GraphicToFile & recorder;
 
@@ -774,13 +771,10 @@ public:
         NativeCaptureLocal(
             GraphicToFile & recorder,
             MonotonicTimePoint now,
-            std::chrono::microseconds frame_interval,
             std::chrono::seconds break_interval
         )
-        : start_native_capture(now)
-        , inter_frame_interval_native_capture(frame_interval)
-        , start_break_capture(now)
-        , inter_frame_interval_start_break_capture(break_interval)
+        : next_break(now + break_interval)
+        , break_interval(break_interval)
         , recorder(recorder)
         {}
 
@@ -804,21 +798,12 @@ public:
         {
             this->recorder.mouse(x, y);
 
-            if (now >= this->start_native_capture + this->inter_frame_interval_native_capture) {
-                this->recorder.timestamp(now);
-                this->start_native_capture = now;
-                if (now
-                    >= this->start_break_capture + this->inter_frame_interval_start_break_capture
-                ) {
-                    this->recorder.breakpoint();
-                    this->start_break_capture = now;
-                }
-                return WaitingTimeBeforeNextSnapshot(this->inter_frame_interval_native_capture);
+            if (now >= this->next_break) {
+                this->recorder.breakpoint();
+                this->next_break = now + this->break_interval;
             }
-            else {
-                return WaitingTimeBeforeNextSnapshot(
-                    this->inter_frame_interval_native_capture - (now - this->start_native_capture));
-            }
+
+            return WaitingTimeBeforeNextSnapshot(this->next_break - now);
         }
     } nc;
 
@@ -865,8 +850,7 @@ public:
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         wrm_params.wrm_verbose)
-    , nc(this->graphic_to_file, capture_params.now,
-        wrm_params.frame_interval, wrm_params.break_interval)
+    , nc(this->graphic_to_file, capture_params.now, wrm_params.break_interval)
     , kbd_input_mask_enabled{false}
     {}
 

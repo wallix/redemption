@@ -36,7 +36,6 @@ struct WrmParams
     CryptoContext & cctx;
     Random & rnd;
     const char * hash_path;
-    std::chrono::duration<unsigned int, std::ratio<1, 100>> frame_interval;
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
     RDPSerializerVerbose wrm_verbose;

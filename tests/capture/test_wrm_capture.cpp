@@ -91,7 +91,6 @@ namespace
                 }(),
                 rnd,
                 hash_wd.dirname(),
-                /*wrm_frame_interval = */1s,
                 /*wrm_break_interval = */3s,
                 WrmCompressionAlgorithm::no_compression,
                 RDPSerializerVerbose::none,
@@ -120,16 +119,19 @@ static void gen_wrm1(
     gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     // ------------------------------ BREAKPOINT ------------------------------
@@ -137,16 +139,19 @@ static void gen_wrm1(
     gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     // ------------------------------ BREAKPOINT ------------------------------
@@ -154,6 +159,7 @@ static void gen_wrm1(
     gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
     now += 1s;
+    wrm.send_timestamp_chunk(now);
     wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     // The destruction of capture object will finalize the metafile content
 }
@@ -190,7 +196,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
     auto st3 = get_stat(wrm3);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n800 600\nnochecksum\n\n\n",
-        wrm1, " 1646 ",
+        wrm1, " 1667 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -198,7 +204,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1000 1004\n",
-        wrm2, " 3508 ",
+        wrm2, " 3529 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -206,7 +212,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1004 1007\n",
-        wrm3, " 3463 ",
+        wrm3, " 3484 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -214,9 +220,9 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_chars(st3.st_ino), ' ',
         int_to_chars(st3.st_mtim.tv_sec), ' ',
         int_to_chars(st3.st_ctim.tv_sec), " 1007 1008\n")});
-    RED_TEST_FILE_SIZE(wrm1, 1646);
-    RED_TEST_FILE_SIZE(wrm2, 3508);
-    RED_TEST_FILE_SIZE(wrm3, 3463);
+    RED_TEST_FILE_SIZE(wrm1, 1667);
+    RED_TEST_FILE_SIZE(wrm2, 3529);
+    RED_TEST_FILE_SIZE(wrm3, 3484);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"), array_view{str_concat(
         "v2\n\n\ncapture.mwrm ",
@@ -229,7 +235,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_chars(st.st_mtim.tv_sec), ' ',
         int_to_chars(st.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000000.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000000.wrm 1646 ",
+        "v2\n\n\ncapture-000000.wrm 1667 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -238,7 +244,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000001.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000001.wrm 3508 ",
+        "v2\n\n\ncapture-000001.wrm 3529 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -247,7 +253,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000002.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000002.wrm 3463 ",
+        "v2\n\n\ncapture-000002.wrm 3484 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -279,7 +285,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     auto st3 = get_stat(wrm3);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n800 600\nchecksum\n\n\n",
-        wrm1, " 1646 ",
+        wrm1, " 1667 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -287,9 +293,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1000 1004"
-        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b"
-        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b\n",
-        wrm2, " 3508 ",
+        " ee5723c77cb159a38f27e7f4260078d1642ee240659c9e02ddaff095c57263c8"
+        " ee5723c77cb159a38f27e7f4260078d1642ee240659c9e02ddaff095c57263c8\n",
+        wrm2, " 3529 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -297,9 +303,9 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1004 1007"
-        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a"
-        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a\n",
-        wrm3, " 3463 ",
+        " 58c4a45b47e47f85ab8ffe7552e8c706e74d024077d001158766681ba4706a73"
+        " 58c4a45b47e47f85ab8ffe7552e8c706e74d024077d001158766681ba4706a73\n",
+        wrm3, " 3484 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -307,11 +313,11 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st3.st_ino), ' ',
         int_to_chars(st3.st_mtim.tv_sec), ' ',
         int_to_chars(st3.st_ctim.tv_sec), " 1007 1008"
-        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d"
-        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d\n")});
-    RED_TEST_FILE_SIZE(wrm1, 1646);
-    RED_TEST_FILE_SIZE(wrm2, 3508);
-    RED_TEST_FILE_SIZE(wrm3, 3463);
+        " 52b5f746c8368a79d78a59704edfc2a7d6944cef45a6dba452a8ec7103403ae0"
+        " 52b5f746c8368a79d78a59704edfc2a7d6944cef45a6dba452a8ec7103403ae0\n")});
+    RED_TEST_FILE_SIZE(wrm1, 1667);
+    RED_TEST_FILE_SIZE(wrm2, 3529);
+    RED_TEST_FILE_SIZE(wrm3, 3484);
 
     auto hash_content = RED_CHECK_GET_FILE_CONTENTS(hash_wd.add_file("capture.mwrm"));
     auto hash_expected = str_concat(
@@ -327,7 +333,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
     RED_TEST(hash_content.size() == hash_expected.size() + 65*2);
     RED_TEST(prefix(hash_content, hash_expected.size()) == hash_expected);
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000000.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000000.wrm 1646 ",
+        "v2\n\n\ncapture-000000.wrm 1667 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -335,10 +341,10 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec),
-        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b"
-        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b\n")});
+        " ee5723c77cb159a38f27e7f4260078d1642ee240659c9e02ddaff095c57263c8"
+        " ee5723c77cb159a38f27e7f4260078d1642ee240659c9e02ddaff095c57263c8\n")});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000001.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000001.wrm 3508 ",
+        "v2\n\n\ncapture-000001.wrm 3529 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -346,10 +352,10 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec),
-        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a"
-        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a\n")});
+        " 58c4a45b47e47f85ab8ffe7552e8c706e74d024077d001158766681ba4706a73"
+        " 58c4a45b47e47f85ab8ffe7552e8c706e74d024077d001158766681ba4706a73\n")});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000002.wrm"), array_view{str_concat(
-        "v2\n\n\ncapture-000002.wrm 3463 ",
+        "v2\n\n\ncapture-000002.wrm 3484 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -357,8 +363,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st3.st_ino), ' ',
         int_to_chars(st3.st_mtim.tv_sec), ' ',
         int_to_chars(st3.st_ctim.tv_sec),
-        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d"
-        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d\n")});
+        " 52b5f746c8368a79d78a59704edfc2a7d6944cef45a6dba452a8ec7103403ae0"
+        " 52b5f746c8368a79d78a59704edfc2a7d6944cef45a6dba452a8ec7103403ae0\n")});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);

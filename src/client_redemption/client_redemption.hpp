@@ -671,7 +671,6 @@ public:
             , this->cctx
             , *this->gen
             , hash_path.c_str()
-            , std::chrono::duration<unsigned int, std::ratio<1, 100> >{60}
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
             , RDPSerializerVerbose::none
