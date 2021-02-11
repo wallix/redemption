@@ -44,39 +44,39 @@ class AuthState(object):
     PASSWORD = "PASSWORD"
     OTP = "OTP"
     SSH_KEY = "SSH_KEY"
-    PINGID = "PINGID"
+    MOBILE_DEVICE = "MOBILE_DEVICE"
 
 
 COMPATIBILITY_PROXY = {
-    # IDENT.X509: [AUTH.X509, AUTH.PASSWORD, AUTH.PINGID],
-    AuthState.KERBEROS: [AUTH.KERBEROS, AUTH.PASSWORD, AUTH.PINGID],
+    # IDENT.X509: [AUTH.X509, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
+    AuthState.KERBEROS: [AUTH.KERBEROS, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.OTP: [AUTH.TOKEN],
-    AuthState.PASSWORD: [AUTH.PASSWORD, AUTH.PINGID],
-    AuthState.SSH_KEY: [AUTH.SSH_KEY, AUTH.PASSWORD, AUTH.PINGID],
-    AuthState.PINGID: [AUTH.PINGID, AUTH.PASSWORD],
+    AuthState.PASSWORD: [AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
+    AuthState.SSH_KEY: [AUTH.SSH_KEY, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
+    AuthState.MOBILE_DEVICE: [AUTH.MOBILE_DEVICE, AUTH.PASSWORD],
 }
 
 EXPECTED_FIRST_COMPAT = {
-    # IDENT.X509: [AUTH.X509, AUTH.PASSWORD, AUTH.PINGID],
+    # IDENT.X509: [AUTH.X509, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.KERBEROS: [AUTH.KERBEROS],
     AuthState.OTP: [AUTH.TOKEN],
-    AuthState.PASSWORD: [AUTH.PASSWORD, AUTH.PINGID],
+    AuthState.PASSWORD: [AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.SSH_KEY: [AUTH.SSH_KEY],
-    AuthState.PINGID: [AUTH.PINGID],
+    AuthState.MOBILE_DEVICE: [AUTH.MOBILE_DEVICE],
 }
 
 IDENT_PROXY = {
-    # IDENT.X509: [AUTH.X509, AUTH.PASSWORD, AUTH.PINGID],
+    # IDENT.X509: [AUTH.X509, AUTH.PASSWORD, AUTH.MOBILE_DEVICE],
     AuthState.KERBEROS: IDENT.KERBEROS,
     AuthState.OTP: IDENT.TOKEN,
     AuthState.PASSWORD: IDENT.LOGIN,
     AuthState.SSH_KEY: IDENT.LOGIN,
-    AuthState.PINGID: IDENT.LOGIN,
+    AuthState.MOBILE_DEVICE: IDENT.LOGIN,
 }
 
 CHALLENGE_AUTH_STATE = {
     AUTH.PASSWORD: AuthState.PASSWORD,
-    AUTH.PINGID: AuthState.PINGID,
+    AUTH.MOBILE_DEVICE: AuthState.MOBILE_DEVICE,
 }
 
 
@@ -152,7 +152,7 @@ class Authenticator(object):
         if auth_state in [AuthState.PASSWORD,
                           AuthState.KERBEROS,
                           AuthState.SSH_KEY,
-                          AuthState.PINGID]:
+                          AuthState.MOBILE_DEVICE]:
             data = {
                 'login': login,
             }
@@ -227,9 +227,9 @@ class Authenticator(object):
         except AuthenticationChallenged as ac:
             Logger().debug("AuthenticationChallenged %s" % ac.__dict__)
             self.set_challenge(ac.challenge)
-            if self.auth_state == AuthState.PINGID:
+            if self.auth_state == AuthState.MOBILE_DEVICE:
                 return self._authentify(
-                    enginei, {}, "PINGID"
+                    enginei, {}, "mobile_device"
                 )
             # Logger().debug("Challenge %s" % self.challenge.__dict__)
             return False
@@ -249,7 +249,7 @@ class Authenticator(object):
         auth_type = challenge.get("auth_type")
         self.auth_state = CHALLENGE_AUTH_STATE.get(auth_type)
         if self.auth_state is None:
-            # Challenge only work for "PASSWORD" and PINGID
+            # Challenge only work for "PASSWORD" and MOBILE_DEVICE
             self._reset_auth()
             return
         self.auth_challenge = challenge
@@ -333,26 +333,26 @@ class Authenticator(object):
         self._reset_auth()
         return False
 
-    def check_pingid(self, wab_login, ip_client, ip_server):
+    def check_mobile_device(self, wab_login, ip_client, ip_server):
         if not self._init_identify(ip_client, ip_server, login=wab_login,
-                                   auth_state=AuthState.PINGID):
+                                   auth_state=AuthState.MOBILE_DEVICE):
             return False
         auth_type = self.auth_challenge.get('auth_type')
-        return auth_type == AUTH.PINGID
+        return auth_type == AUTH.MOBILE_DEVICE
 
-    def pingid_authenticate(self, enginei):
-        if self.auth_state != AuthState.PINGID:
+    def mobile_device_authenticate(self, enginei):
+        if self.auth_state != AuthState.MOBILE_DEVICE:
             self._reset_auth()
             return False
         try:
             data = {}
             auth_type = self.auth_challenge.get('auth_type')
-            if auth_type == AUTH.PINGID:
-                return self._authentify(enginei, data, "pingid")
+            if auth_type == AUTH.MOBILE_DEVICE:
+                return self._authentify(enginei, data, "mobile_device")
         except Exception as a:
             self._reset_auth()
             import traceback
-            Logger().info("Engine pingid_authenticate failed: "
+            Logger().info("Engine mobile_device_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
             raise
         self._reset_auth()
@@ -371,8 +371,8 @@ class Authenticator(object):
             auth_type = self.auth_challenge.get('auth_type')
             if auth_type == AUTH.PASSWORD:
                 data['password'] = password
-            if auth_type == AUTH.PINGID:
-                return self._authentify(enginei, data, "pingid")
+            if auth_type == AUTH.MOBILE_DEVICE:
+                return self._authentify(enginei, data, "mobile_device")
             if data:
                 return self._authentify(enginei, data, "password")
         except Exception as a:

@@ -126,10 +126,10 @@ class LegacyAuthenticator(object):
             ip_client, "", ip_server
         )
 
-    def check_pingid(self, wab_login, ip_client, ip_server):
+    def check_mobile_device(self, wab_login, ip_client, ip_server):
         return False
 
-    def pingid_authenticate(self, enginei):
+    def mobile_device_authenticate(self, enginei):
         return False
 
     def password_authenticate(self, enginei, wab_login, ip_client, password,
