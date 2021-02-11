@@ -26,6 +26,8 @@
 #include "utils/fileutils.hpp"
 
 
+using namespace std::literals::chrono_literals;
+
 RED_AUTO_TEST_CASE_WF(TestRecordingProgress, wf)
 {
     auto const start_time = MonotonicTimePoint(123456789s);

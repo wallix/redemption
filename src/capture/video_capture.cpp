@@ -45,6 +45,8 @@
 #include <ctime>
 
 
+using namespace std::chrono_literals;
+
 namespace
 {
     void video_transport_log_error(Error const & error)
@@ -68,9 +70,9 @@ namespace
 
     inline time_t to_time_t(
         MonotonicTimePoint t,
-        DurationFromMonotonicTimeToRealTime monotonic_to_real)
+        MonotonicTimeToRealTime monotonic_to_real)
     {
-        auto duration = t.time_since_epoch() + monotonic_to_real.duration;
+        auto duration = monotonic_to_real.to_real_time_duration(t);
         return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
     }
 
@@ -188,7 +190,7 @@ using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnap
 
 VideoCaptureCtx::VideoCaptureCtx(
     MonotonicTimePoint now,
-    DurationFromMonotonicTimeToRealTime monotonic_to_real,
+    RealTimePoint real_now,
     TraceTimestamp trace_timestamp,
     ImageByInterval image_by_interval,
     unsigned frame_rate,
@@ -198,7 +200,7 @@ VideoCaptureCtx::VideoCaptureCtx(
 : drawable(drawable)
 , monotonic_last_time_capture(now)
 , monotonic_start_capture(now)
-, monotonic_to_real(monotonic_to_real)
+, monotonic_to_real(now, real_now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , current_video_time(0)
 , start_frame_index(0)
@@ -442,7 +444,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
 : trans_tmp_file(
     capture_params.record_path, capture_params.basename, video_params.codec.c_str(),
     capture_params.groupid, capture_params.session_log)
-, video_cap_ctx(capture_params.now, capture_params.monotonic_to_real,
+, video_cap_ctx(capture_params.now, capture_params.real_now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
     video_params.frame_rate, drawable, image_frame)
@@ -607,7 +609,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     RDPDrawable & drawable,
     gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params)
-: video_cap_ctx(capture_params.now, capture_params.monotonic_to_real,
+: video_cap_ctx(capture_params.now, capture_params.real_now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
     video_params.frame_rate, drawable, image_frame)
@@ -745,7 +747,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     VideoParams const & video_params,
     NotifyNextVideo & next_video_notifier)
 : monotonic_start_capture(capture_params.now)
-, monotonic_to_real(capture_params.monotonic_to_real)
+, monotonic_to_real(capture_params.now, capture_params.real_now)
 , vc(capture_params, drawable, image_frame, video_params)
 , ic_trans(
     capture_params.record_path, capture_params.basename, ".png",

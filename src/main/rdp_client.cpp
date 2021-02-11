@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 
     ClientFront front(client_info.screen_info, verbose & 0x8000'0000);
     EventManager event_manager;
-    event_manager.set_current_time(MonotonicTimePoint::clock::now());
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;

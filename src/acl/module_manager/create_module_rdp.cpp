@@ -171,7 +171,7 @@ public:
             [this,log_interval](Event& event)
             {
                 event.alarm.reset_timeout(log_interval);
-                this->metrics->log(event.alarm.now);
+                this->metrics->log(event.alarm.now, this->events_guard.get_time_base().real_time);
             });
     }
 
@@ -794,8 +794,8 @@ ModPack create_mod_rdp(
                 ini.get<cfg::globals::host>(),
                 client_info.screen_info,
                 ini.get<cfg::metrics::sign_key>()),
-            events.get_current_time(),
-            events.get_time_base().get_duration_from_monotonic_time_to_real_time(),
+            events.get_monotonic_time(),
+            events.get_time_base().real_time,
             ini.get<cfg::metrics::log_file_turnover_interval>(),
             ini.get<cfg::metrics::log_interval>());
     }

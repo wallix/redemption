@@ -48,6 +48,7 @@
 // include "system/linux/system/tls_context.hpp"
 // include "transport/socket_transport.hpp"
 
+using namespace std::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestWithoutExistingLicense)
 {

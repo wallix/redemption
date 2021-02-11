@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+using namespace std::chrono_literals;
 
 bool create_metrics_directory(const std::string & path)
 {
@@ -50,40 +51,28 @@ bool create_metrics_directory(const std::string & path)
 
 namespace
 {
-    // Returns the beginning of the timeslice of width seconds containing timepoint
-    // origin of intervals is midnight 1 jan 1970
-    MonotonicTimePoint timeslice(MonotonicTimePoint tp, MonotonicTimePoint::duration seconds)
-    {
-        return tp - tp.time_since_epoch() % seconds;
-    }
-
-    bool is_midnight(MonotonicTimePoint tp)
-    {
-        return (tp.time_since_epoch() % MonotonicTimePoint::duration(24h)).count() == 0;
-    }
-
-    tm to_tm(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real)
+    tm to_tm(RealTimePoint real_time)
     {
         struct tm tm;
-        auto now = tp.time_since_epoch() + monotonic_to_real.duration;
+        auto now = real_time.time_since_epoch();
         time_t time = std::chrono::duration_cast<std::chrono::seconds>(now).count();
         gmtime_r(&time, &tm);
         return tm;
     }
 
     // yyyy-MM-dd
-    chars_view strftime_date(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, char (&buf)[35])
+    chars_view strftime_date(RealTimePoint real_time, char (&buf)[35])
     {
-        const auto tm = to_tm(tp, monotonic_to_real);
+        const auto tm = to_tm(real_time);
         return {buf, buf + snprintf(buf, std::size(buf), "%04d-%02d-%02d",
             1900+tm.tm_year, 1+tm.tm_mon, tm.tm_mday)
         };
     }
 
     // yyyy-MM-dd_hh-mm-ss
-    chars_view strftime_filename(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, char (&buf)[35])
+    chars_view strftime_filename(RealTimePoint real_time, char (&buf)[35])
     {
-        const auto tm = to_tm(tp, monotonic_to_real);
+        const auto tm = to_tm(real_time);
         return {buf, buf + snprintf(buf, std::size(buf),
             "%04d-%02d-%02d_%02d-%02d-%02d",
             1900+tm.tm_year, 1+tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec)
@@ -91,9 +80,9 @@ namespace
     }
 
     // yyyy-MM-dd hh:mm:ss
-    chars_view strftime_event(MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, char (&buf)[35])
+    chars_view strftime_event(RealTimePoint real_time, char (&buf)[35])
     {
-        const auto tm = to_tm(tp, monotonic_to_real);
+        const auto tm = to_tm(real_time);
         return {buf, buf + snprintf(buf, std::size(buf),
             "%04d-%02d-%02d %02d:%02d:%02d",
             1900+tm.tm_year, 1+tm.tm_mon, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec)
@@ -108,12 +97,12 @@ namespace
 
 struct Metrics::Impl
 {
-    static void new_file(Metrics& m, MonotonicTimePoint timeslice, DurationFromMonotonicTimeToRealTime monotonic_to_real)
+    static void new_file(Metrics& m, MonotonicTimePoint::duration file_duration, RealTimePoint real_time)
     {
         char buf[35];
-        auto text_date = is_midnight(timeslice)
-            ? strftime_date(timeslice, monotonic_to_real, buf)
-            : strftime_filename(timeslice, monotonic_to_real, buf);
+        auto text_date = file_duration == MonotonicTimePoint::duration(24h)
+            ? strftime_date(real_time, buf)
+            : strftime_filename(real_time, buf);
 
         auto metrics_path_suffix = ".logmetrics"_av;
         str_assign(m.complete_metrics_file_path,
@@ -131,13 +120,13 @@ struct Metrics::Impl
                 m.complete_metrics_file_path, strerror(errnum));
         }
 
-        write_event_to_logindex(m, m.connection_time, monotonic_to_real, " connection "_av);
+        write_event_to_logindex(m, real_time, " connection "_av);
     }
 
-    static void write_event_to_logmetrics(Metrics& m, MonotonicTimePoint now, DurationFromMonotonicTimeToRealTime monotonic_to_real)
+    static void write_event_to_logmetrics(Metrics& m, RealTimePoint real_time)
     {
         char buf[35];
-        auto text_datetime = strftime_event(now, monotonic_to_real, buf);
+        auto text_datetime = strftime_event(real_time, buf);
 
         char sentence[4096];
         char * ptr = sentence;
@@ -161,7 +150,7 @@ struct Metrics::Impl
         }
     }
 
-    static void write_event_to_logindex(Metrics& m, MonotonicTimePoint tp, DurationFromMonotonicTimeToRealTime monotonic_to_real, chars_view event_name)
+    static void write_event_to_logindex(Metrics& m, RealTimePoint real_time, chars_view event_name)
     {
         unique_fd fd_header(m.complete_index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!fd_header.is_open()) {
@@ -170,7 +159,7 @@ struct Metrics::Impl
         }
 
         char buf[35];
-        auto disconnect_time_str = strftime_event(tp, monotonic_to_real, buf);
+        auto disconnect_time_str = strftime_event(real_time, buf);
 
         iovec iov[] = {
             to_iov(disconnect_time_str),
@@ -197,7 +186,7 @@ void Metrics::set_protocol(std::string fields_version, std::string protocol_name
     LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%" PRIu64 " sec rotation=%" PRIu64 " hours",
         this->path.c_str(), static_cast<uint64_t>(this->log_delay.count()), static_cast<uint64_t>(this->file_interval.count()));
 
-    Impl::new_file(*this, this->current_file_date, this->monotonic_to_real);
+    Impl::new_file(*this, this->file_interval, this->last_real_time);
 }
 
 Metrics::Metrics(
@@ -208,7 +197,7 @@ Metrics::Metrics(
     chars_view target_service_sig, // hashed (target service name + device name)
     chars_view session_info_sig,   // hashed (source_host + client info)
     MonotonicTimePoint now,                   // time at beginning of metrics
-    DurationFromMonotonicTimeToRealTime monotonic_to_real,
+    RealTimePoint real_time,
     std::chrono::hours file_interval,         // daily rotation of filename
     std::chrono::seconds log_delay            // delay between 2 logs flush
 )
@@ -216,13 +205,13 @@ Metrics::Metrics(
 , version("0.0")
 , protocol_name("none")
 , file_interval{file_interval}
-, current_file_date(timeslice(now, this->file_interval))
-, monotonic_to_real(monotonic_to_real)
+, next_file_date(now - real_time.time_since_epoch() % this->file_interval + this->file_interval)
 , path((path.back() == '/') ? path.substr(0,path.size()-1) : path)
 , session_id(std::move(session_id.insert(0, 1, ' ')))
 , connection_time(now)
 , log_delay(log_delay)
 , next_log_time{now+this->log_delay}
+, last_real_time(real_time)
 {
     this->header.len = size_t(snprintf(this->header.buffer, sizeof(this->header.buffer),
         "%.*s user=%.*s account=%.*s target_service_device=%.*s client_info=%.*s\n",
@@ -233,29 +222,32 @@ Metrics::Metrics(
         int(session_info_sig.size()), session_info_sig.data()));
 }
 
-void Metrics::log(MonotonicTimePoint now)
+void Metrics::log(MonotonicTimePoint now, RealTimePoint real_time)
 {
+    this->rotate(now, real_time);
+
     if (this->next_log_time > now) {
         return ;
     }
-
-    this->next_log_time += this->log_delay;
-
-    this->rotate(now);
-    Impl::write_event_to_logmetrics(*this, now, this->monotonic_to_real);
+    this->next_log_time = now + this->log_delay;
+    Impl::write_event_to_logmetrics(*this, real_time);
 }
 
 void Metrics::disconnect()
 {
-    this->rotate(this->next_log_time);
-    Impl::write_event_to_logmetrics(*this, this->next_log_time, this->monotonic_to_real);
-    Impl::write_event_to_logindex(*this, this->next_log_time, this->monotonic_to_real, " disconnection "_av);
+    this->rotate(this->next_log_time - this->log_delay, this->last_real_time);
+    Impl::write_event_to_logmetrics(*this, this->last_real_time);
+    Impl::write_event_to_logindex(*this, this->last_real_time, " disconnection "_av);
 }
 
-void Metrics::rotate(MonotonicTimePoint now)
+void Metrics::rotate(MonotonicTimePoint now, RealTimePoint real_time)
 {
-    if (this->current_file_date + this->file_interval <= now) {
-        this->current_file_date = timeslice(now, this->file_interval);
-        Impl::new_file(*this, this->current_file_date, this->monotonic_to_real);
+    this->last_real_time = real_time;
+    if (this->next_file_date <= now) {
+        const auto elapsed = (now - this->next_file_date);
+        const auto count_interval = elapsed / this->file_interval;
+        const auto elapsed_log = count_interval * this->file_interval;
+        Impl::new_file(*this, this->file_interval, real_time - (now - this->next_file_date) + elapsed_log);
+        this->next_file_date += elapsed_log + this->file_interval;
     }
 }

@@ -108,7 +108,7 @@ CloseMod::CloseMod(
                 e.garbage = true;
             });
 
-        const auto start_time = this->events_guard.get_current_time();
+        const auto start_time = this->events_guard.get_monotonic_time();
         this->events_guard.create_event_timeout(
             "Close Refresh Message Event",
             start_time,

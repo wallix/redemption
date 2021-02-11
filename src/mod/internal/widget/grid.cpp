@@ -318,6 +318,8 @@ void WidgetGrid::blur()
 
 void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap)
 {
+    using namespace std::chrono_literals;
+
     if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
         uint16_t y = this->y();
         uint16_t const x = this->x();
@@ -330,11 +332,9 @@ void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Key
                     this->click_interval.update();
                     this->set_selection(row_index);
                 }
-                else {
-                    if (this->click_interval.tick() <= MonotonicTimePoint::duration(700ms)) {
-                        this->send_notify(NOTIFY_SUBMIT);
-                        return;
-                    }
+                else if (this->click_interval.tick() <= MonotonicTimePoint::duration(700ms)) {
+                    this->send_notify(NOTIFY_SUBMIT);
+                    return;
                 }
 
                 break;

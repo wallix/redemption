@@ -105,7 +105,8 @@ public:
             return 9;
         }
 
-        this->event_manager.set_current_time(MonotonicTimePoint::clock::now());
+        this->event_manager.get_writable_time_base().monotonic_time
+            = MonotonicTimePoint::clock::now();
         this->event_manager.execute_events([&rfds](int fd){
             return io_fd_isset(fd, rfds);
         }, false);
@@ -193,7 +194,7 @@ int main(int argc, char const** argv)
     ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, argv, config);
     EventManager event_manager;
-    event_manager.set_current_time(MonotonicTimePoint::clock::now());
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
     ScopedSslInit scoped_ssl;
 
     ClientRedemptionHeadless client(event_manager, config);

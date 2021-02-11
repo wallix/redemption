@@ -170,7 +170,7 @@ public:
                 array_md5 ResponseKeyLM = ::HmacMd5(::Md4(this->identity_Password),::UTF16_to_upper(this->utf16_user), this->utf16_domain);
 
                 using std::chrono::duration_cast;
-                const auto duration = this->time_base.get_current_time().time_since_epoch();
+                const auto duration = this->time_base.monotonic_time.time_since_epoch();
                 const auto dur_miroseconds = duration_cast<std::chrono::microseconds>(duration);
                 const auto dur_seconds = duration_cast<std::chrono::seconds>(dur_miroseconds);
                 const uint32_t seconds = checked_int{dur_seconds.count()};

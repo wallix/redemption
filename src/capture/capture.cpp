@@ -94,6 +94,7 @@ class SequencedVideoCaptureImpl {};
 
 using std::begin;
 using std::end;
+using namespace std::chrono_literals;
 
 namespace
 {
@@ -321,14 +322,10 @@ void filtering_kbd_input(uint32_t uchar, Utf8CharFn utf32_char_fn,
     }
 }
 
-time_t to_time_t(MonotonicTimePoint::duration d)
+inline time_t to_time_t(MonotonicTimePoint t, MonotonicTimeToRealTime monotonic_to_real)
 {
-    return std::chrono::duration_cast<std::chrono::seconds>(d).count();
-}
-
-time_t to_time_t(MonotonicTimePoint t)
-{
-    return std::chrono::duration_cast<std::chrono::seconds>(t.time_since_epoch()).count();
+    auto duration = monotonic_to_real.to_real_time_duration(t);
+    return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 }
 
 } // anonymous namespace
@@ -663,7 +660,7 @@ protected:
     const std::chrono::microseconds frame_interval;
 
 private:
-    const DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    const MonotonicTimeToRealTime monotonic_to_real;
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
@@ -695,7 +692,7 @@ protected:
     , drawable(drawable)
     , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
-    , monotonic_to_real(capture_params.monotonic_to_real)
+    , monotonic_to_real(capture_params.now, capture_params.real_now)
     , zoom_factor(png_params.zoom)
     , scaled_width{(((image_view.width() * this->zoom_factor) / 100)+3) & 0xFFC}
     , scaled_height{((image_view.height() * this->zoom_factor) / 100)}
@@ -766,7 +763,7 @@ public:
             if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
                 this->drawable.trace_mouse();
                 tm ptm;
-                time_t t = to_time_t(now + this->monotonic_to_real.duration);
+                time_t t = to_time_t(now, this->monotonic_to_real);
                 localtime_r(&t, &ptm);
                 this->image_frame_api.prepare_image_frame();
                 this->timestamp_tracer.trace(ptm);
@@ -971,9 +968,8 @@ class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureA
         sizeof(kbd_buffer) - session_meta_kbd_prefix().size() - session_meta_kbd_suffix().size();
     uint8_t kbd_chars_size[kbd_buffer_usable_char];
     std::ptrdiff_t kbd_char_pos = 0;
-    time_t monotonic_to_real;
-    time_t monotonic_start_time;
-    time_t monotonic_last_time;
+    MonotonicTimeToRealTime monotonic_to_real;
+    MonotonicTimePoint monotonic_last_time;
     Transport & trans;
     bool is_probe_enabled_session = false;
     bool previous_char_is_event_flush = false;
@@ -985,14 +981,13 @@ class Capture::SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureA
 public:
     explicit SessionMeta(
         MonotonicTimePoint now,
-        DurationFromMonotonicTimeToRealTime monotonic_to_real,
+        RealTimePoint real_now,
         Transport& trans,
         bool key_markers_hidden_state,
         MetaParams meta_params)
     : kbd_stream{{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}}
-    , monotonic_to_real(to_time_t(monotonic_to_real.duration))
-    , monotonic_start_time(to_time_t(now))
-    , monotonic_last_time(to_time_t(now))
+    , monotonic_to_real(now, real_now)
+    , monotonic_last_time(now)
     , trans(trans)
     , key_markers_hidden_state(key_markers_hidden_state)
     , meta_params(meta_params)
@@ -1025,16 +1020,16 @@ public:
             this->write_keys(uchar);
             this->send_kbd_if_special_char(uchar);
         }
-        this->monotonic_last_time = to_time_t(now);
+        this->monotonic_last_time = now;
         return true;
     }
 
     void send_line(MonotonicTimePoint now, chars_view data) {
-        this->send_data(to_time_t(now), data, '-');
+        this->send_data(now, data, '-');
     }
 
     void next_video(MonotonicTimePoint now) {
-        this->send_data(to_time_t(now), cstr_array_view("(break)"), '+');
+        this->send_data(now, cstr_array_view("(break)"), '+');
     }
 
 private:
@@ -1046,7 +1041,7 @@ public:
         log_format_set_info(this->formatted_message, LogId::TITLE_BAR, {
             KVLog("data"_av, title),
         });
-        this->send_data(to_time_t(now), this->formatted_message, '+');
+        this->send_data(now, this->formatted_message, '+');
     }
 
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override {
@@ -1066,7 +1061,7 @@ public:
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
     ) override {
-        this->monotonic_last_time = to_time_t(now);
+        this->monotonic_last_time = now;
         return WaitingTimeBeforeNextSnapshot(10s);
     }
 
@@ -1129,15 +1124,15 @@ private:
         this->kbd_stream.out_copy_bytes(bytes);
     }
 
-    void send_data(time_t rawtime, chars_view data, char sep) {
-        this->send_date(rawtime, sep);
+    void send_data(MonotonicTimePoint now, chars_view data, char sep) {
+        this->send_date(now, sep);
         this->trans.send(data);
         this->trans.send("\n"_av);
-        this->monotonic_last_time = rawtime;
+        this->monotonic_last_time = now;
     }
 
-    void send_date(time_t rawtime, char sep) {
-        rawtime += this->monotonic_to_real;
+    void send_date(MonotonicTimePoint now, char sep) {
+        auto rawtime = to_time_t(now, this->monotonic_to_real);
 
         tm ptm;
         localtime_r(&rawtime, &ptm);
@@ -1249,7 +1244,7 @@ public:
                 session_log->report("FILESYSTEM_FULL", "100|unknown");
             }
         })
-    , meta(capture_params.now, capture_params.monotonic_to_real, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
+    , meta(capture_params.now, capture_params.real_now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
     , session_log_agent(this->meta, meta_params)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
     {

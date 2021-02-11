@@ -22,6 +22,8 @@
 
 #include "utils/to_timeval.hpp"
 
+using namespace std::literals::chrono_literals;
+
 template<class Ch, class Tr>
 static inline std::basic_ostream<Ch, Tr>&
 operator<<(std::basic_ostream<Ch, Tr>& out, timeval const& tv)

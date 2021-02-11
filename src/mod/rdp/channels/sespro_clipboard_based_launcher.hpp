@@ -354,15 +354,16 @@ public:
 
     MonotonicTimePoint get_short_delay_timeout() const
     {
+        using namespace std::chrono_literals;
         std::chrono::milliseconds delay_ms = this->params.short_delay_ms;
-        return this->events_guard.get_current_time()
+        return this->events_guard.get_monotonic_time()
              + std::min(this->to_microseconds(delay_ms, this->delay_coefficient), 1000ms);
     }
 
     MonotonicTimePoint get_long_delay_timeout() const
     {
         std::chrono::milliseconds delay_ms = this->params.long_delay_ms;
-        return this->events_guard.get_current_time() + this->to_microseconds(delay_ms, this->delay_coefficient);
+        return this->events_guard.get_monotonic_time() + this->to_microseconds(delay_ms, this->delay_coefficient);
     }
 
     void make_delay_sequencer()

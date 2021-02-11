@@ -25,8 +25,12 @@
 #include "test_only/test_framework/file.hpp"
 #include "test_only/lcg_random.hpp"
 
-#include "capture/capture.hpp"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 #include "capture/capture.cpp" // Yeaaahh...
+REDEMPTION_DIAGNOSTIC_POP
+
+#include "capture/capture.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/drawable.hpp"
@@ -40,6 +44,8 @@
 #include "test_only/ostream_buffered.hpp"
 #include "test_only/transport/test_transport.hpp"
 
+
+using namespace std::chrono_literals;
 
 static struct stat get_stat(char const* filename)
 {
@@ -120,7 +126,7 @@ namespace
         }
         , capture_params{
             now,
-            DurationFromMonotonicTimeToRealTime{},
+            RealTimePoint{1000s},
             basename,
             record_tmp_path,
             record_path,
@@ -204,6 +210,11 @@ namespace
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
     }
 
+    inline time_t to_time_t(MonotonicTimePoint t)
+    {
+        auto duration = t.time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    }
 
     const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
 } // namespace
@@ -700,9 +711,11 @@ namespace
         };
     }
 
-    Capture::SessionMeta make_session_meta(MonotonicTimePoint const& now, Transport& trans, bool key_markers_hidden_state)
+    Capture::SessionMeta make_session_meta(MonotonicTimePoint now, Transport& trans, bool key_markers_hidden_state)
     {
-        return Capture::SessionMeta(now, DurationFromMonotonicTimeToRealTime{}, trans, key_markers_hidden_state, make_meta_params());
+        return Capture::SessionMeta(
+            now, RealTimePoint{now.time_since_epoch()},
+            trans, key_markers_hidden_state, make_meta_params());
     }
 } // namespace
 
@@ -1197,7 +1210,7 @@ namespace
             BmpCache::Verbose::none
         )
         , drawable(scr.cx, scr.cy)
-        , consumer(now, DurationFromMonotonicTimeToRealTime{},
+        , consumer(now, RealTimePoint{now.time_since_epoch()},
             trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache,
             drawable, WrmCompressionAlgorithm::no_compression,
             GraphicToFile::SendInput::NO, RDPSerializerVerbose::none)
@@ -2154,7 +2167,7 @@ RED_AUTO_TEST_CASE(TestReload)
                 player.interpret_order();
             }
             ::dump_png24(trans, drawable, true);
-            RED_CHECK(test.time == to_time_t(player.get_current_time()));
+            RED_CHECK(test.time == to_time_t(player.get_monotonic_time()));
         }
 
         RED_TEST(trans.size() == test.file_len);
@@ -2347,26 +2360,26 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     RDPDrawable drawable(info.width, info.height);
     GraphicToFile graphic_to_file(
-        player.get_current_time(), DurationFromMonotonicTimeToRealTime{},
+        player.get_monotonic_time(), player.get_real_time(),
         out_wrm_trans, BitsPerPixel{24}, false,
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
         GraphicToFile::SendInput::NO, RDPSerializerVerbose::none
     );
-    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.get_current_time(), std::chrono::seconds{1}, std::chrono::seconds{20});
+    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.get_monotonic_time(), std::chrono::seconds{1}, std::chrono::seconds{20});
 
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
     player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr, nullptr);
 
     bool requested_to_stop = false;
 
-    RED_CHECK(1352304810 == to_time_t(player.get_current_time()));
+    RED_CHECK(1352304810 == to_time_t(player.get_monotonic_time()));
     player.play(requested_to_stop);
 
     BufTransport out_png_trans;
     ::dump_png24(out_png_trans, drawable, true);
     RED_TEST(out_png_trans.size() == 21280);
 
-    RED_CHECK(1352304870 == to_time_t(player.get_current_time()));
+    RED_CHECK(1352304870 == to_time_t(player.get_monotonic_time()));
 
     graphic_to_file.sync();
 

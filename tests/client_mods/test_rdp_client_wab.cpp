@@ -44,6 +44,7 @@
 #include "gdi/osd_api.hpp"
 
 
+using namespace std::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -157,7 +158,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     int n = 10;
     int count = 0;
     detail::ProtectedEventContainer::get_events(events)[0]->alarm.fd = 0;
-    event_manager.set_current_time(MonotonicTimePoint{1s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     for (; count < n && !event_manager.is_empty(); ++count) {
         event_manager.execute_events([](int){return true;}, false);
     }

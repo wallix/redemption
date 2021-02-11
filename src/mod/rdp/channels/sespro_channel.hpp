@@ -260,7 +260,7 @@ public:
                     [this](Event&event)
                     {
                         this->process_event_launch();
-                        event.alarm.reset_timeout(this->events_guard.get_current_time()
+                        event.alarm.reset_timeout(this->events_guard.get_monotonic_time()
                             + this->sespro_params.effective_launch_timeout);
                     });
                 this->session_probe_launch_timeout_timer_started = true;
@@ -284,7 +284,7 @@ public:
     void give_additional_launch_time() {
         if (!this->session_probe_ready && this->session_probe_timer && !this->launch_aborted) {
             this->session_probe_timer.reset_timeout(
-                this->events_guard.get_current_time() + this->sespro_params.effective_launch_timeout);
+                this->events_guard.get_monotonic_time() + this->sespro_params.effective_launch_timeout);
             LOG_IF(bool(this->verbose & RDPVerbose::sesprobe), LOG_INFO,
                 "SessionProbeVirtualChannel::give_additional_launch_time");
         }
@@ -319,7 +319,7 @@ private:
                 "Session Probe keep alive requested");
 
         this->session_probe_timer.reset_timeout(
-            this->events_guard.get_current_time() + this->sespro_params.keepalive_timeout);
+            this->events_guard.get_monotonic_time() + this->sespro_params.keepalive_timeout);
     }
 
     bool client_input_disabled_because_session_probe_keepalive_is_missing = false;

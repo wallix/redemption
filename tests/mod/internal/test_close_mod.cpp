@@ -36,6 +36,8 @@
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/close_mod/"
 
+using namespace std::literals::chrono_literals;
+
 RED_AUTO_TEST_CASE(TestCloseMod)
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
@@ -62,17 +64,17 @@ RED_AUTO_TEST_CASE(TestCloseMod)
         d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
         RED_CHECK(event_cont.size() == 2);
-        event_manager.set_current_time(MonotonicTimePoint{62s});
+        event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{62s};
         event_manager.execute_events([](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_1.png");
 
         RED_CHECK(event_cont.size() == 2);
-        event_manager.set_current_time(MonotonicTimePoint{581s});
+        event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{581s};
         event_manager.execute_events([](int){return false;}, false);
         RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_2.png");
 
         RED_CHECK(event_cont.size() == 2);
-        event_manager.set_current_time(MonotonicTimePoint{600s});
+        event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{600s};
         event_manager.execute_events([](int){return false;}, false);
         RED_CHECK(event_cont.size() == 1);
 
@@ -106,7 +108,7 @@ RED_AUTO_TEST_CASE(TestCloseModSelector)
     d.init();
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    event_manager.set_current_time(MonotonicTimePoint{1s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     event_manager.execute_events([](int){return false;}, false);
 
     RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_selector_1.png");
@@ -157,7 +159,7 @@ RED_AUTO_TEST_CASE(TestCloseModRail)
 
     d.rdp_input_invalidate(Rect{ 0, 0, screen_info.width, screen_info.height });
 
-    event_manager.set_current_time(MonotonicTimePoint{1s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     event_manager.execute_events([](int){return false;}, false);
 
     RED_CHECK_IMG(front, IMG_TEST_PATH "close_mod_rail.png");

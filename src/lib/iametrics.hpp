@@ -42,16 +42,17 @@ extern "C"
                          , const char * account_sig         // secondary account
                          , const char * target_service_sig  // clear target service name + clear device name
                          , const char * session_info_sig    // info relative to client session
-                         , unsigned long now_seconds        // time at beginning of metrics
-                         , int           file_interval_hours     // daily rotation of filename (hours)
-                         , int           log_delay_seconds  // delay between 2 logs
+                         , uint64_t     monotonic_now_ms    // time at beginning of metrics
+                         , uint64_t     real_now_ms         // time at beginning of metrics
+                         , int          file_interval_hours // daily rotation of filename (hours)
+                         , int          log_delay_seconds   // delay between 2 logs
                          ) noexcept;
 
     REDEMPTION_LIB_EXPORT
     void metrics_delete(Metrics * metrics) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_log(Metrics * metrics, uint64_t now_ms) noexcept;
+    void metrics_log(Metrics * metrics, uint64_t monotonic_ms, uint64_t real_now) noexcept;
 
     REDEMPTION_LIB_EXPORT
     int metrics_add_to_current_data(Metrics * metrics, unsigned index, uint64_t value) noexcept;

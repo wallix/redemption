@@ -28,7 +28,7 @@
 #include "transport/file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/timestamp_tracer.hpp"
-#include "utils/monotonic_clock.hpp"
+#include "utils/monotonic_time_to_real_time.hpp"
 
 #include <memory>
 #include <chrono>
@@ -82,7 +82,7 @@ struct VideoCaptureCtx : noncopyable
 
     VideoCaptureCtx(
         MonotonicTimePoint monotonic_now,
-        DurationFromMonotonicTimeToRealTime monotonic_to_real,
+        RealTimePoint monotonic_to_real,
         TraceTimestamp trace_timestamp,
         ImageByInterval image_by_interval,
         unsigned frame_rate,
@@ -110,7 +110,7 @@ private:
     RDPDrawable & drawable;
     MonotonicTimePoint monotonic_last_time_capture;
     const MonotonicTimePoint monotonic_start_capture;
-    const DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    const MonotonicTimeToRealTime monotonic_to_real;
     const std::chrono::microseconds frame_interval;
     std::chrono::microseconds current_video_time;
     int64_t start_frame_index;
@@ -266,7 +266,7 @@ private:
     bool ic_has_first_img = false;
 
     const MonotonicTimePoint monotonic_start_capture;
-    const DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    const MonotonicTimeToRealTime monotonic_to_real;
 
     VideoCapture vc;
     SequenceTransport ic_trans;

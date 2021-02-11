@@ -27,6 +27,7 @@
 #include "core/RDP/state_chunk.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/real_clock.hpp"
 #include "utils/verbose_flags.hpp"
 
 
@@ -212,7 +213,8 @@ public:
     ~FileToGraphic();
 
     WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
-    MonotonicTimePoint get_current_time() const noexcept { return this->record_now; }
+    MonotonicTimePoint get_monotonic_time() const noexcept { return this->record_now; }
+    RealTimePoint get_real_time() const noexcept { return RealTimePoint(this->record_now.time_since_epoch()); }
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,

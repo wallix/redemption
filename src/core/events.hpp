@@ -30,13 +30,14 @@
 
 #include <vector>
 #include <chrono>
+#include <utility>
 #include <string_view>
 #include <type_traits>
 
+#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <cinttypes>
-#include <utility>
 
 class EventContainer;
 class EventRef;
@@ -149,9 +150,9 @@ public:
         return this->creator.time_base;
     }
 
-    [[nodiscard]] MonotonicTimePoint get_current_time() const noexcept
+    [[nodiscard]] MonotonicTimePoint get_monotonic_time() const noexcept
     {
-        return this->creator.time_base.get_current_time();
+        return this->creator.time_base.monotonic_time;
     }
 
     void end_of_lifespan(void const* lifespan)
@@ -178,7 +179,7 @@ public:
         {
             return this->create_event_timeout(
                 name, lifespan,
-                this->time_base.get_current_time() + delay,
+                this->time_base.monotonic_time + delay,
                 static_cast<TimeoutAction&&>(on_timeout));
         }
 
@@ -220,7 +221,7 @@ public:
         {
             return this->create_event_fd_timeout(
                 name, lifespan, fd, delay,
-                this->time_base.get_current_time() + delay,
+                this->time_base.monotonic_time + delay,
                 static_cast<FdAction&&>(on_fd),
                 static_cast<TimeoutAction&&>(on_timeout));
         }
@@ -251,7 +252,7 @@ public:
         Creator() = default;
 
         std::vector<Event*> queue;
-        TimeBase time_base{MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{}};
+        TimeBase time_base {};
 
         static const int action_tag = 0;
         static const int timeout_tag = 1;
@@ -433,14 +434,7 @@ public:
 
     void set_time_base(TimeBase const& time_base) noexcept
     {
-        detail::ProtectedEventContainer::get_writable_time_base(this->event_container)
-            = time_base;
-    }
-
-    void set_current_time(MonotonicTimePoint const& now) noexcept
-    {
-        detail::ProtectedEventContainer::get_writable_time_base(this->event_container)
-            .set_current_time(now);
+        this->get_writable_time_base() = time_base;
     }
 
     [[nodiscard]] TimeBase const& get_time_base() const noexcept
@@ -448,9 +442,14 @@ public:
         return this->event_container.get_time_base();
     }
 
-    [[nodiscard]] MonotonicTimePoint get_current_time() const noexcept
+    [[nodiscard]] TimeBase& get_writable_time_base() noexcept
     {
-        return this->event_container.get_current_time();
+        return detail::ProtectedEventContainer::get_writable_time_base(this->event_container);
+    }
+
+    [[nodiscard]] MonotonicTimePoint get_monotonic_time() const noexcept
+    {
+        return this->event_container.get_monotonic_time();
     }
 
     template<class Fn>
@@ -472,7 +471,7 @@ public:
     void execute_events(Fn&& fn, bool verbose)
     {
         auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
-        auto const tv = this->get_current_time();
+        auto const tv = this->get_monotonic_time();
         size_t iend = events.size();
         // ignore events created in the loop
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
@@ -559,9 +558,9 @@ struct EventsGuard : private noncopyable
         return this->events.get_time_base();
     }
 
-    [[nodiscard]] MonotonicTimePoint get_current_time() const noexcept
+    [[nodiscard]] MonotonicTimePoint get_monotonic_time() const noexcept
     {
-        return this->events.get_current_time();
+        return this->events.get_monotonic_time();
     }
 
     template<class TimeoutAction>
@@ -766,7 +765,7 @@ struct EventRef
         TimeoutFn&& fn)
     {
         reset_timeout_or_create_event(
-            events_guard.get_current_time() + delay,
+            events_guard.get_monotonic_time() + delay,
             events_guard.event_container(),
             name,
             &events_guard,
@@ -782,7 +781,7 @@ struct EventRef
         TimeoutFn&& fn)
     {
         reset_timeout_or_create_event(
-            event_container.get_current_time() + delay,
+            event_container.get_monotonic_time() + delay,
             event_container,
             name,
             lifespan,
@@ -884,7 +883,7 @@ struct EventRef2
 
     bool reset_timeout(MonotonicTimePoint::duration delay) noexcept
     {
-        return event_ref_.reset_timeout(event_container_.get_current_time() + delay);
+        return event_ref_.reset_timeout(event_container_.get_monotonic_time() + delay);
     }
 
     template<class TimeoutFn>
@@ -908,7 +907,7 @@ struct EventRef2
         TimeoutFn&& fn)
     {
         event_ref_.reset_timeout_or_create_event(
-            event_container_.get_current_time() + delay,
+            event_container_.get_monotonic_time() + delay,
             event_container_,
             name,
             this,

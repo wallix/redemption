@@ -70,6 +70,8 @@
 
 #include <csignal>
 
+using namespace std::chrono_literals;
+
 namespace
 {
 
@@ -1191,7 +1193,7 @@ static inline int replay(
                         ](MonotonicTimePoint now) mutable {
                             CaptureParams capture_params{
                                 now,
-                                DurationFromMonotonicTimeToRealTime{},
+                                RealTimePoint{now.time_since_epoch()},
                                 spath.basename.c_str(),
                                 record_tmp_path,
                                 record_path,
@@ -1251,7 +1253,7 @@ static inline int replay(
                                 &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
                         }
                         else {
-                            set_capture_consumer(player.get_current_time());
+                            set_capture_consumer(player.get_monotonic_time());
                         }
 
                         if (update_progress_data.is_valid()) {

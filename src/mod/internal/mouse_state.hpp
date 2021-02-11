@@ -52,6 +52,7 @@ public:
         switch (this->dc_state) {
             case MouseState::DCState::Wait:
                 if (flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
+                    using namespace std::chrono_literals;
                     this->dc_state = MouseState::DCState::FirstClickDown;
                     this->first_click_down_timer.reset_timeout_or_create_event(
                         1s, "Mouse::DC Event",

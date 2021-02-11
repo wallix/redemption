@@ -1220,6 +1220,8 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                 || (MOUSE_BUTTON_PRESSED_TITLEBAR == this->pressed_mouse_button)) {
                     this->button_1_down = this->pressed_mouse_button;
 
+                    using namespace std::chrono_literals;
+
                     this->events_guard.create_event_timeout("Double Click Down Timer",
                         400ms, [this](Event &/*e*/)
                         {

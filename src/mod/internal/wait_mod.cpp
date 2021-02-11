@@ -23,6 +23,8 @@
 #include "mod/internal/wait_mod.hpp"
 
 
+using namespace std::chrono_literals;
+
 WaitMod::WaitMod(
     WaitModVariables vars,
     EventContainer& events,

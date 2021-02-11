@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     };
 
     {
-        TimeBase time_base(MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{});
+        TimeBase time_base{MonotonicTimePoint{}, {}};
         TestTransport socket(
             cstr_array_view("123456789"),
             cstr_array_view("abcdefghijklmnopqrstuvwxyz"));
@@ -121,7 +121,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
     }
 
     {
-        TimeBase time_base(MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{});
+        TimeBase time_base{MonotonicTimePoint{}, {}};
         ReplayTransport trans(
             wf, time_base, ReplayTransport::FdType::AlwaysReady,
             ReplayTransport::FirstPacket::DisableTimer, ReplayTransport::UncheckedPacket::Send);
@@ -130,7 +130,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
 
     // Replay
     {
-        TimeBase time_base(MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{});
+        TimeBase time_base{MonotonicTimePoint{}, {}};
         ReplayTransport trans(wf, time_base, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
         auto av = make_writable_array_view(buf);
@@ -169,7 +169,7 @@ RED_AUTO_TEST_CASE_WF(TestRecorderTransport, wf)
 
     // Replay real time
     {
-        TimeBase time_base(MonotonicTimePoint{}, DurationFromMonotonicTimeToRealTime{});
+        TimeBase time_base{MonotonicTimePoint{}, {}};
         ReplayTransport trans(wf, time_base, ReplayTransport::FdType::Timer);
         char buf[10];
         auto av = make_writable_array_view(buf);

@@ -30,6 +30,8 @@
 #include "test_only/lcg_random.hpp"
 
 
+using namespace std::chrono_literals;
+
 RED_AUTO_TEST_CASE(TestNego)
 {
     ut::default_pattern_view = ut::PatternView::hex;
@@ -106,7 +108,7 @@ RED_AUTO_TEST_CASE(TestNego)
     char pass[] = "Pénélope\x00";
     char host[] = "Télémaque";
     LCGRandom rand;
-    TimeBase time_base(MonotonicTimePoint{167426s + 178586us}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{167426s + 178586us}, {}};
 
     NullServerNotifier null_server_notifier;
     std::string extra_message;

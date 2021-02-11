@@ -406,9 +406,9 @@ private:
                     msg += ini.get<cfg::globals::target_device>();
                     if (this->end_time_session.time_since_epoch().count()) {
                         const auto elapsed_time
-                            = this->end_time_session
-                            - this->time_base.get_current_time();
+                            = this->end_time_session- this->time_base.monotonic_time;
                         // only if "reasonable" time
+                        using namespace std::chrono_literals;
                         if (elapsed_time < MonotonicTimePoint::duration(60s*60*24*366)) {
                             str_append(msg,
                                 "  [",

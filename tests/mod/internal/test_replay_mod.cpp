@@ -33,6 +33,8 @@ namespace std
     RED_TEST_DELEGATE_OSTREAM(::MonotonicTimePoint, "{" << _.time_since_epoch().count() << "}");
 }
 
+using namespace std::literals::chrono_literals;
+
 RED_AUTO_TEST_CASE(TestInteractiveTargetMod)
 {
     uint16_t w = 1024;

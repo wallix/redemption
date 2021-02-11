@@ -94,12 +94,12 @@ namespace
         unsigned loop_duration, bool ignore_frame_in_timeval, bool mouse)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
-        DurationFromMonotonicTimeToRealTime monotonic_to_real{1353055788s};
+        RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
             25, codec.name, codec.options, false, false, false, video_interval, 0};
         CaptureParams capture_params{
-            monotonic_time, monotonic_to_real, "video", nullptr, dirname, 0 /* groupid */,
+            monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 100 /* zoom */, drawable, drawable, video_params,
@@ -114,12 +114,12 @@ namespace
         unsigned loop_duration, bool ignore_frame_in_timeval, bool mouse)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
-        DurationFromMonotonicTimeToRealTime monotonic_to_real{1353055788s};
+        RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
             25, codec.name, codec.options, false, false, false, video_interval, 0};
         CaptureParams capture_params{
-            monotonic_time, monotonic_to_real, "video", nullptr, dirname, 0 /* groupid */,
+            monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});

@@ -26,7 +26,7 @@
 #include <openssl/tls1.h>
 #include <openssl/tls1.h>
 
-
+using namespace std::literals::chrono_literals;
 
 #ifndef __EMSCRIPTEN__
 # define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
@@ -71,7 +71,7 @@ mod_vnc::mod_vnc( Transport & t
     , encodings(encodings)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
-    , beginning(events.get_current_time().time_since_epoch())
+    , beginning(events.get_monotonic_time().time_since_epoch())
     , rail_client_execute(rail_client_execute)
     , gd(gd)
     , events_guard(events)
@@ -95,7 +95,7 @@ mod_vnc::mod_vnc( Transport & t
 
     this->events_guard.create_event_timeout(
         "VNC Init Event",
-        this->events_guard.get_current_time(),
+        this->events_guard.get_monotonic_time(),
         [this](Event& event)
         {
             // First Timeout Clear Screen
@@ -285,7 +285,7 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
         Keymap2 * /*keymap*/)
 {
     LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
-    
+
     if (this->state != UP_AND_RUNNING) {
         return;
     }
@@ -318,9 +318,9 @@ void mod_vnc::rdp_input_unicode(uint16_t unicode, uint16_t flag)
            unicode,
            flag);
 
-    
+
     using namespace scancode;
- 
+
     ScancodeSeq scancode_seq =
         unicode_to_scancode(this->keymapSym.get_keylayout(), unicode);
     array_view<Scancode16bits> scancodes =
@@ -333,7 +333,7 @@ void mod_vnc::rdp_input_unicode(uint16_t unicode, uint16_t flag)
     }
 
     for (auto scancode : scancodes)
-    {   
+    {
         rdp_input_scancode(scancode, 0, flag, 0, nullptr);
     }
 }
@@ -420,7 +420,7 @@ void mod_vnc::rdp_input_clip_data(bytes_view data)
 
     this->clipboard_owned_by_client = true;
 
-    this->clipboard_last_client_data_timestamp = this->events_guard.get_current_time();
+    this->clipboard_last_client_data_timestamp = this->events_guard.get_monotonic_time();
 }
 
 
@@ -1726,7 +1726,7 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                     ? RDPECLIP::CF_UNICODETEXT
                     : RDPECLIP::CF_TEXT;
 
-                const auto usnow        = this->events_guard.get_current_time();
+                const auto usnow        = this->events_guard.get_monotonic_time();
                 const auto timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                 if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
                     LOG_IF(bool(this->verbose & VNCVerbose::clipboard), LOG_INFO,
@@ -2114,7 +2114,7 @@ void mod_vnc::draw_tile(Rect rect, const uint8_t * raw, gdi::GraphicApi & drawab
 
 void mod_vnc::disconnect()
 {
-    auto delay = this->events_guard.get_current_time().time_since_epoch()
+    auto delay = this->events_guard.get_monotonic_time().time_since_epoch()
                 - this->beginning;
     long seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
 

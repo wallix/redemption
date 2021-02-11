@@ -20,6 +20,25 @@ Author(s): Proxy Team
 
 #pragma once
 
-#include <chrono>
+#include "utils/monotonic_clock.hpp"
+#include "utils/real_clock.hpp"
 
-using MonotonicTimePoint = std::chrono::steady_clock::time_point;
+struct MonotonicTimeToRealTime
+{
+    MonotonicTimeToRealTime(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    : monotonic_to_real(real_time.time_since_epoch() - monotonic_time.time_since_epoch())
+    {}
+
+    RealTimePoint to_real_time_point(MonotonicTimePoint monotonic_time) const
+    {
+        return RealTimePoint(to_real_time_duration(monotonic_time));
+    }
+
+    MonotonicTimePoint::duration to_real_time_duration(MonotonicTimePoint monotonic_time) const
+    {
+        return (monotonic_time + monotonic_to_real).time_since_epoch();
+    }
+
+private:
+    MonotonicTimePoint::duration monotonic_to_real;
+};

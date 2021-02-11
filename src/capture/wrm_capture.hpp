@@ -46,6 +46,7 @@
 #include "utils/stream.hpp"
 #include "utils/png.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/monotonic_time_to_real_time.hpp"
 
 #include <cstddef>
 
@@ -115,7 +116,8 @@ class GraphicToFile
 
     MonotonicTimePoint timer;
     MonotonicTimePoint last_sent_timer {};
-    const DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    // for a monotic real time
+    const MonotonicTimeToRealTime original_monotonic_to_real;
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
     const bool send_input;
@@ -134,7 +136,7 @@ public:
     enum class SendInput { NO, YES };
 
     GraphicToFile(MonotonicTimePoint now
-                , DurationFromMonotonicTimeToRealTime monotonic_to_real
+                , RealTimePoint real_now
                 , Transport & trans
                 , const BitsPerPixel capture_bpp
                 // TODO strong type
@@ -152,7 +154,7 @@ public:
     , trans_target(trans)
     , trans(this->compression_bullder.get())
     , timer(now)
-    , monotonic_to_real(monotonic_to_real)
+    , original_monotonic_to_real(now, real_now)
     , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
@@ -182,19 +184,19 @@ public:
             this->flush_orders();
             this->flush_bitmaps();
             this->timer = now;
-            const auto us = this->real_time();
-            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(us);
+            const auto tp = this->original_monotonic_to_real.to_real_time_duration(this->timer);
+            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(tp);
             timeval tv;
             tv.tv_sec = seconds.count();
-            tv.tv_usec = (us - seconds).count();
+            tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(tp - seconds).count();
             this->trans.timestamp(tv);
         }
     }
 
 private:
-    std::chrono::microseconds real_time() const
+    std::chrono::microseconds monotonic_time() const
     {
-        const auto time_since_epoch = this->timer.time_since_epoch() + this->monotonic_to_real.duration;
+        const auto time_since_epoch = this->timer.time_since_epoch();
         return std::chrono::duration_cast<std::chrono::microseconds>(time_since_epoch);
     }
 
@@ -279,7 +281,7 @@ public:
     {
         StaticOutStream<12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1> payload;
 
-        payload.out_uint64_le(this->real_time().count());
+        payload.out_uint64_le(this->monotonic_time().count());
 
         if (this->send_input) {
             payload.out_uint16_le(this->mouse_x);
@@ -365,7 +367,7 @@ public:
 private:
     void send_elapsed_time()
     {
-        if (this->timer >= this->last_sent_timer + 1s) {
+        if (this->timer >= this->last_sent_timer + std::chrono::seconds(1)) {
             this->send_timestamp_chunk();
         }
     }
@@ -505,7 +507,7 @@ public:
         }
 
         StaticOutStream<1024*16> out_stream;
-        out_stream.out_uint64_le(this->real_time().count());
+        out_stream.out_uint64_le(this->monotonic_time().count());
         OutStream kvheader(out_stream.out_skip_bytes(2 + 4 + 1));
 
         uint8_t kv_len = checked_int(kv_list.size());
@@ -569,7 +571,7 @@ class WrmCaptureImpl :
     struct Serializer final : GraphicToFile
     {
         Serializer(MonotonicTimePoint now
-                , DurationFromMonotonicTimeToRealTime const & monotonic_to_real
+                , RealTimePoint real_now
                 , Transport & trans
                 , const BitsPerPixel capture_bpp
                 , const bool remote_app
@@ -580,7 +582,7 @@ class WrmCaptureImpl :
                 , WrmCompressionAlgorithm wrm_compression_algorithm
                 , SendInput send_input
                 , RDPSerializerVerbose verbose)
-            : GraphicToFile(now, monotonic_to_real, trans, capture_bpp, remote_app,
+            : GraphicToFile(now, real_now, trans, capture_bpp, remote_app,
                             bmp_cache, gly_cache, ptr_cache,
                             image_frame_api, wrm_compression_algorithm,
                             send_input, verbose)
@@ -844,8 +846,7 @@ public:
         wrm_params.hash_path,
         capture_params.basename,
         [&]{
-            const auto time_since_epoch = capture_params.now.time_since_epoch()
-                                        + capture_params.monotonic_to_real.duration;
+            const auto time_since_epoch = capture_params.real_now.time_since_epoch();
             const auto us = std::chrono::duration_cast<std::chrono::microseconds>(time_since_epoch);
             const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(us);
             timeval tv;
@@ -859,7 +860,7 @@ public:
         capture_params.session_log,
         wrm_params.file_permissions)
     , graphic_to_file(
-        capture_params.now, capture_params.monotonic_to_real,
+        capture_params.now, capture_params.real_now,
         this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,

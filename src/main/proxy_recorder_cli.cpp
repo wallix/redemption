@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
 
     openlog("ProxyRecorder", LOG_CONS | LOG_PERROR, LOG_USER);
 
-    TimeBase time_base(MonotonicTimePoint::clock::now(), DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint::clock::now(), RealTimePoint::clock::now()};
     FrontServer front(
         target_host, target_port, time_base, capture_file,
         std::move(nla_username), std::move(nla_password),

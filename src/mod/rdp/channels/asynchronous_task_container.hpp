@@ -89,7 +89,7 @@ public:
             this->first_task = task.release();
             this->last_task = this->first_task;
             this->first_task->configure_event(
-                this->events_guard.get_current_time(),
+                this->events_guard.get_monotonic_time(),
                 AsynchronousTask::AsynchronousEventContainer{*this}
             );
         }
@@ -109,7 +109,7 @@ private:
         delete std::exchange(this->first_task, this->first_task->p_next_task_);
         if (this->first_task) {
             this->first_task->configure_event(
-                this->events_guard.get_current_time(),
+                this->events_guard.get_monotonic_time(),
                 AsynchronousTask::AsynchronousEventContainer{*this}
             );
         }

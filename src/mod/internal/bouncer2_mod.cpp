@@ -26,6 +26,9 @@
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 
+
+using namespace std::literals::chrono_literals;
+
 namespace
 {
     constexpr auto delay = 33ms;

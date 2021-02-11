@@ -26,6 +26,8 @@
 #include "core/RDP/slowpath.hpp"
 
 
+using namespace std::chrono_literals;
+
 void RailModuleHostMod::rdp_input_invalidate(Rect r)
 {
     this->screen.rdp_input_invalidate(r);

@@ -88,7 +88,7 @@ ReplayTransport::ReplayTransport(
     FdType fd_type, FirstPacket first_packet,
     UncheckedPacket unchecked_packet)
 : time_base(time_base)
-, start_time(this->time_base.get_current_time())
+, start_time(this->time_base.monotonic_time)
 , in_file(open_file(fname))
 , fd(FdType::Timer == fd_type
 ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)
@@ -136,7 +136,7 @@ void ReplayTransport::reschedule_timer()
     }
 
     auto const targetTime = prefetchForTimer();
-    auto const now = this->time_base.get_current_time();
+    auto const now = this->time_base.monotonic_time;
 
     // zero disarms the timer, force to 1 nanoseconds
     auto const delate_time = std::max(
@@ -315,7 +315,7 @@ MonotonicTimePoint ReplayTransport::prefetchForTimer()
         /* if we've not found anything just return now so that select() will trigger right now*/
     }
 
-    return this->time_base.get_current_time();
+    return this->time_base.monotonic_time;
 }
 
 size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)

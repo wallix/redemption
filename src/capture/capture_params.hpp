@@ -22,6 +22,7 @@
 
 #include "configs/autogen/enums.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/real_clock.hpp"
 
 #include <cstdint>
 
@@ -30,7 +31,7 @@ class SessionLogApi;
 struct CaptureParams
 {
     MonotonicTimePoint now;
-    DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    RealTimePoint real_now;
     // TODO: basename, record_path and record_tmp_path should be copied, we have no control of these variable lifecycles
     char const * basename;
     char const * record_tmp_path;

@@ -54,7 +54,7 @@ struct ReplayMod::Reader
         play_video_with_corrupted_bitmap,
         debug_capture)
     {
-        this->start_time_replay = this->reader.get_current_time();
+        this->start_time_replay = this->reader.get_monotonic_time();
     }
 
     void server_resize(gdi::GraphicApi & drawable, FrontAPI & front)
@@ -106,7 +106,7 @@ ReplayMod::ReplayMod(
 
     auto action = [this](Event& ev){
         if (this->next_timestamp()) {
-            const auto replay_delay = this->internal_reader->reader.get_current_time()
+            const auto replay_delay = this->internal_reader->reader.get_monotonic_time()
                                     - this->internal_reader->start_time_replay;
             ev.alarm.reset_timeout(replay_delay);
         }
@@ -121,7 +121,7 @@ ReplayMod::ReplayMod(
         }
     };
 
-    this->events_guards.create_event_timeout("replay", this->events_guards.get_current_time(), action);
+    this->events_guards.create_event_timeout("replay", this->events_guards.get_monotonic_time(), action);
 }
 
 ReplayMod::~ReplayMod() = default;
@@ -129,13 +129,13 @@ ReplayMod::~ReplayMod() = default;
 bool ReplayMod::next_timestamp()
 {
     auto& reader = this->internal_reader->reader;
-    auto previous = reader.get_current_time();
+    auto previous = reader.get_monotonic_time();
     bool has_order;
 
     try {
         while ((has_order = reader.next_order())) {
             reader.interpret_order();
-            if (previous != reader.get_current_time()) {
+            if (previous != reader.get_monotonic_time()) {
                 break;
             }
         }
@@ -164,7 +164,7 @@ void ReplayMod::init_reader()
         ".mwrm",
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
-    this->start_time = this->events_guards.get_current_time();
+    this->start_time = this->events_guards.get_monotonic_time();
     this->internal_reader->server_resize(this->drawable, this->front);
 }
 

@@ -49,19 +49,22 @@ extern "C"
                          , const char * account_sig         // secondary account
                          , const char * target_service_sig  // clear target service name + clear device name
                          , const char * session_info_sig    // info relative to client session
-                         , const unsigned long now_seconds  // time at beginning of metrics
+                         , const uint64_t monotonic_now_ms  // time at beginning of metrics
+                         , const uint64_t real_now_ms       // time at beginning of metrics
                          , const int    file_interval_hours // daily rotation of filename (hours)
                          , const int    log_delay_seconds   // delay between 2 logs
                          ) noexcept
     {
         auto av = [](char const* s){ return chars_view{s, strlen(s)}; };
+        using std::chrono::milliseconds;
         using std::chrono::seconds;
         using std::chrono::hours;
         Metrics * metrics = new(std::nothrow) Metrics(
             path, session_id,
-            av(primary_user_sig), av(account_sig), av(target_service_sig),
-            av(session_info_sig), MonotonicTimePoint(seconds(now_seconds)),
-            DurationFromMonotonicTimeToRealTime{}, hours(file_interval_hours), seconds(log_delay_seconds));
+            av(primary_user_sig), av(account_sig), av(target_service_sig), av(session_info_sig),
+            MonotonicTimePoint(milliseconds(monotonic_now_ms)),
+            RealTimePoint{milliseconds(real_now_ms)},
+            hours(file_interval_hours), seconds(log_delay_seconds));
         metrics->set_protocol(version, protocol_name, nbitems);
         return metrics;
     }
@@ -71,9 +74,12 @@ extern "C"
         delete metrics; /*NOLINT*/
     }
 
-    void metrics_log(Metrics * metrics, uint64_t now_ms) noexcept
+    void metrics_log(Metrics * metrics, uint64_t monotonic_ms, uint64_t real_now) noexcept
     {
-        metrics->log(MonotonicTimePoint(std::chrono::milliseconds(now_ms)));
+        metrics->log(
+            MonotonicTimePoint(std::chrono::milliseconds(monotonic_ms)),
+            RealTimePoint(std::chrono::milliseconds(real_now))
+        );
     }
 
     int metrics_add_to_current_data(Metrics * metrics, unsigned index, uint64_t value) noexcept

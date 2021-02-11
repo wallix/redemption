@@ -126,7 +126,7 @@ inline ExecuteEventResult execute_events(
         return ExecuteEventResult::Error;
     }
 
-    event_manager.set_current_time(MonotonicTimePoint::clock::now());
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
     event_manager.execute_events([&rfds](int fd){
         return io_fd_isset(fd, rfds);
     }, false);
@@ -141,7 +141,7 @@ inline int run_connection_test(
 {
     int       timeout_counter = 0;
     int const timeout_counter_max = 3;
-    std::chrono::milliseconds const timeout = 5s;
+    std::chrono::milliseconds const timeout{5000};
 
     for (;;) {
         LOG(LOG_INFO, "run_connection_test");

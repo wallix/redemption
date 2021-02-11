@@ -23,6 +23,7 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/real_clock.hpp"
 
 #include <chrono>
 #include <string>
@@ -41,7 +42,7 @@ public:
            , chars_view target_service_sig   // hashed (target service name + device name)
            , chars_view session_info_sig     // hashed (source_host + client info)
            , MonotonicTimePoint now                     // time at beginning of metrics
-           , DurationFromMonotonicTimeToRealTime monotonic_to_real
+           , RealTimePoint real_now
            , std::chrono::hours file_interval           // daily rotation of filename
            , std::chrono::seconds log_delay             // delay between 2 logs flush
            );
@@ -63,11 +64,11 @@ public:
          this->disconnect();
     }
 
-    void log(MonotonicTimePoint now);
+    void log(MonotonicTimePoint now, RealTimePoint real_time);
 
     void disconnect();
 
-    void rotate(MonotonicTimePoint now);
+    void rotate(MonotonicTimePoint now, RealTimePoint real_time);
 
 private:
     std::vector<uint64_t> current_data;
@@ -77,8 +78,7 @@ private:
 
     // output file info
     const MonotonicTimePoint::duration file_interval;
-    MonotonicTimePoint current_file_date;
-    DurationFromMonotonicTimeToRealTime monotonic_to_real;
+    MonotonicTimePoint next_file_date;
     const std::string path;
     unique_fd fd = invalid_fd();
 
@@ -94,6 +94,7 @@ private:
 
     const MonotonicTimePoint::duration log_delay;
     MonotonicTimePoint next_log_time;
+    RealTimePoint last_real_time;
     std::string complete_metrics_file_path;
     std::string complete_index_file_path;
 

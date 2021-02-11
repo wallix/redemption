@@ -783,12 +783,17 @@ public:
     , acl_report(acl_report)
     , events_guard(events)
     , rdp_keepalive_connection_interval(
-            (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
-             (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
-          )
+        ( ini.get<cfg::globals::rdp_keepalive_connection_interval>().count()
+       && ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000)
+        )
+        ? std::chrono::milliseconds(1000)
+        : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
+    )
     , supported_orders(primary_drawing_orders_supported() - parse_primary_drawing_orders(
         this->ini.get<cfg::client::disabled_orders>().c_str(), bool(this->verbose)))
     {
+        using namespace std::literals::chrono_literals;
+
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
 
             this->handshake_timeout = this->events_guard.create_event_timeout(
@@ -998,6 +1003,8 @@ public:
     // ===========================================================================
     bool can_be_start_capture(bool force_capture, SessionLogApi & session_log) override
     {
+        using namespace std::literals::chrono_literals;
+
         // Recording is enabled.
         // TODO simplify use of movie flag. Should probably be tested outside before calling start_capture. Do we still really need that flag. Maybe sesman can just provide flags of recording types for set_auth_info set_screen_info
         // I also should imagine something else for capture needs. Maybe to see after splitting front between
@@ -1110,8 +1117,8 @@ public:
         );
 
         CaptureParams capture_params{
-            this->events_guard.get_current_time(),
-            this->events_guard.get_time_base().get_duration_from_monotonic_time_to_real_time(),
+            this->events_guard.get_monotonic_time(),
+            this->events_guard.get_time_base().real_time,
             record_filebase,
             record_tmp_path,
             record_path.c_str(),
@@ -1194,7 +1201,7 @@ public:
     {
         if (this->capture) {
             LOG(LOG_INFO, "---<>  Front::must_be_stop_capture  <>---");
-            this->capture->force_flush(this->events_guard.get_current_time(), this->mouse_x, this->mouse_y);
+            this->capture->force_flush(this->events_guard.get_monotonic_time(), this->mouse_x, this->mouse_y);
             this->capture.reset();
             this->capture_timer.garbage();
             this->set_gd(this->orders.graphics_update_pdu());
@@ -1206,7 +1213,7 @@ public:
     void must_flush_capture() override
     {
         if (this->capture && this->video_enhanced_mode >= VideoEnhancedMode::v1) {
-            this->capture->force_flush(this->events_guard.get_current_time(), this->mouse_x, this->mouse_y);
+            this->capture->force_flush(this->events_guard.get_monotonic_time(), this->mouse_x, this->mouse_y);
         }
     }
 
@@ -3046,7 +3053,7 @@ public:
 
         this->update_keyboard_input_mask_state();
 
-        this->session_update(this->events_guard.get_current_time(),
+        this->session_update(this->events_guard.get_monotonic_time(),
             LogId::PROBE_STATUS, {
                 KVLog("status"_av, started ? "Ready"_av : "Unknown"_av),
             });
@@ -5135,7 +5142,7 @@ private:
                 LOG(LOG_INFO, "Front::input_event_scancode: Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
             }
             else {
-                auto const now = this->events_guard.get_current_time();
+                auto const now = this->events_guard.get_monotonic_time();
                 bool const send_to_mod = !this->capture
                     || (0 == decoded_keys.count)
                     || (1 == decoded_keys.count

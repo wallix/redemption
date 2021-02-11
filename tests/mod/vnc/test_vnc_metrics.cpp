@@ -31,7 +31,7 @@ using namespace std::literals::chrono_literals;
 RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle1, wd)
 {
     MonotonicTimePoint epoch(1533211671s);
-    DurationFromMonotonicTimeToRealTime delta_time{10s};
+    RealTimePoint real_time{epoch.time_since_epoch() + 10s};
 
     Metrics m( wd.dirname()
               , "164d89c1a56957b752540093e178"
@@ -40,7 +40,7 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle1, wd)
               , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
               , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
               , epoch
-              , delta_time
+              , real_time
               , 24h
               , 5s
               );
@@ -56,23 +56,23 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle1, wd)
     RED_CHECK_FILE_CONTENTS(logindex1, expected_log_index);
 
     metrics.right_click();
-    m.log(epoch);
+    m.log(epoch, real_time);
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    m.log(epoch+1s);
+    m.log(epoch+1s, real_time+1s);
     metrics.right_click();
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    m.log(epoch+3s);
+    m.log(epoch+3s, real_time+3s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    m.log(epoch+5s);
+    m.log(epoch+5s, real_time+5s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"_av);
 
-    m.log(epoch+7s);
+    m.log(epoch+7s, real_time+7s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"_av);
 
-    m.log(epoch+10s);
+    m.log(epoch+10s, real_time+10s);
     RED_CHECK_FILE_CONTENTS(logmetrics1,
         "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"
         "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"_av);
@@ -81,6 +81,7 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle1, wd)
 RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle2, wd)
 {
     MonotonicTimePoint epoch(1533211681s);
+    RealTimePoint real_time{epoch.time_since_epoch()};
 
     Metrics m( wd.dirname()
             , "164d89c1a56957b752540093e178"
@@ -89,7 +90,7 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle2, wd)
             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
             , epoch
-            , DurationFromMonotonicTimeToRealTime{}
+            , real_time
             , 24h
             , 3s
             );
@@ -102,22 +103,23 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogCycle2, wd)
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
     metrics.right_click();
-    m.log(epoch+0s);
+    m.log(epoch+0s, real_time+0s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    m.log(epoch+1s);
+    m.log(epoch+1s, real_time+1s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    m.log(epoch+2s);
+    m.log(epoch+2s, real_time+2s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, ""_av);
 
-    m.log(epoch+3s);
+    m.log(epoch+3s, real_time+3s);
     RED_CHECK_FILE_CONTENTS(logmetrics1, "2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 0 0 0 0 0 1 0\n"_av);
 }
 
 RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogBasicIncrement, wd)
 {
     MonotonicTimePoint epoch(1533211681s);
+    RealTimePoint real_time{epoch.time_since_epoch()};
 
     Metrics m( wd.dirname()
           , "164d89c1a56957b752540093e178"
@@ -126,7 +128,7 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogBasicIncrement, wd)
           , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
           , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
           , epoch
-          , DurationFromMonotonicTimeToRealTime{}
+          , real_time
           , 24h
           , 5s
           );
@@ -139,32 +141,37 @@ RED_AUTO_TEST_CASE_WD(TestVNCMetricsLogBasicIncrement, wd)
     std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 1 0\n");
 
     epoch += 5s;
+    real_time += 5s;
     metrics.right_click();
-    m.log(epoch);
+    m.log(epoch, real_time);
     RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
 
     epoch += 5s;
+    real_time += 5s;
     expected_log_metrics += "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n";
     metrics.right_click();
-    m.log(epoch);
+    m.log(epoch, real_time);
     RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
 
     epoch += 5s;
+    real_time += 5s;
     expected_log_metrics += "2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 1\n";
     metrics.left_click();
-    m.log(epoch);
+    m.log(epoch, real_time);
     RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
 
     epoch += 5s;
+    real_time += 5s;
     expected_log_metrics += "2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 1 2 1\n";
     metrics.key_pressed();
-    m.log(epoch);
+    m.log(epoch, real_time);
     RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
 
     epoch += 5s;
+    real_time += 5s;
     expected_log_metrics += "2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 0 0 4 1 2 1\n";
     metrics.mouse_move(0, 0);
     metrics.mouse_move(2, 2);
-    m.log(epoch);
+    m.log(epoch, real_time);
     RED_CHECK_FILE_CONTENTS(logmetrics1, expected_log_metrics);
 }

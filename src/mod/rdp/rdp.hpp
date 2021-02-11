@@ -1993,7 +1993,7 @@ public:
         , session_log(session_log)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
-        , session_time_start(events.get_current_time().time_since_epoch())
+        , session_time_start(events.get_monotonic_time().time_since_epoch())
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
@@ -2022,6 +2022,8 @@ public:
         (void)mod_rdp_factory;
         (void)session_log;
         #endif
+
+        using namespace std::literals::chrono_literals;
 
         if (this->enable_remotefx){
             LOG(LOG_INFO, "RemoteFX enabled on proxy");
@@ -5199,7 +5201,7 @@ public:
 
                                     if (this->channels.remote_app.bypass_legal_notice_timeout.count()) {
                                         event.alarm.reset_timeout(
-                                            this->events_guard.get_current_time()
+                                            this->events_guard.get_monotonic_time()
                                             + this->channels.remote_app.bypass_legal_notice_timeout);
                                         failed = true;
                                     }
@@ -6009,7 +6011,7 @@ private:
     void log_disconnection(bool enable_verbose)
     {
         if (this->session_time_start.count()) {
-            auto delay = this->events_guard.get_current_time().time_since_epoch()
+            auto delay = this->events_guard.get_monotonic_time().time_since_epoch()
                         - this->session_time_start;
             long seconds = std::chrono::duration_cast<std::chrono::seconds>(delay).count();
             this->session_time_start = MonotonicTimePoint::duration(0);

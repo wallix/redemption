@@ -31,6 +31,8 @@
 
 #include <deque>
 
+using namespace std::chrono_literals;
+
 
 class TestToServerSender : public VirtualChannelDataSender
 {
@@ -77,11 +79,10 @@ RED_AUTO_TEST_CASE(TestRdpdrDriveReadTask)
         RDPVerbose(0)));
 
     RED_CHECK(!event_manager.is_empty());
-    MonotonicTimePoint now = events.get_current_time();
+    auto& time_base = event_manager.get_writable_time_base();
     for (int i = 0; i < 100 && !event_manager.is_empty(); ++i) {
-        event_manager.set_current_time(now);
         event_manager.execute_events([](int/*fd*/){ return true; }, false);
-        now += 1s;
+        time_base.monotonic_time += 1s;
     }
     RED_CHECK(event_manager.is_empty());
 }
@@ -110,11 +111,10 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
         RDPVerbose(0)));
 
     RED_CHECK(!event_manager.is_empty());
-    MonotonicTimePoint now = event_manager.get_current_time();
+    auto& time_base = event_manager.get_writable_time_base();
     for (int i = 0; i < 100 && !event_manager.is_empty(); ++i) {
-        event_manager.set_current_time(now);
         event_manager.execute_events([](int/*fd*/){ return false; }, false);
-        now += 1s;
+        time_base.monotonic_time += 1s;
     }
     RED_CHECK(event_manager.is_empty());
 }

@@ -44,7 +44,7 @@ struct WidgetTestMod::WidgetTestModPrivate
     {
         this->timer = this->events_guard.create_event_timeout(
             "WidgetTestMod Timer",
-            this->events_guard.get_current_time(),
+            this->events_guard.get_monotonic_time(),
             [this](Event&)
             {
                 this->gd.begin_update();

@@ -26,6 +26,8 @@
 #include "utils/timebase.hpp"
 #include "core/events.hpp"
 
+using namespace std::chrono_literals;
+
 const auto nofd_fn = [](int /*fd*/) { return false; };
 
 static std::vector<Event*> const& get_events(EventContainer const& event_container)
@@ -199,13 +201,13 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
         {
             this->events_guard.create_event_timeout(
                 "Init Event",
-                this->events_guard.get_current_time(),
+                this->events_guard.get_monotonic_time(),
                 [this](Event&/*event*/)
                 {
                     this->events_guard.create_event_fd_timeout(
                         "Fd Event",
-                        1, std::chrono::seconds{300},
-                        this->events_guard.get_current_time(),
+                        1, 300s,
+                        this->events_guard.get_monotonic_time(),
                         [this](Event&/*event*/){ ++this->counter1; },
                         [this](Event&/*event*/){ ++this->counter2; }
                     );
@@ -224,14 +226,14 @@ RED_AUTO_TEST_CASE(TestChangeOfRunningAction)
     event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
-    event_manager.set_current_time(MonotonicTimePoint{3s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{3s};
     event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);
     event_manager.execute_events([](int /*fd*/){ return true; }, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 1);
-    event_manager.set_current_time(MonotonicTimePoint{303s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{303s};
     event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 1);
     RED_CHECK(context.counter2 == 2);
@@ -272,7 +274,7 @@ RED_AUTO_TEST_CASE(TestNontrivialEvent)
     auto& events = event_manager.get_events();
 
     Context context(events);
-    event_manager.set_current_time(MonotonicTimePoint{300s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{300s};
     event_manager.execute_events(nofd_fn, false);
     RED_CHECK(context.counter1 == 0);
     RED_CHECK(context.counter2 == 1);

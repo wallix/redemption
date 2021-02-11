@@ -97,6 +97,7 @@ public:
 
     void configure_event(MonotonicTimePoint now, AsynchronousEventContainer async_event_container) override
     {
+        using namespace std::chrono_literals;
         async_event_container.create_event_fd_timeout(
             "RdpdrDriveReadTask",
             this->file_descriptor,
@@ -206,6 +207,7 @@ public:
 
     void configure_event(MonotonicTimePoint now, AsynchronousEventContainer async_event_container) override
     {
+        using namespace std::chrono_literals;
         async_event_container.create_event_timeout(
             "RdpdrSendDriveIOResponseTask",
             now + 1ms,

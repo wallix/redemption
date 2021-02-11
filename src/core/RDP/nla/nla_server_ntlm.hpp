@@ -604,7 +604,7 @@ public:
         }
         else {
             using std::chrono::duration_cast;
-            const auto duration = this->time_base.get_current_time().time_since_epoch();
+            const auto duration = this->time_base.monotonic_time.time_since_epoch();
             const auto dur_miroseconds = duration_cast<std::chrono::microseconds>(duration);
             const auto dur_seconds = duration_cast<std::chrono::seconds>(dur_miroseconds);
             OutStream out_stream(this->Timestamp);

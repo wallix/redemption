@@ -21,6 +21,10 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/session_events.hpp"
+#include "core/error.hpp"
+#include "configs/config.hpp"
+
+using namespace std::literals::chrono_literals;
 
 namespace
 {
@@ -31,7 +35,7 @@ namespace
 
         DataEvents()
         {
-            event_manager.set_current_time(MonotonicTimePoint{10000s});
+            event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{10000s};
         }
 
         void execute_timer_events()
@@ -50,12 +54,12 @@ namespace
 
         void set_time(MonotonicTimePoint t)
         {
-            event_manager.set_current_time(t);
+            event_manager.get_writable_time_base().monotonic_time = t;
         }
 
         MonotonicTimePoint time() const
         {
-            return event_manager.get_current_time();
+            return event_manager.get_monotonic_time();
         }
     };
 }

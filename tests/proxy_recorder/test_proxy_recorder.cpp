@@ -27,6 +27,8 @@
 #include "proxy_recorder/nla_tee_transport.hpp"
 #include "utils/timebase.hpp"
 
+using namespace std::literals::chrono_literals;
+
 // TODO copy of test_transport::hexdump
 // struct xxhexdump
 // {
@@ -233,7 +235,7 @@ uint8_t data2[0x144] = {
 /* 0140 */ 0xab, 0x85, 0x2f, 0x00,                                                                          // ../.
 };
 
-uint8_t data2_reply[1] = {0};
+    uint8_t data2_reply[1] = {0};
     size_t index = 0;
     Data datas[6] = {
         {0, sizeof(data0), data0},
@@ -256,7 +258,7 @@ RED_AUTO_TEST_CASE_WF(TestNLAOnSiteCapture, wf)
     bool enable_kerberos = false;
     uint64_t verbosity = 4096;
 
-    TimeBase time_base(MonotonicTimePoint{1533211681s}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{1533211681s}, {}};
     RecorderFile outFile(time_base, wf.c_str());
 
     ReplayBackTransport backConn;

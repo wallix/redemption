@@ -38,6 +38,8 @@
 #include <cstring>
 #include <string>
 
+using namespace std::chrono_literals;
+
 namespace
 {
     struct WrmForTest
@@ -65,7 +67,7 @@ namespace
         : gd_drawable(cx ? cx : scr.cx, cy ? cy : scr.cy)
         , wrm(
             CaptureParams{
-                now, DurationFromMonotonicTimeToRealTime{1000s - now.time_since_epoch()},
+                now, RealTimePoint{1000s},
                 filebase, tmp_wd.dirname(), record_wd.dirname(),
                 /*groupid=*/0, nullptr, SmartVideoCropping::disable, 0},
             WrmParams{
@@ -285,8 +287,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1000 1004"
-        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0"
-        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0\n",
+        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b"
+        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b\n",
         wrm2, " 3508 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
@@ -295,8 +297,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1004 1007"
-        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da"
-        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da\n",
+        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a"
+        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a\n",
         wrm3, " 3463 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
@@ -305,8 +307,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st3.st_ino), ' ',
         int_to_chars(st3.st_mtim.tv_sec), ' ',
         int_to_chars(st3.st_ctim.tv_sec), " 1007 1008"
-        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97"
-        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97\n")});
+        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d"
+        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d\n")});
     RED_TEST_FILE_SIZE(wrm1, 1646);
     RED_TEST_FILE_SIZE(wrm2, 3508);
     RED_TEST_FILE_SIZE(wrm3, 3463);
@@ -333,8 +335,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec),
-        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0"
-        " 4ac40d3a6ed890ac5dbf3e4a2d2d418e2b3117dc3a05b7634938e4ab4c6203b0\n")});
+        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b"
+        " 1434e6376b09caaa14621dc1c40f4b6145a55656930394704c022cddea145b0b\n")});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000001.wrm"), array_view{str_concat(
         "v2\n\n\ncapture-000001.wrm 3508 ",
         int_to_chars(st2.st_mode), ' ',
@@ -344,8 +346,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec),
-        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da"
-        " bfe254764f99bb1f349bfbc669492fd6d307b15a1b9223b0513718150b9a30da\n")});
+        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a"
+        " 73e0536b1ac686d390e4be5465623048aac03468d210e6020703e6e158c3493a\n")});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture-000002.wrm"), array_view{str_concat(
         "v2\n\n\ncapture-000002.wrm 3463 ",
         int_to_chars(st3.st_mode), ' ',
@@ -355,8 +357,8 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         int_to_chars(st3.st_ino), ' ',
         int_to_chars(st3.st_mtim.tv_sec), ' ',
         int_to_chars(st3.st_ctim.tv_sec),
-        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97"
-        " 0a6285817cd490b2fafc626db08eaa85169976d0aba96e9f7f4f34895adc4b97\n")});
+        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d"
+        " 8bcbcb965b906127c8e69a2f9b3d489b4b4e9652c7dfc1b8e15d7ef5b11bb23d\n")});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);

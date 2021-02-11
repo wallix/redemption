@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     detail::ProtectedEventContainer::get_events(events)[0]->alarm.fd = 0;
     event_manager.execute_events([](int /*fd*/){ return false; }, false);
-    event_manager.set_current_time(MonotonicTimePoint{1s});
+    event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     for (int count=0; count < 100 && !event_manager.is_empty(); ++count) {
         event_manager.execute_events([](int){return true;}, false);
     }

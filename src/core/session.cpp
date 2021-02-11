@@ -421,7 +421,7 @@ private:
         if (is_target_module(next_state)) {
             keepalive.start();
             event_manager.set_time_base(current_time_base());
-            this->target_connection_start_time = event_manager.get_current_time();
+            this->target_connection_start_time = event_manager.get_monotonic_time();
         }
         else {
             keepalive.stop();
@@ -633,9 +633,11 @@ private:
 
     struct NextDelay
     {
-        NextDelay(bool nodelay, EventManager const& event_manager)
+        NextDelay(bool nodelay, EventManager& event_manager)
         {
             if (!nodelay) {
+                event_manager.get_writable_time_base().monotonic_time
+                    = MonotonicTimePoint::clock::now();
                 auto timeout = event_manager.next_timeout();
                 // 0 means no timeout to trigger
                 if (timeout != MonotonicTimePoint{}) {
@@ -706,7 +708,7 @@ private:
                 continue;
             }
 
-            event_manager.set_current_time(MonotonicTimePoint::clock::now());
+            event_manager.set_time_base(current_time_base());
             event_manager.execute_events(
                 [](int /*fd*/){ assert(false); return false; },
                 bool(this->verbose() & SessionVerbose::Event));
@@ -822,8 +824,6 @@ private:
                 }
                 ioswitch.set_read_sck(auth_sck);
 
-                event_manager.set_current_time(MonotonicTimePoint::clock::now());
-
                 if (ioswitch.select(NextDelay(
                     mod_has_tls_pending_data || front_has_tls_pending_data,
                     event_manager
@@ -840,7 +840,7 @@ private:
                     continue;
                 }
 
-                event_manager.set_current_time(MonotonicTimePoint::clock::now());
+                event_manager.set_time_base(current_time_base());
 
                 if (front_has_tls_pending_data) {
                     ioswitch.set_read_sck(front_trans.get_sck());
@@ -913,11 +913,9 @@ private:
                     if (has_field(cfg::context::end_date_cnx())) {
                         auto time_base = current_time_base();
                         event_manager.set_time_base(time_base);
-                        const auto sys_date
-                            = time_base.get_current_time().time_since_epoch()
-                            + time_base.get_duration_from_monotonic_time_to_real_time().duration;
+                        const auto sys_date = time_base.real_time.time_since_epoch();
                         auto const elapsed = ini.get<cfg::context::end_date_cnx>() - sys_date;
-                        auto const new_end_date = time_base.get_current_time() + elapsed;
+                        auto const new_end_date = time_base.monotonic_time + elapsed;
                         end_session_warning.set_time(new_end_date);
                         mod_wrapper.set_time_close(new_end_date);
                     }
@@ -1245,14 +1243,10 @@ private:
 
     static TimeBase current_time_base()
     {
-        timespec tp;
-        clock_gettime(CLOCK_REALTIME, &tp);
-        auto monotonic = MonotonicTimePoint::clock::now();
-        auto sys_time = std::chrono::seconds(tp.tv_sec) + std::chrono::nanoseconds(tp.tv_nsec);
-        return TimeBase(
-            monotonic,
-            DurationFromMonotonicTimeToRealTime{sys_time - monotonic.time_since_epoch()}
-        );
+        return TimeBase{
+            MonotonicTimePoint::clock::now(),
+            std::chrono::system_clock::now()
+        };
     }
 
 public:

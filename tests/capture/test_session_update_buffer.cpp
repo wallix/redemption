@@ -24,6 +24,8 @@
 
 #include "capture/session_update_buffer.hpp"
 
+using namespace std::chrono_literals;
+
 namespace
 {
     template<class Duration>

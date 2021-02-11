@@ -31,6 +31,8 @@
 
 RED_TEST_DELEGATE_PRINT_ENUM(credssp::State);
 
+using namespace std::literals::chrono_literals;
+
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
     RED_TEST_MESSAGE("==================== TestNlaClient ===================");
@@ -52,7 +54,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 //    rand.random(tmp.data(), tmp.size());
 //    RED_CHECK(bytes_view(tmp) == bytes_view(std::array<uint8_t,8>{0xb8, 0x6c, 0xda, 0xa6, 0xf0, 0xf6, 0x30, 0x8d}));
 
-    TimeBase time_base(MonotonicTimePoint{3598079566s}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{3598079566s}, {}};
     std::string extra_message;
     rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, time_base, true, true);
 
@@ -161,7 +163,7 @@ RED_AUTO_TEST_CASE(TestNlaclientv6)
         0x0d, 0x13, 0x98, 0x72, 0x06, 0x6b, 0xa7, 0xf1, 0x3a, 0xcd, 0x16, 0xdd, 0x43, 0xee, 0x90, 0xfb,  // ...r.k..:...C...
     }));
 
-    TimeBase time_base(MonotonicTimePoint{0x5d91e371s}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{0x5d91e371s}, {}};
 
     std::string extra_message;
     rdpClientNTLM ntlm_client(user, domain, pass, host.c_str(), public_key, false, rand, time_base, true, true);
@@ -424,7 +426,7 @@ RED_AUTO_TEST_CASE(TestNlaserver0)
     std::string domain;
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xad, 0x62, 0xb1, 0xe4, 0x68, 0x0d, 0x3c}));
 
-    TimeBase time_base(MonotonicTimePoint{0x01d5754Es}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{0x01d5754Es}, {}};
 
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av){
             auto user_str = ::UTF16toUTF8(user_av);
@@ -576,7 +578,7 @@ RED_AUTO_TEST_CASE(TestNlaserver1)
 
     ReplayRandom rand(std::vector<uint8_t>({0xab, 0xb8, 0x4d, 0x26, 0xe0, 0x87, 0x11, 0x87}));
 
-    TimeBase time_base(MonotonicTimePoint{0x01D57877s}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{0x01D57877s}, {}};
 
     auto get_password_hash = [&](bytes_view user_av, bytes_view domain_av) -> std::pair<PasswordCallback,array_md4>{
             auto user_str = ::UTF16toUTF8(user_av);
@@ -743,7 +745,7 @@ RED_AUTO_TEST_CASE(TestNlaserver2)
 ///* 0010 */ 0x79, 0x43, 0x0f, 0x1c, 0x87, 0xcf, 0xd2, 0xf5, 0xbc, 0x9e, 0xef, 0x9f, 0xd9, 0x11, 0xf1, 0xf0,  // yC..............
     ReplayRandom rand(std::vector<uint8_t>({0x72, 0xE9, 0x0E, 0x66, 0x83, 0x2E, 0x12, 0xC7}));
 
-    TimeBase time_base(MonotonicTimePoint{0x01D57878s}, DurationFromMonotonicTimeToRealTime{});
+    TimeBase time_base{MonotonicTimePoint{0x01D57878s}, {}};
 
     std::function<std::pair<PasswordCallback,array_md4>(bytes_view,bytes_view)>
         get_password_hash =
