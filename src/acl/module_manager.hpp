@@ -197,6 +197,8 @@ class ModOSD : public gdi::ProtectedGraphics, public mod_api
     const Font & glyphs;
     const Theme & theme;
 
+    bool disable_osd_in_progress = false;
+
 public:
     explicit ModOSD(const ModWrapper & mod_wrapper, FrontAPI & front, BGRPalette const & palette, gdi::GraphicApi& graphics, ClientInfo const & client_info, const Font & glyphs, const Theme & theme, ClientExecute & rail_client_execute, windowing_api* & winapi, Inifile & ini)
     : gdi::ProtectedGraphics(graphics, Rect{})
@@ -217,6 +219,8 @@ public:
 
     void disable_osd()
     {
+        this->disable_osd_in_progress = true;
+
         this->is_disable_by_input = false;
         auto const protected_rect = this->get_protected_rect();
         this->set_protected_rect(Rect{});
@@ -233,6 +237,8 @@ public:
         }
 
         this->mod_wrapper.mod->rdp_input_invalidate(protected_rect);
+
+        this->disable_osd_in_progress = false;
     }
 
     [[nodiscard]] const char* get_message() const {
@@ -360,7 +366,7 @@ public:
             this->draw_osd_message_impl(this->graphics);
             this->graphics.end_update();
         }
-        else {
+        else if (!this->disable_osd_in_progress) {
             this->disable_osd();
         }
     }
