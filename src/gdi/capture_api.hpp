@@ -23,6 +23,7 @@
 
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "utils/real_clock.hpp"
 
 #include <cassert>
 
@@ -79,7 +80,8 @@ struct CaptureApi : private noncopyable
 struct ExternalCaptureApi : private noncopyable
 {
     virtual void external_breakpoint() = 0;
-    virtual void external_time(MonotonicTimePoint now) = 0;
+    virtual void external_monotonic_time_point(MonotonicTimePoint now) = 0;
+    virtual void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) = 0;
 
     virtual ~ExternalCaptureApi() = default;
 };

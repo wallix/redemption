@@ -22,6 +22,7 @@
 
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "test_only/test_framework/working_directory.hpp"
+#include "test_only/test_framework/check_img.hpp"
 #include "test_only/test_framework/file.hpp"
 #include "test_only/lcg_random.hpp"
 
@@ -44,6 +45,8 @@ REDEMPTION_DIAGNOSTIC_POP
 #include "test_only/ostream_buffered.hpp"
 #include "test_only/transport/test_transport.hpp"
 
+
+#define IMG_TEST_PATH FIXTURES_PATH "/img_ref/capture"
 
 using namespace std::chrono_literals;
 
@@ -222,6 +225,12 @@ namespace
         return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
     }
 
+    inline time_t to_time_t(RealTimePoint t)
+    {
+        auto duration = t.time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    }
+
     const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
 } // namespace
 
@@ -249,16 +258,16 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     auto st0 = get_stat(wrm0);
     auto st1 = get_stat(wrm1);
     auto st2 = get_stat(wrm2);
-    RED_TEST_FILE_SIZE(wrm0, 1667);
-    RED_TEST_FILE_SIZE(wrm1, 3529);
-    RED_TEST_FILE_SIZE(wrm2, 3484);
+    RED_TEST_FILE_SIZE(wrm0, 1691);
+    RED_TEST_FILE_SIZE(wrm1, 3553);
+    RED_TEST_FILE_SIZE(wrm2, 3508);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        wrm0, " 1667 ",
+        wrm0, " 1691 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -266,7 +275,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st0.st_ino), ' ',
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), " 1000 1004\n",
-        wrm1, " 3529 ",
+        wrm1, " 3553 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -274,7 +283,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1004 1007\n",
-        wrm2, " 3484 ",
+        wrm2, " 3508 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -292,7 +301,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
     RED_TEST_FILE_SIZE(record_wd.add_file("test_capture-000006.png"), 3225);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000000.wrm"), array_view{str_concat(
-        "v2\n\n\ntest_capture-000000.wrm 1667 ",
+        "v2\n\n\ntest_capture-000000.wrm 1691 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -301,7 +310,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000001.wrm"), array_view{str_concat(
-        "v2\n\n\ntest_capture-000001.wrm 3529 ",
+        "v2\n\n\ntest_capture-000001.wrm 3553 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -310,7 +319,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("test_capture-000002.wrm"), array_view{str_concat(
-        "v2\n\n\ntest_capture-000002.wrm 3484 ",
+        "v2\n\n\ntest_capture-000002.wrm 3508 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -429,17 +438,17 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
     auto st1 = get_stat(wrm1);
     auto st2 = get_stat(wrm2);
     auto st3 = get_stat(wrm3);
-    RED_TEST_FILE_SIZE(wrm0, 1672);
-    RED_TEST_FILE_SIZE(wrm1, 3449);
-    RED_TEST_FILE_SIZE(wrm2, 4405);
-    RED_TEST_FILE_SIZE(wrm3, 4409);
+    RED_TEST_FILE_SIZE(wrm0, 1696);
+    RED_TEST_FILE_SIZE(wrm1, 3473);
+    RED_TEST_FILE_SIZE(wrm2, 4429);
+    RED_TEST_FILE_SIZE(wrm3, 4433);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        wrm0, " 1672 ",
+        wrm0, " 1696 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -447,7 +456,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st0.st_ino), ' ',
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), " 1000 1004\n",
-        wrm1, " 3449 ",
+        wrm1, " 3473 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -455,7 +464,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1004 1005\n",
-        wrm2, " 4405 ",
+        wrm2, " 4429 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -463,7 +472,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1005 1007\n",
-        wrm3, " 4409 ",
+        wrm3, " 4433 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -482,7 +491,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-0-000007.png"), 4137 +- 100_v);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000000.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000000.wrm 1672 ",
+        "v2\n\n\nresizing-capture-0-000000.wrm 1696 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -491,7 +500,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000001.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000001.wrm 3449 ",
+        "v2\n\n\nresizing-capture-0-000001.wrm 3473 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -500,7 +509,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000002.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000002.wrm 4405 ",
+        "v2\n\n\nresizing-capture-0-000002.wrm 4429 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -509,7 +518,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-0-000003.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-0-000003.wrm 4409 ",
+        "v2\n\n\nresizing-capture-0-000003.wrm 4433 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -567,17 +576,17 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     auto st1 = get_stat(wrm1);
     auto st2 = get_stat(wrm2);
     auto st3 = get_stat(wrm3);
-    RED_TEST_FILE_SIZE(wrm0, 1667);
-    RED_TEST_FILE_SIZE(wrm1, 3460);
-    RED_TEST_FILE_SIZE(wrm2, 2651);
-    RED_TEST_FILE_SIZE(wrm3, 2651);
+    RED_TEST_FILE_SIZE(wrm0, 1691);
+    RED_TEST_FILE_SIZE(wrm1, 3484);
+    RED_TEST_FILE_SIZE(wrm2, 2675);
+    RED_TEST_FILE_SIZE(wrm3, 2675);
     RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
         "v2\n"
         "800 600\n"
         "nochecksum\n"
         "\n"
         "\n",
-        wrm0, " 1667 ",
+        wrm0, " 1691 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -585,7 +594,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st0.st_ino), ' ',
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), " 1000 1004\n",
-        wrm1, " 3460 ",
+        wrm1, " 3484 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -593,7 +602,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st1.st_ino), ' ',
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), " 1004 1005\n",
-        wrm2, " 2651 ",
+        wrm2, " 2675 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -601,7 +610,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st2.st_ino), ' ',
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), " 1005 1007\n",
-        wrm3, " 2651 ",
+        wrm3, " 2675 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -620,7 +629,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
     RED_TEST_FILE_SIZE(record_wd.add_file("resizing-capture-1-000007.png"), 2345 +- 100_v);
 
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000000.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000000.wrm 1667 ",
+        "v2\n\n\nresizing-capture-1-000000.wrm 1691 ",
         int_to_chars(st0.st_mode), ' ',
         int_to_chars(st0.st_uid), ' ',
         int_to_chars(st0.st_gid), ' ',
@@ -629,7 +638,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st0.st_mtim.tv_sec), ' ',
         int_to_chars(st0.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000001.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000001.wrm 3460 ",
+        "v2\n\n\nresizing-capture-1-000001.wrm 3484 ",
         int_to_chars(st1.st_mode), ' ',
         int_to_chars(st1.st_uid), ' ',
         int_to_chars(st1.st_gid), ' ',
@@ -638,7 +647,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st1.st_mtim.tv_sec), ' ',
         int_to_chars(st1.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000002.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000002.wrm 2651 ",
+        "v2\n\n\nresizing-capture-1-000002.wrm 2675 ",
         int_to_chars(st2.st_mode), ' ',
         int_to_chars(st2.st_uid), ' ',
         int_to_chars(st2.st_gid), ' ',
@@ -647,7 +656,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         int_to_chars(st2.st_mtim.tv_sec), ' ',
         int_to_chars(st2.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("resizing-capture-1-000003.wrm"), array_view{str_concat(
-        "v2\n\n\nresizing-capture-1-000003.wrm 2651 ",
+        "v2\n\n\nresizing-capture-1-000003.wrm 2675 ",
         int_to_chars(st3.st_mode), ' ',
         int_to_chars(st3.st_uid), ' ',
         int_to_chars(st3.st_gid), ' ',
@@ -1336,26 +1345,30 @@ const char expected_stripped_wrm[] =
 /* 05b0 */ "\xfc\x93\x00\x01\x4b\x66\x2c\x0e\x00\x00\x00\x00\x49\x45\x4e\x44" //....Kf,.....IEND
 /* 05c0 */ "\xae\x42\x60\x82"                                                 //.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-/* 0000 */ "\x00\xca\x9a\x3B\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
 
            "\x00\x00\x10\x00\x00\x00\x01\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
 
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-           "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x3BAA0C40 = 1001000000
+           "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
 
 /* 0000 */ "\x00\x00\x12\x00\x00\x00\x01\x00" // 0000: ORDERS  0012:chunk_len=18 0002: 1 orders
            "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
 
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-           "\x00\xd3\xd7\x3b\x00\x00\x00\x00" // time = 1004000000
+           "\x00\x09\x3d\x00\x00\x00\x00\x00" // time = 4000000
 
 /* 0000 */ "\x00\x00\x0d\x00\x00\x00\x01\x00"
            "\x11\x32\x32\xff\xff"
 
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00"
-           "\x80\x57\xf6\x3b\x00\x00\x00\x00"
+           "\x80\x8d\x5b\x00\x00\x00\x00\x00" // time = 6000000
 
 /* 0000 */ "\x00\x00\x0d\x00\x00\x00\x01\x00"
            "\x11\x62\x32\x00\x00"
@@ -1492,22 +1505,26 @@ const char expected_stripped_wrm2[] =
 /* 05b0 */ "\xfc\x93\x00\x01\x4b\x66\x2c\x0e\x00\x00\x00\x00\x49\x45\x4e\x44" //....Kf,.....IEND
 /* 05c0 */ "\xae\x42\x60\x82"                                                 //.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-/* 0000 */ "\x00\xca\x9a\x3B\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
 
            "\x00\x00\x1A\x00\x00\x00\x02\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
            "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-/* 0000 */ "\x40\x0c\xaa\x3b\x00\x00\x00\x00" // time = 1001000000
+           "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
 
            "\x00\x00\x12\x00\x00\x00\x02\x00"
 /* 0000 */ "\x11\x32\x32\xff\xff"             // encode_color24()(WHITE) rect
            "\x11\x62\x32\x00\x00"             // encode_color24()(RED) rect
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00"
-/* 0000 */ "\xc0\x99\x05\x3c\x00\x00\x00\x00" // time 1007000000
+/* 0000 */ "\xc0\xcf\x6a\x00\x00\x00\x00\x00" // time 1007000000
 
            "\x00\x00\x13\x00\x00\x00\x01\x00"
 /* 0000 */ "\x01\x1f\x05\x00\x05\x00\x0a\x00\x0a\x00\x00" // encode_color24()(BLACK) rect
@@ -1562,34 +1579,45 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.sync();
 
     RED_TEST_PASSPOINT();
-    RED_TEST(trans.size() == 1588);
+    RED_TEST(trans.size() == 1612);
 
     GeneratorTransport in_wrm_trans(trans.data());
 
     MonotonicTimePoint begin_capture {};
     MonotonicTimePoint end_capture {};
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
-    RDPDrawable drawable1(player.get_wrm_info().width, player.get_wrm_info().height);
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+    RDPDrawable drawable(player.get_wrm_info().width, player.get_wrm_info().height);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    BufTransport buftrans;
-    dump_png24(buftrans, drawable1, true);
-    RED_TEST(1476 == buftrans.size());
+    // Timestamp
+    RED_TEST(player.next_order());
+    player.interpret_order();
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/wrm_to_png/1.png");
 
-    for (std::size_t sz : {2786, 2800, 2800, 2814, 2823})
-    {
-        // Green Rect
-        // Blue Rect
-        // Timestamp
-        // White Rect
-        // Red Rect
-        RED_TEST(player.next_order());
-        player.interpret_order();
+    // Green Rect
+    RED_TEST(player.next_order());
+    player.interpret_order();
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/wrm_to_png/2.png");
 
-        buftrans.buf.clear();
-        dump_png24(buftrans, drawable1, true);
-        RED_TEST(sz == buftrans.size());
-    }
+    // Blue Rect
+    RED_TEST(player.next_order());
+    player.interpret_order();
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/wrm_to_png/3.png");
+
+    // Timestamp
+    RED_TEST(player.next_order());
+    player.interpret_order();
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/wrm_to_png/3.png");
+
+    // White Rect
+    RED_TEST(player.next_order());
+    player.interpret_order();
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/wrm_to_png/4.png");
+
+    // Red Rect
+    RED_TEST(player.next_order());
+    player.interpret_order();
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/wrm_to_png/5.png");
 
     RED_TEST(!player.next_order());
     in_wrm_trans.disconnect();
@@ -1611,8 +1639,12 @@ const char expected_Red_on_Blue_wrm[] =
 /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x7e\x0c\x75\x94\x00\x01\xa8\x50\xf2" //.......~.u....P.
 /* 0060 */ "\x39\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"             //9....IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-/* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
 
 /* 0000 */ "\x00\x00\x2d\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x19\x0a\x4c\x64\x64\xff"         // Blue rect  // order 0A=opaque rect
@@ -1626,7 +1658,7 @@ const char expected_Red_on_Blue_wrm[] =
            "\x59\x0d\x3d\x01\x00\x5a\x14\x0a\xcc" // order=0d : MEMBLT
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-           "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
+           "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
 
            "\x00\x00\x1e\x00\x00\x00\x01\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 // -----------------------------------------------------
@@ -1681,8 +1713,12 @@ const char expected_reset_rect_wrm[] =
 /* 0050 */ "\x00\x00\x00\x00\x00\x00\x00\x7e\x0c\x75\x94\x00\x01\xa8\x50\xf2" //.......~.u....P.
 /* 0060 */ "\x39\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82"             //9....IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
 /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-/* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+           "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
 
 /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
            "\x19\x0a\x1c\x64\x64\xff\x11"     // Red Rect
@@ -1734,7 +1770,7 @@ const char expected_reset_rect_wrm[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // MultiScrBlt
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-           "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
+           "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
 
            "\x00\x00\x10\x00\x00\x00\x01\x00"
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
@@ -1768,8 +1804,12 @@ const char expected_continuation_wrm[] =
            "\x01\x00\x64\x00\x64\x00\x18\x00" // WRM version 1, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-           "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
+           "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
 
            // save images
 /* 0000 */ "\x00\x10\x49\x01\x00\x00\x01\x00"
@@ -1846,8 +1886,12 @@ RED_AUTO_TEST_CASE(TestImageChunk)
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+    /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // encode_color24()(RED) rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // encode_color24()(BLUE) RECT
@@ -1902,8 +1946,12 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+    /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // encode_color24()(RED) rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // encode_color24()(BLUE) RECT
@@ -1969,8 +2017,12 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+    /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // encode_color24()(RED) rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // encode_color24()(BLUE) RECT
@@ -2064,8 +2116,12 @@ const char source_wrm_png[] =
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+    /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2109,8 +2165,12 @@ const char source_wrm_png[] =
 /* 0030 */ "\x80\x96\x00\x00\x02\x62\x00\x01\xfc\x4c\x5e\xbd\x00\x00\x00\x00" //.....b...L^.....
 /* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`.
 
+           "\xf4\x03\x18\x00\x00\x00\x01\x00" // 03F4: TIMES 0010: chunk_len=24 0001: 1 order
+/* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
+           "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
+
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xCA\x9A\x3B\x00\x00\x00\x00" // 0x000000003B9ACA00 = 1000000000
+    /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2140,7 +2200,7 @@ const char source_wrm_png[] =
     /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x42\x60\x82"
     /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
-    /* 0000 */ "\x00\xD3\xD7\x3B\x00\x00\x00\x00" // 0x000000003bd7d300 = 1004000000
+    /* 0000 */ "\x00\x09\x3d\x00\x00\x00\x00\x00" // time = 4000000
        ;
 
 RED_AUTO_TEST_CASE(TestReload)
@@ -2150,15 +2210,16 @@ RED_AUTO_TEST_CASE(TestReload)
         char const* name;
         chars_view data;
         unsigned file_len;
-        time_t time;
+        time_t monotonic_time;
+        time_t real_time;
     };
 
     RED_TEST_CONTEXT_DATA(auto const& test, test.name, {
-        Test{"TestReloadSaveCache", cstr_array_view(expected_Red_on_Blue_wrm), 298, 1001},
-        Test{"TestReloadOrderStates", cstr_array_view(expected_reset_rect_wrm), 341, 1001},
-        Test{"TestContinuationOrderStates", cstr_array_view(expected_continuation_wrm), 341, 1001},
-        Test{"testimg", cstr_array_view(source_wrm_png), 107, 1000},
-        Test{"testimg_then_other_chunk", cstr_array_view(source_wrm_png_then_other_chunk), 107, 1004}
+        Test{"TestReloadSaveCache", cstr_array_view(expected_Red_on_Blue_wrm), 298, 1, 1001},
+        Test{"TestReloadOrderStates", cstr_array_view(expected_reset_rect_wrm), 341, 1, 1001},
+        Test{"TestContinuationOrderStates", cstr_array_view(expected_continuation_wrm), 341, 1, 1001},
+        Test{"testimg", cstr_array_view(source_wrm_png), 107, 0, 1000},
+        Test{"testimg_then_other_chunk", cstr_array_view(source_wrm_png_then_other_chunk), 107, 4, 1004}
     })
     {
         BufTransport trans;
@@ -2176,7 +2237,8 @@ RED_AUTO_TEST_CASE(TestReload)
                 player.interpret_order();
             }
             ::dump_png24(trans, drawable, true);
-            RED_CHECK(test.time == to_time_t(player.get_monotonic_time()));
+            RED_CHECK(test.real_time == to_time_t(player.get_real_time()));
+            RED_CHECK(test.monotonic_time == to_time_t(player.get_monotonic_time()));
         }
 
         RED_TEST(trans.size() == test.file_len);
@@ -2328,9 +2390,6 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternKill)
     RED_CHECK(report_message.is_killed);
 }
 
-
-
-
 RED_AUTO_TEST_CASE(TestSample0WRM)
 {
     int fd = ::open(FIXTURES_PATH "/sample0.wrm", O_RDONLY);
@@ -2341,61 +2400,18 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     MonotonicTimePoint end_capture {};
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, FileToGraphic::Verbose(0));
 
-    RDPDrawable drawable1(player.get_wrm_info().width, player.get_wrm_info().height);
-
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-
-    BufSequenceTransport out_wrm_trans;
-
     auto const& info = player.get_wrm_info();
-    BmpCache bmp_cache(
-        BmpCache::Recorder, info.bpp,
-        info.number_of_cache,
-        info.use_waiting_list,
-        BmpCache::CacheOption(
-            info.cache_0_entries, info.cache_0_size, info.cache_0_persistent),
-        BmpCache::CacheOption(
-            info.cache_1_entries, info.cache_1_size, info.cache_1_persistent),
-        BmpCache::CacheOption(
-            info.cache_2_entries, info.cache_2_size, info.cache_2_persistent),
-        BmpCache::CacheOption(
-            info.cache_3_entries, info.cache_3_size, info.cache_3_persistent),
-        BmpCache::CacheOption(
-            info.cache_4_entries, info.cache_4_size, info.cache_4_persistent),
-        BmpCache::Verbose::none
-    );
-    GlyphCache gly_cache;
-    PointerCache ptr_cache;
-
     RDPDrawable drawable(info.width, info.height);
-    GraphicToFile graphic_to_file(
-        player.get_monotonic_time(), player.get_real_time(),
-        out_wrm_trans, BitsPerPixel{24}, false,
-        bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression,
-        GraphicToFile::SendInput::NO, RDPSerializerVerbose::none
-    );
-    WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.get_monotonic_time(), std::chrono::seconds{20});
-
     player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr, nullptr);
 
     bool requested_to_stop = false;
 
     RED_CHECK(1352304810 == to_time_t(player.get_monotonic_time()));
     player.play(requested_to_stop);
 
-    BufTransport out_png_trans;
-    ::dump_png24(out_png_trans, drawable, true);
-    RED_TEST(out_png_trans.size() == 21280);
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "/sample0.png");
 
     RED_CHECK(1352304870 == to_time_t(player.get_monotonic_time()));
-
-    graphic_to_file.sync();
-
-    RED_TEST(out_wrm_trans.size() == 3);
-    RED_TEST(out_wrm_trans[0].size() == 490437);
-    RED_TEST(out_wrm_trans[1].size() == 1008139);
-    RED_TEST(out_wrm_trans[2].size() == 195756);
 }
 
 RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)

@@ -126,7 +126,9 @@ public:
 
     void external_breakpoint() override;
 
-    void external_time(MonotonicTimePoint now) override;
+    void external_monotonic_time_point(MonotonicTimePoint now) override;
+
+    void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override;
 
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override;
 

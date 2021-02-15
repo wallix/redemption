@@ -2188,10 +2188,17 @@ void Capture::external_breakpoint()
     }
 }
 
-void Capture::external_time(MonotonicTimePoint now)
+void Capture::external_monotonic_time_point(MonotonicTimePoint now)
 {
     for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
-        obj.external_time(now);
+        obj.external_monotonic_time_point(now);
+    }
+}
+
+void Capture::external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time)
+{
+    for (gdi::ExternalCaptureApi & obj : this->ext_caps) {
+        obj.external_times(monotonic_delay, real_time);
     }
 }
 

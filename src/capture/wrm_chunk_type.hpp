@@ -29,17 +29,21 @@ enum class WrmChunkType : uint16_t
     RDP_UPDATE_BITMAP2  = 0x3ED,    // ::RDP_UPDATE_BITMAP
 
     META_FILE           = 0x3EE,    // 1006
-    TIMESTAMP           = 0x3F0,    // 1008
-    POINTER             = 0x3F1,    // 1009
-    POINTER2            = 0x3F2,    // 1010
-    POINTER_NATIVE      = 0x3F3,    // 1011
+    // formely TIMESTAMP on real time,
+    // now a monotonic time that starts at 0.
+    // real time is in TIMES
+    TIMESTAMP_OR_RECORD_DELAY = 0x3F0,    // 1008
+    POINTER                   = 0x3F1,    // 1009
+    POINTER2                  = 0x3F2,    // 1010
+    POINTER_NATIVE            = 0x3F3,    // 1011
+    TIMES                     = 0x3F4,    // 1012
 
-    LAST_IMAGE_CHUNK    = 0x1000,   // 4096
-    PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
-    SAVE_STATE          = 0x1002,   // 4098
-    RESET_CHUNK         = 0x1003,   // 4099
-    OLD_SESSION_UPDATE  = 0x1004,
-    SESSION_UPDATE      = 0x1005,
+    LAST_IMAGE_CHUNK          = 0x1000,   // 4096
+    PARTIAL_IMAGE_CHUNK       = 0x1001,   // 4097
+    SAVE_STATE                = 0x1002,   // 4098
+    RESET_CHUNK               = 0x1003,   // 4099
+    OLD_SESSION_UPDATE        = 0x1004,
+    SESSION_UPDATE            = 0x1005,
 
     POSSIBLE_ACTIVE_WINDOW_CHANGE = 0x2000,
     IMAGE_FRAME_RECT              = 0x2001,

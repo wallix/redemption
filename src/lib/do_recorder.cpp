@@ -93,6 +93,8 @@ class ChunkToFile
 
     uint16_t info_version = 0;
 
+    RealTimePoint real_time {};
+
 public:
     ChunkToFile(
         Transport * trans, WrmMetaChunk info,
@@ -115,55 +117,69 @@ public:
 public:
     void chunk(WrmChunkType chunk_type, uint16_t chunk_count, InStream stream) /*override*/
     {
+        auto resend = [&]{
+            send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
+            this->trans.send(stream.get_data(), stream.get_capacity());
+        };
+
         switch (chunk_type)
         {
-        case WrmChunkType::META_FILE:
-            {
-                WrmMetaChunk meta;
-                meta.receive(stream);
+        case WrmChunkType::META_FILE: {
+            WrmMetaChunk meta;
+            meta.receive(stream);
 
-                this->info_version = meta.version;
-                meta.compression_algorithm = this->compression_bullder.get_algorithm();
+            this->info_version = meta.version;
+            meta.compression_algorithm = this->compression_bullder.get_algorithm();
 
-                meta.send(this->trans_target);
-            }
+            meta.send(this->trans_target);
+
             break;
+        }
 
-        case WrmChunkType::SAVE_STATE:
-            {
-                StateChunk sc;
-                SaveStateChunk ssc;
+        case WrmChunkType::SAVE_STATE: {
+            StateChunk sc;
+            SaveStateChunk ssc;
 
-                ssc.recv(stream, sc, this->info_version);
+            ssc.recv(stream, sc, this->info_version);
 
-                StaticOutStream<65536> payload;
+            StaticOutStream<65536> payload;
 
-                ssc.send(payload, sc);
+            ssc.send(payload, sc);
 
-                send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), chunk_count);
-                this->trans.send(payload.get_produced_bytes());
-            }
+            send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), chunk_count);
+            this->trans.send(payload.get_produced_bytes());
+
             break;
+        }
 
-        case WrmChunkType::RESET_CHUNK:
-            {
-                send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
-                this->trans.next();
-            }
+        case WrmChunkType::RESET_CHUNK: {
+            send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
+            this->trans.next();
+
             break;
+        }
 
-        case WrmChunkType::TIMESTAMP:
-            {
-                auto us = std::chrono::microseconds(stream.in_uint64_le());
-                this->trans_target.timestamp(to_timeval(us));
+        case WrmChunkType::TIMES: {
+            if (this->real_time == RealTimePoint{}) {
+                stream.in_skip_bytes(8);
+                this->real_time = RealTimePoint(std::chrono::microseconds(stream.in_uint64_le()));
+                this->trans_target.timestamp(to_timeval(this->real_time.time_since_epoch()));
             }
-            REDEMPTION_CXX_FALLTHROUGH;
+            resend();
+
+            break;
+        }
+
+        case WrmChunkType::TIMESTAMP_OR_RECORD_DELAY: {
+            auto us = std::chrono::microseconds(stream.in_uint64_le());
+            this->trans_target.timestamp(to_timeval(this->real_time.time_since_epoch() + us));
+            resend();
+
+            break;
+        }
+
         default:
-            {
-                send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
-                this->trans.send(stream.get_data(), stream.get_capacity());
-            }
-            break;
+            resend();
         }
     }
 };
@@ -1188,12 +1204,13 @@ static inline int replay(
                             ini
                         );
 
-                        auto set_capture_consumer = [
-                            &, capture = std::optional<Capture>()
-                        ](MonotonicTimePoint now) mutable {
+                        std::optional<Capture> retared_capture {};
+                        auto set_capture_consumer = [&](
+                            MonotonicTimePoint now, RealTimePoint real_time
+                        ) mutable {
                             CaptureParams capture_params{
                                 now,
-                                RealTimePoint{now.time_since_epoch()},
+                                real_time,
                                 spath.basename.c_str(),
                                 record_tmp_path,
                                 record_path,
@@ -1202,7 +1219,7 @@ static inline int replay(
                                 ini.get<cfg::video::smart_video_cropping>(),
                                 0
                             };
-                            auto* ptr = &capture.emplace(
+                            auto* ptr = &retared_capture.emplace(
                                   capture_params
                                 , drawable_params
                                 , capture_wrm, wrm_params
@@ -1222,38 +1239,73 @@ static inline int replay(
                             player.add_consumer(ptr, ptr, ptr, ptr, ptr, ptr, ptr);
                         };
 
-                        auto lazy_capture = [&, begin_capture = MonotonicTimePoint(begin_cap)](
-                            MonotonicTimePoint now
-                        ) {
-                            if (begin_capture > now) {
-                                return;
-                            }
-                            set_capture_consumer(begin_capture);
-                        };
-
-                        struct CaptureMaker : gdi::ExternalCaptureApi
+                        struct CaptureMaker final : gdi::ExternalCaptureApi
                         {
                             void external_breakpoint() override {}
 
-                            void external_time(MonotonicTimePoint now) override
+                            // old format starts with timestamp (real tune = monotonic_time)
+                            void external_monotonic_time_point(MonotonicTimePoint now) override
                             {
-                                this->load_capture(now);
+                                if (this->old_format_begin_capture > now) {
+                                    return;
+                                }
+
+                                this->load_capture(now, RealTimePoint{now.time_since_epoch()});
                             }
 
-                            explicit CaptureMaker(decltype(lazy_capture) load_capture)
-                            : load_capture(load_capture)
+                            // new format starts with time_points
+                            void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override
+                            {
+                                if (this->new_format_begin_capture > monotonic_delay) {
+                                    return;
+                                }
+
+                                auto elapsed = monotonic_delay - this->new_format_begin_capture;
+                                this->load_capture(
+                                    MonotonicTimePoint(monotonic_delay - elapsed),
+                                    real_time - elapsed
+                                );
+
+                                if (elapsed > 250ms) {
+                                    this->retarded_capture->external_times(
+                                        monotonic_delay, real_time);
+                                }
+                            }
+
+                            explicit CaptureMaker(
+                                decltype(set_capture_consumer) & load_capture,
+                                std::optional<Capture> & retarded_capture,
+                                MonotonicTimePoint old_format_begin_capture,
+                                MonotonicTimePoint::duration new_format_begin_capture)
+                            : old_format_begin_capture(old_format_begin_capture)
+                            , new_format_begin_capture(new_format_begin_capture)
+                            , load_capture(load_capture)
+                            , retarded_capture(retarded_capture)
                             {}
 
-                            decltype(lazy_capture) load_capture;
+                        private:
+                            MonotonicTimePoint old_format_begin_capture;
+                            MonotonicTimePoint::duration new_format_begin_capture;
+                            decltype(set_capture_consumer) & load_capture;
+                            std::optional<Capture> & retarded_capture;
                         };
-                        CaptureMaker capture_maker(lazy_capture);
+
+                        CaptureMaker capture_maker(
+                            set_capture_consumer,
+                            retared_capture,
+                            MonotonicTimePoint(begin_cap),
+                            MonotonicTimePoint::duration(
+                                begin_cap - Seconds(mwrm_infos.wrms.front().start_time)
+                            )
+                        );
 
                         if (begin_cap.count()) {
                             player.add_consumer(
                                 &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
                         }
                         else {
-                            set_capture_consumer(player.get_monotonic_time());
+                            set_capture_consumer(
+                                player.get_monotonic_time(), player.get_real_time());
                         }
 
                         if (update_progress_data.is_valid()) {

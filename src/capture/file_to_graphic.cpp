@@ -42,12 +42,18 @@
 #include "utils/hexdump.hpp"
 #include "utils/utf.hpp"
 #include "utils/png.hpp"
+#include <boost/hana/count.hpp>
 
 namespace
 {
     inline MonotonicTimePoint monotomic_time_point_from_stream(InStream& in_stream)
     {
         return MonotonicTimePoint(std::chrono::microseconds(in_stream.in_uint64_le()));
+    }
+
+    inline RealTimePoint real_time_point_from_stream(InStream& in_stream)
+    {
+        return RealTimePoint(std::chrono::microseconds(in_stream.in_uint64_le()));
     }
 }
 
@@ -164,9 +170,10 @@ bool FileToGraphic::next_order()
                 case WrmChunkType::RDP_UPDATE_BITMAP:
                 case WrmChunkType::RDP_UPDATE_BITMAP2:
                     this->statistics.bitmap_update_chunk++;   break;
-                case WrmChunkType::TIMESTAMP:
+                case WrmChunkType::TIMESTAMP_OR_RECORD_DELAY:
                     this->statistics.timestamp_chunk.count++;
                     REDEMPTION_CXX_FALLTHROUGH;
+                case WrmChunkType::TIMES:
                 case WrmChunkType::META_FILE:
                 case WrmChunkType::SAVE_STATE:
                 case WrmChunkType::RESET_CHUNK:
@@ -275,6 +282,8 @@ void FileToGraphic::interpret_order()
 
     ReceiveOrder receive_order{*this};
 
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_WARNING("-Wswitch-enum")
     switch (this->chunk_type)
     {
     case WrmChunkType::RDP_UPDATE_ORDERS:
@@ -291,6 +300,7 @@ void FileToGraphic::interpret_order()
         uint8_t class_ = (control & (RDP::STANDARD | RDP::SECONDARY));
         if (class_ == RDP::SECONDARY) {
             RDP::AltsecDrawingOrderHeader header(control);
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (header.orderType) {
                 case RDP::AltsecDrawingOrderType::FrameMarker:
                 {
@@ -459,14 +469,25 @@ void FileToGraphic::interpret_order()
         }
     }
     break;
-    case WrmChunkType::TIMESTAMP:
+
+    case WrmChunkType::TIMES:
+        this->record_now = monotomic_time_point_from_stream(this->stream);
+        this->last_real_time = real_time_point_from_stream(this->stream);
+        this->monotonic_real_time = this->record_now;
+        this->timestamp_ok = true;
+        for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+            obj->external_times(this->record_now.time_since_epoch(), this->last_real_time);
+        }
+        break;
+
+    case WrmChunkType::TIMESTAMP_OR_RECORD_DELAY:
     {
         auto * const p = this->stream.get_current();
 
         this->record_now = monotomic_time_point_from_stream(this->stream);
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-            obj->external_time(this->record_now);
+            obj->external_monotonic_time_point(this->record_now);
         }
 
         // If some data remains, it is input data : mouse_x, mouse_y and decoded keyboard keys (utf8)
@@ -514,10 +535,7 @@ void FileToGraphic::interpret_order()
             }
         }
 
-        if (!this->timestamp_ok) {
-            this->timestamp_ok = true;
-        }
-
+        this->timestamp_ok = true;
         this->statistics.timestamp_chunk.total_len += this->stream.get_current() - p;
     }
     break;
@@ -784,7 +802,7 @@ void FileToGraphic::interpret_order()
         this->record_now = monotomic_time_point_from_stream(this->stream);
 
         for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-            obj->external_time(this->record_now);
+            obj->external_monotonic_time_point(this->record_now);
         }
 
         uint16_t message_length = this->stream.in_uint16_le();
@@ -831,9 +849,7 @@ void FileToGraphic::interpret_order()
             }
         }
 
-        if (!this->timestamp_ok) {
-            this->timestamp_ok = true;
-        }
+        this->timestamp_ok = true;
     }
     break;
     case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
@@ -878,10 +894,12 @@ void FileToGraphic::interpret_order()
         }
     break;
 
+    case WrmChunkType::INVALID_CHUNK:
     default:
         LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
         throw Error(ERR_WRM);
     }
+    REDEMPTION_DIAGNOSTIC_POP
 }
 
 

@@ -116,6 +116,9 @@ class GraphicToFile
 
     MonotonicTimePoint timer;
     MonotonicTimePoint last_sent_timer {};
+    const MonotonicTimePoint start_timer {};
+    MonotonicTimePoint monotonic_real_time {};
+    RealTimePoint last_real_time {};
     // for a monotic real time
     const MonotonicTimeToRealTime original_monotonic_to_real;
     uint16_t mouse_x = 0;
@@ -154,6 +157,9 @@ public:
     , trans_target(trans)
     , trans(this->compression_bullder.get())
     , timer(now)
+    , start_timer(now)
+    , monotonic_real_time(now)
+    , last_real_time(real_now)
     , original_monotonic_to_real(now, real_now)
     , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
@@ -170,6 +176,8 @@ public:
 
         this->send_meta_chunk();
         this->send_image_chunk();
+
+        this->send_time_points();
     }
 
     void dump_png24(Transport & trans, bool bgr) const
@@ -180,24 +188,43 @@ public:
     /// \brief Update timestamp but send nothing, the timestamp will be sent later with the next effective event
     void timestamp(MonotonicTimePoint now)
     {
-        if (this->timer < now) {
-            this->flush_orders();
-            this->flush_bitmaps();
-            this->timer = now;
-            const auto tp = this->original_monotonic_to_real.to_real_time_duration(this->timer);
-            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(tp);
-            timeval tv;
-            tv.tv_sec = seconds.count();
-            tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(tp - seconds).count();
-            this->trans.timestamp(tv);
-        }
+        assert(now >= this->timer);
+
+        this->flush_orders();
+        this->flush_bitmaps();
+        this->timer = now;
+        const auto tp = this->original_monotonic_to_real.to_real_time_duration(this->timer);
+        const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(tp);
+        timeval tv;
+        tv.tv_sec = seconds.count();
+        tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(tp - seconds).count();
+        this->trans.timestamp(tv);
+    }
+
+    void update_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time)
+    {
+        this->sync();
+        auto monotonic_time = this->start_timer + monotonic_delay;
+        this->timestamp(monotonic_time);
+        this->monotonic_real_time = monotonic_time;
+        this->last_real_time = real_time;
+        this->send_time_points();
     }
 
 private:
-    std::chrono::microseconds monotonic_time() const
+    static void write_us_time(OutStream& out, MonotonicTimePoint::duration epoch)
     {
-        const auto time_since_epoch = this->timer.time_since_epoch();
-        return std::chrono::duration_cast<std::chrono::microseconds>(time_since_epoch);
+        const auto us = std::chrono::duration_cast<std::chrono::microseconds>(epoch);
+        out.out_uint64_le(checked_int{us.count()});
+    }
+
+    void send_time_points()
+    {
+        StaticOutStream<8*2> payload;
+        write_us_time(payload, this->timer - this->start_timer);
+        write_us_time(payload, this->last_real_time.time_since_epoch());
+        send_wrm_chunk(this->trans, WrmChunkType::TIMES, 16, 1);
+        this->trans.send(payload.get_produced_bytes());
     }
 
 public:
@@ -281,7 +308,7 @@ public:
     {
         StaticOutStream<12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1> payload;
 
-        payload.out_uint64_le(this->monotonic_time().count());
+        write_us_time(payload, this->timer - this->start_timer);
 
         if (this->send_input) {
             payload.out_uint16_le(this->mouse_x);
@@ -293,7 +320,7 @@ public:
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
 
-        send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
+        send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP_OR_RECORD_DELAY, payload.get_offset(), 1);
         this->trans.send(payload.get_produced_bytes());
 
         this->last_sent_timer = this->timer;
@@ -357,7 +384,10 @@ public:
             this->send_reset_chunk();
         }
         this->trans.next();
+        this->last_real_time += this->timer - this->monotonic_real_time;
+        this->monotonic_real_time = this->timer;
         this->send_meta_chunk();
+        this->send_time_points();
         this->send_timestamp_chunk();
         this->send_save_state_chunk();
         this->send_image_chunk(true);
@@ -478,7 +508,7 @@ protected:
         else {
             cursor.emit_pointer2(payload);
         }
-        send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
+        send_wrm_chunk(this->trans, pointer32x32 ? WrmChunkType::POINTER : WrmChunkType::POINTER2, payload.get_offset(), 0);
         this->trans.send(payload.get_produced_bytes());
     }
 
@@ -507,7 +537,7 @@ public:
         }
 
         StaticOutStream<1024*16> out_stream;
-        out_stream.out_uint64_le(this->monotonic_time().count());
+        write_us_time(out_stream, this->timer - this->start_timer);
         OutStream kvheader(out_stream.out_skip_bytes(2 + 4 + 1));
 
         uint8_t kv_len = checked_int(kv_list.size());
@@ -562,12 +592,6 @@ class WrmCaptureImpl :
     public gdi::ExternalCaptureApi, // from gdi/capture_api.hpp
     public gdi::RelayoutApi
 {
-    BmpCache     bmp_cache;
-    GlyphCache   gly_cache;
-    PointerCache ptr_cache;
-
-    OutMetaSequenceTransport out;
-
     struct Serializer final : GraphicToFile
     {
         Serializer(MonotonicTimePoint now
@@ -632,19 +656,37 @@ class WrmCaptureImpl :
                 GraphicToFile::draw(bitmap_data, bmp);
             }
         }
+    };
 
-        ~Serializer() = default;
-    } graphic_to_file;
+    MonotonicTimePoint next_break;
+    const std::chrono::seconds break_interval;
+
+    bool kbd_input_mask_enabled;
+
+    Rect      max_image_frame_rect;
+    Dimension min_image_frame_dim;
+
+    BmpCache     bmp_cache;
+    GlyphCache   gly_cache;
+    PointerCache ptr_cache;
+
+    OutMetaSequenceTransport out;
+
+    Serializer graphic_to_file;
 
 public:
-
     // EXTERNAL CAPTURE API
     void external_breakpoint() override {
-        this->nc.external_breakpoint();
+        this->graphic_to_file.breakpoint();
     }
 
-    void external_time(MonotonicTimePoint now) override {
-        this->nc.external_time(now);
+    void external_monotonic_time_point(MonotonicTimePoint now) override {
+        this->graphic_to_file.sync();
+        this->graphic_to_file.timestamp(now);
+    }
+
+    void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override {
+        this->graphic_to_file.update_times(monotonic_delay, real_time);
     }
 
     // CAPTURE PROBE API
@@ -760,62 +802,13 @@ public:
         this->graphic_to_file.set_pointer(cache_idx, cursor, mode);
     }
 
-    class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi
-    {
-        MonotonicTimePoint next_break;
-        const std::chrono::seconds break_interval;
-
-        GraphicToFile & recorder;
-
-    public:
-        NativeCaptureLocal(
-            GraphicToFile & recorder,
-            MonotonicTimePoint now,
-            std::chrono::seconds break_interval
-        )
-        : next_break(now + break_interval)
-        , break_interval(break_interval)
-        , recorder(recorder)
-        {}
-
-        ~NativeCaptureLocal() override {
-            this->recorder.sync();
-        }
-
-        // toggles externally genareted breakpoint.
-        void external_breakpoint() override {
-            this->recorder.breakpoint();
-        }
-
-        void external_time(MonotonicTimePoint now) override {
-            this->recorder.sync();
-            this->recorder.timestamp(now);
-        }
-
-        WaitingTimeBeforeNextSnapshot periodic_snapshot(
-            MonotonicTimePoint now, uint16_t x, uint16_t y, bool /*ignore_frame_in_timeval*/
-        ) override
-        {
-            this->recorder.mouse(x, y);
-
-            if (now >= this->next_break) {
-                this->recorder.breakpoint();
-                this->next_break = now + this->break_interval;
-            }
-
-            return WaitingTimeBeforeNextSnapshot(this->next_break - now);
-        }
-    } nc;
-
-    bool kbd_input_mask_enabled;
-
-    Rect      max_image_frame_rect;
-    Dimension min_image_frame_dim;
-
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
         gdi::ImageFrameApi & image_frame_api, ImageView const & image_view)
-    : bmp_cache(
+    : next_break(capture_params.now + wrm_params.break_interval)
+    , break_interval(wrm_params.break_interval)
+    , kbd_input_mask_enabled{false}
+    , bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
         BmpCache::CacheOption(600, 768, false),
         BmpCache::CacheOption(300, 3072, false),
@@ -850,8 +843,6 @@ public:
         this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
         wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
         wrm_params.wrm_verbose)
-    , nc(this->graphic_to_file, capture_params.now, wrm_params.break_interval)
-    , kbd_input_mask_enabled{false}
     {}
 
 public:
@@ -866,6 +857,8 @@ public:
         if (!this->max_image_frame_rect.isempty()) {
             this->graphic_to_file.send_image_frame_rect_chunk(this->max_image_frame_rect, this->min_image_frame_dim);
         }
+
+        this->graphic_to_file.sync();
     }
 
     // shadow text
@@ -889,9 +882,16 @@ public:
     }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
+        MonotonicTimePoint now, uint16_t x, uint16_t y, bool /*ignore_frame_in_timeval*/
     ) override {
-        return this->nc.periodic_snapshot(now, x, y, ignore_frame_in_timeval);
+        this->graphic_to_file.mouse(x, y);
+
+        if (now >= this->next_break) {
+            this->graphic_to_file.breakpoint();
+            this->next_break = now + this->break_interval;
+        }
+
+        return WaitingTimeBeforeNextSnapshot(this->next_break - now);
     }
 
     void visibility_rects_event(Rect rect) override {

@@ -85,6 +85,9 @@ private:
 
     MonotonicTimePoint record_now;
 
+    MonotonicTimePoint monotonic_real_time {};
+    RealTimePoint last_real_time {};
+
     template<class T, std::size_t N>
     struct fixed_ptr_array
     {
@@ -214,7 +217,7 @@ public:
 
     WrmMetaChunk const& get_wrm_info() const noexcept { return this->info; }
     MonotonicTimePoint get_monotonic_time() const noexcept { return this->record_now; }
-    RealTimePoint get_real_time() const noexcept { return RealTimePoint(this->record_now.time_since_epoch()); }
+    RealTimePoint get_real_time() const noexcept { return this->last_real_time + (this->record_now - this->monotonic_real_time); }
 
     void add_consumer(
         gdi::GraphicApi * graphic_ptr,
