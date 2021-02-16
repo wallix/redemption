@@ -40,6 +40,15 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QToolTip>
 
+inline int qmouse_event_to_flag(QMouseEvent* e)
+{
+    switch (e->button()) {
+        case Qt::LeftButton:   return MOUSE_FLAG_BUTTON1;
+        case Qt::RightButton:  return MOUSE_FLAG_BUTTON2;
+        case Qt::MiddleButton: return MOUSE_FLAG_BUTTON4;
+        default: return 0;
+    }
+}
 
 class QtScreen : public QWidget
 {
@@ -101,19 +110,7 @@ public:
     }
 
     void mouseReleaseEvent(QMouseEvent *e) override {
-        int flag(0);
-        switch (e->button()) {
-
-            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
-            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
-            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
-            case Qt::XButton1:
-            case Qt::XButton2:
-            case Qt::NoButton:
-            case Qt::MouseButtonMask:
-
-            default: break;
-        }
+        int flag = qmouse_event_to_flag(e);
 
         int x = e->x();
         int y = e->y();
@@ -181,18 +178,7 @@ public:
 
     virtual void mousePressEvent(QMouseEvent *e) override {
 
-        int flag(0);
-        switch (e->button()) {
-            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
-            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
-            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
-            case Qt::XButton1:
-            case Qt::XButton2:
-            case Qt::NoButton:
-            case Qt::MouseButtonMask:
-
-            default: break;
-        }
+        int flag = qmouse_event_to_flag(e);
 
         int x = e->x();
         int y = e->y();
@@ -268,19 +254,7 @@ public:
     }
 
     void mouseReleaseEvent(QMouseEvent *e) override {
-        int flag(0);
-        switch (e->button()) {
-
-            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
-            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
-            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
-            case Qt::XButton1:
-            case Qt::XButton2:
-            case Qt::NoButton:
-            case Qt::MouseButtonMask:
-
-            default: break;
-        }
+        int flag = qmouse_event_to_flag(e);
 
         int x = e->x();
         int y = e->y();
@@ -311,19 +285,7 @@ public:
     }
 
     void mousePressEvent(QMouseEvent *e) override {
-
-        int flag(0);
-        switch (e->button()) {
-            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
-            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
-            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
-            case Qt::XButton1:
-            case Qt::XButton2:
-            case Qt::NoButton:
-            case Qt::MouseButtonMask:
-
-            default: break;
-        }
+        int flag = qmouse_event_to_flag(e);
 
         int x = e->x();
         int y = e->y();
