@@ -110,7 +110,8 @@ class Session
             Inifile& ini,
             CryptoContext& cctx,
             Random& rnd,
-            gdi::CaptureProbeApi& probe_api)
+            gdi::CaptureProbeApi& probe_api,
+            TimeBase const& time_base)
         : ini(ini)
         , probe_api(probe_api)
         , log_file(ini, cctx, rnd, [&ini](Error const& error){
@@ -119,6 +120,7 @@ class Session
                 AclReport{ini}.report("FILESYSTEM_FULL", "100|unknown");
             }
         })
+        , time_base(time_base)
         {
             if (bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::wrm)) {
                 this->dont_log |= LogCategoryId::Drive;
@@ -177,7 +179,7 @@ class Session
                 return ;
             }
 
-            this->probe_api.session_update(MonotonicTimePoint::clock::now(), id, kv_list);
+            this->probe_api.session_update(this->time_base.monotonic_time, id, kv_list);
         }
 
         Inifile& ini;
@@ -186,6 +188,7 @@ class Session
         LogCategoryFlags dont_log {};
         SiemLogger siem_logger;
         SessionLogFile log_file;
+        TimeBase const& time_base;
     };
 
     struct Select
@@ -765,7 +768,7 @@ private:
 
         AclSerializer acl_serial(ini, auth_trans);
 
-        SessionLog session_log(ini, cctx, rnd, front);
+        SessionLog session_log(ini, cctx, rnd, front, event_manager.get_time_base());
 
         using namespace std::chrono_literals;
 

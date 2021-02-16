@@ -216,9 +216,9 @@ public:
     }
 
 private:
-    static void write_us_time(OutStream& out, MonotonicTimePoint::duration epoch)
+    static void write_us_time(OutStream& out, MonotonicTimePoint::duration duration)
     {
-        const auto us = std::chrono::duration_cast<std::chrono::microseconds>(epoch);
+        const auto us = std::chrono::duration_cast<std::chrono::microseconds>(duration);
         out.out_uint64_le(checked_int{us.count()});
     }
 
@@ -533,15 +533,18 @@ protected:
 public:
     void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
     {
-        this->timer = now;
-        this->last_sent_timer = this->timer;
+        if (this->timer < now) {
+            this->timer = now;
+            this->last_sent_timer = this->timer;
+        }
 
         if (this->keyboard_buffer_32.get_offset()) {
             this->send_timestamp_chunk();
         }
 
         StaticOutStream<1024*16> out_stream;
-        write_us_time(out_stream, this->timer - this->start_timer);
+        const auto us = std::chrono::duration_cast<std::chrono::microseconds>(now - this->start_timer);
+        out_stream.out_sint64_le(checked_int{us.count()});
         OutStream kvheader(out_stream.out_skip_bytes(2 + 4 + 1));
 
         uint8_t kv_len = checked_int(kv_list.size());

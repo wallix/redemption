@@ -799,10 +799,14 @@ void FileToGraphic::interpret_order()
     break;
     case WrmChunkType::OLD_SESSION_UPDATE:
     case WrmChunkType::SESSION_UPDATE: {
-        this->record_now = monotomic_time_point_from_stream(this->stream);
+        auto event_time = MonotonicTimePoint(
+            std::chrono::microseconds(this->stream.in_sint64_le()));
 
-        for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-            obj->external_monotonic_time_point(this->record_now);
+        if (event_time > this->record_now) {
+            this->record_now = event_time;
+            for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                obj->external_monotonic_time_point(this->record_now);
+            }
         }
 
         uint16_t message_length = this->stream.in_uint16_le();
@@ -815,7 +819,7 @@ void FileToGraphic::interpret_order()
             AgentDataExtractor extractor;
             if (extractor.extract_old_format_list(message.as_chars())) {
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                    cap_probe->session_update(this->record_now,
+                    cap_probe->session_update(event_time,
                         extractor.log_id(), extractor.kvlist());
                 }
             }
@@ -844,7 +848,7 @@ void FileToGraphic::interpret_order()
                 }
 
                 for (gdi::CaptureProbeApi * cap_probe : this->capture_probe_consumers){
-                    cap_probe->session_update(this->record_now, LogId(log_id), {{kvlogs, pkv}});
+                    cap_probe->session_update(event_time, LogId(log_id), {{kvlogs, pkv}});
                 }
             }
         }
