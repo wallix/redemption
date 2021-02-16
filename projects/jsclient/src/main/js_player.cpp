@@ -90,7 +90,7 @@ struct WrmPlayer
         {
             this->interpret_order();
 
-            if (WrmChunkType::TIMESTAMP == this->chunk.type
+            if (WrmChunkType::TIMESTAMP_OR_RECORD_DELAY == this->chunk.type
              || WrmChunkType::SESSION_UPDATE == this->chunk.type)
             {
                 return true;
@@ -162,7 +162,7 @@ struct WrmPlayer
                 break;
             }
 
-            case WrmChunkType::TIMESTAMP:
+            case WrmChunkType::TIMESTAMP_OR_RECORD_DELAY:
             {
                 auto now = std::chrono::microseconds(this->in_stream.in_uint64_le());
 

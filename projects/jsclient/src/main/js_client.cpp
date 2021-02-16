@@ -229,7 +229,7 @@ class RdpClient
         emscripten::val crypto;
     };
 
-    EventContainer event_container;
+    EventManager event_manager;
 
     ModRdpFactory mod_rdp_factory;
     std::unique_ptr<mod_api> mod;
@@ -429,7 +429,7 @@ public:
         }
 
         this->mod = new_mod_rdp(
-            trans, gd, osd, event_container, session_log, front, client_info,
+            trans, gd, osd, event_manager.get_events(), session_log, front, client_info,
             redir_info, js_rand, ChannelsAuthorizations("*", ""),
             rdp_params, TLSClientParams{},
             license_store, ini, nullptr, nullptr, this->mod_rdp_factory);
@@ -437,7 +437,7 @@ public:
 
     void write_first_packet()
     {
-        this->set_time(this->event_container.get_current_time());
+        this->set_time(this->event_manager.get_monotonic_time());
     }
 
     void set_time(MonotonicTimePoint time)
@@ -455,7 +455,7 @@ public:
     {
         this->trans.push_input_buffer(std::move(data));
 
-        auto time = this->event_container.get_current_time();
+        auto time = this->event_manager.get_monotonic_time();
         event_loop([time](Event& event){
             /*if (event.alarm.fd != -1)*/ {
                 event.alarm.reset_timeout(time + event.alarm.grace_delay);
@@ -463,20 +463,19 @@ public:
             }
         });
 
-        detail::ProtectedEventContainer::garbage_collector(this->event_container);
+        this->event_manager.garbage_collector();
     }
 
 private:
     void set_current_time(MonotonicTimePoint now)
     {
-        detail::ProtectedEventContainer::get_writable_time_base(this->event_container)
-            .set_current_time(now);
+        this->event_manager.get_writable_time_base().monotonic_time = now;
     }
 
     template<class Fn>
     void event_loop(Fn&& fn)
     {
-        auto& events = detail::ProtectedEventContainer::get_events(this->event_container);
+        auto& events = detail::ProtectedEventContainer::get_events(this->event_manager.get_events());
         size_t iend = events.size();
         // ignore events created in the loop
         for (size_t i = 0 ; i < iend; ++i){ /*NOLINT*/
@@ -506,7 +505,7 @@ public:
         this->mod->rdp_input_scancode(
             key, 0, flag,
             std::chrono::duration_cast<std::chrono::seconds>(
-                this->event_container.get_current_time().time_since_epoch()).count(),
+                this->event_manager.get_monotonic_time().time_since_epoch()).count(),
             nullptr);
     }
 

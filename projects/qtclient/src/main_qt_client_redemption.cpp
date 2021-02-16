@@ -107,14 +107,15 @@ public:
             }
         }
 
-        this->event_manager.set_current_time(MonotonicTimePoint::clock::now());
+        this->event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint::clock::now();
 
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
             if (auto* mod = this->_callback.get_mod()) {
                 auto action = [this](bool is_timeout){
-                    this->event_manager.set_current_time(MonotonicTimePoint::clock::now());
+                    this->event_manager.get_writable_time_base().monotonic_time
+                        = MonotonicTimePoint::clock::now();
                     try {
                         auto fn = [is_timeout](int /*fd*/){ return !is_timeout; };
                         this->event_manager.execute_events(fn, 0);

@@ -96,7 +96,7 @@ private:
     {
         auto tv = this->event_manager.next_timeout();
         if (tv != MonotonicTimePoint()) {
-            auto delay = tv - this->event_manager.get_current_time();
+            auto delay = tv - this->event_manager.get_monotonic_time();
             this->timer.start(std::chrono::duration_cast<std::chrono::milliseconds>(delay));
         }
     }
