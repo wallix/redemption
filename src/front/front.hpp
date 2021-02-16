@@ -1214,6 +1214,13 @@ public:
         }
     }
 
+    void must_synchronise_times_capture(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    {
+        if (this->capture) {
+            this->capture->synchronise_times(monotonic_time, real_time);
+        }
+    }
+
     [[nodiscard]] bool is_capture_in_progress() const override
     {
         return (this->capture && this->capture->has_wrm_capture());

@@ -472,7 +472,7 @@ public:
     }
 
     void flush() {
-        if (this->kbd_stream.get_offset() || (0!=this->hidden_masked_char_count)) {
+        if (this->kbd_stream.get_offset() || hidden_masked_char_count) {
             if (this->hidden_masked_char_count){
                 this->kbd_stream.out_copy_bytes("********"_av);
             }
@@ -627,7 +627,7 @@ public:
         return !this->regexes_filter_kill.empty() || !this->regexes_filter_notify.empty();
     }
 
-    void operator()(chars_view str) {
+    void title_changed(chars_view str) {
         assert(str.data() && not str.empty());
         this->check_filter(this->regexes_filter_kill, str.data());
         this->check_filter(this->regexes_filter_notify, str.data());
@@ -1032,6 +1032,11 @@ public:
         this->send_data(now, cstr_array_view("(break)"), '+');
     }
 
+    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    {
+        this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
+    }
+
 private:
     // buffer for log_format_set_info
     std::string formatted_message;
@@ -1204,11 +1209,12 @@ public:
 
 class Capture::MetaCaptureImpl
 {
-public:
     OutFileTransport meta_trans;
+
+public:
     SessionMeta meta;
     SessionLogAgent session_log_agent;
-    bool enable_agent;
+    const bool enable_agent;
 
     explicit MetaCaptureImpl(CaptureParams const& capture_params, MetaParams const & meta_params)
     : meta_trans(unique_fd{[&](){
@@ -1237,21 +1243,16 @@ public:
             throw error; /* NOLINT */
         }
         return fd;
-        }()},
-        [session_log = capture_params.session_log](const Error & error){
-            if (session_log && error.errnum == ENOSPC) {
-                // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-                session_log->report("FILESYSTEM_FULL", "100|unknown");
-            }
-        })
+    }()}, [session_log = capture_params.session_log](const Error & error){
+        if (session_log && error.errnum == ENOSPC) {
+            // error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
+            session_log->report("FILESYSTEM_FULL", "100|unknown");
+        }
+    })
     , meta(capture_params.now, capture_params.real_now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), meta_params)
     , session_log_agent(this->meta, meta_params)
     , enable_agent(underlying_cast(meta_params.enable_session_log))
     {
-    }
-
-    SessionMeta & get_session_meta() {
-        return this->meta;
     }
 };
 
@@ -1422,10 +1423,10 @@ void Capture::NotifyTitleChanged::notify_title_changed(
     MonotonicTimePoint now, chars_view title
 ) {
     if (this->capture.patterns_checker) {
-        this->capture.patterns_checker->operator()(title);
+        this->capture.patterns_checker->title_changed(title);
     }
     if (this->capture.meta_capture_obj) {
-        this->capture.meta_capture_obj->get_session_meta().title_changed(now, title);
+        this->capture.meta_capture_obj->meta.title_changed(now, title);
     }
 #ifndef REDEMPTION_NO_FFMPEG
     if (this->capture.sequenced_video_capture_obj) {
@@ -1537,7 +1538,7 @@ Capture::Capture(
 
                     image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
                 }
-                this->png_capture_real_time_obj =
+                this->png_real_time_capture_obj =
                     std::make_unique<PngCaptureRT>(capture_params,
                                                    png_params,
                                                    *this->gd_drawable,
@@ -1560,7 +1561,7 @@ Capture::Capture(
         if (capture_video) {
             Ref<NotifyNextVideo> notifier = this->null_notifier_next_video;
             if (video_params.capture_chunk && this->meta_capture_obj) {
-                this->notifier_next_video.session_meta = &this->meta_capture_obj->get_session_meta();
+                this->notifier_next_video.session_meta = &this->meta_capture_obj->meta;
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
@@ -1612,8 +1613,8 @@ Capture::Capture(
             this->probes.emplace_back(*this->wrm_capture_obj);
         }
 
-        if (this->png_capture_real_time_obj) {
-            this->caps.emplace_back(*this->png_capture_real_time_obj);
+        if (this->png_real_time_capture_obj) {
+            this->caps.emplace_back(*this->png_real_time_capture_obj);
         }
 
         if (this->png_capture_obj) {
@@ -1684,7 +1685,7 @@ Capture::~Capture()
     this->syslog_kbd_capture_obj.reset();
     this->pattern_kbd_capture_obj.reset();
     this->png_capture_obj.reset();
-    this->png_capture_real_time_obj.reset();
+    this->png_real_time_capture_obj.reset();
     this->wrm_capture_obj.reset();
 
     if (this->sequenced_video_capture_obj) {
@@ -1725,6 +1726,25 @@ void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cu
     }
 }
 
+void Capture::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+{
+    if (this->wrm_capture_obj) {
+        this->wrm_capture_obj->synchronise_times(monotonic_time, real_time);
+    }
+
+    if (this->sequenced_video_capture_obj) {
+        this->sequenced_video_capture_obj->synchronise_times(monotonic_time, real_time);
+    }
+
+    if (this->full_video_capture_obj) {
+        this->full_video_capture_obj->synchronise_times(monotonic_time, real_time);
+    }
+
+    if (this->meta_capture_obj) {
+        this->meta_capture_obj->meta.synchronise_times(monotonic_time, real_time);
+    }
+}
+
 void Capture::resize(uint16_t width, uint16_t height)
 {
     if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {
@@ -1750,7 +1770,7 @@ void Capture::resize(uint16_t width, uint16_t height)
         this->gd_drawable->resize(width, height);
     }
 
-    if (this->png_capture_real_time_obj) {
+    if (this->png_real_time_capture_obj) {
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = this->gd_drawable;
 
         if (this->video_cropper_real_time) {
@@ -1759,7 +1779,7 @@ void Capture::resize(uint16_t width, uint16_t height)
             image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
         }
 
-        this->png_capture_real_time_obj->resize(*image_frame_api_real_time_ptr);
+        this->png_real_time_capture_obj->resize(*image_frame_api_real_time_ptr);
     }
 
     if (this->png_capture_obj) {
@@ -1777,11 +1797,11 @@ void Capture::resize(uint16_t width, uint16_t height)
     this->external_breakpoint();
 }
 
-// TODO: this could be done directly in external png_capture_real_time_obj object
+// TODO: this could be done directly in external png_real_time_capture_obj object
 Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
 {
-    return this->png_capture_real_time_obj
-        ? this->png_capture_real_time_obj->set_rt_display(enable_rt_display)
+    return this->png_real_time_capture_obj
+        ? this->png_real_time_capture_obj->set_rt_display(enable_rt_display)
         : Capture::RTDisplayResult::Unchanged;
 }
 

@@ -46,7 +46,7 @@ namespace
             );
         }
 
-        void set_time_and_excute_timer_events(MonotonicTimePoint t)
+        void set_time_and_execute_timer_events(MonotonicTimePoint t)
         {
             set_time(t);
             execute_timer_events();
@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestKeepAlive)
     KeepAlive keepalive(ini, d.events, 30s);
 
     auto set_delay = [&](MonotonicTimePoint::duration delay){
-        d.set_time_and_excute_timer_events(t + delay);
+        d.set_time_and_execute_timer_events(t + delay);
         return ini.is_asked<cfg::context::keepalive>();
     };
 
@@ -112,8 +112,8 @@ RED_AUTO_TEST_CASE(TestInactivity)
     inactivity.start(20s);
     d.execute_timer_events();
 
-    d.set_time_and_excute_timer_events(t + 25s);
-    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_excute_timer_events(t + 30s),
+    d.set_time_and_execute_timer_events(t + 25s);
+    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_execute_timer_events(t + 30s),
         ERR_SESSION_CLOSE_USER_INACTIVITY);
 
 
@@ -123,17 +123,17 @@ RED_AUTO_TEST_CASE(TestInactivity)
     t = d.time();
     inactivity.start(40s);
 
-    d.set_time_and_excute_timer_events(t + 25s);
+    d.set_time_and_execute_timer_events(t + 25s);
     inactivity.activity();
 
-    d.set_time_and_excute_timer_events(t + 50s);
+    d.set_time_and_execute_timer_events(t + 50s);
     inactivity.activity();
 
-    d.set_time_and_excute_timer_events(t + 50s);
+    d.set_time_and_execute_timer_events(t + 50s);
 
-    d.set_time_and_excute_timer_events(t + 75s);
+    d.set_time_and_execute_timer_events(t + 75s);
 
-    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_excute_timer_events(t + 90s),
+    RED_CHECK_EXCEPTION_ERROR_ID(d.set_time_and_execute_timer_events(t + 90s),
         ERR_SESSION_CLOSE_USER_INACTIVITY);
     //@}
 
@@ -177,7 +177,7 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning)
     };
 
     auto update_time_and_update_warning = [&](MonotonicTimePoint t){
-        d.set_time_and_excute_timer_events(t);
+        d.set_time_and_execute_timer_events(t);
         return update_warning();
     };
 
@@ -220,5 +220,13 @@ RED_AUTO_TEST_CASE(TestEndSessionWarning)
     RED_TEST(set_time_and_update_warning(t + 20s) == 0);
 
     RED_CHECK_EXCEPTION_ERROR_ID(set_time_and_update_warning(t),
+        ERR_SESSION_CLOSE_ENDDATE_REACHED);
+
+    sync_time();
+    RED_TEST(set_time_and_update_warning(t + 20min) == 20);
+    end_session_warning.add_delay(+10min);
+    RED_TEST(update_time_and_update_warning(t) == 30);
+    end_session_warning.add_delay(-50min);
+    RED_CHECK_EXCEPTION_ERROR_ID(update_time_and_update_warning(t),
         ERR_SESSION_CLOSE_ENDDATE_REACHED);
 }

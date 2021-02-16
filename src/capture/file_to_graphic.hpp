@@ -279,15 +279,12 @@ private:
     template<class CbUpdateProgress>
     void privplay(CbUpdateProgress update_progess, bool const & requested_to_stop)
     {
-        const bool has_begin = this->begin_capture.time_since_epoch().count();
-        const bool has_end = this->begin_capture.time_since_epoch().count();
-
         while (!requested_to_stop && this->next_order()) {
             this->log_play();
 
             this->interpret_order();
 
-            if (!has_begin || this->begin_capture <= this->record_now) {
+            if (this->begin_capture <= this->record_now) {
                 this->snapshot_play();
                 this->ignore_frame_in_timeval = false;
                 update_progess(this->record_now);
@@ -297,7 +294,7 @@ private:
                 break;
             }
 
-            if (has_end && this->end_capture < this->record_now) {
+            if (this->end_capture < this->record_now) {
                 break;
             }
         }

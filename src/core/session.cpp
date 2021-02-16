@@ -62,6 +62,9 @@
 #include "acl/mod_wrapper.hpp"
 #include "utils/genrandom.hpp"
 
+#include <cstdlib>
+
+
 namespace
 {
 
@@ -840,14 +843,31 @@ private:
                     continue;
                 }
 
-                event_manager.set_time_base(current_time_base());
-
                 if (front_has_tls_pending_data) {
                     ioswitch.set_read_sck(front_trans.get_sck());
                 }
 
                 if (mod_has_tls_pending_data) {
                     ioswitch.set_read_sck(pmod_trans->get_sck());
+                }
+
+                // update times and synchronize real time
+                {
+                    auto old_time_base = event_manager.get_time_base();
+                    auto new_time_base = current_time_base();
+
+                    event_manager.set_time_base(new_time_base);
+
+                    constexpr auto max_delay = MonotonicTimePoint::duration(1s);
+                    MonotonicTimePoint::duration monotonic_elpased
+                        = new_time_base.monotonic_time - old_time_base.monotonic_time;
+                    MonotonicTimePoint::duration real_elpased
+                        = new_time_base.real_time - old_time_base.real_time;
+
+                    if (abs(real_elpased) >= monotonic_elpased + max_delay) {
+                        front.must_synchronise_times_capture(new_time_base.monotonic_time, new_time_base.real_time);
+                        end_session_warning.add_delay(real_elpased);
+                    }
                 }
 
                 loop_state = LoopState::Front;

@@ -84,6 +84,9 @@ public:
     /// disable timer with 0 for \c end_date
     void set_time(MonotonicTimePoint end_date);
 
+    /// add delay (can be negative)
+    void add_delay(MonotonicTimePoint::duration delay);
+
     // void reset()
     // {
     //     this->timer_event.garbage();

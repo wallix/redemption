@@ -1395,10 +1395,10 @@ struct RecorderParams {
     // input restrictions
     // ==================
     // "begin capture time (in seconds), either absolute or relative to video start
-    // (negative number means relative to video end), default=from start"
+    // (negative number means relative to video end)"
     std::chrono::seconds begin_cap {};
     // "end capture time (in seconds), either absolute or relative to video start,
-    // (nagative number means relative to video end), default=none"
+    // (nagative number means relative to video end)"
     std::chrono::seconds end_cap {};
     // "Number of orders to execute before stopping, default=0 execute all orders"
     uint32_t order_count = 0;

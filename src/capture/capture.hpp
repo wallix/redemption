@@ -85,6 +85,8 @@ public:
 
     void force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y);
 
+    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+
     void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override;
 
     void resize(uint16_t width, uint16_t height) override;
@@ -234,7 +236,7 @@ private:
 
     std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
     std::unique_ptr<PngCapture> png_capture_obj;
-    std::unique_ptr<PngCaptureRT> png_capture_real_time_obj;
+    std::unique_ptr<PngCaptureRT> png_real_time_capture_obj;
 
     std::unique_ptr<SyslogKbd> syslog_kbd_capture_obj;
     std::unique_ptr<SessionLogKbd> session_log_kbd_capture_obj;

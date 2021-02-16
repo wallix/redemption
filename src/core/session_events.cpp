@@ -150,6 +150,13 @@ void EndSessionWarning::set_time(MonotonicTimePoint end_date)
     );
 }
 
+void EndSessionWarning::add_delay(MonotonicTimePoint::duration delay)
+{
+    if (this->timer_event.has_event()) {
+        this->set_time(this->timer_close + delay);
+    }
+}
+
 // void EndSessionWarning::reset()
 // {
 //     this->timer_event.garbage();

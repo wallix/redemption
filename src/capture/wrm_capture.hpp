@@ -203,8 +203,12 @@ public:
 
     void update_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time)
     {
+        this->update_times(this->start_timer + monotonic_delay, real_time);
+    }
+
+    void update_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    {
         this->sync();
-        auto monotonic_time = this->start_timer + monotonic_delay;
         this->timestamp(monotonic_time);
         this->monotonic_real_time = monotonic_time;
         this->last_real_time = real_time;
@@ -875,6 +879,10 @@ public:
     void send_timestamp_chunk(MonotonicTimePoint now) {
         this->graphic_to_file.timestamp(now);
         this->graphic_to_file.send_timestamp_chunk();
+    }
+
+    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time) {
+        this->graphic_to_file.update_times(monotonic_time, real_time);
     }
 
     void update_mouse_position(uint16_t x, uint16_t y) {

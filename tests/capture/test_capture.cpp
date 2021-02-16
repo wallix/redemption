@@ -698,17 +698,17 @@ RED_AUTO_TEST_CASE(TestPattern)
 
         auto const reason = i ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY";
 
-        checker(cstr_array_view("Gestionnaire"));
+        checker.title_changed(cstr_array_view("Gestionnaire"));
 
         RED_CHECK(report_message.reason.empty());
         RED_CHECK(report_message.message.empty());
 
-        checker(cstr_array_view("Gestionnaire de serveur"));
+        checker.title_changed(cstr_array_view("Gestionnaire de serveur"));
 
         RED_CHECK_EQUAL(report_message.reason,  reason);
         RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de serveur");
 
-        checker(cstr_array_view("Gestionnaire de licences TS"));
+        checker.title_changed(cstr_array_view("Gestionnaire de licences TS"));
 
         RED_CHECK_EQUAL(report_message.reason,  reason);
         RED_CHECK_EQUAL(report_message.message, "$ocr:.de.|Gestionnaire de licences TS");

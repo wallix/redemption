@@ -276,6 +276,11 @@ const uint8_t * VideoCaptureCtx::data() const noexcept
     return this->drawable.data();
 }
 
+void VideoCaptureCtx::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+{
+    this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
+}
+
 WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
     video_recorder & recorder, MonotonicTimePoint now
 )
@@ -484,6 +489,11 @@ void FullVideoCaptureImpl::encoding_video_frame()
     this->video_cap_ctx.encoding_video_frame(this->recorder);
 }
 
+void FullVideoCaptureImpl::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+{
+    this->video_cap_ctx.synchronise_times(monotonic_time, real_time);
+}
+
 //@}
 
 
@@ -681,6 +691,11 @@ void SequencedVideoCaptureImpl::VideoCapture::prepare_video_frame()
     this->image_frame_api.prepare_image_frame();
 }
 
+void SequencedVideoCaptureImpl::VideoCapture::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+{
+    this->video_cap_ctx.synchronise_times(monotonic_time, real_time);
+}
+
 void SequencedVideoCaptureImpl::zoom(unsigned percent)
 {
     percent = std::min(percent, 100u);
@@ -808,6 +823,12 @@ void SequencedVideoCaptureImpl::next_video(MonotonicTimePoint now)
 void SequencedVideoCaptureImpl::encoding_video_frame()
 {
     this->vc.encoding_video_frame();
+}
+
+void SequencedVideoCaptureImpl::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+{
+    this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
+    this->vc.synchronise_times(monotonic_time, real_time);
 }
 
 //@}

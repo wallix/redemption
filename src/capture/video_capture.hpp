@@ -82,7 +82,7 @@ struct VideoCaptureCtx : noncopyable
 
     VideoCaptureCtx(
         MonotonicTimePoint monotonic_now,
-        RealTimePoint monotonic_to_real,
+        RealTimePoint real_time,
         TraceTimestamp trace_timestamp,
         ImageByInterval image_by_interval,
         unsigned frame_rate,
@@ -104,13 +104,15 @@ struct VideoCaptureCtx : noncopyable
 
     [[nodiscard]] const uint8_t * data() const noexcept;
 
+    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+
 private:
     void preparing_video_frame(video_recorder & recorder);
 
     RDPDrawable & drawable;
     MonotonicTimePoint monotonic_last_time_capture;
     const MonotonicTimePoint monotonic_start_capture;
-    const MonotonicTimeToRealTime monotonic_to_real;
+    MonotonicTimeToRealTime monotonic_to_real;
     const std::chrono::microseconds frame_interval;
     std::chrono::microseconds current_video_time;
     int64_t start_frame_index;
@@ -146,6 +148,8 @@ struct FullVideoCaptureImpl final : gdi::CaptureApi
     ) override;
 
     void encoding_video_frame();
+
+    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
     struct TmpFileTransport final : VideoTransportBase
@@ -196,6 +200,8 @@ public:
     void next_video(MonotonicTimePoint now);
 
     void encoding_video_frame();
+
+    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
     void next_video_impl(MonotonicTimePoint now, NotifyNextVideo::Reason reason);
@@ -255,6 +261,8 @@ private:
 
         void prepare_video_frame();
 
+        void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+
     private:
         VideoCaptureCtx video_cap_ctx;
         SequenceTransport trans;
@@ -266,7 +274,7 @@ private:
     bool ic_has_first_img = false;
 
     const MonotonicTimePoint monotonic_start_capture;
-    const MonotonicTimeToRealTime monotonic_to_real;
+    MonotonicTimeToRealTime monotonic_to_real;
 
     VideoCapture vc;
     SequenceTransport ic_trans;
