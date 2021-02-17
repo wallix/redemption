@@ -884,7 +884,7 @@ public:
         this->graphic_to_file.send_timestamp_chunk();
     }
 
-    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time) {
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time) {
         this->graphic_to_file.update_times(monotonic_time, real_time);
     }
 

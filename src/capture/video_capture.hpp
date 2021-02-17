@@ -104,7 +104,7 @@ struct VideoCaptureCtx : noncopyable
 
     [[nodiscard]] const uint8_t * data() const noexcept;
 
-    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
     void preparing_video_frame(video_recorder & recorder);
@@ -149,7 +149,7 @@ struct FullVideoCaptureImpl final : gdi::CaptureApi
 
     void encoding_video_frame();
 
-    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
     struct TmpFileTransport final : VideoTransportBase
@@ -201,7 +201,7 @@ public:
 
     void encoding_video_frame();
 
-    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
     void next_video_impl(MonotonicTimePoint now, NotifyNextVideo::Reason reason);
@@ -261,7 +261,7 @@ private:
 
         void prepare_video_frame();
 
-        void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+        void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
     private:
         VideoCaptureCtx video_cap_ctx;

@@ -868,7 +868,7 @@ private:
                         = new_time_base.real_time - old_time_base.real_time;
 
                     if (abs(real_elpased) >= monotonic_elpased + max_delay) {
-                        front.must_synchronise_times_capture(new_time_base.monotonic_time, new_time_base.real_time);
+                        front.must_synchronize_times_capture(new_time_base.monotonic_time, new_time_base.real_time);
                         end_session_warning.add_delay(real_elpased);
                     }
                 }

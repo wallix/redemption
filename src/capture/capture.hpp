@@ -85,7 +85,7 @@ public:
 
     void force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y);
 
-    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
     void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override;
 

@@ -1214,10 +1214,10 @@ public:
         }
     }
 
-    void must_synchronise_times_capture(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    void must_synchronize_times_capture(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
     {
         if (this->capture) {
-            this->capture->synchronise_times(monotonic_time, real_time);
+            this->capture->synchronize_times(monotonic_time, real_time);
         }
     }
 

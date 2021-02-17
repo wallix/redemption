@@ -1032,7 +1032,7 @@ public:
         this->send_data(now, cstr_array_view("(break)"), '+');
     }
 
-    void synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+    void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
     {
         this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
     }
@@ -1726,22 +1726,22 @@ void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cu
     }
 }
 
-void Capture::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+void Capture::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
     if (this->wrm_capture_obj) {
-        this->wrm_capture_obj->synchronise_times(monotonic_time, real_time);
+        this->wrm_capture_obj->synchronize_times(monotonic_time, real_time);
     }
 
     if (this->sequenced_video_capture_obj) {
-        this->sequenced_video_capture_obj->synchronise_times(monotonic_time, real_time);
+        this->sequenced_video_capture_obj->synchronize_times(monotonic_time, real_time);
     }
 
     if (this->full_video_capture_obj) {
-        this->full_video_capture_obj->synchronise_times(monotonic_time, real_time);
+        this->full_video_capture_obj->synchronize_times(monotonic_time, real_time);
     }
 
     if (this->meta_capture_obj) {
-        this->meta_capture_obj->meta.synchronise_times(monotonic_time, real_time);
+        this->meta_capture_obj->meta.synchronize_times(monotonic_time, real_time);
     }
 }
 

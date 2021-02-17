@@ -276,7 +276,7 @@ const uint8_t * VideoCaptureCtx::data() const noexcept
     return this->drawable.data();
 }
 
-void VideoCaptureCtx::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+void VideoCaptureCtx::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
     this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
 }
@@ -489,9 +489,9 @@ void FullVideoCaptureImpl::encoding_video_frame()
     this->video_cap_ctx.encoding_video_frame(this->recorder);
 }
 
-void FullVideoCaptureImpl::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+void FullVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
-    this->video_cap_ctx.synchronise_times(monotonic_time, real_time);
+    this->video_cap_ctx.synchronize_times(monotonic_time, real_time);
 }
 
 //@}
@@ -691,9 +691,9 @@ void SequencedVideoCaptureImpl::VideoCapture::prepare_video_frame()
     this->image_frame_api.prepare_image_frame();
 }
 
-void SequencedVideoCaptureImpl::VideoCapture::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+void SequencedVideoCaptureImpl::VideoCapture::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
-    this->video_cap_ctx.synchronise_times(monotonic_time, real_time);
+    this->video_cap_ctx.synchronize_times(monotonic_time, real_time);
 }
 
 void SequencedVideoCaptureImpl::zoom(unsigned percent)
@@ -825,10 +825,10 @@ void SequencedVideoCaptureImpl::encoding_video_frame()
     this->vc.encoding_video_frame();
 }
 
-void SequencedVideoCaptureImpl::synchronise_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
+void SequencedVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
     this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
-    this->vc.synchronise_times(monotonic_time, real_time);
+    this->vc.synchronize_times(monotonic_time, real_time);
 }
 
 //@}
