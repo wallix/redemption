@@ -32,7 +32,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "utils/bitmap_shrink.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
@@ -505,36 +504,6 @@ RED_AUTO_TEST_CASE(TestSmallImage)
     dump_png24(trans, drawable, true);
     trans.next();
     RED_CHECK_EQUAL(107, trans.buf.size());
-}
-
-RED_AUTO_TEST_CASE(TestScaleImage)
-{
-    const int width = 800;
-    const int height = 600;
-    Rect scr(0, 0, width, height);
-    BufTransport trans;
-    RDPDrawable drawable(scr.cx, scr.cy);
-
-    read_png24(FIXTURES_PATH "/win2008capture10.png", gdi::get_writable_image_view(drawable));
-
-    // TODO: zooming should be managed by some dedicated Drawable
-    unsigned zoom_factor = 50;
-    unsigned scaled_width = (((drawable.width() * zoom_factor) / 100) + 3) & 0xFFC;
-    unsigned scaled_height = (drawable.height() * zoom_factor) / 100;
-    std::unique_ptr<uint8_t[]> scaled_buffer(new uint8_t[scaled_width * scaled_height * 3]);
-
-    // Zoom 50
-    scale_data(
-        scaled_buffer.get(), drawable.data(),
-        scaled_width, drawable.width(),
-        scaled_height, drawable.height(),
-        drawable.rowsize());
-
-    ::dump_png24(
-        trans, scaled_buffer.get(),
-        scaled_width, scaled_height,
-        scaled_width * 3, false);
-    RED_CHECK_EQUAL(8162, trans.buf.size());
 }
 
 RED_AUTO_TEST_CASE(TestBogusBitmap)

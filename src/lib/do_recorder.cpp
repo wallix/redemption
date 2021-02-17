@@ -1127,17 +1127,6 @@ static inline int replay(
                             MonotonicTimePoint(begin_cap != 0s ? begin_cap : begin_record),
                             MonotonicTimePoint(end_cap != 0s ? end_cap : end_record));
 
-                        if (png_params.png_width && png_params.png_height) {
-                            auto get_percent = [](unsigned target_dim, unsigned source_dim) -> unsigned {
-                                return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
-                            };
-                            png_params.zoom = std::max(
-                                get_percent(png_params.png_width, max_screen_dim.w),
-                                get_percent(png_params.png_height, max_screen_dim.h)
-                            );
-                            //std::cout << "zoom: " << zoom << '%' << std::endl;
-                        }
-
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
                         ini.set<cfg::video::codec_id>(video_params.codec);
@@ -1407,7 +1396,7 @@ struct RecorderParams {
     std::string output_filename;
 
     // png output options
-    PngParams png_params = {0, 0, 60s, 100, 0, false , false, false, nullptr};
+    PngParams png_params = {0, 0, 60s, 0, false , false, false, nullptr};
     VideoParams video_params {5, {}, {}, {}, {}, {}, {}, {}};
     FullVideoParams full_video_params {};
 
@@ -1536,23 +1525,8 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         cli::option("verbose").help("more logs")
             .parser(cli::arg_location(verbose)).argname("<verbosity>"),
 
-        cli::option("zoom").help("scaling factor for png capture (default 100%)")
-            .parser(cli::arg_location(recorder.png_params.zoom, [&](unsigned zoom){
-                if (zoom != 100 && recorder.png_params.png_width) {
-                    msg_error = "Conflicting options: --zoom and --png-geometry";
-                    return cli::Res::BadFormat;
-                }
-
-                return cli::Res::Ok;
-            })).argname("<percent>"),
-
-        cli::option('g', "png-geometry").help("png capture geometry (Ex. 160x120)")
+        cli::option('g', "png-geometry").help("png capture geometry (ex. -g 160x120)")
             .parser(cli::arg([&](std::string_view geometry){
-                if (recorder.png_params.zoom != 100) {
-                    msg_error = "Conflicting options: --zoom and --png-geometry";
-                    return cli::Res::BadFormat;
-                }
-
                 char * end;
                 auto png_w = strtoul(geometry.data(), &end, 10);
                 auto png_h = (*end == 'x') ? strtoul(end+1, &end, 10) : 0L;

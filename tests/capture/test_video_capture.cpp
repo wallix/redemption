@@ -102,8 +102,8 @@ namespace
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
-            capture_params, 100 /* zoom */, drawable, drawable, video_params,
-            next_video_notifier);
+            capture_params, 0 /* png_width */, 0 /* png_height */,
+            drawable, drawable, video_params, next_video_notifier);
         simple_movie(
             monotonic_time, loop_duration, drawable, video_capture, mouse);
     }

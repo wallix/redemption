@@ -29,6 +29,7 @@
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "utils/monotonic_time_to_real_time.hpp"
+#include "utils/scaled_image24.hpp"
 
 #include <memory>
 #include <chrono>
@@ -173,7 +174,7 @@ class SequencedVideoCaptureImpl final : public gdi::CaptureApi
 public:
     SequencedVideoCaptureImpl(
         CaptureParams const & capture_params,
-        unsigned image_zoom,
+        unsigned png_width, unsigned png_height,
         /* const */RDPDrawable & drawable,
         gdi::ImageFrameApi & image_frame,
         VideoParams const& video_params,
@@ -188,13 +189,7 @@ public:
         uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
-    void zoom(unsigned percent);
-
     void ic_flush();
-
-    void dump24();
-
-    void scale_dump24();
 
     void next_video(MonotonicTimePoint now);
 
@@ -278,15 +273,11 @@ private:
     VideoCapture vc;
     SequenceTransport ic_trans;
 
-    unsigned ic_zoom_factor;
-    unsigned ic_scaled_width;
-    unsigned ic_scaled_height;
-
     /* const */ RDPDrawable & ic_drawable;
 
     gdi::ImageFrameApi & image_frame_api;
 
-    std::unique_ptr<uint8_t[]> ic_scaled_buffer;
+    ScaledPng24 ic_scaled_png;
 
     MonotonicTimePoint start_break;
     const std::chrono::microseconds break_interval;

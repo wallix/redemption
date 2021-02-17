@@ -20,18 +20,31 @@
 
 #pragma once
 
-//#include "configs/config_access.hpp"
+#include <memory>
+#include <cstdint>
 
-#include <chrono>
 
-struct PngParams
+class Transport;
+class ImageView;
+
+struct ScaledPng24
 {
-    unsigned png_width;
-    unsigned png_height;
-    std::chrono::milliseconds png_interval;
-    uint32_t png_limit;
-    bool real_time_image_capture;
-    bool remote_program_session;
-    bool rt_display;
-    const char *real_basename;
+    ScaledPng24(unsigned width, unsigned height);
+
+    bool is_scaled() const noexcept { return this->scaled_width; }
+
+    void dump_png24(Transport& trans, ImageView const& image_view, bool bgr) const;
+
+private:
+    unsigned scaled_width;
+    unsigned scaled_height;
+
+    std::unique_ptr<uint8_t[]> scaled_buffer;
 };
+
+void scale_image24(
+    uint8_t *dest, const uint8_t *src,
+    unsigned int dest_width, unsigned int src_width,
+    unsigned int dest_height, unsigned int src_height,
+    unsigned int src_rowsize
+);

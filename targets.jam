@@ -245,6 +245,7 @@ exe rdpproxy :
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -483,6 +484,7 @@ lib libredrec :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -727,6 +729,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -838,6 +841,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>tests/includes/test_only/test_framework/check_img.o
@@ -2489,6 +2493,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -2654,6 +2659,7 @@ test-run tests/core/test_session :
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -2747,6 +2753,7 @@ test-run tests/front/test_front :
   <library>src/utils/primitives/primitives.o
   <library>src/utils/primitives/primitives_sse2.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -2883,6 +2890,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4961,6 +4969,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -5023,6 +5032,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -5085,6 +5095,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -5564,11 +5575,6 @@ test-run tests/utils/test_bitmap_from_file :
   <covfile>src/utils/bitmap_from_file.cpp
   <covfile>src/utils/bitmap_from_file.hpp
 ;
-test-run tests/utils/test_bitmap_shrink :
-  $(REDEMPTION_TEST_PATH)/utils/test_bitmap_shrink.cpp
-:
-  <covfile>src/utils/bitmap_shrink.hpp
-;
 test-run tests/utils/test_bitstream :
   $(REDEMPTION_TEST_PATH)/utils/test_bitstream.cpp
 :
@@ -5798,6 +5804,26 @@ test-run tests/utils/test_rle :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/utils/rle.cpp
   <covfile>src/utils/rle.hpp
+;
+test-run tests/utils/test_scaled_image24 :
+  $(REDEMPTION_TEST_PATH)/utils/test_scaled_image24.cpp
+:
+  <library>crypto
+  <library>png
+  <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/scaled_image24.o
+  <library>src/utils/stacktrace.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  <library>tests/includes/test_only/transport/test_transport.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/utils/scaled_image24.cpp
+  <covfile>src/utils/scaled_image24.hpp
 ;
 test-run tests/utils/test_stream :
   $(REDEMPTION_TEST_PATH)/utils/test_stream.cpp
@@ -6036,6 +6062,7 @@ obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/primitives/primitives.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 obj src/utils/primitives/primitives_sse2.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives_sse2.cpp ;
 obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
+obj src/utils/scaled_image24.o : $(REDEMPTION_SRC_PATH)/utils/scaled_image24.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj src/utils/stacktrace.o : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 obj src/utils/strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
@@ -6351,7 +6378,6 @@ alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitmap : tests/utils/test_bitmap ;
 alias test_bitmap_data_allocator : tests/utils/test_bitmap_data_allocator ;
 alias test_bitmap_from_file : tests/utils/test_bitmap_from_file ;
-alias test_bitmap_shrink : tests/utils/test_bitmap_shrink ;
 alias test_bitstream : tests/utils/test_bitstream ;
 alias test_cfgloader : tests/utils/test_cfgloader ;
 alias test_channels_authorizations : tests/utils/test_channels_authorizations ;
@@ -6382,6 +6408,7 @@ alias test_rect : tests/utils/test_rect ;
 alias test_redirection_info : tests/utils/test_redirection_info ;
 alias test_region : tests/utils/test_region ;
 alias test_rle : tests/utils/test_rle ;
+alias test_scaled_image24 : tests/utils/test_scaled_image24 ;
 alias test_stream : tests/utils/test_stream ;
 alias test_string_c : tests/utils/test_string_c ;
 alias test_strutils : tests/utils/test_strutils ;
@@ -6675,7 +6702,6 @@ alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap.coverage : tests/utils/test_bitmap.coverage ;
 alias test_bitmap_data_allocator.coverage : tests/utils/test_bitmap_data_allocator.coverage ;
 alias test_bitmap_from_file.coverage : tests/utils/test_bitmap_from_file.coverage ;
-alias test_bitmap_shrink.coverage : tests/utils/test_bitmap_shrink.coverage ;
 alias test_bitstream.coverage : tests/utils/test_bitstream.coverage ;
 alias test_cfgloader.coverage : tests/utils/test_cfgloader.coverage ;
 alias test_cli.coverage : tests/utils/test_cli.coverage ;
@@ -6705,6 +6731,7 @@ alias test_rect.coverage : tests/utils/test_rect.coverage ;
 alias test_redirection_info.coverage : tests/utils/test_redirection_info.coverage ;
 alias test_region.coverage : tests/utils/test_region.coverage ;
 alias test_rle.coverage : tests/utils/test_rle.coverage ;
+alias test_scaled_image24.coverage : tests/utils/test_scaled_image24.coverage ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
 alias test_string_c.coverage : tests/utils/test_string_c.coverage ;
 alias test_strutils.coverage : tests/utils/test_strutils.coverage ;
@@ -7113,7 +7140,6 @@ alias tests/utils.norec :
   tests/utils/test_bitmap
   tests/utils/test_bitmap_data_allocator
   tests/utils/test_bitmap_from_file
-  tests/utils/test_bitmap_shrink
   tests/utils/test_bitstream
   tests/utils/test_cfgloader
   tests/utils/test_channels_authorizations
@@ -7144,6 +7170,7 @@ alias tests/utils.norec :
   tests/utils/test_redirection_info
   tests/utils/test_region
   tests/utils/test_rle
+  tests/utils/test_scaled_image24
   tests/utils/test_stream
   tests/utils/test_string_c
   tests/utils/test_strutils

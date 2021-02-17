@@ -28,8 +28,6 @@
 
 #include "gdi/capture_api.hpp"
 
-#include "utils/png.hpp"
-#include "utils/bitmap_shrink.hpp"
 #include "utils/log.hpp"
 #include "utils/strutils.hpp"
 
@@ -696,50 +694,9 @@ void SequencedVideoCaptureImpl::VideoCapture::synchronize_times(MonotonicTimePoi
     this->video_cap_ctx.synchronize_times(monotonic_time, real_time);
 }
 
-void SequencedVideoCaptureImpl::zoom(unsigned percent)
-{
-    percent = std::min(percent, 100u);
-    auto const image_view = this->image_frame_api.get_image_view();
-    const unsigned zoom_width = (image_view.width() * percent) / 100;
-    const unsigned zoom_height = (image_view.height() * percent) / 100;
-    this->ic_zoom_factor = percent;
-    this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
-    this->ic_scaled_height = zoom_height;
-    if (this->ic_zoom_factor != 100) {
-        this->ic_scaled_buffer = std::make_unique<uint8_t[]>(this->ic_scaled_width * this->ic_scaled_height * 3);
-    }
-}
-
 void SequencedVideoCaptureImpl::ic_flush()
 {
-    if (this->ic_zoom_factor == 100) {
-        this->dump24();
-    }
-    else {
-        this->scale_dump24();
-    }
-}
-
-void SequencedVideoCaptureImpl::dump24()
-{
-    dump_png24(this->ic_trans, this->image_frame_api, true);
-}
-
-void SequencedVideoCaptureImpl::scale_dump24()
-{
-    auto image_view = this->image_frame_api.get_image_view();
-    scale_data(
-        this->ic_scaled_buffer.get(),
-        image_view.data(),
-        this->ic_scaled_width,
-        image_view.width(),
-        this->ic_scaled_height,
-        image_view.height(),
-        image_view.line_size());
-    ::dump_png24(
-        this->ic_trans, this->ic_scaled_buffer.get(),
-        this->ic_scaled_width, this->ic_scaled_height,
-        this->ic_scaled_width * 3, false);
+    this->ic_scaled_png.dump_png24(this->ic_trans, this->image_frame_api, true);
 }
 
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::video_sequencer_periodic_snapshot(
@@ -756,7 +713,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::video_sequencer_periodi
 
 SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     CaptureParams const & capture_params,
-    unsigned image_zoom,
+    unsigned png_width, unsigned png_height,
     /* const */RDPDrawable & drawable,
     gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params,
@@ -767,24 +724,15 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , ic_trans(
     capture_params.record_path, capture_params.basename, ".png",
     capture_params.groupid, capture_params.session_log)
-, ic_zoom_factor(std::min(image_zoom, 100u))
 , ic_drawable(drawable)
 , image_frame_api(image_frame)
+, ic_scaled_png(png_width, png_height)
 , start_break(capture_params.now)
 , break_interval((video_params.video_interval > std::chrono::microseconds::zero())
     ? video_params.video_interval
     : std::chrono::microseconds::max())
 , next_video_notifier(next_video_notifier)
-{
-    auto const image_view = image_frame.get_image_view();
-    const unsigned zoom_width = (image_view.width() * this->ic_zoom_factor) / 100;
-    const unsigned zoom_height = (image_view.height() * this->ic_zoom_factor) / 100;
-    this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
-    this->ic_scaled_height = zoom_height;
-    if (this->ic_zoom_factor != 100) {
-        this->ic_scaled_buffer = std::make_unique<uint8_t[]>(this->ic_scaled_width * this->ic_scaled_height * 3);
-    }
-}
+{}
 
 void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNextVideo::Reason reason)
 {

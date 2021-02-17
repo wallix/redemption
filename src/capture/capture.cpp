@@ -47,15 +47,13 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/ranges.hpp"
 
-#include "utils/bitmap_shrink.hpp"
+#include "utils/scaled_image24.hpp"
 #include "utils/colors.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
-#include "utils/png.hpp"
 #include "utils/stream.hpp"
 #include "utils/utf.hpp"
 #include "utils/timestamp_tracer.hpp"
-#include "utils/monotonic_clock.hpp" // TODO remove this
 
 #include "transport/file_transport.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
@@ -660,11 +658,7 @@ protected:
 
 private:
     const MonotonicTimeToRealTime monotonic_to_real;
-    unsigned zoom_factor;
-    unsigned scaled_width;
-    unsigned scaled_height;
-
-    std::unique_ptr<uint8_t[]> scaled_buffer;
+    const ScaledPng24 scaled_png;
 
 protected:
     TimestampTracer timestamp_tracer;
@@ -692,22 +686,12 @@ protected:
     , last_time_capture(capture_params.now)
     , frame_interval(png_params.png_interval)
     , monotonic_to_real(capture_params.now, capture_params.real_now)
-    , zoom_factor(png_params.zoom)
-    , scaled_width{(((image_view.width() * this->zoom_factor) / 100)+3) & 0xFFC}
-    , scaled_height{((image_view.height() * this->zoom_factor) / 100)}
+    , scaled_png{png_params.png_width, png_params.png_height}
     , timestamp_tracer(image_view)
     , image_frame_api(imageFrameApi)
-    {
-        if (this->zoom_factor != 100) {
-            this->scaled_buffer = std::make_unique<uint8_t[]>(
-                this->scaled_width * this->scaled_height * 3);
-        }
-    }
+    {}
 
     void resize(WritableImageView const & image_view) {
-        this->scaled_width  = ((((image_view.width()  * this->zoom_factor) / 100) + 3) & 0xFFC);
-        this->scaled_height =  (((image_view.height() * this->zoom_factor) / 100));
-
         this->timestamp_tracer = TimestampTracer(image_view);
     }
 
@@ -726,21 +710,7 @@ public:
 
     void dump()
     {
-        auto const image_view = this->image_frame_api.get_writable_image_view();
-        if (this->zoom_factor == 100) {
-            ::dump_png24(this->trans, image_view, true);
-        }
-        else {
-            scale_data(
-                this->scaled_buffer.get(), image_view.data(),
-                this->scaled_width, image_view.width(),
-                this->scaled_height, image_view.height(),
-                image_view.line_size());
-            ::dump_png24(
-                this->trans, this->scaled_buffer.get(),
-                this->scaled_width, this->scaled_height,
-                this->scaled_width * 3, false);
-        }
+        this->scaled_png.dump_png24(this->trans, this->image_frame_api, true);
     }
 
      virtual void clear_old() {}
@@ -1564,8 +1534,8 @@ Capture::Capture(
                 notifier = this->notifier_next_video;
             }
             this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
-                capture_params, png_params.zoom, *this->gd_drawable,
-                *image_frame_api_ptr, video_params, notifier);
+                capture_params, png_params.png_width, png_params.png_height,
+                *this->gd_drawable, *image_frame_api_ptr, video_params, notifier);
         }
 
         if (capture_video_full) {

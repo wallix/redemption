@@ -1079,7 +1079,6 @@ public:
         PngParams png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
-            100u,
             (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
             ini.get<cfg::video::png_limit>() : 0,
             true,

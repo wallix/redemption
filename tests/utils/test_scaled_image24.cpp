@@ -20,9 +20,13 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "utils/scaled_image24.hpp"
+#include "utils/bitmap_from_file.hpp"
+#include "utils/png.hpp"
 
-#include "utils/bitmap_shrink.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/check_img.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 
 RED_AUTO_TEST_CASE(TestSimpleShrink)
@@ -93,11 +97,43 @@ RED_AUTO_TEST_CASE(TestSimpleShrink)
     static_assert(sizeof(expected) == sizeof(scaled_buffer));
 
     // Zoom 50
-    scale_data(
+    scale_image24(
         scaled_buffer, data,
         scaled_width, width,
         scaled_height, height,
         rowsize);
 
     RED_CHECK(make_array_view(expected) == make_array_view(scaled_buffer));
+}
+
+RED_AUTO_TEST_CASE(TestScaleImage)
+{
+    RED_CHECK(!ScaledPng24(0, 0).is_scaled());
+    RED_CHECK(!ScaledPng24(10, 0).is_scaled());
+    RED_CHECK(!ScaledPng24(0, 10).is_scaled());
+
+    auto bmp = bitmap_from_file(FIXTURES_PATH "/win2008capture10.png", BGRColor());
+    RED_REQUIRE(bmp.cx() == 800);
+    RED_REQUIRE(bmp.cy() == 600);
+    RED_REQUIRE(bmp.bpp() == BitsPerPixel::BitsPP24);
+
+    // Zoom 50
+    const uint16_t width = 400;
+    const uint16_t height = 300;
+    const unsigned line_size = ((width + 3) & 0xffc) * 3;
+
+    BufTransport trans;
+    ScaledPng24 scaled_png(width, height);
+    RED_CHECK(scaled_png.is_scaled());
+
+    scaled_png.dump_png24(trans, bmp, false);
+
+    uint8_t data[line_size * height];
+    WritableImageView img{
+        data, width, height, line_size,
+        BitsPerPixel::BitsPP24, ImageView::Storage::TopToBottom
+    };
+
+    read_png24(trans, img);
+    RED_CHECK_IMG(img, FIXTURES_PATH "/scaled_image24/win2008capture10_50_percent.png");
 }
