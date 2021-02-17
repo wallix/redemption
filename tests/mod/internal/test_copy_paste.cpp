@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestPaste)
 {
     ScreenInfo screen_info{120, 20, BitsPerPixel{24}};
 
-    CopyPaste copy_paste;
+    CopyPaste copy_paste{false};
     CopyPasteFront front(screen_info, copy_paste);
     TestGraphic gd(screen_info.width, screen_info.height);
 

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "mod/internal/widget/notify_api.hpp"
+#include "utils/sugar/array_view.hpp"
 
 #include <cstdint>
 #include <cstddef>
@@ -28,6 +29,7 @@
 
 class FrontAPI;
 class WidgetEdit;
+class Widget;
 class InStream;
 namespace CHANNELS
 {
@@ -37,6 +39,28 @@ namespace CHANNELS
 
 class CopyPaste
 {
+public:
+    explicit CopyPaste(bool verbose)
+    : verbose(verbose)
+    {}
+
+    CopyPaste(const CopyPaste &) = delete;
+    CopyPaste & operator=(const CopyPaste &) = delete;
+
+    bool ready(FrontAPI & front);
+
+    explicit operator bool () const noexcept
+    {
+        return this->channel_;
+    }
+
+    void paste(WidgetEdit & edit);
+
+    void copy(chars_view str);
+
+    void send_to_mod_channel(InStream & chunk, uint32_t flags);
+
+private:
     FrontAPI * front_ = nullptr;
     const CHANNELS::ChannelDef * channel_ = nullptr;
     WidgetEdit * paste_edit_ = nullptr;
@@ -56,7 +80,7 @@ class CopyPaste
 
         static constexpr std::size_t max_size()
         {
-            return sizeof(buf_) / sizeof(buf_[0]) - 1;
+            return static_size - 1;
         }
 
         void utf16_push_back(const uint8_t * s, std::size_t n);
@@ -78,36 +102,10 @@ class CopyPaste
     };
 
     LimitString clipboard_str_;
+    size_t long_data_response_size = 0;
     bool has_clipboard_ = false;
-    std::size_t long_data_response_size = 0;
-
-    bool       client_use_long_format_names = false;
-    bool const server_use_long_format_names = true;
-
+    bool client_use_long_format_names = false;
     bool verbose;
-
-public:
-    explicit CopyPaste(bool verbose = false) /*NOLINT*/
-    : verbose(verbose)
-    {}
-
-    CopyPaste(const CopyPaste &) = delete;
-    CopyPaste & operator=(const CopyPaste &) = delete;
-
-    bool ready(FrontAPI & front);
-
-    explicit operator bool () const noexcept
-    {
-        return this->channel_;
-    }
-
-    void paste(WidgetEdit & edit);
-
-    void copy(const char * s, std::size_t n);
-
-    void copy(const char * s);
-
-    void send_to_mod_channel(InStream & chunk, uint32_t flags);
 };
 
 void copy_paste_process_event(
