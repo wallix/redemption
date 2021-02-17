@@ -1732,6 +1732,7 @@ void Capture::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint
         this->wrm_capture_obj->synchronize_times(monotonic_time, real_time);
     }
 
+#ifndef REDEMPTION_NO_FFMPEG
     if (this->sequenced_video_capture_obj) {
         this->sequenced_video_capture_obj->synchronize_times(monotonic_time, real_time);
     }
@@ -1739,6 +1740,7 @@ void Capture::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint
     if (this->full_video_capture_obj) {
         this->full_video_capture_obj->synchronize_times(monotonic_time, real_time);
     }
+#endif
 
     if (this->meta_capture_obj) {
         this->meta_capture_obj->meta.synchronize_times(monotonic_time, real_time);
