@@ -486,8 +486,7 @@ public:
 
 private:
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/,
-        bool /*ignore_frame_in_timeval*/
+        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/
     ) override {
         MonotonicTimePoint::duration const time_to_wait = 2s;
 
@@ -754,7 +753,7 @@ public:
      }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/, bool /*ignore_frame_in_timeval*/
+        MonotonicTimePoint now, uint16_t /*x*/, uint16_t /*y*/
     ) override {
         auto const duration = now - this->last_time_capture;
         std::chrono::microseconds const interval = this->frame_interval;
@@ -836,10 +835,10 @@ public:
     }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t x, uint16_t y, bool ignore_frame_in_timeval
+        MonotonicTimePoint now, uint16_t x, uint16_t y
     ) override {
         if (this->enable_rt_display) {
-            return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
+            return this->PngCapture::periodic_snapshot(now, x, y);
         }
         auto const duration = now - this->last_time_capture;
         return WaitingTimeBeforeNextSnapshot(this->frame_interval - duration % this->frame_interval);
@@ -1064,7 +1063,7 @@ public:
     }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/
     ) override {
         this->monotonic_last_time = now;
         return WaitingTimeBeforeNextSnapshot(10s);
@@ -1295,7 +1294,7 @@ public:
 
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/
     ) override {
         auto const diff {now - this->last_ocr};
 
@@ -1398,7 +1397,7 @@ public:
 
         if (cmd.action == RDP::FrameMarker::FrameEnd) {
             for (gdi::CaptureApi & cap : this->caps) {
-                cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y, false);
+                cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y);
             }
         }
     }
@@ -1857,8 +1856,7 @@ void Capture::add_graphic(gdi::GraphicApi & gd)
 
 Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
     MonotonicTimePoint now,
-    uint16_t cursor_x, uint16_t cursor_y,
-    bool ignore_frame_in_timeval
+    uint16_t cursor_x, uint16_t cursor_y
 ) {
     if (this->gd_drawable) {
         this->gd_drawable->mouse_cursor_pos_x = cursor_x;
@@ -1869,7 +1867,7 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
     auto time = MonotonicTimePoint::duration::max();
     if (!this->caps.empty()) {
         for (gdi::CaptureApi & cap : this->caps) {
-            auto next_time = cap.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            auto next_time = cap.periodic_snapshot(now, cursor_x, cursor_y);
             time = std::min(time, next_time.duration());
         }
     }

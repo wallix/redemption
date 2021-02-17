@@ -66,7 +66,6 @@ int main(int ac, char ** av)
     int vx = 5;
     int vy = 4;
     auto const color = encode_color24()(WABGREEN);
-    bool ignore_frame_in_timeval = false;
     for (size_t x = 0; x < 200; x++) {
         r.y += vy;
         drawable.draw(RDPOpaqueRect(r, encode_color24()(BLUE)),  screen, color_cxt);
@@ -76,7 +75,7 @@ int main(int ac, char ** av)
         now.tv_sec  = usec / 1000000LL;
         now.tv_usec = (usec % 1000000LL);
         drawable.set_mouse_cursor_pos(r.x + 10, r.y + 10);
-        capture.periodic_snapshot(now,  r.x + 10, r.y + 10, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now,  r.x + 10, r.y + 10);
         if ((r.x + r.cx >= drawable.width())  || (r.x < 0)) { vx = -vx; }
         if ((r.y + r.cy >= drawable.height()) || (r.y < 0)) { vy = -vy; }
     }

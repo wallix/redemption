@@ -114,25 +114,24 @@ static void gen_wrm1(
     auto now = wrm_test.now;
 
     auto const color_cxt = gdi::ColorCtx::depth24();
-    bool ignore_frame_in_timeval = false;
 
     gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
 
     // ------------------------------ BREAKPOINT ------------------------------
 
@@ -140,19 +139,19 @@ static void gen_wrm1(
     wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
 
     gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
     wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
 
     // ------------------------------ BREAKPOINT ------------------------------
 
@@ -160,7 +159,7 @@ static void gen_wrm1(
     wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
     now += 1s;
     wrm.send_timestamp_chunk(now);
-    wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+    wrm.periodic_snapshot(now, 0, 0);
     // The destruction of capture object will finalize the metafile content
 }
 

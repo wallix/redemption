@@ -82,7 +82,6 @@ FileToGraphic::FileToGraphic(
     , begin_capture(begin_capture)
     , end_capture(end_capture == MonotonicTimePoint{} ? MonotonicTimePoint::max() : end_capture)
     , max_order_count(0)
-    , ignore_frame_in_timeval(false)
     , statistics()
     , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
     , verbose(verbose)
@@ -500,9 +499,9 @@ void FileToGraphic::interpret_order()
             this->mouse_x = this->stream.in_uint16_le();
             this->mouse_y = this->stream.in_uint16_le();
 
-            if (  (this->info.version > 1)
-                && this->stream.in_uint8()) {
-                this->ignore_frame_in_timeval = true;
+            if (this->info.version > 1) {
+                // ignore_frame_in_timeval
+                this->stream.in_skip_bytes(1);
             }
 
             if (REDEMPTION_UNLIKELY(bool(this->verbose & Verbose::timestamp))) {
@@ -1067,10 +1066,7 @@ void FileToGraphic::play(bool const & requested_to_stop)
 void FileToGraphic::snapshot_play()
 {
     for (gdi::CaptureApi * cap : this->capture_consumers){
-        cap->periodic_snapshot(
-            this->record_now, this->mouse_x, this->mouse_y,
-            this->ignore_frame_in_timeval
-        );
+        cap->periodic_snapshot(this->record_now, this->mouse_x, this->mouse_y);
     }
 }
 

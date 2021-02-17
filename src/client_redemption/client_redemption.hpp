@@ -1078,7 +1078,7 @@ public:
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.begin_update();
                 this->capture->wrm_capture.begin_update();
-                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
             }
         }
     }
@@ -1090,7 +1090,7 @@ public:
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.end_update();
                 this->capture->wrm_capture.end_update();
-                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+                this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
             }
         }
     }
@@ -1116,7 +1116,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order);
             this->capture->wrm_capture.draw(order);
-            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
         }
     }
 
@@ -1132,7 +1132,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip_or_bmp, others...);
             this->capture->wrm_capture.draw(order, clip_or_bmp, others...);
-            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
         }
     }
 
@@ -1149,7 +1149,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.screen_info.bpp), &this->config.mod_palette), others...);
             this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.screen_info.bpp), &this->config.mod_palette), others...);
-            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(MonotonicTimePoint::clock::now(), this->_callback.mouse_data.x, this->_callback.mouse_data.y);
         }
     }
 

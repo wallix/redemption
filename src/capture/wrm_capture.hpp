@@ -893,7 +893,7 @@ public:
     }
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t x, uint16_t y, bool /*ignore_frame_in_timeval*/
+        MonotonicTimePoint now, uint16_t x, uint16_t y
     ) override {
         this->graphic_to_file.mouse(x, y);
 

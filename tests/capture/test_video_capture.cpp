@@ -44,7 +44,7 @@ namespace
 {
     void simple_movie(
         MonotonicTimePoint now, unsigned duration, RDPDrawable & drawable,
-        gdi::CaptureApi & capture, bool ignore_frame_in_timeval, bool mouse
+        gdi::CaptureApi & capture, bool mouse
     ) {
         Rect screen(0, 0, drawable.width(), drawable.height());
         auto const color_cxt = gdi::ColorCtx::depth24();
@@ -63,8 +63,8 @@ namespace
             uint16_t cursor_x = mouse ? r.x + 10 : 0;
             uint16_t cursor_y = mouse ? r.y + 10 : 0;
             drawable.set_mouse_cursor_pos(cursor_x, cursor_y);
-            capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
-            capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+            capture.periodic_snapshot(now, cursor_x, cursor_y);
+            capture.periodic_snapshot(now, cursor_x, cursor_y);
             if ((r.x + r.cx >= drawable.width())  || (r.x < 0)) { vx = -vx; }
             if ((r.y + r.cy >= drawable.height()) || (r.y < 0)) { vy = -vy; }
         }
@@ -72,7 +72,7 @@ namespace
         now += 40000us;
         uint16_t cursor_x = mouse ? r.x + 10 : 0;
         uint16_t cursor_y = mouse ? r.y + 10 : 0;
-        capture.periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, cursor_x, cursor_y);
     }
 
     struct notified_on_video_change : public NotifyNextVideo
@@ -91,7 +91,7 @@ namespace
 
     void simple_sequenced_video(
         char const* dirname, Codec const& codec, std::chrono::seconds video_interval,
-        unsigned loop_duration, bool ignore_frame_in_timeval, bool mouse)
+        unsigned loop_duration, bool mouse)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
@@ -105,13 +105,12 @@ namespace
             capture_params, 100 /* zoom */, drawable, drawable, video_params,
             next_video_notifier);
         simple_movie(
-            monotonic_time, loop_duration, drawable, video_capture,
-            ignore_frame_in_timeval, mouse);
+            monotonic_time, loop_duration, drawable, video_capture, mouse);
     }
 
     void simple_full_video(
         char const* dirname, Codec const& codec, std::chrono::seconds video_interval,
-        unsigned loop_duration, bool ignore_frame_in_timeval, bool mouse)
+        unsigned loop_duration, bool mouse)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
@@ -123,15 +122,13 @@ namespace
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
-        simple_movie(
-            monotonic_time, loop_duration, drawable, video_capture,
-            ignore_frame_in_timeval, mouse);
+        simple_movie(monotonic_time, loop_duration, drawable, video_capture, mouse);
     }
 } // namespace
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
 {
-    simple_sequenced_video(wd.dirname(), mp4, 2s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), mp4, 2s, 250, true);
 
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "2bis.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "2s.png");
@@ -149,7 +146,7 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4, wd)
 
 RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
 {
-    simple_sequenced_video(wd.dirname(), mp4, 1s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), mp4, 1s, 250, true);
 
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "1s.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "1s.png");
@@ -177,7 +174,7 @@ RED_AUTO_TEST_CASE_WD(SequencedVideoCaptureX264, wd)
 
 RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4_3, wd)
 {
-    simple_sequenced_video(wd.dirname(), mp4, 5s, 250, false, true);
+    simple_sequenced_video(wd.dirname(), mp4, 5s, 250, true);
 
     RED_CHECK_IMG(wd.add_file("video-000000.png"), IMG_TEST_PATH "2bis.png");
     RED_CHECK_IMG(wd.add_file("video-000001.png"), IMG_TEST_PATH "5s.png");
@@ -189,14 +186,14 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4_3, wd)
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264, wd)
 {
-    simple_full_video(wd.dirname(), mp4, 0s, 250, false, true);
+    simple_full_video(wd.dirname(), mp4, 0s, 250, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 106930 +- 10000_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264_2, wd)
 {
-    simple_full_video(wd.dirname(), mp4, 0s, 250, false, false);
+    simple_full_video(wd.dirname(), mp4, 0s, 250, false);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 92693 +- 10000_v);
 }

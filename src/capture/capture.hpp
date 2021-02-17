@@ -114,8 +114,7 @@ public:
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now,
-        uint16_t cursor_x, uint16_t cursor_y,
-        bool ignore_frame_in_timeval
+        uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
     void visibility_rects_event(Rect rect) override;

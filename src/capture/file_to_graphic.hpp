@@ -141,8 +141,6 @@ public:
 private:
     WrmMetaChunk info {};
 
-    bool ignore_frame_in_timeval;
-
 public:
     Rect      max_image_frame_rect;
     Dimension min_image_frame_dim;
@@ -286,7 +284,6 @@ private:
 
             if (this->begin_capture <= this->record_now) {
                 this->snapshot_play();
-                this->ignore_frame_in_timeval = false;
                 update_progess(this->record_now);
             }
 

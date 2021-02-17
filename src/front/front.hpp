@@ -1161,8 +1161,7 @@ public:
             {
                 auto const capture_ms = this->capture->periodic_snapshot(
                     event.alarm.now,
-                    this->mouse_x, this->mouse_y,
-                    false  // ignore frame in time interval
+                    this->mouse_x, this->mouse_y
                 ).duration();
                 if (capture_ms != capture_ms.max()){
                     event.alarm.reset_timeout(capture_ms);

@@ -140,11 +140,11 @@ struct FullVideoCaptureImpl final : gdi::CaptureApi
     ~FullVideoCaptureImpl();
 
     void frame_marker_event(
-        MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/
+        MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/
     ) override;
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
-        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
+        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
     void encoding_video_frame();
@@ -180,13 +180,12 @@ public:
         NotifyNextVideo & next_video_notifier);
 
     void frame_marker_event(
-        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y, bool ignore_frame_in_timeval
+        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now,
-        uint16_t cursor_x, uint16_t cursor_y,
-        bool ignore_frame_in_timeval
+        uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
     void zoom(unsigned percent);

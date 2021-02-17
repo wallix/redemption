@@ -175,48 +175,46 @@ namespace
     void capture_draw_color1(MonotonicTimePoint& now, Capture& capture, Rect scr, uint16_t cy)
     {
         auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, cy, 30), encode_color24()(BLUE)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, cy, 30), encode_color24()(WHITE)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, cy, 30), encode_color24()(RED)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
     }
 
     void capture_draw_color2(MonotonicTimePoint& now, Capture& capture, Rect scr, uint16_t cy)
     {
         auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, cy, 30), encode_color24()(BLACK)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, cy, 30), encode_color24()(PINK)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, cy, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
     }
 
     inline time_t to_time_t(MonotonicTimePoint t)
@@ -357,12 +355,10 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         auto const color_cxt = gdi::ColorCtx::depth16();
         capture.set_pointer(0, edit_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
-        bool ignore_frame_in_timeval = true;
-
         capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 5);
     });
 
     RED_CHECK_FILE_CONTENTS(record_wd.add_file("test_capture-000000.png"),
@@ -420,12 +416,11 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         capture_draw_color2(now, capture, scr, 1200);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
     });
 
     auto mwrm = record_wd.add_file("resizing-capture-0.mwrm");
@@ -558,12 +553,11 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         capture_draw_color2(now, capture, scr, 700);
 
         auto const color_cxt = gdi::ColorCtx::depth24();
-        bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
         now += 1s;
         capture.force_flush(now, 0, 0);
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        capture.periodic_snapshot(now, 0, 0);
     });
 
     auto mwrm = record_wd.add_file("resizing-capture-1.mwrm");
@@ -763,19 +757,19 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         send_kbd();
         send_kbd();
         send_kbd();
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         send_kbd();
         meta.title_changed(now, cstr_array_view("Blah1"));
         now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah2"));
         now += 1s;
         send_kbd();
         send_kbd();
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah3"));
         now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
     }
 
     RED_CHECK_EQ(
@@ -804,18 +798,18 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
             now += 1s;
         };
         send_kbd();
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         send_kbd();
         meta.title_changed(now, cstr_array_view("Bl\"ah1"));
         now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah\\2"));
         meta.session_update(now, LogId::INPUT_LANGUAGE, {
             KVLog("identifier"_av, "fr"_av),
             KVLog("display_name"_av, "xy\\z"_av),
         });
         now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
     }
 
     RED_CHECK_EQ(
@@ -844,13 +838,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         };
 
         meta.title_changed(now, cstr_array_view("Blah1")); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
         send_kbd(); now += 1s;
         send_kbd(); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
     }
 
@@ -897,13 +891,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         });
         now += 1s;
 
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
         send_kbd(); now += 1s;
         send_kbd(); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
     }
 
@@ -949,13 +943,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
 
         send_kbd(); now += 1s;
 
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
         send_kbd(); now += 1s;
         send_kbd(); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
     }
 
@@ -995,7 +989,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
 
         meta.possible_active_window_change();
 
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
         meta.kbd_input(now, 'D'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
@@ -1004,13 +998,13 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, 'G'); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\t'); now += 1s;
         meta.kbd_input(now, 'H'); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
         meta.kbd_input(now, 'I'); now += 1s;
         meta.kbd_input(now, 'J'); now += 1s;
@@ -1123,7 +1117,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
 
         meta.possible_active_window_change();
 
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah2")); now += 1s;
         meta.kbd_input(now, 'D'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
@@ -1132,13 +1126,13 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, 'G'); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.title_changed(now, cstr_array_view("Blah3")); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\r'); now += 1s;
         meta.kbd_input(now, '\t'); now += 1s;
         meta.kbd_input(now, 'H'); now += 1s;
-        meta.periodic_snapshot(now, 0, 0, false);
+        meta.periodic_snapshot(now, 0, 0);
         meta.next_video(now);
         meta.kbd_input(now, 'I'); now += 1s;
         meta.kbd_input(now, 'J'); now += 1s;
@@ -2503,13 +2497,13 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 
         // gestionnaire de serveur
         draw_img(FIXTURES_PATH "/m-21288-2.bmp");
-        capture.periodic_snapshot(now, 0, 0, false);
+        capture.periodic_snapshot(now, 0, 0);
 
         now += 100s;
         capture.session_update(now, LogId::PROBE_STATUS, {
             KVLog("status"_av, "Unknown"_av),
         });
-        capture.periodic_snapshot(now, 0, 0, false);
+        capture.periodic_snapshot(now, 0, 0);
 
         now += 100s;
         capture.session_update(now, LogId::PROBE_STATUS, {
@@ -2523,14 +2517,14 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
 
         // qwhybcaliueLkaASsFkkUibnkzkwwkswq.txt - Bloc-notes
         draw_img(FIXTURES_PATH "/win2008capture10.bmp");
-        capture.periodic_snapshot(now, 0, 0, false);
+        capture.periodic_snapshot(now, 0, 0);
         now += 100s;
         capture.session_update(now, LogId::FOREGROUND_WINDOW_CHANGED, {
             KVLog("windows"_av, "b"_av),
             KVLog("class"_av, "x"_av),
             KVLog("command_line"_av, "y"_av),
         });
-        capture.periodic_snapshot(now, 0, 0, false);
+        capture.periodic_snapshot(now, 0, 0);
 
         now += 100s;
         // disable sespro
@@ -2543,12 +2537,12 @@ RED_AUTO_TEST_CASE(TestSwitchTitleExtractor)
             KVLog("class"_av, "t"_av),
             KVLog("command_line"_av, "v"_av),
         });
-        capture.periodic_snapshot(now, 0, 0, false);
+        capture.periodic_snapshot(now, 0, 0);
 
         now += 100s;
         // Gestionnaire de licences TS
         draw_img(FIXTURES_PATH "/win2008capture.bmp");
-        capture.periodic_snapshot(now, 0, 0, false);
+        capture.periodic_snapshot(now, 0, 0);
     });
 
     auto meta_content =

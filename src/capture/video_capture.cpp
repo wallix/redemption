@@ -473,13 +473,13 @@ FullVideoCaptureImpl::~FullVideoCaptureImpl()
 
 
 void FullVideoCaptureImpl::frame_marker_event(
-    MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
 {
     this->video_cap_ctx.frame_marker_event(this->recorder);
 }
 
 WaitingTimeBeforeNextSnapshot FullVideoCaptureImpl::periodic_snapshot(
-    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
 {
     return this->video_cap_ctx.snapshot(this->recorder, now);
 }
@@ -559,7 +559,7 @@ void SequencedVideoCaptureImpl::SequenceTransport::do_send(const uint8_t * data,
 }
 
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
-    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
 {
     this->vc.periodic_snapshot(now);
     if (!this->ic_has_first_img) {
@@ -569,7 +569,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
 }
 
 void SequencedVideoCaptureImpl::frame_marker_event(
-    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/, bool /*ignore_frame_in_timeval*/)
+    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
 {
     this->vc.frame_marker_event();
     if (!this->ic_has_first_img) {

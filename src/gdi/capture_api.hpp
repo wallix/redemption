@@ -60,17 +60,15 @@ struct CaptureApi : private noncopyable
 
     virtual WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now,
-        uint16_t cursor_x, uint16_t cursor_y,
-        bool ignore_frame_in_timeval
+        uint16_t cursor_x, uint16_t cursor_y
     ) = 0;
 
     virtual void frame_marker_event(
         MonotonicTimePoint now,
-        uint16_t cursor_x, uint16_t cursor_y,
-        bool ignore_frame_in_timeval
+        uint16_t cursor_x, uint16_t cursor_y
     )
     {
-        this->periodic_snapshot(now, cursor_x, cursor_y, ignore_frame_in_timeval);
+        this->periodic_snapshot(now, cursor_x, cursor_y);
     }
 
     virtual void visibility_rects_event(Rect /*rect*/) {}
