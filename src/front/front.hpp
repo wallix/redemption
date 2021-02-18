@@ -88,6 +88,7 @@
 #include "core/RDP/slowpath.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/x224.hpp"
+#include "core/RDP/virtual_channel_pdu.hpp"
 #include "core/app_path.hpp"
 #include "core/callback.hpp"
 #include "core/channel_list.hpp"

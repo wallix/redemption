@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
 
 uint32_t ClientIODiskAPI::FileStatvfs::_default_FileSystemAttributes() noexcept
 {

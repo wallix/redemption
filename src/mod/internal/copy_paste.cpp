@@ -139,7 +139,6 @@ void CopyPaste::copy(chars_view str)
         out_s,
         Cliprdr::IsLongFormat(this->client_use_long_format_names),
         std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}}});
-    hexdump(out_s.get_produced_bytes());
 
     this->front_->send_to_channel(
         *this->channel_, out_s.get_produced_bytes(),

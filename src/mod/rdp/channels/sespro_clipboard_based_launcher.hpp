@@ -28,10 +28,9 @@
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
-#include "utils/timebase.hpp"
+#include "core/RDP/slowpath.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/clipboard/format_list_serialize.hpp"
-#include "acl/auth_api.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 public:

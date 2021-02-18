@@ -86,11 +86,7 @@ test-run-js tests/red_channels/test_clipboard :
   tests/red_channels/test_clipboard.cpp
 :
   src/red_channels/clipboard.bc
-  src/system/ssl_mod_exp.bc
-  src/core/RDP/mppc.bc
   src/core/error.bc
-  src/mod/rdp/rdp_negociation_data.bc
-  src/utils/hexdump.bc
   src/utils/stacktrace.bc
   src/utils/utf.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -99,13 +95,6 @@ test-run-js tests/red_channels/test_js_channel :
   tests/red_channels/test_js_channel.cpp
 :
   src/red_channels/js_channel.bc
-  src/system/ssl_mod_exp.bc
-  src/core/RDP/mppc.bc
-  src/core/error.bc
-  src/mod/rdp/rdp_negociation_data.bc
-  src/utils/hexdump.bc
-  src/utils/stacktrace.bc
-  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run-js tests/redjs/test_front :
   tests/redjs/test_front.cpp
@@ -113,18 +102,14 @@ test-run-js tests/redjs/test_front :
   src/redjs/front.bc
   src/redjs/graphics.bc
   src/redjs/image_conversions.bc
-  src/system/ssl_mod_exp.bc
   src/client_redemption/pointer_to_rgba8888.bc
-  src/core/RDP/mppc.bc
   src/core/RDP/rdp_pointer.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/clip_from_cmd.bc
   src/gdi/graphic_api.bc
-  src/mod/rdp/rdp_negociation_data.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
-  src/utils/hexdump.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)

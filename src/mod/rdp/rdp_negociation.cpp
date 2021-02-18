@@ -37,6 +37,8 @@
 #include "core/RDP/gcc/userdata/cs_core.hpp"
 #include "core/RDP/gcc/userdata/cs_cluster.hpp"
 #include "core/RDP/gcc.hpp"
+#include "core/RDP/sec.hpp"
+#include "core/RDP/mcs.hpp"
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"

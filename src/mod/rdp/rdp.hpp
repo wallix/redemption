@@ -75,6 +75,7 @@
 #include "core/RDP/x224.hpp"
 #include "core/RDP/orders/remoteFx.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
+#include "core/RDP/virtual_channel_pdu.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 
 #include "core/RDPEA/audio_output.hpp"

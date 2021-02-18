@@ -24,6 +24,7 @@
 #include "core/channel_names.hpp"
 #include "core/channel_list.hpp"
 #include "mod/mod_api.hpp"
+#include "utils/stream.hpp"
 #endif
 
 class ClientChannelMod {

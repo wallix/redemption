@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/RDP/slowpath.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/channel_list.hpp"
