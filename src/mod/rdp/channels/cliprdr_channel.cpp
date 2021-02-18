@@ -3231,8 +3231,8 @@ void ClipboardVirtualChannel::DLP_antivirus_check_channels_files()
 
 bool ClipboardVirtualChannel::use_long_format_names() const
 {
-    return (this->client_ctx.use_long_format_names
-        && this->server_ctx.use_long_format_names);
+    return this->client_ctx.use_long_format_names
+        && this->server_ctx.use_long_format_names;
 }
 
 void ClipboardVirtualChannel::empty_client_clipboard()

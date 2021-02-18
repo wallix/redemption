@@ -25,7 +25,7 @@
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 #include "utils/stream.hpp"
-#include "mod/internal/widget/edit.hpp"
+#include "mod/internal/widget/widget.hpp"
 #include "core/channel_names.hpp"
 #include "core/stream_throw_helpers.hpp"
 
@@ -65,7 +65,6 @@ void CopyPaste::LimitString::utf16_push_back(const uint8_t * s, size_t n)
         this->max_size() - this->size_
     );
     this->buf_[this->size_] = 0;
-    this->widget_edit_buf_is_computed = false;
 }
 
 void CopyPaste::LimitString::assign(char const * s, size_t n)
@@ -75,37 +74,11 @@ void CopyPaste::LimitString::assign(char const * s, size_t n)
         : ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(s), this->max_size()));
     memcpy(this->buf_, s, this->size_);
     this->buf_[this->size_] = 0;
-    this->widget_edit_buf_is_computed = false;
 }
 
-const char * CopyPaste::LimitString::c_str() /*const*/
+zstring_view CopyPaste::LimitString::zstring() const
 {
-    if (!this->widget_edit_buf_is_computed) {
-        this->widget_edit_buf_is_computed = true;
-        auto const data = this->buf_;
-        auto const sz = this->size();
-        auto const data_end = data + sz;
-        auto p = std::find_if(data, data_end, [](uint8_t c){
-            return c == '\t' || c == '\n' || c == '\r';
-        });
-        if (p == data_end) {
-            this->widget_edit_buf_selected_ = this->buf_;
-        }
-        // ignore multi-line
-        else {
-            this->widget_edit_buf_selected_ = this->widget_edit_buf_;
-            memcpy(this->widget_edit_buf_, data, p - data);
-            auto pnew = this->widget_edit_buf_ + (p - data);
-            if (*p == '\t') {
-                for (; p != data_end && !(*p == '\n' || *p == '\r'); ++pnew, ++p) {
-                    *pnew = *p == '\t' ? ' ' : *p;
-                }
-            }
-            *pnew = '\0';
-        }
-    }
-
-    return this->widget_edit_buf_selected_;
+    return zstring_view{zstring_view::is_zero_terminated(), this->buf_, this->size_};
 }
 
 
@@ -139,14 +112,14 @@ bool CopyPaste::ready(FrontAPI & front)
     return false;
 }
 
-void CopyPaste::paste(WidgetEdit & edit)
+void CopyPaste::paste(Widget & widget)
 {
     if (this->has_clipboard_) {
-        this->paste_edit_ = nullptr;
-        edit.insert_text(this->clipboard_str_.c_str());
+        this->pasted_widget_ = nullptr;
+        widget.clipboard_insert_utf8(this->clipboard_str_.zstring());
     }
-    else {
-        this->paste_edit_ = &edit;
+    else if (!this->pasted_widget_) {
+        this->pasted_widget_ = &widget;
 
         send_to_front_channel(
             *this->front_, *this->channel_,
@@ -166,6 +139,7 @@ void CopyPaste::copy(chars_view str)
         out_s,
         Cliprdr::IsLongFormat(this->client_use_long_format_names),
         std::array{Cliprdr::FormatNameRef{RDPECLIP::CF_UNICODETEXT, {}}});
+    hexdump(out_s.get_produced_bytes());
 
     this->front_->send_to_channel(
         *this->channel_, out_s.get_produced_bytes(),
@@ -186,9 +160,9 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
         }
 
         if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-            if (this->paste_edit_) {
-                this->paste_edit_->insert_text(this->clipboard_str_.c_str());
-                this->paste_edit_ = nullptr;
+            if (this->pasted_widget_) {
+                this->pasted_widget_->clipboard_insert_utf8(this->clipboard_str_.zstring());
+                this->pasted_widget_ = nullptr;
             }
 
             this->has_clipboard_ = true;
@@ -200,6 +174,9 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
     }
 
     RDPECLIP::RecvPredictor rp(stream);
+
+    LOG_IF(this->verbose, LOG_INFO, "CopyPaste::send_to_mod_channel msgType=%s",
+           RDPECLIP::get_msgType_name(rp.msgType()));
 
     switch (rp.msgType()) {
         case RDPECLIP::CB_FORMAT_LIST: {
@@ -218,19 +195,33 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
         //case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
         //    break;
 
-        //case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-        //    RDPECLIP::FormatDataRequestPDU().recv(stream);
-        //    this->send_to_front_channel_and_set_buf_size(
-        //        this->clipboard_str_.size() * 2 /*utf8 to utf16*/ + sizeof(RDPECLIP::CliprdrHeader) + 4 /*data_len*/,
-        //        RDPECLIP::FormatDataResponsePDU(true), this->clipboard_str_.c_str()
-        //    );
-        //    break;
+        case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
+            // RDPECLIP::FormatDataRequestPDU format_data_request;
+            // format_data_request.recv(stream);
+
+            constexpr auto header_size = RDPECLIP::CliprdrHeader::size();
+            StaticOutStream<header_size + 2048> out;
+            auto header_data = out.out_skip_bytes(header_size);
+
+            auto data_len = UTF8toUTF16(this->clipboard_str_.zstring(), out.get_tail());
+            out.out_skip_bytes(data_len);
+
+            OutStream out_header(header_data);
+            RDPECLIP::CliprdrHeader(
+                RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL,
+                data_len
+            ).emit(out_header);
+
+            this->front_->send_to_channel(
+                *this->channel_, out.get_produced_bytes(), out.get_offset(),
+                cliprdr_channel_flags
+            );
+
+            break;
+        }
 
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
             RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
-            // TODO: format data response PDU is bypassed and the raw data is managed directly
-            // we should not do that but reassemble data response packet from PDU before pasting
-            // see also condition on this->long_data_response_size
             header.recv(stream);
             if (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -238,9 +229,9 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
 
                     this->clipboard_str_.utf16_push_back(stream.get_current(), header.dataLen() / 2);
 
-                    if (this->paste_edit_) {
-                        this->paste_edit_->insert_text(this->clipboard_str_.c_str());
-                        this->paste_edit_ = nullptr;
+                    if (this->pasted_widget_) {
+                        this->pasted_widget_->clipboard_insert_utf8(this->clipboard_str_.zstring());
+                        this->pasted_widget_ = nullptr;
                     }
 
                     this->has_clipboard_ = true;
@@ -292,30 +283,17 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
             }
         }
         break;
-
-        default:
-            LOG_IF(this->verbose, LOG_INFO,
-                "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType()));
-            break;
     }
 }
 
 
 void copy_paste_process_event(
-    CopyPaste & copy_paste, WidgetEdit & widget_edit, NotifyApi::notify_event_t event)
+    CopyPaste & copy_paste, Widget & widget,
+    NotifyApi::notify_event_t event)
 {
     switch(event) {
-        case NOTIFY_PASTE:
-            copy_paste.paste(widget_edit);
-            break;
-        //TODO enable copy/cut
-        //case NOTIFY_COPY:
-        //    copy_paste.copy(widget_edit.get_text());
-        //    break;
-        //case NOTIFY_CUT:
-        //    copy_paste.copy(widget_edit.get_text());
-        //    widget_edit.set_text("");
-        //    break;
-        default: ;
+        case NOTIFY_PASTE: widget.clipboard_paste(copy_paste); break;
+        case NOTIFY_COPY: widget.clipboard_copy(copy_paste); break;
+        case NOTIFY_CUT: widget.clipboard_copy(copy_paste); break;
     }
 }

@@ -160,9 +160,11 @@ void LoginMod::notify(Widget* sender, notify_event_t event)
     case NOTIFY_CANCEL:
         this->set_mod_signal(BACK_EVENT_STOP);
         break;
-    case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
+    case NOTIFY_PASTE:
+    case NOTIFY_COPY:
+    case NOTIFY_CUT:
         if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event); /*NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)*/
+            copy_paste_process_event(this->copy_paste, *sender, event);
         }
         break;
     default:;

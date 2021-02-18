@@ -246,12 +246,18 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 this->ask_page();
             }
         }
-    } break;
-    case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT: {
+
+        break;
+    }
+
+    case NOTIFY_PASTE:
+    case NOTIFY_COPY:
+    case NOTIFY_CUT:
         if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event); /*NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)*/
+            copy_paste_process_event(this->copy_paste, *widget, event);
         }
-    } break;
+        break;
+
     default:;
     }
 }

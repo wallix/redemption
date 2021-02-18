@@ -91,6 +91,11 @@ public:
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
 
+    void clipboard_paste(CopyPaste& copy_paste) override;
+    void clipboard_copy(CopyPaste& copy_paste) override;
+    void clipboard_cut(CopyPaste& copy_paste) override;
+    void clipboard_insert_utf8(zstring_view text) override;
+
 private:
     void insert_unicode_char(uint16_t unicode_char);
 };

@@ -67,15 +67,16 @@ void DialogMod::init()
 
 void DialogMod::notify(Widget* sender, notify_event_t event)
 {
-    (void)sender;
     switch (event) {
         case NOTIFY_SUBMIT: this->accepted(); break;
         case NOTIFY_CANCEL: this->refused(); break;
-        case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
-        if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event); /*NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)*/
-        }
-        break;
+        case NOTIFY_PASTE:
+        case NOTIFY_COPY:
+        case NOTIFY_CUT:
+            if (this->copy_paste) {
+                copy_paste_process_event(this->copy_paste, *sender, event);
+            }
+            break;
         default:;
     }
 }

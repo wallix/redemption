@@ -22,13 +22,13 @@
 
 #include "mod/internal/widget/notify_api.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <cstdint>
 #include <cstddef>
 
 
 class FrontAPI;
-class WidgetEdit;
 class Widget;
 class InStream;
 namespace CHANNELS
@@ -54,7 +54,7 @@ public:
         return this->channel_;
     }
 
-    void paste(WidgetEdit & edit);
+    void paste(Widget & widget);
 
     void copy(chars_view str);
 
@@ -63,16 +63,14 @@ public:
 private:
     FrontAPI * front_ = nullptr;
     const CHANNELS::ChannelDef * channel_ = nullptr;
-    WidgetEdit * paste_edit_ = nullptr;
+    Widget * pasted_widget_ = nullptr;
 
     class LimitString
     {
+    public:
         static const std::size_t static_size = 1024/* * 4*/;
 
         char buf_[static_size];
-        char widget_edit_buf_[static_size];
-        char * widget_edit_buf_selected_;
-        bool widget_edit_buf_is_computed = false;
         std::size_t size_ = 0;
 
     public:
@@ -87,17 +85,11 @@ private:
 
         void assign(char const * s, std::size_t n);
 
-        const char * c_str() /*const*/;
-
-        [[nodiscard]] std::size_t size() const
-        {
-            return this->size_;
-        }
+        zstring_view zstring() const;
 
         void clear()
         {
             this->size_ = 0;
-            this->widget_edit_buf_is_computed = false;
         }
     };
 
@@ -109,5 +101,5 @@ private:
 };
 
 void copy_paste_process_event(
-    CopyPaste & copy_paste, WidgetEdit & widget_edit,
+    CopyPaste & copy_paste, Widget & widget,
     NotifyApi::notify_event_t event);

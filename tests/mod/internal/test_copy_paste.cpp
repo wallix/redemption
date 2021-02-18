@@ -59,7 +59,8 @@ struct CopyPasteFront : FakeFront
 
     void send_to_channel(
         const CHANNELS::ChannelDef& channel, bytes_view chunk_data,
-        std::size_t /*total_length*/, int /*flags*/) override {
+        std::size_t /*total_length*/, int /*flags*/
+    ) override {
         RED_REQUIRE(channel.name == channel_names::cliprdr);
 
         InStream stream(chunk_data);
@@ -140,9 +141,10 @@ public:
     : copy_paste(copy_paste)
     {}
 
-    void notify(Widget * sender, notify_event_t event) override {
+    void notify(Widget * sender, notify_event_t event) override
+    {
         RED_REQUIRE(sender);
-        copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(sender), event);
+        copy_paste_process_event(this->copy_paste, *sender, event);
     }
 };
 

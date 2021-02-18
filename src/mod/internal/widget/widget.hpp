@@ -23,8 +23,11 @@
 #include "mod/internal/widget/notify_api.hpp"
 #include "utils/rect.hpp"
 #include "utils/colors.hpp"
+#include "utils/sugar/zstring_view.hpp"
 #include "core/callback.hpp"
 #include "core/RDP/rdp_pointer.hpp"
+
+class CopyPaste;
 
 struct Keymap2;
 namespace gdi
@@ -258,6 +261,11 @@ public:
     {
         return Dimension(0, 0);
     }
+
+    virtual void clipboard_paste(CopyPaste& copy_paste) { (void)copy_paste; }
+    virtual void clipboard_copy(CopyPaste& copy_paste) { (void)copy_paste; }
+    virtual void clipboard_cut(CopyPaste& copy_paste) { (void)copy_paste; }
+    virtual void clipboard_insert_utf8(zstring_view text) { (void)text; }
 
     ///Return x position in it's screen
     [[nodiscard]] int16_t x() const

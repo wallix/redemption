@@ -212,3 +212,14 @@ void WidgetPassword::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 
     this->rdp_input_invalidate(this->get_rect());
 }
+
+void WidgetPassword::clipboard_cut(CopyPaste& copy_paste)
+{
+    (void)copy_paste;
+    this->set_text("");
+}
+
+void WidgetPassword::clipboard_copy(CopyPaste& copy_paste)
+{
+    (void)copy_paste;
+}

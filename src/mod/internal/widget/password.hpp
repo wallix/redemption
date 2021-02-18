@@ -63,4 +63,7 @@ public:
                                     long int param4, Keymap2* keymap) override;
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
+
+    void clipboard_copy(CopyPaste& copy_paste) override;
+    void clipboard_cut(CopyPaste& copy_paste) override;
 };

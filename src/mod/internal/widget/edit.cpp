@@ -25,6 +25,7 @@
 #include "gdi/text_metrics.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/widget/edit.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "utils/colors.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/utf.hpp"
@@ -609,4 +610,58 @@ void WidgetEdit::insert_unicode_char(uint16_t unicode_char)
         this->w_text - pxtmp + 1,
         this->h_text
     ));
+}
+
+void WidgetEdit::clipboard_paste(CopyPaste& copy_paste)
+{
+    copy_paste.paste(*this);
+}
+
+void WidgetEdit::clipboard_copy(CopyPaste& copy_paste)
+{
+    auto str = this->get_text();
+    copy_paste.copy({str, strlen(str)});
+}
+
+void WidgetEdit::clipboard_cut(CopyPaste& copy_paste)
+{
+    this->clipboard_copy(copy_paste);
+    this->set_text("");
+}
+
+void WidgetEdit::clipboard_insert_utf8(zstring_view text)
+{
+    auto is_special_space = [](char c){
+        return c == '\r'
+            || c == '\t'
+            || c == '\n';
+    };
+    // replace \t with space and ignore multi-line
+    for (auto* s = text.c_str(); *s; ++s) {
+        if (is_special_space(*s)) {
+            constexpr std::size_t buf_size = 255;
+            char buf[buf_size + 1];
+            auto* p = buf;
+            auto* end = text.data() + std::min(buf_size, text.size());
+            auto n = std::min(buf_size, std::size_t(s - text.data()));
+            memcpy(p, text.data(), n);
+            p += n;
+            for (; s < end; ++s) {
+                if (!is_special_space(*s)) {
+                    *p++ = *s;
+                }
+                else if (*s == '\r' || *s == '\n') {
+                    break;
+                }
+                else {
+                    *p++ = ' ';
+                }
+            }
+            *p = '\0';
+            this->insert_text(buf);
+            return ;
+        }
+    }
+
+    this->insert_text(text.c_str());
 }

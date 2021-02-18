@@ -29,7 +29,7 @@ struct ServerTransportContext {
     OutTransport trans;
     CryptContext & encrypt;
     const RdpNegociationResult & negociation_result;
-    
+
     ServerTransportContext(Transport& trans, CryptContext & encrypt, const RdpNegociationResult & negociation_result)
         : trans(trans)
         , encrypt(encrypt)
