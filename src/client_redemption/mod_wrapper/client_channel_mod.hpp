@@ -99,23 +99,22 @@ public:
             int data_sent(0);
 
             // First Part
-                out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
+            out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
 
-                data_sent += first_part_data_size;
-                InStream chunk_first(out_stream_first_part.get_produced_bytes());
+            data_sent += first_part_data_size;
+            InStream chunk_first(out_stream_first_part.get_produced_bytes());
 
-                this->send_to_mod_channel( front_channel_name
-                                         , chunk_first
-                                         , total_length
-                                         , CHANNELS::CHANNEL_FLAG_FIRST | flags
-                                         );
+            this->send_to_mod_channel( front_channel_name
+                                     , chunk_first
+                                     , total_length
+                                     , CHANNELS::CHANNEL_FLAG_FIRST | flags
+                                     );
 
-//             ::hexdump(out_stream_first_part.get_produced_bytes());
-
+            // ::hexdump(out_stream_first_part.get_produced_bytes());
 
             for (size_t i = 0; i < cmpt_PDU_part; i++) {
 
-            // Next Part
+                // Next Part
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
                 out_stream_next_part.out_copy_bytes(data.data() + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
@@ -128,24 +127,25 @@ public:
                                          , flags
                                          );
 
-//             ::hexdump(out_stream_next_part.get_produced_bytes());
+                // ::hexdump(out_stream_next_part.get_produced_bytes());
             }
 
             // Last part
-                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
-                out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
+            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
+            out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
 
-                InStream chunk_last(out_stream_last_part.get_produced_bytes());
+            InStream chunk_last(out_stream_last_part.get_produced_bytes());
 
-                this->send_to_mod_channel( front_channel_name
-                                         , chunk_last
-                                         , total_length
-                                         , CHANNELS::CHANNEL_FLAG_LAST | flags
-                                         );
+            this->send_to_mod_channel( front_channel_name
+                                     , chunk_last
+                                     , total_length
+                                     , CHANNELS::CHANNEL_FLAG_LAST | flags
+                                     );
 
-//         ::hexdump(out_stream_last_part.get_produced_bytes());
+            // ::hexdump(out_stream_last_part.get_produced_bytes());
 
-        } else {
+        }
+        else {
 
             out_stream_first_part.out_copy_bytes(data);
             InStream chunk(out_stream_first_part.get_produced_bytes());

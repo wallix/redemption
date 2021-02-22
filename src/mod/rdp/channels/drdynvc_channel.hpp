@@ -101,7 +101,7 @@ public:
             break;
 
             default:
-//                assert(false);
+                // assert(false);
 
                 LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
                     "DynamicChannelVirtualChannel::process_client_message: "
@@ -202,7 +202,7 @@ public:
             break;
 
             default:
-//                assert(false);
+                // assert(false);
 
                 LOG_IF(bool(this->verbose & RDPVerbose::drdynvc), LOG_INFO,
                     "DynamicChannelVirtualChannel::process_server_message: "

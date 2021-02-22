@@ -249,7 +249,6 @@ namespace FastPath {
             return istream;
         }())
         {
-//            stream.in_skip_bytes(this->payload.get_capacity());
         }   // ClientInputEventPDU_Recv(InStream & stream)
     };  // struct ClientInputEventPDU_Recv
 
@@ -460,9 +459,9 @@ namespace FastPath {
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_RELEASE){
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_RELEASE;
             }
-//            else{
-//                this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN;
-//            }
+            // else{
+            //     this->spKeyboardFlags |= SlowPath::KBDFLAGS_DOWN;
+            // }
 
             if (this->eventFlags & FASTPATH_INPUT_KBDFLAGS_EXTENDED){
                 this->spKeyboardFlags |= SlowPath::KBDFLAGS_EXTENDED;

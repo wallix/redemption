@@ -218,9 +218,7 @@ struct DrawablePointer
 
         const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
         const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
-//        for (unsigned int y = 0; y < this->width; ++y) {
         for (unsigned int y = 0; y < this->height; ++y) {
-//            for (unsigned int x = 0; x < this->height; ++x) {
             for (unsigned int x = 0; x < this->width; ++x) {
                 ::put_pixel_24bpp(
                     this->mask24, this->line_bytes, x, y,

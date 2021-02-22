@@ -1008,8 +1008,8 @@ enum : int {
         , xDest(0)
         {
             //assert( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-//             assert(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-//             assert(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+            // assert(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+            // assert(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
         void emit(OutStream & stream) const {
@@ -1042,8 +1042,8 @@ enum : int {
 
             this->bitmapInfoHeader.recv(stream);
             //assert( (this->srcHeight * this->srcWidth * this->bitmapInfoHeader.bitCount / 8) == int(this->bitmapInfoHeader.imageSize));
-//             assert(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
-//             assert(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
+            // assert(uint16_t(this->bitmapInfoHeader.height) == this->destHeight);
+            // assert(uint16_t(this->bitmapInfoHeader.width) == this->destWidth);
         }
 
         void log() const {

@@ -1405,10 +1405,10 @@ public:
 
         {
             auto cr_tpdu = X224::CR_TPDU_Data_Recv(x224_stream, bogus_neg_req, 0);
-//            if (cr_tpdu._header_size != x224_stream.get_capacity()) {
-//                LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
-//                             " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
-//            }
+            // if (cr_tpdu._header_size != x224_stream.get_capacity()) {
+            //     LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
+            //                  " %zu bytes remains", x224_stream.get_capacity() - cr_tpdu._header_size);
+            // }
 
             if (cr_tpdu.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED) {
                 LOG(LOG_INFO, "Front::incoming: Client requires Restricted Administration mode");
@@ -4720,7 +4720,7 @@ private:
         else {
             // REVERT FIX
             Bitmap new_bmp(bmp.bpp(), bmp);
-//            Bitmap new_bmp(this->client_info.screen_info.bpp, bmp);
+            // Bitmap new_bmp(this->client_info.screen_info.bpp, bmp);
 
             size_t const serializer_max_data_block_size = this->orders.graphics_update_pdu().get_max_data_block_size();
 
@@ -4992,11 +4992,11 @@ private:
         // hence, we check for this case. There does not seem to exist any
         // similar restriction on cy actual reason of this is unclear
         // (I don't even know if it's related to redemption code or client code).
-//        LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
-//            this->client_info.cache1_size,
-//            this->client_info.cache2_size,
-//            this->client_info.cache3_size,
-//            front_bitmap_size);
+        // LOG(LOG_INFO, "cache1=%u cache2=%u cache3=%u bmp_size==%u",
+        //     this->client_info.cache1_size,
+        //     this->client_info.cache2_size,
+        //     this->client_info.cache3_size,
+        //     front_bitmap_size);
         size_t const serializer_max_data_block_size = [this]{
             Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
             return graphics_update_pdu_.get_max_data_block_size();

@@ -474,7 +474,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
             GCC::UserData::RecvFactory f(gcc_cr.payload);
             switch (f.tag) {
             case SC_CORE:
-//                            LOG(LOG_INFO, "=================== SC_CORE =============");
+                // LOG(LOG_INFO, "=================== SC_CORE =============");
                 {
                     GCC::UserData::SCCore sc_core;
                     sc_core.recv(f.payload);
@@ -509,7 +509,8 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
                         memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
-//                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
+
+                        // LOG(LOG_INFO, "================= SC_SECURITY got random =============");
                         // serverCertificate (variable): The variable-length certificate containing the
                         //  server's public key information. The length in bytes is given by the
                         // serverCertLen field. If the encryptionMethod and encryptionLevel fields are
@@ -517,7 +518,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 
                         /* RSA info */
                         if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
-//                                        LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
+                            // LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
 
                             memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
                             memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
@@ -637,21 +638,21 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);
                         LOG_IF(bool(this->verbose & RDPVerbose::security), LOG_INFO, "RdpNegociation: Generate client random");
 
-//                                        LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
-//                                        LOG(LOG_INFO, "================= SC_SECURITY client_random");
-//                                        hexdump(this->client_random, SEC_RANDOM_SIZE);
-//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
-//                                            static_cast<unsigned>(SEC_RANDOM_SIZE));
+                        // LOG(LOG_INFO, "================= SC_SECURITY rsa_encrypt");
+                        // LOG(LOG_INFO, "================= SC_SECURITY client_random");
+                        // hexdump(this->client_random, SEC_RANDOM_SIZE);
+                        // LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+                        //     static_cast<unsigned>(SEC_RANDOM_SIZE));
 
-//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len");
-//                                        hexdump(modulus, this->server_public_key_len);
-//                                        LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len=%u",
-//                                            static_cast<unsigned>(this->server_public_key_len));
+                        // LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len");
+                        // hexdump(modulus, this->server_public_key_len);
+                        // LOG(LOG_INFO, "================= SC_SECURITY server_public_key_len=%u",
+                        //     static_cast<unsigned>(this->server_public_key_len));
 
-//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent");
-//                                        hexdump(exponent, SEC_EXPONENT_SIZE);
-//                                        LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
-//                                            static_cast<unsigned>(SEC_EXPONENT_SIZE));
+                        // LOG(LOG_INFO, "================= SC_SECURITY exponent");
+                        // hexdump(exponent, SEC_EXPONENT_SIZE);
+                        // LOG(LOG_INFO, "================= SC_SECURITY exponent_size=%u",
+                        //     static_cast<unsigned>(SEC_EXPONENT_SIZE));
 
                         ssllib::rsa_encrypt(
                             this->client_crypt_random,
@@ -662,10 +663,10 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                             SEC_EXPONENT_SIZE,
                             exponent);
 
-//                                        LOG(LOG_INFO, "================= SC_SECURITY client_crypt_random");
-//                                        hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
-//                                        LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
-//                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
+                        // LOG(LOG_INFO, "================= SC_SECURITY client_crypt_random");
+                        // hexdump(this->client_crypt_random, sizeof(this->client_crypt_random));
+                        // LOG(LOG_INFO, "================= SC_SECURITY SEC_RANDOM_SIZE=%u",
+                        //     static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
                         SEC::KeyBlock key_block(this->client_random, serverRandom);
                         memcpy(this->encrypt.sign_key, key_block.blob0, 16);
@@ -678,7 +679,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                 }
                 break;
             case SC_NET:
-//                            LOG(LOG_INFO, "=================== SC_NET =============");
+                // LOG(LOG_INFO, "=================== SC_NET =============");
 
                 {
                     GCC::UserData::SCNet sc_net;

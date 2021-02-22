@@ -994,7 +994,7 @@ class RDPBmpCache {
     void receive_raw_v1(InStream & stream, const RDPSecondaryOrderHeader &/* header*/
                        , const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
-//        LOG(LOG_INFO, "receive raw v1");
+        // LOG(LOG_INFO, "receive raw v1");
         using namespace RDP;
 
         // cacheId (1 byte): An 8-bit, unsigned integer. The bitmap cache into

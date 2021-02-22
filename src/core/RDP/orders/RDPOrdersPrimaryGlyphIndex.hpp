@@ -378,18 +378,18 @@ public:
         // hence coordinates fields are transmitted as absolute fields
         // DELTA may also raise some problems with empty rects,
         // if initial rect is empty DELTA should not be used
-//        control |=
-//            (is_1_byte(this->bk.x               - oldcmd.bk.x                )
-//          && is_1_byte(this->bk.y               - oldcmd.bk.y                )
-//          && is_1_byte(this->bk.x + this->bk.cx - oldcmd.bk.x + oldcmd.bk.cx )
-//          && is_1_byte(this->bk.y + this->bk.cy - oldcmd.bk.y + oldcmd.bk.cy )
-//          && is_1_byte(this->op.x               - oldcmd.op.x                )
-//          && is_1_byte(this->op.y               - oldcmd.op.y                )
-//          && is_1_byte(this->op.x + this->op.cx - oldcmd.op.x + oldcmd.op.cx )
-//          && is_1_byte(this->op.y + this->op.cy - oldcmd.op.y + oldcmd.op.cy )
-//          && is_1_byte(this->glyph_x            - oldcmd.glyph_x             )
-//          && is_1_byte(this->glyph_y            - oldcmd.glyph_y             )
-//                                                                    ) * DELTA;
+        // control |=
+        //     (is_1_byte(this->bk.x               - oldcmd.bk.x                )
+        //   && is_1_byte(this->bk.y               - oldcmd.bk.y                )
+        //   && is_1_byte(this->bk.x + this->bk.cx - oldcmd.bk.x + oldcmd.bk.cx )
+        //   && is_1_byte(this->bk.y + this->bk.cy - oldcmd.bk.y + oldcmd.bk.cy )
+        //   && is_1_byte(this->op.x               - oldcmd.op.x                )
+        //   && is_1_byte(this->op.y               - oldcmd.op.y                )
+        //   && is_1_byte(this->op.x + this->op.cx - oldcmd.op.x + oldcmd.op.cx )
+        //   && is_1_byte(this->op.y + this->op.cy - oldcmd.op.y + oldcmd.op.cy )
+        //   && is_1_byte(this->glyph_x            - oldcmd.glyph_x             )
+        //   && is_1_byte(this->glyph_y            - oldcmd.glyph_y             )
+        //                                                             ) * DELTA;
 
         header.fields =
               (this->cache_id           != oldcmd.cache_id            ) * 0x000001

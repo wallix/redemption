@@ -21,8 +21,6 @@ Author(s): Jonathan Poelen
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "core/error.hpp"
 
-// #ifndef __EMSCRIPTEN__
-
 #include <exception>
 #include <iostream>
 #include <cstring>
@@ -53,24 +51,3 @@ void set_exception_handler_pretty_message() noexcept
         old_terminate_handler();
     });
 }
-
-// #else
-//
-// #include <emscripten.h>
-//
-//
-// EM_JS(void, node_set_exception_handler_pretty_message, (), {
-//     process.on('uncaughtException', function(ex) {
-//         if (!(ex instanceof ExitStatus)) {
-//             console.log(ex);
-//             throw ex;
-//         }
-//     })
-// });
-//
-// void set_exception_handler_pretty_message() noexcept
-// {
-//     node_set_exception_handler_pretty_message();
-// }
-//
-// #endif

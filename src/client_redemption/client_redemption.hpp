@@ -723,7 +723,7 @@ public:
 
         if (this->replay_mod == nullptr) {
             const std::string errorMsg = str_concat("Cannot read movie \"", this->config._movie_full_path, "\".");
-//             LOG(LOG_ERR, "%s", errorMsg);
+            // LOG(LOG_ERR, "%s", errorMsg);
             this->set_error_msg(errorMsg);
             std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
             this->disconnect(labelErrorMsg, false);
@@ -734,7 +734,6 @@ public:
     void replay( const std::string & movie_path) override
     {
         auto const last_delimiter_it = std::find(movie_path.rbegin(), movie_path.rend(), '/');
-//         int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
 
         std::string const movie_name = (last_delimiter_it == movie_path.rend())
         ? movie_path
@@ -841,7 +840,7 @@ public:
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
         if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             cmd.log(LOG_INFO);
-//             LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
+            // LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
         }
 
         this->clientRemoteAppChannel.draw(cmd);
@@ -857,13 +856,13 @@ public:
     void draw(const RDP::RAIL::WindowIcon            &  /*unused*/) override {
         LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
             "RDP::RAIL::WindowIcon");
-//         cmd.log(LOG_INFO);
+        // cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::CachedIcon            &  /*unused*/) override {
         LOG_IF(bool(this->config.verbose & RDPVerbose::rail_order), LOG_INFO,
             "RDP::RAIL::CachedIcon");
-//         cmd.log(LOG_INFO);
+        // cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons            & cmd) override {
@@ -1108,9 +1107,7 @@ private:
     void draw_impl(no_log /*unused*/, RDP::FrameMarker const& order)
     {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-//             if constexpr (with_log) { /*NOLINT*/
-                order.log(LOG_INFO);
-//             }
+            order.log(LOG_INFO);
         }
 
         if (this->config.is_recording && !this->config.is_replaying) {

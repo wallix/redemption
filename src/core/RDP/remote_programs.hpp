@@ -1076,7 +1076,7 @@ public:
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
-    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len) 
+    static inline void utf16_to_utf8sz(std::string & out, InStream & in, size_t utf16len)
     {
         uint8_t const * const utf16_data = in.get_current();
         in.in_skip_bytes(utf16len);
@@ -1119,7 +1119,7 @@ public:
 
         ::check_throw(stream, ColorSchemeLength, "High Contrast System Information Structure ColorSchemeLength", ERR_RAIL_PDU_TRUNCATED);
 
-//        assert(ColorSchemeLength >= 2);
+        // assert(ColorSchemeLength >= 2);
 
         ::check_throw(stream, ColorSchemeLength, "High Contrast System Information Structure", ERR_RAIL_PDU_TRUNCATED);
         this->utf16_to_utf8sz(this->color_scheme, stream, ColorSchemeLength);

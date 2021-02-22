@@ -678,7 +678,7 @@ void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
             &config.CB_TEMP_DIR,
             &config.DATA_CONF_DIR,
             &config.SOUND_TEMP_DIR
-//             &config.WINDOWS_CONF
+            // &config.WINDOWS_CONF
         }) {
             if (!pstr->empty()) {
                 if (!file_exist(pstr->c_str())) {

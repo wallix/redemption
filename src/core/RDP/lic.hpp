@@ -255,7 +255,7 @@ namespace LIC
                 throw Error(ERR_LIC);
             }
             // TODO Factory does not read anything, write it using a cleaner method
-//            stream.p -= 4;
+            // stream.p -= 4;
             stream.rewind();
         }
     };
@@ -2215,13 +2215,13 @@ namespace LIC
 
             stream.in_skip_bytes(lenLicensingBlob); /* blobData */
 
-//            stream.out_uint16_le(1);
-//            stream.out_uint16_le(license_size);
-//            stream.out_copy_bytes(license_data, license_size);
-//            stream.out_uint16_le(1);
-//            stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
-//            stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
-//            stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
+            // stream.out_uint16_le(1);
+            // stream.out_uint16_le(license_size);
+            // stream.out_copy_bytes(license_data, license_size);
+            // stream.out_uint16_le(1);
+            // stream.out_uint16_le(LIC::LICENSE_HWID_SIZE);
+            // stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
+            // stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
 
             // TODO Add missing fields
             //stream.end = stream.p;

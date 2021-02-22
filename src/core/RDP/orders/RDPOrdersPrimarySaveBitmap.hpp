@@ -88,7 +88,8 @@
 //  +---------------------+---------------------------------------------------------+
 
 
-class RDPSaveBitmap {
+class RDPSaveBitmap
+{
 public:
     uint32_t SavedBitmapPosition{0};
     uint16_t nLeftRect{0};
@@ -97,9 +98,7 @@ public:
     uint16_t nBottomRect{0};
     uint8_t Operation{0};
 
-    RDPSaveBitmap()
-     
-    = default;
+    RDPSaveBitmap() = default;
 
     RDPSaveBitmap(uint32_t SavedBitmapPosition, int16_t nLeftRect, int16_t nTopRect, int16_t nRightRect, int16_t nBottomRect, uint8_t Operation)
     : SavedBitmapPosition(SavedBitmapPosition)
@@ -109,21 +108,4 @@ public:
     , nBottomRect(nBottomRect)
     , Operation(Operation)
     {}
-
-    void emit( OutStream & stream) const {
-
-    }
-
-    void receive(InStream & stream, const RDPPrimaryOrderHeader & header) {
-
-    }   
-
-    void log(int level, const Rect clip) const {
-//         char buffer[2048];
-//         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));
-//         buffer[sizeof(buffer) - 1] = 0;
-//         LOG(level, "%s", buffer);
-    }
-
-
 };  // class RDPMultiOpaqueRect

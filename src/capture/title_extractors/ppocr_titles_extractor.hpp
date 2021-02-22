@@ -40,25 +40,6 @@
 
 #include <algorithm>
 
-// namespace rdp_ppocr {
-//
-// template<size_t... Ints>
-// struct integer_sequence
-// { static constexpr std::size_t size = sizeof...(Ints); };
-//
-// template<class Ints>
-// struct first_index;
-//
-// template<size_t I, size_t... Ints>
-// struct first_index<integer_sequence<I, Ints...>>
-// { static constexpr std::size_t value = I; };
-//
-// using algo_indexes = integer_sequence<16, 12, 18, 19, 11, 15, 14, 10, 13, 17, 9, 5, 4, 1, 7, 8, 3, 0, 6, 2>;
-// constexpr size_t first_algo = first_index<algo_indexes>::value;
-// constexpr size_t count_algo_base = algo_indexes::size;
-//
-// }
-
 struct PpOcrTitlesExtractor
 {
     PpOcrTitlesExtractor(

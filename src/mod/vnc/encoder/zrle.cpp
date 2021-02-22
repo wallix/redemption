@@ -392,11 +392,11 @@ namespace
         // return false if there is no next tile any more
         bool next_tile()
         {
-//                LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+            // LOG(LOG_INFO, "Previous tile: rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
 
             if (this->cx_remain <= 64){
                 if (this->cy_remain <= 64){
-//                        LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+                // LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                     return false;
                 }
                 this->cx_remain = this->r.cx;
@@ -404,13 +404,14 @@ namespace
                 this->tile = Rect(this->r.x, this->tile.y + 64,
                                 std::min<size_t>(64, this->cx_remain),
                                 std::min<size_t>(64, this->cy_remain));
-//                    LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+
+                // LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
                 return true;
             }
             this->cx_remain -= 64;
             this->tile.x += 64;
             this->tile.cx = std::min<size_t>(64, this->cx_remain);
-//                LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
+            // LOG(LOG_INFO, "rect=%s remain=(%d, %d) tile=%s", this->r, this->cx_remain, this->cy_remain, this->tile);
             return true;
         }
 
@@ -526,7 +527,7 @@ namespace
                         if (x >= this->tile.cx) break;
                         uint8_t palette_index = 0;
                         if (subencoding > 4){ // 5 .. 16
-//                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
+                            // LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
                             switch (q){
                             case 0:
                                 palette_index = current_byte >> 4;
@@ -537,7 +538,7 @@ namespace
                             }
                         }
                         else if (subencoding > 2){ // 3 or 4
-//                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
+                            // LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
                             switch (q){
                                 case 0:
                                     palette_index = (current_byte >> 6) & 3;
@@ -554,7 +555,7 @@ namespace
                             }
                         }
                         else { // 2
-//                               LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
+                            // LOG(LOG_INFO, "subencoding=%u q=%u", subencoding, q);
                             switch (q){
                                 case 0:
                                     palette_index = (current_byte >> 7) & 1;
@@ -733,7 +734,7 @@ namespace
                         }
                     }
                 }
-//                    LOG(LOG_INFO, "paletteIndex=%u length=%u", palette_index, length);
+                // LOG(LOG_INFO, "paletteIndex=%u length=%u", palette_index, length);
                 for (size_t i = 0 ; i < length ; i++){
                     if (tmp_tile_data == tile_data + this->tile.cx * this->tile.cy * this->Bpp){
                         LOG(LOG_ERR, "VNC::zrle uncompressed stream, plainRLE out of bound");

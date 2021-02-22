@@ -961,7 +961,7 @@ public:
         uint16_t const data_length = stream.in_uint16_le();
         (void)data_length;
 
-//        assert(stream.in_remain() == data_length);
+        // assert(stream.in_remain() == data_length);
 
         this->checkout_channel_flags  = flags;
         this->checkout_channel_chanid = checkout_channel.chanid;
@@ -2745,7 +2745,6 @@ public:
 
             case FastPath::UpdateType::COLOR:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer), LOG_INFO, "Process pointer color (Fast)");
-//                 this->process_color_pointer_pdu(stream, drawable);
                 this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
                 break;
 
@@ -5075,8 +5074,6 @@ public:
 
         this->session_log.report("OPEN_SESSION_SUCCESSFUL", "OK.");
 
-//        this->fd_event->disable_timeout();
-
 #ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enable_session_probe &&
             (!this->channels.session_probe_virtual_channel || !this->channels.session_probe_virtual_channel->has_been_launched())) {
@@ -5317,7 +5314,6 @@ public:
             ::check_throw(stream, capset_length - 4, "mod_rdp::Demand active PDU (2)", ERR_RDP_DATA_TRUNCATED);
             uint8_t const * next = stream.get_current() + capset_length - 4;
 
-//            InStream substream(stream.get_current(), capset_length - 4);
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
                 this->receive_caps<GeneralCaps>(stream, capset_length);
@@ -5827,7 +5823,7 @@ private:
 
         // 2.2.9.1.1.3.1.2.1 Bitmap Update Data (TS_UPDATE_BITMAP_DATA)
         // ------------------------------------------------------------
-//         // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
+        // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
         // defines a Bitmap Update (section 2.2.9.1.1.3.1.2).
 
         // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update

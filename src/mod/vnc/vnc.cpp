@@ -807,13 +807,11 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             LOG(LOG_ERR, "VNC Stopped: %s", e.errmsg());
             this->set_mod_signal(BACK_EVENT_NEXT);
             this->front.must_be_stop_capture();
-//            throw Error(ERR_BACK_EVENT_NEXT);
         }
         catch (...) {
             LOG(LOG_ERR, "unexpected exception raised in VNC");
             this->set_mod_signal(BACK_EVENT_NEXT);
             this->front.must_be_stop_capture();
-//            throw Error(ERR_BACK_EVENT_NEXT);
         }
 
         return false;
@@ -1272,9 +1270,9 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
             // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
             // "\0\0\0"
 
-//                const char * pixel_format =  "\x20\x18\x00"
-//                                             "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
-//                                             "\0\0\0" ;
+            // const char * pixel_format = "\x20\x18\x00"
+            //                             "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+            //                             "\0\0\0" ;
 
 
             const char * pixel_format =
@@ -1387,7 +1385,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                                          +  support_rre_encoding
                                          +  support_cursor_pseudo_encoding;
 
-//                LOG(LOG_INFO, "number of encodings=%d", number_of_encodings);
+            // LOG(LOG_INFO, "number of encodings=%d", number_of_encodings);
 
             stream.out_uint8(VNC_CS_MSG_SET_ENCODINGS);
             stream.out_uint8(0);
@@ -1937,7 +1935,6 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
             // TODO: really we are not using format data response but reading underlying data directly
             // we should not do that! We should reassemble consecutive data packets until data_response
             // is reassembled, then check if it is full and should be send or not.
-//                RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
 
             header.recv(chunk);
             if (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
@@ -1957,8 +1954,6 @@ void mod_vnc::clipboard_send_to_vnc_server(InStream & chunk, size_t length, uint
                            , header.dataLen(), chunk.in_remain());
                         throw Error(ERR_VNC);
                     }
-
-//                        format_data_response_pdu.recv(chunk);
 
                     this->to_vnc_clipboard_data.rewind();
 

@@ -334,27 +334,6 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
     ::fill_region(this->drawable, region, bg_color);
 }
 
-//void hide_child(Rect clip, BGRColor bg_color) {
-//    SubRegion region;
-//
-//    int index_w_current = this->impl->get_first();
-//    while (index_w_current != -1) {
-//        Widget * w = this->impl->get(index_w_current);
-//        assert(w);
-//
-//        Rect rect_widget = clip.intersect(w->rect);
-//        if (!rect_widget.isempty()) {
-//            region.add_rect(rect_widget);
-//        }
-//
-//        index_w_current = this->impl->get_next(index_w_current);
-//    }
-//
-//    if (!region.rects.empty()) {
-//        ::fill_region(this->drawable, region, bg_color);
-//    }
-//}
-
 void WidgetParent::move_xy(int16_t x, int16_t y)
 {
     this->set_xy(this->x() + x, this->y() + y);
@@ -492,12 +471,10 @@ void WidgetParent::rdp_input_scancode(
         uint32_t nb_kevent = keymap->nb_kevent_available();
         switch (keymap->top_kevent()) {
         case Keymap2::KEVENT_TAB:
-            //std::cout << ("tab") << '\n';
             keymap->get_kevent();
             this->next_focus();
             break;
         case Keymap2::KEVENT_BACKTAB:
-            //std::cout << ("backtab") << '\n';
             keymap->get_kevent();
             this->previous_focus();
             break;

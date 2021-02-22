@@ -356,8 +356,8 @@ void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const
 {
     /* no remoteFx support in recording, transcode to bitmapUpdates */
     for (const Rect & rect : content.region.rects) {
-//        LOG(LOG_INFO, "RDPDrawable::draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
-//            content.stride, rect);
+        // LOG(LOG_INFO, "RDPDrawable::draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
+        //     content.stride, rect);
         Bitmap bitmap(content.data, content.stride, rect);
         RDPBitmapData bitmap_data;
         bitmap_data.dest_left = cmd.destRect.x + rect.ileft();
@@ -373,11 +373,6 @@ void RDPDrawable::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const
 
         this->RDPDrawable::draw(bitmap_data, bitmap);
     }
-
-//    ImageView constImg(content.data, content.width, content.rect.height(), content.stride,
-//            BitsPerPixel{32}, ImageView::Storage::TopToBottom);
-
-//    this->drawable.draw_bitmap(cmd.destRect, constImg);
 }
 
 /*

@@ -49,7 +49,6 @@ void RailModuleHostMod::rdp_input_scancode(
             }
         }
         else {
-//            if ((param1 == 56) && (param3 == (SlowPath::KBDFLAGS_DOWN | SlowPath::KBDFLAGS_RELEASE))) {
             if ((param1 == 56) && (param3 & SlowPath::KBDFLAGS_RELEASE)) {
                 this->alt_key_pressed = false;
             }

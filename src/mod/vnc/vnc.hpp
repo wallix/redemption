@@ -1117,21 +1117,8 @@ private:
           , zd{zd}
           , verbose(verbose)
         {
-//            REDEMPTION_DIAGNOSTIC_PUSH
-//            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
-////            if (inflateInit(&this->zstrm) != Z_OK)
-//            REDEMPTION_DIAGNOSTIC_POP
-//            {
-//                LOG(LOG_ERR, "vnc zlib initialization failed");
-//                throw Error(ERR_VNC_ZLIB_INITIALIZATION);
-//            }
             this->last = VNC::Encoder::EncoderState::Ready;
         }
-
-//        ~FrameBufferUpdateCtx()
-//        {
-//            inflateEnd(&this->zstrm);
-//        }
 
         void start(BitsPerPixel bpp, BytesPerPixel Bpp)
         {

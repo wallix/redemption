@@ -2132,7 +2132,7 @@ void ClientExecute::process_client_get_application_id_pdu(InStream& chunk)
 
 // TS_RAIL_ORDER_NOTIFY_EVENT:
 
-//TS_RAIL_ORDER_SYSCOMMAND:
+// TS_RAIL_ORDER_SYSCOMMAND:
 
 void ClientExecute::process_client_system_command_pdu(InStream& chunk)
 {

@@ -626,10 +626,6 @@ public:
         return ::char_ptr_cast(this->PreferredDosName_);
     }
 
-//    const uint8_t * DeviceData() const {
-//        return this->device_data.p.get();
-//    }
-
     [[nodiscard]] size_t DeviceDataLength() const {
         return this->device_data.sz /* DeviceData(variable) */
             ;
@@ -735,7 +731,7 @@ public:
         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * PreferredDosName = \"%s\" (8 bytes)", this->PreferredDosName());
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
-//         LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+        // LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
 };  // DeviceAnnounceHeader_Send
 
@@ -1558,12 +1554,12 @@ public:
             this->Length_, this->Offset_);
     }
 
-//     void log() const {
-//         LOG(LOG_INFO, "     Device Read Request:");
-//         LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
-//         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
-//         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
-//     }
+    // void log() const {
+    //     LOG(LOG_INFO, "     Device Read Request:");
+    //     LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
+    //     LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
+    //     LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
+    // }
 };
 
 
@@ -1663,17 +1659,18 @@ struct DeviceWriteRequest {
         this->Offset = stream.in_uint64_le();
         stream.in_skip_bytes(20);
 
-// TODO: improve Length check: should take care of fragmentation
-// also 1600 is really a negociated value and we should use actual value
+        // TODO: improve Length check: should take care of fragmentation
+        // also 1600 is really a negociated value and we should use actual value
 
-//        {
-//            int exp = this->Length;
-//            if (exp > 1600-56) {
-//                exp = 1600-56;
-//            }
+        // {
+        //     int exp = this->Length;
+        //     if (exp > 1600-56) {
+        //         exp = 1600-56;
+        //     }
             // Length(variable)
-//            ::check_throw(stream, exp, "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
-//        }
+        //     ::check_throw(stream, exp, "RDPDR::DeviceWriteRequest", ERR_RDPDR_PDU_TRUNCATED);
+        // }
+
         this->WriteData = stream.get_current();
     }
 
@@ -2608,7 +2605,7 @@ public:
 
     explicit ClientNameRequest(const char * computer_name)
     {
-//         assert(this->ComputerNameLen <= 500)-1);
+        // assert(this->ComputerNameLen <= 500)-1);
         std::memcpy(this->ComputerName, computer_name,  500);
     }
 
@@ -5054,13 +5051,13 @@ struct RdpDrStatus
     DeviceIORequestData get_completion_resquest(uint32_t deviceId, uint32_t completionId) {
         DeviceIORequestData res;
 
-//         LOG(LOG_INFO, "**********************************");
-//         LOG(LOG_INFO, "     Request List Size = %d", int(this->requestList.size()));
-//         LOG(LOG_INFO, "**********************************");
-//         for (size_t i = 0; i < this->requestList.size(); i++) {
-//             this->requestList[i].request.log();
-//         }
-//         LOG(LOG_INFO, "**********************************");
+        // LOG(LOG_INFO, "**********************************");
+        // LOG(LOG_INFO, "     Request List Size = %d", int(this->requestList.size()));
+        // LOG(LOG_INFO, "**********************************");
+        // for (size_t i = 0; i < this->requestList.size(); i++) {
+        //     this->requestList[i].request.log();
+        // }
+        // LOG(LOG_INFO, "**********************************");
 
         for (size_t i = 0; i < this->requestList.size(); i++) {
             if (this->requestList[i].DeviceId() == deviceId && this->requestList[i].CompletionId() == completionId) {
@@ -5195,11 +5192,11 @@ void streamLog(InStream & stream , RdpDrStatus & status)
 
                                     switch (dcr.IoControlCode()) {
                                         case fscc::FSCTL_DELETE_REPARSE_POINT :
-//                                             {
-//                                                 fscc::ReparseGUIDDataBuffer rgdb;
-//                                                 rgdb.receive(s);
-//                                                 rgdb.log();
-//                                             }
+                                            // {
+                                            //     fscc::ReparseGUIDDataBuffer rgdb;
+                                            //     rgdb.receive(s);
+                                            //     rgdb.log();
+                                            // }
                                             break;
                                          case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID :
                                             break;
@@ -5449,11 +5446,11 @@ void streamLog(InStream & stream , RdpDrStatus & status)
                                         case fscc::FSCTL_GET_OBJECT_ID:
                                         case fscc::FSCTL_CREATE_OR_GET_OBJECT_ID:
                                         {
-//                                             fscc::FileObjectBuffer_Type1 rgdb;
-//                                             rgdb.receive(s);
-//                                             rgdb.log();
-                                        }
+                                            // fscc::FileObjectBuffer_Type1 rgdb;
+                                            // rgdb.receive(s);
+                                            // rgdb.log();
                                             break;
+                                        }
                                         //case fscc::FSCTL_FILESYSTEM_GET_STATISTICS:
                                         //    break;
                                         default: LOG(LOG_INFO, "     Device Controle UnLogged IO Control Code: 0x%08x", status_dior.IOControlCode);

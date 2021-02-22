@@ -786,8 +786,8 @@ public:
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override {
         /* no remoteFx support in recording, transcode to bitmapUpdates */
         for (const Rect & rect : content.region.rects) {
-//            LOG(LOG_INFO, "draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
-//                content.stride, rect);
+            // LOG(LOG_INFO, "draw(RDPSetSurfaceCommand cmd, RDPSurfaceContent const &content) stride=%u, rect=%s",
+            //     content.stride, rect);
             Bitmap bitmap(content.data, content.stride, rect);
             RDPBitmapData bitmap_data;
             bitmap_data.dest_left = cmd.destRect.x + rect.ileft();

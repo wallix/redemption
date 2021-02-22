@@ -595,7 +595,6 @@ struct ReparseGUIDDataBuffer {
     , ReparseDataLength(ReparseDataLength)
     {
         std::memcpy(this->ReparseGuid, ReparseGuid, GUID_SIZE);
-//         assert(ReparseDataLength <=  65536);
         std::memcpy(this->DataBuffer, DataBuffer, ReparseDataLength);
     }
 
