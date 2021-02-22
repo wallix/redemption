@@ -86,4 +86,6 @@ public:
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* /*unused*/) override;
 
     void auto_resize();
+
+    void clipboard_copy(CopyPaste& copy_paste) override;
 };

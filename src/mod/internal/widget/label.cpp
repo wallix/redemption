@@ -22,6 +22,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/font.hpp"
 #include "mod/internal/widget/label.hpp"
+#include "mod/internal/copy_paste.hpp"
 #include "gdi/graphic_api.hpp"
 #include "gdi/text_metrics.hpp"
 #include "utils/sugar/cast.hpp"
@@ -194,4 +195,10 @@ void WidgetLabel::auto_resize()
 {
     Dimension dim = this->get_optimal_dim();
     this->set_wh(dim);
+}
+
+void WidgetLabel::clipboard_copy(CopyPaste& copy_paste)
+{
+    auto str = this->get_text();
+    copy_paste.copy({str, strlen(str)});
 }

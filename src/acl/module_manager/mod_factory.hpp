@@ -148,7 +148,8 @@ public:
             this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            this->glyphs
+            this->glyphs,
+            this->theme
         );
         return {new_mod, nullptr, nullptr, false, false, nullptr};
     }

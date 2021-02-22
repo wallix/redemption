@@ -21,11 +21,12 @@
 #pragma once
 
 #include "mod/mod_api.hpp"
-#include "core/events.hpp"
 #include <memory>
 
 class FrontAPI;
 class Font;
+class Theme;
+class EventContainer;
 
 namespace gdi
 {
@@ -39,9 +40,11 @@ public:
         gdi::GraphicApi & gd,
         EventContainer & events,
         FrontAPI & front, uint16_t width, uint16_t height,
-        Font const & font);
+        Font const & font, Theme const & theme);
 
     ~WidgetTestMod() override;
+
+    void init() override;
 
     void rdp_gdi_up_and_running() override {}
 
@@ -67,7 +70,7 @@ public:
 
     bool server_error_encountered() const override { return false; }
 
-    void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+    void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override;
 
     class WidgetTestModPrivate;
     friend WidgetTestModPrivate;

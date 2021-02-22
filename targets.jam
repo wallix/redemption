@@ -47,6 +47,7 @@ exe headlessclient :
   <library>src/keyboard/keymapsym.o
   <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
   <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
@@ -172,6 +173,7 @@ exe rdpproxy :
   <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/flat_button.o
@@ -367,6 +369,7 @@ exe rdpclient :
   <library>src/keyboard/keymapsym.o
   <library>src/keyboard/scancode/autogen/all_LCIDs_scancodes.o
   <library>src/keyboard/scancode/unicode_to_scancode.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -616,6 +619,7 @@ test-run tests/acl/test_license_api :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -923,6 +927,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -1017,6 +1022,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -1083,6 +1089,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -2393,6 +2400,7 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/flat_button.o
@@ -2560,6 +2568,7 @@ test-run tests/core/test_session :
   <library>src/mod/internal/transition_mod.o
   <library>src/mod/internal/wait_mod.o
   <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
   <library>src/mod/internal/widget/edit.o
   <library>src/mod/internal/widget/edit_valid.o
   <library>src/mod/internal/widget/flat_button.o
@@ -2695,6 +2704,7 @@ test-run tests/front/test_front :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -2940,6 +2950,7 @@ test-run tests/mod/internal/test_close_mod :
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/close_mod.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_mod_base.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3177,6 +3188,7 @@ test-run tests/mod/internal/test_rail_module_host_mod :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/rail_module_host_mod.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3377,6 +3389,13 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget_test_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_data_allocator.o
@@ -3419,6 +3438,40 @@ test-run tests/mod/internal/widget/test_composite :
   $(BOOST_STACKTRACE_LINKFLAGS)
   <covfile>src/mod/internal/widget/composite.cpp
   <covfile>src/mod/internal/widget/composite.hpp
+;
+test-run tests/mod/internal/widget/test_delegated_copy :
+  $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_delegated_copy.cpp
+:
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/text_metrics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/delegated_copy.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/utf.o
+  <library>tests/includes/test_only/core/font.o
+  <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/internal/widget/delegated_copy.cpp
+  <covfile>src/mod/internal/widget/delegated_copy.hpp
 ;
 test-run tests/mod/internal/widget/test_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit.cpp
@@ -3508,6 +3561,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
@@ -3716,6 +3770,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/flat_wab_close.o
@@ -3802,6 +3857,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/grid.o
@@ -3838,6 +3894,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/group_box.o
@@ -3909,6 +3966,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
@@ -3943,6 +4001,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/grid.o
   <library>src/mod/internal/widget/label.o
@@ -3978,6 +4037,7 @@ test-run tests/mod/internal/widget/test_language_button :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/language_button.o
@@ -4112,6 +4172,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
@@ -4147,6 +4208,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/scroll.o
@@ -4224,6 +4286,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/composite.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/multiline.o
@@ -4258,6 +4321,7 @@ test-run tests/mod/internal/widget/test_vertical_scroll_text :
   <library>src/gdi/graphic_api.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/internal/widget/vertical_scroll_text.o
@@ -4434,6 +4498,7 @@ test-run tests/mod/rdp/channels/test_sespro_alternate_shell_based_launcher :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/channels/rdpdr_file_system_drive_manager.o
@@ -4544,6 +4609,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/screen_functions.o
   <library>src/gdi/text_metrics.o
   <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/metrics.o
@@ -5923,6 +5989,7 @@ obj src/mod/internal/test_card_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/test_
 obj src/mod/internal/transition_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/transition_mod.cpp ;
 obj src/mod/internal/wait_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/wait_mod.cpp ;
 obj src/mod/internal/widget/composite.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/composite.cpp ;
+obj src/mod/internal/widget/delegated_copy.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/delegated_copy.cpp ;
 obj src/mod/internal/widget/edit.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit.cpp ;
 obj src/mod/internal/widget/edit_valid.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/edit_valid.cpp ;
 obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
@@ -6198,6 +6265,7 @@ alias test_test_card_mod : tests/mod/internal/test_test_card_mod ;
 alias test_wait_mod : tests/mod/internal/test_wait_mod ;
 alias test_widget_test_mod : tests/mod/internal/test_widget_test_mod ;
 alias test_composite : tests/mod/internal/widget/test_composite ;
+alias test_delegated_copy : tests/mod/internal/widget/test_delegated_copy ;
 alias test_edit : tests/mod/internal/widget/test_edit ;
 alias test_edit_valid : tests/mod/internal/widget/test_edit_valid ;
 alias test_flat_button : tests/mod/internal/widget/test_flat_button ;
@@ -6527,6 +6595,7 @@ alias test_test_card_mod.coverage : tests/mod/internal/test_test_card_mod.covera
 alias test_wait_mod.coverage : tests/mod/internal/test_wait_mod.coverage ;
 alias test_widget_test_mod.coverage : tests/mod/internal/test_widget_test_mod.coverage ;
 alias test_composite.coverage : tests/mod/internal/widget/test_composite.coverage ;
+alias test_delegated_copy.coverage : tests/mod/internal/widget/test_delegated_copy.coverage ;
 alias test_edit.coverage : tests/mod/internal/widget/test_edit.coverage ;
 alias test_edit_valid.coverage : tests/mod/internal/widget/test_edit_valid.coverage ;
 alias test_flat_button.coverage : tests/mod/internal/widget/test_flat_button.coverage ;
@@ -6926,6 +6995,7 @@ alias tests/mod/internal.norec :
 ;
 alias tests/mod/internal/widget.norec :
   tests/mod/internal/widget/test_composite
+  tests/mod/internal/widget/test_delegated_copy
   tests/mod/internal/widget/test_edit
   tests/mod/internal/widget/test_edit_valid
   tests/mod/internal/widget/test_flat_button

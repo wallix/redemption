@@ -114,6 +114,10 @@ bool CopyPaste::ready(FrontAPI & front)
 
 void CopyPaste::paste(Widget & widget)
 {
+    if (REDEMPTION_UNLIKELY(!*this)) {
+        return;
+    }
+
     if (this->has_clipboard_) {
         this->pasted_widget_ = nullptr;
         widget.clipboard_insert_utf8(this->clipboard_str_.zstring());
@@ -131,6 +135,12 @@ void CopyPaste::paste(Widget & widget)
 
 void CopyPaste::copy(chars_view str)
 {
+    if (REDEMPTION_UNLIKELY(!*this)) {
+        return;
+    }
+
+    LOG_IF(this->verbose, LOG_INFO, "CopyPaste::copy '%.*s'", int(str.size()), str.data());
+
     this->has_clipboard_ = true;
     this->clipboard_str_.assign(str.data(), str.size());
 
@@ -147,6 +157,10 @@ void CopyPaste::copy(chars_view str)
 
 void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
 {
+    if (REDEMPTION_UNLIKELY(!*this)) {
+        return;
+    }
+
     InStream stream({chunk.get_data(), chunk.get_capacity()});
 
     if (this->long_data_response_size) {
@@ -293,6 +307,6 @@ void copy_paste_process_event(
     switch(event) {
         case NOTIFY_PASTE: widget.clipboard_paste(copy_paste); break;
         case NOTIFY_COPY: widget.clipboard_copy(copy_paste); break;
-        case NOTIFY_CUT: widget.clipboard_copy(copy_paste); break;
+        case NOTIFY_CUT: widget.clipboard_cut(copy_paste); break;
     }
 }

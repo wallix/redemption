@@ -18,13 +18,12 @@
     Author(s): Christophe Grosjean, Meng Tan, Raphael Zhou
 */
 
-#include "utils/timebase.hpp"
+#include "utils/theme.hpp"
 #include "core/events.hpp"
 #include "mod/internal/widget_test_mod.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/core/font.hpp"
 
-// TEST missing
 int main()
 {
     ScreenInfo screen_info{800, 600, BitsPerPixel{24}};
@@ -32,16 +31,5 @@ int main()
     FakeFront front(screen_info);
 
     EventContainer events;
-    WidgetTestMod d(front.gd(), events, front, screen_info.width, screen_info.height, global_font());
-
-/*
-    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-*/
-
-/*
-    const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
-    LOG(LOG_INFO, "%s\n", res);
-    RED_CHECK(0 == strcmp("True", res));
-*/
+    WidgetTestMod d(front.gd(), events, front, screen_info.width, screen_info.height, global_font(), Theme());
 }
