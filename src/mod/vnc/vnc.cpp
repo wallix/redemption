@@ -1152,7 +1152,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
     case WAIT_SECURITY_ULTRA_CHALLENGE: {
         uint8_t passPhraseUsed;
         if (!this->dsm){
-            dsm = new UltraDSM(this->password);
+            dsm = new UltraDSM(/*this->password*/);
         }
 
         InStream challenge(this->server_data_buf.av());

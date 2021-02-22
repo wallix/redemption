@@ -30,11 +30,12 @@
 /**
  *    @brief UltraVNC DSM plugin
  */
-class UltraDSM {
+class UltraDSM
+{
     /** @brief plug-in state */
-    enum UltraDsmState {
-        DSM_WAITING_CHALLENGE,
-    };
+    // enum UltraDsmState {
+    //     DSM_WAITING_CHALLENGE,
+    // };
 
     /** various plug-in constants */
     enum {
@@ -66,7 +67,7 @@ class UltraDSM {
     };
 
 public:
-    UltraDSM(char *password);
+    UltraDSM();
 
     ~UltraDSM();
 
@@ -81,8 +82,8 @@ public:
     static const EVP_CIPHER* getCipher(uint32_t dwFlags, int &nKeyLength);
 
 private:
-    UltraDsmState m_state;
-    char *m_password;
+    // UltraDsmState m_state;
+    // char *m_password;
     RSA *m_rsa;
     int m_nRSASize;
     uint32_t m_challengeFlags;

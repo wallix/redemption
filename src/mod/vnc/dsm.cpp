@@ -254,10 +254,8 @@ static EVP_CIPHER_CTX *initCipher(const EVP_CIPHER* cipher, bool encrypt, int ke
 }
 
 
-UltraDSM::UltraDSM(char *password)
-    : m_state(DSM_WAITING_CHALLENGE)
-    , m_password(password)
-    , m_rsa(nullptr)
+UltraDSM::UltraDSM()
+    : m_rsa(nullptr)
     , m_nRSASize(0)
     , m_challengeFlags(0)
     , m_responseFlags(0)
@@ -623,7 +621,7 @@ bool UltraDSM::getResponse(OutStream &out) {
         uint16_t wEncryptedSize = nEncryptedSize;
         uint16_t wClientAuthSigLength = nClientAuthSigLength;
 
-        int nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
+        // int nResponseLength = sizeof(m_responseFlags) + sizeof(wEncryptedSize) + nEncryptedSize + sizeof(wClientAuthSigLength) + nClientAuthSigLength;
 
         out.out_uint32_le(m_responseFlags);
         out.out_uint16_le(wEncryptedSize);
