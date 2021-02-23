@@ -115,7 +115,6 @@
     f(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER)       \
     fv(ERR_VNC_CONNECTION_ERROR, 10005)                      \
     fv(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE, 10007)          \
-    f(ERR_VNC_ZLIB_INITIALIZATION)                           \
     fv(ERR_VNC_ZRLE_PROTOCOL, 10010)                         \
     f(ERR_VNC_HEXTILE_PROTOCOL)                              \
                                                              \
@@ -201,9 +200,7 @@
                                                              \
     fv(ERR_CRYPTO_BUFFER_TOO_SMALL, 25500)                   \
     f(ERR_CRYPTO_SNAPPY_BUFFER_TOO_SMALL)                    \
-    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)           \
-                                                             \
-    fv(ERR_BACK_EVENT_NEXT, 30000)
+    f(ERR_CRYPTO_SNAPPY_COMPRESSION_INVALID_INPUT)
 
 
 #define MAKE_ENUM(e) e,
