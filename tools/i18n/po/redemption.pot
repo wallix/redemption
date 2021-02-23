@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-04 11:20+0100\n"
+"POT-Creation-Date: 2021-02-25 10:56+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -142,231 +142,249 @@ msgid ""
 "Contact your system administrator for assistance."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:100
-msgid "Selector"
-msgstr ""
-
 #: ../../src/utils/translation.hpp:101
-msgid "Session is out of allowed timeframe"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:102
-msgid "Missed keepalive from ACL"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:103
-msgid "Connection closed on inactivity"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:104
-msgid "Authentifier service failed"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:105
-msgid "Failed to connect to remote host."
-msgstr ""
-
-#: ../../src/utils/translation.hpp:106
-msgid "Failed to authenticate with remote RDP host."
-msgstr ""
-
-#: ../../src/utils/translation.hpp:107
-msgid "Failed to authenticate with remote VNC host."
-msgstr ""
-
-#: ../../src/utils/translation.hpp:108
-msgid "Failed to authenticate with remote X host."
-msgstr ""
-
-#: ../../src/utils/translation.hpp:109
-msgid "Connection to server ended."
-msgstr ""
-
-#: ../../src/utils/translation.hpp:110
-msgid "No results found"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:111
-msgid "Back to Selector"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:112
-msgid "Exit"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:113
-msgid "Comment"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:114
-msgid "Comment *"
-msgstr ""
-
-#: ../../src/utils/translation.hpp:115
-msgid "Ticket Ref."
+msgid ""
+"Search help using '?'\n"
+"\n"
+"The '?' can be placed at the beginning of the target string for use the "
+"advanced filter mode : \n"
+"\n"
+"   ?<field>=<pattern>\n"
+"\n"
+"\n"
+"<field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
+"Use '&' as separator for multiple field/pattern.\n"
+"\n"
+"An example of the target string is the following :\n"
+"\n"
+"   ?account=my_account&?device=my_device&?service=my_service\n"
 msgstr ""
 
 #: ../../src/utils/translation.hpp:116
-msgid "Ticket Ref. *"
+msgid "Selector"
 msgstr ""
 
 #: ../../src/utils/translation.hpp:117
-msgid "Duration"
+msgid "Session is out of allowed timeframe"
 msgstr ""
 
 #: ../../src/utils/translation.hpp:118
-msgid "Duration *"
+msgid "Missed keepalive from ACL"
 msgstr ""
 
 #: ../../src/utils/translation.hpp:119
-msgid "Format: [hours]h[mins]m"
+msgid "Connection closed on inactivity"
 msgstr ""
 
 #: ../../src/utils/translation.hpp:120
-msgid "(*) required fields"
+msgid "Authentifier service failed"
 msgstr ""
 
 #: ../../src/utils/translation.hpp:121
-msgid "Confirm"
+msgid "Failed to connect to remote host."
 msgstr ""
 
 #: ../../src/utils/translation.hpp:122
+msgid "Failed to authenticate with remote RDP host."
+msgstr ""
+
+#: ../../src/utils/translation.hpp:123
+msgid "Failed to authenticate with remote VNC host."
+msgstr ""
+
+#: ../../src/utils/translation.hpp:124
+msgid "Failed to authenticate with remote X host."
+msgstr ""
+
+#: ../../src/utils/translation.hpp:125
+msgid "Connection to server ended."
+msgstr ""
+
+#: ../../src/utils/translation.hpp:126
+msgid "No results found"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:127
+msgid "Back to Selector"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:128
+msgid "Exit"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:129
+msgid "Comment"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:130
+msgid "Comment *"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:131
+msgid "Ticket Ref."
+msgstr ""
+
+#: ../../src/utils/translation.hpp:132
+msgid "Ticket Ref. *"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:133
+msgid "Duration"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:134
+msgid "Duration *"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:135
+msgid "Format: [hours]h[mins]m"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:136
+msgid "(*) required fields"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:137
+msgid "Confirm"
+msgstr ""
+
+#: ../../src/utils/translation.hpp:138
 #, c-format
 msgid "Error: %s field is required."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:123
+#: ../../src/utils/translation.hpp:139
 #, c-format
 msgid "Error: %s invalid format."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:124
+#: ../../src/utils/translation.hpp:140
 #, c-format
 msgid "Error: %s is too high (max: %d minutes)."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:125
+#: ../../src/utils/translation.hpp:141
 msgid "Information"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:126
+#: ../../src/utils/translation.hpp:142
 msgid "Authentication Required"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:127
+#: ../../src/utils/translation.hpp:143
 msgid "Target Information Required"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:128
+#: ../../src/utils/translation.hpp:144
 msgid "Device"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:129
+#: ../../src/utils/translation.hpp:145
 msgid "Press \"Insert\" key or left-click to hide this message."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:130
+#: ../../src/utils/translation.hpp:146
 msgid "Another user connected to the resource, so your connection was lost."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:131
+#: ../../src/utils/translation.hpp:147
 #, c-format
 msgid "The process '%s' was interrupted in accordance with security policies."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:132
+#: ../../src/utils/translation.hpp:148
 #, c-format
 msgid ""
 "The account manipulation initiated by process '%s' was rejected in "
 "accordance with security policies."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:133
+#: ../../src/utils/translation.hpp:149
 msgid "Session logoff in progress."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:134
+#: ../../src/utils/translation.hpp:150
 msgid "Starting RemoteApp ..."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:135
+#: ../../src/utils/translation.hpp:151
 msgid "All RemoteApp windows are closed."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:136
+#: ../../src/utils/translation.hpp:152
 msgid "Disconnect Now"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:137
+#: ../../src/utils/translation.hpp:153
 msgid ""
 "The computer that you are trying to connect to is redirecting you to another "
 "computer!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:138
+#: ../../src/utils/translation.hpp:154
 msgid "NLA Authentication Failed!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:139
+#: ../../src/utils/translation.hpp:155
 msgid "TLS certificate changed!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:140
+#: ../../src/utils/translation.hpp:156
 msgid "TLS certificate missed!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:141
+#: ../../src/utils/translation.hpp:157
 msgid "TLS certificate corrupted!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:142
+#: ../../src/utils/translation.hpp:158
 msgid "TLS certificate  is inaccessible!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:143
+#: ../../src/utils/translation.hpp:159
 msgid "VNC connection error!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:144
+#: ../../src/utils/translation.hpp:160
 msgid "Unsupported client display monitor layout!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:145
+#: ../../src/utils/translation.hpp:161
 msgid "RDP negotiation phase failure."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:146
+#: ../../src/utils/translation.hpp:162
 msgid "An error occurred during the licensing protocol!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:147
+#: ../../src/utils/translation.hpp:163
 msgid "The RemoteApp program did not start on the remote computer!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:148
+#: ../../src/utils/translation.hpp:164
 msgid "Cannot start the RemoteApp program!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:149
+#: ../../src/utils/translation.hpp:165
 msgid "The RemoteApp program is not in the list of authorized programs!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:150
+#: ../../src/utils/translation.hpp:166
 msgid "Logon timer expired!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:151
+#: ../../src/utils/translation.hpp:167
 msgid "Could not launch Session Probe!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:153
+#: ../../src/utils/translation.hpp:169
 msgid ""
 "(ASBL) Could not launch Session Probe! File System Virtual Channel is "
 "unavailable. Please allow the drive redirection in the Remote Desktop "
 "Services settings of the target."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:156
+#: ../../src/utils/translation.hpp:172
 msgid ""
 "(ASBL) Could not launch Session Probe! Maybe something blocks it on the "
 "target. Is the target running under Microsoft Server products? The Command "
@@ -375,108 +393,108 @@ msgid ""
 "is enough free space."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:160
+#: ../../src/utils/translation.hpp:176
 msgid "(ASBL) Session Probe launch has failed for unknown reason!"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:162
+#: ../../src/utils/translation.hpp:178
 msgid ""
 "(CBBL) Could not launch Session Probe! File System Virtual Channel is "
 "unavailable. Please allow the drive redirection in the Remote Desktop "
 "Services settings of the target."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:165
+#: ../../src/utils/translation.hpp:181
 msgid ""
 "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is "
 "unavailable. Please allow the clipboard redirection in the Remote Desktop "
 "Services settings of the target."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:168
+#: ../../src/utils/translation.hpp:184
 msgid ""
 "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready "
 "yet. Is the target running under Windows Server 2008 R2 or more recent "
 "version?"
 msgstr ""
 
-#: ../../src/utils/translation.hpp:171
+#: ../../src/utils/translation.hpp:187
 msgid ""
 "(CBBL) Session Probe is not launched! Maybe something blocks it on the "
 "target. Please also check the temporary directory to ensure there is enough "
 "free space."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:174
+#: ../../src/utils/translation.hpp:190
 msgid ""
 "(CBBL) Session Probe launch cycle has been interrupted! The launch timeout "
 "duration may be too short."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:177
+#: ../../src/utils/translation.hpp:193
 msgid ""
 "(CBBL) Session Probe launch has failed for unknown reason! Please refer to "
 "the syslog file for more detailed information regarding the error condition."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:180
+#: ../../src/utils/translation.hpp:196
 msgid ""
 "(RP) Could not launch Session Probe! Please refer to the syslog file for "
 "more detailed information regarding the error condition."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:182
+#: ../../src/utils/translation.hpp:198
 msgid "Unknown backend failure."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:183
+#: ../../src/utils/translation.hpp:199
 msgid "Provided login/password is probably incorrect."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:184
+#: ../../src/utils/translation.hpp:200
 msgid "Please wait..."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:185
+#: ../../src/utils/translation.hpp:201
 msgid "Enable NLA is probably required."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:186
+#: ../../src/utils/translation.hpp:202
 msgid "Enable TLS is probably required."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:187
+#: ../../src/utils/translation.hpp:203
 msgid "Please check provided Load Balance Info."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:188
+#: ../../src/utils/translation.hpp:204
 msgid "Fail during TLS security exchange."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:189
+#: ../../src/utils/translation.hpp:205
 msgid "Remote access may be denied for the user account."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:190 ../../src/utils/translation.hpp:191
+#: ../../src/utils/translation.hpp:206 ../../src/utils/translation.hpp:207
 msgid "Fail during channels connection."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:192
+#: ../../src/utils/translation.hpp:208
 msgid "Failed while trying to get licence."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:193
+#: ../../src/utils/translation.hpp:209
 msgid "Fail while connecting session on the target."
 msgstr ""
 
-#: ../../src/utils/translation.hpp:194
+#: ../../src/utils/translation.hpp:210
 msgid "File being analyzed: "
 msgstr ""
 
-#: ../../src/utils/translation.hpp:195
+#: ../../src/utils/translation.hpp:211
 msgid "Valid file: "
 msgstr ""
 
-#: ../../src/utils/translation.hpp:196
+#: ../../src/utils/translation.hpp:212
 msgid "Invalid file: "
 msgstr ""

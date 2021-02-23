@@ -97,6 +97,22 @@ namespace trkeys
           "This field is required and not case-sensitive.\n"
           "\n"
           "Contact your system administrator for assistance.");
+    TR_KV(target_accurate_filter_help,
+          "Search help using '?'\n"
+          "\n"
+          "The '?' can be placed at the beginning of the "
+          "target string for use the advanced filter mode : \n"
+          "\n"
+          "   ?<field>=<pattern>\n"
+          "\n"
+          "\n"
+          "<field> can be \"account\", \"domain\", "
+          "\"device\" or \"service\".\n"
+          "Use '&' as separator for multiple field/pattern.\n"
+          "\n"
+          "An example of the target string is the following :\n"
+          "\n"
+          "   ?account=my_account&?device=my_device&?service=my_service\n");
     TR_KV(selector, "Selector");
     TR_KV(session_out_time, "Session is out of allowed timeframe");
     TR_KV(miss_keepalive, "Missed keepalive from ACL");

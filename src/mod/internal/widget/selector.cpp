@@ -150,6 +150,10 @@ WidgetSelector::WidgetSelector(
 , connect(drawable, *this, this, TR(trkeys::connect, lang), -18,
             theme.global.fgcolor, theme.global.bgcolor,
             theme.global.focus_color, 2, font, 6, 2)
+, target_helpicon(drawable, *this, nullptr, "?", -19,
+                  theme.selector_label.fgcolor, theme.selector_label.bgcolor,
+                  theme.global.focus_color, 1, font, 1, 1)
+, tr(lang)
 , bg_color(theme.global.bgcolor)
 , font(font)
 , left(left)
@@ -180,10 +184,14 @@ WidgetSelector::WidgetSelector(
     this->add_widget(&this->last_page);
     this->add_widget(&this->logout);
     this->add_widget(&this->connect);
+    this->add_widget(&this->target_helpicon);
 
     if (extra_button) {
         this->add_widget(extra_button);
     }
+
+    this->target_helpicon.tab_flag = IGNORE_TAB;
+    this->target_helpicon.focus_flag = IGNORE_FOCUS;
 
     this->move_size_widget(left, top, width, height);
 }
@@ -242,6 +250,9 @@ void WidgetSelector::move_size_widget(int16_t left, int16_t top, uint16_t width,
 
     dim = this->connect.get_optimal_dim();
     this->connect.set_wh(dim);
+
+    dim = this->target_helpicon.get_optimal_dim();
+    this->target_helpicon.set_wh(dim);
 
 
     this->less_than_800 = (this->cx() < 800);
@@ -320,6 +331,13 @@ void WidgetSelector::rearrange()
                 this->column_expansion_buttons[i].set_xy(this->left + offset - 15, labels_y + 5);
             }
         }
+
+        WidgetLabel& target_header_label = this->header_labels[IDX_TARGET];
+
+        this->target_helpicon.set_xy(this->left
+                                     + target_header_label.x()
+                                     + target_header_label.get_optimal_dim().w,
+                                     labels_y);
     }
 
     {
@@ -448,6 +466,25 @@ void WidgetSelector::rdp_input_scancode(long int param1, long int param2, long i
             break;
         }
     }
+}
+
+void WidgetSelector::rdp_input_mouse(int device_flags, int x, int y, Keymap2 *keymap)
+{
+    if (device_flags == MOUSE_FLAG_MOVE)
+    {
+        Widget *wid = this->widget_at_pos(x, y);
+
+        if (wid == &this->target_helpicon)
+        {
+            this->show_tooltip(wid,
+                               this->tr(trkeys::target_accurate_filter_help),
+                               x,
+                               y,
+                               this->get_rect());
+        }
+    }
+
+    WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
 }
 
 void WidgetSelector::show_tooltip(
