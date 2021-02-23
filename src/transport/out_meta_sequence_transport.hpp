@@ -25,7 +25,7 @@
 
 class AclReportApi;
 
-struct OutMetaSequenceTransport : Transport
+struct OutMetaSequenceTransport final : Transport
 {
     OutMetaSequenceTransport(
         CryptoContext & cctx,

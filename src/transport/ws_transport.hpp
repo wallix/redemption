@@ -24,8 +24,7 @@
 
 #include "transport/socket_transport.hpp"
 
-class WsTransport
-: public SocketTransport
+class WsTransport final : public SocketTransport
 {
 public:
     enum UseTls : bool { No, Yes };

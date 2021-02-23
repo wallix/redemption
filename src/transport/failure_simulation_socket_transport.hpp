@@ -23,7 +23,7 @@
 
 #include "transport/socket_transport.hpp"
 
-class FailureSimulationSocketTransport : public SocketTransport
+class FailureSimulationSocketTransport final : public SocketTransport
 {
 public:
     // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport

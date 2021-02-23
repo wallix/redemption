@@ -68,6 +68,11 @@
 namespace
 {
 
+struct FinalSocketTransport final : ::SocketTransport
+{
+    using ::SocketTransport::SocketTransport;
+};
+
 enum class SessionVerbose : uint32_t
 {
     Event   = 0x02,
@@ -755,7 +760,7 @@ private:
     {
         assert(auth_sck != INVALID_SOCKET);
 
-        SocketTransport auth_trans(
+        FinalSocketTransport auth_trans(
             "Authentifier", unique_fd(auth_sck),
             ini.get<cfg::globals::authfile>().c_str(), 0,
             std::chrono::seconds(1), SocketTransport::Verbose::none);
@@ -1470,7 +1475,7 @@ void session_start_sck(
 
 void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
 {
-    session_start_sck<SocketTransport>(
+    session_start_sck<FinalSocketTransport>(
         "RDP Client", std::move(sck), sck_start_time, ini, pid_file);
 }
 

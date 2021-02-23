@@ -24,7 +24,7 @@
 #include "transport/mwrm_reader.hpp"
 
 
-class InMetaSequenceTransport : public Transport
+class InMetaSequenceTransport final : public Transport
 {
 public:
     using EncryptionMode = InCryptoTransport::EncryptionMode;

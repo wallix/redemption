@@ -108,8 +108,13 @@ public:
 
 class ModWithSocketAndMetrics final : public mod_api
 {
+    struct FinalSocketTransport final : SocketTransport
+    {
+        using SocketTransport::SocketTransport;
+    };
+
 public:
-    SocketTransport socket_transport;
+    FinalSocketTransport socket_transport;
     ModVNCWithMetrics mod;
 
 private:

@@ -199,6 +199,11 @@ private:
 
 class ModRDPWithSocketAndMetrics final : public mod_api
 {
+    struct FinalSocketTransport final : SocketTransport
+    {
+        using SocketTransport::SocketTransport;
+    };
+
     std::unique_ptr<SocketTransport> socket_transport_ptr;
     ModRdpFactory rdp_factory;
 
@@ -278,7 +283,7 @@ public:
             std::string * error_message
         ) -> SocketTransport* {
             if (ModRdpUseFailureSimulationSocketTransport::Off == use_failure_simulation_socket_transport) {
-                return new SocketTransport( /*NOLINT*/
+                return new FinalSocketTransport( /*NOLINT*/
                     name, std::move(sck), ip_address, port, recv_timeout, verbose, error_message
                 );
             }
