@@ -341,8 +341,7 @@ def is_exclude_path(path):
     return startswith(path, 'tests/includes/') \
         or startswith(path, 'tests/system/'
                       + (system_type == 'linux' and 'emscripten' or 'linux')
-                      + '/system/') \
-        or startswith(path, 'tests/web_video/') \
+                      + '/system/')
 
 if not filter_targets:
     if src_tests:

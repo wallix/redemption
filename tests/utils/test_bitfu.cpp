@@ -25,14 +25,6 @@
 
 #include "utils/bitfu.hpp"
 
-//include "utils/rdtsc.hpp"
-//long long ustime() {
-//    struct timeval now;
-//    gettimeofday(&now, nullptr);
-//    return (long long)now.tv_sec*1000000LL + (long long)now.tv_usec;
-//}
-
-
 RED_AUTO_TEST_CASE(TestAlign4)
 {
 //  uint8_t buffer[4] = {};

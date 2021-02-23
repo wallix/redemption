@@ -229,10 +229,6 @@ public:
 
     void clear_consumer();
 
-    void set_pause_client(timeval & time);
-
-    void set_wait_after_load_client(timeval & time);
-
     /* order count set this->stream.p to the beginning of the next order.
      * Most of the times it means not changing it, except when it must read next chunk
      * when remaining order count is 0.
