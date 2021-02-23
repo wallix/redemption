@@ -98,11 +98,7 @@ private:
  * starting with chunk_type, chunk_size and order_count
  *  (whatever it means, depending on chunks)
  */
-class GraphicToFile
-: public RDPSerializer
-, public gdi::KbdInputApi
-, public gdi::CaptureProbeApi
-, public gdi::RelayoutApi
+class GraphicToFile : public RDPSerializer
 {
     enum {
         GTF_SIZE_KEYBUF_REC = 1024
@@ -235,15 +231,14 @@ public:
         this->mouse_y = mouse_y;
     }
 
-    bool kbd_input(MonotonicTimePoint now, uint32_t uchar) override {
-        (void)now;
+    bool kbd_input(uint32_t uchar) {
         if (keyboard_buffer_32.has_room(sizeof(uint32_t))) {
             keyboard_buffer_32.out_uint32_le(uchar);
         }
         return true;
     }
 
-    void enable_kbd_input_mask(bool enable) override {
+    void enable_kbd_input_mask(bool enable) {
         send_wrm_chunk(this->trans, WrmChunkType::KBD_INPUT_MASK, sizeof(uint8_t), 1);
         this->trans.send((enable ? "\1" : "\0"), 1);
     }
@@ -528,7 +523,7 @@ protected:
     }
 
 public:
-    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list) override
+    void session_update(MonotonicTimePoint now, LogId id, KVLogList kv_list)
     {
         if (this->timer < now) {
             this->timer = now;
@@ -568,7 +563,7 @@ public:
         this->trans.send(out_stream.get_produced_bytes());
     }
 
-    void possible_active_window_change() override {
+    void possible_active_window_change() {
         if (this->keyboard_buffer_32.get_offset()) {
             this->send_timestamp_chunk();
         }
@@ -576,7 +571,7 @@ public:
         send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
     }
 
-    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override {
+    void relayout(MonitorLayoutPDU const & monitor_layout_pdu) {
         send_wrm_chunk(this->trans, WrmChunkType::MONITOR_LAYOUT, monitor_layout_pdu.size(), 1);
 
         StaticOutStream<1024> payload;
@@ -868,8 +863,8 @@ public:
     }
 
     // shadow text
-    bool kbd_input(MonotonicTimePoint now, uint32_t uchar) override {
-        return this->graphic_to_file.kbd_input(now, this->kbd_input_mask_enabled ? '*' : uchar);
+    bool kbd_input(MonotonicTimePoint /*now*/, uint32_t uchar) override {
+        return this->graphic_to_file.kbd_input(this->kbd_input_mask_enabled ? '*' : uchar);
     }
 
     void enable_kbd_input_mask(bool enable) override {
