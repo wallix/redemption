@@ -187,8 +187,3 @@ bool SnappyCompressionOutTransport::next()
 
     return this->target_transport.next();
 }
-
-void SnappyCompressionOutTransport::timestamp(timeval now)
-{
-    this->target_transport.timestamp(now);
-}

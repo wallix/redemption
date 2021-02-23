@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <sys/time.h>
 #include <cstdint>
 #include <cstddef>
 
@@ -32,15 +31,14 @@
 #include "utils/invalid_socket.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/noncopyable.hpp"
-#include "utils/sugar/std_stream_proto.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/buffer_view.hpp"
 
-#include "configs/autogen/enums.hpp"
 
 using std::size_t; /*NOLINT*/
 
 class ServerNotifier;
+
 
 struct TLSClientParams
 {
@@ -211,9 +209,6 @@ public:
         return true;
     }
 
-    virtual void timestamp(timeval now)
-    { (void)now; }
-
     /* Some transports are splitted between sequential discrete units
      * (it may be block, chunk, numbered files, directory entries, whatever).
      * Calling next means flushing the current unit and start the next one.
@@ -227,11 +222,6 @@ public:
     [[nodiscard]] virtual int get_fd() const { return INVALID_SOCKET; }
 };
 
-
-REDEMPTION_OSTREAM(out, Transport::Read status)
-{
-    return out << (status == Transport::Read::Ok ? "Read::Ok" : "Read::Eof");
-}
 
 struct InTransport
 {
@@ -263,7 +253,6 @@ struct InTransport
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
-    void timestamp(timeval now) { this->t.timestamp(now); }
     bool next() { return this->t.next(); }
     [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 
@@ -298,7 +287,6 @@ struct OutTransport
     void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
-    void timestamp(timeval now) { this->t.timestamp(now); }
     bool next() { return this->t.next(); }
     [[nodiscard]] int get_fd() const { return this->t.get_fd(); }
 

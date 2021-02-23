@@ -18,10 +18,10 @@
    Author(s): Christophe Grosjean, Jonatan Poelen
 */
 
-#include "utils/log.hpp"
-
+#include "acl/auth_api.hpp"
 #include "utils/strutils.hpp"
 #include "core/error.hpp"
+#include "utils/log.hpp"
 
 #include "transport/out_meta_sequence_transport.hpp"
 #include "transport/mwrm_reader.hpp"
@@ -92,7 +92,7 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     const char * path,
     const char * hash_path,
     const char * basename,
-    timeval now,
+    RealTimePoint now,
     uint16_t width,
     uint16_t height,
     const int groupid,
@@ -104,11 +104,12 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
 , groupid_(groupid)
 , mf_(path, basename)
 , hf_(hash_path, basename)
-, start_sec_(now.tv_sec)
-, stop_sec_(now.tv_sec)
 , cctx(cctx)
 , file_permissions_(file_permissions)
 {
+    this->timestamp(now);
+    this->start_sec_ = this->stop_sec_;
+
     this->meta_buf_encrypt_transport.open(
         this->mf_.filename,
         this->hf_.filename,
@@ -127,9 +128,11 @@ OutMetaSequenceTransport::~OutMetaSequenceTransport()
     }
 }
 
-void OutMetaSequenceTransport::timestamp(timeval now)
+void OutMetaSequenceTransport::timestamp(RealTimePoint tp)
 {
-    this->stop_sec_ = now.tv_sec;
+    auto dur = tp.time_since_epoch();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(dur);
+    this->stop_sec_ = seconds.count();
 }
 
 bool OutMetaSequenceTransport::next()
@@ -182,7 +185,7 @@ void OutMetaSequenceTransport::next_meta_file()
     const char * filename = this->filegen_.get_filename(this->num_file_);
     this->current_filename_[0] = 0;
 
-    this->num_file_ ++;
+    this->num_file_++;
 
     struct stat stat;
     if (::stat(filename, &stat)){

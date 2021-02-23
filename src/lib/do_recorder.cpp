@@ -50,7 +50,6 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/to_timeval.hpp"
 #include "utils/strutils.hpp"
 #include "utils/ref.hpp"
 
@@ -86,7 +85,7 @@ enum {
 class ChunkToFile
 {
     CompressionOutTransportBuilder compression_bullder;
-    Transport & trans_target;
+    OutMetaSequenceTransport & trans_target;
     Transport & trans;
 
     const uint8_t wrm_format_version;
@@ -97,10 +96,10 @@ class ChunkToFile
 
 public:
     ChunkToFile(
-        Transport * trans, WrmMetaChunk info,
+        OutMetaSequenceTransport& trans, WrmMetaChunk info,
         WrmCompressionAlgorithm wrm_compression_algorithm)
-    : compression_bullder(*trans, wrm_compression_algorithm)
-    , trans_target(*trans)
+    : compression_bullder(trans, wrm_compression_algorithm)
+    , trans_target(trans)
     , trans(this->compression_bullder.get())
     , wrm_format_version(bool(this->compression_bullder.get_algorithm()) ? 4 : 3)
     {
@@ -163,7 +162,7 @@ public:
             if (this->real_time == RealTimePoint{}) {
                 stream.in_skip_bytes(8);
                 this->real_time = RealTimePoint(std::chrono::microseconds(stream.in_uint64_le()));
-                this->trans_target.timestamp(to_timeval(this->real_time.time_since_epoch()));
+                this->trans_target.timestamp(this->real_time);
             }
             resend();
 
@@ -172,7 +171,7 @@ public:
 
         case WrmChunkType::TIMESTAMP_OR_RECORD_DELAY: {
             auto us = std::chrono::microseconds(stream.in_uint64_le());
-            this->trans_target.timestamp(to_timeval(this->real_time.time_since_epoch() + us));
+            this->trans_target.timestamp(this->real_time + us);
             resend();
 
             break;
@@ -339,7 +338,7 @@ static int do_recompress(
             outfile.directory.c_str(),
             ini.get<cfg::video::hash_path>().c_str(),
             outfile.basename.c_str(),
-            timeval{begin_record.count(), 0},
+            RealTimePoint(begin_record),
             player.get_wrm_info().width,
             player.get_wrm_info().height,
             ini.get<cfg::video::capture_groupid>(),
@@ -348,7 +347,7 @@ static int do_recompress(
         );
 
         ChunkToFile recorder(
-            &trans, player.get_wrm_info(), ini.get<cfg::video::wrm_compression_algorithm>());
+            trans, player.get_wrm_info(), ini.get<cfg::video::wrm_compression_algorithm>());
 
         player.set_consumer(recorder);
 

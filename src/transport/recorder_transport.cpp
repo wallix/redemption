@@ -107,11 +107,6 @@ bool RecorderTransport::connect()
     return this->trans.connect();
 }
 
-void RecorderTransport::timestamp(timeval now)
-{
-    this->trans.timestamp(now);
-}
-
 bool RecorderTransport::next()
 {
     return this->trans.next();

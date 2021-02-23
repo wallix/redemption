@@ -72,10 +72,6 @@ public:
 
     bool next() override;
 
-    void timestamp(timeval now) override {
-        this->target_transport.timestamp(now);
-    }
-
 private:
     void compress(const uint8_t * const data, size_t data_length, bool end);
 

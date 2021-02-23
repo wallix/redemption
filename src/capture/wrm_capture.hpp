@@ -120,7 +120,6 @@ class GraphicToFile
     MonotonicTimePoint monotonic_real_time {};
     RealTimePoint last_real_time {};
     // for a monotic real time
-    const MonotonicTimeToRealTime original_monotonic_to_real;
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
     const bool send_input;
@@ -160,7 +159,6 @@ public:
     , start_timer(now)
     , monotonic_real_time(now)
     , last_real_time(real_now)
-    , original_monotonic_to_real(now, real_now)
     , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
@@ -180,6 +178,11 @@ public:
         this->send_time_points();
     }
 
+    MonotonicTimePoint current_timer() const
+    {
+        return this->timer;
+    }
+
     void dump_png24(Transport & trans, bool bgr) const
     {
         ::dump_png24(trans, this->image_frame_api, bgr);
@@ -193,12 +196,6 @@ public:
         this->flush_orders();
         this->flush_bitmaps();
         this->timer = now;
-        const auto tp = this->original_monotonic_to_real.to_real_time_duration(this->timer);
-        const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(tp);
-        timeval tv;
-        tv.tv_sec = seconds.count();
-        tv.tv_usec = std::chrono::duration_cast<std::chrono::microseconds>(tp - seconds).count();
-        this->trans.timestamp(tv);
     }
 
     void update_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time)
@@ -667,6 +664,7 @@ class WrmCaptureImpl :
 
     MonotonicTimePoint next_break;
     const std::chrono::seconds break_interval;
+    const MonotonicTimeToRealTime original_monotonic_to_real;
 
     bool kbd_input_mask_enabled;
 
@@ -681,6 +679,14 @@ class WrmCaptureImpl :
 
     Serializer graphic_to_file;
 
+    void update_timestamp(MonotonicTimePoint now)
+    {
+        this->graphic_to_file.timestamp(now);
+        const auto timer = this->graphic_to_file.current_timer();
+        const auto tp = this->original_monotonic_to_real.to_real_time_point(timer);
+        this->out.timestamp(tp);
+    }
+
 public:
     // EXTERNAL CAPTURE API
     void external_breakpoint() override {
@@ -689,7 +695,7 @@ public:
 
     void external_monotonic_time_point(MonotonicTimePoint now) override {
         this->graphic_to_file.sync();
-        this->graphic_to_file.timestamp(now);
+        this->update_timestamp(now);
     }
 
     void external_times(MonotonicTimePoint::duration monotonic_delay, RealTimePoint real_time) override {
@@ -814,6 +820,7 @@ public:
         gdi::ImageFrameApi & image_frame_api, ImageView const & image_view)
     : next_break(capture_params.now + wrm_params.break_interval)
     , break_interval(wrm_params.break_interval)
+    , original_monotonic_to_real(capture_params.now, capture_params.real_now)
     , kbd_input_mask_enabled{false}
     , bmp_cache(
         BmpCache::Recorder, wrm_params.capture_bpp, 3, false,
@@ -830,15 +837,7 @@ public:
         capture_params.record_path,
         wrm_params.hash_path,
         capture_params.basename,
-        [&]{
-            const auto time_since_epoch = capture_params.real_now.time_since_epoch();
-            const auto us = std::chrono::duration_cast<std::chrono::microseconds>(time_since_epoch);
-            const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(us);
-            timeval tv;
-            tv.tv_sec = seconds.count();
-            tv.tv_usec = (us - seconds).count();
-            return tv;
-        }(),
+        capture_params.real_now,
         image_view.width(),
         image_view.height(),
         capture_params.groupid,
@@ -880,7 +879,7 @@ public:
     }
 
     void send_timestamp_chunk(MonotonicTimePoint now) {
-        this->graphic_to_file.timestamp(now);
+        this->update_timestamp(now);
         this->graphic_to_file.send_timestamp_chunk();
     }
 

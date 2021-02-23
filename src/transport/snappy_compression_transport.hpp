@@ -64,6 +64,4 @@ private:
 
 public:
     bool next() override;
-
-    void timestamp(timeval now) override;
 };

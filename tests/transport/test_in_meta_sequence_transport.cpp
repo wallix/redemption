@@ -245,22 +245,22 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
 
     // two files: 5 and 10 bytes
     {
+        using namespace std::chrono_literals;
+
         LCGRandom rnd;
-        timeval tv;
-        tv.tv_usec = 0;
-        tv.tv_sec = 1352304810;
+        RealTimePoint tp(1352304810s);
         const int groupid = 0;
 
         cctx.set_trace_type(TraceType::cryptofile);
 
-        OutMetaSequenceTransport crypto_trans(cctx, rnd, recorded_wd.dirname(), hash_wd.dirname(), "TESTOFS", tv, 800, 600, groupid, nullptr, -1);
+        OutMetaSequenceTransport crypto_trans(cctx, rnd, recorded_wd.dirname(), hash_wd.dirname(), "TESTOFS", tp, 800, 600, groupid, nullptr, -1);
         crypto_trans.send("AAAAX", 5);
-        tv.tv_sec += 100;
-        crypto_trans.timestamp(tv);
+        tp += 100s;
+        crypto_trans.timestamp(tp);
         crypto_trans.next();
         crypto_trans.send("BBBBXCCCCX", 10);
-        tv.tv_sec += 100;
-        crypto_trans.timestamp(tv);
+        tp += 100s;
+        crypto_trans.timestamp(tp);
         RED_TEST_PASSPOINT();
     }
 

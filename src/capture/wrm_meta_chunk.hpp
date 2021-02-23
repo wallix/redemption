@@ -26,6 +26,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "cxx/diagnostic.hpp"
+#include "configs/autogen/enums.hpp"
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")

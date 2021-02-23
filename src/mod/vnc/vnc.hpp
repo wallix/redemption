@@ -74,6 +74,9 @@
 #include "mod/vnc/vnc_verbose.hpp"
 #include "acl/auth_api.hpp"
 
+#include "configs/autogen/enums.hpp"
+
+
 class UltraDSM;
 class mod_vnc;
 

@@ -89,8 +89,6 @@ public:
 
     bool connect() override;
 
-    void timestamp(timeval now) override;
-
     bool next() override;
 
     [[nodiscard]] int get_fd() const override;

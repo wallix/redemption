@@ -20,9 +20,10 @@
 
 #pragma once
 
-#include "acl/auth_api.hpp"
 #include "transport/crypto_transport.hpp"
+#include "utils/real_clock.hpp"
 
+class AclReportApi;
 
 struct OutMetaSequenceTransport : Transport
 {
@@ -32,7 +33,7 @@ struct OutMetaSequenceTransport : Transport
         const char * path,
         const char * hash_path,
         const char * basename,
-        timeval now,
+        RealTimePoint now,
         uint16_t width,
         uint16_t height,
         const int groupid,
@@ -41,7 +42,7 @@ struct OutMetaSequenceTransport : Transport
 
     ~OutMetaSequenceTransport();
 
-    void timestamp(timeval now) override;
+    void timestamp(RealTimePoint tp);
 
     bool next() override;
 

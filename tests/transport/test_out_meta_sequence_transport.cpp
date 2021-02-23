@@ -28,6 +28,8 @@ Author(s): Jonathan Poelen
 #include "test_only/lcg_random.hpp"
 
 
+using namespace std::chrono_literals;
+
 static void gen_out_meta_seq(
     TraceType trace_type, WorkingDirectory& record_wd, WorkingDirectory& hash_wd)
 {
@@ -42,16 +44,14 @@ static void gen_out_meta_seq(
     cctx.set_hmac_key("12345678901234567890123456789012"_av);
     LCGRandom rnd;
 
-    timeval now;
-    now.tv_sec = 1352304810;
-    now.tv_usec = 0;
+    RealTimePoint tp(1352304810s);
     const int groupid = 0;
 
     cctx.set_trace_type(trace_type);
 
     OutMetaSequenceTransport wrm_trans(
         cctx, rnd, record_wd.dirname(), hash_wd.dirname(), "xxx",
-        now, 800, 600, groupid, nullptr, -1);
+        tp, 800, 600, groupid, nullptr, -1);
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);
     wrm_trans.next();
