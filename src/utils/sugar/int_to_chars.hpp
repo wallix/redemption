@@ -67,21 +67,23 @@ inline int_to_chars_result int_to_chars(T n) noexcept
 
     int_to_chars_result chars;
     auto r = std::to_chars(chars.data(), chars.data() + chars.max_capacity(), n);
-    chars.set_size(std::size_t(r.ptr - chars.data()));
+    auto len = r.ptr - chars.data();
+    chars.set_size(std::size_t(len));
 
     return chars;
 }
 
 template<class T>
-inline int_to_chars_result int_to_zchars(T n) noexcept
+inline int_to_zchars_result int_to_zchars(T n) noexcept
 {
     static_assert(std::is_integral_v<T>);
     static_assert(sizeof(T) <= 64);
 
-    int_to_chars_result chars;
+    int_to_zchars_result chars;
     auto r = std::to_chars(chars.data(), chars.data() + chars.max_capacity(), n);
-    r.ptr = '\0';
-    chars.set_size(std::size_t(r.ptr - chars.data()) + 1);
+    auto len = r.ptr - chars.data();
+    chars.set_size(std::size_t(len));
+    *r.ptr = '\0';
 
     return chars;
 }
