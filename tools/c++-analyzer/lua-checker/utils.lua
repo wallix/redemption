@@ -18,12 +18,17 @@ peg.word = peg.wordchars^1
 peg.space = peg.S'\n\t '
 peg.ws0 = peg.space^0
 peg.ws = peg.space^1
-peg.singleLineComment = '//' * peg.After('\n')
-peg.multiLineComment = '/*' * peg.After('*/')
+
+local singleLineComment = '//' * peg.After('\n')
+local multiLineComment = '/*' * peg.After('*/')
+
+local remove_comments = peg.Cs(((singleLineComment + multiLineComment) / '' + 1)^0)
 
 local format = string.format
 
 local print_error = function(s) io.stderr:write(s) end
+
+local content_by_file = {}
 
 return {
     peg = peg,
@@ -36,12 +41,20 @@ return {
     print_error=print_error,
 
     readall=function(fname)
-        f,e = io.open(fname)
+        local s = content_by_file[fname]
+        if s then
+            return s
+        end
+
+        local f,e = io.open(fname)
         if e then
             error(e)
         end
-        local s = f:read('*a')
+        s = f:read('*a')
         f:close()
+
+        s = remove_comments:match(s)
+        content_by_file[fname] = s
         return s
     end,
 

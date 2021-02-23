@@ -87,14 +87,14 @@ end
 
 function terminate()
     if #logs == 0 then
-        print_error('log6(...) not found\n')
+        utils.print_error('log6(...) not found\n')
         return 1
     end
 
     table.sort(logs, function(a, b) return a[3] < b[3] end)
 
     function printlog(info)
-        print_error(string.format('%s:%d:\n  %s  %s\n', info[1], info[2], info[3], info[4]))
+        utils.print_error(string.format('%s:%d:\n  %s  %s\n', info[1], info[2], info[3], info[4]))
     end
 
     if verbose then
@@ -110,7 +110,7 @@ function terminate()
         log = logs[i]
         ids[log[3]] = 1
         if previouslog[3] == log[3] and previouslog[4] ~= log[4] then
-            print_error('log6 differ:\n')
+            utils.print_error('log6 differ:\n')
             printlog(previouslog)
             printlog(logs[i])
             errcount = errcount + 1

@@ -14,7 +14,7 @@ do
     local ws0 = peg.ws0
     patternVarFile = After('using' * ws * C(peg.word) * ws0 * '=' * ws0 * 'vcfg::variables<')
     patternVar = Ct(After('vcfg::var<' * C(Ident))^0)
-    patternVarSearch = Ct(After('<' * C(Ident) * '>'+ peg.singleLineComment + peg.multiLineComment)^0)
+    patternVarSearch = Ct(After('<' * C(Ident) * '>')^0)
 end
 
 local match_and_setk = utils.match_and_setk

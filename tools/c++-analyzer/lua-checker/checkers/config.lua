@@ -9,7 +9,7 @@ do
     local After = peg.After
     local Ident = 'cfg:' * (peg.word + ':')^1
     patternVar = Ct(After(C(Ident))^0)
-    patternVarSearch = Ct(After('<' * C(Ident) * '>'+ peg.singleLineComment + peg.multiLineComment)^0)
+    patternVarSearch = Ct(After('<' * C(Ident) * '>')^0)
     patternType = Ct((After('.enumeration_') * After('"') * C(peg.Until('"')))^0)
     patternTypeSearch = Ct(After((1-peg.wordchars) * C((R'AZ' * R('AZ','az')^1)))^0)
 end
