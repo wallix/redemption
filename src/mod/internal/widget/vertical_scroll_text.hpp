@@ -49,8 +49,13 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
+    void scroll_up();
+    void scroll_down();
+
 private:
-    int16_t compute_cursor_y(int current_value) const;
+    void _update_cursor_button_y();
+    void _scroll_up();
+    void _scroll_down();
 
     RDPColor const fg_color;
     RDPColor const bg_color;
@@ -60,15 +65,19 @@ private:
 
     int16_t cursor_button_y = 0;
 
-    int current_value = 0;
-    int step = 0;
+    int current_y = 0;
+    int page_h = 0;
+    int scroll_h = 0;
+    int total_h = 0;
 
-    int cursor_button_diff_y = 0;
+    int mouse_start_y = 0;
+    int mouse_y = 0;
 
     uint16_t x_text;
     uint16_t y_text;
 
     Dimension const button_dim;
+    uint16_t cursor_button_h;
 
     bool mouse_down = false;
     bool has_scroll = false;
