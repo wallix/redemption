@@ -234,6 +234,19 @@ void FlatDialog::rdp_input_scancode(long int param1, long int param2, long int p
             keymap->get_kevent();
             this->send_notify(NOTIFY_CANCEL);
             break;
+        case Keymap2::KEVENT_LEFT_ARROW:
+        case Keymap2::KEVENT_UP_ARROW:
+        case Keymap2::KEVENT_PGUP:
+            keymap->get_kevent();
+            this->dialog.scroll_up();
+            break;
+
+        case Keymap2::KEVENT_RIGHT_ARROW:
+        case Keymap2::KEVENT_DOWN_ARROW:
+        case Keymap2::KEVENT_PGDOWN:
+            keymap->get_kevent();
+            this->dialog.scroll_down();
+            break;
         default:
             WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
             break;
