@@ -145,8 +145,7 @@ namespace i18n
                 throw std::bad_alloc();
             }
         }
-        LOG(LOG_INFO,
-            "i18n context is cleared. Default system locale is used");
+        LOG(LOG_INFO, "i18n context is cleared");
         _clearable_context = false;
     }
 

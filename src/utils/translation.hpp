@@ -209,26 +209,32 @@ struct Translation
 private:
     Language lang = Language::en;
     Language prev_lang = Language::en;
+    mutable bool translation_context_set = false;
     mutable MessageTranslator_t message_translator;
 
     Translation() = default;
 
     inline void reset_message_translator_context() const
     {
-        if (this->lang != this->prev_lang)
+        if (!translation_context_set || this->lang != this->prev_lang)
         {
-            this->message_translator.clear_context();
+            if (!translation_context_set)
+            {
+                translation_context_set = true;
+            }
+            else
+            {
+                this->message_translator.clear_context();
+            }
 
-            /* check if it's english language for avoid useless context reset
-               because text is already in english by default in code */
             switch (this->lang)
             {
                 case Language::en:
-                    // this->message_translator.set_context("en"_zv);
-                    return ;
+                    this->message_translator.set_context("en"_zv);
+                    break;
                 case Language::fr:
                     this->message_translator.set_context("fr"_zv);
-                    return ;
+                    break;
             }
         }
     }
