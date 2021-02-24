@@ -70,7 +70,7 @@ FlatLogin::FlatLogin(
                   target, -18, theme.edit.fgcolor, theme.edit.bgcolor,
                   theme.edit.focus_color, theme.global.bgcolor, font,
                   label_text_target, (width <= 640), -1u, 1, 1, false)
-    , login_message_label(drawable, *this, nullptr, -19,
+    , message_label(drawable, *this, nullptr, -19,
         login_message ? std::string(login_message) : std::string(),
         theme.global.fgcolor, theme.global.bgcolor, theme.global.focus_color,
         font, WIDGET_MULTILINE_BORDER_X, WIDGET_MULTILINE_BORDER_Y)
@@ -109,7 +109,7 @@ FlatLogin::FlatLogin(
     this->add_widget(&this->error_message_label);
 
     if (*login_message) {
-        this->add_widget(&this->login_message_label);
+        this->add_widget(&this->message_label);
     }
 
     if (extra_button) {
@@ -132,7 +132,9 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
     this->set_xy(left, top);
     this->set_wh(width, height);
 
-    Dimension dim;
+    auto set_optimal_wh = [](auto& widget){
+        widget.set_wh(widget.get_optimal_dim());
+    };
 
     if (width > 640) {
         if (!this->labels_added) {
@@ -145,14 +147,9 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
             this->labels_added = true;
         }
 
-        dim = this->login_label.get_optimal_dim();
-        this->login_label.set_wh(dim);
-
-        dim = this->target_label.get_optimal_dim();
-        this->target_label.set_wh(dim);
-
-        dim = this->password_label.get_optimal_dim();
-        this->password_label.set_wh(dim);
+        set_optimal_wh(this->login_label);
+        set_optimal_wh(this->target_label);
+        set_optimal_wh(this->password_label);
     }
     else {
         if (this->labels_added) {
@@ -170,137 +167,180 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
         this->password_label.set_wh(0, 0);
     }
 
+    const Dimension edit_dim = {
+        uint16_t((width >= 420) ? 400 : width - 20),
+        this->login_edit.get_optimal_dim().h
+    };
+
     this->target_edit.use_title(width < 640);
-    dim = this->target_edit.get_optimal_dim();
-    this->target_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
+    this->target_edit.set_wh(edit_dim);
 
     this->login_edit.use_title(width < 640);
-    dim = this->login_edit.get_optimal_dim();
-    this->login_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
-
-    const uint16_t offset_y = this->login_edit.cy();
+    this->login_edit.set_wh(edit_dim);
 
     this->password_edit.use_title(width < 640);
-    dim = this->password_edit.get_optimal_dim();
-    this->password_edit.set_wh((width >= 420) ? 400 : width - 20, dim.h);
+    this->password_edit.set_wh(edit_dim);
 
-    const int target_bloc_w =
-        this->show_target
-        ? this->target_label.cx() + 10 + this->target_edit.cx()
-        : 0;
-    const int cbloc_w =
-        std::max({this->login_label.cx() + 10 + this->login_edit.cx(),
-                  this->password_label.cx() + 10 + this->password_edit.cx(),
-                  target_bloc_w});
+    this->error_message_label.set_wh(
+        edit_dim.w,
+        this->error_message_label.get_optimal_dim().h);
 
-    dim = this->error_message_label.get_optimal_dim();
-    this->error_message_label.set_wh(dim);
+    set_optimal_wh(this->version_label);
 
+    set_optimal_wh(this->helpicon);
 
-    const int targetlabel_h =
-        this->show_target
-        ?  offset_y + this->target_label.cy()
-        : 0;
+    set_optimal_wh(this->img);
 
-    const int targetedit_h =
-        this->show_target
-        ?  offset_y + 4 + this->target_edit.cy()
-        : 0;
+    const int labels_w = std::max({
+        this->login_label.cx(),
+        this->password_label.cx(),
+        this->show_target ? this->target_label.cx() : uint16_t()
+    }) + ((width > 640) ? 10 : 0);
 
-    auto const bottom_size
-      = this->error_message_label.cy()
-      + targetedit_h
-      + this->login_edit.cy()
-      + this->password_edit.cy()
-      + this->version_label.cy()
-      + (offset_y + 4) * 4
-      + 60;
+    const int cbloc_w = labels_w + edit_dim.w;
+    const int cbloc_x = (width - cbloc_w) / 2;
 
-    this->login_message_label.set_wh(
-        cbloc_w - WIDGET_MULTILINE_BORDER_X * 2,
-        height - bottom_size);
-    {
-        auto dim = this->login_message_label.get_optimal_dim();
-        if (dim.h < this->login_message_label.cy()) {
-            this->login_message_label.set_wh(this->login_message_label.cx(), dim.h);
+    const int original_space_h = 10;
+    const int original_extra_space_between_label_h = 10;
+
+    const int nb_label = this->show_target ? 5 : 4;
+    const int min_message_h = edit_dim.h * 4;
+    const int labels_h = edit_dim.h * nb_label;
+
+    int space_h = 0;
+    int extra_space_between_label_h = original_extra_space_between_label_h;
+    int start_y = 0;
+
+    int img_cy = this->img.cy();
+    for (;;) {
+        const int full_borders_h = (nb_label + 3) * original_space_h
+                                 + (nb_label - 1) * extra_space_between_label_h;
+
+        if (labels_h + min_message_h + full_borders_h + img_cy <= height) {
+            const int total_message_info_border_h = original_space_h * 2
+                                                  + extra_space_between_label_h / 2;
+            const int bloc_h = labels_h + full_borders_h + img_cy;
+            const int max_message_h = height - bloc_h;
+
+            this->message_label.set_wh(cbloc_w, max_message_h);
+            const Dimension message_dim {
+                uint16_t(cbloc_w),
+                this->message_label.get_optimal_dim().h
+            };
+
+            if (message_dim.h <= max_message_h) {
+                this->message_label.set_wh(message_dim);
+                int y = height / 2 - original_space_h - edit_dim.h - space_h;
+
+                if (!(message_dim.h + total_message_info_border_h < y && height - y >= bloc_h)) {
+                    y += edit_dim.h - space_h;
+                }
+
+                if (message_dim.h + total_message_info_border_h < y && height - y >= bloc_h) {
+                    start_y = y;
+                    this->message_label.set_wh(message_dim);
+                    y = (y - message_dim.h - total_message_info_border_h) / 2 + original_space_h;
+                    if (y + edit_dim.h - space_h + message_dim.h < start_y) {
+                        y += edit_dim.h - space_h;
+                    }
+                    this->message_label.set_xy(left + cbloc_x, top + y);
+                }
+                else {
+                    start_y = message_dim.h + total_message_info_border_h;
+                    this->message_label.set_xy(left + cbloc_x, top + original_space_h);
+                }
+            }
+            else {
+                start_y = max_message_h + total_message_info_border_h;
+                this->message_label.set_xy(left + cbloc_x, top + original_space_h);
+            }
+
+            space_h = original_space_h;
+            break;
+        }
+        // no extra space space between widget
+        else if (extra_space_between_label_h) {
+            extra_space_between_label_h = 0;
+        }
+        // no space between widget
+        else if (labels_h + min_message_h + img_cy <= height) {
+            start_y = height - (labels_h + img_cy);
+            this->message_label.set_wh(cbloc_w, start_y);
+            this->message_label.set_xy(left + cbloc_x, top);
+            break;
+        }
+        // image as background
+        else if (img_cy) {
+            img_cy = 0;
+            extra_space_between_label_h = original_extra_space_between_label_h;
+            this->img.set_xy(this->img.x(), top);
+        }
+        else {
+            start_y = edit_dim.h * 3;
+            this->message_label.set_wh(cbloc_w, start_y);
+            this->message_label.set_xy(left + cbloc_x, top);
+            break;
         }
     }
 
-    const int cbloc_h
-        = this->login_message_label.cy() + 60
-        + this->login_label.cy()
-        + offset_y + this->login_label.cy()
-        + targetlabel_h
-        + offset_y + this->password_label.cy()
-        + 60;
+    int y = start_y + top;
+    auto set_xy_label = [&](WidgetLabel& label){
+        label.set_xy(left + cbloc_x, y);
+        y += edit_dim.h + space_h;
+    };
 
-    const int cbloc_x = (width  - cbloc_w) / 2;
-    const int cbloc_y = (height - cbloc_h) / 2;
+    auto set_xy_label_and_edit = [&](WidgetEditValid& edit, WidgetLabel& label) {
+        set_xy_label(label);
+        y += extra_space_between_label_h;
+        edit.set_xy(left + cbloc_x + labels_w, label.y() - edit.get_border_height() - 3);
+    };
 
-    this->login_message_label.set_xy(
-        left + (width - this->login_message_label.cx()) / 2, cbloc_y);
-
-    int login_message_bottom = cbloc_y + this->login_message_label.cy() + 60;
-
-    this->error_message_label.set_xy(left + cbloc_x, top + login_message_bottom);
-
-    int last_offset = this->error_message_label.y() + this->error_message_label.cy();
-
+    set_xy_label(this->error_message_label);
     if (this->show_target) {
-        this->target_label.set_xy(left + cbloc_x,
-                                  last_offset + offset_y + 4);
-        last_offset = this->target_label.y() + this->target_label.cy();
+        set_xy_label_and_edit(this->target_edit, this->target_label);
     }
+    set_xy_label_and_edit(this->login_edit, this->login_label);
+    set_xy_label_and_edit(this->password_edit, this->password_label);
 
-    this->login_label.set_xy(left + cbloc_x,
-                             last_offset + offset_y + 4);
-    last_offset = this->login_label.y() + this->login_label.cy();
-
-    this->password_label.set_xy(left + cbloc_x,
-                                last_offset + offset_y + 4);
-
-    const int labels_w = std::max(this->password_label.cx(), this->login_label.cx());
-
-    if (this->show_target) {
-        this->target_edit.set_xy(left + cbloc_x + labels_w + 10, this->target_label.y() - this->target_edit.get_border_height() - 3);
-    }
-    this->login_edit.set_xy(left + cbloc_x + labels_w + 10, this->login_label.y() - this->login_edit.get_border_height() - 3);
-    this->password_edit.set_xy(left + cbloc_x + labels_w + 10, this->password_label.y() - this->password_edit.get_border_height() - 3);
-
-    this->error_message_label.set_xy(this->login_edit.x(),
-                                     this->error_message_label.y());
-
-    dim = this->error_message_label.get_optimal_dim();
-    this->error_message_label.set_wh(this->login_edit.cx(), dim.h);
-
-
-    dim = this->version_label.get_optimal_dim();
-    this->version_label.set_wh(dim);
-
-    dim = this->img.get_optimal_dim();
-    this->img.set_wh(dim);
 
     // Bottom bloc positioning
     // Logo and Version
-    const int bottom_height = (height - cbloc_h) / 2;
-    const int bbloc_h       = this->img.cy() + 10 + this->version_label.cy();
-    const int y_bbloc       =   ((bbloc_h + 10) > (bottom_height / 2))
-                                ? (height - (bbloc_h + 10))
-                                : (height / 2 + cbloc_h / 2 + bottom_height / 2);
+    const int bottom_height = (height - y + top) / 2;
+    const int bbloc_h       = (img_cy ? img_cy + space_h : 0) + this->version_label.cy();
 
-    this->img.set_xy(left + (width - this->img.cx()) / 2, top + y_bbloc);
-    if (this->img.y() + this->img.cy() > top + height) {
-        this->img.set_xy(this->img.x(), top);
+    if (bbloc_h + 10 > bottom_height / 2) {
+        y = top + height - (bbloc_h + space_h);
     }
-    this->version_label.set_xy(left + (width - this->version_label.cx()) / 2,
-                                top + y_bbloc + this->img.cy() + 10);
 
-    dim = this->helpicon.get_optimal_dim();
-    this->helpicon.set_wh(dim);
-    this->helpicon.set_xy(left + width - 60, top + height - 60);
+    if (img_cy) {
+        this->img.set_xy(left + (width - this->img.cx()) / 2, y);
+        y += img_cy + space_h;
+    }
+    this->version_label.set_xy(left + (width - this->version_label.cx()) / 2, y);
+
+
+    const auto bottom_w = img_cy
+        ? std::max(this->version_label.cx(), this->img.cx())
+        : this->version_label.cx();
+    const int border_w = (width - bottom_w) / 2;
+    const int helpicon_space_w = std::clamp((border_w - this->helpicon.cx()) / 2, 0, 60);
+    const int space_w = this->extra_button
+        ?  std::min(helpicon_space_w, std::clamp((border_w - this->extra_button->cx()) / 2, 0, 60))
+        : helpicon_space_w;
+    const int button_space_h = img_cy ? 30 : space_h;
+    const int diff_button_h = this->extra_button
+        ? (this->extra_button->cy() - this->helpicon.cy()) / 2
+        : 0;
+    this->helpicon.set_xy(
+        left + width - (this->helpicon.cx() + space_w),
+        top + height - (this->helpicon.cy() + button_space_h + diff_button_h)
+    );
 
     if (this->extra_button) {
-        this->extra_button->set_xy(left + 60, top + height - 60);
+        this->extra_button->set_xy(
+            left + space_w,
+            top + height - button_space_h - this->extra_button->cy()
+        );
     }
 }
 

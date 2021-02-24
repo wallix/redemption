@@ -43,7 +43,7 @@ public:
     WidgetEditValid    password_edit;
     WidgetLabel        target_label;
     WidgetEditValid    target_edit;
-    WidgetVerticalScrollText login_message_label;
+    WidgetVerticalScrollText message_label;
     WidgetImage        img;
     WidgetLabel        version_label;
     WidgetFlatButton   helpicon;
