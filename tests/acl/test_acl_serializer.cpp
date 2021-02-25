@@ -59,7 +59,14 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 
     acl.send_acl_data();
     RED_CHECK(trans.trans.buf ==
-        "\x00\x16"
+        "\x00\x17"
+        "?\x0ftarget_password"
+        "?\x0btarget_host"
+        "?\x0aproto_dest"
+        "?\x08password"
+        "?\x05login"
+        "?\x0dtarget_device"
+        "?\x0ctarget_login"
         "!\x03""bpp\x00\x00\x00\x02""24"
         "!\x05width\x00\x00\x00\x03""800"
         "!\x06height\x00\x00\x00\x03""600"
@@ -68,20 +75,15 @@ RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
         "!\x15selector_group_filter\x00\x00\x00\x00"
         "!\x15selector_proto_filter\x00\x00\x00\x00"
         "!\x17selector_lines_per_page\x00\x00\x00\x01\x30"
-        "?\x0ftarget_password"
-        "?\x0btarget_host"
-        "?\x0aproto_dest"
-        "?\x08password"
         "!\x09reporting\x00\x00\x00\x00"
         "!\x13""auth_channel_target\x00\x00\x00\x00"
         "!\x0e""accept_message\x00\x00\x00\x05""False"
         "!\x0f""display_message\x00\x00\x00\x05""False"
         "!\x12real_target_device\x00\x00\x00\x00"
-        "?\x05login"
         "!\x09ip_client\x00\x00\x00\x00"
         "!\x09ip_target\x00\x00\x00\x00"
-        "?\x0dtarget_device"
-        "?\x0ctarget_login"_av);
+        "!\x0elogin_language\x00\x00\x00\x04""Auto"
+        ""_av);
 
     trans.trans.buf.clear();
     trans.excep = true;

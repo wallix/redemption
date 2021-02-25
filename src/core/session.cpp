@@ -777,9 +777,6 @@ private:
 
         using namespace std::chrono_literals;
 
-        // TODO
-        this->ini.set_acl<cfg::translation::login_language>(this->ini.get<cfg::translation::login_language>());
-
         enum class LoopState
         {
             AclSend,
