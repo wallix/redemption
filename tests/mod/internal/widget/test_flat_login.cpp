@@ -27,6 +27,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/notify_trace.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/login/"
@@ -86,18 +87,7 @@ RED_AUTO_TEST_CASE(TraceFlatLogin2)
 RED_AUTO_TEST_CASE(TraceFlatLogin3)
 {
     TestGraphic drawable(800, 600);
-    struct Notify : NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-
-        Notify() = default;
-
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
+    NotifyTrace notifier;
     WidgetFlatButton * extra_button = nullptr;
 
 
@@ -111,15 +101,15 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     flat_login.set_widget_focus(&flat_login.password_edit, Widget::focus_reason_tabkey);
 
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    RED_CHECK(notifier.sender == &flat_login);
-    RED_CHECK(notifier.event == NOTIFY_SUBMIT);
+    RED_CHECK(notifier.last_widget == &flat_login);
+    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(flat_login.x(),
@@ -129,13 +119,13 @@ RED_AUTO_TEST_CASE(TraceFlatLogin3)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "login_3.png");
 
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
     keymap.push_kevent(Keymap2::KEVENT_ESC); // enterto validate
     flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    RED_CHECK(notifier.sender == &flat_login);
-    RED_CHECK(notifier.event == NOTIFY_CANCEL);
+    RED_CHECK(notifier.last_widget == &flat_login);
+    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLoginHelp)
@@ -226,18 +216,7 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
-    struct Notify : NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-
-        Notify() = default;
-
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
+    NotifyTrace notifier;
     WidgetFlatButton * extra_button = nullptr;
 
     FlatLogin flat_login(drawable, 0, 0, 800, 600, parent, &notifier, "test6",
@@ -245,8 +224,8 @@ RED_AUTO_TEST_CASE(EventWidgetOk)
                          "", LOGON_MESSAGE, extra_button, false,
                          global_font_deja_vu_14(), Translator{Language::en}, Theme{});
 
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 }
 
 RED_AUTO_TEST_CASE(TraceFlatLogin4)

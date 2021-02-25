@@ -34,7 +34,7 @@ class NotifyApi : noncopyable
 public:
     using notify_event_t = int;
 
-    virtual void notify(Widget * sender, notify_event_t event) = 0;
+    virtual void notify(Widget & widget, notify_event_t event) = 0;
 
     virtual ~NotifyApi() = default;
 };

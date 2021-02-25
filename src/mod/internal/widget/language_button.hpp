@@ -40,7 +40,7 @@ public:
         Theme const & theme
     );
 
-    void notify(Widget* widget, NotifyApi::notify_event_t event) override;
+    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
 private:
     struct Loc

@@ -136,7 +136,7 @@ public:
 
     void ask_for_connection();
 
-    void notify(Widget* widget, notify_event_t event) override;
+    void notify(Widget& widget, notify_event_t event) override;
 
     void add_device(array_view<chars_view> entries);
 

@@ -33,9 +33,9 @@ struct TestScrollCtx
         WidgetScrollBar* scroll;
         unsigned pos = 0;
 
-        void notify(Widget * sender, notify_event_t /*event*/) override
+        void notify(Widget & sender, notify_event_t /*event*/) override
         {
-            RED_REQUIRE(scroll == sender);
+            RED_REQUIRE(scroll == &sender);
 
             auto new_pos = this->scroll->get_current_value();
             RED_TEST(this->pos != new_pos);

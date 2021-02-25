@@ -242,10 +242,9 @@ BGRColor FlatInteractiveTarget::get_bg_color() const
     return this->bgcolor;
 }
 
-void FlatInteractiveTarget::notify(Widget* widget, NotifyApi::notify_event_t event)
+void FlatInteractiveTarget::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
-    if ((widget == this->last_interactive)
-            && event == NOTIFY_SUBMIT) {
+    if (&widget == this->last_interactive && event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     else if (event == NOTIFY_SUBMIT) {

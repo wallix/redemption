@@ -372,27 +372,27 @@ void WidgetSelector::rearrange()
 void WidgetSelector::ask_for_connection()
 {
     if (this->notifier) {
-        this->notifier->notify(&this->connect, NOTIFY_SUBMIT);
+        this->notifier->notify(this->connect, NOTIFY_SUBMIT);
     }
 }
 
 
-void WidgetSelector::notify(Widget* widget, notify_event_t event)
+void WidgetSelector::notify(Widget& widget, notify_event_t event)
 {
-    if ((widget->group_id == this->selector_lines.group_id) ||
-        (widget->group_id == this->connect.group_id)) {
+    if ((widget.group_id == this->selector_lines.group_id) ||
+        (widget.group_id == this->connect.group_id)) {
         if (NOTIFY_SUBMIT == event) {
             this->ask_for_connection();
         }
     }
-    else if (widget->group_id == this->apply.group_id) {
+    else if (widget.group_id == this->apply.group_id) {
         if (NOTIFY_SUBMIT == event || NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {
             if (this->notifier) {
                 this->notifier->notify(widget, event);
             }
         }
     }
-    else if (widget->group_id == this->logout.group_id) {
+    else if (widget.group_id == this->logout.group_id) {
         if (NOTIFY_SUBMIT == event) {
             if (this->notifier) {
                 this->notifier->notify(widget, NOTIFY_CANCEL);
@@ -400,7 +400,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
         }
     }
 
-    else if (widget->group_id == this->column_expansion_buttons[0].group_id) {
+    else if (widget.group_id == this->column_expansion_buttons[0].group_id) {
         if (NOTIFY_SUBMIT == event) {
             this->priority_column_index = 0;
 
@@ -408,7 +408,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
             this->rdp_input_invalidate(this->get_rect());
         }
     }
-    else if (widget->group_id == this->column_expansion_buttons[1].group_id) {
+    else if (widget.group_id == this->column_expansion_buttons[1].group_id) {
         if (NOTIFY_SUBMIT == event) {
             this->priority_column_index = 1;
 
@@ -416,7 +416,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
             this->rdp_input_invalidate(this->get_rect());
         }
     }
-    else if (widget->group_id == this->column_expansion_buttons[2].group_id) {
+    else if (widget.group_id == this->column_expansion_buttons[2].group_id) {
         if (NOTIFY_SUBMIT == event) {
             this->priority_column_index = 2;
 

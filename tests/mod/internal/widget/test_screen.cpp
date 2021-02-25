@@ -28,22 +28,11 @@
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
 
+#include "test_only/mod/internal/widget/notify_trace.hpp"
+
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/screen/"
 
-
-struct Notify : public NotifyApi {
-    Widget* sender = nullptr;
-    notify_event_t event = 0;
-
-    Notify() = default;
-
-    void notify(Widget* sender, notify_event_t event) override
-    {
-        this->sender = sender;
-        this->event = event;
-    }
-};
 
 RED_AUTO_TEST_CASE(TestScreenEvent)
 {
@@ -54,10 +43,10 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
     wscreen.tab_flag = Widget::NORMAL_TAB;
-    Notify notifier1;
-    Notify notifier2;
-    Notify notifier3;
-    Notify notifier4;
+    NotifyTrace notifier1;
+    NotifyTrace notifier2;
+    NotifyTrace notifier3;
+    NotifyTrace notifier4;
 
     WidgetFlatButton wbutton1(drawable, wscreen, &notifier1, "button 1",
                               0, WHITE, DARK_BLUE_BIS, WINBLUE, 2, global_font_lato_light_16());
@@ -92,11 +81,11 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     wscreen.rdp_input_invalidate(wscreen.get_rect());
 
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == &wbutton2);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == nullptr);
-    RED_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == &wbutton2);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == nullptr);
+    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_BEGIN);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_1.png");
 
     Keymap2 keymap;
@@ -104,132 +93,132 @@ RED_AUTO_TEST_CASE(TestScreenEvent)
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == &wbutton2);
-    RED_CHECK(notifier3.sender == &wbutton3);
-    RED_CHECK(notifier4.sender == nullptr);
-    RED_CHECK(notifier2.event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier3.event == NOTIFY_FOCUS_BEGIN);
-    notifier2.sender = nullptr;
-    notifier3.sender = nullptr;
-    notifier2.event = 0;
-    notifier3.event = 0;
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == &wbutton2);
+    RED_CHECK(notifier3.last_widget == &wbutton3);
+    RED_CHECK(notifier4.last_widget == nullptr);
+    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_END);
+    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_BEGIN);
+    notifier2.last_widget = nullptr;
+    notifier3.last_widget = nullptr;
+    notifier2.last_event = 0;
+    notifier3.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_2.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == &wbutton3);
-    RED_CHECK(notifier4.sender == &wbutton4);
-    RED_CHECK(notifier3.event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
-    notifier3.sender = nullptr;
-    notifier4.sender = nullptr;
-    notifier3.event = 0;
-    notifier4.event = 0;
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == &wbutton3);
+    RED_CHECK(notifier4.last_widget == &wbutton4);
+    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_END);
+    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_BEGIN);
+    notifier3.last_widget = nullptr;
+    notifier4.last_widget = nullptr;
+    notifier3.last_event = 0;
+    notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    RED_CHECK(notifier1.sender == &wbutton1);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == &wbutton4);
-    RED_CHECK(notifier1.event == NOTIFY_FOCUS_BEGIN);
-    RED_CHECK(notifier4.event == NOTIFY_FOCUS_END);
-    notifier1.sender = nullptr;
-    notifier4.sender = nullptr;
-    notifier1.event = 0;
-    notifier4.event = 0;
+    RED_CHECK(notifier1.last_widget == &wbutton1);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == &wbutton4);
+    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_BEGIN);
+    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_END);
+    notifier1.last_widget = nullptr;
+    notifier4.last_widget = nullptr;
+    notifier1.last_event = 0;
+    notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_4.png");
 
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    RED_CHECK(notifier1.sender == &wbutton1);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == &wbutton4);
-    RED_CHECK(notifier1.event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
-    notifier1.sender = nullptr;
-    notifier4.sender = nullptr;
-    notifier1.event = 0;
-    notifier4.event = 0;
+    RED_CHECK(notifier1.last_widget == &wbutton1);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == &wbutton4);
+    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_END);
+    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_BEGIN);
+    notifier1.last_widget = nullptr;
+    notifier4.last_widget = nullptr;
+    notifier1.last_event = 0;
+    notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
     keymap.push_kevent(Keymap2::KEVENT_BACKTAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == &wbutton3);
-    RED_CHECK(notifier4.sender == &wbutton4);
-    RED_CHECK(notifier3.event == NOTIFY_FOCUS_BEGIN);
-    RED_CHECK(notifier4.event == NOTIFY_FOCUS_END);
-    notifier3.sender = nullptr;
-    notifier4.sender = nullptr;
-    notifier3.event = 0;
-    notifier4.event = 0;
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == &wbutton3);
+    RED_CHECK(notifier4.last_widget == &wbutton4);
+    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_BEGIN);
+    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_END);
+    notifier3.last_widget = nullptr;
+    notifier4.last_widget = nullptr;
+    notifier3.last_event = 0;
+    notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_2.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton1.x(), wbutton1.y(), &keymap);
-    RED_CHECK(notifier1.sender == &wbutton1);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == &wbutton3);
-    RED_CHECK(notifier4.sender == nullptr);
-    RED_CHECK(notifier1.event == NOTIFY_FOCUS_BEGIN);
-    RED_CHECK(notifier3.event == NOTIFY_FOCUS_END);
-    notifier1.sender = nullptr;
-    notifier3.sender = nullptr;
-    notifier1.event = 0;
-    notifier3.event = 0;
+    RED_CHECK(notifier1.last_widget == &wbutton1);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == &wbutton3);
+    RED_CHECK(notifier4.last_widget == nullptr);
+    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_BEGIN);
+    RED_CHECK(notifier3.last_event == NOTIFY_FOCUS_END);
+    notifier1.last_widget = nullptr;
+    notifier3.last_widget = nullptr;
+    notifier1.last_event = 0;
+    notifier3.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_7.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton2.x(), wbutton2.y(), &keymap);
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == nullptr);
-    RED_CHECK(notifier1.event == 0);
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == nullptr);
+    RED_CHECK(notifier1.last_event == 0);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_4.png");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     wscreen.rdp_input_scancode(0,0,0,0, &keymap);
-    RED_CHECK(notifier1.sender == &wbutton1);
-    RED_CHECK(notifier2.sender == &wbutton2);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == nullptr);
-    RED_CHECK(notifier1.event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier2.event == NOTIFY_FOCUS_BEGIN);
-    notifier1.sender = nullptr;
-    notifier2.sender = nullptr;
-    notifier1.event = 0;
-    notifier2.event = 0;
+    RED_CHECK(notifier1.last_widget == &wbutton1);
+    RED_CHECK(notifier2.last_widget == &wbutton2);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == nullptr);
+    RED_CHECK(notifier1.last_event == NOTIFY_FOCUS_END);
+    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_BEGIN);
+    notifier1.last_widget = nullptr;
+    notifier2.last_widget = nullptr;
+    notifier1.last_event = 0;
+    notifier2.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_1.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                             wbutton4.x(), wbutton4.y(), &keymap);
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == &wbutton2);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == &wbutton4);
-    RED_CHECK(notifier2.event == NOTIFY_FOCUS_END);
-    RED_CHECK(notifier4.event == NOTIFY_FOCUS_BEGIN);
-    notifier2.sender = nullptr;
-    notifier4.sender = nullptr;
-    notifier2.event = 0;
-    notifier4.event = 0;
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == &wbutton2);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == &wbutton4);
+    RED_CHECK(notifier2.last_event == NOTIFY_FOCUS_END);
+    RED_CHECK(notifier4.last_event == NOTIFY_FOCUS_BEGIN);
+    notifier2.last_widget = nullptr;
+    notifier4.last_widget = nullptr;
+    notifier2.last_event = 0;
+    notifier4.last_event = 0;
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_10.png");
 
     wscreen.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                             wbutton4.x(), wbutton4.y(), &keymap);
-    RED_CHECK(notifier1.sender == nullptr);
-    RED_CHECK(notifier2.sender == nullptr);
-    RED_CHECK(notifier3.sender == nullptr);
-    RED_CHECK(notifier4.sender == &wbutton4);
-    RED_CHECK(notifier4.event == NOTIFY_SUBMIT);
+    RED_CHECK(notifier1.last_widget == nullptr);
+    RED_CHECK(notifier2.last_widget == nullptr);
+    RED_CHECK(notifier3.last_widget == nullptr);
+    RED_CHECK(notifier4.last_widget == &wbutton4);
+    RED_CHECK(notifier4.last_event == NOTIFY_SUBMIT);
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "screen_3.png");
 
     wscreen.show_tooltip(nullptr, "tooltip test", 30, 35, Rect(0, 0, 0, 0));

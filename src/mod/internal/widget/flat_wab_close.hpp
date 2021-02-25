@@ -86,7 +86,7 @@ public:
 
     std::chrono::seconds refresh_timeleft(std::chrono::seconds remaining);
 
-    void notify(Widget * widget, NotifyApi::notify_event_t event) override;
+    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
 };

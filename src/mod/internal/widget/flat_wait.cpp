@@ -134,16 +134,16 @@ void FlatWait::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     }
 }
 
-void FlatWait::notify(Widget* widget, NotifyApi::notify_event_t event)
+void FlatWait::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if ((event == NOTIFY_CANCEL) ||
-        ((event == NOTIFY_SUBMIT) && (widget == &this->exit))) {
+        ((event == NOTIFY_SUBMIT) && (&widget == &this->exit))) {
         this->send_notify(NOTIFY_CANCEL);
     }
-    else if ((event == NOTIFY_SUBMIT) && (widget == &this->goselector)) {
+    else if ((event == NOTIFY_SUBMIT) && (&widget == &this->goselector)) {
         this->send_notify(NOTIFY_SUBMIT);
     }
-    else if ((event == NOTIFY_SUBMIT) && (widget->group_id == this->form.group_id)) {
+    else if ((event == NOTIFY_SUBMIT) && (widget.group_id == this->form.group_id)) {
         this->send_notify(NOTIFY_TEXT_CHANGED);
     }
     else if (NOTIFY_COPY == event || NOTIFY_CUT == event || NOTIFY_PASTE == event) {

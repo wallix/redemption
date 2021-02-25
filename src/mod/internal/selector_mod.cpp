@@ -180,7 +180,7 @@ void SelectorMod::ask_page()
     this->ini.ask<cfg::context::selector>();
 }
 
-void SelectorMod::notify(Widget* widget, notify_event_t event)
+void SelectorMod::notify(Widget& widget, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_CANCEL: {
@@ -192,7 +192,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
         break;
     }
     case NOTIFY_SUBMIT: {
-        if (widget == &this->selector.connect) {
+        if (&widget == &this->selector.connect) {
             char buffer[1024] = {};
             uint16_t row_index = 0;
             uint16_t column_index = 0;
@@ -212,35 +212,35 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
                 // throw Error(ERR_BACK_EVENT_NEXT);
             }
         }
-        else if (widget->group_id == this->selector.apply.group_id) {
+        else if (widget.group_id == this->selector.apply.group_id) {
             this->ask_page();
         }
-        else if (widget == &this->selector.first_page) {
+        else if (&widget == &this->selector.first_page) {
             if (this->current_page > 1) {
                 this->current_page = 1;
                 this->ask_page();
             }
         }
-        else if (widget == &this->selector.prev_page) {
+        else if (&widget == &this->selector.prev_page) {
             if (this->current_page > 1) {
                 --this->current_page;
                 this->ask_page();
             }
         }
-        else if (widget == &this->selector.current_page) {
+        else if (&widget == &this->selector.current_page) {
             int page = atoi(this->selector.current_page.get_text()); /*NOLINT*/
             if (page != this->current_page) {
                 this->current_page = page;
                 this->ask_page();
             }
         }
-        else if (widget == &this->selector.next_page) {
+        else if (&widget == &this->selector.next_page) {
             if (this->current_page < this->number_page) {
                 ++this->current_page;
                 this->ask_page();
             }
         }
-        else if (widget == &this->selector.last_page) {
+        else if (&widget == &this->selector.last_page) {
             if (this->current_page < this->number_page) {
                 this->current_page = this->number_page;
                 this->ask_page();
@@ -254,7 +254,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
     case NOTIFY_COPY:
     case NOTIFY_CUT:
         if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *widget, event);
+            copy_paste_process_event(this->copy_paste, widget, event);
         }
         break;
 

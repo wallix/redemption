@@ -58,9 +58,9 @@ struct WidgetTestMod::WidgetTestModPrivate : NotifyApi
         this->screen.rdp_input_invalidate(this->screen.get_rect());
     }
 
-    void notify(Widget * sender, NotifyApi::notify_event_t event) override
+    void notify(Widget& sender, NotifyApi::notify_event_t event) override
     {
-        copy_paste_process_event(this->copy_paste, *sender, event);
+        copy_paste_process_event(this->copy_paste, sender, event);
     }
 
     gdi::GraphicApi & gd;

@@ -349,12 +349,12 @@ BGRColor FlatLogin::get_bg_color() const
     return this->bg_color;
 }
 
-void FlatLogin::notify(Widget* widget, NotifyApi::notify_event_t event)
+void FlatLogin::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if (event == NOTIFY_SUBMIT &&
-      ( widget == &this->login_edit
-     || widget == &this->target_edit
-     || widget == &this->password_edit
+      ( &widget == &this->login_edit
+     || &widget == &this->target_edit
+     || &widget == &this->password_edit
       )
     ) {
         this->send_notify(NOTIFY_SUBMIT);

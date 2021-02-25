@@ -23,6 +23,7 @@
 #include "test_only/test_framework/check_img.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/notify_trace.hpp"
 
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/edit.hpp"
@@ -276,17 +277,7 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
-
-    struct Notify : NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
+    NotifyTrace notifier;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
@@ -299,17 +290,15 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
                            "line 4",
                            extra_button, colors, global_font_deja_vu_14());
 
-//    RED_CHECK(notifier.sender == 0);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == 0);
 
     int x = flat_dialog.ok.x() + flat_dialog.ok.cx() / 2 ;
     int y = flat_dialog.ok.y() + flat_dialog.ok.cy() / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-//    RED_CHECK(notifier.sender == 0);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == 0);
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_9.png");
@@ -318,10 +307,10 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
     // flat_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
     //                                  flat_dialog.ok.x(), flat_dialog.ok.y(), nullptr);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == NOTIFY_SUBMIT);
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
 
@@ -332,9 +321,8 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
     y = flat_dialog.cancel->y() + flat_dialog.cancel->cy() / 2 ;
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, nullptr);
     // flat_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, nullptr);
-//    RED_CHECK(notifier.sender == 0);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == 0);
 
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
@@ -343,18 +331,18 @@ RED_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, nullptr);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == NOTIFY_CANCEL);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == NOTIFY_CANCEL);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 }
 
 RED_AUTO_TEST_CASE(EventWidgetChallenge)
@@ -364,18 +352,7 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
-    struct Notify : NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-
-        Notify() = default;
-
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
+    NotifyTrace notifier;
     Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
@@ -397,16 +374,14 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
                            "adipiscing et arcu.", extra_button, colors, global_font_deja_vu_14(),
                            "Ok", "Cancel", CHALLENGE_ECHO);
 
-//    RED_CHECK(notifier.sender == 0);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == 0);
 
 
     flat_dialog.challenge->set_text("challenge_test");
 
-//    RED_CHECK(notifier.sender == 0);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == 0);
 
     flat_dialog.rdp_input_invalidate(flat_dialog.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "dialog_12.png");
@@ -415,11 +390,11 @@ RED_AUTO_TEST_CASE(EventWidgetChallenge)
     keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(notifier.sender == &flat_dialog);
-    RED_CHECK(notifier.event == NOTIFY_SUBMIT);
+    RED_CHECK(notifier.last_widget == &flat_dialog);
+    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
 
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
 }
 
 

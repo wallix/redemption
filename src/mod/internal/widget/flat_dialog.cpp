@@ -206,14 +206,14 @@ BGRColor FlatDialog::get_bg_color() const
     return this->bg_color;
 }
 
-void FlatDialog::notify(Widget* widget, NotifyApi::notify_event_t event)
+void FlatDialog::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if ((event == NOTIFY_CANCEL) ||
-        ((event == NOTIFY_SUBMIT) && (widget == this->cancel.get()))) {
+        ((event == NOTIFY_SUBMIT) && (&widget == this->cancel.get()))) {
         this->send_notify(NOTIFY_CANCEL);
     }
     else if ((event == NOTIFY_SUBMIT) &&
-             ((widget == &this->ok) || (widget == this->challenge.get()))) {
+             ((&widget == &this->ok) || (&widget == this->challenge.get()))) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     else if (event == NOTIFY_PASTE) {

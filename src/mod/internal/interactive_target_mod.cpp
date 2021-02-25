@@ -73,9 +73,8 @@ void InteractiveTargetMod::init()
     this->copy_paste.ready(this->front);
 }
 
-void InteractiveTargetMod::notify(Widget* sender, notify_event_t event)
+void InteractiveTargetMod::notify(Widget& sender, notify_event_t event)
 {
-    (void)sender;
     switch (event) {
         case NOTIFY_SUBMIT: this->accepted(); break;
         case NOTIFY_CANCEL: this->refused(); break;
@@ -83,7 +82,7 @@ void InteractiveTargetMod::notify(Widget* sender, notify_event_t event)
         case NOTIFY_COPY:
         case NOTIFY_CUT:
             if (this->copy_paste) {
-                copy_paste_process_event(this->copy_paste, *sender, event);
+                copy_paste_process_event(this->copy_paste, sender, event);
             }
             break;
         default: ;

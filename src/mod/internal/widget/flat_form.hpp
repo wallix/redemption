@@ -82,7 +82,7 @@ public:
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width, uint16_t height);
 
-    void notify(Widget* widget, NotifyApi::notify_event_t event) override;
+    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
 private:
     template<class T, class... Ts>

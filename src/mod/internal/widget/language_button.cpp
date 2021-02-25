@@ -87,7 +87,7 @@ LanguageButton::LanguageButton(
     this->set_wh(dim);
 }
 
-void LanguageButton::notify(Widget* widget, NotifyApi::notify_event_t event)
+void LanguageButton::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     (void)widget;
     if (event == NOTIFY_SUBMIT || event == MOUSE_FLAG_BUTTON1) {

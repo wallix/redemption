@@ -141,10 +141,9 @@ public:
     : copy_paste(copy_paste)
     {}
 
-    void notify(Widget * sender, notify_event_t event) override
+    void notify(Widget & sender, notify_event_t event) override
     {
-        RED_REQUIRE(sender);
-        copy_paste_process_event(this->copy_paste, *sender, event);
+        copy_paste_process_event(this->copy_paste, sender, event);
     }
 };
 

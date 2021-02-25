@@ -175,14 +175,15 @@ public:
     void send_notify(NotifyApi::notify_event_t event)
     {
         if (this->notifier) {
-            this->notifier->notify(this, event);
+            this->notifier->notify(*this, event);
         }
     }
 
-    void notify(Widget * /*sender*/, NotifyApi::notify_event_t event) override
+    void notify(Widget & widget, NotifyApi::notify_event_t event) override
     {
+        (void)widget;
         if (this->notifier) {
-            this->notifier->notify(this, event);
+            this->notifier->notify(*this, event);
         }
     }
 

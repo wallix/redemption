@@ -28,6 +28,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/notify_trace.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/wab_close/"
@@ -162,16 +163,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 {
-    struct Notify : NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
+    NotifyTrace notifier;
 
     TestGraphic drawable(800, 600);
 
@@ -204,13 +196,10 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
                                    flat_wab_close.cancel.x() + 2,
                                    flat_wab_close.cancel.y() + 2, nullptr);
 
-    RED_CHECK(notifier.sender == &flat_wab_close);
-    RED_CHECK(notifier.event == NOTIFY_CANCEL);
+    RED_CHECK(notifier.last_widget == &flat_wab_close);
+    RED_CHECK(notifier.last_event == NOTIFY_CANCEL);
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "wab_close_8.png");
-
-    notifier.sender = nullptr;
-    notifier.event = 0;
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);

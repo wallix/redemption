@@ -318,12 +318,12 @@ std::chrono::seconds FlatWabClose::refresh_timeleft(std::chrono::seconds remaini
     return std::chrono::seconds(seconds ? 1 : 60);
 }
 
-void FlatWabClose::notify(Widget * widget, NotifyApi::notify_event_t event)
+void FlatWabClose::notify(Widget & widget, NotifyApi::notify_event_t event)
 {
-    if (widget == &this->cancel && event == NOTIFY_SUBMIT) {
+    if (&widget == &this->cancel && event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_CANCEL);
     }
-    else if (this->back && widget == this->back && event == NOTIFY_SUBMIT) {
+    else if (this->back && &widget == this->back && event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     else {

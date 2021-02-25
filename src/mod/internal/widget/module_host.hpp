@@ -99,7 +99,7 @@ public:
 
     // NotifyApi
 
-    void notify(Widget* /*widget*/, NotifyApi::notify_event_t event) override;
+    void notify(Widget& sender, NotifyApi::notify_event_t event) override;
 
     // RdpInput
 

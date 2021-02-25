@@ -28,6 +28,7 @@
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/widget_receive_event.hpp"
 
 #include <string_view>
 
@@ -277,23 +278,7 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
 {
     TestGraphic drawable(800, 600);
 
-    struct WidgetReceiveEvent : public Widget {
-        Widget* sender = nullptr;
-        NotifyApi::notify_event_t event = 0;
-
-        WidgetReceiveEvent(TestGraphic& drawable)
-        : Widget(drawable, *this, nullptr)
-        {}
-
-        void rdp_input_invalidate(Rect /*r*/) override
-        {}
-
-        void notify(Widget* sender, NotifyApi::notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } widget_for_receive_event(drawable);
+    WidgetReceiveEvent widget_for_receive_event(drawable);
 
     Widget& parent = widget_for_receive_event;
     NotifyApi * notifier = nullptr;
@@ -306,19 +291,19 @@ RED_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     wlabel.set_xy(x, y);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, nullptr);
-    RED_CHECK(widget_for_receive_event.sender == nullptr);
-    RED_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
+    RED_CHECK(widget_for_receive_event.last_event == 0);
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, nullptr);
-    RED_CHECK(widget_for_receive_event.sender == nullptr);
-    RED_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
+    RED_CHECK(widget_for_receive_event.last_event == 0);
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
     keymap.push_char('a');
 
     wlabel.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(widget_for_receive_event.sender == nullptr);
-    RED_CHECK(widget_for_receive_event.event == 0);
+    RED_CHECK(widget_for_receive_event.last_widget == nullptr);
+    RED_CHECK(widget_for_receive_event.last_event == 0);
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)

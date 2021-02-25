@@ -556,7 +556,7 @@ void WidgetModuleHost::set_wh(uint16_t w, uint16_t h)
 
 // NotifyApi
 
-void WidgetModuleHost::notify(Widget* /*widget*/, NotifyApi::notify_event_t event)
+void WidgetModuleHost::notify(Widget& /*widget*/, NotifyApi::notify_event_t event)
 {
     Widget* parentWidget = &this->parent;
     while (&parentWidget->parent != &parentWidget->parent.parent) {

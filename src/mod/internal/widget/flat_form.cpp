@@ -197,9 +197,9 @@ void FlatForm::move_size_widget(int16_t left, int16_t top, uint16_t width, uint1
     this->confirm.set_xy(left + width - this->confirm.cx(), top + y + 10);
 }
 
-void FlatForm::notify(Widget* widget, NotifyApi::notify_event_t event)
+void FlatForm::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
-    if ((widget->group_id == this->confirm.group_id)
+    if ((widget.group_id == this->confirm.group_id)
      && (NOTIFY_COPY != event)
      && (NOTIFY_CUT != event)
      && (NOTIFY_PASTE != event)
@@ -337,7 +337,7 @@ void FlatForm::check_confirmation()
     }
 
     if (this->notifier) {
-        this->notifier->notify(&this->confirm, NOTIFY_SUBMIT);
+        this->notifier->notify(this->confirm, NOTIFY_SUBMIT);
     }
 }
 

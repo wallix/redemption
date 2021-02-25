@@ -139,7 +139,7 @@ void LoginMod::init()
     this->copy_paste.ready(this->front);
 }
 
-void LoginMod::notify(Widget* sender, notify_event_t event)
+void LoginMod::notify(Widget& sender, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_SUBMIT: {
@@ -164,7 +164,7 @@ void LoginMod::notify(Widget* sender, notify_event_t event)
     case NOTIFY_COPY:
     case NOTIFY_CUT:
         if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *sender, event);
+            copy_paste_process_event(this->copy_paste, sender, event);
         }
         break;
     default:;

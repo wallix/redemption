@@ -27,6 +27,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/notify_trace.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/number_edit/"
@@ -36,16 +37,7 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
 {
     TestGraphic drawable(800, 600);
 
-    struct Notify : public NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-        Notify() = default;
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
+    NotifyTrace notifier;
 
     WidgetScreen parent(drawable, 800, 600, global_font_lato_light_16(), nullptr, Theme{});
 
@@ -69,13 +61,13 @@ RED_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_1.png");
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 
     keymap.push('2');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.get_rect());
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "number_edit_3.png");
-    RED_CHECK(notifier.sender == &wnumber_edit);
-    RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
+    RED_CHECK(notifier.last_widget == &wnumber_edit);
+    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
 }

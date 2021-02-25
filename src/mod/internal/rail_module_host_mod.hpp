@@ -100,7 +100,7 @@ public:
 
     void init() override;
 
-    void notify(Widget* /*sender*/, notify_event_t /*event*/) override
+    void notify(Widget& /*widget*/, notify_event_t /*event*/) override
     {}
 
     RailModuleHost& get_module_host();

@@ -220,13 +220,13 @@ void WidgetEditValid::rdp_input_unicode(uint16_t unicode, uint16_t flag)
     this->editbox->rdp_input_unicode(unicode, flag);
 }
 
-void WidgetEditValid::notify(Widget* widget, NotifyApi::notify_event_t event)
+void WidgetEditValid::notify(Widget& widget, NotifyApi::notify_event_t event)
 {
     if (event == NOTIFY_SUBMIT) {
         this->send_notify(NOTIFY_SUBMIT);
     }
     if ((event == NOTIFY_TEXT_CHANGED) &&
-        (widget == this->editbox) &&
+        (&widget == this->editbox) &&
         this->label && this->use_label_) {
         if (this->editbox->num_chars == 1) {
             this->editbox->rdp_input_invalidate(this->get_rect());

@@ -25,33 +25,12 @@ Author(s): Proxies Team
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/widget_receive_event.hpp"
+#include "test_only/mod/internal/widget/notify_trace.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/delegated_copy/"
 
-namespace
-{
-    struct TestWidgetCopyNotifier : Widget
-    {
-        TestWidgetCopyNotifier(gdi::GraphicApi & drawable, Widget & parent)
-        : Widget(drawable, parent, nullptr)
-        {}
-
-        void notify(Widget * sender, NotifyApi::notify_event_t event) override
-        {
-            this->last_event = event;
-            this->last_widget = sender;
-        }
-
-        void rdp_input_invalidate(Rect r) override
-        {
-            (void)r;
-        }
-
-        NotifyApi::notify_event_t last_event = 0;
-        Widget const * last_widget = nullptr;
-    };
-} // anonymous namespace
 
 RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
 {
@@ -67,9 +46,9 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     BGRColor bg_color = YELLOW;
     BGRColor focus_color = BLUE;
 
-    TestWidgetCopyNotifier widget(gd, screen);
-    TestWidgetCopyNotifier dummy_widget(gd, screen);
-    WidgetDelegatedCopy delegated(gd, dummy_widget, widget, fg_color, bg_color, focus_color, font, 2, 2);
+    NotifyTrace notifier;
+    WidgetReceiveEvent dummy_widget(gd, screen);
+    WidgetDelegatedCopy delegated(gd, dummy_widget, notifier, fg_color, bg_color, focus_color, font, 2, 2);
 
     delegated.set_wh(delegated.get_optimal_dim());
     delegated.set_xy(5, 5);
@@ -77,14 +56,14 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     screen.add_widget(&delegated);
     screen.refresh(screen.get_rect());
 
-    RED_CHECK(widget.last_event == 0);
-    RED_CHECK(!widget.last_widget);
+    RED_CHECK(notifier.last_event == 0);
+    RED_CHECK(!notifier.last_widget);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_1.png");
 
     delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 10, 10, nullptr);
 
-    RED_CHECK(widget.last_event == NOTIFY_COPY);
-    RED_CHECK(widget.last_widget == &dummy_widget);
+    RED_CHECK(notifier.last_event == NOTIFY_COPY);
+    RED_CHECK(notifier.last_widget == &dummy_widget);
     RED_CHECK_IMG(gd, IMG_TEST_PATH "delegated_copy_2.png");
 
     delegated.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 10, 10, nullptr);

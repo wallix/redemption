@@ -72,7 +72,7 @@ public:
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
 
-    void notify(Widget* widget, NotifyApi::notify_event_t event) override;
+    void notify(Widget& widget, NotifyApi::notify_event_t event) override;
 
     [[nodiscard]] static unsigned get_border_height()
     {

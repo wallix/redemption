@@ -127,7 +127,7 @@ CloseMod::~CloseMod()
     this->vars.set<cfg::context::close_box_extra_message>("");
 }
 
-void CloseMod::notify(Widget* sender, notify_event_t event)
+void CloseMod::notify(Widget& sender, notify_event_t event)
 {
     (void)sender;
     if (NOTIFY_CANCEL == event) {

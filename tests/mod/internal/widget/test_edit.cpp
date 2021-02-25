@@ -27,6 +27,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/core/font.hpp"
+#include "test_only/mod/internal/widget/notify_trace.hpp"
 
 
 #define IMG_TEST_PATH FIXTURES_PATH "/img_ref/mod/internal/widget/edit/"
@@ -280,35 +281,7 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 {
     TestGraphic drawable(800, 600);
 
-    struct WidgetReceiveEvent : public Widget {
-        Widget* sender = nullptr;
-        NotifyApi::notify_event_t event = 0;
-
-        WidgetReceiveEvent(TestGraphic& drawable)
-        : Widget(drawable, *this, nullptr)
-        {}
-
-        void rdp_input_invalidate(Rect /*r*/) override
-        {}
-
-        void notify(Widget* sender, NotifyApi::notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } widget_for_receive_event(drawable);
-
-    struct Notify : public NotifyApi {
-        Widget* sender = nullptr;
-        notify_event_t event = 0;
-        Notify() = default;
-        void notify(Widget* sender, notify_event_t event) override
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } notifier;
-
+    NotifyTrace notifier;
 
     WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
 
@@ -336,27 +309,27 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_11.png");
-    RED_CHECK(notifier.sender == &wedit);
-    RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    RED_CHECK(notifier.last_widget == &wedit);
+    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
 
     keymap.event(0, 17, ctrl_alt_delete); // 'z'
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_12.png");
-    RED_CHECK(notifier.sender == &wedit);
-    RED_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    RED_CHECK(notifier.last_widget == &wedit);
+    RED_CHECK(notifier.last_event == NOTIFY_TEXT_CHANGED);
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_13.png");
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
@@ -382,42 +355,40 @@ RED_AUTO_TEST_CASE(EventWidgetEdit)
 
     keymap.push_kevent(Keymap2::KEVENT_DELETE);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_18.png");
 
     keymap.push_kevent(Keymap2::KEVENT_END);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_19.png");
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "edit_20.png");
 
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    RED_CHECK(notifier.sender == &wedit);
-    RED_CHECK(notifier.event == NOTIFY_SUBMIT);
-    notifier.sender = nullptr;
-    notifier.event = 0;
+    RED_CHECK(notifier.last_widget == &wedit);
+    RED_CHECK(notifier.last_event == NOTIFY_SUBMIT);
+    notifier.last_widget = nullptr;
+    notifier.last_event = 0;
 
     wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x+10, y+3, nullptr);
-    RED_CHECK(widget_for_receive_event.sender == nullptr);
-    RED_CHECK(widget_for_receive_event.event == 0);
-    RED_CHECK(notifier.sender == nullptr);
-    RED_CHECK(notifier.event == 0);
+    RED_CHECK(notifier.last_widget == nullptr);
+    RED_CHECK(notifier.last_event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
 
