@@ -81,7 +81,7 @@ public:
         fd_set rfds;
         io_fd_zero(rfds);
 
-        this->event_manager.get_fds([&rfds,&max](int fd){
+        this->event_manager.for_each_fd([&rfds,&max](int fd){
             io_fd_set(fd, rfds);
             max = std::max(max, fd);
         });

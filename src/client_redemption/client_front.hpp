@@ -104,7 +104,7 @@ inline ExecuteEventResult execute_events(
     fd_set rfds;
     io_fd_zero(rfds);
 
-    event_manager.get_fds([&rfds,&max](int fd){
+    event_manager.for_each_fd([&rfds,&max](int fd){
         io_fd_set(fd, rfds);
         max = std::max(max, fd);
     });

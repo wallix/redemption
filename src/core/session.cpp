@@ -828,7 +828,7 @@ private:
                 }
                 else {
                     ioswitch.set_read_sck(front_trans.get_sck());
-                    event_manager.get_fds([&](int fd){ ioswitch.set_read_sck(fd); });
+                    event_manager.for_each_fd([&](int fd){ ioswitch.set_read_sck(fd); });
                 }
                 ioswitch.set_read_sck(auth_sck);
 

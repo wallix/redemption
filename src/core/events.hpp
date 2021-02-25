@@ -453,7 +453,7 @@ public:
     }
 
     template<class Fn>
-    void get_fds(Fn&& fn)
+    void for_each_fd(Fn&& fn)
     {
         for (auto* pevent : detail::ProtectedEventContainer::get_events(this->event_container)) {
             if (pevent->alarm.fd != INVALID_SOCKET && !pevent->garbage){
