@@ -148,9 +148,27 @@ struct no_sesman_io_t {};
 struct spec_attr_t { cfg_attributes::spec::internal::attr value; };
 struct sesman_io_t { cfg_attributes::sesman::internal::io value; };
 struct log_policy_t { cfg_attributes::spec::log_policy value; };
-struct connection_policy_t : sesman_io_t {
-    std::vector<std::string> files;
+struct connection_policy_t : sesman_io_t
+{
+    // Should be `std::vector<std::string> files`, but does not work with g++ + debug
+    //   internal compiler error: in assign_temp, at function.c:984
+    // 287 |         const infos_type infos{detail_::normalize_info_arg(args)...};
+    std::vector<std::string>* files;
     cfg_attributes::connpolicy::internal::attr spec;
+
+    connection_policy_t(cfg_attributes::sesman::connection_policy const& conn)
+    : sesman_io_t{::cfg_attributes::sesman::internal::io::sesman_to_proxy}
+    , files(new std::vector<std::string>{conn.files.begin(), conn.files.end()})
+    , spec(conn.spec)
+    {}
+
+    // internal compiler error too...
+    // connection_policy_t(connection_policy_t const&) = delete;
+
+    // ~connection_policy_t()
+    // {
+    //     delete files;
+    // }
 };
 
 namespace detail_
@@ -180,11 +198,7 @@ namespace detail_
             return log_policy_t{x};
         }
         else if constexpr (is_convertible_v<T, cfg_attributes::sesman::connection_policy>) {
-            return connection_policy_t{
-                {cfg_attributes::sesman::internal::io::sesman_to_proxy},
-                {x.files.begin(), x.files.end()},
-                x.spec
-            };
+            return connection_policy_t{x};
         }
         else {
             return T(x);
