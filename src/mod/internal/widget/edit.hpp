@@ -46,10 +46,6 @@ public:
                int group_id, BGRColor fgcolor, BGRColor bgcolor, BGRColor focus_color,
                Font const & font, std::size_t edit_position = -1, int xtext = 0, int ytext = 0); /*NOLINT*/
 
-    WidgetEdit(WidgetEdit const & other);
-
-    ~WidgetEdit() override;
-
     Dimension get_optimal_dim() const override;
 
     virtual void set_text(const char * text/*, int position = 0*/);

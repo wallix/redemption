@@ -60,10 +60,6 @@ public:
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0); /*NOLINT*/
 
-    WidgetLabel(WidgetLabel const & other);
-
-    ~WidgetLabel() override;
-
     void set_text(char const* text);
     void set_text(chars_view text);
 

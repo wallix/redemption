@@ -77,10 +77,6 @@ WidgetEdit::WidgetEdit(
     this->pointer_flag = Pointer::POINTER_EDIT;
 }
 
-WidgetEdit::WidgetEdit(WidgetEdit const & other) = default;
-
-WidgetEdit::~WidgetEdit() = default;
-
 Dimension WidgetEdit::get_optimal_dim() const
 {
     Dimension dim = this->label.get_optimal_dim();

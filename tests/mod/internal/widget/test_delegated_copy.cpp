@@ -33,8 +33,8 @@ namespace
 {
     struct TestWidgetCopyNotifier : Widget
     {
-        TestWidgetCopyNotifier(Widget& parent)
-        : Widget(parent)
+        TestWidgetCopyNotifier(gdi::GraphicApi & drawable, Widget & parent)
+        : Widget(drawable, parent, nullptr)
         {}
 
         void notify(Widget * sender, NotifyApi::notify_event_t event) override
@@ -67,8 +67,8 @@ RED_AUTO_TEST_CASE(TraceWidgetDelegatedCopy)
     BGRColor bg_color = YELLOW;
     BGRColor focus_color = BLUE;
 
-    TestWidgetCopyNotifier widget(screen);
-    TestWidgetCopyNotifier dummy_widget(screen);
+    TestWidgetCopyNotifier widget(gd, screen);
+    TestWidgetCopyNotifier dummy_widget(gd, screen);
     WidgetDelegatedCopy delegated(gd, dummy_widget, widget, fg_color, bg_color, focus_color, font, 2, 2);
 
     delegated.set_wh(delegated.get_optimal_dim());
