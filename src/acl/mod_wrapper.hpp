@@ -63,20 +63,27 @@ class ModWrapper final : public gdi::OsdApi, private Callback
         GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect)
             : sink(sink), callback(callback), palette(palette), protected_rect(rect) {}
 
-        template<class Command, class... Args>
+        template<class Command>
         void draw(Command const & cmd)
-            { this->sink.draw(cmd); }
+        {
+            this->sink.draw(cmd);
+        }
+
         void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
-            { this->sink.draw(cmd, content); }
+        {
+            this->sink.draw(cmd, content);
+        }
 
         template<class Command, class... Args>
         void draw(Command const & cmd, Rect clip, Args const &... args)
         {
             auto const & clip_rect = clip_from_cmd(cmd).intersect(clip);
-            if (this->protected_rect.contains(clip_rect) || clip_rect.isempty()) {
+            if (REDEMPTION_UNLIKELY(
+                this->protected_rect.contains(clip_rect) || clip_rect.isempty()
+            )) {
                 // nada: leave the OSD message rect untouched
             }
-            else if (clip_rect.has_intersection(this->protected_rect)) {
+            else if (REDEMPTION_UNLIKELY(clip_rect.has_intersection(this->protected_rect))) {
                 // draw the parts of the screen outside OSD message rect
                 for (const Rect & subrect : gdi::subrect4(clip_rect, this->protected_rect)) {
                     if (!subrect.isempty()) {
@@ -96,10 +103,10 @@ class ModWrapper final : public gdi::OsdApi, private Callback
                         , bitmap_data.dest_right - bitmap_data.dest_left + 1
                         , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
-            if (this->protected_rect.contains(rectBmp) || rectBmp.isempty()) {
+            if (REDEMPTION_UNLIKELY(this->protected_rect.contains(rectBmp) || rectBmp.isempty())) {
                 // nada: leave the OSD message rect untouched
             }
-            if (rectBmp.has_intersection(this->protected_rect)) {
+            if (REDEMPTION_UNLIKELY(rectBmp.has_intersection(this->protected_rect))) {
                 for (const Rect & subrect : gdi::subrect4(rectBmp, this->protected_rect)) {
                     if (!subrect.isempty()) {
                         // draw the parts of the screen outside OSD message rect
@@ -141,24 +148,22 @@ class ModWrapper final : public gdi::OsdApi, private Callback
             const bool has_dest_intersec_fg = drect.has_intersection(this->protected_rect);
             const bool has_src_intersec_fg = srect.has_intersection(this->protected_rect);
 
-            if (!has_dest_intersec_fg && !has_src_intersec_fg) {
+            if (REDEMPTION_LIKELY(!has_dest_intersec_fg && !has_src_intersec_fg)) {
                 // neither scr or dest rect intersect with OSD message
                 this->sink.draw(cmd, clip);
             }
+            else if (has_src_intersec_fg){
+                // We don't have src data, ask it to server, no choice
+                gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
+                auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
+                auto av = make_array_view(rects.begin(), e);
+                this->callback.rdp_input_invalidate2(av);
+            }
             else {
-                if (has_src_intersec_fg){
-                    // We don't have src data, ask it to server, no choice
-                    gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
-                    auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
-                    auto av = make_array_view(rects.begin(), e);
-                    this->callback.rdp_input_invalidate2(av);
-                }
-                else {
-                    // only drect has intersection, src rect is available
-                    for (const Rect & subrect : gdi::subrect4(drect, this->protected_rect)) {
-                        if (!subrect.isempty()) {
-                            this->sink.draw(cmd, subrect);
-                        }
+                // only drect has intersection, src rect is available
+                for (const Rect & subrect : gdi::subrect4(drect, this->protected_rect)) {
+                    if (!subrect.isempty()) {
+                        this->sink.draw(cmd, subrect);
                     }
                 }
             }
@@ -622,7 +627,8 @@ private:
     {
         if (this->is_disable_by_input
          && this->get_protected_rect().contains_pt(x, y)
-         && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+         && device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)
+        ) {
             this->disable_osd();
             return true;
         }

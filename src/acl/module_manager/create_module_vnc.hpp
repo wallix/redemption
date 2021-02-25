@@ -27,7 +27,6 @@
 #include "keyboard/keymap2.hpp"
 #include "acl/mod_pack.hpp"
 
-class ModWrapper;
 class Inifile;
 class FrontAPI;
 class ClientInfo;
@@ -44,7 +43,7 @@ namespace gdi
 }
 
 ModPack create_mod_vnc(
-    ModWrapper & mod_wrapper,
+    gdi::GraphicApi & drawable,
     Inifile& ini,
     FrontAPI& front,
     ClientInfo const& client_info,

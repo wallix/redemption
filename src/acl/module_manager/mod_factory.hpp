@@ -210,7 +210,7 @@ private:
             auth_error_message.c_str(),
             this->ini,
             this->events,
-            this->mod_wrapper.get_graphics(), this->front,
+            this->graphics, this->front,
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
             this->rail_client_execute.adjust_rect(this->client_info.get_widget_rect()),
@@ -374,6 +374,7 @@ public:
     ) -> ModPack
     {
         auto mod_pack = create_mod_rdp(
+            this->mod_wrapper.get_graphics(),
             this->mod_wrapper,
             this->redir_info,
             this->ini,
@@ -389,6 +390,7 @@ public:
             this->cctx,
             this->server_auto_reconnect_packet,
             perform_automatic_reconnection);
+        this->mod_wrapper.target_info_is_shown = false;
         mod_pack.enable_osd = true;
         mod_pack.connected = true;
         return mod_pack;
@@ -397,12 +399,13 @@ public:
     auto create_vnc_mod(SessionLogApi& session_log) -> ModPack
     {
         auto mod_pack = create_mod_vnc(
-            this->mod_wrapper, this->ini,
+            this->mod_wrapper.get_graphics(), this->ini,
             this->front, this->client_info,
             this->rail_client_execute, this->keymap.key_flags,
             this->glyphs, this->theme,
             this->events,
             session_log);
+        this->mod_wrapper.target_info_is_shown = false;
         mod_pack.enable_osd = true;
         mod_pack.connected = true;
         return mod_pack;

@@ -29,7 +29,6 @@
 
 #include <array>
 
-class ModWrapper;
 class RedirectionInfo;
 class Inifile;
 class FrontAPI;
@@ -44,12 +43,14 @@ class CryptoContext;
 namespace gdi
 {
     class GraphicApi;
+    class OsdApi;
 }
 
 enum class PerformAutomaticReconnection : bool { No, Yes, };
 
 ModPack create_mod_rdp(
-    ModWrapper & mod_wrapper,
+    gdi::GraphicApi & drawable,
+    gdi::OsdApi & osd,
     RedirectionInfo & redir_info,
     Inifile & ini,
     FrontAPI & front,

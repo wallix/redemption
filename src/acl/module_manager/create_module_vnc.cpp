@@ -29,8 +29,6 @@
 #include "mod/vnc/vnc.hpp"
 #include "mod/internal/rail_module_host_mod.hpp"
 #include "transport/socket_transport.hpp"
-#include "acl/mod_pack.hpp"
-#include "acl/mod_wrapper.hpp"
 #include "acl/module_manager/create_module_vnc.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
 #include "acl/connect_to_target_host.hpp"
@@ -118,12 +116,11 @@ public:
     ModVNCWithMetrics mod;
 
 private:
-    ModWrapper & mod_wrapper;
     Inifile & ini;
 
 public:
     ModWithSocketAndMetrics(
-        ModWrapper & mod_wrapper, Inifile & ini,
+        gdi::GraphicApi & drawable, Inifile & ini,
         const char * name, unique_fd sck, SocketTransport::Verbose verbose,
         std::string * error_message,
         EventContainer& events,
@@ -153,17 +150,14 @@ public:
                       , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
                       , verbose, error_message)
     , mod(
-          this->socket_transport, mod_wrapper.get_graphics(),
+          this->socket_transport, drawable,
           events, username, password, front, front_width, front_height,
           keylayout, key_flags, clipboard_up, clipboard_down, encodings,
           clipboard_server_encoding_type, bogus_clipboard_infinite_loop,
           server_is_apple, send_alt_ksym, cursor_pseudo_encoding_supported,
           rail_client_execute, vnc_verbose, metrics, session_log)
-    , mod_wrapper(mod_wrapper)
     , ini(ini)
-    {
-        this->mod_wrapper.target_info_is_shown = false;
-    }
+    {}
 
     ~ModWithSocketAndMetrics()
     {
@@ -267,7 +261,7 @@ public:
 }
 
 ModPack create_mod_vnc(
-    ModWrapper & mod_wrapper,
+    gdi::GraphicApi & drawable,
     Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     Font & glyphs,
@@ -315,7 +309,7 @@ ModPack create_mod_vnc(
     const auto vnc_verbose = safe_cast<VNCVerbose>(ini.get<cfg::debug::mod_vnc>());
 
     auto new_mod = std::make_unique<ModWithSocketAndMetrics>(
-        mod_wrapper,
+        drawable,
         ini,
         name,
         std::move(client_sck),
@@ -356,8 +350,6 @@ ModPack create_mod_vnc(
         auto mod = new_mod.release();
         return ModPack{mod, nullptr, nullptr, false, false, tmp_psocket_transport};
     }
-
-    gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
 
     auto* host_mod = create_mod_rail(
         ini,

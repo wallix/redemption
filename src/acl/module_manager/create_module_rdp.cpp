@@ -41,8 +41,6 @@
 #include "acl/module_manager/create_module_rdp.hpp"
 #include "acl/module_manager/create_module_rail.hpp"
 #include "acl/connect_to_target_host.hpp"
-#include "acl/mod_wrapper.hpp"
-#include "acl/mod_pack.hpp"
 #include "transport/failure_simulation_socket_transport.hpp"
 #include "transport/socket_transport.hpp"
 
@@ -212,7 +210,6 @@ public:
     RdpData rdp_data;
 
 private:
-    ModWrapper & mod_wrapper;
     Inifile & ini;
 
     std::unique_ptr<FdxCapture> fdx_capture;
@@ -255,7 +252,7 @@ public:
     }
 
     ModRDPWithSocketAndMetrics(
-        ModWrapper & mod_wrapper
+        gdi::OsdApi & osd
       , Inifile & ini
       , const char * name
       , unique_fd sck
@@ -303,16 +300,13 @@ public:
          , std::chrono::milliseconds(ini.get<cfg::globals::mod_recv_timeout>())
          , verbose, error_message))
     , mod(*this->socket_transport_ptr, gd
-        , mod_wrapper , events, session_log, front, info, redir_info, gen
+        , osd , events, session_log, front, info, redir_info, gen
         , make_channels_authorizations(ini), mod_rdp_params, tls_client_params
         , license_store
         , vars, metrics, file_validator_service, this->get_rdp_factory())
     , rdp_data(events)
-    , mod_wrapper(mod_wrapper)
     , ini(ini)
-    {
-        this->mod_wrapper.target_info_is_shown = false;
-    }
+    {}
 
     ~ModRDPWithSocketAndMetrics()
     {
@@ -504,7 +498,8 @@ inline static ApplicationParams get_rdp_application_params(Inifile & ini)
 }
 
 ModPack create_mod_rdp(
-    ModWrapper & mod_wrapper,
+    gdi::GraphicApi & drawable,
+    gdi::OsdApi & osd,
     RedirectionInfo & redir_info,
     Inifile & ini,
     FrontAPI& front,
@@ -914,10 +909,8 @@ ModPack create_mod_rdp(
             break;
     }
 
-    gdi::GraphicApi& drawable = mod_wrapper.get_graphics();
-
     auto new_mod = std::make_unique<ModRDPWithSocketAndMetrics>(
-        mod_wrapper,
+        osd,
         ini,
         name,
         std::move(client_sck),
