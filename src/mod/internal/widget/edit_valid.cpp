@@ -54,7 +54,7 @@ WidgetEditValid::WidgetEditValid(
     this->editbox->draw_border_focus = false;
 }
 
-Dimension WidgetEditValid::get_optimal_dim()
+Dimension WidgetEditValid::get_optimal_dim() const
 {
     Dimension dim = this->button.get_optimal_dim();
 

@@ -39,7 +39,7 @@ public:
                     // TODO re-enable
                     int /*xtext*/ = 0, int /*ytext*/ = 0, bool pass = false); /*NOLINT*/
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     ~WidgetEditValid() override;
 

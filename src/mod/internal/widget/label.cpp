@@ -129,7 +129,7 @@ void WidgetLabel::draw(
     );
 }
 
-Dimension WidgetLabel::get_optimal_dim()
+Dimension WidgetLabel::get_optimal_dim() const
 {
     gdi::TextMetrics tm(this->font, (this->buffer[0] ? this->buffer : "Édp"));
     return Dimension(

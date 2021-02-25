@@ -38,7 +38,7 @@ public:
 
     void rdp_input_invalidate(Rect clip) override;
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     [[nodiscard]] BGRColor get_bg_color() const noexcept
     {

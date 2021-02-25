@@ -91,7 +91,7 @@ void WidgetMultiLine::rdp_input_invalidate(Rect clip)
     }
 }
 
-Dimension WidgetMultiLine::get_optimal_dim()
+Dimension WidgetMultiLine::get_optimal_dim() const
 {
     return Dimension(
         this->line_metrics.max_width() + this->x_text * 2,

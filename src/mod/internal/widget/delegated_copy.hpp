@@ -33,7 +33,7 @@ public:
         BGRColor fgcolor, BGRColor bgcolor, BGRColor activecolor,
         Font const & font, int xicon, int yicon);
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     static Dimension get_optimal_dim(Font const & font, int xicon, int yicon);
 

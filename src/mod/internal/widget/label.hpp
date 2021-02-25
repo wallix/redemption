@@ -75,7 +75,7 @@ public:
                      char const* text, RDPColor fgcolor, RDPColor bgcolor, gdi::ColorCtx color_ctx,
                      Font const & font, int xtext, int ytext);
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     static Dimension get_optimal_dim(Font const & font, char const* text, int xtext, int ytext);
 

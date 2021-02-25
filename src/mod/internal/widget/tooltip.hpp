@@ -33,7 +33,7 @@ public:
 
     ~WidgetTooltip() override;
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     void set_text(const char * text);
     void set_text(const char * text, unsigned max_width);

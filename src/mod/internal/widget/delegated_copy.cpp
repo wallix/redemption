@@ -93,7 +93,7 @@ void WidgetDelegatedCopy::draw(
     drawable.end_update();
 }
 
-Dimension WidgetDelegatedCopy::get_optimal_dim()
+Dimension WidgetDelegatedCopy::get_optimal_dim() const
 {
     return this->optimal_glyph_dim;
 }

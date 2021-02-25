@@ -213,7 +213,7 @@ void WidgetFlatButton::rdp_input_unicode(uint16_t unicode, uint16_t flag)
     }
 }
 
-Dimension WidgetFlatButton::get_optimal_dim()
+Dimension WidgetFlatButton::get_optimal_dim() const
 {
     Dimension dm = WidgetLabel::get_optimal_dim(this->font, this->buffer, this->x_text, this->y_text);
     return Dimension(dm.w + (this->border_width * 2 - 1), dm.h + (this->border_width * 2 - 1));

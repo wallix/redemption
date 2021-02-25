@@ -257,7 +257,7 @@ public:
         }
     }
 
-    virtual Dimension get_optimal_dim()
+    virtual Dimension get_optimal_dim() const
     {
         return Dimension(0, 0);
     }

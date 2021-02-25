@@ -87,7 +87,7 @@ public:
 
     using Widget::set_wh;
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     // RdpInput
     void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) override;

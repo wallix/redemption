@@ -81,7 +81,7 @@ void WidgetImage::rdp_input_invalidate(Rect clip)
     }
 }
 
-Dimension WidgetImage::get_optimal_dim()
+Dimension WidgetImage::get_optimal_dim() const
 {
     return Dimension(this->bmp.cx(), this->bmp.cy());
 }

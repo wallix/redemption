@@ -316,7 +316,7 @@ void WidgetScrollBar::set_wh(uint16_t w, uint16_t h)
     this->update_rects();
 }
 
-Dimension WidgetScrollBar::get_optimal_dim()
+Dimension WidgetScrollBar::get_optimal_dim() const
 {
     return get_optimal_button_dim(this->font, this->horizontal);
 }

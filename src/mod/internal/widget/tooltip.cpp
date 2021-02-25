@@ -40,7 +40,7 @@ WidgetTooltip::WidgetTooltip(
 
 WidgetTooltip::~WidgetTooltip() = default;
 
-Dimension WidgetTooltip::get_optimal_dim()
+Dimension WidgetTooltip::get_optimal_dim() const
 {
     Dimension dim = this->desc.get_optimal_dim();
 

@@ -85,7 +85,7 @@ public:
 
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override;
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     static Dimension get_optimal_dim(unsigned border_width, Font const& font, char const* text, int xtext = 0, int ytext = 0);
 };

@@ -44,7 +44,7 @@ WidgetPassword::WidgetPassword(
     this->h_char -= 1;
 }
 
-Dimension WidgetPassword::get_optimal_dim()
+Dimension WidgetPassword::get_optimal_dim() const
 {
     Dimension dim = this->masked_text.get_optimal_dim();
 

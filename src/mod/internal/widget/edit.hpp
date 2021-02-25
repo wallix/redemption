@@ -50,7 +50,7 @@ public:
 
     ~WidgetEdit() override;
 
-    Dimension get_optimal_dim() override;
+    Dimension get_optimal_dim() const override;
 
     virtual void set_text(const char * text/*, int position = 0*/);
 

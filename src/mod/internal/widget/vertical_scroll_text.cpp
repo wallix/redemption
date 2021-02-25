@@ -104,7 +104,7 @@ void WidgetVerticalScrollText::set_wh(uint16_t w, uint16_t h)
     }
 }
 
-Dimension WidgetVerticalScrollText::get_optimal_dim()
+Dimension WidgetVerticalScrollText::get_optimal_dim() const
 {
     return Dimension(
         uint16_t(this->line_metrics.max_width() + this->x_text * 2),
