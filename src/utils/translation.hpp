@@ -98,21 +98,12 @@ namespace trkeys
           "\n"
           "Contact your system administrator for assistance.");
     TR_KV(target_accurate_filter_help,
-          "Search help using '?'\n"
-          "\n"
-          "The '?' can be placed at the beginning of the "
-          "target string for use the advanced filter mode : \n"
-          "\n"
-          "   ?<field>=<pattern>\n"
-          "\n"
-          "\n"
-          "<field> can be \"account\", \"domain\", "
-          "\"device\" or \"service\".\n"
+          "To filter on specific field of a target use the following syntax:\n"
+          "    ?<field>=<pattern>\n"
+          "where <field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
           "Use '&' as separator for multiple field/pattern.\n"
-          "\n"
-          "An example of the target string is the following :\n"
-          "\n"
-          "   ?account=my_account&?device=my_device&?service=my_service\n");
+          "Example:\n"
+          "    ?account=my_account&?device=my_device");
     TR_KV(selector, "Selector");
     TR_KV(session_out_time, "Session is out of allowed timeframe");
     TR_KV(miss_keepalive, "Missed keepalive from ACL");

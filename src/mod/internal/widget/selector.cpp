@@ -48,7 +48,8 @@ WidgetSelector::WidgetSelector(
     const char * number_of_page,
     WidgetFlatButton * extra_button,
     WidgetSelectorParams const & selector_params,
-    Font const & font, Theme const & theme, Language lang)
+    Font const & font, Theme const & theme, Language lang,
+    bool has_target_helpicon /* for unit test only */)
 : WidgetParent(drawable, parent, notifier)
 , less_than_800(width < 800)
 , nb_columns(std::min(selector_params.nb_columns, WidgetSelectorParams::nb_max_columns))
@@ -152,7 +153,7 @@ WidgetSelector::WidgetSelector(
             theme.global.focus_color, 2, font, 6, 2)
 , target_helpicon(drawable, *this, nullptr, "?", -19,
                   theme.selector_label.fgcolor, theme.selector_label.bgcolor,
-                  theme.global.focus_color, 1, font, 1, 1)
+                  theme.global.focus_color, 1, font, 3, 0)
 , tr(lang)
 , bg_color(theme.global.bgcolor)
 , font(font)
@@ -184,7 +185,11 @@ WidgetSelector::WidgetSelector(
     this->add_widget(&this->last_page);
     this->add_widget(&this->logout);
     this->add_widget(&this->connect);
-    this->add_widget(&this->target_helpicon);
+
+    if (has_target_helpicon)
+    {
+        this->add_widget(&this->target_helpicon);
+    }
 
     if (extra_button) {
         this->add_widget(extra_button);
@@ -336,7 +341,7 @@ void WidgetSelector::rearrange()
 
         this->target_helpicon.set_xy(this->left
                                      + target_header_label.x()
-                                     + target_header_label.get_optimal_dim().w,
+                                     + target_header_label.get_optimal_dim().w + 4,
                                      labels_y);
     }
 

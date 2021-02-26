@@ -130,7 +130,8 @@ public:
                    const char * number_of_page,
                    WidgetFlatButton * extra_button,
                    WidgetSelectorParams const & selector_params,
-                   Font const & font, Theme const & theme, Language lang);
+                   Font const & font, Theme const & theme, Language lang,
+                   bool has_target_helpicon = false);
 
     ~WidgetSelector() override;
 
