@@ -970,7 +970,7 @@ void print_help(Tuple const& t, std::ostream& out, int maxlen = 32)
         int const lengths[] = {0, detail::print_option_name(detail::output_len_counter{}, opts).n...};
         int const* p = lengths + 1;
         int max = std::min(maxlen, *std::max_element(p, std::end(lengths)));
-        (..., print_help(out, opts, std::max(max - *p++, 0) + 4));
+        (..., print_help(out, opts, std::max(max + 4 - *p++, 2)));
     });
 }
 
