@@ -88,6 +88,10 @@ public:
     WidgetFlatButton connect;
 
 private:
+    WidgetFlatButton target_helpicon;
+
+    Translator tr;
+
     BGRColor bg_color;
 
     Font const & font;
@@ -126,7 +130,8 @@ public:
                    const char * number_of_page,
                    WidgetFlatButton * extra_button,
                    WidgetSelectorParams const & selector_params,
-                   Font const & font, Theme const & theme, Language lang);
+                   Font const & font, Theme const & theme, Language lang,
+                   bool has_target_helpicon = false);
 
     ~WidgetSelector() override;
 
@@ -141,6 +146,8 @@ public:
     void add_device(array_view<chars_view> entries);
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
+
+    void rdp_input_mouse(int device_flags, int x, int y, Keymap2 *keymap) override;
 
     void show_tooltip(Widget * widget, const char * text, int x, int y,
                       Rect const preferred_display_rect) override;

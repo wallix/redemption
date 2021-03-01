@@ -117,7 +117,7 @@ SelectorMod::SelectorMod(
         ini.is_asked<cfg::context::selector_number_of_pages>()
             ? ""
             : lexical_string(ini.get<cfg::context::selector_number_of_pages>()).c_str(),
-        &this->language_button, this->selector_params, font, theme, language(ini))
+        &this->language_button, this->selector_params, font, theme, language(ini), true)
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
     , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/

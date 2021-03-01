@@ -508,3 +508,32 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_20.png");
 }
+
+RED_AUTO_TEST_CASE(TraceWidgetSelectorTargetHelpIcon)
+{
+    TestGraphic drawable(800, 600);
+
+
+    // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
+    WidgetScreen parent(drawable, 800, 600, global_font_deja_vu_14(), nullptr, Theme{});
+
+    NotifyApi * notifier = nullptr;
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
+    WidgetFlatButton * extra_button = nullptr;
+    WidgetSelectorParams params;
+    params.nb_columns = 3;
+    params.weight[0] = 33;
+    params.weight[1] = 34;
+    params.weight[2] = 33;
+    params.label[0] = "Authorization";
+    params.label[1] = "Target";
+    params.label[2] = "Protocol";
+
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(),  Theme(), Language::en, true);
+
+    // ask to widget to redraw at it's current position
+    selector.rdp_input_invalidate(selector.get_rect());
+
+    RED_CHECK_IMG(drawable, IMG_TEST_PATH "selector_21.png");
+}
