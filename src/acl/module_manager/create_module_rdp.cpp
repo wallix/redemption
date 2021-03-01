@@ -390,12 +390,6 @@ public:
         return this->mod.get_dim();
     }
 
-    // from mod_api
-    void log_metrics() override
-    {
-        return this->mod.log_metrics();
-    }
-
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
