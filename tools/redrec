@@ -5,7 +5,7 @@ import ctypes
 import ctypes.util
 
 def usage():
-  print("%s: Usage [{rec|ver|dec}] library.so [hex-hmac_key hex-key] lib-args" % sys.argv[0])
+  print("Usage: %s [{rec|ver|dec}] library.so [hex-hmac_key hex-key] lib-args..." % sys.argv[0])
 
 
 role = 'redrec'
