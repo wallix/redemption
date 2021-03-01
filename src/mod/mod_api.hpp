@@ -21,16 +21,24 @@
 #pragma once
 
 #include "core/callback.hpp"
-#include "core/back_event_t.hpp"
 #include "acl/acl_field_mask.hpp"
 
+enum BackEvent_t
+{
+    BACK_EVENT_NONE = 0,
+    BACK_EVENT_NEXT,     // MODULE FINISHED, ASKING FOR NEXT MODULE
+    BACK_EVENT_STOP = 4, // MODULE FINISHED, ASKING TO LEAVE SESSION
+};
 
 class mod_api : public Callback
 {
 public:
     BackEvent_t mod_signal = BACK_EVENT_NONE;
 
-    void set_mod_signal(BackEvent_t signal) { this->mod_signal = signal; }
+    void set_mod_signal(BackEvent_t signal)
+    {
+        this->mod_signal = signal;
+    }
 
     BackEvent_t get_mod_signal()
     {
