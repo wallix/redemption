@@ -848,10 +848,6 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
             }
             break;
         }
-
-        default:
-            LOG(LOG_ERR, "Unhandled decoder state %u", this->decoderState);
-            throw Error(ERR_MCS_PDU_TRUNCATED);
         }
     }
 }

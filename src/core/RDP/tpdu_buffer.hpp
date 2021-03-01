@@ -85,6 +85,8 @@ namespace Extractors
             auto av = buf.av(4);
             uint16_t len;
 
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
             switch (FastPath::FASTPATH_OUTPUT(av[0] & 0x03))
             {
                 case FastPath::FASTPATH_OUTPUT_ACTION_FASTPATH:
@@ -119,6 +121,7 @@ namespace Extractors
                     LOG(LOG_ERR, "Bad X224 header, unknown TPKT version (%.2x)", av[0]);
                     throw Error(ERR_X224);
             }
+            REDEMPTION_DIAGNOSTIC_POP()
 
             return HeaderResult::ok(len);
         }
@@ -191,9 +194,10 @@ namespace Extractors
 
 struct TpduBuffer
 {
-    enum TpduType {
+    enum TpduType
+    {
             PDU = 0,
-        CREDSSP = 1
+        CREDSSP = 1,
     };
 
     TpduBuffer() = default;
@@ -236,12 +240,12 @@ struct TpduBuffer
     bool next(TpduType packet)
     {
         switch (packet){
-        default:
         case PDU:
             return this->extract(this->extractors.x224);
         case CREDSSP:
             return this->extract(this->extractors.credssp);
         }
+        REDEMPTION_UNREACHABLE();
     }
 
 

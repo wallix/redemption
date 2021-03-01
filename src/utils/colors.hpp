@@ -24,15 +24,15 @@
 
 #pragma once
 
+#include "cxx/diagnostic.hpp"
+#include "gdi/screen_info.hpp"
+#include "utils/sugar/std_stream_proto.hpp"
+
 #include <iterator>
 #include <cstdint>
 #include <cassert>
-#include <cstdlib>
 #include <cstddef>
 #include <utility>
-
-#include "gdi/screen_info.hpp"
-#include "utils/sugar/std_stream_proto.hpp"
 
 
 // Those are in BGR
@@ -374,6 +374,8 @@ struct decode_color32
 
 inline BGRColor color_decode(const RDPColor c, const BitsPerPixel in_bpp, const BGRPalette & palette) noexcept
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (in_bpp){
         case BitsPerPixel{8}:  return decode_color8()(c, palette);
         case BitsPerPixel{15}: return decode_color15()(c);
@@ -382,6 +384,7 @@ inline BGRColor color_decode(const RDPColor c, const BitsPerPixel in_bpp, const 
         case BitsPerPixel{32}: return decode_color24()(c);
         default: assert(!"unknown bpp");
     }
+    REDEMPTION_DIAGNOSTIC_POP()
     return BGRColor{0};
 }
 
@@ -485,16 +488,17 @@ struct encode_color32
 
 inline RDPColor color_encode(const BGRColor c, const BitsPerPixel out_bpp) noexcept
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (out_bpp){
         case BitsPerPixel{8}:  return encode_color8()(c);
         case BitsPerPixel{15}: return encode_color15()(c);
         case BitsPerPixel{16}: return encode_color16()(c);
         case BitsPerPixel{32}:
         case BitsPerPixel{24}: return encode_color24()(c);
-        default:
-            assert(!"unknown bpp");
-        break;
+        default: assert(!"unknown bpp");
     }
+    REDEMPTION_DIAGNOSTIC_POP()
     return RDPColor{};
 }
 

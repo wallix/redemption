@@ -259,11 +259,11 @@ private:
         this->md5.len += len;
         if (r) {
             if (len < 64 - r) {
-                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_PUSH()
                 // release only (-O2 and above)
                 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Warray-bounds")
                 memcpy(this->md5.buf + r, p, len);
-                REDEMPTION_DIAGNOSTIC_POP
+                REDEMPTION_DIAGNOSTIC_POP()
                 return;
             }
             memcpy(this->md5.buf + r, p, 64 - r);

@@ -261,15 +261,14 @@ parse_error parse_integral(
         return no_parse_error;
     }
 
-    switch (r.ec) {
-        case std::errc::value_too_large:
-            return make_invalid_range_error<TInt, min, max>();
-        default:
-            return InList
-                ? parse_error{"bad format, expected list of decimal, hexadecimal"
-                    " (ex: \"integral[, integral ...]*\")"}
-                : parse_error{"bad format, expected decimal, hexadecimal"};
+    if (r.ec == std::errc::value_too_large) {
+        return make_invalid_range_error<TInt, min, max>();
     }
+
+    return InList
+        ? parse_error{"bad format, expected list of decimal, hexadecimal"
+            " (ex: \"integral[, integral ...]*\")"}
+        : parse_error{"bad format, expected decimal, hexadecimal"};
 }
 
 template<class T>

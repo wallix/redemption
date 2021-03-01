@@ -78,11 +78,11 @@ namespace Cliprdr
         };
 
 #define REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(var_name, format_name)         \
-    REDEMPTION_DIAGNOSTIC_PUSH /* for emscripten */                       \
+    REDEMPTION_DIAGNOSTIC_PUSH() /* for emscripten */                       \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-variable-declarations") \
     inline constexpr ::Cliprdr::formats::Names var_name {                 \
         format_name ""_av, format_name ""_utf16_le};                      \
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(file_group_descriptor_w, "FileGroupDescriptorW")
         REDEMPTION_CLIPRDR_DEF_FORMAT_NAME(preferred_drop_effect, "Preferred DropEffect")

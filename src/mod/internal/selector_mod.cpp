@@ -324,6 +324,8 @@ void SelectorMod::rdp_input_scancode(
 
     if (&this->selector.selector_lines == this->selector.current_focus
         && keymap->nb_kevent_available() > 0) {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (keymap->top_kevent()){
         case Keymap2::KEVENT_LEFT_ARROW:
             keymap->get_kevent();
@@ -351,6 +353,7 @@ void SelectorMod::rdp_input_scancode(
             this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
             break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
     else {
         this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);

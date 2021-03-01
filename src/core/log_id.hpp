@@ -145,7 +145,7 @@ inline bool is_valid_log_id(unsigned id)
 
 namespace detail
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
     constexpr inline chars_view log_id_string_map[]{
         #define f(x, cat) #x ""_av,
@@ -158,5 +158,5 @@ namespace detail
         X_LOG_ID(f)
         #undef f
     };
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 } // namespace detail

@@ -328,7 +328,7 @@ inline time_t to_time_t(MonotonicTimePoint t, MonotonicTimeToRealTime monotonic_
 
 } // anonymous namespace
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wsubobject-linkage")
 class Capture::PatternKbd final : public gdi::KbdInputApi
 {
@@ -402,7 +402,7 @@ private:
         );
     }
 };
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 class Capture::SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
 {
@@ -867,6 +867,9 @@ namespace {
 
 bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch")
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (detail::log_id_category_map[underlying_cast(id)]) {
         case LogCategoryId::Drive:
             if (!bool(meta_params.log_file_system_activities)) {
@@ -902,9 +905,8 @@ bool is_logable_kvlist(LogId id, KVLogList kv_list, MetaParams meta_params)
             }
         }
         break;
-
-        default:;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 
     return true;
 }

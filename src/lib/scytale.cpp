@@ -1118,7 +1118,7 @@ namespace
         }
     }
 
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-internal-declaration")
     // returns a storage_list of storage_params
     inline auto make_storage_list()
@@ -1133,7 +1133,7 @@ namespace
             return storage_list<>();
         });
     }
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 } // anonymous namespace
 
 extern "C"

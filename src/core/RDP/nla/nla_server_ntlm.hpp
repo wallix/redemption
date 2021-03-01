@@ -241,6 +241,8 @@ public:
             case ServerAuthenticateData::Loop:
             {
                 std::vector<uint8_t> result;
+                REDEMPTION_DIAGNOSTIC_PUSH()
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
                 switch (this->ntlm_state) {
                 case NTLM_STATE_INITIAL:
                 {
@@ -519,6 +521,7 @@ public:
                     this->state = credssp::State::Err;
                     return {};
                 } // Switch
+                REDEMPTION_DIAGNOSTIC_POP()
                 this->state = credssp::State::Err;
                 return {};
             }
@@ -655,6 +658,8 @@ public:
                                   };
         }
         for (auto tag: this->avFieldsTags){
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (tag){
             case MsvAvNbDomainName:
             {
@@ -697,6 +702,7 @@ public:
             default:
             break;
             }
+            REDEMPTION_DIAGNOSTIC_POP()
         }
 
         auto target_info = emitTargetInfo(challenge_message.AvPairList);

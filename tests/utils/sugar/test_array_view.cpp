@@ -177,7 +177,7 @@ constexpr bool check_cstr_array_view_call(T && /*unused*/, char /*unused*/)
     return false;
 }
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcomma")
 template<class V, class T>
 constexpr auto check_array_view_call(T && a, int /*unused*/)
@@ -192,7 +192,7 @@ constexpr auto check_array_view_guide(T && a, int /*unused*/)
 {
     return true;
 }
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 template<class V, class T>
 constexpr bool check_array_view_call(T && /*unused*/, char /*unused*/)
@@ -208,14 +208,14 @@ constexpr bool check_array_view_guide(T && /*unused*/, char /*unused*/)
 
 namespace
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunneeded-member-function")
     struct Range
     {
         char* data() const { return nullptr; } /*NOLINT*/
         std::size_t size() const { return 0; } /*NOLINT*/
     };
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
     char cstr[5] = {'0', '1', '2', '\0', '5'};
     char const * p = nullptr;

@@ -1030,7 +1030,8 @@ private:
 
                 buf.advance(1);
 
-
+                REDEMPTION_DIAGNOSTIC_PUSH()
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
                 switch (this->message_type)
                 {
                     case VNC_SC_MSG_FRAMEBUFFER_UPDATE: /* framebuffer update */
@@ -1054,6 +1055,7 @@ private:
                         LOG(LOG_ERR, "unknown message type in vnc %u", message_type);
                         throw Error(ERR_VNC);
                 }
+                REDEMPTION_DIAGNOSTIC_POP()
                 break;
 
             case State::FrameBufferupdate: return vnc.lib_frame_buffer_update(drawable, buf);

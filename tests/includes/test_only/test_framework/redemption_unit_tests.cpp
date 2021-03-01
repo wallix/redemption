@@ -645,7 +645,6 @@ namespace ut
             CASE(utf8_nl, put_utf8_bytes2);
             CASE(hex, put_hex_bytes);
             CASE(dump, put_dump_bytes);
-            default:
             CASE(deduced, put_auto_bytes);
             #undef CASE
         }

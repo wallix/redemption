@@ -284,6 +284,8 @@ MonotonicTimePoint ReplayTransport::prefetchForTimer()
     size_t pos = data_in_pos;
     bool found = false;
     while (pos < mPrefetchQueue.size() && !found) {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (mPrefetchQueue[pos].type) {
         case PacketType::DataIn:
         case PacketType::Eof:
@@ -293,6 +295,7 @@ MonotonicTimePoint ReplayTransport::prefetchForTimer()
             pos++;
             break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 
     if (found) {
@@ -303,6 +306,8 @@ MonotonicTimePoint ReplayTransport::prefetchForTimer()
     try {
         while (true) {
             Data *d = read_single_chunk();
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch(d->type) {
             case PacketType::DataIn:
             case PacketType::Eof:
@@ -310,6 +315,7 @@ MonotonicTimePoint ReplayTransport::prefetchForTimer()
             default:
                 break;
             }
+            REDEMPTION_DIAGNOSTIC_POP()
         }
     } catch(...) {
         /* if we've not found anything just return now so that select() will trigger right now*/
@@ -325,6 +331,8 @@ size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)
 
     size_t counter;
 
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch(kind) {
     case PacketType::DataIn:
         counter = data_in_pos;
@@ -336,6 +344,7 @@ size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)
         counter = 0;
         break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 
     /* try to find the requested kind of record in the prefetch queue */
     while (counter < mPrefetchQueue.size() && mPrefetchQueue[counter].type != kind) {

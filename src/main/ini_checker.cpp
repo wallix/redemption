@@ -25,13 +25,13 @@
 #include "utils/cli.hpp"
 #include "cxx/diagnostic.hpp"
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
 #include "configs/io.hpp"
 #include "configs/autogen/enums_func_ini.tcc"
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 #include <string_view>
 #include <iostream>

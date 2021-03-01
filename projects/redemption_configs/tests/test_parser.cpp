@@ -22,13 +22,13 @@
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "configs/autogen/enums.hpp"
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 #include "configs/autogen/enums_func_ini.hpp"
 #include "configs/io.hpp"
 #include "configs/autogen/enums_func_ini.tcc"
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 RED_TEST_DELEGATE_PRINT(parse_error, (_ ? _.c_str() : "no error"));
 RED_TEST_DELEGATE_PRINT(std::chrono::seconds, _.count());

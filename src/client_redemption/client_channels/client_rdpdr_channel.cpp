@@ -157,10 +157,12 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
     rdpdr::SharedHeader header;
     header.receive(chunk);
 
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
     switch (header.component) {
-
         case rdpdr::Component::RDPDR_CTYP_CORE:
-
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (header.packet_id) {
                 case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                     LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
@@ -202,6 +204,7 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                 default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknown packetId = %x",       header.packet_id);
                 break;
             }
+            REDEMPTION_DIAGNOSTIC_POP()
             break;
 
         case rdpdr::Component::RDPDR_CTYP_PRT:
@@ -209,6 +212,8 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
             //hexdump_c(chunk_series.get_data(), chunk_size);
             chunk.in_skip_bytes(4);
 
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (header.packet_id) {
                 case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
                 {
@@ -309,12 +314,14 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                     LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknown packetId = %x", header.packet_id);
                     break;
             }
+            REDEMPTION_DIAGNOSTIC_POP()
         }
-            break;
+        break;
 
         default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknown component = %x", header.component);
             break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void ClientRDPDRChannel::FremoveDriveDevice(const DeviceData * devices, const size_t deviceCount) {

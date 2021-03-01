@@ -27,9 +27,9 @@ Author(s): Jonathan Poelen
 # include <emscripten/em_js.h>
 # include "cxx/diagnostic.hpp"
 # define RED_EM_JS(return_type, name, params, ...)             \
-    REDEMPTION_DIAGNOSTIC_PUSH                                 \
+    REDEMPTION_DIAGNOSTIC_PUSH()                               \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \
     EM_JS(return_type, name, params, __VA_ARGS__)              \
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 #endif
 

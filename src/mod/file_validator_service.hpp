@@ -514,22 +514,19 @@ private:
             return State::WaitingData;
         }
 
-        switch (header.msg_type)
-        {
-            case MsgType::Result:
-                if (this->result_header.recv(in_stream) != ReceiveStatus::Ok) {
-                    return State::WaitingData;
-                }
+        if (header.msg_type == MsgType::Result) {
+            if (this->result_header.recv(in_stream) != ReceiveStatus::Ok) {
+                return State::WaitingData;
+            }
 
-                this->content.clear();
-                return read_content();
-
-            default:
-                LOG(LOG_ERR, "FileValidatorService::receive_response: Unknown packet: msg_type=%d",
-                    int(header.msg_type));
-                in_stream.in_skip_bytes(std::min<std::size_t>(
-                    header.msg_len, in_stream.in_remain()));
-                return shift_data(State::Error);
+            this->content.clear();
+            return read_content();
+        }
+        else {
+            LOG(LOG_ERR, "FileValidatorService::receive_response: Unknown packet: msg_type=%d",
+                int(header.msg_type));
+            in_stream.in_skip_bytes(std::min<std::size_t>(header.msg_len, in_stream.in_remain()));
+            return shift_data(State::Error);
         }
     }
 

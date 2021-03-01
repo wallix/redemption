@@ -1554,6 +1554,8 @@ struct ClipboardVirtualChannel::ClipCtx::D
                             clip.requested_format_id, chunk_data, is_client_to_server);
                     }
 
+                    REDEMPTION_DIAGNOSTIC_PUSH()
+                    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
                     switch (clip.nolock_data) {
                         case ClipCtx::TransferState::Text: {
                             self.file_validator->send_data(
@@ -1598,6 +1600,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                         default:
                             assert(false);
                     }
+                    REDEMPTION_DIAGNOSTIC_POP()
 
                     break;
                 }
@@ -2505,11 +2508,11 @@ struct ClipboardVirtualChannel::ClipCtx::D
         }
 
         char format_buf[255];
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wformat-overflow=")
         int format_len = std::sprintf(format_buf, "%.*s(%u)",
             int(utf8_format.size()), utf8_format.as_charp(), requestedFormatId);
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
         array_view format_av{format_buf, checked_cast<std::size_t>(format_len)};
 
         char size_buf[32];

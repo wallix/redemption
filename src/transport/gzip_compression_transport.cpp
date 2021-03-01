@@ -34,10 +34,10 @@ GZipCompressionInTransport::GZipCompressionInTransport(Transport & st)
 , inflate_pending(false)
 //, verbose(verbose)
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
     int const ret = ::inflateInit(&this->compression_stream);
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
     if (ret != Z_OK) {
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
@@ -81,10 +81,10 @@ Transport::Read GZipCompressionInTransport::do_atomic_read(uint8_t * buffer, siz
 
                     ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
 
-                    REDEMPTION_DIAGNOSTIC_PUSH
+                    REDEMPTION_DIAGNOSTIC_PUSH()
                     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
                     int ret = ::inflateInit(&this->compression_stream);
-                    REDEMPTION_DIAGNOSTIC_POP
+                    REDEMPTION_DIAGNOSTIC_POP()
                     (void)ret;
                 }
 
@@ -119,10 +119,10 @@ GZipCompressionOutTransport::GZipCompressionOutTransport(Transport & tt)
 , uncompressed_data()
 , compressed_data()
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
     int const ret = ::deflateInit(&this->compression_stream, Z_DEFAULT_COMPRESSION);
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
     if (ret != Z_OK) {
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }
@@ -282,11 +282,11 @@ bool GZipCompressionOutTransport::next()
 
     ::memset(&this->compression_stream, 0, sizeof(this->compression_stream));
 
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
     int ret = ::deflateInit(&this->compression_stream, Z_DEFAULT_COMPRESSION);
     (void)ret;
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
     this->reset_compressor = true;
 

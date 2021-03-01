@@ -28,10 +28,10 @@
 #include "cxx/diagnostic.hpp"
 #include "configs/autogen/enums.hpp"
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
 constexpr inline std::size_t WRM_HEADER_SIZE = 8;
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 inline void send_wrm_chunk(Transport& t, WrmChunkType chunktype, uint16_t data_size, uint16_t count)
 {

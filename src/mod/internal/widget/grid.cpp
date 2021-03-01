@@ -356,6 +356,8 @@ void WidgetGrid::rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Key
 void WidgetGrid::rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap)
 {
     if (keymap->nb_kevent_available() > 0) {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (keymap->top_kevent()) {
             case Keymap2::KEVENT_LEFT_ARROW:
             case Keymap2::KEVENT_UP_ARROW:
@@ -393,6 +395,7 @@ void WidgetGrid::rdp_input_scancode(long int param1, long int param2, long int p
                 Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
                 break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 }
 

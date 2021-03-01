@@ -51,14 +51,14 @@ namespace
     // TODO constexpr with C++20
     // TODO sould be a hash map
     inline auto const sorted_log_id_strings = []() noexcept {
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
         std::array pairs{
             #define f(x, cat) Pair(#x "", LogId::x),
             X_LOG_ID(f)
             #undef f
         };
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
 
         std::sort(begin(pairs), end(pairs), pair_comparator());
 
@@ -271,6 +271,8 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
 
         this->id = it->second;
 
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (this->id) {
             case LogId::PASSWORD_TEXT_BOX_GET_FOCUS:
             case LogId::UAC_PROMPT_BECOME_VISIBLE:
@@ -426,6 +428,7 @@ bool AgentDataExtractor::extract_old_format_list(Av data)
                     "MetaDataExtractor(): Unexpected order. Data=\"%.*s\"",
                     int(data.size()), data.data());
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 
     return false;

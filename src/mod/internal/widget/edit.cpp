@@ -383,6 +383,8 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
 {
     while (keymap->nb_kevent_available() > 0){
         uint32_t nb_kevent = keymap->nb_kevent_available();
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (keymap->top_kevent()){
             case Keymap2::KEVENT_LEFT_ARROW:
             case Keymap2::KEVENT_UP_ARROW:
@@ -570,6 +572,7 @@ void WidgetEdit::rdp_input_scancode(long int param1, long int param2, long int p
                 Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
                 break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
         if (nb_kevent == keymap->nb_kevent_available()) {
             // this is to prevent infinite loop if the kevent is not consummed
             keymap->get_kevent();

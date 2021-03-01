@@ -2245,6 +2245,9 @@ public:
     [[noreturn]] void throw_error(Error & error)
     {
         LOG(LOG_INFO, "throw error mod_rdp::fd event exception %u: %s", error.id, error.errmsg());
+
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (error.id) {
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
         case ERR_TRANSPORT_TLS_CERTIFICATE_MISSED:
@@ -2254,6 +2257,7 @@ public:
             throw error;
         default: break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
 
         const char * statestr = "UNKNOWN_STATE";
         const char * statedescr = "Unknown state.";
@@ -2668,6 +2672,8 @@ public:
             LOG_IF(bool(this->verbose & RDPVerbose::graphics),
                 LOG_INFO, "fastpath full packet len=%lu", stream.in_remain());
 
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
             switch (static_cast<FastPath::UpdateType>(upd.updateCode)) {
             case FastPath::UpdateType::ORDERS:
                 drawable.begin_update();
@@ -2768,6 +2774,7 @@ public:
                 , upd.updateCode);
                 throw Error(ERR_RDP_FASTPATH);
             }
+            REDEMPTION_DIAGNOSTIC_POP()
         }
 
         // TODO Check that all data in the PDU have been consumed

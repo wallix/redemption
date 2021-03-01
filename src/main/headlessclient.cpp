@@ -181,14 +181,14 @@ int main(int argc, char const** argv)
         sa.sa_handler = [](int sig){
             std::cout << "got SIGPIPE(" << sig << ") : ignoring\n";
         };
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
         REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
         #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
             REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
         #endif
         sigaction(SIGPIPE, &sa, nullptr);
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 
     ClientRedemptionConfig config(RDPVerbose(0), CLIENT_REDEMPTION_MAIN_PATH);

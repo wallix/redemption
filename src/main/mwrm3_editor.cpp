@@ -538,7 +538,7 @@ struct PrintSerialization
     }
 };
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcomma")
 template<Mwrm3::Type type, class... Ts>
 void mwrm3_text_writer_read_data(mwrm3_type_info<type, Ts...> m)
@@ -565,7 +565,7 @@ void mwrm3_text_writer_read_data(mwrm3_type_info<type, Ts...> m)
         }, [](auto /*dummy*/){});
     }
 }
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 template<class... Mwrm3TypeInfo>
 void mwrm3_text_writer_impl(integral_mwrm3_type_info_list<Mwrm3TypeInfo...> /*infos*/)

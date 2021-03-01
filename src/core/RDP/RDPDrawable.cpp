@@ -98,7 +98,8 @@ namespace
                     u32_to_color(drawable, decode_color24()(color1)),
                     u32_to_color(drawable, decode_color24()(color2))
                 };
-            case Depth::unspecified(): default:;
+            case Depth::unspecified():
+                break;
         }
 
         assert(false);

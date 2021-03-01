@@ -26,10 +26,10 @@
 #include "test_only/test_framework/file.hpp"
 #include "test_only/lcg_random.hpp"
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 #include "capture/capture.cpp" // Yeaaahh...
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 #include "capture/capture.hpp"
 #include "capture/file_to_graphic.hpp"

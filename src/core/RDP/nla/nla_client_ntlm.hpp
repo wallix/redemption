@@ -414,7 +414,7 @@ public:
                 this->state = credssp::State::Finish;
                 return v;
             }
-            default:
+            case Start:
             break;
         }
         this->state = credssp::State::Err;

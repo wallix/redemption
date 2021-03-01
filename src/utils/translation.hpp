@@ -283,10 +283,10 @@ public:
     auto translate_fmt(char* s, std::size_t n, trkeys::TrKeyFmt<T> k, Ts const&... xs) const
     -> decltype(T::check_printf_result(s, n, xs...))
     {
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         return std::snprintf(s, n, _translate(k.translation).c_str(), xs...);
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 };
 

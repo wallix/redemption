@@ -54,7 +54,7 @@ namespace jln
 
     namespace literals
     {
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wpedantic")
         template<class C, C... cs>
@@ -64,7 +64,7 @@ namespace jln
         template<class C, C... cs>
         string_c<cs...> operator ""_s () noexcept
         { return {}; }
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
     } // namespace literals
 
     template<unsigned long long x>

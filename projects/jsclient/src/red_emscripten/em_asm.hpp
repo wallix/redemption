@@ -28,14 +28,14 @@ Author(s): Jonathan Poelen
 # include <emscripten/em_asm.h>
 # include "cxx/diagnostic.hpp"
 # define RED_EM_ASM(...)                                                      \
-    REDEMPTION_DIAGNOSTIC_PUSH                                                \
+    REDEMPTION_DIAGNOSTIC_PUSH()                                              \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-zero-variadic-macro-arguments") \
     EM_ASM(__VA_ARGS__)                                                       \
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 # define RED_EM_ASM_INT(...)                                                  \
-    REDEMPTION_DIAGNOSTIC_PUSH                                                \
+    REDEMPTION_DIAGNOSTIC_PUSH()                                              \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-zero-variadic-macro-arguments") \
     EM_ASM_INT(__VA_ARGS__)                                                   \
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 #endif
 

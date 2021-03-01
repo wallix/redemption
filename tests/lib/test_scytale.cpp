@@ -495,10 +495,10 @@ RED_AUTO_TEST_CASE(ScytaleTfl)
                     return bytes_view(buffer.data(), std::size_t(len));
                 }
 
-                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_PUSH()
                 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code-return")
                 return bytes_view{}; /*NOLINT*/
-                REDEMPTION_DIAGNOSTIC_POP
+                REDEMPTION_DIAGNOSTIC_POP()
             };
 
             auto content = readall(file2hash.c_str(), fname.c_str());

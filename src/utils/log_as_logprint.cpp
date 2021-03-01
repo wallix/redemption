@@ -20,12 +20,12 @@
 
 #include "cxx/diagnostic.hpp"
 #include "cxx/compiler_version.hpp"
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 #endif
 #include "utils/log.hpp"
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 #ifdef __EMSCRIPTEN__
 # include "red_emscripten/em_asm.hpp"
@@ -45,7 +45,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
     va_list ap;
     va_start(ap, format);
 
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
 #ifdef __EMSCRIPTEN__
     char buffer[1024];
@@ -71,7 +71,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
     std::fputs("\n", stderr);
     // std::fflush(stderr);
 #endif
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
     va_end(ap);
 }

@@ -138,10 +138,10 @@ create_server(uint32_t s_addr,
     } u;
     memset(&u, 0, sizeof(u));
     u.s4.sin_family = AF_INET;
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
     u.s4.sin_port = htons(port);
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
     u.s4.sin_addr.s_addr = s_addr;
 
     LOG(LOG_INFO, "Listen: binding socket %d on %s:%d",
@@ -174,10 +174,10 @@ create_ip_dual_stack_server(int port,
 
     memset(&u, 0, sizeof(u));
     u.s6.sin6_family = AF_INET6;
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
     u.s6.sin6_port = htons(port);
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
     u.s6.sin6_addr = in6addr_any;
 
     char ip_address[INET6_ADDRSTRLEN] { };
@@ -240,7 +240,7 @@ struct ServerLoopIgnoreTimeout
 
 inline bool is_no_error_server_loop() noexcept
 {
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wlogical-op")
     // these are not really errors
     return errno == EAGAIN
@@ -248,7 +248,7 @@ inline bool is_no_error_server_loop() noexcept
         || errno == EINPROGRESS
         || errno == EINTR
     ;
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 template<class CbNewConn>

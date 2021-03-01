@@ -3929,6 +3929,8 @@ static int rle_bin_to_run_order(
             break;
         }
 
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (run_order.code_identifier)
         {
             case CodeIdentifier::REGULAR_COLOR_IMAGE:
@@ -3948,6 +3950,7 @@ static int rle_bin_to_run_order(
                 RED_FAIL(run_order.code_identifier);
                 break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 
     return 0;

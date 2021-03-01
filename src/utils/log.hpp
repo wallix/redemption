@@ -178,7 +178,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 #   define LOG_REDEMPTION_FILENAME(priority)
 # else
 #   define LOG_REDEMPTION_FILENAME(priority)                 \
-    REDEMPTION_DIAGNOSTIC_PUSH                               \
+    REDEMPTION_DIAGNOSTIC_PUSH()                               \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
     if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
         ::detail::LOG__REDEMPTION__INTERNAL(                 \
@@ -186,7 +186,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
             __FILE__, __LINE__                               \
         );                                                   \
     }                                                        \
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 # endif
 
 # define LOG(priority, ...) do {                                       \

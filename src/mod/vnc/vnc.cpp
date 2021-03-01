@@ -467,6 +467,8 @@ bool mod_vnc::doTlsSwitch()
 {
     TLSClientParams tlsParams;
 
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch(this->choosenAuth) {
     case VeNCRYPT_TLSNone:
     case VeNCRYPT_TLSPlain:
@@ -480,6 +482,7 @@ bool mod_vnc::doTlsSwitch()
     default:
         break;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
     NullServerNotifier notifier;
 
     switch (this->t.enable_client_tls(notifier, tlsParams)) {
@@ -491,9 +494,6 @@ bool mod_vnc::doTlsSwitch()
             throw Error(ERR_VNC_CONNECTION_ERROR);
         case Transport::TlsResult::Ok:
             return true;
-        default:
-            LOG(LOG_ERR, "unexpected result");
-            throw Error(ERR_VNC_CONNECTION_ERROR);
     }
 }
 
@@ -509,6 +509,8 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
             this->tlsSwitch = false;
             can_read = true;
 
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch(this->choosenAuth) {
             case VeNCRYPT_TLSNone:
             case VeNCRYPT_X509None:
@@ -535,6 +537,7 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
                 LOG(LOG_ERR, "auth %d not handled yet", this->choosenAuth);
                 break;
             }
+            REDEMPTION_DIAGNOSTIC_POP()
         } else {
             can_read = false;
         }
@@ -744,6 +747,8 @@ bool mod_vnc::treatVeNCrypt() {
         break;
     }
     case WAIT_VENCRYPT_AUTH_ANSWER: {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch(this->choosenAuth ) {
         case VNC_AUTH_NONE:
             this->state = WAIT_SECURITY_RESULT;
@@ -776,11 +781,9 @@ bool mod_vnc::treatVeNCrypt() {
             LOG(LOG_ERR, "unknown state");
             throw Error(ERR_VNC_CONNECTION_ERROR);
         }
-
+        REDEMPTION_DIAGNOSTIC_POP()
         break;
     }
-    default:
-        break;
     }
     return true;
 }
@@ -938,6 +941,8 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                 uint8_t authAnswer = static_cast<uint8_t>(preferedAuth);
                 this->t.send(bytes_view{&authAnswer, 1});
 
+                REDEMPTION_DIAGNOSTIC_PUSH()
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
                 switch (preferedAuth){
                     case VNC_AUTH_INVALID:
                         this->state = WAIT_SECURITY_TYPES_INVALID_AUTH;
@@ -968,6 +973,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                         LOG(LOG_ERR, "internal bug when computing prefered VNC auth");
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                 }
+                REDEMPTION_DIAGNOSTIC_POP()
             } else {
                 // version 3.3 or less, the server decides the security type that
                 // is used
@@ -1456,10 +1462,6 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
     case WAIT_CLIENT_UP_AND_RUNNING:
         LOG(LOG_INFO, "Waiting for client become up and running");
         break;
-
-    default:
-        LOG(LOG_ERR, "Unknown state=%d", static_cast<int>(this->state));
-        throw Error(ERR_VNC);
     }
 
     return false;

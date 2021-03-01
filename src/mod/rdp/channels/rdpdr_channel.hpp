@@ -1831,6 +1831,8 @@ public:
 
         bool send_message_to_server = true;
 
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
         switch (this->client_message_header.packet_id)
         {
             case rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM:
@@ -1963,6 +1965,7 @@ public:
                     static_cast<uint16_t>(this->server_message_header.packet_id));
             break;
         }   // switch (this->client_message_header.packet_id)
+        REDEMPTION_DIAGNOSTIC_POP()
 
         if (send_message_to_server) {
             this->send_message_to_server(total_length, flags, chunk_data);
@@ -2710,6 +2713,8 @@ public:
 
         bool send_message_to_client = (this->has_valid_to_client_sender() && !this->disable_client_sender);
 
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
         switch (this->server_message_header.packet_id)
         {
             case rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE:
@@ -2818,6 +2823,7 @@ public:
                     static_cast<uint16_t>(this->server_message_header.packet_id));
             break;
         }   // switch (this->server_message_header.packet_id)
+        REDEMPTION_DIAGNOSTIC_POP()
 
         if (send_message_to_client) {
             this->send_message_to_client(total_length, flags, chunk_data);

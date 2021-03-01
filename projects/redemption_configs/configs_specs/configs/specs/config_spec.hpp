@@ -107,7 +107,7 @@ void config_spec_definition(Writer && W)
         "  27: GlyphIndex\n"
     ;
 
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wc99-designator")
 
     W.section("globals", [&]
@@ -961,7 +961,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_label_fgcolor"}, set("white"));
     });
 
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 }

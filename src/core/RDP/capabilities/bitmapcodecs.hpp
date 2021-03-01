@@ -263,6 +263,8 @@ enum BitmapCodecType {
 };
 
 inline const char *bitmapCodecTypeStr(BitmapCodecType btype) {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
     switch (btype) {
     default:
     case CODEC_UNKNOWN: return "UNKNOWN";
@@ -270,6 +272,7 @@ inline const char *bitmapCodecTypeStr(BitmapCodecType btype) {
     case CODEC_REMOTEFX: return "RemoteFx";
     case CODEC_NS: return "NSCodec";
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 enum {
@@ -738,13 +741,13 @@ struct Recv_CS_BitmapCodec
         switch (this->codecType){
         case CODEC_NS:
             return 19u + Recv_NSCodecCaps().computeSize();
-        break;
         case CODEC_REMOTEFX:
             return 19u + Recv_RFXClntCaps().computeSize();
-        break;
-        default:
-            return 19u;
+        case CODEC_IGNORE:
+        case CODEC_UNKNOWN:
+            break;
         }
+        return 19u;
     }
 
     void recv(InStream & stream) {
@@ -1124,13 +1127,13 @@ struct Recv_SC_BitmapCodec
         switch (this->codecType){
         case CODEC_NS:
             return 19u + Recv_NSCodecCaps().computeSize();
-        break;
         case CODEC_REMOTEFX:
             return 19u + Recv_RFXSrvrCaps().computeSize();
-        break;
-        default:
-            return 19u;
+        case CODEC_IGNORE:
+        case CODEC_UNKNOWN:
+            break;
         }
+        return 19u;
     }
 
     void recv(InStream & stream) {

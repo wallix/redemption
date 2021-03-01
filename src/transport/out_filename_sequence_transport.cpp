@@ -54,7 +54,6 @@ const char * FilenameGenerator::get(unsigned count) const
 
     using std::snprintf;
     switch (this->format) {
-        default:
         case PATH_FILE_PID_COUNT_EXTENSION:
             snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
                     , this->filename, this->pid, count, this->extension);

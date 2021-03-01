@@ -222,7 +222,7 @@ inline RDPColor color_encode(const BGRColor color, Depth depth) noexcept
         case Depth::depth15(): return encode_color15()(color);
         case Depth::depth16(): return encode_color16()(color);
         case Depth::depth24(): return encode_color24()(color);
-        case Depth::unspecified(): default:;
+        case Depth::unspecified(): break;
     }
 
     REDEMPTION_UNREACHABLE();
@@ -237,7 +237,7 @@ inline BGRColor color_decode(const RDPColor color, ColorCtx color_ctx) noexcept
         case Depth::depth15(): return decode_color15()(color);
         case Depth::depth16(): return decode_color16()(color);
         case Depth::depth24(): return decode_color24()(color);
-        case Depth::unspecified(): default:;
+        case Depth::unspecified(): break;
     }
 
     REDEMPTION_UNREACHABLE();

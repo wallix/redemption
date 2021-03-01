@@ -121,6 +121,8 @@ public:
             this->trans.send(stream.get_data(), stream.get_capacity());
         };
 
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (chunk_type)
         {
         case WrmChunkType::META_FILE: {
@@ -180,6 +182,7 @@ public:
         default:
             resend();
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 };
 
@@ -284,6 +287,8 @@ private:
     }
 
     void interpret_chunk() {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (safe_cast<WrmChunkType>(this->chunk_type)) {
         case WrmChunkType::META_FILE:
             this->info.receive(this->stream);
@@ -301,6 +306,7 @@ private:
             break;
         default :;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }   // void interpret_chunk()
 };
 
@@ -2058,7 +2064,7 @@ extern "C" {
                         cctx.old_encryption_scheme = true;
                         in_t.open(rp.full_path.c_str());
                         break;
-                    default:
+                    case EncryptionSchemeTypeResult::NewScheme:
                         break;
                 }
 

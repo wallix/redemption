@@ -1445,6 +1445,8 @@ void rle_decompress(
     const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size, size_t* RM18446_adjusted_size)
 {
     (void)src_cy;
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (image.bits_per_pixel()) {
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         case BitsPerPixel{8 }: return RLEDecompressorImpl< 8>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
@@ -1452,15 +1454,19 @@ void rle_decompress(
         case BitsPerPixel{16}: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
         default:               return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 // TODO simplify and enhance compression using 1 pixel orders BLACK or WHITE.
 void rle_compress(ImageView const & image, OutStream & outbuffer)
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (image.bits_per_pixel()) {
         case BitsPerPixel{8 }: return RLEDecompressorImpl< 8>{}.compress_(image, outbuffer);
         case BitsPerPixel{15}: return RLEDecompressorImpl<15>{}.compress_(image, outbuffer);
         case BitsPerPixel{16}: return RLEDecompressorImpl<16>{}.compress_(image, outbuffer);
         default:               return RLEDecompressorImpl<24>{}.compress_(image, outbuffer);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }

@@ -28,6 +28,7 @@ Author(s): Jonathan Poelen
 
 
 enum class BitsPerPixel : uint8_t {
+    Unspecified = 0,
     BitsPP1 = 1,
     BitsPP4 = 4,
     BitsPP8 = 8,

@@ -203,7 +203,7 @@ video_recorder::video_recorder(
 
     this->d->codec_ctx->pix_fmt = pix_fmt;
 
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch")
     switch (codec_id){
         case AV_CODEC_ID_H264:
@@ -226,7 +226,7 @@ video_recorder::video_recorder(
             this->d->codec_ctx->mb_decision = 2;
         break;
     }
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
     // some formats want stream headers to be separate
     if(fmt->flags & AVFMT_GLOBALHEADER){

@@ -104,7 +104,7 @@ void init_signals()
     sigaddset(&sa.sa_mask, SIGUSR1);
     sigaddset(&sa.sa_mask, SIGUSR2);
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
@@ -142,7 +142,7 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 
     sa.sa_handler = SIG_IGN; /*NOLINT*/
     sigaction(SIGUSR2, &sa, nullptr);
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 }
 
 }  // namespace
@@ -443,11 +443,11 @@ namespace
         if (ws_port) {
             std::string listen_addr(ws_addr, ws_port);
             uint32_t ws_iaddr = inet_addr(listen_addr.c_str());
-            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_PUSH()
             REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
             REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wuseless-cast")
             if (ws_iaddr == INADDR_NONE) { ws_iaddr = INADDR_ANY; }
-            REDEMPTION_DIAGNOSTIC_POP
+            REDEMPTION_DIAGNOSTIC_POP()
             char* end = nullptr;
             long port = std::strtol(ws_port + 1, &end, 10);
 
@@ -474,11 +474,11 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
 
     // Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
     REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wuseless-cast")
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
     const bool debug_config = (ini.get<cfg::debug::config>() == Inifile::ENABLE_DEBUG_CONFIG);
     const EnableTransparentMode enable_transparent_mode

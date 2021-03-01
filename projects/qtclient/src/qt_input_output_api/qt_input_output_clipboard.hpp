@@ -49,10 +49,10 @@ struct TextEnder {
 
 class QtInputOutputClipboard : public QObject, public ClientIOClipboardAPI
 {
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
     enum : int {
         FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
@@ -166,8 +166,9 @@ public Q_SLOTS:
     {
         QImage::Format format(QImage::Format_RGB16);
 
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         if (alpha) {
-
             switch (bpp) {
                 case BitsPerPixel{15}: format = QImage::Format_ARGB4444_Premultiplied; break;
                 case BitsPerPixel{16}: format = QImage::Format_ARGB4444_Premultiplied; break;
@@ -175,8 +176,8 @@ public Q_SLOTS:
                 case BitsPerPixel{32}: format = QImage::Format_ARGB32_Premultiplied;   break;
                 default : break;
             }
-        } else {
-
+        }
+        else {
             switch (bpp) {
                 case BitsPerPixel{15}: format = QImage::Format_RGB555; break;
                 case BitsPerPixel{16}: format = QImage::Format_RGB16;  break;
@@ -185,6 +186,7 @@ public Q_SLOTS:
                 default : break;
             }
         }
+        REDEMPTION_DIAGNOSTIC_POP()
 
         return format;
     }

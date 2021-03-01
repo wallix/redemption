@@ -119,6 +119,8 @@ Error::Error(error_type id, int errnum, uintptr_t data) noexcept
 
 zstring_view Error::errmsg(bool with_id) const noexcept
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch(this->id) {
     case NO_ERROR:
         return "No error"_zv;
@@ -187,4 +189,5 @@ zstring_view Error::errmsg(bool with_id) const noexcept
         #undef MAKE_CASE_V
         return "Unknown Error"_zv;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }

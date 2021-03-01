@@ -220,10 +220,6 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
             case SERVER_UPDATE_POINTER_NEW:
                 updateCode = FastPath::UpdateType::POINTER;
                 break;
-
-            default:
-                assert(false);
-                break;
         }
 
         bytes_view fullPacket = data_common.get_packet();
@@ -362,7 +358,7 @@ void send_server_update( Transport & trans, bool fastpath_support, bool compress
                 }
                 break;
 
-            default:
+            case SERVER_UPDATE_GRAPHICS_SURFCMDS:
                 assert(false);
                 break;
         }

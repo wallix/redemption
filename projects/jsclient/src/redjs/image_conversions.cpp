@@ -66,6 +66,8 @@ void convert_bitmap_to_image_data(
     namespace fns = pixel_conversion_fns;
     using namespace shortcut_decode_with_palette;
     auto dec24_revert = [](RDPColor c) { return BGRasRGBColor(dec24{}(c)); };
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (bits_per_pixel) {
         case BitsPerPixel::BitsPP8:  convert(fns::buf2col_1B, dec8{*palette}); break;
         case BitsPerPixel::BitsPP15: convert(fns::buf2col_2B, dec15{}); break;
@@ -73,6 +75,7 @@ void convert_bitmap_to_image_data(
         case BitsPerPixel::BitsPP24: convert(fns::buf2col_3B, dec24_revert); break;
         default: assert(!"unknown bpp");
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void convert_bitmap8_to_bitmap16(

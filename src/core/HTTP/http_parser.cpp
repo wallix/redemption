@@ -145,8 +145,6 @@ bool HttpParser::parse(chars_view input) {
             }
             break;
         }
-        default:
-            break;
         }
     }
 }

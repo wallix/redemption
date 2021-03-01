@@ -165,7 +165,7 @@ inline namespace flags_operators
 
 } // namespace utils
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 using namespace utils::flags_operators; /*NOLINT*/
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()

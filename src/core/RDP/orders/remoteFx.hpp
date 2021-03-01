@@ -237,18 +237,14 @@ public:
     };
 
 
-    RfxDecoder(DecoderState initialState = RFX_WAITING_SYNC)
-        : decoderState(initialState)
-    {
-    }
+    RfxDecoder() = default;
 
     [[nodiscard]] DecoderState getState() const {    return decoderState; }
 
     void recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::GraphicApi & drawable);
 
-
 private:
-    DecoderState decoderState;
+    DecoderState decoderState = RFX_WAITING_SYNC;
     uint8_t haveFlags = 0;
     TS_RFX_REGION currentRegion;
 };

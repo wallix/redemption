@@ -563,6 +563,8 @@ public:
                 LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "Alternate secondary order");
 
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
+                REDEMPTION_DIAGNOSTIC_PUSH()
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
                 switch (header.orderType) {
                     case RDP::AltsecDrawingOrderType::SwitchSurface: {
                         uint16_t bitmapId = stream.in_uint16_le();
@@ -580,6 +582,7 @@ public:
                         /* error, unknown order */
                     break;
                 }
+                REDEMPTION_DIAGNOSTIC_POP()
 
                 break;
             }

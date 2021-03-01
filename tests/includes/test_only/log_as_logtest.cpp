@@ -20,12 +20,12 @@
 
 #include "cxx/diagnostic.hpp"
 #include "cxx/compiler_version.hpp"
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 #endif
 #include "utils/log.hpp"
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 #include "test_only/log_buffered.hpp"
 
@@ -133,7 +133,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
             return ;
         }
         va_list ap;
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         va_start(ap, format);
         auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
@@ -142,7 +142,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
         va_start(ap, format);
         std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
         va_end(ap);
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
         log_buf.back() = '\n';
 
         // replace "priority (31905/31905) -- message" by "priority - message"
@@ -157,7 +157,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
         va_list ap;
         va_start(ap, format);
 
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
 #ifdef __EMSCRIPTEN__
         char buffer[4096];
@@ -169,7 +169,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noe
         std::puts("");
         std::fflush(stdout);
 #endif
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
 
         va_end(ap);
     }

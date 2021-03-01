@@ -18,6 +18,7 @@
     Author(s): David Fort
 */
 
+#include "cxx/diagnostic.hpp"
 #include "utils/primitives/primitives.hpp"
 
 #include "utils/primitives/primitives_internal.hpp"
@@ -208,6 +209,8 @@ Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
     uint8_t *pDst, uint32_t dstStep, Primitives::PixelFormat dstFormat,
     const Primitives::prim_size_t *roi)
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (dstFormat)
     {
         case Primitives::PIXEL_FORMAT_BGRA32:
@@ -217,6 +220,7 @@ Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R(
         default:
             return general_yCbCrToRGB_16s8u_P3AC4R_general(pSrc, srcStep, pDst, dstStep, dstFormat, roi);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 

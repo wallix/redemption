@@ -215,6 +215,8 @@ bool ChannelsAuthorizations::rdpdr_type_all_is_authorized() const noexcept
 
 bool ChannelsAuthorizations::rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (DeviceType) {
         case rdpdr::RDPDR_DTYP_SERIAL:
         case rdpdr::RDPDR_DTYP_PARALLEL:
@@ -233,6 +235,7 @@ bool ChannelsAuthorizations::rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceTy
             assert(!"Unknown RDPDR DeviceType");
             return false;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 bool ChannelsAuthorizations::rdpdr_drive_read_is_authorized() const noexcept

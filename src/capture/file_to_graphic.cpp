@@ -163,6 +163,8 @@ bool FileToGraphic::next_order()
 
         if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
         && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (this->chunk_type) {
                 case WrmChunkType::RDP_UPDATE_ORDERS:
                     this->statistics.graphics_update_chunk++; break;
@@ -181,6 +183,7 @@ bool FileToGraphic::next_order()
                     this->statistics.internal_order_read_len += this->chunk_size; break;
                 default: ;
             }
+            REDEMPTION_DIAGNOSTIC_POP()
             if (this->chunk_size > 65536){
                 LOG(LOG_ERR,"chunk_size (%u) > 65536", this->chunk_size);
                 throw Error(ERR_WRM);
@@ -281,8 +284,8 @@ void FileToGraphic::interpret_order()
 
     ReceiveOrder receive_order{*this};
 
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_WARNING("-Wswitch-enum")
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
     switch (this->chunk_type)
     {
     case WrmChunkType::RDP_UPDATE_ORDERS:
@@ -771,7 +774,7 @@ void FileToGraphic::interpret_order()
 
         const BitsPerPixel data_bpp = checked_int{this->stream.in_uint16_le()}; /* data bpp */
 
-        const uint8_t cache_idx = this->stream.in_uint16_le();
+        const uint16_t cache_idx = this->stream.in_uint16_le();
 
         const Pointer cursor = pointer_loader_new(data_bpp, this->stream, palette, false, false);
 
@@ -902,7 +905,7 @@ void FileToGraphic::interpret_order()
         LOG(LOG_ERR, "unknown chunk type %d", this->chunk_type);
         throw Error(ERR_WRM);
     }
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 

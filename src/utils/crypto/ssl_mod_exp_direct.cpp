@@ -52,10 +52,10 @@ writable_bytes_view mod_exp_direct(
     int_type exp = b256_to_bigint(exponent);
     int_type m = b256_to_bigint(modulus);
 
-    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wzero-as-null-pointer-constant")
     int_type r = boost::multiprecision::powm(base, exp, m);
-    REDEMPTION_DIAGNOSTIC_POP
+    REDEMPTION_DIAGNOSTIC_POP()
 
     auto it = boost::multiprecision::export_bits(r, out.data(), 8);
     auto r_len = static_cast<size_t>(it - out.data());

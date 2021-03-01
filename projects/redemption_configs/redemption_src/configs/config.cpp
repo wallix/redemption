@@ -28,10 +28,10 @@
 
 #include "configs/autogen/str_authid.hpp"
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
 #include "configs/autogen/enums_func_ini.tcc"
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 namespace
 {

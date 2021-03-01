@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cxx/diagnostic.hpp"
 #include "extract_data.hh"
 #include "rgb8.hpp"
 
@@ -196,8 +197,8 @@ namespace ocr
     template<class F>
     void dispatch_title_color(unsigned int tid, F&& f)
     {
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_WARNING("-Wswitch-enum")
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
         switch (titlebar_color_id::type(tid)) {
             case titlebar_color_id::WINDOWS_2012:
                 f(titlebar_color_windows2012_standard(), true);
@@ -211,8 +212,9 @@ namespace ocr
             case titlebar_color_id::WINDOWS_RUSSIAN:
             default:
                 f(titlebar_colors[tid], titlebar_color_id::is_win2012(tid));
+                break;
         }
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 
     template<class Color>

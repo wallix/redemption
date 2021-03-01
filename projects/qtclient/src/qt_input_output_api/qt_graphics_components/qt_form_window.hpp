@@ -65,10 +65,10 @@
 
 class IconMovie :  public QWidget
 {
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
     ClientCallback * controllers;
 
@@ -218,10 +218,10 @@ public:
 class QtMoviesPanel : public QWidget
 {
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
     QFormLayout lay;
 
@@ -259,10 +259,10 @@ public:
 
 class QtFormReplay : public QWidget
 {
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
     ClientCallback * controllers;
 
@@ -340,10 +340,10 @@ public:
 class ConnectionFormQt  : public QWidget
 {
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
     uint8_t protocol_type;
 
@@ -420,10 +420,10 @@ private Q_SLOTS:
 class QtIconAccount :  public QWidget
 {
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     FormTabAPI * main_tab;
@@ -507,63 +507,41 @@ public:
         this->repaint();
     }
 
-    void mousePressEvent(QMouseEvent *e) override {
+    void mousePressEvent(QMouseEvent *e) override
+    {
+        if (this->main_tab && e->button() == Qt::LeftButton ) {
+            if (e->x() > 127 && e->x() < 135 && e->y() > 2 && e->y() < 9) {
+                this->main_tab->delete_account(this->accountData.index);
+            }
+            else {
+                this->main_tab->account_index_to_drop = this->accountData.index;
+                QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
+                QPixmap map = QPixmap::fromImage(image);
 
-        switch (e->button()) {
-            case Qt::LeftButton:
-                if (this->main_tab) {
+                QCursor qcursor(map, 10, 10);
 
-                    if (e->x() > 127 && e->x() < 135 && e->y() > 2 && e->y() < 9) {
-                        this->main_tab->delete_account(this->accountData.index);
-                    } else {
-
-                        this->main_tab->account_index_to_drop = this->accountData.index;
-                        QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
-                        QPixmap map = QPixmap::fromImage(image);
-
-                        QCursor qcursor(map, 10, 10);
-
-                        this->main_tab->setCursor(qcursor);
-                    }
-                }
-                break;
-
-            default:
-                break;
+                this->main_tab->setCursor(qcursor);
+            }
         }
     }
 
-    void mouseReleaseEvent(QMouseEvent *e) override {
-
-        switch (e->button()) {
-            case Qt::LeftButton:
-                if (this->main_tab) {
-                    if (this->drop_rect.contains(QPoint(e->globalX() - this->main_tab->nativeParentWidget()->x(), e->globalY() - this->main_tab->nativeParentWidget()->y()))) {
-                        this->main_tab->drop_account();
-                    }
-                    this->main_tab->account_index_to_drop = -1;
-                    this->main_tab->setCursor(Qt::ArrowCursor);
-                }
-                break;
-
-            default:
-                break;
+    void mouseReleaseEvent(QMouseEvent *e) override
+    {
+        if (this->main_tab && e->button() == Qt::LeftButton) {
+            if (this->drop_rect.contains(QPoint(e->globalX() - this->main_tab->nativeParentWidget()->x(), e->globalY() - this->main_tab->nativeParentWidget()->y()))) {
+                this->main_tab->drop_account();
+            }
+            this->main_tab->account_index_to_drop = -1;
+            this->main_tab->setCursor(Qt::ArrowCursor);
         }
     }
 
     void mouseDoubleClickEvent( QMouseEvent * e ) override {
-        switch (e->button()) {
-            case Qt::LeftButton:
-                if (this->main_tab) {
-                    this->main_tab->account_index_to_drop = this->accountData.index+1;
-                    this->main_tab->drop_account();
-                    this->main_tab->account_index_to_drop = -1;
-                    this->main_tab->setCursor(Qt::ArrowCursor);
-                }
-                break;
-
-            default:
-                break;
+        if (this->main_tab && e->button() == Qt::LeftButton) {
+            this->main_tab->account_index_to_drop = this->accountData.index+1;
+            this->main_tab->drop_account();
+            this->main_tab->account_index_to_drop = -1;
+            this->main_tab->setCursor(Qt::ArrowCursor);
         }
     }
 
@@ -588,10 +566,10 @@ public:
 class QtAccountPanel : public QWidget
 {
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     QtIconAccount * icons[35];
@@ -783,10 +761,10 @@ public:
 class QtFormTab : public FormTabAPI
 {
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 
 public:
@@ -1009,10 +987,10 @@ private Q_SLOTS:
 class QtForm : public QWidget, public FormApi
 {
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     ClientRedemptionConfig * config;

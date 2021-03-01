@@ -176,10 +176,8 @@ Transport::TlsResult SocketTransport::enable_client_tls(ServerNotifier & server_
             this->tls_state = TLSState::Uninit;
             LOG(LOG_ERR, "SocketTransport::enable_client_tls() failed");
             return Transport::TlsResult::Fail;
-        default:
-            LOG(LOG_ERR, "SocketTransport::%s() unhandled state for tls_state", __FUNCTION__);
-            return Transport::TlsResult::Fail;
     }
+    REDEMPTION_UNREACHABLE();
 }
 
 bool SocketTransport::disconnect()

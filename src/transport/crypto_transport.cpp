@@ -390,14 +390,8 @@ size_t InCryptoTransport::do_partial_read(uint8_t * buffer, size_t len)
                     char_ptr_cast(dec_buf),
                     pack_buf_size, this->clear_data, &chunk_size);
 
-            switch (status)
-            {
-                case SNAPPY_OK:
-                    break;
-                case SNAPPY_INVALID_INPUT:
-                case SNAPPY_BUFFER_TOO_SMALL:
-                default:
-                    throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            if (REDEMPTION_UNLIKELY(status != SNAPPY_OK)) {
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
             }
 
             this->clear_pos = 0;

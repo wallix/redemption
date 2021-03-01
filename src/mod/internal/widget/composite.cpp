@@ -469,6 +469,8 @@ void WidgetParent::rdp_input_scancode(
 
     while (keymap->nb_kevent_available() > 0) {
         uint32_t nb_kevent = keymap->nb_kevent_available();
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (keymap->top_kevent()) {
         case Keymap2::KEVENT_TAB:
             keymap->get_kevent();
@@ -484,6 +486,7 @@ void WidgetParent::rdp_input_scancode(
             }
             break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
         if (nb_kevent == keymap->nb_kevent_available()) {
             // this is to prevent infinite loop if the kevent is not consummed
             keymap->get_kevent();

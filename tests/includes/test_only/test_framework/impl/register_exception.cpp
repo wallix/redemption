@@ -35,7 +35,7 @@ namespace
     {
         register_exception()
         {
-            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_PUSH()
             REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
             #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
                 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
@@ -55,7 +55,7 @@ namespace
                     throw std::runtime_error{str_concat(prefix_msg_error, e.errmsg())};
                 }
             );
-            REDEMPTION_DIAGNOSTIC_POP
+            REDEMPTION_DIAGNOSTIC_POP()
         }
     };
 

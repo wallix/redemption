@@ -158,7 +158,7 @@ namespace
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Zrle::Encoder::Exit remaining data  %zu", buf.av().size());
                 return EncoderState::Exit;
             }
-            default:
+            case ZrleState::Exit:
                 LOG(LOG_ERR, "Unexpected state in ZrleEncoder (%u), should not happen", static_cast<unsigned>(this->state));
                 break;
             }
@@ -175,13 +175,13 @@ namespace
         // We are currently providing complete Streams encoding all the expected tiling rects
         // We can predict the number of expected rects (64x64 tiling of external rect is determinist)
         // But we can't predict the size of each individual rect before decoding.
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
         void rle_test_bypass(InStream & uncompressed_data_buffer, gdi::GraphicApi & drawable)
         {
             this->lib_framebuffer_update_zrle(uncompressed_data_buffer, drawable);
         }
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
 
     private:
     //    7.6.9   ZRLE Encoding

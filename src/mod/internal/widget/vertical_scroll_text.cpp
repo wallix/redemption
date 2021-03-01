@@ -92,7 +92,7 @@ void WidgetVerticalScrollText::set_wh(uint16_t w, uint16_t h)
         this->line_metrics = gdi::MultiLineTextMetrics(this->font, this->text.c_str(), new_cx);
 
         const int text_h = int(this->line_metrics.lines().size() * glyph_cy - this->y_text);
-        const int total_scroll_h = std::max(int(cy - this->button_dim.h * 2), 1);
+        const int total_scroll_h = std::max(cy - this->button_dim.h * 2, 1);
 
         this->page_h = std::max(cy / glyph_cy - 1, 1) * glyph_cy;
         this->total_h = text_h - this->page_h;
@@ -251,6 +251,8 @@ void WidgetVerticalScrollText::rdp_input_scancode(long param1, long param2, long
     }
 
     if (keymap->nb_kevent_available() > 0) {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (keymap->top_kevent()){
             case Keymap2::KEVENT_LEFT_ARROW:
             case Keymap2::KEVENT_UP_ARROW:
@@ -270,6 +272,7 @@ void WidgetVerticalScrollText::rdp_input_scancode(long param1, long param2, long
                 Widget::rdp_input_scancode(param1, param2, param3, param4, keymap);
                 break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 }
 

@@ -223,11 +223,11 @@ private:
         this->ctx.len += len;
         if (r) {
             if (len < 128 - r) {
-                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_PUSH()
                 // release only (-O2 and above)
                 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Warray-bounds")
                 memcpy(this->ctx.buf + r, p, len);
-                REDEMPTION_DIAGNOSTIC_POP
+                REDEMPTION_DIAGNOSTIC_POP()
                 return;
             }
             memcpy(this->ctx.buf + r, p, 128 - r);

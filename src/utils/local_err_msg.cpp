@@ -24,6 +24,8 @@
 
 zstring_view local_err_msg(Error const& error, Language lang, bool with_id) noexcept
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (error.id) {
     case ERR_SESSION_UNKNOWN_BACKEND:
         return TR(trkeys::err_session_unknown_backend, lang);
@@ -106,4 +108,5 @@ zstring_view local_err_msg(Error const& error, Language lang, bool with_id) noex
     default:
         return error.errmsg(with_id);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }

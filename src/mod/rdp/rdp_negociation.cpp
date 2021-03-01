@@ -370,6 +370,8 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
     buf.load_data(this->trans);
     while (buf.next(TpduBuffer::PDU)) {
         InStream x224_data(buf.current_pdu_buffer());
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (this->state)
         {
             case State::BASIC_SETTINGS_EXCHANGE:
@@ -456,6 +458,7 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                 }
                 break;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
     return false;
 }

@@ -137,6 +137,8 @@ struct WrmPlayer
 
     void interpret_order()
     {
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wcovered-switch-default")
         switch (this->chunk.type)
         {
             case WrmChunkType::RDP_UPDATE_ORDERS:
@@ -159,6 +161,14 @@ struct WrmPlayer
                         throw Error(ERR_WRM);
                 }
 
+                break;
+            }
+
+            case WrmChunkType::TIMES:
+            {
+                auto now = std::chrono::microseconds(this->in_stream.in_uint64_le());
+                (void)/*last_real_time*/this->in_stream.in_uint64_le();
+                this->_update_time(now);
                 break;
             }
 
@@ -332,6 +342,17 @@ struct WrmPlayer
                 break;
             }
 
+            case WrmChunkType::POINTER_NATIVE:
+            {
+                const BitsPerPixel data_bpp = checked_int{this->in_stream.in_uint16_le()};
+                const uint16_t cache_idx = this->in_stream.in_uint16_le();
+                const Pointer cursor = pointer_loader_new(data_bpp, this->in_stream,
+                                                          BGRPalette::classic_332(),
+                                                          false, false);
+                this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
+                break;
+            }
+
             case WrmChunkType::RESET_CHUNK:
                 this->wrm_info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
                 // TODO
@@ -358,10 +379,16 @@ struct WrmPlayer
                 this->in_stream.in_skip_bytes(1);
                 break;
 
+            case WrmChunkType::MONITOR_LAYOUT:
+                this->_skip_chunk();
+                break;
+
+            case WrmChunkType::INVALID_CHUNK:
             default:
                 LOG(LOG_ERR, "unknown chunk type %d", this->chunk.type);
                 throw Error(ERR_WRM);
         }
+        REDEMPTION_DIAGNOSTIC_POP()
     }
 
 private:
@@ -423,6 +450,8 @@ EMSCRIPTEN_BINDINGS(player)
 void WrmPlayer::_interpret_secondary_order(uint8_t control)
 {
     RDP::AltsecDrawingOrderHeader header(control);
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (header.orderType)
     {
         case RDP::AltsecDrawingOrderType::FrameMarker:
@@ -444,6 +473,7 @@ void WrmPlayer::_interpret_secondary_order(uint8_t control)
             LOG(LOG_WARNING, "unsupported Alternate Secondary Drawing Order (%d)", header.orderType);
             throw Error(ERR_WRM);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void WrmPlayer::_interpret_cache_order()

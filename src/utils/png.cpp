@@ -392,6 +392,8 @@ void set_rows_from_image_chunk(
             }
             chunk_trans.in_stream.in_copy_bytes(buffer + total_len, remaining);
             total_len += remaining;
+            REDEMPTION_DIAGNOSTIC_PUSH()
+            REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (safe_cast<WrmChunkType>(chunk_trans.chunk_type)) {
             case WrmChunkType::PARTIAL_IMAGE_CHUNK:
             {
@@ -413,6 +415,7 @@ void set_rows_from_image_chunk(
                 LOG(LOG_ERR, "%s", msg_error);
                 png_error(png_ptr, msg_error);
             }
+            REDEMPTION_DIAGNOSTIC_POP()
         }
     };
 

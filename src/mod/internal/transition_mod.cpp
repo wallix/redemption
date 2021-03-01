@@ -51,13 +51,8 @@ void TransitionMod::rdp_input_scancode(long int param1, long int param2,
 {
     RailModBase::rdp_input_scancode(param1, param2, param3, param4, keymap);
 
-    if (keymap->nb_kevent_available() > 0){
-        switch (keymap->top_kevent()){
-        case Keymap2::KEVENT_ESC:
-            keymap->get_kevent();
-            this->set_mod_signal(BACK_EVENT_STOP);
-            break;
-        default:;
-        }
+    if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC) {
+        keymap->get_kevent();
+        this->set_mod_signal(BACK_EVENT_STOP);
     }
 }

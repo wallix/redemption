@@ -641,8 +641,9 @@ Pointer decode_pointer(
                 //     printf("\n");
                 // }
                 // printf("\n");
+
+                return ;
             }
-            break;
             case BitsPerPixel{4}:
             {
                 for (unsigned i = 0; i < dlen ; i++) {
@@ -652,8 +653,8 @@ Pointer decode_pointer(
                     ::out_bytes_le(cursor_data + 6 * i + 3, 3, palette[ px       & 0xF].as_u32());
                 }
                 memcpy(cursor_mask, mask, mlen);
+                return ;
             }
-            break;
             case BitsPerPixel{8}:
             case BitsPerPixel{15}:
             case BitsPerPixel{16}:
@@ -736,13 +737,13 @@ Pointer decode_pointer(
                     }
 
                 }
+                return ;
             }
-            break;
-            default:
-                // TODO : force some cursor if that happen
-                LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
-            break;
+            case BitsPerPixel::Unspecified: break;
             }
+
+            // TODO : force some cursor if that happen
+            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
         }
     );
 }

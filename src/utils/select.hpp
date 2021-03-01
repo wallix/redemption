@@ -30,7 +30,7 @@
 
 #include "utils/invalid_socket.hpp"
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
 inline void io_fd_zero(fd_set & rfds)
 {
@@ -51,7 +51,7 @@ inline int io_fd_isset(int const fd, fd_set const & rfds)
 {
     return FD_ISSET(fd, &rfds);
 }
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 inline int prepare_fds(int const fd, int max, fd_set & rfds)
 {

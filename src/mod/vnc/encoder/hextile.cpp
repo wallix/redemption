@@ -360,13 +360,13 @@ namespace
             return true;
         }
 
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
         [[nodiscard]] Rect current_tile() const
         {
             return this->tile;
         }
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
     };
 } // namespace
 

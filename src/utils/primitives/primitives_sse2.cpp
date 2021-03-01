@@ -21,6 +21,7 @@
 #include <emmintrin.h>
 #include <pmmintrin.h>
 
+#include "cxx/diagnostic.hpp"
 #include "utils/primitives/primitives.hpp"
 #include "utils/primitives/primitives_internal.hpp"
 
@@ -424,6 +425,8 @@ static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
         return general_yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
     }
 
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (DstFormat)
     {
         case Primitives::PIXEL_FORMAT_BGRA32:
@@ -437,6 +440,7 @@ static Primitives::pstatus_t sse2_yCbCrToRGB_16s8u_P3AC4R(
         default:
             return general_yCbCrToRGB_16s8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 void init_sse(Primitives *prims) {

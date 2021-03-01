@@ -42,12 +42,15 @@
 
 inline int qmouse_event_to_flag(QMouseEvent* e)
 {
+    REDEMPTION_DIAGNOSTIC_PUSH()
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
     switch (e->button()) {
         case Qt::LeftButton:   return MOUSE_FLAG_BUTTON1;
         case Qt::RightButton:  return MOUSE_FLAG_BUTTON2;
         case Qt::MiddleButton: return MOUSE_FLAG_BUTTON4;
         default: return 0;
     }
+    REDEMPTION_DIAGNOSTIC_POP()
 }
 
 class QtScreen : public QWidget
@@ -56,10 +59,10 @@ class QtScreen : public QWidget
  * Basic screen to show drawn orders into a qt windows, track mouse and keyboard.
  */
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     enum : int {
@@ -209,10 +212,10 @@ class RemoteAppQtScreen : public QtScreen
      *  to only show remote appl contents.
      */
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     int x_pixmap_shift;
@@ -313,10 +316,10 @@ class RDPQtScreen :  public QtScreen
      *      - "Connection/Disconnection"
      */
 
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     QPushButton    _buttonCtrlAltDel;
@@ -422,10 +425,10 @@ class ReplayQtScreen : public QtScreen
      *      - "Stop"
      *      - "Close"
      */
-REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
-REDEMPTION_DIAGNOSTIC_POP
+REDEMPTION_DIAGNOSTIC_POP()
 
 public:
     QPushButton    _buttonCtrlAltDel;

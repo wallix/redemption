@@ -44,10 +44,10 @@ class Zcompressor
         this->z.zalloc = nullptr; // Z_NULL;
         this->z.zfree = nullptr; // Z_NULL;
         this->z.opaque = nullptr; //Z_NULL;
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wold-style-cast")
         deflateInit(&this->z, 9);
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
         this->offset = 0;
         this->z.next_out = &this->out[this->offset];
         this->z.avail_out = sizeof(this->out) - this->offset;
@@ -114,10 +114,10 @@ class Zdecompressor
         this->z.zalloc = nullptr; // Z_NULL;
         this->z.zfree = nullptr; // Z_NULL;
         this->z.opaque = nullptr; //Z_NULL;
-        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_PUSH()
         REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wold-style-cast")
         inflateInit(&this->z);
-        REDEMPTION_DIAGNOSTIC_POP
+        REDEMPTION_DIAGNOSTIC_POP()
         this->offset = 0;
         this->z.next_out = &this->out[this->offset];
         this->z.avail_out = sizeof(this->out) - this->offset;
