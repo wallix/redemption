@@ -252,7 +252,7 @@ public:
             return this->id;
         }
 
-        bool set(bytes_view value);
+        bool parse(bytes_view value);
 
     private:
         Inifile* ini = nullptr;

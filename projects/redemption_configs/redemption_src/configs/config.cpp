@@ -131,7 +131,7 @@ zstring_view Inifile::FieldConstReference::get_acl_name() const
     return configs::authstr[unsigned(this->id)];
 }
 
-bool Inifile::FieldReference::set(bytes_view value)
+bool Inifile::FieldReference::parse(bytes_view value)
 {
     bool const ok = config_parse_value_fns[unsigned(this->id)](this->ini->variables, value);
     if (ok) {

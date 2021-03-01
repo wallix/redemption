@@ -1626,9 +1626,9 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_height>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::opt_width>());
 
-    get_acl_field(ini, cfg::context::opt_bpp::index).set("16"_zv);
-    get_acl_field(ini, cfg::context::opt_height::index).set("1024"_zv);
-    get_acl_field(ini, cfg::context::opt_width::index).set("1280"_zv);
+    get_acl_field(ini, cfg::context::opt_bpp::index).parse("16"_zv);
+    get_acl_field(ini, cfg::context::opt_height::index).parse("1024"_zv);
+    get_acl_field(ini, cfg::context::opt_width::index).parse("1280"_zv);
 
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_height>());
@@ -1656,12 +1656,12 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_group_filter>());
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::selector_lines_per_page>());
 
-    get_acl_field(ini, cfg::context::selector::index).set("True"_zv);
-    get_acl_field(ini, cfg::context::selector_current_page::index).set("2"_zv);
-    get_acl_field(ini, cfg::context::selector_device_filter::index).set("Windows"_zv);
-    get_acl_field(ini, cfg::context::selector_group_filter::index).set("RDP"_zv);
-    get_acl_field(ini, cfg::context::selector_lines_per_page::index).set("25"_zv);
-    get_acl_field(ini, cfg::context::selector_number_of_pages::index).set("2"_zv);
+    get_acl_field(ini, cfg::context::selector::index).parse("True"_zv);
+    get_acl_field(ini, cfg::context::selector_current_page::index).parse("2"_zv);
+    get_acl_field(ini, cfg::context::selector_device_filter::index).parse("Windows"_zv);
+    get_acl_field(ini, cfg::context::selector_group_filter::index).parse("RDP"_zv);
+    get_acl_field(ini, cfg::context::selector_lines_per_page::index).parse("25"_zv);
+    get_acl_field(ini, cfg::context::selector_number_of_pages::index).parse("2"_zv);
 
     RED_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector>());
     RED_CHECK_EQUAL(false,     ini.is_asked<cfg::context::selector_current_page>());
@@ -1685,12 +1685,12 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // target_xxxx
-    get_acl_field(ini, cfg::globals::target_device::index).set("127.0.0.1"_zv);
-    get_acl_field(ini, cfg::context::target_password::index).set("12345678"_zv);
-    get_acl_field(ini, cfg::context::target_port::index).set("3390"_zv);
-    get_acl_field(ini, cfg::context::target_protocol::index).set("RDP"_zv);
-    get_acl_field(ini, cfg::globals::target_user::index).set("admin"_zv);
-    get_acl_field(ini, cfg::globals::target_application::index).set("wallix@putty"_zv);
+    get_acl_field(ini, cfg::globals::target_device::index).parse("127.0.0.1"_zv);
+    get_acl_field(ini, cfg::context::target_password::index).parse("12345678"_zv);
+    get_acl_field(ini, cfg::context::target_port::index).parse("3390"_zv);
+    get_acl_field(ini, cfg::context::target_protocol::index).parse("RDP"_zv);
+    get_acl_field(ini, cfg::globals::target_user::index).parse("admin"_zv);
+    get_acl_field(ini, cfg::globals::target_application::index).parse("wallix@putty"_zv);
 
     RED_CHECK_EQUAL(false,          ini.is_asked<cfg::globals::target_device>());
     RED_CHECK_EQUAL(false,          ini.is_asked<cfg::context::target_password>());
@@ -1718,7 +1718,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::globals::host>());
 
-    get_acl_field(ini, cfg::globals::host::index).set("127.0.0.1"_zv);
+    get_acl_field(ini, cfg::globals::host::index).parse("127.0.0.1"_zv);
 
     RED_CHECK_EQUAL(false,       ini.is_asked<cfg::globals::host>());
 
@@ -1731,7 +1731,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::globals::target>());
 
-    get_acl_field(ini, cfg::globals::target::index).set("192.168.0.1"_zv);
+    get_acl_field(ini, cfg::globals::target::index).parse("192.168.0.1"_zv);
 
     RED_CHECK_EQUAL(false,         ini.is_asked<cfg::globals::target>());
 
@@ -1741,7 +1741,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // auth_user
-    get_acl_field(ini, cfg::globals::auth_user::index).set("admin"_zv);
+    get_acl_field(ini, cfg::globals::auth_user::index).parse("admin"_zv);
 
     RED_CHECK_EQUAL(false,   ini.is_asked<cfg::globals::auth_user>());
 
@@ -1755,7 +1755,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::password>());
 
-    get_acl_field(ini, cfg::context::password::index).set("12345678"_zv);
+    get_acl_field(ini, cfg::context::password::index).parse("12345678"_zv);
 
     RED_CHECK_EQUAL(false,      ini.is_asked<cfg::context::password>());
 
@@ -1765,7 +1765,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // answer
-    get_acl_field(ini, cfg::context::auth_channel_answer::index).set("answer"_zv);
+    get_acl_field(ini, cfg::context::auth_channel_answer::index).parse("answer"_zv);
 
     RED_CHECK_EQUAL("answer", ini.get<cfg::context::auth_channel_answer>());
 
@@ -1775,7 +1775,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL(true, ini.is_asked<cfg::context::auth_channel_target>());
 
-    get_acl_field(ini, cfg::context::auth_channel_target::index).set("target"_zv);
+    get_acl_field(ini, cfg::context::auth_channel_target::index).parse("target"_zv);
 
     RED_CHECK_EQUAL(false, 	ini.is_asked<cfg::context::auth_channel_target>());
 
@@ -1785,13 +1785,13 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // message
-    get_acl_field(ini, cfg::context::message::index).set("message"_zv);
+    get_acl_field(ini, cfg::context::message::index).parse("message"_zv);
 
     RED_CHECK_EQUAL("message", ini.get<cfg::context::message>());
 
 
     // rejected
-    get_acl_field(ini, cfg::context::rejected::index).set("rejected"_zv);
+    get_acl_field(ini, cfg::context::rejected::index).parse("rejected"_zv);
 
     RED_CHECK_EQUAL("rejected", ini.get<cfg::context::rejected>());
 
@@ -1799,7 +1799,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // keepalive
-    get_acl_field(ini, cfg::context::keepalive::index).set("True"_zv);
+    get_acl_field(ini, cfg::context::keepalive::index).parse("True"_zv);
 
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::keepalive>());
 
@@ -1807,23 +1807,23 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // session_id
-    get_acl_field(ini, cfg::context::session_id::index).set("0123456789"_zv);
+    get_acl_field(ini, cfg::context::session_id::index).parse("0123456789"_zv);
 
     RED_CHECK_EQUAL("0123456789", ini.get<cfg::context::session_id>());
 
 
     // end_date_cnx
-    get_acl_field(ini, cfg::context::end_date_cnx::index).set("12345678"_zv);
+    get_acl_field(ini, cfg::context::end_date_cnx::index).parse("12345678"_zv);
 
     RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>().count());
 
     // mode_console
-    get_acl_field(ini, cfg::mod_rdp::mode_console::index).set("forbid"_zv);
+    get_acl_field(ini, cfg::mod_rdp::mode_console::index).parse("forbid"_zv);
 
     RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::mod_rdp::mode_console>());
 
     // real_target_device
-    get_acl_field(ini, cfg::context::real_target_device::index).set("10.0.0.1"_zv);
+    get_acl_field(ini, cfg::context::real_target_device::index).parse("10.0.0.1"_zv);
 
     RED_CHECK_EQUAL("10.0.0.1", ini.get<cfg::context::real_target_device>());
 
@@ -1831,7 +1831,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // authentication_challenge
-    get_acl_field(ini, cfg::context::authentication_challenge::index).set("true"_zv);
+    get_acl_field(ini, cfg::context::authentication_challenge::index).parse("true"_zv);
 
     RED_CHECK_EQUAL(true, ini.get<cfg::context::authentication_challenge>());
 }
@@ -1867,7 +1867,7 @@ RED_AUTO_TEST_CASE(TestConfigNotifications)
     RED_CHECK(ini.get_acl_fields_changed().size() == 0);
 
     // auth_user has been changed, so check_from_acl() method will notify that something changed
-    RED_CHECK(get_acl_field(ini, cfg::globals::auth_user::index).set("someoneelse"_zv));
+    RED_CHECK(get_acl_field(ini, cfg::globals::auth_user::index).parse("someoneelse"_zv));
     RED_CHECK_EQUAL("someoneelse", ini.get<cfg::globals::auth_user>());
 
     ini.clear_acl_fields_changed();
