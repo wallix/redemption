@@ -56,7 +56,7 @@ class RemoteProgramsSessionManager final
     Language lang;
 
     Font  const & font;
-    Theme const & theme;
+    Theme theme;
 
     const RDPVerbose verbose;
 

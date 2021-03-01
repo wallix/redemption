@@ -1275,7 +1275,7 @@ private:
     }
 
 public:
-    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
+    Session(SocketTransport&& front_trans, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
     : ini(ini)
     , pid_file(pid_file)
     {
@@ -1374,8 +1374,6 @@ public:
         }
 
         try {
-            Font glyphs = Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>());
-
             Theme theme;
             ::load_theme(theme, ini);
 
@@ -1388,10 +1386,10 @@ public:
 
             ModWrapper mod_wrapper(
                 event_manager.get_time_base(), front.get_palette(), front, front.keymap,
-                front.get_client_info(), glyphs, rail_client_execute, this->ini);
+                front.get_client_info(), font, rail_client_execute, this->ini);
             ModFactory mod_factory(
                 mod_wrapper, event_manager.get_events(), front.get_client_info(), front,
-                front, redir_info, ini, glyphs, theme, rail_client_execute, front.keymap,
+                front, redir_info, ini, font, theme, rail_client_execute, front.keymap,
                 rnd, cctx);
 
             auto end_loop = EndLoopState::ShowCloseBox;
@@ -1451,7 +1449,7 @@ template<class SocketType, class... Args>
 void session_start_sck(
     char const* name, unique_fd&& sck,
     MonotonicTimePoint sck_start_time, Inifile& ini,
-    PidFile& pid_file, Args&&... args)
+    PidFile& pid_file, Font const& font, Args&&... args)
 {
     auto const watchdog_verbosity = (ini.get<cfg::globals::host>() == "127.0.0.1")
         ? SocketTransport::Verbose::watchdog
@@ -1464,29 +1462,29 @@ void session_start_sck(
             name, std::move(sck), "", 0, ini.get<cfg::client::recv_timeout>(),
             static_cast<Args&&>(args)..., sck_verbosity | watchdog_verbosity
         ),
-        sck_start_time, ini, pid_file
+        sck_start_time, ini, pid_file, font
     );
 }
 
 } // anonymous namespace
 
-void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
+void session_start_tls(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
 {
     session_start_sck<FinalSocketTransport>(
-        "RDP Client", std::move(sck), sck_start_time, ini, pid_file);
+        "RDP Client", std::move(sck), sck_start_time, ini, pid_file, font);
 }
 
-void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
+void session_start_ws(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
 {
     session_start_sck<WsTransport>(
-        "RDP Ws Client", std::move(sck), sck_start_time, ini, pid_file,
+        "RDP Ws Client", std::move(sck), sck_start_time, ini, pid_file, font,
         WsTransport::UseTls::No, WsTransport::TlsOptions());
 }
 
-void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file)
+void session_start_wss(unique_fd sck, MonotonicTimePoint sck_start_time, Inifile& ini, PidFile& pid_file, Font const& font)
 {
     session_start_sck<WsTransport>(
-        "RDP Wss Client", std::move(sck), sck_start_time, ini, pid_file,
+        "RDP Wss Client", std::move(sck), sck_start_time, ini, pid_file, font,
         WsTransport::UseTls::Yes, WsTransport::TlsOptions{
             ini.get<cfg::globals::certificate_password>(),
             ini.get<cfg::client::ssl_cipher_list>(),

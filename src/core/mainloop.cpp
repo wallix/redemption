@@ -24,6 +24,7 @@
 #include "core/mainloop.hpp"
 #include "core/session.hpp"
 #include "core/pid_file.hpp"
+#include "core/font.hpp"
 #include "main/version.hpp"
 #include "utils/log.hpp"
 #include "utils/log_siem.hpp"
@@ -186,9 +187,10 @@ namespace
         Tls,
     };
 
-    void session_server_start(int incoming_sck, bool forkable,
-        unsigned uid, unsigned gid, std::string const& config_filename, bool debug_config,
-        SocketType socket_type)
+    void session_server_start(
+        int incoming_sck, bool forkable, unsigned uid, unsigned gid,
+        std::string const& config_filename, bool debug_config,
+        SocketType socket_type, Font const& font)
     {
         union
         {
@@ -383,16 +385,16 @@ namespace
 
                 switch (socket_type) {
                     case SocketType::Ws:
-                        session_start_ws(unique_fd{sck}, start_time, ini, pid_file);
+                        session_start_ws(unique_fd{sck}, start_time, ini, pid_file, font);
                         break;
                     case SocketType::Wss:
                         // disable rdp tls
                         ini.set<cfg::client::tls_support>(false);
                         ini.set<cfg::client::tls_fallback_legacy>(true);
-                        session_start_wss(unique_fd{sck}, start_time, ini, pid_file);
+                        session_start_wss(unique_fd{sck}, start_time, ini, pid_file, font);
                         break;
                     case SocketType::Tls:
-                        session_start_tls(unique_fd{sck}, start_time, ini, pid_file);
+                        session_start_tls(unique_fd{sck}, start_time, ini, pid_file, font);
                         break;
                 }
 
@@ -486,6 +488,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
                                              s_addr,
                                              ini.get<cfg::globals::port>(),
                                              enable_transparent_mode);
+    const Font font(app_path(AppPath::DefaultFontFile),
+                    ini.get<cfg::globals::spark_view_specific_glyph_width>());
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {
@@ -503,7 +507,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
                     ? SocketType::Wss
                     : SocketType::Ws
                 : SocketType::Tls;
-            session_server_start(sck, forkable, uid, gid, config_filename, debug_config, socket_type);
+            session_server_start(sck, forkable, uid, gid, config_filename,
+                                 debug_config, socket_type, font);
             return true;
         });
     }
@@ -511,7 +516,8 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
     {
         unique_server_loop(std::move(sck1), [&](int sck)
         {
-            session_server_start(sck, forkable, uid, gid, config_filename, debug_config, SocketType::Tls);
+            session_server_start(sck, forkable, uid, gid, config_filename,
+                                 debug_config, SocketType::Tls, font);
             return true;
         });
     }

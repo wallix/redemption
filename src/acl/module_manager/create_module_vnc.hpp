@@ -26,6 +26,7 @@
 
 #include "keyboard/keymap2.hpp"
 #include "acl/mod_pack.hpp"
+#include "utils/ref.hpp"
 
 class Inifile;
 class FrontAPI;
@@ -49,7 +50,7 @@ ModPack create_mod_vnc(
     ClientInfo const& client_info,
     ClientExecute& rail_client_execute,
     Keymap2::KeyFlags key_flags,
-    Font & glyphs,
+    Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
     SessionLogApi& session_log);

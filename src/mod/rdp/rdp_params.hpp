@@ -26,6 +26,7 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/channels/validator_params.hpp"
 #include "utils/log.hpp"
+#include "utils/ref.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "core/RDP/capabilities/order.hpp"
 
@@ -168,7 +169,7 @@ struct ModRDPParams
 
     RemoteAppParams remote_app_params;
 
-    Font const & font;
+    Ref<Font const> font;
     Theme const & theme;
 
     bool clean_up_32_bpp_cursor = false;

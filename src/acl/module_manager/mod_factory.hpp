@@ -60,7 +60,7 @@ class ModFactory
     gdi::GraphicApi & graphics;
     RedirectionInfo & redir_info;
     Inifile & ini;
-    Font & glyphs;
+    Font const & glyphs;
     Theme & theme;
     ClientExecute & rail_client_execute;
     Keymap2 & keymap;
@@ -85,7 +85,7 @@ public:
                gdi::GraphicApi & graphics,
                RedirectionInfo & redir_info,
                Inifile & ini,
-               Font & glyphs,
+               Ref<Font const> glyphs,
                Theme & theme,
                ClientExecute & rail_client_execute,
                Keymap2 & keymap,

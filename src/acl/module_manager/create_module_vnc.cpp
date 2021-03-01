@@ -264,7 +264,7 @@ ModPack create_mod_vnc(
     gdi::GraphicApi & drawable,
     Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
     ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
-    Font & glyphs,
+    Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
     SessionLogApi& session_log

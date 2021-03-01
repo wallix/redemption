@@ -506,7 +506,7 @@ ModPack create_mod_rdp(
     ClientInfo client_info /* /!\ modified */,
     ClientExecute& rail_client_execute,
     Keymap2::KeyFlags key_flags,
-    Font & glyphs,
+    Ref<Font const> glyphs,
     Theme & theme,
     EventContainer& events,
     SessionLogApi& session_log,
