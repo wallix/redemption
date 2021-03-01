@@ -98,10 +98,10 @@ namespace trkeys
           "\n"
           "Contact your system administrator for assistance.");
     TR_KV(target_accurate_filter_help,
-          "To filter on specific field of a target use the following syntax:\n"
+          "Use the following syntax to filter on a specific field of a target:\n"
           "    ?<field>=<pattern>\n"
           "where <field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
-          "Use '&' as separator for multiple field/pattern.\n"
+          "Use the '&' separator to combine several criteria.\n"
           "Example:\n"
           "    ?account=my_account&?device=my_device");
     TR_KV(selector, "Selector");
