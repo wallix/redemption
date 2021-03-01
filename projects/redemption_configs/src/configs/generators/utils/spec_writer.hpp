@@ -40,25 +40,16 @@ namespace detail
 {
     template<class From, class To, class
       = decltype(static_cast<void(*)(To)>(nullptr)(*static_cast<From*>(nullptr)))>
-    std::true_type is_convertible(int)
-    { return {}; }
+    std::true_type is_convertible(int);
 
     template<class From, class To>
-    std::false_type is_convertible(...)
-    { return {}; }
+    std::false_type is_convertible(...);
 
     template<template<class...> class To, class... Ts>
-    std::true_type is_t_convertible_impl_aux(To<Ts...> const&)
-    { return {}; }
+    std::true_type is_t_convertible_impl(To<Ts...> const*);
 
-    template<template<class...> class To, class From>
-    auto is_t_convertible_impl(From const& pack, int)
-    -> decltype(is_t_convertible_impl_aux<To>(pack))
-    { return {}; }
-
-    template<template<class...> class To, class From>
-    std::false_type is_t_convertible_impl(From const&, char)
-    { return {}; }
+    template<template<class...> class To>
+    std::false_type is_t_convertible_impl(...);
 }
 
 template<class From, class To>
@@ -68,7 +59,7 @@ template<class From, class To>
 constexpr bool is_convertible_v = is_convertible<From, To>::value;
 
 template<class From, template<class...> class To>
-using is_t_convertible = decltype(detail::is_t_convertible_impl<To>(*static_cast<From*>(nullptr), 1));
+using is_t_convertible = decltype(detail::is_t_convertible_impl<To>(static_cast<From*>(nullptr)));
 
 template<class From, template<class...> class To>
 constexpr bool is_t_convertible_v = is_t_convertible<From, To>::value;
@@ -82,17 +73,17 @@ T<Ts...> const& get_t_elem(T<Ts...> const& x)
 namespace detail_
 {
     template<class T, class U>
-    U const & get_default(cfg_attributes::type_<T>, cfg_attributes::default_<U> const * d)
+    U const & get_default(cfg_attributes::default_<U> const * d)
     { return d->value; }
 
     template<class T>
-    T const & get_default(cfg_attributes::type_<T>, ...)
+    T const & get_default(...)
     { static T r{}; return r; }
 }
 
 template<class T, class Pack>
-auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
-{ return detail_::get_default<T>(t, &infos); }
+auto const & get_default(cfg_attributes::type_<T>, Pack const & infos)
+{ return detail_::get_default<T>(&infos); }
 
 template<template<class> class Default, class T, class Pack>
 auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
@@ -102,7 +93,7 @@ auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
         return get_t_elem<Default>(infos).value;
     }
     else {
-        return detail_::get_default<T>(t, &infos);
+        return detail_::get_default<T>(&infos);
     }
 }
 
@@ -150,25 +141,8 @@ struct sesman_io_t { cfg_attributes::sesman::internal::io value; };
 struct log_policy_t { cfg_attributes::spec::log_policy value; };
 struct connection_policy_t : sesman_io_t
 {
-    // Should be `std::vector<std::string> files`, but does not work with g++ + debug
-    //   internal compiler error: in assign_temp, at function.c:984
-    // 287 |         const infos_type infos{detail_::normalize_info_arg(args)...};
-    std::vector<std::string>* files;
+    std::vector<std::string> const& files;
     cfg_attributes::connpolicy::internal::attr spec;
-
-    connection_policy_t(cfg_attributes::sesman::connection_policy const& conn)
-    : sesman_io_t{::cfg_attributes::sesman::internal::io::sesman_to_proxy}
-    , files(new std::vector<std::string>{conn.files.begin(), conn.files.end()})
-    , spec(conn.spec)
-    {}
-
-    // internal compiler error too...
-    // connection_policy_t(connection_policy_t const&) = delete;
-
-    // ~connection_policy_t()
-    // {
-    //     delete files;
-    // }
 };
 
 namespace detail_
@@ -198,7 +172,11 @@ namespace detail_
             return log_policy_t{x};
         }
         else if constexpr (is_convertible_v<T, cfg_attributes::sesman::connection_policy>) {
-            return connection_policy_t{x};
+            return connection_policy_t{
+                {::cfg_attributes::sesman::internal::io::sesman_to_proxy},
+                x.files,
+                x.spec
+            };
         }
         else {
             return T(x);
@@ -249,13 +227,9 @@ public:
         assert(current_section_names.sesman.empty());
 
         dispatch([&](auto&... writer){
-            (..., writer.do_start_section(current_section_names));
-        });
-
-        fn();
-
-        dispatch([&](auto&... writer){
-            (..., writer.do_stop_section(current_section_names));
+            (writer.do_start_section(current_section_names), ...);
+            fn();
+            (writer.do_stop_section(current_section_names), ...);
         });
     }
 
@@ -293,15 +267,15 @@ public:
         const infos_type infos{detail_::normalize_info_arg(args)...};
 
         detail_::check_names(infos,
-            !(... || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>),
+            !(is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)> || ...),
             has_sesman_io, has_conn_policy);
 
         dispatch([&](auto&... writer){
-            (..., writer.evaluate_member(
+            (writer.evaluate_member(
                 current_section_names,
                 infos,
                 this->enums
-            ));
+            ), ...);
         });
     }
 };

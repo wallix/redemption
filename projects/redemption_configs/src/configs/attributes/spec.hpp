@@ -314,11 +314,11 @@ namespace sesman
 
     struct connection_policy
     {
-        std::vector<std::string_view> files;
+        std::vector<std::string> files;
         connpolicy::internal::attr spec = {};
 
-        explicit connection_policy(std::string_view file)
-        : files{file}
+        explicit connection_policy(std::string file)
+        : files(1u, std::move(file))
         {}
     };
 

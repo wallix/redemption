@@ -126,7 +126,7 @@ struct ConnectionPolicyWriterBase
             auto sesman_name = sesman_network_name(infos, section_names);
 
             auto s = this->python_spec.out.str();
-            for (auto const& file : *connpolicy.files) {
+            for (auto const& file : connpolicy.files) {
                 this->file_map[file][section.name] += s;
             }
 
