@@ -25,7 +25,6 @@
 REDEMPTION_DIAGNOSTIC_PUSH()
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wunused-function")
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
-#include "configs/autogen/enums_func_ini.hpp"
 #include "configs/io.hpp"
 #include "configs/autogen/enums_func_ini.tcc"
 REDEMPTION_DIAGNOSTIC_POP()

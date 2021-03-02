@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "configs/zbuffer.hpp"
+#include "configs/spec_types.hpp"
 
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"

@@ -45,41 +45,6 @@ namespace cpp_enumeration_writer
           ;
     }
 
-    inline void write_utility_ini_hpp(std::ostream & out, type_enumerations const & enums)
-    {
-        out << cpp_comment(do_not_edit, 0)
-            << "\n"
-            "#pragma once\n"
-            "\n"
-            "#include \"configs/zbuffer.hpp\"\n"
-            "#include \"configs/autogen/enums.hpp\"\n"
-            "\n"
-            "\n"
-            "namespace configs\n"
-            "{\n"
-            "\n"
-        ;
-
-        for (type_enumeration const& e : enums.enumerations_) {
-            switch (e.cat) {
-            case type_enumeration::Category::flags:
-                break;
-            case type_enumeration::Category::autoincrement:
-            case type_enumeration::Category::set:
-                out <<
-                    "template<>\n"
-                    "struct str_buffer_size<" << e.name << ">\n"
-                    "{\n"
-                    "    static const std::size_t value = 0;\n"
-                    "};\n\n"
-                ;
-                break;
-            }
-        }
-
-        out << "} // namespace config\n";
-    }
-
     inline void write_utility_ini_cpp(std::ostream & out, type_enumerations const & enums)
     {
         out << cpp_comment(do_not_edit, 0)
@@ -365,8 +330,6 @@ int app_write_cpp_enumeration(Writer && writer, char const * progname)
     MultiFilenameWriter<type_enumerations> sw(e);
     sw.then("autogen/include/configs/autogen/enums.hpp",
             &cpp_enumeration_writer::write_type)
-      .then("autogen/include/configs/autogen/enums_func_ini.hpp",
-            &cpp_enumeration_writer::write_utility_ini_hpp)
       .then("autogen/include/configs/autogen/enums_func_ini.tcc",
             &cpp_enumeration_writer::write_utility_ini_cpp)
     ;

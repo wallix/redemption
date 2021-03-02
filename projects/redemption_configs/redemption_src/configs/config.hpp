@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "configs/zbuffer.hpp"
+#include "configs/spec_types.hpp"
 
 #include "utils/cfgloader.hpp"
 #include "utils/sugar/array_view.hpp"
@@ -33,32 +33,6 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
-
-
-namespace configs
-{
-    template<class... Ts>
-    struct Pack
-    { static const std::size_t size = sizeof...(Ts); };
-
-    template<class... Ts>
-    struct MaxBufferSize;
-
-    template<class... Ts>
-    struct MaxBufferSize<configs::Pack<Ts...>>
-    {
-        static constexpr std::size_t impl()
-        {
-            std::size_t max = 0;
-            for (std::size_t n : {configs::str_buffer_size<typename Ts::type>::value...}) {
-                if (n >= max) {
-                    max = n;
-                }
-            }
-            return max + 1u;
-        }
-    };
-} // namespace configs
 
 // config members
 //@{
@@ -73,7 +47,7 @@ namespace configs
 #include "configs/autogen/variables_configuration_fwd.hpp"
 #include "configs/autogen/variables_configuration.hpp"
 
-#include "configs/autogen/enums_func_ini.hpp"
+#include "configs/autogen/max_str_buffer_size.hpp"
 
 
 class Inifile
@@ -161,8 +135,7 @@ public:
 
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
-    using ZStringBuffer = std::array<char,
-        configs::MaxBufferSize<configs::VariablesAclPack>::impl() + 1>;
+    using ZStringBuffer = std::array<char, configs::max_str_buffer_size + 1>;
 
     enum class LoggableCategory : char
     {

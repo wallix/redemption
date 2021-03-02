@@ -148,33 +148,133 @@ void write_type(std::ostream& out, type_<T>) { out << type_name<T>(); }
 inline void write_type(std::ostream& out, type_<types::file_permission>)
 { out << "uint32_t"; }
 
-template<unsigned N>
-void write_type_spec(std::ostream& out, type_<types::fixed_string<N>>)
-{ out << "::configs::spec_types::fixed_string"; }
+
+// buffer size for assign_zbuf_from_cfg()
+enum class StrBufferSize : std::size_t;
+
+template<class TInt>
+constexpr std::size_t integral_buffer_size()
+{
+    return std::numeric_limits<TInt>::digits10 + 1 + std::numeric_limits<TInt>::is_signed;
+}
 
 template<unsigned N>
-void write_type_spec(std::ostream& out, type_<types::fixed_binary<N>>)
-{ out << "::configs::spec_types::fixed_binary"; }
+StrBufferSize write_type_spec(std::ostream& out, type_<types::fixed_string<N>>)
+{
+    out << "::configs::spec_types::fixed_string";
+    return StrBufferSize(0);
+}
+
+template<unsigned N>
+StrBufferSize write_type_spec(std::ostream& out, type_<types::fixed_binary<N>>)
+{
+    out << "::configs::spec_types::fixed_binary";
+    return StrBufferSize(N * 2);
+}
 
 template<class T, long min, long max>
-void write_type_spec(std::ostream& out, type_<types::range<T, min, max>>)
-{ out << "::configs::spec_types::range<" << type_name<T>() << ", " << min << ", " << max << ">"; }
-
-inline void write_type_spec(std::ostream& out, type_<types::ip_string>)
-{ out << "::configs::spec_types::ip"; }
-
-template<class T>
-void write_type_spec(std::ostream& out, type_<types::list<T>>)
-{ out << "::configs::spec_types::list<" << type_name<T>() << ">"; }
+StrBufferSize write_type_spec(std::ostream& out, type_<types::range<T, min, max>>)
+{
+    out << "::configs::spec_types::range<" << type_name<T>() << ", " << min << ", " << max << ">";
+    return StrBufferSize(integral_buffer_size<T>());
+}
 
 template<class T>
-void write_type_spec(std::ostream& out, type_<T> t) { write_type(out, t); }
+StrBufferSize write_type_spec(std::ostream& out, type_<types::list<T>>)
+{
+    out << "::configs::spec_types::list<" << type_name<T>() << ">";
+    return StrBufferSize(0);
+}
 
-inline void write_type_spec(std::ostream& out, type_<types::file_permission>)
-{ out << "::configs::spec_types::file_permission"; }
+template<class Rep, class Period>
+StrBufferSize write_type_spec(std::ostream& out, type_<std::chrono::duration<Rep, Period>>)
+{
+    out << type_name<std::chrono::duration<Rep, Period>>();
+    return StrBufferSize(integral_buffer_size<Rep>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<bool>)
+{
+    out << "bool";
+    return StrBufferSize(5);
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::u16>)
+{
+    out << "uint16_t";
+    return StrBufferSize(integral_buffer_size<uint16_t>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::u32>)
+{
+    out << "uint32_t";
+    return StrBufferSize(integral_buffer_size<uint32_t>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::u64>)
+{
+    out << "uint64_t";
+    return StrBufferSize(integral_buffer_size<uint64_t>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::unsigned_>)
+{
+    out << "unsigned";
+    return StrBufferSize(integral_buffer_size<unsigned>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::int_>)
+{
+    out << "int";
+    return StrBufferSize(integral_buffer_size<int>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<std::string>)
+{
+    out << "std::string";
+    return StrBufferSize(0);
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::dirpath>)
+{
+    out << "::configs::spec_types::directory_path";
+    return StrBufferSize(0);
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::ip_string>)
+{
+    out << "::configs::spec_types::ip";
+    return StrBufferSize(0);
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::file_permission>)
+{
+    out << "::configs::spec_types::file_permission";
+    return StrBufferSize(integral_buffer_size<uint16_t>());
+}
+
+inline StrBufferSize write_type_spec(std::ostream& out, type_<types::rgb>)
+{
+    out << "::configs::spec_types::rgb";
+    return StrBufferSize(7);
+}
+
+template<class T>
+StrBufferSize write_type_spec(std::ostream& out, type_<T>)
+{
+    if constexpr (std::is_enum_v<T>) {
+        out << type_name<T>();
+        return StrBufferSize(0);
+    }
+    else {
+        static_assert(std::is_void_v<T>, "missing type");
+    }
+}
+
 
 struct CppConfigWriterBase;
 
+void write_max_str_buffer_size_hpp(std::ostream & out, CppConfigWriterBase& writer);
 void write_ini_values(std::ostream & out, CppConfigWriterBase& writer);
 void write_config_set_value(std::ostream & out_set_value, CppConfigWriterBase& writer);
 void write_variables_configuration(std::ostream & out_varconf, CppConfigWriterBase& writer);
@@ -245,6 +345,7 @@ struct CppConfigWriterBase
     std::vector<std::size_t> start_indexes;
     std::string cfg_values;
     std::string cfg_str_values;
+    std::size_t max_str_buffer_size = 0;
 
     struct Filenames
     {
@@ -254,6 +355,7 @@ struct CppConfigWriterBase
         std::string variable_configuration_hpp;
         std::string config_set_value;
         std::string ini_values_hpp;
+        std::string max_str_buffer_size_hpp;
     };
     Filenames filenames;
 
@@ -306,6 +408,7 @@ struct CppConfigWriterBase
           .then(filenames.variable_configuration_hpp, &write_variables_configuration)
           .then(filenames.config_set_value, &write_config_set_value)
           .then(filenames.ini_values_hpp, &write_ini_values)
+          .then(filenames.max_str_buffer_size_hpp, &write_max_str_buffer_size_hpp)
         ;
         if (sw.err) {
             std::cerr << "CppConfigWriterBase: " << sw.filename << ": " << strerror(errno) << "\n";
@@ -431,7 +534,11 @@ struct CppConfigWriterBase
         if (bool(properties) || is_convertible_v<Pack, spec_attr_t>) {
             auto type_sesman = get_type<spec::type_>(infos);
             this->out_member_ << "        using sesman_and_spec_type = ";
-            write_type_spec(this->out_member_, type_sesman);
+            auto buf_size = write_type_spec(this->out_member_, type_sesman);
+            if (bool(/*PropertyFieldFlags::read & */properties)) {
+                this->max_str_buffer_size
+                    = std::max(this->max_str_buffer_size, std::size_t(buf_size));
+            }
             this->out_member_ << ";\n";
             this->out_member_ << "        using mapped_type = sesman_and_spec_type;\n";
         }
@@ -546,6 +653,9 @@ inline void write_variables_configuration(std::ostream & out_varconf, CppConfigW
         "\n"
         "namespace configs\n"
         "{\n"
+        "    template<class... Ts>\n"
+        "    struct Pack\n"
+        "    { static const std::size_t size = sizeof...(Ts); };\n\n"
         "    namespace cfg_indexes\n"
         "    {\n"
     ;
@@ -747,6 +857,19 @@ inline void write_ini_values(std::ostream& out, CppConfigWriterBase& writer)
         << writer.cfg_str_values <<
         "};\n"
         "}\n"
+    ;
+}
+
+inline void write_max_str_buffer_size_hpp(std::ostream & out, CppConfigWriterBase& writer)
+{
+    out << cpp_comment(do_not_edit, 0) <<
+        "\n"
+        "#pragma once\n"
+        "\n"
+        "namespace configs {\n"
+        "    inline constexpr std::size_t max_str_buffer_size = "
+        << writer.max_str_buffer_size
+        << ";\n}\n"
     ;
 }
 

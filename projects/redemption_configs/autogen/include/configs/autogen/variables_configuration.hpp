@@ -8,6 +8,10 @@
 
 namespace configs
 {
+    template<class... Ts>
+    struct Pack
+    { static const std::size_t size = sizeof...(Ts); };
+
     namespace cfg_indexes
     {
         inline constexpr int section0 = 0; /* globals */
