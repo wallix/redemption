@@ -112,6 +112,12 @@ namespace types
     struct unsigned_ : unsigned_base { unsigned_(unsigned = 0) {} };
     struct int_ : signed_base { int_(int = 0) {} };
 
+    struct rgb
+    {
+        rgb(int = 0) {}
+        rgb(char const* = nullptr) {}
+    };
+
     template<unsigned Len> struct fixed_string {};
     template<unsigned Len> struct fixed_binary {};
 

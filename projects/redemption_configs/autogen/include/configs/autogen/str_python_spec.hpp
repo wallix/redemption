@@ -1327,46 +1327,67 @@ enable_theme = boolean(default=False)
 #_image=/var/wab/images/rdp-oem-logo.png
 logo = string(default=')gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(')
 
-bgcolor = string(default='dark_blue_bis')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+bgcolor = string(default='#081F60')
 
-fgcolor = string(default='white')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+fgcolor = string(default='#FFFFFF')
 
-separator_color = string(default='light_blue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+separator_color = string(default='#CFD5EB')
 
-focus_color = string(default='winblue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+focus_color = string(default='#004D9C')
 
-error_color = string(default='yellow')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+error_color = string(default='#FFFF00')
 
-edit_bgcolor = string(default='white')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+edit_bgcolor = string(default='#FFFFFF')
 
-edit_fgcolor = string(default='black')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+edit_fgcolor = string(default='#000000')
 
-edit_focus_color = string(default='winblue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+edit_focus_color = string(default='#004D9C')
 
-tooltip_bgcolor = string(default='black')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+tooltip_bgcolor = string(default='#000000')
 
-tooltip_fgcolor = string(default='light_yellow')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+tooltip_fgcolor = string(default='#FFFF9F')
 
-tooltip_border_color = string(default='black')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+tooltip_border_color = string(default='#000000')
 
-selector_line1_bgcolor = string(default='pale_blue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line1_bgcolor = string(default='#E9ECF6')
 
-selector_line1_fgcolor = string(default='black')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line1_fgcolor = string(default='#000000')
 
-selector_line2_bgcolor = string(default='light_blue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line2_bgcolor = string(default='#CFD5EB')
 
-selector_line2_fgcolor = string(default='black')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_line2_fgcolor = string(default='#000000')
 
-selector_selected_bgcolor = string(default='medium_blue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_selected_bgcolor = string(default='#4472C4')
 
-selector_selected_fgcolor = string(default='white')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_selected_fgcolor = string(default='#FFFFFF')
 
-selector_focus_bgcolor = string(default='winblue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_focus_bgcolor = string(default='#004D9C')
 
-selector_focus_fgcolor = string(default='white')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_focus_fgcolor = string(default='#FFFFFF')
 
-selector_label_bgcolor = string(default='medium_blue')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_label_bgcolor = string(default='#4472C4')
 
-selector_label_fgcolor = string(default='white')
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+selector_label_fgcolor = string(default='#FFFFFF')
 
 )gen_config_ini"

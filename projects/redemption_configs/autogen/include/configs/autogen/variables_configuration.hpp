@@ -5177,215 +5177,215 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { REDEMPTION_CONFIG_THEME_LOGO };
     };
-    /// type: std::string <br/>
-    /// default: "dark_blue_bis" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 532320 <br/>
     struct theme::bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "dark_blue_bis" };
+        type value { 532320 };
     };
-    /// type: std::string <br/>
-    /// default: "white" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777215 <br/>
     struct theme::fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "white" };
+        type value { 16777215 };
     };
-    /// type: std::string <br/>
-    /// default: "light_blue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 13620715 <br/>
     struct theme::separator_color {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "light_blue" };
+        type value { 13620715 };
     };
-    /// type: std::string <br/>
-    /// default: "winblue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 19868 <br/>
     struct theme::focus_color {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "winblue" };
+        type value { 19868 };
     };
-    /// type: std::string <br/>
-    /// default: "yellow" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16776960 <br/>
     struct theme::error_color {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "yellow" };
+        type value { 16776960 };
     };
-    /// type: std::string <br/>
-    /// default: "white" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777215 <br/>
     struct theme::edit_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "white" };
+        type value { 16777215 };
     };
-    /// type: std::string <br/>
-    /// default: "black" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 0 <br/>
     struct theme::edit_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "black" };
+        type value { 0 };
     };
-    /// type: std::string <br/>
-    /// default: "winblue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 19868 <br/>
     struct theme::edit_focus_color {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "winblue" };
+        type value { 19868 };
     };
-    /// type: std::string <br/>
-    /// default: "black" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 0 <br/>
     struct theme::tooltip_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "black" };
+        type value { 0 };
     };
-    /// type: std::string <br/>
-    /// default: "light_yellow" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777119 <br/>
     struct theme::tooltip_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "light_yellow" };
+        type value { 16777119 };
     };
-    /// type: std::string <br/>
-    /// default: "black" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 0 <br/>
     struct theme::tooltip_border_color {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "black" };
+        type value { 0 };
     };
-    /// type: std::string <br/>
-    /// default: "pale_blue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 15330550 <br/>
     struct theme::selector_line1_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "pale_blue" };
+        type value { 15330550 };
     };
-    /// type: std::string <br/>
-    /// default: "black" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 0 <br/>
     struct theme::selector_line1_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "black" };
+        type value { 0 };
     };
-    /// type: std::string <br/>
-    /// default: "light_blue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 13620715 <br/>
     struct theme::selector_line2_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "light_blue" };
+        type value { 13620715 };
     };
-    /// type: std::string <br/>
-    /// default: "black" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 0 <br/>
     struct theme::selector_line2_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "black" };
+        type value { 0 };
     };
-    /// type: std::string <br/>
-    /// default: "medium_blue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 4485828 <br/>
     struct theme::selector_selected_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "medium_blue" };
+        type value { 4485828 };
     };
-    /// type: std::string <br/>
-    /// default: "white" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777215 <br/>
     struct theme::selector_selected_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "white" };
+        type value { 16777215 };
     };
-    /// type: std::string <br/>
-    /// default: "winblue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 19868 <br/>
     struct theme::selector_focus_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "winblue" };
+        type value { 19868 };
     };
-    /// type: std::string <br/>
-    /// default: "white" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777215 <br/>
     struct theme::selector_focus_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "white" };
+        type value { 16777215 };
     };
-    /// type: std::string <br/>
-    /// default: "medium_blue" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 4485828 <br/>
     struct theme::selector_label_bgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "medium_blue" };
+        type value { 4485828 };
     };
-    /// type: std::string <br/>
-    /// default: "white" <br/>
+    /// type: ::configs::spec_types::rgb <br/>
+    /// default: 16777215 <br/>
     struct theme::selector_label_fgcolor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = std::string;
-        using sesman_and_spec_type = std::string;
+        using type = ::configs::spec_types::rgb;
+        using sesman_and_spec_type = ::configs::spec_types::rgb;
         using mapped_type = sesman_and_spec_type;
-        type value { "white" };
+        type value { 16777215 };
     };
 
 } // namespace cfg
@@ -5841,6 +5841,7 @@ struct context
 
 struct theme
 : cfg::theme::logo_path
+, cfg::theme::enable_theme
 , cfg::theme::bgcolor
 , cfg::theme::fgcolor
 , cfg::theme::separator_color
@@ -5862,7 +5863,6 @@ struct theme
 , cfg::theme::selector_focus_fgcolor
 , cfg::theme::selector_label_bgcolor
 , cfg::theme::selector_label_fgcolor
-, cfg::theme::enable_theme
 { static constexpr bool is_section = true; };
 
 } // namespace cfg_section

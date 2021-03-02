@@ -69,6 +69,9 @@ template<class T, class Ratio>
 void write_type_info(std::ostream& out, type_<std::chrono::duration<T, Ratio>> t)
 { python_spec_writer::write_type_info(out, t); }
 
+inline void write_type_info(std::ostream& out, type_<types::rgb> t)
+{ python_spec_writer::write_type_info(out, t); }
+
 inline void write_type_info(std::ostream& out, type_<bool>)
 { out << "value: 0 or 1"; }
 
@@ -85,7 +88,7 @@ void write_type_info(std::ostream& out, type_<types::fixed_binary<N>>)
 
 template<unsigned N>
 void write_type_info(std::ostream& out, type_<types::fixed_string<N>>)
-{ out << "maxlen = " << N << "\n"; }
+{ out << "maxlen = " << N; }
 
 inline void write_type_info(std::ostream& out, type_<types::dirpath>)
 { out << "maxlen = " << globals::path_max; }
@@ -108,6 +111,8 @@ namespace impl
 
     using python_spec_writer::impl::stringize_integral;
     using python_spec_writer::impl::quoted2;
+
+    using python_spec_writer::impl::CssColor;
 }
 
 template<class T>
@@ -145,6 +150,9 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::fixed_string
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::dirpath>, T const & x)
 { out << impl::quoted2(x); }
+
+inline void write_type(std::ostream& out, type_enumerations&, type_<types::rgb>, uint32_t x)
+{ out << impl::CssColor(x); }
 
 template<class T>
 void write_type(std::ostream& out, type_enumerations&, type_<types::ip_string>, T const & x)

@@ -28,6 +28,7 @@
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/string_c.hpp"
 #include "utils/chex_to_int.hpp"
+#include "utils/colors.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -515,6 +516,152 @@ inline parse_error parse_from_cfg(
             default: return parsing_error;
         }
     }
+}
+
+template<class... Str>
+constexpr auto str_flat_lower_strings(int, Str const&... strings)
+{
+    constexpr auto n = (... + std::extent_v<Str>)
+                     - sizeof...(strings) /* zero-terminal with char[N] */;
+    std::array<char, n> str {};
+    char* p = str.begin();
+    for (char const* s : {strings...}) {
+        while (*s) {
+            char c = *s++;
+            if ('A' <= c && c <= 'Z') {
+                c = char(c - 'A' + 'a');
+            }
+            *p++ = c;
+        }
+    }
+    return str;
+}
+
+template<class FlatStr, class... Str>
+constexpr auto str_array_from_flat_strings(FlatStr const& str, Str const&... strings)
+{
+    constexpr std::size_t ns[] {(std::extent_v<Str> - 1)...};
+    std::array<std::string_view, sizeof...(strings)> views {};
+    char const* p = str.begin();
+    std::string_view* psv = views.begin();
+    for (std::size_t n : ns) {
+        *psv++ = {p, n};
+        p += n;
+    }
+    return views;
+}
+
+#define XCOLORS(f) \
+    f(BLACK) \
+    f(GREY) \
+    f(MEDIUM_GREY) \
+    f(DARK_GREY) \
+    f(ANTHRACITE) \
+    f(WHITE) \
+    f(BLUE) \
+    f(DARK_BLUE) \
+    f(CYAN) \
+    f(DARK_BLUE_WIN) \
+    f(DARK_BLUE_BIS) \
+    f(MEDIUM_BLUE) \
+    f(PALE_BLUE) \
+    f(LIGHT_BLUE) \
+    f(WINBLUE) \
+    f(RED) \
+    f(DARK_RED) \
+    f(MEDIUM_RED) \
+    f(PINK) \
+    f(GREEN) \
+    f(WABGREEN) \
+    f(WABGREEN_BIS) \
+    f(DARK_WABGREEN) \
+    f(INV_DARK_WABGREEN) \
+    f(DARK_GREEN) \
+    f(INV_DARK_GREEN) \
+    f(LIGHT_GREEN) \
+    f(INV_LIGHT_GREEN) \
+    f(PALE_GREEN) \
+    f(INV_PALE_GREEN) \
+    f(MEDIUM_GREEN) \
+    f(INV_MEDIUM_GREEN) \
+    f(YELLOW) \
+    f(LIGHT_YELLOW) \
+    f(ORANGE) \
+    f(LIGHT_ORANGE) \
+    f(PALE_ORANGE) \
+    f(BROWN)
+
+#define TO_STR(c) , #c
+#define TO_RGB_COLOR(c) BGRColor(BGRasRGBColor(c)).as_u32(),
+inline constexpr auto flat_lower_colors = str_flat_lower_strings(0 XCOLORS(TO_STR));
+inline constexpr auto lower_colors = str_array_from_flat_strings(flat_lower_colors XCOLORS(TO_STR));
+inline constexpr uint32_t rgb_colors[] {XCOLORS(TO_RGB_COLOR)};
+#undef TO_RGB_COLOR
+#undef TO_STR
+#undef XCOLORS
+
+inline parse_error parse_from_cfg(
+    ::configs::spec_types::rgb& x, ::configs::spec_type<::configs::spec_types::rgb> /*type*/,
+    bytes_view value)
+{
+    using Rgb = ::configs::spec_types::rgb;
+
+    const parse_error parsing_error{"invalid color, expected #rgb, #rrggbb or hexadecimal value"};
+
+    auto sv = std::string_view{value.as_chars().data(), value.size()};
+
+    // #rrggbb
+    if (sv.size() == 7) {
+        if (sv[0] == '#') {
+            uint32_t color;
+            auto [p, ec] = std::from_chars(sv.begin() + 1, sv.end(), color, 16);
+            if (ec == std::errc() && p == sv.end()) {
+                x = Rgb(color);
+                return no_parse_error;
+            }
+            return parsing_error;
+        }
+    }
+
+    // #rgb
+    if (sv.size() == 4) {
+        if (sv[0] == '#') {
+            uint32_t color;
+            auto [p, ec] = std::from_chars(sv.begin() + 1, sv.end(), color, 16);
+            if (ec == std::errc() && p == sv.end()) {
+                uint32_t r = (color >> 8) & 0xf;
+                uint32_t g = (color >> 4) & 0xf;
+                uint32_t b = (color >> 0) & 0xf;
+                x = Rgb((((r << 4) | r) << 16) | (((g << 4) | g) << 8) | ((b << 4) | b));
+                return no_parse_error;
+            }
+            return parsing_error;
+        }
+    }
+
+    // 0xXXXX
+    if (sv.size() > 2) {
+        if (sv[0] == '0' && sv[1] == 'x') {
+            uint32_t color;
+            auto r = std::from_chars(sv.begin() + 2, sv.end(), color, 16);
+            auto [p, ec] = r;
+            if (ec == std::errc() && p == sv.end() && color <= 0xffffffu) {
+                x = Rgb(color);
+                return no_parse_error;
+            }
+            return parsing_error;
+        }
+    }
+
+    // named color
+    for (std::string_view const& s : lower_colors) {
+        if (s == sv) {
+            x = Rgb(rgb_colors[&s - lower_colors.data()]);
+            return no_parse_error;
+        }
+    }
+
+    return parsing_error;
 }
 
 } // anonymous namespace

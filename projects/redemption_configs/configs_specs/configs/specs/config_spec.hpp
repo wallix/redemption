@@ -29,6 +29,7 @@
 #include "include/debug_verbose_description.hpp"
 
 #include "keyboard/keymap2.hpp" // Keymap2::keylayouts()
+#include "utils/colors.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -932,33 +933,37 @@ void config_spec_definition(Writer && W)
         W.member(image_in_gui, no_sesman, L, type_<std::string>(), names{.cpp="logo_path", .ini="logo"},
         desc{"Logo displayed when theme is enabled"}, set(CPP_EXPR(REDEMPTION_CONFIG_THEME_LOGO)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"bgcolor"}, set("dark_blue_bis"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"fgcolor"}, set("white"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"separator_color"}, set("light_blue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"focus_color"}, set("winblue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"error_color"}, set("yellow"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"edit_bgcolor"}, set("white"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"edit_fgcolor"}, set("black"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"edit_focus_color"}, set("winblue"));
+        auto to_rgb = [](NamedBGRColor color){
+            return BGRColor(BGRasRGBColor(color)).as_u32();
+        };
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"tooltip_bgcolor"}, set("black"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"tooltip_fgcolor"}, set("light_yellow"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"tooltip_border_color"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"bgcolor"}, set(to_rgb(DARK_BLUE_BIS)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"fgcolor"}, set(to_rgb(WHITE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"separator_color"}, set(to_rgb(LIGHT_BLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"focus_color"}, set(to_rgb(WINBLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"error_color"}, set(to_rgb(YELLOW)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"edit_bgcolor"}, set(to_rgb(WHITE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"edit_fgcolor"}, set(to_rgb(BLACK)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"edit_focus_color"}, set(to_rgb(WINBLUE)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line1_bgcolor"}, set("pale_blue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line1_fgcolor"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"tooltip_bgcolor"}, set(to_rgb(BLACK)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"tooltip_fgcolor"}, set(to_rgb(LIGHT_YELLOW)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"tooltip_border_color"}, set(to_rgb(BLACK)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line2_bgcolor"}, set("light_blue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_line2_fgcolor"}, set("black"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_line1_bgcolor"}, set(to_rgb(PALE_BLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_line1_fgcolor"}, set(to_rgb(BLACK)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_selected_bgcolor"}, set("medium_blue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_selected_fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_line2_bgcolor"}, set(to_rgb(LIGHT_BLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_line2_fgcolor"}, set(to_rgb(BLACK)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_focus_bgcolor"}, set("winblue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_focus_fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_selected_bgcolor"}, set(to_rgb(MEDIUM_BLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_selected_fgcolor"}, set(to_rgb(WHITE)));
 
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_label_bgcolor"}, set("medium_blue"));
-        W.member(ini_and_gui, no_sesman, L, type_<std::string>(), names{"selector_label_fgcolor"}, set("white"));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_focus_bgcolor"}, set(to_rgb(WINBLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_focus_fgcolor"}, set(to_rgb(WHITE)));
+
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_label_bgcolor"}, set(to_rgb(MEDIUM_BLUE)));
+        W.member(ini_and_gui, no_sesman, L, type_<types::rgb>(), names{"selector_label_fgcolor"}, set(to_rgb(WHITE)));
     });
 
     REDEMPTION_DIAGNOSTIC_POP()

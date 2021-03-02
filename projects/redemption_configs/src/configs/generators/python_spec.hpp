@@ -71,6 +71,9 @@ inline void write_type_info(std::ostream&, type_<types::dirpath>) {}
 inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
 //@}
 
+inline void write_type_info(std::ostream& out, type_<types::rgb>)
+{ out << "(is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)\n"; }
+
 inline void write_type_info(std::ostream& out, type_<types::file_permission>)
 { out << "(in octal or symbolic mode format (as chmod Linux command))\n"; }
 
@@ -199,6 +202,34 @@ namespace impl
     }
 
     inline exprio stringize_integral(cfg_attributes::cpp::expr e) { return {e.value}; }
+
+    struct CssColor
+    {
+        CssColor(uint32_t x)
+        {
+            assert(!(x >> 24));
+            char* p = color;
+            *p++ = '#';
+            auto puthex = [&](uint32_t n){ *p++ = "0123456789ABCDEF"[n & 0xf]; };
+            puthex(x >> 20);
+            puthex(x >> 16);
+            puthex(x >> 12);
+            puthex(x >> 8);
+            puthex(x >> 4);
+            puthex(x >> 0);
+            *p = '0';
+        }
+
+        std::string_view sv() const { return std::string_view{color, 7}; }
+
+        friend std::ostream& operator<<(std::ostream& out, CssColor const& color)
+        {
+            return out << color.sv();
+        }
+
+    private:
+        char color[8];
+    };
 }
 
 template<class T>
@@ -226,6 +257,10 @@ template<class Int, long min, long max, class T>
 void write_type(std::ostream& out, type_<types::range<Int, min, max>>, T i)
 { out << "integer(min=" << min << ", max=" << max << ", default=" << impl::stringize_integral(i) << ")"; }
 
+inline void write_type(std::ostream& out, type_<types::rgb>, uint32_t x)
+{
+    out << "string(default='" << impl::CssColor(x) << "')";
+}
 
 template<class T, class Ratio, class U>
 void write_type(std::ostream& out, type_<std::chrono::duration<T, Ratio>>, U i)

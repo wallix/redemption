@@ -17,6 +17,7 @@ project configs
     <include>$(SYSTEM_SRC_PATH)
 
     <rtti>off
+    <cxx-stack-protector>off
 
     $(REDEMPTION_CXXFLAGS)
     <toolset>clang:<cxxflags>-Wno-class-varargs
@@ -79,13 +80,12 @@ rule create_generator ( name : file : libraries * : requirements * )
     obj src/configs/write_$(name).cpp.o : src/configs/write_$(name).cpp :
         $(requirements)
         <cxxflags>-std=c++2a
-        <cxx-stack-protector>off
         # bug of clang
         # zstring_view.hpp:187:24: warning: zero as null pointer constant [-Wzero-as-null-pointer-constant]
         # return lhs.to_sv() >= std::string_view(rhs);
         #                    ^~
         #                    nullptr
-        <toolset>clang:<cxxflags>-Wno-zero-as-null-pointer-constant
+        # <toolset>clang:<cxxflags>-Wno-zero-as-null-pointer-constant
     ;
     exe make_$(name) : src/configs/write_$(name).cpp.o : $(libraries) ;
 }

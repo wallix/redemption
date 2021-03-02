@@ -1546,46 +1546,67 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_image=/var/wab/images/rdp-oem-logo.png
 #logo = )gen_config_ini" << (REDEMPTION_CONFIG_THEME_LOGO) << R"gen_config_ini(
 
-#bgcolor = dark_blue_bis
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#bgcolor = #081F60
 
-#fgcolor = white
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#fgcolor = #FFFFFF
 
-#separator_color = light_blue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#separator_color = #CFD5EB
 
-#focus_color = winblue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#focus_color = #004D9C
 
-#error_color = yellow
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#error_color = #FFFF00
 
-#edit_bgcolor = white
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#edit_bgcolor = #FFFFFF
 
-#edit_fgcolor = black
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#edit_fgcolor = #000000
 
-#edit_focus_color = winblue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#edit_focus_color = #004D9C
 
-#tooltip_bgcolor = black
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#tooltip_bgcolor = #000000
 
-#tooltip_fgcolor = light_yellow
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#tooltip_fgcolor = #FFFF9F
 
-#tooltip_border_color = black
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#tooltip_border_color = #000000
 
-#selector_line1_bgcolor = pale_blue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line1_bgcolor = #E9ECF6
 
-#selector_line1_fgcolor = black
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line1_fgcolor = #000000
 
-#selector_line2_bgcolor = light_blue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line2_bgcolor = #CFD5EB
 
-#selector_line2_fgcolor = black
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_line2_fgcolor = #000000
 
-#selector_selected_bgcolor = medium_blue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_selected_bgcolor = #4472C4
 
-#selector_selected_fgcolor = white
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_selected_fgcolor = #FFFFFF
 
-#selector_focus_bgcolor = winblue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_focus_bgcolor = #004D9C
 
-#selector_focus_fgcolor = white
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_focus_fgcolor = #FFFFFF
 
-#selector_label_bgcolor = medium_blue
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_label_bgcolor = #4472C4
 
-#selector_label_fgcolor = white
+# (is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)
+#selector_label_fgcolor = #FFFFFF
 
 )gen_config_ini"

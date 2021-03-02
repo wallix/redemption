@@ -91,12 +91,19 @@ struct str_buffer_size<std::array<unsigned char, N>>
 namespace spec_types
 {
     struct directory_path;
+    struct rgb;
 }
 
 template<>
 struct str_buffer_size<spec_types::directory_path>
 {
     static const std::size_t value = 0;
+};
+
+template<>
+struct str_buffer_size<spec_types::rgb>
+{
+    static const std::size_t value = 7;
 };
 
 
@@ -127,6 +134,20 @@ namespace spec_types
 
     template<class T, underlying_type_for_range_t<T> min, underlying_type_for_range_t<T> max>
     struct range {};
+
+    struct rgb
+    {
+        explicit rgb(uint32_t color = 0) noexcept : rgb_(color) { }
+
+        uint8_t red() const noexcept { return uint8_t(rgb_ >> 16); }
+        uint8_t green() const noexcept { return uint8_t((rgb_ >> 8) & 0xff); }
+        uint8_t blue() const noexcept { return uint8_t(rgb_ & 0xff); }
+
+        uint32_t to_rrggbb() const { return rgb_; }
+
+    private:
+        uint32_t rgb_;
+    };
 
     struct directory_path
     {

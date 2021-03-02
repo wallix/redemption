@@ -2407,7 +2407,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2415,7 +2415,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2423,7 +2423,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::separator_color&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2431,7 +2431,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::focus_color&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2439,7 +2439,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::error_color&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2447,7 +2447,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::edit_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2455,7 +2455,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::edit_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2463,7 +2463,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::edit_focus_color&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2471,7 +2471,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::tooltip_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2479,7 +2479,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::tooltip_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2487,7 +2487,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::tooltip_border_color&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2495,7 +2495,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_line1_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2503,7 +2503,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_line1_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2511,7 +2511,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_line2_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2519,7 +2519,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_line2_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2527,7 +2527,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_selected_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2535,7 +2535,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_selected_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2543,7 +2543,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_focus_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2551,7 +2551,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_focus_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2559,7 +2559,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_label_bgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }
@@ -2567,7 +2567,7 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::theme::selector_label_fgcolor&>(this->variables).value,
-                ::configs::spec_type<std::string>{},
+                ::configs::spec_type<::configs::spec_types::rgb>{},
                 value
             );
         }

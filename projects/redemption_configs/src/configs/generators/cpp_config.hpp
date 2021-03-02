@@ -130,6 +130,9 @@ void write_type(std::ostream& out, type_<types::fixed_string<N>>) { out << "char
 template<class T, long min, long max>
 void write_type(std::ostream& out, type_<types::range<T, min, max>>) { out << type_name<T>(); }
 
+inline void write_type(std::ostream& out, type_<types::rgb>)
+{ out << "::configs::spec_types::rgb"; }
+
 inline void write_type(std::ostream& out, type_<types::dirpath>)
 { out << "::configs::spec_types::directory_path"; }
 

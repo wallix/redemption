@@ -143,6 +143,45 @@ RED_AUTO_TEST_CASE(TestEnumParser)
     }
 }
 
+RED_AUTO_TEST_CASE(TestColorParser)
+{
+    using Rgb = ::configs::spec_types::rgb;
+
+    Rgb rgb;
+    configs::spec_type<Rgb> stype;
+
+    auto const h32 = ut::hex_int{8};
+#ifndef BOOST_TEST
+    void BOOST_TEST(bool, ut::hex_int);
+#endif
+#define TEST_RGB(...) BOOST_TEST(__VA_ARGS__, h32)
+
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "0x123456"_zv));
+    TEST_RGB(rgb.to_rrggbb() == 0x123456);
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "0x123"_zv));
+    TEST_RGB(rgb.to_rrggbb() == 0x123);
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "0xaB2"_zv));
+    TEST_RGB(rgb.to_rrggbb() == 0xAB2);
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "#123456"_zv));
+    TEST_RGB(rgb.to_rrggbb() == 0x123456);
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "#123"_zv));
+    TEST_RGB(rgb.to_rrggbb() == 0x112233);
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "red"_zv));
+    TEST_RGB(rgb.to_rrggbb() == BGRColor(BGRasRGBColor(RED)).as_u32());
+    RED_CHECK(no_parse_error == parse_from_cfg(rgb, stype, "inv_medium_green"_zv));
+    TEST_RGB(rgb.to_rrggbb() == BGRColor(BGRasRGBColor(INV_MEDIUM_GREEN)).as_u32());
+
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "bla_bla"_zv));
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "0x1234567"_zv));
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "#1234567"_zv));
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "#1234"_zv));
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "#"_zv));
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, "0"_zv));
+    RED_CHECK(no_parse_error != parse_from_cfg(rgb, stype, ""_zv));
+
+#undef TEST_RGB
+}
+
 RED_AUTO_TEST_CASE(TestOtherParser)
 {
     // unsigned
