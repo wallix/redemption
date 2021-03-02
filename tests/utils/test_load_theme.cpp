@@ -24,6 +24,16 @@
 #include "utils/load_theme.hpp"
 #include "utils/sugar/algostring.hpp"
 
+namespace
+{
+    using Rgb = ::configs::spec_types::rgb;
+
+    inline Rgb to_rgb(NamedBGRColor color)
+    {
+        return Rgb(BGRColor(BGRasRGBColor(color)).as_u32());
+    }
+}
+
 RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values)
 {
     Theme colors;
@@ -65,36 +75,36 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_hardcoded_default_values_even_if_inifile_i
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(false);
-    ini.set<cfg::theme::bgcolor>("orange");
-    ini.set<cfg::theme::fgcolor>("white");
-    ini.set<cfg::theme::separator_color>("brown");
-    ini.set<cfg::theme::focus_color>("dark_red");
-    ini.set<cfg::theme::error_color>("red");
+    ini.set<cfg::theme::bgcolor>(to_rgb(ORANGE));
+    ini.set<cfg::theme::fgcolor>(to_rgb(WHITE));
+    ini.set<cfg::theme::separator_color>(to_rgb(BROWN));
+    ini.set<cfg::theme::focus_color>(to_rgb(DARK_RED));
+    ini.set<cfg::theme::error_color>(to_rgb(RED));
     ini.set<cfg::theme::logo_path>(str_concat(app_path(AppPath::Cfg),
                                               "/themes/test_theme/logo.png"));
 
-    ini.set<cfg::theme::edit_bgcolor>("yellow");
-    ini.set<cfg::theme::edit_fgcolor>("white");
-    ini.set<cfg::theme::edit_focus_color>("dark_red");
+    ini.set<cfg::theme::edit_bgcolor>(to_rgb(YELLOW));
+    ini.set<cfg::theme::edit_fgcolor>(to_rgb(WHITE));
+    ini.set<cfg::theme::edit_focus_color>(to_rgb(DARK_RED));
 
-    ini.set<cfg::theme::tooltip_bgcolor>("pale_blue");
-    ini.set<cfg::theme::tooltip_fgcolor>("dark_blue");
-    ini.set<cfg::theme::tooltip_border_color>("dark_green");
+    ini.set<cfg::theme::tooltip_bgcolor>(to_rgb(PALE_BLUE));
+    ini.set<cfg::theme::tooltip_fgcolor>(to_rgb(DARK_BLUE));
+    ini.set<cfg::theme::tooltip_border_color>(to_rgb(DARK_GREEN));
 
-    ini.set<cfg::theme::selector_line1_bgcolor>("pale_orange");
-    ini.set<cfg::theme::selector_line1_fgcolor>("white");
+    ini.set<cfg::theme::selector_line1_bgcolor>(to_rgb(PALE_ORANGE));
+    ini.set<cfg::theme::selector_line1_fgcolor>(to_rgb(WHITE));
 
-    ini.set<cfg::theme::selector_line2_bgcolor>("light_orange");
-    ini.set<cfg::theme::selector_line2_fgcolor>("white");
+    ini.set<cfg::theme::selector_line2_bgcolor>(to_rgb(LIGHT_ORANGE));
+    ini.set<cfg::theme::selector_line2_fgcolor>(to_rgb(WHITE));
 
-    ini.set<cfg::theme::selector_selected_bgcolor>("medium_red");
-    ini.set<cfg::theme::selector_selected_fgcolor>("black");
+    ini.set<cfg::theme::selector_selected_bgcolor>(to_rgb(MEDIUM_RED));
+    ini.set<cfg::theme::selector_selected_fgcolor>(to_rgb(BLACK));
 
-    ini.set<cfg::theme::selector_focus_bgcolor>("dark_red");
-    ini.set<cfg::theme::selector_focus_fgcolor>("black");
+    ini.set<cfg::theme::selector_focus_bgcolor>(to_rgb(DARK_RED));
+    ini.set<cfg::theme::selector_focus_fgcolor>(to_rgb(BLACK));
 
-    ini.set<cfg::theme::selector_label_bgcolor>("medium_red");
-    ini.set<cfg::theme::selector_label_fgcolor>("black");
+    ini.set<cfg::theme::selector_label_bgcolor>(to_rgb(MEDIUM_RED));
+    ini.set<cfg::theme::selector_label_fgcolor>(to_rgb(BLACK));
 
     Theme colors;
 
@@ -137,36 +147,36 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
     Inifile ini;
 
     ini.set<cfg::theme::enable_theme>(true);
-    ini.set<cfg::theme::bgcolor>("0xDD8015");
-    ini.set<cfg::theme::fgcolor>("0xffffff");
-    ini.set<cfg::theme::separator_color>("0xC56A00");
-    ini.set<cfg::theme::focus_color>("#0xAD1C22");
-    ini.set<cfg::theme::error_color>("#ff0000");
+    ini.set<cfg::theme::bgcolor>(Rgb(0xDD8015));
+    ini.set<cfg::theme::fgcolor>(Rgb(0xffffff));
+    ini.set<cfg::theme::separator_color>(Rgb(0xC56A00));
+    ini.set<cfg::theme::focus_color>(Rgb(0xAD1C22));
+    ini.set<cfg::theme::error_color>(Rgb(0xff0000));
     ini.set<cfg::theme::logo_path>(str_concat(app_path(AppPath::Cfg),
                                               "/themes/test_theme/logo.png"));
 
-    ini.set<cfg::theme::edit_bgcolor>("WHITE");
-    ini.set<cfg::theme::edit_fgcolor>("BLACK");
-    ini.set<cfg::theme::edit_focus_color>("DARK_RED");
+    ini.set<cfg::theme::edit_bgcolor>(to_rgb(WHITE));
+    ini.set<cfg::theme::edit_fgcolor>(to_rgb(BLACK));
+    ini.set<cfg::theme::edit_focus_color>(to_rgb(DARK_RED));
 
-    ini.set<cfg::theme::tooltip_bgcolor>("PaLe_BlUe");
-    ini.set<cfg::theme::tooltip_fgcolor>("DaRk_BlUe");
-    ini.set<cfg::theme::tooltip_border_color>("DaRk_GrEeN");
+    ini.set<cfg::theme::tooltip_bgcolor>(to_rgb(PALE_BLUE));
+    ini.set<cfg::theme::tooltip_fgcolor>(to_rgb(DARK_BLUE));
+    ini.set<cfg::theme::tooltip_border_color>(to_rgb(DARK_GREEN));
 
-    ini.set<cfg::theme::selector_line1_bgcolor>("lIgHt_oRaNgE");
-    ini.set<cfg::theme::selector_line1_fgcolor>("bLaCk");
+    ini.set<cfg::theme::selector_line1_bgcolor>(to_rgb(LIGHT_ORANGE));
+    ini.set<cfg::theme::selector_line1_fgcolor>(to_rgb(BLACK));
 
-    ini.set<cfg::theme::selector_line2_bgcolor>("LIght_ORange");
-    ini.set<cfg::theme::selector_line2_fgcolor>("BLack");
+    ini.set<cfg::theme::selector_line2_bgcolor>(to_rgb(LIGHT_ORANGE));
+    ini.set<cfg::theme::selector_line2_fgcolor>(to_rgb(BLACK));
 
-    ini.set<cfg::theme::selector_selected_bgcolor>("mediUM_rED");
-    ini.set<cfg::theme::selector_selected_fgcolor>("whiTE");
+    ini.set<cfg::theme::selector_selected_bgcolor>(to_rgb(MEDIUM_RED));
+    ini.set<cfg::theme::selector_selected_fgcolor>(to_rgb(WHITE));
 
-    ini.set<cfg::theme::selector_focus_bgcolor>("dARk_rEd");
-    ini.set<cfg::theme::selector_focus_fgcolor>("wHITe");
+    ini.set<cfg::theme::selector_focus_bgcolor>(to_rgb(DARK_RED));
+    ini.set<cfg::theme::selector_focus_fgcolor>(to_rgb(WHITE));
 
-    ini.set<cfg::theme::selector_label_bgcolor>("medium_red");
-    ini.set<cfg::theme::selector_label_fgcolor>("white");
+    ini.set<cfg::theme::selector_label_bgcolor>(to_rgb(MEDIUM_RED));
+    ini.set<cfg::theme::selector_label_fgcolor>(to_rgb(WHITE));
 
     Theme colors;
 
@@ -204,77 +214,4 @@ RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile)
 
     RED_CHECK_EQUAL(colors.selector_label.bgcolor, MEDIUM_RED);
     RED_CHECK_EQUAL(colors.selector_label.fgcolor, WHITE);
-}
-
-RED_AUTO_TEST_CASE(TestLoadTheme_load_from_inifile_with_wrong_values)
-{
-    Inifile ini;
-
-    ini.set<cfg::theme::enable_theme>(true);
-    ini.set<cfg::theme::bgcolor>("ABCDEFGH0xDD8015");
-    ini.set<cfg::theme::fgcolor>("AC#0xffffffABCDEFGH");
-    ini.set<cfg::theme::separator_color>("#0xC56A00MOP");
-    ini.set<cfg::theme::focus_color>("K0xAD1C22");
-    ini.set<cfg::theme::error_color>("G#0xff0000");
-    ini.set<cfg::theme::logo_path>("/bad_path");
-
-    ini.set<cfg::theme::edit_bgcolor>("WHITE123456#FF");
-    ini.set<cfg::theme::edit_fgcolor>("123456BLACK");
-    ini.set<cfg::theme::edit_focus_color>("DARK_123456_RED");
-
-    ini.set<cfg::theme::tooltip_bgcolor>("PPPPPaLeEEE_BBBlUeEEEE");
-    ini.set<cfg::theme::tooltip_fgcolor>("DDDDDaRkKKK_BBBBlUeeeee");
-    ini.set<cfg::theme::tooltip_border_color>("DDDDDaRkKKK_GGGGrEeNNNN");
-
-    ini.set<cfg::theme::selector_line1_bgcolor>("lIgHt_oRaNgE_lIgHt_oRaNgE");
-    ini.set<cfg::theme::selector_line1_fgcolor>("bLaCk_bLaCk");
-
-    ini.set<cfg::theme::selector_line2_bgcolor>("LIghtLIght_ORangeORange");
-    ini.set<cfg::theme::selector_line2_fgcolor>("BLackBLack");
-
-    ini.set<cfg::theme::selector_selected_bgcolor>("rED_mediUM_mediUM_rED");
-    ini.set<cfg::theme::selector_selected_fgcolor>("#wHITe0xDD8015");
-
-    ini.set<cfg::theme::selector_focus_bgcolor>("0xDD8015dARk_rEd");
-    ini.set<cfg::theme::selector_focus_fgcolor>("");
-
-    ini.set<cfg::theme::selector_label_bgcolor>("0x");
-    ini.set<cfg::theme::selector_label_fgcolor>("#");
-
-    Theme colors;
-
-    load_theme(colors, ini);
-
-    constexpr BGRColor null_bgr;
-
-    RED_CHECK(colors.global.enable_theme);
-    RED_CHECK_EQUAL(colors.global.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.global.fgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.global.separator_color, null_bgr);
-    RED_CHECK_EQUAL(colors.global.focus_color, null_bgr);
-    RED_CHECK_EQUAL(colors.global.error_color, null_bgr);
-    RED_CHECK_EQUAL(colors.global.logo_path, "/bad_path");
-
-    RED_CHECK_EQUAL(colors.edit.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.edit.fgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.edit.focus_color, null_bgr);
-
-    RED_CHECK_EQUAL(colors.tooltip.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.tooltip.fgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.tooltip.border_color, null_bgr);
-
-    RED_CHECK_EQUAL(colors.selector_line1.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.selector_line1.fgcolor, null_bgr);
-
-    RED_CHECK_EQUAL(colors.selector_line2.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.selector_line2.fgcolor, null_bgr);
-
-    RED_CHECK_EQUAL(colors.selector_selected.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.selector_selected.fgcolor, null_bgr);
-
-    RED_CHECK_EQUAL(colors.selector_focus.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.selector_focus.fgcolor, null_bgr);
-
-    RED_CHECK_EQUAL(colors.selector_label.bgcolor, null_bgr);
-    RED_CHECK_EQUAL(colors.selector_label.fgcolor, null_bgr);
 }

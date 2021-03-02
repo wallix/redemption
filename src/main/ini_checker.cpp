@@ -59,6 +59,24 @@ namespace
         return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 4);
     }
 
+    zstring_view assign_zbuf_from_cfg(
+        writable_chars_view zbuf,
+        cfg_s_type<::configs::spec_types::rgb> /*type*/,
+        ::configs::spec_types::rgb rgb
+    ) {
+        uint32_t x = rgb.to_rrggbb();
+        char const * digits = "0123456789ABCDEF";
+        zbuf[0] = '#';
+        zbuf[1] = digits[(x >> 20) & 0xf];
+        zbuf[2] = digits[(x >> 16) & 0xf];
+        zbuf[3] = digits[(x >> 12) & 0xf];
+        zbuf[4] = digits[(x >>  8) & 0xf];
+        zbuf[5] = digits[(x >>  4) & 0xf];
+        zbuf[6] = digits[(x >>  0) & 0xf];
+        zbuf[7] = '\0';
+        return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 7);
+    }
+
     template<class... Cfg>
     struct PrinterValues<configs::Pack<Cfg...>>
     {
