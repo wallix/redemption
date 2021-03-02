@@ -678,17 +678,18 @@ namespace ut
     void print_hex(std::ostream& out, uint64_t x, int ndigit, bool align_by_byte)
     {
         int n = 1;
-        if (x > 0xffffffffu) {
+        auto y = x;
+        if (y > 0xffffffffu) {
             n += 8;
-            x >>= 32;
+            y >>= 32;
         }
-        if (x > 0xffffu) {
+        if (y > 0xffffu) {
             n += 4;
-            x >>= 16;
+            y >>= 16;
         }
-        if (x > 0xffu) {
+        if (y > 0xffu) {
             n += 2;
-            x >>= 8;
+            y >>= 8;
         }
         ndigit = std::max(n, ndigit);
 
@@ -713,7 +714,7 @@ namespace ut
         };
         while (ndigit > 0) {
             ndigit -= 2;
-            f(x >> (ndigit * 8));
+            f(x >> (ndigit * 4));
         }
 
         out.write(buf, p-buf);
