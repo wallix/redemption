@@ -37,7 +37,7 @@ struct FileTransport : Transport
         return this->file.close();
     }
 
-    void seek(int64_t offset, int whence) override;
+    void seek(int64_t offset, int whence);
 
     [[nodiscard]] int get_fd() const override
     {

@@ -150,13 +150,6 @@ public:
     virtual void flush()
     {}
 
-    virtual void seek(int64_t offset, int whence)
-    {
-        (void)offset;
-        (void)whence;
-        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
-    }
-
 private:
     // note: `func(buf, len)` derived function shadows `f(array)` function base.
     // do_*() function resolves this problem
@@ -237,7 +230,6 @@ struct InTransport
 
     [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
 
-    void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
     bool next() { return this->t.next(); }
@@ -269,7 +261,6 @@ struct OutTransport
 
     [[nodiscard]] u8_array_view get_public_key() const { return this->t.get_public_key(); }
 
-    void seek(int64_t offset, int whence) { this->t.seek(offset, whence); }
     bool disconnect() { return this->t.disconnect(); }
     bool connect() { return this->t.connect(); }
     bool next() { return this->t.next(); }

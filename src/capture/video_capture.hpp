@@ -42,7 +42,7 @@ struct VideoTransportBase : Transport
 {
     VideoTransportBase(const int groupid, AclReportApi * acl_report);
 
-    void seek(int64_t offset, int whence) override;
+    void seek(int64_t offset, int whence);
 
     ~VideoTransportBase();
 
