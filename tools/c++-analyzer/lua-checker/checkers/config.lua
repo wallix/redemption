@@ -5,11 +5,15 @@ do
     local peg = utils.peg
     local C = peg.C
     local R = peg.R
+    local S = peg.S
+    local P = peg.P
     local Ct = peg.Ct
     local After = peg.After
     local Ident = 'cfg:' * (peg.word + ':')^1
     patternVar = Ct(After(C(Ident))^0)
-    patternVarSearch = Ct(After('<' * C(Ident) * '>')^0)
+    patternVarSearch = Ct(After( '<' * C(Ident) * S'>'
+                               + '(' * C(Ident) * (P'()' + '{}')
+                               )^0)
     patternType = Ct((After('.enumeration_') * After('"') * C(peg.Until('"')))^0)
     patternTypeSearch = Ct(After((1-peg.wordchars) * C((R'AZ' * R('AZ','az')^1)))^0)
 end
