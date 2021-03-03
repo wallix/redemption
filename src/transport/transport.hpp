@@ -35,8 +35,6 @@
 #include "utils/sugar/buffer_view.hpp"
 
 
-using std::size_t; /*NOLINT*/
-
 class ServerNotifier;
 
 
