@@ -38,6 +38,8 @@
 #include "transport/mwrm_reader.hpp"
 #include "transport/file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
+#include "transport/in_multi_crypto_transport.hpp"
+#include "transport/mwrm_file_data.hpp"
 
 #include "utils/compression_transport_builder.hpp"
 #include "utils/fileutils.hpp"
@@ -504,39 +506,6 @@ static inline int check_encrypted_or_checksumed(
     return 0;
 }
 
-struct MwrmInfos
-{
-    MetaHeader header {};
-    EncryptionMode encryption_mode;
-    std::vector<MetaLine> wrms;
-};
-
-static inline MwrmInfos load_mwrm_infos(
-    char const* mwrm_filename,
-    EncryptionMode encryption_mode,
-    CryptoContext & cctx)
-{
-    MwrmInfos mwrm_infos;
-
-    mwrm_infos.encryption_mode = encryption_mode;
-
-    std::vector<MetaLine>& wrms = mwrm_infos.wrms;
-    wrms.reserve(32);
-
-    InCryptoTransport mwrm_file(cctx, encryption_mode);
-    MwrmReader mwrm_reader(mwrm_file);
-
-    mwrm_file.open(mwrm_filename);
-    mwrm_reader.read_meta_headers();
-    mwrm_infos.header = mwrm_reader.get_header();
-
-    while (Transport::Read::Ok == mwrm_reader.read_meta_line(wrms.emplace_back())) {
-    }
-    wrms.pop_back();
-
-    return mwrm_infos;
-}
-
 static void raise_error(
     std::string const& output_filename,
     int code, const char * message)
@@ -567,101 +536,42 @@ static int raise_error_and_log(
     return code;
 }
 
-namespace
-{
-    struct WrmsTransport final : public Transport
-    {
-        using EncryptionMode = InCryptoTransport::EncryptionMode;
-
-        WrmsTransport(
-            Ref<const std::vector<MetaLine>> wrms,
-            CryptoContext & cctx,
-            EncryptionMode encryption)
-        : wrm(cctx, encryption)
-        , wrms(wrms)
-        {}
-
-        bool disconnect() override
-        {
-            if (this->wrm.is_open()) {
-                this->wrm.close();
-            }
-            return true;
-        }
-
-        bool next() override
-        {
-            if (this->pos >= this->wrms.size()) {
-                LOG(LOG_ERR, "WrmsTransport::next: No more line!");
-                throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
-            }
-
-            this->wrm.open(this->wrms[this->pos].filename);
-            ++this->pos;
-            return true;
-        }
-
-    private:
-        Read do_atomic_read(uint8_t * data, size_t len) override
-        {
-            for (;;) {
-                if (!this->wrm.is_open()) {
-                    if (this->pos >= this->wrms.size()) {
-                        return Read::Eof;
-                    }
-                    this->wrm.open(this->wrms[this->pos].filename);
-                    ++this->pos;
-                }
-
-                if (Read::Ok == this->wrm.atomic_read(data, len)) {
-                    return Read::Ok;
-                }
-
-                this->wrm.close();
-            }
-        }
-
-        InCryptoTransport wrm;
-        std::vector<MetaLine> const& wrms;
-        std::size_t pos = 0;
-    };
-}
-
 static inline int update_filename_and_check_size(
     std::string const& output_filename,
-    std::vector<MetaLine>& wrms,
-    std::string const& other_wrm_directory,
+    std::vector<MetaLine> const& wrms,
+    std::vector<std::string>& filenames,
+    std::string_view other_wrm_directory,
     bool ignore_file_size)
 {
     struct stat st;
-    std::string new_filename = (other_wrm_directory.empty() || other_wrm_directory.back() != '/')
-        ? other_wrm_directory
+    std::string prefix = (other_wrm_directory.empty() || other_wrm_directory.back() != '/')
+        ? std::string(other_wrm_directory)
         : str_concat(other_wrm_directory, '/');
-    size_t const new_filename_base_len = new_filename.size();
 
-    for (auto& wrm : wrms) {
+    filenames.reserve(wrms.size());
+    for (auto const& wrm : wrms) {
         if (::stat(wrm.filename, &st)) {
             bool has_error = true;
             if (errno == ENOENT && !other_wrm_directory.empty()) {
                 size_t len = 0;
                 char const* basename = basename_len(wrm.filename, len);
-                new_filename.resize(new_filename_base_len);
-                new_filename += std::string_view{basename, len};
-                if (utils::strbcpy(wrm.filename, new_filename)) {
-                    has_error = ::stat(wrm.filename, &st);
-                }
+                filenames.push_back(str_concat(prefix, std::string_view{basename, len}));
+                has_error = ::stat(filenames.back().c_str(), &st);
             }
 
             if (has_error) {
-                LOG(LOG_INFO, "Wrm file not found: %s", wrm.filename);
+                LOG(LOG_INFO, "Wrm file not found: %s", filenames.back());
                 return raise_error_and_log(output_filename, -1, "wrm file not fount"_zv);
             }
+        }
+        else {
+            filenames.push_back(wrm.filename);
         }
 
         if (!ignore_file_size && wrm.size != st.st_size) {
             using ull = unsigned long long;
             LOG(LOG_INFO, "Wrm file size mismatch (%llu != %llu): %s",
-                ull(wrm.size), ull(st.st_size), wrm.filename);
+                ull(wrm.size), ull(st.st_size), filenames.back());
             return raise_error_and_log(output_filename, -1, "wrm file size mismatch"_zv);
         }
     }
@@ -904,7 +814,7 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
 inline void get_join_visibility_rect(
     Rect & out_max_image_frame_rect,
     Rect & out_min_image_frame_rect,
-    WrmsTransport && in_wrm_trans,
+    InMultiCryptoTransport && in_wrm_trans,
     Dimension & out_max_screen_dim,
     bool play_video_with_corrupted_bitmap,
     uint32_t verbose)
@@ -950,7 +860,8 @@ inline void get_join_visibility_rect(
 }
 
 static inline int replay(
-    MwrmInfos const& mwrm_infos,
+    InMultiCryptoTransport&& in_wrm_trans,
+    std::vector<MetaLine> const& wrm_lines,
     std::string & infile_path,
     std::string & input_basename,
     std::string const& hash_path,
@@ -980,10 +891,6 @@ static inline int replay(
     Random & rnd,
     uint32_t verbose)
 {
-    if (mwrm_infos.wrms.empty()) {
-        return raise_error_and_log(output_filename, -1, "wrm file not foudn in mwrm file"_zv);
-    }
-
     char infile_prefix[4096];
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
@@ -1003,8 +910,8 @@ static inline int replay(
 
     // begin or end relative to end of trace
     {
-        Seconds const duration ( mwrm_infos.wrms.front().stop_time
-                               - mwrm_infos.wrms.back().start_time);
+        Seconds const duration ( wrm_lines.front().stop_time
+                               - wrm_lines.back().start_time);
 
         if (begin_cap.count() < 0) {
             begin_cap = std::max(begin_cap + duration, Seconds(0));
@@ -1021,11 +928,11 @@ static inline int replay(
         auto relative_time_barrier = 31536000s;
 
         if (begin_cap.count() && begin_cap < relative_time_barrier) {
-            begin_cap += Seconds(mwrm_infos.wrms.front().start_time);
+            begin_cap += Seconds(wrm_lines.front().start_time);
         }
 
         if (end_cap.count() && end_cap < relative_time_barrier) {
-            end_cap += Seconds(mwrm_infos.wrms.front().start_time);
+            end_cap += Seconds(wrm_lines.front().start_time);
         }
     }
 
@@ -1034,8 +941,8 @@ static inline int replay(
     // number of file up to begin_cap
     if (begin_cap.count())
     {
-        auto first = mwrm_infos.wrms.begin();
-        auto last = mwrm_infos.wrms.end();
+        auto first = wrm_lines.begin();
+        auto last = wrm_lines.end();
 
         while (first < last && begin_cap >= Seconds(first->stop_time)) {
             ++first;
@@ -1045,18 +952,14 @@ static inline int replay(
             return raise_error_and_log(output_filename, -1, "Asked time not found in mwrm file"_zv);
         }
 
-        file_count = checked_int{first - mwrm_infos.wrms.begin() + 1};
+        file_count = checked_int{first - wrm_lines.begin() + 1};
     }
 
-    EncryptionMode const encryption_mode = mwrm_infos.encryption_mode;
-
-    std::chrono::seconds begin_record = Seconds(mwrm_infos.wrms.front().start_time);
-    std::chrono::seconds end_record   = Seconds(mwrm_infos.wrms.back().stop_time);
-    unsigned count_wrm_file = mwrm_infos.wrms.size();
+    std::chrono::seconds begin_record = Seconds(wrm_lines.front().start_time);
+    std::chrono::seconds end_record   = Seconds(wrm_lines.back().stop_time);
+    unsigned count_wrm_file = wrm_lines.size();
     // TODO
     uint64_t total_wrm_file_len = 0;
-
-    WrmsTransport in_wrm_trans(mwrm_infos.wrms, cctx, encryption_mode);
 
     int result = -1;
     try {
@@ -1289,7 +1192,7 @@ static inline int replay(
                             retared_capture,
                             MonotonicTimePoint(begin_cap),
                             MonotonicTimePoint::duration(
-                                begin_cap - Seconds(mwrm_infos.wrms.front().start_time)
+                                begin_cap - Seconds(wrm_lines.front().start_time)
                             )
                         );
 
@@ -1946,10 +1849,13 @@ extern "C" {
             auto const mwrm_prefix = str_concat(rp.mwrm_path, rp.input_basename);
             auto const mwrm_filename = str_concat(mwrm_prefix, rp.infile_extension);
 
-            auto mwrm_infos = load_mwrm_infos(mwrm_filename.c_str(), encryption_mode, cctx);
+            auto mwrm_infos = load_mwrm_file_data(mwrm_filename.c_str(), cctx, encryption_mode);
+            std::vector<std::string> wrm_filenames;
 
             if (int r = update_filename_and_check_size(rp.output_filename,
-                                                       mwrm_infos.wrms, rp.mwrm_path,
+                                                       mwrm_infos.wrms,
+                                                       wrm_filenames,
+                                                       rp.mwrm_path,
                                                        rp.ignore_file_size)
             ) {
                 return r;
@@ -1967,7 +1873,7 @@ extern "C" {
                     get_join_visibility_rect(
                         max_joint_visibility_rect,
                         min_joint_visibility_rect,
-                        WrmsTransport(mwrm_infos.wrms, cctx, encryption_mode),
+                        InMultiCryptoTransport(wrm_filenames, cctx, encryption_mode),
                         max_screen_dim,
                         ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                         verbose
@@ -1990,7 +1896,19 @@ extern "C" {
                 }
             }
 
-            res = replay(mwrm_infos,
+            if (mwrm_infos.wrms.empty()) {
+                return raise_error_and_log(
+                    rp.output_filename, -1, "wrm file not foudn in mwrm file"_zv
+                );
+            }
+
+            InMultiCryptoTransport in_wrm_trans(
+                std::move(wrm_filenames),
+                cctx,
+                mwrm_infos.encryption_mode);
+
+            res = replay(std::move(in_wrm_trans),
+                         mwrm_infos.wrms,
                          rp.mwrm_path,
                          rp.input_basename,
                          rp.hash_path,

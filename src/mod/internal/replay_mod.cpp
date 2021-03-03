@@ -22,9 +22,12 @@ Author(s): Wallix Team
 #include "core/front_api.hpp"
 #include "core/events.hpp"
 #include "utils/timebase.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/replay_mod.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
+#include "transport/in_multi_crypto_transport.hpp"
+#include "transport/mwrm_file_data.hpp"
 
 
 struct ReplayMod::Reader
@@ -33,19 +36,42 @@ struct ReplayMod::Reader
 
     MonotonicTimePoint start_time_replay;
 
-    InMetaSequenceTransport in_trans;
+    InMultiCryptoTransport in_trans;
     FileToGraphic reader;
 
     Reader(
-        char const* prefix,
-        char const* extension,
+        std::string const& mwrm_filename,
         bool play_video_with_corrupted_bitmap,
         Verbose debug_capture)
     // TODO RZ: Support encrypted recorded file.
     : in_trans(
+        [&]{
+            std::vector<std::string> filenames;
+            auto pos = mwrm_filename.find_last_of('/');
+            if (pos == std::string::npos) {
+                pos = mwrm_filename.size();
+            }
+            else {
+                ++pos;
+            }
+            MwrmFileData mwrm_data = load_mwrm_file_data(
+                mwrm_filename.c_str(),
+                this->cctx,
+                InCryptoTransport::EncryptionMode::NotEncrypted);
+            filenames.reserve(mwrm_data.wrms.size());
+            for (auto const& wrm : mwrm_data.wrms) {
+                if (file_exist(wrm.filename)) {
+                    filenames.push_back(wrm.filename);
+                }
+                else {
+                    filenames.push_back(str_concat(
+                        chars_view(mwrm_filename.data(), pos),
+                        wrm.filename));
+                }
+            }
+            return filenames;
+        }(),
         this->cctx,
-        prefix,
-        extension,
         InCryptoTransport::EncryptionMode::NotEncrypted)
     , reader(
         this->in_trans,
@@ -89,13 +115,7 @@ ReplayMod::ReplayMod(
 : auth_error_message(auth_error_message)
 , drawable(drawable)
 , front(front)
-, prefix_path([&]() -> std::string&& {
-    auto pos = replay_path.find_last_of('.');
-    if (pos != std::string::npos) {
-        replay_path.resize(pos);
-    }
-    return std::move(replay_path);
-}())
+, replay_path(std::move(replay_path))
 , debug_capture(debug_capture)
 , wait_for_escape(wait_for_escape)
 , replay_on_loop(replay_on_loop)
@@ -157,11 +177,10 @@ bool ReplayMod::next_timestamp()
 
 void ReplayMod::init_reader()
 {
-    LOG(LOG_INFO, "Playing %s.mwrm", this->prefix_path);
+    LOG(LOG_INFO, "Playing %s", this->replay_path);
 
     this->internal_reader = std::make_unique<Reader>(
-        this->prefix_path.c_str(),
-        ".mwrm",
+        this->replay_path,
         this->play_video_with_corrupted_bitmap,
         this->debug_capture);
     this->start_time = this->events_guards.get_monotonic_time();

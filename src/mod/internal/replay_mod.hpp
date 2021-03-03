@@ -87,7 +87,7 @@ private:
     gdi::GraphicApi& drawable;
     FrontAPI& front;
 
-    std::string const prefix_path;
+    std::string const replay_path;
 
     class Reader;
     std::unique_ptr<Reader> internal_reader;

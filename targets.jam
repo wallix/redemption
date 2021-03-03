@@ -72,7 +72,8 @@ exe headlessclient :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_meta_sequence_transport.o
   <library>src/transport/recorder_transport.o
@@ -220,7 +221,8 @@ exe rdpproxy :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -474,6 +476,8 @@ lib libredrec :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -1152,7 +1156,8 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
@@ -1193,7 +1198,8 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
@@ -1234,7 +1240,8 @@ test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
@@ -1275,7 +1282,8 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
@@ -2447,7 +2455,8 @@ test-run tests/core/test_mainloop :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -2615,7 +2624,8 @@ test-run tests/core/test_session :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -2860,6 +2870,8 @@ test-run tests/lib/test_do_recorder :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/out_filename_sequence_transport.o
   <library>src/transport/out_meta_sequence_transport.o
@@ -3236,7 +3248,8 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
   <library>src/transport/gzip_compression_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
+  <library>src/transport/mwrm_file_data.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/snappy_compression_transport.o
   <library>src/utils/bitmap.o
@@ -5230,24 +5243,39 @@ test-run tests/transport/test_gzip_compression_transport :
   <covfile>src/transport/gzip_compression_transport.hpp
   <define>ZLIB_CONST
 ;
-test-run tests/transport/test_in_meta_sequence_transport :
-  $(REDEMPTION_TEST_PATH)/transport/test_in_meta_sequence_transport.cpp
+test-run tests/transport/test_in_multi_crypto_transport :
+  $(REDEMPTION_TEST_PATH)/transport/test_in_multi_crypto_transport.cpp
 :
   <library>crypto
   <library>snappy
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/file_transport.o
-  <library>src/transport/in_meta_sequence_transport.o
+  <library>src/transport/in_multi_crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/out_meta_sequence_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/stacktrace.o
   <library>src/utils/strutils.o
-  <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
-  <covfile>src/transport/in_meta_sequence_transport.cpp
-  <covfile>src/transport/in_meta_sequence_transport.hpp
+  <covfile>src/transport/in_multi_crypto_transport.cpp
+  <covfile>src/transport/in_multi_crypto_transport.hpp
+;
+test-run tests/transport/test_mwrm_file_data :
+  $(REDEMPTION_TEST_PATH)/transport/test_mwrm_file_data.cpp
+:
+  <library>crypto
+  <library>snappy
+  <library>src/core/error.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/file_transport.o
+  <library>src/transport/mwrm_file_data.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/stacktrace.o
+  <library>src/utils/strutils.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/transport/mwrm_file_data.cpp
+  <covfile>src/transport/mwrm_file_data.hpp
 ;
 test-run tests/transport/test_mwrm_reader :
   $(REDEMPTION_TEST_PATH)/transport/test_mwrm_reader.cpp
@@ -6049,7 +6077,8 @@ obj src/system/linux/system/tls_check_certificate.o : $(REDEMPTION_SRC_PATH)/sys
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/file_transport.o : $(REDEMPTION_SRC_PATH)/transport/file_transport.cpp ;
 obj src/transport/gzip_compression_transport.o : $(REDEMPTION_SRC_PATH)/transport/gzip_compression_transport.cpp : <define>ZLIB_CONST ;
-obj src/transport/in_meta_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/in_meta_sequence_transport.cpp ;
+obj src/transport/in_multi_crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/in_multi_crypto_transport.cpp ;
+obj src/transport/mwrm_file_data.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_file_data.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/out_filename_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_filename_sequence_transport.cpp ;
 obj src/transport/out_meta_sequence_transport.o : $(REDEMPTION_SRC_PATH)/transport/out_meta_sequence_transport.cpp ;
@@ -6352,7 +6381,8 @@ alias test_tls_context : tests/system/linux/system/test_tls_context ;
 alias test_crypto_transport : tests/transport/test_crypto_transport ;
 alias test_file_transport : tests/transport/test_file_transport ;
 alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
-alias test_in_meta_sequence_transport : tests/transport/test_in_meta_sequence_transport ;
+alias test_in_multi_crypto_transport : tests/transport/test_in_multi_crypto_transport ;
+alias test_mwrm_file_data : tests/transport/test_mwrm_file_data ;
 alias test_mwrm_reader : tests/transport/test_mwrm_reader ;
 alias test_out_filename_sequence_transport : tests/transport/test_out_filename_sequence_transport ;
 alias test_out_meta_sequence_transport : tests/transport/test_out_meta_sequence_transport ;
@@ -6681,7 +6711,8 @@ alias test_tls_context.coverage : tests/system/linux/system/test_tls_context.cov
 alias test_crypto_transport.coverage : tests/transport/test_crypto_transport.coverage ;
 alias test_file_transport.coverage : tests/transport/test_file_transport.coverage ;
 alias test_gzip_compression_transport.coverage : tests/transport/test_gzip_compression_transport.coverage ;
-alias test_in_meta_sequence_transport.coverage : tests/transport/test_in_meta_sequence_transport.coverage ;
+alias test_in_multi_crypto_transport.coverage : tests/transport/test_in_multi_crypto_transport.coverage ;
+alias test_mwrm_file_data.coverage : tests/transport/test_mwrm_file_data.coverage ;
 alias test_mwrm_reader.coverage : tests/transport/test_mwrm_reader.coverage ;
 alias test_out_filename_sequence_transport.coverage : tests/transport/test_out_filename_sequence_transport.coverage ;
 alias test_out_meta_sequence_transport.coverage : tests/transport/test_out_meta_sequence_transport.coverage ;
@@ -7108,7 +7139,8 @@ alias tests/transport.norec :
   tests/transport/test_crypto_transport
   tests/transport/test_file_transport
   tests/transport/test_gzip_compression_transport
-  tests/transport/test_in_meta_sequence_transport
+  tests/transport/test_in_multi_crypto_transport
+  tests/transport/test_mwrm_file_data
   tests/transport/test_mwrm_reader
   tests/transport/test_out_filename_sequence_transport
   tests/transport/test_out_meta_sequence_transport
