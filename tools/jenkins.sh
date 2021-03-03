@@ -24,10 +24,6 @@ update: update targets.jam and others generated files";
     esac
 done
 
-if [[ $fast -eq 0 ]]; then
-    ./tools/c++-analyzer/redemption-analyzer.sh
-fi
-
 timestamp=$(date +%s)
 show_duration()
 {
@@ -35,6 +31,11 @@ show_duration()
     echo duration"[$@]": $((($timestamp2-$timestamp)/60))m $((($timestamp2-$timestamp)%60))s
     timestamp=$timestamp2
 }
+
+if [[ $fast -eq 0 ]]; then
+    ./tools/c++-analyzer/redemption-analyzer.sh
+    show_duration redemption-analyzer.sh
+fi
 
 # jsclient (emscripten)
 pushd projects/jsclient
@@ -56,6 +57,7 @@ set -o pipefail
 toolset_emscripten=toolset=clang-$version
 bjam -qj2 $toolset_emscripten debug cxxflags=-Wno-shadow-field |& sed '#^/var/lib/jenkins/jobs/redemption-future/workspace/##'
 set +o pipefail
+rm -r bin/*
 popd
 
 show_duration jsclient
@@ -142,6 +144,19 @@ build $toolset_wab cxxflags=-g -j2
 
 show_duration $toolset_wab
 
+if [[ $fast -eq 0 ]]; then
+    # valgrind
+    #find ./bin/$gcc/release/tests/ -type d -exec \
+    #  ./tools/c++-analyzer/valgrind -qd '{}' \;
+    /usr/bin/time --format="%Es - %MK" \
+      find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
+      parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
+
+    show_duration valgrind
+fi
+
+rm -r bin/gcc*
+
 
 # Warn new files created by tests.
 set -o pipefail
@@ -159,6 +174,7 @@ set +o pipefail
 build $toolset_clang -sNO_FFMPEG=1 san -j3 ocr_tools -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san $big_mem -s FAST_CHECK=1
 build $toolset_clang -sNO_FFMPEG=1 san -j2 -s FAST_CHECK=1
+rm -r bin/clang*
 
 show_duration $toolset_clang
 
@@ -166,11 +182,13 @@ show_duration $toolset_clang
 if [[ $fast -eq 0 ]]; then
     # debug with coverage
     build $toolset_gcc debug -scoverage=on covbin=$gcovbin -s FAST_CHECK=1
+    rm -r bin/gcc*
 
     show_duration $toolset_gcc coverage
 
     # cppcheck
     # ./tools/c++-analyzer/cppcheck-filtered 2>&1 1>/dev/null
+    # show_duration cppcheck
 
 
     # extract TODO, BUG, etc
@@ -191,15 +209,6 @@ if [[ $fast -eq 0 ]]; then
       ./tools/c++-analyzer/clang-tidy | sed -E '/^(.+\/|)modules\//,/\^/d'
 
     show_duration clang-tidy
-
-    # valgrind
-    #find ./bin/$gcc/release/tests/ -type d -exec \
-    #  ./tools/c++-analyzer/valgrind -qd '{}' \;
-    /usr/bin/time --format="%Es - %MK" \
-      find ./bin/$valgrind_compiler/release/tests/ -type d -exec \
-      parallel -j2 ./tools/c++-analyzer/valgrind -qd ::: '{}' +
-
-    show_duration valgrind
 fi
 
 if [[ $update -eq 1 ]]; then
