@@ -61,8 +61,6 @@ public:
 
     virtual ~Transport() = default;
 
-    virtual int get_sck() { return INVALID_SOCKET; }
-
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
     virtual TlsResult enable_client_tls(
         ServerNotifier & server_notifier, const TLSClientParams & /*tls_client_params*/)

@@ -164,7 +164,7 @@ WsTransport::TlsResult WsTransport::enable_client_tls(
 
 bool WsTransport::disconnect()
 {
-    if (this->get_sck() != INVALID_SOCKET) {
+    if (this->get_fd() != INVALID_SOCKET) {
         if (this->state != State::Closed) {
             this->state = State::Closed;
             ws_protocol_server_send_close_frame(D::sender(*this));
