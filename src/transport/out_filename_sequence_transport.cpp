@@ -25,56 +25,38 @@
 #include <cstring>
 
 
-FilenameGenerator::FilenameGenerator(
-    Format format,
+OutFilenameSequenceTransport::FilenameGenerator::FilenameGenerator(
     const char * const prefix,
     const char * const filename,
     const char * const extension)
-: format(format)
-, pid(getpid())
-, last_filename(nullptr)
+: last_filename(nullptr)
 , last_num(-1u)
 {
-    if (!utils::strbcpy(this->path, prefix)
-     || !utils::strbcpy(this->filename, filename)
+    int len = snprintf(this->filename_gen, sizeof(this->filename_gen), "%s%s-", prefix, filename);
+    if (len <= 0
+     || len >= int(sizeof(this->filename_gen) - 1)
      || !utils::strbcpy(this->extension, extension)
     ) {
         LOG(LOG_ERR, "Filename too long");
         throw Error(ERR_TRANSPORT);
     }
 
-    this->filename_gen[0] = 0;
+    this->filename_suffix_pos = std::size_t(len);
 }
 
-const char * FilenameGenerator::get(unsigned count) const
+const char * OutFilenameSequenceTransport::FilenameGenerator::get(unsigned count) const
 {
     if (count == this->last_num && this->last_filename) {
         return this->last_filename;
     }
 
-    using std::snprintf;
-    switch (this->format) {
-        case PATH_FILE_PID_COUNT_EXTENSION:
-            snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u-%06u%s", this->path
-                    , this->filename, this->pid, count, this->extension);
-            break;
-        case PATH_FILE_COUNT_EXTENSION:
-            snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                    , this->filename, count, this->extension);
-            break;
-        case PATH_FILE_PID_EXTENSION:
-            snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s-%06u%s", this->path
-                    , this->filename, this->pid, this->extension);
-            break;
-        case PATH_FILE_EXTENSION:
-            snprintf( this->filename_gen, sizeof(this->filename_gen), "%s%s%s", this->path
-                    , this->filename, this->extension);
-            break;
-    }
+    snprintf( this->filename_gen + this->filename_suffix_pos
+            , sizeof(this->filename_gen) - this->filename_suffix_pos
+            , "%06u%s", count, this->extension);
     return this->filename_gen;
 }
 
-void FilenameGenerator::set_last_filename(unsigned num, const char * name)
+void OutFilenameSequenceTransport::FilenameGenerator::set_last_filename(unsigned num, const char * name)
 {
     this->last_num = num;
     this->last_filename = name;
@@ -82,22 +64,21 @@ void FilenameGenerator::set_last_filename(unsigned num, const char * name)
 
 
 OutFilenameSequenceTransport::OutFilenameSequenceTransport(
-    FilenameGenerator::Format format,
     const char * const prefix,
     const char * const filename,
     const char * const extension,
     const int groupid,
     std::function<void(const Error & error)> notify_error)
-: filegen_(format, prefix, filename, extension)
+: filegen_(prefix, filename, extension)
 , buf_(invalid_fd(), notify_error)
 , groupid_(groupid)
 {
     this->current_filename_[0] = 0;
 }
 
-const FilenameGenerator * OutFilenameSequenceTransport::seqgen() const noexcept
+char const* OutFilenameSequenceTransport::seqgen(unsigned i) const noexcept
 {
-    return &this->filegen_;
+    return this->filegen_.get(i);
 }
 
 bool OutFilenameSequenceTransport::next()
@@ -169,7 +150,10 @@ void OutFilenameSequenceTransport::open_filename(const char * filename)
 
 const char * OutFilenameSequenceTransport::rename_filename()
 {
-    const char * filename = this->get_filename_generate();
+    this->filegen_.set_last_filename(-1u, "");
+    const char * filename = this->filegen_.get(this->num_file_);
+    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
+
     const int res = ::rename(this->current_filename_, filename);
     // LOG( LOG_INFO, "renaming file \"%s\" to \"%s\""
     //    , this->current_filename_, filename);
@@ -183,13 +167,5 @@ const char * OutFilenameSequenceTransport::rename_filename()
     ++this->num_file_;
     this->filegen_.set_last_filename(-1u, "");
 
-    return filename;
-}
-
-const char * OutFilenameSequenceTransport::get_filename_generate()
-{
-    this->filegen_.set_last_filename(-1u, "");
-    const char * filename = this->filegen_.get(this->num_file_);
-    this->filegen_.set_last_filename(this->num_file_, this->current_filename_);
     return filename;
 }

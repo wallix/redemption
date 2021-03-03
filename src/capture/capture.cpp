@@ -671,7 +671,6 @@ protected:
         RDPDrawable & drawable,
         gdi::ImageFrameApi & imageFrameApi, WritableImageView const & image_view)
     : trans(
-        FilenameGenerator::PATH_FILE_COUNT_EXTENSION,
         capture_params.record_tmp_path,
         png_params.real_basename,
         ".png",
@@ -718,7 +717,7 @@ public:
      void clear_png_interval(uint32_t num_start, uint32_t num_end) {
         for(uint32_t num = num_start ; num < num_end ; num++) {
             // unlink may fail, for instance if file does not exist, just don't care
-            ::unlink(this->trans.seqgen()->get(num));
+            ::unlink(this->trans.seqgen(num));
         }
      }
 

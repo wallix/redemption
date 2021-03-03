@@ -23,48 +23,11 @@
 #include "transport/file_transport.hpp"
 
 
-struct FilenameGenerator
-{
-    enum Format {
-        PATH_FILE_PID_COUNT_EXTENSION,
-        PATH_FILE_COUNT_EXTENSION,
-        PATH_FILE_PID_EXTENSION,
-        PATH_FILE_EXTENSION
-    };
-
-private:
-    char         path[1024];
-    char         filename[1012];
-    char         extension[12];
-    Format       format;
-    unsigned     pid;
-    mutable char filename_gen[2070];
-
-    const char * last_filename;
-    unsigned     last_num;
-
-public:
-    FilenameGenerator(FilenameGenerator const &) = delete;
-    FilenameGenerator& operator=(FilenameGenerator const &) = delete;
-
-    FilenameGenerator(
-        Format format,
-        const char * const prefix,
-        const char * const filename,
-        const char * const extension);
-
-    const char * get(unsigned count) const;
-
-    void set_last_filename(unsigned num, const char * name);
-};
-
-
 // TODO in PngCapture
 class OutFilenameSequenceTransport : public Transport
 {
 public:
     OutFilenameSequenceTransport(
-        FilenameGenerator::Format format,
         const char * const prefix,
         const char * const filename,
         const char * const extension,
@@ -73,7 +36,7 @@ public:
 
     ~OutFilenameSequenceTransport();
 
-    const FilenameGenerator * seqgen() const noexcept;
+    char const* seqgen(unsigned i) const noexcept;
 
     bool next() override;
 
@@ -82,6 +45,30 @@ public:
     bool disconnect() override;
 
 private:
+    struct FilenameGenerator
+    {
+    private:
+        char         extension[12];
+        mutable char filename_gen[2070];
+        std::size_t  filename_suffix_pos;
+
+        const char * last_filename;
+        unsigned     last_num;
+
+    public:
+        FilenameGenerator(FilenameGenerator const &) = delete;
+        FilenameGenerator& operator=(FilenameGenerator const &) = delete;
+
+        FilenameGenerator(
+            const char * const prefix,
+            const char * const filename,
+            const char * const extension);
+
+        const char * get(unsigned count) const;
+
+        void set_last_filename(unsigned num, const char * name);
+    };
+
     void do_send(const uint8_t * data, size_t len) override;
 
     /// \return 0 if success
@@ -89,8 +76,6 @@ private:
     void open_filename(const char * filename);
 
     const char * rename_filename();
-
-    const char * get_filename_generate();
 
     char current_filename_[1024];
     FilenameGenerator filegen_;
