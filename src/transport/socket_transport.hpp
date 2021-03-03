@@ -88,7 +88,7 @@ public:
 
     [[nodiscard]] bool has_tls_pending_data() const;
 
-    [[nodiscard]] int get_fd() const override { return this->sck; }
+    [[nodiscard]] int get_fd() const override final { return this->sck; }
 
     [[nodiscard]] u8_array_view get_public_key() const override;
 
