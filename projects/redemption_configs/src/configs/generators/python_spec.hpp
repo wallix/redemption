@@ -26,6 +26,7 @@
 #include "configs/enumeration.hpp"
 
 #include "utils/sugar/algostring.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -74,7 +75,7 @@ inline void write_type_info(std::ostream&, type_<types::ip_string>) {}
 inline void write_type_info(std::ostream& out, type_<types::rgb>)
 { out << "(is in rgb format: hexadecimal (0x21AF21), #rgb (#2fa) or #rrggbb (#22ffaa)\n"; }
 
-inline void write_type_info(std::ostream& out, type_<types::file_permission>)
+inline void write_type_info(std::ostream& out, type_<FilePermissions>)
 { out << "(in octal or symbolic mode format (as chmod Linux command))\n"; }
 
 template<unsigned N>
@@ -299,7 +300,7 @@ void write_type(std::ostream& out, type_<types::list<T>>, L const & s)
 }
 
 template<class T>
-void write_type(std::ostream& out, type_<types::file_permission>, T const & x)
+void write_type(std::ostream& out, type_<FilePermissions>, T const & x)
 {
     char octal[32]{};
     (void)std::to_chars(std::begin(octal), std::end(octal), x, 8);

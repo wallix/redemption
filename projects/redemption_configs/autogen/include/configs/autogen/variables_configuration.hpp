@@ -3509,13 +3509,13 @@ namespace cfg
         type value { false };
     };
     /// Allow to control permissions on recorded files with octal number <br/>
-    /// type: uint32_t <br/>
+    /// type: FilePermissions <br/>
     /// default: 0440 <br/>
     struct video::file_permissions {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
-        using type = uint32_t;
-        using sesman_and_spec_type = ::configs::spec_types::file_permission;
+        using type = FilePermissions;
+        using sesman_and_spec_type = ::FilePermissions;
         using mapped_type = sesman_and_spec_type;
         type value { 0440 };
     };
@@ -5682,6 +5682,7 @@ struct video
 , cfg::video::ffmpeg_options
 , cfg::video::png_interval
 , cfg::video::frame_interval
+, cfg::video::file_permissions
 , cfg::video::capture_groupid
 , cfg::video::capture_flags
 , cfg::video::png_limit
@@ -5701,7 +5702,6 @@ struct video
 , cfg::video::smart_video_cropping
 , cfg::video::play_video_with_corrupted_bitmap
 , cfg::video::allow_rt_without_recording
-, cfg::video::file_permissions
 , cfg::video::rt_basename_only_sid
 { static constexpr bool is_section = true; };
 

@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::globals::close_timeout>().count());
 
     RED_CHECK_EQUAL("/tmp/",                          ini.get<cfg::video::replay_path>());
-    RED_CHECK_EQUAL(0440,                             ini.get<cfg::video::file_permissions>());
+    RED_CHECK_EQUAL(0440,                             ini.get<cfg::video::file_permissions>().permissions_as_uint());
 
     RED_CHECK_EQUAL(TraceType::localfile_hashed,
                                                       ini.get<cfg::globals::trace_type>());

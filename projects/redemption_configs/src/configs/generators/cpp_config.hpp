@@ -28,6 +28,7 @@
 #include "configs/enumeration.hpp"
 #include "configs/type_name.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -105,7 +106,7 @@ void write_assignable_default(std::ostream& out, type_enumerations& /*enums*/, t
 }
 
 template<class U>
-void write_assignable_default(std::ostream& out, type_enumerations& /*enums*/, type_<types::file_permission>, default_<U> const& d)
+void write_assignable_default(std::ostream& out, type_enumerations& /*enums*/, type_<FilePermissions>, default_<U> const& d)
 {
     char octal[32]{};
     auto r = std::to_chars(std::begin(octal), std::end(octal), d.value, 8);
@@ -145,8 +146,8 @@ void write_type(std::ostream& out, type_<types::list<T>>) { out << "std::string"
 template<class T>
 void write_type(std::ostream& out, type_<T>) { out << type_name<T>(); }
 
-inline void write_type(std::ostream& out, type_<types::file_permission>)
-{ out << "uint32_t"; }
+inline void write_type(std::ostream& out, type_<FilePermissions>)
+{ out << "FilePermissions"; }
 
 
 // buffer size for assign_zbuf_from_cfg()
@@ -247,9 +248,9 @@ inline StrBufferSize write_type_spec(std::ostream& out, type_<types::ip_string>)
     return StrBufferSize(0);
 }
 
-inline StrBufferSize write_type_spec(std::ostream& out, type_<types::file_permission>)
+inline StrBufferSize write_type_spec(std::ostream& out, type_<FilePermissions>)
 {
-    out << "::configs::spec_types::file_permission";
+    out << "::FilePermissions";
     return StrBufferSize(integral_buffer_size<uint16_t>());
 }
 

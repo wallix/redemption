@@ -29,6 +29,7 @@
 #include "utils/string_c.hpp"
 #include "utils/chex_to_int.hpp"
 #include "utils/colors.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -417,7 +418,7 @@ parse_from_cfg(T & x, ::configs::spec_type<bool> /*type*/, bytes_view value)
 }
 
 inline parse_error parse_from_cfg(
-    uint32_t& x, ::configs::spec_type<::configs::spec_types::file_permission> /*type*/,
+    FilePermissions& x, ::configs::spec_type<FilePermissions> /*type*/,
     bytes_view value)
 {
     uint32_t tmp = 0;
@@ -439,7 +440,7 @@ inline parse_error parse_from_cfg(
             return parse_error{"Cannot have file permission higher than 0777 number"};
         }
 
-        x = tmp;
+        x = FilePermissions(tmp);
 
         return no_parse_error;
     }
@@ -499,7 +500,7 @@ inline parse_error parse_from_cfg(
         }
 
         if (p == e) {
-            x = tmp;
+            x = FilePermissions(tmp);
             return no_parse_error;
         }
 
@@ -508,7 +509,7 @@ inline parse_error parse_from_cfg(
                 while (++p != e && *p == ' ') {
                 }
                 if (p == e) {
-                    x = tmp;
+                    x = FilePermissions(tmp);
                     return no_parse_error;
                 }
                 break;

@@ -26,6 +26,7 @@
 #include "configs/enumeration.hpp"
 
 #include "configs/generators/python_spec.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -93,7 +94,7 @@ void write_type_info(std::ostream& out, type_<types::fixed_string<N>>)
 inline void write_type_info(std::ostream& out, type_<types::dirpath>)
 { out << "maxlen = " << globals::path_max; }
 
-inline void write_type_info(std::ostream& out, type_<types::file_permission>)
+inline void write_type_info(std::ostream& out, type_<FilePermissions>)
 { out << "(is in octal or symbolic mode format (as chmod Linux command))\nmax = 777, min = 0"; }
 
 
@@ -167,7 +168,7 @@ void write_type(std::ostream& out, type_enumerations&, type_<types::list<T>>, L 
 }
 
 template<class T>
-void write_type(std::ostream& out, type_enumerations&, type_<types::file_permission>, T const & x)
+void write_type(std::ostream& out, type_enumerations&, type_<FilePermissions>, T const & x)
 {
     char octal[32]{};
     (void)std::to_chars(std::begin(octal), std::end(octal), x, 8);

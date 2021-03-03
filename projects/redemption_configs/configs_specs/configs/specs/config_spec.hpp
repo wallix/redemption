@@ -30,6 +30,7 @@
 
 #include "keyboard/keymap2.hpp" // Keymap2::keylayouts()
 #include "utils/colors.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -697,7 +698,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"allow_rt_without_recording"}, desc { "Allow Realtime display (4eyes) without recording of session" }, set(false));
 
-        W.member(hidden_in_gui, no_sesman, L, type_<types::file_permission>(), names{"file_permissions"}, desc { "Allow to control permissions on recorded files with octal number" }, set(0440));
+        W.member(hidden_in_gui, no_sesman, L, type_<FilePermissions>(), names{"file_permissions"}, desc { "Allow to control permissions on recorded files with octal number" }, set(0440));
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), names{"rt_basename_only_sid"}, desc{"Use only session id for basename"}, set(false));
     });

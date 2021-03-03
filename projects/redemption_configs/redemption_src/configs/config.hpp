@@ -37,6 +37,7 @@
 // config members
 //@{
 #include "core/app_path.hpp"
+#include "utils/file_permissions.hpp"
 #include <string>
 #include <chrono>
 //@}

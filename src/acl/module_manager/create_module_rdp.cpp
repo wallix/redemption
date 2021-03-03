@@ -235,7 +235,7 @@ public:
                 str_concat(record_dir.as_string(), subdir),
                 str_concat(hash_dir.as_string(), subdir),
                 filebase,
-                session_id, groupid, FilePermissions(ini.get<cfg::video::file_permissions>()),
+                session_id, groupid, ini.get<cfg::video::file_permissions>(),
                 cctx, gen,
                 /* TODO should be a log (siem?)*/
                 [](const Error & /*error*/){});

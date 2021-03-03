@@ -47,9 +47,10 @@ namespace
 
     zstring_view assign_zbuf_from_cfg(
         writable_chars_view zbuf,
-        cfg_s_type<::configs::spec_types::file_permission> /*type*/,
-        uint32_t x
+        cfg_s_type<FilePermissions> /*type*/,
+        FilePermissions perms
     ) {
+        auto x = perms.permissions_as_uint();
         char const * digits = "01234567";
         zbuf[0] = '0';
         zbuf[1] = digits[(x & 0700) >> 6];

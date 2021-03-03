@@ -116,6 +116,6 @@ WrmParams wrm_params_from_ini(
         ini.get<cfg::video::break_interval>(),
         ini.get<cfg::video::wrm_compression_algorithm>(),
         safe_cast<RDPSerializerVerbose>(ini.get<cfg::debug::capture>()),
-        FilePermissions(ini.get<cfg::video::file_permissions>())
+        ini.get<cfg::video::file_permissions>()
     };
 }

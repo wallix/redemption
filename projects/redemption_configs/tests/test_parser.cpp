@@ -49,9 +49,9 @@ namespace
 
     struct Octal
     {
-        uint32_t i;
+        unsigned i;
 
-        operator uint32_t () const
+        operator unsigned () const
         {
             return i;
         }
@@ -297,68 +297,68 @@ RED_AUTO_TEST_CASE(TestOtherParser)
         RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "11"_zv));
     }
 
-    // file_permission
+    // FilePermissions
     {
-        uint32_t i;
-        configs::spec_type<configs::spec_types::file_permission> stype;
+        FilePermissions perms(0);
+        configs::spec_type<FilePermissions> stype;
 
         // octal
 
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0000777"_zv));
-        RED_CHECK(Octal{0777} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0000123"_zv));
-        RED_CHECK(Octal{0123} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "0777"_zv));
-        RED_CHECK(Octal{0777} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "777"_zv));
-        RED_CHECK(Octal{0777} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "123"_zv));
-        RED_CHECK(Octal{0123} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "23"_zv));
-        RED_CHECK(Octal{0023} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "0000777"_zv));
+        RED_CHECK(Octal{0777} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "0000123"_zv));
+        RED_CHECK(Octal{0123} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "0777"_zv));
+        RED_CHECK(Octal{0777} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "777"_zv));
+        RED_CHECK(Octal{0777} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "123"_zv));
+        RED_CHECK(Octal{0123} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "23"_zv));
+        RED_CHECK(Octal{0023} == Octal{perms.permissions_as_uint()});
 
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ""_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "1234"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "288"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "-36"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a66"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, ""_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "1234"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "288"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "-36"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "a66"_zv));
 
         // symbolic mode
 
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "=rwx"_zv));
-        RED_CHECK(Octal{0775} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "=rwxrrrxxw"_zv));
-        RED_CHECK(Octal{0775} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "-r"_zv));
-        RED_CHECK(Octal{0000} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "+rw"_zv));
-        RED_CHECK(Octal{0664} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "u=rx"_zv));
-        RED_CHECK(Octal{0500} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "g=rx"_zv));
-        RED_CHECK(Octal{0050} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "o=rx"_zv));
-        RED_CHECK(Octal{0005} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "a=rwx"_zv));
-        RED_CHECK(Octal{0777} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "u=rw, g+r"_zv));
-        RED_CHECK(Octal{0640} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "u=rw, g=r"_zv));
-        RED_CHECK(Octal{0040} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "a=rwx, o-x"_zv));
-        RED_CHECK(Octal{0776} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "=w, +x, "_zv));
-        RED_CHECK(Octal{0331} == Octal{i});
-        RED_CHECK(no_parse_error == parse_from_cfg(i, stype, "="_zv));
-        RED_CHECK(Octal{0000} == Octal{i});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "=rwx"_zv));
+        RED_CHECK(Octal{0775} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "=rwxrrrxxw"_zv));
+        RED_CHECK(Octal{0775} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "-r"_zv));
+        RED_CHECK(Octal{0000} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "+rw"_zv));
+        RED_CHECK(Octal{0664} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "u=rx"_zv));
+        RED_CHECK(Octal{0500} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "g=rx"_zv));
+        RED_CHECK(Octal{0050} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "o=rx"_zv));
+        RED_CHECK(Octal{0005} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "a=rwx"_zv));
+        RED_CHECK(Octal{0777} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "u=rw, g+r"_zv));
+        RED_CHECK(Octal{0640} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "u=rw, g=r"_zv));
+        RED_CHECK(Octal{0040} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "a=rwx, o-x"_zv));
+        RED_CHECK(Octal{0776} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "=w, +x, "_zv));
+        RED_CHECK(Octal{0331} == Octal{perms.permissions_as_uint()});
+        RED_CHECK(no_parse_error == parse_from_cfg(perms, stype, "="_zv));
+        RED_CHECK(Octal{0000} == Octal{perms.permissions_as_uint()});
 
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a=rwxo-x"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "=rwx=x"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "=a,"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "aa"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "a"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, "==w"_zv));
-        RED_CHECK(no_parse_error != parse_from_cfg(i, stype, ","_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "a=rwxo-x"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "=rwx=x"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "=a,"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "aa"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "a"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, "==w"_zv));
+        RED_CHECK(no_parse_error != parse_from_cfg(perms, stype, ","_zv));
     }
 
     // fixed_binary
