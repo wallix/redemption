@@ -247,13 +247,16 @@ namespace
     void drawImage(QPainter& painter, ImagePos const& p, Bitmap const& bmp)
     {
         QImage::Format format/* = QImage::Format_Invalid*/;
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
         switch (bmp.bpp()) {
             case BitsPerPixel{15}: format = QImage::Format_RGB555; break;
             case BitsPerPixel{16}: format = QImage::Format_RGB16;  break;
             case BitsPerPixel{24}: format = QImage::Format_RGB888; break;
             case BitsPerPixel{32}: format = QImage::Format_RGB32;  break;
-            default: return;
+            default: assert(!"unknown bpp");
         }
+        REDEMPTION_DIAGNOSTIC_POP()
 
         QImage qbitmap(bmp.data() + bmp.line_size() * p.srcy + p.srcx, p.w, p.h, bmp.line_size(), format);
 
