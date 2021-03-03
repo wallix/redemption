@@ -537,7 +537,6 @@ bool SequencedVideoCaptureImpl::SequenceTransport::next()
     this->rename();
 
     ++this->filegen.num;
-    ++this->seqno;
     return true;
 }
 

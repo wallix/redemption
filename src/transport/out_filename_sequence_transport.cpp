@@ -113,7 +113,7 @@ bool OutFilenameSequenceTransport::next()
         throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
     }
 
-    ++this->seqno;
+    ++this->seqno_;
     return true;
 }
 

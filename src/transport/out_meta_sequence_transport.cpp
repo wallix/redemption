@@ -143,7 +143,6 @@ bool OutMetaSequenceTransport::next()
     }
 
     this->next_meta_file();
-    ++this->seqno;
     return true;
 }
 

@@ -77,6 +77,8 @@ public:
 
     bool next() override;
 
+    [[nodiscard]] uint32_t get_seqno() const { return this->seqno_; }
+
     bool disconnect() override;
 
 private:
@@ -95,5 +97,6 @@ private:
     OutFileTransport buf_;
     unsigned num_file_ = 0;
     int groupid_;
+    uint32_t seqno_ = 0;
     bool status = true;
 };

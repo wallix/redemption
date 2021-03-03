@@ -53,9 +53,6 @@ struct TLSClientParams
 
 class Transport : noncopyable
 {
-protected:
-    uint32_t seqno = 0;
-
 public:
     explicit Transport() = default;
 
@@ -65,9 +62,6 @@ public:
     virtual ~Transport() = default;
 
     virtual int get_sck() { return INVALID_SOCKET; }
-
-    [[nodiscard]] uint32_t get_seqno() const
-    { return this->seqno; }
 
     enum class [[nodiscard]] TlsResult : uint8_t { Ok, Fail, Want, WaitExternalEvent, };
     virtual TlsResult enable_client_tls(
@@ -215,7 +209,6 @@ public:
      * seqno countains the current sequence number, starting from 0. */
     virtual bool next()
     {
-        this->seqno++;
         return true;
     }
 
@@ -237,8 +230,6 @@ struct InTransport
 
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(writable_byte_ptr buffer, size_t len) { return this->t.partial_read(buffer, len); }
-
-    [[nodiscard]] uint32_t get_seqno() const { return this->t.get_seqno(); }
 
     Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
     {
@@ -271,8 +262,6 @@ struct OutTransport
 
     void send(byte_ptr buffer, size_t len) { this->t.send(buffer, len); }
     void send(bytes_view buffer) { this->t.send(buffer); }
-
-    [[nodiscard]] uint32_t get_seqno() const { return this->t.get_seqno(); }
 
     Transport::TlsResult enable_client_tls(ServerNotifier & server_notifier, const TLSClientParams & tls_client_params)
     {
