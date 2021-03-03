@@ -704,7 +704,7 @@ bool OutCryptoTransport::is_open() const
     return this->out_file.is_open();
 }
 
-void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, uint32_t file_permissions, bytes_view derivator)
+void OutCryptoTransport::open(const char * const finalname, const char * const hash_filename, int groupid, FilePermissions file_permissions, bytes_view derivator)
 {
     // This should avoid double open, we do not want that
     if (this->is_open()){
@@ -728,12 +728,12 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
         LOG(LOG_ERR, "OutCryptoTransport::open : open failed (%s -> %s): %s", this->tmpname, finalname, strerror(errno));
         throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
     }
-    if (chmod(this->tmpname, file_permissions) == -1) {
+    if (chmod(this->tmpname, file_permissions.permissions_as_uint()) == -1) {
         int const err = errno;
 
         LOG( LOG_ERR, "can't set file %s mod to %o : %s [%d]"
             , this->tmpname
-            , file_permissions
+            , file_permissions.permissions_as_uint()
             , strerror(err)
             , err);
         LOG(LOG_INFO, "OutCryptoTransport::open : chmod failed (%s -> %s)", this->tmpname, finalname);
@@ -753,7 +753,7 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
 }
 
 // derivator implicitly basename(finalname)
-void OutCryptoTransport::open(const char * finalname, const char * const hash_filename, int groupid, uint32_t file_permissions)
+void OutCryptoTransport::open(const char * finalname, const char * const hash_filename, int groupid, FilePermissions file_permissions)
 {
     size_t base_len = 0;
     const char * base = basename_len(finalname, base_len);

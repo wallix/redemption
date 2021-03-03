@@ -23,6 +23,7 @@
 #include "core/RDP/RDPSerializerVerbose.hpp"
 #include "configs/autogen/enums.hpp"
 #include "gdi/screen_info.hpp"
+#include "utils/file_permissions.hpp"
 
 #include <chrono>
 
@@ -39,5 +40,5 @@ struct WrmParams
     std::chrono::seconds break_interval;
     WrmCompressionAlgorithm wrm_compression_algorithm;
     RDPSerializerVerbose wrm_verbose;
-    uint32_t file_permissions;
+    FilePermissions file_permissions;
 };

@@ -123,7 +123,7 @@ namespace
             std::chrono::seconds{3},
             WrmCompressionAlgorithm::no_compression,
             RDPSerializerVerbose::none,
-            S_IRUSR | S_IRGRP
+            FilePermissions::user_and_group_permissions(BitPermissions::read)
         }
         , capture_params{
             now,

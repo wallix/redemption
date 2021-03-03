@@ -97,7 +97,7 @@ void SessionLogFile::open_session_log()
 
     this->ct.open(
         record_path.c_str(), hash_path.c_str(), groupid,
-        this->ini.get<cfg::video::file_permissions>(), /*derivator=*/basename);
+        FilePermissions(this->ini.get<cfg::video::file_permissions>()), /*derivator=*/basename);
     // force to create the file
     this->ct.send("", 0);
 }

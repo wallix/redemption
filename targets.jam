@@ -5676,6 +5676,11 @@ test-run tests/utils/test_ellipse :
 :
   <covfile>src/utils/ellipse.hpp
 ;
+test-run tests/utils/test_file_permissions :
+  $(REDEMPTION_TEST_PATH)/utils/test_file_permissions.cpp
+:
+  <covfile>src/utils/file_permissions.hpp
+;
 test-run tests/utils/test_fileutils :
   $(REDEMPTION_TEST_PATH)/utils/test_fileutils.cpp
 :
@@ -6403,6 +6408,7 @@ alias test_d3des : tests/utils/test_d3des ;
 alias test_diffiehellman : tests/utils/test_diffiehellman ;
 alias test_drawable : tests/utils/test_drawable ;
 alias test_ellipse : tests/utils/test_ellipse ;
+alias test_file_permissions : tests/utils/test_file_permissions ;
 alias test_fileutils : tests/utils/test_fileutils ;
 alias test_genrandom : tests/utils/test_genrandom ;
 alias test_get_printable_password : tests/utils/test_get_printable_password ;
@@ -6728,6 +6734,7 @@ alias test_d3des.coverage : tests/utils/test_d3des.coverage ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
 alias test_ellipse.coverage : tests/utils/test_ellipse.coverage ;
+alias test_file_permissions.coverage : tests/utils/test_file_permissions.coverage ;
 alias test_fileutils.coverage : tests/utils/test_fileutils.coverage ;
 alias test_genrandom.coverage : tests/utils/test_genrandom.coverage ;
 alias test_get_printable_password.coverage : tests/utils/test_get_printable_password.coverage ;
@@ -7169,6 +7176,7 @@ alias tests/utils.norec :
   tests/utils/test_diffiehellman
   tests/utils/test_drawable
   tests/utils/test_ellipse
+  tests/utils/test_file_permissions
   tests/utils/test_fileutils
   tests/utils/test_genrandom
   tests/utils/test_get_printable_password

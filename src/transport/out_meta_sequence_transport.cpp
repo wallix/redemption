@@ -97,7 +97,7 @@ OutMetaSequenceTransport::OutMetaSequenceTransport(
     uint16_t height,
     const int groupid,
     AclReportApi * acl_report,
-    uint32_t file_permissions)
+    FilePermissions file_permissions)
 : meta_buf_encrypt_transport(cctx, rnd, make_notify_error(acl_report))
 , wrm_filter_encrypt_transport(cctx, rnd, make_notify_error(acl_report))
 , filegen_(path, hash_path, basename, ".wrm")

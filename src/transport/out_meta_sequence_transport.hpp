@@ -38,7 +38,7 @@ struct OutMetaSequenceTransport final : Transport
         uint16_t height,
         const int groupid,
         AclReportApi * acl_report,
-        uint32_t file_permissions);
+        FilePermissions file_permissions);
 
     ~OutMetaSequenceTransport();
 
@@ -98,5 +98,5 @@ private:
 
     CryptoContext & cctx;
 
-    uint32_t file_permissions_;
+    FilePermissions file_permissions_;
 };

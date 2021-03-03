@@ -674,7 +674,7 @@ public:
             , std::chrono::seconds(600) /* break_interval */
             , WrmCompressionAlgorithm::no_compression
             , RDPSerializerVerbose::none
-            , -1u
+            , FilePermissions(0777)
         };
 
         CaptureParams captureParams;

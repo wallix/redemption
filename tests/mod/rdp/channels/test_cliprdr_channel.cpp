@@ -743,7 +743,7 @@ namespace
         FdxCapture fdx = FdxCapture{
             record_path.dirname().string(),
             hash_path.dirname().string(),
-            "sid,blabla", sid, -1, 0660, cctx, rnd,
+            "sid,blabla", sid, -1, FilePermissions(0660), cctx, rnd,
             [](const Error & /*error*/){}};
     };
 

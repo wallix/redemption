@@ -740,7 +740,7 @@ RED_AUTO_TEST_CASE(TestRdpLogonInfo)
             cctx.set_trace_type(trace_type);
 
             OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-            ct.open(finalname, hash_finalname, 0, -1);
+            ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
             ct.send("We write, ", 10);
             ct.send("and again, ", 11);
             ct.send("and so on.", 10);
@@ -770,7 +770,7 @@ RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportBigFile, wd)
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
+        ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
         char buf[200000]{};
         ct.send(buf, sizeof(buf));
         ct.close(qhash, fhash);
@@ -801,7 +801,7 @@ RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportAutoClose, wd)
     cctx.set_trace_type(TraceType::cryptofile);
 
     OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-    ct.open(finalname, hash_finalname, 0, -1);
+    ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
     ct.send("We write, and again, and so on.", 31);
 
     // if there is no explicit close we can't get hash values
@@ -826,11 +826,11 @@ RED_AUTO_TEST_CASE_WD(TestOutCryptoTransportMultipleFiles, wd)
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
 
-        ct.open(finalname1, hash_finalname1, 0, -1);
+        ct.open(finalname1, hash_finalname1, 0, FilePermissions(0777));
         ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
 
-        ct.open(finalname2, hash_finalname2, 0, -1);
+        ct.open(finalname2, hash_finalname2, 0, FilePermissions(0777));
         ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
     }
@@ -857,7 +857,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
+        ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
         ct.send("We write, and again, and so on.", 31);
         ct.close(qhash, fhash);
     }
@@ -938,7 +938,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
+        ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
         ct.send(make_array_view(randomSample));
         ct.close(qhash, fhash);
     }
@@ -1019,7 +1019,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
+        ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
         ct.send("We write, ", 10);
         ct.send("and again, ", 11);
         ct.send("and so on.", 10);
@@ -1106,7 +1106,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
+        ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
         ct.send(clearSample, sizeof(clearSample));
         ct.close(qhash, fhash);
     }
@@ -1180,7 +1180,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(finalname, hash_finalname, 0, -1);
+        ct.open(finalname, hash_finalname, 0, FilePermissions(0777));
         ct.send(clearSample, sizeof(clearSample));
         ct.close(qhash, fhash);
     }
@@ -1257,7 +1257,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         cctx.set_trace_type(TraceType::localfile);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(encrypted_file, hash_encrypted_file, 0, -1);
+        ct.open(encrypted_file, hash_encrypted_file, 0, FilePermissions(0777));
         ct.send(original_contents);
     }
 
@@ -1315,7 +1315,7 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, [](const Error & /*error*/){});
-        ct.open(encrypted_file, hash_encrypted_file, 0, -1);
+        ct.open(encrypted_file, hash_encrypted_file, 0, FilePermissions(0777));
         ct.send(original_contents);
         ct.close(qhash, fhash);
     }

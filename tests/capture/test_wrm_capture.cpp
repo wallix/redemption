@@ -94,7 +94,7 @@ namespace
                 /*wrm_break_interval = */3s,
                 WrmCompressionAlgorithm::no_compression,
                 RDPSerializerVerbose::none,
-                -1u,
+                FilePermissions(0777),
             },
             gd_drawable)
         {}

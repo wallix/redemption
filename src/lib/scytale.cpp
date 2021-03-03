@@ -324,7 +324,12 @@ int scytale_writer_open(
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    CHECK_NOTHROW(handle->out_crypto_transport.open(record_path, hash_path, groupid, -1/*, TODO derivator*/), ERR_TRANSPORT_OPEN_FAILED);
+    CHECK_NOTHROW(
+        handle->out_crypto_transport.open(
+            record_path, hash_path, groupid,
+            // TODO file_permissions as parameter
+            FilePermissions(0440)/*, TODO derivator*/),
+        ERR_TRANSPORT_OPEN_FAILED);
     return 0;
 }
 
@@ -644,7 +649,8 @@ struct ScytaleFdxWriterHandle
         int groupid, char const * sid)
     : random_wrapper(random_type)
     , cctxw(hmac_key, trace_fn, with_encryption, with_checksum, false, false, master_derivator)
-    , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid, -1,
+    // TODO file_permissions as parameter
+    , fdx_capture(record_path, hash_path, fdx_file_base, sid, groupid, FilePermissions(0440),
         this->cctxw.cctx, *this->random_wrapper.rnd, [](const Error &/*error*/){})
     {
         this->qhashhex[0] = 0;

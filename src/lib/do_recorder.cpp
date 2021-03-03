@@ -349,7 +349,7 @@ static int do_recompress(
             player.get_wrm_info().height,
             ini.get<cfg::video::capture_groupid>(),
             nullptr,
-            -1
+            FilePermissions(ini.get<cfg::video::file_permissions>())
         );
 
         ChunkToFile recorder(

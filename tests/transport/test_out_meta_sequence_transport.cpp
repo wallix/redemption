@@ -51,7 +51,7 @@ static void gen_out_meta_seq(
 
     OutMetaSequenceTransport wrm_trans(
         cctx, rnd, record_wd.dirname(), hash_wd.dirname(), "xxx",
-        tp, 800, 600, groupid, nullptr, -1);
+        tp, 800, 600, groupid, nullptr, FilePermissions(0777));
     wrm_trans.send("AAAAX", 5);
     wrm_trans.send("BBBBX", 5);
     wrm_trans.next();
