@@ -84,12 +84,12 @@ public:
         return this->strans.connect();
     }
 
-    void set_trace_send(bool send_trace) override
+    void set_trace_send(bool send_trace)
     {
         this->enable_trace_send = send_trace;
     }
 
-    void set_trace_receive(bool receive_trace) override
+    void set_trace_receive(bool receive_trace)
     {
         this->enable_trace = receive_trace;
     }
