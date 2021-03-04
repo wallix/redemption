@@ -50,6 +50,7 @@ namespace
 # include "utils/log.hpp"
 # include <cstring>
 
+
 # ifdef REDEMPTION_WITH_STACKTRACE
 #  include <csignal>
 #  include <cstdlib>
@@ -74,10 +75,13 @@ namespace
         char const* s_err = nullptr;
         #define MAKE_CASE_V(e, x) case e: s_err = #e; break;
         #define MAKE_CASE(e) case e: s_err = #e; break;
+        REDEMPTION_DIAGNOSTIC_PUSH()
+        REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wcovered-switch-default")
         switch (error) {
             EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
             default: return false;
         }
+        REDEMPTION_DIAGNOSTIC_POP()
         #undef MAKE_CASE
         #undef MAKE_CASE_V
 
