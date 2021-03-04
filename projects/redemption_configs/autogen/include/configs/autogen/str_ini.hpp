@@ -135,10 +135,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_advanced
-#spark_view_specific_glyph_width = 0
-
-# value: 0 or 1
-#_advanced
 #experimental_enable_serializer_data_block_size_limit = 0
 
 # value: 0 or 1

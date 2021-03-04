@@ -114,9 +114,6 @@ unicode_keyboard_event_support = boolean(default=True)
 mod_recv_timeout = integer(min=100, max=10000, default=1000)
 
 #_advanced
-spark_view_specific_glyph_width = boolean(default=False)
-
-#_advanced
 experimental_enable_serializer_data_block_size_limit = boolean(default=False)
 
 #_advanced

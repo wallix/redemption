@@ -230,8 +230,7 @@ struct Font
     Font() = default;
 
     /// \param file_path  path to the font definition file (*.rbf)
-    explicit Font(const char * file_path, bool spark_view_specific_glyph_width = false) /*NOLINT*/
-    : spark_view_specific_glyph_width_(spark_view_specific_glyph_width)
+    explicit Font(const char * file_path)
     {
         this->load_from_file(file_path);
         this->font_items.shrink_to_fit();
@@ -240,8 +239,8 @@ struct Font
         }
     }
 
-    explicit Font(std::string const & file_path, bool spark_view_specific_glyph_width = false) /*NOLINT*/
-    : Font(file_path.c_str(), spark_view_specific_glyph_width)
+    explicit Font(std::string const & file_path)
+    : Font(file_path.c_str())
     {}
 
     [[nodiscard]] bool is_loaded() const
@@ -259,10 +258,6 @@ struct Font
 
     [[nodiscard]] char const * name() const noexcept {
         return this->name_;
-    }
-
-    [[nodiscard]] bool spark_view_specific_glyph_width() const noexcept {
-        return this->spark_view_specific_glyph_width_;
     }
 
     [[nodiscard]] bool glyph_defined(uint32_t charnum) const
@@ -301,6 +296,4 @@ private:
     uint16_t size_ = 0;
     uint16_t max_height_ = 0;
     char name_[32] {};
-
-    bool spark_view_specific_glyph_width_ = false;
 };

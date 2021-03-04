@@ -488,8 +488,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
                                              s_addr,
                                              ini.get<cfg::globals::port>(),
                                              enable_transparent_mode);
-    const Font font(app_path(AppPath::DefaultFontFile),
-                    ini.get<cfg::globals::spark_view_specific_glyph_width>());
+    const Font font(app_path(AppPath::DefaultFontFile));
 
     if (ini.get<cfg::websocket::enable_websocket>())
     {

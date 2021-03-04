@@ -574,16 +574,6 @@ namespace cfg
     };
     /// type: bool <br/>
     /// default: false <br/>
-    struct globals::spark_view_specific_glyph_width {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
-    /// type: bool <br/>
-    /// default: false <br/>
     struct globals::experimental_enable_serializer_data_block_size_limit {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -5440,7 +5430,6 @@ struct globals
 , cfg::globals::new_pointer_update_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
-, cfg::globals::spark_view_specific_glyph_width
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
 , cfg::globals::experimental_support_resize_session_during_recording
 , cfg::globals::support_connection_redirection_during_recording

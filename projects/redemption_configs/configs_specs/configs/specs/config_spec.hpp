@@ -178,8 +178,6 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, sesman_to_proxy, not_target_ctx, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, names{"mod_recv_timeout"}, set(1000));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"spark_view_specific_glyph_width"}, set(false));
-
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_enable_serializer_data_block_size_limit"},set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"experimental_support_resize_session_during_recording"},set(true));
