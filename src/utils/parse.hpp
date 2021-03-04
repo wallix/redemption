@@ -105,15 +105,29 @@ public:
     }
 
     uint64_t in_uint64_le() noexcept {
-        uint64_t low = this->in_uint32_le();
-        uint64_t high = this->in_uint32_le();
-        return low + (high << 32);
+        p += 8;
+        return  uint64_t(p[-8])
+             | (uint64_t(p[-7]) << 8)
+             | (uint64_t(p[-6]) << 16)
+             | (uint64_t(p[-5]) << 24)
+             | (uint64_t(p[-4]) << 32)
+             | (uint64_t(p[-3]) << 40)
+             | (uint64_t(p[-2]) << 48)
+             | (uint64_t(p[-1]) << 56)
+             ;
     }
 
     uint64_t in_uint64_be() noexcept {
-        uint64_t high = this->in_uint32_be();
-        uint64_t low = this->in_uint32_be();
-        return low + (high << 32);
+        p += 8;
+        return  uint64_t(p[-1])
+             | (uint64_t(p[-2]) << 8)
+             | (uint64_t(p[-3]) << 16)
+             | (uint64_t(p[-4]) << 24)
+             | (uint64_t(p[-5]) << 32)
+             | (uint64_t(p[-6]) << 40)
+             | (uint64_t(p[-7]) << 48)
+             | (uint64_t(p[-8]) << 56)
+             ;
     }
 
     uint32_t in_bytes_le(const uint8_t nb) noexcept {
