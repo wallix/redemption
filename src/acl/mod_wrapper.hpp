@@ -27,11 +27,10 @@
 #include "acl/time_before_closing.hpp"
 #include "keyboard/keymap2.hpp"
 #include "configs/config.hpp"
-#include "gdi/clip_from_cmd.hpp"
-#include "gdi/graphic_api_forwarder.hpp"
-#include "gdi/subrect4.hpp"
 #include "gdi/osd_api.hpp"
+#include "gdi/protected_graphics.hpp"
 #include "gdi/text_metrics.hpp"
+#include "gdi/subrect4.hpp"
 #include "mod/null/null.hpp"
 #include "utils/translation.hpp"
 #include "utils/timebase.hpp"
@@ -42,7 +41,6 @@
 #include "core/RDP/slowpath.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 
 
 class SocketTransport;
@@ -50,144 +48,9 @@ class rdp_api;
 
 class ModWrapper final : public gdi::OsdApi, private Callback
 {
-    class GFilter
+    struct Graphics final : gdi::ProtectedGraphics
     {
-        gdi::GraphicApi & sink;
-        Callback & callback;
-
-    public:
-        BGRPalette const & palette;
-        Rect protected_rect;
-
-    public:
-        GFilter(gdi::GraphicApi & sink, Callback & callback, const BGRPalette & palette, Rect rect)
-            : sink(sink), callback(callback), palette(palette), protected_rect(rect) {}
-
-        template<class Command>
-        void draw(Command const & cmd)
-        {
-            this->sink.draw(cmd);
-        }
-
-        void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
-        {
-            this->sink.draw(cmd, content);
-        }
-
-        template<class Command, class... Args>
-        void draw(Command const & cmd, Rect clip, Args const &... args)
-        {
-            auto const & clip_rect = clip_from_cmd(cmd).intersect(clip);
-            if (REDEMPTION_UNLIKELY(
-                this->protected_rect.contains(clip_rect) || clip_rect.isempty()
-            )) {
-                // nada: leave the OSD message rect untouched
-            }
-            else if (REDEMPTION_UNLIKELY(clip_rect.has_intersection(this->protected_rect))) {
-                // draw the parts of the screen outside OSD message rect
-                for (const Rect & subrect : gdi::subrect4(clip_rect, this->protected_rect)) {
-                    if (!subrect.isempty()) {
-                        this->sink.draw(cmd, subrect, args...);
-                    }
-                }
-            }
-            else {
-                // The drawing order is fully ouside OSD message rect
-                this->sink.draw(cmd, clip, args...);
-            }
-        }
-
-        void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp)
-        {
-            Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
-                        , bitmap_data.dest_right - bitmap_data.dest_left + 1
-                        , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
-
-            if (REDEMPTION_UNLIKELY(this->protected_rect.contains(rectBmp) || rectBmp.isempty())) {
-                // nada: leave the OSD message rect untouched
-            }
-            if (REDEMPTION_UNLIKELY(rectBmp.has_intersection(this->protected_rect))) {
-                for (const Rect & subrect : gdi::subrect4(rectBmp, this->protected_rect)) {
-                    if (!subrect.isempty()) {
-                        // draw the parts of the screen outside OSD message rect
-                        Bitmap sub_bmp(bmp, Rect(subrect.x - rectBmp.x, subrect.y - rectBmp.y, subrect.cx, subrect.cy));
-
-                        RDPBitmapData sub_bmp_data = bitmap_data;
-
-                        sub_bmp_data.dest_left = subrect.x;
-                        sub_bmp_data.dest_top = subrect.y;
-                        sub_bmp_data.dest_right = std::min<uint16_t>(sub_bmp_data.dest_left + subrect.cx - 1, bitmap_data.dest_right);
-                        sub_bmp_data.dest_bottom = sub_bmp_data.dest_top + subrect.cy - 1;
-
-                        sub_bmp_data.width = sub_bmp.cx();
-                        sub_bmp_data.height = sub_bmp.cy();
-                        sub_bmp_data.bits_per_pixel = safe_int(sub_bmp.bpp());
-                        sub_bmp_data.flags = 0;
-
-                        sub_bmp_data.bitmap_length = sub_bmp.bmp_size();
-
-                        this->sink.draw(sub_bmp_data, sub_bmp);
-                    }
-                }
-            }
-            else {
-                // The drawing order is fully ouside OSD message rect
-                this->sink.draw(bitmap_data, bmp);
-            }
-        }
-
-        void draw(const RDPScrBlt & cmd, const Rect clip)
-        {
-            const Rect drect = cmd.rect.intersect(clip);
-            const int deltax = cmd.srcx - cmd.rect.x;
-            const int deltay = cmd.srcy - cmd.rect.y;
-            const int srcx = drect.x + deltax;
-            const int srcy = drect.y + deltay;
-            const Rect srect(srcx, srcy, drect.cx, drect.cy);
-
-            const bool has_dest_intersec_fg = drect.has_intersection(this->protected_rect);
-            const bool has_src_intersec_fg = srect.has_intersection(this->protected_rect);
-
-            if (REDEMPTION_LIKELY(!has_dest_intersec_fg && !has_src_intersec_fg)) {
-                // neither scr or dest rect intersect with OSD message
-                this->sink.draw(cmd, clip);
-            }
-            else if (has_src_intersec_fg){
-                // We don't have src data, ask it to server, no choice
-                gdi::subrect4_t rects = gdi::subrect4(drect, this->protected_rect);
-                auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
-                auto av = make_array_view(rects.begin(), e);
-                this->callback.rdp_input_invalidate2(av);
-            }
-            else {
-                // only drect has intersection, src rect is available
-                for (const Rect & subrect : gdi::subrect4(drect, this->protected_rect)) {
-                    if (!subrect.isempty()) {
-                        this->sink.draw(cmd, subrect);
-                    }
-                }
-            }
-        }
-
-        void set_pointer(
-            uint16_t cache_idx, Pointer const& cursor,
-            gdi::GraphicApi::SetPointerMode mode)
-        {
-            this->sink.set_pointer(cache_idx, cursor, mode);
-        }
-
-        void set_palette(BGRPalette const & palette) { this->sink.set_palette(palette); }
-        void sync() { this->sink.sync(); }
-        void set_row(std::size_t rownum, bytes_view data) { this->sink.set_row(rownum, data); }
-        void begin_update() { this->sink.begin_update(); }
-        void end_update() { this->sink.end_update(); }
-    };
-
-    struct Graphics final : gdi::GraphicApiForwarder<GFilter>
-    {
-        using gdi::GraphicApiForwarder<GFilter>::GraphicApiForwarder;
-
-        using gdi::GraphicApiForwarder<GFilter>::sink;
+        using gdi::ProtectedGraphics::ProtectedGraphics;
     } gfilter;
 
     bool connected = false;
@@ -203,6 +66,7 @@ private:
 
     ClientInfo const & client_info;
     ClientExecute & rail_client_execute;
+    BGRPalette const & palette;
 
     rdp_api * rdpapi = nullptr;
     windowing_api * winapi = nullptr;
@@ -226,10 +90,14 @@ private:
     TimeBase const& time_base;
 
 public:
-    explicit ModWrapper(CRef<TimeBase> time_base, BGRPalette const & palette, gdi::GraphicApi& graphics, Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs, ClientExecute & rail_client_execute, Inifile & ini)
-    : gfilter(graphics, static_cast<Callback&>(*this), palette, Rect{})
+    explicit ModWrapper(
+        CRef<TimeBase> time_base, BGRPalette const & palette, gdi::GraphicApi& graphics,
+        Keymap2 & keymap, ClientInfo const & client_info, const Font & glyphs,
+        ClientExecute & rail_client_execute, Inifile & ini)
+    : gfilter(graphics, static_cast<RdpInput&>(*this), Rect{})
     , client_info(client_info)
     , rail_client_execute(rail_client_execute)
+    , palette(palette)
     , ini(ini)
     , bogus_refresh_rect_ex(false)
     , glyphs(glyphs)
@@ -463,8 +331,8 @@ private:
             this->get_mod().rdp_input_invalidate(r);
             return;
         }
-        auto rects = gdi::subrect4(r, this->get_protected_rect());
-        this->get_mod().rdp_input_invalidate2({std::begin(rects), std::end(rects)});
+
+        this->get_mod().rdp_input_invalidate2(gdi::subrect4(r, this->get_protected_rect()));
     }
 
     void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) override
@@ -507,12 +375,12 @@ private:
 
     [[nodiscard]] Rect get_protected_rect() const
     {
-        return this->gfilter.sink.protected_rect;
+        return this->gfilter.get_protected_rect();
     }
 
     void set_protected_rect(Rect const rect)
     {
-        this->gfilter.sink.protected_rect = rect;
+        this->gfilter.set_protected_rect(rect);
     }
 
     static constexpr int padw = 16;
@@ -520,10 +388,10 @@ private:
 
     void prepare_osd_message()
     {
-        this->bogus_refresh_rect_ex = (this->ini.get<cfg::globals::bogus_refresh_rect>()
+        this->bogus_refresh_rect_ex
+          = (this->ini.get<cfg::globals::bogus_refresh_rect>()
          && this->ini.get<cfg::globals::allow_using_multiple_monitors>()
          && (this->client_info.cs_monitor.monitorCount > 1));
-
 
         gdi::TextMetrics tm(this->glyphs, this->osd_message.c_str());
         int w = tm.width + padw * 2;
@@ -568,7 +436,7 @@ private:
             return ;
         }
 
-        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->gfilter.sink.palette);
+        auto const color_ctx = gdi::ColorCtx::from_bpp(this->client_info.screen_info.bpp, this->palette);
 
         drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 

@@ -27,6 +27,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/callback.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "test_only/gdi/test_graphic.hpp"
@@ -40,17 +41,29 @@ namespace
     template<class F>
     auto make_osd(gdi::GraphicApi & drawable, Rect const rect, F f)
     {
-        struct OSD : gdi::ProtectedGraphics
+        struct OSD : gdi::ProtectedGraphics, RdpInput
         {
             OSD(GraphicApi & drawable, Rect const rect, F f)
-            : gdi::ProtectedGraphics(drawable, rect)
+            : gdi::ProtectedGraphics(drawable, *this, rect)
             , f(f)
             {}
 
-            void refresh_rects(array_view<Rect> /*unused*/) override
+            void rdp_input_invalidate(Rect /*r*/) override
             {
                 f();
             }
+
+            void rdp_input_scancode(long /*param1*/, long /*param2*/, long /*param3*/, long /*param4*/, Keymap2 * /*keymap*/) override {}
+            void rdp_input_mouse(int /*device_flags*/, int /*x*/, int /*y*/, Keymap2 * /*keymap*/) override {}
+            void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/, int16_t /*param1*/, int16_t /*param2*/) override {}
+
+            // Client Notify module that gdi is up and running
+            void rdp_gdi_up_and_running() override {}
+
+            // Client Notify module that gdi is not up and running any more
+            void rdp_gdi_down() override {}
+
+            void refresh(Rect /*clip*/) override {}
 
             F f;
         };

@@ -233,23 +233,11 @@ public:
     }
 
 private:
-    struct InternalProtectedGraphics final : gdi::ProtectedGraphics
-    {
-        RemoteProgramsSessionManager & manager_;
-
-        explicit InternalProtectedGraphics(RemoteProgramsSessionManager & self)
-        : gdi::ProtectedGraphics(*self.drawable, self.protected_rect)
-        , manager_(self)
-        {}
-
-        void refresh_rects(array_view<Rect> av) override
-        { this->manager_.mod.rdp_input_invalidate2(av); }
-    };
-
     template<class Cmd, class... Args>
     void draw_impl(Cmd const & cmd, Args const &... args) {
         if (this->drawable) {
-            InternalProtectedGraphics(*this).draw(cmd, args...);
+            gdi::ProtectedGraphics(*this->drawable, this->mod, this->protected_rect)
+            .draw(cmd, args...);
         }
     }
 
