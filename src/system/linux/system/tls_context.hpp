@@ -64,6 +64,21 @@ inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std
     return false;
 }
 
+inline void set_tls_levels(SSL_CTX* ctx, uint32_t tls_min_level, uint32_t tls_max_level)
+{
+    auto to_version = [](uint32_t level) {
+        return level == 0 ? 0
+             : level == 1 ? TLS1_1_VERSION
+             : level == 2 ? TLS1_2_VERSION
+             : TLS1_3_VERSION;
+    };
+
+    SSL_CTX_set_min_proto_version(ctx, to_version(tls_min_level));
+    if (tls_max_level){
+        SSL_CTX_set_max_proto_version(ctx, to_version(tls_max_level));
+    }
+}
+
 /**
  * @brief all the context needed to manipulate TLS context for a TLS object
  */
@@ -138,10 +153,8 @@ public:
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-        SSL_CTX_set_min_proto_version(ctx, tls_client_params.tls_min_level);
-        if (tls_client_params.tls_max_level) {
-            SSL_CTX_set_max_proto_version(ctx, tls_client_params.tls_max_level);
-        }
+
+        set_tls_levels(ctx, tls_client_params.tls_min_level, tls_client_params.tls_max_level);
 
         // https://www.openssl.org/docs/man1.1.1/man3/SSL_CTX_set_ciphersuites.html
         // "DEFAULT@SEC_LEVEL=1"
@@ -513,11 +526,7 @@ public:
         LOG(LOG_INFO, "TLSContext::enable_server_tls() set SSL options");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
-        SSL_CTX_set_min_proto_version(ctx, tls_min_level);
-
-        if (tls_max_level){
-            SSL_CTX_set_max_proto_version(ctx, tls_max_level);
-        }
+        set_tls_levels(ctx, tls_min_level, tls_max_level);
 
         // LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
         // SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
