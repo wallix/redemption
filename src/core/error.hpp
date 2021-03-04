@@ -48,7 +48,6 @@
     f(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND)               \
     f(ERR_TRANSPORT_DIFFERS)                                 \
     f(ERR_TRANSPORT_OPEN_FAILED)                             \
-    f(ERR_TRANSPORT_SEEK_NOT_AVAILABLE)                      \
     f(ERR_TRANSPORT_SEEK_FAILED)                             \
                                                              \
     fv(ERR_TRANSPORT_WRITE_NO_ROOM, 1512)                    \
