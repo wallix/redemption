@@ -578,7 +578,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_log_level = 5
 
-# This policy setting allows you to configure a time limit for disconnected application sessions.
+# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # min = 0, max = 172800000
 # (in milliseconds)
@@ -657,11 +657,11 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#session_probe_update_disabled_features = 1
+#session_probe_childless_window_as_unidentified_input_field = 1
 
 # value: 0 or 1
 #_hidden
-#session_probe_childless_window_as_unidentified_input_field = 1
+#session_probe_update_disabled_features = 1
 
 # min = 0, max = 511
 #   0x000: none
@@ -682,6 +682,14 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_hidden
 #session_probe_bestsafe_integration = 0
 
+# For targets running WALLIX BestSafe only.
+# min = 0, max = 2
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+#_hidden
+#session_probe_on_account_manipulation = 0
+
 # The name of the environment variable pointing to the alternative directory to launch Session Probe.
 # If empty, the environment variable TMP will be used.
 # maxlen = 3
@@ -692,14 +700,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_hidden
 #session_probe_public_session = 0
-
-# For targets running WALLIX BestSafe only.
-# min = 0, max = 2
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
-#_hidden
-#session_probe_on_account_manipulation = 0
 
 # value: 0 or 1
 #_advanced

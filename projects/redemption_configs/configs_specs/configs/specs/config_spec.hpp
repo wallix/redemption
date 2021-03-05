@@ -381,7 +381,7 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeLogLevel>(), names{.cpp="session_probe_log_level", .connpolicy="log_level"}, set(SessionProbeLogLevel::Debug));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{.cpp="session_probe_disconnected_application_limit", .connpolicy="disconnected_application_limit"}, desc{
-            "This policy setting allows you to configure a time limit for disconnected application sessions.\n"
+            "(Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.\n"
             "0 to disable timeout."
         }, set(0));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{.cpp="session_probe_disconnected_session_limit", .connpolicy="disconnected_session_limit"}, desc{
@@ -413,13 +413,15 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{.cpp="session_probe_end_of_session_check_delay_time", .connpolicy="end_of_session_check_delay_time"}, set(0));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_ignore_ui_less_processes_during_end_of_session_check", .connpolicy="ignore_ui_less_processes_during_end_of_session_check"}, set(true));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_update_disabled_features", .connpolicy="update_disabled_features"}, set(true));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_childless_window_as_unidentified_input_field", .connpolicy="childless_window_as_unidentified_input_field"}, set(true));
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_update_disabled_features", .connpolicy="update_disabled_features"}, set(true));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeDisabledFeature>(), names{.cpp="session_probe_disabled_features", .connpolicy="disabled_features"}, set(SessionProbeDisabledFeature::chrome_inspection | SessionProbeDisabledFeature::firefox_inspection | SessionProbeDisabledFeature::group_membership));
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_bestsafe_integration", .connpolicy="enable_bestsafe_interaction"}, set(false));
+
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), names{.cpp="session_probe_on_account_manipulation", .connpolicy="on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L,
             type_<types::fixed_string<3>>(),
@@ -431,9 +433,6 @@ void config_spec_definition(Writer && W)
                 "If empty, the environment variable TMP will be used."});
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_public_session", .connpolicy="public_session"}, desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
-
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnAccountManipulation>(), names{.cpp="session_probe_on_account_manipulation", .connpolicy="on_account_manipulation"}, set(SessionProbeOnAccountManipulation::allow));
-
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_at_end_of_session_freeze_connection_and_wait"}, set(true));
 

@@ -494,7 +494,7 @@ session_probe_enable_log_rotation = boolean(default=True)
 #_hidden
 session_probe_log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
-# This policy setting allows you to configure a time limit for disconnected application sessions.
+# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden
@@ -558,10 +558,10 @@ session_probe_end_of_session_check_delay_time = integer(min=0, max=60000, defaul
 session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_hidden
-session_probe_update_disabled_features = boolean(default=True)
+session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
 
 #_hidden
-session_probe_childless_window_as_unidentified_input_field = boolean(default=True)
+session_probe_update_disabled_features = boolean(default=True)
 
 #   0x000: none
 #   0x001: Java Access Bridge
@@ -580,6 +580,13 @@ session_probe_disabled_features = integer(min=0, max=511, default=352)
 #_hidden
 session_probe_bestsafe_integration = boolean(default=False)
 
+# For targets running WALLIX BestSafe only.
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+#_hidden
+session_probe_on_account_manipulation = option(0, 1, 2, default=0)
+
 # The name of the environment variable pointing to the alternative directory to launch Session Probe.
 # If empty, the environment variable TMP will be used.
 #_hidden
@@ -588,13 +595,6 @@ session_probe_alternate_directory_environment_variable = string(max=3, default='
 # If enabled, disconnected session can be recovered by a different primary user.
 #_hidden
 session_probe_public_session = boolean(default=False)
-
-# For targets running WALLIX BestSafe only.
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
-#_hidden
-session_probe_on_account_manipulation = option(0, 1, 2, default=0)
 
 #_advanced
 session_probe_at_end_of_session_freeze_connection_and_wait = boolean(default=True)

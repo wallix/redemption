@@ -165,13 +165,13 @@ namespace cfg
         struct session_probe_memory_usage_limit;
         struct session_probe_end_of_session_check_delay_time;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
-        struct session_probe_update_disabled_features;
         struct session_probe_childless_window_as_unidentified_input_field;
+        struct session_probe_update_disabled_features;
         struct session_probe_disabled_features;
         struct session_probe_bestsafe_integration;
+        struct session_probe_on_account_manipulation;
         struct session_probe_alternate_directory_environment_variable;
         struct session_probe_public_session;
-        struct session_probe_on_account_manipulation;
         struct session_probe_at_end_of_session_freeze_connection_and_wait;
         struct session_probe_enable_cleaner;
         struct session_probe_clipboard_based_launcher_reset_keyboard_status;

@@ -206,7 +206,7 @@ enable_log_rotation = boolean(default=True)
 #_advanced
 log_level = option(1, 2, 3, 4, 5, 6, default=5)
 
-# This policy setting allows you to configure a time limit for disconnected application sessions.
+# (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
 # 0 to disable timeout.
 # (in milliseconds)
 #_advanced
@@ -261,10 +261,10 @@ end_of_session_check_delay_time = integer(min=0, max=60000, default=0)
 ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
 #_advanced
-update_disabled_features = boolean(default=True)
+childless_window_as_unidentified_input_field = boolean(default=True)
 
 #_advanced
-childless_window_as_unidentified_input_field = boolean(default=True)
+update_disabled_features = boolean(default=True)
 
 #   0x000: none
 #   0x001: Java Access Bridge
@@ -282,6 +282,12 @@ disabled_features = integer(min=0, max=511, default=352)
 
 enable_bestsafe_interaction = boolean(default=False)
 
+# For targets running WALLIX BestSafe only.
+#   0: User action will be accepted
+#   1: (Same thing as 'allow') 
+#   2: User action will be rejected
+on_account_manipulation = option(0, 1, 2, default=0)
+
 # The name of the environment variable pointing to the alternative directory to launch Session Probe.
 # If empty, the environment variable TMP will be used.
 #_advanced
@@ -289,12 +295,6 @@ alternate_directory_environment_variable = string(max=3, default='')
 
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
-
-# For targets running WALLIX BestSafe only.
-#   0: User action will be accepted
-#   1: (Same thing as 'allow') 
-#   2: User action will be rejected
-on_account_manipulation = option(0, 1, 2, default=0)
 
 # Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
 # (Ex. for backwards compatibility only: 10.1.0.0/16:22)

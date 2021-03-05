@@ -134,7 +134,7 @@ cfg::mod_rdp::session_probe_log_level ⇐ mod_rdp:session_probe_log_level   [Ses
       5: Debug
       6: Detail
 cfg::mod_rdp::session_probe_disconnected_application_limit ⇐ mod_rdp:session_probe_disconnected_application_limit   [std::chrono::milliseconds]
-    This policy setting allows you to configure a time limit for disconnected application sessions.
+    (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions.
     0 to disable timeout.
 cfg::mod_rdp::session_probe_disconnected_session_limit ⇐ mod_rdp:session_probe_disconnected_session_limit   [std::chrono::milliseconds]
     This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.
@@ -152,8 +152,8 @@ cfg::mod_rdp::session_probe_handle_usage_limit ⇐ mod_rdp:session_probe_handle_
 cfg::mod_rdp::session_probe_memory_usage_limit ⇐ mod_rdp:session_probe_memory_usage_limit   [uint32_t]
 cfg::mod_rdp::session_probe_end_of_session_check_delay_time ⇐ mod_rdp:session_probe_end_of_session_check_delay_time   [std::chrono::milliseconds]
 cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check ⇐ mod_rdp:session_probe_ignore_ui_less_processes_during_end_of_session_check   [bool]
-cfg::mod_rdp::session_probe_update_disabled_features ⇐ mod_rdp:session_probe_update_disabled_features   [bool]
 cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field ⇐ mod_rdp:session_probe_childless_window_as_unidentified_input_field   [bool]
+cfg::mod_rdp::session_probe_update_disabled_features ⇐ mod_rdp:session_probe_update_disabled_features   [bool]
 cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled_features   [SessionProbeDisabledFeature]
       0x000: none
       0x001: Java Access Bridge
@@ -166,16 +166,16 @@ cfg::mod_rdp::session_probe_disabled_features ⇐ mod_rdp:session_probe_disabled
       0x100: Inspect group membership of user
     Note: values can be added (enable all: 0x001 + 0x002 + 0x004 + 0x010 + 0x020 + 0x040 + 0x080 + 0x100 = 0x1f7)
 cfg::mod_rdp::session_probe_bestsafe_integration ⇐ mod_rdp:session_probe_bestsafe_integration   [bool]
-cfg::mod_rdp::session_probe_alternate_directory_environment_variable ⇐ mod_rdp:session_probe_alternate_directory_environment_variable   [std::string(maxlen=3)]
-    The name of the environment variable pointing to the alternative directory to launch Session Probe.
-    If empty, the environment variable TMP will be used.
-cfg::mod_rdp::session_probe_public_session ⇐ mod_rdp:session_probe_public_session   [bool]
-    If enabled, disconnected session can be recovered by a different primary user.
 cfg::mod_rdp::session_probe_on_account_manipulation ⇐ mod_rdp:session_probe_on_account_manipulation   [SessionProbeOnAccountManipulation]
     For targets running WALLIX BestSafe only.
       0: User action will be accepted
       1: (Same thing as 'allow') 
       2: User action will be rejected
+cfg::mod_rdp::session_probe_alternate_directory_environment_variable ⇐ mod_rdp:session_probe_alternate_directory_environment_variable   [std::string(maxlen=3)]
+    The name of the environment variable pointing to the alternative directory to launch Session Probe.
+    If empty, the environment variable TMP will be used.
+cfg::mod_rdp::session_probe_public_session ⇐ mod_rdp:session_probe_public_session   [bool]
+    If enabled, disconnected session can be recovered by a different primary user.
 cfg::mod_rdp::server_cert_store ⇐ mod_rdp:server_cert_store   [bool]
     Keep known server certificates on WAB
 cfg::mod_rdp::server_cert_check ⇐ mod_rdp:server_cert_check   [ServerCertCheck]

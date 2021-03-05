@@ -1115,18 +1115,18 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "session_probe_update_disabled_features"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_update_disabled_features&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "session_probe_childless_window_as_unidentified_input_field"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                value
+            );
+        }
+        else if (key == "session_probe_update_disabled_features"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::session_probe_update_disabled_features&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -1147,6 +1147,14 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
+        else if (key == "session_probe_on_account_manipulation"_zv) {
+            ::config_parse_and_log(
+                this->section_name, key.c_str(),
+                static_cast<cfg::mod_rdp::session_probe_on_account_manipulation&>(this->variables).value,
+                ::configs::spec_type<SessionProbeOnAccountManipulation>{},
+                value
+            );
+        }
         else if (key == "session_probe_alternate_directory_environment_variable"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -1160,14 +1168,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::session_probe_public_session&>(this->variables).value,
                 ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "session_probe_on_account_manipulation"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::session_probe_on_account_manipulation&>(this->variables).value,
-                ::configs::spec_type<SessionProbeOnAccountManipulation>{},
                 value
             );
         }

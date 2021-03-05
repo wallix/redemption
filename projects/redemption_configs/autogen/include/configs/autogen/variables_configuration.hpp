@@ -1758,7 +1758,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { SessionProbeLogLevel::Debug };
     };
-    /// This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
+    /// (Deprecated!) This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy    [name: session_probe::disconnected_application_limit] <br/>
@@ -1990,10 +1990,10 @@ namespace cfg
         type value { true };
     };
     /// type: bool <br/>
-    /// connpolicy -> proxy    [name: session_probe::update_disabled_features] <br/>
-    /// sesmanName: mod_rdp:session_probe_update_disabled_features <br/>
+    /// connpolicy -> proxy    [name: session_probe::childless_window_as_unidentified_input_field] <br/>
+    /// sesmanName: mod_rdp:session_probe_childless_window_as_unidentified_input_field <br/>
     /// default: true <br/>
-    struct mod_rdp::session_probe_update_disabled_features {
+    struct mod_rdp::session_probe_childless_window_as_unidentified_input_field {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -2005,10 +2005,10 @@ namespace cfg
         type value { true };
     };
     /// type: bool <br/>
-    /// connpolicy -> proxy    [name: session_probe::childless_window_as_unidentified_input_field] <br/>
-    /// sesmanName: mod_rdp:session_probe_childless_window_as_unidentified_input_field <br/>
+    /// connpolicy -> proxy    [name: session_probe::update_disabled_features] <br/>
+    /// sesmanName: mod_rdp:session_probe_update_disabled_features <br/>
     /// default: true <br/>
-    struct mod_rdp::session_probe_childless_window_as_unidentified_input_field {
+    struct mod_rdp::session_probe_update_disabled_features {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
@@ -2049,6 +2049,21 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { false };
     };
+    /// type: SessionProbeOnAccountManipulation <br/>
+    /// connpolicy -> proxy    [name: session_probe::on_account_manipulation] <br/>
+    /// sesmanName: mod_rdp:session_probe_on_account_manipulation <br/>
+    /// default: SessionProbeOnAccountManipulation::allow <br/>
+    struct mod_rdp::session_probe_on_account_manipulation {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 52};
+        using type = SessionProbeOnAccountManipulation;
+        using sesman_and_spec_type = SessionProbeOnAccountManipulation;
+        using mapped_type = sesman_and_spec_type;
+        type value { SessionProbeOnAccountManipulation::allow };
+    };
     /// The name of the environment variable pointing to the alternative directory to launch Session Probe. <br/>
     /// If empty, the environment variable TMP will be used. <br/>
     /// type: char[4] <br/>
@@ -2060,7 +2075,7 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 52};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 53};
         using type = char[4];
         using sesman_and_spec_type = ::configs::spec_types::fixed_string;
         using mapped_type = sesman_and_spec_type;
@@ -2076,26 +2091,11 @@ namespace cfg
         static constexpr bool is_proxy_to_sesman = false;
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 53};
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 54};
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value { false };
-    };
-    /// type: SessionProbeOnAccountManipulation <br/>
-    /// connpolicy -> proxy    [name: session_probe::on_account_manipulation] <br/>
-    /// sesmanName: mod_rdp:session_probe_on_account_manipulation <br/>
-    /// default: SessionProbeOnAccountManipulation::allow <br/>
-    struct mod_rdp::session_probe_on_account_manipulation {
-        static constexpr bool is_sesman_to_proxy = true;
-        static constexpr bool is_proxy_to_sesman = false;
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 54};
-        using type = SessionProbeOnAccountManipulation;
-        using sesman_and_spec_type = SessionProbeOnAccountManipulation;
-        using mapped_type = sesman_and_spec_type;
-        type value { SessionProbeOnAccountManipulation::allow };
     };
     /// type: bool <br/>
     /// default: true <br/>
@@ -5550,12 +5550,12 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_end_of_session_check_delay_time
 , cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check
-, cfg::mod_rdp::session_probe_update_disabled_features
 , cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field
+, cfg::mod_rdp::session_probe_update_disabled_features
 , cfg::mod_rdp::session_probe_bestsafe_integration
+, cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::session_probe_alternate_directory_environment_variable
 , cfg::mod_rdp::session_probe_public_session
-, cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::session_probe_at_end_of_session_freeze_connection_and_wait
 , cfg::mod_rdp::session_probe_enable_cleaner
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_reset_keyboard_status
@@ -5957,13 +5957,13 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_end_of_session_check_delay_time
 , cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check
-, cfg::mod_rdp::session_probe_update_disabled_features
 , cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field
+, cfg::mod_rdp::session_probe_update_disabled_features
 , cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::session_probe_bestsafe_integration
+, cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::session_probe_alternate_directory_environment_variable
 , cfg::mod_rdp::session_probe_public_session
-, cfg::mod_rdp::session_probe_on_account_manipulation
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message
