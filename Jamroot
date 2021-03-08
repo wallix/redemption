@@ -283,19 +283,29 @@ make ppocr_resources :
 #
 #   bjam install-gettext
 #
-actions make_gettextinstall
+actions gen_gettext_mo
 {
     ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/gen_msg_catalog.py -C -p $(REDEMPTION_PUBLIC_PATH)/tools/i18n/ -b $(<).d
     :>$(<)
 }
-actions make_gettextinstall2
+actions make_gettext_install
 {
-    mkdir -p $(INSTALLDIR)$(SHARE_PREFIX)
-    cp -R $(>).d $(INSTALLDIR)$(SHARE_PREFIX)/$(>:B) ;
+    mkdir -p $(INSTALLDIR)$(SHARE_PREFIX)/$(>:B)
+    cp -R $(>).d/* $(INSTALLDIR)$(SHARE_PREFIX)/$(>:B) ;
 }
 
 explicit install-gettext ;
-make install-gettext : locale : @make_gettextinstall2 ;
+make install-gettext : locale : @make_gettext_install ;
 
 explicit locale ;
-make locale : : @make_gettextinstall ;
+make locale : : @gen_gettext_mo ;
+
+
+actions update_gettext_po
+{
+    cd tools/i18n/
+    ./gen_msg_catalog.py -p . -e
+    ./gen_msg_catalog.py -p . -M
+}
+explicit update-po ;
+make update-po : : @update_gettext_po ;
