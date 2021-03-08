@@ -33,8 +33,8 @@
 
 namespace
 {
-    constexpr zstring_view GETTEXTINSTALL_DIRNAME = "locale"_zv;
-    constexpr zstring_view CATEGORY_DIRNAME = "LC_MESSAGES"_zv;
+    constexpr zstring_view GETTEXTINSTALL_DIRNAME = "/locale/"_zv;
+    constexpr zstring_view CATEGORY_DIRNAME = "/LC_MESSAGES/"_zv;
     constexpr zstring_view DOMAIN_NAME = "redemption"_zv;
     constexpr zstring_view DOMAIN_NAME_EXT = ".mo"_zv;
     constexpr const char *CODESET = "UTF-8";
@@ -44,15 +44,12 @@ namespace
     [[nodiscard]]
     inline bool
     check_directory(const std::string& directory_path,
-                    const char *log_msg_part,
                     zstring_view locale_name)
     {
-        if (!dir_exist(directory_path))
-        {
+        if (!dir_exist(directory_path)) {
             LOG(LOG_WARNING,
                 "need %s directory for messages with \"%s\" locale",
-                log_msg_part,
-                locale_name);
+                directory_path, locale_name);
             return false;
         }
         return true;
@@ -151,66 +148,42 @@ namespace i18n
 
     void MessageTranslatorGettext::set_context(zstring_view locale_name)
     {
-        std::string gettextinstall_path = str_concat(app_path(AppPath::Share),
-                                                     '/',
-                                                     GETTEXTINSTALL_DIRNAME,
-                                                     '/');
+        std::string locale_path = str_concat(app_path(AppPath::Share),
+                                             GETTEXTINSTALL_DIRNAME);
 
-        if (!check_directory(gettextinstall_path,
-                             "gettextinstall",
-                             locale_name))
-        {
+        if (!check_directory(locale_path, locale_name)) {
             return;
         }
 
-        std::string target_locale_path = str_concat(gettextinstall_path,
-                                                    '/',
-                                                    locale_name,
-                                                    '/');
+        std::string target_locale_path = str_concat(locale_path, locale_name);
 
-        if (!check_directory(target_locale_path,
-                             "target locale",
-                             locale_name))
-        {
+        if (!check_directory(target_locale_path, locale_name)) {
             return;
         }
 
         std::string category_path = str_concat(target_locale_path,
-                                               '/',
-                                               CATEGORY_DIRNAME,
-                                               '/');
+                                               CATEGORY_DIRNAME);
 
-        if (!check_directory(category_path,
-                             "category",
-                             locale_name))
-        {
+        if (!check_directory(category_path, locale_name)) {
             return;
         }
 
         if (auto domain_name_file_path = str_concat(category_path,
-                                                    '/',
                                                     DOMAIN_NAME,
                                                     DOMAIN_NAME_EXT);
-            !check_domain_name_file_path(domain_name_file_path, locale_name))
-        {
+            !check_domain_name_file_path(domain_name_file_path, locale_name)
+        ) {
             return;
         }
 
-        if (!std::setlocale(LC_MESSAGES, LOCALE))
-        {
+        if (!std::setlocale(LC_MESSAGES, LOCALE)) {
             LOG(LOG_ERR,
                 "cannot set LC_MESSAGES environment variable "
                 "with locale for use GNU gettext framework");
             return;
         }
 
-        if (setenv(LANGUAGE_ENV_VAR, locale_name.c_str(), 1) == -1)
-        {
-            if (errno == ENOMEM)
-            {
-                LOG(LOG_ERR, "setenv() error (errno : %d)", errno);
-                throw std::bad_alloc();
-            }
+        if (setenv(LANGUAGE_ENV_VAR, locale_name.c_str(), 1) == -1) {
             LOG(LOG_ERR,
                 "cannot set LANGUAGE environment variable "
                 "with locale \"%s\" for use GNU gettext framework",
@@ -218,13 +191,7 @@ namespace i18n
             return;
         }
 
-        if (!bindtextdomain(DOMAIN_NAME.c_str(), gettextinstall_path.c_str()))
-        {
-            if (errno == ENOMEM)
-            {
-                LOG(LOG_ERR, "bindtextdomain() error (errno : %d)", errno);
-                throw std::bad_alloc();
-            }
+        if (!bindtextdomain(DOMAIN_NAME.c_str(), locale_path.c_str())) {
             LOG(LOG_ERR,
                 "cannot set directory for domain name "
                 "with locale \"%s\" for use GNU gettext framework",
@@ -232,15 +199,7 @@ namespace i18n
             return;
         }
 
-        if (!bind_textdomain_codeset(DOMAIN_NAME.c_str(), CODESET))
-        {
-            if (errno == ENOMEM)
-            {
-                LOG(LOG_ERR,
-                    "bind_textdomain_codeset() error (errno : %d)",
-                    errno);
-                throw std::bad_alloc();
-            }
+        if (!bind_textdomain_codeset(DOMAIN_NAME.c_str(), CODESET)) {
             LOG(LOG_ERR,
                 "cannot set codeset for domain name "
                 "with locale \"%s\" for use GNU gettext framework",
@@ -248,24 +207,16 @@ namespace i18n
             return;
         }
 
-        if (!textdomain(DOMAIN_NAME.c_str()))
-        {
-            if (errno == ENOMEM)
-            {
-                LOG(LOG_ERR, "textdomain() error (errno : %d)", errno);
-                throw std::bad_alloc();
-            }
+        if (!textdomain(DOMAIN_NAME.c_str())) {
             LOG(LOG_ERR,
                 "cannot set domain name with locale \"%s\" "
                 "for use GNU gettext framework",
                 locale_name);
             return;
         }
-        LOG(LOG_INFO,
-            "i18n context is set for \"%s\" locale",
-            locale_name);
+
+        LOG(LOG_INFO, "i18n context is set for \"%s\" locale", locale_name);
         _clearable_context = true;
-        return;
     }
 
     zstring_view
