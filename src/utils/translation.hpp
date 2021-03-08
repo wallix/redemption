@@ -33,14 +33,6 @@ namespace trkeys
 {
     struct TrKey { zstring_view translation; };
 
-#define TR_PROTECTED_KV(name, en)                       \
-    constexpr struct TrKey##_##name                     \
-    { zstring_view translation; } name{en ""_zv}
-
-    TR_PROTECTED_KV(password, "Password");
-
-#undef TR_PROTECTED_KV
-
     template<class T> struct TrKeyFmt
     {
         zstring_view translation;
@@ -61,6 +53,7 @@ namespace trkeys
 
 #define TR_KV(name, en) constexpr TrKey name{en ""_zv}
     TR_KV(login, "Login");
+    TR_KV(password, "Password");
     TR_KV(diagnostic, "Diagnostic");
     TR_KV(connection_closed, "Connection closed");
     TR_KV(OK, "OK");
@@ -269,11 +262,6 @@ public:
         this->lang = lang;
     }
 
-    [[nodiscard]] zstring_view translate(trkeys::TrKey_password k) const
-    {
-        return _translate(k.translation);
-    }
-
     [[nodiscard]] zstring_view translate(trkeys::TrKey k) const
     {
         return _translate(k.translation);
@@ -290,12 +278,6 @@ public:
     }
 };
 
-
-inline zstring_view TR(trkeys::TrKey_password k, Language lang)
-{
-    Translation::getInstance().set_lang(lang);
-    return Translation::getInstance().translate(k);
-}
 
 inline zstring_view TR(trkeys::TrKey k, Language lang)
 {
@@ -315,11 +297,6 @@ struct Translator
     explicit Translator(Language lang)
       : lang(lang)
     {}
-
-    zstring_view operator()(trkeys::TrKey_password const & k) const
-    {
-        return TR(k, this->lang);
-    }
 
     zstring_view operator()(trkeys::TrKey const & k) const
     {

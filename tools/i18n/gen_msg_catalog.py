@@ -19,7 +19,7 @@ def check_po_dir_path(po_dir_path) :
 
 def check_msg_catalog_template_path(po_dir_path) :
     msg_catalog_template_file = po_dir_path + '/' + DOMAIN_NAME + ".pot"
-    
+
     if not os.path.exists(msg_catalog_template_file) :
         raise OSError("missing '"
                       + msg_catalog_template_file
@@ -44,21 +44,21 @@ def check_transl_msg_catalog_path(target_locale_dir_path) :
                                + '/'
                                + DOMAIN_NAME
                                + ".po")
-    
+
     if not os.path.exists(transl_msg_catalog_file) :
         raise OSError("missing '"
                       + transl_msg_catalog_file
                       + "' file")
     elif not os.path.isfile(transl_msg_catalog_file) :
         raise OSError("cannot use '"
-                      + transl_msg_catalog_file 
+                      + transl_msg_catalog_file
                       + "' as file")
 
 
 
 def gen_msg_catalog_template(po_path) :
     po_dir_path = po_path + '/' + PO_OUTPUT_DIRNAME
-    
+
     if not os.path.exists(po_dir_path) :
         os.mkdir(po_dir_path)
         print("'" + po_dir_path + "' directory has been generated")
@@ -69,7 +69,6 @@ def gen_msg_catalog_template(po_path) :
         "xgettext",
         "--keyword=TR_KV:2",
         "--keyword=TR_KV_FMT:2",
-        "--keyword=TR_PROTECTED_KV:2",
         "--c++",
         "--sort-by-file",
         "--output="
@@ -92,12 +91,12 @@ def gen_msg_catalog_template(po_path) :
 
 def gen_transl_msg_catalog(target_locale, po_path) :
     po_dir_path = po_path + '/' + PO_OUTPUT_DIRNAME
-    
+
     check_po_dir_path(po_dir_path)
     check_msg_catalog_template_path(po_dir_path)
-    
+
     target_locale_dir_path = po_dir_path + '/' + target_locale
-    
+
     if not os.path.exists(target_locale_dir_path) :
         os.mkdir(target_locale_dir_path)
         print("'" + target_locale_dir_path + "' directory has been generated")
@@ -128,7 +127,7 @@ def gen_transl_msg_catalog(target_locale, po_path) :
 
 def gen_modified_transl_msg_catalog_from_tpl(target_locale, po_path) :
     po_dir_path = po_path + '/' + PO_OUTPUT_DIRNAME
-    
+
     check_po_dir_path(po_dir_path)
     check_msg_catalog_template_path(po_dir_path)
 
@@ -153,7 +152,7 @@ def gen_modified_transl_msg_catalog_from_tpl(target_locale, po_path) :
                       + target_locale
                       + "' message catalog modification "
                       "(maybe in your .po file, charset is wrong)")
-    
+
     print("'"
           + target_locale_dir_path
           + '/'
@@ -162,7 +161,7 @@ def gen_modified_transl_msg_catalog_from_tpl(target_locale, po_path) :
 
 def gen_compiled_msg_catalog(target_locale, po_path, mo_path) :
     po_dir_path = po_path + '/' + PO_OUTPUT_DIRNAME
-    
+
     check_po_dir_path(po_dir_path)
 
     po_target_locale_dir_path = po_dir_path + '/' + target_locale
@@ -177,7 +176,7 @@ def gen_compiled_msg_catalog(target_locale, po_path, mo_path) :
         raise OSError("cannot use '" + mo_path + "' as directory")
 
     mo_target_locale_dir_path = mo_path + '/' + target_locale
-    
+
     if not os.path.exists(mo_target_locale_dir_path) :
         os.mkdir(mo_target_locale_dir_path)
         print("'"
@@ -203,7 +202,7 @@ def gen_compiled_msg_catalog(target_locale, po_path, mo_path) :
         "--output-file="
         + mo_category_dir_path + '/' + DOMAIN_NAME + ".mo",
         po_target_locale_dir_path + '/' + DOMAIN_NAME + ".po"]
-    
+
     if subprocess.call(list_msgfmt_cmd,
                        shell=False,
                        stdout=subprocess.DEVNULL,
@@ -220,40 +219,40 @@ def gen_compiled_msg_catalog(target_locale, po_path, mo_path) :
 
 def gen_all_modified_transl_msg_catalogs_from_tpl(po_path) :
     po_dir_path = po_path + '/' + PO_OUTPUT_DIRNAME
-    
+
     check_po_dir_path(po_dir_path)
-    
+
     target_locale_dir_name_list = ([target_locale_dir_name
         for target_locale_dir_name in os.listdir(po_dir_path)
         if os.path.isdir(po_dir_path + '/' + target_locale_dir_name)])
-    
+
     if not target_locale_dir_name_list :
         raise RuntimeError("no locale directory in '"
                            + po_dir_path
                            + "' directory")
-    
+
     for target_locale_dir_name in target_locale_dir_name_list :
         gen_modified_transl_msg_catalog_from_tpl(target_locale_dir_name,
                                                  po_path)
-    
+
 def gen_all_compiled_msg_catalogs(po_path, mo_path) :
     po_path_dir = po_path + '/' + PO_OUTPUT_DIRNAME
-    
+
     check_po_dir_path(po_path_dir)
 
     target_locale_dir_name_list = ([target_locale_dir_name
         for target_locale_dir_name in os.listdir(po_path_dir)
         if os.path.isdir(po_path_dir + '/' + target_locale_dir_name)])
-    
+
     if not target_locale_dir_name_list :
         raise RuntimeError("no locale directory in '"
                            + po_path_dir
                            + "' directory")
-    
+
     for target_locale_dir_name in target_locale_dir_name_list :
         gen_compiled_msg_catalog(target_locale_dir_name, po_path, mo_path)
 
-def execute_generation(args) :    
+def execute_generation(args) :
     if args.extract_source :
         gen_msg_catalog_template(args.po_path)
     elif args.init_catalog :
@@ -271,7 +270,7 @@ def execute_generation(args) :
 
 def parse_arguments() :
     import argparse
-    
+
     usage_example_desc = ("example usage with 'en' locale: \n"
                           + sys.argv[0] + " -e -p .\n"
                           + sys.argv[0] + " -i -l en -p .\n"
@@ -300,7 +299,7 @@ def parse_arguments() :
                                action="store_true",
                                help=("initialize message catalog by "
                                      "generating .po file (if .po file "
-                                     "already exists, use rather -m option " 
+                                     "already exists, use rather -m option "
                                      "for avoid overwritten) "
                                      "[to use with -l, -p options]"))
     mandatory_grp.add_argument("-m",
@@ -329,7 +328,7 @@ def parse_arguments() :
                                help=("compile all message catalogs by "
                                      "generating .mo files "
                                      "[to use with -p, -b options]"))
-    
+
     optional_grp = parser.add_argument_group("optional arguments")
 
     optional_grp.add_argument("-h",
@@ -380,7 +379,7 @@ def parse_arguments() :
 
 if __name__ == "__main__" :
     args = parse_arguments()
-    
+
     try :
         execute_generation(args)
     except :
