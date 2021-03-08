@@ -298,12 +298,15 @@ explicit install-gettext ;
 make install-gettext : locale : @make_gettext_install ;
 
 explicit locale ;
-make locale : : @gen_gettext_mo ;
+make locale :
+  ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/po/fr/redemption.po
+  ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/po/en/redemption.po
+: @gen_gettext_mo ;
 
 
 actions update_gettext_po
 {
-    cd tools/i18n/
+    cd ./$(REDEMPTION_PUBLIC_PATH)/tools/i18n/
     ./gen_msg_catalog.py -p . -e
     ./gen_msg_catalog.py -p . -M
 }
