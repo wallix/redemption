@@ -102,8 +102,10 @@ RED_AUTO_TEST_CASE(TestWidgetVerticalScrollTextLongText)
     ctx.set_size(300, 200);
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long1.png");
 
-    ctx.click(290, 10);
+    ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 290, 10, nullptr);
+    ctx.draw();
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long2.png");
+    ctx.scroll.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 290, 10, nullptr);
 
     ctx.click(290, 190);
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long3.png");
@@ -130,7 +132,7 @@ RED_AUTO_TEST_CASE(TestWidgetVerticalScrollTextLongText)
     RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long5_2.png");
 
     ctx.input_key(Keymap2::KEVENT_DOWN_ARROW);
-    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long6_3.png");
+    RED_CHECK_IMG(ctx.drawable, IMG_TEST_PATH "long6_2.png");
 
     auto dim = ctx.scroll.get_optimal_dim();
     RED_CHECK(dim.w == 280);
