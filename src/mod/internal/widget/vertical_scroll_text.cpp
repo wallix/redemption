@@ -164,9 +164,16 @@ void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y, K
         return;
     }
 
-    if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
-        this->mouse_down = true;
+    auto update_scroll_bar = [this]{
+        this->rdp_input_invalidate(Rect(
+            this->x() + this->cx() - this->button_dim.w,
+            this->y(),
+            this->button_dim.w,
+            this->cy()
+        ));
+    };
 
+    if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
         auto in_range = [](int x, int16_t rx, uint16_t rcx){
             return rx <= x && x < rx + rcx;
         };
@@ -181,12 +188,7 @@ void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y, K
             this->mouse_start_y = y;
             this->mouse_y = this->cursor_button_y - this->button_dim.w;
 
-            this->rdp_input_invalidate(Rect(
-                this->x() + this->cx() - this->button_dim.w,
-                this->y(),
-                this->button_dim.w,
-                this->cy()
-            ));
+            update_scroll_bar();
         }
         // top
         else if (y < this->y() + this->cursor_button_y) {
@@ -200,11 +202,13 @@ void WidgetVerticalScrollText::rdp_input_mouse(int device_flags, int x, int y, K
         }
     }
     else if (device_flags == MOUSE_FLAG_BUTTON1) {
-        this->mouse_down      = false;
-        this->selected_button = ButtonType::None;
+        if (bool(this->selected_button)) {
+            this->selected_button = ButtonType::None;
+            update_scroll_bar();
+        }
     }
     else if (device_flags == MOUSE_FLAG_MOVE) {
-        if (this->mouse_down && (ButtonType::Cursor == this->selected_button)) {
+        if (ButtonType::Cursor == this->selected_button) {
             auto const delta = y - this->mouse_start_y;
             auto const cursor_y = this->mouse_y + delta;
             auto new_y = cursor_y * this->total_h / this->scroll_h;
@@ -318,7 +322,7 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
             auto draw_text_button = [&](
                 char const* text, ButtonType button_type, int16_t y, uint16_t bh, uint16_t dy
             ){
-                bool const has_focus = (this->mouse_down && (this->selected_button == button_type));
+                bool const has_focus = (this->selected_button == button_type);
                 auto const bg = has_focus ? this->focus_color : this->bg_color;
                 if (has_focus) {
                     opaque_rect(Rect(sx + 2, y + 2, bw - 4, bh - 4), bg);
@@ -348,35 +352,40 @@ void WidgetVerticalScrollText::rdp_input_invalidate(Rect clip)
             draw_button_borders(ry + rh - bh, bh);
         }
 
-        uint16_t const glyph_cy = this->font.max_height() + this->y_text;
+        if (!this->has_scroll
+         || (this->x() <= rect_intersect.x
+          && rect_intersect.x <= this->x() + this->cx() - this->button_dim.w)
+        ) {
+            uint16_t const glyph_cy = this->font.max_height() + this->y_text;
 
-        auto lines = this->line_metrics.lines();
-        size_t start = size_t(this->current_y) / glyph_cy;
-        size_t count = this->cy() / glyph_cy + 1;
-        start = std::min(start, lines.size());
-        lines = lines.from_offset(std::min(start, lines.size()));
-        lines = lines.first(std::min(count, lines.size()));
+            auto lines = this->line_metrics.lines();
+            size_t start = size_t(this->current_y) / glyph_cy;
+            size_t count = this->cy() / glyph_cy + 1;
+            start = std::min(start, lines.size());
+            lines = lines.from_offset(std::min(start, lines.size()));
+            lines = lines.first(std::min(count, lines.size()));
 
-        int dy = this->y() + int(start) * glyph_cy - this->current_y;
-        int const incy = this->y_text;
-        int16_t const dx = this->x_text + rect.x;
-        uint16_t const cx_text = rect.cx - (has_scroll ? this->button_dim.w : 0);
-        for (auto const& line : lines) {
-            dy += incy;
-            gdi::server_draw_text(
-                this->drawable,
-                this->font,
-                dx,
-                int16_t(dy),
-                line.str,
-                this->fg_color,
-                this->bg_color,
-                gdi::ColorCtx::depth24(),
-                rect_intersect.intersect(
-                    Rect(rect.x, int16_t(dy), cx_text, this->font.max_height())
-                )
-            );
-            dy += this->font.max_height();
+            int dy = this->y() + int(start) * glyph_cy - this->current_y;
+            int const incy = this->y_text;
+            int16_t const dx = this->x_text + rect.x;
+            uint16_t const cx_text = rect.cx - (has_scroll ? this->button_dim.w : 0);
+            for (auto const& line : lines) {
+                dy += incy;
+                gdi::server_draw_text(
+                    this->drawable,
+                    this->font,
+                    dx,
+                    int16_t(dy),
+                    line.str,
+                    this->fg_color,
+                    this->bg_color,
+                    gdi::ColorCtx::depth24(),
+                    rect_intersect.intersect(
+                        Rect(rect.x, int16_t(dy), cx_text, this->font.max_height())
+                    )
+                );
+                dy += this->font.max_height();
+            }
         }
 
         this->drawable.end_update();

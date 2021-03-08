@@ -79,7 +79,6 @@ private:
     Dimension const button_dim;
     uint16_t cursor_button_h;
 
-    bool mouse_down = false;
     bool has_scroll = false;
 
     enum class ButtonType : unsigned char
