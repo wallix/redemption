@@ -295,7 +295,8 @@ void FlatLogin::move_size_widget(int16_t left, int16_t top, uint16_t width, uint
         edit.set_xy(left + cbloc_x + labels_w, label.y() - edit.get_border_height() - 3);
     };
 
-    set_xy_label(this->error_message_label);
+    this->error_message_label.set_xy(left + cbloc_x + labels_w, y);
+    y += edit_dim.h + space_h;
     if (this->show_target) {
         set_xy_label_and_edit(this->target_edit, this->target_label);
     }
