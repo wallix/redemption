@@ -52,6 +52,7 @@ namespace trkeys
     constexpr TrKeyFmt<TrKeyFmt##_##name> name{en ""_zv}
 
 #define TR_KV(name, en) constexpr TrKey name{en ""_zv}
+    TR_KV(optional_target, "Target (optional)");
     TR_KV(login, "Login");
     TR_KV(password, "Password");
     TR_KV(diagnostic, "Diagnostic");

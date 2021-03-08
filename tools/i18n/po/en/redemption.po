@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-01 14:00+0100\n"
+"POT-Creation-Date: 2021-03-08 12:37+0100\n"
 "PO-Revision-Date: 2021-03-01 14:06+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,119 +17,123 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../src/utils/translation.hpp:40
-msgid "Password"
-msgstr "Password"
+#: ../../src/utils/translation.hpp:55
+msgid "Target (optional)"
+msgstr ""
 
-#: ../../src/utils/translation.hpp:63
+#: ../../src/utils/translation.hpp:56
 msgid "Login"
 msgstr "Login"
 
-#: ../../src/utils/translation.hpp:64
+#: ../../src/utils/translation.hpp:57
+msgid "Password"
+msgstr "Password"
+
+#: ../../src/utils/translation.hpp:58
 msgid "Diagnostic"
 msgstr "Diagnostic"
 
-#: ../../src/utils/translation.hpp:65
+#: ../../src/utils/translation.hpp:59
 msgid "Connection closed"
 msgstr "Connection closed"
 
-#: ../../src/utils/translation.hpp:66
+#: ../../src/utils/translation.hpp:60
 msgid "OK"
 msgstr "OK"
 
-#: ../../src/utils/translation.hpp:67
+#: ../../src/utils/translation.hpp:61
 msgid "Cancel"
 msgstr "Cancel"
 
-#: ../../src/utils/translation.hpp:68
+#: ../../src/utils/translation.hpp:62
 msgid "Help"
 msgstr "Help"
 
-#: ../../src/utils/translation.hpp:69
+#: ../../src/utils/translation.hpp:63
 msgid "Close"
 msgstr "Close"
 
-#: ../../src/utils/translation.hpp:70
+#: ../../src/utils/translation.hpp:64
 msgid "Refused"
 msgstr "Refused"
 
-#: ../../src/utils/translation.hpp:71
+#: ../../src/utils/translation.hpp:65
 msgid "Username"
 msgstr "Username"
 
-#: ../../src/utils/translation.hpp:72
+#: ../../src/utils/translation.hpp:66
 msgid "Your Bastion password will expire soon. Please change it."
 msgstr "Your Bastion password will expire soon. Please change it."
 
-#: ../../src/utils/translation.hpp:73
+#: ../../src/utils/translation.hpp:67
 msgid "Protocol"
 msgstr "Protocol"
 
-#: ../../src/utils/translation.hpp:74
+#: ../../src/utils/translation.hpp:68
 msgid "Authorization"
 msgstr "Authorization"
 
-#: ../../src/utils/translation.hpp:75
+#: ../../src/utils/translation.hpp:69
 msgid "Target"
 msgstr "Target"
 
-#: ../../src/utils/translation.hpp:76
+#: ../../src/utils/translation.hpp:70
 msgid "Description"
 msgstr "Description"
 
-#: ../../src/utils/translation.hpp:77
+#: ../../src/utils/translation.hpp:71
 msgid "Close Time"
 msgstr "Close Time"
 
-#: ../../src/utils/translation.hpp:78
+#: ../../src/utils/translation.hpp:72
 msgid "Logout"
 msgstr "Logout"
 
-#: ../../src/utils/translation.hpp:79
+#: ../../src/utils/translation.hpp:73
 msgid "Apply"
 msgstr "Apply"
 
-#: ../../src/utils/translation.hpp:80
+#: ../../src/utils/translation.hpp:74
 msgid "Filter"
 msgstr "Filter"
 
-#: ../../src/utils/translation.hpp:81
+#: ../../src/utils/translation.hpp:75
 msgid "Connect"
 msgstr "Connect"
 
-#: ../../src/utils/translation.hpp:82
+#: ../../src/utils/translation.hpp:76
 msgid "Time left"
 msgstr "Time left"
 
-#: ../../src/utils/translation.hpp:83
+#: ../../src/utils/translation.hpp:77
 msgid "second"
 msgstr "second"
 
-#: ../../src/utils/translation.hpp:84
+#: ../../src/utils/translation.hpp:78
 msgid "minute"
 msgstr "minute"
 
-#: ../../src/utils/translation.hpp:85
+#: ../../src/utils/translation.hpp:79
 msgid "hour"
 msgstr "hour"
 
-#: ../../src/utils/translation.hpp:86
+#: ../../src/utils/translation.hpp:80
 msgid "before closing"
 msgstr "before closing"
 
-#: ../../src/utils/translation.hpp:87
+#: ../../src/utils/translation.hpp:81
 msgid "Your session is currently being audited."
 msgstr "Your session is currently being audited."
 
-#: ../../src/utils/translation.hpp:88
+#: ../../src/utils/translation.hpp:82
 msgid "Connection closed by manager."
 msgstr "Connection closed by manager."
 
-#: ../../src/utils/translation.hpp:89
+#: ../../src/utils/translation.hpp:83
 msgid "End of connection"
 msgstr "End of connection"
 
-#: ../../src/utils/translation.hpp:91
+#: ../../src/utils/translation.hpp:85
 msgid ""
 "The \"Target\" field can be entered with a string labelled in this format:\n"
 "\"Account@Domain@Device:Service:Auth\".\n"
@@ -150,328 +154,328 @@ msgstr ""
 "This field is required and not case-sensitive.\n"
 "\n"
 "Contact your system administrator for assistance."
+
+#: ../../src/utils/translation.hpp:95
+msgid ""
+"Use the following syntax to filter on a specific field of a target:\n"
+"    ?<field>=<pattern>\n"
+"where <field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
+"Use the '&' separator to combine several criteria.\n"
+"Example:\n"
+"    ?account=my_account&?device=my_device"
+msgstr ""
+"Use the following syntax to filter on a specific field of a target:\n"
+"    ?<field>=<pattern>\n"
+"where <field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
+"Use the '&' separator to combine several criteria.\n"
+"Example:\n"
+"    ?account=my_account&?device=my_device"
 
 #: ../../src/utils/translation.hpp:101
-msgid ""
-"Use the following syntax to filter on a specific field of a target:\n"
-"    ?<field>=<pattern>\n"
-"where <field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
-"Use the '&' separator to combine several criteria.\n"
-"Example:\n"
-"    ?account=my_account&?device=my_device"
-msgstr ""
-"Use the following syntax to filter on a specific field of a target:\n"
-"    ?<field>=<pattern>\n"
-"where <field> can be \"account\", \"domain\", \"device\" or \"service\".\n"
-"Use the '&' separator to combine several criteria.\n"
-"Example:\n"
-"    ?account=my_account&?device=my_device"
-
-#: ../../src/utils/translation.hpp:107
 msgid "Selector"
 msgstr "Selector"
 
-#: ../../src/utils/translation.hpp:108
+#: ../../src/utils/translation.hpp:102
 msgid "Session is out of allowed timeframe"
 msgstr "Session is out of allowed timeframe"
 
-#: ../../src/utils/translation.hpp:109
+#: ../../src/utils/translation.hpp:103
 msgid "Missed keepalive from ACL"
 msgstr "Missed keepalive from ACL"
 
-#: ../../src/utils/translation.hpp:110
+#: ../../src/utils/translation.hpp:104
 msgid "Connection closed on inactivity"
 msgstr "Connection closed on inactivity"
 
-#: ../../src/utils/translation.hpp:111
+#: ../../src/utils/translation.hpp:105
 msgid "Authentifier service failed"
 msgstr "Authentifier service failed"
 
-#: ../../src/utils/translation.hpp:112
+#: ../../src/utils/translation.hpp:106
 msgid "Failed to connect to remote host."
 msgstr "Failed to connect to remote host."
 
-#: ../../src/utils/translation.hpp:113
+#: ../../src/utils/translation.hpp:107
 msgid "Failed to authenticate with remote RDP host."
 msgstr "Failed to authenticate with remote RDP host."
 
-#: ../../src/utils/translation.hpp:114
+#: ../../src/utils/translation.hpp:108
 msgid "Failed to authenticate with remote VNC host."
 msgstr "Failed to authenticate with remote VNC host."
 
-#: ../../src/utils/translation.hpp:115
+#: ../../src/utils/translation.hpp:109
 msgid "Failed to authenticate with remote X host."
 msgstr "Failed to authenticate with remote X host."
 
-#: ../../src/utils/translation.hpp:116
+#: ../../src/utils/translation.hpp:110
 msgid "Connection to server ended."
 msgstr "Connection to server ended."
 
-#: ../../src/utils/translation.hpp:117
+#: ../../src/utils/translation.hpp:111
 msgid "No results found"
 msgstr "No results found"
 
-#: ../../src/utils/translation.hpp:118
+#: ../../src/utils/translation.hpp:112
 msgid "Back to Selector"
 msgstr "Back to Selector"
 
-#: ../../src/utils/translation.hpp:119
+#: ../../src/utils/translation.hpp:113
 msgid "Exit"
 msgstr "Exit"
 
-#: ../../src/utils/translation.hpp:120
+#: ../../src/utils/translation.hpp:114
 msgid "Comment"
 msgstr "Comment"
 
-#: ../../src/utils/translation.hpp:121
+#: ../../src/utils/translation.hpp:115
 msgid "Comment *"
 msgstr "Comment *"
 
-#: ../../src/utils/translation.hpp:122
+#: ../../src/utils/translation.hpp:116
 msgid "Ticket Ref."
 msgstr "Ticket Ref."
 
-#: ../../src/utils/translation.hpp:123
+#: ../../src/utils/translation.hpp:117
 msgid "Ticket Ref. *"
 msgstr "Ticket Ref. *"
 
-#: ../../src/utils/translation.hpp:124
+#: ../../src/utils/translation.hpp:118
 msgid "Duration"
 msgstr "Duration"
 
-#: ../../src/utils/translation.hpp:125
+#: ../../src/utils/translation.hpp:119
 msgid "Duration *"
 msgstr "Duration *"
 
-#: ../../src/utils/translation.hpp:126
+#: ../../src/utils/translation.hpp:120
 msgid "Format: [hours]h[mins]m"
 msgstr "Format: [hours]h[mins]m"
 
-#: ../../src/utils/translation.hpp:127
+#: ../../src/utils/translation.hpp:121
 msgid "(*) required fields"
 msgstr "(*) required fields"
 
-#: ../../src/utils/translation.hpp:128
+#: ../../src/utils/translation.hpp:122
 msgid "Confirm"
 msgstr "Confirm"
 
-#: ../../src/utils/translation.hpp:129
+#: ../../src/utils/translation.hpp:123
 #, c-format
 msgid "Error: %s field is required."
 msgstr "Error: %s field is required."
 
-#: ../../src/utils/translation.hpp:130
+#: ../../src/utils/translation.hpp:124
 #, c-format
 msgid "Error: %s invalid format."
 msgstr "Error: %s invalid format."
 
-#: ../../src/utils/translation.hpp:131
+#: ../../src/utils/translation.hpp:125
 #, c-format
 msgid "Error: %s is too high (max: %d minutes)."
 msgstr "Error: %s is too high (max: %d minutes)."
 
-#: ../../src/utils/translation.hpp:132
+#: ../../src/utils/translation.hpp:126
 msgid "Information"
 msgstr "Information"
 
-#: ../../src/utils/translation.hpp:133
+#: ../../src/utils/translation.hpp:127
 msgid "Authentication Required"
 msgstr "Authentication Required"
 
-#: ../../src/utils/translation.hpp:134
+#: ../../src/utils/translation.hpp:128
 msgid "Target Information Required"
 msgstr "Target Information Required"
 
-#: ../../src/utils/translation.hpp:135
+#: ../../src/utils/translation.hpp:129
 msgid "Device"
 msgstr "Device"
 
-#: ../../src/utils/translation.hpp:136
+#: ../../src/utils/translation.hpp:130
 msgid "Press \"Insert\" key or left-click to hide this message."
 msgstr "Press \"Insert\" key or left-click to hide this message."
 
-#: ../../src/utils/translation.hpp:137
+#: ../../src/utils/translation.hpp:131
 msgid "Another user connected to the resource, so your connection was lost."
 msgstr "Another user connected to the resource, so your connection was lost."
 
-#: ../../src/utils/translation.hpp:138
+#: ../../src/utils/translation.hpp:132
 #, c-format
 msgid "The process '%s' was interrupted in accordance with security policies."
 msgstr "The process '%s' was interrupted in accordance with security policies."
 
-#: ../../src/utils/translation.hpp:139
+#: ../../src/utils/translation.hpp:133
 #, c-format
 msgid "The account manipulation initiated by process '%s' was rejected in accordance with security policies."
 msgstr "The account manipulation initiated by process '%s' was rejected in accordance with security policies."
 
-#: ../../src/utils/translation.hpp:140
+#: ../../src/utils/translation.hpp:134
 msgid "Session logoff in progress."
 msgstr "Session logoff in progress."
 
-#: ../../src/utils/translation.hpp:141
+#: ../../src/utils/translation.hpp:135
 msgid "Starting RemoteApp ..."
 msgstr "Starting RemoteApp ..."
 
-#: ../../src/utils/translation.hpp:142
+#: ../../src/utils/translation.hpp:136
 msgid "All RemoteApp windows are closed."
 msgstr "All RemoteApp windows are closed."
 
-#: ../../src/utils/translation.hpp:143
+#: ../../src/utils/translation.hpp:137
 msgid "Disconnect Now"
 msgstr "Disconnect Now"
 
-#: ../../src/utils/translation.hpp:144
+#: ../../src/utils/translation.hpp:138
 msgid "The computer that you are trying to connect to is redirecting you to another computer!"
 msgstr "The computer that you are trying to connect to is redirecting you to another computer!"
 
-#: ../../src/utils/translation.hpp:145
+#: ../../src/utils/translation.hpp:139
 msgid "NLA Authentication Failed!"
 msgstr "NLA Authentication Failed!"
 
-#: ../../src/utils/translation.hpp:146
+#: ../../src/utils/translation.hpp:140
 msgid "TLS certificate changed!"
 msgstr "TLS certificate changed!"
 
-#: ../../src/utils/translation.hpp:147
+#: ../../src/utils/translation.hpp:141
 msgid "TLS certificate missed!"
 msgstr "TLS certificate missed!"
 
-#: ../../src/utils/translation.hpp:148
+#: ../../src/utils/translation.hpp:142
 msgid "TLS certificate corrupted!"
 msgstr "TLS certificate corrupted!"
 
-#: ../../src/utils/translation.hpp:149
+#: ../../src/utils/translation.hpp:143
 msgid "TLS certificate  is inaccessible!"
 msgstr "TLS certificate  is inaccessible!"
 
-#: ../../src/utils/translation.hpp:150
+#: ../../src/utils/translation.hpp:144
 msgid "VNC connection error!"
 msgstr "VNC connection error!"
 
-#: ../../src/utils/translation.hpp:151
+#: ../../src/utils/translation.hpp:145
 msgid "Unsupported client display monitor layout!"
 msgstr "Unsupported client display monitor layout!"
 
-#: ../../src/utils/translation.hpp:152
+#: ../../src/utils/translation.hpp:146
 msgid "RDP negotiation phase failure."
 msgstr "RDP negotiation phase failure."
 
-#: ../../src/utils/translation.hpp:153
+#: ../../src/utils/translation.hpp:147
 msgid "An error occurred during the licensing protocol!"
 msgstr "An error occurred during the licensing protocol!"
 
-#: ../../src/utils/translation.hpp:154
+#: ../../src/utils/translation.hpp:148
 msgid "The RemoteApp program did not start on the remote computer!"
 msgstr "The RemoteApp program did not start on the remote computer!"
 
-#: ../../src/utils/translation.hpp:155
+#: ../../src/utils/translation.hpp:149
 msgid "Cannot start the RemoteApp program!"
 msgstr "Cannot start the RemoteApp program!"
 
-#: ../../src/utils/translation.hpp:156
+#: ../../src/utils/translation.hpp:150
 msgid "The RemoteApp program is not in the list of authorized programs!"
 msgstr "The RemoteApp program is not in the list of authorized programs!"
 
-#: ../../src/utils/translation.hpp:157
+#: ../../src/utils/translation.hpp:151
 msgid "Logon timer expired!"
 msgstr "Logon timer expired!"
 
-#: ../../src/utils/translation.hpp:158
+#: ../../src/utils/translation.hpp:152
 msgid "Could not launch Session Probe!"
 msgstr "Could not launch Session Probe!"
 
-#: ../../src/utils/translation.hpp:160
+#: ../../src/utils/translation.hpp:154
 msgid "(ASBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target."
 msgstr "(ASBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target."
 
-#: ../../src/utils/translation.hpp:163
+#: ../../src/utils/translation.hpp:157
 msgid "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. Is the target running under Microsoft Server products? The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. Please also check the temporary directory to ensure there is enough free space."
 msgstr "(ASBL) Could not launch Session Probe! Maybe something blocks it on the target. Is the target running under Microsoft Server products? The Command Prompt should be published as the RemoteApp program and accept any command-line parameters. Please also check the temporary directory to ensure there is enough free space."
 
-#: ../../src/utils/translation.hpp:167
+#: ../../src/utils/translation.hpp:161
 msgid "(ASBL) Session Probe launch has failed for unknown reason!"
 msgstr "(ASBL) Session Probe launch has failed for unknown reason!"
 
-#: ../../src/utils/translation.hpp:169
+#: ../../src/utils/translation.hpp:163
 msgid "(CBBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target."
 msgstr "(CBBL) Could not launch Session Probe! File System Virtual Channel is unavailable. Please allow the drive redirection in the Remote Desktop Services settings of the target."
 
-#: ../../src/utils/translation.hpp:172
+#: ../../src/utils/translation.hpp:166
 msgid "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is unavailable. Please allow the clipboard redirection in the Remote Desktop Services settings of the target."
 msgstr "(CBBL) Could not launch Session Probe! Clipboard Virtual Channel is unavailable. Please allow the clipboard redirection in the Remote Desktop Services settings of the target."
 
-#: ../../src/utils/translation.hpp:175
+#: ../../src/utils/translation.hpp:169
 msgid "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. Is the target running under Windows Server 2008 R2 or more recent version?"
 msgstr "(CBBL) Could not launch Session Probe! Drive of Session Probe is not ready yet. Is the target running under Windows Server 2008 R2 or more recent version?"
 
-#: ../../src/utils/translation.hpp:178
+#: ../../src/utils/translation.hpp:172
 msgid "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. Please also check the temporary directory to ensure there is enough free space."
 msgstr "(CBBL) Session Probe is not launched! Maybe something blocks it on the target. Please also check the temporary directory to ensure there is enough free space."
 
-#: ../../src/utils/translation.hpp:181
+#: ../../src/utils/translation.hpp:175
 msgid "(CBBL) Session Probe launch cycle has been interrupted! The launch timeout duration may be too short."
 msgstr "(CBBL) Session Probe launch cycle has been interrupted! The launch timeout duration may be too short."
 
-#: ../../src/utils/translation.hpp:184
+#: ../../src/utils/translation.hpp:178
 msgid "(CBBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition."
 msgstr "(CBBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition."
 
-#: ../../src/utils/translation.hpp:187
+#: ../../src/utils/translation.hpp:181
 msgid "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition."
 msgstr "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition."
 
-#: ../../src/utils/translation.hpp:189
+#: ../../src/utils/translation.hpp:183
 msgid "Unknown backend failure."
 msgstr "Unknown backend failure."
 
-#: ../../src/utils/translation.hpp:190
+#: ../../src/utils/translation.hpp:184
 msgid "Provided login/password is probably incorrect."
 msgstr "Provided login/password is probably incorrect."
 
-#: ../../src/utils/translation.hpp:191
+#: ../../src/utils/translation.hpp:185
 msgid "Please wait..."
 msgstr "Please wait..."
 
-#: ../../src/utils/translation.hpp:192
+#: ../../src/utils/translation.hpp:186
 msgid "Enable NLA is probably required."
 msgstr "Enable NLA is probably required."
 
-#: ../../src/utils/translation.hpp:193
+#: ../../src/utils/translation.hpp:187
 msgid "Enable TLS is probably required."
 msgstr "Enable TLS is probably required."
 
-#: ../../src/utils/translation.hpp:194
+#: ../../src/utils/translation.hpp:188
 msgid "Please check provided Load Balance Info."
 msgstr "Please check provided Load Balance Info."
 
-#: ../../src/utils/translation.hpp:195
+#: ../../src/utils/translation.hpp:189
 msgid "Fail during TLS security exchange."
 msgstr "Fail during TLS security exchange."
 
-#: ../../src/utils/translation.hpp:196
+#: ../../src/utils/translation.hpp:190
 msgid "Remote access may be denied for the user account."
 msgstr "Remote access may be denied for the user account."
 
-#: ../../src/utils/translation.hpp:197 ../../src/utils/translation.hpp:198
+#: ../../src/utils/translation.hpp:191 ../../src/utils/translation.hpp:192
 msgid "Fail during channels connection."
 msgstr "Fail during channels connection."
 
-#: ../../src/utils/translation.hpp:199
+#: ../../src/utils/translation.hpp:193
 msgid "Failed while trying to get licence."
 msgstr "Failed while trying to get licence."
 
-#: ../../src/utils/translation.hpp:200
+#: ../../src/utils/translation.hpp:194
 msgid "Fail while connecting session on the target."
 msgstr "Fail while connecting session on the target."
 
-#: ../../src/utils/translation.hpp:201
+#: ../../src/utils/translation.hpp:195
 msgid "File being analyzed: "
 msgstr "File being analyzed: "
 
-#: ../../src/utils/translation.hpp:202
+#: ../../src/utils/translation.hpp:196
 msgid "Valid file: "
 msgstr "Valid file: "
 
-#: ../../src/utils/translation.hpp:203
+#: ../../src/utils/translation.hpp:197
 msgid "Invalid file: "
 msgstr "Invalid file: "

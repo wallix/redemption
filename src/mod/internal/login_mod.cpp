@@ -84,7 +84,7 @@ LoginMod::LoginMod(
         nullptr, nullptr, nullptr,
         TR(trkeys::login, login_language(vars)),
         TR(trkeys::password, login_language(vars)),
-        TR(trkeys::target, login_language(vars)),
+        TR(trkeys::optional_target, login_language(vars)),
         vars.get<cfg::context::opt_message>().c_str(),
         vars.get<cfg::context::login_message>().c_str(),
         &this->language_button,
