@@ -92,10 +92,7 @@ inline void draw_impl(
         drawable.draw(cmd, clip);
     }
     else {
-        gdi::subrect4_t rects = gdi::subrect4(drect, protected_rect);
-        auto e = std::remove_if(rects.begin(), rects.end(), [](const Rect & rect) { return rect.isempty(); });
-        auto av = make_array_view(rects.begin(), e);
-        rdp_input.rdp_input_invalidate2(av);
+        rdp_input.rdp_input_invalidate2(gdi::subrect4(drect, protected_rect));
     }
 }
 
