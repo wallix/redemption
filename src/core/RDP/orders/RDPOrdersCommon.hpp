@@ -778,7 +778,7 @@ class RDPPrimaryOrderHeader
             stream.out_uint8(pen.style);
         }
         if (this->fields & (base << 1)) {
-            stream.out_sint8(pen.width);
+            stream.out_uint8(pen.width);
          }
         if (this->fields & (base << 2)) {
             emit_rdp_color(stream, pen.color);
