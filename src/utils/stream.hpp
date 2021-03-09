@@ -596,40 +596,33 @@ public:
         }
     }
 
-    void out_sint8(char v) noexcept {
+    void out_sint8(int8_t v) noexcept {
         assert(this->has_room(1));
         *(this->p++) = v;
     }
 
-    void out_uint16_le(unsigned int v) noexcept {
+    void out_uint16_le(uint16_t v) noexcept {
         assert(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
-    void out_sint16_le(signed int v) noexcept {
+    void out_sint16_le(int16_t v) noexcept {
         assert(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
-    void out_uint16_be(unsigned int v) noexcept {
+    void out_uint16_be(uint16_t v) noexcept {
         assert(this->has_room(2));
         this->p[1] = v & 0xFF;
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
-    void out_uint16_be_bis(unsigned int v) noexcept {
-        assert(this->has_room(2));
-        this->p[1] = v & 0xFF;
-        this->p[0] = (v >> 8) & 0xFF;
-        this->p+=2;
-    }
-
-    void out_uint32_le_bis(unsigned int v) noexcept {
+    void out_uint32_le(uint32_t v) noexcept {
         assert(this->has_room(4));
         this->p[0] = (v & 0xFF);
         this->p[1] = (v >> 8) & 0xFF;
@@ -638,16 +631,7 @@ public:
         this->p+=4;
     }
 
-    void out_uint32_le(unsigned int v) noexcept {
-        assert(this->has_room(4));
-        this->p[0] = (v & 0xFF);
-        this->p[1] = (v >> 8) & 0xFF;
-        this->p[2] = (v >> 16) & 0xFF;
-        this->p[3] = (v >> 24) & 0xFF;
-        this->p+=4;
-    }
-
-    void out_uint32_be(unsigned int v) noexcept {
+    void out_uint32_be(uint32_t v) noexcept {
         assert(this->has_room(4));
         this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;

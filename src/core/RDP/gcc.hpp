@@ -442,7 +442,7 @@ namespace GCC
             stream.out_copy_bytes("McDn"_av);
 
             // set user_data_len (TWO_BYTE_UNSIGNED_ENCODING)
-            stream.out_uint16_be_bis(0x8000 | payload_size);
+            stream.out_uint16_be(0x8000 | payload_size);
         }
     };
 
