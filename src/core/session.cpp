@@ -1357,7 +1357,11 @@ public:
             }
             return ;
         }
-        catch(...) {
+        catch (const std::exception & e) {
+            LOG(LOG_ERR, "Proxy data processing raised error %s!", e.what());
+            return ;
+        }
+        catch (...) {
             LOG(LOG_ERR, "Proxy data processing raised an unknown error");
             return ;
         }
@@ -1430,7 +1434,7 @@ public:
         catch (const std::exception & e) {
             LOG(LOG_ERR, "Session exception %s!", e.what());
         }
-        catch(...) {
+        catch (...) {
             LOG(LOG_ERR, "Session unexpected exception");
         }
 
