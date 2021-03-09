@@ -582,6 +582,14 @@ class Sesman():
         uint are big-endian byte ordered
         """
 
+        self.proxy_conx.setblocking(False)
+        while True:
+            r, w, x = select([self.proxy_conx], [], [], 30)
+            self.engine.keepalive(timeout=60)
+            if self.proxy_conx in r:
+                break
+        self.proxy_conx.setblocking(True)
+
         self._changed_keys = []
 
         def read_sck():
@@ -932,10 +940,10 @@ class Sesman():
                                                  self.target_service_name)
                 else:
                     target_info = u"%s@%s" % (target_login, target_device)
-            try:
-                target_info = target_info.encode('utf8')
-            except Exception:
-                target_info = None
+                try:
+                    target_info = target_info.encode('utf8')
+                except Exception:
+                    target_info = None
 
             # Check if X509 Authentication is active
             if self.engine.is_x509_connected(
@@ -1468,6 +1476,7 @@ class Sesman():
                 timeout = None if status != APPROVAL_PENDING else 5
                 logtimer.pause()
                 r, w, x = select([self.proxy_conx], [], [], timeout)
+                self.engine.keepalive(timeout=60)
                 logtimer.resume()
             except BastionSignal as e:
                 Logger().info("Got Signal %s" % e)
@@ -1700,7 +1709,7 @@ class Sesman():
                     # [ SELECTOR ]
                     logtimer.start("FETCH_RIGHTS")
                     _status, _error = self.get_service()
-                    Logger().info("get service end :%s" % _status)
+                    Logger().info("get_service end :%s" % _status)
                     if not _status:
                         # logout or error in selector
                         self.engine.reset_proxy_rights()
@@ -1740,6 +1749,7 @@ class Sesman():
                     self.reset_target_session_vars()
                 self.engine.proxy_session_logout()
                 self.rdplog.log("LOGOUT")
+                self.engine.close_client()
 
         if tries <= 0:
             Logger().info(u"Too many login failures")
@@ -2126,6 +2136,7 @@ class Sesman():
                                     Logger().info("<<<<%s>>>>" %
                                                   traceback.format_exc())
                                 raise
+                            self.engine.keepalive(timeout=60)
                             current_time = time()
                             if self.check_session_parameters:
                                 self.update_session_parameters(current_time)

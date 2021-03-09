@@ -4,23 +4,29 @@
 from __future__ import absolute_import
 from logger import Logger
 try:
-    from wabengine.common.exception import AuthenticationFailed
-    from wabengine.common.exception import AuthenticationChallenged
-    from wabengine.common.exception import MultiFactorAuthentication
-    from wabengine.common.exception import AuthenticationUpdatePwd
-    from wabengine.common.exception import LicenseException
-    from wabengine.common.exception import MustChangePassword
-    from wabengine.common.exception import AccountLocked
-    from wabengine.common.exception import SessionAlreadyStopped
-    from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
-        PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT,\
-        WRONG_FINGERPRINT, RDP_PATTERN_FOUND, RDP_PROCESS_FOUND, \
-        RDP_OUTCXN_FOUND, FILESYSTEM_FULL
+    from wabengine.common.exception import (
+        LicenseException,
+        SessionAlreadyStopped,
+    )
+    from wallixgenericnotifier import (
+        Notify,
+        CX_EQUIPMENT,
+        PATTERN_FOUND,
+        PRIMARY_CX_FAILED,
+        SECONDARY_CX_FAILED,
+        NEW_FINGERPRINT,
+        WRONG_FINGERPRINT,
+        RDP_PATTERN_FOUND,
+        RDP_PROCESS_FOUND,
+        RDP_OUTCXN_FOUND,
+        FILESYSTEM_FULL,
+    )
     from wabconfig import Config
-    from wabengine.client.sync_client import SynClient
-    from wallixconst.authentication import PASSWORD_VAULT, \
-        PASSWORD_INTERACTIVE, PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, \
-        KERBEROS_FORWARDING, PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
+    from wallixconst.authentication import (  # noqa: F401
+        PASSWORD_VAULT,
+        PASSWORD_INTERACTIVE,
+        PASSWORD_MAPPING,
+    )
     from wallixconst.account import AM_IL_DOMAIN
     from wallixconst.trace import LOCAL_TRACE_PATH_RDP
     from wabx509 import AuthX509
@@ -41,7 +47,7 @@ except Exception:
     except Exception:
         # Logger().info("FAKE LOADING FAILED>>>>>> %s" %
         #               traceback.format_exc())
-        Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
+        Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % str(tracelog))
 
 
 from .logtime import logtime_function_pause
@@ -57,6 +63,7 @@ from .checkout import (
     SHADOW_ACCEPTED,
     SHADOW_REJECTED,
 )
+from .transaction import manage_transaction
 from . import targetaccuratefilter as taf
 
 DEFAULT_CONF_DIR = "/var/wab/etc/"
@@ -123,6 +130,7 @@ def decode_rawtext_data(data):
         break
     return data
 
+
 class Engine(object):
     def __init__(self, legacy_auth=False):
         self.wabengine = None
@@ -175,14 +183,27 @@ class Engine(object):
         self.checktarget_cache = None
         self.checktarget_infos_cache = None
 
+        self.avatar_id = None
+
+    def keepalive(self, timeout, close=True):
+        if self.avatar_id:
+            self.wabengine.save_session(self.avatar_id, timeout=timeout)
+            # TODO: should free db session
+            # with manage_transaction(self.wabengine, close=close):
+            #     self.wabengine.save_session(self.avatar_id, timeout=timeout)
+
     def _post_authentication(self):
+        self.avatar_id = self.wabengine.connect(timeout=60)
         self.update_user()
         self.checkout = CheckoutEngine(self.wabengine)
 
     def update_user(self):
-        userobj = self.wabengine.who_am_i()
-        self.user_cn = userobj.cn
-        self.user_lang = userobj.preferredLanguage
+        if not self.wabengine:
+            return
+        with manage_transaction(self.wabengine):
+            userobj = self.wabengine.who_am_i()
+            self.user_cn = userobj.cn
+            self.user_lang = userobj.preferredLanguage
 
     def set_session_status(self, result=None, diag=None):
         # Logger().info("Engine set session status : result='%s', diag='%s'" %
@@ -193,29 +214,25 @@ class Engine(object):
             self.session_diag = diag
 
     def get_language(self):
-        try:
-            if not self.user_lang:
-                self.update_user()
-        except Exception:
-            pass
+        if not self.user_lang:
+            self.update_user()
         return self.user_lang or 'en'
 
     def get_username(self):
-        try:
-            if not self.user_cn:
-                self.update_user()
-        except Exception:
-            pass
+        if not self.user_cn:
+            self.update_user()
         return self.user_cn or ""
 
     def get_otp_client(self):
         try:
-            return self.wabengine.get_otp_client()
+            with manage_transaction(self.wabengine):
+                return self.wabengine.get_otp_client()
         except Exception:
             return ''
 
     def check_license(self):
-        res = self.wabengine.is_session_management_license()
+        with manage_transaction(self.wabengine):
+            res = self.wabengine.is_session_management_license()
         if not res:
             Logger().info("License Error: "
                           "Session management License is not available.")
@@ -290,22 +307,21 @@ class Engine(object):
             if i < fingerprint_len - 1:
                 finger_host += ':'
 
-        finger = self.wabengine.get_fingerprint(hname, service_cn)
-        if not finger:
-            self.wabengine.save_fingerprint(
-                hname,
-                service_cn,
-                finger_host
-            )
-            Notify(self.wabengine,
-                   NEW_FINGERPRINT,
-                   {'device': hname})
-        elif (finger != finger_host):
-            Notify(self.wabengine,
-                   WRONG_FINGERPRINT,
-                   {'device': hname})
-            return False, ("Host Key received is different from host key in "
-                           "DB, please contact your administrator")
+        with manage_transaction(self.wabengine):
+            finger = self.wabengine.get_fingerprint(hname, service_cn)
+
+        with manage_transaction(self.wabengine):
+            if not finger:
+                self.wabengine.save_fingerprint(
+                    hname,
+                    service_cn,
+                    finger_host
+                )
+                Notify(self.wabengine, NEW_FINGERPRINT, {'device': hname})
+            elif (finger != finger_host):
+                Notify(self.wabengine, WRONG_FINGERPRINT, {'device': hname})
+                return False, ("Host Key received is different from host key in "
+                               "DB, please contact your administrator")
         return True, "OK"
 
     def init_timeframe(self, auth):
@@ -336,14 +352,17 @@ class Engine(object):
         return u'localfile_hashed'
 
     def get_trace_encryption_key(self, path, old_scheme=False):
-        return self.wabengine.get_trace_encryption_key(path, old_scheme)
+        with manage_transaction(self.wabengine):
+            return self.wabengine.get_trace_encryption_key(path, old_scheme)
 
     def get_trace_sign_key(self):
-        return self.wabengine.get_trace_sign_key()
+        with manage_transaction(self.wabengine):
+            return self.wabengine.get_trace_sign_key()
 
     def password_expiration_date(self):
         try:
-            _data = self.wabengine.check_password_expiration_info()
+            with manage_transaction(self.wabengine):
+                _data = self.wabengine.check_password_expiration_info()
             if _data[2]:
                 Logger().info("Engine password_expiration_date=%s" % _data[0])
                 return True, _data[0]
@@ -368,13 +387,13 @@ class Engine(object):
             self, ip_client, ip_server
         )
 
-    def check_pingid(self, wab_login, ip_client, ip_server):
-        return self.authenticator.check_pingid(
+    def check_mobile_device(self, wab_login, ip_client, ip_server):
+        return self.authenticator.check_mobile_device(
             wab_login, ip_client, ip_server
         )
 
-    def pingid_authenticate(self):
-        return self.authenticator.pingid_authenticate(self)
+    def mobile_device_authenticate(self):
+        return self.authenticator.mobile_device_authenticate(self)
 
     def password_authenticate(self, wab_login, ip_client, password, ip_server):
         return self.authenticator.password_authenticate(
@@ -698,6 +717,7 @@ class Engine(object):
         """
         Clean Target session (if exist) rights and infos
         """
+
         self.target_right = None
         self.deconnection_epoch = 0xffffffff
         self.deconnection_time = u"-"
@@ -724,13 +744,25 @@ class Engine(object):
         self.reset_proxy_rights()
         if self.authenticator is not None:
             self.authenticator.reset()
+        self.close_client()
+        self.user_cn = None
+
+    def close_client(self):
+        if self.wabengine:
+            Logger().debug("Engine close_client()")
+            if self.avatar_id:
+                self.wabengine.disconnect(self.avatar_id)
+            self.wabengine.close_proxy()
+            self.wabengine = None
+        self.avatar_id = None
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
         Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s"
                        % (protocols, target_device))
-        urights = self.wabengine.get_proxy_user_rights(protocols,
-                                                       target_device,
-                                                       **kwargs)
+        with manage_transaction(self.wabengine):
+            urights = self.wabengine.get_proxy_user_rights(protocols,
+                                                           target_device,
+                                                           **kwargs)
         Logger().debug("** END Get_proxy_right **")
         if urights and (type(urights[0]) == str):
             import json
@@ -986,11 +1018,12 @@ class Engine(object):
         application = selected_target['application_cn']
         try:
             if application and not self.is_shadow_session(selected_target):
-                effective_target = self.wabengine.get_effective_target(
-                    selected_target
-                )
-                Logger().info("Engine get_effective_target done (application)")
-                return effective_target
+                with manage_transaction(self.wabengine):
+                    effective_target = self.wabengine.get_effective_target(
+                        selected_target
+                    )
+                    Logger().info("Engine get_effective_target done (application)")
+                    return effective_target
             else:
                 Logger().info("Engine get_effective_target done (physical)")
                 return [selected_target]
@@ -1029,12 +1062,13 @@ class Engine(object):
             Logger().info("Engine get_app_params shadow done")
             return app_params
         try:
-            app_params = self.wabengine.get_app_params(
-                selected_target,
-                effective_target
-            )
-            Logger().info("Engine get_app_params done")
-            return app_params
+            with manage_transaction(self.wabengine):
+                app_params = self.wabengine.get_app_params(
+                    selected_target,
+                    effective_target
+                )
+                Logger().info("Engine get_app_params done")
+                return app_params
         except Exception:
             import traceback
             Logger().info("Engine get_app_params failed: (((%s)))" %
@@ -1151,13 +1185,14 @@ class Engine(object):
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
-            self.session_id, self.start_time = self.wabengine.start_session(
-                auth,
-                pid=pid,
-                effective_login=effective_login,
-                **kwargs
-            )
-            self.failed_secondary_set = False
+            with manage_transaction(self.wabengine):
+                self.session_id, self.start_time = self.wabengine.start_session(
+                    auth,
+                    pid=pid,
+                    effective_login=effective_login,
+                    **kwargs
+                )
+                self.failed_secondary_set = False
         except LicenseException:
             Logger().info("Engine start_session failed: License Exception")
             self.session_id, self.start_time = None, None
@@ -1181,13 +1216,14 @@ class Engine(object):
             signal.signal(signal.SIGUSR1, kill_handler)
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
-            self.session_id, self.start_time = self.wabengine.start_session(
-                target,
-                pid=pid,
-                subprotocol=subproto,
-                effective_login=effective_login,
-                target_host=self.host
-            )
+            with manage_transaction(self.wabengine):
+                self.session_id, self.start_time = self.wabengine.start_session(
+                    target,
+                    pid=pid,
+                    subprotocol=subproto,
+                    effective_login=effective_login,
+                    target_host=self.host
+                )
         except LicenseException:
             Logger().info("Engine start_session failed: License exception")
             self.session_id, self.start_time = None, None
@@ -1240,9 +1276,10 @@ class Engine(object):
             physical_target['service_cn'])
         try:
             if self.session_id:
-                self.wabengine.update_session(self.session_id,
-                                              hosttarget=hosttarget,
-                                              **kwargs)
+                with manage_transaction(self.wabengine):
+                    self.wabengine.update_session(self.session_id,
+                                                  hosttarget=hosttarget,
+                                                  **kwargs)
         except Exception:
             import traceback
             Logger().info("Engine update_session_target failed: (((%s)))" %
@@ -1255,8 +1292,9 @@ class Engine(object):
         """
         try:
             if self.session_id:
-                self.wabengine.update_session(self.session_id,
-                                              **kwargs)
+                with manage_transaction(self.wabengine):
+                    self.wabengine.update_session(self.session_id,
+                                                  **kwargs)
         except Exception:
             import traceback
             Logger().info("Engine update_session failed: (((%s)))" %
@@ -1265,9 +1303,10 @@ class Engine(object):
     def shadow_response(self, errcode, errmsg, token, userdata):
         try:
             status = SHADOW_ACCEPTED if errcode == '0' else SHADOW_REJECTED
-            self.wabengine.make_session_shadowing_response(
-                status=status, errmsg=errmsg, token=token, userdata=userdata
-            )
+            with manage_transaction(self.wabengine):
+                self.wabengine.make_session_shadowing_response(
+                    status=status, errmsg=errmsg, token=token, userdata=userdata
+                )
         except Exception:
             import traceback
             Logger().info("Engine shadow_response failed: (((%s)))" %
@@ -1281,14 +1320,15 @@ class Engine(object):
                 #     "title='%s'" %
                 #     (self.session_result, self.session_diag, title)
                 # )
-                self.wabengine.stop_session(
-                    self.session_id,
-                    result=self.session_result,
-                    diag=self.session_diag,
-                    title=title,
-                    check=self.trace_hash
-                )
-                self.trace_hash = None
+                with manage_transaction(self.wabengine):
+                    self.wabengine.stop_session(
+                        self.session_id,
+                        result=self.session_result,
+                        diag=self.session_diag,
+                        title=title,
+                        check=self.trace_hash
+                    )
+                    self.trace_hash = None
         except SessionAlreadyStopped:
             pass
         except Exception:
@@ -1313,7 +1353,8 @@ class Engine(object):
         else:
             return {}, {}
         try:
-            restrictions = self.wabengine.get_proxy_restrictions(auth)
+            with manage_transaction(self.wabengine):
+                restrictions = self.wabengine.get_proxy_restrictions(auth)
             kill_patterns = {}
             notify_patterns = {}
             for restriction in restrictions:
@@ -1363,7 +1404,8 @@ class Engine(object):
         else:
             return None, None
         try:
-            restrictions = self.wabengine.get_proxy_restrictions(auth)
+            with manage_transaction(self.wabengine):
+                restrictions = self.wabengine.get_proxy_restrictions(auth)
             kill_patterns = []
             notify_patterns = []
             for restriction in restrictions:
@@ -1470,11 +1512,12 @@ class Engine(object):
         try:
             is_recorded = target['auth_is_recorded']
             if is_recorded:
-                self.session_record = self.wabengine.get_trace_writer(
-                    self.session_id,
-                    filename=filename,
-                    trace_type=u'pcap'
-                )
+                with manage_transaction(self.wabengine):
+                    self.session_record = self.wabengine.get_trace_writer(
+                        self.session_id,
+                        filename=filename,
+                        trace_type=u'pcap'
+                    )
                 self.session_record_type = "pcap"
                 self.session_record.initialize()
         except Exception:
@@ -1497,11 +1540,12 @@ class Engine(object):
         try:
             is_recorded = target['auth_is_recorded']
             if is_recorded:
-                self.session_record = self.wabengine.get_trace_writer(
-                    self.session_id,
-                    filename=filename,
-                    trace_type=u'ttyrec'
-                )
+                with manage_transaction(self.wabengine):
+                    self.session_record = self.wabengine.get_trace_writer(
+                        self.session_id,
+                        filename=filename,
+                        trace_type=u'ttyrec'
+                    )
                 self.session_record_type = "ttyrec"
                 self.session_record.initialize()
         except Exception:
@@ -1535,12 +1579,13 @@ class Engine(object):
         try:
             _status, _error = True, u"No error"
             if video_path:
-                # Notify WabEngine with Trace file descriptor
-                trace = self.wabengine.get_trace_writer(
-                    self.session_id,
-                    filename=video_path,
-                    trace_type=u"rdptrc"
-                )
+                with manage_transaction(self.wabengine):
+                    # Notify WabEngine with Trace file descriptor
+                    trace = self.wabengine.get_trace_writer(
+                        self.session_id,
+                        filename=video_path,
+                        trace_type=u"rdptrc"
+                    )
                 trace.initialize()
                 trace.writeframe(b"%s.mwrm" % (video_path.encode('utf-8')))
                 self.trace_hash = trace.end()
@@ -1551,7 +1596,8 @@ class Engine(object):
         return _status, _error
 
     def read_session_parameters(self, key=None):
-        return self.wabengine.read_session_parameters(self.session_id, key=key)
+        with manage_transaction(self.wabengine):
+            return self.wabengine.read_session_parameters(self.session_id, key=key)
 
     def check_target(self, target, pid=None, request_ticket=None):
         if self.checktarget_cache == (APPROVAL_ACCEPTED, target['target_uid']):
@@ -1706,10 +1752,8 @@ class Engine(object):
         except Exception:
             domain = ""
         if check_in_creds:
-            login = (self.checkout.get_target_login(right)
-                     or login)
-            domain = (self.checkout.get_target_domain(right)
-                      or domain)
+            login = (self.checkout.get_target_login(right) or login)
+            domain = (self.checkout.get_target_domain(right) or domain)
         if not login and right['domain_cn'] == AM_IL_DOMAIN:
             # Interactive Login
             return login

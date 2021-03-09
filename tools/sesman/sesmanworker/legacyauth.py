@@ -27,11 +27,29 @@ except Exception:
 
 from .challenge import (
     Challenge,
-    wchallenge_to_challenge,
     mfa_to_challenge,
     aup_to_challenge,
 )
 
+
+def wchallenge_to_challenge(challenge):
+    """ Convert Challenge from bastion to internal Challenge
+
+    param challenge: Challenge from bastion
+    param previous_token: token from previous MFA if needed
+    :rtype: Challenge
+    :return: a converted Challenge
+    """
+    return Challenge(
+        challenge_type="CHALLENGE",
+        title="= Challenge =",
+        message="",
+        fields=[challenge.message],
+        echos=[challenge.promptEcho],
+        username=challenge.username,
+        challenge=challenge,
+        token=getattr(challenge, "mfa_token", None),
+    )
 
 class LegacyAuthenticator(object):
     __slots__ = (
