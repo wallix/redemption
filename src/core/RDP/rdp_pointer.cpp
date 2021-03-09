@@ -110,11 +110,14 @@ void Pointer::emit_pointer2(OutStream & result) const
     result.out_uint8(this->get_hotspot().x);
     result.out_uint8(this->get_hotspot().y);
 
-    result.out_uint16_le(this->xor_data_size());
-    result.out_uint16_le(this->bit_mask_size());
+    auto xor_data = this->get_24bits_xor_mask();
+    auto bit_mask = this->get_monochrome_and_mask();
 
-    result.out_copy_bytes(this->get_24bits_xor_mask());
-    result.out_copy_bytes(this->get_monochrome_and_mask());
+    result.out_uint16_le(xor_data.size());
+    result.out_uint16_le(bit_mask.size());
+
+    result.out_copy_bytes(xor_data);
+    result.out_copy_bytes(bit_mask);
 }
 
 //    2.2.9.1.1.4.4     Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
@@ -615,22 +618,21 @@ Pointer decode_pointer(
                     uint8_t *      dest_mask = cursor_mask + i * dest_mask_line_bytes;
 
                     unsigned char bit_count = 7;
-                    unsigned char mask_bit_count = 7;
                     for (unsigned int j = 0; j < width ; ++j) {
                         unsigned databit = *src & (1 << bit_count);
                         uint8_t pixel = databit ? 0xFF : 0;
                         *dest++ = pixel;
                         *dest++ = pixel;
                         *dest++ = pixel;
-                        src       = src + ((bit_count==0)?1:0);
-                        bit_count = (bit_count - 1) & 7;
 
-                        if (mask_bit_count == 0){
+                        if (bit_count == 0) {
+                            src++;
                             *dest_mask = *src_mask;
                             dest_mask++;
                             src_mask++;
                         }
-                        mask_bit_count = (mask_bit_count - 1) & 7;
+
+                        bit_count = (bit_count - 1) & 7;
                     }
                 }
 
@@ -661,22 +663,6 @@ Pointer decode_pointer(
             case BitsPerPixel{24}:
             case BitsPerPixel{32}:
             {
-                bool linux_32bpp_cursor = false;
-                if (BitsPerPixel{32} == data_bpp)
-                {
-                    bool empty_and_mask = true;
-                    const uint8_t* check_point = mask;
-                    for (uint16_t midx = 0; midx < mlen; ++midx, ++check_point) {
-                        if (*check_point) {
-                            empty_and_mask = false;
-                        }
-                    }
-
-                    if (empty_and_mask) {
-                        linux_32bpp_cursor = true;
-                    }
-                }
-
                 uint8_t BPP = nb_bytes_per_pixel(data_bpp);
                 const unsigned int src_xor_line_length_in_byte = width * BPP;
                 const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
@@ -694,6 +680,11 @@ Pointer decode_pointer(
                         dest += 3;
                     }
                 }
+
+                bool linux_32bpp_cursor = BitsPerPixel{32} == data_bpp
+                                          // empty and_mask
+                                       && std::all_of(mask, mask+mlen, [](uint8_t x) { return !x; });
+
                 if (linux_32bpp_cursor) {
                     // https://github.com/neutrinolabs/xrdp/issues/879
                     // https://github.com/FreeRDP/FreeRDP/issues/3863
@@ -725,18 +716,16 @@ Pointer decode_pointer(
                                 dest_mask++;
                             }
                             mask_bit_count = (mask_bit_count - 1) & 7;
-
                         }
                     }
-
                 }
                 else {
                     memcpy(cursor_mask, mask, mlen);
                     if ((data_bpp == BitsPerPixel{32}) && (clean_up_32_bpp_cursor)) {
                         fix_32_bpp(dimensions, cursor_data, cursor_mask);
                     }
-
                 }
+
                 return ;
             }
             case BitsPerPixel::Unspecified: break;
