@@ -906,13 +906,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportClearText)
         auto st = get_stat(finalname);
         RED_CHECK_FILE_CONTENTS(hash_finalname, str_concat(
             "v2\n\n\nclear.txt 31 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec),
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec),
             " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b"
             " c528b474843d8b14cf5bf43a9c049af3239fac564d86b4329069b5e145d0769b\n"));
     }
@@ -988,13 +988,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
         auto st = get_stat(finalname);
         RED_CHECK(hash_buf == str_concat(
             "v2\n\n\nencrypted.txt 8260 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec),
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec),
             " 04521650db48e670363c68a9cddbeb60f92583bc0d2e093ff2c9375da69d7af0"
             " a87c5179e2cc2ce3516440c0b0bda899cc46ac423f220f6450bbbb7c45b81cc4\n"));
     }
@@ -1065,13 +1065,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportCrypted)
         auto st = get_stat(finalname);
         RED_CHECK(hash_buf == str_concat(
             "v2\n\n\nencrypted.txt 100 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec),
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec),
             " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5"
             " 2acc1e2cbffe64030d50eae7845a9dce6ec4e84ac2435f6c0f7f16f87b0180f5\n"));
     }
@@ -1148,13 +1148,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClear)
         auto st = get_stat(finalname);
         RED_CHECK_FILE_CONTENTS(hash_finalname, str_concat(
             "v2\n\n\nclear.txt 4047 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec),
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec),
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"));
     }
@@ -1223,13 +1223,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigClearPartialRead)
         auto st = get_stat(finalname);
         RED_CHECK_FILE_CONTENTS(hash_finalname, str_concat(
             "v2\n\n\nclear.txt 4047 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec),
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec),
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b"
             " cdbbf7cc04848d8729af68cb696fb104082dc6f0c0c099a0d978323b1f203f5b\n"));
     }
@@ -1282,13 +1282,13 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
         auto st = get_stat(encrypted_file);
         RED_CHECK(hash_buf == str_concat(
             "v2\n\n\nencrypted_file.enc 4166665 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec), '\n'));
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec), '\n'));
     }
     RED_CHECK(make_array_view(buffer) == original_contents);
 
@@ -1362,13 +1362,13 @@ RED_AUTO_TEST_CASE_WD(TestInCryptoTransportBigReadEncrypted, wd)
         auto st = get_stat(encrypted_file);
         RED_CHECK(hash_buf == str_concat(
             "v2\n\n\nencrypted_file.enc 1143180 ",
-            int_to_chars(st.st_mode), ' ',
-            int_to_chars(st.st_uid), ' ',
-            int_to_chars(st.st_gid), ' ',
-            int_to_chars(st.st_dev), ' ',
-            int_to_chars(st.st_ino), ' ',
-            int_to_chars(st.st_mtim.tv_sec), ' ',
-            int_to_chars(st.st_ctim.tv_sec), keys
+            int_to_decimal_chars(st.st_mode), ' ',
+            int_to_decimal_chars(st.st_uid), ' ',
+            int_to_decimal_chars(st.st_gid), ' ',
+            int_to_decimal_chars(st.st_dev), ' ',
+            int_to_decimal_chars(st.st_ino), ' ',
+            int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+            int_to_decimal_chars(st.st_ctim.tv_sec), keys
         ));
     }
 

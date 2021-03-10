@@ -206,14 +206,14 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 
     RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
         "v2\n\n\nsid,blabla.fdx "sv,
-        int_to_chars(file_content.size()), ' ',
-        int_to_chars(st.st_mode), ' ',
-        int_to_chars(st.st_uid), ' ',
-        int_to_chars(st.st_gid), ' ',
-        int_to_chars(st.st_dev), ' ',
-        int_to_chars(st.st_ino), ' ',
-        int_to_chars(st.st_mtim.tv_sec), ' ',
-        int_to_chars(st.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(file_content.size()), ' ',
+        int_to_decimal_chars(st.st_mode), ' ',
+        int_to_decimal_chars(st.st_uid), ' ',
+        int_to_decimal_chars(st.st_gid), ' ',
+        int_to_decimal_chars(st.st_dev), ' ',
+        int_to_decimal_chars(st.st_ino), ' ',
+        int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st.st_ctim.tv_sec), '\n'));
 
     auto tfl1 = fdx_record_path.add_file(str_concat(sid, ",000001.tfl"));
     auto tfl3 = fdx_record_path.add_file(str_concat(sid, ",000003.tfl"));
@@ -233,49 +233,49 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
 
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000001.tfl")), str_concat(
         "v2\n\n\nmy_session_id,000001.tfl 4 ",
-        int_to_chars(st1.st_mode), ' ',
-        int_to_chars(st1.st_uid), ' ',
-        int_to_chars(st1.st_gid), ' ',
-        int_to_chars(st1.st_dev), ' ',
-        int_to_chars(st1.st_ino), ' ',
-        int_to_chars(st1.st_mtim.tv_sec), ' ',
-        int_to_chars(st1.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st1.st_mode), ' ',
+        int_to_decimal_chars(st1.st_uid), ' ',
+        int_to_decimal_chars(st1.st_gid), ' ',
+        int_to_decimal_chars(st1.st_dev), ' ',
+        int_to_decimal_chars(st1.st_ino), ' ',
+        int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st1.st_ctim.tv_sec), '\n'));
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000003.tfl")), str_concat(
         "v2\n\n\nmy_session_id,000003.tfl 2 ",
-        int_to_chars(st3.st_mode), ' ',
-        int_to_chars(st3.st_uid), ' ',
-        int_to_chars(st3.st_gid), ' ',
-        int_to_chars(st3.st_dev), ' ',
-        int_to_chars(st3.st_ino), ' ',
-        int_to_chars(st3.st_mtim.tv_sec), ' ',
-        int_to_chars(st3.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st3.st_mode), ' ',
+        int_to_decimal_chars(st3.st_uid), ' ',
+        int_to_decimal_chars(st3.st_gid), ' ',
+        int_to_decimal_chars(st3.st_dev), ' ',
+        int_to_decimal_chars(st3.st_ino), ' ',
+        int_to_decimal_chars(st3.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st3.st_ctim.tv_sec), '\n'));
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000004.tfl")), str_concat(
         "v2\n\n\nmy_session_id,000004.tfl 3 ",
-        int_to_chars(st4.st_mode), ' ',
-        int_to_chars(st4.st_uid), ' ',
-        int_to_chars(st4.st_gid), ' ',
-        int_to_chars(st4.st_dev), ' ',
-        int_to_chars(st4.st_ino), ' ',
-        int_to_chars(st4.st_mtim.tv_sec), ' ',
-        int_to_chars(st4.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st4.st_mode), ' ',
+        int_to_decimal_chars(st4.st_uid), ' ',
+        int_to_decimal_chars(st4.st_gid), ' ',
+        int_to_decimal_chars(st4.st_dev), ' ',
+        int_to_decimal_chars(st4.st_ino), ' ',
+        int_to_decimal_chars(st4.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st4.st_ctim.tv_sec), '\n'));
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000005.tfl")), str_concat(
         "v2\n\n\nmy_session_id,000005.tfl 5 ",
-        int_to_chars(st5.st_mode), ' ',
-        int_to_chars(st5.st_uid), ' ',
-        int_to_chars(st5.st_gid), ' ',
-        int_to_chars(st5.st_dev), ' ',
-        int_to_chars(st5.st_ino), ' ',
-        int_to_chars(st5.st_mtim.tv_sec), ' ',
-        int_to_chars(st5.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st5.st_mode), ' ',
+        int_to_decimal_chars(st5.st_uid), ' ',
+        int_to_decimal_chars(st5.st_gid), ' ',
+        int_to_decimal_chars(st5.st_dev), ' ',
+        int_to_decimal_chars(st5.st_ino), ' ',
+        int_to_decimal_chars(st5.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st5.st_ctim.tv_sec), '\n'));
     RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000006.tfl")), str_concat(
         "v2\n\n\nmy_session_id,000006.tfl 5 ",
-        int_to_chars(st6.st_mode), ' ',
-        int_to_chars(st6.st_uid), ' ',
-        int_to_chars(st6.st_gid), ' ',
-        int_to_chars(st6.st_dev), ' ',
-        int_to_chars(st6.st_ino), ' ',
-        int_to_chars(st6.st_mtim.tv_sec), ' ',
-        int_to_chars(st6.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st6.st_mode), ' ',
+        int_to_decimal_chars(st6.st_uid), ' ',
+        int_to_decimal_chars(st6.st_gid), ' ',
+        int_to_decimal_chars(st6.st_dev), ' ',
+        int_to_decimal_chars(st6.st_ino), ' ',
+        int_to_decimal_chars(st6.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st6.st_ctim.tv_sec), '\n'));
 }
 
 RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)

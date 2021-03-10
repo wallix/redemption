@@ -31,7 +31,9 @@ struct int_to_chars_result
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
 
     template<class T>
-    friend int_to_chars_result int_to_chars(T n) noexcept;
+    friend int_to_chars_result int_to_decimal_chars(T n) noexcept;
+    template<class T>
+    friend int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
 
 private:
     char buffer[20];
@@ -47,18 +49,26 @@ struct int_to_zchars_result
     char const* c_str() const noexcept { return data(); }
 
     template<class T>
-    friend int_to_zchars_result int_to_zchars(T n) noexcept;
+    friend int_to_zchars_result int_to_decimal_zchars(T n) noexcept;
+    template<class T>
+    friend int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
 
 private:
-    char buffer[20];
+    char buffer[21];
     unsigned ibeg;
 };
 
 template<class T>
-int_to_chars_result int_to_chars(T n) noexcept;
+int_to_chars_result int_to_decimal_chars(T n) noexcept;
 
 template<class T>
-int_to_zchars_result int_to_zchars(T n) noexcept;
+int_to_zchars_result int_to_decimal_zchars(T n) noexcept;
+
+template<class T>
+int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
+
+template<class T>
+int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
 
 
 namespace detail
@@ -84,7 +94,7 @@ namespace detail
     };
 
     template<class UInt>
-    inline char* decimal_to_chars_impl(char *end, UInt value) noexcept
+    inline char* to_decimal_chars_impl(char *end, UInt value) noexcept
     {
         static_assert(std::is_unsigned_v<UInt>);
 
@@ -107,7 +117,7 @@ namespace detail
     }
 
     template<class Int>
-    inline char* decimal_to_chars(char *end, Int value) noexcept
+    inline char* to_decimal_chars(char *end, Int value) noexcept
     {
         static_assert(std::is_integral_v<Int>);
         static_assert(sizeof(Int) <= 64);
@@ -117,34 +127,72 @@ namespace detail
             auto abs_value = static_cast<UInt>(value);
             bool negative = (value < 0);
             if (negative) abs_value = 0 - abs_value;
-            char* begin = decimal_to_chars_impl(end, abs_value);
+            char* begin = to_decimal_chars_impl(end, abs_value);
             if (negative) *--begin = '-';
             return begin;
         }
         else if constexpr (sizeof(Int) < sizeof(unsigned)) {
-            return decimal_to_chars_impl(end, unsigned(value));
+            return to_decimal_chars_impl(end, unsigned(value));
         }
         else {
-            return decimal_to_chars_impl(end, value);
+            return to_decimal_chars_impl(end, value);
         }
+    }
+
+    template<class UInt>
+    inline char* to_hexadecimal_chars(char *end, UInt value) noexcept
+    {
+        static_assert(std::is_unsigned_v<UInt>);
+
+        char* out = end;
+
+        while (value > 0xf) {
+            *--out = "0123456789ABCDEF"[value & 0xf];
+            value >>= 4;
+        }
+
+        if (value <= 0xf) {
+            *--out = "0123456789ABCDEF"[value & 0xf];
+        }
+
+        return out;
     }
 }
 
 template<class T>
-inline int_to_chars_result int_to_chars(T n) noexcept
+inline int_to_chars_result int_to_decimal_chars(T n) noexcept
 {
     int_to_chars_result r;
     char* end = r.buffer + 20;
-    r.ibeg = unsigned(detail::decimal_to_chars(end, n) - r.buffer);
+    r.ibeg = unsigned(detail::to_decimal_chars(end, n) - r.buffer);
     return r;
 }
 
 template<class T>
-inline int_to_zchars_result int_to_zchars(T n) noexcept
+inline int_to_zchars_result int_to_decimal_zchars(T n) noexcept
 {
     int_to_zchars_result r;
     char* end = r.buffer + 20;
     *end = '\0';
-    r.ibeg = unsigned(detail::decimal_to_chars(end, n) - r.buffer);
+    r.ibeg = unsigned(detail::to_decimal_chars(end, n) - r.buffer);
+    return r;
+}
+
+template<class T>
+inline int_to_chars_result int_to_hexadecimal_chars(T n) noexcept
+{
+    int_to_chars_result r;
+    char* end = r.buffer + 20;
+    r.ibeg = unsigned(detail::to_hexadecimal_chars(end, n) - r.buffer);
+    return r;
+}
+
+template<class T>
+inline int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept
+{
+    int_to_zchars_result r;
+    char* end = r.buffer + 20;
+    *end = '\0';
+    r.ibeg = unsigned(detail::to_hexadecimal_chars(end, n) - r.buffer);
     return r;
 }

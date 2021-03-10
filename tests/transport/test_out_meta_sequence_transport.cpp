@@ -99,21 +99,21 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportLocal)
         "\n"
         "\n",
         file1, " 10 ",
-        int_to_chars(st1.st_mode), ' ',
-        int_to_chars(st1.st_uid), ' ',
-        int_to_chars(st1.st_gid), ' ',
-        int_to_chars(st1.st_dev), ' ',
-        int_to_chars(st1.st_ino), ' ',
-        int_to_chars(st1.st_mtim.tv_sec), ' ',
-        int_to_chars(st1.st_ctim.tv_sec), " 1352304810 1352304811\n",
+        int_to_decimal_chars(st1.st_mode), ' ',
+        int_to_decimal_chars(st1.st_uid), ' ',
+        int_to_decimal_chars(st1.st_gid), ' ',
+        int_to_decimal_chars(st1.st_dev), ' ',
+        int_to_decimal_chars(st1.st_ino), ' ',
+        int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st1.st_ctim.tv_sec), " 1352304810 1352304811\n",
         file2, " 5 ",
-        int_to_chars(st2.st_mode), ' ',
-        int_to_chars(st2.st_uid), ' ',
-        int_to_chars(st2.st_gid), ' ',
-        int_to_chars(st2.st_dev), ' ',
-        int_to_chars(st2.st_ino), ' ',
-        int_to_chars(st2.st_mtim.tv_sec), ' ',
-        int_to_chars(st2.st_ctim.tv_sec), " 1352304811 1352304811\n")});
+        int_to_decimal_chars(st2.st_mode), ' ',
+        int_to_decimal_chars(st2.st_uid), ' ',
+        int_to_decimal_chars(st2.st_gid), ' ',
+        int_to_decimal_chars(st2.st_dev), ' ',
+        int_to_decimal_chars(st2.st_ino), ' ',
+        int_to_decimal_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st2.st_ctim.tv_sec), " 1352304811 1352304811\n")});
 
     auto hash1 = hash_wd.add_file("xxx-000000.wrm");
     auto hash2 = hash_wd.add_file("xxx-000001.wrm");
@@ -123,25 +123,25 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportLocal)
         "\n"
         "\n"
         "xxx-000000.wrm 10 ",
-        int_to_chars(st1.st_mode), ' ',
-        int_to_chars(st1.st_uid), ' ',
-        int_to_chars(st1.st_gid), ' ',
-        int_to_chars(st1.st_dev), ' ',
-        int_to_chars(st1.st_ino), ' ',
-        int_to_chars(st1.st_mtim.tv_sec), ' ',
-        int_to_chars(st1.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st1.st_mode), ' ',
+        int_to_decimal_chars(st1.st_uid), ' ',
+        int_to_decimal_chars(st1.st_gid), ' ',
+        int_to_decimal_chars(st1.st_dev), ' ',
+        int_to_decimal_chars(st1.st_ino), ' ',
+        int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st1.st_ctim.tv_sec), '\n'));
     RED_TEST_FILE_CONTENTS(hash2, str_concat(
         "v2\n"
         "\n"
         "\n"
         "xxx-000001.wrm 5 ",
-        int_to_chars(st2.st_mode), ' ',
-        int_to_chars(st2.st_uid), ' ',
-        int_to_chars(st2.st_gid), ' ',
-        int_to_chars(st2.st_dev), ' ',
-        int_to_chars(st2.st_ino), ' ',
-        int_to_chars(st2.st_mtim.tv_sec), ' ',
-        int_to_chars(st2.st_ctim.tv_sec), '\n'));
+        int_to_decimal_chars(st2.st_mode), ' ',
+        int_to_decimal_chars(st2.st_uid), ' ',
+        int_to_decimal_chars(st2.st_gid), ' ',
+        int_to_decimal_chars(st2.st_dev), ' ',
+        int_to_decimal_chars(st2.st_ino), ' ',
+        int_to_decimal_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st2.st_ctim.tv_sec), '\n'));
 
 
     auto mhash = hash_wd.add_file("xxx.mwrm");
@@ -150,14 +150,14 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportLocal)
         "\n"
         "\n"
         "xxx.mwrm ",
-        int_to_chars(mwrmst.st_size), ' ',
-        int_to_chars(mwrmst.st_mode), ' ',
-        int_to_chars(mwrmst.st_uid), ' ',
-        int_to_chars(mwrmst.st_gid), ' ',
-        int_to_chars(mwrmst.st_dev), ' ',
-        int_to_chars(mwrmst.st_ino), ' ',
-        int_to_chars(mwrmst.st_mtim.tv_sec), ' ',
-        int_to_chars(mwrmst.st_ctim.tv_sec), '\n')});
+        int_to_decimal_chars(mwrmst.st_size), ' ',
+        int_to_decimal_chars(mwrmst.st_mode), ' ',
+        int_to_decimal_chars(mwrmst.st_uid), ' ',
+        int_to_decimal_chars(mwrmst.st_gid), ' ',
+        int_to_decimal_chars(mwrmst.st_dev), ' ',
+        int_to_decimal_chars(mwrmst.st_ino), ' ',
+        int_to_decimal_chars(mwrmst.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(mwrmst.st_ctim.tv_sec), '\n')});
 
     RED_CHECK_WORKSPACE(record_wd);
     RED_CHECK_WORKSPACE(hash_wd);
@@ -186,23 +186,23 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
         "\n"
         "\n",
         file1, " 10 ",
-        int_to_chars(st1.st_mode), ' ',
-        int_to_chars(st1.st_uid), ' ',
-        int_to_chars(st1.st_gid), ' ',
-        int_to_chars(st1.st_dev), ' ',
-        int_to_chars(st1.st_ino), ' ',
-        int_to_chars(st1.st_mtim.tv_sec), ' ',
-        int_to_chars(st1.st_ctim.tv_sec), " 1352304810 1352304811"
+        int_to_decimal_chars(st1.st_mode), ' ',
+        int_to_decimal_chars(st1.st_uid), ' ',
+        int_to_decimal_chars(st1.st_gid), ' ',
+        int_to_decimal_chars(st1.st_dev), ' ',
+        int_to_decimal_chars(st1.st_ino), ' ',
+        int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st1.st_ctim.tv_sec), " 1352304810 1352304811"
         " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7"
         " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7\n",
         file2, " 5 ",
-        int_to_chars(st2.st_mode), ' ',
-        int_to_chars(st2.st_uid), ' ',
-        int_to_chars(st2.st_gid), ' ',
-        int_to_chars(st2.st_dev), ' ',
-        int_to_chars(st2.st_ino), ' ',
-        int_to_chars(st2.st_mtim.tv_sec), ' ',
-        int_to_chars(st2.st_ctim.tv_sec), " 1352304811 1352304811"
+        int_to_decimal_chars(st2.st_mode), ' ',
+        int_to_decimal_chars(st2.st_uid), ' ',
+        int_to_decimal_chars(st2.st_gid), ' ',
+        int_to_decimal_chars(st2.st_dev), ' ',
+        int_to_decimal_chars(st2.st_ino), ' ',
+        int_to_decimal_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st2.st_ctim.tv_sec), " 1352304811 1352304811"
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36"
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36\n")});
 
@@ -214,13 +214,13 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
         "\n"
         "\n"
         "xxx-000000.wrm 10 ",
-        int_to_chars(st1.st_mode), ' ',
-        int_to_chars(st1.st_uid), ' ',
-        int_to_chars(st1.st_gid), ' ',
-        int_to_chars(st1.st_dev), ' ',
-        int_to_chars(st1.st_ino), ' ',
-        int_to_chars(st1.st_mtim.tv_sec), ' ',
-        int_to_chars(st1.st_ctim.tv_sec),
+        int_to_decimal_chars(st1.st_mode), ' ',
+        int_to_decimal_chars(st1.st_uid), ' ',
+        int_to_decimal_chars(st1.st_gid), ' ',
+        int_to_decimal_chars(st1.st_dev), ' ',
+        int_to_decimal_chars(st1.st_ino), ' ',
+        int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st1.st_ctim.tv_sec),
         " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7"
         " d873d36d05d92a7e7b0d0e1dca7d994f090f204185d38a6e2a1c1723a76326b7\n"));
     RED_TEST_FILE_CONTENTS(hash2, str_concat(
@@ -228,13 +228,13 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
         "\n"
         "\n"
         "xxx-000001.wrm 5 ",
-        int_to_chars(st2.st_mode), ' ',
-        int_to_chars(st2.st_uid), ' ',
-        int_to_chars(st2.st_gid), ' ',
-        int_to_chars(st2.st_dev), ' ',
-        int_to_chars(st2.st_ino), ' ',
-        int_to_chars(st2.st_mtim.tv_sec), ' ',
-        int_to_chars(st2.st_ctim.tv_sec),
+        int_to_decimal_chars(st2.st_mode), ' ',
+        int_to_decimal_chars(st2.st_uid), ' ',
+        int_to_decimal_chars(st2.st_gid), ' ',
+        int_to_decimal_chars(st2.st_dev), ' ',
+        int_to_decimal_chars(st2.st_ino), ' ',
+        int_to_decimal_chars(st2.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st2.st_ctim.tv_sec),
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36"
         " 3e6965faf9da00b75a8a4031748f22ffe9d992751bf189ea603d6acb8d172c36\n"));
 
@@ -243,14 +243,14 @@ RED_AUTO_TEST_CASE(TestOutmetaTransportHashed)
         "\n"
         "\n"
         "xxx.mwrm ",
-        int_to_chars(mwrmst.st_size), ' ',
-        int_to_chars(mwrmst.st_mode), ' ',
-        int_to_chars(mwrmst.st_uid), ' ',
-        int_to_chars(mwrmst.st_gid), ' ',
-        int_to_chars(mwrmst.st_dev), ' ',
-        int_to_chars(mwrmst.st_ino), ' ',
-        int_to_chars(mwrmst.st_mtim.tv_sec), ' ',
-        int_to_chars(mwrmst.st_ctim.tv_sec), ' ');
+        int_to_decimal_chars(mwrmst.st_size), ' ',
+        int_to_decimal_chars(mwrmst.st_mode), ' ',
+        int_to_decimal_chars(mwrmst.st_uid), ' ',
+        int_to_decimal_chars(mwrmst.st_gid), ' ',
+        int_to_decimal_chars(mwrmst.st_dev), ' ',
+        int_to_decimal_chars(mwrmst.st_ino), ' ',
+        int_to_decimal_chars(mwrmst.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(mwrmst.st_ctim.tv_sec), ' ');
     auto hash_mwrm = RED_CHECK_GET_FILE_CONTENTS(hash_wd.add_file("xxx.mwrm"));
 
     RED_TEST(hash_mwrm.size() == expected_prefix.size() + 65*2);
