@@ -33,12 +33,12 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-member-function")
 #include "configs/autogen/enums_func_ini.tcc"
 REDEMPTION_DIAGNOSTIC_POP()
 
-#include <string_view>
+#include <type_traits>
 #include <iostream>
+#include <charconv>
 
 #include <cstdio>
 
-using namespace std::string_view_literals;
 
 namespace
 {
@@ -78,29 +78,95 @@ namespace
         return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 7);
     }
 
+    template<bool>
+    struct ToIntType
+    {
+        template<class T>
+        using f = T;
+    };
+
+    template<>
+    struct ToIntType<true>
+    {
+        template<class T>
+        using f = std::underlying_type_t<T>;
+    };
+
+    struct Printer
+    {
+        Inifile::ZStringBuffer zbuffer;
+        int i = 0;
+        char integer_buffer[32];
+
+        Printer()
+        {
+            integer_buffer[0] = ' ';
+            integer_buffer[1] = '(';
+            integer_buffer[2] = '0';
+            integer_buffer[3] = 'x';
+        }
+
+        template<class Cfg>
+        void print(Inifile const& ini)
+        {
+            auto const& value = ini.get<Cfg>();
+
+            char const* hexadecimal_format = "";
+
+            using type = typename Cfg::type;
+
+            if constexpr (
+                (std::is_integral_v<type> && !std::is_same_v<type, bool>)
+              || std::is_enum_v<type>
+            ) {
+                using IntConverter = ToIntType<std::is_enum_v<type>>;
+                using IntType = typename IntConverter::template f<type>;
+                hexadecimal_format = init_hex_data(IntType(value));
+            }
+
+            print_impl(
+                configs::cfg_ini_infos::ini_names[i],
+                assign_zbuf_from_cfg(
+                    make_writable_array_view(zbuffer),
+                    cfg_s_type<typename Cfg::sesman_and_spec_type>(),
+                    value
+                ),
+                hexadecimal_format
+            );
+        }
+
+    private:
+        void print_impl(
+            configs::cfg_ini_infos::SectionAndName names,
+            zstring_view zstr,
+            char const* hexadecimal_format)
+        {
+            std::printf("[%s] %s = %s%s\n",
+                names.section.c_str(), names.name.c_str(), zstr.c_str(),
+                hexadecimal_format);
+
+            ++i;
+        }
+
+        template<class T>
+        char const* init_hex_data(T value)
+        {
+            auto first = integer_buffer + 4;
+            auto last = std::end(integer_buffer) - 2;
+            auto r = std::to_chars(first, last, value, 16);
+            r.ptr[0] = ')';
+            r.ptr[1] = '\0';
+            return integer_buffer;
+        }
+    };
+
     template<class... Cfg>
     struct PrinterValues<configs::Pack<Cfg...>>
     {
         static void print(Inifile& ini)
         {
-            int i = 0;
-
-            auto show = [&](configs::cfg_ini_infos::SectionAndName names, zstring_view str){
-                std::printf("[%s] %s = %s\n",
-                    names.section.c_str(), names.name.c_str(), str.c_str());
-                ++i;
-            };
-
-            Inifile::ZStringBuffer zbuffer;
-            auto buffer = make_writable_array_view(zbuffer);
-            (..., show(
-                configs::cfg_ini_infos::ini_names[i],
-                assign_zbuf_from_cfg(
-                    buffer,
-                    cfg_s_type<typename Cfg::sesman_and_spec_type>(),
-                    ini.get<Cfg>()
-                )
-            ));
+            Printer printer;
+            (..., printer.print<Cfg>(ini));
         }
     };
 }
