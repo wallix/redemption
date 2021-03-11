@@ -21,7 +21,9 @@ Author(s): Jonathan Poelen
 #include "client_redemption/pointer_to_rgba8888.hpp"
 
 #include "core/RDP/rdp_pointer.hpp"
+#include "utils/colors.hpp"
 
+#include <cstring>
 
 namespace
 {
@@ -35,111 +37,269 @@ namespace
         return true;
     }
 
-    void apply_reversed_color(uint8_t* data, uint8_t const* pointer_data) noexcept
+    void init_with_bpp1(uint8_t* dest, int w, int h, uint8_t const* data, uint8_t const* mask)
     {
-        if (!data[3]) {
-            data[0] = 0xFFu - pointer_data[0];
-            data[1] = 0xFFu - pointer_data[1];
-            data[2] = 0xFFu - pointer_data[2];
-            data[3] = 255;
+        const int line_bytes = int(::even_pad_length(::nbbytes(unsigned(w))));
+
+        for (int y = 0; y < h; ++y) {
+            const uint8_t* src      = data + y * line_bytes;
+            const uint8_t* src_mask = mask + y * line_bytes;
+
+            unsigned char bit_count = 7;
+            const uint8_t* enddest = dest + 4*w;
+            while (dest < enddest) {
+                uint8_t pixel = (*src & (1 << bit_count)) ? 0xFF : 0;
+                *dest++ = pixel;
+                *dest++ = pixel;
+                *dest++ = pixel;
+                *dest++ = (*src_mask & (1 << bit_count)) ? 0 : 0xFF;
+
+                if (bit_count == 0) {
+                    ++src;
+                    ++src_mask;
+                }
+
+                bit_count = (bit_count - 1) & 7;
+            }
         }
     }
 
-    void apply_color(uint8_t* data, uint8_t const* pointer_data)
+    void init_with_bpp4(
+        uint8_t* dest, int w, int h, uint8_t const* data, uint8_t const* mask,
+        BGRPalette const& palette)
     {
-        data[0] = pointer_data[0];
-        data[1] = pointer_data[1];
-        data[2] = pointer_data[2];
-        data[3] = 255;
+        const int data_line_bytes = int(::even_pad_length(::nbbytes(unsigned(w * 4))));
+        const int mask_line_bytes = int(::even_pad_length(::nbbytes(unsigned(w))));
+
+        for (int y = 0; y < h; ++y) {
+            const uint8_t* src      = data + y * data_line_bytes;
+            const uint8_t* src_mask = mask + y * mask_line_bytes;
+
+            unsigned char bit_count = 7;
+            const uint8_t* enddest = dest + 4*w;
+            while (dest < enddest) {
+                BGRColor pixel1 = palette[*src >> 4];
+
+                *dest++ = pixel1.red();
+                *dest++ = pixel1.green();
+                *dest++ = pixel1.blue();
+                *dest++ = (*src_mask & (1 << bit_count)) ? 0 : 0xFF;
+
+                bit_count = (bit_count - 1) & 7;
+
+                BGRColor pixel2 = palette[*src & 0xf];
+
+                *dest++ = pixel2.red();
+                *dest++ = pixel2.green();
+                *dest++ = pixel2.blue();
+                *dest++ = (*src_mask & (1 << bit_count)) ? 0 : 0xFF;
+
+                if (bit_count == 0) {
+                    ++src_mask;
+                }
+
+                bit_count = (bit_count - 1) & 7;
+
+                ++src;
+            }
+        }
     }
 
-    void apply_transparency(uint8_t* data)
+    template<class Decoder>
+    void init_with_bpp8_15_16_24(
+        uint8_t* dest, int w, int h, uint8_t const* data, uint8_t const* mask, Decoder decoder)
     {
-        // ignore invisible pixels
-        // data[0] = 0;
-        // data[1] = 0;
-        // data[2] = 0;
-        data[3] = 0;
+        constexpr int bytes_per_pixel = ::nbbytes(unsigned(Decoder::bpp));
+        const int data_line_bytes = int(::even_pad_length(unsigned(w * bytes_per_pixel)));
+        const int mask_line_bytes = int(::even_pad_length(::nbbytes(unsigned(w))));
+
+        data += (h-1) * data_line_bytes;
+        mask += (h-1) * mask_line_bytes;
+
+        for (int y = 0; y < h; ++y) {
+            const uint8_t* src      = data;
+            const uint8_t* src_mask = mask;
+
+            unsigned char bit_count = 7;
+            const uint8_t* enddest = dest + 4*w;
+            while (dest < enddest) {
+                auto raw_color = in_uint32_from_nb_bytes_le(bytes_per_pixel, src);
+                BGRColor pixel = decoder(RDPColor::from(raw_color));
+                src += bytes_per_pixel;
+
+                *dest++ = pixel.red();
+                *dest++ = pixel.green();
+                *dest++ = pixel.blue();
+                *dest++ = (*src_mask & (1 << bit_count)) ? 0 : 0xFF;
+
+                if (bit_count == 0) {
+                    ++src_mask;
+                }
+
+                bit_count = (bit_count - 1) & 7;
+            }
+
+            data -= data_line_bytes;
+            mask -= mask_line_bytes;
+        }
+    }
+
+    void init_with_bpp32(uint8_t* dest, int w, int h, uint8_t const* data)
+    {
+        const int w4 = w * 4;
+        uint8_t const* src = data + (h-1) * w4;
+
+        for (int y = 0; y < h; ++y) {
+            std::memcpy(dest, src, size_t(w4));
+            dest += w4;
+            src -= w4;
+        }
+    }
+
+    void apply_shadow(uint8_t* dest, int w, int h)
+    {
+        if (w <= 2 || h <= 3) {
+            return ;
+        }
+
+        auto has_color = [](uint8_t const* color) {
+            return color[0] || color[1] || color[2];
+        };
+
+        auto reverse_color = [=](uint8_t* dest_color, uint8_t const* color)
+        {
+            if (!has_color(dest_color)) {
+                dest_color[0] = 255u - color[0];
+                dest_color[1] = 255u - color[1];
+                dest_color[2] = 255u - color[2];
+                dest_color[3] = 255;
+            }
+        };
+
+        const int w4 = w * 4;
+
+        auto apply_color = [=](
+            uint8_t* dest,
+            auto has_top, auto has_bottom,
+            auto has_left, auto has_right
+        ){
+            constexpr bool top = decltype(has_top)::value;
+            constexpr bool bottom = decltype(has_bottom)::value;
+            constexpr bool left = decltype(has_left)::value;
+            constexpr bool right = decltype(has_right)::value;
+
+            if (!has_color(dest)) {
+                return;
+            }
+
+            dest[3] = 255;
+
+            // border top
+            if constexpr (top && left)     reverse_color(dest - w4 - 4, dest);
+            if constexpr (top)             reverse_color(dest - w4, dest);
+            if constexpr (top && right)    reverse_color(dest - w4 + 4, dest);
+            // border left
+            if constexpr (left)            reverse_color(dest - 4, dest);
+            // border right
+            if constexpr (right)           reverse_color(dest + 4, dest);
+            // border bottom
+            if constexpr (bottom && left)  reverse_color(dest + w4 - 4, dest);
+            if constexpr (bottom)          reverse_color(dest + w4, dest);
+            if constexpr (bottom && right) reverse_color(dest + w4 + 4, dest);
+        };
+
+        auto y = std::true_type{};
+        auto n = std::false_type{};
+
+        // without border top / left
+        apply_color(dest, n, y, n, y);
+        dest += 4;
+        // without border top
+        for (auto* enddest = dest + w4 - 4*2; dest < enddest; dest += 4) {
+            apply_color(dest, n, y, y, y);
+        }
+        // without border top / right
+        apply_color(dest, n, y, y, n);
+        dest += 4;
+
+        for (int i = 1; i < h-1; ++i) {
+            // without border left
+            apply_color(dest, y, y, n, y);
+            dest += 4;
+            for (auto* enddest = dest + w4 - 4*2; dest < enddest; dest += 4) {
+                apply_color(dest, y, y, y, y);
+            }
+            // without border right
+            apply_color(dest, y, y, y, n);
+            dest += 4;
+        }
+
+        // without border bottom / left
+        apply_color(dest, y, n, n, y);
+        dest += 4;
+        // without border bottom
+        for (auto* enddest = dest + w4 - 4*2; dest < enddest; dest += 4) {
+            apply_color(dest, y, n, y, y);
+        }
+        // without border bottom / right
+        apply_color(dest, y, n, y, n);
+        dest += 4;
     }
 }
-
 
 redclient::RGBA8888Image redclient::pointer_to_rgba8888(Pointer const& pointer)
 {
     auto const dimensions = pointer.get_dimensions();
-    auto const av_and_1byte = pointer.get_monochrome_and_mask();
-    auto const av_xor_mask = pointer.get_24bits_xor_mask();
-    bool const is_empty_mask = ::is_empty_mask(av_and_1byte);
-    auto const width = dimensions.width + is_empty_mask * 2u;
-    auto const height = dimensions.height + is_empty_mask * 2u;
-    auto const d3 = dimensions.width * 3;
-    auto const w4 = width * 4;
-    auto const decrement_next_line = w4 * 2 - is_empty_mask * 8;
-
-    uint8_t* pdata = is_empty_mask
-        // zero initialization
-        ? new uint8_t[width * height * 4]{} /*NOLINT*/
-        // default initialization (apply_transparency is used)
-        : new uint8_t[width * height * 4]; /*NOLINT*/
+    auto const width = dimensions.width;
+    auto const height = dimensions.height;
+    auto const source = pointer.get_native_xor_mask();
+    auto const mask = pointer.get_monochrome_and_mask();
+    auto* pdata = new uint8_t[width * height * 4]; /*NOLINT*/
     RGBA8888Image img{width, height, std::unique_ptr<uint8_t[]>(pdata)};
-    pdata += width * height * 4 - w4 + is_empty_mask * (4 - w4);
 
-    auto for_each_pixel = [&](auto f)
-    {
-        for (auto pointer_data = av_xor_mask.begin(), pointer_data_end = av_xor_mask.end();
-             pointer_data < pointer_data_end;
-        )
-        {
-            for (auto pointer_data_end_line = pointer_data + d3;
-                pointer_data < pointer_data_end_line; void(pdata += 4), pointer_data += 3
-            )
-            {
-                f(pdata, pointer_data);
-            }
-            // pointer_data is aligned on 2 bytes
-            pointer_data += (d3 & 1);
-            pdata -= decrement_next_line;
-        }
-    };
+    auto* xor_mask = source.data();
+    auto* and_mask = mask.data();
 
-    if (is_empty_mask)
-    {
-        for_each_pixel([&](uint8_t* data, uint8_t const* pointer_data)
-        {
-            if (pointer_data[0] || pointer_data[1] || pointer_data[2])
-            {
-                apply_color(data, pointer_data);
+    switch (pointer.get_native_xor_bpp()) {
+        case BitsPerPixel::BitsPP1:
+            init_with_bpp1(pdata, width, height, xor_mask, and_mask);
+            break;
 
-                // border top
-                apply_reversed_color(data - w4 - 4, data);
-                apply_reversed_color(data - w4, data);
-                apply_reversed_color(data - w4 + 4, data);
-                // border left
-                apply_reversed_color(data - 4, data);
-                // border right
-                apply_reversed_color(data + 4, data);
-                // border bottom
-                apply_reversed_color(data + w4 - 4, data);
-                apply_reversed_color(data + w4, data);
-                apply_reversed_color(data + w4 + 4, data);
-            }
-        });
+        case BitsPerPixel::BitsPP4:
+            init_with_bpp4(pdata, width, height, xor_mask, and_mask,
+                BGRPalette::classic_332());
+            break;
+
+        case BitsPerPixel::BitsPP8:
+            init_with_bpp8_15_16_24(pdata, width, height, xor_mask, and_mask,
+                decode_color8_with_palette{BGRPalette::classic_332()});
+            break;
+
+        case BitsPerPixel::BitsPP15:
+            init_with_bpp8_15_16_24(pdata, width, height, xor_mask, and_mask,
+                decode_color15{});
+            break;
+
+        case BitsPerPixel::BitsPP16:
+            init_with_bpp8_15_16_24(pdata, width, height, xor_mask, and_mask,
+                decode_color16{});
+            break;
+
+        case BitsPerPixel::BitsPP24:
+            init_with_bpp8_15_16_24(pdata, width, height, xor_mask, and_mask,
+                decode_color24{});
+            break;
+
+        case BitsPerPixel::BitsPP32:
+            init_with_bpp32(pdata, width, height, xor_mask);
+            break;
+
+        case BitsPerPixel::Unspecified:
+            break;
     }
-    else
-    {
-        unsigned i = 0;
-        for_each_pixel([&](uint8_t* data, uint8_t const* pointer_data)
-        {
-            if (!(av_and_1byte[i / 8u] & (1u << (7u - (i % 8u)))))
-            {
-                apply_color(data, pointer_data);
-            }
-            else
-            {
-                apply_transparency(data);
-            }
-            ++i;
-        });
+
+    if (is_empty_mask(mask)) {
+        apply_shadow(pdata, width, height);
     }
 
     return img;

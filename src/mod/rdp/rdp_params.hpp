@@ -62,7 +62,7 @@ struct ModRDPParams
     bool enable_nla = true;
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
-    bool use_native_pointer = false;
+    bool use_native_pointer = true;
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_remotefx = false;
