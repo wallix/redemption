@@ -22,9 +22,7 @@
 #include "configs/config.hpp"
 #include "gdi/text_metrics.hpp"
 #include "keyboard/keymap2.hpp"
-
-#include <charconv>
-#include <cassert>
+#include "utils/sugar/int_to_chars.hpp"
 
 
 namespace
@@ -55,25 +53,6 @@ namespace
     }
 
     constexpr int nb_max_row = 1024;
-
-    struct lexical_string
-    {
-        char buf[32];
-
-        template<class T>
-        lexical_string(T x)
-        {
-            std::to_chars_result result = std::to_chars(std::begin(buf), std::end(buf), x);
-            assert(result.ec == std::errc());
-            assert(result.ptr != std::end(buf));
-            *result.ptr = '\0';
-        }
-
-        char const* c_str() const
-        {
-            return this->buf;
-        }
-    };
 } // namespace
 
 
@@ -113,10 +92,10 @@ SelectorMod::SelectorMod(
         this->screen, this,
         ini.is_asked<cfg::context::selector_current_page>()
             ? ""
-            : lexical_string(ini.get<cfg::context::selector_current_page>()).c_str(),
+            : int_to_decimal_zchars(ini.get<cfg::context::selector_current_page>()).c_str(),
         ini.is_asked<cfg::context::selector_number_of_pages>()
             ? ""
-            : lexical_string(ini.get<cfg::context::selector_number_of_pages>()).c_str(),
+            : int_to_decimal_zchars(ini.get<cfg::context::selector_number_of_pages>()).c_str(),
         &this->language_button, this->selector_params, font, theme, language(ini), true)
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
@@ -147,15 +126,12 @@ void SelectorMod::init()
 
 void SelectorMod::acl_update(AclFieldMask const& /*acl_fields*/)
 {
-    char buffer[16];
-
     this->current_page = this->ini.get<cfg::context::selector_current_page>();
-    snprintf(buffer, sizeof(buffer), "%d", this->current_page);
-    this->selector.current_page.set_text(buffer);
+    this->selector.current_page.set_text(int_to_decimal_zchars(this->current_page).c_str());
 
     this->number_page = this->ini.get<cfg::context::selector_number_of_pages>();
-    snprintf(buffer, sizeof(buffer), "%d", this->number_page);
-    this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+    this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(
+        int_to_decimal_zchars(this->number_page).c_str()).buffer);
 
     this->selector.selector_lines.clear();
 

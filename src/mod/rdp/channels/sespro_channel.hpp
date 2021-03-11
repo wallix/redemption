@@ -38,6 +38,8 @@
 #include "utils/parse_server_message.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/uninit_checked.hpp"
 #include "utils/translation.hpp"
 
@@ -663,12 +665,7 @@ public:
 
                 send_client_message([](OutStream & out_s) {
                     out_s.out_copy_bytes("ExtraInfo="_av);
-
-                    {
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "%d", ::getpid());
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes(int_to_decimal_chars(::getpid()));
                 });
 
                 send_client_message([this](OutStream & out_s) {
@@ -854,13 +851,9 @@ public:
                     const bool result =
                         this->sespro_params.extra_system_processes.get(proc_index, name);
 
-                    {
-                        const int error_code = (result ? 0 : -1);
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                            proc_index, error_code);
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes(int_to_decimal_chars(proc_index));
+                    out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
 
                     if (result) {
                         out_s.out_uint8('\x01');
@@ -890,13 +883,9 @@ public:
                             rule_index, type, host_address_or_subnet, port_range,
                             description);
 
-                    {
-                        const int error_code = (result ? 0 : -1);
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                            rule_index, error_code);
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes(int_to_decimal_chars(rule_index));
+                    out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
 
                     if (result) {
                         char cstr[128];
@@ -928,13 +917,9 @@ public:
                         this->sespro_params.process_monitor_rules.get(
                             rule_index, type, pattern, description);
 
-                    {
-                        const int error_code = (result ? 0 : -1);
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                            rule_index, error_code);
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes(int_to_decimal_chars(rule_index));
+                    out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
 
                     if (result) {
                         char cstr[128];
@@ -962,13 +947,9 @@ public:
                     const bool result =
                         this->sespro_params.windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
 
-                    {
-                        const int error_code = (result ? 0 : -1);
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
-                            app_index, error_code);
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes(int_to_decimal_chars(app_index));
+                    out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
 
                     if (result) {
                         out_s.out_uint8('\x01');
@@ -1024,11 +1005,8 @@ public:
 
                         if (0x0104 <= this->other_version) {
                             out_s.out_uint8('\x01');
-
-                            char cstr[128];
-                            int len = std::snprintf(cstr, sizeof(cstr), "%d",
-                                static_cast<int>(this->sespro_params.log_level));
-                            out_s.out_copy_bytes(cstr, size_t(len));
+                            out_s.out_copy_bytes(int_to_decimal_chars(
+                                underlying_cast(this->sespro_params.log_level)));
                         }
                         else {
                             if (this->sespro_params.log_level >= SessionProbeLogLevel::Off) {

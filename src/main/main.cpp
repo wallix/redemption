@@ -35,12 +35,12 @@
 #include "system/scoped_crypto_init.hpp"
 #include "system/scoped_ssl_init.hpp"
 #include "transport/file_transport.hpp"
-#include "transport/file_transport.hpp"
 
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/cli.hpp"
 
 #include <iostream>
@@ -54,12 +54,30 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-inline void daemonize(const char * pid_file)
+static bool write_pid_file(int pid)
+{
+    char const* pid_file = app_path(AppPath::LockFile);
+    int fd = open(pid_file, O_WRONLY | O_CREAT, S_IRWXU);
+    if (fd == -1) {
+        int errnum = errno;
+        std::clog <<  "Writing process id to " << pid_file << " failed. Maybe no rights ?"
+                  << " : " << errnum << ":'" << strerror(errnum) << "'\n";
+        return false;
+    }
+
+    auto text = int_to_decimal_chars(pid);
+
+    if (write(fd, text.data(), text.size()) != ssize_t(text.size())) {
+        LOG(LOG_ERR, "Couldn't write pid to %s: %s", pid_file, strerror(errno));
+        return false;
+    }
+
+    return true;
+}
+
+static void daemonize()
 {
     int pid;
-    int fd;
-    char text[256];
-    std::size_t lg;
 
     close(0);
     close(1);
@@ -74,19 +92,8 @@ inline void daemonize(const char * pid_file)
         _exit(0);
     case 0: /* child daemon process */
         pid = getpid();
-        fd = open(pid_file, O_WRONLY | O_CREAT, S_IRWXU);
-        if (fd == -1) {
-            std::clog
-            <<  "Writing process id to " LOCKFILE " failed. Maybe no rights ?"
-            << " : " << errno << ":'" << strerror(errno) << "'\n";
-            _exit(1);
-        }
-        lg = snprintf(text, 255, "%d", pid);
 
-        try {
-            OutFileTransport(unique_fd{fd}).send(text, lg);
-        } catch (Error const &) {
-            LOG(LOG_ERR, "Couldn't write pid to %s: %s", pid_file, strerror(errno));
+        if (!write_pid_file(pid)) {
             _exit(1);
         }
 
@@ -392,27 +399,12 @@ int main(int argc, char** argv)
         return 1;
     }
 
-
-    /* write the pid to file */
-    int const fd = open(app_path(AppPath::LockFile), O_WRONLY | O_CREAT, S_IRWXU);
-    if (fd == -1) {
-        std::clog
-        <<  "Writing process id to " << app_path(AppPath::LockFile)
-        << " failed. Maybe no rights ?" << " : " << errno << ":'" << strerror(errno) << "'\n";
-        return 1;
-    }
-
-    try {
-        char text[256];
-        size_t lg = snprintf(text, 255, "%d", getpid());
-        OutFileTransport(unique_fd{fd}).send(text, lg);
-    } catch (Error const &) {
-        LOG(LOG_ERR, "Couldn't write pid to %s: %s", app_path(AppPath::LockFile), strerror(errno));
+    if (!write_pid_file(getpid())) {
         return 1;
     }
 
     if (!is_nodeamon) {
-        daemonize(app_path(AppPath::LockFile));
+        daemonize();
     }
 
     Inifile ini;
