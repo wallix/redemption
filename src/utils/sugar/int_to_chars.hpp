@@ -23,40 +23,41 @@ Author(s): Proxy Team
 #include <type_traits>
 #include <cstring>
 
+namespace detail
+{
+    struct int_to_chars_result_access;
+}
 
 struct int_to_chars_result
 {
-    char* data() noexcept { return buffer + ibeg; }
+    int_to_chars_result() = default;
+
     char const* data() const noexcept { return buffer + ibeg; }
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
 
-    template<class T>
-    friend int_to_chars_result int_to_decimal_chars(T n) noexcept;
-    template<class T>
-    friend int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
-
 private:
+    friend detail::int_to_chars_result_access;
+
     char buffer[20];
-    unsigned ibeg;
+    unsigned ibeg = 20;
 };
 
 struct int_to_zchars_result
 {
-    char* data() noexcept { return buffer + ibeg; }
+    int_to_zchars_result() = default;
+
     char const* data() const noexcept { return buffer + ibeg; }
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
 
     char const* c_str() const noexcept { return data(); }
 
-    template<class T>
-    friend int_to_zchars_result int_to_decimal_zchars(T n) noexcept;
-    template<class T>
-    friend int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
-
 private:
+    friend detail::int_to_chars_result_access;
+
     char buffer[21];
-    unsigned ibeg;
+    unsigned ibeg = 21;
 };
+
 
 template<class T>
 int_to_chars_result int_to_decimal_chars(T n) noexcept;
@@ -69,6 +70,19 @@ int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
 
 template<class T>
 int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
+
+
+template<class T>
+void int_to_decimal_chars(int_to_chars_result& out, T n) noexcept;
+
+template<class T>
+void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept;
+
+template<class T>
+void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept;
+
+template<class T>
+void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept;
 
 
 namespace detail
@@ -157,14 +171,28 @@ namespace detail
 
         return out;
     }
+
+    struct int_to_chars_result_access
+    {
+        template<class T>
+        inline static char* buffer(T& r) noexcept
+        {
+            return r.buffer;
+        }
+
+        template<class T>
+        inline static void set_ibeg(T& r, std::ptrdiff_t n) noexcept
+        {
+            r.ibeg = unsigned(n);
+        }
+    };
 }
 
 template<class T>
 inline int_to_chars_result int_to_decimal_chars(T n) noexcept
 {
     int_to_chars_result r;
-    char* end = r.buffer + 20;
-    r.ibeg = unsigned(detail::to_decimal_chars(end, n) - r.buffer);
+    int_to_decimal_chars(r, n);
     return r;
 }
 
@@ -172,9 +200,7 @@ template<class T>
 inline int_to_zchars_result int_to_decimal_zchars(T n) noexcept
 {
     int_to_zchars_result r;
-    char* end = r.buffer + 20;
-    *end = '\0';
-    r.ibeg = unsigned(detail::to_decimal_chars(end, n) - r.buffer);
+    int_to_decimal_zchars(r, n);
     return r;
 }
 
@@ -182,8 +208,7 @@ template<class T>
 inline int_to_chars_result int_to_hexadecimal_chars(T n) noexcept
 {
     int_to_chars_result r;
-    char* end = r.buffer + 20;
-    r.ibeg = unsigned(detail::to_hexadecimal_chars(end, n) - r.buffer);
+    int_to_hexadecimal_chars(r, n);
     return r;
 }
 
@@ -191,8 +216,44 @@ template<class T>
 inline int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept
 {
     int_to_zchars_result r;
-    char* end = r.buffer + 20;
-    *end = '\0';
-    r.ibeg = unsigned(detail::to_hexadecimal_chars(end, n) - r.buffer);
+    int_to_hexadecimal_zchars(r, n);
     return r;
+}
+
+template<class T>
+inline void int_to_decimal_chars(int_to_chars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    char* end = buffer + 20;
+    access::set_ibeg(out, detail::to_decimal_chars(end, n) - buffer);
+}
+
+template<class T>
+inline void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    char* end = buffer + 20;
+    *end = '\0';
+    access::set_ibeg(out, detail::to_decimal_chars(end, n) - buffer);
+}
+
+template<class T>
+inline void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    char* end = buffer + 20;
+    access::set_ibeg(out, detail::to_hexadecimal_chars(end, n) - buffer);
+}
+
+template<class T>
+inline void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    char* end = buffer + 20;
+    *end = '\0';
+    access::set_ibeg(out, detail::to_hexadecimal_chars(end, n) - buffer);
 }
