@@ -629,12 +629,7 @@ public:
                     {
                         send_client_message([options](OutStream & out_s) {
                             out_s.out_copy_bytes("Options="_av);
-
-                            {
-                                char cstr[128];
-                                int len = std::snprintf(cstr, sizeof(cstr), "%u", options);
-                                out_s.out_copy_bytes(cstr, size_t(len));
-                            }
+                            out_s.out_copy_bytes(int_to_decimal_chars(options));
                         });
                     }
                 }
@@ -690,13 +685,7 @@ public:
                     if (disconnect_session_limit) {
                         send_client_message([disconnect_session_limit](OutStream & out_s) {
                             out_s.out_copy_bytes("DisconnectedSessionLimit="_av);
-
-                            {
-                                char cstr[128];
-                                int len = std::snprintf(cstr, sizeof(cstr), "%u",
-                                    disconnect_session_limit);
-                                out_s.out_copy_bytes(cstr, size_t(len));
-                            }
+                            out_s.out_copy_bytes(int_to_decimal_chars(disconnect_session_limit));
                         });
                     }
                 }
@@ -704,13 +693,8 @@ public:
                 if (this->sespro_params.idle_session_limit.count()) {
                     send_client_message([this](OutStream & out_s) {
                         out_s.out_copy_bytes("IdleSessionLimit="_av);
-
-                        {
-                            char cstr[128];
-                            int len = std::snprintf(cstr, sizeof(cstr), "%lld",
-                                ms2ll(this->sespro_params.idle_session_limit));
-                            out_s.out_copy_bytes(cstr, size_t(len));
-                        }
+                        out_s.out_copy_bytes(int_to_decimal_chars(
+                            ms2ll(this->sespro_params.idle_session_limit)));
                     });
                 }
 
@@ -722,13 +706,7 @@ public:
 
                     send_client_message([this](OutStream & out_s) {
                         out_s.out_copy_bytes("ReconnectionCookie="_av);
-
-                        {
-                            char cstr[128];
-                            int len = std::snprintf(cstr, sizeof(cstr), "%u",
-                                this->reconnection_cookie);
-                            out_s.out_copy_bytes(cstr, size_t(len));
-                        }
+                        out_s.out_copy_bytes(int_to_decimal_chars(this->reconnection_cookie));
                     });
                 }
 
@@ -745,14 +723,11 @@ public:
 
                 send_client_message([this](OutStream & out_s) {
                     out_s.out_copy_bytes("Bushido="_av);
-
-                    {
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%u",
-                            this->sespro_params.handle_usage_limit,
-                            this->sespro_params.memory_usage_limit);
-                        out_s.out_copy_bytes(cstr, size_t(len));
-                    }
+                    out_s.out_copy_bytes(int_to_decimal_chars(
+                        this->sespro_params.handle_usage_limit));
+                    out_s.out_uint8('\x01');
+                    out_s.out_copy_bytes(int_to_decimal_chars(
+                        this->sespro_params.memory_usage_limit));
                 });
 
                 send_client_message([this](OutStream & out_s) {
@@ -888,9 +863,9 @@ public:
                     out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
 
                     if (result) {
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01", type);
-                        out_s.out_copy_bytes(cstr, size_t(len));
+                        out_s.out_uint8('\x01');
+                        out_s.out_copy_bytes(int_to_decimal_chars(type));
+                        out_s.out_uint8('\x01');
                         out_s.out_copy_bytes(host_address_or_subnet);
                         out_s.out_uint8('\x01');
                         out_s.out_copy_bytes(port_range);
@@ -922,9 +897,9 @@ public:
                     out_s.out_copy_bytes(result ? "0"_av : "-1"_av);
 
                     if (result) {
-                        char cstr[128];
-                        int len = std::snprintf(cstr, sizeof(cstr), "\x01" "%u" "\x01", type);
-                        out_s.out_copy_bytes(cstr, size_t(len));
+                        out_s.out_uint8('\x01');
+                        out_s.out_copy_bytes(int_to_decimal_chars(type));
+                        out_s.out_uint8('\x01');
                         out_s.out_copy_bytes(pattern);
                     }
                 });
@@ -1695,11 +1670,7 @@ public:
         }
 
         out_s.out_uint8('\x01');
-        {
-            char cstr[128];
-            int len = std::snprintf(cstr, sizeof(cstr), "%u", flags);
-            out_s.out_copy_bytes(cstr, size_t(len));
-        }
+        out_s.out_copy_bytes(int_to_decimal_chars(flags));
 
         out_s.out_clear_bytes(1);   // Null-terminator.
 

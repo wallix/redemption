@@ -31,6 +31,7 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/unordered_erase.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/translation.hpp"
 #include "gdi/osd_api.hpp"
 
@@ -2515,9 +2516,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
         REDEMPTION_DIAGNOSTIC_POP()
         array_view format_av{format_buf, checked_cast<std::size_t>(format_len)};
 
-        char size_buf[32];
-        int size_len = std::sprintf(size_buf, "%u", in_header.dataLen());
-        array_view size_av{size_buf, checked_cast<std::size_t>(size_len)};
+        auto size_av = int_to_decimal_chars(in_header.dataLen());
 
         constexpr size_t max_length_of_data_to_dump = 256;
         char data_to_dump_buf[
