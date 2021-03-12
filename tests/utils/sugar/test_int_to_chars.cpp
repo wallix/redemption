@@ -21,6 +21,7 @@ Author(s): Proxies Team
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/log.hpp"
 
 
 RED_AUTO_TEST_CASE(TestIntToDecimalChars)
@@ -43,6 +44,13 @@ RED_AUTO_TEST_CASE(TestIntToDecimalChars)
     RED_CHECK(int_to_decimal_chars(18446744073709551615ull) == "18446744073709551615"_av);
 
     RED_CHECK(int_to_decimal_chars(18446744073709551615ull).size() == 20);
+
+    auto str = int_to_decimal_chars(596u);
+    auto av = chars_view(str);
+    using voidp = void const*;
+    RED_CHECK(voidp(av.data()) == voidp(str.data()));
+    RED_CHECK(av.size() == str.size());
+    RED_CHECK(av == "596"_av);
 
     RED_CHECK(int_to_decimal_zchars(0) == "0"_av);
     RED_CHECK(int_to_decimal_zchars(1) == "1"_av);

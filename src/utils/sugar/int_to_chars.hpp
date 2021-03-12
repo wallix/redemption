@@ -26,7 +26,7 @@ Author(s): Proxy Team
 
 struct int_to_chars_result
 {
-    char* data() noexcept { return buffer; }
+    char* data() noexcept { return buffer + ibeg; }
     char const* data() const noexcept { return buffer + ibeg; }
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
 
@@ -42,7 +42,7 @@ private:
 
 struct int_to_zchars_result
 {
-    char* data() noexcept { return buffer; }
+    char* data() noexcept { return buffer + ibeg; }
     char const* data() const noexcept { return buffer + ibeg; }
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
 
