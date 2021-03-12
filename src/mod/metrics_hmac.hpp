@@ -22,6 +22,7 @@
 
 #include "system/ssl_sha256.hpp"
 #include "gdi/screen_info.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 
@@ -45,13 +46,9 @@ public:
 
         static_assert(sizeof(sig) * 2 + 1 == sizeof(dest));
 
-        const char * hex = "0123456789ABCDEF";
         auto p = std::begin(dest);
         for (uint8_t c : sig) {
-            *p = hex[(c>>4) & 0xF];
-            ++p;
-            *p = hex[c & 0xF];
-            ++p;
+            p = int_to_fixed_hexadecimal_chars(p, c);
         }
         *p = 0;
     }

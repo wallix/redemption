@@ -27,6 +27,7 @@
 #include "cxx/diagnostic.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <iterator>
 #include <cstdint>
@@ -138,17 +139,8 @@ constexpr bool operator != (BGRColor const & lhs, BGRColor const & rhs) { return
 
 REDEMPTION_OSTREAM(out, BGRColor c)
 {
-    char const * thex = "0123456789ABCDEF";
-    char s[]{
-        thex[(c.as_u32() >> 20) & 0xf],
-        thex[(c.as_u32() >> 16) & 0xf],
-        thex[(c.as_u32() >> 12) & 0xf],
-        thex[(c.as_u32() >> 8) & 0xf],
-        thex[(c.as_u32() >> 4) & 0xf],
-        thex[(c.as_u32() >> 0) & 0xf],
-        '\0'
-    };
-    return out << s;
+    auto chars = int_to_fixed_hexadecimal_chars<3>(c.as_u32());
+    return out.write(chars.data(), chars.size());
 }
 
 constexpr uint32_t log_value(BGRColor const & c) noexcept { return c.as_u32(); }

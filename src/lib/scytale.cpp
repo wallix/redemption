@@ -28,6 +28,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/c_interface.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/string_c.hpp"
 
 #include "main/version.hpp"
@@ -224,13 +225,11 @@ static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
 
 namespace
 {
-    constexpr inline char const* hexadecimal_string = "0123456789ABCDEF";
     inline void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
         static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hashhex;
         for (uint8_t c : hash) {
-            *phex++ = hexadecimal_string[c >> 4];
-            *phex++ = hexadecimal_string[c & 0xf];
+            phex = int_to_fixed_hexadecimal_chars(phex, c);
         }
         *phex = '\0';
     }
@@ -242,8 +241,8 @@ namespace
         for (size_t i = 0 ; i < sizeof(HashHexArray) - 1; i += 2) {
             auto c1 = hashhex[i];
             auto c2 = hashhex[i+1];
-            *phex++ = ((0xF & (c1 < 'A'? c1 - '0' : c1 < 'a' ? c1 - 'A' : c1 - 'a')) << 4)
-                    |  (0xF & (c2 < 'A'? c2 - '0' : c2 < 'a' ? c2 - 'A' : c2 - 'a'));
+            *phex++ = ((0xF & (c1 < 'A' ? c1 - '0' : c1 < 'a' ? c1 - 'A' : c1 - 'a')) << 4)
+                    |  (0xF & (c2 < 'A' ? c2 - '0' : c2 < 'a' ? c2 - 'A' : c2 - 'a'));
         }
     }
 
@@ -1180,14 +1179,8 @@ struct ScytaleMwrm3ReaderHandle
 
                 case Mwrm3::ParserResult::UnknownType: {
                     auto int_type = InStream(this->remaining_data).in_uint16_le();
-                    const char chars[]{
-                        hexadecimal_string[(int_type >> 12)],
-                        hexadecimal_string[(int_type >> 8) & 0xf],
-                        hexadecimal_string[(int_type >> 4) & 0xf],
-                        hexadecimal_string[int_type & 0xf],
-                    };
-                    str_assign(this->message_error,
-                        "Unknown type: 0x"_av, make_array_view(chars));
+                    auto chars = int_to_fixed_hexadecimal_chars(int_type);
+                    str_assign(this->message_error, "Unknown type: 0x"_av, chars);
                     return nullptr;
                 }
 

@@ -19,6 +19,7 @@
  */
 
 #include "transport/mwrm_reader.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/chex_to_int.hpp"
 #include "utils/log.hpp"
 
@@ -485,10 +486,10 @@ private:
         char * p = writer.mes + writer.len;
 
         auto hexdump = [&p](uint8_t const (&hash)[MD_HASH::DIGEST_LENGTH]) {
-            *p++ = ' ';                // 1 octet
-            for (unsigned c : hash) {
-                sprintf(p, "%02x", c); // 64 octets (hash)
-                p += 2;
+            *p++ = ' '; // 1 octet
+            // 64 octets (hash)
+            for (uint8_t c : hash) {
+                p = int_to_fixed_hexadecimal_lower_chars(p, c);
             }
         };
         hexdump(qhash);

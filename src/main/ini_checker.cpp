@@ -21,6 +21,7 @@
 
 #include "configs/config.hpp"
 #include "configs/autogen/cfg_ini_pack.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/cfgloader.hpp"
 #include "utils/cli.hpp"
 #include "cxx/diagnostic.hpp"
@@ -66,14 +67,8 @@ namespace
         ::configs::spec_types::rgb rgb
     ) {
         uint32_t x = rgb.to_rrggbb();
-        char const * digits = "0123456789ABCDEF";
         zbuf[0] = '#';
-        zbuf[1] = digits[(x >> 20) & 0xf];
-        zbuf[2] = digits[(x >> 16) & 0xf];
-        zbuf[3] = digits[(x >> 12) & 0xf];
-        zbuf[4] = digits[(x >>  8) & 0xf];
-        zbuf[5] = digits[(x >>  4) & 0xf];
-        zbuf[6] = digits[(x >>  0) & 0xf];
+        int_to_fixed_hexadecimal_chars<3>(zbuf.data()+1, x);
         zbuf[7] = '\0';
         return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 7);
     }
