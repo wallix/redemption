@@ -59,6 +59,8 @@ private:
 };
 
 
+// to decimal chars
+//@{
 template<class T>
 int_to_chars_result int_to_decimal_chars(T n) noexcept;
 
@@ -66,23 +68,81 @@ template<class T>
 int_to_zchars_result int_to_decimal_zchars(T n) noexcept;
 
 template<class T>
-int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
-
-template<class T>
-int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
-
-
-template<class T>
 void int_to_decimal_chars(int_to_chars_result& out, T n) noexcept;
 
 template<class T>
 void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept;
+//@}
+
+
+// to hexadecimal upper case chars
+//@{
+template<class T>
+int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
+
+template<class T>
+int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
 
 template<class T>
 void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept;
 
 template<class T>
 void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept;
+//@}
+
+
+// to hexadecimal lower case chars
+//@{
+template<class T>
+int_to_chars_result int_to_hexadecimal_lower_chars(T n) noexcept;
+
+template<class T>
+int_to_zchars_result int_to_hexadecimal_lower_zchars(T n) noexcept;
+
+template<class T>
+void int_to_hexadecimal_lower_chars(int_to_chars_result& out, T n) noexcept;
+
+template<class T>
+void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noexcept;
+//@}
+
+
+// to fixed hexadecimal upper case chars
+//@{
+template<int NbBytes = -1, class T>
+int_to_chars_result int_to_fixed_hexadecimal_chars(T n) noexcept;
+
+template<int NbBytes = -1, class T>
+int_to_zchars_result int_to_fixed_hexadecimal_zchars(T n) noexcept;
+
+template<int NbBytes = -1, class T>
+void int_to_fixed_hexadecimal_chars(int_to_chars_result& out, T n) noexcept;
+
+template<int NbBytes = -1, class T>
+void int_to_fixed_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept;
+
+template<int NbBytes = -1, class T>
+char* int_to_fixed_hexadecimal_chars(char* out, T n) noexcept;
+//@}
+
+
+// to fixed hexadecimal upper case chars
+//@{
+template<int NbBytes = -1, class T>
+int_to_chars_result int_to_fixed_hexadecimal_lower_chars(T n) noexcept;
+
+template<int NbBytes = -1, class T>
+int_to_zchars_result int_to_fixed_hexadecimal_lower_zchars(T n) noexcept;
+
+template<int NbBytes = -1, class T>
+void int_to_fixed_hexadecimal_lower_chars(int_to_chars_result& out, T n) noexcept;
+
+template<int NbBytes = -1, class T>
+void int_to_fixed_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noexcept;
+
+template<int NbBytes = -1, class T>
+char* int_to_fixed_hexadecimal_lower_chars(char* out, T n) noexcept;
+//@}
 
 
 namespace detail
@@ -153,20 +213,45 @@ namespace detail
         }
     }
 
+    constexpr inline auto& hex_upper_table = "0123456789ABCDEF";
+    constexpr inline auto& hex_lower_table = "0123456789abcdef";
+
     template<class UInt>
-    inline char* to_hexadecimal_chars(char *end, UInt value) noexcept
+    inline char* to_hexadecimal_chars(char *end, UInt value, char const(&hex_table)[17]) noexcept
     {
         static_assert(std::is_unsigned_v<UInt>);
+        static_assert(sizeof(UInt) <= 64);
 
         char* out = end;
 
         while (value > 0xf) {
-            *--out = "0123456789ABCDEF"[value & 0xf];
+            *--out = hex_table[value & 0xf];
             value >>= 4;
         }
 
         if (value <= 0xf) {
-            *--out = "0123456789ABCDEF"[value & 0xf];
+            *--out = hex_table[value & 0xf];
+        }
+
+        return out;
+    }
+
+    template<int NbBytes, class T>
+    inline char* to_fixed_hexadecimal_chars(char* out, T n, char const(&hex_table)[17]) noexcept
+    {
+        static_assert(std::is_unsigned_v<T>);
+        static_assert(sizeof(T) <= 64);
+        static_assert(NbBytes == -1 || NbBytes <= int(sizeof(T)),
+        "number of NbBytes must not exceed sizeof(T)");
+
+        constexpr std::size_t start = (NbBytes == -1)
+            ? 0
+            : (sizeof(T) - std::size_t(NbBytes));
+
+        for (std::size_t i = start; i < sizeof(T); ++i) {
+            std::size_t d = (sizeof(T) - 1 - i) * 8;
+            *out++ = hex_table[(n >> (d+4)) & 0xfu];
+            *out++ = hex_table[(n >>  d   ) & 0xfu];
         }
 
         return out;
@@ -221,6 +306,55 @@ inline int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept
 }
 
 template<class T>
+inline int_to_chars_result int_to_hexadecimal_lower_chars(T n) noexcept
+{
+    int_to_chars_result r;
+    int_to_hexadecimal_lower_chars(r, n);
+    return r;
+}
+
+template<class T>
+inline int_to_zchars_result int_to_hexadecimal_lower_zchars(T n) noexcept
+{
+    int_to_zchars_result r;
+    int_to_hexadecimal_lower_zchars(r, n);
+    return r;
+}
+
+template<int NbBytes, class T>
+inline int_to_chars_result int_to_fixed_hexadecimal_chars(T n) noexcept
+{
+    int_to_chars_result r;
+    int_to_fixed_hexadecimal_chars<NbBytes>(r, n);
+    return r;
+}
+
+template<int NbBytes, class T>
+inline int_to_zchars_result int_to_fixed_hexadecimal_zchars(T n) noexcept
+{
+    int_to_zchars_result r;
+    int_to_fixed_hexadecimal_zchars<NbBytes>(r, n);
+    return r;
+}
+
+template<int NbBytes, class T>
+inline int_to_chars_result int_to_fixed_hexadecimal_lower_chars(T n) noexcept
+{
+    int_to_chars_result r;
+    int_to_fixed_hexadecimal_lower_chars<NbBytes>(r, n);
+    return r;
+}
+
+template<int NbBytes, class T>
+inline int_to_zchars_result int_to_fixed_hexadecimal_lower_zchars(T n) noexcept
+{
+    int_to_zchars_result r;
+    int_to_fixed_hexadecimal_lower_zchars<NbBytes>(r, n);
+    return r;
+}
+
+
+template<class T>
 inline void int_to_decimal_chars(int_to_chars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
@@ -245,7 +379,8 @@ inline void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
     char* end = buffer + 20;
-    access::set_ibeg(out, detail::to_hexadecimal_chars(end, n) - buffer);
+    char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_upper_table);
+    access::set_ibeg(out, begin - buffer);
 }
 
 template<class T>
@@ -255,5 +390,81 @@ inline void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept
     auto buffer = access::buffer(out);
     char* end = buffer + 20;
     *end = '\0';
-    access::set_ibeg(out, detail::to_hexadecimal_chars(end, n) - buffer);
+    char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_upper_table);
+    access::set_ibeg(out, begin - buffer);
+}
+
+template<class T>
+inline void int_to_hexadecimal_lower_chars(int_to_chars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    char* end = buffer + 20;
+    char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_lower_table);
+    access::set_ibeg(out, begin - buffer);
+}
+
+template<class T>
+inline void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    char* end = buffer + 20;
+    *end = '\0';
+    char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_lower_table);
+    access::set_ibeg(out, begin - buffer);
+}
+
+template<int NbBytes, class T>
+inline void int_to_fixed_hexadecimal_chars(int_to_chars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    int_to_fixed_hexadecimal_chars<NbBytes>(buffer + ibeg, n);
+    access::set_ibeg(out, ibeg);
+}
+
+template<int NbBytes, class T>
+inline void int_to_fixed_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    int_to_fixed_hexadecimal_chars<NbBytes>(buffer + ibeg, n);
+    buffer[20] = '\0';
+    access::set_ibeg(out, ibeg);
+}
+
+template<int NbBytes, class T>
+inline void int_to_fixed_hexadecimal_lower_chars(int_to_chars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    int_to_fixed_hexadecimal_lower_chars<NbBytes>(buffer + ibeg, n);
+    access::set_ibeg(out, ibeg);
+}
+
+template<int NbBytes, class T>
+inline void int_to_fixed_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noexcept
+{
+    using access = detail::int_to_chars_result_access;
+    auto buffer = access::buffer(out);
+    constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
+    int_to_fixed_hexadecimal_lower_chars<NbBytes>(buffer + ibeg, n);
+    buffer[20] = '\0';
+    access::set_ibeg(out, ibeg);
+}
+
+template<int NbBytes, class T>
+inline char* int_to_fixed_hexadecimal_chars(char* out, T n) noexcept
+{
+    return detail::to_fixed_hexadecimal_chars<NbBytes>(out, n, detail::hex_upper_table);
+}
+
+template<int NbBytes, class T>
+inline char* int_to_fixed_hexadecimal_lower_chars(char* out, T n) noexcept
+{
+    return detail::to_fixed_hexadecimal_chars<NbBytes>(out, n, detail::hex_lower_table);
 }
