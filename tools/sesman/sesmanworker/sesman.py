@@ -126,6 +126,12 @@ class RdpProxyLog(object):
 MAGICASK = (u'UNLIKELYVALUEMAGICASPICONSTANTS'
             u'3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED')
 
+KEEPALIVE_INTERVAL = 30
+KEEPALIVE_GRACEDELAY = 30
+KEEPALIVE_TIMEOUT = KEEPALIVE_INTERVAL + KEEPALIVE_GRACEDELAY
+
+WORKFLOW_POLL_INTERVAL = 5
+
 
 def mundane(value):
     if value == MAGICASK:
@@ -556,8 +562,19 @@ class Sesman():
         self.proxy_conx.sendall(pack('>H', len(_list)))
         self.proxy_conx.sendall(_r_data)
 
+    def wait_read_proxy_conx(self):
+        self.proxy_conx.setblocking(False)
+        r = []
+        while True:
+            r, w, x = select([self.proxy_conx], [], [], KEEPALIVE_INTERVAL)
+            self.engine.keepalive(timeout=KEEPALIVE_TIMEOUT)
+            if self.proxy_conx in r:
+                break
+        self.proxy_conx.setblocking(True)
+        return r
+
     @logtime_function_pause
-    def receive_data(self, expected_list=None):
+    def receive_data(self, expected_list=None, blocking_call=True):
         """ NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded
         * Packet format:
         uint16                   request_count
@@ -582,13 +599,8 @@ class Sesman():
         uint are big-endian byte ordered
         """
 
-        self.proxy_conx.setblocking(False)
-        while True:
-            r, w, x = select([self.proxy_conx], [], [], 30)
-            self.engine.keepalive(timeout=60)
-            if self.proxy_conx in r:
-                break
-        self.proxy_conx.setblocking(True)
+        if blocking_call:
+            _ = self.wait_read_proxy_conx()
 
         self._changed_keys = []
 
@@ -597,7 +609,7 @@ class Sesman():
                 d = self.proxy_conx.recv(65536)
                 if len(d):
                     if DEBUG:
-                        Logger().info(d)
+                        Logger().debug(d)
                     return d
 
             except Exception:
@@ -1473,10 +1485,13 @@ class Sesman():
             r = []
             try:
                 Logger().info(u"Start Select ...")
-                timeout = None if status != APPROVAL_PENDING else 5
                 logtimer.pause()
-                r, w, x = select([self.proxy_conx], [], [], timeout)
-                self.engine.keepalive(timeout=60)
+                if status == APPROVAL_PENDING:
+                    # waiting for status update
+                    r, w, x = select([self.proxy_conx], [], [],
+                                     WORKFLOW_POLL_INTERVAL)
+                else:
+                    r = self.wait_read_proxy_conx()
                 logtimer.resume()
             except BastionSignal as e:
                 Logger().info("Got Signal %s" % e)
@@ -1489,7 +1504,7 @@ class Sesman():
                     Logger().info("<<<<%s>>>>" % traceback.format_exc())
                 raise
             if self.proxy_conx in r:
-                _status, _error = self.receive_data()
+                _status, _error = self.receive_data(blocking_call=False)
                 if self.shared.get(u'waitinforeturn') == "backselector":
                     # received back to selector
                     self.send_data({
@@ -2125,7 +2140,8 @@ class Sesman():
                             r = []
                             got_signal = False
                             try:
-                                r, w, x = select([self.proxy_conx], [], [], 60)
+                                r, w, x = select([self.proxy_conx], [], [],
+                                                 KEEPALIVE_TIMEOUT)
                             except BastionSignal as e:
                                 Logger().info("Got Signal %s" % e)
                                 got_signal = True
@@ -2136,7 +2152,7 @@ class Sesman():
                                     Logger().info("<<<<%s>>>>" %
                                                   traceback.format_exc())
                                 raise
-                            self.engine.keepalive(timeout=60)
+                            self.engine.keepalive(timeout=KEEPALIVE_TIMEOUT)
                             current_time = time()
                             if self.check_session_parameters:
                                 self.update_session_parameters(current_time)
@@ -2144,7 +2160,8 @@ class Sesman():
                             self.rtmanager.check(current_time)
                             if self.proxy_conx in r:
                                 _status, _error = self.receive_data(
-                                    Sesman.EXPECTING_KEYS
+                                    Sesman.EXPECTING_KEYS,
+                                    blocking_call=False
                                 )
 
                                 if self._changed_keys:
