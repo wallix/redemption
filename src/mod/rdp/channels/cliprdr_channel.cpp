@@ -2451,9 +2451,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
             digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
             digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
 
-        char file_size[128];
-        size_t file_size_len = std::snprintf(file_size, std::size(file_size), "%lu",
-            real_file_size(file_contents_range));
+        auto file_size = int_to_decimal_zchars(real_file_size(file_contents_range));
 
         self.session_log.log6(
             from_remote_session
@@ -2461,7 +2459,7 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 : LogId::CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION,
          {
             KVLog("file_name"_av, file_contents_range.file_name),
-            KVLog("size"_av, {file_size, file_size_len}),
+            KVLog("size"_av, file_size),
             KVLog("sha256"_av, {digest_s, digest_s_len}),
         });
 

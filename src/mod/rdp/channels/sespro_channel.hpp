@@ -591,13 +591,8 @@ public:
                     if (this->sespro_params.end_of_session_check_delay_time.count() > 0) {
                         send_client_message([this](OutStream & out_s) {
                             out_s.out_copy_bytes("EndOfSessionCheckDelayTime="_av);
-
-                            {
-                                char cstr[128];
-                                int len = std::snprintf(cstr, sizeof(cstr), "%ld",
-                                    this->sespro_params.end_of_session_check_delay_time.count());
-                                out_s.out_copy_bytes(cstr, size_t(len));
-                            }
+                            out_s.out_copy_bytes(int_to_decimal_chars(
+                                this->sespro_params.end_of_session_check_delay_time.count()));
                         });
                     }
                 }

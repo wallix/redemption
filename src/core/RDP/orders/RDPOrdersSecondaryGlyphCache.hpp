@@ -27,6 +27,7 @@
 
 #include "utils/bitfu.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 using std::size_t; /*NOLINT*/
@@ -228,11 +229,13 @@ public:
                             , unsigned(this->cacheId), unsigned(this->cGlyphs), unsigned(this->cacheIndex)
                             , this->x, this->y, unsigned(this->cx), unsigned(this->cy));
         uint16_t c = this->datasize();
-        for (uint16_t i = 0; i < c; i++) {
+        for (uint16_t i = 0; i < c && lg + 4 < sz; i++) {
             if (i) {
-                lg += snprintf(buffer + lg, sz - lg, " ");
+                buffer[lg] = ' ';
+                ++lg;
             }
-            lg += snprintf(buffer + lg, sz - lg, "%02x", unsigned(this->aj[i]));
+            int_to_fixed_hexadecimal_chars(buffer + lg, this->aj[i]);
+            lg += 2;
         }
         lg += snprintf(buffer + lg, sz - lg, ")(%u))", unsigned(c));
         if (lg >= sz) {

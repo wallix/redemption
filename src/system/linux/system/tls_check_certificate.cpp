@@ -27,6 +27,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <string>
 #include <memory>
@@ -51,6 +52,7 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 namespace
 {
 
+// TODO we should be able to simplify that to just put expected value in a provided buffer
 std::unique_ptr<char[]> crypto_print_name(X509_NAME* name)
 {
     std::unique_ptr<char[]> buffer;
@@ -68,7 +70,7 @@ std::unique_ptr<char[]> crypto_print_name(X509_NAME* name)
 }
 
 // TODO we should be able to simplify that to just put expected value in a provided buffer
-inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
+std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
 {
     uint32_t fp_len;
     uint8_t fp[EVP_MAX_MD_SIZE];
@@ -76,17 +78,18 @@ inline std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
     X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
     auto fp_buffer = std::make_unique<char[]>(3 * fp_len);
-    memset(fp_buffer.get(), 0, 3 * fp_len);
+
+    bytes_view fp_view = {fp, fp_len};
 
     char * p = fp_buffer.get();
 
-    int i = 0;
-    for (i = 0; i < int(fp_len - 1); i++)
+    for (uint8_t c : fp_view.drop_back(1))
     {
-        sprintf(p, "%02x:", unsigned(fp[i]));
-        p = &fp_buffer[(i + 1) * 3];
+        p = int_to_fixed_hexadecimal_chars(p, c);
+        *p++ = ':';
     }
-    sprintf(p, "%02x", unsigned(fp[i]));
+    p = int_to_fixed_hexadecimal_chars(p, fp_view.back());
+    *p = '\0';
 
     return fp_buffer;
 }

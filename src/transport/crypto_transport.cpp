@@ -27,6 +27,7 @@
 #include "utils/genrandom.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte_ptr.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
@@ -672,20 +673,19 @@ OutCryptoTransport::~OutCryptoTransport()
         HashArray fhash{};
         this->close(qhash, fhash);
         if (this->cctx.get_with_checksum()){
-            char mes[std::size(qhash)*4+1+128]{};
+            char mes[std::size(qhash)*4+2];
             char * p = mes;
-            p += sprintf(mes, "Encrypted transport implicitly closed, hash checksums dropped :");
             auto hexdump = [&p](HashArray & hash) {
-                *p++ = ' ';                // 1 octet
-                for (unsigned c : hash) {
-                    sprintf(p, "%02x", c); // 64 octets (hash)
-                    p += 2;
+                *p++ = ' '; // 1 octet
+                // 64 octets (hash)
+                for (uint8_t c : hash) {
+                    p = int_to_fixed_hexadecimal_chars(p, c);
                 }
             };
             hexdump(qhash);
             hexdump(fhash);
             *p++ = 0;
-            LOG(LOG_INFO, "%s", mes);
+            LOG(LOG_INFO, "Encrypted transport implicitly closed, hash checksums dropped:%s", mes);
         }
     }
     catch (Error const & e){
