@@ -727,7 +727,7 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
 /* 19f0 */ 0xff, 0xff, 0xff, 0x80,                                                                          // ....
     };
     InStream in_stream_cursor(mouse_raw);
-    Pointer cursor = pointer_loader_new(BitsPerPixel{32}, in_stream_cursor, BGRPalette::classic_332(), true, false);
+    Pointer cursor = pointer_loader_new(BitsPerPixel{32}, in_stream_cursor);
 
     DrawablePointer current_pointer(cursor);
 

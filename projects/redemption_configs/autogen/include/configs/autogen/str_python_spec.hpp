@@ -97,9 +97,6 @@ allow_scale_factor = boolean(default=False)
 bogus_refresh_rect = boolean(default=True)
 
 #_advanced
-use_native_pointer = boolean(default=True)
-
-#_advanced
 large_pointer_support = boolean(default=True)
 
 new_pointer_update_support = boolean(default=True)
@@ -297,10 +294,6 @@ disabled_orders = string(default='25')
 # Force usage of bitmap cache V2 for compatibility with WALLIX Access Manager.
 #_advanced
 force_bitmap_cache_v2_with_am = boolean(default=True)
-
-# Disable native pointer for compatibility with WALLIX Access Manager.
-#_advanced
-disable_native_pointer_with_am = boolean(default=True)
 
 [mod_rdp]
 
@@ -683,9 +676,6 @@ server_cert_error_message = integer(min=0, max=7, default=1)
 
 # Do not transmit client machine name or RDP server.
 hide_client_name = boolean(default=False)
-
-#_advanced
-clean_up_32_bpp_cursor = boolean(default=False)
 
 bogus_ios_rdpdr_virtual_channel = boolean(default=True)
 

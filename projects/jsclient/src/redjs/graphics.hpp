@@ -38,7 +38,7 @@ class Graphics : public gdi::GraphicApi
 {
 public:
     Graphics(emscripten::val callbacks, uint16_t width, uint16_t height);
-    ~Graphics();
+    ~Graphics() override;
 
     PrimaryDrawingOrdersSupport get_supported_orders() const;
 

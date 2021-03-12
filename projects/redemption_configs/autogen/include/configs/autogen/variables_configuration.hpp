@@ -506,16 +506,6 @@ namespace cfg
     };
     /// type: bool <br/>
     /// default: true <br/>
-    struct globals::use_native_pointer {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
-    };
-    /// type: bool <br/>
-    /// default: true <br/>
     struct globals::large_pointer_support {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1053,17 +1043,6 @@ namespace cfg
     /// type: bool <br/>
     /// default: true <br/>
     struct client::force_bitmap_cache_v2_with_am {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { true };
-    };
-    /// Disable native pointer for compatibility with WALLIX Access Manager. <br/>
-    /// type: bool <br/>
-    /// default: true <br/>
-    struct client::disable_native_pointer_with_am {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
@@ -2278,16 +2257,6 @@ namespace cfg
     /// type: bool <br/>
     /// default: false <br/>
     struct mod_rdp::hide_client_name {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct mod_rdp::clean_up_32_bpp_cursor {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         using type = bool;
@@ -5414,7 +5383,6 @@ struct globals
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::allow_scale_factor
 , cfg::globals::bogus_refresh_rect
-, cfg::globals::use_native_pointer
 , cfg::globals::large_pointer_support
 , cfg::globals::new_pointer_update_support
 , cfg::globals::unicode_keyboard_event_support
@@ -5468,7 +5436,6 @@ struct client
 , cfg::client::bogus_pointer_xormask_padding
 , cfg::client::disabled_orders
 , cfg::client::force_bitmap_cache_v2_with_am
-, cfg::client::disable_native_pointer_with_am
 { static constexpr bool is_section = true; };
 
 struct mod_rdp
@@ -5561,7 +5528,6 @@ struct mod_rdp
 , cfg::mod_rdp::server_cert_failure_message
 , cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::hide_client_name
-, cfg::mod_rdp::clean_up_32_bpp_cursor
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
 , cfg::mod_rdp::log_only_relevant_clipboard_activities

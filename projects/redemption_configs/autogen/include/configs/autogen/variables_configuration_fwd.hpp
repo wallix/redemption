@@ -43,7 +43,6 @@ namespace cfg
         struct allow_using_multiple_monitors;
         struct allow_scale_factor;
         struct bogus_refresh_rect;
-        struct use_native_pointer;
         struct large_pointer_support;
         struct new_pointer_update_support;
         struct unicode_keyboard_event_support;
@@ -98,7 +97,6 @@ namespace cfg
         struct bogus_pointer_xormask_padding;
         struct disabled_orders;
         struct force_bitmap_cache_v2_with_am;
-        struct disable_native_pointer_with_am;
     };
 
     struct mod_rdp {
@@ -187,7 +185,6 @@ namespace cfg
         struct server_cert_failure_message;
         struct server_cert_error_message;
         struct hide_client_name;
-        struct clean_up_32_bpp_cursor;
         struct bogus_ios_rdpdr_virtual_channel;
         struct enable_rdpdr_data_analysis;
         struct remoteapp_bypass_legal_notice_delay;

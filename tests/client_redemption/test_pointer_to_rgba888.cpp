@@ -27,11 +27,9 @@ Author(s): Jonathan Poelen
 
 struct ReadableCursor
 {
-    static constexpr std::size_t N = 34;
-
     std::vector<char> str;
 
-    ReadableCursor(redclient::RGBA8888Image const& img) noexcept
+    ReadableCursor(redclient::RGBA8888Image const& img)
     {
         this->str.resize((img.width + 1u) * img.height);
         auto* it = img.data();
@@ -51,13 +49,11 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
 {
     auto pointer = normal_pointer();
     redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(decode_pointer(
-        BitsPerPixel(24), BGRPalette::classic_332(),
+        BitsPerPixel(24),
         pointer.get_dimensions().width, pointer.get_dimensions().height,
         pointer.get_hotspot().x, pointer.get_hotspot().y,
-        pointer.get_24bits_xor_mask().size(), pointer.get_24bits_xor_mask().data(),
-        pointer.get_monochrome_and_mask().size(), pointer.get_monochrome_and_mask().data(),
-        false, true
-    ));
+        pointer.get_nbits_xor_mask().size(), pointer.get_nbits_xor_mask().data(),
+        pointer.get_monochrome_and_mask().size(), pointer.get_monochrome_and_mask().data()));
 
     RED_REQUIRE(32u == img.width);
     RED_REQUIRE(32u == img.height);
@@ -323,12 +319,16 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer2)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    redclient::RGBA8888Image img = redclient::pointer_to_rgba8888(decode_pointer(
-        BitsPerPixel(24), BGRPalette::classic_332(),
-        32, 32, 0, 0,
-        sizeof(xor_mask), xor_mask,
-        sizeof(and_mask), and_mask, false, true
-    ));
+    redclient::RGBA8888Image img =
+        redclient::pointer_to_rgba8888(decode_pointer(BitsPerPixel(24),
+                                                      32,
+                                                      32,
+                                                      0,
+                                                      0,
+                                                      sizeof(xor_mask),
+                                                      xor_mask,
+                                                      sizeof(and_mask),
+                                                      and_mask));
 
     RED_REQUIRE(32u == img.width);
     RED_REQUIRE(32u == img.height);

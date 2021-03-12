@@ -29,48 +29,11 @@
 #include <cassert>
 #include <cstring>
 
-
-namespace
-{
-
-void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t const * mask_buffer)
-{
-    const unsigned int xor_line_length_in_byte = dimensions.width * 3u;
-    const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);
-    const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
-    const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
-    for (uint16_t i0 = 0; i0 < dimensions.height; ++i0) {
-        uint8_t* xorMask = data_buffer + (dimensions.height - i0 - 1) * xor_padded_line_length_in_byte;
-
-        const uint8_t* andMask = mask_buffer + (dimensions.height - i0 - 1) * and_padded_line_length_in_byte;
-        unsigned char and_bit_extraction_mask = 7;
-
-        // TODO: iterating on width... check scanline padding is OK
-        for (unsigned int i1 = 0; i1 < dimensions.width; ++i1) {
-            if ((*andMask) & (1 << and_bit_extraction_mask)) {
-                *xorMask         = 0;
-                *(xorMask + 1)   = 0;
-                *(xorMask + 2)   = 0;
-            }
-
-            xorMask += 3;
-            if (and_bit_extraction_mask) {
-                and_bit_extraction_mask--;
-            }
-            else {
-                and_bit_extraction_mask = 7;
-                andMask++;
-            }
-        }
-    }
-}
-
-}
-
 Pointer Pointer::build_from_native(
     CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask)
 {
     Pointer pointer;
+
     pointer.dimensions = d;
     pointer.hotspot = hs;
     pointer.native_xor_bpp = xor_bpp;
@@ -88,8 +51,7 @@ bool Pointer::operator==(const Pointer & other) const
         && other.dimensions.width == this->dimensions.width
         && other.dimensions.height == this->dimensions.height
         && (0 == memcmp(this->data, other.data, other.xor_data_size()))
-        && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()))
-        ;
+        && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()));
 }
 
 void Pointer::emit_pointer32x32(OutStream & result) const
@@ -97,7 +59,7 @@ void Pointer::emit_pointer32x32(OutStream & result) const
     result.out_uint8(this->get_hotspot().x);
     result.out_uint8(this->get_hotspot().y);
 
-    result.out_copy_bytes(this->get_24bits_xor_mask());
+    result.out_copy_bytes(this->get_nbits_xor_mask());
     result.out_copy_bytes(this->get_monochrome_and_mask());
 }
 
@@ -110,7 +72,7 @@ void Pointer::emit_pointer2(OutStream & result) const
     result.out_uint8(this->get_hotspot().x);
     result.out_uint8(this->get_hotspot().y);
 
-    auto xor_data = this->get_24bits_xor_mask();
+    auto xor_data = this->get_nbits_xor_mask();
     auto bit_mask = this->get_monochrome_and_mask();
 
     result.out_uint16_le(xor_data.size());
@@ -172,7 +134,7 @@ void emit_color_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer co
     //     the andMaskData field.
 
     auto av_mask = cursor.get_monochrome_and_mask();
-    auto av_data = cursor.get_24bits_xor_mask();
+    auto av_data = cursor.get_nbits_xor_mask();
 
     stream.out_uint16_le(av_mask.size());
 
@@ -292,7 +254,7 @@ void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer cons
     auto av_and = cursor.get_monochrome_and_mask();
 
     uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
-    auto av_xor = cursor.get_24bits_xor_mask();
+    auto av_xor = cursor.get_nbits_xor_mask();
 
     for (unsigned int h = 0; h < dimensions.height; ++h) {
         const uint8_t* psource = av_xor.data() + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;
@@ -437,309 +399,24 @@ bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& c
     return new_pointer_update_used;
 }
 
-// static void debug_show_raw_pointer(
-//     BitsPerPixel data_bpp, const BGRPalette & palette,
-//     uint16_t width, uint16_t height,
-//     const uint8_t * xor_mask_data, const uint8_t * and_mask_data)
-// {
-//     switch (data_bpp)
-//     {
-//     case BitsPerPixel{1}:
-//     {
-//         LOG(LOG_INFO, "debug_show_raw_pointer(): 1 bit par pixel curosor");
-
-//         {
-//             const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(width));
-//             const uint8_t * src_last_line       = xor_mask_data + ((height-1) * src_line_bytes);
-
-//             for (unsigned int i = 0; i < height; ++i) {
-//                 std::string debug_data;
-//                 const uint8_t* src  = src_last_line - i * src_line_bytes;
-
-//                 unsigned char bit_count = 7;
-//                 for (unsigned int j = 0; j < width ; ++j) {
-//                     unsigned databit = *src & (1 << bit_count);
-//                     if (databit) {
-//                         debug_data += "X";
-//                     }
-//                     else {
-//                         debug_data += ".";
-//                     }
-//                     src       = src + ((bit_count==0)?1:0);
-//                     bit_count = (bit_count - 1) & 7;
-//                 }
-//                 LOG(LOG_INFO, "%s", debug_data.c_str());
-//             }
-//         }
-
-//         {
-//             const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
-//             const uint8_t * src_last_mask_line  = and_mask_data + ((height-1) * src_mask_line_bytes);
-
-//             for (unsigned int i = 0; i < height; ++i) {
-//                 std::string debug_data;
-//                 const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
-
-//                 unsigned char mask_bit_count = 7;
-//                 for (unsigned int j = 0; j < width ; ++j) {
-//                     unsigned databit = *src_mask & (1 << mask_bit_count);
-//                     if (databit) {
-//                         debug_data += "M";
-//                     }
-//                     else {
-//                         debug_data += ".";
-//                     }
-//                     src_mask       = src_mask + ((mask_bit_count==0) ? 1 : 0);
-//                     mask_bit_count = (mask_bit_count - 1) & 7;
-//                 }
-//                 LOG(LOG_INFO, "%s", debug_data.c_str());
-//             }
-//         }
-//     }
-//     break;
-
-//     case BitsPerPixel{4}:
-//     {
-//         for (unsigned i = 0; i < length_xor_mask ; i++) {
-//             const uint8_t px = xor_mask_data[i];
-//             // target cursor will receive 8 bits input at once
-//             ::out_bytes_le(cursor_data + 6 * i,     3, palette[(px >> 4) & 0xF].as_u32());
-//             ::out_bytes_le(cursor_data + 6 * i + 3, 3, palette[ px       & 0xF].as_u32());
-//         }
-//         memcpy(cursor_mask, and_mask_data, length_and_mask);
-//     }
-//     break;
-
-//     case BitsPerPixel{8}:
-//     case BitsPerPixel{15}:
-//     case BitsPerPixel{16}:
-//     case BitsPerPixel{24}:
-//     case BitsPerPixel{32}:
-//     {
-//         LOG(LOG_INFO, "debug_show_raw_pointer(): %u bits par pixel curosor", data_bpp);
-
-//         uint8_t BPP = nb_bytes_per_pixel(data_bpp);
-//         const unsigned int src_xor_line_length_in_byte = width * BPP;
-//         const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
-
-//         for (unsigned int i0 = 0; i0 < height; ++i0) {
-//             std::string debug_data;
-//             const uint8_t* src  = xor_mask_data + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
-
-//             for (unsigned int i1 = 0; i1 < width; ++i1) {
-//                 RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
-//                 src += BPP;
-//                 if (color_decode(px, data_bpp, palette).as_u32()) {
-//                     debug_data += "X";
-//                 }
-//                 else {
-//                     debug_data += ".";
-//                 }
-//             }
-//             LOG(LOG_INFO, "%s", debug_data.c_str());
-//         }
-
-//         {
-//             const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
-//             const uint8_t * src_last_mask_line  = and_mask_data + ((height-1) * src_mask_line_bytes);
-
-//             for (unsigned int i = 0; i < height; ++i) {
-//                 std::string debug_data;
-//                 const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
-
-//                 unsigned char mask_bit_count = 7;
-//                 for (unsigned int j = 0; j < width ; ++j) {
-//                     unsigned databit = *src_mask & (1 << mask_bit_count);
-//                     if (databit) {
-//                         debug_data += "M";
-//                     }
-//                     else {
-//                         debug_data += ".";
-//                     }
-//                     src_mask       = src_mask + ((mask_bit_count==0) ? 1 : 0);
-//                     mask_bit_count = (mask_bit_count - 1) & 7;
-//                 }
-//                 LOG(LOG_INFO, "%s", debug_data.c_str());
-//             }
-//         }
-//     }
-//     break;
-//     default:
-//         // TODO : force some cursor if that happen
-//         LOG(LOG_INFO, "debug_show_raw_pointer(): color depth not supported %u", data_bpp);
-//     break;
-//     }
-// }
-
-Pointer decode_pointer(
-    BitsPerPixel data_bpp, const BGRPalette & palette,
-    uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
-    uint16_t dlen, const uint8_t * data,
-    uint16_t mlen, const uint8_t * mask,
-    bool clean_up_32_bpp_cursor,
-    bool use_native_pointer)
+Pointer decode_pointer(BitsPerPixel data_bpp,
+                       uint16_t width,
+                       uint16_t height,
+                       uint16_t hsx,
+                       uint16_t hsy,
+                       uint16_t dlen,
+                       const uint8_t * data,
+                       uint16_t mlen,
+                       const uint8_t * mask)
 {
-    //debug_show_raw_pointer(
-    //    data_bpp, palette,
-    //    width, height,
-    //    data, mask);
-
-    if (use_native_pointer)
-    {
-        return Pointer::build_from_native(
-                  CursorSize(width, height)
-                , Hotspot(hsx, hsy)
-                , data_bpp
-                , bytes_view(data, dlen)
-                , bytes_view(mask, mlen)
-            );
-    }
-
-    CursorSize dimensions(width, height);
-
-    return Pointer::build_from(dimensions, Hotspot(hsx, hsy),
-        [&](uint8_t * cursor_data, uint8_t * cursor_mask)
-        {
-            switch (data_bpp)
-            {
-            case BitsPerPixel{1}:
-            {
-                const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(width));
-                const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
-                const unsigned int dest_line_bytes = ::even_pad_length(width * 3);
-                const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(width));
-                const uint8_t * src_last_line       = data + ((height-1) * src_line_bytes);
-                const uint8_t * src_last_mask_line  = mask + ((height-1) * src_mask_line_bytes);
-
-                for (unsigned int i = 0; i < height; ++i) {
-                    const uint8_t* src  = src_last_line     - i * src_line_bytes;
-                    const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
-                    uint8_t *      dest = cursor_data + i * dest_line_bytes;
-                    uint8_t *      dest_mask = cursor_mask + i * dest_mask_line_bytes;
-
-                    unsigned char bit_count = 7;
-                    for (unsigned int j = 0; j < width ; ++j) {
-                        unsigned databit = *src & (1 << bit_count);
-                        uint8_t pixel = databit ? 0xFF : 0;
-                        *dest++ = pixel;
-                        *dest++ = pixel;
-                        *dest++ = pixel;
-
-                        if (bit_count == 0) {
-                            src++;
-                            *dest_mask = *src_mask;
-                            dest_mask++;
-                            src_mask++;
-                        }
-
-                        bit_count = (bit_count - 1) & 7;
-                    }
-                }
-
-                // for (unsigned int y = 0; y < height; ++y) {
-                //     for (unsigned int x = 0; x < width; ++x) {
-                //         printf("%s", (::get_pixel_1bpp(data, src_line_bytes, x, y) ? "#" : "."));
-                //     }
-                //     printf("\n");
-                // }
-                // printf("\n");
-
-                return ;
-            }
-            case BitsPerPixel{4}:
-            {
-                for (unsigned i = 0; i < dlen ; i++) {
-                    const uint8_t px = data[i];
-                    // target cursor will receive 8 bits input at once
-                    ::out_bytes_le(cursor_data + 6 * i,     3, palette[(px >> 4) & 0xF].as_u32());
-                    ::out_bytes_le(cursor_data + 6 * i + 3, 3, palette[ px       & 0xF].as_u32());
-                }
-                memcpy(cursor_mask, mask, mlen);
-                return ;
-            }
-            case BitsPerPixel{8}:
-            case BitsPerPixel{15}:
-            case BitsPerPixel{16}:
-            case BitsPerPixel{24}:
-            case BitsPerPixel{32}:
-            {
-                uint8_t BPP = nb_bytes_per_pixel(data_bpp);
-                const unsigned int src_xor_line_length_in_byte = width * BPP;
-                const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
-                const unsigned int dest_xor_line_length_in_byte = width * 3;
-                const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
-
-                for (unsigned int i0 = 0; i0 < height; ++i0) {
-                    const uint8_t* src  = data + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
-                    uint8_t* dest = cursor_data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
-
-                    for (unsigned int i1 = 0; i1 < width; ++i1) {
-                        RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
-                        src += BPP;
-                        ::out_bytes_le(dest, 3, color_decode(px, data_bpp, palette).as_u32());
-                        dest += 3;
-                    }
-                }
-
-                bool linux_32bpp_cursor = BitsPerPixel{32} == data_bpp
-                                          // empty and_mask
-                                       && std::all_of(mask, mask+mlen, [](uint8_t x) { return !x; });
-
-                if (linux_32bpp_cursor) {
-                    // https://github.com/neutrinolabs/xrdp/issues/879
-                    // https://github.com/FreeRDP/FreeRDP/issues/3863
-
-                    uint8_t BPP = nb_bytes_per_pixel(data_bpp);
-                    const unsigned int src_xor_line_length_in_byte = width * BPP;
-                    const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
-
-                    const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(width));
-                    uint8_t * dest_last_mask_line  = cursor_mask + ((height-1) * dest_mask_line_bytes);
-
-                    for (unsigned int i0 = 0; i0 < height; ++i0) {
-                        const uint8_t* src  = data + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
-
-                        uint8_t* dest_mask = dest_last_mask_line - i0 * dest_mask_line_bytes;
-
-                        unsigned char mask_bit_count = 7;
-                        uint8_t mask_val = 0;
-                        for (unsigned int i1 = 0; i1 < width; ++i1) {
-                            uint32_t rgba = in_uint32_from_nb_bytes_le(BPP, src);
-                            src += BPP;
-                            if (!(rgba & 0xFF000000)) {
-                                mask_val |= (1 << mask_bit_count);
-                            }
-
-                            if (mask_bit_count == 0){
-                                *dest_mask = mask_val;
-                                mask_val = 0;
-                                dest_mask++;
-                            }
-                            mask_bit_count = (mask_bit_count - 1) & 7;
-                        }
-                    }
-                }
-                else {
-                    memcpy(cursor_mask, mask, mlen);
-                    if ((data_bpp == BitsPerPixel{32}) && (clean_up_32_bpp_cursor)) {
-                        fix_32_bpp(dimensions, cursor_data, cursor_mask);
-                    }
-                }
-
-                return ;
-            }
-            case BitsPerPixel::Unspecified: break;
-            }
-
-            // TODO : force some cursor if that happen
-            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
-        }
-    );
+    return Pointer::build_from_native(CursorSize(width, height),
+                                      Hotspot(hsx, hsy),
+                                      data_bpp,
+                                      bytes_view(data, dlen),
+                                      bytes_view(mask, mlen));
 }
 
-Pointer pointer_loader_new(
-    BitsPerPixel data_bpp, InStream & stream,
-    const BGRPalette & palette, bool clean_up_32_bpp_cursor, bool use_native_pointer)
+Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream& stream)
 {
     auto hsx      = stream.in_uint16_le();
     auto hsy      = stream.in_uint16_le();
@@ -761,7 +438,15 @@ Pointer pointer_loader_new(
     const uint8_t * data = stream.in_uint8p(dlen);
     const uint8_t * mask = stream.in_uint8p(mlen);
 
-    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor, use_native_pointer);
+    return decode_pointer(data_bpp,
+                          width,
+                          height,
+                          hsx,
+                          hsy,
+                          dlen,
+                          data,
+                          mlen,
+                          mask);
 }
 
 Pointer pointer_loader_vnc(
@@ -861,8 +546,16 @@ Pointer pointer_loader_2(InStream & stream)
 
     auto data = stream.in_uint8p(dlen);
     auto mask = stream.in_uint8p(mlen);
-    const BGRPalette palette = BGRPalette::classic_332();
-    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true, false);
+
+    return decode_pointer(data_bpp,
+                          width,
+                          height,
+                          hsx,
+                          hsy,
+                          dlen,
+                          data,
+                          mlen,
+                          mask);
 }
 
 Pointer pointer_loader_32x32(InStream & stream)
@@ -880,8 +573,16 @@ Pointer pointer_loader_32x32(InStream & stream)
 
     auto data = stream.in_uint8p(dlen);
     auto mask = stream.in_uint8p(mlen);
-    const BGRPalette palette = BGRPalette::classic_332();
-    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true, false);
+
+    return decode_pointer(data_bpp,
+                          width,
+                          height,
+                          hsx,
+                          hsy,
+                          dlen,
+                          data,
+                          mlen,
+                          mask);
 }
 
 Pointer harmonize_pointer(Pointer const& src_ptr)
@@ -910,7 +611,7 @@ Pointer harmonize_pointer(Pointer const& src_ptr)
             int const quot = cursor_size.width / 8u;
             int const rem = cursor_size.width % 8u;
 
-            uint8_t const* src_xor  = src_ptr.get_24bits_xor_mask().data();
+            uint8_t const* src_xor  = src_ptr.get_nbits_xor_mask().data();
             uint8_t const* src_and  = src_ptr.get_monochrome_and_mask().data();
             for (unsigned int i = 0; i < src_ptr.get_dimensions().height; ++i) {
                 memcpy(dest_xor, src_xor, src_xor_padded_line_length_in_byte);
@@ -948,6 +649,7 @@ constexpr Pointer predefined_pointer(
                     *dest++ = v;
                     *dest++ = v;
                     *dest++ = v;
+
                     res_mask |= (c == '.'|| c == '-') ? (1 << bit_count) : 0;
                     if (bit_count == 0){
                         *dest_mask =  res_mask;

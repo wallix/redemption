@@ -558,7 +558,6 @@ ModPack create_mod_rdp(
                              && ini.get<cfg::mod_rdp::enable_nla>();
     mod_rdp_params.enable_krb                          = ini.get<cfg::mod_rdp::enable_kerberos>();
     mod_rdp_params.enable_fastpath                     = ini.get<cfg::mod_rdp::fast_path>();
-    mod_rdp_params.use_native_pointer                  = ini.get<cfg::globals::use_native_pointer>();
     mod_rdp_params.enable_new_pointer                  = (client_info.supported_new_pointer_update && ini.get<cfg::globals::new_pointer_update_support>());
     mod_rdp_params.enable_glyph_cache                  = ini.get<cfg::globals::glyph_cache>();
 
@@ -639,7 +638,6 @@ ModPack create_mod_rdp(
         rap.bypass_legal_notice_timeout = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout>();
     }
 
-    mod_rdp_params.clean_up_32_bpp_cursor              = ini.get<cfg::mod_rdp::clean_up_32_bpp_cursor>();
     mod_rdp_params.large_pointer_support               = ini.get<cfg::globals::large_pointer_support>();
     mod_rdp_params.load_balance_info                   = ini.get<cfg::mod_rdp::load_balance_info>().c_str();
 
