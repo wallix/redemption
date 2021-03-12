@@ -26,12 +26,12 @@
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/select.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#include <charconv>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -240,13 +240,12 @@ resolve_both_ipv4_and_ipv6_address(const char *ip,
 {
     addrinfo *addr_info = nullptr;
     addrinfo hints { };
-    char port_buf[16] { };
 
     hints.ai_flags |= AI_V4MAPPED;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    std::to_chars(port_buf, port_buf + sizeof(port_buf), port);
-    if (int res = ::getaddrinfo(ip, port_buf, &hints, &addr_info))
+    auto port_str = int_to_decimal_zchars(port);
+    if (int res = ::getaddrinfo(ip, port_str.c_str(), &hints, &addr_info))
     {
         const char *error = (res == EAI_SYSTEM) ?
             strerror(errno) : gai_strerror(res);

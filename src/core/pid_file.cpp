@@ -22,8 +22,7 @@
 #include "core/app_path.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/algostring.hpp"
-
-#include <charconv>
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -44,9 +43,8 @@ namespace
 
 PidFile::PidFile(int pid)
 {
-    char session_id[32];
-    auto r = std::to_chars(std::begin(session_id), std::end(session_id), pid);
-    init_pid_filename(this->filename, {session_id, r.ptr});
+    auto session_id = int_to_decimal_chars(pid);
+    init_pid_filename(this->filename, session_id);
 
     int fd = ::open(this->filename.c_str(), O_WRONLY | O_CREAT, S_IRWXU);
     if (fd == -1) {
@@ -56,7 +54,7 @@ PidFile::PidFile(int pid)
             errnum, strerror(errnum));
     }
     else {
-        if (write(fd, session_id, size_t(r.ptr - session_id)) == -1) {
+        if (write(fd, session_id.data(), session_id.size()) == -1) {
             int errnum = errno;
             LOG(LOG_ERR, "Couldn't write pid to %s/session_<pid>.pid: %s",
                 app_path(AppPath::LockDir), strerror(errnum));
