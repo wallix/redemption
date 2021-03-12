@@ -2521,7 +2521,8 @@ struct ClipboardVirtualChannel::ClipCtx::D
         constexpr size_t max_length_of_data_to_dump = 256;
         char data_to_dump_buf[
             max_length_of_data_to_dump * maximum_length_of_utf8_character_in_bytes];
-        std::string_view utf8_string{};
+        chars_view utf8_string{};
+        int_to_chars_result int_to_chars_buffer;
 
         if (log_current_activity || not self.params.dont_log_data_into_syslog) {
             switch (requestedFormatId) {
@@ -2546,9 +2547,9 @@ struct ClipboardVirtualChannel::ClipCtx::D
                     auto av = ::UTF16toUTF8_buf(
                         data_to_dump.first(length_of_data_to_dump),
                         make_writable_array_view(data_to_dump_buf));
-                    utf8_string = {av.as_charp(), av.size()};
+                    utf8_string = av.as_chars();
                     if (not utf8_string.empty() && not utf8_string.back()) {
-                        utf8_string.remove_suffix(1);
+                        utf8_string = utf8_string.drop_back(1);
                     }
                 }
                 break;
@@ -2556,9 +2557,8 @@ struct ClipboardVirtualChannel::ClipCtx::D
                 case RDPECLIP::CF_LOCALE:
                     if (data_to_dump.size() >= 4) {
                         InStream in_stream(data_to_dump);
-                        int len = std::sprintf(data_to_dump_buf,
-                            "%u", in_stream.in_uint32_le());
-                        utf8_string = {data_to_dump_buf, checked_cast<std::size_t>(len)};
+                        int_to_decimal_chars(int_to_chars_buffer, in_stream.in_uint32_le());
+                        utf8_string = int_to_chars_buffer;
                     }
                 break;
             }
