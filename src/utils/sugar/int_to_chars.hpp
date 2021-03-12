@@ -44,7 +44,10 @@ private:
 
 struct int_to_zchars_result
 {
-    int_to_zchars_result() = default;
+    int_to_zchars_result() noexcept
+    {
+        buffer[20] = '\0';
+    }
 
     char const* data() const noexcept { return buffer + ibeg; }
     std::size_t size() const noexcept { return std::size_t(20 - ibeg); }
@@ -55,7 +58,7 @@ private:
     friend detail::int_to_chars_result_access;
 
     char buffer[21];
-    unsigned ibeg = 21;
+    unsigned ibeg = 20;
 };
 
 
@@ -369,7 +372,6 @@ inline void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
     char* end = buffer + 20;
-    *end = '\0';
     access::set_ibeg(out, detail::to_decimal_chars(end, n) - buffer);
 }
 
@@ -389,7 +391,6 @@ inline void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
     char* end = buffer + 20;
-    *end = '\0';
     char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_upper_table);
     access::set_ibeg(out, begin - buffer);
 }
@@ -410,7 +411,6 @@ inline void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noex
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
     char* end = buffer + 20;
-    *end = '\0';
     char* begin = detail::to_hexadecimal_chars(end, n, detail::hex_lower_table);
     access::set_ibeg(out, begin - buffer);
 }
@@ -432,7 +432,6 @@ inline void int_to_fixed_hexadecimal_zchars(int_to_zchars_result& out, T n) noex
     auto buffer = access::buffer(out);
     constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
     int_to_fixed_hexadecimal_chars<NbBytes>(buffer + ibeg, n);
-    buffer[20] = '\0';
     access::set_ibeg(out, ibeg);
 }
 
@@ -453,7 +452,6 @@ inline void int_to_fixed_hexadecimal_lower_zchars(int_to_zchars_result& out, T n
     auto buffer = access::buffer(out);
     constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
     int_to_fixed_hexadecimal_lower_chars<NbBytes>(buffer + ibeg, n);
-    buffer[20] = '\0';
     access::set_ibeg(out, ibeg);
 }
 

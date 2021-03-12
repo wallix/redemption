@@ -24,6 +24,12 @@ Author(s): Proxies Team
 #include "utils/log.hpp"
 
 
+RED_AUTO_TEST_CASE(TestIntToCharsResult)
+{
+    RED_CHECK(int_to_chars_result() == ""_av);
+    RED_CHECK(int_to_zchars_result() == ""_av);
+}
+
 RED_AUTO_TEST_CASE(TestIntToDecimalChars)
 {
     RED_CHECK(int_to_decimal_chars(0) == "0"_av);
