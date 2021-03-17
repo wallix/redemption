@@ -560,14 +560,11 @@ void video_recorder::encoding_video_frame(int64_t frame_index)
 struct video_recorder::D {};
 
 video_recorder::video_recorder(
-    write_packet_fn_t write_packet_fn, seek_fn_t /*seek_fn*/, void * io_params,
+    char const* /*filename*/, const int /*groupid*/, AclReportApi * /*acl_report*/,
     ImageView const & /*image_view*/, int /*frame_rate*/,
     const char * /*codec_name*/, char const* /*codec_options*/, int /*log_level*/
-) {
-    uint8_t buf[1]{};
-    // force file create
-    write_packet_fn(io_params, buf, 0);
-}
+)
+{}
 
 video_recorder::~video_recorder() = default;
 
