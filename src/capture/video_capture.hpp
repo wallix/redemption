@@ -38,34 +38,6 @@ class CaptureParams;
 class FullVideoParams;
 class RDPDrawable;
 
-struct VideoTransportBase : Transport
-{
-    VideoTransportBase(const int groupid, AclReportApi * acl_report);
-
-    void seek(int64_t offset, int whence);
-
-    ~VideoTransportBase();
-
-protected:
-    void force_open();
-    void rename();
-    [[nodiscard]] bool is_open() const;
-    void do_send(const uint8_t * data, size_t len) override;
-
-private:
-    OutFileTransport out_file;
-    const int groupid;
-
-    char tmp_filename[1128];
-
-protected:
-    char final_filename[1024];
-    bool status = true;
-
-private:
-    AclReportApi * acl_report;
-};
-
 
 struct VideoCaptureCtx : noncopyable
 {
@@ -153,17 +125,6 @@ struct FullVideoCaptureImpl final : gdi::CaptureApi
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
-    struct TmpFileTransport final : VideoTransportBase
-    {
-        TmpFileTransport(
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
-            const int groupid,
-            AclReportApi * acl_report
-        );
-    } trans_tmp_file;
-
     VideoCaptureCtx video_cap_ctx;
     video_recorder recorder;
 };
@@ -204,30 +165,23 @@ private:
     WaitingTimeBeforeNextSnapshot first_periodic_snapshot(MonotonicTimePoint now);
     WaitingTimeBeforeNextSnapshot video_sequencer_periodic_snapshot(MonotonicTimePoint now);
 
-    struct SequenceTransport final : VideoTransportBase
+    struct SequenceTransport
     {
-        struct FileGen {
-            char path[1024];
-            char base[1012];
-            char ext[12];
-            unsigned num = 0;
-        } filegen;
+        std::string filename;
+        int const num_pos;
+        int const groupid;
+        int num = 0;
+        AclReportApi * const acl_report;
 
         SequenceTransport(
-            const char * const prefix,
-            const char * const filename,
-            const char * const extension,
+            std::string_view prefix,
+            std::string_view filename,
+            std::string_view extension,
             const int groupid,
             AclReportApi * acl_report
         );
 
-        bool next() override;
-
-        ~SequenceTransport();
-
-    private:
-        void set_final_filename();
-        void do_send(const uint8_t * data, size_t len) override;
+        void next();
     };
 
     struct VideoCapture

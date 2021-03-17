@@ -22,21 +22,20 @@
 
 #pragma once
 
+#include "utils/image_view.hpp"
+
 #include <memory>
 #include <cstdint>
 
-class ImageView;
+class AclReportApi;
 
 
 class video_recorder
 {
 public:
-    using write_packet_fn_t = int(*)(void *io_params, uint8_t *buf, int buf_size);
-    using seek_fn_t = int64_t(*)(void *io_params, int64_t offset, int whence);
-
     video_recorder(
-        write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-        ImageView const & image_view, int frame_rate,
+        char const* filename, const int groupid, AclReportApi * acl_report,
+        ImageView const& image_view, int frame_rate,
         const char * codec_name, char const* codec_options, int log_level
     );
 

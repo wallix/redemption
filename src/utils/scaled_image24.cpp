@@ -32,23 +32,43 @@ ScaledPng24::ScaledPng24(unsigned width, unsigned height)
 {
 }
 
-void ScaledPng24::dump_png24(Transport& trans, const ImageView& image_view, bool bgr) const
+template<class Out>
+static void ScaledPng24_dump_png24_impl(
+    Out& out, const ImageView& image_view, bool bgr,
+    uint8_t* scaled_buffer, unsigned scaled_width, unsigned scaled_height
+)
 {
-    if (!this->scaled_buffer) {
-        ::dump_png24(trans, image_view, bgr);
+    if (!scaled_buffer) {
+        ::dump_png24(out, image_view, bgr);
     }
     else {
         assert(image_view.bits_per_pixel() == ImageView::BitsPerPixel::BitsPP24);
         ::scale_image24(
-            this->scaled_buffer.get(), image_view.data(),
-            this->scaled_width, image_view.width(),
-            this->scaled_height, image_view.height(),
+            scaled_buffer, image_view.data(),
+            scaled_width, image_view.width(),
+            scaled_height, image_view.height(),
             image_view.line_size());
         ::dump_png24(
-            trans, this->scaled_buffer.get(),
-            this->scaled_width, this->scaled_height,
-            this->scaled_width * 3, !bgr);
+            out, scaled_buffer,
+            scaled_width, scaled_height,
+            scaled_width * 3, !bgr);
     }
+}
+
+void ScaledPng24::dump_png24(Transport& trans, const ImageView& image_view, bool bgr) const
+{
+    ScaledPng24_dump_png24_impl(
+        trans, image_view, bgr,
+        this->scaled_buffer.get(), this->scaled_width, this->scaled_height
+    );
+}
+
+void ScaledPng24::dump_png24(char const* filename, const ImageView& image_view, bool bgr) const
+{
+    ScaledPng24_dump_png24_impl(
+        filename, image_view, bgr,
+        this->scaled_buffer.get(), this->scaled_width, this->scaled_height
+    );
 }
 
 

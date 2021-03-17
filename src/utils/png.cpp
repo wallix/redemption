@@ -280,6 +280,16 @@ void dump_png24(
     // fwrite(this->data, 3, this->width * this->height, file);
 }
 
+void dump_png24(
+    char const* filename, uint8_t const * data,
+    const size_t width, const size_t height, const size_t rowsize,
+    const bool bgr
+) {
+    if (File f{filename, "wb"}) {
+        dump_png24(f.get(), data, width, height, rowsize, bgr);
+    }
+}
+
 void dump_png24(Transport & trans, ImageView const & image_view, bool bgr)
 {
     ::dump_png24(

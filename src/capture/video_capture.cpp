@@ -23,6 +23,7 @@
 #include "capture/full_video_params.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
 
@@ -30,10 +31,6 @@
 
 #include "utils/log.hpp"
 #include "utils/strutils.hpp"
-
-#ifndef REDEMPTION_NO_FFMPEG
-#include <libavformat/avio.h> // AVSEEK_SIZE
-#endif
 
 #include <cerrno>
 #include <cstring>
@@ -47,25 +44,6 @@ using namespace std::chrono_literals;
 
 namespace
 {
-    void video_transport_log_error(Error const & error)
-    {
-        if (error.id == ERR_TRANSPORT_WRITE_FAILED) {
-            LOG(LOG_ERR, "VideoTransport::send: %s [%d]", strerror(error.errnum), error.errnum);
-        }
-    }
-
-    void video_transport_acl_report(AclReportApi * acl_report, int errnum)
-    {
-        if (errnum == ENOSPC) {
-            if (acl_report){
-                acl_report->report("FILESYSTEM_FULL", "100|unknown");
-            }
-            else {
-                LOG(LOG_ERR, "FILESYSTEM_FULL:100|unknown");
-            }
-        }
-    }
-
     inline time_t to_time_t(
         MonotonicTimePoint t,
         MonotonicTimeToRealTime monotonic_to_real)
@@ -86,100 +64,6 @@ namespace
     }
 }
 
-// VideoTransportBase
-//@{
-
-VideoTransportBase::VideoTransportBase(const int groupid, AclReportApi * acl_report)
-: out_file(invalid_fd(), [acl_report](const Error & error){
-    video_transport_log_error(error);
-    video_transport_acl_report(acl_report, error.errnum);
-})
-, groupid(groupid)
-, acl_report(acl_report)
-{
-    this->tmp_filename[0] = 0;
-    this->final_filename[0] = 0;
-}
-
-void VideoTransportBase::seek(int64_t offset, int whence)
-{
-    this->out_file.seek(offset, whence);
-}
-
-VideoTransportBase::~VideoTransportBase()
-{
-    if (this->out_file.is_open()) {
-        this->out_file.close();
-        // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-        if (::rename(this->tmp_filename, this->final_filename) < 0) {
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
-               , this->tmp_filename, this->final_filename, errno, strerror(errno));
-        }
-    }
-}
-
-void VideoTransportBase::force_open()
-{
-    assert(this->final_filename[0]);
-    assert(!this->out_file.is_open());
-
-    std::snprintf(this->tmp_filename, sizeof(this->tmp_filename), "%sred-XXXXXX.tmp", this->final_filename);
-    int fd = ::mkostemps(this->tmp_filename, 4, O_WRONLY | O_CREAT);
-    if (fd == -1) {
-        int const errnum = errno;
-        LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
-           , this->tmp_filename
-           , strerror(errnum), errnum);
-        this->status = false;
-        video_transport_acl_report(this->acl_report, errnum);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-    }
-
-    if (fchmod(fd, this->groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
-        int const errnum = errno;
-        LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
-           , this->tmp_filename
-           , this->groupid ? "u+r, g+r" : "u+r"
-           , strerror(errnum), errnum);
-        ::close(fd);
-        unlink(this->tmp_filename);
-        throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-    }
-
-    this->out_file.open(unique_fd{fd});
-}
-
-void VideoTransportBase::rename()
-{
-    assert(this->final_filename[0]);
-    assert(this->out_file.is_open());
-
-    this->out_file.close();
-    // LOG(LOG_INFO, "\"%s\" -> \"%s\".", this->current_filename, this->rename_to);
-
-    if (::rename(this->tmp_filename, this->final_filename) < 0)
-    {
-        int const errnum = errno;
-        LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
-            , this->tmp_filename, this->final_filename, errnum, strerror(errnum));
-        this->status = false;
-        throw Error(ERR_TRANSPORT_WRITE_FAILED, errnum);
-    }
-
-    this->tmp_filename[0] = 0;
-}
-
-bool VideoTransportBase::is_open() const
-{
-    return this->out_file.is_open();
-}
-
-void VideoTransportBase::do_send(const uint8_t * data, size_t len)
-{
-    this->out_file.send(data, len);
-}
-
-//@}
 
 using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnapshot;
 
@@ -337,95 +221,6 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
 //@}
 
 
-// FullVideoCaptureImpl::TmpFileTransport
-//@{
-
-FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
-    const char * const prefix,
-    const char * const filename,
-    const char * const extension,
-    const int groupid,
-    AclReportApi * acl_report)
-: VideoTransportBase(groupid, acl_report)
-{
-    int const len = std::snprintf(
-        this->final_filename,
-        sizeof(this->final_filename),
-        "%s%s.%s", prefix, filename, extension
-    );
-    if (len > int(sizeof(this->final_filename))) {
-        LOG(LOG_ERR, "%s", "Video path length is too large.");
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
-
-    ::unlink(this->final_filename);
-    this->force_open();
-}
-
-//@}
-
-
-// IOVideoRecorderWithTransport
-//@{
-
-template<class Transport>
-struct IOVideoRecorderWithTransport
-{
-#ifndef REDEMPTION_NO_FFMPEG
-    static int write(void * opaque, uint8_t * buf, int buf_size)
-    {
-        Transport * trans       = static_cast<Transport*>(opaque);
-        int         return_code = buf_size;
-        try {
-            trans->send(buf, buf_size);
-        }
-        catch (Error const & e) {
-            if (e.id == ERR_TRANSPORT_WRITE_NO_ROOM) {
-                LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%u)", e.id);
-            }
-            else {
-                LOG(LOG_ERR, "Video write_packet failure (id=%u, errnum=%d)", e.id, e.errnum);
-            }
-            return_code = -1;
-        }
-        return return_code;
-    }
-
-    static int64_t seek(void * opaque, int64_t offset, int whence)
-    {
-        // This function is like the fseek() C stdio function.
-        // "whence" can be either one of the standard C values
-        // (SEEK_SET, SEEK_CUR, SEEK_END) or one more value: AVSEEK_SIZE.
-
-        // When "whence" has this value, your seek function must
-        // not seek but return the size of your file handle in bytes.
-        // This is also optional and if you don't implement it you must return <0.
-
-        // Otherwise you must return the current position of your stream
-        //  in bytes (that is, after the seeking is performed).
-        // If the seek has failed you must return <0.
-        if (whence == AVSEEK_SIZE) {
-            LOG(LOG_ERR, "Video seek failure");
-            return -1;
-        }
-        try {
-            Transport * trans = static_cast<Transport*>(opaque);
-            trans->seek(offset, whence);
-            return offset;
-        }
-        catch (Error const & e){
-            LOG(LOG_ERR, "Video seek failure (id=%u)", e.id);
-            return -1;
-        }
-    }
-#else
-    static int write(void * /*opaque*/, uint8_t * /*buf*/, int buf_size) { return buf_size; }
-    static int64_t seek(void * /*opaque*/, int64_t offset, int /*whence*/) { return offset; }
-#endif
-};
-
-//@}
-
 static void log_video_params(VideoParams const& video_params)
 {
     if (video_params.verbosity) {
@@ -444,17 +239,18 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     CaptureParams const & capture_params,
     RDPDrawable & drawable, gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
-: trans_tmp_file(
-    capture_params.record_path, capture_params.basename, video_params.codec.c_str(),
-    capture_params.groupid, capture_params.session_log)
-, video_cap_ctx(capture_params.now, capture_params.real_now,
+: video_cap_ctx(capture_params.now, capture_params.real_now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
     video_params.frame_rate, drawable, image_frame)
 , recorder(
-    IOVideoRecorderWithTransport<TmpFileTransport>::write,
-    IOVideoRecorderWithTransport<TmpFileTransport>::seek,
-    &this->trans_tmp_file,
+    str_concat(
+        std::string_view{capture_params.record_path},
+        std::string_view{capture_params.basename},
+        '.',
+        video_params.codec
+    ).c_str(),
+    capture_params.groupid, capture_params.session_log,
     image_frame.get_image_view(),
     checked_int{video_params.frame_rate},
     video_params.codec.c_str(),
@@ -498,61 +294,23 @@ void FullVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, 
 // SequencedVideoCaptureImpl
 //@{
 
-void SequencedVideoCaptureImpl::SequenceTransport::set_final_filename()
-{
-    int len = std::snprintf(
-        this->final_filename, sizeof(this->final_filename), "%s%s-%06u%s",
-        this->filegen.path, this->filegen.base, this->filegen.num, this->filegen.ext
-    );
-    if (len > int(sizeof(this->final_filename))) {
-        LOG(LOG_ERR, "%s", "Video path length is too large.");
-        throw Error(ERR_TRANSPORT_OPEN_FAILED);
-    }
-}
-
 SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
-    const char * const prefix,
-    const char * const filename,
-    const char * const extension,
+    std::string_view prefix,
+    std::string_view filename,
+    std::string_view extension,
     const int groupid,
     AclReportApi * acl_report)
-: VideoTransportBase(groupid, acl_report)
+: filename(str_concat(prefix, filename, "-000000."_av, extension))
+, num_pos(int(this->filename.size() - (extension.size() + 1)))
+, groupid(groupid)
+, acl_report(acl_report)
+{}
+
+void SequencedVideoCaptureImpl::SequenceTransport::next()
 {
-    if (!utils::strbcpy(this->filegen.path, prefix)
-     || !utils::strbcpy(this->filegen.base, filename)
-     || !utils::strbcpy(this->filegen.ext, extension)) {
-        LOG(LOG_ERR, "Filename too long");
-        throw Error(ERR_TRANSPORT);
-    }
-}
-
-bool SequencedVideoCaptureImpl::SequenceTransport::next()
-{
-    if (!this->status) {
-        LOG(LOG_ERR, "SequencedVideoCaptureImpl::SequenceTransport::next: Invalid status!");
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
-    }
-
-    this->set_final_filename();
-    this->rename();
-
-    ++this->filegen.num;
-    return true;
-}
-
-SequencedVideoCaptureImpl::SequenceTransport::~SequenceTransport()
-{
-    this->set_final_filename();
-}
-
-void SequencedVideoCaptureImpl::SequenceTransport::do_send(const uint8_t * data, size_t len)
-{
-    if (!this->is_open()) {
-        this->set_final_filename();
-        this->force_open();
-    }
-
-    this->VideoTransportBase::do_send(data, len);
+    ++this->num;
+    auto chars = int_to_decimal_chars(this->num);
+    memcpy(this->filename.data() + this->num_pos - chars.size(), chars.data(), chars.size());
 }
 
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
@@ -621,7 +379,7 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
     video_params.frame_rate, drawable, image_frame)
 , trans(
-    capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
+    capture_params.record_path, capture_params.basename, video_params.codec,
     capture_params.groupid, capture_params.session_log)
 , video_params(video_params)
 , image_frame_api(image_frame)
@@ -632,7 +390,9 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
 
 SequencedVideoCaptureImpl::VideoCapture::~VideoCapture()
 {
-    this->encoding_video_frame();
+    if (this->recorder) {
+        this->encoding_video_frame();
+    }
 }
 
 void SequencedVideoCaptureImpl::VideoCapture::next_video()
@@ -644,9 +404,9 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
     }
 
     this->recorder = std::make_unique<video_recorder>(
-        IOVideoRecorderWithTransport<SequenceTransport>::write,
-        IOVideoRecorderWithTransport<SequenceTransport>::seek,
-        &this->trans,
+        this->trans.filename.c_str(),
+        this->trans.groupid,
+        this->trans.acl_report,
         this->image_frame_api.get_image_view(),
         this->video_params.frame_rate,
         this->video_params.codec.c_str(),
@@ -695,7 +455,7 @@ void SequencedVideoCaptureImpl::VideoCapture::synchronize_times(MonotonicTimePoi
 
 void SequencedVideoCaptureImpl::ic_flush()
 {
-    this->ic_scaled_png.dump_png24(this->ic_trans, this->image_frame_api, true);
+    this->ic_scaled_png.dump_png24(this->ic_trans.filename.c_str(), this->image_frame_api, true);
 }
 
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::video_sequencer_periodic_snapshot(
@@ -721,7 +481,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , monotonic_to_real(capture_params.now, capture_params.real_now)
 , vc(capture_params, drawable, image_frame, video_params)
 , ic_trans(
-    capture_params.record_path, capture_params.basename, ".png",
+    capture_params.record_path, capture_params.basename, "png",
     capture_params.groupid, capture_params.session_log)
 , ic_drawable(drawable)
 , image_frame_api(image_frame)

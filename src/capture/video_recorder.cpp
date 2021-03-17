@@ -46,7 +46,10 @@ extern "C" {
 #include "cxx/diagnostic.hpp"
 #include "utils/image_view.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/log.hpp"
+#include "acl/auth_api.hpp"
+#include "transport/file_transport.hpp"
 
 #include <algorithm>
 
@@ -59,6 +62,7 @@ namespace
             av_free(ptr);
         }
     };
+
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 65, 0)
     // not sure which version of libavcodec
     void avio_context_free(AVIOContext** ptr)
@@ -67,10 +71,84 @@ namespace
         *ptr = nullptr;
     }
 #endif
+
+    void video_transport_log_error(Error const & error)
+    {
+        if (error.id == ERR_TRANSPORT_WRITE_FAILED) {
+            LOG(LOG_ERR, "VideoTransport::send: %s [%d]", strerror(error.errnum), error.errnum);
+        }
+    }
+
+    void video_transport_acl_report(AclReportApi * acl_report, int errnum)
+    {
+        if (errnum == ENOSPC) {
+            if (acl_report){
+                acl_report->report("FILESYSTEM_FULL", "100|unknown");
+            }
+            else {
+                LOG(LOG_ERR, "FILESYSTEM_FULL:100|unknown");
+            }
+        }
+    }
+
+    template<class Transport>
+    struct IOVideoRecorderWithTransport
+    {
+        static int write(void * opaque, uint8_t * buf, int buf_size)
+        {
+            Transport * trans       = static_cast<Transport*>(opaque);
+            int         return_code = buf_size;
+            try {
+                trans->send(buf, buf_size);
+            }
+            catch (Error const & e) {
+                if (e.id == ERR_TRANSPORT_WRITE_NO_ROOM) {
+                    LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%u)", e.id);
+                }
+                else {
+                    LOG(LOG_ERR, "Video write_packet failure (id=%u, errnum=%d)", e.id, e.errnum);
+                }
+                return_code = -1;
+            }
+            return return_code;
+        }
+
+        static int64_t seek(void * opaque, int64_t offset, int whence)
+        {
+            // This function is like the fseek() C stdio function.
+            // "whence" can be either one of the standard C values
+            // (SEEK_SET, SEEK_CUR, SEEK_END) or one more value: AVSEEK_SIZE.
+
+            // When "whence" has this value, your seek function must
+            // not seek but return the size of your file handle in bytes.
+            // This is also optional and if you don't implement it you must return <0.
+
+            // Otherwise you must return the current position of your stream
+            //  in bytes (that is, after the seeking is performed).
+            // If the seek has failed you must return <0.
+            if (whence == AVSEEK_SIZE) {
+                LOG(LOG_ERR, "Video seek failure");
+                return -1;
+            }
+            try {
+                Transport * trans = static_cast<Transport*>(opaque);
+                trans->seek(offset, whence);
+                return offset;
+            }
+            catch (Error const & e){
+                LOG(LOG_ERR, "Video seek failure (id=%u)", e.id);
+                return -1;
+            }
+        }
+    };
 } // anonymous namespace
 
 struct video_recorder::D
 {
+    std::string final_filename;
+    std::string tmp_filename;
+    OutFileTransport out_file;
+
     AVStream* video_st = nullptr;
 
     AVFrame* picture = nullptr;
@@ -90,13 +168,51 @@ struct video_recorder::D
     std::unique_ptr<uint8_t, default_av_free> custom_io_buffer;
     AVIOContext* custom_io_context = nullptr;
 
-    D()
-    : picture(av_frame_alloc())
+    static unique_fd open_file(char* tmp_filename, const int groupid, AclReportApi * acl_report)
+    {
+        int fd = ::mkostemps(tmp_filename, 4, O_WRONLY | O_CREAT);
+        if (fd == -1) {
+            int const errnum = errno;
+            LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
+               , tmp_filename, strerror(errnum), errnum);
+            video_transport_acl_report(acl_report, errnum);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
+        }
+
+        if (fchmod(fd, groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
+            int const errnum = errno;
+            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
+               , tmp_filename, groupid ? "u+r, g+r" : "u+r", strerror(errnum), errnum);
+            ::close(fd);
+            unlink(tmp_filename);
+            throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
+        }
+
+        return unique_fd{fd};
+    }
+
+    D(std::string_view filename, const int groupid, AclReportApi * acl_report)
+    : final_filename(filename)
+    , tmp_filename(str_concat(filename, "red-XXXXXX.tmp"_av))
+    , out_file(open_file(tmp_filename.data(), groupid, acl_report), [acl_report](const Error & error){
+        video_transport_log_error(error);
+        video_transport_acl_report(acl_report, error.errnum);
+    })
+    , picture(av_frame_alloc())
     , original_picture(av_frame_alloc())
-    {}
+    {
+      ::unlink(this->final_filename.c_str());
+    }
 
     ~D()
     {
+        this->out_file.close();
+        if (::rename(this->tmp_filename.c_str(), this->final_filename.c_str()) < 0) {
+            int const errnum = errno;
+            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
+               , this->tmp_filename, this->final_filename, errnum, strerror(errnum));
+        }
+
         avio_context_free(&this->custom_io_context);
         sws_freeContext(this->img_convert_ctx);
         avformat_free_context(this->oc);
@@ -139,11 +255,11 @@ static void check_errnum(int errnum, char const* msg)
 // https://libav.org/documentation/doxygen/master/encode_video_8c-example.html
 
 video_recorder::video_recorder(
-    write_packet_fn_t write_packet_fn, seek_fn_t seek_fn, void * io_params,
-    ImageView const & image_view, int frame_rate,
+    char const* filename, const int groupid, AclReportApi * acl_report,
+    ImageView const& image_view, int frame_rate,
     const char * codec_name, char const* codec_options, int log_level
 )
-: d(new D)
+: d(std::make_unique<D>(filename, groupid, acl_report))
 {
     d->original_height = image_view.height();
     const int image_view_width = image_view.width();
@@ -168,7 +284,6 @@ video_recorder::video_recorder(
     const AVPixelFormat pix_fmt = AV_PIX_FMT_YUV420P;
 
     this->d->oc->oformat = fmt;
-    //strncpy(this->d->oc->filename, file, sizeof(this->d->oc->filename));
 
     // add the video streams using the default format codecs and initialize the codecs
     this->d->video_st = avformat_new_stream(this->d->oc, nullptr);
@@ -293,10 +408,10 @@ video_recorder::video_recorder(
         this->d->custom_io_buffer.get(), // buffer
         io_buffer_size,               // buffer size
         1,                            // writable
-        io_params,                    // user-specific data
+        &this->d->out_file,           // user-specific data
         nullptr,                      // function for refilling the buffer, may be nullptr.
-        write_packet_fn,              // function for writing the buffer contents, may be nullptr.
-        seek_fn                       // function for seeking to specified byte position, may be nullptr.
+        IOVideoRecorderWithTransport<OutFileTransport>::write,
+        IOVideoRecorderWithTransport<OutFileTransport>::seek
     );
     if (!this->d->custom_io_context) {
         throw Error(ERR_RECORDER_ALLOCATION_FAILED);

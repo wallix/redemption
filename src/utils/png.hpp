@@ -51,6 +51,15 @@ void dump_png24(
     bool bgr
 );
 
+void dump_png24(
+    char const* filename,
+    uint8_t const * data,
+    std::size_t width,
+    std::size_t height,
+    std::size_t rowsize,
+    bool bgr
+);
+
 void dump_png24(std::FILE * file, ImageView const & image_view, bool bgr);
 void dump_png24(Transport & trans, ImageView const & image_view, bool bgr);
 void dump_png24(const char * filename, ImageView const & image_view, bool bgr);

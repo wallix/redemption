@@ -34,6 +34,7 @@ struct ScaledPng24
     bool is_scaled() const noexcept { return this->scaled_width; }
 
     void dump_png24(Transport& trans, ImageView const& image_view, bool bgr) const;
+    void dump_png24(char const * filename, ImageView const& image_view, bool bgr) const;
 
 private:
     unsigned scaled_width;
