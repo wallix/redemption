@@ -47,11 +47,15 @@ extern "C" {
 #include "utils/image_view.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
 #include "acl/auth_api.hpp"
-#include "transport/file_transport.hpp"
 
 #include <algorithm>
+#include <sys/uio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 namespace
 {
@@ -72,13 +76,6 @@ namespace
     }
 #endif
 
-    void video_transport_log_error(Error const & error)
-    {
-        if (error.id == ERR_TRANSPORT_WRITE_FAILED) {
-            LOG(LOG_ERR, "VideoTransport::send: %s [%d]", strerror(error.errnum), error.errnum);
-        }
-    }
-
     void video_transport_acl_report(AclReportApi * acl_report, int errnum)
     {
         if (errnum == ENOSPC) {
@@ -91,29 +88,68 @@ namespace
         }
     }
 
-    template<class Transport>
-    struct IOVideoRecorderWithTransport
+    struct VideoRecorderOutputFile
     {
-        static int write(void * opaque, uint8_t * buf, int buf_size)
+        explicit VideoRecorderOutputFile(
+            std::string_view filename,
+            const int groupid,
+            AclReportApi * acl_report)
+        : tmp_filename(str_concat(filename, "red-XXXXXX.tmp"_av))
+        , fd{[groupid, acl_report, tmp_filename = this->tmp_filename.data()]{
+            int fd = ::mkostemps(tmp_filename, 4, O_WRONLY | O_CREAT);
+            if (fd == -1) {
+                int const errnum = errno;
+                LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
+                   , tmp_filename, strerror(errnum), errnum);
+                video_transport_acl_report(acl_report, errnum);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
+            }
+
+            if (fchmod(fd, groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
+                int const errnum = errno;
+                LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
+                   , tmp_filename, groupid ? "u+r, g+r" : "u+r", strerror(errnum), errnum);
+                ::close(fd);
+                unlink(tmp_filename);
+                throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
+            }
+
+            return unique_fd{fd};
+        }()}
+        , acl_report(acl_report)
+        , final_filename(filename)
         {
-            Transport * trans       = static_cast<Transport*>(opaque);
-            int         return_code = buf_size;
-            try {
-                trans->send(buf, buf_size);
-            }
-            catch (Error const & e) {
-                if (e.id == ERR_TRANSPORT_WRITE_NO_ROOM) {
-                    LOG(LOG_ERR, "Video write_packet failure, no space left on device (id=%u)", e.id);
-                }
-                else {
-                    LOG(LOG_ERR, "Video write_packet failure (id=%u, errnum=%d)", e.id, e.errnum);
-                }
-                return_code = -1;
-            }
-            return return_code;
+            ::unlink(this->final_filename.c_str());
         }
 
-        static int64_t seek(void * opaque, int64_t offset, int whence)
+        int write(uint8_t * buf, int buf_size)
+        {
+            assert(buf_size >= 0);
+
+            if (buf_size + this->buffer_len < buffer_capacity) {
+                memcpy(this->buffer.get() + this->buffer_len, buf, size_t(buf_size));
+                this->buffer_len += buf_size;
+                return buf_size;
+            }
+
+            iovec iov[]{
+                {this->buffer.get(), size_t(this->buffer_len)},
+                {buf, size_t(buf_size)}
+            };
+            ssize_t len = writev(this->fd.fd(), iov, 2);
+            ssize_t total = this->buffer_len + buf_size;
+            this->buffer_len = 0;
+
+            if (REDEMPTION_UNLIKELY(len != total)) {
+                return log_error("send");
+            }
+
+            this->buffer_len = 0;
+
+            return buf_size;
+        }
+
+        int64_t seek(int64_t offset, int whence)
         {
             // This function is like the fseek() C stdio function.
             // "whence" can be either one of the standard C values
@@ -126,28 +162,74 @@ namespace
             // Otherwise you must return the current position of your stream
             //  in bytes (that is, after the seeking is performed).
             // If the seek has failed you must return <0.
-            if (whence == AVSEEK_SIZE) {
+
+            if (REDEMPTION_UNLIKELY(whence == AVSEEK_SIZE)) {
                 LOG(LOG_ERR, "Video seek failure");
                 return -1;
             }
-            try {
-                Transport * trans = static_cast<Transport*>(opaque);
-                trans->seek(offset, whence);
-                return offset;
-            }
-            catch (Error const & e){
-                LOG(LOG_ERR, "Video seek failure (id=%u)", e.id);
+
+            if (REDEMPTION_UNLIKELY(this->send_remaining_buffer() < 0)) {
                 return -1;
             }
+
+            auto res = lseek64(this->fd.fd(), offset, whence);
+            if (REDEMPTION_UNLIKELY(res == static_cast<off_t>(-1))) {
+                return log_error("seek");
+            }
+
+            return offset;
         }
+
+        void close()
+        {
+            this->send_remaining_buffer();
+            this->fd.close();
+
+            if (::rename(this->tmp_filename.c_str(), this->final_filename.c_str()) < 0) {
+                int const errnum = errno;
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
+                   , this->tmp_filename, this->final_filename, errnum, strerror(errnum));
+            }
+        }
+
+    private:
+        int send_remaining_buffer()
+        {
+            if (this->buffer_len) {
+                ssize_t len = ::write(this->fd.fd(), this->buffer.get(), size_t(this->buffer_len));
+                ssize_t total = this->buffer_len;
+                this->buffer_len = 0;
+
+                if (REDEMPTION_UNLIKELY(len != total)) {
+                    return log_error("send");
+                }
+            }
+
+            return 0;
+        }
+
+        int log_error(char const* funcname)
+        {
+            int errnum = errno;
+            LOG(LOG_ERR, "VideoRecorder::%s: %s [%d]", funcname, strerror(errnum), errnum);
+            video_transport_acl_report(this->acl_report, errnum);
+            return -1;
+        }
+
+        static const int buffer_capacity = 1024*256;
+
+        std::string tmp_filename;
+        unique_fd fd;
+        int buffer_len = 0;
+        std::unique_ptr<uint8_t[]> buffer{new uint8_t[buffer_capacity]} /*NOLINT*/;
+        AclReportApi * acl_report;
+        std::string final_filename;
     };
 } // anonymous namespace
 
 struct video_recorder::D
 {
-    std::string final_filename;
-    std::string tmp_filename;
-    OutFileTransport out_file;
+    VideoRecorderOutputFile out_file;
 
     AVStream* video_st = nullptr;
 
@@ -168,51 +250,15 @@ struct video_recorder::D
     std::unique_ptr<uint8_t, default_av_free> custom_io_buffer;
     AVIOContext* custom_io_context = nullptr;
 
-    static unique_fd open_file(char* tmp_filename, const int groupid, AclReportApi * acl_report)
-    {
-        int fd = ::mkostemps(tmp_filename, 4, O_WRONLY | O_CREAT);
-        if (fd == -1) {
-            int const errnum = errno;
-            LOG( LOG_ERR, "can't open temporary file %s : %s [%d]"
-               , tmp_filename, strerror(errnum), errnum);
-            video_transport_acl_report(acl_report, errnum);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-        }
-
-        if (fchmod(fd, groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR) == -1) {
-            int const errnum = errno;
-            LOG( LOG_ERR, "can't set file %s mod to %s : %s [%d]"
-               , tmp_filename, groupid ? "u+r, g+r" : "u+r", strerror(errnum), errnum);
-            ::close(fd);
-            unlink(tmp_filename);
-            throw Error(ERR_TRANSPORT_OPEN_FAILED, errnum);
-        }
-
-        return unique_fd{fd};
-    }
-
     D(std::string_view filename, const int groupid, AclReportApi * acl_report)
-    : final_filename(filename)
-    , tmp_filename(str_concat(filename, "red-XXXXXX.tmp"_av))
-    , out_file(open_file(tmp_filename.data(), groupid, acl_report), [acl_report](const Error & error){
-        video_transport_log_error(error);
-        video_transport_acl_report(acl_report, error.errnum);
-    })
+    : out_file(filename, groupid, acl_report)
     , picture(av_frame_alloc())
     , original_picture(av_frame_alloc())
-    {
-      ::unlink(this->final_filename.c_str());
-    }
+    {}
 
     ~D()
     {
         this->out_file.close();
-        if (::rename(this->tmp_filename.c_str(), this->final_filename.c_str()) < 0) {
-            int const errnum = errno;
-            LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed errno=%d : %s"
-               , this->tmp_filename, this->final_filename, errnum, strerror(errnum));
-        }
-
         avio_context_free(&this->custom_io_context);
         sws_freeContext(this->img_convert_ctx);
         avformat_free_context(this->oc);
@@ -410,8 +456,12 @@ video_recorder::video_recorder(
         1,                            // writable
         &this->d->out_file,           // user-specific data
         nullptr,                      // function for refilling the buffer, may be nullptr.
-        IOVideoRecorderWithTransport<OutFileTransport>::write,
-        IOVideoRecorderWithTransport<OutFileTransport>::seek
+        [](void * data, uint8_t * buf, int buf_size) {
+            return static_cast<VideoRecorderOutputFile*>(data)->write(buf, buf_size);
+        },
+        [](void * data, int64_t offset, int whence) {
+            return static_cast<VideoRecorderOutputFile*>(data)->seek(offset, whence);
+        }
     );
     if (!this->d->custom_io_context) {
         throw Error(ERR_RECORDER_ALLOCATION_FAILED);
