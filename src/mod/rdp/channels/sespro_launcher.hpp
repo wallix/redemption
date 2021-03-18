@@ -32,6 +32,8 @@ class SessionProbeLauncher {
 public:
     virtual ~SessionProbeLauncher() = default;
 
+    virtual bool on_client_format_list_rejected() = 0;
+
     virtual bool on_clipboard_initialize() = 0;
 
     virtual bool on_clipboard_monitor_ready() = 0;
@@ -69,4 +71,3 @@ public:
 
     virtual bool is_stopped() const = 0;
 };
-

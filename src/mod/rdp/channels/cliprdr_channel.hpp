@@ -443,8 +443,12 @@ private:
     SessionProbeLauncher* format_list_notifier             = nullptr;
     SessionProbeLauncher* format_list_response_notifier    = nullptr;
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
+    SessionProbeLauncher* format_list_rejection_notifier   = nullptr;
 
     const bool proxy_managed;   // Has not client.
+
+    unsigned int format_list_rejection_retry_count = 0;
+    static unsigned int const FORMAT_LIST_REJECTION_RETRY_MAX = 3;
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -2003,9 +2007,30 @@ public:
                         this->clipboard_initialize_notifier = nullptr;
                     }
                 }
-                else if (this->format_list_response_notifier) {
+                if (this->format_list_response_notifier) {
                     if (!this->format_list_response_notifier->on_server_format_list_response()) {
                         this->format_list_response_notifier = nullptr;
+                    }
+                }
+
+                if (this->format_list_rejection_notifier &&
+                    this->format_list_rejection_notifier->is_stopped()) {
+                    if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL and
+                        this->format_list_rejection_retry_count < ClipboardVirtualChannel::FORMAT_LIST_REJECTION_RETRY_MAX) {
+                        LOG(LOG_INFO, "ClipboardVirtualChannel::process_server_format_list_response_pdu: "
+                            "Resend rejected Format List PDU");
+
+                        if (!this->format_list_rejection_notifier->on_client_format_list_rejected()) {
+                            this->format_list_rejection_notifier = nullptr;
+                        }
+                        else {
+                            send_message_to_client = false;
+                        }
+
+                        this->format_list_rejection_retry_count++;
+                    }
+                    else {
+                            this->format_list_rejection_notifier = nullptr;
                     }
                 }
             break;
@@ -2112,6 +2137,7 @@ public:
         this->format_list_notifier             = launcher;
         this->format_list_response_notifier    = launcher;
         this->format_data_request_notifier     = launcher;
+        this->format_list_rejection_notifier   = launcher;
     }
 
     void empty_client_clipboard() {

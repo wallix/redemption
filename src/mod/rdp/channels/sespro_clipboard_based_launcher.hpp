@@ -83,6 +83,8 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     size_t                     current_client_format_list_pdu_length = 0;
     uint32_t                   current_client_format_list_pdu_flags  = 0;
 
+    bool format_list_sent = false;
+
 public:
     SessionProbeClipboardBasedLauncher(
         SessionReactor& session_reactor,
@@ -112,6 +114,10 @@ public:
                 ms2ll(clipboard_initialization_delay_ms), ms2ll(start_delay_ms),
                 ms2ll(long_delay_ms), ms2ll(short_delay_ms));
         }
+    }
+
+    bool on_client_format_list_rejected() override {
+        return restore_client_clipboard();
     }
 
     bool on_clipboard_initialize() override {
@@ -613,33 +619,56 @@ public:
                     current_chunk_pos, current_chunk_size);
                 this->current_client_format_list_pdu_flags  = flags;
 
-                RDPECLIP::FormatListPDUEx format_list_pdu;
-                format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+                if (this->format_list_sent)
+                {
+                    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
 
-                const bool use_long_format_names =
-                    (this->cliprdr_channel ?
-                     this->cliprdr_channel->use_long_format_names() :
-                     false);
-                const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+                    StaticOutStream<128> out_s;
+                    clipboard_header.emit(out_s);
 
-                RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                    RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                    format_list_pdu.size(use_long_format_names));
+                    const size_t totalLength = out_s.get_offset();
+                    std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+                    this->cliprdr_channel->process_server_message(
+                                                  totalLength,
+                                                    CHANNELS::CHANNEL_FLAG_FIRST
+                                                  | CHANNELS::CHANNEL_FLAG_LAST,
+                                                  out_s.get_data(),
+                                                  totalLength,
+                                                  out_asynchronous_task);
+                    assert(!out_asynchronous_task);
+                }
+                else
+                {
+                    RDPECLIP::FormatListPDUEx format_list_pdu;
+                    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
-                StaticOutStream<256> out_s;
+                    const bool use_long_format_names =
+                        (this->cliprdr_channel ?
+                         this->cliprdr_channel->use_long_format_names() :
+                         false);
+                    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-                clipboard_header.emit(out_s);
-                format_list_pdu.emit(out_s, use_long_format_names);
+                    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                        format_list_pdu.size(use_long_format_names));
 
-                const size_t totalLength = out_s.get_offset();
+                    StaticOutStream<256> out_s;
 
-                this->cliprdr_channel->process_client_message(
-                        totalLength,
-                          CHANNELS::CHANNEL_FLAG_FIRST
-                        | CHANNELS::CHANNEL_FLAG_LAST
-                        | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                        out_s.get_data(),
-                        totalLength);
+                    clipboard_header.emit(out_s);
+                    format_list_pdu.emit(out_s, use_long_format_names);
+
+                    const size_t totalLength = out_s.get_offset();
+
+                    this->cliprdr_channel->process_client_message(
+                            totalLength,
+                              CHANNELS::CHANNEL_FLAG_FIRST
+                            | CHANNELS::CHANNEL_FLAG_LAST
+                            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                            out_s.get_data(),
+                            totalLength);
+
+                    this->format_list_sent = true;
+                }
 
                 ret = false;
             }
@@ -721,6 +750,10 @@ public:
             }
         }
 
+        restore_client_clipboard();
+    }
+
+     bool restore_client_clipboard() {
         if (this->clipboard_initialized) {
             if (!this->clipboard_initialized_by_proxy && bool(this->current_client_format_list_pdu)) {
                 // Sends client Format List PDU to server
@@ -733,8 +766,12 @@ public:
             else {
                 this->cliprdr_channel->empty_client_clipboard();
             }
+
+            return true;
         }
-    }
+
+        return false;
+     }
 
 private:
     void do_state_start() {
@@ -744,33 +781,35 @@ private:
             return;
         }
 
-        RDPECLIP::FormatListPDUEx format_list_pdu;
-        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+        if (!this->format_list_sent)
+        {
+            RDPECLIP::FormatListPDUEx format_list_pdu;
+            format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
-        const bool use_long_format_names =
-            (this->cliprdr_channel ?
-             this->cliprdr_channel->use_long_format_names() :
-             false);
-        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+            const bool use_long_format_names =
+                (this->cliprdr_channel ?
+                 this->cliprdr_channel->use_long_format_names() :
+                 false);
+            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-            format_list_pdu.size(use_long_format_names));
+            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                format_list_pdu.size(use_long_format_names));
 
-        StaticOutStream<256> out_s;
+            StaticOutStream<256> out_s;
 
-        clipboard_header.emit(out_s);
-        format_list_pdu.emit(out_s, use_long_format_names);
+            clipboard_header.emit(out_s);
+            format_list_pdu.emit(out_s, use_long_format_names);
 
-        const size_t totalLength = out_s.get_offset();
-        InStream in_s(out_s.get_data(), totalLength);
-
-        this->mod.send_to_mod_channel(channel_names::cliprdr,
-                                      in_s,
-                                      totalLength,
-                                        CHANNELS::CHANNEL_FLAG_FIRST
-                                      | CHANNELS::CHANNEL_FLAG_LAST
-                                      | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+            const size_t totalLength = out_s.get_offset();
+            this->cliprdr_channel->process_client_message(
+                totalLength,
+                  CHANNELS::CHANNEL_FLAG_FIRST
+                | CHANNELS::CHANNEL_FLAG_LAST
+                | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                out_s.get_data(),
+                totalLength);
+        }
     }
 
     void rdp_send_scancode(long param1, long param2, long device_flags, long time, Keymap2 * /*unused*/) {
