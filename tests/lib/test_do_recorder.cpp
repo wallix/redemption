@@ -40,7 +40,6 @@ struct Codec
     char const* name;
     char const* options;
 };
-constexpr Codec flv{"flv", "flags=+qscale b=30000"};
 constexpr char const* mp4_options{"profile=baseline preset=ultrafast b=80000"};
 #endif
 
@@ -728,76 +727,6 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
         "No error detected during the data verification.\n\nverify ok\n"_av,
         ""_av);
 }
-
-#ifndef REDEMPTION_NO_FFMPEG
-RED_AUTO_TEST_CASE_WD(TestAppRecorder, wd)
-{
-    auto output = wd.dirname().string() + "recorder.1.flva";
-    char const * argv[] {
-        "recorder.py",
-        "redrec",
-        "-i",
-            FIXTURES_PATH "/verifier/recorded/"
-            "toto@10.10.43.13,Administrateur@QA@cible"
-            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "-o",
-            output.c_str(),
-        "--video",
-        "--full",
-        "--video-break-interval", "500",
-        "--video-codec", flv.name,
-        "--video-codec-options", flv.options,
-        "--disable-bogus-vlc",
-    };
-
-    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
-        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
-
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 13450874);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 1641583);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 14977057);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
-    RED_TEST_FILE_CONTENTS(wd.add_file("recorder.1.pgs"),
-        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
-}
-#endif
-
-#ifndef REDEMPTION_NO_FFMPEG
-RED_AUTO_TEST_CASE_WD(TestAppRecorderVlc, wd)
-{
-    auto output = wd.dirname().string() + "recorder.1.flva";
-    char const * argv[] {
-        "recorder.py",
-        "redrec",
-        "-i",
-            FIXTURES_PATH "/verifier/recorded/"
-            "toto@10.10.43.13,Administrateur@QA@cible"
-            ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm",
-        "--mwrm-path", FIXTURES_PATH "/verifier/recorded/",
-        "-o",
-            output.c_str(),
-        "--video",
-        "--full",
-        "--video-break-interval", "500",
-        "--video-codec", flv.name,
-        "--video-codec-options", flv.options,
-        "--bogus-vlc",
-    };
-
-    TEST_DO_MAIN(argv, 0, hmac_key, trace_fn,
-        str_concat("Output file is \"", output, "\".\n\n"), ""_av);
-
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.flv"), 62513357 +- 100_v);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.flv"), 7555247);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1.flv"), 70069293 +- 100_v);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000000.png"), 26981);
-    RED_TEST_FILE_SIZE(wd.add_file("recorder.1-000001.png"), 27557);
-    RED_TEST_FILE_CONTENTS(wd.add_file("recorder.1.pgs"),
-        "{\"percentage\":100,\"eta\":0,\"videos\":1}"_av);
-}
-#endif
 
 #ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE_WD(TestAppRecorderChunk, wd)
