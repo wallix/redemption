@@ -370,7 +370,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
 
 void SequencedVideoCaptureImpl::init_recorder()
 {
-    this->recorder = std::make_unique<video_recorder>(
+    this->recorder.emplace(
         this->vc_filename_generator.current_filename(),
         this->groupid,
         this->acl_report,

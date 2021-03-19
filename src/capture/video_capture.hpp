@@ -33,6 +33,7 @@
 
 #include <memory>
 #include <chrono>
+#include <optional>
 
 class CaptureParams;
 class FullVideoParams;
@@ -193,7 +194,7 @@ private:
 
     VideoCaptureCtx video_cap_ctx;
     FilenameGenerator vc_filename_generator;
-    std::unique_ptr<video_recorder> recorder;
+    std::optional<video_recorder> recorder;
     FilenameGenerator ic_filename_generator;
     const VideoParams video_params;
     int const groupid;
