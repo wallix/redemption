@@ -32,7 +32,6 @@
 #include "utils/monotonic_time_to_real_time.hpp"
 #include "utils/scaled_image24.hpp"
 
-#include <memory>
 #include <chrono>
 #include <optional>
 
@@ -85,7 +84,7 @@ struct VideoCaptureCtx : noncopyable
     );
 
     void frame_marker_event(video_recorder & recorder);
-    void encoding_video_frame(video_recorder & recorder);
+    void encoding_end_frame(video_recorder & recorder);
     gdi::CaptureApi::WaitingTimeBeforeNextSnapshot snapshot(
         video_recorder& recorder, MonotonicTimePoint now, bool & has_draw_event,
         uint16_t cursor_x, uint16_t cursor_y);
@@ -136,8 +135,6 @@ struct FullVideoCaptureImpl final
         MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
-    void encoding_video_frame();
-
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
@@ -168,15 +165,13 @@ public:
         uint16_t cursor_x, uint16_t cursor_y
     ) override;
 
-    void ic_flush(const tm& now);
-
     void next_video(MonotonicTimePoint now);
-
-    void encoding_video_frame();
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
 private:
+    void ic_flush(const tm& now);
+
     void next_video_impl(MonotonicTimePoint now, NotifyNextVideo::Reason reason);
 
     // first next_video is ignored

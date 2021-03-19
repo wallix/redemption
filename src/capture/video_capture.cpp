@@ -124,7 +124,7 @@ void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
     this->has_frame_marker = true;
 }
 
-void VideoCaptureCtx::encoding_video_frame(video_recorder & recorder)
+void VideoCaptureCtx::encoding_end_frame(video_recorder & recorder)
 {
     this->preparing_video_frame(recorder);
     auto index = this->current_video_time / this->frame_interval - this->start_frame_index;
@@ -259,7 +259,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
 
 FullVideoCaptureImpl::~FullVideoCaptureImpl()
 {
-    this->encoding_video_frame();
+    this->video_cap_ctx.encoding_end_frame(this->recorder);
 }
 
 
@@ -276,11 +276,6 @@ WaitingTimeBeforeNextSnapshot FullVideoCaptureImpl::periodic_snapshot(
     auto ret = this->video_cap_ctx.snapshot(
         this->recorder, now, this->sink.has_draw_event, cursor_x, cursor_y);
     return ret;
-}
-
-void FullVideoCaptureImpl::encoding_video_frame()
-{
-    this->video_cap_ctx.encoding_video_frame(this->recorder);
 }
 
 void FullVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
@@ -434,7 +429,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 SequencedVideoCaptureImpl::~SequencedVideoCaptureImpl()
 {
     if (this->recorder) {
-        this->video_cap_ctx.encoding_video_frame(*this->recorder);
+        this->video_cap_ctx.encoding_end_frame(*this->recorder);
     }
 }
 
@@ -453,7 +448,7 @@ void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNe
         this->ic_flush(ptm);
     }
 
-    this->encoding_video_frame();
+    this->video_cap_ctx.encoding_end_frame(*this->recorder);
     this->recorder.reset();
     this->vc_filename_generator.next();
 
@@ -469,11 +464,6 @@ void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNe
 void SequencedVideoCaptureImpl::next_video(MonotonicTimePoint now)
 {
     this->next_video_impl(now, NotifyNextVideo::Reason::external);
-}
-
-void SequencedVideoCaptureImpl::encoding_video_frame()
-{
-    this->video_cap_ctx.encoding_video_frame(*this->recorder);
 }
 
 void SequencedVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
