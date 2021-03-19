@@ -25,6 +25,7 @@
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
 #include "gdi/capture_api.hpp"
+#include "gdi/graphic_api_forwarder.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/timestamp_tracer.hpp"
@@ -42,6 +43,25 @@ class RDPDrawable;
 
 struct VideoCaptureCtx : noncopyable
 {
+    struct UpdatableDraw
+    {
+        template<class... Ts>
+        void draw(Ts const&...);
+
+        void set_pointer(
+            uint16_t /*cache_idx*/, Pointer const& /*cursor*/,
+            gdi::GraphicApi::SetPointerMode /*mode*/)
+        {}
+        void set_palette(BGRPalette const & /*palette*/) {}
+        void sync() {}
+
+        void set_row(std::size_t /*rownum*/, bytes_view /*data*/) {}
+        void begin_update() {}
+        void end_update() {}
+
+        bool has_draw_event = true;
+    };
+
     enum class ImageByInterval : bool
     {
         One,
@@ -67,16 +87,9 @@ struct VideoCaptureCtx : noncopyable
     void frame_marker_event(video_recorder & recorder);
     void encoding_video_frame(video_recorder & recorder);
     gdi::CaptureApi::WaitingTimeBeforeNextSnapshot snapshot(
-        video_recorder& recorder, MonotonicTimePoint now);
+        video_recorder& recorder, MonotonicTimePoint now, bool & has_draw_event,
+        uint16_t cursor_x, uint16_t cursor_y);
     void next_video();
-
-    [[nodiscard]] uint16_t width() const noexcept;
-
-    [[nodiscard]] uint16_t height() const noexcept;
-
-    [[nodiscard]] size_t pix_len() const noexcept;
-
-    [[nodiscard]] const uint8_t * data() const noexcept;
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
@@ -95,6 +108,8 @@ private:
     ImageByInterval image_by_interval;
     time_t previous_second = 0;
     bool has_frame_marker = false;
+    uint16_t cursor_x = 0;
+    uint16_t cursor_y = 0;
 
     gdi::ImageFrameApi & image_frame_api;
 
@@ -103,7 +118,9 @@ public:
 };
 
 
-struct FullVideoCaptureImpl final : gdi::CaptureApi
+struct FullVideoCaptureImpl final
+  : gdi::CaptureApi
+  , public gdi::GraphicApiForwarder<VideoCaptureCtx::UpdatableDraw>
 {
     FullVideoCaptureImpl(
         CaptureParams const & capture_params,
@@ -113,9 +130,7 @@ struct FullVideoCaptureImpl final : gdi::CaptureApi
 
     ~FullVideoCaptureImpl();
 
-    void frame_marker_event(
-        MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/
-    ) override;
+    void draw(RDP::FrameMarker const & cmd) override;
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
@@ -131,7 +146,9 @@ private:
 };
 
 
-class SequencedVideoCaptureImpl final : public gdi::CaptureApi
+class SequencedVideoCaptureImpl final
+  : public gdi::CaptureApi
+  , public gdi::GraphicApiForwarder<VideoCaptureCtx::UpdatableDraw>
 {
 public:
     SequencedVideoCaptureImpl(
@@ -144,9 +161,7 @@ public:
 
     ~SequencedVideoCaptureImpl();
 
-    void frame_marker_event(
-        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
-    ) override;
+    void draw(RDP::FrameMarker const & cmd) override;
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now,

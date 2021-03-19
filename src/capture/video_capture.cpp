@@ -32,6 +32,8 @@
 #include "utils/log.hpp"
 #include "utils/strutils.hpp"
 
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+
 #include <cerrno>
 #include <cstring>
 #include <cstddef>
@@ -69,6 +71,11 @@ using WaitingTimeBeforeNextSnapshot = gdi::CaptureApi::WaitingTimeBeforeNextSnap
 
 // VideoCaptureCtx
 //@{
+template<class... Ts>
+void VideoCaptureCtx::UpdatableDraw::draw(Ts const&...)
+{
+    this->has_draw_event = true;
+}
 
 VideoCaptureCtx::VideoCaptureCtx(
     MonotonicTimePoint now,
@@ -138,41 +145,31 @@ void VideoCaptureCtx::next_video()
     }
 }
 
-uint16_t VideoCaptureCtx::width() const noexcept
-{
-    return this->drawable.width();
-}
-
-uint16_t VideoCaptureCtx::height() const noexcept
-{
-    return this->drawable.height();
-}
-
-size_t VideoCaptureCtx::pix_len() const noexcept
-{
-    return this->drawable.pix_len();
-}
-
-const uint8_t * VideoCaptureCtx::data() const noexcept
-{
-    return this->drawable.data();
-}
-
 void VideoCaptureCtx::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
     this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
 }
 
 WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
-    video_recorder & recorder, MonotonicTimePoint now
+    video_recorder & recorder, MonotonicTimePoint now, bool & has_draw_event,
+    uint16_t cursor_x, uint16_t cursor_y
 )
 {
     std::chrono::microseconds tick { to_us(now - this->monotonic_last_time_capture) };
     std::chrono::microseconds const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
-        if (!this->has_frame_marker) {
+        if (!this->has_frame_marker
+         && (has_draw_event
+          || this->cursor_x != cursor_x
+          || this->cursor_y != cursor_y
+         )
+        ) {
             this->preparing_video_frame(recorder);
         }
+
+        has_draw_event = false;
+        this->cursor_x = cursor_x;
+        this->cursor_y = cursor_y;
 
         std::chrono::microseconds previous_video_time = this->current_video_time;
 
@@ -266,16 +263,19 @@ FullVideoCaptureImpl::~FullVideoCaptureImpl()
 }
 
 
-void FullVideoCaptureImpl::frame_marker_event(
-    MonotonicTimePoint /*now*/, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
+void FullVideoCaptureImpl::draw(RDP::FrameMarker const & cmd)
 {
-    this->video_cap_ctx.frame_marker_event(this->recorder);
+    if (cmd.action == RDP::FrameMarker::FrameEnd) {
+        this->video_cap_ctx.frame_marker_event(this->recorder);
+    }
 }
 
 WaitingTimeBeforeNextSnapshot FullVideoCaptureImpl::periodic_snapshot(
-    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
+    MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
 {
-    return this->video_cap_ctx.snapshot(this->recorder, now);
+    auto ret = this->video_cap_ctx.snapshot(
+        this->recorder, now, this->sink.has_draw_event, cursor_x, cursor_y);
+    return ret;
 }
 
 void FullVideoCaptureImpl::encoding_video_frame()
@@ -316,24 +316,20 @@ char const* SequencedVideoCaptureImpl::FilenameGenerator::current_filename() con
 
 
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
-    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
+    MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
 {
-    this->video_cap_ctx.snapshot(*this->recorder, now);
+    this->video_cap_ctx.snapshot(
+        *this->recorder, now, this->sink.has_draw_event, cursor_x, cursor_y);
     if (!this->ic_has_first_img) {
         return this->first_periodic_snapshot(now);
     }
     return this->video_sequencer_periodic_snapshot(now);
 }
 
-void SequencedVideoCaptureImpl::frame_marker_event(
-    MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
+void SequencedVideoCaptureImpl::draw(RDP::FrameMarker const & cmd)
 {
-    this->video_cap_ctx.frame_marker_event(*this->recorder);
-    if (!this->ic_has_first_img) {
-        this->first_periodic_snapshot(now);
-    }
-    else {
-        this->video_sequencer_periodic_snapshot(now);
+    if (cmd.action == RDP::FrameMarker::FrameEnd) {
+        this->video_cap_ctx.frame_marker_event(*this->recorder);
     }
 }
 
@@ -457,14 +453,13 @@ void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNe
         this->ic_flush(ptm);
     }
 
-    if (this->recorder) {
-        this->encoding_video_frame();
-        this->recorder.reset();
-        this->vc_filename_generator.next();
-    }
+    this->encoding_video_frame();
+    this->recorder.reset();
+    this->vc_filename_generator.next();
 
     this->init_recorder();
     this->video_cap_ctx.next_video();
+    this->sink.has_draw_event = true;
 
     this->ic_flush(ptm);
 

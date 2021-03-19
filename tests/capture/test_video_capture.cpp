@@ -44,11 +44,12 @@ namespace
 {
     void simple_movie(
         MonotonicTimePoint now, unsigned duration, RDPDrawable & drawable,
-        gdi::CaptureApi & capture, bool mouse
+        gdi::CaptureApi & capture, gdi::GraphicApi & video_drawable, bool mouse
     ) {
         Rect screen(0, 0, drawable.width(), drawable.height());
         auto const color_cxt = gdi::ColorCtx::depth24();
         drawable.draw(RDPOpaqueRect(screen, encode_color24()(BLUE)), screen, color_cxt);
+        video_drawable.draw(RDPOpaqueRect(screen, encode_color24()(BLUE)), screen, color_cxt);
 
         Rect r(10, 10, 50, 50);
         int vx = 5;
@@ -58,10 +59,11 @@ namespace
             r.y += vy;
             r.x += vx;
             drawable.draw(RDPOpaqueRect(r, encode_color24()(WABGREEN)), screen, color_cxt);
+            video_drawable.draw(RDPOpaqueRect(r, encode_color24()(WABGREEN)), screen, color_cxt);
             now += 40000us;
             //printf("now sec=%u usec=%u\n", (unsigned)now.tv_sec, (unsigned)now.tv_usec);
-            uint16_t cursor_x = mouse ? r.x + 10 : 0;
-            uint16_t cursor_y = mouse ? r.y + 10 : 0;
+            uint16_t cursor_x = mouse ? uint16_t(r.x + 10) : 0;
+            uint16_t cursor_y = mouse ? uint16_t(r.y + 10) : 0;
             drawable.set_mouse_cursor_pos(cursor_x, cursor_y);
             capture.periodic_snapshot(now, cursor_x, cursor_y);
             capture.periodic_snapshot(now, cursor_x, cursor_y);
@@ -70,8 +72,8 @@ namespace
         }
         // last frame (video.encoding_video_frame())
         now += 40000us;
-        uint16_t cursor_x = mouse ? r.x + 10 : 0;
-        uint16_t cursor_y = mouse ? r.y + 10 : 0;
+        uint16_t cursor_x = mouse ? uint16_t(r.x + 10) : 0;
+        uint16_t cursor_y = mouse ? uint16_t(r.y + 10) : 0;
         capture.periodic_snapshot(now, cursor_x, cursor_y);
     }
 
@@ -105,7 +107,7 @@ namespace
             capture_params, 0 /* png_width */, 0 /* png_height */,
             drawable, drawable, video_params, next_video_notifier);
         simple_movie(
-            monotonic_time, loop_duration, drawable, video_capture, mouse);
+            monotonic_time, loop_duration, drawable, video_capture, video_capture, mouse);
     }
 
     void simple_full_video(
@@ -122,7 +124,7 @@ namespace
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
-        simple_movie(monotonic_time, loop_duration, drawable, video_capture, mouse);
+        simple_movie(monotonic_time, loop_duration, drawable, video_capture, video_capture, mouse);
     }
 } // namespace
 

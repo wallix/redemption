@@ -1365,12 +1365,6 @@ public:
         for (gdi::GraphicApi & gd : this->gds) {
             gd.draw(cmd);
         }
-
-        if (cmd.action == RDP::FrameMarker::FrameEnd) {
-            for (gdi::CaptureApi & cap : this->caps) {
-                cap.frame_marker_event(this->mouse.last_now, this->mouse.last_x, this->mouse.last_y);
-            }
-        }
     }
 
 public:
@@ -1594,10 +1588,12 @@ Capture::Capture(
         if (this->sequenced_video_capture_obj) {
             //this->caps.emplace_back(this->sequenced_video_capture_obj->vc);
             this->caps.emplace_back(*this->sequenced_video_capture_obj);
+            this->gds.emplace_back(*this->sequenced_video_capture_obj);
         }
 
         if (this->full_video_capture_obj) {
             this->caps.emplace_back(*this->full_video_capture_obj);
+            this->gds.emplace_back(*this->full_video_capture_obj);
         }
 #endif
     }
