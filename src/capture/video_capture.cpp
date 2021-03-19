@@ -294,29 +294,31 @@ void FullVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, 
 // SequencedVideoCaptureImpl
 //@{
 
-SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
+SequencedVideoCaptureImpl::FilenameGenerator::FilenameGenerator(
     std::string_view prefix,
     std::string_view filename,
-    std::string_view extension,
-    const int groupid,
-    AclReportApi * acl_report)
+    std::string_view extension)
 : filename(str_concat(prefix, filename, "-000000."_av, extension))
 , num_pos(int(this->filename.size() - (extension.size() + 1)))
-, groupid(groupid)
-, acl_report(acl_report)
 {}
 
-void SequencedVideoCaptureImpl::SequenceTransport::next()
+void SequencedVideoCaptureImpl::FilenameGenerator::next()
 {
     ++this->num;
     auto chars = int_to_decimal_chars(this->num);
     memcpy(this->filename.data() + this->num_pos - chars.size(), chars.data(), chars.size());
 }
 
+char const* SequencedVideoCaptureImpl::FilenameGenerator::current_filename() const
+{
+    return this->filename.c_str();
+}
+
+
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
     MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
 {
-    this->vc.periodic_snapshot(now);
+    this->video_cap_ctx.snapshot(*this->recorder, now);
     if (!this->ic_has_first_img) {
         return this->first_periodic_snapshot(now);
     }
@@ -326,7 +328,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::periodic_snapshot(
 void SequencedVideoCaptureImpl::frame_marker_event(
     MonotonicTimePoint now, uint16_t /*cursor_x*/, uint16_t /*cursor_y*/)
 {
-    this->vc.frame_marker_event();
+    this->video_cap_ctx.frame_marker_event(*this->recorder);
     if (!this->ic_has_first_img) {
         this->first_periodic_snapshot(now);
     }
@@ -350,11 +352,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
             tm ptm;
             time_t t = to_time_t(now, this->monotonic_to_real);
             localtime_r(&t, &ptm);
-            this->vc.prepare_video_frame();
-            this->vc.trace_timestamp(ptm);
-            this->ic_flush();
-            this->vc.clear_timestamp();
-            this->ic_trans.next();
+            this->ic_flush(ptm);
             this->ic_has_first_img = true;
             ret = WaitingTimeBeforeNextSnapshot(video_interval);
         }
@@ -369,44 +367,13 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
     return std::min(ret.duration(), this->video_sequencer_periodic_snapshot(now).duration());
 }
 
-SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
-    CaptureParams const & capture_params,
-    RDPDrawable & drawable,
-    gdi::ImageFrameApi & image_frame,
-    VideoParams const & video_params)
-: video_cap_ctx(capture_params.now, capture_params.real_now,
-    video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
-    video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
-    video_params.frame_rate, drawable, image_frame)
-, trans(
-    capture_params.record_path, capture_params.basename, video_params.codec,
-    capture_params.groupid, capture_params.session_log)
-, video_params(video_params)
-, image_frame_api(image_frame)
-{
-    log_video_params(video_params);
-    this->next_video();
-}
 
-SequencedVideoCaptureImpl::VideoCapture::~VideoCapture()
+void SequencedVideoCaptureImpl::init_recorder()
 {
-    if (this->recorder) {
-        this->encoding_video_frame();
-    }
-}
-
-void SequencedVideoCaptureImpl::VideoCapture::next_video()
-{
-    if (this->recorder) {
-        this->encoding_video_frame();
-        this->recorder.reset();
-        this->trans.next();
-    }
-
     this->recorder = std::make_unique<video_recorder>(
-        this->trans.filename.c_str(),
-        this->trans.groupid,
-        this->trans.acl_report,
+        this->vc_filename_generator.current_filename(),
+        this->groupid,
+        this->acl_report,
         this->image_frame_api.get_image_view(),
         this->video_params.frame_rate,
         this->video_params.codec.c_str(),
@@ -414,48 +381,15 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->video_params.verbosity
     );
     this->recorder->preparing_video_frame();
-    this->video_cap_ctx.next_video();
 }
 
-void SequencedVideoCaptureImpl::VideoCapture::encoding_video_frame()
-{
-    this->video_cap_ctx.encoding_video_frame(*this->recorder);
-}
-
-void SequencedVideoCaptureImpl::VideoCapture::frame_marker_event()
-{
-    this->video_cap_ctx.frame_marker_event(*this->recorder);
-}
-
-WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::VideoCapture::periodic_snapshot(
-    MonotonicTimePoint now)
-{
-    return this->video_cap_ctx.snapshot(*this->recorder, now);
-}
-
-void SequencedVideoCaptureImpl::VideoCapture::trace_timestamp(const tm & now)
-{
-    this->video_cap_ctx.timestamp_tracer.trace(now);
-}
-
-void SequencedVideoCaptureImpl::VideoCapture::clear_timestamp()
-{
-    this->video_cap_ctx.timestamp_tracer.clear();
-}
-
-void SequencedVideoCaptureImpl::VideoCapture::prepare_video_frame()
+void SequencedVideoCaptureImpl::ic_flush(const tm& now)
 {
     this->image_frame_api.prepare_image_frame();
-}
-
-void SequencedVideoCaptureImpl::VideoCapture::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
-{
-    this->video_cap_ctx.synchronize_times(monotonic_time, real_time);
-}
-
-void SequencedVideoCaptureImpl::ic_flush()
-{
-    this->ic_scaled_png.dump_png24(this->ic_trans.filename.c_str(), this->image_frame_api, true);
+    this->video_cap_ctx.timestamp_tracer.trace(now);
+    this->ic_scaled_png.dump_png24(this->ic_filename_generator.current_filename(), this->image_frame_api, true);
+    this->video_cap_ctx.timestamp_tracer.clear();
+    this->ic_filename_generator.next();
 }
 
 WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::video_sequencer_periodic_snapshot(
@@ -479,10 +413,15 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     NotifyNextVideo & next_video_notifier)
 : monotonic_start_capture(capture_params.now)
 , monotonic_to_real(capture_params.now, capture_params.real_now)
-, vc(capture_params, drawable, image_frame, video_params)
-, ic_trans(
-    capture_params.record_path, capture_params.basename, "png",
-    capture_params.groupid, capture_params.session_log)
+, video_cap_ctx(capture_params.now, capture_params.real_now,
+    video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
+    video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
+    video_params.frame_rate, drawable, image_frame)
+, vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
+, ic_filename_generator(capture_params.record_path, capture_params.basename, "png")
+, video_params(video_params)
+, groupid(capture_params.groupid)
+, acl_report(capture_params.session_log)
 , ic_drawable(drawable)
 , image_frame_api(image_frame)
 , ic_scaled_png(png_width, png_height)
@@ -491,7 +430,18 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     ? video_params.video_interval
     : std::chrono::microseconds::max())
 , next_video_notifier(next_video_notifier)
-{}
+{
+    log_video_params(video_params);
+    this->init_recorder();
+}
+
+SequencedVideoCaptureImpl::~SequencedVideoCaptureImpl()
+{
+    if (this->recorder) {
+        this->video_cap_ctx.encoding_video_frame(*this->recorder);
+    }
+}
+
 
 void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNextVideo::Reason reason)
 {
@@ -504,20 +454,19 @@ void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNe
 
     if (!this->ic_has_first_img) {
         this->ic_has_first_img = true;
-        this->vc.prepare_video_frame();
-        this->vc.trace_timestamp(ptm);
-        this->ic_flush();
-        this->vc.clear_timestamp();
-        this->ic_trans.next();
+        this->ic_flush(ptm);
     }
 
-    this->vc.next_video();
+    if (this->recorder) {
+        this->encoding_video_frame();
+        this->recorder.reset();
+        this->vc_filename_generator.next();
+    }
 
-    this->vc.prepare_video_frame();
-    this->vc.trace_timestamp(ptm);
-    this->ic_flush();
-    this->vc.clear_timestamp();
-    this->ic_trans.next();
+    this->init_recorder();
+    this->video_cap_ctx.next_video();
+
+    this->ic_flush(ptm);
 
     this->next_video_notifier.notify_next_video(now, reason);
 }
@@ -529,13 +478,13 @@ void SequencedVideoCaptureImpl::next_video(MonotonicTimePoint now)
 
 void SequencedVideoCaptureImpl::encoding_video_frame()
 {
-    this->vc.encoding_video_frame();
+    this->video_cap_ctx.encoding_video_frame(*this->recorder);
 }
 
 void SequencedVideoCaptureImpl::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
     this->monotonic_to_real = MonotonicTimeToRealTime(monotonic_time, real_time);
-    this->vc.synchronize_times(monotonic_time, real_time);
+    this->video_cap_ctx.synchronize_times(monotonic_time, real_time);
 }
 
 //@}
