@@ -99,9 +99,8 @@ private:
     MonotonicTimePoint monotonic_last_time_capture;
     const MonotonicTimePoint monotonic_start_capture;
     MonotonicTimeToRealTime monotonic_to_real;
-    const std::chrono::microseconds frame_interval;
-    std::chrono::microseconds current_video_time;
-    int64_t start_frame_index;
+    MonotonicTimePoint::duration frame_interval;
+    int64_t frame_index = 0;
 
     TraceTimestamp trace_timestamp;
     ImageByInterval image_by_interval;
