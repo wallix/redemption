@@ -47,10 +47,11 @@ struct VideoCaptureCtx : noncopyable
         template<class... Ts>
         void draw(Ts const&...);
 
+        void draw(RDP::FrameMarker const & /*cmd*/) {}
+
         void set_pointer(
             uint16_t /*cache_idx*/, Pointer const& /*cursor*/,
-            gdi::GraphicApi::SetPointerMode /*mode*/)
-        {}
+            gdi::GraphicApi::SetPointerMode /*mode*/);
         void set_palette(BGRPalette const & /*palette*/) {}
         void sync() {}
 
@@ -78,11 +79,16 @@ struct VideoCaptureCtx : noncopyable
         gdi::ImageFrameApi & image_frame
     );
 
-    void frame_marker_event(video_recorder & recorder);
-    void encoding_end_frame(video_recorder & recorder, bool & has_draw_event);
+    void frame_marker_event(
+        video_recorder & recorder, MonotonicTimePoint now, bool & has_draw_event,
+        uint16_t cursor_x, uint16_t cursor_y);
+
     gdi::CaptureApi::WaitingTimeBeforeNextSnapshot snapshot(
         video_recorder& recorder, MonotonicTimePoint now, bool & has_draw_event,
         uint16_t cursor_x, uint16_t cursor_y);
+
+    void encoding_end_frame(video_recorder & recorder, bool & has_draw_event);
+
     void next_video(video_recorder & recorder);
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
@@ -121,7 +127,9 @@ struct FullVideoCaptureImpl final
 
     ~FullVideoCaptureImpl();
 
-    void draw(RDP::FrameMarker const & cmd) override;
+    void frame_marker_event(
+        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
+    ) override;
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
@@ -150,7 +158,9 @@ public:
 
     ~SequencedVideoCaptureImpl();
 
-    void draw(RDP::FrameMarker const & cmd) override;
+    void frame_marker_event(
+        MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
+    ) override;
 
     WaitingTimeBeforeNextSnapshot periodic_snapshot(
         MonotonicTimePoint now,

@@ -230,9 +230,6 @@ private:
         uint16_t last_y;
     };
 
-    class Graphic;
-    std::unique_ptr<Graphic> graphic_api;
-
     std::unique_ptr<WrmCaptureImpl> wrm_capture_obj;
     std::unique_ptr<PngCapture> png_capture_obj;
     std::unique_ptr<PngCaptureRT> png_real_time_capture_obj;

@@ -1307,82 +1307,6 @@ public:
 };
 
 
-class Capture::Graphic
-{
-public:
-    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.set_pointer(cache_idx, cursor, mode);
-        }
-    }
-
-    void set_palette(BGRPalette const & palette)
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.set_palette(palette);
-        }
-    }
-
-    void sync()
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.sync();
-        }
-    }
-
-    void set_row(std::size_t rownum, bytes_view data)
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.set_row(rownum, data);
-        }
-    }
-
-    void begin_update()
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.begin_update();
-        }
-    }
-
-    void end_update()
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.end_update();
-        }
-    }
-
-    template<class... Ts>
-    void draw(Ts const & ... args)
-    {
-        for (gdi::GraphicApi & gd : this->gds){
-            gd.draw(args...);
-        }
-    }
-
-    void draw(RDP::FrameMarker const & cmd)
-    {
-        for (gdi::GraphicApi & gd : this->gds) {
-            gd.draw(cmd);
-        }
-    }
-
-public:
-    MouseTrace const & mouse;
-    const std::vector<Ref<gdi::GraphicApi>> & gds;
-    const std::vector<Ref<gdi::CaptureApi>> & caps;
-
-    explicit Graphic(
-        MouseTrace const & mouse,
-        const std::vector<Ref<gdi::GraphicApi>> & gds,
-        const std::vector<Ref<gdi::CaptureApi>> & caps) noexcept
-    : mouse(mouse)
-    , gds(gds)
-    , caps(caps)
-    {}
-};
-
-
 void Capture::NotifyTitleChanged::notify_title_changed(
     MonotonicTimePoint now, chars_view title
 ) {
@@ -1482,8 +1406,6 @@ Capture::Capture(
 
             image_frame_api_ptr = this->video_cropper.get();
         }
-
-        this->graphic_api = std::make_unique<Graphic>(this->mouse_info, this->gds, this->caps);
 
         if (capture_png) {
             if (png_params.real_time_image_capture) {
@@ -1783,7 +1705,9 @@ void Capture::set_row(size_t rownum, bytes_view data)
 void Capture::sync()
 {
     if (this->capture_drawable) {
-        this->graphic_api->sync();
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.sync();
+        }
     }
 }
 
@@ -1811,7 +1735,7 @@ void Capture::enable_kbd_input_mask(bool enable)
 
 bool Capture::has_graphic_api() const
 {
-    return static_cast<bool>(this->graphic_api);
+    return this->capture_drawable;
 }
 
 void Capture::add_graphic(gdi::GraphicApi & gd)
@@ -1967,12 +1891,27 @@ template<class... Ts>
 void Capture::draw_impl(const Ts & ... args)
 {
     if (this->capture_drawable) {
-        this->graphic_api->draw(args...);
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.draw(args...);
+        }
     }
 }
 
-void Capture::draw(RDP::FrameMarker    const & cmd) { this->draw_impl(cmd); }
-void Capture::draw(RDPDstBlt          const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
+void Capture::draw(RDP::FrameMarker const & cmd)
+{
+    for (gdi::GraphicApi & gd : this->gds) {
+        gd.draw(cmd);
+    }
+
+    if (cmd.action == RDP::FrameMarker::FrameEnd) {
+        auto mouse = this->mouse_info;
+        for (gdi::CaptureApi & cap : this->caps) {
+            cap.frame_marker_event(mouse.last_now, mouse.last_x, mouse.last_y);
+        }
+    }
+}
+
+void Capture::draw(RDPDstBlt           const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
 void Capture::draw(RDPMultiDstBlt      const & cmd, Rect clip) { this->draw_impl(cmd, clip); }
 void Capture::draw(RDPPatBlt           const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
 void Capture::draw(RDP::RDPMultiPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) { this->draw_impl(cmd, clip, color_ctx); }
@@ -2010,9 +1949,7 @@ void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
         cmd.log(LOG_INFO);
     }
 
-    if (this->capture_drawable) {
-        this->graphic_api->draw(cmd);
-    }
+    this->draw_impl(cmd);
 
     uint32_t const  fields_present_flags = cmd.header.FieldsPresentFlags();
     uint32_t const  window_id            = cmd.header.WindowId();
@@ -2102,9 +2039,7 @@ void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
         cmd.log(LOG_INFO);
     }
 
-    if (this->capture_drawable) {
-        this->graphic_api->draw(cmd);
-    }
+    this->draw_impl(cmd);
 
     uint32_t const window_id = cmd.header.WindowId();
 
@@ -2141,7 +2076,7 @@ void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
 void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)
 {
     if (this->capture_drawable) {
-        this->graphic_api->draw(cmd);
+        this->draw_impl(cmd);
 
         this->visibility_rects_event(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));
     }
@@ -2150,14 +2085,18 @@ void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)
 void  Capture::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
 {
     if (this->capture_drawable) {
-        this->graphic_api->set_pointer(cache_idx, cursor, mode);
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.set_pointer(cache_idx, cursor, mode);
+        }
     }
 }
 
 void Capture::set_palette(const BGRPalette & palette)
 {
     if (this->capture_drawable) {
-        this->graphic_api->set_palette(palette);
+        for (gdi::GraphicApi & gd : this->gds){
+            gd.set_palette(palette);
+        }
     }
 }
 

@@ -63,6 +63,14 @@ struct CaptureApi : private noncopyable
         uint16_t cursor_x, uint16_t cursor_y
     ) = 0;
 
+    virtual void frame_marker_event(
+        MonotonicTimePoint now,
+        uint16_t cursor_x, uint16_t cursor_y
+    )
+    {
+        this->periodic_snapshot(now, cursor_x, cursor_y);
+    }
+
     virtual void visibility_rects_event(Rect /*rect*/) {}
 };
 
