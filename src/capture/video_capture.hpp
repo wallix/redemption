@@ -61,22 +61,17 @@ struct VideoCaptureCtx : noncopyable
         bool has_draw_event = true;
     };
 
-    enum class ImageByInterval : bool
+    enum class ImageByInterval : unsigned char
     {
-        One,
-        ZeroOrOne,
-    };
-
-    enum class TraceTimestamp : bool
-    {
-        No,
-        Yes,
+        OneWithTimestamp,
+        OneWithoutTimestamp,
+        ZeroOrOneWithTimestamp,
+        ZeroOrOneWithoutTimestamp,
     };
 
     VideoCaptureCtx(
         MonotonicTimePoint monotonic_now,
         RealTimePoint real_time,
-        TraceTimestamp trace_timestamp,
         ImageByInterval image_by_interval,
         unsigned frame_rate,
         RDPDrawable & drawable,
@@ -84,11 +79,11 @@ struct VideoCaptureCtx : noncopyable
     );
 
     void frame_marker_event(video_recorder & recorder);
-    void encoding_end_frame(video_recorder & recorder);
+    void encoding_end_frame(video_recorder & recorder, bool & has_draw_event);
     gdi::CaptureApi::WaitingTimeBeforeNextSnapshot snapshot(
         video_recorder& recorder, MonotonicTimePoint now, bool & has_draw_event,
         uint16_t cursor_x, uint16_t cursor_y);
-    void next_video();
+    void next_video(video_recorder & recorder);
 
     void synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time);
 
@@ -97,14 +92,12 @@ private:
 
     RDPDrawable & drawable;
     MonotonicTimePoint monotonic_last_time_capture;
-    const MonotonicTimePoint monotonic_start_capture;
     MonotonicTimeToRealTime monotonic_to_real;
     MonotonicTimePoint::duration frame_interval;
-    int64_t frame_index = 0;
 
-    TraceTimestamp trace_timestamp;
-    ImageByInterval image_by_interval;
-    time_t previous_second = 0;
+    MonotonicTimePoint next_trace_time;
+    int64_t frame_index = 0;
+    const ImageByInterval image_by_interval;
     bool has_frame_marker = false;
     uint16_t cursor_x = 0;
     uint16_t cursor_y = 0;

@@ -44,20 +44,40 @@
 
 using namespace std::chrono_literals;
 
+using ImageByInterval = VideoCaptureCtx::ImageByInterval;
+
 namespace
 {
-    inline time_t to_time_t(
+    inline tm to_tm_t(
         MonotonicTimePoint t,
         MonotonicTimeToRealTime monotonic_to_real)
     {
+        tm res;
         auto duration = monotonic_to_real.to_real_time_duration(t);
-        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+        time_t sec = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+        localtime_r(&sec, &res);
+        return res;
     }
 
-    inline time_t to_time_t(MonotonicTimePoint const& t)
+    inline bool has_timestamp_flag(ImageByInterval image_by_interval)
     {
-        auto duration = t.time_since_epoch();
-        return std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+        constexpr int timestamp_flags
+          = int(ImageByInterval::OneWithTimestamp)
+          | int(ImageByInterval::ZeroOrOneWithTimestamp);
+
+        return timestamp_flags & int(image_by_interval);
+    }
+
+    inline ImageByInterval video_params_to_image_by_interval(VideoParams const & video_params)
+    {
+        return video_params.no_timestamp
+            ? (video_params.bogus_vlc_frame_rate
+                ? ImageByInterval::OneWithoutTimestamp
+                : ImageByInterval::ZeroOrOneWithoutTimestamp)
+            : (video_params.bogus_vlc_frame_rate
+                ? ImageByInterval::OneWithTimestamp
+                : ImageByInterval::ZeroOrOneWithTimestamp)
+            ;
     }
 }
 
@@ -75,7 +95,6 @@ void VideoCaptureCtx::UpdatableDraw::draw(Ts const&...)
 VideoCaptureCtx::VideoCaptureCtx(
     MonotonicTimePoint now,
     RealTimePoint real_now,
-    TraceTimestamp trace_timestamp,
     ImageByInterval image_by_interval,
     unsigned frame_rate,
     RDPDrawable & drawable,
@@ -83,10 +102,9 @@ VideoCaptureCtx::VideoCaptureCtx(
 )
 : drawable(drawable)
 , monotonic_last_time_capture(now)
-, monotonic_start_capture(now)
 , monotonic_to_real(now, real_now)
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
-, trace_timestamp(trace_timestamp)
+, next_trace_time(now)
 , image_by_interval(image_by_interval)
 , image_frame_api(image_frame)
 , timestamp_tracer(image_frame.get_writable_image_view())
@@ -94,43 +112,49 @@ VideoCaptureCtx::VideoCaptureCtx(
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
-    this->drawable.trace_mouse();
-    this->image_frame_api.prepare_image_frame();
-    if (TraceTimestamp::Yes == this->trace_timestamp) {
-        tm tm_result;
-        time_t rawtime = to_time_t(this->monotonic_last_time_capture, this->monotonic_to_real);
-        localtime_r(&rawtime, &tm_result);
-        this->timestamp_tracer.trace(tm_result);
-    }
-    recorder.preparing_video_frame();
-    this->previous_second = to_time_t(this->monotonic_last_time_capture);
+    bool const has_timestamp = has_timestamp_flag(this->image_by_interval);
 
-    if (TraceTimestamp::Yes == this->trace_timestamp) {
+    this->image_frame_api.prepare_image_frame();
+
+    if (has_timestamp) {
+        this->timestamp_tracer.trace(to_tm_t(
+            this->monotonic_last_time_capture, this->monotonic_to_real));
+    }
+
+    recorder.preparing_video_frame();
+
+    if (has_timestamp) {
         this->timestamp_tracer.clear();
     }
-    this->drawable.clear_mouse();
 }
 
 void VideoCaptureCtx::frame_marker_event(video_recorder & recorder)
 {
+    this->drawable.trace_mouse();
     this->preparing_video_frame(recorder);
+    this->drawable.clear_mouse();
     this->has_frame_marker = true;
 }
 
-void VideoCaptureCtx::encoding_end_frame(video_recorder & recorder)
+void VideoCaptureCtx::encoding_end_frame(video_recorder & recorder, bool & has_draw_event)
 {
-    this->preparing_video_frame(recorder);
-    MonotonicTimePoint::duration delay = 400ms;
-    auto interval = this->frame_interval;
-    do {
-        recorder.encoding_video_frame(++this->frame_index);
-        interval += this->frame_interval;
-    } while (interval <= delay);
+    auto dur = std::max(this->frame_interval, MonotonicTimePoint::duration(400ms));
+    auto save_monotonic_last_time_capture = this->monotonic_last_time_capture;
+    auto save_next_trace_time = this->next_trace_time;
+    this->snapshot(
+        recorder, this->monotonic_last_time_capture + dur,
+        has_draw_event, this->cursor_x, this->cursor_y);
+    this->monotonic_last_time_capture = save_monotonic_last_time_capture;
+    this->next_trace_time = save_next_trace_time;
 }
 
-void VideoCaptureCtx::next_video()
+void VideoCaptureCtx::next_video(video_recorder & recorder)
 {
     this->frame_index = 0;
+    this->drawable.trace_mouse();
+    this->preparing_video_frame(recorder);
+    this->drawable.clear_mouse();
+    recorder.encoding_video_frame(++this->frame_index);
 }
 
 void VideoCaptureCtx::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
@@ -146,27 +170,39 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
     auto tick = now - this->monotonic_last_time_capture;
     auto const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
-        if (!this->has_frame_marker
-         && (has_draw_event
-          || this->cursor_x != cursor_x
-          || this->cursor_y != cursor_y
-         )
+        bool const has_timestamp = has_timestamp_flag(this->image_by_interval);
+        bool const update_timestamp = has_timestamp
+                                   && now >= this->next_trace_time;
+        bool const update_image = !this->has_frame_marker
+                               && (has_draw_event
+                               // TODO Drawable::dont_show_mouse_cursor
+                                || this->cursor_x != cursor_x
+                                || this->cursor_y != cursor_y
+                               );
+        bool const update_pointer = (update_image || update_timestamp);
+
+        if (update_pointer) {
+            this->drawable.trace_mouse();
+        }
+
+        if (update_image
+         && (!has_timestamp || this->monotonic_last_time_capture < this->next_trace_time)
         ) {
             this->preparing_video_frame(recorder);
         }
 
-        has_draw_event = false;
         this->cursor_x = cursor_x;
         this->cursor_y = cursor_y;
+        has_draw_event = false;
 
         // synchronize video time with the end of second
 
         switch (this->image_by_interval) {
-            case ImageByInterval::One:
-            {
+            case ImageByInterval::OneWithTimestamp:
                 do {
-                    if (to_time_t(this->monotonic_last_time_capture) != this->previous_second) {
+                    if (this->monotonic_last_time_capture >= this->next_trace_time) {
                         this->preparing_video_frame(recorder);
+                        this->next_trace_time += 1s;
                     }
 
                     recorder.encoding_video_frame(++this->frame_index);
@@ -174,17 +210,27 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                     this->monotonic_last_time_capture += frame_interval;
                     tick -= frame_interval;
                 } while (this->monotonic_last_time_capture + frame_interval <= now);
-            }
-            break;
+                break;
 
-            case ImageByInterval::ZeroOrOne:
-            {
+            case ImageByInterval::OneWithoutTimestamp:
                 do {
-                    if (to_time_t(this->monotonic_last_time_capture) != this->previous_second) {
+                    recorder.encoding_video_frame(++this->frame_index);
+
+                    this->monotonic_last_time_capture += frame_interval;
+                    tick -= frame_interval;
+                } while (this->monotonic_last_time_capture + frame_interval <= now);
+                break;
+
+            case ImageByInterval::ZeroOrOneWithTimestamp:
+                do {
+                    if (this->monotonic_last_time_capture >= this->next_trace_time) {
                         this->preparing_video_frame(recorder);
+                        this->next_trace_time += 1s;
                     }
 
-                    auto elapsed = std::min(tick, MonotonicTimePoint::duration(1s));
+                    auto update_timer_at = std::max(this->monotonic_last_time_capture + frame_interval, this->next_trace_time)
+                                         - this->monotonic_last_time_capture;
+                    auto elapsed = std::min(tick, update_timer_at);
                     auto count = elapsed / frame_interval;
                     elapsed = count * frame_interval;
 
@@ -194,8 +240,26 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                     this->monotonic_last_time_capture += elapsed;
                     tick -= elapsed;
                 } while (this->monotonic_last_time_capture + frame_interval <= now);
-            }
-            break;
+                break;
+
+            case ImageByInterval::ZeroOrOneWithoutTimestamp:
+                constexpr MonotonicTimePoint::duration max_frame_interval = 2s;
+                do {
+                    auto elapsed = std::min(tick, max_frame_interval);
+                    auto count = elapsed / frame_interval;
+                    elapsed = count * frame_interval;
+
+                    this->frame_index += count;
+                    recorder.encoding_video_frame(this->frame_index);
+
+                    this->monotonic_last_time_capture += elapsed;
+                    tick -= elapsed;
+                } while (this->monotonic_last_time_capture + frame_interval <= now);
+                break;
+        }
+
+        if (update_pointer) {
+            this->drawable.clear_mouse();
         }
     }
     return WaitingTimeBeforeNextSnapshot(frame_interval - tick);
@@ -212,8 +276,6 @@ static void log_video_params(VideoParams const& video_params)
     }
 }
 
-using TraceTimestamp = VideoCaptureCtx::TraceTimestamp;
-using ImageByInterval = VideoCaptureCtx::ImageByInterval;
 
 // FullVideoCaptureImpl
 //@{
@@ -222,9 +284,9 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     CaptureParams const & capture_params,
     RDPDrawable & drawable, gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params, FullVideoParams const & full_video_params)
-: video_cap_ctx(capture_params.now, capture_params.real_now,
-    video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
-    full_video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
+: video_cap_ctx(
+    capture_params.now, capture_params.real_now,
+    video_params_to_image_by_interval(video_params),
     video_params.frame_rate, drawable, image_frame)
 , recorder(
     str_concat(
@@ -245,7 +307,7 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
 
 FullVideoCaptureImpl::~FullVideoCaptureImpl()
 {
-    this->video_cap_ctx.encoding_end_frame(this->recorder);
+    this->video_cap_ctx.encoding_end_frame(this->recorder, this->sink.has_draw_event);
 }
 
 
@@ -326,10 +388,7 @@ WaitingTimeBeforeNextSnapshot SequencedVideoCaptureImpl::first_periodic_snapshot
          || duration > 2s
          || duration >= video_interval
         ) {
-            tm ptm;
-            time_t t = to_time_t(now, this->monotonic_to_real);
-            localtime_r(&t, &ptm);
-            this->ic_flush(ptm);
+            this->ic_flush(to_tm_t(now, this->monotonic_to_real));
             this->ic_has_first_img = true;
             ret = WaitingTimeBeforeNextSnapshot(video_interval);
         }
@@ -357,7 +416,6 @@ void SequencedVideoCaptureImpl::init_recorder()
         this->video_params.codec_options.c_str(),
         this->video_params.verbosity
     );
-    this->recorder->preparing_video_frame();
 }
 
 void SequencedVideoCaptureImpl::ic_flush(const tm& now)
@@ -390,9 +448,9 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     NotifyNextVideo & next_video_notifier)
 : monotonic_start_capture(capture_params.now)
 , monotonic_to_real(capture_params.now, capture_params.real_now)
-, video_cap_ctx(capture_params.now, capture_params.real_now,
-    video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
-    video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
+, video_cap_ctx(
+    capture_params.now, capture_params.real_now,
+    video_params_to_image_by_interval(video_params),
     video_params.frame_rate, drawable, image_frame)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
 , ic_filename_generator(capture_params.record_path, capture_params.basename, "png")
@@ -415,7 +473,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 SequencedVideoCaptureImpl::~SequencedVideoCaptureImpl()
 {
     if (this->recorder) {
-        this->video_cap_ctx.encoding_end_frame(*this->recorder);
+        this->video_cap_ctx.encoding_end_frame(*this->recorder, this->sink.has_draw_event);
     }
 }
 
@@ -424,23 +482,20 @@ void SequencedVideoCaptureImpl::next_video_impl(MonotonicTimePoint now, NotifyNe
 {
     this->start_break = now;
 
-    time_t t = to_time_t(now, this->monotonic_to_real);
-
-    tm ptm;
-    localtime_r(&t, &ptm);
+    tm ptm = to_tm_t(now, this->monotonic_to_real);
 
     if (!this->ic_has_first_img) {
         this->ic_has_first_img = true;
         this->ic_flush(ptm);
     }
 
-    this->video_cap_ctx.encoding_end_frame(*this->recorder);
+    this->video_cap_ctx.encoding_end_frame(*this->recorder, this->sink.has_draw_event);
     this->recorder.reset();
     this->vc_filename_generator.next();
 
     this->init_recorder();
-    this->video_cap_ctx.next_video();
-    this->sink.has_draw_event = true;
+    this->sink.has_draw_event = false;
+    this->video_cap_ctx.next_video(*this->recorder);
 
     this->ic_flush(ptm);
 
