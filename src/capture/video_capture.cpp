@@ -57,15 +57,6 @@ namespace
         return res;
     }
 
-    inline bool has_timestamp_flag(ImageByInterval image_by_interval)
-    {
-        constexpr int timestamp_flags
-          = int(ImageByInterval::OneWithTimestamp)
-          | int(ImageByInterval::ZeroOrOneWithTimestamp);
-
-        return timestamp_flags & int(image_by_interval);
-    }
-
     inline ImageByInterval video_params_to_image_by_interval(VideoParams const & video_params)
     {
         return video_params.no_timestamp
@@ -111,24 +102,25 @@ VideoCaptureCtx::VideoCaptureCtx(
 , frame_interval(std::chrono::microseconds(1000000L / frame_rate)) // `1000000L % frame_rate ` should be equal to 0
 , next_trace_time(now)
 , image_by_interval(image_by_interval)
+, has_timestamp(
+    image_by_interval == ImageByInterval::OneWithTimestamp
+ || image_by_interval == ImageByInterval::ZeroOrOneWithTimestamp)
 , image_frame_api(image_frame)
 , timestamp_tracer(image_frame.get_writable_image_view())
 {}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
-    bool const has_timestamp = has_timestamp_flag(this->image_by_interval);
-
     this->image_frame_api.prepare_image_frame();
 
-    if (has_timestamp) {
+    if (this->has_timestamp) {
         this->timestamp_tracer.trace(to_tm_t(
             this->monotonic_last_time_capture, this->monotonic_to_real));
     }
 
     recorder.preparing_video_frame();
 
-    if (has_timestamp) {
+    if (this->has_timestamp) {
         this->timestamp_tracer.clear();
     }
 }
@@ -189,8 +181,7 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
     auto tick = now - this->monotonic_last_time_capture;
     auto const frame_interval = this->frame_interval;
     if (tick >= frame_interval) {
-        bool const has_timestamp = has_timestamp_flag(this->image_by_interval);
-        bool const update_timestamp = has_timestamp
+        bool const update_timestamp = this->has_timestamp
                                    && now >= this->next_trace_time;
         bool const update_image = !this->has_frame_marker
                                && (has_draw_event
@@ -205,7 +196,7 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         }
 
         if (update_image
-         && (!has_timestamp || this->monotonic_last_time_capture < this->next_trace_time)
+         && (!this->has_timestamp || this->monotonic_last_time_capture < this->next_trace_time)
         ) {
             this->preparing_video_frame(recorder);
         }

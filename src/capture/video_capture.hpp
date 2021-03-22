@@ -104,6 +104,7 @@ private:
     MonotonicTimePoint next_trace_time;
     int64_t frame_index = 0;
     const ImageByInterval image_by_interval;
+    const bool has_timestamp;
     bool has_frame_marker = false;
     uint16_t cursor_x = 0;
     uint16_t cursor_y = 0;
