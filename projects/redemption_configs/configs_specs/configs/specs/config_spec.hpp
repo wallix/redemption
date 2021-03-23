@@ -691,7 +691,7 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), names{"smart_video_cropping"}, set(SmartVideoCropping::disable));
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"play_video_with_corrupted_bitmap"}, desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"play_video_with_corrupted_bitmap"}, desc{"Needed to play a video with corrupted Bitmap Update."}, set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"allow_rt_without_recording"}, desc { "Allow Realtime display (4eyes) without recording of session" }, set(false));
 

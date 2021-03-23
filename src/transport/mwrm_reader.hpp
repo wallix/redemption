@@ -83,6 +83,7 @@ struct MetaLine
     time_t  mtime {};
     time_t  ctime {};
     //@}
+    // TODO std::chrono::seconds
     time_t  start_time {};
     time_t  stop_time {};
     // always true with header.version = 2 and header.has_checksum = true

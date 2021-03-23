@@ -811,48 +811,96 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     return -1;
 }
 
+struct CaptureTimes
+{
+    using Seconds = std::chrono::seconds;
+
+    // TODO currently a timestamp, should be a duration
+    Seconds begin_cap;
+    Seconds end_cap;
+
+    // start and stop as timestamp
+    void adjust_time(Seconds start_time, Seconds stop_time)
+    {
+        // begin or end relative to end of trace
+        {
+            Seconds const duration ( stop_time - start_time);
+
+            if (begin_cap.count() < 0) {
+                begin_cap = std::max(begin_cap + duration, Seconds(0));
+            }
+
+            if (end_cap.count() < 0) {
+                end_cap = std::max(end_cap + duration, Seconds(0));
+            }
+        }
+
+        // begin or end relative to start of trace
+        {
+            // less than 1 year, it is relative not absolute timestamp
+            auto relative_time_barrier = 31536000s;
+
+            if (begin_cap.count() && begin_cap < relative_time_barrier) {
+                begin_cap += Seconds(start_time);
+            }
+
+            if (end_cap.count() && end_cap < relative_time_barrier) {
+                end_cap += Seconds(start_time);
+            }
+        }
+    }
+};
+
 inline void get_join_visibility_rect(
-    Rect & out_max_image_frame_rect,
-    Rect & out_min_image_frame_rect,
     InMultiCryptoTransport && in_wrm_trans,
+    SmartVideoCropping smart_video_cropping,
+    Rect & crop_rect,
     Dimension & out_max_screen_dim,
     bool play_video_with_corrupted_bitmap,
-    uint32_t verbose)
+    FileToGraphic::Verbose verbose)
 {
     MonotonicTimePoint begin_capture {};
     MonotonicTimePoint end_capture {};
-
     FileToGraphic player(
         in_wrm_trans, begin_capture, end_capture,
         play_video_with_corrupted_bitmap,
-        safe_cast<FileToGraphic::Verbose>(verbose));
+        verbose);
 
     player.play(program_requested_to_shutdown);
     auto& info = player.get_wrm_info();
 
     if (info.remote_app) {
-        out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, info.width, info.height));
-        if (out_max_image_frame_rect.cx & 1)
+        switch (smart_video_cropping)
         {
-            if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < info.width) {
-                out_max_image_frame_rect.cx += 1;
-            }
-            else if (out_max_image_frame_rect.x > 0) {
-                out_max_image_frame_rect.x  -= 1;
-                out_max_image_frame_rect.cx += 1;
-            }
-        }
+            case SmartVideoCropping::v1:
+                break;
 
-        out_min_image_frame_rect = Rect(0, 0,
-            std::min(player.min_image_frame_dim.w, info.width),
-            std::min(player.min_image_frame_dim.h, info.height));
-        if (!out_min_image_frame_rect.isempty()) {
-            if (out_min_image_frame_rect.cx & 1) {
-                out_min_image_frame_rect.cx++;
-            }
+            case SmartVideoCropping::v2:
+                crop_rect = Rect(0, 0,
+                    std::min(player.min_image_frame_dim.w, info.width),
+                    std::min(player.min_image_frame_dim.h, info.height));
+                if (!crop_rect.isempty()) {
+                    if (crop_rect.cx & 1) {
+                        crop_rect.cx++;
+                    }
 
-            out_min_image_frame_rect.x = (info.width  - out_min_image_frame_rect.cx) / 2;
-            out_min_image_frame_rect.y = (info.height - out_min_image_frame_rect.cy) / 2;
+                    crop_rect.x = (info.width  - crop_rect.cx) / 2;
+                    crop_rect.y = (info.height - crop_rect.cy) / 2;
+                }
+                break;
+
+            case SmartVideoCropping::disable:
+                crop_rect = player.max_image_frame_rect.intersect(info.width, info.height);
+                if (crop_rect.cx & 1) {
+                    if (crop_rect.x + crop_rect.cx < info.width) {
+                        crop_rect.cx += 1;
+                    }
+                    else if (crop_rect.x > 0) {
+                        crop_rect.x  -= 1;
+                        crop_rect.cx += 1;
+                    }
+                }
+                break;
         }
     }
 
@@ -869,8 +917,7 @@ static inline int replay(
     bool chunk,
     unsigned ocr_version,
     std::string const& output_filename,
-    std::chrono::seconds begin_cap,
-    std::chrono::seconds end_cap,
+    const CaptureTimes capture_times,
     PngParams & png_params,
     VideoParams & video_params,
     FullVideoParams const& full_video_params,
@@ -908,43 +955,15 @@ static inline int replay(
 
     using Seconds = std::chrono::seconds;
 
-    // begin or end relative to end of trace
-    {
-        Seconds const duration ( wrm_lines.front().stop_time
-                               - wrm_lines.back().start_time);
-
-        if (begin_cap.count() < 0) {
-            begin_cap = std::max(begin_cap + duration, Seconds(0));
-        }
-
-        if (end_cap.count() < 0) {
-            end_cap = std::max(end_cap + duration, Seconds(0));
-        }
-    }
-
-    // begin or end relative to start of trace
-    {
-        // less than 1 year, it is relative not absolute timestamp
-        auto relative_time_barrier = 31536000s;
-
-        if (begin_cap.count() && begin_cap < relative_time_barrier) {
-            begin_cap += Seconds(wrm_lines.front().start_time);
-        }
-
-        if (end_cap.count() && end_cap < relative_time_barrier) {
-            end_cap += Seconds(wrm_lines.front().start_time);
-        }
-    }
-
     int file_count = 0;
 
     // number of file up to begin_cap
-    if (begin_cap.count())
+    if (capture_times.begin_cap.count())
     {
         auto first = wrm_lines.begin();
         auto last = wrm_lines.end();
 
-        while (first < last && begin_cap >= Seconds(first->stop_time)) {
+        while (first < last && capture_times.begin_cap >= Seconds(first->stop_time)) {
             ++first;
         }
 
@@ -958,7 +977,7 @@ static inline int replay(
     std::chrono::seconds begin_record = Seconds(wrm_lines.front().start_time);
     std::chrono::seconds end_record   = Seconds(wrm_lines.back().stop_time);
     unsigned count_wrm_file = wrm_lines.size();
-    // TODO
+    // TODO wrm_lines.size() ?
     uint64_t total_wrm_file_len = 0;
 
     int result = -1;
@@ -973,17 +992,19 @@ static inline int replay(
             || show_statistics
             || file_count > 1
             || order_count
-            || begin_cap != begin_record
-            || end_cap != begin_cap);
+            || capture_times.begin_cap != begin_record
+            || capture_times.end_cap != capture_times.begin_cap);
 
         if (test){
             for (int i = 1; i < file_count; i++) {
                 in_wrm_trans.next();
             }
 
-            LOG(LOG_INFO, "player begin_capture = %ld", begin_cap.count());
+            LOG(LOG_INFO, "player begin_capture = %ld", capture_times.begin_cap.count());
             FileToGraphic player(
-                in_wrm_trans, MonotonicTimePoint{begin_cap}, MonotonicTimePoint{end_cap},
+                in_wrm_trans,
+                MonotonicTimePoint{capture_times.begin_cap},
+                MonotonicTimePoint{capture_times.end_cap},
                 ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 safe_cast<FileToGraphic::Verbose>(verbose));
 
@@ -1032,8 +1053,12 @@ static inline int replay(
                                      , outfile.directory.c_str(), outfile.basename.c_str());
                         UpdateProgressData update_progress_data(
                             progress_filename,
-                            MonotonicTimePoint(begin_cap != 0s ? begin_cap : begin_record),
-                            MonotonicTimePoint(end_cap != 0s ? end_cap : end_record));
+                            MonotonicTimePoint(capture_times.begin_cap != 0s
+                                                ? capture_times.begin_cap
+                                                : begin_record),
+                            MonotonicTimePoint(capture_times.end_cap != 0s
+                                                ? capture_times.end_cap
+                                                : end_record));
 
                         ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
@@ -1190,13 +1215,13 @@ static inline int replay(
                         CaptureMaker capture_maker(
                             set_capture_consumer,
                             retared_capture,
-                            MonotonicTimePoint(begin_cap),
+                            MonotonicTimePoint(capture_times.begin_cap),
                             MonotonicTimePoint::duration(
-                                begin_cap - Seconds(wrm_lines.front().start_time)
+                                capture_times.begin_cap - Seconds(wrm_lines.front().start_time)
                             )
                         );
 
-                        if (begin_cap.count()) {
+                        if (capture_times.begin_cap.count()) {
                             player.add_consumer(
                                 &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr, nullptr);
                         }
@@ -1861,46 +1886,36 @@ extern "C" {
                 return r;
             }
 
-            ini.set<cfg::video::hash_path>(rp.hash_path);
+            auto const& wrms = mwrm_infos.wrms;
 
-            Rect      crop_rect;
-            Dimension max_screen_dim;
-            if (!mwrm_infos.wrms.empty())
-            {
-                Rect max_joint_visibility_rect;
-                Rect min_joint_visibility_rect;
-                try {
-                    get_join_visibility_rect(
-                        max_joint_visibility_rect,
-                        min_joint_visibility_rect,
-                        InMultiCryptoTransport(wrm_filenames, cctx, encryption_mode),
-                        max_screen_dim,
-                        ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
-                        verbose
-                    );
-
-                    switch (ini.get<cfg::video::smart_video_cropping>())
-                    {
-                        case SmartVideoCropping::v1:
-                            break;
-                        case SmartVideoCropping::v2:
-                            crop_rect = min_joint_visibility_rect;
-                            break;
-                        case SmartVideoCropping::disable:
-                            crop_rect = max_joint_visibility_rect;
-                            break;
-                    }
-                }
-                catch (Error const&) {
-                    // ignore exceptions, logged within replay()
-                }
-            }
-
-            if (mwrm_infos.wrms.empty()) {
+            if (wrms.empty()) {
                 return raise_error_and_log(
                     rp.output_filename, -1, "wrm file not foudn in mwrm file"_zv
                 );
             }
+
+            ini.set<cfg::video::hash_path>(rp.hash_path);
+
+            Rect      crop_rect;
+            Dimension max_screen_dim;
+            try {
+                get_join_visibility_rect(
+                    InMultiCryptoTransport(wrm_filenames, cctx, mwrm_infos.encryption_mode),
+                    ini.get<cfg::video::smart_video_cropping>(),
+                    crop_rect,
+                    max_screen_dim,
+                    ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+                    safe_cast<FileToGraphic::Verbose>(verbose)
+                );
+            }
+            catch (Error const&) {
+                // ignore exceptions, logged within replay()
+            }
+
+            CaptureTimes capture_times {rp.begin_cap, rp.end_cap};
+            capture_times.adjust_time(
+                std::chrono::seconds(wrms.back().start_time),
+                std::chrono::seconds(wrms.front().stop_time));
 
             InMultiCryptoTransport in_wrm_trans(
                 std::move(wrm_filenames),
@@ -1908,7 +1923,7 @@ extern "C" {
                 mwrm_infos.encryption_mode);
 
             res = replay(std::move(in_wrm_trans),
-                         mwrm_infos.wrms,
+                         wrms,
                          rp.mwrm_path,
                          rp.input_basename,
                          rp.hash_path,
@@ -1916,8 +1931,7 @@ extern "C" {
                          rp.chunk,
                          rp.ocr_version,
                          rp.output_filename,
-                         rp.begin_cap,
-                         rp.end_cap,
+                         capture_times,
                          rp.png_params,
                          rp.video_params,
                          rp.full_video_params,

@@ -206,6 +206,7 @@ public:
 
     FileToGraphic(
         Transport & trans,
+        // TODO monotonic_clock or real_clock ?
         MonotonicTimePoint begin_capture,
         MonotonicTimePoint end_capture,
         bool play_video_with_corrupted_bitmap,
