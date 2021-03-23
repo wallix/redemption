@@ -57,13 +57,14 @@ namespace
         return res;
     }
 
-    inline ImageByInterval video_params_to_image_by_interval(VideoParams const & video_params)
+    inline ImageByInterval video_params_to_image_by_interval(
+        bool no_timestamp, bool bogus_vlc_frame_rate)
     {
-        return video_params.no_timestamp
-            ? (video_params.bogus_vlc_frame_rate
+        return no_timestamp
+            ? (bogus_vlc_frame_rate
                 ? ImageByInterval::OneWithoutTimestamp
                 : ImageByInterval::ZeroOrOneWithoutTimestamp)
-            : (video_params.bogus_vlc_frame_rate
+            : (bogus_vlc_frame_rate
                 ? ImageByInterval::OneWithTimestamp
                 : ImageByInterval::ZeroOrOneWithTimestamp)
             ;
@@ -296,7 +297,9 @@ FullVideoCaptureImpl::FullVideoCaptureImpl(
     VideoParams const & video_params, FullVideoParams const & full_video_params)
 : video_cap_ctx(
     capture_params.now, capture_params.real_now,
-    video_params_to_image_by_interval(video_params),
+    video_params_to_image_by_interval(
+        video_params.no_timestamp,
+        full_video_params.bogus_vlc_frame_rate),
     video_params.frame_rate, drawable, image_frame)
 , recorder(
     str_concat(
@@ -460,7 +463,8 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , monotonic_to_real(capture_params.now, capture_params.real_now)
 , video_cap_ctx(
     capture_params.now, capture_params.real_now,
-    video_params_to_image_by_interval(video_params),
+    video_params_to_image_by_interval(
+        video_params.no_timestamp, video_params.bogus_vlc_frame_rate),
     video_params.frame_rate, drawable, image_frame)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
 , ic_filename_generator(capture_params.record_path, capture_params.basename, "png")
