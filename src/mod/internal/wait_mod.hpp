@@ -66,6 +66,8 @@ public:
         this->wait_widget.move_size_widget(left, top, width, height);
     }
 
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
 private:
     LanguageButton language_button;
     FlatWait wait_widget;

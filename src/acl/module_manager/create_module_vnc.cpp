@@ -101,6 +101,8 @@ public:
     }
 
     ~ModVNCWithMetrics() = default;
+
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
 };
 
 
@@ -249,6 +251,10 @@ public:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
+    }
+
+    void acl_update(AclFieldMask const& acl_fields) override {
+        this->mod.acl_update(acl_fields);
     }
 };
 

@@ -68,6 +68,8 @@ public:
         this->close_widget.move_size_widget(left, top, width, height);
     }
 
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
 private:
     EventsGuard events_guard;
 };

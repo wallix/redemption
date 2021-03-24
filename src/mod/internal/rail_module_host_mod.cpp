@@ -254,3 +254,8 @@ bool RailModuleHostMod::is_resizing_hosted_desktop_allowed() const
 {
     return this->can_resize_hosted_desktop;
 }
+
+void RailModuleHostMod::acl_update(AclFieldMask const& acl_fields)
+{
+    return this->rail_module_host.get_managed_mod().acl_update(acl_fields);
+}

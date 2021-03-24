@@ -394,6 +394,10 @@ public:
     {
         this->mod.send_to_mod_channel(front_channel_name, chunk, length, flags);
     }
+
+    void acl_update(AclFieldMask const& acl_fields) override {
+        this->mod.acl_update(acl_fields);
+    }
 };
 
 inline static ModRdpSessionProbeParams get_session_probe_params(Inifile & ini)

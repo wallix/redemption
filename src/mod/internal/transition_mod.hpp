@@ -43,6 +43,8 @@ public:
     void rdp_input_scancode(long int param1, long int param2, long int param3,
                             long int param4, Keymap2* keymap) override;
 
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
 private:
     WidgetTooltip ttmessage;
 };

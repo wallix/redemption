@@ -45,5 +45,7 @@ struct null_mod : public mod_api
     void rdp_gdi_up_and_running() override {}
     void rdp_gdi_down() override {}
     void send_to_mod_channel(CHANNELS::ChannelNameId /*front_channel_name*/, InStream & /*chunk*/, std::size_t /*length*/, uint32_t /*flags*/) override {}
+
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
 };
 

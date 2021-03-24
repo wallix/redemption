@@ -168,6 +168,8 @@ private:
         void refresh(Rect r) override;
 
         [[nodiscard]] Dimension get_dim() const override;
+
+        void acl_update(AclFieldMask const& acl_fields) override;
     } module_holder;
 
     CompositeArray composite_array;

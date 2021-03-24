@@ -133,6 +133,11 @@ Dimension WidgetModuleHost::ModuleHolder::get_dim() const
     return this->managed_mod->get_dim();
 }
 
+void WidgetModuleHost::ModuleHolder::acl_update(AclFieldMask const& acl_fields)
+{
+    this->managed_mod->acl_update(acl_fields);
+}
+
 
 struct WidgetModuleHost::Impl
 {

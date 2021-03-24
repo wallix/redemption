@@ -62,7 +62,7 @@ public:
 
     [[nodiscard]] virtual Dimension get_dim() const { return Dimension(); }
 
-    virtual void acl_update(AclFieldMask const& acl_fields) { (void)acl_fields; }
+    virtual void acl_update(AclFieldMask const& acl_fields) /*{ (void)acl_fields; }*/ = 0;
 
     virtual void reset_keyboard_status() {}
 };

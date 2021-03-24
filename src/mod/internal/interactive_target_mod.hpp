@@ -61,6 +61,8 @@ public:
         this->challenge.move_size_widget(left, top, width, height);
     }
 
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
 private:
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;
 

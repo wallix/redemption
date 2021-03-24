@@ -62,6 +62,8 @@ public:
         this->dialog_widget.move_size_widget(left, top, width, height);
     }
 
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
+
 private:
     void accepted();
 
