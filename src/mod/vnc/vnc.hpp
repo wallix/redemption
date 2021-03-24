@@ -1727,5 +1727,7 @@ public:
 
     [[nodiscard]] Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
+
+    void acl_update(AclFieldMask const&/* acl_fields*/) override {}
 };
 
