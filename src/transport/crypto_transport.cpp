@@ -673,7 +673,7 @@ OutCryptoTransport::~OutCryptoTransport()
         HashArray fhash{};
         this->close(qhash, fhash);
         if (this->cctx.get_with_checksum()){
-            char mes[std::size(qhash)*4+2];
+            char mes[std::size(qhash)*4+2+1];
             char * p = mes;
             auto hexdump = [&p](HashArray & hash) {
                 *p++ = ' '; // 1 octet
