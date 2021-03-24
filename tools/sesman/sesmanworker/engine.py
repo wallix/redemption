@@ -1684,8 +1684,8 @@ class Engine(object):
         service_port = target['service_port']
         service_name = target['service_cn']
         auth_name = target['auth_cn']
-        user_group_name = target['user_group_cn']
-        target_group_name = target['target_group_cn']
+        user_group_name = target.get('user_group_cn', "")
+        target_group_name = target.get('target_group_cn', "")
         conn_opts = target['connection_policy_data']
         return LoginInfo(account_login=account_login,
                          account_name=account_name,
