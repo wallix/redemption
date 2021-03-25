@@ -135,16 +135,14 @@ sys_lib_prefix = (
     ('libavformat/', Dep(
         linkflags=['<library>ffmpeg'],
         cxxflags=['$(FFMPEG_CXXFLAGS)'])),
-    ('libavcodec/', Dep(
-        cxxflags=['$(FFMPEG_CXXFLAGS)'])),
     ('openssl/', Dep(
         linkflags=['<library>crypto'])),
 )
 
 
 user_lib_assoc = dict((
-    ('program_options/program_options.hpp', Dep(
-        linkflags=['<library>program_options'])),
+    ('src/capture/video_capture.hpp', Dep(
+        cxxflags=['$(FFMPEG_CXXFLAGS)'])),
 ))
 
 user_lib_prefix = (
