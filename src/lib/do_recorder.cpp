@@ -904,6 +904,7 @@ inline void get_join_visibility_rect(
         }
     }
 
+    // in META_FILE
     out_max_screen_dim = player.max_screen_dim;
 }
 
@@ -1562,7 +1563,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         cli::option("ocr-version").help("version 1 or 2")
             .parser(cli::arg_location(recorder.ocr_version)).argname("<version>"),
 
-        cli::option("bogus-vlc").help("Needed to play a video with ffplay or VLC")
+        cli::option("bogus-vlc").help("Needed to play a video with old ffplay or VLC v1")
             .parser(cli::on_off_location(bogus_vlc)),
 
         cli::option("disable-bogus-vlc")

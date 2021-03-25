@@ -68,13 +68,11 @@
 
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
-#include "capture/full_video_params.hpp"
 #include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/ocr_params.hpp"
 #include "capture/pattern_params.hpp"
 #include "capture/png_params.hpp"
-#include "capture/sequenced_video_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
 
@@ -1394,8 +1392,12 @@ Capture::Capture(
 
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
-        if (!crop_rect.isempty() &&
-            ((capture_png && !png_params.real_time_image_capture) || capture_video || capture_video_full)) {
+        if (!crop_rect.isempty()
+         && ( (capture_png && !png_params.real_time_image_capture)
+           || capture_video
+           || capture_video_full
+         )
+        ) {
             this->video_cropper = std::make_unique<VideoCropper>(
                 *this->gd_drawable,
                 crop_rect.x,
@@ -1412,8 +1414,6 @@ Capture::Capture(
                 not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = this->gd_drawable;
 
                 if (png_params.remote_program_session) {
-                    assert(image_frame_api_real_time_ptr == this->gd_drawable);
-
                     this->video_cropper_real_time = std::make_unique<VideoCropper>(
                         *this->gd_drawable,
                         0,
@@ -1687,7 +1687,6 @@ void Capture::resize(uint16_t width, uint16_t height)
     this->external_breakpoint();
 }
 
-// TODO: this could be done directly in external png_real_time_capture_obj object
 Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
 {
     return this->png_real_time_capture_obj
@@ -1770,9 +1769,10 @@ void Capture::visibility_rects_event(Rect rect) {
         cap.visibility_rects_event(rect);
     }
 
-    if ((this->smart_video_cropping == SmartVideoCropping::disable) ||
-        (this->smart_video_cropping == SmartVideoCropping::v1) ||
-        !static_cast<bool>(this->video_cropper)) {
+    if (this->smart_video_cropping == SmartVideoCropping::disable
+     || this->smart_video_cropping == SmartVideoCropping::v1
+     || !this->video_cropper
+    ) {
         return;
     }
 

@@ -55,8 +55,6 @@ inline FileValidatorId recv_file_id(InStream& stream) noexcept
 
 enum class MsgType : uint8_t
 {
-    // Create a new file to analyse
-    // NewFile = 0x00, // deprecated
     // Send data from a file
     DataFile = 0x01,
     // Close the session
@@ -69,7 +67,7 @@ enum class MsgType : uint8_t
     Result = 0x05,
     // map with key(string), value(string)
     Infos = 0x06,
-    // Create a new data text to analyse
+    // Create a new data to analyze
     NewData = 0x07,
 
     Unknown,

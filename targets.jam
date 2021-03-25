@@ -744,6 +744,7 @@ test-run tests/capture/test_capture :
   <library>tests/includes/test_only/transport/test_transport.o
   <library>z
   $(BOOST_STACKTRACE_LINKFLAGS)
+  $(FFMPEG_CXXFLAGS)
   <covfile>src/capture/capture.cpp
   <covfile>src/capture/capture.hpp
   <define>ZLIB_CONST
@@ -853,6 +854,7 @@ test-run tests/capture/test_video_capture :
   <library>tests/includes/test_only/test_framework/check_img.o
   <library>tests/includes/test_only/test_framework/working_directory.o
   $(BOOST_STACKTRACE_LINKFLAGS)
+  $(FFMPEG_CXXFLAGS)
   <covfile>src/capture/video_capture.cpp
   <covfile>src/capture/video_capture.hpp
 ;
@@ -5955,7 +5957,7 @@ obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/modu
 obj src/acl/session_inactivity.o : $(REDEMPTION_SRC_PATH)/acl/session_inactivity.cpp ;
 obj src/acl/session_logfile.o : $(REDEMPTION_SRC_PATH)/acl/session_logfile.cpp ;
 obj src/capture/agent_data_extractor.o : $(REDEMPTION_SRC_PATH)/capture/agent_data_extractor.cpp ;
-obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
+obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
 obj src/capture/fdx_capture.o : $(REDEMPTION_SRC_PATH)/capture/fdx_capture.cpp ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
@@ -5966,7 +5968,7 @@ obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_i
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
 obj src/capture/session_update_buffer.o : $(REDEMPTION_SRC_PATH)/capture/session_update_buffer.cpp ;
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
-obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp ;
+obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;

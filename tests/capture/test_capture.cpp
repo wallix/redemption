@@ -33,6 +33,8 @@ REDEMPTION_DIAGNOSTIC_POP()
 
 #include "capture/capture.hpp"
 #include "capture/file_to_graphic.hpp"
+#include "capture/full_video_params.hpp"
+#include "capture/sequenced_video_params.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"

@@ -678,7 +678,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<ColorDepthSelectionStrategy>{}, names{"wrm_color_depth_selection_strategy"}, set(ColorDepthSelectionStrategy::depth16));
         W.member(advanced_in_gui, no_sesman, L, type_<WrmCompressionAlgorithm>{}, names{"wrm_compression_algorithm"}, set(WrmCompressionAlgorithm::gzip));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_vlc_frame_rate"}, desc{"Needed to play a video with ffplay or VLC.\nNote: Useless with mpv and mplayer."}, set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_vlc_frame_rate"}, desc{"Needed to play a video with old ffplay or VLC v1.\nNote: Useless with mpv, MPlayer or VLC v2."}, set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"codec_id"}, set("mp4"));
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"framerate"}, set(5));

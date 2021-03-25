@@ -1030,9 +1030,6 @@ public:
 
         this->capture_bpp = this->wrm_color_depth();
 
-        // TODO remove this after unifying capture interface
-        VideoParams video_params = video_params_from_ini(std::chrono::seconds::zero(), ini);
-
         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char *record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
@@ -1052,42 +1049,40 @@ public:
         bool const capture_pattern_checker = this->has_ocr_pattern_check();
 
         const CaptureFlags capture_flags =
-            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
-            ini.get<cfg::video::capture_flags>() :
-            (capture_pattern_checker ? CaptureFlags::ocr : CaptureFlags::none);
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
+                ? ini.get<cfg::video::capture_flags>()
+                : (capture_pattern_checker
+                    ? CaptureFlags::ocr
+                    : CaptureFlags::none
+                );
 
         const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
         const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        const bool capture_video = bool(capture_flags & CaptureFlags::video);
-        // TODO missing CaptureFlags::full_video
+        const bool capture_video = false;
         const bool capture_video_full = false;
-        // TODO missing CaptureFlags::meta
-        const bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
+        const bool capture_meta = false;
         const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || this->has_kbd_pattern_check();
 
         OcrParams const ocr_params = ocr_params_from_ini(ini);
 
-        const char *real_png_basename = record_filebase;
-
-        if (ini.get<cfg::video::rt_basename_only_sid>())
-        {
-            real_png_basename = ini.get<cfg::context::session_id>().c_str();
-        }
-
-        PngParams png_params = {
+        PngParams const png_params = {
             0, 0,
             ini.get<cfg::video::png_interval>(),
-            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>()) ?
-            ini.get<cfg::video::png_limit>() : 0,
+            (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
+                ? ini.get<cfg::video::png_limit>()
+                : 0,
             true,
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>(),
-            real_png_basename
+            ini.get<cfg::video::rt_basename_only_sid>()
+                ? ini.get<cfg::context::session_id>().c_str()
+                : record_filebase
         };
-        const bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
+        const bool capture_png = bool(capture_flags & CaptureFlags::png)
+                              && (png_params.png_limit > 0);
 
         DrawableParams const drawable_params{
             this->client_info.screen_info.width,
@@ -1095,7 +1090,7 @@ public:
             nullptr
         };
 
-        MetaParams const meta_params = meta_params_from_ini(ini);
+        MetaParams const meta_params {};
 
         KbdLogParams const kbd_log_params = kbd_log_params_capture_from_ini(ini);
 
@@ -1103,8 +1098,9 @@ public:
 
         SequencedVideoParams const sequenced_video_params {};
         FullVideoParams const full_video_params {};
+        VideoParams const video_params {};
 
-        WrmParams wrm_params = wrm_params_from_ini(
+        WrmParams const wrm_params = wrm_params_from_ini(
             this->capture_bpp,
             this->client_info.remote_program,
             this->cctx,
@@ -1113,7 +1109,7 @@ public:
             ini
         );
 
-        CaptureParams capture_params{
+        CaptureParams const capture_params{
             this->events_guard.get_monotonic_time(),
             this->events_guard.get_time_base().real_time,
             record_filebase,
@@ -1139,10 +1135,7 @@ public:
               , capture_kbd, kbd_log_params
               , video_params
               , nullptr
-              , (this->client_info.remote_program
-                && (ini.get<cfg::video::smart_video_cropping>() != SmartVideoCropping::disable))
-                ? Rect(0, 0, 640, 480)
-                : Rect()
+              , Rect()
             ),
             &session_log
         };
@@ -1150,9 +1143,14 @@ public:
         if (this->nomouse) {
             this->capture->set_pointer_display();
         }
+
         if (this->capture->has_graphic_api()) {
             this->set_gd(this->capture.get());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
+        }
+
+        if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
+            this->capture->visibility_rects_event(this->rail_window_rect);
         }
 
         this->capture_timer = this->events_guard.create_event_timeout(
@@ -1170,10 +1168,6 @@ public:
                     event.garbage = true;
                 }
            });
-
-        if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
-            this->capture->visibility_rects_event(this->rail_window_rect);
-        }
 
         this->update_keyboard_input_mask_state();
 
@@ -4606,12 +4600,12 @@ private:
     void draw_impl(RDP::RAIL::NewOrExistingWindow const & cmd) {
         this->gd->draw(cmd);
 
-        if (!this->capture &&
-            (cmd.header.FieldsPresentFlags() & (RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)) &&
-            (cmd.NumVisibilityRects() == 1)) {
-            this->rail_window_rect = static_cast<Rect>(cmd.VisibilityRects(0)).offset(
-                    cmd.VisibleOffsetX(), cmd.VisibleOffsetY()
-                );
+        if (!this->capture
+         && (cmd.header.FieldsPresentFlags() & (RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY | RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET))
+         && (cmd.NumVisibilityRects() == 1)
+        ) {
+            this->rail_window_rect = Rect(cmd.VisibilityRects(0))
+                .offset(cmd.VisibleOffsetX(), cmd.VisibleOffsetY());
         }
         else {
             this->rail_window_rect.empty();
