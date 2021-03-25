@@ -1093,11 +1093,8 @@ static inline int replay(
 
                         RDPDrawable rdp_drawable{max_screen_dim.w, max_screen_dim.h};
 
-                        DrawableParams const drawable_params{
-                            max_screen_dim.w,
-                            max_screen_dim.h,
-                            &rdp_drawable
-                        };
+                        DrawableParams const drawable_params
+                            = DrawableParams::shared_drawable(rdp_drawable);
 
                         MetaParams const meta_params{
                             MetaParams::EnableSessionLog::No,

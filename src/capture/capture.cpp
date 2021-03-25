@@ -1386,7 +1386,12 @@ Capture::Capture(
         else {
             this->gd_drawable_ = std::make_unique<RDPDrawable>(
                 drawable_params.width, drawable_params.height);
+
             this->gd_drawable = this->gd_drawable_.get();
+
+            if (drawable_params.no_mouse) {
+                this->gd_drawable->show_mouse_cursor(false);
+            }
         }
         this->gds.emplace_back(*this->gd_drawable);
 
@@ -2097,13 +2102,6 @@ void Capture::set_palette(const BGRPalette & palette)
         for (gdi::GraphicApi & gd : this->gds){
             gd.set_palette(palette);
         }
-    }
-}
-
-void Capture::set_pointer_display()
-{
-    if (this->capture_drawable) {
-        this->gd_drawable->show_mouse_cursor(false);
     }
 }
 

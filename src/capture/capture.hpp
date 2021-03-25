@@ -123,8 +123,6 @@ public:
 
     void set_palette(const BGRPalette & palette) override;
 
-    void set_pointer_display();
-
     void external_breakpoint() override;
 
     void external_monotonic_time_point(MonotonicTimePoint now) override;

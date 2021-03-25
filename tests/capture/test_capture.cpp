@@ -115,7 +115,7 @@ namespace
         , record_tmp_path(record_wd.dirname())
         , record_path(record_tmp_path)
         , hash_path(hash_wd.dirname())
-        , drawable_params{cx, cy, nullptr}
+        , drawable_params(DrawableParams::delayed_drawable(cx, cy, false))
         , wrm_params{
             BitsPerPixel{24},
             false,

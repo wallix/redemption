@@ -20,11 +20,27 @@
 
 #pragma once
 
+#include <cstdint>
+
 class RDPDrawable;
 
 struct DrawableParams
 {
-    int width;
-    int height;
+    // width, height and no_mouse are ignored when rdp_drawable != nullptr
+    uint16_t width;
+    uint16_t height;
+    bool no_mouse;
+
     RDPDrawable* rdp_drawable;
+
+    static DrawableParams delayed_drawable(uint16_t width, uint16_t height, bool no_mouse)
+    {
+        return {width, height, no_mouse, nullptr};
+    }
+
+    static DrawableParams shared_drawable(RDPDrawable&& rdp_drawable) = delete;
+    static DrawableParams shared_drawable(RDPDrawable& rdp_drawable)
+    {
+        return {0, 0, false, &rdp_drawable};
+    }
 };

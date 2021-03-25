@@ -1084,11 +1084,11 @@ public:
         bool const capture_png = bool(capture_flags & CaptureFlags::png)
                               && (png_params.png_limit > 0);
 
-        DrawableParams const drawable_params{
+        DrawableParams const drawable_params = DrawableParams::delayed_drawable(
             this->client_info.screen_info.width,
             this->client_info.screen_info.height,
-            nullptr
-        };
+            this->nomouse
+        );
 
         MetaParams const meta_params {};
 
@@ -1139,10 +1139,6 @@ public:
             ),
             &session_log
         };
-
-        if (this->nomouse) {
-            this->capture->set_pointer_display();
-        }
 
         if (this->capture->has_graphic_api()) {
             this->set_gd(this->capture.get());
