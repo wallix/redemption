@@ -1295,7 +1295,7 @@ public:
             using Front::Front;
 
             // secondary session is ready, set target_connection_time
-            bool can_be_start_capture(bool force_capture, SessionLogApi& session_log) override
+            bool can_be_start_capture(SessionLogApi& session_log) override
             {
                 if (*this->target_connection_start_time_ptr != MonotonicTimePoint{}) {
                     auto elapsed = MonotonicTimePoint::clock::now()
@@ -1305,7 +1305,7 @@ public:
                     *this->target_connection_start_time_ptr = {};
                 }
 
-                return this->Front::can_be_start_capture(force_capture, session_log);
+                return this->Front::can_be_start_capture(session_log);
             }
         };
 

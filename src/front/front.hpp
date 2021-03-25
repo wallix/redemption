@@ -899,7 +899,7 @@ public:
                         }
                         else {
                             this->must_be_stop_capture();
-                            this->can_be_start_capture(false, *this->capture._session_log);
+                            this->can_be_start_capture(*this->capture._session_log);
                         }
                     }
 
@@ -999,7 +999,7 @@ public:
     }
 
     // ===========================================================================
-    bool can_be_start_capture(bool force_capture, SessionLogApi & session_log) override
+    bool can_be_start_capture(SessionLogApi & session_log) override
     {
         using namespace std::literals::chrono_literals;
 
@@ -1015,7 +1015,7 @@ public:
 
         // force capture allow to capture video from test modules
         // even if sanity check is_capture_necessary() disagree with it
-        if (!this->is_capture_necessary() && !force_capture)
+        if (!this->is_capture_necessary())
         {
             LOG(LOG_INFO, "Front::can_be_start_capture: Capture is not necessary");
             return false;
@@ -1030,15 +1030,15 @@ public:
 
         this->capture_bpp = this->wrm_color_depth();
 
-        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
-        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
-        const char *record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
+        int const groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        char const * const record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        char const * const record_filebase = ini.get<cfg::capture::record_filebase>().c_str();
 
         auto const& subdir = ini.get<cfg::capture::record_subdirectory>();
         auto const& record_dir = ini.get<cfg::video::record_path>();
         auto const& hash_dir = ini.get<cfg::video::hash_path>();
-        auto record_path = str_concat(record_dir.as_string(), subdir, '/');
-        auto hash_path = str_concat(hash_dir.as_string(), subdir, '/');
+        auto const record_path = str_concat(record_dir.as_string(), subdir, '/');
+        auto const hash_path = str_concat(hash_dir.as_string(), subdir, '/');
 
         for (auto* s : {&record_path, &hash_path}) {
             if (recursive_create_directory(s->c_str(), S_IRWXU | S_IRGRP | S_IXGRP, groupid) != 0) {
@@ -1048,7 +1048,7 @@ public:
 
         bool const capture_pattern_checker = this->has_ocr_pattern_check();
 
-        const CaptureFlags capture_flags =
+        CaptureFlags const capture_flags =
             (ini.get<cfg::globals::is_rec>() || ini.get<cfg::video::allow_rt_without_recording>())
                 ? ini.get<cfg::video::capture_flags>()
                 : (capture_pattern_checker
@@ -1081,7 +1081,7 @@ public:
                 ? ini.get<cfg::context::session_id>().c_str()
                 : record_filebase
         };
-        const bool capture_png = bool(capture_flags & CaptureFlags::png)
+        bool const capture_png = bool(capture_flags & CaptureFlags::png)
                               && (png_params.png_limit > 0);
 
         DrawableParams const drawable_params{

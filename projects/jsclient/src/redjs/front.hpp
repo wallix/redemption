@@ -50,7 +50,7 @@ public:
 
     void add_channel_receiver(ChannelReceiver channel);
 
-    bool can_be_start_capture(bool force_capture, SessionLogApi& session_log) override;
+    bool can_be_start_capture(SessionLogApi& session_log) override;
     bool must_be_stop_capture() override;
     bool is_capture_in_progress() const override;
 

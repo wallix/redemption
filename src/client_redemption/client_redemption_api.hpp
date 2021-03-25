@@ -33,7 +33,7 @@ class ClientRedemptionAPI : public FrontAPI
 public:
     virtual ~ClientRedemptionAPI() = default;
 
-    bool can_be_start_capture(bool /*force_capture*/, SessionLogApi & /*session_log*/) override { return true; }
+    bool can_be_start_capture(SessionLogApi & /*session_log*/) override { return true; }
     bool is_capture_in_progress() const override { return true; }
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, bytes_view /*chunk_data*/
                         , std::size_t /*total_length*/, int  /*flags*/) override {}

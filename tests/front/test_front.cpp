@@ -56,10 +56,6 @@ namespace dump2008 {
 class MyFront : public FrontWrapper
 {
 public:
-    bool can_be_start_capture(bool /*force_capture*/, SessionLogApi& /*session_log*/) override { return false; }
-    bool must_be_stop_capture() override { return false; }
-    void must_flush_capture() override {}
-
     using FrontWrapper::FrontWrapper;
 
     void send_to_channel(

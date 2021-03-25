@@ -3231,7 +3231,7 @@ public:
                             }
                             else
 #endif
-                            if (this->front.can_be_start_capture(false, this->session_log)) {
+                            if (this->front.can_be_start_capture(this->session_log)) {
                                 if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
                                     this->rdp_allow_display_updates(
@@ -6230,7 +6230,7 @@ public:
         if (this->delayed_start_capture) {
             this->delayed_start_capture = false;
 
-            if (this->front.can_be_start_capture(false, this->session_log)) {
+            if (this->front.can_be_start_capture(this->session_log)) {
                 if (this->bogus_refresh_rect && this->monitor_count) {
                     this->rdp_suppress_display_updates();
                     this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
