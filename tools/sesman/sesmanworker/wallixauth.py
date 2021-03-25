@@ -15,7 +15,7 @@ try:
         AUTHENTICATION_TYPES as AUTH,
     )
     from wabx509 import AuthX509
-except Exception as e:
+except Exception:
     import traceback
     tracelog = traceback.format_exc()
     try:
@@ -24,7 +24,7 @@ except Exception as e:
             IDENTIFICATION_TYPES as IDENT,
             AUTHENTICATION_TYPES as AUTH,
         )
-    except Exception as e:
+    except Exception:
         Logger().info("Wabengine const LOADING FAILED %s" % tracelog)
 
 
@@ -133,7 +133,7 @@ class Authenticator(object):
         if self.checker is None:
             self.checker = Checker()
 
-    def _reset_auth(self, remove_auth_state=None, cancel=False):
+    def _reset_auth(self, remove_auth_state=None, cancel=True):
         if remove_auth_state:
             Logger().debug(">> PA remove state %s" % remove_auth_state)
             # do not try this auth method again
@@ -143,7 +143,10 @@ class Authenticator(object):
         self.auth_challenge = None
         self.auth_ident = None
         if cancel and self.auth_key and self.checker:
-            self.checker.cancel(self.auth_key)
+            try:
+                self.checker.cancel(self.auth_key)
+            except Exception:
+                pass
         self.auth_key = None
 
     def _init_identify(self, ip_source, server_ip,
@@ -222,7 +225,7 @@ class Authenticator(object):
                 return False
         except AuthenticationFailed as a:
             Logger().debug(">> PA init_identify AuthenticationFailed %s" % a)
-            self._reset_auth()
+            self._reset_auth(cancel=False)
             return False
         except IdentificationFailed as a:
             Logger().debug(">> PA init_identify IdentificationFailed %s" % a)
@@ -231,7 +234,7 @@ class Authenticator(object):
                 # if identification failed on "automatic" method,
                 # do not try it again
                 remove_state = auth_state
-            self._reset_auth(remove_auth_state=remove_state)
+            self._reset_auth(remove_auth_state=remove_state, cancel=False)
             return False
 
         if (auth_type == AUTH.SSH_KEY
@@ -270,8 +273,10 @@ class Authenticator(object):
             return False
         except AuthenticationFailed as exp:
             Logger().info("%s" % exp)
-        except Exception as a:
-            self._reset_auth()
+            self._reset_auth(cancel=False)
+            return False
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info(
                 "Engine authenticate (%s) failed: "
@@ -375,8 +380,8 @@ class Authenticator(object):
             if auth_type == AUTH.MOBILE_DEVICE:
                 return self._authentify(enginei, data, "mobile_device",
                                         no_delay=True)
-        except Exception as a:
-            self._reset_auth()
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine mobile_device_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
@@ -402,8 +407,8 @@ class Authenticator(object):
                                         no_delay=True)
             if data:
                 return self._authentify(enginei, data, "password")
-        except Exception as a:
-            self._reset_auth()
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine password_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
@@ -445,7 +450,7 @@ class Authenticator(object):
             if data:
                 return self._authentify(enginei, data, "gssapi",
                                         no_delay=True)
-        except Exception as a:
+        except Exception:
             self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine gssapi_authenticate failed: "
@@ -473,8 +478,8 @@ class Authenticator(object):
             if data:
                 return self._authentify(enginei, data, "pubkey",
                                         no_delay=True)
-        except Exception as a:
-            self._reset_auth()
+        except Exception:
+            self._reset_auth(cancel=False)
             import traceback
             Logger().info("Engine pubkey_authenticate failed: "
                           "(((%s)))" % traceback.format_exc())
