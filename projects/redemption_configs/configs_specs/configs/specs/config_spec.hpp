@@ -365,19 +365,23 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 300000>>(), names{.cpp="session_probe_launch_fallback_timeout", .connpolicy="launch_fallback_timeout"}, desc{
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "0 to disable timeout."
-        }, set(10000));
+        }, set(40000));
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_start_launch_timeout_timer_only_after_logon", .connpolicy="start_launch_timeout_timer_only_after_logon"}, desc{
             "Minimum supported server : Windows Server 2008."
         }, set(true));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 60000>>(), names{.cpp="session_probe_keepalive_timeout", .connpolicy="keepalive_timeout"}, set(5000));
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<SessionProbeOnKeepaliveTimeout>(), names{.cpp="session_probe_on_keepalive_timeout", .connpolicy="on_keepalive_timeout"}, set(SessionProbeOnKeepaliveTimeout::disconnect_user));
 
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_end_disconnected_session", .connpolicy="end_disconnected_session"}, desc{"End automatically a disconnected session.\nSession Probe must be enabled to use this feature."}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_end_disconnected_session", .connpolicy="end_disconnected_session"}, desc{
+            "End automatically a disconnected session.\n"
+            "This option is recommended for Web applications running in Desktop mode.\n"
+            "Session Probe must be enabled to use this feature."
+        }, set(false));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"session_probe_customize_executable_name"}, set(false));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_enable_log", .connpolicy="enable_log"}, set(false));
-        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_enable_log_rotation", .connpolicy="enable_log_rotation"}, set(true));
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), names{.cpp="session_probe_enable_log_rotation", .connpolicy="enable_log_rotation"}, set(false));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<SessionProbeLogLevel>(), names{.cpp="session_probe_log_level", .connpolicy="log_level"}, set(SessionProbeLogLevel::Debug));
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<std::chrono::milliseconds, 0, 172'800'000>>(), names{.cpp="session_probe_disconnected_application_limit", .connpolicy="disconnected_application_limit"}, desc{
@@ -858,7 +862,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<std::string>(), names{"login_message"});
 
         W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), names{.cpp="session_probe_outbound_connection_monitoring_rules", .connpolicy="outbound_connection_monitoring_rules"}, desc{
-            "Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)\n"
+            "Comma-separated rules (Ex.: $deny:192.168.0.0/24:5900,$allow:host.domain.net:3389,$allow:192.168.0.110:21)\n"
             "(Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"
             "Session Probe must be enabled to use this feature."
         });

@@ -169,7 +169,7 @@ launch_timeout = integer(min=0, max=300000, default=40000)
 # 0 to disable timeout.
 # (in milliseconds)
 #_advanced
-launch_fallback_timeout = integer(min=0, max=300000, default=10000)
+launch_fallback_timeout = integer(min=0, max=300000, default=40000)
 
 # Minimum supported server : Windows Server 2008.
 start_launch_timeout_timer_only_after_logon = boolean(default=True)
@@ -184,6 +184,7 @@ keepalive_timeout = integer(min=0, max=60000, default=5000)
 on_keepalive_timeout = option(0, 1, 2, default=1)
 
 # End automatically a disconnected session.
+# This option is recommended for Web applications running in Desktop mode.
 # Session Probe must be enabled to use this feature.
 end_disconnected_session = boolean(default=False)
 
@@ -191,7 +192,7 @@ end_disconnected_session = boolean(default=False)
 enable_log = boolean(default=False)
 
 #_advanced
-enable_log_rotation = boolean(default=True)
+enable_log_rotation = boolean(default=False)
 
 #   1: Fatal
 #   2: Error
@@ -292,7 +293,7 @@ alternate_directory_environment_variable = string(max=3, default='')
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
-# Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
+# Comma-separated rules (Ex.: $deny:192.168.0.0/24:5900,$allow:host.domain.net:3389,$allow:192.168.0.110:21)
 # (Ex. for backwards compatibility only: 10.1.0.0/16:22)
 # Session Probe must be enabled to use this feature.
 outbound_connection_monitoring_rules = string(default='')

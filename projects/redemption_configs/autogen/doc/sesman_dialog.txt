@@ -123,6 +123,7 @@ cfg::mod_rdp::session_probe_on_keepalive_timeout ⇐ mod_rdp:session_probe_on_ke
       2: freeze connection and wait
 cfg::mod_rdp::session_probe_end_disconnected_session ⇐ mod_rdp:session_probe_end_disconnected_session   [bool]
     End automatically a disconnected session.
+    This option is recommended for Web applications running in Desktop mode.
     Session Probe must be enabled to use this feature.
 cfg::mod_rdp::session_probe_enable_log ⇐ mod_rdp:session_probe_enable_log   [bool]
 cfg::mod_rdp::session_probe_enable_log_rotation ⇐ mod_rdp:session_probe_enable_log_rotation   [bool]
@@ -373,7 +374,7 @@ cfg::context::pattern_notify ⇐ pattern_notify   [std::string]
 cfg::context::opt_message ⇐ opt_message   [std::string]
 cfg::context::login_message ⇐ login_message   [std::string]
 cfg::context::session_probe_outbound_connection_monitoring_rules ⇐ context:session_probe_outbound_connection_monitoring_rules   [std::string]
-    Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)
+    Comma-separated rules (Ex.: $deny:192.168.0.0/24:5900,$allow:host.domain.net:3389,$allow:192.168.0.110:21)
     (Ex. for backwards compatibility only: 10.1.0.0/16:22)
     Session Probe must be enabled to use this feature.
 cfg::context::session_probe_process_monitoring_rules ⇐ context:session_probe_process_monitoring_rules   [std::string]

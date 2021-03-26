@@ -455,7 +455,7 @@ session_probe_launch_timeout = integer(min=0, max=300000, default=40000)
 # 0 to disable timeout.
 # (in milliseconds)
 #_hidden
-session_probe_launch_fallback_timeout = integer(min=0, max=300000, default=10000)
+session_probe_launch_fallback_timeout = integer(min=0, max=300000, default=40000)
 
 # Minimum supported server : Windows Server 2008.
 #_hidden
@@ -472,6 +472,7 @@ session_probe_keepalive_timeout = integer(min=0, max=60000, default=5000)
 session_probe_on_keepalive_timeout = option(0, 1, 2, default=1)
 
 # End automatically a disconnected session.
+# This option is recommended for Web applications running in Desktop mode.
 # Session Probe must be enabled to use this feature.
 #_hidden
 session_probe_end_disconnected_session = boolean(default=False)
@@ -483,7 +484,7 @@ session_probe_customize_executable_name = boolean(default=False)
 session_probe_enable_log = boolean(default=False)
 
 #_hidden
-session_probe_enable_log_rotation = boolean(default=True)
+session_probe_enable_log_rotation = boolean(default=False)
 
 #   1: Fatal
 #   2: Error

@@ -1628,7 +1628,7 @@ namespace cfg
     /// type: std::chrono::milliseconds <br/>
     /// connpolicy -> proxy    [name: session_probe::launch_fallback_timeout] <br/>
     /// sesmanName: mod_rdp:session_probe_launch_fallback_timeout <br/>
-    /// default: 10000 <br/>
+    /// default: 40000 <br/>
     struct mod_rdp::session_probe_launch_fallback_timeout {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1638,7 +1638,7 @@ namespace cfg
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         using mapped_type = sesman_and_spec_type;
-        type value { 10000 };
+        type value { 40000 };
     };
     /// Minimum supported server : Windows Server 2008. <br/>
     /// type: bool <br/>
@@ -1687,6 +1687,7 @@ namespace cfg
         type value { SessionProbeOnKeepaliveTimeout::disconnect_user };
     };
     /// End automatically a disconnected session. <br/>
+    /// This option is recommended for Web applications running in Desktop mode. <br/>
     /// Session Probe must be enabled to use this feature. <br/>
     /// type: bool <br/>
     /// connpolicy -> proxy    [name: session_probe::end_disconnected_session] <br/>
@@ -1731,7 +1732,7 @@ namespace cfg
     /// type: bool <br/>
     /// connpolicy -> proxy    [name: session_probe::enable_log_rotation] <br/>
     /// sesmanName: mod_rdp:session_probe_enable_log_rotation <br/>
-    /// default: true <br/>
+    /// default: false <br/>
     struct mod_rdp::session_probe_enable_log_rotation {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1741,7 +1742,7 @@ namespace cfg
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value { true };
+        type value { false };
     };
     /// type: SessionProbeLogLevel <br/>
     /// connpolicy -> proxy    [name: session_probe::log_level] <br/>
@@ -4601,7 +4602,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value {  };
     };
-    /// Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*) <br/>
+    /// Comma-separated rules (Ex.: $deny:192.168.0.0/24:5900,$allow:host.domain.net:3389,$allow:192.168.0.110:21) <br/>
     /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
     /// Session Probe must be enabled to use this feature. <br/>
     /// type: std::string <br/>

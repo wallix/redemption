@@ -113,7 +113,7 @@ cp_spec = {
             'launch_timeout', 40000
         ),
         u'mod_rdp:session_probe_launch_fallback_timeout': (
-            'launch_fallback_timeout', 10000
+            'launch_fallback_timeout', 40000
         ),
         u'mod_rdp:session_probe_start_launch_timeout_timer_only_after_logon': (
             'start_launch_timeout_timer_only_after_logon', True
@@ -131,7 +131,7 @@ cp_spec = {
             'enable_log', False
         ),
         u'mod_rdp:session_probe_enable_log_rotation': (
-            'enable_log_rotation', True
+            'enable_log_rotation', False
         ),
         u'mod_rdp:session_probe_log_level': (
             'log_level', 5

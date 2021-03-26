@@ -531,7 +531,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 # min = 0, max = 300000
 # (in milliseconds)
 #_hidden
-#session_probe_launch_fallback_timeout = 10000
+#session_probe_launch_fallback_timeout = 40000
 
 # Minimum supported server : Windows Server 2008.
 # value: 0 or 1
@@ -551,6 +551,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 #session_probe_on_keepalive_timeout = 1
 
 # End automatically a disconnected session.
+# This option is recommended for Web applications running in Desktop mode.
 # Session Probe must be enabled to use this feature.
 # value: 0 or 1
 #_hidden
@@ -566,7 +567,7 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_hidden
-#session_probe_enable_log_rotation = 1
+#session_probe_enable_log_rotation = 0
 
 # min = 0, max = 6
 #   1: Fatal
