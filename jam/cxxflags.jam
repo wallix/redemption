@@ -14,8 +14,6 @@ REDEMPTION_CXXFLAGS +=
     <cxx-microsoft-abi-compatibility-warning-default>off
     <cxx-conversion-warnings-default>off
     <variant>debug:<cxx-stl-debug-default>allow-broken-abi
-    <variant>debug:<cxx-optimization-default>g
-    <variant>san:<cxx-optimization-default>g
 
     <toolset>clang:<cxxflags>-Wno-overlength-strings
     <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion

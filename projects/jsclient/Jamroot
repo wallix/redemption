@@ -48,7 +48,7 @@ rule emcc_flags ( properties * )
     # remove -Wno-ctad-maybe-unsupported
     for f in [ flags $(properties) ]
     {
-        if $(f) != <cxxflags>-Wno-ctad-maybe-unsupported && $(f) != <cxxflags>-Og
+        if $(f) != <cxxflags>-Wno-ctad-maybe-unsupported
         {
             fs += $(f) ;
         }
