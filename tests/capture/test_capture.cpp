@@ -156,7 +156,7 @@ namespace
                 capture_video_full, full_video_params,
                 capture_meta, meta_params,
                 capture_kbd, kbd_log_params,
-                video_params, nullptr, Rect()
+                video_params, nullptr, Rect(), Rect()
             );
 
             f(capture, Rect(0, 0, drawable_params.width, drawable_params.height));
@@ -1224,7 +1224,7 @@ namespace
         )
         , drawable(scr.cx, scr.cy)
         , consumer(now, RealTimePoint{now.time_since_epoch()},
-            trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache,
+            trans, BitsPerPixel{24}, false, Rect(), bmp_cache, gly_cache, ptr_cache,
             drawable, WrmCompressionAlgorithm::no_compression,
             GraphicToFile::SendInput::NO, RDPSerializerVerbose::none)
         {}

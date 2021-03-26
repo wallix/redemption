@@ -811,7 +811,8 @@ public:
         return WaitingTimeBeforeNextSnapshot(this->frame_interval - duration % this->frame_interval);
     }
 
-    void visibility_rects_event(Rect rect) override {
+    void visibility_rects_event(Rect rect)
+    {
         if ((this->smart_video_cropping != SmartVideoCropping::disable) && !rect.isempty()) {
             rect = rect.intersect(
                 {0, 0, this->drawable.width(), this->drawable.height()});
@@ -1346,7 +1347,8 @@ Capture::Capture(
     bool capture_kbd, const KbdLogParams& kbd_log_params,
     const VideoParams& video_params,
     UpdateProgressData * update_progress_data,
-    Rect const & crop_rect)
+    Rect const & crop_rect,
+    Rect const & rail_window_rect)
 : update_progress_data(update_progress_data)
 , mouse_info{
     capture_params.now,
@@ -1354,7 +1356,7 @@ Capture::Capture(
     static_cast<uint16_t>(drawable_params.height / 2)}
 , capture_drawable(capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full)
 , smart_video_cropping(capture_params.smart_video_cropping)
-, verbose(capture_params.verbose)
+, rail_screen_visibility(capture_params.verbose)
 {
     LOG(LOG_INFO,
         "Enable capture:  wrm=%s  png=%s  kbd=%s  video=%s  video_full=%s  pattern=%s  ocr=%s  meta=%s",
@@ -1445,7 +1447,7 @@ Capture::Capture(
         }
         if (capture_wrm) {
             this->wrm_capture_obj = std::make_unique<WrmCaptureImpl>(
-                capture_params, wrm_params, *this->gd_drawable);
+                capture_params, wrm_params, *this->gd_drawable, rail_window_rect);
         }
 
 #ifndef REDEMPTION_NO_FFMPEG
@@ -1568,6 +1570,10 @@ Capture::Capture(
     if (this->title_capture_obj) {
         this->caps.emplace_back(*this->title_capture_obj);
         this->probes.emplace_back(*this->title_capture_obj);
+    }
+
+    if (!rail_window_rect.isempty()) {
+        this->visibility_rects_event(rail_window_rect);
     }
 }
 
@@ -1770,8 +1776,8 @@ Capture::WaitingTimeBeforeNextSnapshot Capture::periodic_snapshot(
 }
 
 void Capture::visibility_rects_event(Rect rect) {
-    for (gdi::CaptureApi & cap : this->caps) {
-        cap.visibility_rects_event(rect);
+    if (this->png_real_time_capture_obj) {
+        this->png_real_time_capture_obj->visibility_rects_event(rect);
     }
 
     if (this->smart_video_cropping == SmartVideoCropping::disable
@@ -1815,82 +1821,6 @@ void Capture::visibility_rects_event(Rect rect) {
     (void)retval;
 }
 
-
-struct Capture::WindowRecord
-{
-    uint32_t window_id;
-    uint32_t fields_present_flags;
-    uint32_t style;
-    uint8_t show_state;
-    int32_t visible_offset_x;
-    int32_t visible_offset_y;
-
-    std::string title_info;
-};
-
-struct Capture::WindowVisibilityRectRecord
-{
-    uint32_t window_id;
-    Rect rect;
-
-    WindowVisibilityRectRecord(uint32_t window_id, Rect rect) noexcept
-    : window_id(window_id)
-    , rect(rect)
-    {}
-};
-
-Rect Capture::get_join_visibility_rect() const
-{
-    LOG_IF(this->verbose, LOG_INFO, "Capture::get_join_visibility_rect(): ...");
-
-    Rect join_visibility_rect;
-
-    for (const WindowRecord& window : this->windows) {
-        for (const WindowVisibilityRectRecord& window_visibility_rect : this->window_visibility_rects) {
-            if (window.window_id != window_visibility_rect.window_id) {
-                continue;
-            }
-
-            assert(window.fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
-
-            if (
-                // Window is not IME icon.
-                0 != strcmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
-                ((((window.style & WS_DISABLED) || (window.style & WS_SYSMENU) || (window.style & WS_VISIBLE)) &&
-                    !(window.style & WS_ICONIC) &&
-                    (window.show_state != SW_FORCEMINIMIZE) &&
-                    (window.show_state != SW_HIDE) &&
-                    (window.show_state != SW_MINIMIZE)) ||
-                    // window is ctreated before recording starts
-                    (!window.style && !window.show_state))
-            ) {
-                LOG_IF(this->verbose, LOG_INFO,
-                    "Capture::get_join_visibility_rect(): + Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                    window.title_info,
-                    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
-                    window.show_state, window.style);
-
-                join_visibility_rect =
-                    join_visibility_rect.disjunct(
-                        window_visibility_rect.rect.offset(
-                                window.visible_offset_x,
-                                window.visible_offset_y
-                            ));
-            }
-            else {
-                LOG_IF(this->verbose, LOG_INFO,
-                    "Capture::get_join_visibility_rect():   Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                    window.title_info,
-                    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
-                    window.show_state, window.style);
-            }
-        }
-    }
-
-    LOG_IF(this->verbose, LOG_INFO, "Capture::get_join_visibility_rect(): Done.");
-
-    return join_visibility_rect;
-}
 
 template<class... Ts>
 void Capture::draw_impl(const Ts & ... args)
@@ -1948,134 +1878,24 @@ void Capture::draw(RDPBrushCache const & cmd) { this->draw_impl(cmd); }
 
 void Capture::draw(const RDP::RAIL::NewOrExistingWindow & cmd)
 {
-    if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw(NewOrExistingWindow): ...");
-
-        cmd.log(LOG_INFO);
-    }
-
     this->draw_impl(cmd);
 
-    uint32_t const  fields_present_flags = cmd.header.FieldsPresentFlags();
-    uint32_t const  window_id            = cmd.header.WindowId();
-    uint32_t const  style                = cmd.Style();
-    uint8_t  const  show_state           = cmd.ShowState();
-    int32_t  const  visible_offset_x     = cmd.VisibleOffsetX();
-    int32_t  const  visible_offset_y     = cmd.VisibleOffsetY();
-    std::string const& title_info        = cmd.TitleInfo();
+    this->rail_screen_visibility.update(cmd);
 
-    if (fields_present_flags &
-        (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
-         RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
-         RDP::RAIL::WINDOW_ORDER_FIELD_TITLE |
-         RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)
-    ) {
-        auto iter = std::find_if(
-            this->windows.begin(),
-            this->windows.end(),
-            [window_id](WindowRecord& window) -> bool {
-                return (window.window_id == window_id);
-            }
-        );
-        if (iter != this->windows.end()) {
-            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_STYLE) {
-                iter->style = style;
-                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_STYLE;
-            }
-            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_SHOW) {
-                iter->show_state = show_state;
-                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_SHOW;
-            }
-            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_TITLE) {
-                iter->title_info = title_info;
-                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_TITLE;
-            }
-            if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET) {
-                iter->visible_offset_x = visible_offset_x;
-                iter->visible_offset_y = visible_offset_y;
-                iter->fields_present_flags |= RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET;
-            }
-        }
-        else {
-            this->windows.emplace_back(WindowRecord{
-                window_id,
-                (fields_present_flags &
-                 (RDP::RAIL::WINDOW_ORDER_FIELD_STYLE |
-                  RDP::RAIL::WINDOW_ORDER_FIELD_SHOW |
-                  RDP::RAIL::WINDOW_ORDER_FIELD_TITLE |
-                  RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET)),
-                style, show_state, visible_offset_x, visible_offset_y,
-                title_info
-            });
-        }
-    }
-
-    if (fields_present_flags & RDP::RAIL::WINDOW_ORDER_FIELD_VISIBILITY) {
-        this->window_visibility_rects.erase(
-            std::remove_if(
-                this->window_visibility_rects.begin(),
-                this->window_visibility_rects.end(),
-                [window_id](WindowVisibilityRectRecord& window_visibility_rect) {
-                    return (window_visibility_rect.window_id == window_id);
-                }),
-                this->window_visibility_rects.end()
-            );
-
-        if (cmd.NumVisibilityRects()) {
-            for (unsigned i = 0; i < cmd.NumVisibilityRects(); ++i) {
-                this->window_visibility_rects.emplace_back(
-                    window_id, cmd.VisibilityRects(i));
-            }
-        }
-    }
-
-    Rect join_visibility_rect = this->get_join_visibility_rect();
-
-    this->visibility_rects_event(join_visibility_rect);
-
-    LOG_IF(this->verbose, LOG_INFO, "Capture::draw(NewOrExistingWindow): Done.");
+    this->visibility_rects_event(
+        this->rail_screen_visibility.get_join_visibility_rect()
+    );
 }
 
 void Capture::draw(const RDP::RAIL::DeletedWindow & cmd)
 {
-    if (this->verbose) {
-        LOG(LOG_INFO, "Capture::draw(DeletedWindow): ...");
-
-        cmd.log(LOG_INFO);
-    }
-
     this->draw_impl(cmd);
 
-    uint32_t const window_id = cmd.header.WindowId();
+    this->rail_screen_visibility.update(cmd);
 
-    this->windows.erase(
-            std::remove_if(this->windows.begin(), this->windows.end(),
-                [window_id, this](WindowRecord& window) {
-                        if (window.window_id == window_id) {
-                            LOG_IF(this->verbose, LOG_INFO,
-                                "Capture::draw(DeletedWindow): Title=\"%s\"", window.title_info.c_str());
-                            return true;
-                        }
-
-                        return false;
-                    }),
-            this->windows.end()
-        );
-
-    this->window_visibility_rects.erase(
-            std::remove_if(this->window_visibility_rects.begin(),
-                this->window_visibility_rects.end(),
-                [window_id](WindowVisibilityRectRecord& window_visibility_rect) {
-                        return (window_visibility_rect.window_id == window_id);
-                    }),
-            this->window_visibility_rects.end()
-        );
-
-    Rect join_visibility_rect = this->get_join_visibility_rect();
-
-    this->visibility_rects_event(join_visibility_rect);
-
-    LOG_IF(this->verbose, LOG_INFO, "Capture::draw(DeletedWindow): Done.");
+    this->visibility_rects_event(
+        this->rail_screen_visibility.get_join_visibility_rect()
+    );
 }
 
 void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)
@@ -2083,7 +1903,9 @@ void Capture::draw(const RDP::RAIL::NonMonitoredDesktop & cmd)
     if (this->capture_drawable) {
         this->draw_impl(cmd);
 
-        this->visibility_rects_event(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));
+        this->visibility_rects_event(Rect(
+            0, 0, this->gd_drawable->width(), this->gd_drawable->height()
+        ));
     }
 }
 

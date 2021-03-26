@@ -104,7 +104,7 @@ class GraphicToFile : public RDPSerializer
         GTF_SIZE_KEYBUF_REC = 1024
     };
 
-    CompressionOutTransportBuilder compression_bullder;
+    CompressionOutTransportBuilder compression_builder;
     Transport & trans_target;
     Transport & trans;
     StaticOutStream<65536> buffer_stream_orders;
@@ -139,6 +139,7 @@ public:
                 , const BitsPerPixel capture_bpp
                 // TODO strong type
                 , const bool remote_app
+                , Rect rail_window_rect
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
                 , PointerCache & ptr_cache
@@ -148,9 +149,9 @@ public:
                 , RDPSerializerVerbose verbose)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
                    , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, true, verbose)
-    , compression_bullder(trans, wrm_compression_algorithm)
+    , compression_builder(trans, wrm_compression_algorithm)
     , trans_target(trans)
-    , trans(this->compression_bullder.get())
+    , trans(this->compression_builder.get())
     , timer(now)
     , start_timer(now)
     , monotonic_real_time(now)
@@ -158,18 +159,26 @@ public:
     , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
-    , wrm_format_version(remote_app ? 5 : (bool(this->compression_bullder.get_algorithm()) ? 4 : 3))
+    , wrm_format_version(remote_app ? 5 : (bool(this->compression_builder.get_algorithm()) ? 4 : 3))
     , remote_app(remote_app)
     {
-        if (wrm_compression_algorithm != this->compression_bullder.get_algorithm()) {
+        if (wrm_compression_algorithm != this->compression_builder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
                , static_cast<unsigned>(wrm_compression_algorithm));
         }
 
-        this->order_count = 0;
-
         this->send_meta_chunk();
         this->send_image_chunk();
+
+        if (!rail_window_rect.isempty()) {
+            StaticOutStream<32> payload;
+            payload.out_sint16_le(rail_window_rect.x);
+            payload.out_sint16_le(rail_window_rect.y);
+            payload.out_uint16_le(rail_window_rect.cx);
+            payload.out_uint16_le(rail_window_rect.cy);
+            send_wrm_chunk(this->trans, WrmChunkType::RAIL_WINDOW_RECT_START, payload.get_offset(), 0);
+            this->trans.send(payload.get_produced_bytes());
+        }
 
         this->send_time_points();
     }
@@ -282,7 +291,7 @@ public:
           , c3.persistent()
           , c4.persistent()
 
-          , this->compression_bullder.get_algorithm()
+          , this->compression_builder.get_algorithm()
 
           , this->remote_app
         }.send(this->trans_target);
@@ -376,7 +385,7 @@ public:
         this->flush_orders();
         this->flush_bitmaps();
         this->send_timestamp_chunk();
-        if (bool(this->compression_bullder.get_algorithm())) {
+        if (bool(this->compression_builder.get_algorithm())) {
             this->send_reset_chunk();
         }
         this->trans.next();
@@ -435,21 +444,6 @@ public:
         this->trans.send(this->stream_bitmaps.get_produced_bytes());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
-    }
-
-    void send_image_frame_rect_chunk(const Rect& max_image_frame_rect, const Dimension& min_image_frame_dim)
-    {
-        StaticOutStream<32> payload;
-        payload.out_sint16_le(max_image_frame_rect.x);
-        payload.out_sint16_le(max_image_frame_rect.y);
-        payload.out_uint16_le(max_image_frame_rect.cx);
-        payload.out_uint16_le(max_image_frame_rect.cy);
-
-        payload.out_uint16_le(min_image_frame_dim.w);
-        payload.out_uint16_le(min_image_frame_dim.h);
-
-        send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
-        this->trans.send(payload.get_produced_bytes());
     }
 
 protected:
@@ -593,23 +587,7 @@ class WrmCaptureImpl :
 {
     struct Serializer final : GraphicToFile
     {
-        Serializer(MonotonicTimePoint now
-                , RealTimePoint real_now
-                , Transport & trans
-                , const BitsPerPixel capture_bpp
-                , const bool remote_app
-                , BmpCache & bmp_cache
-                , GlyphCache & gly_cache
-                , PointerCache & ptr_cache
-                , gdi::ImageFrameApi & image_frame_api
-                , WrmCompressionAlgorithm wrm_compression_algorithm
-                , SendInput send_input
-                , RDPSerializerVerbose verbose)
-            : GraphicToFile(now, real_now, trans, capture_bpp, remote_app,
-                            bmp_cache, gly_cache, ptr_cache,
-                            image_frame_api, wrm_compression_algorithm,
-                            send_input, verbose)
-        {}
+        using GraphicToFile::GraphicToFile;
 
         using GraphicToFile::draw;
 
@@ -662,9 +640,6 @@ class WrmCaptureImpl :
     const MonotonicTimeToRealTime original_monotonic_to_real;
 
     bool kbd_input_mask_enabled;
-
-    Rect      max_image_frame_rect;
-    Dimension min_image_frame_dim;
 
     BmpCache     bmp_cache;
     GlyphCache   gly_cache;
@@ -812,7 +787,8 @@ public:
 
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
-        gdi::ImageFrameApi & image_frame_api, ImageView const & image_view)
+        gdi::ImageFrameApi & image_frame_api, ImageView const & image_view,
+        Rect rail_window_rect)
     : next_break(capture_params.now + wrm_params.break_interval)
     , break_interval(wrm_params.break_interval)
     , original_monotonic_to_real(capture_params.now, capture_params.real_now)
@@ -841,25 +817,27 @@ public:
     , graphic_to_file(
         capture_params.now, capture_params.real_now,
         this->out, wrm_params.capture_bpp, wrm_params.remote_app,
-        this->bmp_cache, this->gly_cache, this->ptr_cache, image_frame_api,
-        wrm_params.wrm_compression_algorithm, GraphicToFile::SendInput::YES,
-        wrm_params.wrm_verbose)
+        rail_window_rect, this->bmp_cache, this->gly_cache,
+        this->ptr_cache, image_frame_api, wrm_params.wrm_compression_algorithm,
+        GraphicToFile::SendInput::YES, wrm_params.wrm_verbose)
     {}
 
-public:
     WrmCaptureImpl(
         const CaptureParams & capture_params, const WrmParams & wrm_params,
-        gdi::ImageFrameApi & image_frame_api)
-    : WrmCaptureImpl(capture_params, wrm_params, image_frame_api, image_frame_api.get_image_view())
+        gdi::ImageFrameApi & image_frame_api, Rect rail_window_rect)
+    : WrmCaptureImpl(
+        capture_params, wrm_params, image_frame_api,
+        image_frame_api.get_image_view(), rail_window_rect)
     {}
 
     ~WrmCaptureImpl() override
     {
-        if (!this->max_image_frame_rect.isempty()) {
-            this->graphic_to_file.send_image_frame_rect_chunk(this->max_image_frame_rect, this->min_image_frame_dim);
+        try {
+            this->graphic_to_file.sync();
         }
-
-        this->graphic_to_file.sync();
+        catch (Error const& error) {
+            LOG(LOG_ERR, "WrmCaptureImpl: error on destructor: %s", error.errmsg());
+        }
     }
 
     // shadow text
@@ -897,15 +875,6 @@ public:
         }
 
         return WaitingTimeBeforeNextSnapshot(this->next_break - now);
-    }
-
-    void visibility_rects_event(Rect rect) override {
-        if (!rect.isempty()) {
-            this->max_image_frame_rect = this->max_image_frame_rect.disjunct(rect);
-
-            this->min_image_frame_dim.w = std::max(this->min_image_frame_dim.w, rect.cx);
-            this->min_image_frame_dim.h = std::max(this->min_image_frame_dim.h, rect.cy);
-        }
     }
 
     void relayout(MonitorLayoutPDU const & monitor_layout_pdu) override {

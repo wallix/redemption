@@ -134,18 +134,22 @@ void FileToGraphic::clear_consumer()
 bool FileToGraphic::next_order()
 {
     if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
-        && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
+     && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK
+    ) {
         if (this->stream.get_current() == this->stream.get_data_end()
-            && this->remaining_order_count) {
+         && this->remaining_order_count
+        ) {
             LOG(LOG_ERR, "Incomplete order batch at chunk %u "
-                            "order [%d/%u] "
-                            "remaining [%zu/%u]",
-                            this->chunk_type,
-                            (this->chunk_count-this->remaining_order_count), this->chunk_count,
-                            this->stream.in_remain(), this->chunk_size);
+                         "order [%d/%u] remaining [%zu/%u]",
+                         this->chunk_type,
+                         this->chunk_count - this->remaining_order_count,
+                         this->chunk_count,
+                         this->stream.in_remain(),
+                         this->chunk_size);
             throw Error(ERR_WRM);
         }
     }
+
     if (!this->remaining_order_count){
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->sync();
@@ -162,7 +166,8 @@ bool FileToGraphic::next_order()
         this->statistics.total_read_len += this->chunk_size;
 
         if (this->chunk_type != WrmChunkType::LAST_IMAGE_CHUNK
-        && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK) {
+         && this->chunk_type != WrmChunkType::PARTIAL_IMAGE_CHUNK
+        ) {
             REDEMPTION_DIAGNOSTIC_PUSH()
             REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
             switch (this->chunk_type) {
@@ -200,7 +205,11 @@ bool FileToGraphic::next_order()
             this->statistics.internal_order_read_len += this->chunk_size;
         }
     }
-    if (this->remaining_order_count > 0){this->remaining_order_count--;}
+
+    if (this->remaining_order_count > 0) {
+        this->remaining_order_count--;
+    }
+
     return true;
 }
 
@@ -863,6 +872,13 @@ void FileToGraphic::interpret_order()
             cap_probe->possible_active_window_change();
         }
     break;
+
+    case WrmChunkType::RAIL_WINDOW_RECT_START:
+        this->rail_window_rect_start.x  = this->stream.in_sint16_le();
+        this->rail_window_rect_start.y  = this->stream.in_sint16_le();
+        this->rail_window_rect_start.cx = this->stream.in_uint16_le();
+        this->rail_window_rect_start.cy = this->stream.in_uint16_le();
+        break;
 
     case WrmChunkType::IMAGE_FRAME_RECT:
         this->max_image_frame_rect.x  = this->stream.in_sint16_le();

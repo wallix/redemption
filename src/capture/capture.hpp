@@ -32,6 +32,7 @@
 #include "capture/notify_next_video.hpp"
 #include "utils/ref.hpp"
 #include "utils/monotonic_clock.hpp"
+#include "capture/rail_screen_computation.hpp"
 
 #include <vector>
 #include <memory>
@@ -78,7 +79,8 @@ public:
         bool capture_kbd, const KbdLogParams& kbd_log_params,
         const VideoParams& video_params,
         UpdateProgressData * update_progress_data,
-        Rect const & crop_rect
+        Rect const & crop_rect,
+        Rect const & rail_window_rect
     );
 
     ~Capture();
@@ -116,8 +118,6 @@ public:
         MonotonicTimePoint now,
         uint16_t cursor_x, uint16_t cursor_y
     ) override;
-
-    void visibility_rects_event(Rect rect) override;
 
     void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
 
@@ -187,7 +187,7 @@ private:
     template<class... Ts>
     void draw_impl(const Ts & ... args);
 
-    [[nodiscard]] Rect get_join_visibility_rect() const;
+    void visibility_rects_event(Rect rect);
 
     // Title changed
     //@{
@@ -257,13 +257,7 @@ private:
 
     SmartVideoCropping smart_video_cropping;
 
-    uint32_t verbose = 0;
-
-    struct WindowRecord;
-    struct WindowVisibilityRectRecord;
-
-    std::vector<WindowRecord> windows;
-    std::vector<WindowVisibilityRectRecord> window_visibility_rects;
+    RailScreenVisibility rail_screen_visibility;
 
     bool old_kbd_input_mask_state = false;
 };

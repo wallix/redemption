@@ -368,17 +368,9 @@ struct WrmPlayer
             }
 
             case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
-                // nothing
-                break;
-
+            case WrmChunkType::RAIL_WINDOW_RECT_START:
             case WrmChunkType::IMAGE_FRAME_RECT:
-                this->_skip_chunk();
-                break;
-
             case WrmChunkType::KBD_INPUT_MASK:
-                this->in_stream.in_skip_bytes(1);
-                break;
-
             case WrmChunkType::MONITOR_LAYOUT:
                 this->_skip_chunk();
                 break;

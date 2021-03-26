@@ -1136,6 +1136,7 @@ public:
               , video_params
               , nullptr
               , Rect()
+              , this->client_info.remote_program ? this->rail_window_rect : Rect()
             ),
             &session_log
         };
@@ -1143,10 +1144,6 @@ public:
         if (this->capture->has_graphic_api()) {
             this->set_gd(this->capture.get());
             this->capture->add_graphic(this->orders.graphics_update_pdu());
-        }
-
-        if (this->client_info.remote_program && !this->rail_window_rect.isempty()) {
-            this->capture->visibility_rects_event(this->rail_window_rect);
         }
 
         this->capture_timer = this->events_guard.create_event_timeout(

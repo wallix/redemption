@@ -25,6 +25,7 @@
 #include "capture/sequenced_video_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "capture/regions_capture.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
@@ -851,63 +852,6 @@ struct CaptureTimes
     }
 };
 
-inline void get_join_visibility_rect(
-    InMultiCryptoTransport && in_wrm_trans,
-    SmartVideoCropping smart_video_cropping,
-    Rect & crop_rect,
-    Dimension & out_max_screen_dim,
-    bool play_video_with_corrupted_bitmap,
-    FileToGraphic::Verbose verbose)
-{
-    MonotonicTimePoint begin_capture {};
-    MonotonicTimePoint end_capture {};
-    FileToGraphic player(
-        in_wrm_trans, begin_capture, end_capture,
-        play_video_with_corrupted_bitmap,
-        verbose);
-
-    player.play(program_requested_to_shutdown);
-    auto& info = player.get_wrm_info();
-
-    if (info.remote_app) {
-        switch (smart_video_cropping)
-        {
-            case SmartVideoCropping::v1:
-                break;
-
-            case SmartVideoCropping::v2:
-                crop_rect = Rect(0, 0,
-                    std::min(player.min_image_frame_dim.w, info.width),
-                    std::min(player.min_image_frame_dim.h, info.height));
-                if (!crop_rect.isempty()) {
-                    if (crop_rect.cx & 1) {
-                        crop_rect.cx++;
-                    }
-
-                    crop_rect.x = (info.width  - crop_rect.cx) / 2;
-                    crop_rect.y = (info.height - crop_rect.cy) / 2;
-                }
-                break;
-
-            case SmartVideoCropping::disable:
-                crop_rect = player.max_image_frame_rect.intersect(info.width, info.height);
-                if (crop_rect.cx & 1) {
-                    if (crop_rect.x + crop_rect.cx < info.width) {
-                        crop_rect.cx += 1;
-                    }
-                    else if (crop_rect.x > 0) {
-                        crop_rect.x  -= 1;
-                        crop_rect.cx += 1;
-                    }
-                }
-                break;
-        }
-    }
-
-    // in META_FILE
-    out_max_screen_dim = player.max_screen_dim;
-}
-
 static inline int replay(
     InMultiCryptoTransport&& in_wrm_trans,
     std::vector<MetaLine> const& wrm_lines,
@@ -1153,6 +1097,8 @@ static inline int replay(
                                 , video_params
                                 , &update_progress_data
                                 , crop_rect
+                                // TODO rail_window_rect
+                                , Rect()
                             );
 
                             player.clear_consumer();
@@ -1897,17 +1843,20 @@ extern "C" {
             Rect      crop_rect;
             Dimension max_screen_dim;
             try {
-                get_join_visibility_rect(
-                    InMultiCryptoTransport(wrm_filenames, cctx, mwrm_infos.encryption_mode),
+                InMultiCryptoTransport trans(wrm_filenames, cctx, mwrm_infos.encryption_mode);
+                auto r = RegionsCapture::compute_regions(
+                    trans,
                     ini.get<cfg::video::smart_video_cropping>(),
-                    crop_rect,
-                    max_screen_dim,
+                    MonotonicTimePoint(),
+                    MonotonicTimePoint(),
                     ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
-                    safe_cast<FileToGraphic::Verbose>(verbose)
-                );
+                    safe_cast<FileToGraphic::Verbose>(verbose));
+                crop_rect = r.crop_rect;
+                max_screen_dim = r.max_screen_dim;
             }
-            catch (Error const&) {
-                // ignore exceptions, logged within replay()
+            catch (Error const& e) {
+                const bool msg_with_error_id = false;
+                raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
             }
 
             CaptureTimes capture_times {rp.begin_cap, rp.end_cap};

@@ -49,7 +49,7 @@ public:
             override { this->sink.draw(cmd, clip, color_ctx); }
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
             override { this->sink.draw(cmd, clip, color_ctx); }
-    void draw(RDPMultiOpaqueRect  const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+    void draw(RDPMultiOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
             override { this->sink.draw(cmd, clip, color_ctx); }
     void draw(RDPScrBlt const & cmd, Rect clip)
             override { this->sink.draw(cmd, clip); }
@@ -76,7 +76,7 @@ public:
         override { this->sink.draw(cmd); }
     void draw(RDPMemBlt const & cmd, Rect clip)
         override { this->sink.draw(cmd, clip); }
-    void draw(RDPMem3Blt const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    void draw(RDPMem3Blt const & cmd, Rect clip, ColorCtx color_ctx)
         override { this->sink.draw(cmd, clip, color_ctx); }
 #else
     void draw(RDPMemBlt const & cmd, Rect clip, Bitmap const & bmp)

@@ -70,8 +70,6 @@ struct CaptureApi : private noncopyable
     {
         this->periodic_snapshot(now, cursor_x, cursor_y);
     }
-
-    virtual void visibility_rects_event(Rect /*rect*/) {}
 };
 
 

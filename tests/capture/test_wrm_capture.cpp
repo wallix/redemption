@@ -63,7 +63,7 @@ namespace
             WorkingDirectory& tmp_wd,
             char const* filebase = "capture",
             uint16_t cx = 0, uint16_t cy = 0,
-            bool remote_app = false)
+            bool remote_app = false, Rect rail_window_rect = Rect())
         : gd_drawable(cx ? cx : scr.cx, cy ? cy : scr.cy)
         , wrm(
             CaptureParams{
@@ -96,7 +96,8 @@ namespace
                 RDPSerializerVerbose::none,
                 FilePermissions(0777),
             },
-            gd_drawable)
+            gd_drawable,
+            rail_window_rect)
         {}
     };
 }
@@ -495,105 +496,6 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         int_to_decimal_chars(st.st_ctim.tv_sec), '\n')});
     RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_kbd_input.mwrm"), array_view{str_concat(
         "v2\n\n\ncapture_kbd_input.mwrm ",
-        int_to_decimal_chars(mst.st_size), ' ',
-        int_to_decimal_chars(mst.st_mode), ' ',
-        int_to_decimal_chars(mst.st_uid), ' ',
-        int_to_decimal_chars(mst.st_gid), ' ',
-        int_to_decimal_chars(mst.st_dev), ' ',
-        int_to_decimal_chars(mst.st_ino), ' ',
-        int_to_decimal_chars(mst.st_mtim.tv_sec), ' ',
-        int_to_decimal_chars(mst.st_ctim.tv_sec), '\n')});
-
-    RED_CHECK_WORKSPACE(record_wd);
-    RED_CHECK_WORKSPACE(hash_wd);
-    RED_CHECK_WORKSPACE(tmp_wd);
-}
-
-RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
-{
-    WorkingDirectory record_wd("record");
-    WorkingDirectory hash_wd("hash");
-    WorkingDirectory tmp_wd("tmp");
-
-    {
-        WrmForTest wrm_test(TraceType::localfile, record_wd, hash_wd, tmp_wd,
-            "capture_remoteapp", 0, 0, true);
-        auto& wrm = wrm_test.wrm;
-        auto now = wrm_test.now;
-
-        const auto scr = wrm_test.scr;
-        auto const color_cxt = gdi::ColorCtx::depth24();
-
-        wrm.send_timestamp_chunk(now);
-
-        wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);
-
-        Rect rect = Rect(50, 50, 320, 200);
-        wrm.draw(RDPOpaqueRect(rect, encode_color24()(YELLOW)), rect, color_cxt);
-        wrm.visibility_rects_event(rect);
-
-
-        now += 1s;
-        wrm.send_timestamp_chunk(now);
-
-        wrm.draw(RDPOpaqueRect(scr, encode_color24()(BLACK)), scr, color_cxt);
-
-        rect = Rect(125, 75, 370, 250);
-        wrm.draw(RDPOpaqueRect(rect, encode_color24()(BLUE)), rect, color_cxt);
-        wrm.visibility_rects_event(rect);
-
-        wrm.send_timestamp_chunk(now);
-    }
-
-    auto first_file = record_wd.add_file("capture_remoteapp-000000.wrm");
-
-    int fd = ::open(first_file.c_str(), O_RDONLY);
-    RED_REQUIRE_NE(fd, -1);
-    InFileTransport in_wrm_trans(unique_fd{fd});
-
-    FileToGraphic player(in_wrm_trans, {}, {}, false, FileToGraphic::Verbose(0));
-
-    while(player.next_order())
-    {
-        player.interpret_order();
-    }
-
-    RED_CHECK(player.get_wrm_info().remote_app);
-    RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
-    RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
-
-    auto mwrm = record_wd.add_file("capture_remoteapp.mwrm");
-    auto st = get_stat(first_file);
-    auto mst = get_stat(mwrm);
-    RED_TEST_FILE_SIZE(first_file, 1694);
-    RED_TEST_FILE_CONTENTS(mwrm, array_view{str_concat(
-        "v2\n"
-        "800 600\n"
-        "nochecksum\n"
-        "\n"
-        "\n",
-        first_file, " 1694 ",
-        int_to_decimal_chars(st.st_mode), ' ',
-        int_to_decimal_chars(st.st_uid), ' ',
-        int_to_decimal_chars(st.st_gid), ' ',
-        int_to_decimal_chars(st.st_dev), ' ',
-        int_to_decimal_chars(st.st_ino), ' ',
-        int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
-        int_to_decimal_chars(st.st_ctim.tv_sec), " 1000 1002\n")});
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_remoteapp-000000.wrm"), array_view{str_concat(
-        "v2\n"
-        "\n"
-        "\n"
-        "capture_remoteapp-000000.wrm 1694 ",
-        int_to_decimal_chars(st.st_mode), ' ',
-        int_to_decimal_chars(st.st_uid), ' ',
-        int_to_decimal_chars(st.st_gid), ' ',
-        int_to_decimal_chars(st.st_dev), ' ',
-        int_to_decimal_chars(st.st_ino), ' ',
-        int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
-        int_to_decimal_chars(st.st_ctim.tv_sec), '\n')});
-    RED_TEST_FILE_CONTENTS(hash_wd.add_file("capture_remoteapp.mwrm"), array_view{str_concat(
-        "v2\n\n\ncapture_remoteapp.mwrm ",
         int_to_decimal_chars(mst.st_size), ' ',
         int_to_decimal_chars(mst.st_mode), ' ',
         int_to_decimal_chars(mst.st_uid), ' ',

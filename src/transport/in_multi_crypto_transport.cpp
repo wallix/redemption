@@ -46,6 +46,10 @@ bool InMultiCryptoTransport::next()
         throw Error(ERR_TRANSPORT_NO_MORE_DATA, errno);
     }
 
+    if (this->in_file.is_open()) {
+        this->in_file.close();
+    }
+
     this->in_file.open(this->filenames[this->pos].c_str());
     ++this->pos;
     return true;

@@ -149,7 +149,7 @@ private:
             const uint16_t width, const uint16_t height,
             CaptureParams const& capture_params, WrmParams const& wrm_params)
         : drawable(width, height)
-        , wrm_capture(capture_params, wrm_params, this->drawable)
+        , wrm_capture(capture_params, wrm_params, this->drawable, Rect())
         {}
     };
     std::unique_ptr<Capture>  capture;
