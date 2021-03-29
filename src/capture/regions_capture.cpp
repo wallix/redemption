@@ -26,18 +26,16 @@ Author(s): Proxies Team
 RegionsCapture RegionsCapture::compute_regions(
     Transport & trans,
     SmartVideoCropping smart_video_cropping,
-    MonotonicTimePoint begin_capture,
     MonotonicTimePoint end_capture,
     bool play_video_with_corrupted_bitmap,
+    ExplicitCRef<bool> requested_to_shutdown,
     FileToGraphic::Verbose verbose)
 {
-    // TODO bad implementation of begin_capture/end_capture
-
     RegionsCapture ret;
 
     FileToGraphic reader(
-        trans, begin_capture, end_capture, play_video_with_corrupted_bitmap,
-        verbose);
+        trans, MonotonicTimePoint(), end_capture,
+        play_video_with_corrupted_bitmap, verbose);
 
     ret.is_remote_app = reader.get_wrm_info().remote_app;
 
@@ -54,21 +52,21 @@ RegionsCapture RegionsCapture::compute_regions(
             reader.get_wrm_info().height,
             bool(verbose));
 
-        ret.rail_window_rect_start = reader.rail_window_rect_start;
-        rail_computation.visibility_rect_event(reader.rail_window_rect_start);
+        ret.rail_window_rect_start = reader.rail_wrm_window_rect;
+        rail_computation.visibility_rect_event(reader.rail_wrm_window_rect);
 
         reader.add_consumer(
             &rail_computation, nullptr, nullptr, nullptr, nullptr, nullptr,
             &rail_computation);
 
-        while (reader.next_order()) {
+        while (!requested_to_shutdown && reader.next_order()) {
             reader.interpret_order();
         }
 
         ret.max_image_frame_rect = rail_computation.get_max_image_frame_rect();
         ret.min_image_frame_dim = rail_computation.get_min_image_frame_dim();
 
-        // IMAGE_FRAME_RECT (obsolete packet, replaced by RAIL_WINDOW_RECT_START)
+        // IMAGE_FRAME_RECT (obsolete packet, replaced by RAIL_WINDOW_RECT)
         if (!reader.max_image_frame_rect.isempty()) {
             ret.max_image_frame_rect
               = ret.max_image_frame_rect.disjunct(reader.max_image_frame_rect);
@@ -112,11 +110,11 @@ RegionsCapture RegionsCapture::compute_regions(
         // max_screen_dim is in META_FILE
         ret.max_screen_dim = reader.max_screen_dim;
         try {
-            for (;;) {
+            while (!requested_to_shutdown) {
                 trans.next();
                 FileToGraphic reader(
-                    trans, begin_capture, end_capture, play_video_with_corrupted_bitmap,
-                    verbose);
+                    trans, MonotonicTimePoint(), end_capture,
+                    play_video_with_corrupted_bitmap, verbose);
                 set_max_dim(ret.max_screen_dim, reader.max_screen_dim);
             }
         }

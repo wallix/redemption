@@ -34,4 +34,45 @@ private:
 };
 
 template<class T>
-using CRef = Ref<const T>;
+struct Ref<T const>
+{
+    Ref(Ref&&) noexcept = default;
+    Ref(Ref const&) noexcept = default;
+
+    Ref(Ref<T> const& other) noexcept : Ref(other.get()) {}
+
+    Ref(T const& ref) noexcept : _p(&ref) {}
+    Ref(T const&& ref) = delete;
+    Ref(T&& ref) = delete;
+
+    operator T const& () const noexcept { return *_p; }
+    T const& get() const noexcept { return *_p; }
+
+private:
+    T const* _p;
+};
+
+template<class T>
+using CRef = Ref<T const>;
+
+
+template<class T>
+struct ExplicitRef : Ref<T>
+{
+    explicit ExplicitRef(T& ref) noexcept : Ref<T>(ref) {}
+    explicit ExplicitRef(T&& ref) = delete;
+};
+
+template<class T>
+struct ExplicitCRef : Ref<T const>
+{
+    explicit ExplicitCRef(T const& ref) noexcept : Ref<T const>(ref) {}
+    explicit ExplicitCRef(T const&& ref) = delete;
+    explicit ExplicitCRef(T&& ref) = delete;
+};
+
+template<class T>
+struct ExplicitRef<T const> : ExplicitCRef<T>
+{
+    using ExplicitCRef<T>::ExplicitCRef;
+};

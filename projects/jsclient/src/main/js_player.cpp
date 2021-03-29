@@ -368,7 +368,7 @@ struct WrmPlayer
             }
 
             case WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE:
-            case WrmChunkType::RAIL_WINDOW_RECT_START:
+            case WrmChunkType::RAIL_WINDOW_RECT:
             case WrmChunkType::IMAGE_FRAME_RECT:
             case WrmChunkType::KBD_INPUT_MASK:
             case WrmChunkType::MONITOR_LAYOUT:

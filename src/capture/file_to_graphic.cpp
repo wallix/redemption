@@ -873,11 +873,11 @@ void FileToGraphic::interpret_order()
         }
     break;
 
-    case WrmChunkType::RAIL_WINDOW_RECT_START:
-        this->rail_window_rect_start.x  = this->stream.in_sint16_le();
-        this->rail_window_rect_start.y  = this->stream.in_sint16_le();
-        this->rail_window_rect_start.cx = this->stream.in_uint16_le();
-        this->rail_window_rect_start.cy = this->stream.in_uint16_le();
+    case WrmChunkType::RAIL_WINDOW_RECT:
+        this->rail_wrm_window_rect.x  = this->stream.in_sint16_le();
+        this->rail_wrm_window_rect.y  = this->stream.in_sint16_le();
+        this->rail_wrm_window_rect.cx = this->stream.in_uint16_le();
+        this->rail_wrm_window_rect.cy = this->stream.in_uint16_le();
         break;
 
     case WrmChunkType::IMAGE_FRAME_RECT:

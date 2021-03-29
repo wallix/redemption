@@ -20,6 +20,7 @@ Author(s): Proxies Team
 
 #pragma once
 
+#include "utils/ref.hpp"
 #include "utils/rect.hpp"
 #include "utils/monotonic_clock.hpp"
 #include "configs/autogen/enums.hpp"
@@ -32,9 +33,9 @@ struct RegionsCapture
     static RegionsCapture compute_regions(
         Transport & trans,
         SmartVideoCropping smart_video_cropping,
-        MonotonicTimePoint begin_capture,
         MonotonicTimePoint end_capture,
         bool play_video_with_corrupted_bitmap,
+        ExplicitCRef<bool> requested_to_shutdown,
         FileToGraphic::Verbose verbose);
 
     bool      is_remote_app = false;

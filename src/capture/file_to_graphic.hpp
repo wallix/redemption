@@ -142,7 +142,7 @@ private:
     WrmMetaChunk info {};
 
 public:
-    Rect      rail_window_rect_start;
+    Rect      rail_wrm_window_rect;
     Rect      max_image_frame_rect;
     Dimension min_image_frame_dim;
 

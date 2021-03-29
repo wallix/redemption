@@ -1779,6 +1779,9 @@ void Capture::visibility_rects_event(Rect rect) {
     if (this->png_real_time_capture_obj) {
         this->png_real_time_capture_obj->visibility_rects_event(rect);
     }
+    if (this->wrm_capture_obj) {
+        this->wrm_capture_obj->visibility_rects_event(rect);
+    }
 
     if (this->smart_video_cropping == SmartVideoCropping::disable
      || this->smart_video_cropping == SmartVideoCropping::v1

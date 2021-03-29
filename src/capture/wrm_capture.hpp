@@ -129,6 +129,7 @@ class GraphicToFile : public RDPSerializer
     const uint8_t wrm_format_version;
 
     const bool remote_app;
+    Rect rail_window_rect;
 
 public:
     enum class SendInput { NO, YES };
@@ -161,6 +162,7 @@ public:
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(remote_app ? 5 : (bool(this->compression_builder.get_algorithm()) ? 4 : 3))
     , remote_app(remote_app)
+    , rail_window_rect(rail_window_rect)
     {
         if (wrm_compression_algorithm != this->compression_builder.get_algorithm()) {
             LOG( LOG_WARNING, "compression algorithm %u not fount. Compression disable."
@@ -169,17 +171,6 @@ public:
 
         this->send_meta_chunk();
         this->send_image_chunk();
-
-        if (!rail_window_rect.isempty()) {
-            StaticOutStream<32> payload;
-            payload.out_sint16_le(rail_window_rect.x);
-            payload.out_sint16_le(rail_window_rect.y);
-            payload.out_uint16_le(rail_window_rect.cx);
-            payload.out_uint16_le(rail_window_rect.cy);
-            send_wrm_chunk(this->trans, WrmChunkType::RAIL_WINDOW_RECT_START, payload.get_offset(), 0);
-            this->trans.send(payload.get_produced_bytes());
-        }
-
         this->send_time_points();
     }
 
@@ -295,6 +286,22 @@ public:
 
           , this->remote_app
         }.send(this->trans_target);
+
+        if (this->remote_app && !this->rail_window_rect.isempty()) {
+            StaticOutStream<32> payload;
+            payload.out_sint16_le(rail_window_rect.x);
+            payload.out_sint16_le(rail_window_rect.y);
+            payload.out_uint16_le(rail_window_rect.cx);
+            payload.out_uint16_le(rail_window_rect.cy);
+            send_wrm_chunk(this->trans, WrmChunkType::RAIL_WINDOW_RECT,
+                payload.get_offset(), 0);
+            this->trans.send(payload.get_produced_bytes());
+        }
+    }
+
+    void visibility_rects_event(Rect rect)
+    {
+        this->rail_window_rect = rect;
     }
 
     // this one is used to store some embedded image inside WRM
@@ -829,6 +836,11 @@ public:
         capture_params, wrm_params, image_frame_api,
         image_frame_api.get_image_view(), rail_window_rect)
     {}
+
+    void visibility_rects_event(Rect rect)
+    {
+        this->graphic_to_file.visibility_rects_event(rect);
+    }
 
     ~WrmCaptureImpl() override
     {

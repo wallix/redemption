@@ -1819,23 +1819,41 @@ extern "C" {
             auto const mwrm_filename = str_concat(mwrm_prefix, rp.infile_extension);
 
             auto mwrm_infos = load_mwrm_file_data(mwrm_filename.c_str(), cctx, encryption_mode);
+            auto& wrms = mwrm_infos.wrms;
+
+            if (wrms.empty()) {
+                return raise_error_and_log(
+                    rp.output_filename, -1, "wrm file not found in mwrm file"_zv
+                );
+            }
+
+            CaptureTimes capture_times {rp.begin_cap, rp.end_cap};
+
+            // consumes the first wrm
+            if (capture_times.begin_cap.count()) {
+                auto it = std::find_if(wrms.begin(), wrms.end(), [&](MetaLine const& meta_line){
+                    using Seconds = std::chrono::seconds;
+                    return Seconds(meta_line.stop_time) > capture_times.begin_cap;
+                });
+                if (it != wrms.end()) {
+                    wrms.erase(wrms.begin(), it);
+                }
+                else {
+                    return raise_error_and_log(
+                        rp.output_filename, -1, "no recording on the requested time slot"_zv
+                    );
+                }
+            }
+
             std::vector<std::string> wrm_filenames;
 
             if (int r = update_filename_and_check_size(rp.output_filename,
-                                                       mwrm_infos.wrms,
+                                                       wrms,
                                                        wrm_filenames,
                                                        rp.mwrm_path,
                                                        rp.ignore_file_size)
             ) {
                 return r;
-            }
-
-            auto const& wrms = mwrm_infos.wrms;
-
-            if (wrms.empty()) {
-                return raise_error_and_log(
-                    rp.output_filename, -1, "wrm file not foudn in mwrm file"_zv
-                );
             }
 
             ini.set<cfg::video::hash_path>(rp.hash_path);
@@ -1847,9 +1865,9 @@ extern "C" {
                 auto r = RegionsCapture::compute_regions(
                     trans,
                     ini.get<cfg::video::smart_video_cropping>(),
-                    MonotonicTimePoint(),
-                    MonotonicTimePoint(),
+                    MonotonicTimePoint(capture_times.end_cap),
                     ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
+                    ExplicitCRef(program_requested_to_shutdown),
                     safe_cast<FileToGraphic::Verbose>(verbose));
                 crop_rect = r.crop_rect;
                 max_screen_dim = r.max_screen_dim;
@@ -1859,7 +1877,6 @@ extern "C" {
                 raise_error(rp.output_filename, e.id, e.errmsg(msg_with_error_id));
             }
 
-            CaptureTimes capture_times {rp.begin_cap, rp.end_cap};
             capture_times.adjust_time(
                 std::chrono::seconds(wrms.back().start_time),
                 std::chrono::seconds(wrms.front().stop_time));
