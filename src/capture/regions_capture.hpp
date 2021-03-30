@@ -33,6 +33,8 @@ struct RegionsCapture
     static RegionsCapture compute_regions(
         Transport & trans,
         SmartVideoCropping smart_video_cropping,
+        MonotonicTimePoint::duration interval_time_for_frame_maker_end,
+        MonotonicTimePoint begin_capture,
         MonotonicTimePoint end_capture,
         bool play_video_with_corrupted_bitmap,
         ExplicitCRef<bool> requested_to_shutdown,
@@ -44,4 +46,12 @@ struct RegionsCapture
     Rect      crop_rect;
     Dimension min_image_frame_dim;
     Dimension max_screen_dim;
+
+    struct UpdatableFrameMarkerEnd
+    {
+        std::unique_ptr<unsigned long long[]> p;
+        std::size_t len;
+    };
+
+    UpdatableFrameMarkerEnd updatable_frame_marker_end {};
 };

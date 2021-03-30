@@ -880,6 +880,7 @@ static inline int replay(
     Inifile & ini, CryptoContext & cctx,
     Rect const & crop_rect,
     Dimension const & max_screen_dim,
+    array_view<unsigned long long> updatable_frame_marker_end_bitset_view,
     Random & rnd,
     uint32_t verbose)
 {
@@ -1009,6 +1010,8 @@ static inline int replay(
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
                         ini.set<cfg::video::codec_id>(video_params.codec);
                         video_params = video_params_from_ini(video_break_interval, ini);
+                        video_params.updatable_frame_marker_end_bitset_view
+                            = updatable_frame_marker_end_bitset_view;
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
@@ -1860,17 +1863,28 @@ extern "C" {
 
             Rect      crop_rect;
             Dimension max_screen_dim;
+            array_view<unsigned long long> updatable_frame_marker_end_bitset_view;
+            std::unique_ptr<unsigned long long[]> updatable_frame_marker_end_bitset;
             try {
                 InMultiCryptoTransport trans(wrm_filenames, cctx, mwrm_infos.encryption_mode);
                 auto r = RegionsCapture::compute_regions(
                     trans,
                     ini.get<cfg::video::smart_video_cropping>(),
+                    rp.chunk || rp.full_video || bool(rp.capture_flags & CaptureFlags::video)
+                        ? std::chrono::microseconds(1000000L / ini.get<cfg::video::framerate>())
+                        : MonotonicTimePoint::duration(),
+                    MonotonicTimePoint(capture_times.begin_cap),
                     MonotonicTimePoint(capture_times.end_cap),
                     ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                     ExplicitCRef(program_requested_to_shutdown),
                     safe_cast<FileToGraphic::Verbose>(verbose));
                 crop_rect = r.crop_rect;
                 max_screen_dim = r.max_screen_dim;
+                updatable_frame_marker_end_bitset = std::move(r.updatable_frame_marker_end.p);
+                updatable_frame_marker_end_bitset_view = {
+                    updatable_frame_marker_end_bitset.get(),
+                    r.updatable_frame_marker_end.len
+                };
             }
             catch (Error const& e) {
                 const bool msg_with_error_id = false;
@@ -1910,8 +1924,13 @@ extern "C" {
                          rp.wrm_compression_algorithm,
                          rp.video_break_interval,
                          rp.encryption_type,
-                         ini, cctx, crop_rect, max_screen_dim,
-                         rnd, verbose);
+                         ini,
+                         cctx,
+                         crop_rect,
+                         max_screen_dim,
+                         updatable_frame_marker_end_bitset_view,
+                         rnd,
+                         verbose);
 
             } catch (const Error & e) {
                 std::cout << "decrypt failed: with id=" << e.id << std::endl;

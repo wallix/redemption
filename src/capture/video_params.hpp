@@ -24,6 +24,7 @@
 #include <chrono>
 
 #include "configs/autogen/enums.hpp"
+#include "utils/sugar/array_view.hpp"
 
 struct VideoParams
 {
@@ -34,6 +35,6 @@ struct VideoParams
     bool capture_chunk;
     bool bogus_vlc_frame_rate;
     std::chrono::microseconds video_interval;
-
     unsigned verbosity;
+    array_view<unsigned long long> updatable_frame_marker_end_bitset_view {};
 };

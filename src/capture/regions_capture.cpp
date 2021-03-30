@@ -21,11 +21,77 @@ Author(s): Proxies Team
 #include "capture/regions_capture.hpp"
 #include "capture/file_to_graphic.hpp"
 #include "capture/rail_screen_computation.hpp"
+#include "gdi/updatable_graphics.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
+#include "utils/bitset_stream.hpp"
 
+namespace
+{
+
+constexpr std::size_t updatable_frame_end_buffer_size = 16*1024*1024;
+
+struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics
+{
+    UpdatableFrameMarkerEndGraphics(
+        MonotonicTimePoint::duration interval,
+        CRef<FileToGraphic> ftg)
+    : ftg(ftg)
+    , next_time(this->ftg.get_monotonic_time())
+    , interval(interval)
+    {}
+
+    using gdi::UpdatableGraphics::draw;
+
+    void draw(RDP::FrameMarker const & cmd) override
+    {
+        if (cmd.action == RDP::FrameMarker::FrameEnd) {
+            if (is_updatable_frame()) {
+                if (next_time <= ftg.get_monotonic_time()) {
+                    updatable_frame_end_bitset_stream.write(previous_drawing_event);
+                    previous_drawing_event = false;
+                    auto elapsed = ftg.get_monotonic_time() - next_time;
+                    next_time += elapsed / interval * interval + interval;
+                }
+                else {
+                    updatable_frame_end_bitset_stream.write(false);
+                }
+            }
+            first_frame = false;
+            previous_drawing_event = previous_drawing_event || has_drawing_event();
+            set_drawing_event(false);
+        }
+    }
+
+    void last_frame()
+    {
+        if (is_updatable_frame()) {
+            updatable_frame_end_bitset_stream.write(previous_drawing_event);
+        }
+    }
+
+    bool is_updatable_frame() const
+    {
+        return !first_frame
+            && updatable_frame_end_bitset_stream.current() != updatable_frame_last_it
+            ;
+    }
+
+    FileToGraphic const& ftg;
+    MonotonicTimePoint next_time;
+    MonotonicTimePoint::duration interval;
+    BitsetOutStream updatable_frame_end_bitset_stream;
+    unsigned long long* updatable_frame_last_it = nullptr;
+    bool previous_drawing_event = true;
+    bool first_frame = true;
+};
+
+}
 
 RegionsCapture RegionsCapture::compute_regions(
     Transport & trans,
     SmartVideoCropping smart_video_cropping,
+    MonotonicTimePoint::duration interval_time_for_frame_maker_end,
+    MonotonicTimePoint begin_capture,
     MonotonicTimePoint end_capture,
     bool play_video_with_corrupted_bitmap,
     ExplicitCRef<bool> requested_to_shutdown,
@@ -37,11 +103,46 @@ RegionsCapture RegionsCapture::compute_regions(
         trans, MonotonicTimePoint(), end_capture,
         play_video_with_corrupted_bitmap, verbose);
 
+    UpdatableFrameMarkerEndGraphics updatable_frame_end{
+        interval_time_for_frame_maker_end, reader};
+
     ret.is_remote_app = reader.get_wrm_info().remote_app;
 
     auto set_max_dim = [](Dimension& dim, Dimension const& other){
         dim.w = std::max(dim.w, other.w);
         dim.h = std::max(dim.h, other.h);
+    };
+
+    auto consume_all_orders = [&]{
+        if (interval_time_for_frame_maker_end.count()) {
+            if (begin_capture > reader.get_monotonic_time()) {
+                while (!requested_to_shutdown && reader.next_order()) {
+                    reader.interpret_order();
+
+                    if (begin_capture <= reader.get_monotonic_time()) {
+                        break;
+                    }
+                }
+            }
+
+            ret.updatable_frame_marker_end.len = updatable_frame_end_buffer_size;
+            ret.updatable_frame_marker_end.p
+                = std::make_unique<unsigned long long[]>(updatable_frame_end_buffer_size);
+
+            updatable_frame_end.updatable_frame_end_bitset_stream
+                = BitsetOutStream(ret.updatable_frame_marker_end.p.get());
+            updatable_frame_end.updatable_frame_last_it
+                = ret.updatable_frame_marker_end.p.get() + updatable_frame_end_buffer_size;
+
+            reader.add_consumer(
+                &updatable_frame_end, nullptr, nullptr, nullptr,
+                nullptr, nullptr, nullptr
+            );
+        }
+
+        while (!requested_to_shutdown && reader.next_order()) {
+            reader.interpret_order();
+        }
     };
 
     if (ret.is_remote_app
@@ -59,9 +160,7 @@ RegionsCapture RegionsCapture::compute_regions(
             &rail_computation, nullptr, nullptr, nullptr, nullptr, nullptr,
             &rail_computation);
 
-        while (!requested_to_shutdown && reader.next_order()) {
-            reader.interpret_order();
-        }
+        consume_all_orders();
 
         ret.max_image_frame_rect = rail_computation.get_max_image_frame_rect();
         ret.min_image_frame_dim = rail_computation.get_min_image_frame_dim();
@@ -106,20 +205,42 @@ RegionsCapture RegionsCapture::compute_regions(
                 break;
         }
     }
+    else if (interval_time_for_frame_maker_end.count()) {
+        consume_all_orders();
+        ret.max_screen_dim = reader.max_screen_dim;
+    }
     else {
         // max_screen_dim is in META_FILE
         ret.max_screen_dim = reader.max_screen_dim;
         try {
-            while (!requested_to_shutdown) {
+            auto t = reader.get_monotonic_time();
+            while (!requested_to_shutdown && t <= end_capture) {
                 trans.next();
                 FileToGraphic reader(
                     trans, MonotonicTimePoint(), end_capture,
                     play_video_with_corrupted_bitmap, verbose);
                 set_max_dim(ret.max_screen_dim, reader.max_screen_dim);
+                t = reader.get_monotonic_time();
             }
         }
         catch (...) {
             // ERR_NO_MORE_DATA
+        }
+    }
+
+    updatable_frame_end.last_frame();
+
+    // update ret.updatable_frame_marker_end.len
+    if (auto* p = ret.updatable_frame_marker_end.p.get()) {
+        auto* curr = updatable_frame_end.updatable_frame_end_bitset_stream.current();
+        if (p != curr) {
+            auto dist = curr - p;
+            dist += updatable_frame_end.updatable_frame_end_bitset_stream.is_partial();
+            ret.updatable_frame_marker_end.len = std::size_t(dist);
+        }
+        else {
+            ret.updatable_frame_marker_end.p.reset();
+            ret.updatable_frame_marker_end.len = 0;
         }
     }
 

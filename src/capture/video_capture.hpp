@@ -25,12 +25,13 @@
 #include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
 #include "gdi/capture_api.hpp"
-#include "gdi/graphic_api_forwarder.hpp"
+#include "gdi/updatable_graphics.hpp"
 #include "transport/file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "utils/monotonic_time_to_real_time.hpp"
 #include "utils/scaled_image24.hpp"
+#include "utils/bitset_stream.hpp"
 
 #include <chrono>
 #include <optional>
@@ -42,26 +43,6 @@ class RDPDrawable;
 
 struct VideoCaptureCtx : noncopyable
 {
-    struct UpdatableDraw
-    {
-        template<class... Ts>
-        void draw(Ts const&...);
-
-        void draw(RDP::FrameMarker const & /*cmd*/) {}
-
-        void set_pointer(
-            uint16_t /*cache_idx*/, Pointer const& /*cursor*/,
-            gdi::GraphicApi::SetPointerMode /*mode*/);
-        void set_palette(BGRPalette const & /*palette*/) {}
-        void sync() {}
-
-        void set_row(std::size_t /*rownum*/, bytes_view /*data*/) {}
-        void begin_update() {}
-        void end_update() {}
-
-        bool has_draw_event = true;
-    };
-
     enum class ImageByInterval : unsigned char
     {
         OneWithTimestamp,
@@ -76,18 +57,24 @@ struct VideoCaptureCtx : noncopyable
         ImageByInterval image_by_interval,
         unsigned frame_rate,
         RDPDrawable & drawable,
-        gdi::ImageFrameApi & image_frame
+        gdi::ImageFrameApi & image_frame,
+        array_view<BitsetInStream::underlying_type> updatable_frame_marker_end_bitset_view
     );
 
+    gdi::GraphicApi& graphics_api() noexcept
+    {
+        return this->updatable_graphics;
+    }
+
     void frame_marker_event(
-        video_recorder & recorder, MonotonicTimePoint now, bool & has_draw_event,
+        video_recorder & recorder, MonotonicTimePoint now,
         uint16_t cursor_x, uint16_t cursor_y);
 
     gdi::CaptureApi::WaitingTimeBeforeNextSnapshot snapshot(
-        video_recorder& recorder, MonotonicTimePoint now, bool & has_draw_event,
+        video_recorder& recorder, MonotonicTimePoint now,
         uint16_t cursor_x, uint16_t cursor_y);
 
-    void encoding_end_frame(video_recorder & recorder, bool & has_draw_event);
+    void encoding_end_frame(video_recorder & recorder);
 
     void next_video(video_recorder & recorder);
 
@@ -111,15 +98,18 @@ private:
 
     gdi::ImageFrameApi & image_frame_api;
 
+    gdi::UpdatableGraphics updatable_graphics;
+    BitsetInStream updatable_frame_marker_end_bitset_stream;
+    BitsetInStream::underlying_type const* updatable_frame_marker_end_bitset_end;
+
 public:
     TimestampTracer timestamp_tracer;
 };
 
 
-struct FullVideoCaptureImpl final
-  : gdi::CaptureApi
-  , public gdi::GraphicApiForwarder<VideoCaptureCtx::UpdatableDraw>
+class FullVideoCaptureImpl final : public gdi::CaptureApi
 {
+public:
     FullVideoCaptureImpl(
         CaptureParams const & capture_params,
         RDPDrawable & drawable, gdi::ImageFrameApi & image_frame,
@@ -127,6 +117,11 @@ struct FullVideoCaptureImpl final
     );
 
     ~FullVideoCaptureImpl();
+
+    gdi::GraphicApi& graphics_api() noexcept
+    {
+        return this->video_cap_ctx.graphics_api();
+    }
 
     void frame_marker_event(
         MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
@@ -144,9 +139,7 @@ private:
 };
 
 
-class SequencedVideoCaptureImpl final
-  : public gdi::CaptureApi
-  , public gdi::GraphicApiForwarder<VideoCaptureCtx::UpdatableDraw>
+class SequencedVideoCaptureImpl final : public gdi::CaptureApi
 {
 public:
     SequencedVideoCaptureImpl(
@@ -158,6 +151,11 @@ public:
         NotifyNextVideo & next_video_notifier);
 
     ~SequencedVideoCaptureImpl();
+
+    gdi::GraphicApi& graphics_api() noexcept
+    {
+        return this->video_cap_ctx.graphics_api();
+    }
 
     void frame_marker_event(
         MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y
@@ -209,9 +207,6 @@ private:
     FilenameGenerator vc_filename_generator;
     std::optional<video_recorder> recorder;
     FilenameGenerator ic_filename_generator;
-    const VideoParams video_params;
-    int const groupid;
-    AclReportApi * const acl_report;
 
     /* const */ RDPDrawable & ic_drawable;
 
@@ -223,4 +218,16 @@ private:
     const std::chrono::microseconds break_interval;
 
     NotifyNextVideo & next_video_notifier;
+
+    struct RecorderParams
+    {
+        AclReportApi * acl_report;
+        std::string codec_name;
+        std::string codec_options;
+        int frame_rate;
+        int verbosity;
+        int groupid;
+    };
+
+    const RecorderParams recorder_params;
 };

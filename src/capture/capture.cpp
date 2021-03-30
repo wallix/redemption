@@ -1515,14 +1515,13 @@ Capture::Capture(
         }
 #ifndef REDEMPTION_NO_FFMPEG
         if (this->sequenced_video_capture_obj) {
-            //this->caps.emplace_back(this->sequenced_video_capture_obj->vc);
             this->caps.emplace_back(*this->sequenced_video_capture_obj);
-            this->gds.emplace_back(*this->sequenced_video_capture_obj);
+            this->gds.emplace_back(this->sequenced_video_capture_obj->graphics_api());
         }
 
         if (this->full_video_capture_obj) {
             this->caps.emplace_back(*this->full_video_capture_obj);
-            this->gds.emplace_back(*this->full_video_capture_obj);
+            this->gds.emplace_back(this->full_video_capture_obj->graphics_api());
         }
 #endif
     }

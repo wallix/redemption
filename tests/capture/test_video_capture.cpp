@@ -107,7 +107,8 @@ namespace
             capture_params, 0 /* png_width */, 0 /* png_height */,
             drawable, drawable, video_params, next_video_notifier);
         simple_movie(
-            monotonic_time, loop_duration, drawable, video_capture, video_capture, mouse);
+            monotonic_time, loop_duration, drawable, video_capture,
+            video_capture.graphics_api(), mouse);
     }
 
     void simple_full_video(
@@ -124,7 +125,9 @@ namespace
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
             capture_params, drawable, drawable, video_params, FullVideoParams{false});
-        simple_movie(monotonic_time, loop_duration, drawable, video_capture, video_capture, mouse);
+        simple_movie(
+            monotonic_time, loop_duration, drawable, video_capture,
+            video_capture.graphics_api(), mouse);
     }
 } // namespace
 
