@@ -28,7 +28,7 @@ Author(s): Proxies Team
 namespace
 {
 
-constexpr std::size_t updatable_frame_end_buffer_size = 16*1024*1024;
+constexpr std::size_t updatable_frame_end_buffer_size = 16*1024*1024 / sizeof(unsigned long long);
 
 struct UpdatableFrameMarkerEndGraphics final : gdi::UpdatableGraphics
 {
