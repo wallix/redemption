@@ -229,7 +229,7 @@ namespace
         static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hashhex;
         for (uint8_t c : hash) {
-            phex = int_to_fixed_hexadecimal_chars(phex, c);
+            phex = int_to_fixed_hexadecimal_upper_chars(phex, c);
         }
         *phex = '\0';
     }
@@ -1179,7 +1179,7 @@ struct ScytaleMwrm3ReaderHandle
 
                 case Mwrm3::ParserResult::UnknownType: {
                     auto int_type = InStream(this->remaining_data).in_uint16_le();
-                    auto chars = int_to_fixed_hexadecimal_chars(int_type);
+                    auto chars = int_to_fixed_hexadecimal_upper_chars(int_type);
                     str_assign(this->message_error, "Unknown type: 0x"_av, chars);
                     return nullptr;
                 }

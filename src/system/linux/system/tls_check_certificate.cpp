@@ -85,10 +85,10 @@ std::unique_ptr<char[]> crypto_cert_fingerprint(X509 const* xcert)
 
     for (uint8_t c : fp_view.drop_back(1))
     {
-        p = int_to_fixed_hexadecimal_chars(p, c);
+        p = int_to_fixed_hexadecimal_upper_chars(p, c);
         *p++ = ':';
     }
-    p = int_to_fixed_hexadecimal_chars(p, fp_view.back());
+    p = int_to_fixed_hexadecimal_upper_chars(p, fp_view.back());
     *p = '\0';
 
     return fp_buffer;

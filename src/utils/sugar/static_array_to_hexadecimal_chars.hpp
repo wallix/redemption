@@ -122,7 +122,7 @@ namespace detail
         static_array_to_hexadecimal_chars_result<N> r;
         auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
         for (uint8_t i : a) {
-            p = int_to_fixed_hexadecimal_chars(p, i);
+            p = int_to_fixed_hexadecimal_upper_chars(p, i);
         }
         return r;
     }
@@ -146,7 +146,7 @@ namespace detail
         static_array_to_hexadecimal_zchars_result<N> r;
         auto* p = detail::static_array_to_hexadecimal_chars_result_access::buffer(r);
         for (uint8_t i : a) {
-            p = int_to_fixed_hexadecimal_chars(p, i);
+            p = int_to_fixed_hexadecimal_upper_chars(p, i);
         }
         *p = '\0';
         return r;

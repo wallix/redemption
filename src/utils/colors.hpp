@@ -139,7 +139,7 @@ constexpr bool operator != (BGRColor const & lhs, BGRColor const & rhs) { return
 
 REDEMPTION_OSTREAM(out, BGRColor c)
 {
-    auto chars = int_to_fixed_hexadecimal_chars<3>(c.as_u32());
+    auto chars = int_to_fixed_hexadecimal_upper_chars<3>(c.as_u32());
     return out.write(chars.data(), chars.size());
 }
 

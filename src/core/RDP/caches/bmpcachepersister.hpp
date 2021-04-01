@@ -60,7 +60,7 @@ private:
     {
         explicit KeyString(map_key sig) noexcept
         {
-            *int_to_fixed_hexadecimal_chars(this->s, sig) = '\0';
+            *int_to_fixed_hexadecimal_upper_chars(this->s, sig) = '\0';
         }
 
         [[nodiscard]] const char * c_str() const noexcept

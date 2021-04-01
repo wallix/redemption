@@ -679,7 +679,7 @@ OutCryptoTransport::~OutCryptoTransport()
                 *p++ = ' '; // 1 octet
                 // 64 octets (hash)
                 for (uint8_t c : hash) {
-                    p = int_to_fixed_hexadecimal_chars(p, c);
+                    p = int_to_fixed_hexadecimal_upper_chars(p, c);
                 }
             };
             hexdump(qhash);

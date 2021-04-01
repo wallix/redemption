@@ -360,8 +360,8 @@ struct PersistentKeyListPDUData {
                 break;
             }
 
-            p = int_to_fixed_hexadecimal_chars(p, this->entries[i].Key1);
-            p = int_to_fixed_hexadecimal_chars(p, this->entries[i].Key2);
+            p = int_to_fixed_hexadecimal_upper_chars(p, this->entries[i].Key1);
+            p = int_to_fixed_hexadecimal_upper_chars(p, this->entries[i].Key2);
         }
         memcpy(p, "))", 2);
         p += 2;

@@ -81,16 +81,16 @@ void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept;
 // to hexadecimal upper case chars
 //@{
 template<class T>
-int_to_chars_result int_to_hexadecimal_chars(T n) noexcept;
+int_to_chars_result int_to_hexadecimal_upper_chars(T n) noexcept;
 
 template<class T>
-int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept;
+int_to_zchars_result int_to_hexadecimal_upper_zchars(T n) noexcept;
 
 template<class T>
-void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept;
+void int_to_hexadecimal_upper_chars(int_to_chars_result& out, T n) noexcept;
 
 template<class T>
-void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept;
+void int_to_hexadecimal_upper_zchars(int_to_zchars_result& out, T n) noexcept;
 //@}
 
 
@@ -113,19 +113,19 @@ void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noexcept;
 // to fixed hexadecimal upper case chars
 //@{
 template<int NbBytes = -1, class T>
-int_to_chars_result int_to_fixed_hexadecimal_chars(T n) noexcept;
+int_to_chars_result int_to_fixed_hexadecimal_upper_chars(T n) noexcept;
 
 template<int NbBytes = -1, class T>
-int_to_zchars_result int_to_fixed_hexadecimal_zchars(T n) noexcept;
+int_to_zchars_result int_to_fixed_hexadecimal_upper_zchars(T n) noexcept;
 
 template<int NbBytes = -1, class T>
-void int_to_fixed_hexadecimal_chars(int_to_chars_result& out, T n) noexcept;
+void int_to_fixed_hexadecimal_upper_chars(int_to_chars_result& out, T n) noexcept;
 
 template<int NbBytes = -1, class T>
-void int_to_fixed_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept;
+void int_to_fixed_hexadecimal_upper_zchars(int_to_zchars_result& out, T n) noexcept;
 
 template<int NbBytes = -1, class T>
-char* int_to_fixed_hexadecimal_chars(char* out, T n) noexcept;
+char* int_to_fixed_hexadecimal_upper_chars(char* out, T n) noexcept;
 //@}
 
 
@@ -293,18 +293,18 @@ inline int_to_zchars_result int_to_decimal_zchars(T n) noexcept
 }
 
 template<class T>
-inline int_to_chars_result int_to_hexadecimal_chars(T n) noexcept
+inline int_to_chars_result int_to_hexadecimal_upper_chars(T n) noexcept
 {
     int_to_chars_result r;
-    int_to_hexadecimal_chars(r, n);
+    int_to_hexadecimal_upper_chars(r, n);
     return r;
 }
 
 template<class T>
-inline int_to_zchars_result int_to_hexadecimal_zchars(T n) noexcept
+inline int_to_zchars_result int_to_hexadecimal_upper_zchars(T n) noexcept
 {
     int_to_zchars_result r;
-    int_to_hexadecimal_zchars(r, n);
+    int_to_hexadecimal_upper_zchars(r, n);
     return r;
 }
 
@@ -325,18 +325,18 @@ inline int_to_zchars_result int_to_hexadecimal_lower_zchars(T n) noexcept
 }
 
 template<int NbBytes, class T>
-inline int_to_chars_result int_to_fixed_hexadecimal_chars(T n) noexcept
+inline int_to_chars_result int_to_fixed_hexadecimal_upper_chars(T n) noexcept
 {
     int_to_chars_result r;
-    int_to_fixed_hexadecimal_chars<NbBytes>(r, n);
+    int_to_fixed_hexadecimal_upper_chars<NbBytes>(r, n);
     return r;
 }
 
 template<int NbBytes, class T>
-inline int_to_zchars_result int_to_fixed_hexadecimal_zchars(T n) noexcept
+inline int_to_zchars_result int_to_fixed_hexadecimal_upper_zchars(T n) noexcept
 {
     int_to_zchars_result r;
-    int_to_fixed_hexadecimal_zchars<NbBytes>(r, n);
+    int_to_fixed_hexadecimal_upper_zchars<NbBytes>(r, n);
     return r;
 }
 
@@ -376,7 +376,7 @@ inline void int_to_decimal_zchars(int_to_zchars_result& out, T n) noexcept
 }
 
 template<class T>
-inline void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept
+inline void int_to_hexadecimal_upper_chars(int_to_chars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
@@ -386,7 +386,7 @@ inline void int_to_hexadecimal_chars(int_to_chars_result& out, T n) noexcept
 }
 
 template<class T>
-inline void int_to_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept
+inline void int_to_hexadecimal_upper_zchars(int_to_zchars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
@@ -416,22 +416,22 @@ inline void int_to_hexadecimal_lower_zchars(int_to_zchars_result& out, T n) noex
 }
 
 template<int NbBytes, class T>
-inline void int_to_fixed_hexadecimal_chars(int_to_chars_result& out, T n) noexcept
+inline void int_to_fixed_hexadecimal_upper_chars(int_to_chars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
     constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
-    int_to_fixed_hexadecimal_chars<NbBytes>(buffer + ibeg, n);
+    int_to_fixed_hexadecimal_upper_chars<NbBytes>(buffer + ibeg, n);
     access::set_ibeg(out, ibeg);
 }
 
 template<int NbBytes, class T>
-inline void int_to_fixed_hexadecimal_zchars(int_to_zchars_result& out, T n) noexcept
+inline void int_to_fixed_hexadecimal_upper_zchars(int_to_zchars_result& out, T n) noexcept
 {
     using access = detail::int_to_chars_result_access;
     auto buffer = access::buffer(out);
     constexpr int ibeg = 20 - (NbBytes == -1 ? int(sizeof(T)) : NbBytes) * 2;
-    int_to_fixed_hexadecimal_chars<NbBytes>(buffer + ibeg, n);
+    int_to_fixed_hexadecimal_upper_chars<NbBytes>(buffer + ibeg, n);
     access::set_ibeg(out, ibeg);
 }
 
@@ -456,7 +456,7 @@ inline void int_to_fixed_hexadecimal_lower_zchars(int_to_zchars_result& out, T n
 }
 
 template<int NbBytes, class T>
-inline char* int_to_fixed_hexadecimal_chars(char* out, T n) noexcept
+inline char* int_to_fixed_hexadecimal_upper_chars(char* out, T n) noexcept
 {
     return detail::to_fixed_hexadecimal_chars<NbBytes>(out, n, detail::hex_upper_table);
 }

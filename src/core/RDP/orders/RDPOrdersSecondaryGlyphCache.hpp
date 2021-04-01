@@ -234,7 +234,7 @@ public:
                 buffer[lg] = ' ';
                 ++lg;
             }
-            int_to_fixed_hexadecimal_chars(buffer + lg, this->aj[i]);
+            int_to_fixed_hexadecimal_upper_chars(buffer + lg, this->aj[i]);
             lg += 2;
         }
         lg += snprintf(buffer + lg, sz - lg, ")(%u))", unsigned(c));

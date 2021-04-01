@@ -48,7 +48,7 @@ public:
 
         auto p = std::begin(dest);
         for (uint8_t c : sig) {
-            p = int_to_fixed_hexadecimal_chars(p, c);
+            p = int_to_fixed_hexadecimal_upper_chars(p, c);
         }
         *p = 0;
     }

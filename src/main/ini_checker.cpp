@@ -68,7 +68,7 @@ namespace
     ) {
         uint32_t x = rgb.to_rrggbb();
         zbuf[0] = '#';
-        int_to_fixed_hexadecimal_chars<3>(zbuf.data()+1, x);
+        int_to_fixed_hexadecimal_upper_chars<3>(zbuf.data()+1, x);
         zbuf[7] = '\0';
         return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), 7);
     }
