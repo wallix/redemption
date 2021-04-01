@@ -50,7 +50,6 @@ public:
 private:
     int mouse_cursor_hotspot_x;
     int mouse_cursor_hotspot_y;
-    bool dont_show_mouse_cursor;
     DrawablePointer current_pointer;
 
     int frame_start_count;
@@ -114,11 +113,6 @@ public:
     [[nodiscard]] size_t pix_len() const noexcept
     {
         return this->drawable.pix_len();
-    }
-
-    void show_mouse_cursor(bool x)
-    {
-        this->dont_show_mouse_cursor = !x;
     }
 
     void prepare_image_frame() override

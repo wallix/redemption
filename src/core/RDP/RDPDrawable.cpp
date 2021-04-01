@@ -132,7 +132,6 @@ RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height, Pointer co
 , save_mouse_y(0)
 , mouse_cursor_pos_x(width / 2)
 , mouse_cursor_pos_y(height / 2)
-, dont_show_mouse_cursor(false)
 , current_pointer(cursor)
 , frame_start_count(0)
 , mod_palette_rgb(BGRPalette::classic_332())
@@ -536,9 +535,6 @@ void RDPDrawable::draw(const RDP::FrameMarker & order)
 
 void RDPDrawable::trace_mouse()
 {
-    if (this->dont_show_mouse_cursor) {
-        return;
-    }
     this->save_mouse_x = this->mouse_cursor_pos_x;
     this->save_mouse_y = this->mouse_cursor_pos_y;
     int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
@@ -548,9 +544,6 @@ void RDPDrawable::trace_mouse()
 
 void RDPDrawable::clear_mouse()
 {
-    if (this->dont_show_mouse_cursor) {
-        return;
-    }
     int x = this->save_mouse_x - this->mouse_cursor_hotspot_x;
     int y = this->save_mouse_y - this->mouse_cursor_hotspot_y;
     return this->drawable.clear_mouse(this->current_pointer, x, y, this->save_mouse);

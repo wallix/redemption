@@ -132,7 +132,6 @@ class Front : public FrontAPI, public gdi::GraphicApi
     // for printf with %p
     using voidp = void const *;
 
-    bool nomouse;
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
 
@@ -765,8 +764,7 @@ public:
          , CryptoContext & cctx
          , bool fp_support // If true, fast-path must be supported
          )
-    : nomouse(ini.get<cfg::globals::nomouse>())
-    , verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
+    : verbose(static_cast<Verbose>(ini.get<cfg::debug::front>()))
     , keymap(bool(this->verbose & Verbose::keymap) ? 1 : 0)
     , encryptionLevel(underlying_cast(ini.get<cfg::globals::encryptionLevel>()) + 1)
     , trans(trans)
@@ -1086,8 +1084,7 @@ public:
 
         DrawableParams const drawable_params = DrawableParams::delayed_drawable(
             this->client_info.screen_info.width,
-            this->client_info.screen_info.height,
-            this->nomouse
+            this->client_info.screen_info.height
         );
 
         MetaParams const meta_params {};

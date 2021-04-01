@@ -123,7 +123,6 @@ void VideoCaptureCtx::frame_marker_event(
     if (((updatable_frame_marker_end_bitset_stream.current() == updatable_frame_marker_end_bitset_end
        || updatable_frame_marker_end_bitset_stream.read()
       ) && this->updatable_graphics.has_drawing_event())
-     // TODO Drawable::dont_show_mouse_cursor
      || this->cursor_x != cursor_x
      || this->cursor_y != cursor_y
     ) {
@@ -178,7 +177,6 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                                    && now >= this->next_trace_time;
         bool const update_image = !this->has_frame_marker
                                && (this->updatable_graphics.has_drawing_event()
-                                // TODO Drawable::dont_show_mouse_cursor
                                 || this->cursor_x != cursor_x
                                 || this->cursor_y != cursor_y
                                );

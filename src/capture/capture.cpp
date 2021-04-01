@@ -1390,10 +1390,6 @@ Capture::Capture(
                 drawable_params.width, drawable_params.height);
 
             this->gd_drawable = this->gd_drawable_.get();
-
-            if (drawable_params.no_mouse) {
-                this->gd_drawable->show_mouse_cursor(false);
-            }
         }
         this->gds.emplace_back(*this->gd_drawable);
 

@@ -78,8 +78,6 @@ RED_AUTO_TEST_CASE(TestModOSD)
     TestGraphic drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
 
-    drawable.show_mouse_cursor(false);
-
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
     Bitmap const bmp = bitmap_from_file(FIXTURES_PATH "/ad8b.bmp", BLACK);
@@ -101,8 +99,6 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     Rect screen_rect(0, 0, 800, 600);
     TestGraphic drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
-
-    drawable.show_mouse_cursor(false);
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
@@ -126,8 +122,6 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     Rect screen_rect(0, 0, 800, 600);
     TestGraphic drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
-
-    drawable.show_mouse_cursor(false);
 
     drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 

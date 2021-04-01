@@ -26,21 +26,20 @@ class RDPDrawable;
 
 struct DrawableParams
 {
-    // width, height and no_mouse are ignored when rdp_drawable != nullptr
+    // width and height are ignored when rdp_drawable != nullptr
     uint16_t width;
     uint16_t height;
-    bool no_mouse;
 
     RDPDrawable* rdp_drawable;
 
-    static DrawableParams delayed_drawable(uint16_t width, uint16_t height, bool no_mouse)
+    static DrawableParams delayed_drawable(uint16_t width, uint16_t height)
     {
-        return {width, height, no_mouse, nullptr};
+        return {width, height, nullptr};
     }
 
     static DrawableParams shared_drawable(RDPDrawable&& rdp_drawable) = delete;
     static DrawableParams shared_drawable(RDPDrawable& rdp_drawable)
     {
-        return {0, 0, false, &rdp_drawable};
+        return {0, 0, &rdp_drawable};
     }
 };

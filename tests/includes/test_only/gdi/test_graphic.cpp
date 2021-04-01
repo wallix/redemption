@@ -78,11 +78,6 @@ void TestGraphic::clear_mouse()
     this->d->gd.clear_mouse();
 }
 
-void TestGraphic::show_mouse_cursor(bool display)
-{
-    this->d->gd.show_mouse_cursor(display);
-}
-
 void TestGraphic::set_mouse_cursor_pos(uint16_t x, uint16_t y)
 {
     this->d->gd.set_mouse_cursor_pos(x, y);
