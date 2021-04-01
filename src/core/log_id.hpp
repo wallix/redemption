@@ -22,6 +22,8 @@
 
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/flags.hpp"
+#include "utils/sugar/zstring_view.hpp"
+#include "core/log_id.hpp"
 
 enum class LogCategoryId
 {
@@ -147,8 +149,8 @@ namespace detail
 {
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_EMSCRIPTEN_IGNORE("-Wmissing-variable-declarations")
-    constexpr inline chars_view log_id_string_map[]{
-        #define f(x, cat) #x ""_av,
+    constexpr inline zstring_view log_id_string_map[]{
+        #define f(x, cat) #x ""_zv,
         X_LOG_ID(f)
         #undef f
     };

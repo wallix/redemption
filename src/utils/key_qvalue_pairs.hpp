@@ -24,6 +24,7 @@
 #include "acl/auth_api.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/zstring_view.hpp"
 
 #include <string>
 #include <algorithm>
@@ -82,8 +83,8 @@ inline std::string& kv_list_to_string(
     return buffer;
 }
 
-constexpr inline chars_view log_id_string_type_map[]{
-    #define f(x, cat) "type=\"" #x "\""_av,
+constexpr inline zstring_view log_id_string_type_map[]{
+    #define f(x, cat) "type=\"" #x "\""_zv,
     X_LOG_ID(f)
     #undef f
 };

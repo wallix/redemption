@@ -164,7 +164,7 @@ private:
             for (auto const& kv : kv_list) {
                 str_append(msg, kv.key, '=', kv.value, ' ');
             }
-            LOG(LOG_INFO, "type=%s %s", msg, detail::log_id_string_map[unsigned(id)].data());
+            LOG(LOG_INFO, "type=%s %s", msg, detail::log_id_string_map[unsigned(id)]);
         }
     }
 

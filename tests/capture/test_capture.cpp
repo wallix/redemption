@@ -2246,7 +2246,7 @@ struct ReportMessage : NullSessionLog
 
     void log6(LogId id, KVLogList kv_list) override
     {
-        s += detail::log_id_string_map[int(id)].data();
+        s += detail::log_id_string_map[int(id)].to_sv();
         for (auto& kv : kv_list) {
             str_append(s, ' ', kv.key, '=', kv.value);
         }

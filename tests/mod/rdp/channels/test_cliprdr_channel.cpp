@@ -627,7 +627,7 @@ namespace
 
         void log6(LogId id, KVLogList kv_list) override
         {
-            std::string s = detail::log_id_string_map[int(id)].data();
+            std::string s = detail::log_id_string_map[int(id)].to_string();
             for (auto& kv : kv_list) {
                 str_append(s, ' ', kv.key, '=', kv.value);
             }
