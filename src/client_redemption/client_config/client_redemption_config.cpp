@@ -28,6 +28,7 @@
 #include "utils/cli.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/redemption_info_version.hpp"
 
@@ -111,10 +112,10 @@ void ClientConfig::writeWindowsData(WindowsData & config)
     unique_fd fd(config.config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
     if (fd.is_open()) {
         std::string info = str_concat(
-            "form_x ", std::to_string(config.form_x), "\n"
-            "form_y ", std::to_string(config.form_y), "\n"
-            "screen_x ", std::to_string(config.screen_x), "\n"
-            "screen_y ", std::to_string(config.screen_y), '\n');
+            "form_x ", int_to_decimal_chars(config.form_x), "\n"
+            "form_y ", int_to_decimal_chars(config.form_y), "\n"
+            "screen_x ", int_to_decimal_chars(config.screen_x), "\n"
+            "screen_y ", int_to_decimal_chars(config.screen_y), '\n');
 
         ::write(fd.fd(), info.c_str(), info.length());
     }
@@ -505,7 +506,7 @@ void ClientConfig::writeAccoundData(const std::string& ip, const std::string& na
             std::string to_write = str_concat(
                 (config._save_password_account ? "save_pwd true\n" : "save_pwd false\n"),
                 "last_target ",
-                std::to_string(config._last_target_index),
+                int_to_decimal_chars(config._last_target_index),
                 "\n\n");
 
             for (int i = 0; i < config._accountNB; i++) {
@@ -514,7 +515,7 @@ void ClientConfig::writeAccoundData(const std::string& ip, const std::string& na
                     "title ", config._accountData[i].title, "\n"
                     "IP "   , config._accountData[i].IP   , "\n"
                     "name " , config._accountData[i].name , "\n"
-                    "protocol ", std::to_string(config._accountData[i].protocol), '\n');
+                    "protocol ", int_to_decimal_chars(config._accountData[i].protocol), '\n');
 
                 if (config._save_password_account) {
                     str_append(to_write, "pwd ", config._accountData[i].pwd, "\n");
@@ -524,8 +525,8 @@ void ClientConfig::writeAccoundData(const std::string& ip, const std::string& na
 
                 str_append(
                     to_write,
-                    "port ", std::to_string(config._accountData[i].port), "\n"
-                    "options_profil ", std::to_string(config._accountData[i].options_profil), "\n"
+                    "port ", int_to_decimal_chars(config._accountData[i].port), "\n"
+                    "options_profil ", int_to_decimal_chars(config._accountData[i].options_profil), "\n"
                     "\n");
             }
 
@@ -577,7 +578,7 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
     if(file.is_open()) {
 
         std::string to_write = str_concat(
-            "current_user_profil_id ", std::to_string(config.current_user_profil), '\n');
+            "current_user_profil_id ", int_to_decimal_chars(config.current_user_profil), '\n');
 
         bool not_reading_current_profil = true;
         std::string ligne;
@@ -599,34 +600,34 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
 
         str_append(
             to_write,
-            "\nid ", std::to_string(config.userProfils[config.current_user_profil].id), "\n"
+            "\nid ", int_to_decimal_chars(config.userProfils[config.current_user_profil].id), "\n"
             "name ", config.userProfils[config.current_user_profil].name, "\n"
-            "keylayout ", std::to_string(config.info.keylayout), "\n"
-            "brush_cache_code ", std::to_string(config.info.brush_cache_code), "\n"
-            "bpp ", std::to_string(static_cast<int>(config.info.screen_info.bpp)), "\n"
-            "width ", std::to_string(config.rdp_width), "\n"
-            "height ", std::to_string(config.rdp_height), "\n"
-            "rdp5_performanceflags ", std::to_string(static_cast<int>(config.info.rdp5_performanceflags)), "\n"
-            "monitorCount ", std::to_string(config.info.cs_monitor.monitorCount), "\n"
-            "span ", std::to_string(config.is_spanning), "\n"
-            "record ", std::to_string(config.is_recording),"\n"
-            "tls ", std::to_string(config.modRDPParamsData.enable_tls), "\n"
-            "nla ", std::to_string(config.modRDPParamsData.enable_nla), "\n"
-            "tls-min-level ", std::to_string(config.tls_client_params_data.tls_min_level), "\n"
-            "tls-max-level ", std::to_string(config.tls_client_params_data.tls_max_level), "\n"
+            "keylayout ", int_to_decimal_chars(config.info.keylayout), "\n"
+            "brush_cache_code ", int_to_decimal_chars(config.info.brush_cache_code), "\n"
+            "bpp ", int_to_decimal_chars(underlying_cast(config.info.screen_info.bpp)), "\n"
+            "width ", int_to_decimal_chars(config.rdp_width), "\n"
+            "height ", int_to_decimal_chars(config.rdp_height), "\n"
+            "rdp5_performanceflags ", int_to_decimal_chars(config.info.rdp5_performanceflags), "\n"
+            "monitorCount ", int_to_decimal_chars(config.info.cs_monitor.monitorCount), "\n"
+            "span ", int_to_decimal_chars(config.is_spanning), "\n"
+            "record ", int_to_decimal_chars(config.is_recording),"\n"
+            "tls ", int_to_decimal_chars(config.modRDPParamsData.enable_tls), "\n"
+            "nla ", int_to_decimal_chars(config.modRDPParamsData.enable_nla), "\n"
+            "tls-min-level ", int_to_decimal_chars(config.tls_client_params_data.tls_min_level), "\n"
+            "tls-max-level ", int_to_decimal_chars(config.tls_client_params_data.tls_max_level), "\n"
             "tls-cipher-string ", config.tls_client_params_data.cipher_string, "\n"
-            "show_common_cipher_list ", std::to_string(config.tls_client_params_data.show_common_cipher_list), "\n"
-            "sound ", std::to_string(config.modRDPParamsData.enable_sound), "\n"
-            "console_mode ", std::to_string(config.info.console_session), "\n"
-            "remotefx ", std::to_string(config.enable_remotefx), "\n"
-            "enable_shared_clipboard ", std::to_string(config.enable_shared_clipboard), "\n"
-            "enable_shared_virtual_disk ", std::to_string(config.modRDPParamsData.enable_shared_virtual_disk), "\n"
-            "enable_shared_remoteapp ", std::to_string(config.modRDPParamsData.enable_shared_remoteapp), "\n"
+            "show_common_cipher_list ", int_to_decimal_chars(config.tls_client_params_data.show_common_cipher_list), "\n"
+            "sound ", int_to_decimal_chars(config.modRDPParamsData.enable_sound), "\n"
+            "console_mode ", int_to_decimal_chars(config.info.console_session), "\n"
+            "remotefx ", int_to_decimal_chars(config.enable_remotefx), "\n"
+            "enable_shared_clipboard ", int_to_decimal_chars(config.enable_shared_clipboard), "\n"
+            "enable_shared_virtual_disk ", int_to_decimal_chars(config.modRDPParamsData.enable_shared_virtual_disk), "\n"
+            "enable_shared_remoteapp ", int_to_decimal_chars(config.modRDPParamsData.enable_shared_remoteapp), "\n"
             "share-dir ", config.SHARE_DIR, "\n"
             "remote-exe ", config.rDPRemoteAppConfig.full_cmd_line, "\n"
             "remote-dir ", config.rDPRemoteAppConfig.source_of_WorkingDir, "\n"
-            "vnc-applekeyboard ", std::to_string(config.modVNCParamsData.is_apple), "\n"
-            "mod ", std::to_string(static_cast<int>(config.mod_state)) , "\n"
+            "vnc-applekeyboard ", int_to_decimal_chars(config.modVNCParamsData.is_apple), "\n"
+            "mod ", int_to_decimal_chars(config.mod_state) , "\n"
         );
 
         ::write(file.fd(), to_write.c_str(), to_write.length());

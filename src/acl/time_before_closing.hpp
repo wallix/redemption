@@ -22,6 +22,7 @@
 #pragma once
 
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/translation.hpp"
 
 #include <chrono>
@@ -38,7 +39,7 @@ inline std::string time_before_closing(std::chrono::seconds elapsed_time, Transl
     if (hours) {
         str_append(
             msg,
-            std::to_string(hours),
+            int_to_decimal_chars(hours),
             ' ',
             tr(trkeys::hour),
             (hours > 1) ? "s, " : ", "
@@ -48,7 +49,7 @@ inline std::string time_before_closing(std::chrono::seconds elapsed_time, Transl
     if (minutes || hours) {
         str_append(
             msg,
-            std::to_string(minutes),
+            int_to_decimal_chars(minutes),
             ' ',
             tr(trkeys::minute),
             (minutes > 1) ? "s, " : ", "
@@ -57,12 +58,13 @@ inline std::string time_before_closing(std::chrono::seconds elapsed_time, Transl
 
     str_append(
         msg,
-        std::to_string(seconds),
+        int_to_decimal_chars(seconds),
         ' ',
         tr(trkeys::second),
         (seconds > 1) ? "s " : " ",
         tr(trkeys::before_closing)
     );
+
     return msg;
 }
 

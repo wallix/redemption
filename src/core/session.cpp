@@ -1062,7 +1062,7 @@ private:
                             loop_state = LoopState::UpdateOsd;
                             auto lang = language(ini);
                             mod_wrapper.display_osd_message(str_concat(
-                                std::to_string(minutes.count()),
+                                int_to_decimal_chars(minutes.count()),
                                 ' ',
                                 TR(trkeys::minute, lang),
                                 (minutes.count() > 1) ? "s " : " ",
