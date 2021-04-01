@@ -22,7 +22,6 @@ namespace cfg
         struct target_application_password;
         struct glyph_cache;
         struct port;
-        struct nomouse;
         struct encryptionLevel;
         struct authfile;
         struct handshake_timeout;

@@ -10,7 +10,6 @@ namespace configs::cfg_ini_infos {
 using IniPack = Pack<
 cfg::globals::glyph_cache,
 cfg::globals::port,
-cfg::globals::nomouse,
 cfg::globals::encryptionLevel,
 cfg::globals::authfile,
 cfg::globals::handshake_timeout,
@@ -306,7 +305,6 @@ struct SectionAndName { zstring_view section; zstring_view name; };
 constexpr SectionAndName const ini_names[] = {
 {"globals"_zv, "glyph_cache"_zv},
 {"globals"_zv, "port"_zv},
-{"globals"_zv, "nomouse"_zv},
 {"globals"_zv, "encryptionLevel"_zv},
 {"globals"_zv, "authfile"_zv},
 {"globals"_zv, "handshake_timeout"_zv},

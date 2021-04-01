@@ -266,16 +266,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { 3389 };
     };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct globals::nomouse {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
     /// type: Level <br/>
     /// default: Level::low <br/>
     struct globals::encryptionLevel {
@@ -3412,8 +3402,8 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { WrmCompressionAlgorithm::gzip };
     };
-    /// Needed to play a video with ffplay or VLC. <br/>
-    /// Note: Useless with mpv and mplayer. <br/>
+    /// Needed to play a video with old ffplay or VLC v1. <br/>
+    /// Note: Useless with mpv, MPlayer or VLC v2. <br/>
     /// type: bool <br/>
     /// default: true <br/>
     struct video::bogus_vlc_frame_rate {
@@ -3477,7 +3467,6 @@ namespace cfg
         type value { SmartVideoCropping::disable };
     };
     /// Needed to play a video with corrupted Bitmap Update. <br/>
-    /// Note: Useless with mpv and mplayer. <br/>
     /// type: bool <br/>
     /// default: false <br/>
     struct video::play_video_with_corrupted_bitmap {
@@ -5411,7 +5400,6 @@ struct globals
 , cfg::globals::capture_chunk
 , cfg::globals::glyph_cache
 , cfg::globals::port
-, cfg::globals::nomouse
 , cfg::globals::encryptionLevel
 , cfg::globals::trace_type
 , cfg::globals::listen_address

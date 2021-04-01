@@ -137,7 +137,6 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"glyph_cache"}, set(false));
         W.member(advanced_in_gui | iptables_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"port"}, desc{"Warning: Service will be automatically restarted and active sessions will be disconnected\nThe port set in this field must not be already used, otherwise the service will not run."}, set(3389));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"nomouse"}, set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<Level>(), spec::type_<std::string>(), names{"encryptionLevel"}, set(Level::low));
         W.member(advanced_in_gui, no_sesman, L, type_<std::string>(), names{"authfile"}, set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
 

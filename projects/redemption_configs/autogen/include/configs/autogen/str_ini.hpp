@@ -16,10 +16,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #port = 3389
 
-# value: 0 or 1
-#_advanced
-#nomouse = 0
-
 # values: low, medium, high
 #_advanced
 #encryptionLevel = low
@@ -1250,8 +1246,8 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #wrm_compression_algorithm = 1
 
-# Needed to play a video with ffplay or VLC.
-# Note: Useless with mpv and mplayer.
+# Needed to play a video with old ffplay or VLC v1.
+# Note: Useless with mpv, MPlayer or VLC v2.
 # value: 0 or 1
 #_advanced
 #bogus_vlc_frame_rate = 1
@@ -1279,7 +1275,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #smart_video_cropping = 0
 
 # Needed to play a video with corrupted Bitmap Update.
-# Note: Useless with mpv and mplayer.
 # value: 0 or 1
 #_advanced
 #play_video_with_corrupted_bitmap = 0

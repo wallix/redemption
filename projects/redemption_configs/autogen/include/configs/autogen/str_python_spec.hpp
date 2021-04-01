@@ -15,9 +15,6 @@ glyph_cache = boolean(default=False)
 port = integer(min=0, default=3389)
 
 #_advanced
-nomouse = boolean(default=False)
-
-#_advanced
 encryptionLevel = option('low', 'medium', 'high', default='low')
 
 #_advanced
@@ -1063,8 +1060,8 @@ wrm_color_depth_selection_strategy = option(0, 1, default=1)
 #_advanced
 wrm_compression_algorithm = option(0, 1, 2, default=1)
 
-# Needed to play a video with ffplay or VLC.
-# Note: Useless with mpv and mplayer.
+# Needed to play a video with old ffplay or VLC v1.
+# Note: Useless with mpv, MPlayer or VLC v2.
 #_advanced
 bogus_vlc_frame_rate = boolean(default=True)
 
@@ -1088,7 +1085,6 @@ notimestamp = boolean(default=False)
 smart_video_cropping = option(0, 1, 2, default=0)
 
 # Needed to play a video with corrupted Bitmap Update.
-# Note: Useless with mpv and mplayer.
 #_advanced
 play_video_with_corrupted_bitmap = boolean(default=False)
 
