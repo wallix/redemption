@@ -52,14 +52,3 @@ enum class AppPath
     DefaultFontFile,
 };
 zstring_view app_path(AppPath) noexcept;
-
-// TODO move these into configuration
-#define LOGIN_WAB_BLUE "wablogoblue.png"
-#define LOGO_PNG "logo.png"
-#define LOGO_BMP "logo.bmp"
-#define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
-#define LOCKFILE "rdpproxy.pid"
-
-#define RDPPROXY_INI "rdpproxy.ini"
-
-#define DEFAULT_FONT_NAME "dejavu_14.rbf"

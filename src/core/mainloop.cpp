@@ -472,7 +472,6 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid, std::string
 {
     init_signals();
 
-    // Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.get<cfg::globals::listen_address>().c_str());
     REDEMPTION_DIAGNOSTIC_PUSH()
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
