@@ -755,12 +755,9 @@ namespace
         Direction direction,
         std::string_view result_content)
     {
-        char buf[24];
-        unsigned n = std::snprintf(buf, std::size(buf), "%" PRIu32,
-            underlying_cast(file_validator_id));
         session_log.log6(LogId::TEXT_VERIFICATION, {
             KVLog("direction"_av, to_dlpav_str_direction(direction)),
-            KVLog("copy_id"_av, {buf, n}),
+            KVLog("copy_id"_av, int_to_decimal_chars(underlying_cast(file_validator_id))),
             KVLog("status"_av, result_content),
         });
     }

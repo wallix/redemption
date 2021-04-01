@@ -28,6 +28,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <array>
 #include <string>
@@ -381,10 +382,9 @@ struct FileValidatorService
 
     FileValidatorId open_text(uint32_t locale_identifier, std::string_view target_name)
     {
-        char buf[24];
-        unsigned n = std::sprintf(buf, "%" PRIu32, locale_identifier);
+        auto chars = int_to_decimal_chars(locale_identifier);
         return this->open_raw_data(target_name,
-            data_map_array("microsoft_locale_id"_av, bytes_view{buf, n}));
+            data_map_array("microsoft_locale_id"_av, chars));
     }
 
     FileValidatorId open_unicode(std::string_view target_name)
