@@ -32,10 +32,11 @@
 #include "utils/file_permissions.hpp"
 
 #include <algorithm>
-#include <cstdlib>
-#include <cerrno>
 #include <cstring>
 #include <charconv>
+#include <chrono>
+#include <string>
+#include <type_traits>
 
 namespace
 {
@@ -119,15 +120,11 @@ typename std::enable_if<std::is_integral<TInt>::value, zstring_view>::type
 assign_zbuf_from_cfg(writable_chars_view zbuf, cfg_s_type<TInt> /*type*/, TInt const & x)
 {
     assert(zbuf.data());
-
-    int sz;
-    if constexpr (std::is_signed<TInt>::value) {
-        sz = snprintf(zbuf.data(), zbuf.size(), "%lld", static_cast<long long>(x));
-    }
-    else {
-        sz = snprintf(zbuf.data(), zbuf.size(), "%llu", static_cast<unsigned long long>(x));
-    }
-    return zstring_view(zstring_view::is_zero_terminated{}, zbuf.data(), sz);
+    auto r = std::to_chars(zbuf.begin(), zbuf.end(), x);
+    assert(r.ec == std::errc());
+    *r.ptr = '\0';
+    return zstring_view(zstring_view::is_zero_terminated{},
+        zbuf.data(), std::size_t(r.ptr - zbuf.data()));
 }
 
 template<class T, class Ratio>
