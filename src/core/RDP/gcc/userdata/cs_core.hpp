@@ -32,6 +32,7 @@
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "core/error.hpp"
 #include "core/stream_throw_helpers.hpp"
 
@@ -789,7 +790,8 @@ public:
         }
         if (this->length == 146) { return; }
 
-        LOG(LOG_INFO, "cs_core::clientDigProductId=[%s]", log_array_02x_format(this->clientDigProductId));
+        LOG(LOG_INFO, "cs_core::clientDigProductId=[%s]",
+            static_array_to_hexadecimal_lower_zchars(this->clientDigProductId));
         if (this->length == 210) { return; }
 
         LOG(LOG_INFO, "cs_core::connectionType = %s", this->connectionTypeString(this->connectionType));

@@ -24,6 +24,7 @@
 #include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "core/stream_throw_helpers.hpp"
 
 #include <algorithm>
@@ -335,10 +336,8 @@ struct PersistentKeyListPDUData {
     }
 
     void log(int level, const char * message) const {
-        char   buffer[2048];
-        size_t sz = sizeof(buffer);
-        size_t lg = 0;
-        lg += snprintf(buffer + lg, sz - lg,
+        char buffer[2048];
+        int lg = snprintf(buffer, sizeof(buffer),
             "%s PersistentKeyListPDUData(numEntriesCache0=%u numEntriesCache1=%u numEntriesCache2=%u numEntriesCache3=%u "
                 "numEntriesCache4=%u totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u"
                 " totalEntriesCache3=%u totalEntriesCache4=%u bBitMask=%u entries(",
@@ -349,25 +348,24 @@ struct PersistentKeyListPDUData {
             unsigned(this->totalEntriesCache[1]), unsigned(this->totalEntriesCache[2]),
             unsigned(this->totalEntriesCache[3]), unsigned(this->totalEntriesCache[4]),
             unsigned(this->bBitMask));
+        char *p = buffer + lg;
         for (uint32_t i = 0, c = this->maximum_entries(); i < c; i++) {
             if (i) {
-                lg += snprintf(buffer + lg, sz - lg, " ");
+                *p++ = ' ';
             }
 
             if (i > 20) {
-                lg += snprintf(buffer + lg, sz - lg, "...");
+                memcpy(p, "...", 3);
+                p += 3;
                 break;
             }
 
-            uint8_t keys[8];
-            memcpy(keys,     &this->entries[i].Key1, 4);
-            memcpy(keys + 4, &this->entries[i].Key2, 4);
-            lg += snprintf(buffer + lg, sz - lg, "(%02X%02X%02X%02X%02X%02X%02X%02X)",
-                unsigned(keys[0]), unsigned(keys[1]), unsigned(keys[2]), unsigned(keys[3]),
-                unsigned(keys[4]), unsigned(keys[5]), unsigned(keys[6]), unsigned(keys[7]));
+            p = int_to_fixed_hexadecimal_chars(p, this->entries[i].Key1);
+            p = int_to_fixed_hexadecimal_chars(p, this->entries[i].Key2);
         }
-        /*lg +=*/ snprintf(buffer + lg, sz - lg, "))");
-        buffer[sizeof(buffer) - 1] = 0;
+        memcpy(p, "))", 2);
+        p += 2;
+        *p = 0;
         LOG(level, "%s", buffer);
     }
 

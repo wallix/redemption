@@ -26,6 +26,7 @@
 #include "utils/verbose_flags.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 
 #include <unordered_map>
 
@@ -45,13 +46,13 @@ private:
     static map_key tokey(uint8_t const (&sig)[8]) noexcept
     {
         return (map_key(sig[0]) << 56)
-                | (map_key(sig[1]) << 48)
-                | (map_key(sig[2]) << 40)
-                | (map_key(sig[3]) << 32)
-                | (map_key(sig[4]) << 24)
-                | (map_key(sig[5]) << 16)
-                | (map_key(sig[6]) << 8)
-                | (map_key(sig[7]) << 0)
+             | (map_key(sig[1]) << 48)
+             | (map_key(sig[2]) << 40)
+             | (map_key(sig[3]) << 32)
+             | (map_key(sig[4]) << 24)
+             | (map_key(sig[5]) << 16)
+             | (map_key(sig[6]) << 8)
+             | (map_key(sig[7]) << 0)
         ;
     }
 
@@ -59,17 +60,7 @@ private:
     {
         explicit KeyString(map_key sig) noexcept
         {
-            std::snprintf(
-                this->s, sizeof(this->s), "%02X%02X%02X%02X%02X%02X%02X%02X",
-                unsigned((sig >> 56) & 0xff),
-                unsigned((sig >> 48) & 0xff),
-                unsigned((sig >> 40) & 0xff),
-                unsigned((sig >> 32) & 0xff),
-                unsigned((sig >> 24) & 0xff),
-                unsigned((sig >> 16) & 0xff),
-                unsigned((sig >> 8 ) & 0xff),
-                unsigned((sig >> 0 ) & 0xff)
-            );
+            *int_to_fixed_hexadecimal_chars(this->s, sig) = '\0';
         }
 
         [[nodiscard]] const char * c_str() const noexcept
@@ -402,27 +393,6 @@ private:
                 const uint8_t (& sig)[8]  = cache_elem.sig.sig_8;
                 const uint16_t   bmp_size = bmp.bmp_size();
                 const uint8_t  * bmp_data = bmp.data();
-
-                // if (bmp_cache.owner == BmpCache::Front) {
-                //     uint8_t sha1[SslSha1::DIGEST_LENGTH];
-                //     bmp.compute_sha1(sha1);
-
-                //     char sig_sig[SslSha1::DIGEST_LENGTH];
-
-                //     snprintf( sig_sig, sizeof(sig_sig), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                //             , sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
-
-                //     char sig_sha1[SslSha1::DIGEST_LENGTH];
-
-                //     snprintf( sig_sha1, sizeof(sig_sig), "%02X%02X%02X%02X%02X%02X%02X%02X"
-                //             , sha1[0], sha1[1], sha1[2], sha1[3], sha1[4], sha1[5], sha1[6], sha1[7]);
-
-                //     LOG( LOG_INFO
-                //        , "BmpCachePersister::save_to_disk: sig=\"%s\" sha1=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                //        , sig_sig, sig_sha1, bmp.bpp(), bmp.cx(), bmp.cy(), bmp_size);
-
-                //     assert(!memcmp(bmp_cache.sig[cache_id][cache_index].sig_8, sha1, sizeof(bmp_cache.sig[cache_id][cache_index].sig_8)));
-                // }
 
                 LOG_IF(bool(verbose & Verbose::bmp_info), LOG_INFO
                   , "BmpCachePersister::save_to_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"

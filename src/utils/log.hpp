@@ -79,29 +79,6 @@ auto log_value(T const & x) noexcept
 -> decltype(detail_::log_value(x, 1))
 { return detail_::log_value(x, 1); }
 
-template<std::size_t n>
-struct redemption_log_s
-{
-    char data[n];
-};
-
-template<std::size_t n>
-detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x) noexcept
-{ return {x.data}; }
-
-template<std::size_t n>
-redemption_log_s<n*2+1>
-log_array_02x_format(uint8_t const (&d)[n]) noexcept
-{
-    redemption_log_s<n*2+1> r;
-    char * p = r.data;
-    for (uint8_t c : d) {
-        *p++ = "012345678abcdef"[c >> 4];
-        *p++ = "012345678abcdef"[c & 0xf];
-    }
-    *p = 0;
-    return r;
-}
 
 #if ! defined(IN_IDE_PARSER) && REDEMPTION_HAS_INCLUDE(<boost/preprocessor/config/config.hpp>)
 # include <boost/preprocessor/config/config.hpp>

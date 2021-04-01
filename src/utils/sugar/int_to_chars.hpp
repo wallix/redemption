@@ -129,7 +129,7 @@ char* int_to_fixed_hexadecimal_chars(char* out, T n) noexcept;
 //@}
 
 
-// to fixed hexadecimal upper case chars
+// to fixed hexadecimal lower case chars
 //@{
 template<int NbBytes = -1, class T>
 int_to_chars_result int_to_fixed_hexadecimal_lower_chars(T n) noexcept;
@@ -245,7 +245,7 @@ namespace detail
         static_assert(std::is_unsigned_v<T>);
         static_assert(sizeof(T) <= 64);
         static_assert(NbBytes == -1 || NbBytes <= int(sizeof(T)),
-        "number of NbBytes must not exceed sizeof(T)");
+            "number of NbBytes must not exceed sizeof(T)");
 
         constexpr std::size_t start = (NbBytes == -1)
             ? 0

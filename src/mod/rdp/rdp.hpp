@@ -140,6 +140,7 @@ struct FileValidatorService;
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/splitter.hpp"
+#include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
@@ -1295,15 +1296,7 @@ public:
                 uint8_t sig[SslSha1::DIGEST_LENGTH];
                 sha1.final(sig);
 
-                char clipboard_based_launcher_cookie[32];
-                snprintf(
-                    clipboard_based_launcher_cookie,
-                    sizeof(clipboard_based_launcher_cookie),
-                    "/#%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X ",
-                    sig[0], sig[1], sig[2], sig[3], sig[4],
-                    sig[5], sig[6], sig[7], sig[8], sig[9]);
-
-                return std::string(clipboard_based_launcher_cookie);
+                return str_concat("/#"_av, static_array_to_hexadecimal_upper_chars(sig), ' ');
             }
 
             return str_concat("/#", this->session_probe.target_informations, ' ');

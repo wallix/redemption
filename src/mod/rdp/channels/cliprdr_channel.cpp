@@ -32,6 +32,7 @@ Author(s): Jonathan Poelen, Christophe Grosjean, Raphael Zhou
 #include "utils/sugar/unordered_erase.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/int_to_chars.hpp"
+#include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 #include "utils/translation.hpp"
 #include "gdi/osd_api.hpp"
 
@@ -2438,15 +2439,8 @@ struct ClipboardVirtualChannel::ClipCtx::D
         }
 
         static_assert(SslSha256::DIGEST_LENGTH == decltype(file_contents_range.sig)::digest_len);
-        auto& digest = file_contents_range.sig.digest();
-        char digest_s[128];
-        size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
-            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-            digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
-            digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
-            digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
-            digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
+        auto const digest_str = static_array_to_hexadecimal_lower_zchars(
+            file_contents_range.sig.digest());
 
         auto file_size = int_to_decimal_zchars(real_file_size(file_contents_range));
 
@@ -2457,12 +2451,12 @@ struct ClipboardVirtualChannel::ClipCtx::D
          {
             KVLog("file_name"_av, file_contents_range.file_name),
             KVLog("size"_av, file_size),
-            KVLog("sha256"_av, {digest_s, digest_s_len}),
+            KVLog("sha256"_av, digest_str),
         });
 
         LOG_IF(!self.params.dont_log_data_into_syslog, LOG_INFO,
             "type=%s file_name=%s size=%s sha256=%s",
-            type, file_contents_range.file_name, file_size, digest_s);
+            type, file_contents_range.file_name, file_size, digest_str);
     }
 
     static void log_siem_info(

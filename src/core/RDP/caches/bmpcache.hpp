@@ -31,6 +31,7 @@
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
 
 using std::size_t; /*NOLINT*/
 
@@ -682,10 +683,9 @@ public:
         const uint32_t cache_index_32 = cache.get_cache_index(e_compare);
         if (cache_index_32 != cache_range<cache_element>::invalid_cache_index) {
             LOG_IF(bool(this->verbose & Verbose::persistent) && persistent, LOG_INFO
-              , "BmpCache: %s use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache"
+              , "BmpCache: %s use bitmap %s stored in persistent disk bitmap cache"
               , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-              , e_compare.sha1[0], e_compare.sha1[1], e_compare.sha1[2], e_compare.sha1[3]
-              , e_compare.sha1[4], e_compare.sha1[5], e_compare.sha1[6], e_compare.sha1[7]);
+              , static_array_to_hexadecimal_upper_zchars(e_compare.sha1));
             cache[cache_index_32].stamp = ++this->stamp;
             // Generating source code for unit test.
             //if (this->verbose & 8192) {
@@ -715,20 +715,18 @@ public:
                 id          |= IN_WAIT_LIST;
 
                 LOG_IF(bool(this->verbose & Verbose::persistent), LOG_INFO
-                  , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list."
+                  , "BmpCache: %s Put bitmap %s into wait list."
                   , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                  , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
-                  , le_compare.sha1[4], le_compare.sha1[5], le_compare.sha1[6], le_compare.sha1[7]);
+                  , static_array_to_hexadecimal_upper_zchars(le_compare.sha1));
             }
             else {
                 this->waiting_list.remove(le_compare);
                 this->waiting_list[cache_index_32].reset();
 
                 LOG_IF(bool(this->verbose & Verbose::persistent), LOG_INFO
-                  , "BmpCache: %s Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u"
+                  , "BmpCache: %s Put bitmap %s into persistent cache, cache_index=%u"
                   , ((this->owner == Front) ? "Front" : ((this->owner == Mod_rdp) ? "Mod_rdp" : "Recorder"))
-                  , le_compare.sha1[0], le_compare.sha1[1], le_compare.sha1[2], le_compare.sha1[3]
-                  , le_compare.sha1[4], le_compare.sha1[5], le_compare.sha1[6], le_compare.sha1[7]
+                  , static_array_to_hexadecimal_upper_zchars(le_compare.sha1)
                   , oldest_cidx);
             }
         }

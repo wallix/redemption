@@ -33,6 +33,8 @@
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "system/ssl_sha256.hpp"
 #include "utils/sugar/algostring.hpp"
+#include "utils/sugar/static_array_to_hexadecimal_chars.hpp"
+#include "utils/sugar/int_to_chars.hpp"
 #include "utils/strutils.hpp"
 #include "utils/timebase.hpp"
 #include "core/file_system_virtual_channel_params.hpp"
@@ -1546,36 +1548,30 @@ public:
                             !::utils::ends_case_with(file_path, DESKTOP_INI_FILENAME)) {
                             if (target_iter->for_reading) {
                                 if (target_iter->sequential_access_offset == target_iter->end_of_file) {
-                                    uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
-
+                                    uint8_t digest[SslSha256::DIGEST_LENGTH];
                                     target_iter->sha256.final(digest);
 
-                                    char digest_s[128];
-                                    size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
-                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-                                        digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
-                                        digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
-                                        digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
-                                        digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
+                                    auto const digest_str
+                                        = static_array_to_hexadecimal_lower_zchars(digest);
+                                    auto const file_size_str
+                                        = int_to_decimal_zchars(target_iter->end_of_file);
 
                                     LOG_IF(bool(this->verbose & RDPVerbose::rdpdr), LOG_INFO,
                                         "FileSystemVirtualChannel::process_client_drive_io_response:"
-                                        " File reading. Length=%" PRId64 " SHA-256=%s",
-                                        target_iter->end_of_file, digest_s);
+                                        " File reading. Length=%s SHA-256=%s",
+                                        file_size_str, digest_str);
 
-                                    auto const file_size_str = std::to_string(target_iter->end_of_file);
                                     this->session_log.log6(
                                         LogId::DRIVE_REDIRECTION_READ_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
-                                        KVLog("sha256"_av, {digest_s, digest_s_len}),
+                                        KVLog("sha256"_av, digest_str),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
                                         "type=DRIVE_REDIRECTION_READ_EX file_name=%s"
                                         "size=%s sha256=%s",
-                                        file_path, file_size_str, digest_s);
+                                        file_path, file_size_str, digest_str);
                                 }
                                 else {
                                     this->session_log.log6(
@@ -1589,32 +1585,25 @@ public:
                             }
                             else if (target_iter->for_writing) {
                                 if (target_iter->sequential_access_offset >= target_iter->end_of_file) {
-                                    uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
-
+                                    uint8_t digest[SslSha256::DIGEST_LENGTH];
                                     target_iter->sha256.final(digest);
 
-                                    char digest_s[128];
-                                    size_t digest_s_len = snprintf(digest_s, sizeof(digest_s),
-                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-                                        digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
-                                        digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
-                                        digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
-                                        digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
-
-                                    auto const file_size_str = std::to_string(target_iter->end_of_file);
+                                    auto const digest_str
+                                        = static_array_to_hexadecimal_lower_zchars(digest);
+                                    auto const file_size_str
+                                        = int_to_decimal_zchars(target_iter->end_of_file);
 
                                     this->session_log.log6(
                                         LogId::DRIVE_REDIRECTION_WRITE_EX, {
                                         KVLog("file_name"_av, file_path),
                                         KVLog("size"_av, file_size_str),
-                                        KVLog("sha256"_av, {digest_s, digest_s_len}),
+                                        KVLog("sha256"_av, digest_str),
                                     });
 
                                     LOG_IF(!this->param_dont_log_data_into_syslog, LOG_INFO,
                                         "type=DRIVE_REDIRECTION_WRITE_EX file_name=%s"
                                         "size=%s sha256=%s",
-                                        file_path, file_size_str, digest_s);
+                                        file_path, file_size_str, digest_str);
                                 }
                                 else if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     this->session_log.log6(
