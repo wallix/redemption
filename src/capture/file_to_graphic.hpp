@@ -135,10 +135,6 @@ private:
     const MonotonicTimePoint begin_capture;
     const MonotonicTimePoint end_capture;
 
-public:
-    uint32_t max_order_count;
-
-private:
     WrmMetaChunk info {};
 
 public:
@@ -283,10 +279,6 @@ private:
             if (this->begin_capture <= this->record_now) {
                 this->snapshot_play();
                 update_progess(this->record_now);
-            }
-
-            if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
-                break;
             }
 
             if (this->end_capture < this->record_now) {

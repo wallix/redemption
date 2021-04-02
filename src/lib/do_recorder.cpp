@@ -290,10 +290,8 @@ private:
     }
 
     void interpret_chunk() {
-        REDEMPTION_DIAGNOSTIC_PUSH()
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wswitch-enum")
-        switch (safe_cast<WrmChunkType>(this->chunk_type)) {
-        case WrmChunkType::META_FILE:
+        switch (underlying_cast(this->chunk_type)) {
+        case underlying_cast(WrmChunkType::META_FILE):
             this->info.receive(this->stream);
             this->trans = &this->compression_builder.reset(
                 *this->trans_source, this->info.compression_algorithm
@@ -302,14 +300,12 @@ private:
             this->stream.rewind();
             this->meta_ok = true;
             break;
-        case WrmChunkType::RESET_CHUNK:
+        case underlying_cast(WrmChunkType::RESET_CHUNK):
             this->info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
 
             this->trans = this->trans_source;
             break;
-        default :;
         }
-        REDEMPTION_DIAGNOSTIC_POP()
     }   // void interpret_chunk()
 };
 
@@ -800,23 +796,33 @@ static void show_statistics(
 }
 
 
-inline int is_encrypted_file(const char * input_filename, bool & infile_is_encrypted)
+enum class IsEncryptedResult
 {
-    infile_is_encrypted = false;
-    const int fd_test = open(input_filename, O_RDONLY);
-    if (fd_test != -1) {
-        uint8_t data[4] = {};
-        ssize_t res_test = read(fd_test, data, 4);
-        const uint32_t magic = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
-        if ((res_test == 4) && (magic == WABCRYPTOFILE_MAGIC)) {
-            infile_is_encrypted = true;
-            std::cout << "Input file is encrypted.\n";
-        }
-        close(fd_test);
-        return 0;
+    Error,
+    IsEncrypted,
+    IsUnencrypted,
+};
+
+inline IsEncryptedResult is_encrypted_file(const char * input_filename)
+{
+    auto ufd = unique_fd{input_filename, O_RDONLY};
+    if (REDEMPTION_UNLIKELY(ufd)) {
+        return IsEncryptedResult::Error;
     }
 
-    return -1;
+    uint8_t data[4] = {};
+    ssize_t const res_test = read(ufd.fd(), data, 4);
+    if (REDEMPTION_UNLIKELY(res_test == -1)) {
+        return IsEncryptedResult::Error;
+    }
+
+    uint32_t const magic =  uint32_t(data[0])
+                         | (uint32_t(data[1]) << 8)
+                         | (uint32_t(data[2]) << 16)
+                         | (uint32_t(data[3]) << 24);
+    return (res_test == 4 && magic == WABCRYPTOFILE_MAGIC)
+        ? IsEncryptedResult::IsEncrypted
+        : IsEncryptedResult::IsUnencrypted;
 }
 
 struct CaptureTimes
@@ -867,7 +873,6 @@ static inline int replay(
     std::string const& hash_path,
     CaptureFlags const& capture_flags,
     bool chunk,
-    unsigned ocr_version,
     std::string const& output_filename,
     const CaptureTimes capture_times,
     PngParams & png_params,
@@ -876,7 +881,6 @@ static inline int replay(
     SequencedVideoParams sequenced_video_params,
     int wrm_color_depth,
     std::chrono::seconds wrm_break_interval,
-    uint32_t order_count,
     bool show_file_metadata,
     bool show_statistics,
     bool clear,
@@ -933,7 +937,6 @@ static inline int replay(
             || show_file_metadata
             || show_statistics
             || file_count > 1
-            || order_count
             || capture_times.begin_cap != begin_record
             || capture_times.end_cap != capture_times.begin_cap);
 
@@ -959,8 +962,6 @@ static inline int replay(
                 result = 0;
             }
             else {
-                player.max_order_count = order_count;
-
                 int return_code = 0;
 
                 if (not output_filename.empty()) {
@@ -968,8 +969,8 @@ static inline int replay(
 
                     if (verbose) {
                         std::cout << "Output file path: "
-                                    << outfile.directory << outfile.basename << outfile.extension
-                                    << '\n' << std::endl;
+                                  << outfile.directory << outfile.basename << outfile.extension
+                                  << '\n' << std::endl;
                     }
 
                     if (clear) {
@@ -1023,7 +1024,7 @@ static inline int replay(
                         bool capture_kbd = false;
 
                         const OcrParams ocr_params = OcrParams{
-                            ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1,
+                            ini.get<cfg::ocr::version>(),
                             ocr::locale::LocaleId(
                                 static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
                             ini.get<cfg::ocr::on_title_bar_only>(),
@@ -1254,7 +1255,8 @@ static inline int replay(
     return result;
 }
 
-struct RecorderParams {
+struct RecorderParams
+{
     std::string input_filename;
     std::string input_basename;
     std::string infile_extension;
@@ -1274,8 +1276,6 @@ struct RecorderParams {
     // "end capture time (in seconds), either absolute or relative to video start,
     // (nagative number means relative to video end)"
     std::chrono::seconds end_cap {};
-    // "Number of orders to execute before stopping, default=0 execute all orders"
-    uint32_t order_count = 0;
 
     // common output options
     std::string output_filename;
@@ -1288,21 +1288,17 @@ struct RecorderParams {
 
     // video output options
     bool full_video = false; // create full video
-    std::chrono::seconds video_break_interval {10*60};
+    std::chrono::seconds video_break_interval {10min};
 
     // wrm output options
     int wrm_compression_algorithm = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
     int wrm_color_depth = static_cast<int>(USE_ORIGINAL_COLOR_DEPTH);
-    std::chrono::seconds wrm_break_interval {86400};
+    std::chrono::seconds wrm_break_interval {24h};
     TraceType encryption_type = TraceType::localfile;
-
-    // ocr output options
-    unsigned    ocr_version = -1u;
 
     // miscellaneous options
     CaptureFlags capture_flags = CaptureFlags::none; // output control
-    bool auto_output_file   = false;
-    bool clear              = true;
+    bool clear = true;
     bool infile_is_encrypted = false;
     bool chunk = false;
 
@@ -1505,9 +1501,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         cli::option("video-codec").help("ffmpeg video codec name (flv, mp4, etc)")
             .parser(cli::arg_location(recorder.video_params.codec)).argname("<codec>"),
 
-        cli::option("ocr-version").help("version 1 or 2")
-            .parser(cli::arg_location(recorder.ocr_version)).argname("<version>"),
-
         cli::option("bogus-vlc").help("Needed to play a video with old ffplay or VLC v1")
             .parser(cli::on_off_location(bogus_vlc)),
 
@@ -1616,14 +1609,17 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
             recorder.mwrm_path = input.directory;
         }
 
-        recorder.input_basename = "";
-        recorder.input_filename = "";
-        recorder.infile_extension = ".mwrm";
-        if (not input.basename.empty()) {
+        if (input.basename.empty()) {
+            recorder.input_basename = "";
+            recorder.input_filename = "";
+            recorder.infile_extension = ".mwrm";
+        }
+        else {
             recorder.input_basename = input.basename;
-            recorder.input_filename = input.basename;
-            recorder.infile_extension = (strlen(input.extension.c_str()) > 0)?input.extension.c_str():".mwrm";
-            recorder.input_filename += recorder.infile_extension;
+            recorder.infile_extension = (input.extension.size() > 0)
+                ? input.extension.c_str()
+                : ".mwrm";
+            str_assign(recorder.input_filename, input.basename, recorder.infile_extension);
         }
 
         if (recorder.mwrm_path.back() != '/'){
@@ -1642,10 +1638,21 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         LOG(LOG_INFO, "mwrm_path=\"%s\"", recorder.mwrm_path);
     }
 
-    if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
-        int const errnum = errno;
-        auto const mes = str_concat("Input file error: ", strerror(errnum));
-        return cl_error(mes.c_str(), -errnum);
+    switch (is_encrypted_file(recorder.full_path.c_str())) {
+        case IsEncryptedResult::Error: {
+            int const errnum = errno;
+            auto const mes = str_concat("Input file error: ", strerror(errnum));
+            return cl_error(mes.c_str(), -errnum);
+        }
+
+        case IsEncryptedResult::IsEncrypted:
+            std::cout << "Input file is encrypted.\n";
+            recorder.infile_is_encrypted = true;
+            break;
+
+        case IsEncryptedResult::IsUnencrypted:
+            recorder.infile_is_encrypted = false;
+            break;
     }
 
     switch (wrm_encryption) {
@@ -1667,10 +1674,11 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     if (!recorder.output_filename.empty()) {
         auto output = ParsePath(recorder.output_filename);
         if (output.directory.empty()){
-            std::string directory = str_concat(app_path(AppPath::Wrm), '/');
-            recorder.output_filename.insert(0, directory);
+            recorder.output_filename = str_concat(
+                app_path(AppPath::Wrm), '/', recorder.output_filename,
+                output.extension.empty() ? ".mwrm"_av : ""_av);
         }
-        if (output.extension.empty()){
+        else if (output.extension.empty()){
             recorder.output_filename += ".mwrm";
         }
         std::cout << "Output file is \"" << recorder.output_filename << "\".\n";
@@ -1788,7 +1796,6 @@ extern "C" {
 
             if (!rp.show_file_metadata
              && !rp.show_statistics
-             && !rp.auto_output_file
              && rp.output_filename.empty()
             ) {
                 std::cerr << "Missing output filename : use -o filename\n\n";
@@ -1900,7 +1907,6 @@ extern "C" {
                          rp.hash_path,
                          rp.capture_flags,
                          rp.chunk,
-                         rp.ocr_version,
                          rp.output_filename,
                          capture_times,
                          rp.png_params,
@@ -1909,7 +1915,6 @@ extern "C" {
                          rp.sequenced_video_params,
                          rp.wrm_color_depth,
                          rp.wrm_break_interval,
-                         rp.order_count,
                          rp.show_file_metadata,
                          rp.show_statistics,
                          rp.clear,
