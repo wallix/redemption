@@ -123,7 +123,7 @@
 #include "core/stream_throw_helpers.hpp"
 
 #include "proxy_recorder/nego_server.hpp"
-#include "configs/config.hpp"
+
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 
