@@ -24,19 +24,6 @@
 #include "configs/config.hpp"
 
 
-VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini)
-{
-    return VideoParams{
-        ini.get<cfg::video::framerate>(),
-        ini.get<cfg::video::codec_id>(),
-        ini.get<cfg::video::ffmpeg_options>(),
-        ini.get<cfg::video::notimestamp>(),
-        ini.get<cfg::video::bogus_vlc_frame_rate>(),
-        video_break_interval,
-        ini.get<cfg::debug::ffmpeg>(),
-    };
-}
-
 OcrParams ocr_params_from_ini(const Inifile & ini)
 {
     return OcrParams{

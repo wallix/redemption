@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "capture/video_params.hpp"
 #include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
 #include "capture/ocr_params.hpp"
@@ -32,8 +31,6 @@
 class CryptoContext;
 class Inifile;
 class Random;
-
-VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, const Inifile & ini);
 
 OcrParams ocr_params_from_ini(const Inifile & ini);
 

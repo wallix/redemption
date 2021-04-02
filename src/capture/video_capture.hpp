@@ -38,6 +38,7 @@
 
 class CaptureParams;
 class FullVideoParams;
+class SequencedVideoParams;
 class RDPDrawable;
 
 
@@ -148,6 +149,7 @@ public:
         /* const */RDPDrawable & drawable,
         gdi::ImageFrameApi & image_frame,
         VideoParams const& video_params,
+        SequencedVideoParams const& sequenced_video_params,
         NotifyNextVideo & next_video_notifier);
 
     ~SequencedVideoCaptureImpl();

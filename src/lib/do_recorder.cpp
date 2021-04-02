@@ -866,6 +866,7 @@ static inline int replay(
     PngParams & png_params,
     VideoParams & video_params,
     FullVideoParams const& full_video_params,
+    SequencedVideoParams const& sequenced_video_params,
     int wrm_color_depth,
     std::chrono::seconds wrm_break_interval,
     uint32_t order_count,
@@ -1003,12 +1004,19 @@ static inline int replay(
                                                 ? capture_times.end_cap
                                                 : end_record));
 
-                        ini.set<cfg::video::bogus_vlc_frame_rate>(video_params.bogus_vlc_frame_rate);
+                        ini.set<cfg::video::bogus_vlc_frame_rate>(sequenced_video_params.bogus_vlc_frame_rate);
                         ini.set<cfg::video::ffmpeg_options>(video_params.codec_options);
                         ini.set<cfg::video::codec_id>(video_params.codec);
-                        video_params = video_params_from_ini(video_break_interval, ini);
+                        video_params = VideoParams{
+                            ini.get<cfg::video::framerate>(),
+                            ini.get<cfg::video::codec_id>(),
+                            ini.get<cfg::video::ffmpeg_options>(),
+                            ini.get<cfg::video::notimestamp>(),
+                            ini.get<cfg::debug::ffmpeg>(),
+                        };
                         video_params.updatable_frame_marker_end_bitset_view
                             = updatable_frame_marker_end_bitset_view;
+
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
@@ -1055,7 +1063,10 @@ static inline int replay(
 
                         PatternParams const pattern_params = pattern_params_from_ini(ini);
 
-                        SequencedVideoParams const sequenced_video_params {};
+                        SequencedVideoParams const sequenced_video_params {
+                            video_break_interval,
+                            ini.get<cfg::video::bogus_vlc_frame_rate>(),
+                        };
 
                         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
@@ -1274,8 +1285,9 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, 60s, 0, false , false, false, nullptr};
-    VideoParams video_params {5, {}, {}, {}, {}, {}, {}};
+    VideoParams video_params {5, {}, {}, {}, {}};
     FullVideoParams full_video_params {};
+    SequencedVideoParams sequenced_video_params {};
 
     // video output options
     bool full_video = false; // create full video
@@ -1548,14 +1560,14 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     recorder.full_video_params.bogus_vlc_frame_rate = ini.get<cfg::video::bogus_vlc_frame_rate>();
-    recorder.video_params.bogus_vlc_frame_rate = false;
+    recorder.sequenced_video_params.bogus_vlc_frame_rate = false;
     if (1 == bogus_vlc) {
         recorder.full_video_params.bogus_vlc_frame_rate = true;
-        recorder.video_params.bogus_vlc_frame_rate = true;
+        recorder.sequenced_video_params.bogus_vlc_frame_rate = true;
     }
     if (0 == bogus_vlc) {
         recorder.full_video_params.bogus_vlc_frame_rate = false;
-        recorder.video_params.bogus_vlc_frame_rate = false;
+        recorder.sequenced_video_params.bogus_vlc_frame_rate = false;
     }
 
     if (recorder.chunk) {
@@ -1906,6 +1918,7 @@ extern "C" {
                          rp.png_params,
                          rp.video_params,
                          rp.full_video_params,
+                         rp.sequenced_video_params,
                          rp.wrm_color_depth,
                          rp.wrm_break_interval,
                          rp.order_count,

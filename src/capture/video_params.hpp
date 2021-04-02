@@ -32,8 +32,6 @@ struct VideoParams
     std::string codec;
     std::string codec_options;
     bool no_timestamp;
-    bool bogus_vlc_frame_rate;
-    std::chrono::microseconds video_interval;
     unsigned verbosity;
     array_view<unsigned long long> updatable_frame_marker_end_bitset_view {};
 };

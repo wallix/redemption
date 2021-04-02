@@ -21,6 +21,7 @@
 #include "capture/capture_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
+#include "capture/sequenced_video_params.hpp"
 #include "capture/video_capture.hpp"
 #include "capture/video_recorder.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -472,13 +473,14 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     /* const */RDPDrawable & drawable,
     gdi::ImageFrameApi & image_frame,
     VideoParams const & video_params,
+    SequencedVideoParams const& sequenced_video_params,
     NotifyNextVideo & next_video_notifier)
 : monotonic_start_capture(capture_params.now)
 , monotonic_to_real(capture_params.now, capture_params.real_now)
 , video_cap_ctx(
     capture_params.now, capture_params.real_now,
     video_params_to_image_by_interval(
-        video_params.no_timestamp, video_params.bogus_vlc_frame_rate),
+        video_params.no_timestamp, sequenced_video_params.bogus_vlc_frame_rate),
     video_params.frame_rate, drawable, image_frame,
     video_params.updatable_frame_marker_end_bitset_view)
 , vc_filename_generator(capture_params.record_path, capture_params.basename, video_params.codec)
@@ -487,8 +489,8 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
 , image_frame_api(image_frame)
 , ic_scaled_png(png_width, png_height)
 , start_break(capture_params.now)
-, break_interval((video_params.video_interval > std::chrono::microseconds::zero())
-    ? video_params.video_interval
+, break_interval((sequenced_video_params.break_interval > std::chrono::microseconds::zero())
+    ? sequenced_video_params.break_interval
     : std::chrono::microseconds::max())
 , next_video_notifier(next_video_notifier)
 , recorder_params{

@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include <chrono>
+
 struct SequencedVideoParams
 {
+    std::chrono::microseconds break_interval;
+    bool bogus_vlc_frame_rate;
 };

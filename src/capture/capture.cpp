@@ -1341,7 +1341,7 @@ Capture::Capture(
     bool capture_png, const PngParams& png_params,
     bool capture_pattern_checker, const PatternParams& pattern_params,
     bool capture_ocr, const OcrParams& ocr_params,
-    bool capture_video, const SequencedVideoParams& /*sequenced_video_params*/,
+    bool capture_video, const SequencedVideoParams& sequenced_video_params,
     bool capture_video_full, const FullVideoParams& full_video_params,
     bool capture_meta, const MetaParams& meta_params,
     bool capture_kbd, const KbdLogParams& kbd_log_params,
@@ -1455,7 +1455,8 @@ Capture::Capture(
             }
             this->sequenced_video_capture_obj = std::make_unique<SequencedVideoCaptureImpl>(
                 capture_params, png_params.png_width, png_params.png_height,
-                *this->gd_drawable, *image_frame_api_ptr, video_params, notifier);
+                *this->gd_drawable, *image_frame_api_ptr, video_params,
+                sequenced_video_params, notifier);
         }
 
         if (capture_video_full) {

@@ -30,6 +30,7 @@
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "capture/full_video_params.hpp"
+#include "capture/sequenced_video_params.hpp"
 #include "capture/capture_params.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "utils/fileutils.hpp"
@@ -99,32 +100,34 @@ namespace
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
-            25, codec.name, codec.options, false, false, video_interval, 0};
+            25, codec.name, codec.options, false, 0};
+        SequencedVideoParams sequenced_video_params { video_interval, false };
         CaptureParams capture_params{
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         SequencedVideoCaptureImpl video_capture(
             capture_params, 0 /* png_width */, 0 /* png_height */,
-            drawable, drawable, video_params, next_video_notifier);
+            drawable, drawable, video_params, sequenced_video_params,
+            next_video_notifier);
         simple_movie(
             monotonic_time, loop_duration, drawable, video_capture,
             video_capture.graphics_api(), mouse);
     }
 
     void simple_full_video(
-        char const* dirname, Codec const& codec, std::chrono::seconds video_interval,
+        char const* dirname, Codec const& codec,
         unsigned loop_duration, bool mouse)
     {
         MonotonicTimePoint monotonic_time{12s + 653432us};
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
-            25, codec.name, codec.options, false, false, video_interval, 0};
+            25, codec.name, codec.options, false, 0};
         CaptureParams capture_params{
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
         FullVideoCaptureImpl video_capture(
-            capture_params, drawable, drawable, video_params, FullVideoParams{false});
+            capture_params, drawable, drawable, video_params, FullVideoParams{});
         simple_movie(
             monotonic_time, loop_duration, drawable, video_capture,
             video_capture.graphics_api(), mouse);
@@ -191,14 +194,14 @@ RED_AUTO_TEST_CASE_WD(TestSequencedVideoCaptureMP4_3, wd)
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264, wd)
 {
-    simple_full_video(wd.dirname(), mp4, 0s, 250, true);
+    simple_full_video(wd.dirname(), mp4, 250, true);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 106930 +- 10000_v);
 }
 
 RED_AUTO_TEST_CASE_WD(TestFullVideoCaptureX264_2, wd)
 {
-    simple_full_video(wd.dirname(), mp4, 0s, 250, false);
+    simple_full_video(wd.dirname(), mp4, 250, false);
 
     RED_TEST_FILE_SIZE(wd.add_file("video.mp4"), 92693 +- 10000_v);
 }
