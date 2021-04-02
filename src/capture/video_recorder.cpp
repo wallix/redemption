@@ -59,6 +59,8 @@ extern "C" {
 
 namespace
 {
+    constexpr int original_timestamp_height = 12;
+
     struct default_av_free
     {
         void operator()(void * ptr) noexcept
@@ -239,9 +241,11 @@ struct video_recorder::D
     AVCodecContext* codec_ctx = nullptr;
     AVFormatContext* oc = nullptr;
     SwsContext* img_convert_ctx = nullptr;
+    SwsContext* img_convert_timestamp_ctx = nullptr;
 
     AVPacket pkt;
     int original_height;
+    int timestamp_height;
 
     std::unique_ptr<uint8_t, default_av_free> picture_buf;
     std::unique_ptr<uint8_t, default_av_free> video_outbuf;
@@ -261,6 +265,7 @@ struct video_recorder::D
         this->out_file.close();
         avio_context_free(&this->custom_io_context);
         sws_freeContext(this->img_convert_ctx);
+        sws_freeContext(this->img_convert_timestamp_ctx);
         avformat_free_context(this->oc);
         avcodec_free_context(&this->codec_ctx);
         av_frame_free(&this->picture);
@@ -478,11 +483,18 @@ video_recorder::video_recorder(
 
     this->d->img_convert_ctx = sws_getContext(
         image_view.width(), image_view.height(), AV_PIX_FMT_BGR24,
-        image_view_width, image_view_height, pix_fmt,
+        image_view.width(), image_view.height(), pix_fmt,
         SWS_BICUBIC, nullptr, nullptr, nullptr
     );
-
     throw_if(!this->d->img_convert_ctx, "Cannot initialize the conversion context");
+
+    this->d->timestamp_height = std::min(int(image_view.height()), original_timestamp_height);
+    this->d->img_convert_timestamp_ctx = sws_getContext(
+        image_view.width(), this->d->timestamp_height, AV_PIX_FMT_BGR24,
+        image_view.width(), this->d->timestamp_height, pix_fmt,
+        SWS_BICUBIC, nullptr, nullptr, nullptr
+    );
+    throw_if(!this->d->img_convert_timestamp_ctx, "Cannot initialize the conversion context");
 }
 
 static std::pair<int, char const*> encode_frame(
@@ -539,8 +551,25 @@ void video_recorder::preparing_video_frame()
     /* stat */// LOG(LOG_INFO, "preparing_video_frame");
     sws_scale(
         this->d->img_convert_ctx,
-        this->d->original_picture->data, this->d->original_picture->linesize,
-        0, this->d->original_height, this->d->picture->data, this->d->picture->linesize);
+        this->d->original_picture->data,
+        this->d->original_picture->linesize,
+        0,
+        this->d->original_height,
+        this->d->picture->data,
+        this->d->picture->linesize);
+}
+
+void video_recorder::preparing_timestamp_video_frame()
+{
+    /* stat */// LOG(LOG_INFO, "preparing_timestamp_video_frame");
+    sws_scale(
+        this->d->img_convert_timestamp_ctx,
+        this->d->original_picture->data,
+        this->d->original_picture->linesize,
+        0,
+        this->d->timestamp_height,
+        this->d->picture->data,
+        this->d->picture->linesize);
 }
 
 void video_recorder::encoding_video_frame(int64_t frame_index)

@@ -98,11 +98,15 @@ VideoCaptureCtx::VideoCaptureCtx(
 , updatable_frame_marker_end_bitset_stream(updatable_frame_marker_end_bitset_view.data())
 , updatable_frame_marker_end_bitset_end(updatable_frame_marker_end_bitset_view.end())
 , timestamp_tracer(image_frame.get_writable_image_view())
-{}
+{
+    this->updatable_graphics.set_drawing_event(true);
+}
 
 void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
 {
     this->image_frame_api.prepare_image_frame();
+
+    this->drawable.trace_mouse();
 
     if (this->has_timestamp) {
         this->timestamp_tracer.trace(to_tm_t(
@@ -114,6 +118,8 @@ void VideoCaptureCtx::preparing_video_frame(video_recorder & recorder)
     if (this->has_timestamp) {
         this->timestamp_tracer.clear();
     }
+
+    this->drawable.clear_mouse();
 }
 
 void VideoCaptureCtx::frame_marker_event(
@@ -126,9 +132,7 @@ void VideoCaptureCtx::frame_marker_event(
      || this->cursor_x != cursor_x
      || this->cursor_y != cursor_y
     ) {
-        this->drawable.trace_mouse();
         this->preparing_video_frame(recorder);
-        this->drawable.clear_mouse();
         this->updatable_graphics.set_drawing_event(false);
     }
 
@@ -154,9 +158,7 @@ void VideoCaptureCtx::encoding_end_frame(video_recorder & recorder)
 void VideoCaptureCtx::next_video(video_recorder & recorder)
 {
     this->frame_index = 0;
-    this->drawable.trace_mouse();
     this->preparing_video_frame(recorder);
-    this->drawable.clear_mouse();
     recorder.encoding_video_frame(++this->frame_index);
 }
 
@@ -183,13 +185,25 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
         bool const update_pointer = (update_image || update_timestamp);
 
         if (update_pointer) {
+            this->image_frame_api.prepare_image_frame();
+
             this->drawable.trace_mouse();
         }
 
-        if (update_image
-         && (!this->has_timestamp || this->monotonic_last_time_capture < this->next_trace_time)
+        if (update_pointer
+         || (update_image
+             && (!this->has_timestamp || this->monotonic_last_time_capture < this->next_trace_time))
         ) {
-            this->preparing_video_frame(recorder);
+            if (this->has_timestamp) {
+                this->timestamp_tracer.trace(to_tm_t(
+                    this->monotonic_last_time_capture, this->monotonic_to_real));
+
+                if (this->monotonic_last_time_capture >= this->next_trace_time) {
+                    this->next_trace_time += 1s;
+                }
+            }
+
+            recorder.preparing_video_frame();
         }
 
         this->cursor_x = cursor_x;
@@ -199,11 +213,18 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
 
         // synchronize video time with the end of second
 
+        auto preparing_timestamp_video_frame = [this](video_recorder & recorder){
+            this->timestamp_tracer.trace(to_tm_t(
+                this->monotonic_last_time_capture, this->monotonic_to_real));
+
+            recorder.preparing_timestamp_video_frame();
+        };
+
         switch (this->image_by_interval) {
             case ImageByInterval::OneWithTimestamp:
                 do {
                     if (this->monotonic_last_time_capture >= this->next_trace_time) {
-                        this->preparing_video_frame(recorder);
+                        preparing_timestamp_video_frame(recorder);
                         this->next_trace_time += 1s;
                     }
 
@@ -226,7 +247,7 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
             case ImageByInterval::ZeroOrOneWithTimestamp:
                 do {
                     if (this->monotonic_last_time_capture >= this->next_trace_time) {
-                        this->preparing_video_frame(recorder);
+                        preparing_timestamp_video_frame(recorder);
                         this->next_trace_time += 1s;
                     }
 
@@ -258,6 +279,10 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
                     tick -= elapsed;
                 } while (this->monotonic_last_time_capture + frame_interval <= now);
                 break;
+        }
+
+        if (update_timestamp && this->has_timestamp) {
+            this->timestamp_tracer.clear();
         }
 
         if (update_pointer) {

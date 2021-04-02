@@ -42,6 +42,7 @@ public:
     ~video_recorder();
 
     void preparing_video_frame();
+    void preparing_timestamp_video_frame();
 
     void encoding_video_frame(int64_t frame_index);
 
