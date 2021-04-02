@@ -7,7 +7,6 @@ cfg::globals::front_connection_time ⇒ front_connection_time   [std::chrono::mi
     from incoming connection to "up_and_running" state
 cfg::globals::target_connection_time ⇒ target_connection_time   [std::chrono::milliseconds]
     from Module rdp creation to "up_and_running" state
-cfg::globals::capture_chunk ⇐ capture_chunk   [bool]
 cfg::globals::nla_auth_user ⇔ nla_login   [std::string]
 cfg::globals::auth_user ⇔ login   [std::string]
 cfg::globals::host ⇔ ip_client   [std::string]

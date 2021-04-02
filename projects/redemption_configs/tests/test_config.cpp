@@ -81,7 +81,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     // default config
     Inifile             ini;
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -99,7 +98,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -365,7 +363,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     Inifile ini;
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_device>());
@@ -382,7 +379,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -559,7 +555,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     Inifile ini;
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -577,7 +572,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig1bis, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -725,7 +719,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     Inifile ini;
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -743,7 +736,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig2, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -895,7 +887,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
 
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -913,7 +904,6 @@ RED_AUTO_TEST_CASE_WF(TestConfig3, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -1039,7 +1029,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     Inifile ini;
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -1057,7 +1046,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -1185,7 +1173,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     ;
     RED_CHECK(configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -1203,7 +1190,6 @@ RED_AUTO_TEST_CASE_WF(TestMultiple, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -1313,7 +1299,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     // - every characters following # are ignored until end of line (comments)
     Inifile             ini;
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
 
 
@@ -1334,7 +1319,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
@@ -1450,7 +1434,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
 
     RED_CHECK(!configuration_load(ini.configuration_holder(), wf.c_str()));
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::capture_chunk>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::is_rec>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::auth_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::host>());
@@ -1468,7 +1451,6 @@ RED_AUTO_TEST_CASE_WF(TestNewConf, wf)
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
     RED_CHECK_EQUAL(10,                               ini.get<cfg::video::png_interval>().count());
-    RED_CHECK_EQUAL(40,                               ini.get<cfg::video::frame_interval>().count());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());

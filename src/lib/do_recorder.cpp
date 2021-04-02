@@ -867,7 +867,6 @@ static inline int replay(
     VideoParams & video_params,
     FullVideoParams const& full_video_params,
     int wrm_color_depth,
-    uint32_t wrm_frame_interval,
     std::chrono::seconds wrm_break_interval,
     uint32_t order_count,
     bool show_file_metadata,
@@ -888,11 +887,9 @@ static inline int replay(
     std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
     ini.set<cfg::video::hash_path>(hash_path);
 
-    ini.set<cfg::video::frame_interval>(std::chrono::duration<unsigned int, std::centi>{wrm_frame_interval});
     ini.set<cfg::video::break_interval>(wrm_break_interval);
     ini.set<cfg::globals::trace_type>(encryption_type);
 
-    ini.set<cfg::globals::capture_chunk>(chunk);
     ini.set<cfg::ocr::version>(ocr_version == 2 ? OcrVersion::v2 : OcrVersion::v1);
 
     if (chunk){
@@ -1021,7 +1018,7 @@ static inline int replay(
                         bool capture_pattern_checker = false;
 
                         bool capture_ocr = bool(capture_flags & CaptureFlags::ocr)
-                                            || capture_pattern_checker;
+                                        || capture_pattern_checker;
                         bool capture_video = bool(capture_flags & CaptureFlags::video);
                         bool capture_video_full = full_video;
                         bool capture_meta = capture_ocr;
@@ -1277,7 +1274,7 @@ struct RecorderParams {
 
     // png output options
     PngParams png_params = {0, 0, 60s, 0, false , false, false, nullptr};
-    VideoParams video_params {5, {}, {}, {}, {}, {}, {}, {}};
+    VideoParams video_params {5, {}, {}, {}, {}, {}, {}};
     FullVideoParams full_video_params {};
 
     // video output options
@@ -1287,7 +1284,6 @@ struct RecorderParams {
     // wrm output options
     int wrm_compression_algorithm = static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM);
     int wrm_color_depth = static_cast<int>(USE_ORIGINAL_COLOR_DEPTH);
-    uint32_t    wrm_frame_interval = 100;
     std::chrono::seconds wrm_break_interval {86400};
     TraceType encryption_type = TraceType::localfile;
 
@@ -1374,9 +1370,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
         cli::option("frame-rate").help("frame per second, default=5 frames ")
             .parser(cli::arg_location(video_frame_rate)),
-
-        cli::option('r', "frameinterval").help("time between consecutive capture frames (in 100/th of seconds), default=100 one frame per second")
-            .parser(cli::arg_location(recorder.wrm_frame_interval)),
 
         cli::option('k', "breakinterval").help("number of seconds between splitting wrm files in seconds(default, one wrm every day)")
             .parser(cli::arg_location(recorder.wrm_break_interval)),
@@ -1914,7 +1907,6 @@ extern "C" {
                          rp.video_params,
                          rp.full_video_params,
                          rp.wrm_color_depth,
-                         rp.wrm_frame_interval,
                          rp.wrm_break_interval,
                          rp.order_count,
                          rp.show_file_metadata,

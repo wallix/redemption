@@ -31,7 +31,6 @@ VideoParams video_params_from_ini(std::chrono::seconds video_break_interval, con
         ini.get<cfg::video::codec_id>(),
         ini.get<cfg::video::ffmpeg_options>(),
         ini.get<cfg::video::notimestamp>(),
-        ini.get<cfg::globals::capture_chunk>(),
         ini.get<cfg::video::bogus_vlc_frame_rate>(),
         video_break_interval,
         ini.get<cfg::debug::ffmpeg>(),

@@ -182,7 +182,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::auth_user>(s);
     ini.set<cfg::globals::authfile>(cs);
     ini.set<cfg::globals::authfile>(s);
-    ini.set<cfg::globals::capture_chunk>(true);
     ini.set<cfg::globals::certificate_password>(cs);
     ini.set<cfg::globals::certificate_password>(s);
     ini.set<cfg::globals::close_timeout>(std::chrono::seconds{1});
@@ -282,7 +281,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::video::disable_clipboard_log>(ClipboardLogFlags::syslog);
     ini.set<cfg::video::disable_file_system_log>(FileSystemLogFlags::syslog);
     ini.set<cfg::video::disable_keyboard_log>(KeyboardLogFlags::syslog);
-    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
     ini.set<cfg::video::hash_path>(cpath);
     ini.set<cfg::video::hash_path>(spath);
     ini.set<cfg::video::png_interval>(std::chrono::seconds{1});

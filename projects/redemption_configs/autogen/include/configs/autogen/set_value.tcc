@@ -1923,14 +1923,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "frame_interval"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::video::frame_interval&>(this->variables).value,
-                ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 100>>>{},
-                value
-            );
-        }
         else if (key == "break_interval"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),

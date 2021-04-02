@@ -987,11 +987,6 @@ capture_flags = integer(min=0, max=15, default=11)
 #_advanced
 png_interval = integer(min=0, default=10)
 
-# Frame interval.
-# (in 1/100 seconds)
-#_advanced
-frame_interval = integer(min=0, default=40)
-
 # Time between 2 wrm movies.
 # (in seconds)
 #_advanced

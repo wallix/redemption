@@ -1162,11 +1162,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #png_interval = 10
 
-# Frame interval.
-# (in 1/100 seconds)
-#_advanced
-#frame_interval = 40
-
 # Time between 2 wrm movies.
 # (in seconds)
 #_advanced

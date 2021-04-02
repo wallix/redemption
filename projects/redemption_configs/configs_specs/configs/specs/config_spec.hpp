@@ -121,8 +121,6 @@ void config_spec_definition(Writer && W)
             type_<std::chrono::milliseconds>(), names{"target_connection_time"},
             desc{"from Module rdp creation to \"up_and_running\" state"});
 
-        W.member(no_ini_no_gui, sesman_to_proxy, not_target_ctx, L, type_<bool>(), names{"capture_chunk"});
-
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), names{.cpp="nla_auth_user", .sesman="nla_login"});
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), names{.cpp="auth_user", .sesman="login"});
         W.member(no_ini_no_gui, sesman_rw, not_target_ctx, L, type_<std::string>(), names{.cpp="host", .sesman="ip_client"});
@@ -657,7 +655,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<CaptureFlags>{}, names{"capture_flags"}, set(CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr));
 
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::deci>>(), names{"png_interval"}, desc{"Frame interval."}, set(10));
-        W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::duration<unsigned, std::centi>>(), names{"frame_interval"}, desc{"Frame interval."}, set(40));
         W.member(advanced_in_gui, no_sesman, L, type_<std::chrono::seconds>(), names{"break_interval"}, desc{"Time between 2 wrm movies."}, set(600));
         W.member(advanced_in_gui, no_sesman, L, type_<types::unsigned_>(), names{"png_limit"}, desc{"Number of png captures to keep."}, set(5));
 

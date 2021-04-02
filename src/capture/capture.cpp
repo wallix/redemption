@@ -1449,7 +1449,7 @@ Capture::Capture(
 #ifndef REDEMPTION_NO_FFMPEG
         if (capture_video) {
             Ref<NotifyNextVideo> notifier = this->null_notifier_next_video;
-            if (video_params.capture_chunk && this->meta_capture_obj) {
+            if (this->meta_capture_obj) {
                 this->notifier_next_video.session_meta = &this->meta_capture_obj->meta;
                 notifier = this->notifier_next_video;
             }

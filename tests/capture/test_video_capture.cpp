@@ -99,7 +99,7 @@ namespace
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
-            25, codec.name, codec.options, false, false, false, video_interval, 0};
+            25, codec.name, codec.options, false, false, video_interval, 0};
         CaptureParams capture_params{
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
@@ -119,7 +119,7 @@ namespace
         RealTimePoint real_time{1353055788s + monotonic_time.time_since_epoch()};
         RDPDrawable drawable(800, 600);
         VideoParams video_params{
-            25, codec.name, codec.options, false, false, false, video_interval, 0};
+            25, codec.name, codec.options, false, false, video_interval, 0};
         CaptureParams capture_params{
             monotonic_time, real_time, "video", nullptr, dirname, 0 /* groupid */,
             nullptr, SmartVideoCropping::disable, 0};
