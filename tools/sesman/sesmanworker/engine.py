@@ -1728,6 +1728,10 @@ class Engine(object):
             return login
         return "%s@%s" % (login, domain)
 
+    def get_scenario_account_field(self, field, param):
+        from .parsers import resolve_scenario_account
+        return resolve_scenario_account(self, field, param, force_device=False)
+
     def get_crypto_methods(self):
         class crypto_methods(object):
             def __init__(self, proxy):
@@ -1849,3 +1853,14 @@ class LoginInfo(object):
                                   self.target_name,
                                   self.service_name,
                                   self.auth_name)
+
+    def get_target_dict(self):
+        return {
+            "user_group": self.user_group_name,
+            "target_group": self.target_group_name,
+            "authorization": self.auth_name,
+            "account": self.account_name,
+            "account_domain": self.domain_name,
+            "device": self.target_name,
+            "service": self.service_name,
+        }
