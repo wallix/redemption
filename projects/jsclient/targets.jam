@@ -44,6 +44,7 @@ exe-js js_client :
   src/mod/rdp/rdp_negociation_data.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
+  src/utils/hexadecimal_string_to_buffer.bc
   src/utils/hexdump.bc
   src/utils/parse_primary_drawing_orders.bc
   src/utils/primitives/primitives.bc
@@ -70,6 +71,7 @@ exe-js js_player :
   src/transport/mwrm_reader.bc
   src/utils/bitmap.bc
   src/utils/bitmap_data_allocator.bc
+  src/utils/hexadecimal_string_to_buffer.bc
   src/utils/rle.bc
   src/utils/stacktrace.bc
   $(BOOST_STACKTRACE_LINKFLAGS)
@@ -186,6 +188,7 @@ objjs src/mod/rdp/rdp_negociation_data.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_n
 objjs src/transport/mwrm_reader.bc : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/bitmap_data_allocator.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap_data_allocator.cpp ;
+objjs src/utils/hexadecimal_string_to_buffer.bc : $(REDEMPTION_SRC_PATH)/utils/hexadecimal_string_to_buffer.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/parse_primary_drawing_orders.bc : $(REDEMPTION_SRC_PATH)/utils/parse_primary_drawing_orders.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
