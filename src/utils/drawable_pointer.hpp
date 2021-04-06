@@ -186,21 +186,19 @@ struct DrawablePointer
     unsigned width { 0 };
     unsigned height { 0 };
 
-    unsigned line_bytes { 0 };
-
-    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
-    uint8_t mask24[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
+    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 4]; // 96 pixels per line * 96 lines * 4 bytes per pixel
+    uint8_t mask[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
 
     ImageView image_data_view_data;
-    ImageView image_data_view_mask24;
+    ImageView image_data_view_mask;
 
-    DrawablePointer()
-    : image_data_view_data(create_img(nullptr))
-    , image_data_view_mask24(create_img(nullptr))
+    DrawablePointer() :
+        image_data_view_data(create_img(nullptr, 0)),
+        image_data_view_mask(create_img(nullptr, 0))
     {}
 
-    DrawablePointer(Pointer const& cursor)
-    : DrawablePointer()
+    DrawablePointer(Pointer const& cursor) :
+        DrawablePointer()
     {
         this->set_cursor(cursor);
     }
@@ -208,36 +206,60 @@ struct DrawablePointer
     void set_cursor(Pointer const& cursor)
     {
         const auto dim = cursor.get_dimensions();
+
         this->width = dim.width;
         this->height = dim.height;
-        this->line_bytes = ::even_pad_length(this->width * 3);
 
-        const uint8_t* pointer_data = cursor.get_24bits_xor_mask().data();
-        ::memcpy(this->data, pointer_data, this->line_bytes * this->height);
-        this->image_data_view_data = this->create_img(this->data);
+        BytesPerPixel bytes_per_pixel = BytesPerPixel{3};
+
+        if (cursor.get_native_xor_bpp() == BitsPerPixel::BitsPP32)
+        {
+            bytes_per_pixel = BytesPerPixel{4};
+        }
+
+        const uint8_t* pointer_data = cursor.get_nbits_xor_mask().data();
+        unsigned line_bytes = ::even_pad_length(this->width * uint8_t(bytes_per_pixel));
+
+        ::memcpy(this->data, pointer_data, line_bytes * this->height);
+        this->image_data_view_data = this->create_img(this->data,
+                                                      line_bytes,
+                                                      bytes_per_pixel);
 
         const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
         const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
-        for (unsigned int y = 0; y < this->height; ++y) {
-            for (unsigned int x = 0; x < this->width; ++x) {
-                ::put_pixel_24bpp(
-                    this->mask24, this->line_bytes, x, y,
-                    (::get_pixel_1bpp(pointer_mask, mask_line_bytes, x, y) ? 0xFFFFFF : 0)
-                );
+
+        for (unsigned int y = 0; y < this->height; ++y)
+        {
+            for (unsigned int x = 0; x < this->width; ++x)
+            {
+                ::put_pixel_24bpp(this->mask,
+                                  line_bytes,
+                                  x,
+                                  y,
+                                  ::get_pixel_1bpp(pointer_mask,
+                                                   mask_line_bytes,
+                                                   x,
+                                                   y) ? 0xFFFFFF : 0);
             }
         }
-        this->image_data_view_mask24 = this->create_img(this->mask24);
+
+        /* xorMask doesn't contain alpha channel info,
+           so we will skip the 4th byte on each pixel
+           on reading with BytesPerPixel{3} rather than BytesPerPixel{4} */
+        this->image_data_view_mask = this->create_img(this->mask, line_bytes);
     }
 
 private:
-    ImageView create_img(uint8_t const* data) const
+    ImageView create_img(uint8_t const* data,
+                         unsigned line_bytes,
+                         BytesPerPixel bytes_per_pixel = BytesPerPixel{3}) const noexcept
     {
         return ImageView(
             data,
             this->width,
             this->height,
-            this->line_bytes,
-            BytesPerPixel{3},
+            line_bytes,
+            bytes_per_pixel,
             ImageView::Storage::BottomToTop
         );
     }

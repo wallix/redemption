@@ -112,10 +112,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 
 # value: 0 or 1
 #_advanced
-#use_native_pointer = 1
-
-# value: 0 or 1
-#_advanced
 #large_pointer_support = 1
 
 # value: 0 or 1
@@ -352,11 +348,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # value: 0 or 1
 #_advanced
 #force_bitmap_cache_v2_with_am = 1
-
-# Disable native pointer for compatibility with WALLIX Access Manager.
-# value: 0 or 1
-#_advanced
-#disable_native_pointer_with_am = 1
 
 [mod_rdp]
 
@@ -803,10 +794,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 # Do not transmit client machine name or RDP server.
 # value: 0 or 1
 #hide_client_name = 0
-
-# value: 0 or 1
-#_advanced
-#clean_up_32_bpp_cursor = 0
 
 # value: 0 or 1
 #bogus_ios_rdpdr_virtual_channel = 1

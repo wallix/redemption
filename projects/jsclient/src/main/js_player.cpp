@@ -346,9 +346,7 @@ struct WrmPlayer
             {
                 const BitsPerPixel data_bpp = checked_int{this->in_stream.in_uint16_le()};
                 const uint16_t cache_idx = this->in_stream.in_uint16_le();
-                const Pointer cursor = pointer_loader_new(data_bpp, this->in_stream,
-                                                          BGRPalette::classic_332(),
-                                                          false, false);
+                const Pointer cursor = pointer_loader_new(data_bpp, this->in_stream);
                 this->gd.set_pointer(cache_idx, cursor, SetPointerMode::New);
                 break;
             }
@@ -546,5 +544,3 @@ void WrmPlayer::_interpret_standard_order(uint8_t control)
             throw Error(ERR_WRM);
     }
 }
-
-

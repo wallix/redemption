@@ -301,6 +301,50 @@ namespace
             { *dest ^= 0xff; return ++dest; }
         };
 
+        struct SpeMemBltAssign
+        {
+            template <typename Op, typename ToColor, typename... Col>
+            uint8_t *operator()(P dest, cP src, Op op, ToColor to_color, Col... c)
+            {
+                return traits::assign(dest, to_color(src), c..., op);
+            }
+        };
+
+        struct SpeMemBltAssign32
+        {
+            using fromColor32 = typename traits::fromColor32;
+
+            template <typename Op, typename... Col>
+            uint8_t *operator()(P dest, cP src, Op, fromColor32 to_color, Col...) const
+            {
+                uint8_t src_alpha = src[3];
+                auto alpha_blending = [src_alpha](uint8_t src_color,
+                                                  uint8_t dest_color) -> uint8_t
+                {
+                    /*
+                      Alpha Blending formula with integers is :
+                         final_color = (src_alpha * src_color + (255 - src_alpha) * dest_color) / 255
+                    */
+
+                    return (src_alpha * src_color + (255 - src_alpha) * dest_color) / 255;
+                };
+
+                color_t src_color = to_color(src);
+                color_t dest_color {dest[0], dest[1], dest[2]};
+                color_t final_color
+                {
+                 alpha_blending(src_color.blue(), dest_color.blue()),
+                 alpha_blending(src_color.green(), dest_color.green()),
+                 alpha_blending(src_color.red(), dest_color.red())
+                };
+
+                *dest++ = final_color.blue();
+                *dest++ = final_color.green();
+                *dest++ = final_color.red();
+                return dest;
+            }
+        };
+
 
         void opaque_rect(Rect rect, const color_t color)
         {
@@ -324,47 +368,88 @@ namespace
         template<class Op, class... Col>
         void mem_blt(Rect rect, const ImageView & bmp, const uint16_t srcx, const uint16_t srcy, Op op, Col... c)
         {
-            P dest = dimpl.first_pixel(rect);
+            const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
+            const bool upToBottom = (bmp.storage_type() == ImageView::Storage::TopToBottom);
             const int startY = (bmp.storage_type() == ImageView::Storage::BottomToTop)
                 ? bmp.height() - srcy - 1
                 : srcy;
             cP src = bmp.data(srcx, startY);
-            const size_t n = rect.cx * dimpl.nbbytes_color();
-            const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
-            const size_t bmp_line_size = bmp.line_size();
-            const int bmp_line_delta = (bmp.storage_type() == ImageView::Storage::BottomToTop)
-                ? -bmp_line_size
-                : bmp_line_size;
+            P dest = dimpl.first_pixel(rect);
 
-            if (bmp_bpp == dimpl.bpp()) {
-                const size_t line_size = dimpl.rowsize();
-                for (cP ep = dest + line_size * rect.cy; dest < ep; dest += line_size, src += bmp_line_delta) {
-                    this->copy(dest, src, n, op, c...);
-                }
-            }
-            else {
-                bool upToBottom = (bmp.storage_type() == ImageView::Storage::TopToBottom);
-                switch (bmp_bpp) {
-                    case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor8{bmp.palette()}, c...); break;
-                    case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor15{}, c...); break;
-                    case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor16{}, c...); break;
-                    case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor24{}, c...); break;
-                    case 32: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                        safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, upToBottom, typename traits::fromColor32{}, c...); break;
-                    default: ;
-                }
+            switch (bmp_bpp)
+            {
+                case 8:
+                    this->spe_mem_blt(dest,
+                                      src,
+                                      rect.cx,
+                                      rect.cy,
+                                      bmp,
+                                      op,
+                                      upToBottom,
+                                      typename traits::fromColor8{bmp.palette()},
+                                      SpeMemBltAssign{},
+                                      c...);
+                    break;
+                case 15:
+                    this->spe_mem_blt(dest,
+                                      src,
+                                      rect.cx,
+                                      rect.cy,
+                                      bmp,
+                                      op,
+                                      upToBottom,
+                                      typename traits::fromColor15{},
+                                      SpeMemBltAssign{},
+                                      c...);
+                    break;
+                case 16:
+                    this->spe_mem_blt(dest,
+                                      src,
+                                      rect.cx,
+                                      rect.cy,
+                                      bmp,
+                                      op,
+                                      upToBottom,
+                                      typename traits::fromColor16{},
+                                      SpeMemBltAssign{},
+                                      c...);
+                    break;
+                case 24:
+                    this->spe_mem_blt(dest,
+                                      src,
+                                      rect.cx,
+                                      rect.cy,
+                                      bmp,
+                                      op,
+                                      upToBottom,
+                                      typename traits::fromColor24{},
+                                      SpeMemBltAssign{},
+                                      c...);
+                    break;
+                case 32:
+                    this->spe_mem_blt(dest,
+                                      src,
+                                      rect.cx,
+                                      rect.cy,
+                                      bmp,
+                                      op,
+                                      upToBottom,
+                                      typename traits::fromColor32{},
+                                      SpeMemBltAssign32{},
+                                      c...);
+                    break;
+                default: ;
             }
         }
 
     private:
-        template<class Op, class ToColor, class... Col>
+        template<class Op, class ToColor, class SpeMemBltAssign, class... Col>
         void spe_mem_blt(
-            P dest, cP src, u16 cx, u16 cy, size_t bmp_Bpp, size_t bmp_line_size, Op op, bool upToBottom, ToColor to_color, Col... c)
+            P dest, cP src, u16 cx, u16 cy, const ImageView& bmp,
+            Op op, bool upToBottom, ToColor to_color, SpeMemBltAssign spe_mem_blt_assign, Col... c)
         {
+            constexpr uint8_t bmp_Bpp = uint8_t(ToColor::bytes_per_pixel);
+            const size_t bmp_line_size = bmp.line_size();
             const size_t line_size = dimpl.rowsize();
             const size_t destn = cx * dimpl.nbbytes_color();
             const size_t srcn = cx * bmp_Bpp;
@@ -376,13 +461,13 @@ namespace
             for (cP ep = dest + line_size * cy; dest < ep; dest += inc_line, src += inc_bmp_line) {
                 const cP dest_e = dest + destn;
                 while (dest != dest_e) {
-                    dest = traits::assign(dest, to_color(src), c..., op);
+                    dest = spe_mem_blt_assign(dest, src, op, to_color, c...);
                     src += bmp_Bpp;
                 }
             }
         }
 
-    public:
+    public :
         void draw_bitmap(Rect rect, ImageView bmp)
         {
             this->mem_blt(rect, bmp, 0, 0, Ops::CopySrc{});
@@ -801,7 +886,7 @@ void Drawable::resize(int width, int height)
 
 template <typename Op, class... Color_>
 void Drawable::mem_blt_op(
-    Rect rect, const ImageView & bmp,
+    Rect rect, const ImageView& bmp,
     const uint16_t srcx, const uint16_t srcy, Color_... c)
 {
     if (bmp.width() < srcx || bmp.height() < srcy) {
@@ -901,7 +986,11 @@ void Drawable::mem_3_blt(
         // |      | RPN: PSDPxax                  |
         // +------+-------------------------------+
         case 0xB8:
-            this->mem_blt_op<Ops::Op_0xB8>(rect, bmp, srcx, srcy, pattern_color);
+            this->mem_blt_op<Ops::Op_0xB8>(rect,
+                                           bmp,
+                                           srcx,
+                                           srcy,
+                                           pattern_color);
         break;
 
         default:
@@ -1482,16 +1571,21 @@ void Drawable::trace_mouse(const DrawablePointer& current_pointer, const int x, 
         cur_psave += data_length;
     }
 
-    Rect rect_sub_view(rect_intersect.x - rect_pointer.x, rect_intersect.y - rect_pointer.y,
-        rect_intersect.cx, rect_intersect.cy);
-    this->mem_blt_ex(
-            rect_intersect,
-            current_pointer.image_data_view_mask24.sub_view(rect_sub_view),
-            0, 0, 0x88);
-    this->mem_blt_ex(
-            rect_intersect,
-            current_pointer.image_data_view_data.sub_view(rect_sub_view),
-            0, 0, 0x66);
+    Rect rect_sub_view(rect_intersect.x - rect_pointer.x,
+                       rect_intersect.y - rect_pointer.y,
+                       rect_intersect.cx,
+                       rect_intersect.cy);
+
+    this->mem_blt_ex(rect_intersect,
+                     current_pointer.image_data_view_mask.sub_view(rect_sub_view),
+                     0,
+                     0,
+                     0x88);
+    this->mem_blt_ex(rect_intersect,
+                     current_pointer.image_data_view_data.sub_view(rect_sub_view),
+                     0,
+                     0,
+                     0x66);
 }
 
 void Drawable::clear_mouse(const DrawablePointer& current_pointer, const int x, const int y, uint8_t * psave)

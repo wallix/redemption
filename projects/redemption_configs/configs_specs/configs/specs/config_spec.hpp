@@ -165,8 +165,6 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"bogus_refresh_rect"}, desc{"Needed to refresh screen of Windows Server 2012."}, set(true));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"use_native_pointer"}, set(true));
-
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"large_pointer_support"}, set(true));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"new_pointer_update_support"}, set(true));
@@ -276,11 +274,6 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
                  names{"force_bitmap_cache_v2_with_am"},
                  desc{"Force usage of bitmap cache V2 for compatibility "
-                         "with WALLIX Access Manager."},
-                 set(true));
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(),
-                 names{"disable_native_pointer_with_am"},
-                 desc{"Disable native pointer for compatibility "
                          "with WALLIX Access Manager."},
                  set(true));
     });
@@ -464,8 +457,6 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<ServerNotification>(), names{"server_cert_error_message"}, desc{"Warn that server certificate check raised some internal error."}, set(ServerNotification::syslog));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"hide_client_name"}, desc{"Do not transmit client machine name or RDP server."}, set(false));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), names{"clean_up_32_bpp_cursor"}, set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), names{"bogus_ios_rdpdr_virtual_channel"}, set(true));
 

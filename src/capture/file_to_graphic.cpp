@@ -784,7 +784,7 @@ void FileToGraphic::interpret_order()
 
         const uint16_t cache_idx = this->stream.in_uint16_le();
 
-        const Pointer cursor = pointer_loader_new(data_bpp, this->stream, palette, false, false);
+        const Pointer cursor = pointer_loader_new(data_bpp, this->stream);
 
 /*
         this->mouse_x = this->stream.in_uint16_le();

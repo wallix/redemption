@@ -251,14 +251,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
                 value
             );
         }
-        else if (key == "use_native_pointer"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::globals::use_native_pointer&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
         else if (key == "large_pointer_support"_zv) {
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
@@ -647,14 +639,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::client::force_bitmap_cache_v2_with_am&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "disable_native_pointer_with_am"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::client::disable_native_pointer_with_am&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );
@@ -1287,14 +1271,6 @@ void Inifile::ConfigurationHolder::set_value(zstring_view key, zstring_view valu
             ::config_parse_and_log(
                 this->section_name, key.c_str(),
                 static_cast<cfg::mod_rdp::hide_client_name&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                value
-            );
-        }
-        else if (key == "clean_up_32_bpp_cursor"_zv) {
-            ::config_parse_and_log(
-                this->section_name, key.c_str(),
-                static_cast<cfg::mod_rdp::clean_up_32_bpp_cursor&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 value
             );

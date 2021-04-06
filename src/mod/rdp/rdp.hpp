@@ -1785,7 +1785,6 @@ class mod_rdp : public mod_api, public rdp_api
     const bool enable_fastpath;                    // choice of programmer
     const bool enable_fastpath_server_update;      // choice of programmer
     const bool enable_glyph_cache;
-    const bool use_native_pointer;
     const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
@@ -1842,7 +1841,6 @@ class mod_rdp : public mod_api, public rdp_api
 
     MonotonicTimePoint::duration session_time_start;
 
-    const bool clean_up_32_bpp_cursor;
     const bool large_pointer_support;
 
     std::unique_ptr<uint8_t[]> multifragment_update_buffer;
@@ -1961,7 +1959,6 @@ public:
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
-        , use_native_pointer(mod_rdp_params.use_native_pointer)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
@@ -1988,7 +1985,6 @@ public:
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , lang(mod_rdp_params.lang)
         , session_time_start(events.get_monotonic_time().time_since_epoch())
-        , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
         , multifragment_update_data({multifragment_update_buffer.get(), 65536})
@@ -5791,7 +5787,7 @@ public:
         }
 
         Pointer& cursor = this->cursors[pointer_idx];
-        cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->use_native_pointer);
+        cursor = pointer_loader_new(data_bpp, stream);
         drawable.set_pointer(pointer_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
     }   // process_new_pointer_pdu
 

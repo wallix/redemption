@@ -102,6 +102,8 @@ struct DrawableTraitColor24
 
     struct fromColor8
     {
+        static constexpr BytesPerPixel bytes_per_pixel{1};
+
         const BGRPalette & palette;
 
         color_t operator()(const uint8_t * p) const
@@ -112,6 +114,8 @@ struct DrawableTraitColor24
 
     struct fromColor15
     {
+        static constexpr BytesPerPixel bytes_per_pixel{2};
+
         color_t operator()(const uint8_t * p) const
         {
             const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
@@ -122,6 +126,8 @@ struct DrawableTraitColor24
 
     struct fromColor16
     {
+        static constexpr BytesPerPixel bytes_per_pixel{2};
+
         color_t operator()(const uint8_t * p) const
         {
             const RDPColor c = RDPColor::from((p[1] << 8) + p[0]);
@@ -132,6 +138,8 @@ struct DrawableTraitColor24
 
     struct fromColor24
     {
+        static constexpr BytesPerPixel bytes_per_pixel{3};
+
         color_t operator()(const uint8_t * p) const
         {
             return {p[0], p[1], p[2]};
@@ -140,6 +148,8 @@ struct DrawableTraitColor24
 
     struct fromColor32
     {
+        static constexpr BytesPerPixel bytes_per_pixel{4};
+
         color_t operator()(const uint8_t * p) const
         {
             return {p[0], p[1], p[2]};
