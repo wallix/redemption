@@ -585,50 +585,6 @@ Pointer pointer_loader_32x32(InStream & stream)
                           mask);
 }
 
-Pointer harmonize_pointer(Pointer const& src_ptr)
-{
-    if (0 == (src_ptr.get_dimensions().width % 2)) {
-        return src_ptr;
-    }
-
-    CursorSize cursor_size(
-        ::even_pad_length(src_ptr.get_dimensions().width),
-        src_ptr.get_dimensions().height);
-
-    return Pointer::build_from(cursor_size, src_ptr.get_hotspot(),
-        [&](uint8_t * dest_xor, uint8_t * dest_and)
-        {
-            const unsigned int src_xor_line_length_in_byte = src_ptr.get_dimensions().width * 3u;
-            const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
-            const unsigned int src_and_line_length_in_byte = ::nbbytes(src_ptr.get_dimensions().width);
-            const unsigned int src_and_padded_line_length_in_byte = ::even_pad_length(src_and_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte = cursor_size.width * 3u;
-            const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
-            const unsigned int dest_and_line_length_in_byte = ::nbbytes(cursor_size.width);
-            const unsigned int dest_and_padded_line_length_in_byte = ::even_pad_length(dest_and_line_length_in_byte);
-
-            int const quot = cursor_size.width / 8u;
-            int const rem = cursor_size.width % 8u;
-
-            uint8_t const* src_xor  = src_ptr.get_nbits_xor_mask().data();
-            uint8_t const* src_and  = src_ptr.get_monochrome_and_mask().data();
-            for (unsigned int i = 0; i < src_ptr.get_dimensions().height; ++i) {
-                memcpy(dest_xor, src_xor, src_xor_padded_line_length_in_byte);
-                memcpy(dest_and, src_and, src_and_padded_line_length_in_byte);
-
-                dest_and[quot] |= (1u << (8 - rem));
-
-                src_xor += src_xor_padded_line_length_in_byte;
-                src_and += src_and_padded_line_length_in_byte;
-
-                dest_xor += dest_xor_padded_line_length_in_byte;
-                dest_and += dest_and_padded_line_length_in_byte;
-            }
-        }
-    );
-}
-
 namespace
 {
 

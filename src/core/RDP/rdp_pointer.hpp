@@ -197,8 +197,6 @@ Pointer pointer_loader_2(InStream & stream);
 
 Pointer pointer_loader_32x32(InStream & stream);
 
-Pointer harmonize_pointer(Pointer const& src_ptr);
-
 Pointer const& normal_pointer() noexcept;
 Pointer const& edit_pointer() noexcept;
 Pointer const& drawable_default_pointer() noexcept;

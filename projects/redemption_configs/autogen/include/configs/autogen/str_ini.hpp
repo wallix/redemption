@@ -323,9 +323,6 @@ R"gen_config_ini(## Config file for RDP proxy.
 #_advanced
 #enable_remotefx = 1
 
-# value: 0 or 1
-#bogus_pointer_xormask_padding = 0
-
 # Disables supported drawing orders:
 #    0: DstBlt
 #    1: PatBlt

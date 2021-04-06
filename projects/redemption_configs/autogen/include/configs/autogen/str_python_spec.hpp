@@ -270,8 +270,6 @@ enable_osd_4_eyes = boolean(default=True)
 #_advanced
 enable_remotefx = boolean(default=True)
 
-bogus_pointer_xormask_padding = boolean(default=False)
-
 # Disables supported drawing orders:
 #    0: DstBlt
 #    1: PatBlt

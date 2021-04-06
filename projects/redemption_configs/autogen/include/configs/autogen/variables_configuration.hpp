@@ -991,16 +991,6 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { true };
     };
-    /// type: bool <br/>
-    /// default: false <br/>
-    struct client::bogus_pointer_xormask_padding {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value { false };
-    };
     /// Disables supported drawing orders: <br/>
     ///    0: DstBlt <br/>
     ///    1: PatBlt <br/>
@@ -5407,7 +5397,6 @@ struct client
 , cfg::client::recv_timeout
 , cfg::client::enable_osd_4_eyes
 , cfg::client::enable_remotefx
-, cfg::client::bogus_pointer_xormask_padding
 , cfg::client::disabled_orders
 , cfg::client::force_bitmap_cache_v2_with_am
 { static constexpr bool is_section = true; };
