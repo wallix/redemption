@@ -30,9 +30,8 @@ if $(NO_FFMPEG) = 0
     lib avformat : : $(_FFMPEG_LINK_MODE) $(_FFMPEG_LIB_PATH) ;
     lib avutil   : : $(_FFMPEG_LINK_MODE) $(_FFMPEG_LIB_PATH) ;
     lib swscale  : : $(_FFMPEG_LINK_MODE) $(_FFMPEG_LIB_PATH) ;
-    lib x264     : : $(_FFMPEG_LINK_MODE) $(_FFMPEG_LIB_PATH) ;
 
-    alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
+    alias ffmpeg : pthread avcodec avformat swscale avutil bz2 png z dl ;
 
     lib pthread ;
 
