@@ -143,6 +143,8 @@ sys_lib_prefix = (
 user_lib_assoc = dict((
     ('src/capture/video_capture.hpp', Dep(
         cxxflags=['$(FFMPEG_CXXFLAGS)'])),
+    ('projects/redemption_configs/redemption_src/configs/config.hpp', Dep(
+        linkflags=['<library>src/utils/hexadecimal_string_to_buffer.o'])),
 ))
 
 user_lib_prefix = (

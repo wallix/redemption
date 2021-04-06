@@ -27,7 +27,7 @@
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/string_c.hpp"
-#include "utils/chex_to_int.hpp"
+#include "utils/hexadecimal_string_to_buffer.hpp"
 #include "utils/colors.hpp"
 #include "utils/file_permissions.hpp"
 
@@ -187,13 +187,7 @@ parse_error parse_from_cfg(
     }
 
     std::array<unsigned char, N> tmp;
-    char const* data = value.as_chars().begin();
-    int err = 0;
-    for (std::size_t i = 0; i < N; ++i, data += 2) {
-        tmp[i] = (chex_to_int(data[0], err) << 4) | chex_to_int(data[1], err);
-    }
-
-    if (err) {
+    if (!hexadecimal_string_to_buffer(value.as_chars(), make_writable_array_view(tmp))) {
         return parse_error{"bad format, expected hexadecimal value"};
     }
 

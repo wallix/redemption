@@ -20,7 +20,7 @@
 
 #include "transport/mwrm_reader.hpp"
 #include "utils/sugar/int_to_chars.hpp"
-#include "utils/chex_to_int.hpp"
+#include "utils/hexadecimal_string_to_buffer.hpp"
 #include "utils/log.hpp"
 
 #include <algorithm>
@@ -85,13 +85,12 @@ namespace
         meta_line.ctime = 0;
     }
 
-    char * extract_hash(uint8_t (&hash)[MD_HASH::DIGEST_LENGTH], char * p, int & err)
+    char * extract_hash(uint8_t (&hash)[MD_HASH::DIGEST_LENGTH], char * in, int & err)
     {
-        for (uint8_t & chash : hash) {
-            chash  = chex_to_int(*p++, err) << 4;
-            chash |= chex_to_int(*p++, err);
-        }
-        return p;
+        auto output = make_writable_array_view(hash);
+        auto input = chars_view(in, output.size() * 2);
+        err |= !hexadecimal_string_to_buffer(input, output);
+        return in + input.size();
     }
 
     char * buf_sread_filename(char * p, char const * e, char * pline)

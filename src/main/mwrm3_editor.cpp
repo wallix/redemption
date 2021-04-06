@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #include "capture/mwrm3.hpp"
 #include "transport/crypto_transport.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/hexadecimal_string_to_buffer.hpp"
 
 #include <iostream>
 
@@ -465,36 +466,14 @@ struct reader_impl<T, decltype(void(std::declval<T&>().bytes))>
                 return false;
             }
 
-            if (T::static_size * 2 == this->value.size() && to_hex())
+            if (T::static_size * 2 == this->value.size()
+             && hexadecimal_string_to_buffer(chars_view(value), writable_bytes_view(value)))
             {
+                value.erase(T::static_size);
                 return true;
             }
         }
         return false;
-    }
-
-    bool to_hex()
-    {
-        auto hex = [](char c){
-            if ('0' <= c && c <= '9') return c - '0';
-            if ('a' <= c && c <= 'f') return 0xa + (c - 'a');
-            if ('A' <= c && c <= 'F') return 0xa + (c - 'A');
-            return -1;
-        };
-
-        for (unsigned i = 0; i < T::static_size; ++i)
-        {
-            int a = hex(value[i*2]);
-            int b = hex(value[i*2+1]);
-            if (a == -1 || b == -1)
-            {
-                return false;
-            }
-            value[i] = (a << 4) | b;
-        }
-
-        value.erase(T::static_size);
-        return true;
     }
 };
 

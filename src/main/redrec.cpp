@@ -1,5 +1,5 @@
 #include "lib/do_recorder.hpp"
-#include "utils/chex_to_int.hpp"
+#include "utils/hexadecimal_string_to_buffer.hpp"
 
 #include <syslog.h>
 #include <iostream>
@@ -91,16 +91,10 @@ int main(int argc, const char** argv)
             return 1;
         }
 
-        auto load_key = [](uint8_t (&key)[CRYPTO_KEY_LENGTH], char const * hexkey)
+        auto load_key = [](uint8_t (&key)[CRYPTO_KEY_LENGTH], std::string_view hexkey)
         {
-            int err = 0;
-            for (std::size_t i = 0; i < CRYPTO_KEY_LENGTH; ++i)
-            {
-                key[i]
-                = (chex_to_int(hexkey[i*2], err) << 4)
-                | chex_to_int(hexkey[i*2+1], err);
-            }
-            return !err;
+            return CRYPTO_KEY_LENGTH * 2 == hexkey.size()
+                && hexadecimal_string_to_buffer(hexkey, make_writable_array_view(key));
         };
 
         if (!load_key(hmac_key_buffer, argv[arg_used+1]) || !load_key(g_key, argv[arg_used+2]))

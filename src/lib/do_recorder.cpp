@@ -53,6 +53,7 @@
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/strutils.hpp"
+#include "utils/hexadecimal_string_to_buffer.hpp"
 #include "utils/ref.hpp"
 
 
@@ -1792,42 +1793,29 @@ extern "C" {
         }
         cctx.set_get_trace_key_cb(trace_fn);
 
-        uint8_t tmp[32] = {};
         for (auto a : {0, 1}) {
-            if (argc <= arg_used + 1){
+            if (argc <= arg_used + 1) {
                 break;
             }
-            auto k = argv[arg_used+1];
-            if (strlen(k) != 64){
+
+            std::string_view k = argv[arg_used+1];
+            if (k.size() != 64) {
                 break;
             }
-            int c1 = -1;
-            int c2 = -1;
-            for (unsigned i = 0; i < 32; ++i) {
-                auto char_to_hex = [](char c){
-                    auto in = [&c](char left, char right) { return left <= c && c <= right; };
-                    return in('0', '9') ? c-'0'
-                         : in('a', 'f') ? 10 + c-'a'
-                         : in('A', 'F') ? 10 + c-'A'
-                         : -1;
-                };
-                c1 = char_to_hex(k[i*2]);
-                c2 = char_to_hex(k[i*2+1]);
-                if (c1 == -1 or c2 == -1){
-                    break;
-                }
-                tmp[i] = c1 << 4 | c2;
-            }
+
+            uint8_t tmp[32];
             // if any character not an hexa digit, ignore option
-            if (c1 == -1 or c2 == -1){
+            if (!hexadecimal_string_to_buffer(k, make_writable_array_view(tmp))) {
                 break;
             }
+
             if (a == 0){
                 cctx.set_hmac_key(tmp);
             }
             else {
                 cctx.set_master_key(tmp);
             }
+
             arg_used++;
         }
 

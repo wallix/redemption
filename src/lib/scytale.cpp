@@ -225,42 +225,13 @@ static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
 
 namespace
 {
-    inline void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
+    void hash_to_hashhex(HashArray const & hash, HashHexArray& hashhex) noexcept {
         static_assert(sizeof(hash) * 2 + 1 == sizeof(HashHexArray));
         auto phex = hashhex;
         for (uint8_t c : hash) {
             phex = int_to_fixed_hexadecimal_upper_chars(phex, c);
         }
         *phex = '\0';
-    }
-
-    inline void chars_to_hash_impl(bytes_view hashhex, HashArray& hash)
-    {
-        assert(hashhex.size() == sizeof(HashHexArray) - 1);
-        auto phex = hash;
-        for (size_t i = 0 ; i < sizeof(HashHexArray) - 1; i += 2) {
-            auto c1 = hashhex[i];
-            auto c2 = hashhex[i+1];
-            *phex++ = ((0xF & (c1 < 'A' ? c1 - '0' : c1 < 'a' ? c1 - 'A' : c1 - 'a')) << 4)
-                    |  (0xF & (c2 < 'A' ? c2 - '0' : c2 < 'a' ? c2 - 'A' : c2 - 'a'));
-        }
-    }
-
-    inline void hashex_to_hash(HashHexArray const & hashhex, HashArray& hash) noexcept {
-        // Undefined Behavior if hashhex is not a valid input hex key
-        static_assert(sizeof(HashArray) * 2 + 1 == sizeof(HashHexArray));
-        auto av = make_array_view(hashhex);
-        chars_to_hash_impl(av.drop_back(1), hash);
-    }
-
-    [[nodiscard]]
-    inline bool chars_to_hash(char const* hashhex, HashArray& hash) noexcept {
-        auto len = strlen(hashhex);
-        if (len != sizeof(HashHexArray)-1u) {
-            return false;
-        }
-        chars_to_hash_impl(bytes_view(hashhex, len), hash);
-        return true;
     }
 } // namespace
 
