@@ -466,7 +466,6 @@ lib libredrec :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/regions_capture.o
@@ -2894,7 +2893,6 @@ test-run tests/lib/test_do_recorder :
   <library>src/capture/capture.o
   <library>src/capture/file_to_graphic.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
   <library>src/capture/rail_screen_computation.o
   <library>src/capture/rdp_ppocr/get_ocr_constants.o
   <library>src/capture/regions_capture.o

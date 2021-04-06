@@ -81,7 +81,6 @@ FileToGraphic::FileToGraphic(
     , mouse_y(0)
     , begin_capture(begin_capture)
     , end_capture(end_capture == MonotonicTimePoint{} ? MonotonicTimePoint::max() : end_capture)
-    , max_order_count(0)
     , statistics()
     , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
     , verbose(verbose)
