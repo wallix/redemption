@@ -99,6 +99,22 @@ public:
         return pointer;
     }
 
+    template<class Builder>
+    constexpr static Pointer build_from(CursorSize d, Hotspot hs, BitsPerPixel bits_per_pixel, Builder&& builder)
+    {
+        Pointer pointer;
+
+        pointer.dimensions = d;
+        pointer.hotspot = hs;
+        pointer.native_xor_bpp = bits_per_pixel;
+        builder(pointer.data, pointer.mask);
+        pointer.native_length_xor_mask
+          = checked_int(d.height * even_pad_length(d.width * nbbytes(underlying_cast(bits_per_pixel))));
+        pointer.native_length_and_mask
+          = checked_int(d.height * even_pad_length(nbbytes(d.width)));
+        return pointer;
+    }
+
     static Pointer build_from_native(CursorSize d, Hotspot hs, BitsPerPixel xor_bpp, bytes_view xor_mask, bytes_view and_mask);
 
     bool operator==(const Pointer & other) const;
@@ -174,14 +190,6 @@ bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& c
 
 
 Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream& stream);
-
-Pointer pointer_loader_vnc(
-    BytesPerPixel Bpp, uint16_t width, uint16_t height,
-    uint16_t hsx, uint16_t hsy,
-    u8_array_view vncdata, u8_array_view vncmask,
-    int red_shift, int red_max,
-    int green_shift, int green_max,
-    int blue_shift, int blue_max);
 
 Pointer decode_pointer(BitsPerPixel data_bpp,
                        uint16_t width,

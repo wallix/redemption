@@ -34,9 +34,9 @@ namespace VNC
     {
         Encoder cursor_encoder(
             BytesPerPixel Bpp, Rect rect,
-            int red_shift, int red_max,
-            int green_shift, int green_max,
-            int blue_shift, int blue_max,
+            uint8_t red_shift, uint16_t red_max,
+            uint8_t green_shift, uint16_t green_max,
+            uint8_t blue_shift, uint16_t blue_max,
             VNCVerbose verbose);
     }  // namespace Encoder
 } // namespace VNC

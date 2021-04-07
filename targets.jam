@@ -4865,6 +4865,17 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <covfile>src/mod/vnc/encoder/hextile.cpp
   <covfile>src/mod/vnc/encoder/hextile.hpp
 ;
+test-run tests/mod/vnc/encoder/test_pointer_loader_vnc :
+  $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_pointer_loader_vnc.cpp
+:
+  <library>crypto
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/utils/stacktrace.o
+  <library>tests/includes/test_only/test_framework/sig.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/mod/vnc/encoder/pointer_loader_vnc.hpp
+;
 test-run tests/mod/vnc/encoder/test_zrle :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
 :
@@ -6474,6 +6485,7 @@ alias test_file_validator_service : tests/mod/test_file_validator_service ;
 alias test_metrics_hmac : tests/mod/test_metrics_hmac ;
 alias test_mod_api : tests/mod/test_mod_api ;
 alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
+alias test_pointer_loader_vnc : tests/mod/vnc/encoder/test_pointer_loader_vnc ;
 alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
 alias test_dsm : tests/mod/vnc/test_dsm ;
 alias test_newline_convert : tests/mod/vnc/test_newline_convert ;
@@ -6812,6 +6824,7 @@ alias test_file_validator_service.coverage : tests/mod/test_file_validator_servi
 alias test_metrics_hmac.coverage : tests/mod/test_metrics_hmac.coverage ;
 alias test_mod_api.coverage : tests/mod/test_mod_api.coverage ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
+alias test_pointer_loader_vnc.coverage : tests/mod/vnc/encoder/test_pointer_loader_vnc.coverage ;
 alias test_zrle.coverage : tests/mod/vnc/encoder/test_zrle.coverage ;
 alias test_dsm.coverage : tests/mod/vnc/test_dsm.coverage ;
 alias test_newline_convert.coverage : tests/mod/vnc/test_newline_convert.coverage ;
@@ -7230,6 +7243,7 @@ alias tests/mod.norec :
 ;
 alias tests/mod/vnc/encoder.norec :
   tests/mod/vnc/encoder/test_hextile
+  tests/mod/vnc/encoder/test_pointer_loader_vnc
   tests/mod/vnc/encoder/test_zrle
 ;
 alias tests/mod/vnc.norec :

@@ -449,88 +449,6 @@ Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream& stream)
                           mask);
 }
 
-Pointer pointer_loader_vnc(
-    BytesPerPixel Bpp,
-    uint16_t width, uint16_t height,
-    uint16_t hsx, uint16_t hsy,
-    u8_array_view vncdata, u8_array_view vncmask,
-    int red_shift, int red_max,
-    int green_shift, int green_max,
-    int blue_shift, int blue_max)
-{
-    // VNC Pointer format
-    // ==================
-
-    // The data consists of width * height pixel values followed by
-    // a bitmask.
-
-    // PIXEL array : width * height * bytesPerPixel
-    // bitmask     : floor((width + 7) / 8) * height
-
-    // The bitmask consists of left-to-right, top-to-bottom
-    // scanlines, where each scanline is padded to a whole number of
-    // bytes. Within each byte the most significant bit represents
-    // the leftmost pixel, with a 1-bit meaning the corresponding
-    // pixel in the cursor is valid.Pointer
-
-    uint16_t minheight = std::min(height, uint16_t(32));
-    uint16_t minwidth = 32;
-
-    return Pointer::build_from(CursorSize(minwidth, minheight), Hotspot(hsx, hsy),
-        [&](uint8_t (&data)[Pointer::DATA_SIZE], uint8_t * mask)
-        {
-            size_t target_offset_line = 0;
-            size_t target_mask_offset_line = 0;
-            size_t source_offset_line = (minheight-1) * width * underlying_cast(Bpp);
-            size_t source_mask_offset_line = (minheight-1) * ::nbbytes(width);
-            memset(data, 0xAA, sizeof(data));
-
-            // LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
-            for (size_t y = 0 ; y < minheight; y++) {
-                for (size_t x = 0 ; x < 32u; x++) {
-                    const size_t target_offset = target_offset_line + x*3;
-                    const size_t source_offset = source_offset_line + x*underlying_cast(Bpp);
-                    unsigned pixel = 0;
-                    if (x < width) {
-                        for(size_t i = 0 ; i < underlying_cast(Bpp); i++){
-                            pixel = (pixel<<8) + vncdata[source_offset+i];
-                        }
-                    }
-                    else {
-                        pixel = 0;
-                    }
-                    const unsigned red = (pixel >> red_shift) & red_max;
-                    const unsigned green = (pixel >> green_shift) & green_max;
-                    const unsigned blue = (pixel >> blue_shift) & blue_max;
-                    // LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
-                    data[target_offset] = (red << 3) | (red >> 2);
-                    data[target_offset+1] = (green << 2) | (green >> 4);
-                    data[target_offset+2] = (blue << 3) | (blue >> 2);
-                }
-
-                for (size_t xx = 0 ; xx < 4 ; xx++){
-                    // LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
-                    if (xx < ::nbbytes(width)){
-                        mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
-                    }
-                    else {
-                        mask[target_mask_offset_line+xx] = 0xFF;
-                    }
-                }
-
-                if ((minwidth % 8) != 0){
-                    mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
-                }
-
-                target_offset_line += 32*3;
-                target_mask_offset_line += 4;
-                source_offset_line -= width*underlying_cast(Bpp);
-                source_mask_offset_line -= ::nbbytes(width);
-            }
-        }
-    );
-}
-
 Pointer pointer_loader_2(InStream & stream)
 {
     uint8_t width     = stream.in_uint8();
@@ -592,7 +510,9 @@ constexpr Pointer predefined_pointer(
     const uint16_t width, const uint16_t height, const char * def,
     const uint16_t hsx, const uint16_t hsy)
 {
-    return Pointer::build_from(CursorSize(width, height), Hotspot(hsx, hsy),
+    return Pointer::build_from(
+        CursorSize(width, height),
+        Hotspot(hsx, hsy),
         [&](uint8_t * dest, uint8_t * dest_mask)
         {
             const char * src = def;

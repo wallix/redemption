@@ -26,6 +26,7 @@ Vnc encoder module for Cursor Pseudo Encoding
 #include "core/buf64k.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
+#include "mod/vnc/encoder/pointer_loader_vnc.hpp"
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 
@@ -65,81 +66,87 @@ namespace Encoder
 {
 namespace
 {
-    struct Cursor
+
+struct Cursor
+{
+    const BytesPerPixel Bpp;
+    const Rect rect;
+    uint16_t red_max;
+    uint16_t green_max;
+    uint16_t blue_max;
+    uint8_t red_shift;
+    uint8_t green_shift;
+    uint8_t blue_shift;
+    VNCVerbose verbose;
+
+    EncoderState operator()(Buf64k & buf, gdi::GraphicApi & drawable)
     {
-        const BytesPerPixel Bpp;
-        const Rect rect;
-        int red_shift;
-        int red_max;
-        int green_shift;
-        int green_max;
-        int blue_shift;
-        int blue_max;
-        VNCVerbose verbose;
-
-        EncoderState operator()(Buf64k & buf, gdi::GraphicApi & drawable)
-        {
-            if (this->rect.isempty()) {
-                // TODO: empty Pointer: no cursor data to read. Should we set an invisible pointer ? If so we should have some flag to configure it
-                return EncoderState::Exit;
-            }
-
-            const size_t sz_pixel_array = this->rect.cx * this->rect.cy * underlying_cast(this->Bpp);
-            const size_t sz_bitmask = ::nbbytes(this->rect.cx) * this->rect.cy;
-
-            if (sz_pixel_array + sz_bitmask > 65536)
-            {
-                // TODO: as cursor size is not limited by VNC protocol, this could actually happen
-                // we should really copy cursor data into local cursor buffer whenever it's incoming
-                // and consume buffer data. But it's a small matter as such large pointers are never
-                // actually happening.
-                LOG(LOG_ERR,
-                    "VNC Encoding: Cursor, data buffer too small (65536 < %zu)",
-                    sz_pixel_array + sz_bitmask);
-                throw Error(ERR_BUFFER_TOO_SMALL);
-            }
-
-            if (buf.remaining() < sz_pixel_array + sz_bitmask)
-            {
-                return EncoderState::NeedMoreData;
-            }
-
-            auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask).data();
-            std::vector<uint8_t> data(cursor_buf, cursor_buf + sz_pixel_array);
-            std::vector<uint8_t> mask(cursor_buf + sz_pixel_array, cursor_buf + sz_pixel_array + sz_bitmask);
-            buf.advance(sz_pixel_array + sz_bitmask);
-
-            // TODO: special dot cursor  if cx=1 cy=1 ? : a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead ?
-            // Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Hotspot{this->x, this->y}, this->mask, this->data, false);
-
-            if (bool(this->verbose & VNCVerbose::cursor_encoder)) {
-                LOG(LOG_INFO, "VNC Cursor(%hd, %hd, %hu, %hu) %u %zu",
-                    this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
-                    this->Bpp, sz_pixel_array);
-                hexdump_d(data);
-                hexdump_d(mask);
-            }
-            Pointer cursor = pointer_loader_vnc(
-                this->Bpp, this->rect.cx, this->rect.cy, this->rect.x, this->rect.y,
-                data, mask,
-                this->red_shift, this->red_max,
-                this->green_shift, this->green_max,
-                this->blue_shift, this->blue_max);
-            drawable.begin_update();
-            drawable.set_pointer(0, cursor, gdi::GraphicApi::SetPointerMode::Insert);
-            drawable.end_update();
-
+        if (this->rect.isempty()) {
+            // TODO: empty Pointer: no cursor data to read. Should we set an invisible pointer ? If so we should have some flag to configure it
             return EncoderState::Exit;
         }
-    };
+
+        const size_t sz_pixel_array = this->rect.cx * this->rect.cy * underlying_cast(this->Bpp);
+        const size_t sz_bitmask = ::nbbytes(this->rect.cx) * this->rect.cy;
+
+        if (sz_pixel_array + sz_bitmask > 65536) {
+            // TODO: as cursor size is not limited by VNC protocol, this could actually happen
+            // we should really copy cursor data into local cursor buffer whenever it's incoming
+            // and consume buffer data. But it's a small matter as such large pointers are never
+            // actually happening.
+            LOG(LOG_ERR,
+                "VNC Encoding: Cursor, data buffer too small (65536 < %zu)",
+                sz_pixel_array + sz_bitmask);
+            throw Error(ERR_BUFFER_TOO_SMALL);
+        }
+
+        if (buf.remaining() < sz_pixel_array + sz_bitmask) {
+            return EncoderState::NeedMoreData;
+        }
+
+        const auto cursor_buf = buf.av(sz_pixel_array + sz_bitmask);
+        const auto data = cursor_buf.first(sz_pixel_array);
+        const auto mask = cursor_buf.drop_front(sz_pixel_array);
+        buf.advance(sz_pixel_array + sz_bitmask);
+
+        // TODO: special dot cursor  if cx=1 cy=1 ? : a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead ?
+        // Pointer cursor(this->bpp, Pointer::CursorSize{this->cx, this->cy}, Hotspot{this->x, this->y}, this->mask, this->data, false);
+
+        if (bool(this->verbose & VNCVerbose::cursor_encoder)) {
+            LOG(LOG_DEBUG, "VNC Cursor(%hd, %hd, %hu, %hu) %u %zu",
+                this->rect.x, this->rect.y, this->rect.cx, this->rect.cy,
+                this->Bpp, sz_pixel_array);
+            hexdump_d(data);
+            hexdump_d(mask);
+        }
+
+        Pointer cursor = pointer_loader_vnc(
+            this->Bpp, this->rect.cx, this->rect.cy, this->rect.x, this->rect.y,
+            data, mask,
+            this->red_shift, this->red_max,
+            this->green_shift, this->green_max,
+            this->blue_shift, this->blue_max);
+        drawable.set_pointer(0, cursor, gdi::GraphicApi::SetPointerMode::Insert);
+
+        return EncoderState::Exit;
+    }
+};
+
 } // namespace
 
 Encoder cursor_encoder(
     BytesPerPixel Bpp, Rect rect,
-    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max,
+    uint8_t red_shift, uint16_t red_max,
+    uint8_t green_shift, uint16_t green_max,
+    uint8_t blue_shift, uint16_t blue_max,
     VNCVerbose verbose)
 {
-    return Encoder(Cursor{Bpp, rect, red_shift, red_max, green_shift, green_max, blue_shift, blue_max, verbose});
+    return Encoder(Cursor{
+        Bpp, rect,
+        red_max, green_max, blue_max,
+        red_shift, green_shift, blue_shift,
+        verbose
+    });
 }
 
 } // namespace Encoder

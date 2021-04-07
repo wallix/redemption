@@ -313,7 +313,7 @@ struct decode_color16
     {
         // b1 b2 b3 b4 b5 g1 g2 g3 g4 g5 g6 r1 r2 r3 r4 r5
         return BGRColor(
-            ((c.as_bgr().as_u32() << 3) & 0xf8) | ((c.as_bgr().as_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r6 r7 r8
+            ((c.as_bgr().as_u32() << 3) & 0xf8) | ((c.as_bgr().as_u32() >>  2) & 0x7), // r1 r2 r3 r4 r5 r1 r2 r3
             ((c.as_bgr().as_u32() >> 3) & 0xfc) | ((c.as_bgr().as_u32() >>  9) & 0x3), // g1 g2 g3 g4 g5 g6 g1 g2
             ((c.as_bgr().as_u32() >> 8) & 0xf8) | ((c.as_bgr().as_u32() >> 13) & 0x7)  // b1 b2 b3 b4 b5 b1 b2 b3
         );
