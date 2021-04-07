@@ -3128,6 +3128,7 @@ public:
 #endif
                                 }
                                 else {
+/*
                                     LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
 
                                     auto resize_result = this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()});
@@ -3142,8 +3143,10 @@ public:
                                     case FrontAPI::ResizeResult::instant_done:
                                     case FrontAPI::ResizeResult::no_need:
                                     case FrontAPI::ResizeResult::remoteapp:
+                                    case FrontAPI::ResizeResult::remoteapp_done:
                                         break;
                                     }
+*/
 
                                     this->connection_finalization_state = WAITING_CTL_COOPERATE;
                                     sdata.payload.in_skip_bytes(sdata.payload.in_remain());
@@ -3372,30 +3375,55 @@ public:
                             this->orders.reset();
 
                             this->process_demand_active(sctrl);
-                            this->send_confirm_active(drawable);
-                            this->send_synchronise();
-                            this->send_control(RDP_CTL_COOPERATE);
-                            this->send_control(RDP_CTL_REQUEST_CONTROL);
 
-                            /* Including RDP 5.0 capabilities */
-                            if (this->negociation_result.use_rdp5){
-                                LOG(LOG_INFO, "use rdp5");
-                                if (this->enable_persistent_disk_bitmap_cache &&
-                                    this->persist_bitmap_cache_on_disk) {
-                                    if (!this->deactivation_reactivation_in_progress) {
-                                        this->send_persistent_key_list();
-                                    }
+
+{
+                            LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp());
+
+                            auto resize_result = this->front.server_resize({this->negociation_result.front_width, this->negociation_result.front_height, this->orders.get_bpp()});
+                            switch (resize_result){
+                                case FrontAPI::ResizeResult::fail:
+                                {
+                                    LOG(LOG_ERR, "Resize not available on older clients,"
+                                        " change client resolution to match server resolution");
+                                    throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
                                 }
-                                this->send_fonts(3);
-                            }
-                            else{
-                                LOG(LOG_INFO, "not using rdp5");
-                                this->send_fonts(1);
-                                this->send_fonts(2);
+                                case FrontAPI::ResizeResult::done:
+                                case FrontAPI::ResizeResult::instant_done:
+                                case FrontAPI::ResizeResult::no_need:
+                                case FrontAPI::ResizeResult::remoteapp:
+                                case FrontAPI::ResizeResult::remoteapp_done:
+                                    break;
                             }
 
-                            this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
-                                (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+                            if (resize_result != FrontAPI::ResizeResult::done
+                            and resize_result != FrontAPI::ResizeResult::remoteapp_done) {
+                                this->send_confirm_active(drawable);
+                                this->send_synchronise();
+                                this->send_control(RDP_CTL_COOPERATE);
+                                this->send_control(RDP_CTL_REQUEST_CONTROL);
+
+                                // Including RDP 5.0 capabilities
+                                if (this->negociation_result.use_rdp5){
+                                    LOG(LOG_INFO, "use rdp5");
+                                    if (this->enable_persistent_disk_bitmap_cache &&
+                                        this->persist_bitmap_cache_on_disk) {
+                                        if (!this->deactivation_reactivation_in_progress) {
+                                            this->send_persistent_key_list();
+                                        }
+                                    }
+                                    this->send_fonts(3);
+                                }
+                                else{
+                                    LOG(LOG_INFO, "not using rdp5");
+                                    this->send_fonts(1);
+                                    this->send_fonts(2);
+                                }
+
+                                this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
+                                    (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+                            }
+}
 
                             this->connection_finalization_state = WAITING_SYNCHRONIZE;
                         }
@@ -5571,7 +5599,49 @@ public:
         }
     }
 
-    void rdp_gdi_up_and_running() override {}
+    void rdp_gdi_up_and_running() override
+    {
+LOG(LOG_INFO, "> > > > > mod_rdp::rdp_gdi_up_and_running()");
+LOG(LOG_INFO, " ");
+LOG(LOG_INFO, " ");
+LOG(LOG_INFO, " ");
+
+        gdi::GraphicApi & drawable =
+#ifndef __EMSCRIPTEN__
+            this->channels.remote_programs_session_manager
+              ? *this->channels.remote_programs_session_manager
+              :
+#endif
+            this->graphics_update_disabled
+              ? gdi::null_gd()
+              : gd;
+
+        this->send_confirm_active(drawable);
+        this->send_synchronise();
+        this->send_control(RDP_CTL_COOPERATE);
+        this->send_control(RDP_CTL_REQUEST_CONTROL);
+
+        // Including RDP 5.0 capabilities
+        if (this->negociation_result.use_rdp5){
+            LOG(LOG_INFO, "use rdp5");
+            if (this->enable_persistent_disk_bitmap_cache &&
+                this->persist_bitmap_cache_on_disk) {
+                if (!this->deactivation_reactivation_in_progress) {
+                    this->send_persistent_key_list();
+                }
+            }
+            this->send_fonts(3);
+        }
+        else{
+            LOG(LOG_INFO, "not using rdp5");
+            this->send_fonts(1);
+            this->send_fonts(2);
+        }
+
+        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0,
+            (this->experimental_fix_input_event_sync ? (this->key_flags & 0x07) : 0), 0);
+    }
+
     void rdp_gdi_down() override {}
 
     void rdp_input_invalidate(Rect r) override {

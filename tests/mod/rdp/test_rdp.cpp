@@ -46,22 +46,26 @@
 
 // remove # otherwise bjam add the file as a dependency (even if it's a comment !!!)
 
+#ifdef GENERATE_TESTING_DATA
 // Uncomment the code block below to generate testing data.
-//include "core/listen.hpp"
-//include "utils/netutils.hpp"
+#include "core/listen.hpp"
+#include "utils/netutils.hpp"
 
 // Uncomment the code block below to generate testing data.
-//include "transport/socket_transport.hpp"
+#include "transport/socket_transport.hpp"
 
 // Uncomment the code block below to generate testing data.
-//include <openssl/ssl.h>
+#include <openssl/ssl.h>
+#endif
 
 using namespace std::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
+#ifdef GENERATE_TESTING_DATA
     // Uncomment the code block below to generate testing data.
-    //SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
+    SocketTransport::Verbose STVerbose = SocketTransport::Verbose::dump;
+#endif
 
     ClientInfo info;
     info.build = 2600;
@@ -87,28 +91,32 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
+#ifdef GENERATE_TESTING_DATA
     // Uncomment the code block below to generate testing data.
-    //SSL_library_init();
+    SSL_library_init();
+#endif
 
     FakeFront front(info.screen_info);
 
     // Uncomment the code block below to generate testing data.
-    //const char * name = "RDP W2008 Target";
-    //auto client_sck = ip_connect("10.10.44.101", 3389);
+#ifdef GENERATE_TESTING_DATA
+    const char * name = "RDP W2008 Target";
+    auto client_sck = ip_connect("10.10.44.101", 3389);
 
     // Uncomment the code block below to generate testing data.
-    //std::string error_message;
-    //SocketTransport t( name
-    //                 , std::move(client_sck)
-    //                 , "10.10.44.101"
-    //                 , 3389
-    //                 , std::chrono::seconds(1)
-    //                 , STVerbose
-    //                 , nullptr);
-
+    std::string error_message;
+    SocketTransport t( name
+                     , std::move(client_sck)
+                     , "10.10.44.101"
+                     , 3389
+                     , std::chrono::seconds(1)
+                     , STVerbose
+                     , nullptr);
+#else
     // Comment the code block below to generate testing data.
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(cstr_array_view(indata), cstr_array_view(outdata));
+#endif
 
     std::string close_box_extra_message;
     Theme theme;
@@ -170,11 +178,27 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     RED_CHECK_EQUAL(info.screen_info.width, 800);
     RED_CHECK_EQUAL(info.screen_info.height, 600);
 
+
+#ifdef GENERATE_TESTING_DATA
+    event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
+
+    LOG(LOG_INFO, "GENERATE_TESTING_DATA");
+
+    // TODO: fix that for actual TESTING DATA GENERATION
+    unique_server_loop(unique_fd(t.get_fd()), [&](int /*sck*/)->bool {
+        LOG(LOG_INFO, "is_up_and_running=%s", (mod->is_up_and_running() ? "Yes" : "No"));
+
+        event_manager.execute_events([&](int /*sck*/)->bool {return true;}, false);
+
+        return !mod->is_up_and_running();
+    });
+#else
     detail::ProtectedEventContainer::get_events(events)[0]->alarm.fd = 0;
     event_manager.execute_events([](int /*fd*/){ return false; }, false);
     event_manager.get_writable_time_base().monotonic_time = MonotonicTimePoint{1s};
     for (int count=0; count < 100 && !event_manager.is_empty(); ++count) {
         event_manager.execute_events([](int){return true;}, false);
     }
+#endif
 }
 
