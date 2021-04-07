@@ -599,6 +599,8 @@ video_recorder::~video_recorder() = default;
 
 void video_recorder::preparing_video_frame() { }
 
+void video_recorder::preparing_timestamp_video_frame() { }
+
 void video_recorder::encoding_video_frame(int64_t /*frame_index*/) { }
 
 #endif
