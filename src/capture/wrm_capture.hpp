@@ -118,7 +118,6 @@ class GraphicToFile : public RDPSerializer
     // for a monotic real time
     uint16_t mouse_x = 0;
     uint16_t mouse_y = 0;
-    const bool send_input;
     gdi::ImageFrameApi & image_frame_api;
 
 
@@ -132,8 +131,6 @@ class GraphicToFile : public RDPSerializer
     Rect rail_window_rect;
 
 public:
-    enum class SendInput { NO, YES };
-
     GraphicToFile(MonotonicTimePoint now
                 , RealTimePoint real_now
                 , Transport & trans
@@ -146,7 +143,6 @@ public:
                 , PointerCache & ptr_cache
                 , gdi::ImageFrameApi & image_frame_api
                 , WrmCompressionAlgorithm wrm_compression_algorithm
-                , SendInput send_input
                 , RDPSerializerVerbose verbose)
     : RDPSerializer( this->buffer_stream_orders, this->buffer_stream_bitmaps, capture_bpp
                    , bmp_cache, gly_cache, ptr_cache, 0, true, true, 32 * 1024, true, verbose)
@@ -157,7 +153,6 @@ public:
     , start_timer(now)
     , monotonic_real_time(now)
     , last_real_time(real_now)
-    , send_input(send_input == SendInput::YES)
     , image_frame_api(image_frame_api)
     , keyboard_buffer_32(keyboard_buffer_32_buf)
     , wrm_format_version(remote_app ? 5 : (bool(this->compression_builder.get_algorithm()) ? 4 : 3))
@@ -322,15 +317,13 @@ public:
 
         write_us_time(payload, this->timer - this->start_timer);
 
-        if (this->send_input) {
-            payload.out_uint16_le(this->mouse_x);
-            payload.out_uint16_le(this->mouse_y);
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
 
-            payload.out_uint8(/*ignore_time_interval*/ 0);
+        payload.out_uint8(/*ignore_time_interval*/ 0);
 
-            payload.out_copy_bytes(keyboard_buffer_32.get_produced_bytes());
-            keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
-        }
+        payload.out_copy_bytes(keyboard_buffer_32.get_produced_bytes());
+        keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
 
         send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP_OR_RECORD_DELAY, payload.get_offset(), 1);
         this->trans.send(payload.get_produced_bytes());
@@ -826,7 +819,7 @@ public:
         this->out, wrm_params.capture_bpp, wrm_params.remote_app,
         rail_window_rect, this->bmp_cache, this->gly_cache,
         this->ptr_cache, image_frame_api, wrm_params.wrm_compression_algorithm,
-        GraphicToFile::SendInput::YES, wrm_params.wrm_verbose)
+        wrm_params.wrm_verbose)
     {}
 
     WrmCaptureImpl(

@@ -1226,7 +1226,7 @@ namespace
         , consumer(now, RealTimePoint{now.time_since_epoch()},
             trans, BitsPerPixel{24}, false, Rect(), bmp_cache, gly_cache, ptr_cache,
             drawable, WrmCompressionAlgorithm::no_compression,
-            GraphicToFile::SendInput::NO, RDPSerializerVerbose::none)
+            RDPSerializerVerbose::none)
         {}
 
         void next_second(int n = 1) /*NOLINT*/
@@ -1344,26 +1344,30 @@ const char expected_stripped_wrm[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
 
            "\x00\x00\x10\x00\x00\x00\x01\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
 
-/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
+           "\x00\x00\x00\x00\x00"
 
 /* 0000 */ "\x00\x00\x12\x00\x00\x00\x01\x00" // 0000: ORDERS  0012:chunk_len=18 0002: 1 orders
            "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
 
-/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x00\x09\x3d\x00\x00\x00\x00\x00" // time = 4000000
+           "\x00\x00\x00\x00\x00"
 
 /* 0000 */ "\x00\x00\x0d\x00\x00\x00\x01\x00"
            "\x11\x32\x32\xff\xff"
 
-/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00"
+/* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00"
            "\x80\x8d\x5b\x00\x00\x00\x00\x00" // time = 6000000
+           "\x00\x00\x00\x00\x00"
 
 /* 0000 */ "\x00\x00\x0d\x00\x00\x00\x01\x00"
            "\x11\x62\x32\x00\x00"
@@ -1504,22 +1508,25 @@ const char expected_stripped_wrm2[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
 
            "\x00\x00\x1A\x00\x00\x00\x02\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x09\x0a\x2c\x20\x03\x58\x02\xff"         // Green Rect(0, 0, 800, 600)
            "\x01\x6e\x32\x00\xbc\x02\x1e\x00\x00\xff"  // Blue  Rect(0, 50, 700, 80)
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
+           "\x00\x00\x00\x00\x00"
 
            "\x00\x00\x12\x00\x00\x00\x02\x00"
 /* 0000 */ "\x11\x32\x32\xff\xff"             // encode_color24()(WHITE) rect
            "\x11\x62\x32\x00\x00"             // encode_color24()(RED) rect
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00"
+           "\xf0\x03\x15\x00\x00\x00\x01\x00"
 /* 0000 */ "\xc0\xcf\x6a\x00\x00\x00\x00\x00" // time 1007000000
+           "\x00\x00\x00\x00\x00"
 
            "\x00\x00\x13\x00\x00\x00\x01\x00"
 /* 0000 */ "\x01\x1f\x05\x00\x05\x00\x0a\x00\x0a\x00\x00" // encode_color24()(BLACK) rect
@@ -1574,7 +1581,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.sync();
 
     RED_TEST_PASSPOINT();
-    RED_TEST(trans.size() == 1612);
+    RED_TEST(trans.size() == 1622);
 
     GeneratorTransport in_wrm_trans(trans.data());
 
@@ -1638,8 +1645,9 @@ const char expected_Red_on_Blue_wrm[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
 
 /* 0000 */ "\x00\x00\x2d\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 /* 0000 */ "\x19\x0a\x4c\x64\x64\xff"         // Blue rect  // order 0A=opaque rect
@@ -1652,8 +1660,9 @@ const char expected_Red_on_Blue_wrm[] =
 
            "\x59\x0d\x3d\x01\x00\x5a\x14\x0a\xcc" // order=0d : MEMBLT
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
+           "\x00\x00\x00\x00\x00"
 
            "\x00\x00\x1e\x00\x00\x00\x01\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
 // -----------------------------------------------------
@@ -1712,8 +1721,9 @@ const char expected_reset_rect_wrm[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-/* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
 
 /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
            "\x19\x0a\x1c\x64\x64\xff\x11"     // Red Rect
@@ -1764,8 +1774,9 @@ const char expected_reset_rect_wrm[] =
 
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // MultiScrBlt
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
+           "\x00\x00\x00\x00\x00"
 
            "\x00\x00\x10\x00\x00\x00\x01\x00"
            "\x11\x3f\x0a\x0a\xec\xec\x00\xff" // Green Rect
@@ -1803,8 +1814,9 @@ const char expected_continuation_wrm[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-           "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+           "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x42\x0F\x00\x00\x00\x00\x00" // 0x0F4240 = 1000000
+           "\x00\x00\x00\x00\x00"
 
            // save images
 /* 0000 */ "\x00\x10\x49\x01\x00\x00\x01\x00"
@@ -1885,8 +1897,9 @@ RED_AUTO_TEST_CASE(TestImageChunk)
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // encode_color24()(RED) rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // encode_color24()(BLUE) RECT
@@ -1945,8 +1958,9 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // encode_color24()(RED) rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // encode_color24()(BLUE) RECT
@@ -2016,8 +2030,9 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
     /* 0000 */ "\x00\x00\x1e\x00\x00\x00\x03\x00" // 0000: ORDERS  001A:chunk_len=26 0002: 2 orders
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // encode_color24()(RED) rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // encode_color24()(BLUE) RECT
@@ -2115,8 +2130,9 @@ const char source_wrm_png[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2164,8 +2180,9 @@ const char source_wrm_png[] =
 /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00"
            "\x00\xca\x9a\x3b\x00\x00\x00\x00" // 0x3B9ACA00 = 1000000000
 
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\x00\x00\x00\x00\x00\x00\x00" // = 0
+           "\x00\x00\x00\x00\x00"
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x01\x10\x10\x00\x00\x00\x01\x00" // 0x1000: PARTIAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
@@ -2194,8 +2211,9 @@ const char source_wrm_png[] =
         "\x00\x00\x00\x49\x45\x4e\x44\xae"
     /* 0000 */ "\x00\x10\x0b\x00\x00\x00\x01\x00" // 0x1000: FINAL_IMAGE_CHUNK 0048: chunk_len=100 0001: 1 order
         "\x42\x60\x82"
-    /* 0000 */ "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
+    /* 0000 */ "\xf0\x03\x15\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
     /* 0000 */ "\x00\x09\x3d\x00\x00\x00\x00\x00" // time = 4000000
+           "\x00\x00\x00\x00\x00"
        ;
 
 RED_AUTO_TEST_CASE(TestReload)
