@@ -117,6 +117,37 @@ void write_assignable_default(std::ostream& out, type_enumerations& /*enums*/, t
     out << "0" << octal;
 }
 
+struct HtmlEntitifier
+{
+    struct OutputData
+    {
+        friend std::ostream& operator<<(std::ostream& out, OutputData const& data)
+        {
+            for (char c : data.str) {
+                if (c == '<') {
+                    out << "&lt;";
+                }
+                else {
+                    out << c;
+                }
+            }
+            return out;
+        }
+
+        std::string str;
+    };
+
+    template<class F>
+    OutputData operator()(F&& f)
+    {
+        out_string.str("");
+        f(out_string);
+        return OutputData{out_string.str()};
+    }
+
+private:
+    std::stringstream out_string;
+};
 
 inline void write_type(std::ostream& out, type_<types::u16>) { out << "uint16_t"; }
 inline void write_type(std::ostream& out, type_<types::u32>) { out << "uint32_t"; }
@@ -317,6 +348,7 @@ struct CppConfigWriterBase
     unsigned depth = 0;
     std::ostringstream out_body_parser_;
     std::ostringstream out_member_;
+    HtmlEntitifier html_entitifier;
 
     struct Member
     {
@@ -471,7 +503,9 @@ struct CppConfigWriterBase
             this->authstrs.emplace_back(sesman_name);
             this->full_names.sesman.emplace_back(sesman_name);
         }
-        this->out_member_ << "    /// type: "; write_type(this->out_member_, type); this->out_member_ << " <br/>\n";
+        this->out_member_ << "    /// type: " << html_entitifier([&](std::ostream& out){
+            write_type(out, type);
+        }) << " <br/>\n";
 
         if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
             if constexpr (!is_convertible_v<Pack, connection_policy_t>) {

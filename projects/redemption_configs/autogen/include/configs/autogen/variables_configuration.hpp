@@ -3129,7 +3129,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { OcrLocale::latin };
     };
-    /// type: std::chrono::duration<unsigned, std::ratio<1, 100>> <br/>
+    /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 100>> <br/>
     /// default: 100 <br/>
     struct ocr::interval {
         static constexpr bool is_sesman_to_proxy = false;
@@ -3184,7 +3184,7 @@ namespace cfg
         type value { CaptureFlags(11) };
     };
     /// Frame interval. <br/>
-    /// type: std::chrono::duration<unsigned, std::ratio<1, 10>> <br/>
+    /// type: std::chrono::duration&lt;unsigned, std::ratio&lt;1, 10>> <br/>
     /// default: 10 <br/>
     struct video::png_interval {
         static constexpr bool is_sesman_to_proxy = false;
@@ -3507,7 +3507,7 @@ namespace cfg
         type value { KeyboardLogFlagsCP::syslog };
     };
 
-    /// type: std::array<unsigned char, 32> <br/>
+    /// type: std::array&lt;unsigned char, 32> <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } <br/>
     struct crypto::encryption_key {
@@ -3521,7 +3521,7 @@ namespace cfg
         using mapped_type = sesman_and_spec_type;
         type value { {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } };
     };
-    /// type: std::array<unsigned char, 32> <br/>
+    /// type: std::array&lt;unsigned char, 32> <br/>
     /// sesman ⇒ proxy <br/>
     /// default: {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, } <br/>
     struct crypto::sign_key {
