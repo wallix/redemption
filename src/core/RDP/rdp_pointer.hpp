@@ -88,18 +88,6 @@ public:
     constexpr explicit Pointer() = default;
 
     template<class Builder>
-    constexpr static Pointer build_from(CursorSize d, Hotspot hs, Builder&& builder)
-    {
-        Pointer pointer;
-
-        pointer.dimensions = d;
-        pointer.hotspot = hs;
-        pointer.native_xor_bpp = BitsPerPixel{0};
-        builder(pointer.data, pointer.mask);
-        return pointer;
-    }
-
-    template<class Builder>
     constexpr static Pointer build_from(CursorSize d, Hotspot hs, BitsPerPixel bits_per_pixel, Builder&& builder)
     {
         Pointer pointer;
@@ -107,11 +95,13 @@ public:
         pointer.dimensions = d;
         pointer.hotspot = hs;
         pointer.native_xor_bpp = bits_per_pixel;
-        builder(pointer.data, pointer.mask);
         pointer.native_length_xor_mask
           = checked_int(d.height * even_pad_length(d.width * nbbytes(underlying_cast(bits_per_pixel))));
         pointer.native_length_and_mask
           = checked_int(d.height * even_pad_length(nbbytes(d.width)));
+
+        builder(pointer.data, pointer.mask);
+
         return pointer;
     }
 

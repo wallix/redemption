@@ -513,6 +513,7 @@ constexpr Pointer predefined_pointer(
     return Pointer::build_from(
         CursorSize(width, height),
         Hotspot(hsx, hsy),
+        BitsPerPixel(24),
         [&](uint8_t * dest, uint8_t * dest_mask)
         {
             const char * src = def;

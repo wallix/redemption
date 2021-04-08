@@ -5816,6 +5816,25 @@ test-run tests/utils/test_drawable :
   <covfile>src/utils/drawable.cpp
   <covfile>src/utils/drawable.hpp
 ;
+test-run tests/utils/test_drawable_pointer :
+  $(REDEMPTION_TEST_PATH)/utils/test_drawable_pointer.cpp
+:
+  <library>crypto
+  <library>png
+  <library>src/core/RDP/rdp_pointer.o
+  <library>src/core/error.o
+  <library>src/gdi/graphic_api.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_data_allocator.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/drawable.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/stacktrace.o
+  <library>tests/includes/test_only/test_framework/check_img.o
+  $(BOOST_STACKTRACE_LINKFLAGS)
+  <covfile>src/utils/drawable_pointer.hpp
+;
 test-run tests/utils/test_ellipse :
   $(REDEMPTION_TEST_PATH)/utils/test_ellipse.cpp
 :
@@ -6572,6 +6591,7 @@ alias test_contiguous_sub_rect_f : tests/utils/test_contiguous_sub_rect_f ;
 alias test_d3des : tests/utils/test_d3des ;
 alias test_diffiehellman : tests/utils/test_diffiehellman ;
 alias test_drawable : tests/utils/test_drawable ;
+alias test_drawable_pointer : tests/utils/test_drawable_pointer ;
 alias test_ellipse : tests/utils/test_ellipse ;
 alias test_file_permissions : tests/utils/test_file_permissions ;
 alias test_fileutils : tests/utils/test_fileutils ;
@@ -6905,6 +6925,7 @@ alias test_contiguous_sub_rect_f.coverage : tests/utils/test_contiguous_sub_rect
 alias test_d3des.coverage : tests/utils/test_d3des.coverage ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
+alias test_drawable_pointer.coverage : tests/utils/test_drawable_pointer.coverage ;
 alias test_ellipse.coverage : tests/utils/test_ellipse.coverage ;
 alias test_file_permissions.coverage : tests/utils/test_file_permissions.coverage ;
 alias test_fileutils.coverage : tests/utils/test_fileutils.coverage ;
@@ -7354,6 +7375,7 @@ alias tests/utils.norec :
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
   tests/utils/test_drawable
+  tests/utils/test_drawable_pointer
   tests/utils/test_ellipse
   tests/utils/test_file_permissions
   tests/utils/test_fileutils

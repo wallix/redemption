@@ -135,11 +135,11 @@ void VideoCaptureCtx::frame_marker_event(
     ) {
         this->preparing_video_frame(recorder);
         this->updatable_graphics.set_drawing_event(false);
+        this->cursor_x = cursor_x;
+        this->cursor_y = cursor_y;
     }
 
     this->has_frame_marker = true;
-    this->cursor_x = cursor_x;
-    this->cursor_y = cursor_y;
 
     this->snapshot(recorder, now, cursor_x, cursor_y);
 }
@@ -178,16 +178,15 @@ WaitingTimeBeforeNextSnapshot VideoCaptureCtx::snapshot(
     if (tick >= frame_interval) {
         bool const update_timestamp = this->has_timestamp
                                    && now >= this->next_trace_time;
-        bool const update_image = !this->has_frame_marker
-                               && (this->updatable_graphics.has_drawing_event()
+        bool const update_image = (!this->has_frame_marker
+                                  && this->updatable_graphics.has_drawing_event())
                                 || this->cursor_x != cursor_x
                                 || this->cursor_y != cursor_y
-                               );
+                                ;
         bool const update_pointer = (update_image || update_timestamp);
 
         if (update_pointer) {
             this->image_frame_api.prepare_image_frame();
-
             this->drawable.trace_mouse();
         }
 

@@ -39,6 +39,7 @@
 #include "utils/log.hpp"
 #include "utils/pixel_io.hpp"
 #include "utils/image_view.hpp"
+#include "utils/colors.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 
 #include <cstdint>
@@ -210,20 +211,95 @@ struct DrawablePointer
         this->width = dim.width;
         this->height = dim.height;
 
-        BytesPerPixel bytes_per_pixel = BytesPerPixel{3};
+        const BitsPerPixel bits_per_pixel = cursor.get_native_xor_bpp();
+        auto pointer_data = cursor.get_native_xor_mask();
 
-        if (cursor.get_native_xor_bpp() == BitsPerPixel::BitsPP32)
-        {
-            bytes_per_pixel = BytesPerPixel{4};
+        switch (bits_per_pixel) {
+            case BitsPerPixel::BitsPP1: {
+                const unsigned line_bytes = ::even_pad_length(::nbbytes(dim.width));
+                const unsigned h = dim.height;
+                auto* dest = this->data;
+                for (unsigned y = 0; y < h; ++y) {
+                    const uint8_t* src = pointer_data.data() + y * line_bytes;
+
+                    unsigned char bit_count = 7;
+                    const uint8_t* enddest = dest + dim.width*3;
+                    while (dest < enddest) {
+                        uint8_t pixel = (*src & (1 << bit_count)) ? 0xFF : 0;
+                        *dest++ = pixel;
+                        *dest++ = pixel;
+                        *dest++ = pixel;
+
+                        if (bit_count == 0) {
+                            ++src;
+                        }
+
+                        bit_count = (bit_count - 1) & 7;
+                    }
+                }
+
+                this->image_data_view_data = this->create_img(this->data,
+                                                              this->width * 3,
+                                                              BytesPerPixel(3));
+                break;
+            }
+
+            case BitsPerPixel::BitsPP4: {
+                const unsigned line_bytes = ::even_pad_length(::nbbytes(dim.width * 4));
+                const unsigned h = dim.height;
+                auto& palette = BGRPalette::classic_332();
+                auto* dest = this->data;
+                for (unsigned y = 0; y < h; ++y) {
+                    const uint8_t* src = pointer_data.data() + y * line_bytes;
+
+                    unsigned char bit_count = 7;
+                    const uint8_t* enddest = dest + dim.width*3;
+                    while (dest < enddest) {
+                        BGRColor pixel1 = palette[*src >> 4];
+
+                        *dest++ = pixel1.red();
+                        *dest++ = pixel1.green();
+                        *dest++ = pixel1.blue();
+
+                        bit_count = (bit_count - 1) & 7;
+
+                        BGRColor pixel2 = palette[*src & 0xf];
+
+                        *dest++ = pixel2.red();
+                        *dest++ = pixel2.green();
+                        *dest++ = pixel2.blue();
+
+                        bit_count = (bit_count - 1) & 7;
+
+                        ++src;
+                    }
+                }
+
+                this->image_data_view_data = this->create_img(this->data,
+                                                              this->width * 3,
+                                                              BytesPerPixel(3));
+                break;
+            }
+
+            case BitsPerPixel::BitsPP8:
+            case BitsPerPixel::BitsPP15:
+            case BitsPerPixel::BitsPP16:
+            case BitsPerPixel::BitsPP24:
+            case BitsPerPixel::BitsPP32: {
+                auto bytes_per_pixel = BytesPerPixel(nbbytes(underlying_cast(bits_per_pixel)));
+                unsigned line_bytes = ::even_pad_length(
+                    this->width * underlying_cast(bytes_per_pixel));
+
+                ::memcpy(this->data, pointer_data.data(), pointer_data.size());
+                this->image_data_view_data = this->create_img(this->data,
+                                                              line_bytes,
+                                                              bytes_per_pixel);
+                break;
+            }
+
+            case BitsPerPixel::Unspecified:
+                break;
         }
-
-        const uint8_t* pointer_data = cursor.get_nbits_xor_mask().data();
-        unsigned line_bytes = ::even_pad_length(this->width * uint8_t(bytes_per_pixel));
-
-        ::memcpy(this->data, pointer_data, line_bytes * this->height);
-        this->image_data_view_data = this->create_img(this->data,
-                                                      line_bytes,
-                                                      bytes_per_pixel);
 
         const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
         const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
@@ -260,7 +336,8 @@ private:
             this->height,
             line_bytes,
             bytes_per_pixel,
-            ImageView::Storage::BottomToTop
+            ImageView::Storage::BottomToTop,
+            &BGRPalette::classic_332()
         );
     }
 };  // struct DrawablePointer

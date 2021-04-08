@@ -68,11 +68,11 @@ struct checked_int
     {}
 
     template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
-    operator U () const noexcept { return checked_cast<U>(i); }
+    constexpr operator U () const noexcept { return checked_cast<U>(i); }
 
-    operator T () const noexcept { return this->i; }
+    constexpr operator T () const noexcept { return this->i; }
 
-    [[nodiscard]] T underlying() const noexcept { return this->i; }
+    constexpr T underlying() const noexcept { return this->i; }
 
 private:
     T i;
@@ -95,9 +95,9 @@ struct saturated_int
     {}
 
     template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
-    operator U () const noexcept { return saturated_cast<U>(i); }
+    constexpr operator U () const noexcept { return saturated_cast<U>(i); }
 
-    operator T () const noexcept { return this->i; }
+    constexpr operator T () const noexcept { return this->i; }
 
     constexpr T underlying() const noexcept { return this->i; }
 
@@ -122,11 +122,11 @@ struct safe_int
     {}
 
     template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
-    operator U () const noexcept { return safe_cast<U>(i); }
+    constexpr operator U () const noexcept { return safe_cast<U>(i); }
 
     constexpr operator T () const noexcept { return this->i; }
 
-    [[nodiscard]] constexpr T underlying() const noexcept { return this->i; }
+    constexpr T underlying() const noexcept { return this->i; }
 
 private:
     T i;
