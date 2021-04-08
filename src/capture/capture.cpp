@@ -1621,6 +1621,13 @@ void Capture::force_flush(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cu
     }
 }
 
+void Capture::update_mouse(MonotonicTimePoint now, uint16_t cursor_x, uint16_t cursor_y)
+{
+    if (cursor_x != this->mouse_info.last_x || cursor_y != this->mouse_info.last_y) {
+        this->force_flush(now, cursor_x, cursor_y);
+    }
+}
+
 void Capture::synchronize_times(MonotonicTimePoint monotonic_time, RealTimePoint real_time)
 {
     if (this->wrm_capture_obj) {

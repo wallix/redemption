@@ -2954,6 +2954,10 @@ public:
             this->up_and_running(tpdu, current_pdu_type, cb);
         break;
         }
+
+        if (this->capture) {
+            this->capture->update_mouse(this->events_guard.get_monotonic_time(), this->mouse_x, this->mouse_y);
+        }
     }
 
     void send_valid_client_license_data(Transport & answer_trans) {
