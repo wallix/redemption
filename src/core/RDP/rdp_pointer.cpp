@@ -50,7 +50,7 @@ bool Pointer::operator==(const Pointer & other) const
         && other.hotspot.y == this->hotspot.y
         && other.dimensions.width == this->dimensions.width
         && other.dimensions.height == this->dimensions.height
-        && (0 == memcmp(this->data, other.data, other.xor_data_size()))
+        && (0 == memcmp(this->data, other.data, other.native_length_xor_mask))
         && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()));
 }
 
@@ -59,7 +59,7 @@ void Pointer::emit_pointer32x32(OutStream & result) const
     result.out_uint8(this->get_hotspot().x);
     result.out_uint8(this->get_hotspot().y);
 
-    result.out_copy_bytes(this->get_nbits_xor_mask());
+    result.out_copy_bytes(this->get_native_xor_mask());
     result.out_copy_bytes(this->get_monochrome_and_mask());
 }
 
@@ -72,7 +72,7 @@ void Pointer::emit_pointer2(OutStream & result) const
     result.out_uint8(this->get_hotspot().x);
     result.out_uint8(this->get_hotspot().y);
 
-    auto xor_data = this->get_nbits_xor_mask();
+    auto xor_data = this->get_native_xor_mask();
     auto bit_mask = this->get_monochrome_and_mask();
 
     result.out_uint16_le(xor_data.size());
@@ -134,7 +134,7 @@ void emit_color_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer co
     //     the andMaskData field.
 
     auto av_mask = cursor.get_monochrome_and_mask();
-    auto av_data = cursor.get_nbits_xor_mask();
+    auto av_data = cursor.get_native_xor_mask();
 
     stream.out_uint16_le(av_mask.size());
 
@@ -254,7 +254,7 @@ void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer cons
     auto av_and = cursor.get_monochrome_and_mask();
 
     uint8_t xorMaskData[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT * 4] = { 0 };
-    auto av_xor = cursor.get_nbits_xor_mask();
+    auto av_xor = cursor.get_native_xor_mask();
 
     for (unsigned int h = 0; h < dimensions.height; ++h) {
         const uint8_t* psource = av_xor.data() + (dimensions.height - h - 1) * source_xor_padded_line_length_in_byte;

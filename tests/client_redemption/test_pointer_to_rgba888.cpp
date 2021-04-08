@@ -52,7 +52,7 @@ RED_AUTO_TEST_CASE(TestImageDataFromNormalPointer)
         BitsPerPixel(24),
         pointer.get_dimensions().width, pointer.get_dimensions().height,
         pointer.get_hotspot().x, pointer.get_hotspot().y,
-        pointer.get_nbits_xor_mask().size(), pointer.get_nbits_xor_mask().data(),
+        pointer.get_native_xor_mask().size(), pointer.get_native_xor_mask().data(),
         pointer.get_monochrome_and_mask().size(), pointer.get_monochrome_and_mask().data()));
 
     RED_REQUIRE(32u == img.width);

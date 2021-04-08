@@ -624,7 +624,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         ""_av_hex;
-    RED_CHECK(vnccursor.get_nbits_xor_mask() == expected_data);
+    RED_CHECK(vnccursor.get_native_xor_mask() == expected_data);
 }
 
 RED_AUTO_TEST_CASE(TestPointerVNC_Color)
@@ -773,7 +773,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 27);
     RED_CHECK_EQUAL(vnccursor.get_hotspot().x, 0);
     RED_CHECK_EQUAL(vnccursor.get_hotspot().y, 8);
-    auto d = vnccursor.get_nbits_xor_mask();
+    auto d = vnccursor.get_native_xor_mask();
     auto m = vnccursor.get_monochrome_and_mask();
 
     RED_CHECK_EQUAL(m.size(), 27*4);

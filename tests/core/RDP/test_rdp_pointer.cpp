@@ -30,9 +30,8 @@
 
 RED_AUTO_TEST_CASE(TestDataSize)
 {
-    Pointer p;
-
-    RED_CHECK_EQUAL(p.xor_data_size(), 32 * 32 * 3);
+    RED_CHECK_EQUAL(Pointer().get_native_xor_mask().size(), 0);
+    RED_CHECK_EQUAL(normal_pointer().get_native_xor_mask().size(), 32 * 32 * 3);
 }
 
 RED_AUTO_TEST_CASE(TestPointerNormal)
@@ -76,7 +75,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
     };
 
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\x48\x58\x41\x28\xb0\xb4\x03\x27\x69\x31\x47\xc8\x2b\x43\x3e\xf3\x33\x80\x1c\xb2");
 }
@@ -122,7 +121,7 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
                     ,0xff ,0xff ,0xff ,0xff
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\x09\xb3\xc6\x81\x07\xef\x2e\xd4\xcb\x1a\xa9\xeb\x2c\xb8\xe9\x13\xfb\xaf\xe2\xe3");
 }
@@ -168,7 +167,7 @@ RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
                    , 0x7f, 0xff, 0xFF, 0xFF
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\x46\x59\xfc\xbc\x13\x24\x18\xd6\x83\xa3\x6a\xc2\xea\xf8\x93\x2b\x30\x4f\x80\x0e");
 }
@@ -214,7 +213,7 @@ RED_AUTO_TEST_CASE(TestPointerSystemDefault)
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\xc5\xc1\x0e\x3a\x17\x39\x56\x0c\xf9\xd7\x66\xac\x3b\x23\x23\xad\xec\xb5\xd9\x46");
 }
@@ -260,7 +259,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
                    , 0xFF, 0xdf, 0xFF, 0xFF
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\x3a\x74\xfe\x82\xcf\xa9\x15\x9e\xa0\x8a\xf9\x43\x77\x40\xf8\xe6\xdf\x13\xd0\xe1");
 }
@@ -307,7 +306,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\x57\xed\x01\xb4\xe3\x9c\xe7\xc1\x0c\x9f\x01\xa1\xdc\x66\x4c\x92\x83\x05\x0e\x91");
 }
@@ -354,7 +353,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\x6b\x3a\xec\xa9\x22\x1f\x23\x5d\x2c\xe6\x91\xcc\x70\x56\xf9\x02\x30\x05\xaa\x3f");
 }
@@ -400,7 +399,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeWE)
                    , 0xFF, 0xFF, 0xFF, 0xFF
     };
     RED_CHECK(p.get_monochrome_and_mask() == make_array_view(expected));
-    auto av = p.get_nbits_xor_mask();
+    auto av = p.get_native_xor_mask();
     RED_CHECK_SIG(av,
         "\xae\x83\x2a\x8e\xd0\x73\x0b\x77\xe3\xb5\xf0\x4e\xbd\x0f\x4e\xa9\xd0\x65\xeb\x59");
 }
@@ -522,16 +521,16 @@ Mask For Cursor
     RED_CHECK_EQ(cursor.get_hotspot().y, 9);
     RED_CHECK_EQ(cursor.get_dimensions().width, 32);
     RED_CHECK_EQ(cursor.get_dimensions().height, 32);
-    auto d = cursor.get_nbits_xor_mask();
+    auto d = cursor.get_native_xor_mask();
     auto m = cursor.get_monochrome_and_mask();
 
     RED_CHECK_EQUAL(m.size(), 32 * 4);
     RED_CHECK_SIG(m,
         "\xff\x5f\x9e\x6f\x76\x30\xf2\xd3\xad\x4d\xe8\xa1\xb2\x67\x8e\xd8\xb7\x5e\x37\x06");
 
-    RED_CHECK_EQUAL(d.size(), 32 * 32 * 3);
+    RED_CHECK_EQUAL(d.size(), 32 / 8 * 32);
     RED_CHECK_SIG(d,
-        "\x02\xec\x1f\x60\xb2\xe7\x67\x41\xdd\x98\x48\xac\x43\x20\x57\xff\x9d\x58\xd7\x50");
+        "\x0a\xe4\xf7\x11\xef\x5d\x6e\x9d\x26\xc6\x11\xfd\x2c\x8c\x8a\xc4\x5e\xcb\xf9\xe7");
 }
 
 RED_AUTO_TEST_CASE(TestLinux32bppPointer)
@@ -811,7 +810,7 @@ RED_AUTO_TEST_CASE(TestLinux32bppPointer)
     RED_CHECK_EQ(cursor.get_hotspot().y, 10);
     RED_CHECK_EQ(cursor.get_dimensions().width, 32);
     RED_CHECK_EQ(cursor.get_dimensions().height, 32);
-    auto d = cursor.get_nbits_xor_mask();
+    auto d = cursor.get_native_xor_mask();
     auto m = cursor.get_monochrome_and_mask();
 
     RED_CHECK_EQUAL(m.size(), 32 * 4);

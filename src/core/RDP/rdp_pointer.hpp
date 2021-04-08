@@ -125,22 +125,9 @@ public:
         return {this->mask, this->bit_mask_size()};
     }
 
-    // size is a multiple of 2
-    [[nodiscard]] bytes_view get_nbits_xor_mask() const
-    {
-        return {this->data, this->xor_data_size()};
-    }
-
     [[nodiscard]] unsigned bit_mask_size() const
     {
         return this->dimensions.height * ::even_pad_length(::nbbytes(this->dimensions.width));
-    }
-
-    [[nodiscard]] unsigned xor_data_size() const
-    {
-        uint8_t bytes_per_pixel = (this->native_xor_bpp == BitsPerPixel::BitsPP32) ? 4 : 3;
-
-        return this->dimensions.height * ::even_pad_length(this->dimensions.width * bytes_per_pixel);
     }
 
     [[nodiscard]] bool is_valid() const
