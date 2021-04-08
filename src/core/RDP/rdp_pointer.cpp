@@ -54,34 +54,6 @@ bool Pointer::operator==(const Pointer & other) const
         && (0 == memcmp(this->mask, other.mask, this->bit_mask_size()));
 }
 
-void Pointer::emit_pointer32x32(OutStream & result) const
-{
-    result.out_uint8(this->get_hotspot().x);
-    result.out_uint8(this->get_hotspot().y);
-
-    result.out_copy_bytes(this->get_native_xor_mask());
-    result.out_copy_bytes(this->get_monochrome_and_mask());
-}
-
-void Pointer::emit_pointer2(OutStream & result) const
-{
-    result.out_uint8(this->get_dimensions().width);
-    result.out_uint8(this->get_dimensions().height);
-    result.out_uint8(24);
-
-    result.out_uint8(this->get_hotspot().x);
-    result.out_uint8(this->get_hotspot().y);
-
-    auto xor_data = this->get_native_xor_mask();
-    auto bit_mask = this->get_monochrome_and_mask();
-
-    result.out_uint16_le(xor_data.size());
-    result.out_uint16_le(bit_mask.size());
-
-    result.out_copy_bytes(xor_data);
-    result.out_copy_bytes(bit_mask);
-}
-
 //    2.2.9.1.1.4.4     Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
 //    -----------------------------------------------------------------
 //    The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp

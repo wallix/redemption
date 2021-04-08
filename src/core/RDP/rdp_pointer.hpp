@@ -141,10 +141,6 @@ public:
     {
         return {this->data, this->native_length_xor_mask};
     }
-
-    // TODO move in wrm_capture.hpp
-    void emit_pointer32x32(OutStream & result) const;
-    void emit_pointer2(OutStream & result) const;
 };
 
 

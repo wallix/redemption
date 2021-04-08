@@ -404,17 +404,6 @@ RED_AUTO_TEST_CASE(TestPointerSizeWE)
         "\xae\x83\x2a\x8e\xd0\x73\x0b\x77\xe3\xb5\xf0\x4e\xbd\x0f\x4e\xa9\xd0\x65\xeb\x59");
 }
 
-RED_AUTO_TEST_CASE(TestPointerIO)
-{
-    StaticOutStream<32+108*96> stream;
-    Pointer cursor = edit_pointer();
-
-    StaticOutStream<8192> result;
-    cursor.emit_pointer32x32(result);
-    RED_CHECK_SIG(result.get_produced_bytes(),
-        "\x8e\xcd\x49\x72\x34\xfa\x5a\xa5\xc4\x6a\x24\xff\xe2\x29\x40\x11\x37\x12\x9b\xc4");
-}
-
 RED_AUTO_TEST_CASE(TestPointer1bit)
 {
 /*
