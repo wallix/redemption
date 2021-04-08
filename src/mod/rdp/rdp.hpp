@@ -3759,7 +3759,7 @@ public:
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
-                    assert(pointer_caps.colorPointerCacheSize <= sizeof(this->cursors) / sizeof(Pointer));
+                    assert(pointer_caps.colorPointerCacheSize <= std::size(this->cursors));
                 }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     pointer_caps.log("Sending to server");
@@ -5756,7 +5756,7 @@ LOG(LOG_INFO, " ");
 
         // TODO Add check that the idx transmitted is actually an used pointer
         uint16_t pointer_idx = stream.in_uint16_le();
-        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= std::size(this->cursors)) {
             LOG(LOG_ERR,
                 "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)",
                 pointer_idx);
@@ -5844,12 +5844,12 @@ LOG(LOG_INFO, " ");
 
         //::hexdump_d(stream.get_current(), stream.in_remain());
 
-        unsigned pointer_idx = stream.in_uint16_le();
+        uint16_t pointer_idx = stream.in_uint16_le();
         LOG_IF(bool(this->verbose & RDPVerbose::graphics_pointer),
             LOG_INFO, "mod_rdp::process_new_pointer_pdu xorBpp=%u pointer_idx=%u",
             data_bpp, pointer_idx);
 
-        if (pointer_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
+        if (pointer_idx >= std::size(this->cursors)) {
             LOG(LOG_ERR,
                 "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%u)",
                 pointer_idx);
