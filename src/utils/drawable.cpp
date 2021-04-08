@@ -28,7 +28,6 @@
 #include "utils/drawable_pointer.hpp"
 #include "utils/ellipse.hpp"
 #include "utils/log.hpp"
-#include "utils/pixel_io.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
 

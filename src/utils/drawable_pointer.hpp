@@ -18,26 +18,9 @@
    Author(s): Christophe Grosjean, Poelen Jonathan
 */
 
-/*
-    Drawable uses a special form of "pointer"
-    defined as a list of non overlapping contiguous sets of pixels
-    each set is defined by
-    - x, y coordinates relative to origin of pointer
-    - the number of pixels in that zone
-    - a pointer to where to find or store the actual pixel values.
-
-    The current implementation first create an empty hull (without actual pointer to data)
-    then use one of several initialisation function
-    either to perform a copy of the mouse pixel data inside DrawablePointer,
-    either to perform a copy of pixels below pointer from the image
-        (when we create a DrawablePointer from background data to restore pointer later)
-*/
-
 #pragma once
 
 #include "utils/bitfu.hpp"
-#include "utils/log.hpp"
-#include "utils/pixel_io.hpp"
 #include "utils/image_view.hpp"
 #include "utils/colors.hpp"
 #include "core/RDP/rdp_pointer.hpp"
@@ -47,136 +30,6 @@
 #include <cstring>
 
 
-class Array2D
-{
-    size_t width_in_bytes;
-    size_t height;
-    const uint8_t * data;
-
-public:
-    class Iterator
-    {
-        const uint8_t * data;
-        size_t nbbytes;
-    public:
-        explicit Iterator (const uint8_t * data, size_t nbbytes) : data(data), nbbytes(nbbytes) {}
-        bool operator!= (const Iterator & other) const { return this->data != other.data; }
-        const uint8_t * operator* () const { return this->data; }
-        const Iterator & operator++ () { this->data += this->nbbytes; return *this; }
-    };
-
-public:
-    explicit Array2D(size_t width_in_bytes, size_t height, const uint8_t * data) :
-    width_in_bytes(width_in_bytes), height(height), data(data)
-    {}
-
-    [[nodiscard]] Iterator begin () const { return Iterator(this->data, this->width_in_bytes); }
-    [[nodiscard]] Iterator end () const { return Iterator(&this->data[this->width_in_bytes * this->height], this->width_in_bytes); }
-};
-
-class PixelArray
-{
-    uint8_t * data;
-    const size_t width_in_bytes;
-
-public:
-    class Iterator
-    {
-        uint8_t * data;
-        size_t offset;
-    public:
-        explicit Iterator (uint8_t * data) : data(data), offset(0) {}
-        bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
-        uint8_t * operator* () const { return &this->data[this->offset]; }
-        const Iterator & operator++ () { this->offset+=3; return *this; }
-    };
-
-    explicit PixelArray(size_t width_in_pixels, uint8_t * data) : data(data), width_in_bytes(width_in_pixels*3)  {}
-
-    [[nodiscard]] Iterator begin () const { return Iterator(this->data); }
-    [[nodiscard]] Iterator end () const { return Iterator(this->data + this->width_in_bytes); }
-};
-
-
-class BitZones
-{
-    size_t width_in_bits;
-    const uint8_t * data;
-
-public:
-    class Iterator
-    {
-        const size_t width_in_bits;
-        const uint8_t * data;
-        size_t offset;
-        struct Zone {
-            bool bit;
-            size_t length;
-            explicit Zone(bool bit, size_t length) : bit(bit), length(length) {}
-        } zone;
-    public:
-        explicit Iterator (const uint8_t * data, size_t width_in_bits, size_t offset) : width_in_bits(width_in_bits), data(data), offset(offset), zone(false,0)
-        {
-            this->operator++();
-        }
-
-        bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
-
-        Zone operator* () const { return this->zone;}
-
-        const Iterator & operator++ () {
-            if (this->offset < this->width_in_bits){
-                this->offset += zone.length;
-                if (this->offset < this->width_in_bits){
-                    bool bit = this->data[this->offset>>3]&(1<<(7-(offset&0x7)));
-
-                    size_t lg = 1;
-                    while ((this->offset+lg) < this->width_in_bits){
-                        bool bit2 = this->data[(this->offset+lg)>>3]&(1<<(7-((this->offset+lg)&0x7)));
-                        if (bit2 != bit) { break;}
-                        lg++;
-                    }
-//                    printf("%d - zone(%d, %d) - %d | ", this->offset, bit, lg, this->offset+ lg);
-                    this->zone = Zone(bit, lg);
-                }
-            }
-            return *this;
-        }
-    };
-
-    explicit BitZones(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {
-//        printf("bitzone %.2x %.2x %.2x %.2x\n", data[0], data[1], data[2], data[3]);
-    }
-
-    [[nodiscard]] Iterator begin () const { return Iterator(this->data, this->width_in_bits, 0); }
-    [[nodiscard]] Iterator end () const { return Iterator(this->data, this->width_in_bits, this->width_in_bits); }
-};
-
-
-class BitArray
-{
-    size_t width_in_bits;
-    const uint8_t * data;
-
-public:
-    class Iterator
-    {
-        const uint8_t * data;
-        size_t offset;
-    public:
-        explicit Iterator (const uint8_t * data, size_t offset) : data(data), offset(offset) {}
-        bool operator!= (const Iterator & other) const { return (this->data != other.data) || (this->offset != other.offset); }
-        bool operator* () const { return this->data[this->offset>>3]&(1<<(7-(offset&0x7))); }
-        const Iterator & operator++ () { ++this->offset; return *this; }
-    };
-
-    explicit BitArray(size_t width_in_bits, const uint8_t * data) : width_in_bits(width_in_bits), data(data)  {}
-
-    [[nodiscard]] Iterator begin () const { return Iterator(this->data, 0); }
-    [[nodiscard]] Iterator end () const { return Iterator(this->data, this->width_in_bits); }
-};
-
-
 struct DrawablePointer
 {
     enum {
@@ -184,8 +37,8 @@ struct DrawablePointer
         , MAX_HEIGHT = 96
     };
 
-    unsigned width { 0 };
-    unsigned height { 0 };
+    uint16_t width { 0 };
+    uint16_t height { 0 };
 
     uint8_t data[MAX_WIDTH * MAX_HEIGHT * 4]; // 96 pixels per line * 96 lines * 4 bytes per pixel
     uint8_t mask[MAX_WIDTH * MAX_HEIGHT * 3]; // 96 pixels per line * 96 lines * 3 bytes per pixel
@@ -304,25 +157,24 @@ struct DrawablePointer
         const uint8_t* pointer_mask = cursor.get_monochrome_and_mask().data();
         const unsigned int mask_line_bytes = ::even_pad_length(::nbbytes(this->width));
 
+        auto* mask_ptr = this->mask;
         for (unsigned int y = 0; y < this->height; ++y)
         {
             for (unsigned int x = 0; x < this->width; ++x)
             {
-                ::put_pixel_24bpp(this->mask,
-                                  line_bytes,
-                                  x,
-                                  y,
-                                  ::get_pixel_1bpp(pointer_mask,
-                                                   mask_line_bytes,
-                                                   x,
-                                                   y) ? 0xFFFFFF : 0);
+                const size_t index = y * mask_line_bytes * 8 + x;
+                const bool bit = pointer_mask[index / 8] & (1 << (7 - (index % 8)));
+                const uint8_t pixel = bit ? 0xFF : 0;
+                *mask_ptr++ = pixel;
+                *mask_ptr++ = pixel;
+                *mask_ptr++ = pixel;
             }
         }
 
         /* xorMask doesn't contain alpha channel info,
            so we will skip the 4th byte on each pixel
            on reading with BytesPerPixel{3} rather than BytesPerPixel{4} */
-        this->image_data_view_mask = this->create_img(this->mask, line_bytes);
+        this->image_data_view_mask = this->create_img(this->mask, this->width * 3);
     }
 
 private:
