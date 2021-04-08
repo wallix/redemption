@@ -284,8 +284,6 @@ void mod_vnc::rdp_input_mouse( int device_flags, int x, int y, Keymap2 * /*keyma
 void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flags, long /*param4*/,
         Keymap2 * /*keymap*/)
 {
-    LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, keycode=%ld)", device_flags, keycode);
-
     if (this->state != UP_AND_RUNNING) {
         return;
     }
@@ -300,24 +298,20 @@ void mod_vnc::rdp_input_scancode(long keycode, long /*param2*/, long device_flag
 
     uint8_t downflag = 0;
     while (uint32_t key = this->keymapSym.get_sym(downflag)){
-        if (bool(this->verbose & VNCVerbose::keymap_stack)) {
-            LOG(LOG_INFO, "keyloop::key=%u (%x) %s param1=%u nbsym=%u",
-                key, key, downflag?"DOWN":"UP",
-                static_cast<unsigned>(keycode),
-                this->keymapSym.nb_sym_available());
-        }
+        LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
+            "keyloop::key=%u (%x) %s param1=%u nbsym=%u",
+            key, key, downflag?"DOWN":"UP",
+            static_cast<unsigned>(keycode),
+            this->keymapSym.nb_sym_available());
         this->send_keyevent(downflag, key);
     }
 }
 
 void mod_vnc::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 {
-    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack),
-           LOG_INFO,
+    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
            "mod_vnc::rdp_input_unicode(unicode=%d, flag=%d)",
-           unicode,
-           flag);
-
+           unicode, flag);
 
     using namespace scancode;
 
@@ -339,7 +333,8 @@ void mod_vnc::rdp_input_unicode(uint16_t unicode, uint16_t flag)
 }
 
 void mod_vnc::send_keyevent(uint8_t down_flag, uint32_t key) {
-    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
+    LOG_IF(bool(this->verbose & VNCVerbose::keymap_stack), LOG_INFO,
+        "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
     StaticOutStream<8> stream;
     stream.out_uint8(4);
     stream.out_uint8(down_flag); /* down/up flag */
@@ -446,7 +441,9 @@ void mod_vnc::update_screen(Rect r, uint8_t incr) {
 }
 
 void mod_vnc::rdp_input_invalidate(Rect r) {
-    LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate");
+    LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO,
+        "mod_vnc::rdp_input_invalidate");
+
     if (this->state != UP_AND_RUNNING) {
         LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate not up and running");
         return;
@@ -456,9 +453,6 @@ void mod_vnc::rdp_input_invalidate(Rect r) {
 
     if (!r_.isempty()) {
         this->update_screen(r_, 0);
-    }
-    else {
-        LOG(LOG_INFO, "mod_vnc::rdp_input_invalidate empty rect");
     }
 }
 
@@ -557,7 +551,8 @@ void mod_vnc::draw_event(gdi::GraphicApi & gd)
     uint64_t const data_server_after = this->server_data_buf.remaining();
     IF_ENABLE_METRICS(data_from_server(data_server_before - data_server_after));
 
-    LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO, "Remaining in buffer : %" PRIu64, data_server_after);
+    LOG_IF(bool(this->verbose & VNCVerbose::draw_event), LOG_INFO,
+        "Remaining in buffer : %" PRIu64, data_server_after);
 
     this->check_timeout();
 
@@ -821,7 +816,8 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
 
     case WAIT_SECURITY_TYPES:
         {
-            LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO, "state=WAIT_SECURITY_TYPES");
+            LOG_IF(bool(this->verbose & VNCVerbose::connection), LOG_INFO,
+                "state=WAIT_SECURITY_TYPES");
 
             size_t const protocol_version_len = 12;
 
@@ -864,7 +860,7 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                 throw Error(ERR_VNC_CONNECTION_ERROR);
             }
             LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
-                    "Server Protocol Version=%d.%d", major, minor);
+                "Server Protocol Version=%d.%d", major, minor);
 
             int serverProtocol = major * 1000 + minor;
             this->spokenProtocol = std::min(static_cast<int>(maxSpokenVncProcotol), serverProtocol);
@@ -924,12 +920,12 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
                 size_t preferedAuthIndex = 255;
 
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
-                    "got %d security types:", nAuthTypes);
+                       "got %d security types:", nAuthTypes);
 
                 for (size_t i = 0; i < nAuthTypes; i++) {
                     VncAuthType authType = static_cast<VncAuthType>(s.in_uint8());
                     LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
-                               "* %s", securityTypeString(authType));
+                           "* %s", securityTypeString(authType));
                     this->updatePreferedAuth(authType, preferedAuth, preferedAuthIndex);
                 }
                 LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
@@ -1059,7 +1055,8 @@ bool mod_vnc::draw_event_impl(gdi::GraphicApi & gd)
         return this->treatVeNCrypt();
 
     case WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM:
-        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Receiving VNC Server Random");
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+            "Receiving VNC Server Random");
 
         {
             if (!this->password_ctx.run(this->server_data_buf)) {

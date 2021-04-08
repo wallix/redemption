@@ -845,7 +845,7 @@ public:
     void rdp_input_invalidate(Rect r) override;
 
     void refresh(Rect r) override {
-        LOG(LOG_INFO, "Front::refresh");
+        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Front::refresh");
         this->rdp_input_invalidate(r);
     }
 
@@ -1205,7 +1205,9 @@ private:
                         this->cy = stream.in_uint16_be();
                         this->encoding = stream.in_sint32_be();
 
-                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "Encoding: %u (%u, %u, %u, %u) : %d", this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
+                        LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+                            "Encoding: %u (%u, %u, %u, %u) : %d",
+                            this->num_recs, this->x, this->y, this->cx, this->cy, this->encoding);
 
                         --this->num_recs;
 
@@ -1612,7 +1614,8 @@ private:
             this->remaining_data_length = this->data_length;
             buf.advance(7);
 
-            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO, "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
+            LOG_IF(bool(this->verbose & VNCVerbose::basic_trace), LOG_INFO,
+                "mod_vnc::lib_clip_data: clipboard_data_length=%u", this->data_length);
 
             this->to_rdp_clipboard_data = InStream(this->to_rdp_clipboard_data_buffer);
 
