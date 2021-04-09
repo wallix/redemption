@@ -149,15 +149,12 @@ public:
 //    The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
-void emit_color_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer const& cursor);
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
 //    The TS_POINTERATTRIBUTE structure is used to send pointer data at an
 //    arbitrary color depth. Support for the New Pointer Update is advertised
 //    in the Pointer Capability Set (section 2.2.7.1.5).
-void emit_new_pointer_update(OutStream& stream, uint16_t cache_idx, Pointer const& cursor);
-
 
 bool emit_native_pointer(OutStream& stream, uint16_t cache_idx, Pointer const& cursor);
 

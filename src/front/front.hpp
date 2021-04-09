@@ -210,7 +210,6 @@ private:
               , bool fastpath_support
               , rdp_mppc_enc * mppc_enc
               , bool compression
-              , bool send_new_pointer
               , RDPSerializerVerbose verbose
             )
             : GraphicsUpdatePDU(
@@ -231,7 +230,6 @@ private:
               , fastpath_support
               , mppc_enc
               , compression
-              , send_new_pointer
               , verbose
             )
             , max_data_block_size(max_data_block_size)
@@ -311,7 +309,9 @@ private:
             }
 
             OrderCaps & client_order_caps;
-        } graphics_update_pdu;
+        };
+
+        PrivateGraphicsUpdatePDU graphics_update_pdu;
 
         Graphics(
             OrderCaps & client_order_caps
@@ -414,7 +414,6 @@ private:
           , fastpath_support
           , mppc_enc
           , bool(ini.get<cfg::client::rdp_compression>()) ? client_info.rdp_compression : false
-          , client_info.supported_new_pointer_update
           , safe_cast<RDPSerializerVerbose>(underlying_cast(verbose) >> 16)
         )
         {}

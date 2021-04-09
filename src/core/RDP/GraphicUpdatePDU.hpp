@@ -462,8 +462,6 @@ class GraphicsUpdatePDU : private detail::GraphicsUpdatePDUBuffer, public RDPSer
     rdp_mppc_enc * mppc_enc;
     bool           compression;
 
-    bool send_new_pointer;
-
     Transport & trans;
 
 public:
@@ -484,7 +482,6 @@ public:
                      , bool fastpath_support
                      , rdp_mppc_enc * mppc_enc
                      , bool compression
-                     , bool send_new_pointer
                      , RDPSerializerVerbose verbose
                      )
         : RDPSerializer( this->buffer_stream_orders.get_data_stream()
@@ -500,7 +497,6 @@ public:
         , fastpath_support(fastpath_support)
         , mppc_enc(mppc_enc)
         , compression(compression)
-        , send_new_pointer(send_new_pointer)
         , trans(trans) {
         this->init_orders();
         this->init_bitmaps();
@@ -855,37 +851,15 @@ protected:
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::send_pointer(cache_idx=%d)", cache_idx);
 
-        if (cursor.get_native_xor_bpp() != BitsPerPixel{0})
-        {
-            StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-            bool new_pointer_update_used = emit_native_pointer(stream.get_data_stream(), cache_idx, cursor);
-            ::send_server_update( this->trans, this->fastpath_support, this->compression
-                                , this->mppc_enc, this->shareid, this->encryptionLevel
-                                , this->encrypt, this->userid
-                                , new_pointer_update_used ? SERVER_UPDATE_POINTER_NEW : SERVER_UPDATE_POINTER_COLOR
-                                , 0, stream, underlying_cast(this->verbose));
-        }
-        else
-        {
-            if (this->send_new_pointer) {
-                StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-                emit_new_pointer_update(stream.get_data_stream(), cache_idx, cursor);
-                ::send_server_update( this->trans, this->fastpath_support, this->compression
-                                    , this->mppc_enc, this->shareid, this->encryptionLevel
-                                    , this->encrypt, this->userid
-                                    , SERVER_UPDATE_POINTER_NEW
-                                    , 0, stream, underlying_cast(this->verbose));
-            }
-            else {
-                StaticOutReservedStreamHelper<1024, 65536-1024> stream;
-                emit_color_pointer_update(stream.get_data_stream(), cache_idx, cursor);
-                ::send_server_update( this->trans, this->fastpath_support, this->compression
-                                    , this->mppc_enc, this->shareid, this->encryptionLevel
-                                    , this->encrypt, this->userid
-                                    , SERVER_UPDATE_POINTER_COLOR
-                                    , 0, stream, underlying_cast(this->verbose));
-            }
-        }
+        assert(cursor.get_native_xor_bpp() != BitsPerPixel{0});
+
+        StaticOutReservedStreamHelper<1024, 65536-1024> stream;
+        bool new_pointer_update_used = emit_native_pointer(stream.get_data_stream(), cache_idx, cursor);
+        ::send_server_update( this->trans, this->fastpath_support, this->compression
+                            , this->mppc_enc, this->shareid, this->encryptionLevel
+                            , this->encrypt, this->userid
+                            , new_pointer_update_used ? SERVER_UPDATE_POINTER_NEW : SERVER_UPDATE_POINTER_COLOR
+                            , 0, stream, underlying_cast(this->verbose));
 
         LOG_IF(bool(this->verbose & RDPSerializerVerbose::pointer), LOG_INFO,
             "GraphicsUpdatePDU::send_pointer done");

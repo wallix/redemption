@@ -552,38 +552,6 @@ void RDPDrawable::clear_mouse()
 
 void RDPDrawable::set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode /*mode*/)
 {
-    if (cursor.get_native_xor_bpp() != BitsPerPixel{0})
-    {
-        // Is a native pointer
-        const auto hotspot    = cursor.get_hotspot();
-        const auto dimensions = cursor.get_dimensions();
-
-        auto av_and_mask = cursor.get_monochrome_and_mask();
-        auto av_xor_mask = cursor.get_native_xor_mask();
-
-        const Pointer imported_cursor =
-            decode_pointer(cursor.get_native_xor_bpp(),
-                           dimensions.width,
-                           dimensions.height,
-                           hotspot.x,
-                           hotspot.y,
-                           av_xor_mask.size(),
-                           av_xor_mask.data(),
-                           av_and_mask.size(),
-                           av_and_mask.data());
-
-        this->mouse_cursor_hotspot_x = hotspot.x;
-        this->mouse_cursor_hotspot_y = hotspot.y;
-
-        this->current_pointer.set_cursor(imported_cursor);
-
-        return;
-    }
-
-    const auto hotspot = cursor.get_hotspot();
-
-    this->mouse_cursor_hotspot_x = hotspot.x;
-    this->mouse_cursor_hotspot_y = hotspot.y;
-
+    assert(cursor.get_native_xor_bpp() != BitsPerPixel{0});
     this->current_pointer.set_cursor(cursor);
 }
