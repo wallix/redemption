@@ -58,6 +58,12 @@ struct checked_int
 {
     using value_type = T;
 
+    constexpr checked_int(checked_int&&) noexcept = default;
+    constexpr checked_int(checked_int const&) noexcept = default;
+
+    constexpr checked_int& operator=(checked_int&&) noexcept = default;
+    constexpr checked_int& operator=(checked_int const&) noexcept = default;
+
     template<class U>
     constexpr checked_int(U i) noexcept
     : i(checked_cast<T>(i))
@@ -66,6 +72,19 @@ struct checked_int
     constexpr checked_int(T i) noexcept
     : i(i)
     {}
+
+    template<class U>
+    constexpr checked_int& operator=(U i) noexcept
+    {
+        this->i = checked_cast<T>(i);
+        return *this;
+    }
+
+    constexpr checked_int& operator=(T i) noexcept
+    {
+        this->i = i;
+        return *this;
+    }
 
     template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
     constexpr operator U () const noexcept { return checked_cast<U>(i); }
@@ -85,6 +104,12 @@ struct saturated_int
 {
     using value_type = T;
 
+    constexpr saturated_int(saturated_int&&) noexcept = default;
+    constexpr saturated_int(saturated_int const&) noexcept = default;
+
+    constexpr saturated_int& operator=(saturated_int&&) noexcept = default;
+    constexpr saturated_int& operator=(saturated_int const&) noexcept = default;
+
     template<class U>
     constexpr saturated_int(U i) noexcept
     : i(saturated_cast<T>(i))
@@ -93,6 +118,19 @@ struct saturated_int
     constexpr saturated_int(T i) noexcept
     : i(i)
     {}
+
+    template<class U>
+    constexpr saturated_int& operator=(U i) noexcept
+    {
+        this->i = saturated_cast<T>(i);
+        return *this;
+    }
+
+    constexpr saturated_int& operator=(T i) noexcept
+    {
+        this->i = i;
+        return *this;
+    }
 
     template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
     constexpr operator U () const noexcept { return saturated_cast<U>(i); }
@@ -112,6 +150,12 @@ struct safe_int
 {
     using value_type = T;
 
+    constexpr safe_int(safe_int&&) noexcept = default;
+    constexpr safe_int(safe_int const&) noexcept = default;
+
+    constexpr safe_int& operator=(safe_int&&) noexcept = default;
+    constexpr safe_int& operator=(safe_int const&) noexcept = default;
+
     template<class U>
     constexpr safe_int(U i) noexcept
     : i(safe_cast<T>(i))
@@ -120,6 +164,19 @@ struct safe_int
     constexpr safe_int(T i) noexcept
     : i(i)
     {}
+
+    template<class U>
+    constexpr safe_int& operator=(U i) noexcept
+    {
+        this->i = safe_cast<T>(i);
+        return *this;
+    }
+
+    constexpr safe_int& operator=(T i) noexcept
+    {
+        this->i = i;
+        return *this;
+    }
 
     template<class U, class = std::enable_if_t<detail::is_numeric_convertible<U>::value>>
     constexpr operator U () const noexcept { return safe_cast<U>(i); }
