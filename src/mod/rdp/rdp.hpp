@@ -5601,10 +5601,7 @@ public:
 
     void rdp_gdi_up_and_running() override
     {
-LOG(LOG_INFO, "> > > > > mod_rdp::rdp_gdi_up_and_running()");
-LOG(LOG_INFO, " ");
-LOG(LOG_INFO, " ");
-LOG(LOG_INFO, " ");
+        LOG(LOG_INFO, "mod_rdp::rdp_gdi_up_and_running()");
 
         gdi::GraphicApi & drawable =
 #ifndef __EMSCRIPTEN__
