@@ -1,4 +1,7 @@
 import sys
 import os
+from unittest.mock import Mock
 
-sys.path.append(os.path.abspath("sesmanworker"))
+sys.modules["logger"] = Mock()
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../sesmanworker"))
