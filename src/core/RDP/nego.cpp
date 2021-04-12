@@ -61,6 +61,7 @@ RdpNego::RdpNego(
     | (this->nla ? RdpNegoProtocols::Nla : 0))
 , target_host(target_host)
 , current_password(nullptr)
+, current_service_password(nullptr)
 , rand(rand)
 , time_base(time_base)
 , lb_info(nullptr)
@@ -86,18 +87,31 @@ RdpNego::RdpNego(
 
 RdpNego::~RdpNego() = default;
 
-void RdpNego::set_identity(bytes_view user, bytes_view domain, char const * pass, const std::string & hostname)
+void RdpNego::set_identity(bytes_view username, char const * password,
+    bytes_view domain, const std::string & hostname,
+    char const * service_username, char const * service_password)
 {
     if (this->nla) {
-        this->user.assign(user.data(), user.data()+user.size());
+        this->user.assign(username.data(), username.data() + username.size());
         this->domain = std::vector<uint8_t>{} << domain;
 
         // Password is a multi-sz!
         // TODO sould be array_view<z?string_view> or vector<z?string_view>
-        MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), pass);
+        MultiSZCopy(char_ptr_cast(this->password), sizeof(this->password), password);
         this->current_password = this->password;
 
         this->hostname = hostname;
+
+        // set service username/password
+        if (service_username && service_password)
+        {
+            this->service_user.assign(service_username, service_username + strlen(service_username));
+
+            // Password is a multi-sz!
+            // TODO sould be array_view<z?string_view> or vector<z?string_view>
+            MultiSZCopy(char_ptr_cast(this->service_password), sizeof(this->service_password), service_password);
+            this->current_service_password = this->service_password;
+        }
     }
 }
 
@@ -396,6 +410,7 @@ RdpNego::State RdpNego::activate_ssl_hybrid(OutTransport trans, ServerNotifier& 
                 trans, this->user, this->domain, this->current_password,
                 this->hostname, this->target_host,
                 this->restricted_admin_mode,
+                this->service_user, this->current_service_password,
                 this->rand, this->extra_message, this->lang,
                 bool(this->verbose & Verbose::credssp),
                 bool(this->verbose & Verbose::negotiation)

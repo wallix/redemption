@@ -89,6 +89,18 @@ cp_spec = {
         u'mod_rdp:bogus_monitor_layout_treatment': (
             'bogus_monitor_layout_treatment', False
         ),
+        u'mod_rdp:krb_armoring_account': (
+            'krb_armoring_account', u''
+        ),
+        u'mod_rdp:krb_armoring_realm': (
+            'krb_armoring_realm', u''
+        ),
+        u'mod_rdp:krb_armoring_fallback_user': (
+            'krb_armoring_fallback_user', u''
+        ),
+        u'mod_rdp:krb_armoring_fallback_password': (
+            'krb_armoring_fallback_password', u''
+        ),
         u'context:rail_disconnect_message_delay': (
             'remote_programs_disconnect_message_delay', 3000
         ),

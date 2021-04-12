@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(TestNego)
     RdpNego nego(
         true, "test", true, false, "127.0.0.1", false, rand, time_base,
         extra_message, lang, tls_client_params, RdpNego::Verbose());
-    nego.set_identity(user, domain, pass, host);
+    nego.set_identity(user, pass, domain, host);
 
     TpduBuffer buf;
 

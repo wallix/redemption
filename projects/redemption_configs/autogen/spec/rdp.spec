@@ -134,6 +134,22 @@ forward_client_build_number = boolean(default=True)
 # To resolve the session freeze issue with Windows 7/Windows Server 2008 target.
 bogus_monitor_layout_treatment = boolean(default=False)
 
+# Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead.
+#_advanced
+krb_armoring_account = string(default='')
+
+# Realm to be used for armoring Kerberos tickets. 
+#_advanced
+krb_armoring_realm = string(default='')
+
+# Fallback username to be used for armoring Kerberos tickets. 
+#_advanced
+krb_armoring_fallback_user = string(default='')
+
+# Fallback password to be used for armoring Kerberos tickets.
+#_advanced
+krb_armoring_fallback_password = string(default='')
+
 # Delay before showing disconnect message after the last RemoteApp window is closed.
 # (in milliseconds)
 #_advanced

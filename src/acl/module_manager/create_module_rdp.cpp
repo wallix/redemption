@@ -888,6 +888,9 @@ ModPack create_mod_rdp(
     }
     // ================== End Application Driver ======================
 
+    // account used for Kerberos ticket armoring
+    mod_rdp_params.krb_armoring_user = ini.get<cfg::mod_rdp::effective_krb_armoring_user>().c_str();
+    mod_rdp_params.krb_armoring_password = ini.get<cfg::mod_rdp::effective_krb_armoring_password>().c_str();
 
     unique_fd client_sck =
         connect_to_target_host(ini, session_log, trkeys::authentification_rdp_fail, ini.get<cfg::mod_rdp::enable_ipv6>());

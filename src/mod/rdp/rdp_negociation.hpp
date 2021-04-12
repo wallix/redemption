@@ -172,6 +172,7 @@ private:
     char program[512] = {};
 
     char password[2048] = {};
+    char service_password[2048] = {};
 
     size_t send_channel_index;
 

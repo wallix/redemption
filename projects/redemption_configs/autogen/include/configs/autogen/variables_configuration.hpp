@@ -18,24 +18,24 @@ namespace configs
         inline constexpr int section1 = 18; /* session_log */
         inline constexpr int section2 = 19; /* client */
         inline constexpr int section3 = 21; /* mod_rdp */
-        inline constexpr int section4 = 95; /* mod_vnc */
-        // inline constexpr int section5 = 103; /* metrics */
-        inline constexpr int section6 = 103; /* file_verification */
-        inline constexpr int section7 = 111; /* file_storage */
-        // inline constexpr int section8 = 112; /* icap_server_down */
-        // inline constexpr int section9 = 112; /* icap_server_up */
-        inline constexpr int section10 = 112; /* mod_replay */
-        // inline constexpr int section11 = 113; /* ocr */
-        inline constexpr int section12 = 113; /* video */
-        inline constexpr int section13 = 117; /* capture */
-        inline constexpr int section14 = 121; /* crypto */
-        // inline constexpr int section15 = 123; /* websocket */
-        // inline constexpr int section16 = 123; /* debug */
-        // inline constexpr int section17 = 123; /* remote_program */
-        inline constexpr int section18 = 123; /* translation */
-        // inline constexpr int section19 = 125; /* internal_mod */
-        inline constexpr int section20 = 125; /* context */
-        // inline constexpr int section21 = 205; /* theme */
+        inline constexpr int section4 = 101; /* mod_vnc */
+        // inline constexpr int section5 = 109; /* metrics */
+        inline constexpr int section6 = 109; /* file_verification */
+        inline constexpr int section7 = 117; /* file_storage */
+        // inline constexpr int section8 = 118; /* icap_server_down */
+        // inline constexpr int section9 = 118; /* icap_server_up */
+        inline constexpr int section10 = 118; /* mod_replay */
+        // inline constexpr int section11 = 119; /* ocr */
+        inline constexpr int section12 = 119; /* video */
+        inline constexpr int section13 = 123; /* capture */
+        inline constexpr int section14 = 127; /* crypto */
+        // inline constexpr int section15 = 129; /* websocket */
+        // inline constexpr int section16 = 129; /* debug */
+        // inline constexpr int section17 = 129; /* remote_program */
+        inline constexpr int section18 = 129; /* translation */
+        // inline constexpr int section19 = 131; /* internal_mod */
+        inline constexpr int section20 = 131; /* context */
+        // inline constexpr int section21 = 211; /* theme */
     }
 }
 
@@ -2550,6 +2550,100 @@ namespace cfg
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value { false };
+    };
+    /// Account to be used for armoring Kerberos tickets. Must be in the form 'account_name@domain_name[@device_name]'. If account resolution succeeds the username and password associated with this account will be used; otherwise the below fallback username and password will be used instead. <br/>
+    /// type: std::string <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:krb_armoring_account <br/>
+    /// default: {} <br/>
+    struct mod_rdp::krb_armoring_account {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 74};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// Realm to be used for armoring Kerberos tickets.  <br/>
+    /// type: std::string <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:krb_armoring_realm <br/>
+    /// default: {} <br/>
+    struct mod_rdp::krb_armoring_realm {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 75};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// Fallback username to be used for armoring Kerberos tickets.  <br/>
+    /// type: std::string <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:krb_armoring_fallback_user <br/>
+    /// default: {} <br/>
+    struct mod_rdp::krb_armoring_fallback_user {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 76};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// Fallback password to be used for armoring Kerberos tickets. <br/>
+    /// type: std::string <br/>
+    /// connpolicy -> proxy <br/>
+    /// sesmanName: mod_rdp:krb_armoring_fallback_password <br/>
+    /// default: {} <br/>
+    struct mod_rdp::krb_armoring_fallback_password {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 77};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// Effective username to be used for armoring Kerberos tickets. <br/>
+    /// type: std::string <br/>
+    /// sesman ⇒ proxy <br/>
+    /// default: {} <br/>
+    struct mod_rdp::effective_krb_armoring_user {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 78};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
+    };
+    /// Effective password to be used for armoring Kerberos tickets. <br/>
+    /// type: std::string <br/>
+    /// sesman ⇒ proxy <br/>
+    /// default: {} <br/>
+    struct mod_rdp::effective_krb_armoring_password {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr ::configs::authid_t index { ::configs::cfg_indexes::section3 + 79};
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value {  };
     };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
@@ -5418,6 +5512,12 @@ struct mod_rdp
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::server_cert
 , cfg::mod_rdp::server_cert_response
+, cfg::mod_rdp::krb_armoring_account
+, cfg::mod_rdp::krb_armoring_realm
+, cfg::mod_rdp::krb_armoring_fallback_user
+, cfg::mod_rdp::krb_armoring_fallback_password
+, cfg::mod_rdp::effective_krb_armoring_user
+, cfg::mod_rdp::effective_krb_armoring_password
 , cfg::mod_rdp::session_probe_disabled_features
 , cfg::mod_rdp::rdp_compression
 , cfg::mod_rdp::disconnect_on_logon_user_change
@@ -5899,6 +5999,12 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::auto_reconnection_on_losing_target_link
 , cfg::mod_rdp::forward_client_build_number
 , cfg::mod_rdp::bogus_monitor_layout_treatment
+, cfg::mod_rdp::krb_armoring_account
+, cfg::mod_rdp::krb_armoring_realm
+, cfg::mod_rdp::krb_armoring_fallback_user
+, cfg::mod_rdp::krb_armoring_fallback_password
+, cfg::mod_rdp::effective_krb_armoring_user
+, cfg::mod_rdp::effective_krb_armoring_password
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::server_clipboard_encoding_type
@@ -6019,14 +6125,14 @@ struct BitFlags {
 
 constexpr BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111110111111111111
-, 0b1111100111111111111111111111111111111111111111111111111111111111
-, 0b1110111111111111111111111111111111111111111111011011111011111111
-, 0b0000000000000000000000000000000000000000000000000001111111111111
+, 0b0111111111111111111111111110101111111111111111111111111111111111
+, 0b1111111111111111111111111111111111111111011011111011111111111110
+, 0b0000000000000000000000000000000000000000000001111111111111111011
 }};
 constexpr BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
-, 0b0000000000000000000000000000000000000000000000100000000000000000
+, 0b0000000000000000000000000000000000000000100000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000
 }};
 } // namespace configs

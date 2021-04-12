@@ -68,11 +68,14 @@ private:
 
     std::string hostname;
     std::string user;
+    std::string service_user;
     uint8_t password[2048];
+    uint8_t service_password[2048];
     std::vector<uint8_t> domain;
     const char * target_host;
 
     uint8_t * current_password;
+    uint8_t * current_service_password;
     Random & rand;
     const TimeBase & time_base;
     char * lb_info;
@@ -121,7 +124,20 @@ public:
 
     ~RdpNego();
 
-    void set_identity(bytes_view user, bytes_view domain, char const * pass, const std::string & hostname);
+    /**
+     * \brief Set the identity used for authenticating.
+     * 
+     * \param[in] username User name.
+     * \param[in] password User password.
+     * \param[in] domain Domain name.
+     * \param[in] hostname Host name.
+     * \param[in] service_username Service user name (may be set to null for specifying no delegate user).
+     * \param[in] service_password Service user password (may be set to null for specifying no delegate user).
+     */
+    void set_identity(bytes_view username, char const * password,
+        bytes_view domain, const std::string &hostname,
+        char const * service_username = nullptr,
+        char const * service_password = nullptr);
 
     void send_negotiation_request(OutTransport trans);
 

@@ -65,7 +65,7 @@ def parse_account(param, replace_dict, force_device=False):
     return acc_tuple
 
 
-def resolve_scenario_account(enginei, field, param, force_device=True):
+def resolve_scenario_account(enginei, field, param, force_device=True, default=None):
     """
     Get password or login field from scenario account
 
@@ -83,16 +83,22 @@ def resolve_scenario_account(enginei, field, param, force_device=True):
     :param force_device: bool
         force device_name part in param to match current device
         True by default
+    :param default: bool
+        default value to be returned in case resolution fails;
+        if set to None, param will be returned
+        True by default
 
     :return: requested field (password or login) of scenario account
              if param is not a scenario account, returns its value
     :rtype: str
     """
+    if default is None:
+        default = param
     session_infos = enginei.get_target_login_info().get_target_dict()
     session_infos["user"] = enginei.get_username()
     acc_tuple = parse_account(param, session_infos, force_device)
     if acc_tuple is None:
-        return param
+        return default
     acc_infos = enginei.get_account_infos_by_type(
         *acc_tuple,
         account_type="scenario"
@@ -102,5 +108,5 @@ def resolve_scenario_account(enginei, field, param, force_device=True):
             "Error: Unable to retrieve account info from '%s'" %
             param
         )
-        return param
+        return default
     return acc_infos.get(field.lower())

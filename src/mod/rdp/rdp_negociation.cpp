@@ -286,13 +286,17 @@ RdpNegociation::RdpNegociation(
     //  terminated by an empty string (\0) so that the last two
     //  characters are both null terminators.
     SOHSeparatedStringsToMultiSZ(this->password, sizeof(this->password), mod_rdp_params.target_password);
+    if (mod_rdp_params.krb_armoring_password)
+    {
+        SOHSeparatedStringsToMultiSZ(this->service_password, sizeof(this->service_password),
+            mod_rdp_params.krb_armoring_password);
+    }
 
     LOG(LOG_INFO, "Server key layout is 0x%x", unsigned(this->keylayout));
 
-    this->nego.set_identity(this->logon_info.username(),
-                            this->logon_info.domain(),
-                            this->password,
-                            this->logon_info.hostname());
+    this->nego.set_identity(this->logon_info.username(), this->password,
+                            this->logon_info.domain(), this->logon_info.hostname(),
+                            mod_rdp_params.krb_armoring_user, this->service_password);
 
     if (bool(this->verbose & RDPVerbose::connection)){
         this->redir_info.log(LOG_INFO, "Init with Redir_info");
