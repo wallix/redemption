@@ -187,7 +187,7 @@ void FdxCapture::close_tfl(
     OutCryptoTransport::HashArray fhash;
     tfl.trans.close(qhash, fhash);
 
-    char buf[~uint16_t{} * 2 + 256];
+    char buf[1024 * 16 * 2 + 256];
     OutStream out{buf};
 
     auto write_in_buf = [&](Mwrm3::Type /*type*/, auto... data) {
@@ -196,7 +196,7 @@ void FdxCapture::close_tfl(
 
     // truncate filename if too long
     original_filename = std::string_view(original_filename.data(),
-        std::min(original_filename.size(), std::string_view::size_type(~uint16_t())));
+        std::min(original_filename.size(), std::string_view::size_type(1024 * 16)));
 
     char const* filename = tfl.trans.get_finalname();
     struct stat stat;

@@ -202,7 +202,8 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
         "\x00\x26\x00"
         "file1my_session_id/my_session_id,000003.tfl\x04\x00\x06\x00\x00\x00\x00\x00\x00"
         "\x00\x05\x00\x00\x00\x00\x00\x00\x00\x54\x05\x00\x26\x00"
-        "file6my_session_id/my_session_id,000006.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av);
+        "file6my_session_id/my_session_id,000006.tflABCDEFGHIJABCDEFGHIJABCDEFGHIJAB"_av
+    );
 
     RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
         "v2\n\n\nsid,blabla.fdx "sv,
@@ -276,6 +277,86 @@ RED_AUTO_TEST_CASE_WD(fdx_capture, wd)
         int_to_decimal_chars(st6.st_ino), ' ',
         int_to_decimal_chars(st6.st_mtim.tv_sec), ' ',
         int_to_decimal_chars(st6.st_ctim.tv_sec), '\n'));
+}
+
+RED_AUTO_TEST_CASE_WD(fdx_capture_big_name, wd)
+{
+    using namespace std::string_view_literals;
+
+    auto record_path = wd.create_subdirectory("record");
+    auto hash_path = wd.create_subdirectory("hash");
+
+    auto sid = "my_session_id"sv;
+    auto fdx_basename = "sid,blabla.fdx"sv;
+
+    CryptoContext cctx;
+    LCGRandom rnd;
+
+    FdxCapture fdx_capture(
+        record_path.dirname().string(),
+        hash_path.dirname().string(),
+        "sid,blabla", sid, -1, FilePermissions(0660), cctx, rnd,
+        [](const Error & /*error*/){});
+
+    auto sig1 = Mwrm3::Sha256Signature{"abcdefghijabcdefghijabcdefghijab"_av};
+
+    // very long file name
+    // 64 bytes
+    std::string s = "0123456789ABCDEF""0123456789ABCDEF""0123456789ABCDEF""0123456789ABCDEF";
+    // 1KiB
+    s = str_concat(s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s);
+    // 16KiB + 1KiB
+    s = str_concat(s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s, s);
+    RED_TEST(s.size() == 1024*17);
+
+    {
+        FdxCapture::TflFile tfl = fdx_capture.new_tfl(Mwrm3::Direction::ServerToClient);
+        RED_TEST(tfl.file_id == Mwrm3::FileId(1));
+        tfl.trans.send("ijk"sv);
+        fdx_capture.close_tfl(tfl, s, Mwrm3::TransferedStatus::Completed, sig1);
+    }
+
+    OutCryptoTransport::HashArray qhash;
+    OutCryptoTransport::HashArray fhash;
+    fdx_capture.close(qhash, fhash);
+
+    auto fdx_record_path = record_path.create_subdirectory(sid);
+    auto fdx_hash_path = hash_path.create_subdirectory(sid);
+
+    auto fdx_filepath = record_path.add_file(fdx_basename);
+    auto st = get_stat(fdx_filepath);
+    std::string file_content = RED_REQUIRE_GET_FILE_CONTENTS(fdx_filepath);
+
+    RED_TEST(bytes_view(file_content) == str_concat(
+        "v3\n\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00"
+        "\x00\x00\x00\x00\x00\x34\x00\x40\x26\x00"_av,
+        chars_view(s).first(1024*16), "my_session_id/my_session_id,000001.tflabcdefghijabcdefghijabcdefghijab"
+        ""_av
+    ));
+
+    RED_CHECK_FILE_CONTENTS(hash_path.add_file(fdx_basename), str_concat(
+        "v2\n\n\nsid,blabla.fdx "sv,
+        int_to_decimal_chars(file_content.size()), ' ',
+        int_to_decimal_chars(st.st_mode), ' ',
+        int_to_decimal_chars(st.st_uid), ' ',
+        int_to_decimal_chars(st.st_gid), ' ',
+        int_to_decimal_chars(st.st_dev), ' ',
+        int_to_decimal_chars(st.st_ino), ' ',
+        int_to_decimal_chars(st.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st.st_ctim.tv_sec), '\n'));
+
+    auto tfl1 = fdx_record_path.add_file(str_concat(sid, ",000001.tfl"));
+    auto st1 = get_stat(tfl1);
+    RED_CHECK_FILE_CONTENTS(tfl1, "ijk"sv);
+    RED_CHECK_FILE_CONTENTS(fdx_hash_path.add_file(str_concat(sid, ",000001.tfl")), str_concat(
+        "v2\n\n\nmy_session_id,000001.tfl 3 ",
+        int_to_decimal_chars(st1.st_mode), ' ',
+        int_to_decimal_chars(st1.st_uid), ' ',
+        int_to_decimal_chars(st1.st_gid), ' ',
+        int_to_decimal_chars(st1.st_dev), ' ',
+        int_to_decimal_chars(st1.st_ino), ' ',
+        int_to_decimal_chars(st1.st_mtim.tv_sec), ' ',
+        int_to_decimal_chars(st1.st_ctim.tv_sec), '\n'));
 }
 
 RED_AUTO_TEST_CASE_WD(fdx_capture_encrypted, wd)
