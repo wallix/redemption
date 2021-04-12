@@ -40,7 +40,7 @@ private:
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
-        uint32_t error_code = 0;
+    uint32_t error_code = 0;
 
     ClientNonce SavedClientNonce;
 
@@ -48,6 +48,7 @@ private:
     std::vector<uint8_t> ClientServerHash;
     std::vector<uint8_t> ServerClientHash;
     std::string ServicePrincipalName;
+
     struct SEC_WINNT_AUTH_IDENTITY
     {
         // kerberos only
@@ -81,7 +82,7 @@ private:
             this->Domain.assign(av.data(), av.data()+av.size());
         }
 
-        bool is_empty_user_domain(){
+        bool is_empty_user_domain() const {
             return (this->User.empty() && this->Domain.empty());
         }
 
@@ -152,7 +153,7 @@ private:
             this->Password.assign(password_utf16_av.data(),password_utf16_av.data()+password_utf16_av.size());
         }
 
-    } identity;
+    };
 
     struct Krb5Creds_deleter
     {
@@ -164,34 +165,81 @@ private:
     };
 
     using Krb5CredsPtr = std::unique_ptr<Krb5Creds, Krb5Creds_deleter>;
+
+    ///
+    SEC_WINNT_AUTH_IDENTITY identity;
+
+    ///
+    SEC_WINNT_AUTH_IDENTITY service_identity;
+
     Krb5CredsPtr sspi_credentials = nullptr;
     std::unique_ptr<KERBEROSContext> sspi_krb_ctx = nullptr;
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS sspi_AcquireCredentialsHandle(
-        const std::string & pszPrincipal, std::string & pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const std::string & pszPrincipal, std::string & pvLogonID, SEC_WINNT_AUTH_IDENTITY const* identity,
+        SEC_WINNT_AUTH_IDENTITY const* service_identity
     ) {
         pvLogonID = pszPrincipal;
         this->sspi_credentials = Krb5CredsPtr(new Krb5Creds);
 
-        // set KRB5CCNAME cache name to specific with PID,
-        // call kinit to get tgt with identity credentials
+        const int pid(getpid());
+        char cache_name[256];
+        char fast_cache_name[256];
+        const char *fast_cache_name_ptr(nullptr);
+        int ret(-1);
 
-        int pid = getpid();
-        char cache[256];
-        snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
-        cache[255] = 0;
-        setenv("KRB5CCNAME", cache, 1);
-        LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
-        if (pAuthData) {
-            int ret = this->sspi_credentials->get_credentials(pAuthData->princname,
-                                                         pAuthData->princpass, nullptr);
-            if (!ret) {
-                return SEC_E_OK;
+        // retrieve and cache credentials of a possible service identity
+        if (service_identity && !service_identity->is_empty_user_domain())
+        {
+            // form the service credentials cache name
+            snprintf(fast_cache_name, 255, "FILE:/tmp/krb_red_fast_%d", pid);
+            fast_cache_name[255] = 0;
+
+            LOG(LOG_INFO, "Retrieving service credentials...");
+
+            // set FAST cache name
+            fast_cache_name_ptr = fast_cache_name;
+
+            // do retrieve service credentials
+            ret = this->sspi_credentials->get_credentials(service_identity->princname,
+                service_identity->princpass, fast_cache_name, nullptr);
+            if (ret)
+            {
+                LOG(LOG_ERR, "Failed to retrieve service credentials (%d)", ret);
+
+                goto cleanup;
+            }
+            else
+            {
+                LOG(LOG_INFO, "Service credentials cached to '%s'", fast_cache_name_ptr);
             }
         }
-        return SEC_E_NO_CREDENTIALS;
+
+        // form the main credentials cache name
+        snprintf(cache_name, 255, "FILE:/tmp/krb_red_%d", pid);
+        cache_name[255] = 0;
+
+        // set main credentials cache name in environment
+        setenv("KRB5CCNAME", cache_name, 1);
+        LOG(LOG_INFO, "set KRB5CCNAME to %s", cache_name);
+
+        // retrieve main credentials
+        if (identity)
+        {
+            ret = this->sspi_credentials->get_credentials(identity->princname,
+                identity->princpass, nullptr, fast_cache_name_ptr);
+        }
+    
+    cleanup:
+        // destroy service credentials
+        if (fast_cache_name_ptr)
+        {
+            this->sspi_credentials->destroy_credentials(fast_cache_name_ptr);
+        }
+
+        return (ret ? SEC_E_NO_CREDENTIALS : SEC_E_OK);
     }
 
     bool sspi_get_service_name(const std::string & server, gss_name_t * name) {
@@ -707,26 +755,29 @@ private:
     }
 
 private:
-    void set_credentials(const std::string & user, bytes_view domain,
-                         uint8_t const* pass, const std::string & hostname) {
+    void set_credentials(SEC_WINNT_AUTH_IDENTITY &identity,
+        bytes_view domain, const std::string &username,
+        const uint8_t *password, const std::string &hostname) {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::set_credentials");
-        this->identity.SetUserFromUtf8(user);
-        this->identity.SetDomainFromUtf8(domain);
-        this->identity.SetPasswordFromUtf8(pass);
+        identity.SetUserFromUtf8(username);
+        identity.SetDomainFromUtf8(domain);
+        identity.SetPasswordFromUtf8(password);
         this->SetHostnameFromUtf8(hostname);
         // hexdump_c(pass, strlen((char*)pass));
         // hexdump_c(hostname, strlen((char*)hostname));
-        this->identity.SetKrbAuthIdentity(user, pass);
+        identity.SetKrbAuthIdentity(username, password);
     }
 
 public:
     rdpCredsspClientKerberos(OutTransport transport,
-               const std::string & user,
+               const std::string & username,
                bytes_view domain,
-               uint8_t * pass,
+               const uint8_t * password,
                const std::string & hostname,
                const std::string target_host,
                const bool restricted_admin_mode,
+               const std::string & service_username,
+               const uint8_t * service_password,
                Random & rand,
                std::string& extra_message,
                Language lang,
@@ -743,7 +794,12 @@ public:
         , trans(transport.get_transport())
     {
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::Initialization");
-        this->set_credentials(user, domain, pass, hostname);
+        this->set_credentials(this->identity, domain, username, password, hostname);
+        if (!service_username.empty() && service_password)
+        {
+            this->set_credentials(this->service_identity, domain, service_username,
+                service_password, hostname);
+        }
         this->client_auth_data.state = ClientAuthenticateData::Start;
 
         LOG_IF(this->verbose, LOG_INFO, "rdpCredsspClientKerberos::client_authenticate");
@@ -758,7 +814,8 @@ public:
 
         LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
 
-        SEC_STATUS status = this->sspi_AcquireCredentialsHandle(this->target_host, this->ServicePrincipalName, &this->identity);
+        SEC_STATUS status = this->sspi_AcquireCredentialsHandle(this->target_host, this->ServicePrincipalName,
+            &this->identity, &this->service_identity);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Kerberos InitSecurityInterface status:%s0x%08X, fallback to NTLM",
